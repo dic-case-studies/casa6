@@ -31,9 +31,9 @@
 
 #include <plotms/test/tUtil.h>
 #include <plotms/Data/MSCache.h>
-#include <ms/MeasurementSets/MSColumns.h>
-#include <casa/Arrays/ArrayLogical.h>
-#include <casa/Arrays/ArrayMath.h>
+#include <casacore/ms/MeasurementSets/MSColumns.h>
+#include <casacore/casa/Arrays/ArrayLogical.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
 
 using namespace casa;
 
@@ -126,7 +126,7 @@ TEST_F( PlotMSCacheTest, testMetadata) {
 	}
 
 	// Resize MS columns to expected rows in first chunk
-	Vector<uInt> expRow;
+	Vector<rownr_t> expRow;
 	expRow.resize(expNRow);
 	indgen(expRow);
 	expAnt1.resize(expNRow, True);

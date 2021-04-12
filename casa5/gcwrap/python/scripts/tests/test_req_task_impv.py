@@ -31,6 +31,9 @@ except ImportError:
     from __main__ import *
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+    
 import sys
 import os
 import unittest
@@ -41,21 +44,15 @@ from filecmp import dircmp
 ### DATA ###
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('image/ngc5921.clean.image')
+    datapath = casatools.ctsys.resolve('unittest/impv/ngc5921.clean.image')
     qa = casatools.quanta()
     mytb = casatools.table()
     myia = casatools.image()
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image'
-        myia = ia
-        mytb = tb
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image'
-        myia = ia
-        mytb = tb
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/impv/ngc5921.clean.image'
+    myia = ia
+    mytb = tb
         
 testfile = 'testing.im'
 testfile2 = 'testing2.im'
@@ -135,7 +132,7 @@ class impv_test(unittest.TestCase):
         self.assertTrue(os.path.exists(testfile))
         
         # Check that the outfile needs to be given
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(UnboundLocalError):
                 impv(imagename=datapath, outfile='', start=[10,15], end=[110,120])
         else:
@@ -154,7 +151,7 @@ class impv_test(unittest.TestCase):
             The use of parameters for the other mode is not allowed
         '''
         # Catch if using the wrong combo of length and mode are allowed
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(UnboundLocalError):
                 impv(imagename=datapath, outfile=testfile, start=[10,15], end=[110,120], mode='length')
         else:
@@ -167,7 +164,7 @@ class impv_test(unittest.TestCase):
     def test_modeStartEnd(self):
         ''' Check that start and end is required '''
         # Catch if there is no start or end given
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(UnboundLocalError):
                 impv(imagename=datapath, outfile=testfile, mode='coords')
         else:
@@ -191,7 +188,8 @@ class impv_test(unittest.TestCase):
             If this is left blank then the entire spectral range is used.
         '''
         
-        self.assertTrue(impv(imagename=datapath, outfile=testfile, start=[10,15], end=[110,120], region='box[[0pix,0pix],[255pix,255pix]]'))
+        impv(imagename=datapath, outfile=testfile, start=[10,15], end=[110,120], region='box[[0pix,0pix],[255pix,255pix]]')
+        self.assertTrue(os.path.exists(testfile))
         
         
     def test_startEnd(self):

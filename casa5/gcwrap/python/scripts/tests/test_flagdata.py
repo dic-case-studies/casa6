@@ -19,8 +19,8 @@ if is_CASA6:
     from casatasks.private import flaghelper as fh
 
     ### for testhelper import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import testhelper as th
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+    #import testhelper as th
 
     # CASA6 doesn't need defaul
     def default(atask):
@@ -34,11 +34,13 @@ else:
     from __main__ import default
     from parallel.parallel_task_helper import ParallelTaskHelper
     import flaghelper as fh
-    import testhelper as th
+    #import testhelper as th
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
+
+from casatestutils import testhelper as th
 
 #from IPython.kernel.core.display_formatter import PPrintDisplayFormatter
 
@@ -46,7 +48,7 @@ else:
 # Test of flagdata modes
 #
 
-def test_eq(result, total, flagged):
+def func_test_eq(result, total, flagged):
 
     print("%s of %s data was flagged, expected %s of %s" % \
     (result['flagged'], result['total'], flagged, total))
@@ -74,7 +76,7 @@ def create_input(str_text, filename):
     return
 
 # Path for data
-datapath = ctsys_resolve("regression/unittest/flagdata")
+datapath = ctsys_resolve("unittest/flagdata/")
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -391,7 +393,7 @@ class test_base(unittest.TestCase):
         else:
             print("Moving data...")
             os.system('cp -RH ' + \
-                      ctsys_resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                      ctsys_resolve(os.path.join(datapath,self.vis)) + \
                       ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
@@ -406,7 +408,7 @@ class test_base(unittest.TestCase):
         else:
             print("Moving data...")
             os.system('cp -RH ' + \
-                      ctsys_resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                      ctsys_resolve(os.path.join(datapath,self.vis)) + \
                       ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')        
@@ -422,7 +424,7 @@ class test_base(unittest.TestCase):
         else:
             print("Moving data...")
             os.system('cp -RH ' + \
-                      ctsys_resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                      ctsys_resolve(os.path.join(datapath,self.vis)) + \
                       ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
@@ -431,7 +433,6 @@ class test_base(unittest.TestCase):
         
     def setUp_weightcol(self):
         '''Small MS with two rows and WEIGHT column'''
-        datapath = ctsys_resolve("regression/unittest/mstransform")
 
         inpvis = "combine-1-timestamp-2-SPW-no-WEIGHT_SPECTRUM-Same-Exposure.ms"
         self.vis = "msweight.ms"
@@ -448,7 +449,6 @@ class test_base(unittest.TestCase):
         
     def setUp_tbuff(self):
         '''Small ALMA MS with low-amp points to be flagged with tbuff parameter'''
-        datapath = ctsys_resolve("regression/unittest/flagdata")
         
         self.vis = 'uid___A002_X72c4aa_X8f5_scan21_spw18_field2_corrXX.ms'
         if os.path.exists(self.vis):
@@ -467,6 +467,20 @@ class test_base(unittest.TestCase):
         self.unflag_ms()        
         default(flagdata)
         
+    def setUp_evla_15A_397(self):
+        '''EVLA example MS wich has decreasing number of rows per chunk when traversed with VI/VB2'''        
+
+        self.vis = 'evla_15A-397_spw1_7_scan_4_6.ms'
+        if os.path.exists(self.vis):
+            print("The MS is already around, just unflag")
+        else:
+            print("Moving data...")
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' ' + self.vis)
+
+        os.system('rm -rf ' + self.vis + '.flagversions')
+        self.unflag_ms()
+        default(flagdata)
+
     def unflag_ms(self):
         aflocal.open(self.vis)
         aflocal.selectdata()
@@ -552,7 +566,7 @@ class test_tfcrop(test_base):
         self.assertEqual(res['correlation']['RR']['flagged'], 43)
         self.assertEqual(res['correlation']['LL']['flagged'], 0)
         flagdata(vis=self.vis, mode='extend', extendpols=True, savepars=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', correlation='Ll'), 1099776, 43)
+        func_test_eq(flagdata(vis=self.vis, mode='summary', correlation='Ll'), 1099776, 43)
         
     def test_extendtime(self):
         '''flagdata:: Extend the flags created by tfcrop'''
@@ -962,6 +976,25 @@ class test_rflag(test_base):
         # This test is mischievous, manipulates the model column. Don't leave a messed up MS.
         os.system('rm -rf {0}'.format(self.vis))
        
+class test_rflag_evla(test_base):
+    """flagdata:: Test of mode = 'rflag'"""
+
+    def setUp(self):
+        self.setUp_evla_15A_397()
+
+    def test_rflag_CAS_13360(self):
+        '''flagdata:: rflag in a MS which has decreasing number of rows in subsequent chunks'''
+        
+        flagdata(vis='evla_15A-397_spw1_7_scan_4_6.ms', mode='rflag', \
+                 datacolumn='data', ntime='scan', combinescans=False, \
+                 extendflags=False, winsize=3, timedev='', freqdev='',\
+                 timedevscale=5.0, freqdevscale=5.0, spectralmax=1000000.0, \
+                 spectralmin=0.0, flagbackup=False)
+
+        res = flagdata(vis=self.vis, mode='summary')
+        self.assertEqual(res['flagged'], 3185281)
+
+
 class test_shadow(test_base):
     def setUp(self):
         self.setUp_shadowdata2()
@@ -1133,7 +1166,7 @@ class test_msselection(test_base):
         # Copy the input flagcmd file with a non-existing spw name
         # flagsfile has spw='"Subband:1","Subband:2","Subband:8"
         flagsfile = 'cas9366.flags.txt'
-        os.system('cp -rf '+os.path.join(datapath,flagsfile)+' '+ ' .')
+        os.system('cp -RH '+os.path.join(datapath,flagsfile)+' '+ ' .')
         
         # Try to flag
         try:
@@ -1274,7 +1307,7 @@ class test_statistics_queries(test_base):
 #        print("Test of mode = 'quack'")
 #        print("parallel quack")
 #        flagdata(vis=self.vis, mode='quack', quackinterval=[1.0, 5.0], antenna=['2', '3'], correlation='RR')
-#        test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 22365)
+#        func_test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 22365)
 #
     def test9(self):
         '''flagdata: quack mode'''
@@ -1307,19 +1340,19 @@ class test_statistics_queries(test_base):
         '''flagdata: quack mode, quackincrement'''
         flagdata(vis=self.vis, mode='quack', quackinterval=50, quackmode='endb', quackincrement=True,
                  savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 571536)
+        func_test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 571536)
 
         flagdata(vis=self.vis, mode='quack', quackinterval=20, quackmode='endb', quackincrement=True,
                  savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 857304)
+        func_test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 857304)
         
         flagdata(vis=self.vis, mode='quack', quackinterval=150, quackmode='endb', quackincrement=True,
                  savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 1571724)
+        func_test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 1571724)
         
         flagdata(vis=self.vis, mode='quack', quackinterval=50, quackmode='endb', quackincrement=True,
                  savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 1762236)
+        func_test_eq(flagdata(vis=self.vis, mode='summary'), 2854278, 1762236)
 #        flagdata(vis=self.vis, mode='unflag', savepars=False, flagbackup=False)
 
     def test_quackincrement_list(self):
@@ -1379,12 +1412,12 @@ class test_selections(test_base):
     def test_antenna(self):
         '''flagdata: antenna selection'''
         flagdata(vis=self.vis, antenna='VA02', savepars=False,flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='VA02'), 196434, 196434)
+        func_test_eq(flagdata(vis=self.vis, mode='summary', antenna='VA02'), 196434, 196434)
 
     def test_spw(self):
         '''flagdata: spw selection'''
         flagdata(vis=self.vis, spw='0', savepars=False,flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
+        func_test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
 
     def test_spw_list(self):
         '''flagdata: spw selection in list mode''' 
@@ -1424,12 +1457,12 @@ class test_selections(test_base):
 
     def test_correlation(self):
         flagdata(vis=self.vis, correlation='LL', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 98217)
-        test_eq(flagdata(vis=self.vis, mode='summary', correlation='RR'), 1427139, 0)
+        func_test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 98217)
+        func_test_eq(flagdata(vis=self.vis, mode='summary', correlation='RR'), 1427139, 0)
 #        flagdata(vis=self.vis, mode='unflag', savepars=False, flagbackup=False)
         self.unflag_ms()
         flagdata(vis=self.vis, correlation='LL,RR', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
+        func_test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
         
 #        flagdata(vis=self.vis, mode='unflag', savepars=False, flagbackup=False)
         self.unflag_ms()
@@ -1439,28 +1472,28 @@ class test_selections(test_base):
         self.assertEqual(res['flagged'], 204979)
 #        flagdata(vis=self.vis, correlation='LL RR')
 #        flagdata(vis=self.vis, correlation='LL ,, ,  ,RR')
-#        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
+#        func_test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
 
     def test_field(self):
         '''flagdata: field selection'''
         flagdata(vis=self.vis, field='0', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 39186)
+        func_test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 39186)
 
     def test_uvrange(self):
         '''flagdata: uvrange selection'''
         flagdata(vis=self.vis, uvrange='200~400m', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='VA02'), 196434, 55944)
+        func_test_eq(flagdata(vis=self.vis, mode='summary', antenna='VA02'), 196434, 55944)
 
     def test_timerange(self):
         '''flagdata: timerange selection'''
         flagdata(vis=self.vis, timerange='09:50:00~10:20:00', savepars=False,
                  flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 6552)
+        func_test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 6552)
 
     def test_array(self):
         '''flagdata: array selection'''
         flagdata(vis=self.vis, array='0', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
+        func_test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
                 
     def test_action(self):
         '''flagdata: action = calculate'''
@@ -1474,12 +1507,12 @@ class test_selections(test_base):
         self.assertEqual(flagdata(vis=self.vis, mode='summary', antenna='2')['flagged'],98217)
         self.assertEqual(flagdata(vis=self.vis, mode='summary', correlation='RR')['flagged'], 0)
 
-#        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 98217)
-#        test_eq(flagdata(vis=self.vis, mode='summary', correlation='RR'), 1427139, 0)
+#        func_test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 98217)
+#        func_test_eq(flagdata(vis=self.vis, mode='summary', correlation='RR'), 1427139, 0)
 #        flagdata(vis=self.vis, mode='unflag', savepars=False, flagbackup=False)
         self.unflag_ms()
         flagdata(vis=self.vis, correlation='LL,RR,RL', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
+        func_test_eq(flagdata(vis=self.vis, mode='summary', antenna='2'), 196434, 196434)
         
     def test_multi_timerange(self):
         '''flagdata: CAS-5300, in list mode, flag multiple timerange intervals'''
@@ -1512,7 +1545,7 @@ class test_alma(test_base):
     def test_wvr(self):
         '''flagdata: flag WVR correlation'''
         flagdata(vis=self.vis, correlation='I', savepars=False, flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary', spw='0'),608, 608)
+        func_test_eq(flagdata(vis=self.vis, mode='summary', spw='0'),608, 608)
 
     def test_abs_wvr(self):
         '''flagdata: clip ABS_WVR'''
@@ -1682,40 +1715,40 @@ class test_elevation(test_base):
     def test_lower(self):
         flagdata(vis = self.vis, mode = 'elevation', savepars=False)
         
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, 0)
+        func_test_eq(flagdata(vis=self.vis, mode='summary'), self.all, 0)
 
         flagdata(vis = self.vis, mode = 'elevation', lowerlimit = 50, savepars=False,
                  flagbackup=False)
 
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, 0)
+        func_test_eq(flagdata(vis=self.vis, mode='summary'), self.all, 0)
 
         flagdata(vis = self.vis, mode = 'elevation', lowerlimit = 55, savepars=False,
                  flagbackup=False)
 
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.x55)
+        func_test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.x55)
 
         flagdata(vis = self.vis, mode = 'elevation', lowerlimit = 60, savepars=False,
                  flagbackup=False)
 
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.x60)
+        func_test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.x60)
 
         flagdata(vis = self.vis, mode = 'elevation', lowerlimit = 65, savepars=False,
                  flagbackup=False)
 
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.x65)
+        func_test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.x65)
 
     def test_upper(self):
         flagdata(vis = self.vis, mode = 'elevation', upperlimit = 60, savepars=False,
                  flagbackup=False)
 
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.all - self.x60)
+        func_test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.all - self.x60)
 
 
     def test_interval(self):
         flagdata(vis = self.vis,mode = 'elevation',lowerlimit = 55,upperlimit = 60,
                   savepars=False,flagbackup=False)
 
-        test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.all - (self.x60 - self.x55))
+        func_test_eq(flagdata(vis=self.vis, mode='summary'), self.all, self.all - (self.x60 - self.x55))
 
 
 class test_list_file(test_base):
@@ -2026,12 +2059,9 @@ class test_list_file(test_base):
         filename = 'listintscan.txt'
         create_input(myinput, filename)
         
-        try:
+        with self.assertRaises(ValueError, msg='Expected error '):
             res = flagdata(vis=self.vis, mode='list', inpfile=filename, flagbackup=False)
-            
-        except IOError as instance:
-            print('Expected error!')
-        
+
     def test_file_scan_list(self):
         '''flagdata: select a scan by giving a list value. Expect error.'''
         # The new fh.parseFlagParameters should NOT allow this
@@ -2041,12 +2071,9 @@ class test_list_file(test_base):
         
         filename = 'listscan.txt'
         create_input(myinput, filename)
-        try:
+        with self.assertRaises(Exception, msg='Expected error when reading input list'):
             res = flagdata(vis=self.vis, mode='list', inpfile=filename, flagbackup=False)
-            
-        except IOError as instance:
-            print('Expected error!')
-               
+
     def test_file_overwrite_true(self):
         '''flagdata: Use savepars and overwrite=True'''
         
@@ -2091,11 +2118,12 @@ class test_list_file(test_base):
                 
         # Apply flags from file and try to save in newfile
         # Overwrite parameter should give an error and not save
-        flagdata(vis=self.vis, action='calculate', mode='list',inpfile=filename, savepars=True, outfile=newfile,
-                flagbackup=False, overwrite=False)
+        with self.assertRaises(RuntimeError, msg='expected issue with overwrite'):
+            flagdata(vis=self.vis, action='calculate', mode='list', inpfile=filename,
+                     savepars=True, outfile=newfile, flagbackup=False, overwrite=False)
         
         # newfile should not be overwritten
-        self.assertFalse(filecmp.cmp(filename, newfile, 1), 'Files should be different')        
+        self.assertFalse(filecmp.cmp(filename, newfile, 1), 'Files should be different')
 
     def test_file_overwrite_false1(self):
         '''flagdata: Use savepars and overwrite=False'''
@@ -2419,7 +2447,9 @@ class test_clip(test_base):
         # It should fail and not flag anything
         datacols = ["RESIDUAL","RESIDUAL_DATA"]
         for col in datacols:
-            flagdata(vis=self.vis, mode='clip',datacolumn=col,clipminmax=[2.3,3.1],clipoutside=False, action='apply')
+            with self.assertRaises(ValueError):
+                flagdata(vis=self.vis, mode='clip', datacolumn=col, clipminmax=[2.3,3.1],
+                         clipoutside=False, action='apply')
             print('flagadta is expected to fail with datacolumn='+col)
             self.assertEqual(flagdata(vis=self.vis, mode='summary')['flagged'],0.0)
 
@@ -2463,8 +2493,10 @@ class test_clip(test_base):
         delmod(vis='ngc5921_virtual_model_col.ms',otf=True,scr=True)
         
         # Flag RESIDUAL_DATA should fail because virtual MODEL column doesn't exist
-        flagdata(vis='ngc5921_virtual_model_col.ms', mode='clip',datacolumn='RESIDUAL_DATA',clipminmax=[2.3,3.1],
-                 clipoutside=False, action='apply')
+        with self.assertRaises(ValueError):
+            flagdata(vis='ngc5921_virtual_model_col.ms', mode='clip',
+                     datacolumn='RESIDUAL_DATA', clipminmax=[2.3,3.1], clipoutside=False,
+                     action='apply')
         self.assertEqual(flagdata(vis='ngc5921_virtual_model_col.ms', mode='summary')['flagged'],0)
         
 
@@ -2729,13 +2761,13 @@ class test_tsys(test_base):
          
     def test_unsupported_elevation(self):
         '''Flagdata: Unsupported elevation mode'''
-        res = flagdata(vis=self.vis, mode='elevation')
-        self.assertEqual(res, {})
+        with self.assertRaises(ValueError):
+            res = flagdata(vis=self.vis, mode='elevation')
 
     def test_unsupported_shadow(self):
         '''Flagdata: Unsupported shadow mode'''
-        res = flagdata(vis=self.vis, mode='shadow', flagbackup=False)
-        self.assertEqual(res, {})
+        with self.assertRaises(ValueError):
+            res = flagdata(vis=self.vis, mode='shadow', flagbackup=False)
         
     def test_mixed_list(self):
         '''Flagdata: mixed supported and unsupported modes in a list'''
@@ -2866,8 +2898,9 @@ class test_tsys(test_base):
         
     def test_invalid_datacol_cal(self):
         '''Flagdata: invalid data column should not fall back to default'''
-        flagdata(vis=self.vis, mode='clip', clipminmax=[0.,600.],datacolumn='PARAMERR',
-                 flagbackup=False)
+        with self.assertRaises(ValueError):
+            flagdata(vis=self.vis, mode='clip', clipminmax=[0.,600.],datacolumn='PARAMERR',
+                     flagbackup=False)
         res=flagdata(vis=self.vis, mode='summary')
 #        self.assertEqual(res['flagged'], 1192.0)
         self.assertFalse(res['flagged']==1192.0)
@@ -3062,10 +3095,11 @@ class test_bandpass(test_base):
 
     def test_unsupported_modes(self):
         '''Flagdata: elevation and shadow are not supported in cal tables'''
-        res = flagdata(vis=self.vis, mode='elevation', flagbackup=False)
-        self.assertEqual(res, {})
-        res = flagdata(vis=self.vis, mode='shadow', flagbackup=False)
-        self.assertEqual(res, {})
+        with self.assertRaises(ValueError):
+            res = flagdata(vis=self.vis, mode='elevation', flagbackup=False)
+
+        with self.assertRaises(ValueError):
+            res = flagdata(vis=self.vis, mode='shadow', flagbackup=False)
 
     def test_nullselections(self):
         '''Flagdata: unkonwn scan selection in cal tables'''
@@ -3082,11 +3116,12 @@ class test_bandpass(test_base):
 
     def test_invalid_datacol(self):
         '''Flagdata: invalid data column should not fall back to default'''
-        flagdata(vis=self.vis, mode='clip', clipzeros=True, datacolumn='PARAMERR',
-                 flagbackup=False)
-        res=flagdata(vis=self.vis, mode='summary')
+        with self.assertRaises(ValueError):
+            flagdata(vis=self.vis, mode='clip', clipzeros=True, datacolumn='PARAMERR',
+                     flagbackup=False)
+        res = flagdata(vis=self.vis, mode='summary')
 #        self.assertEqual(res['flagged'], 11078.0)
-        self.assertFalse(res['flagged']==11078.0)
+        self.assertNotEqual(res['flagged'], 11078.0)
         
                         
     def test_manual_field_selection_for_bpass(self):
@@ -4124,7 +4159,9 @@ class test_virtual_col(test_base):
         self.assertFalse('SOURCE_MODEL' in cols_v, 'Test cannot have a virtual MODEL column')
         
         # Run flagdata on it. RESIDUAL_DATA = DATA - MODEL
-        flagdata(self.vis, mode='clip',datacolumn='RESIDUAL_DATA',clipminmax=[2.3,3.1],clipoutside=False)
+        with self.assertRaises(ValueError):
+            flagdata(self.vis, mode='clip', datacolumn='RESIDUAL_DATA',
+                     clipminmax=[2.3,3.1],clipoutside=False)
 
     def test_virtual_model_col(self):
         '''flagdata: Tests using a virtual MODEL column'''
@@ -4187,6 +4224,7 @@ def suite():
     return [test_dict_consolidation,
             test_antint,
             test_rflag,
+            test_rflag_evla,
             test_tfcrop,
             test_shadow,
             test_selections,

@@ -10,17 +10,19 @@ import numpy
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, table, ms
-    from casatasks import setjy
+    from casatasks import setjy, partition
+    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
     mslocal = ms()
     ctsys_resolve = ctsys.resolve
 else:
     from tasks import *
     from taskinit import *
     from taskinit import tbtool as table
+    from parallel.parallel_task_helper import ParallelTaskHelper
     from casa_stack_manip import stack_frame_find
     from __main__ import default
     mslocal = mstool()
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
@@ -34,7 +36,7 @@ Features tested:
   3. Solar system (Uranus) flux density calibration.
 """
 
-datapath = ctsys_resolve('regression/unittest/setjy')
+datapath = ctsys_resolve('unittest/setjy/')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -52,8 +54,12 @@ if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
 
 class SetjyUnitTestBase(unittest.TestCase):
 
-    def setUpMS(self,MS):
+    def setUpMS(self,MS, ismms=False):
 
+        # Modified to test MMS case in the same test_setjy run (2020.05.12 TT)
+        # If ismms=True, look for MMS data is in the same root data directory path but under 
+        # sub-directory, mms.
+    
         self.inpms = MS
 
         # Create working area
@@ -66,10 +72,16 @@ class SetjyUnitTestBase(unittest.TestCase):
         # Create a new fresh copy of the MS
         print("\nCreate a new local copy of the MS...")
         #print(" setjydatapath=",setjydatapath, " inpms=",self.inpms)
+        #print(" setjydatapath=",datapath, " inpms=",self.inpms)
         if testmms:
-            os.system('cp -rH ' + os.path.join(datapath,self.inpms) + ' ' + self.inpms)
+            os.system('cp -RH ' + os.path.join(datapath,self.inpms) + ' ' + self.inpms)
+        #elif ismms:
+        #    os.system('cp -rH ' + os.path.join(datapath+'/mms',self.inpms) + ' ' + self.inpms)
         else:
-            os.system('cp -rf ' + os.path.join(datapath,self.inpms) + ' ' + self.inpms)
+            os.system('cp -RH ' + os.path.join(datapath,self.inpms) + ' ' + self.inpms)
+        
+        if ismms:
+            self.createMMS(self.inpms)
 
     def resetMS(self):
 
@@ -77,6 +89,11 @@ class SetjyUnitTestBase(unittest.TestCase):
             print("\nRemoving a local copy of MS from the previous test...")
             #ret = os.system('rm -rf unittest/setjy/*')
             shutil.rmtree(self.inpms)
+
+        if hasattr(self, 'inpmms') and os.path.exists(self.inpmms):
+            print("\nRemoving a local copy of MMS from the previous test...")
+            shutil.rmtree(self.inpmms)
+   
 
     def get_last_history_line(self,vis, origin='setjy::imager::setjy()',
                               nback=0, maxnback=20, hint=''):
@@ -153,6 +170,24 @@ class SetjyUnitTestBase(unittest.TestCase):
             except Exception:
                 print("Error comparing", val, "to", expval)
                 raise
+    
+    def createMMS(self, msname):
+        '''Create MMSs for tests with input MMS'''
+        prefix = msname.rstrip('.ms')
+        if not os.path.exists(msname):
+#            os.system('cp -RH '+os.path.join(datapath,msname)+' '+ msname)
+            shutil.copytree(os.path.join(datapath,msname), msname)
+        
+        # Create an MMS for the tests
+        self.inpmms = prefix + ".test.mms"
+        
+        if os.path.exists(self.inpmms):
+            os.system("rm -rf " + self.inpmms)
+        if os.path.exists(self.inpmms+'.flagversions'):
+            os.system("rm -rf " + self.inpmms +'.flagversions')
+            
+        print("................. Creating test MMS ..................")
+        partition(vis=msname, outputvis=self.inpmms, flagbackup=False, separationaxis='auto')        
 
 
 class test_SingleObservation(SetjyUnitTestBase):
@@ -1166,6 +1201,7 @@ class test_newStandards(SetjyUnitTestBase):
         self.check_eq(sjran['12']['0']['fluxd'][0],0.99137,0.0001)
         self.check_eq(sjran['12']['1']['fluxd'][0],0.99132,0.0001)
         self.assertTrue(ret)
+        print("ret=%s" % sjran)
  
     def test_PB2017(self):
         self.modelim = ""
@@ -1192,8 +1228,77 @@ class test_newStandards(SetjyUnitTestBase):
         self.check_eq(sjran['12']['0']['fluxd'][0],0.99137,0.0001)
         self.check_eq(sjran['12']['1']['fluxd'][0],0.99132,0.0001)
         self.assertTrue(ret)
- 
+        #print("ret=%s" % sjran)
     
+class test_newStandards_MMS(SetjyUnitTestBase):
+    """Test simple Stnadard Scaling with MMS data"""
+    # can be just mpicasa specific tests but for now it will be tested for serial
+    def setUp(self):
+        # MMS version of the data is stored in the subdirectory, mms
+        prefix = 'n1333_1'
+        msname=prefix+'.ms'
+        # this is MMS
+        self.setUpMS(msname, True)
+        self.field='0542+498_1' #3C147
+
+    def tearDown(self):
+        self.resetMS()
+        #pass
+
+    def test_PB2013_MMS(self):
+        self.modelim = ""
+        sjran = setjy(vis=self.inpmms,
+                      field=self.field,
+                      modimage=self.modelim,
+                      standard='Perley-Butler 2013',
+                      usescratch=True
+                      )
+        ret = True
+        if type(sjran)!=dict:
+            ret = False
+        else:
+            outfldid = ""
+            for ky in sjran.keys():
+                if 'fieldName' in sjran[ky] and sjran[ky]['fieldName']==self.field:
+                    outfldid = ky
+                    break
+            ret = len(outfldid)
+            if not ret:
+                print("FAIL: missing field = %s in the returned dictionary" % self.field)
+        self.check_eq(sjran['12']['0']['fluxd'][0],0.99137,0.0001)
+        self.check_eq(sjran['12']['1']['fluxd'][0],0.99132,0.0001)
+        self.assertTrue(ret)
+        #print("ret=%s" % sjran)
+
+    def test_PB2017_MMS(self):
+        self.modelim = ""
+        sjran = setjy(vis=self.inpmms,
+                      field=self.field,
+                      modimage=self.modelim,
+                      standard='Perley-Butler 2017',
+                      usescratch=True
+                      )
+        ret = True
+        if type(sjran)!=dict:
+            ret = False
+        else:
+            outfldid = ""
+            for ky in sjran.keys():
+                if 'fieldName' in sjran[ky] and sjran[ky]['fieldName']==self.field:
+                    outfldid = ky
+                    break
+            ret = len(outfldid)
+            if not ret:
+                print("FAIL: missing field = %s in the returned dictionary" % self.field)
+        #self.check_eq(sjran['12']['0']['fluxd'][0],1.15116881972,0.0001)
+        #self.check_eq(sjran['12']['1']['fluxd'][0],1.15111995508,0.0001)
+        self.check_eq(sjran['12']['0']['fluxd'][0],0.99137,0.0001)
+        self.check_eq(sjran['12']['1']['fluxd'][0],0.99132,0.0001)
+        self.assertTrue(ret)
+        #print("ret=%s" % sjran)
+
+
+
 class test_inputs(SetjyUnitTestBase):
     """Test input parameter checking"""
     def setUp(self):
@@ -1444,8 +1549,10 @@ class test_inputs(SetjyUnitTestBase):
         """ Test listmodels mode """
         self.inpms=''
         print("\nRunning setjy in listmodels mode ....")
-        sjran = setjy(vis=self.inpms,listmodels=True)
-        self.assertTrue(sjran)
+        try:
+            setjy(vis=self.inpms,listmodels=True)
+        except Exception as exc:
+            self.fail('Unexpected task exception: {}'.format(exc))
 
 
 class test_conesearch(SetjyUnitTestBase):
@@ -1968,17 +2075,19 @@ class test_NullSelection(SetjyUnitTestBase):
 
         # Field 1 is Titan and has scanintent 'CALIBRATE_FLUX#ON_SOURCE', there are
         # SPWs 0-3, but no scan 5 -> null (zero rows) selection
-        res = setjy(vis=self.inpms, field='1', spw='3', scan='5',
-                    standard='Butler-JPL-Horizons 2012', intent="*CALIB*FLUX*",
-                    usescratch=True)
-
-        self.assertEqual(res, False, "setjy did not return False for a null selection")
+        try:
+            setjy(vis=self.inpms, field='1', spw='3', scan='5',
+                  standard='Butler-JPL-Horizons 2012', intent="*CALIB*FLUX*",
+                  usescratch=True)
+        except Exception:
+            self.fail("setjy produced an exception for a null selection - it should have "
+                      "been handled more gracefully")
 
 
 def suite():
     return [test_SingleObservation,test_MultipleObservations,test_ModImage, test_inputs,
             test_conesearch, test_fluxscaleStandard, test_setpol, test_ephemtbl,
-            test_tpmAsteroid,test_NullSelection, test_newStandards]
+            test_tpmAsteroid,test_NullSelection, test_newStandards, test_newStandards_MMS]
 
 if is_CASA6:
     if __name__ == '__main__':

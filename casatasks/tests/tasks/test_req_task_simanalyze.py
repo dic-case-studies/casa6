@@ -34,9 +34,12 @@ except ImportError:
     is_CASA6 = False
 
 if is_CASA6:
-    import casatools # not a good idea inside the casashell...perhaps os.path.exists(casatools.__file__) instead
-    from casatasks import tclean, simobserve, simanalyze 
-    from casatasks import casalog
+    from casatools import ctsys, image, coordsys, componentlist, quanta
+    ia = image()
+    cs = coordsys()
+    cl = componentlist()
+    qa = quanta()
+    from casatasks import tclean, simobserve, simanalyze, casalog
 else:
     from __main__ import default
     from tasks import *
@@ -44,31 +47,40 @@ else:
  
 # DATA #
 if is_CASA6:
-    dataroot = casatools.ctsys.resolve()
-    configpath_int  = casatools.ctsys.resolve((os.path.join(dataroot, 'alma/simmos/vla.a.cfg')))
-    imagepath_int   = casatools.ctsys.resolve((os.path.join(dataroot, 'nrao/VLA/CalModels/3C286_Q.im/')))
-    configpath_sd   = casatools.ctsys.resolve((os.path.join(dataroot, 'alma/simmos/aca.tp.cfg')))
-    mspath_sd       = casatools.ctsys.resolve((os.path.join(dataroot, 'regression/unittest/clean/refimager/refim_twopoints_twochan.ms')))
+    ctsys_resolve = ctsys.resolve
+    configpath_int      = ctsys_resolve('alma/simmos/vla.a.cfg')
+    imagepath_int       = ctsys_resolve('nrao/VLA/CalModels/3C286_Q.im/')
+    configpath_both_int = ctsys_resolve('alma/simmos/aca.cycle7.cfg')
+    configpath_sd       = ctsys_resolve('alma/simmos/aca.tp.cfg')
 else:
     dataroot = os.environ.get('CASAPATH').split()[0]
-    configpath_int  = os.path.join(dataroot, 'data/alma/simmos/vla.a.cfg')
-    imagepath_int   = os.path.join(dataroot, 'data/nrao/VLA/CalModels/3C286_Q.im/')
-    configpath_sd   = os.path.join(dataroot, 'data/alma/simmos/aca.tp.cfg')
-    mspath_sd       = os.path.join(dataroot, 'data/regression/unittest/clean/refimager/refim_twopoints_twochan.ms')
+    configpath_int      = os.path.join(dataroot, 'data/alma/simmos/vla.a.cfg')
+    imagepath_int       = os.path.join(dataroot, 'data/nrao/VLA/CalModels/3C286_Q.im/')
+    configpath_both_int = os.path.join(dataroot, 'data/alma/simmos/aca.cycle7.cfg')
+    configpath_sd       = os.path.join(dataroot, 'data/alma/simmos/aca.tp.cfg')
+    def ctsys_resolve(apath):
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
+        return os.path.join(dataPath,apath)
+    
+# Path to MS data
+mspath_sd = ctsys_resolve('unittest/simanalyze/refim_twopoints_twochan.ms')
 
 logpath = casalog.logfile()
 
 int_project = 'sim_interferometric'
 sd_project = 'sim_single_dish'
 imagepath_sd = 'sd_model.image'
-#both_project = 'sim_both'
+both_project = 'sim_both'
+both_component_list = 'J0319+4130.cl'
+both_model_image_int = both_component_list[:-3]+'.im'
+both_model_image_sd = both_component_list[:-3]+'_rebin.im'
 
 ####    interferometric    ####
 class simanalyze_main_usage_modes_test_int(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         if not is_CASA6: # needs similar branch condition for casalith
+            default(simanalyze)
             default(simobserve)
             default(tclean)
 
@@ -77,15 +89,8 @@ class simanalyze_main_usage_modes_test_int(unittest.TestCase):
                    refdate='2020/02/13', hourangle='transit', totaltime='100s', antennalist=configpath_int,
                    outframe='LSRK', thermalnoise='', leakage=0.0, graphics='none',verbose=False, overwrite=False)
 
-    @classmethod
-    def tearDownClass(cls):
-        os.system("rm -rf {}".format(int_project))
-
-    def setUp(self):
-        if not is_CASA6: # needs similar branch condition for casalith
-            default(simanalyze)
-
     def tearDown(self):
+        os.system("rm -rf {}".format(int_project))
         os.system("rm -rf *.last")
 
     def test_imaging_False_analysis_False(self):
@@ -99,12 +104,14 @@ class simanalyze_main_usage_modes_test_int(unittest.TestCase):
 
         visname = str(int_project +'/'+ int_project + '.' + configpath_int.split('/')[-1][:-3] +'ms')
 
-        val = simanalyze(project=int_project, image=False, vis=visname, imagename=imagepath_int, analyze=False, 
-                       graphics='none', verbose=False, overwrite=True, dryrun=False, logfile=logpath)
-
-        self.assertTrue(val)
+        try:
+            simanalyze(project=int_project, image=False, vis=visname,
+                       imagename=imagepath_int, analyze=False,
+                       graphics='none', verbose=False, overwrite=True, dryrun=False,
+                       logfile=logpath)
+        except Exception:
+            self.fail()
         
-    @unittest.skip("ModuleNotFoundError: No module named clean")
     def test_imaging_True_interferometric_analysis_False(self):
         '''test_imaging_True_interferometric_analysis_False:
         ----------------------------------------------------
@@ -122,7 +129,6 @@ class simanalyze_main_usage_modes_test_int(unittest.TestCase):
 
         self.assertTrue(os.path.isdir(visname_int[:-2]+'image'))
 
-    @unittest.skipUnless(os.path.isdir(int_project+'/'+int_project+'.'+configpath_int.split('/')[-1][:-3]+'image'),"Analysis-only mode presumes the existence of some image data, such as that generated by test_imaging_True_interferometric*")
     def test_imaging_False_interferometric_analysis_True_showfidelity_True(self):
         '''test_imaging_False_interferometric_analysis_True_showfidelity_True:
         ----------------------------------------------------------------------
@@ -134,6 +140,13 @@ class simanalyze_main_usage_modes_test_int(unittest.TestCase):
 
         visname_int = str(int_project +'/'+ int_project + '.' + configpath_int.split('/')[-1][:-3] +'ms')
 
+        # this is not the subject of this test
+        simanalyze(project=int_project, image=True, vis=visname_int, modelimage='',imsize = [],
+                   imdirection ='',cell = '',interactive = False, niter = 0,threshold = '0.1mJy',
+                   weighting = 'natural',mask = [],outertaper = [],pbcor = False,stokes = 'I', 
+                   featherimage = '',analyze=False, graphics='none', verbose=False, overwrite=True, dryrun=False, logfile=logpath)
+
+        # this is the subject of this test
         simanalyze(project=int_project, image=False, analyze=True, showfidelity=True,graphics='none', 
                    verbose=False, overwrite=True, dryrun=False, logfile=logpath)
 
@@ -143,12 +156,12 @@ class simanalyze_main_usage_modes_test_int(unittest.TestCase):
 ####    Single Dish     ####
 class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        '''Called before tests in this class of test cases are run. Executes simobserve to create expected directory structure. Minimally, f"{project}/{project}.{suffix}" where suffix in ['skymodel','newmodel','compskymodel'].'''
+    def setUp(self):
+        """Executes simobserve to create expected directory structure. Minimally, f"{project}/{project}.{suffix}" where suffix in ['skymodel','newmodel','compskymodel']."""
         if not is_CASA6: # needs similar branch condition for casalith
             default(simobserve)
             default(tclean)
+            default(simanalyze)
 
         # create reference image > 2.5*PB to use for SD sim
         tclean(vis=mspath_sd, imagename=imagepath_sd.split('.')[0],
@@ -163,16 +176,9 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
                    antennalist=configpath_sd, sdantlist=configpath_sd, sdant=0, 
                    outframe='LSRK', thermalnoise='', leakage=0.0, graphics='none',verbose=False, overwrite=False)
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         os.system("rm -rf {}*".format(imagepath_sd[:-5]))
         os.system("rm -rf {}".format(sd_project))
-
-    def setUp(self):
-        if not is_CASA6: # needs similar branch condition for casalith
-            default(simanalyze)
-
-    def tearDown(self):
         os.system("rm -rf *.last")
 
     def test_imaging_True_single_dish_analysis_False(self):
@@ -200,7 +206,6 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
         b = True # Expected value
         self.assertEqual(a,b) 
 
-    @unittest.skipUnless(os.path.isdir(sd_project+'/'+sd_project+'.sd.image'), "Analysis-only mode presumes the existence of some image data, such as that generated by test_imaging_True_single_dish*")
     def test_imaging_False_single_dish_analysis_True_showfidelity_True(self):
         '''test_imaging_False_single_dish_analysis_True_showfidelity_True:
         ------------------------------------------------------------------
@@ -210,6 +215,16 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
         The showfidelity parameter displays the fidelity image
         '''
 
+        visname_sd = str(sd_project +'/'+ sd_project + '.' + configpath_sd.split('/')[-1][:-3] +'sd.ms')
+        print(visname_sd)
+
+        # this is not the subject of this test
+        simanalyze(project=sd_project, image=True, vis=visname_sd, modelimage='', imsize = [],
+                   imdirection ='',cell = '',interactive = False, niter = 0,threshold = '0.01mJy',
+                   weighting = 'natural',mask = [],outertaper = [],pbcor = False,stokes = 'I', 
+                   featherimage = '',analyze=False, graphics='none', verbose=False, overwrite=True, dryrun=False, logfile=logpath)
+
+        # this is the subject of this test
         simanalyze(project=sd_project, image=False, imagename='', analyze=True, showfidelity=True,
                    graphics='none', verbose=False, overwrite=True, dryrun=False, logfile=logpath)
 
@@ -219,72 +234,110 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
 ####    both Interferometric and Single Dish    ####
 class simanalyze_main_usage_modes_test_both(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls): # TODO
-        '''Called before tests in this class of test cases are run. Executes simobserve to create expected directory structure. Minimally, f"{project}/{project}.{suffix}" where suffix in ['skymodel','newmodel','compskymodel'].'''
-        if not is_CASA6: # needs similar branch condition for tests to run in casalith
-            default(simobserve)
-            default(tclean)
-
-        ## create images to serve as skymodel inputs to reference simulations?
-        # gaussian = np.random.multivariate_normal(mean=[0,0], cov=[[1, 0], [0, 100]], size=[128,128])
-        # gaus_img = gaussian[:, :, np.newaxis, :] # add degenerate axis to represent stokes
-        # ia.newimagefromarray('demo.im', gaus_imag, csys, linear=False, overwrite=True, log=True
-
-        # # create reference simulation with both int and sd
-        # simobserve(project=both_project, 
-        #            skymodel=imagepath_sd, 
-        #            complist='', 
-        #            setpointings=True, 
-        #            direction=[], 
-        #            mapsize=['1deg'], 
-        #            maptype='square', 
-        #            pointingspacing='',
-        #            caldirection='',
-        #            calflux='1Jy',
-        #            obsmode='sd', 
-        #            refdate='2020/02/13', 
-        #            hourangle='transit', 
-        #            totaltime='100s', 
-        #            antennalist=configpath_int,
-        #            sdantlist=configpath_sd, 
-        #            sdant=0,
-        #            outframe='LSRK', 
-        #            thermalnoise='', 
-        #            leakage=0.0, 
-        #            graphics='none',
-        #            verbose=False, 
-        #            overwrite=False)
-        # simobserve(project=both_project, 
-        #            skymodel=imagepath_sd, 
-        #            complist='', 
-        #            setpointings=True, 
-        #            direction=[], 
-        #            mapsize=['1deg'], 
-        #            maptype='square', 
-        #            pointingspacing='',
-        #            caldirection='',
-        #            calflux='1Jy',
-        #            obsmode='int', 
-        #            refdate='2020/02/13', 
-        #            hourangle='transit', 
-        #            totaltime='100s', 
-        #            antennalist=configpath_int,
-        #            sdantlist=configpath_sd, 
-        #            sdant=0,
-        #            outframe='LSRK', 
-        #            thermalnoise='', 
-        #            leakage=0.0, 
-        #            graphics='none',
-        #            verbose=False, 
-        #            overwrite=False)
-
     def setUp(self):
+        """Executes simobserve to create expected directory structure. Minimally, f"{project}/{project}.{suffix}" where suffix in ['skymodel','newmodel','compskymodel']."""
         if not is_CASA6:
             default(simobserve)
             default(tclean)
+            default(simanalyze)
 
-    @unittest.skip("Still need data to generate reference simulation for single dish + interferometry case")
+        ## create image to serve as skymodel inputs to reference simulations
+        # build a point source component and convert to image
+        cl.done()
+        # J0319+4130 at band 3
+        cl.addcomponent(dir="J2000 03h19m48.160s +41d30m42.11s",
+                        flux=14.38, fluxunit='Jy', freq='115.271GHz',
+                        shape="point", spectrumtype="spectral index", index=-1.0)
+        cl.rename(both_component_list)
+    
+        ia.fromshape(both_model_image_int,[256,256,1,128],overwrite=True)
+        cs=ia.coordsys()
+        cs.setunits(['rad','rad','','Hz'])
+        cell_rad=qa.convert(qa.quantity("0.1arcsec"),"rad")['value']
+        cs.setincrement([-cell_rad,cell_rad],'direction')
+        cs.setreferencevalue([qa.convert("03h19m48.160s",'rad')['value'],
+                              qa.convert("41d30m42.11s",'rad')['value']],type="direction")
+        cs.setreferencevalue("115.271GHz",'spectral')
+        cs.setincrement('15.1368MHz','spectral')
+        ia.setcoordsys(cs.torecord())
+        ia.setbrightnessunit("Jy/pixel")
+        ia.modify(cl.torecord(),subtract=False)
+        ia.done()
+        cs.done()
+
+        # make another one with larger pixel size and FOV
+        ia.fromshape(both_model_image_sd,[256,256,1,128],overwrite=True)
+        cs=ia.coordsys()
+        cs.setunits(['rad','rad','','Hz'])
+        cell_rad=qa.convert(qa.quantity("1.0arcsec"),"rad")['value']
+        cs.setincrement([-cell_rad,cell_rad],'direction')
+        cs.setreferencevalue([qa.convert("03h19m48.160s",'rad')['value'],
+                              qa.convert("41d30m42.11s",'rad')['value']],type="direction")
+        cs.setreferencevalue("115.271GHz",'spectral')
+        cs.setincrement('15.1368MHz','spectral')
+        ia.setcoordsys(cs.torecord())
+        ia.setbrightnessunit("Jy/pixel")
+        ia.modify(cl.torecord(),subtract=False)
+        cl.done()
+        ia.done()
+        cs.done()
+
+        # create reference simulation with both int and sd
+        simobserve(project=both_project, 
+                   skymodel=both_model_image_int,
+                   incell='0.1arcsec',
+                   complist='', 
+                   setpointings=True, 
+                   direction=[], 
+                   mapsize=['20arcsec'], 
+                   maptype='square', 
+                   pointingspacing='',
+                   caldirection='',
+                   calflux='1Jy',
+                   obsmode='int', 
+                   refdate='2020/02/13', 
+                   hourangle='transit', 
+                   totaltime='720s', 
+                   antennalist=configpath_both_int,
+                   sdantlist=configpath_sd, 
+                   sdant=0,
+                   outframe='LSRK', 
+                   thermalnoise='', 
+                   leakage=0.0, 
+                   graphics='none',
+                   verbose=False, 
+                   overwrite=True)
+        simobserve(project=both_project, 
+                    skymodel=both_model_image_sd, 
+                    complist='', 
+                    setpointings=True, 
+                    direction=[], 
+                    mapsize=['200arcsec'], 
+                    maptype='square', 
+                    pointingspacing='',
+                    caldirection='',
+                    calflux='1Jy',
+                    obsmode='sd', 
+                    refdate='2020/02/13', 
+                    hourangle='transit', 
+                    totaltime='7200s', 
+                    antennalist=configpath_sd,
+                    sdantlist=configpath_sd, 
+                    sdant=0,
+                    outframe='LSRK', 
+                    thermalnoise='', 
+                    leakage=0.0, 
+                    graphics='none',
+                    verbose=False, 
+                    overwrite=True)
+
+    def tearDown(self):
+        os.system("rm -rf {}".format(both_project))
+        os.system("rm -rf *.last")
+        os.system("rm -rf *.cl")
+        os.system("rm -rf *.im")
+
+    @unittest.skip("Task call exits with SEVERE error from feather task: Failed AlwaysAssert chan >=0 && chan < Int(nchan()) && stokes >= 0 && stokes < Int(nstokes())")
     def test_imaging_True_interferometric_and_single_dish_analysis_False(self):
         '''test_imaging_True_interferometric_and_single_dish_analysis_False:
         --------------------------------------------------------------------
@@ -295,28 +348,28 @@ class simanalyze_main_usage_modes_test_both(unittest.TestCase):
         Modelimage will not be used if the MS is in total power
         '''
 
-        simanalyze(project=both_project, image=True, vis= 'default',modelimage='', imsize = [1024],
-                   imdirection ='',cell = '',interactive = False, niter = 0,threshold = '0.01mJy',weighting = 'natural',
-                   mask = [],outertaper = [],pbcor = False,stokes = 'I', featherimage = '',analyze=False, 
-                   graphics='none', verbose=False, overwrite=True, dryrun=False, logfile=logpath)
+        simanalyze(project=both_project, image=True, vis='default', modelimage='', imsize=[1458],
+                   imdirection='',cell='', interactive=False, niter=0, threshold='0.01mJy', weighting='natural',
+                   mask=[], outertaper=[], pbcor=False, stokes='I', featherimage='',
+                   analyze=False, graphics='none', verbose=False, overwrite=True, dryrun=False, logfile=logpath)
 
-        visname_both_int = str(both_project +'/'+ both_project + '.' + configpath_int.split('/')[-1][:-3] +'ms')
+        visname_both_int = str(both_project +'/'+ both_project + '.' + configpath_both_int.split('/')[-1][:-3] +'ms')
         visname_both_sd = str(both_project +'/'+ both_project + '.' + configpath_sd.split('/')[-1][:-3] +'sd.ms')
 
-        # confirm that both the IF part and SD part generated output
-        a = (os.path.isdir(visname_int[:-2]+'image') and
+        # confirm that both the IF and SD imaging generated output
+        a = (os.path.isdir(visname_both_int[:-2]+'image') and
              os.path.isdir(both_project+'/'+both_project+'.sd.image') and 
              os.path.isdir(both_project+'/'+both_project+'.image0') and 
              os.path.isdir(both_project+'/'+both_project+'.sd.image0.scaled') and 
              os.path.isdir(both_project+'/'+both_project+'.sd.image0.weight'))
+        # perhaps we should check for feather as well...?
         b = True # Expected value
         self.assertEqual(a,b) 
 
 ####    Suite: Required for CASA5     ####
 
 def suite():
-    return[simanalyze_main_usage_modes_test_int, simanalyze_main_usage_modes_test_sd]
-    #return[simanalyze_main_usage_modes_test_int, simanalyze_main_usage_modes_test_sd, simanalyze_main_usage_modes_test_both]
+    return[simanalyze_main_usage_modes_test_int, simanalyze_main_usage_modes_test_sd, simanalyze_main_usage_modes_test_both]
   
 ####    Main     ####
 if __name__ == '__main__':

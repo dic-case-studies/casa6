@@ -56,12 +56,9 @@ def chmod_recursive(path, mode):
             os.chmod(os.path.join(root, f), mode)
 
 if CASA6:
-    casaimagepath = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms')
+    casaimagepath = casatools.ctsys.resolve('unittest/vishead/ngc5921.ms')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        casaimagepath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms'
-    else:
-        casaimagepath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms'
+    casaimagepath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/vishead/ngc5921.ms'
 
 logpath = casalog.logfile()
 
@@ -83,7 +80,8 @@ class vishead_test(unittest.TestCase):
         ''' 1. test_takesMeasurementSet: Check that vishead takes a MeasurementSet (*.ms)'''
         casalog.setlogfile('testlog.log')
         vishead(vis=casaimagepath, mode='list')
-        success = ('SEVERE  vishead::image::open' not in open('testlog.log').read())
+        with open('testlog.log') as logf:
+            success = ('SEVERE  vishead::image::open' not in logf.read())
         self.assertTrue(success)
 
     def test_listMode(self):
@@ -102,7 +100,8 @@ class vishead_test(unittest.TestCase):
         ''' 3. test_summaryMode: Check that vishead in summary mode produces output in the logger with origin=summary'''
         casalog.setlogfile('testlog.log')
         vishead(vis=casaimagepath, mode='summary')
-        success = ('Antennas:' in open('testlog.log').read())
+        with open('testlog.log') as logf:
+            success = ('Antennas:' in logf.read())
         self.assertTrue(success)
 
     def test_getModeDefaultIndex(self):

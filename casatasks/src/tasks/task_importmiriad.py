@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
@@ -65,9 +64,9 @@ def importmiriad (
             # -----------------------------------------
             mymf.fill(vis,mirfile,tsys,spw,vel,linecal,wide,debug)
         except Exception as e:
-          print(e)
-          casalog.post("Failed to import miriad file %s" % mirfile)
-          raise
+            msg = "Failed to import miriad file %s" % mirfile
+            raise RuntimeError(msg)
+
         # Write the args to HISTORY.
         try:
             param_names = importmiriad.__code__.co_varnames[:importmiriad.__code__.co_argcount]
@@ -82,8 +81,7 @@ def importmiriad (
             )
         except Exception:
             casalog.post("Failed to updated HISTORY", 'WARN')
-    except:
-        pass
+
     finally:
         if (mymf):
             del mymf 

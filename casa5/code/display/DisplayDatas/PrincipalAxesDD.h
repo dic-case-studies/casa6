@@ -29,7 +29,7 @@
 #define TRIALDISPLAY_PRINCIPALAXESDD_H
 
 // aips includes:
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 
 // trial includes:
 #include <display/Display/DisplayCoordinateSystem.h>
@@ -37,13 +37,8 @@
 // display library includes:
 #include <display/DisplayDatas/DisplayData.h>
 #include <display/Utilities/StatusSink.h>
-
-namespace casacore{
-
-	template <class T> class Vector;
-	class String;
-	template <class T> class ImageInterface;
-}
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/aipstype.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

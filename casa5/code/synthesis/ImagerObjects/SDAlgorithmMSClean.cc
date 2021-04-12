@@ -39,6 +39,7 @@
 #include <lattices/Lattices/TiledLineStepper.h>
 #include <lattices/Lattices/LatticeStepper.h>
 #include <lattices/Lattices/LatticeIterator.h>
+#include <lattices/Lattices/LatticeLocker.h>
 #include <synthesis/TransformMachines/StokesImageUtil.h>
 #include <coordinates/Coordinates/StokesCoordinate.h>
 #include <casa/Exceptions/Error.h>
@@ -73,8 +74,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsScaleSizes(scalesizes),
     itsSmallScaleBias(smallscalebias),
     //    itsStopLargeNegatives(stoplargenegatives),
-    itsStopPointMode(stoppointmode),
-    itsMCsetup(false)
+    itsStopPointMode(stoppointmode)
  {
    itsAlgorithmName=String("multiscale");
    if( itsScaleSizes.nelements()==0 ){ itsScaleSizes.resize(1); itsScaleSizes[0]=0.0; }
@@ -115,15 +115,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     LogIO os( LogOrigin("SDAlgorithmMSClean","initializeDeconvolver",WHERE) );
 
     AlwaysAssert( (bool) itsImages, AipsError );
-
-    (itsImages->residual())->get( itsMatResidual , true );
-    (itsImages->model())->get( itsMatModel , true );
-    (itsImages->psf())->get( itsMatPsf , true );
-    itsImages->mask()->get( itsMatMask, true );
-
+    {
+      LatticeLocker lock1 (*(itsImages->residual()), FileLocker::Read);
+      LatticeLocker lock2 (*(itsImages->model()), FileLocker::Read);
+      LatticeLocker lock3 (*(itsImages->psf()), FileLocker::Read);
+      LatticeLocker lock4 (*(itsImages->mask()), FileLocker::Read);
+      (itsImages->residual())->get( itsMatResidual , true );
+      (itsImages->model())->get( itsMatModel , true );
+      (itsImages->psf())->get( itsMatPsf , true );
+      itsImages->mask()->get( itsMatMask, true );
+      
+    }
     //// Initialize the MatrixCleaner.
     ///  ----------- do once ----------
-    if( itsMCsetup == false)
       {
 	itsCleaner.defineScales( itsScaleSizes );
 	
@@ -150,7 +154,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	itsCleaner.setPsf(  tempMat );
 	itsCleaner.makePsfScales();
 
-	itsMCsetup=true;
       }
     /// -----------------------------------------
 
@@ -209,16 +212,22 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     ////This is going to be wrong if there is no 0 scale;
     ///Matrix<Float> residual(itsCleaner.residual());
-    Matrix<Float> residual(itsCleaner.residual(tempModel-prevModel));
+    //Matrix<Float> residual(itsCleaner.residual(tempModel-prevModel));
+    //    cout << "Max tempModel : " << max(abs(tempModel)) << "  Max prevModel  : " << max(abs(prevModel)) << endl;
+    itsMatResidual = itsCleaner.residual(tempModel-prevModel);
+
     // account for mask as well
-    peakresidual = max(abs(residual*itsMatMask));
+    //peakresidual = max(abs(residual*itsMatMask));
+    peakresidual = max(abs(itsMatResidual*itsMatMask));
     modelflux = sum( itsMatModel ); // Performance hog ?
   }	    
 
   void SDAlgorithmMSClean::finalizeDeconvolver()
   {
     ///MatrixCleaner does not modify the original residual image matrix
-    ///so the first line is a dummy. 
+    ///so the first line is a dummy.
+    LatticeLocker lock1 (*(itsImages->residual()), FileLocker::Write);
+    LatticeLocker lock2 (*(itsImages->model()), FileLocker::Write);
     (itsImages->residual())->put( itsMatResidual );
     (itsImages->model())->put( itsMatModel );
   }

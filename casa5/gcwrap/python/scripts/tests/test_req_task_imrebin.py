@@ -31,6 +31,8 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     ia = iatool()
 import sys
 import os
@@ -41,19 +43,14 @@ import numpy as np
 ### DATA ###
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('image/orion_tfeather.im/')
-    stokespath = casatools.ctsys.resolve('image/image_input_processor.im/')
+    datapath = casatools.ctsys.resolve('unittest/imrebin/orion_tfeather.im/')
+    stokespath = casatools.ctsys.resolve('unittest/imrebin/image_input_processor.im/')
     tb = casatools.table()
     ia = casatools.image()
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/orion_tfeather.im/'
-        stokespath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/image_input_processor.im/'
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/orion_tfeather.im/'
-        stokespath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/image_input_processor.im/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imrebin/orion_tfeather.im/'
+    stokespath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imrebin/image_input_processor.im/'
         
 def makeImage():
     
@@ -186,7 +183,8 @@ class imrebin_test(unittest.TestCase):
             Check that the task supports images with float values
         '''
         
-        self.assertTrue(imrebin(imagename=useFloat, outfile=rebinned, factor=[2,2]))
+        imrebin(imagename=useFloat, outfile=rebinned, factor=[2,2])
+        self.assertTrue(rebinned)
         
     def test_compValue(self):
         '''
@@ -197,8 +195,9 @@ class imrebin_test(unittest.TestCase):
             TODO come back to this one to make sure the complex component isn't being discarded
         '''
         
-        self.assertTrue(imrebin(imagename=useComp, outfile=rebinned, factor=[2,2]))
-        
+        imrebin(imagename=useComp, outfile=rebinned, factor=[2,2])
+        self.assertTrue(os.path.exists(rebinned))
+
     def test_outAverage(self):
         '''
             test_outAverage
@@ -235,7 +234,7 @@ class imrebin_test(unittest.TestCase):
             Check that the polarization axis cannot be rebinned
         '''
         
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 imrebin(imagename=datapath, outfile=rebinned, factor=[2,2,2])
         else:
@@ -252,15 +251,16 @@ class imrebin_test(unittest.TestCase):
             All these values must be positive.
         '''
         
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 imrebin(imagename=datapath, outfile=rebinned, factor=[])
             with self.assertRaises(RuntimeError):
                 imrebin(imagename=datapath, outfile=rebinned, factor=[2,2,2,2,2])
             with self.assertRaises(RuntimeError):
                 imrebin(imagename=datapath, outfile=rebinned, factor=[2,-2])
-            with self.assertRaises(AssertionError):
-                imrebin(imagename=datapath, outfile=rebinned, factor=[2.2,2.2])
+            if CASA6:
+                with self.assertRaises(AssertionError):
+                    imrebin(imagename=datapath, outfile=rebinned, factor=[2.2,2.2])
             with self.assertRaises(RuntimeError):
                 imrebin(imagename=datapath, outfile=rebinned, factor=[1,1,1])
             
@@ -456,7 +456,7 @@ class imrebin_test(unittest.TestCase):
         '''
         
         imrebin(imagename=useImage, outfile=rebinned, factor=[2,2])
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 imrebin(imagename=useImage, outfile=rebinned, factor=[2,2])
         else:
@@ -464,7 +464,8 @@ class imrebin_test(unittest.TestCase):
             imrebin(imagename=useImage, outfile=rebinned, factor=[2,2])
             self.assertTrue('SEVERE' in open(testlog).read())
             
-        self.assertTrue(imrebin(imagename=useImage, outfile=rebinned, factor=[2,2], overwrite=True))
+        imrebin(imagename=useImage, outfile=rebinned, factor=[2,2], overwrite=True)
+        self.assertTrue(os.path.exists(rebinned))
         
     
     

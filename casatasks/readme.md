@@ -1,4 +1,3 @@
-
 ## CASAtasks
 
 CASAtasks is a self-contained python module that provides the tasks from the [CASA](http://casa.nrao.edu/) project. This package depends on the [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse) python module being found in your **PYTHONPATH** at build time and runtime. The CASAtasks are stateless routines and recipes built on CASAtools.
@@ -26,7 +25,7 @@ fi
 ```
 but you could also just source this in the shell where you will use pip and build CASAtasks.
 
-Second build and install [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse) using your choice of Python and the instructions found [here](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse).
+Second build and install [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casatools) using your choice of Python and the instructions found [here](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casatools).
 
 #### Checkout
 
@@ -38,27 +37,24 @@ Checkout the casa6 source code:
 
 #### Build
 
-After all of the dependencies have been installed and the source code for CASAtasks is available we can build CASAtasks. Make sure that =which python= returns the version of python that was used to build [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse). Then build the tasks with:
+After all of the dependencies have been installed and the source code for CASAtasks is available we can build CASAtasks. Make sure that =which python= returns the version of python that was used to build [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casatools). Then build the tasks with:
 ```
 -bash-4.2$ cd casa6/casatasks
 -bash-4.2$ PYTHONPATH=../casatools/build/lib.macosx-10.12-x86_64-3.6 ./setup.py build
 ```
-**Substitute** the path to your build of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/CASAtools/browse) in the build line above.
+**Substitute** the path to your build of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casatools) in the build line above.
 
 #### Run Available Tests
 
-Similar to the procedure for setting up testing of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse), you can get the test data for CASAtasks by running:
-```
--bash-4.2$ git show HEAD:almatasks-tests | bash
-```
-in the root directory of a sparse checkout of the CASA data repository (the procedure for getting a sparse data repository is described in the testing section of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse)).
+The data repository used to run CASAtasks tests is the same for CASAtools tests, therefore if you have already checked out [casatestdata](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatestdata/browse) you are all set to run CASAtasks tests. If not, refer to the instructions in the [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casatools):
+
 
 Tests are actively being added, but you can run the existing tests with:
 ```
 -bash-4.2$ PYTHONPATH=../casatools/build/lib.macosx-10.12-x86_64-3.6 ./setup.py test
 ```
 
-Again, **substitute** the path to your build of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casatools/browse) in the line above.
+Again, **substitute** the path to your build of [CASAtools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casatools) in the line above.
 
 ## Available Tasks
 

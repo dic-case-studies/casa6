@@ -51,7 +51,7 @@ casac::record* synthesisiterbot::setupiteration(const casac::record& iterpars)
 
   try 
     {
-      const std::unique_ptr<Record> recpars(toRecord( iterpars ));
+      const std::unique_ptr<const casacore::Record> recpars(toRecord( iterpars ));
       itsIterBot->setupIteration( *recpars );
     } 
   catch  (AipsError x) 
@@ -81,21 +81,32 @@ casac::record* synthesisiterbot::getiterationdetails()
 
 casac::record* synthesisiterbot::pauseforinteraction()
 {
-  casac::record* rstat;
+  static const auto debug = getenv("GRPC_DEBUG");
+  casac::record* rstat = 0;
+  casacore::Record rec;
 
   try 
     {
-      rstat = fromRecord( itsIterBot->pauseForUserInteractionOld() );
+      rec = itsIterBot->pauseForUserInteractionOld( );
+      rstat = fromRecord( rec );
     } 
   catch  (AipsError x) 
     {
       RETHROW(x);
     }
-  
+
+  if ( debug ) {
+      std::cerr << "-------------------------------------------" << std::endl;
+      std::cerr << "--- pauseforinteraction result:         ---" << std::endl;
+      std::cerr << "-------------------------------------------" << std::endl;
+      if ( rstat ) std::cerr << rec << std::endl;
+      else std::cerr << "****exception*occurred****" << std::endl;
+      std::cerr << "-------------------------------------------" << std::endl;
+  }
   return rstat;
 }
 /*
-std::vector<int> synthesisiterbot::pauseforinteraction()
+std::vector<long> synthesisiterbot::pauseforinteraction()
 {
   std::vector<int> rstat;
 
@@ -131,7 +142,7 @@ casac::record* synthesisiterbot::getiterationsummary()
 
 
 
-  int synthesisiterbot::cleanComplete(const bool lastcyclecheck)
+  long synthesisiterbot::cleanComplete(const bool lastcyclecheck)
 {
   Int rstat=0;
 
@@ -202,7 +213,7 @@ bool synthesisiterbot::mergeinitrecord(const casac::record& initrecord)
   
   try 
     {
-      const std::unique_ptr<Record> recpars(toRecord( initrecord ));
+      const std::unique_ptr<casacore::Record> recpars(toRecord( initrecord ));
       itsIterBot->startMinorCycle( *recpars );
      } 
   catch  (AipsError x) 
@@ -219,7 +230,7 @@ bool synthesisiterbot::mergeexecrecord(const casac::record& execrecord)
   
   try 
     {
-      const std::unique_ptr<Record> recpars(toRecord( execrecord ));
+      const std::unique_ptr<casacore::Record> recpars(toRecord( execrecord ));
       itsIterBot->endMinorCycle(*recpars);
      } 
   catch  (AipsError x) 

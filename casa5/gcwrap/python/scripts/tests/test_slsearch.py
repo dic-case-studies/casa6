@@ -82,6 +82,8 @@ else:
     from taskinit import sltool as spectralline
     from taskinit import tbtool as table
     from __main__ import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 
 good_table = "biglist.tbl"
 
@@ -177,9 +179,9 @@ class slsearch_test(unittest.TestCase):
     
     def setUp(self):
         if is_CASA6:
-            datapath=ctsys.resolve('regression/unittest/slsearch')
+            datapath=ctsys.resolve('unittest/slsearch/')
         else:
-            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/slsearch')
+            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/slsearch/')
         shutil.copytree(os.path.join(datapath,good_table), good_table)
 
     def tearDown(self):
@@ -223,7 +225,7 @@ class slsearch_test(unittest.TestCase):
                     self.assertTrue(len(_tb.showcache()) == 0)
                 else:
                     # CASA6 slsearch raises an exception, CASA5 returns None
-                    if is_CASA6:
+                    if is_CASA6 or casa_stack_rethrow:
                         self.assertRaises(
                             Exception, run_slsearch,
                             tab, outfile, freqrange, species,

@@ -36,6 +36,8 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 import sys
 import os
 import unittest
@@ -54,32 +56,22 @@ epsilon = 0.0001
 
 ### Data ###
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/other/outlier_ut.ms/')
-    mms_data = casatools.ctsys.resolve('visibilities/other/outlier_mms.mms/')
-    selectiondata = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms/')
-    mms_select = casatools.ctsys.resolve('visibilities/alma/uid_mms.mms')
-    singledish = casatools.ctsys.resolve('visibilities/other/analytic_spectra_tsys.ms')
+    datapath = casatools.ctsys.resolve('unittest/visstat/outlier_ut.ms/')
+    mms_data = casatools.ctsys.resolve('unittest/visstat/outlier_mms.mms/')
+    selectiondata = casatools.ctsys.resolve('unittest/visstat/uid___X02_X3d737_X1_01_small.ms/')
+    mms_select = casatools.ctsys.resolve('unittest/visstat/uid___X02_X3d737_X1_01_small.mms')
+    singledish = casatools.ctsys.resolve('unittest/visstat/analytic_spectra_tsys.ms')
     # Data for merged test
-    merged_data_path = casatools.ctsys.resolve('regression/unittest/visstat2')
+    merged_data_path = casatools.ctsys.resolve('unittest/visstat/')
     
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/outlier_ut.ms/'
-        mms_data = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/outlier_mms.mms/'
-        selectiondata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
-        mms_select = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid_mms.mms'
-        singledish = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/other/analytic_spectra_tsys.ms'
-        # Data from merged test
-        merged_data_path = os.path.join(os.environ.get('CASAPATH').split()[0], 'data/regression/unittest/visstat2')
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/outlier_ut.ms/'
-        mms_data = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/outlier_mms.mms/'
-        selectiondata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
-        mms_select = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/uid_mms.mms'
-        singledish = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/other/analytic_spectra_tsys.ms'
-        # Data from merged test
-        merged_data_path = os.path.join(os.environ.get('CASAPATH').split()[0], 'data/regression/unittest/visstat2')
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/outlier_ut.ms/'
+    mms_data = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/outlier_mms.mms/'
+    selectiondata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/uid___X02_X3d737_X1_01_small.ms/'
+    mms_select = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/uid___X02_X3d737_X1_01_small.mms'
+    singledish = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/analytic_spectra_tsys.ms'
+    # Data from merged test
+    merged_data_path = os.path.join(os.environ.get('CASAPATH').split()[0], 'casatestdata/unittest/visstat/')
     
 axislist = ['flag', 'antenna1', 'antenna2', 'feed1', 'feed2', 'field_id', 'array_id', 'data_desc_id', 'flag_row', 'interval', 'scan', 'scan_number', 'time', 'weight_spectrum', 'amp', 'amplitude', 'phase', 'real', 'imag', 'imaginary', 'uvrange']
  
@@ -416,7 +408,7 @@ class visstat_test(unittest.TestCase):
             
             Assert that checking an out of range array returns a NoneType, and valid selections retrun a dictionary
         '''
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 arrayFail = visstat(selectiondata, array='1')
             with self.assertRaises(RuntimeError):
@@ -443,7 +435,7 @@ class visstat_test(unittest.TestCase):
             
             Assert that checking an out of range observation ID returns a NoneType, and valid selections return a dictionary
         '''
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 observationFail = visstat(selectiondata, observation=1)
             with self.assertRaises(RuntimeError):
@@ -469,11 +461,11 @@ class visstat_test(unittest.TestCase):
             
             Assert that the dict produced when timeaverage = True is different from the one produced when timeaverage=False
         '''
-        
-        timeavgTrue = visstat(selectiondata, timeaverage=True)
+
+        timeavgTrue = visstat(selectiondata, timebin='1s', timeaverage=True)
         timeavgFalse = visstat(selectiondata, timeaverage=False)
         
-        timeavgTruemms = visstat(mms_select, timeaverage=True)
+        timeavgTruemms = visstat(mms_select, timebin='1s', timeaverage=True)
         timeavgFalsemms = visstat(mms_select, timeaverage=False)
         
         self.assertTrue( timeavgFalse != timeavgTrue )
@@ -505,14 +497,18 @@ class visstat_test(unittest.TestCase):
             
             Assert that all parameter settings give different results than the default output
         '''
+
+        scanSelect = visstat(selectiondata, timeaverage=True, timebin='1s', timespan='scan')
+        stateSelect = visstat(selectiondata, timeaverage=True, timebin='1s',
+                              timespan='state')
+        bothSelect = visstat(selectiondata, timeaverage=True,  timebin='1s',
+                             timespan='scan, state')
         
-        scanSelect = visstat(selectiondata, timeaverage=True, timespan='scan')
-        stateSelect = visstat(selectiondata, timeaverage=True, timespan='state')
-        bothSelect = visstat(selectiondata, timeaverage=True, timespan='scan, state')
-        
-        scanSelectmms = visstat(mms_select, timeaverage=True, timespan='scan')
-        stateSelectmms = visstat(mms_select, timeaverage=True, timespan='state')
-        bothSelectmms = visstat(mms_select, timeaverage=True, timespan='scan, state')
+        scanSelectmms = visstat(mms_select, timeaverage=True,  timebin='1s', timespan='scan')
+        stateSelectmms = visstat(mms_select, timeaverage=True,  timebin='1s',
+                                 timespan='state')
+        bothSelectmms = visstat(mms_select, timeaverage=True,  timebin='1s',
+                                timespan='scan, state')
         
         for item in [scanSelect, stateSelect, bothSelect]:
             self.assertTrue( item != nostat )
@@ -529,10 +525,12 @@ class visstat_test(unittest.TestCase):
             
             Assert that the output is a python dict. Once again this selection seems to not change the values that are returned
         '''
+
+        uvwSelect = visstat(selectiondata, timeaverage=True, timebin='1s',
+                            maxuvwdistance=10.0)
         
-        uvwSelect = visstat(selectiondata, timeaverage=True, maxuvwdistance=10.0)
-        
-        uvwSelectmms = visstat(mms_select, timeaverage=True, maxuvwdistance=10.0)
+        uvwSelectmms = visstat(mms_select, timeaverage=True, timebin='1s',
+                               maxuvwdistance=10.0)
         
         self.assertTrue( uvwSelect != nostat )
         self.assertTrue( uvwSelectmms != nostatmms )
@@ -1149,6 +1147,54 @@ class visstat_test(unittest.TestCase):
         for entry in ['DATA_DESC_ID=0', 'DATA_DESC_ID=2', 'DATA_DESC_ID=3']:
             self.assertEqual(res[entry]['npts'], 16384)
 
+    def test_doquantiles(self):
+        """test doquantiles parameter"""
+        # doquantiles=True, all stats computed
+        res = visstat(
+            vis=self.msfile, axis='amp', datacolumn='data',
+            useflags=True, reportingaxes='ddid', doquantiles=True
+        )
+        self.assertTrue(
+            res['DATA_DESC_ID=0'] and type(res['DATA_DESC_ID=0']) == dict,
+            'res["DATA_DESC_ID=0"] does not exist or is not a dict' 
+        )
+        res2 = res['DATA_DESC_ID=0']
+        expected_keys = [
+            'firstquartile', 'isMasked', 'isWeighted', 'max', 'maxDatasetIndex',
+            'maxIndex', 'mean', 'medabsdevmed', 'median', 'min', 'minDatasetIndex',
+            'minIndex', 'npts', 'rms', 'stddev', 'sum', 'sumOfWeights', 'sumsq',
+            'thirdquartile', 'variance'
+        ]
+        # for python3 must cast dict.keys() to list
+        got_keys = list(res2.keys())
+        got_keys.sort()
+        self.assertTrue(
+            got_keys == expected_keys,
+            'list of keys for doquantiles=True is incorrect'
+        )
+
+        # doquantiles=False, no quantiles computed
+        res = visstat(
+            vis=self.msfile, axis='amp', datacolumn='data',
+            useflags=True, reportingaxes='ddid', doquantiles=False
+        )
+        self.assertTrue(
+            res['DATA_DESC_ID=0'] and type(res['DATA_DESC_ID=0']) == dict,
+            'res["DATA_DESC_ID=0"] does not exist or is not a dict'
+        )
+        res2 = res['DATA_DESC_ID=0']
+        expected_keys = [
+            'isMasked', 'isWeighted', 'max', 'maxDatasetIndex', 'maxIndex',
+            'mean', 'min', 'minDatasetIndex', 'minIndex', 'npts', 'rms',
+            'stddev', 'sum', 'sumOfWeights', 'sumsq', 'variance'
+        ]
+        # for python3 must cast dict.keys() to list
+        got_keys = list(res2.keys())
+        got_keys.sort()
+        self.assertTrue(
+            got_keys == expected_keys,
+            'list of keys for doquantiles=False is incorrect'
+        )
         
 def suite():
     return[visstat_test]

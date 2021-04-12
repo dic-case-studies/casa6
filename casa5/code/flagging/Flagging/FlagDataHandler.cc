@@ -137,8 +137,9 @@ FlagDataHandler::FlagDataHandler(string tablename, uShort iterationApproach, Dou
 	chunkCounts_p = 0;
 	progressCounts_p = 0;
 	msCounts_p = 0;
-	summaryThreshold_p = 10;
 	printChunkSummary_p = true;
+	summaryThreshold_p = summaryThresholdInc_p;
+	chunkLineThreshold_p = chunkLineThresholdInc_p;;
 
 	// Set all the initialized pointers to NULL
 	measurementSetSelection_p = NULL;
@@ -1582,6 +1583,19 @@ FlagDataHandler::preFetchColumns()
 			case VisBufferComponent2::VisibilityCubeFloat:
 			case VisBufferComponent2::WeightScaled:
 			case VisBufferComponent2::WeightSpectrumScaled:
+            case VisBufferComponent2::Sigmas:
+            case VisBufferComponent2::SigmaSpectra:
+            case VisBufferComponent2::NRowsPerShape:
+            case VisBufferComponent2::NShapes:
+            case VisBufferComponent2::VisibilityCubesCorrected:
+            case VisBufferComponent2::NCorrelationsPerShape:
+            case VisBufferComponent2::WeightSpectra:
+            case VisBufferComponent2::NChannelsPerShape:
+            case VisBufferComponent2::VisibilityCubesObserved:
+            case VisBufferComponent2::VisibilityCubesModel:
+            case VisBufferComponent2::VisibilityCubesFloat:
+            case VisBufferComponent2::Weights:
+            case VisBufferComponent2::FlagCubes:
 
 			    break; // nothing for these right now
 		}

@@ -33,22 +33,20 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 import os
 import unittest
 import shutil
 
 if CASA6:
     # Real and fake datapaths
-    datapath = casatools.ctsys.resolve('visibilities/evla/TOSR0001_sb1308595_1.55294.83601028935')
-    falsepath = casatools.ctsys.resolve('visibilities/evla')
+    datapath = casatools.ctsys.resolve('unittest/listsdm/TOSR0001_sb1308595_1.55294.83601028935')
+    falsepath = casatools.ctsys.resolve('unittest/listsdm/')
     filepath = casatools.ctsys.resolve('testlog.log')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/TOSR0001_sb1308595_1.55294.83601028935'
-        falsepath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/TOSR0001_sb1308595_1.55294.83601028935'
-        falsepath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listsdm/TOSR0001_sb1308595_1.55294.83601028935'
+    falsepath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listsdm/'
     filepath = 'testlog.log'
         
 logpath = casalog.logfile()
@@ -75,10 +73,19 @@ class listsdm_test(unittest.TestCase):
     def test_readSDM(self):
         '''test readsdm: Makes sure the sdm can be opened without error and fails when looking at fake paths'''
         self.assertTrue(listsdm(sdm=datapath))
-        if CASA6:
-            with self.assertRaises(FileNotFoundError):
+        if CASA6 or casa_stack_rethrow:
+            if CASA6:
+                exp_exc = FileNotFoundError
+            else:
+                exp_exc = IOError
+            with self.assertRaises(exp_exc):
                 listsdm(sdm=falsepath)
-            with self.assertRaises(AssertionError):
+
+            if CASA6:
+                exp_exc = AssertionError
+            else:
+                exp_exc = RuntimeError
+            with self.assertRaises(exp_exc):
                 listsdm(sdm='fake')
         else:
             self.assertFalse(listsdm(sdm=falsepath))

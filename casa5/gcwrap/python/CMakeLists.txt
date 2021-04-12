@@ -54,7 +54,6 @@ scripts/init_welcome_helpers.py
 scripts/init_user_pre.py
 scripts/init_user_post.py
 scripts/casapy_engine.py
-scripts/caltab_convert2.py
 scripts/check_exceptionhandling.py
 scripts/check_input_saverestore.py
 scripts/cleanhelper.py
@@ -85,6 +84,7 @@ scripts/regressframe.py
 scripts/regression_utility.py
 scripts/restfreqtool.py
 scripts/sdbeamutil.py
+scripts/sdint_helper.py
 scripts/sdutil.py
 scripts/setjy_helper.py
 scripts/simutil.py
@@ -93,7 +93,6 @@ scripts/testhelper.py
 scripts/TablePlotQt4Agg.py
 scripts/TablePlotTkAgg.py
 scripts/task_accor.py
-scripts/task_accum.py
 scripts/task_apparentsens.py
 scripts/task_applycal.py
 scripts/task_asdmsummary.py
@@ -101,8 +100,6 @@ scripts/task_bandpass.py
 scripts/task_blcal.py
 scripts/task_browsetable.py
 scripts/task_calstat.py
-scripts/task_caltabconvert.py
-scripts/task_clean.py
 scripts/task_clearcal.py
 scripts/task_clearstat.py
 scripts/task_concat.py
@@ -176,19 +173,20 @@ scripts/task_plotcal.py
 scripts/task_plotms.py
 scripts/task_plotweather.py
 scripts/task_plotprofilemap.py
-scripts/task_oldsplit.py
 scripts/task_polcal.py
 scripts/task_polfromgain.py
 scripts/task_predictcomp.py
 scripts/task_rerefant.py
 scripts/task_rmfit.py
 scripts/task_rmtables.py
+scripts/task_sdatmcor.py
 scripts/task_sdbaseline.py
 scripts/task_sdcal.py
 scripts/task_sdfit.py
 scripts/task_sdfixscan.py
 scripts/task_sdgaincal.py
 scripts/task_sdimaging.py
+scripts/task_sdintimaging.py
 scripts/task_tsdimaging.py
 scripts/task_sdpolaverage.py
 scripts/task_sdsidebandsplit.py
@@ -205,12 +203,10 @@ scripts/task_specflux.py
 scripts/task_specsmooth.py
 scripts/task_splattotable.py
 scripts/task_split.py
-#scripts/task_split2.py
 scripts/task_spxfit.py
 scripts/task_oldstatwt.py
 scripts/task_statwt.py
 scripts/task_tclean.py
-scripts/task_tclean2.py
 scripts/task_testconcat.py
 scripts/task_uvcontsub.py
 scripts/task_uvcontsub3.py

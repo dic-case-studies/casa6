@@ -55,8 +55,8 @@ def setUpFileCore(file,type_file):
         os.system('rm -rf ' + file)
 
     casalog.post("Copy %s file %s into the working area..." % (type_file,file),"INFO","test_mpi4casa")
-    os.system('cp -RL ' + os.environ.get('CASAPATH').split()[0] + 
-              '/data/regression/unittest/simplecluster/' + file + ' ' + file)
+    os.system('cp -RH ' + os.environ.get('CASAPATH').split()[0] + 
+              '/casatestdata//unittest/casampi/' + file + ' ' + file)
 
 def setUpFile(file,type_file):
         
@@ -1614,8 +1614,8 @@ class test_mpi4casa_uvcont(unittest.TestCase):
     def test1_uvcont_single_spw(self):
         """Test 1: Extract continuum from one single SPW using uvcontsub"""
 
-        uvcontsub(vis=self.vis,field = 'N5921*',fitspw='0:4~6;50~59',spw = '0',
-                  solint = 'int',fitorder = 0,want_cont = True) 
+        uvcontsub(vis=self.vis, field='N5921*', fitspw='0:4~6;50~59', spw='0',
+                  solint='int', fitorder=0, want_cont=True)
         
         compare_cont = testhelper.compTables(self.ref[0],self.vis+".cont",['FLAG_CATEGORY','WEIGHT','SIGMA'])
         self.assertTrue(compare_cont)
@@ -1666,9 +1666,11 @@ class test_mpi4casa_uvcont(unittest.TestCase):
         self.assertTrue(compare_contsub3)
         
     def test3_uvcont_fun_with_flags(self):
-
-        uvcontsub(vis=self.vis,field = 'N5921*',fitspw='0:4~6;50~59',spw = '50',
-                  solint = 'int',fitorder = 0,want_cont = True)
+        with self.assertRaises(ValueError):
+            # Note the spw given here doesn't exist. This test seems to have always been
+            # meant to FAIL
+            uvcontsub(vis=self.vis,field = 'N5921*',fitspw='0:4~6;50~59',spw = '50',
+                      solint = 'int',fitorder = 0,want_cont = True)
         
         
 class test_mpi4casa_NullSelection(unittest.TestCase):

@@ -1,47 +1,41 @@
-import os, re
+import os
+import re
 import shutil
-import string
-import copy
-import math
-import time
 import datetime
 import contextlib
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from . import sdutil
     from casatasks import casalog
-    from casatools import quanta, ms, table, mstransformer
+    from casatools import ms as mstool
+    from casatools import mstransformer as mttool
+    from casatools import quanta, table
     from .mstools import write_history
     from .parallel.parallel_data_helper import ParallelDataHelper
-    from . import flaghelper as fh
     from .update_spw import update_spwchan
-    from .callibrary import callibrary
 else:
-    import sdutil
-    from taskinit import mttool as mstransformer
-    from taskinit import mstool as ms
+    from taskinit import casalog
+    from taskinit import mttool
+    from taskinit import mstool
     from taskinit import tbtool as table
     from taskinit import qatool as quanta
     from mstools import write_history
     from parallel.parallel_data_helper import ParallelDataHelper
-    import flaghelper as fh
     from update_spw import update_spwchan
-    from callibrary import callibrary
 
 """
-The following code is based on the mstransform code, with 
-task name and some task parameters modified. 
-To minimise code modification, the parameters used by 
-mstransform but not by nrobeamaverage are kept as much as 
-possible, and the default values for mstransform are given 
+The following code is based on the mstransform code, with
+task name and some task parameters modified.
+To minimise code modification, the parameters used by
+mstransform but not by nrobeamaverage are kept as much as
+possible, and the default values for mstransform are given
 to them.
 (CAS-12475, 2019/6/7 WK)
 """
 
 @contextlib.contextmanager
 def open_table(path, nomodify=True):
-    tb = table( )
+    tb = table()
     tb.open(path, nomodify=nomodify)
     try:
         yield tb
@@ -52,8 +46,8 @@ def nrobeamaverage(
              infile,
              datacolumn,
              field,
-             spw, 
-             timerange, 
+             spw,
+             timerange,
              scan,
              beam,
              timebin,
@@ -65,8 +59,8 @@ def nrobeamaverage(
         tmpfile = 'tmp-nrobeamaverage-' + os.path.basename(infile.rstrip('/')) + '-' + "{0:%Y%m%d%H%M%S.%f}".format(datetime.datetime.now()) + '.ms'
 
         #data selection
-        do_mst(infile=infile, datacolumn=datacolumn, 
-               field=field, spw=spw, timerange=timerange, scan=scan, 
+        do_mst(infile=infile, datacolumn=datacolumn,
+               field=field, spw=spw, timerange=timerange, scan=scan,
                timebin='0s', outfile=tmpfile)
 
         #open tmpfile and rewrite antenna column of the ON spectra using beam
@@ -93,16 +87,14 @@ def nrobeamaverage(
             tb.putcol('ANTENNA2', acol)
 
         #time averaging
-        do_mst(infile=tmpfile, datacolumn=datacolumn, 
-               field='', spw='', timerange='', scan='', 
+        do_mst(infile=tmpfile, datacolumn=datacolumn,
+               field='', spw='', timerange='', scan='',
                timebin=timebin, outfile=outfile)
 
         add_history(casalog=casalog, infile=infile, datacolumn=datacolumn,
                     field=field, spw=spw, timerange=timerange, scan=scan,
                     timebin=timebin, beam=beam, outfile=outfile)
 
-    except Exception as e:
-        casalog.post('Exception from task_nrobeamaverage : ' + str(e), "SEVERE", origin=origin)
     finally:
         #delete tmpfile
         if os.path.isdir(tmpfile): shutil.rmtree(tmpfile)
@@ -124,13 +116,13 @@ def get_beamid(beam, num_beams):
             for i in range(len(_beam)): _beam[i] = int(_beam[i])
     except Exception as e:
         casalog.post("Error \'%s\' input beam ID is invalid" % (e))
-    
+
     min_beamid = _beam[0]
     for i in range(len(_beam)):
         if _beam[i] < min_beamid: min_beamid = _beam[i]
 
     return _beam, min_beamid
-    
+
 
 
 def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
@@ -157,39 +149,35 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
     maxuvwdistance = 0.0
     ddistart = -1
     reindex = True
-    
+
     # Initialize the helper class
     pdh = ParallelDataHelper('nrobeamaverage', locals())
     pdh.bypassParallelProcessing(0)
-    
+
     # Validate input and output parameters
-    try:
-        pdh.setupIO()
-    except Exception as instance:
-        casalog.post('%s'%instance,'ERROR')
-        return False
+    pdh.setupIO()
 
     # Create a local copy of the MSTransform tool
-    mtlocal = mstransformer( )
-    mslocal = ms( )
-    
+    mtlocal = mttool()
+    mslocal = mstool()
+
     try:
         # Gather all the parameters in a dictionary.
         config = {}
-        
-        config = pdh.setupParameters(inputms=infile, outputms=outfile, field=field, 
+
+        config = pdh.setupParameters(inputms=infile, outputms=outfile, field=field,
                     spw=spw, array=array, scan=scan, antenna=antenna, correlation=correlation,
                     uvrange=uvrange, timerange=timerange, intent=intent, observation=str(observation),
                                      feed=feed, taql='')
-        
+
         # ddistart will be used in the tool when re-indexing the spw table
         config['ddistart'] = ddistart
-        
+
         # re-index parameter is used by the pipeline to not re-index any sub-table and the associated IDs
-        config['reindex'] = reindex        
-        
+        config['reindex'] = reindex
+
         config['datacolumn'] = datacolumn
-        dc = datacolumn.upper()            
+        dc = datacolumn.upper()
         # Make real a virtual MODEL column in the output MS
         if "MODEL" in dc or dc == 'ALL':
             config['realmodelcol'] = realmodelcol
@@ -198,7 +186,7 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
         config['tileshape'] = tileshape
 
         # Only parse timeaverage parameters when timebin > 0s
-        qa = quanta( )
+        qa = quanta()
         """
         if timeaverage:
             tb = qa.convert(qa.quantity(timebin), 's')['value']
@@ -209,44 +197,40 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
         if tbin < 0:
             raise Exception("Parameter timebin must be > '0s' to do time averaging")
         timeaverage = (tbin > 0)
-                       
+
         if timeaverage:
             casalog.post('Parse time averaging parameters')
             config['timeaverage'] = True
             config['timebin'] = timebin
             config['timespan'] = timespan
             config['maxuvwdistance'] = maxuvwdistance
-            
+
         # Configure the tool and all the parameters
         casalog.post('%s'%config, 'DEBUG')
         mtlocal.config(config)
-        
+
         # Open the MS, select the data and configure the output
         mtlocal.open()
-        
+
         # Run the tool
         casalog.post('Apply the transformations')
-        mtlocal.run()        
+        mtlocal.run()
 
+    finally:
         mtlocal.done()
-                    
-    except Exception as instance:
-        mtlocal.done()
-        casalog.post('%s'%instance,'ERROR')
-        return False
 
     # Update the FLAG_CMD sub-table to reflect any spw/channels selection
-    # If the spw selection is by name or FLAG_CMD contains spw with names, skip the updating    
-    
+    # If the spw selection is by name or FLAG_CMD contains spw with names, skip the updating
+
     if (spw != '') and (spw != '*'):
         isopen = False
 
         try:
-            mytb = table( )
+            mytb = table()
             mytb.open(outfile + '/FLAG_CMD', nomodify=False)
             isopen = True
             nflgcmds = mytb.nrows()
-            
+
             if nflgcmds > 0:
                 updateFlagCmd = False
 
@@ -260,14 +244,13 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
                         spwstr = re.search('^[^a-zA-Z]+$', cmd)
                         if spwstr != None and spwstr.string.__len__() > 0:
                             updateFlagCmd = True
-                            break                
-                
+                            break
+
 
                 if updateFlagCmd:
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
-                    #print("width =", width)
                     if hasattr(chanbin, 'has_key'):
                         widths = chanbin
                     else:
@@ -275,7 +258,6 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
                             for i in range(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
-    #                        print('using ms.msseltoindex + a scalar width')
                             numspw = len(mslocal.msseltoindex(vis=infile,
                                                          spw='*')['spw'])
                             if hasattr(chanbin, '__iter__'):
@@ -284,7 +266,6 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
                                 w = chanbin
                             for i in range(numspw):
                                 widths[i] = w
-    #                print('widths =', widths)
                     for rownum in range(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
@@ -296,11 +277,8 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
                             # in that case.
                             cmd = ''
                             try:
-                                #print('sch1 =', sch1)
                                 sch2 = update_spwchan(infile, spw, sch1, truncate=True,
                                                       widths=widths)
-                                #print('sch2 =', sch2)
-                                ##print('spwmatch.group() =', spwmatch.group())
                                 if sch2:
                                     repl = ''
                                     if sch2 != '*':
@@ -323,26 +301,21 @@ def do_mst(infile, datacolumn, field, spw, timerange, scan, timebin, outfile):
 
                 else:
                     casalog.post('FLAG_CMD table contains spw selection by name. Will not update it!','DEBUG')
-                
+
             mytb.close()
-            
-        except Exception as instance:
+
+        finally:
             if isopen:
                 mytb.close()
             mslocal = None
             mytb = None
-            casalog.post("*** Error \'%s\' updating FLAG_CMD" % (instance),
-                         'SEVERE')
-            return False
 
     mytb = None
     mslocal = None
 
-    return True
-
 
 def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebin, beam, outfile):
-    mslocal = ms( )
+    mslocal = mstool()
     # Write history to output MS, not the input ms.
     try:
         code_object = nrobeamaverage.__code__
@@ -357,8 +330,8 @@ def add_history(casalog, infile, datacolumn, field, spw, timerange, scan, timebi
         return False
 
     mslocal = None
-    
+
     return True
-    
- 
-    
+
+
+

@@ -201,6 +201,35 @@ file:///opt/casa/code/tools/xml/casa.xsd">
 </method>
 
 <!-- ******************** function to initialize CASAtools ************************** -->
+<method type="function" name="tryit">
+<description>
+test variant convesion
+</description>
+<input>
+  <param type="record" name="input">
+    <description>testing variant</description>
+  </param>
+</input>
+<returns type="double"/>
+</method>
+
+<method type="function" name="maxint">
+    <description>maximum number an C++ int can hold</description>
+    <returns type="int"/>
+</method>
+<method type="function" name="minint">
+    <description>minimum number an C++ int can hold</description>
+    <returns type="int"/>
+</method>
+<method type="function" name="maxlong">
+    <description>maximum number an C++ long can hold</description>
+    <returns type="int"/>
+</method>
+<method type="function" name="minlong">
+    <description>minimum number an C++ long can hold</description>
+    <returns type="int"/>
+</method>
+
 <method type="function" name="initialize">
 <shortdescription>initialize CASAtools</shortdescription>
 
@@ -215,12 +244,40 @@ returns true if initalization was performed; returns false if initialization was
 </input>
 
 <input>
+  <param type="string" name="distro_data_path">
+	<description>path to the data provided by the casadata pkg</description>
+  </param>
+</input>
+
+<input>
   <param type="stringArray" name="default_path">
 	<description>directories that should constitute the default data path</description>
   </param>
 </input>
 
 <returns type="bool"/>
+</method>
+
+<!-- ******************** functions to manage the CASAtools measures data ******************** -->
+<method type="function" name="rundata">
+  <description>path to the measures data</description>
+  <shortdescription>path to the measures data</shortdescription>
+  <returns type="string"/>
+</method>
+
+<method type="function" name="setrundata">
+<description>
+Set path to the measures data. Must be called during initalization
+before Measures module is initialized.
+</description>
+  <shortdescription>set path to the measures data</shortdescription>
+  <input>
+    <param type="string" name="path">
+      <description>path to IERS data</description>
+      <value/>
+    </param>
+  </input>
+  <returns/>
 </method>
 
 <!-- ******************** functions to manage the CASAtools path ******************** -->

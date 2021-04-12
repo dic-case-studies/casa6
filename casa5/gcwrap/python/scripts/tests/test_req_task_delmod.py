@@ -36,6 +36,9 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+
 #import sys
 import os
 import unittest
@@ -56,44 +59,37 @@ from filecmp import dircmp
 
 # DATA #
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms/')
-    datacopy = casatools.ctsys.resolve('uid___X02_X3d737_X1_01_small.ms/')
+    datapath = casatools.ctsys.resolve('unittest/delmod/')
+    # caltable is found in the casadata package
     calpath = casatools.ctsys.resolve('nrao/VLA/CalModels/3C138_K.im')
     filepath = casatools.ctsys.resolve('testlog.log')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms/'
-    
-    datacopy = 'uid___X02_X3d737_X1_01_small.ms/'
-    
-    #datapath = os.environ.get('CASAPATH').split()[0] + '/bin/simtests/FITS_list/FITS_list.alma.cycle5.1.ms'
-    #datacopy = 'FITS_list.alma.cycle5.1.ms'
-    
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/delmod/'        
     calpath = os.environ.get('CASAPATH').split()[0] + '/data/nrao/VLA/CalModels/3C138_K.im'
     filepath = 'testlog.log'
     
 logpath = casalog.logfile()
+msfile = 'uid___X02_X3d737_X1_01_small.ms'
     
 class delmod_test(unittest.TestCase):
     
     def setUp(self):
-        shutil.copytree(datapath, datacopy)
-        os.chmod(datacopy, 493)
-        for root, dirs, files in os.walk(datacopy):
-            for d in dirs:
-                os.chmod(os.path.join(root, d), 493)
-            for f in files:
-                os.chmod(os.path.join(root, f), 493)
-        clearcal(datacopy, addmodel=True)
+        if not os.path.exists(msfile):
+            shutil.copytree(os.path.join(datapath, msfile), msfile)
+            os.chmod(msfile, 493)
+            for root, dirs, files in os.walk(msfile):
+                for d in dirs:
+                    os.chmod(os.path.join(root, d), 493)
+                for f in files:
+                    os.chmod(os.path.join(root, f), 493)
+            clearcal(msfile, addmodel=True)
         if not CASA6:
             default(delmod)
     
     def tearDown(self):
         print('TABLE IS BEING REMOVED')
         casalog.setlogfile(logpath)
-        rmtables(datacopy)
+        rmtables(msfile)
         if os.path.exists(filepath):
             os.remove(filepath)
     
@@ -108,10 +104,15 @@ class delmod_test(unittest.TestCase):
             The second assert checks that a severe error is raised when the provided MS does not exist
         '''
         casalog.setlogfile('testlog.log')
-        delmod(datacopy)
+        delmod(msfile)
         self.assertFalse('SEVERE' in open('testlog.log').read(), msg='delmod raises a severe error when run on a valid MS')
-        if CASA6:
-            with self.assertRaises(AssertionError, msg='No error is raised when using a fake MS'):
+        if CASA6 or casa_stack_rethrow:
+            if CASA6:
+                exc_type = AssertionError
+            else:
+                exc_type = RuntimeError
+
+            with self.assertRaises(exc_type, msg='No error is raised when using a fake MS'):
                 delmod('notareal.ms')
         else:
             delmod('notareal.ms')
@@ -126,8 +127,8 @@ class delmod_test(unittest.TestCase):
             
             The assert checks that table tools cannot access the scratch column after delmod has been performed
         '''
-        delmod(datacopy, scr=True)
-        tb.open(datacopy)
+        delmod(msfile, scr=True)
+        tb.open(msfile)
         with self.assertRaises(RuntimeError, msg='The MODEL_DATA column was not removed when it should'):
             tb.getcol('MODEL_DATA')
         tb.close()
@@ -144,11 +145,11 @@ class delmod_test(unittest.TestCase):
             The second assertion checks that the virtual model no longer exists
         '''
         # Make the file have a model that can be removed
-        ft(datacopy, model=calpath)
-        self.assertTrue(len(glob.glob(datacopy + r'/SOURCE/FT_MODEL*')) == 1, msg='There is no model initially')
+        ft(msfile, model=calpath)
+        self.assertTrue(len(glob.glob(msfile + r'/SOURCE/FT_MODEL*')) == 1, msg='There is no model initially')
         # remove the model and check that it's gone
-        delmod(datacopy, otf=True)
-        self.assertTrue(len(glob.glob(datacopy + r'/SOURCE/FT_MODEL*')) == 0, msg='The model has not been removed')
+        delmod(msfile, otf=True)
+        self.assertTrue(len(glob.glob(msfile + r'/SOURCE/FT_MODEL*')) == 0, msg='The model has not been removed')
     
     def test_removefield(self):
         '''
@@ -163,11 +164,11 @@ class delmod_test(unittest.TestCase):
             
             The assertion checks that the specified FIELD_ID is no longer present in the MS
         '''
-        ft(datacopy, model=calpath)
+        ft(msfile, model=calpath)
         
-        delmod(datacopy, field='0')
+        delmod(msfile, field='0')
         
-        dcmp = dircmp(datacopy, datapath)
+        dcmp = dircmp(msfile, datapath+msfile)
         self.assertTrue(len(dcmp.diff_files) > 0)
         
 def suite():

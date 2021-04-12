@@ -1,12 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
-
-<task type="function" name="specsmooth" category="analysis">
+<task category="analysis" name="specsmooth" type="function">
 
 <shortdescription>Smooth an image region in one dimension</shortdescription>
 
@@ -14,85 +8,85 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 </description>
 
 <input>
-    <param type="string" name="imagename" mustexist="true" >
-        <description>Name of the input image</description>
-        <value></value>
+    <param mustexist="true" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+        
+        <value/>
         <example>imagename='ngc5921_task.image'</example>
     </param>
-    <param type="string" name="outfile">
-        <description>Output image name.</description>
+    <param name="outfile" type="string"><shortdescription>Output image name.</shortdescription><description>Output image name.</description>
+        
         <value/>
         <example>outfile='mysmoothed.im'</example>
     </param>
-    <param type="string" name="box">
-        <description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
+    <param name="box" type="string"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
+        
         <value/>
-        <example>box="4,4,10,10"</example>
+        <example>box=&quot;4,4,10,10&quot;</example>
     </param>
-    <param type="string" name="chans">
-        <description>Channels to use. Channels must be contiguous. Default is to use all channels.</description>
+    <param name="chans" type="string"><shortdescription>Channels to use. Channels must be contiguous. Default is to use all channels.</shortdescription><description>Channels to use. Channels must be contiguous. Default is to use all channels.</description>
+        
         <value/>
     </param>
-    <param type="string" name="stokes">
-        <description>Stokes planes to use. Planes specified must be contiguous. Default is to use all Stokes planes.</description>
+    <param name="stokes" type="string"><shortdescription>Stokes planes to use. Planes specified must be contiguous. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Planes specified must be contiguous. Default is to use all Stokes planes.</description>
+        
         <value/>
-        <example>stokes="I"</example>
+        <example>stokes=&quot;I&quot;</example>
     </param>
-    <param type="any" name="region">
+    <param name="region" type="any"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
         <any type="variant"/>
-        <description>Region selection. Default is to use the full image.</description>
+        
         <value type="string"/>
-        <example>region="myregion.rgn"</example>
+        <example>region=&quot;myregion.rgn&quot;</example>
     </param>
-    <param type="string" name="mask">
-        <description>Mask to use. Default is none..</description>
-        <value></value>
+    <param name="mask" type="string"><shortdescription>Mask to use. Default is none..</shortdescription><description>Mask to use. Default is none..</description>
+        
+        <value/>
     </param>
-    <param type="bool"  name="overwrite" subparam="true">
-        <description>Overwrite the output if it exists?</description>
+    <param subparam="true" name="overwrite" type="bool"><shortdescription>Overwrite the output if it exists?</shortdescription><description>Overwrite the output if it exists?</description>
+        
         <value>False</value>
     </param>
-    <param type="bool"  name="stretch" subparam="true">
-        <description>Stretch the mask if necessary and possible? Default False</description>
+    <param subparam="true" name="stretch" type="bool"><shortdescription>Stretch the mask if necessary and possible? Default False</shortdescription><description>Stretch the mask if necessary and possible? Default False</description>
+        
         <value>False</value>
     </param>
-    <param type="int" name="axis">
-        <description>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</description>
+    <param name="axis" type="int"><shortdescription>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</shortdescription><description>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</description>
+        
         <value>-1</value>
         <example>axis=3</example>
     </param>
-    <param type="string" name="function">
-        <description>Convolution function. hanning and boxcar are supported functions. Minimum match is supported.</description>
-        <value>boxcar</value>
-        <example>function="boxcar"</example>
+    <param name="function" type="string"><shortdescription>Convolution function. hanning and boxcar are supported functions. Minimum match is supported.</shortdescription><description>Convolution function. hanning and boxcar are supported functions. Minimum match is supported.</description>
+        
+        <value>hanning</value>
+        <example>function=&quot;boxcar&quot;</example>
     </param>
-    <param type="int" name="width" subparam="True">
-        <description>Width of boxcar, in pixels.</description>
+    <param subparam="True" name="width" type="int"><shortdescription>Width of boxcar, in pixels.</shortdescription><description>Width of boxcar, in pixels.</description>
+        
         <value>2</value>
         <example>width=2</example>
     </param>
-    <param type="string" name="dmethod">
-        <description>Decimation method. "" means no decimation, "copy" and "mean" are also supported (minimum match).</description>
+    <param name="dmethod" type="string"><shortdescription>Decimation method. &quot;&quot; means no decimation, &quot;copy&quot; and &quot;mean&quot; are also supported (minimum match).</shortdescription><description>Decimation method. &quot;&quot; means no decimation, &quot;copy&quot; and &quot;mean&quot; are also supported (minimum match).</description>
+        
         <value>copy</value>
-        <example>dmethod="mean"</example>
+        <example>dmethod=&quot;mean&quot;</example>
     </param>
     <constraints>
         <when param="outfile">
-            <notequals type="string" value="">
+            <notequals value="" type="string">
                 <default param="overwrite">
                     <value>False</value>
                 </default>
             </notequals>
         </when>
         <when param="mask">
-            <notequals type="string" value="">
+            <notequals value="" type="string">
                 <default param="stretch">
                     <value>False</value>
                 </default>
             </notequals>
         </when>
         <when param="function">
-            <notequals type="string" value="hanning">
+            <notequals value="hanning" type="string">
                 <default param="width">
                     <value>2</value>
                 </default>
@@ -121,11 +115,11 @@ overwrite       If the specified outfile already exists, overwrite it if True.
 stretch         Stretch the input mask if necessary and possible? Only used if a mask is specified.
                 
 axis            Pixel axis along which to do the convolution &lt;0 means use the spectral axis.
-function        Convolution function to use. Supported values are "boxcar" and "hanning". Minimum
+function        Convolution function to use. Supported values are &quot;boxcar&quot; and &quot;hanning&quot;. Minimum
                 match is supported.
-width           Width of boxcar in pixels. Used only if function parameter minimally matches "boxcar".
-dmethod         Plane decimation method. "" means no decimation should be performed. Other supported
-                values are "copy" and "mean". Minimal match is supported. See below for details.
+width           Width of boxcar in pixels. Used only if function parameter minimally matches &quot;boxcar&quot;.
+dmethod         Plane decimation method. &quot;&quot; means no decimation should be performed. Other supported
+                values are &quot;copy&quot; and &quot;mean&quot;. Minimal match is supported. See below for details.
 
 This application performs one dimensional convolution along a specified axis of an image
 or selected region of an image. Hanning smoothing and boxcar smoothing are supported. 
@@ -147,7 +141,7 @@ convolution is to occur must be at least w pixels in the selected region,
 unless decimation using the mean function is chosen in which case the axis
 length must be at least 2*w (see below).
 
-If dmethod="" (no decimation), the length of the output axis will be equal
+If dmethod=&quot;&quot; (no decimation), the length of the output axis will be equal
 to the length of the input axis - w + 1. The pixel mask, ORed with the OTF mask
 if specified, is copied from the selected region of the input image to the
 output image. Thus for example, if the selected region in the input image has
@@ -156,15 +150,15 @@ and if the pixel values, which are all unmasked, on a slice along this axis
 are [1, 2, 5, 10, 17, 26], then the corresponding output slice will be of
 length five pixels and the output pixel values will be [1.5, 3.5, 7.5, 13.5, 21.5].
 
-If dmethod="copy", the output image is the image calculated
-if dmethod="", except that only every wth plane is kept. Both the pixel and mask
+If dmethod=&quot;copy&quot;, the output image is the image calculated
+if dmethod=&quot;&quot;, except that only every wth plane is kept. Both the pixel and mask
 values of these planes are copied directly to the output image, without further
 processing. Thus for example, if the selected region in the input image has six
 planes along the convolution axis, the boxcar width is chosen to be 2, and if
 the pixel values, which are all unmasked, on a slice along this axis are [1, 2,
 5, 10, 17, 26], the corresponding output pixel values will be [1.5, 7.5, 21.5].
 
-If dmethod="mean", first the image described in the dmethod=""
+If dmethod=&quot;mean&quot;, first the image described in the dmethod=&quot;&quot;
 case is calculated. Then, the ith plane of the output image is calculated by
 averaging the i*w to the (i+1)*w-1  planes of this intermediate image. Thus, for
 example, if the selected region in the input image has six planes along the
@@ -188,7 +182,7 @@ y[i-1], y[i], and y[i+1] are the values of the input image at pixels i-1,
 i, and i+1 respectively. The length of the axis along which the convolution is
 to occur must be at least three pixels in the selected region. 
     
-If dmethod="" (no decimation of image planes), the length of the output axis will
+If dmethod=&quot;&quot; (no decimation of image planes), the length of the output axis will
 be the same as that of the input axis. The output pixel values along the convolution
 axis will be related to those of the input values according to equation 1, except
 the first and last pixels. In that case, 
@@ -206,8 +200,8 @@ region in the input image has six planes along the convolution axis, and if the 
 values, which are all unmasked, on a slice along this axis are [1, 2, 5, 10, 17, 26],
 the corresponding output pixel values will be [1.5, 2.5, 5.5, 10.5, 17.5, 21.5].
     
-If dmethod="copy", the output image is the image calculated if
-dmethod="", except that only the odd-numbered planes are kept. Furthermore, if the
+If dmethod=&quot;copy&quot;, the output image is the image calculated if
+dmethod=&quot;&quot;, except that only the odd-numbered planes are kept. Furthermore, if the
 number of planes along the convolution axis in the selected region of the input image
 is even, the last odd number plane is also discarded. Thus, if the selected region
 has N pixels along the convolution axis in the input image, along the convolution
@@ -218,9 +212,9 @@ along the convolution axis, and if the pixel values, which are all unmasked, on 
 along this axis are [1, 2, 5, 10, 17, 26], the corresponding output pixel values will be
 [2.5, 10.5].
 
-If dmethod="mean", first the image described in the dmethod="" case
+If dmethod=&quot;mean&quot;, first the image described in the dmethod=&quot;&quot; case
 is calculated. The first plane and last plane(s) of that image are then discarded as
-described in the dmethod="copy" case. Then, the ith plane of the output
+described in the dmethod=&quot;copy&quot; case. Then, the ith plane of the output
 image is calculated by averaging the (2*i)th and (2*i + 1)th planes of the intermediate
 image. Thus for example, if the selected region in the input image has six planes
 along the convolution axis, and if the pixel values, which are all unmasked, on a slice
@@ -234,16 +228,15 @@ EXAMPLES
 
 # boxcar smooth the spectral axis by 3 pixels, say it's axis 2 and only
 # write every other pixel
-specsmooth(imagename="mynonsmoothed.im", outfile="myboxcarsmoothed.im",
-axis=2, function="boxcar", dmethod="copy", width=3, overwrite=True)
+specsmooth(imagename=&quot;mynonsmoothed.im&quot;, outfile=&quot;myboxcarsmoothed.im&quot;,
+axis=2, function=&quot;boxcar&quot;, dmethod=&quot;copy&quot;, width=3, overwrite=True)
 
 # hanning smooth the spectral axis, say it's axis 2 and do not perform decimation
 # of image planes
-specsmooth(imagename="mynonsmoothed.im", outfile="myhanningsmoothed.im",
-axis=2, dmethod=""," overwrite=True)
+specsmooth(imagename=&quot;mynonsmoothed.im&quot;, outfile=&quot;myhanningsmoothed.im&quot;,
+axis=2, dmethod=&quot;&quot;,&quot; overwrite=True)
 </example>
     
 </task>
 
 </casaxml>
-

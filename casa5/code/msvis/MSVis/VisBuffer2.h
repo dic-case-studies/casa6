@@ -33,24 +33,22 @@
 //#include <casa/Arrays/Vector.h>
 //#include <casa/Arrays/Matrix.h>
 //#include <casa/BasicSL/Complex.h>
-#include <casa/BasicSL/Complexfwd.h>
+#include <casacore/casa/BasicSL/Complexfwd.h>
 #include <msvis/MSVis/VisBufferComponents2.h>
 //#include <msvis/MSVis/VisibilityIterator2.h>
-#include <measures/Measures/Stokes.h>
+#include <casacore/measures/Measures/Stokes.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/tables/Tables/RowNumbers.h>
 
 using casa::vi::VisBufferComponent2;
 using casa::vi::VisBufferComponents2;
 
 namespace casacore{
 
-template <typename T> class Array;
 template <typename T> class CountedPtr;
-template <typename T> class Cube;
-class IPosition;
-template <typename T> class Matrix;
 class MDirection;
 template <typename T, Int N> class SquareMatrix;
-template <typename T> class Vector;
 class MeasurementSet;
 }
 
@@ -209,7 +207,7 @@ public:
                                     casacore::Bool allowShapeChange = false,
                                     casacore::Bool fetchIfNeeded = true) = 0;
 
-    virtual void setShape (casacore::Int nCorrelations, casacore::Int nChannels, casacore::Int nRows, casacore::Bool clearCache = false) = 0;
+    virtual void setShape (casacore::Int nCorrelations, casacore::Int nChannels, casacore::rownr_t nRows, casacore::Bool clearCache = false) = 0;
     virtual void validateShapes () const = 0;
 
     // For attached VBs this returns the VI the VB is attached to.  For free VBs
@@ -405,8 +403,12 @@ public:
     //virtual void setFlag (const casacore::Matrix<casacore::Bool>& value) = 0; // [nF,nR]
     virtual const casacore::Array<casacore::Bool> & flagCategory () const = 0; // [nC,nF,nCategories,nR]
     virtual void setFlagCategory (const casacore::Array<casacore::Bool>& value) = 0; // [nC,nF,nCategories,nR]
+    virtual const casacore::Vector<casacore::Array<casacore::Bool>> & flagCategories () const = 0; // [nC,nF,nCategories,nR]
+    virtual void setFlagCategories (const casacore::Vector<casacore::Array<casacore::Bool>>& value) = 0; // [nC,nF,nCategories,nR]
     virtual const casacore::Cube<casacore::Bool> & flagCube () const = 0; // [nC,nF,nR]
     virtual void setFlagCube (const casacore::Cube<casacore::Bool>& value) = 0; // [nC,nF,nR]
+    virtual const casacore::Vector<casacore::Cube<casacore::Bool>> & flagCubes () const = 0; // [nC,nF,nR]
+    virtual void setFlagCubes (const casacore::Vector<casacore::Cube<casacore::Bool>>& value) = 0; // [nC,nF,nR]
     virtual const casacore::Vector<casacore::Bool> & flagRow () const = 0; // [nR]
     virtual void setFlagRow (const casacore::Vector<casacore::Bool>& value) = 0; // [nR]
     virtual const casacore::Vector<casacore::Int> & observationId () const = 0; // [nR]
@@ -417,6 +419,8 @@ public:
     virtual void setScan (const casacore::Vector<casacore::Int> & value) = 0; // [nR]
     virtual const casacore::Matrix<casacore::Float> & sigma () const = 0; // [nC, nR]
     virtual void setSigma (const casacore::Matrix <casacore::Float> & value) = 0; // [nC, nR]
+    virtual const casacore::Vector<casacore::Matrix<casacore::Float>> & sigmas () const = 0; // [nC, nR]
+    virtual void setSigmas (const casacore::Vector<casacore::Matrix <casacore::Float>> & value) = 0; // [nC, nR]
     //virtual const casacore::Matrix<casacore::Float> & sigmaMat () const = 0; // [nC,nR]
     virtual const casacore::Vector<casacore::Int> & stateId () const = 0; // [nR]
     virtual void setStateId (const casacore::Vector<casacore::Int> & value) = 0; // [nR]
@@ -430,14 +434,20 @@ public:
     virtual void setUvw (const casacore::Matrix<casacore::Double> & value) = 0; // [3,nR]
     virtual const casacore::Matrix<casacore::Float> & weight () const = 0; // [nC, nR]
     virtual void setWeight (const casacore::Matrix <casacore::Float>& value) = 0; // [nC, nR]
+    virtual const casacore::Vector<casacore::Matrix<casacore::Float>> & weights () const = 0; // [nC, nR]
+    virtual void setWeights (const casacore::Vector<casacore::Matrix <casacore::Float>>& value) = 0; // [nC, nR]
     //virtual const casacore::Matrix<casacore::Float> & weightMat () const = 0; // [nC,nR]
     //virtual void setWeightMat (const casacore::Matrix<casacore::Float>& value) = 0; // [nC,nR]
 
     virtual const casacore::Cube<casacore::Float> & weightSpectrum () const = 0; // [nC,nF,nR]
     virtual void setWeightSpectrum (const casacore::Cube<casacore::Float>& value) = 0; // [nC,nF,nR]
+    virtual const casacore::Vector<casacore::Cube<casacore::Float>> & weightSpectra () const = 0; // [nC,nF,nR]
+    virtual void setWeightSpectra (const casacore::Vector<casacore::Cube<casacore::Float>>& value) = 0; // [nC,nF,nR]
 
     virtual const casacore::Cube<casacore::Float> & sigmaSpectrum () const = 0; // [nC,nF,nR]
     virtual void setSigmaSpectrum (const casacore::Cube<casacore::Float>& value) = 0; // [nC,nF,nR]
+    virtual const casacore::Vector<casacore::Cube<casacore::Float>> & sigmaSpectra () const = 0; // [nC,nF,nR]
+    virtual void setSigmaSpectra (const casacore::Vector<casacore::Cube<casacore::Float>>& value) = 0; // [nC,nF,nR]
 
     // --------------------------------------------------------------
     // Visibility data accessors in order of observed, corrected,
@@ -446,21 +456,30 @@ public:
     virtual const casacore::Cube<casacore::Complex> & visCube () const = 0; // [nC,nF,nR]
     virtual void setVisCube(const casacore::Complex & c) = 0;
     virtual void setVisCube (const casacore::Cube<casacore::Complex> &) = 0; // [nC,nF,nR]
+    virtual const casacore::Vector<casacore::Cube<casacore::Complex>> & visCubes () const = 0; // [nC,nF,nR]
+    virtual void setVisCubes (const casacore::Vector<casacore::Cube<casacore::Complex>> &) = 0; // [nC,nF,nR]
 //    virtual const casacore::Matrix<CStokesVector> & vis () const = 0; // [nF,nR]
 //    virtual void setVis (casacore::Matrix<CStokesVector> &) = 0; // [nF,nR]
 
     virtual const casacore::Cube<casacore::Complex> & visCubeCorrected () const = 0; // [nC,nF,nR]
     virtual void setVisCubeCorrected (const casacore::Cube<casacore::Complex> &) = 0; // [nC,nF,nR]
+    virtual const casacore::Vector<casacore::Cube<casacore::Complex>> & visCubesCorrected () const = 0; // [nC,nF,nR]
+    virtual void setVisCubesCorrected (const casacore::Vector<casacore::Cube<casacore::Complex>> &) = 0; // [nC,nF,nR]
 //    virtual const casacore::Matrix<CStokesVector> & visCorrected () const = 0; // [nF,nR]
 //    virtual void setVisCorrected (const casacore::Matrix<CStokesVector> &) = 0; // [nF,nR]
 
     virtual const casacore::Cube<casacore::Float> & visCubeFloat () const = 0; // [nC,nF,nR]
     virtual void setVisCubeFloat (const casacore::Cube<casacore::Float> &) = 0; // [nC,nF,nR]
+    virtual const casacore::Vector<casacore::Cube<casacore::Float>> & visCubesFloat () const = 0; // [nC,nF,nR]
+    virtual void setVisCubesFloat (const casacore::Vector<casacore::Cube<casacore::Float>> &) = 0; // [nC,nF,nR]
 
     virtual const casacore::Cube<casacore::Complex> & visCubeModel () const = 0; // [nC,nF,nR]
     virtual void setVisCubeModel(const casacore::Complex & c) = 0;
     virtual void setVisCubeModel(const casacore::Cube<casacore::Complex>& vis) = 0; // [nC,nF,nR]
     virtual void setVisCubeModel(const casacore::Vector<casacore::Float>& stokes) = 0; // [1..4]
+    virtual const casacore::Vector<casacore::Cube<casacore::Complex>> & visCubesModel () const = 0; // [nC,nF,nR]
+    //virtual void setVisCubesModel(const casacore::Complex & c) = 0;
+    virtual void setVisCubesModel(const casacore::Vector<casacore::Cube<casacore::Complex>>& vis) = 0; // [nC,nF,nR]
 //    virtual const casacore::Matrix<CStokesVector> & visModel () const = 0; // [nF,nR]
 //    virtual void setVisModel (casacore::Matrix<CStokesVector> &) = 0; // [nF,nR]
 
@@ -527,8 +546,19 @@ public:
     virtual casacore::Int nCorrelations () const = 0;
 
     // Returns the number of rows in this VisBuffer
+    virtual casacore::rownr_t nRows () const = 0;
 
-    virtual casacore::Int nRows () const = 0;
+    // Returns the number of distinct cube/array shapes in this VisBuffer
+    virtual casacore::rownr_t nShapes () const = 0;
+
+    // Returns the number of rows per distinct cube/array shapes in this VisBuffer
+    virtual const casacore::Vector<casacore::rownr_t>& nRowsPerShape () const = 0;
+
+    // Returns the number of channels per distinct cube/array shapes in this VisBuffer
+    virtual const casacore::Vector<casacore::Int>& nChannelsPerShape () const = 0;
+
+    // Returns the number of correlation per distinct cube/array shapes in this VisBuffer
+    virtual const casacore::Vector<casacore::Int>& nCorrelationsPerShape () const = 0;
 
     // Calculates the parallactic angle of the array as a whole
     // at the specified time.
@@ -555,12 +585,9 @@ public:
     // the VisBuffer and the row IDs in the underlying casacore::MS main
     // virtual table:  mainTableID [i] = rowIds () [ i] = 0;
 
-    virtual const casacore::Vector<casacore::uInt> & rowIds () const = 0; // [nR]
+    virtual const casacore::Vector<casacore::rownr_t> & rowIds () const = 0; // [nR]
 
-    // Returns the spectral window ID for the specified row.
-
-    //virtual casacore::Int spectralWindow () const = 0;
-
+    // Returns the spectral window ID for each row.
     virtual const casacore::Vector<casacore::Int> & spectralWindows () const = 0; // [nR]
     virtual void setSpectralWindows (const casacore::Vector<casacore::Int> & spectralWindows) = 0;
 
@@ -572,7 +599,9 @@ protected:
     virtual void configureNewSubchunk (casacore::Int msId, const casacore::String & msName, casacore::Bool isNewMs,
                                        casacore::Bool isNewArrayId, casacore::Bool isNewFieldId,
                                        casacore::Bool isNewSpectralWindow, const Subchunk & subchunk,
-                                       casacore::Int nRows, casacore::Int nChannels, casacore::Int nCorrelations,
+                                       const casacore::Vector<casacore::rownr_t>& nRowsPerShape,
+                                       const casacore::Vector<casacore::Int>& nChannelsPerShape, 
+                                       const casacore::Vector<casacore::Int>& nCorrelationsPerShape,
                                        const casacore::Vector<casacore::Int> & correlations,
                                        const casacore::Vector<casacore::Stokes::StokesTypes> & correlationsDefined,
                                        const casacore::Vector<casacore::Stokes::StokesTypes> & correlationsSelected,
@@ -585,10 +614,17 @@ protected:
 
     virtual casacore::Vector<casacore::Bool> & flagRowRef () = 0;  // [nR]
     virtual casacore::Cube<casacore::Bool> & flagCubeRef () = 0;  // [nC,nF,nR]
+    virtual casacore::Vector<casacore::Cube<casacore::Bool>> & flagCubesRef () = 0;  // [nC,nF,nR]
     virtual casacore::Cube<casacore::Complex> & visCubeRef () = 0; // [nC,nF,nR]
+    virtual casacore::Vector<casacore::Cube<casacore::Complex>> & visCubesRef () = 0; // [nC,nF,nR]
     virtual casacore::Cube<casacore::Complex> & visCubeCorrectedRef () = 0; // [nC,nF,nR]
+    virtual casacore::Vector<casacore::Cube<casacore::Complex>> & visCubesCorrectedRef () = 0; // [nC,nF,nR]
     virtual casacore::Cube<casacore::Complex> & visCubeModelRef () = 0; // [nC,nF,nR]
+    virtual casacore::Vector<casacore::Cube<casacore::Complex>> & visCubesModelRef () = 0; // [nC,nF,nR]
     virtual casacore::Cube<casacore::Float> & weightSpectrumRef () = 0; // [nC,nF,nR]
+    virtual casacore::Vector<casacore::Cube<casacore::Float>> & weightSpectraRef () = 0; // [nC,nF,nR]
+    virtual casacore::Cube<casacore::Float> & sigmaSpectrumRef () = 0; // [nC,nF,nR]
+    virtual casacore::Vector<casacore::Cube<casacore::Float>> & sigmaSpectraRef () = 0; // [nC,nF,nR]
 
 private:
 

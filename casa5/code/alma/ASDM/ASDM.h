@@ -255,6 +255,9 @@ class SysPowerTable;
 //class asdm::TotalPowerTable;
 class TotalPowerTable;
 
+//class asdm::VLAWVRTable;
+class VLAWVRTable;
+
 //class asdm::WVMCalTable;
 class WVMCalTable;
 
@@ -676,6 +679,12 @@ public:
 	 * @return The table TotalPower as a TotalPowerTable.
 	 */
 	TotalPowerTable & getTotalPower () const;
+
+	/**
+	 * Get the table VLAWVR.
+	 * @return The table VLAWVR as a VLAWVRTable.
+	 */
+	VLAWVRTable & getVLAWVR () const;
 
 	/**
 	 * Get the table WVMCal.
@@ -1345,6 +1354,11 @@ private:
 	 * The table TotalPower
 	 */
 	TotalPowerTable * totalPower;
+
+	/**
+	 * The table VLAWVR
+	 */
+	VLAWVRTable * vLAWVR;
 
 	/**
 	 * The table WVMCal

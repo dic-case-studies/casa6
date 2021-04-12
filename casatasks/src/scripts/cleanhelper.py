@@ -1,10 +1,10 @@
 from __future__ import absolute_import
-from __future__ import print_function
 
+import glob
 import os
 import math
-#import pdb
 import numpy
+import re
 import shutil
 import pwd
 from numpy import unique
@@ -18,6 +18,7 @@ if is_CASA6:
     from casatasks import casalog as default_casalog
     from casatools import table, quanta, measures, regionmanager, image, imager, msmetadata
     from casatools import ms as mstool
+    from casatools import ctsys
 
     ms = mstool( )
     tb = table( )
@@ -28,13 +29,20 @@ if is_CASA6:
     im = imager( )
     msmd=msmetadata( )
 
+    # trying to avoid sharing a single instance with all other functions in this module
+    iatool = image
+
+    def _casa_version_string():
+        """ produce a version string with the same format as the mstools.write_history. """
+        return  'version: ' + ctsys.version_string() + ' ' + ctsys.version_desc()
+
 else:
     # possibly not an exact equivalent, but as used here it is
     import commands as subprocess
 
     import string
     from odict import odict
-
+    from taskinit import *
     ###some helper tools
     from  casac import *
     ms = casac.ms()
@@ -45,7 +53,14 @@ else:
     ia = casac.image()
     im = casac.imager()
     msmd=casac.msmetadata()
-    default_casalog = casac.logsink()
+    default_casalog = casalog
+    # trying to avoid sharing a single instance with all other functions in this module
+    iatool = casac.image
+
+    def _casa_version_string():
+        casa_glob = find_casa()
+        return 'version: ' + casa_glob['build']['version'] + ' ' + casa_glob['build']['time']
+
 
 class cleanhelper:
     def __init__(self, imtool='', vis='', usescratch=False, casalog=default_casalog):
@@ -218,8 +233,8 @@ class cleanhelper:
         else:
           self.sortedvisindx=[0]
           self.sortedvislist=self.vis
-        #print("sortedvislist=",self.sortedvislist)
-        #print("sortedvisindx=",self.sortedvisindx)
+        #casalog.post("sortedvislist=" + self.sortedvislist)
+        #casalog.post("sortedvisindx=" + self.sortedvisindx)
         return
 
 
@@ -307,7 +322,7 @@ class cleanhelper:
                             if(len(ms.msseltoindex(self.vis[i], field=phasecenter)['field']) > 0):
                                 tmppc = int(ms.msseltoindex(self.vis[i],
                                                     field=phasecenter)['field'][0])
-                                #print("tmppc,i=", tmppc, i)
+                                # casalog.post("tmppc,i=" + tmppc, i)
                         except Exception:
                              pass
 
@@ -317,7 +332,7 @@ class cleanhelper:
                     tmppc = phasecenter
                 phasecenter = tmppc
         self.phasecenter = phasecenter
-        #print('cell', cellx, celly, restfreq)
+        #casalog.post('cell' + cellx + celly + restfreq)
         ####understand spw
         if spw in (-1, '-1', '*', '', ' '):
             spwindex = -1
@@ -466,7 +481,7 @@ class cleanhelper:
         #    self.getchanimage(self.finalimages[n]+'.psf',self.imagelist[n]+'.test.psf',chan)
         #    ia.open(self.imagelist[n]+'.test.psf')
         #    imdata=ia.getchunk()
-        #    print("imagelist[", n, "]=", self.imagelist[n], " imdata.sum()=",imdata.sum())
+        #    casalog.post("imagelist[", n, "]=" + self.imagelist[n] + " imdata.sum()=" + imdata.sum())
             #if n==0 and imdata.sum()==0.0:
             #    self.skipclean=True 
         #    if self.skipclean:
@@ -598,7 +613,7 @@ class cleanhelper:
           this was called makemultifieldmask3 in CASA 3.3 release but now renamed 
           makemultifieldmask2 as the previous makemultifieldmask2 was removed.
         """
-        #print("Inside makemultifieldmask2")
+        #casalog.post("Inside makemultifieldmask2")
         if((len(self.maskimages)==(len(self.imagelist)))):
             if(self.imagelist[0] not in self.maskimages):
                 self.maskimages=odict()
@@ -643,8 +658,8 @@ class cleanhelper:
             maskframe=self.dataspecframe
         else:
             maskframe=self.usespecframe
-        #print("Frame : ", maskframe)
-        #print("dataframe : ", self.dataspecframe , "   useframe : ", self.usespecframe)
+        #casalog.post("Frame : " + maskframe)
+        #casalog.post("dataframe : " + self.dataspecframe + "   useframe : " + self.usespecframe)
         for k in range(len(self.imagelist)):
             if(not (os.path.exists(self.maskimages[self.imagelist[k]]))):
                 ia.fromimage(outfile=self.maskimages[self.imagelist[k]],
@@ -1155,13 +1170,13 @@ class cleanhelper:
           inuvrange=selectedparams['uvrange'] 
 
           #if len(self.vis)==1:
-            #print("single ms case")
+            #casalog.post("single ms case")
           #  self.im.selectvis(nchan=nchan,start=start,step=width,field=field,
           #                    spw=inspw,time=intimerange, baseline=inantenna,
           #                    scan=inscan, observation=inobs, intent=inintent, uvrange=inuvrange,
           #                    usescratch=usescratch)
           #else:
-            #print("multims case: selectvis for vis[",i,"]: spw,field=", inspw, self.fieldindex[i])
+            #casalog.post("multims case: selectvis for vis[",i,"]: spw,field=", inspw, self.fieldindex[i])
           self.im.selectvis(vis=self.vis[i],nchan=nchan,start=start,step=width,
                             field=self.fieldindex[i], spw=inspw,time=intimerange,
                             baseline=inantenna, scan=inscan,
@@ -1231,12 +1246,12 @@ class cleanhelper:
 #          inuvrange=selectedparams['uvrange'] 
 #          
 #          if len(self.vis) > 1:
-#            print('from datwtfilter - multi';)
+#            casalog.post('from datwtfilter - multi';)
 #            self.im.selectvis(vis=self.vis[i], field=self.fieldindex[i],spw=inspw,time=intimerange,
 #                              baseline=inantenna, scan=inscan, observation=inobs,
 #                              uvrange=inuvrange, usescratch=calready)
 #          else: 
-#            print('from datwtfilter - single')
+#            casalog.post('from datwtfilter - single')
 #            self.im.selectvis(field=field,spw=inspw,time=intimerange,
 #                              baseline=inantenna, scan=inscan, observation=inobs,
 #                              uvrange=inuvrange, usescratch=calready)
@@ -1509,7 +1524,7 @@ class cleanhelper:
                         fframes=[splitline[6],splitline[8]]
                         #imframe = self.csys['spectral2']['system']
                         imframe = self.csys['spectral2']['conversion']['system']
-                        #print("imframe=",imframe," system frame =",self.csys['spectral2']['system']," frame in boxfile=", fframes[0])
+                        #casalog.post("imframe=" + imframe + " system frame =" + self.csys['spectral2']['system'] + " frame in boxfile=" + fframes[0])
                         # the worldbox file created viewer's "box in file"
                         # currently says TOPO in frequency axis but seems to
                         # wrong (the freuencies look like in the image's base
@@ -1542,7 +1557,7 @@ class cleanhelper:
                         #wtrc = [ra[1], dec[1], stokes[1], freqs[1]]
                         #wblc = ra[0]+" "+dec[0]
                         #wtrc = ra[1]+" "+dec[1]
-                        #print"wblc=",wblc," wtrc=",wtrc," using system frame=",self.csys['spectral2']['system'], " convertion frame=",self.csys['spectral2']['conversion']['system']
+                        #casalog.post... "wblc=",wblc," wtrc=",wtrc," using system frame=",self.csys['spectral2']['system'], " convertion frame=",self.csys['spectral2']['conversion']['system']
                         wboxreg = rg.wbox(blc=wblc,trc=wtrc,csys=self.csys)
                         temprec.update({counter:wboxreg})
  
@@ -1745,7 +1760,7 @@ class cleanhelper:
                         elif line.split()[0]!='#':
                             content0+=line     
                 except:
-                    print("Unkown error while reading the file", outlierfile)
+                    casalog.post("Unkown error while reading the file: " + outlierfile)
                     break
         if oldformat:
             if noOldOutlierFileSupport:
@@ -1774,20 +1789,20 @@ class cleanhelper:
                 step = nchar+1
                 start = prevstart+step
                 nexti = content[start:].find(keywd)
-                #print("With start=",start, " found next one at(nexti)=",nexti, " step used =",step, " prevstart=",prevstart)
+                #casalog.post... ("With start=",start, " found next one at(nexti)=",nexti, " step used =",step, " prevstart=",prevstart)
 
                 if nexti == -1:
                     pars[i]=content[prevstart:]
-                #    print("range=",prevstart, " to the end")
+                    # casalog.post("range=" + prevstart + " to the end")
                     break
                 pars[i]=content[prevstart:prevstart+nexti+step]
-                #print("pars[",i,"]=",pars[i])
-                #print("range=",prevstart, " to", prevstart+nexti+step-1)
+                #casalog.post("pars[",i,"]=" + pars[i])
+                #casalog.post("range=" + prevstart + " to" + prevstart+nexti+step-1)
                 prevstart=prevstart+nexti+step
                 i+=1
 
         # for parsing of indiviual par (per field)
-        #print("pars=",pars)
+        #casalog.post("pars=" + pars)
         dparm ={}
         indx=0
         for key in pars.keys():
@@ -1802,7 +1817,7 @@ class cleanhelper:
             parm=parm.replace(", ",",")
             parm=parm.replace(" =","=")
             parm=parm.replace("= ","=")
-            #print("parm=",parm)
+            #casalog.post("parm=" + parm)
             subdic={}
             # final parameter sets 
             values=re.compile('\w+=').split(parm)
@@ -1822,7 +1837,7 @@ class cleanhelper:
                     ipar += 1
             dparm[indx]=subdic
             indx+=1
-        #print("DONE for parsing parm for each field")
+        #casalog.post("DONE for parsing parm for each field")
         # put into list of parameters
         # imsizes, phasecenters, imagenames(imageids)
         # mask is passed to other function for forther processing
@@ -1831,7 +1846,7 @@ class cleanhelper:
             for fld in dparm.keys():
                 # before process, check if it contains all required keys
                 # namely, imagename, phasecenter, imsize
-                #print("dparm[",fld,"]=",dparm[fld])
+                #casalog.post("dparm[",fld,"]=" + dparm[fld])
                 if not ("imagename" in dparm[fld] and \
                         "phasecenter" in dparm[fld] and \
                         "imsize" in dparm[fld]):
@@ -1923,12 +1938,12 @@ class cleanhelper:
         """ 
         retlist = []
         l = list(l)
-        #print('l=',l)
+        #casalog.post('l='+l)
         for i in range(len(l)):
-            #print("ith l=",i, l[i] )
+            #casalog.post("ith l="+i+ l[i] )
             if isinstance(l[i],list) and l[i]:
                 # and (not isinstance(l[i][0],(int,float))):
-                #print("recursive l=",l)
+                #casalog.post("recursive l="+l)
                 if isinstance(l[i][0],list) and isinstance(l[i][0][0],list):
                    retlist.extend(self.flatten(l[i]))
                 else:
@@ -2056,7 +2071,7 @@ class cleanhelper:
             if type(restf)==str: restf=[restf]
             if(qa.quantity(restf[0])['unit'].find('Hz') > -1):
                 rfreq=[qa.convert(qa.quantity(restf[0]),'Hz')['value']] 
-                #print("using user input rest freq=",rfreq)
+                #casalog.post("using user input rest freq=" + rfreq)
             else:
                 raise TypeError("Unrecognized unit or type for restfreq")
         if(vf==0):
@@ -2321,7 +2336,8 @@ class cleanhelper:
         #  newfreqs=chanfreqs
         #else:
           # obstime not included here
-        if debug: print("before ms.cvelfreqs (start,width,nchan)===>",start, width, nchan)
+        if debug: casalog.post("before ms.cvelfreqs (start,width,nchan)===> {} {} {}".
+                               format(start, width, nchan))
         try:
             newfreqs=ms.cvelfreqs(spwids=selspw,fieldids=selfield,mode=mode,nchan=nchan,
                               start=start,width=width,phasec=inphasec, restfreq=restf,
@@ -2332,7 +2348,7 @@ class cleanhelper:
             raise
         ms.close()
         
-        #print(newfreqs)
+        #casalog.post(newfreqs)
         descendingnewfreqs=False
         if len(newfreqs)>1:
           if newfreqs[1]-newfreqs[0] < 0:
@@ -2357,19 +2373,20 @@ class cleanhelper:
                     newfreqs=(numpy.array(newfreqs)[startchan:endchan]).tolist()
         except:
             pass
-        if debug: print("Mode, Start, width after cvelfreqs =",mode, start,width )
+        if debug: casalog.post("Mode, Start, width after cvelfreqs = {} {} {}".
+                               format(mode, start, width))
         if type(newfreqs)==list and len(newfreqs) ==0:
           raise TypeError( "Output frequency grid cannot be calculated: " +
                            " please check start and width parameters" )
         if debug:
           if len(newfreqs)>1:
-            print("FRAME=",self.usespecframe)
-            print("newfreqs[0]===>",newfreqs[0])
-            print("newfreqs[1]===>",newfreqs[1])
-            print("newfreqs[-1]===>",newfreqs[-1])
-            print("len(newfreqs)===>",len(newfreqs))
+            casalog.post("FRAME=" + self.usespecframe)
+            casalog.post("newfreqs[0]===>" + newfreqs[0])
+            casalog.post("newfreqs[1]===>" + newfreqs[1])
+            casalog.post("newfreqs[-1]===>" + newfreqs[-1])
+            casalog.post("len(newfreqs)===>" + len(newfreqs))
           else:
-            print("newfreqs=",newfreqs)
+            casalog.post("newfreqs=" + newfreqs)
 
         # set output number of channels
         if nchan ==1:
@@ -2454,7 +2471,7 @@ class cleanhelper:
             finc = chanres[0]
           else:
             finc = newfreqs[1]-newfreqs[0]
-            if debug: print("finc(newfreqs1-newfreqs0)=",finc)
+            if debug: casalog.post("finc(newfreqs1-newfreqs0)=" + finc)
           if mode=="frequency":
             # It seems that this is no longer necessary... TT 2013-08-12
             #if descendingnewfreqs:
@@ -2481,7 +2498,7 @@ class cleanhelper:
                 retwidth = qa.tos(qa.sub(v0, v1))
           else:
             retwidth=1
-          if debug: print("setChan retwidth=",retwidth)
+          if debug: casalog.post("setChan retwidth=" + retwidth)
         return retnchan, retstart, retwidth
 
     def setChannelizeNonDefault(self, mode,spw,field,nchan,start,width,frame,
@@ -2507,7 +2524,7 @@ class cleanhelper:
         wset=[]
         chunk=spw.split(',')
         for i in range(len(chunk)):
-            #print(chunk[i], '------')
+            #casalog.post(chunk[i] + '------')
             ck=chunk[i].strip()
             if len(ck)==0:
                 continue
@@ -2535,10 +2552,10 @@ class cleanhelper:
                         wds=int(wd[0])
                         wde=int(wd[1])
                         for l in range(wds, wde):
-                            #print(l, s, e, t)
+                            #casalog.post... (l, s, e, t)
                             wset.append([l, s, e, t])
                     else:
-                        #print(wd[0], s, e, t)
+                        #casalog.post ...(wd[0], s, e, t)
                         if e==-1:
                             try:
                                 e=int(s)+1
@@ -2551,20 +2568,20 @@ class cleanhelper:
                     wds=int(win[0])
                     wde=int(win[1])
                     for l in range(wds, wde):
-                        #print(l, 0, -1, 1)
+                        #casalog.post... (l, 0, -1, 1)
                         wset.append([l, 0, -1, 1])
                 else:
-                    #print(win[0], 0, -1, 1)
+                    #casalog.post...(win[0], 0, -1, 1)
                     wset.append([win[0], 0, -1, 1])
     
-        #print(wset)
+        #casalog.post(wset)
         for i in range(len(wset)):
             for j in range(4):
                 try:
                     wset[i][j]=int(wset[i][j])
                 except:
                     wset[i][j]=-1
-        #print(wset)
+        #casalog.post(wset)
         spectable=self.getsubtable(self.vis[self.sortedvisindx[0]], "SPECTRAL_WINDOW")
         tb.open(spectable)
         nr=tb.nrows()
@@ -2581,14 +2598,14 @@ class cleanhelper:
                     wset[i][2]=len(chanfreqs)
                 if wset[i][2]>len(chanfreqs):
                     wset[i][2]=len(chanfreqs)
-                #print(wset[i][1], wset[i][2], len(chanfreqs), wset[i][3])
+                #casalog.post...(wset[i][1], wset[i][2], len(chanfreqs), wset[i][3])
                 for k in range(wset[i][1], wset[i][2], wset[i][3]):
-                    #print(k)
+                    #casalog.post(k)
                     freqs.add(chanfreqs[k]) 
         tb.close()
         freqs=list(freqs)
         freqs.sort()
-        #print(freqs[0], freqs[-1])
+        #casalog.post...(freqs[0], freqs[-1])
     
         if mode=='channel':
             star=0
@@ -2640,7 +2657,7 @@ class cleanhelper:
                 widt=qa.quantity(width)['value']
     
             if widt>0:
-                #print(star, widt, (freqs[-1]-star)//widt)
+                #casalog.post...(star, widt, (freqs[-1]-star)//widt)
                 nchan=max(min(int((freqs[-1]-star)//widt), nchan), 1)
             else:
                 nchan=max(min(int(freqs[0]-star)//widt, nchan), 1)
@@ -2660,7 +2677,7 @@ class cleanhelper:
                 star=min(qa.quantity(start)['value'], star)
                 star=min(star, end0)
             
-            #print(beg1, star, end0)
+            #casalog.post...(beg1, star, end0)
 
             widt=-end0+beg1
             if len(freqs)>1:
@@ -2673,7 +2690,7 @@ class cleanhelper:
             if type(width)==str and width.strip()!='':
                 widt=qa.quantity(width)['value']
 
-            #print(widt)
+            #casalog.post(widt)
             if widt>0:
                 nchan=max(min(int((beg1-star)/widt), nchan), 1)
                 #star=0
@@ -2732,14 +2749,14 @@ class cleanhelper:
         # use time in main table instead?
         tmr=tb.getcell('TIME_RANGE',0)
         tb.close()
-        #print("direction=", me.direction(mrf,str(srcdir[0][0])+'rad',str(srcdir[1][0])+'rad'))
-        #print("tmr[1]=",tmr[1])
-        #print("epoch=", me.epoch('utc',qa.convert(qa.quantity(str(tmr[1])+'s'),'d')))
+        #casalog.post...("direction=", me.direction(mrf,str(srcdir[0][0])+'rad',str(srcdir[1][0])+'rad'))
+        #casalog.post("tmr[1]=" + tmr[1])
+        #caalog.post...("epoch=", me.epoch('utc',qa.convert(qa.quantity(str(tmr[1])+'s'),'d')))
         me.doframe(me.epoch('utc',qa.convert(qa.quantity(str(tmr[0])+'s'),'d')))
         me.doframe(me.observatory(telname))
         me.doframe(mdir)
         f0 = me.frequency(self.dataspecframe, str(fin)+'Hz')
-        #print("frame=", frame, ' f0=',f0)
+        #casalog.post...("frame=", frame, ' f0=',f0)
         fout = me.measure(f0,frame)['m0']['value']
         return fout
 
@@ -2964,7 +2981,7 @@ class cleanhelper:
         #                             'clark');
 
         #localAlgorithm = 'clark'
-        #print("localAlogrithm=",localAlgorithm)
+        #casalog.post("localAlogrithm=" + localAlgorithm)
 
         #self.im.setoptions(ftmachine=localFTMachine,
         #                     wprojplanes=wprojplanes,
@@ -3033,7 +3050,7 @@ class cleanhelper:
         retparms['imagename']=[tmppath[indx]+os.path.basename(imn)+'.ch'+str(chan)
                    for indx, imn in enumerate(finalimagename)]
 
-        #print("Processing channel %s " % chan)
+        #casalog.post("Processing channel %s " % chan)
         #self._casalog.post("Processing channel %s "% chan)
 
         # Select only subset of vis data if possible.
@@ -3135,7 +3152,7 @@ class cleanhelper:
                        (type(modelimage)==list and len(self.imagelist)==1 and len(modelimage)>1):
                         modelimage=[modelimage]
                     
-                    #print("Run convertmodelimage for this list : ", self.imagelist, " with these models : ", modelimage;)
+                    #casalog.post("Run convertmodelimage for this list : " + self.imagelist + " with these models : " + modelimage;)
                     for j in range(len(self.imagelist)):
                         self._casalog.post("Use modelimages: "+str(modelimage[j])+" to create a combined modelimage: " \
                                            +self.imagelist.values()[j]+".model", 'DEBUG1')
@@ -3169,7 +3186,7 @@ class cleanhelper:
                        (type(modelimage)==list and len(self.imagelist)==1 and len(modelimage)>1):
                         modelimage=[modelimage]
 
-             #print("Run convertmodelimage for this list : ", self.imagelist, " with these models : ", modelimage;)
+             #casalog.post convertmodelimage for this list : " + self.imagelist + " with these models : " + modelimage;)
              #spectralline modes + basic mfs
 #             if (not mode=='mfs') or (mode=='mfs' and nterms==1):
 #                    for j in range(len(self.imagelist)):   # = nfield
@@ -3201,7 +3218,7 @@ class cleanhelper:
                            else:
                                modname = self.imagelist[fld]+'.model.tt'+str(tt) ;
                            if( os.path.exists(modsforfield[tt]) ):
-#                              print("Found user-specified model image : "+modsforfield[tt]+" . Adding to starting model : "+modname;)
+#                              casalog.post("Found user-specified model image : "+modsforfield[tt]+" . Adding to starting model : "+modname;)
                                self._casalog.post("Found user-specified model image : "+modsforfield[tt]+" . Adding to starting model : "+modname);
                                self.convertmodelimage(modelimages=modsforfield[tt],outputmodel=modname, imindex=fld);
                            else:
@@ -3270,7 +3287,7 @@ class cleanhelper:
               ia.open(img)
               csys=ia.coordsys()
               csys.setconversiontype(spectral=inspectral)
-              #print("csys.torecord spectral2=", csys.torecord()['spectral2'])
+              #casalog.post("csys.torecord spectral2=" + csys.torecord()['spectral2'])
               ia.setcoordsys(csys.torecord())
               ia.close()
 
@@ -3283,15 +3300,15 @@ class cleanhelper:
         else: 
             useframe=self.usespecframe
 
-        #print('maskimages.keys : ', self.maskimages.keys())
-        #print('imagelist : ', self.imagelist)
+        #casalog.post('maskimages.keys : ' + self.maskimages.keys())
+        #casalog.post('imagelist : ' + self.imagelist)
 
         for key in self.imagelist.keys():
              imgmask = self.imagelist[key]+'.mask'
              img = self.imagelist[key]+'.image'
              if not os.path.exists(img):
                  img = img+'.tt0'
-#             print('Converting frame for ', imgmask, ' to ', useframe)
+             # casalog.post('Converting frame for ' + imgmask + ' to ' + useframe)
              if os.path.exists(imgmask) and os.path.exists(img):
                   ia.open(img)
                   imcsys = ia.coordsys()
@@ -3300,9 +3317,9 @@ class cleanhelper:
 #                  csys=ia.coordsys()
 #                  csys.setreferencecode('LSRK','spectral',True)
 #                  val = csys.setconversiontype(spectral=useframe)
-#                  print('Ret val : ', val, csys.getconversiontype('spectral'))
+#                  casalog.post('Ret val : ' + val + csys.getconversiontype('spectral'))
 #                  ia.setcoordsys(csys.torecord())
-##                  print('conv type : ', imcsys.getconversiontype('spectral'))
+#                  casalog.post('conv type : '+ imcsys.getconversiontype('spectral'))
                   ia.setcoordsys( imcsys.torecord() )
                   ia.close()
              else:
@@ -3481,7 +3498,7 @@ def getAlgorithm(psfmode, imagermode, gridmode, mode,
     if ((mode == 'mfs') and (nterms > 1)): 
         alg = 'msmfs';
         if(imagermode == 'mosaic'): 
-            ##print('Multi-Term MFS with a mosaic is experimental')
+            ##casalog.post('Multi-Term MFS with a mosaic is experimental')
             raise Exception('msmfs (nterms>1) not allowed with imagermode=' + imagermode + '. For now, msmfs automatically performs cs-clean type iterations')
         if (multifield): 
                 addMultiField = True;
@@ -3533,3 +3550,82 @@ def convert_numpydtype(listobj):
       temparr = listobj
       return temparr
     return temparr.tolist()
+
+def get_func_params(func, loc_vars):
+    """ returns a dictionary of parameter name:vale for all the parameters of a function
+
+    :param func: function object (for example a task function)
+    :param loc_vars: locals() from inside the function.
+    """
+    param_names = func.__code__.co_varnames[:func.__code__.co_argcount]
+    params = [(name, loc_vars[name]) for name in param_names]
+    return params
+
+def write_tclean_history(imagename, tname, params, clog):
+        """
+        Update image/logtable with the taskname, CASA version and all task parameters
+        CASR-571. Replicates the same format as mstools.write_history.
+
+        :param imagename: imagename prefi as used in tclean
+        :param tname: task name to use as origin of the history
+        :param params: list of task parameters as a tuple (name, value)
+        :param clog: casa log object
+        """
+
+        def filter_img_names(img_exts):
+            """
+            Applies name (extension) exclusions to not try to open tclean outputs files
+            and/or leftovers that are not images (even if they share the same name as the
+            proper images).
+
+            Some of the files excluded here can cause spurious messages (image tool will
+            print a SEVERE error to the log when open fails) if for example while running
+            several test cases one of them fails or misbehaves leaving temporary files
+            behind.
+
+            :param img_exts: list of image names (different extensions)
+            :returns: list of image names after filtering out undesired ones
+            """
+            accept = []
+            regex = re.compile(imagename + '[0-9]*_?[0-9]*\..+')
+            for img in img_exts:
+                if img.endswith(('.cf', '.cfcache', '.workdirectory', '.work.temp', '.txt')):
+                    continue
+
+                # ensure only 'imgname' + optional integer + .*
+                res = re.match(regex, img)
+                if res:
+                    accept.append(img)
+            return accept
+
+        iat = iatool()
+
+        img_exts = glob.glob(imagename + '*.*')
+        img_exts = filter_img_names(img_exts)
+        clog.post("Writing history into these images: {}".format(img_exts))
+
+        history = ['taskname={0}'.format(tname)]
+        history.append(_casa_version_string())
+        # Add all task arguments.
+        for name, val in params:#range(len(param_names)):
+            msg = "%-11s = " % name
+            if type(val) == str:
+                msg += '"'
+            msg += str(val)
+            if type(val) == str:
+                msg += '"'
+            history.append(msg)
+
+        for img in img_exts:
+            iat_open = False
+            try:
+                iat.open(img)
+                iat_open = True
+                iat.sethistory(origin=tname, history=history)
+            except RuntimeError:
+                clog.post('Could not open this directory as an image to write history: {}'.
+                          format(img), 'DEBUG')
+            finally:
+                if iat_open:
+                    iat.close()
+        iat.done()

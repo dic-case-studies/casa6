@@ -126,7 +126,7 @@ TEST( CalSolVi2Organizer , BasicCalSolveLayerTest ) {
       }
 
       ASSERT_EQ(4,vb->nAntennas());
-      ASSERT_EQ(6,vb->nRows());
+      ASSERT_EQ(6U,vb->nRows());
       ASSERT_EQ(1,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(testA1A2(vb->antenna1(),vb->antenna2(),vb->nAntennas(),False));
@@ -176,7 +176,7 @@ TEST( CalSolVi2Organizer , VECalSolveLayerTest ) {
   // The VI2 for solving:
   CalSolVi2Organizer vi2org;
   vi2org.addSimIO(ss);
-  vi2org.addCalForSolving(ve);
+  vi2org.addCalForSolving(ve,false);
 
   Int nSol;
   Vector<Int> nChunkPerSol;
@@ -219,7 +219,7 @@ TEST( CalSolVi2Organizer , VECalSolveLayerTest ) {
       }
 
       ASSERT_EQ(4,vb->nAntennas());
-      ASSERT_EQ(6,vb->nRows());
+      ASSERT_EQ(6U,vb->nRows());
       ASSERT_EQ(1,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(testA1A2(vb->antenna1(),vb->antenna2(),vb->nAntennas(),False));
@@ -695,7 +695,7 @@ TEST( CalSolVi2Organizer , PartialTimeFreqAvedCalSolveTest ) {
   // The VI2 for solving:
   CalSolVi2Organizer vi2org;
   vi2org.addSimIO(s1);
-  vi2org.addCalForSolving(ve);
+  vi2org.addCalForSolving(ve,false);
   vi2org.addChanAve(chanbin);
   vi2org.addTimeAve(timebin);
 
@@ -736,7 +736,7 @@ TEST( CalSolVi2Organizer , PartialTimeFreqAvedCalSolveTest ) {
       }
 
       ASSERT_EQ(nAnt,vb->nAntennas());
-      ASSERT_EQ(nAnt*(nAnt-1)/2,vb->nRows());
+      ASSERT_EQ((rownr_t)(nAnt*(nAnt-1)/2),vb->nRows());
       ASSERT_EQ(pAveFactor,vb->nChannels());
       ASSERT_EQ(4,vb->nCorrelations());
       ASSERT_TRUE(testA1A2(vb->antenna1(),vb->antenna2(),nAnt,False));

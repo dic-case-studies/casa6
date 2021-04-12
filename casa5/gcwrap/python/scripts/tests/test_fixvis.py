@@ -24,7 +24,7 @@ else:
     _qa = qa
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 '''
@@ -37,6 +37,7 @@ Features tested:
 
 Note: The equinox_vis regression is a more general test of fixvis.
 '''
+datapath = ctsys_resolve('unittest/fixvis/')
 inpms = '0420+417.ms'
 outms = 'output.ms'
 inpms2 = 'twocenteredpointsources.ms'
@@ -46,9 +47,9 @@ class fixvis_test1(unittest.TestCase):
     def setUp(self):
         res = None
         if not os.path.exists(inpms):
-            shutil.copytree(ctsys_resolve(os.path.join('regression/0420+417',inpms)), inpms)
+            shutil.copytree(os.path.join(datapath,inpms),inpms)
         if not os.path.exists(inpms2):
-            shutil.copytree(ctsys_resolve(os.path.join('regression/unittest/fixvis',inpms2)), inpms2)
+            shutil.copytree(os.path.join(datapath,inpms2),inpms2)
         if not is_CASA6:
             default(fixvis)
         shutil.rmtree(outms, ignore_errors=True)
@@ -66,29 +67,21 @@ class fixvis_test1(unittest.TestCase):
         shutil.rmtree(outms2, ignore_errors=True)
         mystats = ''
         try:
-            self.res = fixvis(inpms2, outms2, field='0', refcode=refcode,
-                              phasecenter=phasecent, distances=dist)
-            self.assertTrue(self.res)
+            fixvis(inpms2, outms2, field='0', refcode=refcode,
+                   phasecenter=phasecent, distances=dist)
             mystats = self._get_stats(0, 'testy')
-        except Exception as e:
-            print("*** Unexpected error *** %s" % e)
+        except Exception as exc:
+            self.fail("*** Unexpected error *** {}".format(exc))
 
         return mystats
 
     def _get_stats(self, fld, imgname):
         os.system('rm -rf ' + imgname + '*')
-        # CASA5 version uses clean, CASA6 uses tclean
-        if is_CASA6:
-            tclean( vis=outms2, imagename=imgname, field=str(fld), threshold='0.1mJy',
-                    deconvolver='clark', gridder='standard', mask='user', imsize=[128,128],
-                    cell=['0.10000008arcsec','0.10000008arcsec'], weighting='natural',
-                    uvtaper=[] )
-        else:
-            clean(vis=outms2, imagename=imgname, field=str(fld), niter=10, threshold='0.1mJy',
-                  psfmode='clark', imagermode='csclean', ftmachine='ft', mask=True,
-                  imsize=[128, 128], cell=['0.100000080arcsec', '0.100000080arcsec'],
-                  weighting='natural', uvtaper=True,
-                  outertaper=[''], innertaper=[])
+
+        tclean( vis=outms2, imagename=imgname, field=str(fld), threshold='0.1mJy',
+                deconvolver='clark', gridder='standard', mask='user', imsize=[128,128],
+                cell=['0.10000008arcsec','0.10000008arcsec'], weighting='natural',
+                uvtaper=[] )
         return imstat(imgname + '.image')
 
     def test1(self):
@@ -144,61 +137,41 @@ class fixvis_test1(unittest.TestCase):
         shutil.rmtree(outms2, ignore_errors=True)
 
         mystats = self._fixvis_and_get_stats('J2000 18h00m02.3092s -29d59m29.9987s')
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue( mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
-                             (mystats['maxpos'] == [64, 64, 0, 0]).all( ) )
-        else:
-            self.assertTrue(mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats['maxpos'] == [64, 64, 0, 0]).all())
+
+        self.assertTrue( mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
+                         (mystats['maxpos'] == [64, 64, 0, 0]).all( ) )
 
     def test3(self):
         '''Test3: Apply positive phase center shift along DEC.'''
         refcode = 'J2000'
         shutil.rmtree(outms2, ignore_errors=True)
         mystats = self._fixvis_and_get_stats('J2000 18h00m02.3092s -29d59m26.9987s')
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue( mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
-                             (mystats['maxpos'] == [64,34,0,0]).all() )
-        else:
-            self.assertTrue(mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats['maxpos'] == [64,34,0,0]).all())
+
+        self.assertTrue( mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
+                         (mystats['maxpos'] == [64,34,0,0]).all() )
 
     def test4(self):
         '''Test4: Apply negative phase center shift along DEC using offset syntax.'''
         refcode = 'J2000'
         shutil.rmtree(outms2, ignore_errors=True)
         mystats = self._fixvis_and_get_stats('0h -0d0m3s')
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue( mystats['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
-                             (mystats['maxpos']==[64,94,0,0]).all() )
-        else:
-            self.assertTrue(mystats['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats['maxpos']==[64,94,0,0]).all())
+
+        self.assertTrue( mystats['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
+                         (mystats['maxpos']==[64,94,0,0]).all() )
 
     def test5(self):
         '''Test5: Apply positive phase center shift along RA.'''
         mystats = self._fixvis_and_get_stats('J2000 18h00m02.5401s -29d59m29.9987s')
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue(mystats['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats['maxpos']==[94,64,0,0]).all())
-        else:
-            self.assertTrue(mystats['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats['maxpos']==[94,64,0,0]).all())
+
+        self.assertTrue(mystats['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats['maxpos']==[94,64,0,0]).all())
 
     def test6(self):
         '''Test6: Apply negative phase shift along RA using offset syntax (offset is an angle).'''
         mystats = self._fixvis_and_get_stats('-0d0m3s 0deg')
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue(mystats['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats['maxpos']==[34,64,0,0]).all())
-        else:
-            self.assertTrue(mystats['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats['maxpos']==[34,64,0,0]).all())
+
+        self.assertTrue(mystats['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats['maxpos']==[34,64,0,0]).all())
 
     def test7(self):
         '''Test7: Apply negative phase shift along RA in field 1 (using offset syntax, offset is a time), no shift in field 0.'''
@@ -212,26 +185,19 @@ class fixvis_test1(unittest.TestCase):
             x = _qa.div(_qa.quantity(-3./3600., 'deg'),
                        _qa.cos(_qa.quantity(31.,'deg')))['value']*24./360.*3600. # (seconds)
             phc = str(x) + 's 0deg'
-            self.res = fixvis(vis=outms2, outputvis=outms2, field='1', refcode=refcode,
+            fixvis(vis=outms2, outputvis=outms2, field='1', refcode=refcode,
                               phasecenter=phc, datacolumn='all')
-            self.assertTrue(self.res)
+
             mystats0 = self._get_stats(0, 'testy')
             mystats1 = self._get_stats(1, 'testz')
         except:
             print("*** Unexpected error ***")
             self.assertFalse(True)
                                              
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue(mystats0['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats0['maxpos']==[64,64,0,0]).all() and
-                            mystats1['maxposf']=='18:00:02.333, -30.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats1['maxpos']==[34,64,0,0]).all())
-        else:
-            self.assertTrue(mystats0['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats0['maxpos']==[64,64,0,0]).all() and
-                            mystats1['maxposf']=='18:00:02.333, -30.59.29.999, I, 2.26e+11Hz' and
-                            (mystats1['maxpos']==[34,64,0,0]).all())
+        self.assertTrue(mystats0['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats0['maxpos']==[64,64,0,0]).all() and
+                        mystats1['maxposf']=='18:00:02.333, -30.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats1['maxpos']==[34,64,0,0]).all())
 
     def test8(self):
         '''Test8: Apply negative phase shift along RA in field 0 (using offset syntax, offset is a time), execise datacolumn par = corrected'''
@@ -245,22 +211,15 @@ class fixvis_test1(unittest.TestCase):
             x = _qa.div(_qa.quantity(-3./3600., 'deg'),
                        _qa.cos(_qa.quantity(31.,'deg')))['value']*24./360.*3600. # (seconds)
             phc = str(x) + 's 0deg'
-            self.res = fixvis(vis=outms2, outputvis=outms2, field='0', refcode=refcode,
-                              phasecenter=phc, datacolumn='DATA,CORRECTED')
-            self.assertTrue(self.res)
+            fixvis(vis=outms2, outputvis=outms2, field='0', refcode=refcode,
+                   phasecenter=phc, datacolumn='DATA,CORRECTED')
             mystats0 = self._get_stats(0, 'testy') 
 
-        except:
-            print("*** Unexpected error ***")
-            self.assertFalse(True)
+        except Exception as exc:
+            self.fail("*** Unexpected error ***: {}".format(exc))
 
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue(mystats0['maxposf']=='18:00:02.307, -29.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats0['maxpos']==[34,64,0,0]).all())
-        else:
-            self.assertTrue(mystats0['maxposf']=='18:00:02.307, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats0['maxpos']==[34,64,0,0]).all())
+        self.assertTrue(mystats0['maxposf']=='18:00:02.307, -29.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats0['maxpos']==[34,64,0,0]).all())
 
     def test9(self):
         '''Test9: Apply negative phase shift along RA in field 0 (using offset syntax, offset is a time), exercise datacolumn parameter.'''
@@ -274,24 +233,18 @@ class fixvis_test1(unittest.TestCase):
             x = _qa.div(_qa.quantity(-3./3600., 'deg'),
                        _qa.cos(_qa.quantity(31.,'deg')))['value']*24./360.*3600. # (seconds)
             phc = str(x) + 's 0deg'
-            self.res = fixvis(vis=outms2, outputvis=outms2, field='0', refcode=refcode,
-                              phasecenter=phc, datacolumn='DATA')
-            self.assertTrue(self.res)
+            fixvis(vis=outms2, outputvis=outms2, field='0', refcode=refcode,
+                   phasecenter=phc, datacolumn='DATA')
+
             mystats0 = self._get_stats(0, 'testy') # source should still be centered because CORRECTED was not changed
                                                    # but the phase center change affects the world coordinates anyway
 
-        except:
-            print("*** Unexpected error ***")
-            self.assertFalse(True)
+        except Exception as exc:
+            self.fail("*** Unexpected error ***: {}".format(exc))
 
 
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue(mystats0['maxposf']=='18:00:02.076, -29.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats0['maxpos']==[64,64,0,0]).all())
-        else:
-            self.assertTrue(mystats0['maxposf']=='18:00:02.076, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats0['maxpos']==[64,64,0,0]).all())
+        self.assertTrue(mystats0['maxposf']=='18:00:02.076, -29.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats0['maxpos']==[64,64,0,0]).all())
 
     def test10(self):
         '''Test10: exercise datacolumn parameter - non-existent data column with valid name'''
@@ -331,9 +284,8 @@ class fixvis_test1(unittest.TestCase):
             shutil.rmtree('test9tmp.ms', ignore_errors=True)
             split(vis=outms2, outputvis='test9tmp.ms', datacolumn='corrected')
             shutil.rmtree(outms2)
-            self.res = fixvis(vis='test9tmp.ms', outputvis=outms2, field='1', refcode=refcode,
-                              phasecenter=phc, datacolumn='DATA')
-            self.assertTrue(self.res)
+            fixvis(vis='test9tmp.ms', outputvis=outms2, field='1', refcode=refcode,
+                   phasecenter=phc, datacolumn='DATA')
             
             mystats0 = self._get_stats(0, 'testy')
             mystats1 = self._get_stats(1, 'testz')
@@ -342,17 +294,10 @@ class fixvis_test1(unittest.TestCase):
             print("*** Unexpected error ***")
             self.assertFalse(True)
 
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue(mystats0['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats0['maxpos']==[64,64,0,0]).all() and
-                            mystats1['maxposf']=='18:00:02.333, -30.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats1['maxpos']==[34,64,0,0]).all())
-        else:
-            self.assertTrue(mystats0['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats0['maxpos']==[64,64,0,0]).all() and
-                            mystats1['maxposf']=='18:00:02.333, -30.59.29.999, I, 2.26e+11Hz' and
-                            (mystats1['maxpos']==[34,64,0,0]).all())
+        self.assertTrue(mystats0['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats0['maxpos']==[64,64,0,0]).all() and
+                        mystats1['maxposf']=='18:00:02.333, -30.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats1['maxpos']==[34,64,0,0]).all())
 
     def test12(self):
         '''Test12: Apply negative phase shift along RA in field 1 (using offset syntax, offset is a time) w/o scratch columns'''
@@ -369,28 +314,19 @@ class fixvis_test1(unittest.TestCase):
             shutil.rmtree('test9tmp.ms', ignore_errors=True)
             split(vis=outms2, outputvis='test9tmp.ms', datacolumn='corrected')
             shutil.rmtree(outms2)
-            self.res = fixvis(vis='test9tmp.ms', outputvis=outms2, field='1', refcode=refcode,
-                              phasecenter=phc)
-            self.assertTrue(self.res)
+            fixvis(vis='test9tmp.ms', outputvis=outms2, field='1', refcode=refcode,
+                   phasecenter=phc)
             
             mystats0 = self._get_stats(0, 'testy')
             mystats1 = self._get_stats(1, 'testz')
             
-        except:
-            print("*** Unexpected error ***")
-            self.assertFalse(True)
+        except Exception as exc:
+            self.fail("*** Unexpected error ***: {}".format(exc))
 
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue(mystats0['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats0['maxpos']==[64,64,0,0]).all() and
-                            mystats1['maxposf']=='18:00:02.333, -30.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats1['maxpos']==[34,64,0,0]).all())
-        else:
-            self.assertTrue(mystats0['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats0['maxpos']==[64,64,0,0]).all() and
-                            mystats1['maxposf']=='18:00:02.333, -30.59.29.999, I, 2.26e+11Hz' and
-                            (mystats1['maxpos']==[34,64,0,0]).all())
+        self.assertTrue(mystats0['maxposf']=='18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats0['maxpos']==[64,64,0,0]).all() and
+                        mystats1['maxposf']=='18:00:02.333, -30.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats1['maxpos']==[34,64,0,0]).all())
 
 
     def test13(self):
@@ -402,29 +338,21 @@ class fixvis_test1(unittest.TestCase):
 
         mystats = ''
         try:
-            self.res = fixvis(inpms2, outms3, field='0', refcode=refcode,
-                              phasecenter='J2000 18h00m02.3092s -29d49m29.9987s') # 10 arcmin off
-            self.assertTrue(self.res)
+            fixvis(inpms2, outms3, field='0', refcode=refcode,
+                   phasecenter='J2000 18h00m02.3092s -29d49m29.9987s') # 10 arcmin off
             
-            self.res = fixvis(outms3, outms2, field='0', refcode=refcode,
-                              phasecenter='J2000 18h00m02.3092s -29d59m29.9987s') # == original pos.
-            self.assertTrue(self.res)
+            fixvis(outms3, outms2, field='0', refcode=refcode,
+                   phasecenter='J2000 18h00m02.3092s -29d59m29.9987s') # == original pos.
             
             mystats = self._get_stats(0, 'testy')
             shutil.rmtree(outms3, ignore_errors=True)
-        except:
-            print("*** Unexpected error ***")
+        except Exception as exc:
+            self.fail("*** Unexpected error ***: {}".format(exc))
 
         mystats = self._fixvis_and_get_stats('J2000 18h00m02.3092s -29d59m29.9987s')
 
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue(mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats['maxpos'] == [64, 64, 0, 0]).all())
-        else:
-            self.assertTrue(mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats['maxpos'] == [64, 64, 0, 0]).all())
-
+        self.assertTrue(mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats['maxpos'] == [64, 64, 0, 0]).all())
 
 
     ## def test_obs_pc(self):
@@ -443,13 +371,8 @@ class fixvis_test1(unittest.TestCase):
 
         mystats = self._fixvis_and_get_stats('J2000 18h00m02.3092s -29d59m29.9987s', ['100AU'])
 
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue(mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats['maxpos'] == [64, 64, 0, 0]).all())
-        else:
-            self.assertTrue(mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats['maxpos'] == [64, 64, 0, 0]).all())
+        self.assertTrue(mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats['maxpos'] == [64, 64, 0, 0]).all())
 
     def test15(self):
         '''Test15: Apply trivial phase center shift, i.e. none, and use distances (str) parameter to refocus.'''
@@ -458,13 +381,8 @@ class fixvis_test1(unittest.TestCase):
 
         mystats = self._fixvis_and_get_stats('J2000 18h00m02.3092s -29d59m29.9987s', '100AU')
 
-        # CASA5 and CASA6 differences - due to tclean vs clean?
-        if is_CASA6:
-            self.assertTrue(mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
-                            (mystats['maxpos'] == [64, 64, 0, 0]).all())
-        else:
-            self.assertTrue(mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.26e+11Hz' and
-                            (mystats['maxpos'] == [64, 64, 0, 0]).all())
+        self.assertTrue(mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
+                        (mystats['maxpos'] == [64, 64, 0, 0]).all())
 
 def suite():
     return [fixvis_test1]        

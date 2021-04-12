@@ -31,6 +31,7 @@
 
 #include <casacore/casa/aips.h>
 #include <msvis/MSVis/statistics/Vi2StatsDataIterator.h>
+#include <casa/BasicSL/Complex.h>
 
 namespace casa {
 

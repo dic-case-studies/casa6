@@ -40,8 +40,6 @@
 
 namespace casacore{
 
-	template <class T> class Array;
-	class IPosition;
 	class Record;
 }
 

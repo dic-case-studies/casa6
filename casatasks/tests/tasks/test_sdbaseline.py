@@ -7,8 +7,6 @@ import shutil
 import numpy
 import unittest
 from numpy import array
-#
-#import listing
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -17,8 +15,7 @@ if is_CASA6:
     from casatasks.private.sdutil import tbmanager
 
     ### for selection_syntax import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import selection_syntax
+    from casatestutils import selection_syntax
 
     tb = table( )
 
@@ -36,13 +33,14 @@ else:
     # the global tb tool is used here as is
 
     try:
-        from . import selection_syntax
+        from casatestutils import selection_syntax
     except:
         import tests.selection_syntax as selection_syntax
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
+
 
 ### Utilities for reading blparam file
 class FileReader(object):
@@ -68,6 +66,7 @@ class FileReader(object):
 
     def getline(self, idx):
         return self.__data[idx]
+
 
 class BlparamFileParser(FileReader):
     def __init__(self, blfile):
@@ -145,23 +144,60 @@ class BlparamFileParser(FileReader):
     def __parseRms(self, idx):
         return parseRms(self.getline(idx))
 
+
 def parseCoeff(txt):
     clist = txt.rstrip('\n').split(',')
     ret = []
     for c in clist:
         ret.append(float(c.split('=')[1]))
     return ret
-    
+
+
 def parseRms(txt):
     t = txt.lstrip().rstrip('\n')[6:]
     return float(t)
+
+
+def remove_single_file_dir(filename):
+    """
+    Remove a single file or a single directory.
+    For filename, '.' and those end with '..' (namely, '..', '../..' etc.)
+    are not allowed.
+    """
+    if filename == '.' or filename[-2:] == '..':
+        raise Exception("Caution! Attempting to remove '" + filename + "'!!")
+    
+    if os.path.exists(filename):
+        if os.path.isdir(filename):
+            shutil.rmtree(filename)
+        else: # file or symlink
+            os.remove(filename)
+
+
+def remove_files_dirs(filename):
+    """
+    Remove files/directories/symlinks 'filename*'.
+    For filename, '', '.' and those end with '..' (namely, '..', '../..' etc.)
+    are not allowed.
+    """
+    if filename == '.' or filename[-2:] == '..':
+        raise Exception("Caution! Attempting to remove '" + filename + "*'!!")
+    elif filename == '':
+        raise Exception("The parameter 'filename' must not be a null string.")
+    
+    import glob
+    filenames = glob.glob('{}*'.format(filename.rstrip('/')))
+
+    for filename in filenames:
+        remove_single_file_dir(filename)
+
 
 class sdbaseline_unittest_base(unittest.TestCase):
     """
     Base class for sdbaseline unit test
     """
     # Data path of input/output
-    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
+    datapath = ctsys_resolve('unittest/sdbaseline/')
     taskname = "sdbaseline"
     verboselog = False
 
@@ -233,11 +269,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
         Remove a list of files and directories from disk
         """
         for name in names:
-            if os.path.exists(name):
-                if os.path.isdir(name):
-                    shutil.rmtree(name)
-                else:
-                    os.remove(name)
+            remove_single_file_dir(name)
 
     def _copy(self, names, from_dir=None, dest_dir=None):
         """
@@ -573,6 +605,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
     test004 --- sinusoidal baselining with no mask (maskmode = 'list'). spw and pol specified.
     test050 --- existing file as outfile with overwrite=False (raises an exception)
     test051 --- no data after selection (raises an exception)
+    test060 --- blparam file (infile+'_blparam.txt') should be removed if it exists
 
     Note: The input data 'OrionS_rawACSmod_calave.ms' is generated
           from a single dish regression data 'OrionS_rawACSmod' as follows:
@@ -764,16 +797,16 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         tb.close()
         variance_orig_pol1 = numpy.var(orig_pol1_value)
         
-        #open the MS after sdbaseline
+        # open the MS after sdbaseline
         tb.open(outfile)
         pol1_value = numpy.array(tb.getcell('FLOAT_DATA', 0)[out_pol,:])
         tb.close()
         variance_pol1 = numpy.var(pol1_value)
 
-        #assert pol1_value < orig_pol1_value
+        # assert pol1_value < orig_pol1_value
         self.assertTrue((pol1_value<orig_pol1_value).all())
         
-        #assert variance of pol1_value < variance of orig_pol1_value
+        # assert variance of pol1_value < variance of orig_pol1_value
         self.assertLess(variance_pol1**0.5, variance_orig_pol1**0.5)
 
         #print '1sigma before cspline (pol1)', variance_orig_pol1**0.5 
@@ -806,6 +839,33 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
             sdbaseline(infile=infile, outfile=outfile, spw=spw, maskmode=mode)
         except Exception as e:
             self.assertIn('Spw Expression: No match found for 10,', str(e))
+
+    def test060(self):
+        """Basic Test 060: blparam file (infile+'_blparam.txt') should be removed if it exists"""
+        tid = '060'
+        infile = self.infile
+        outfile = self.outroot+tid+'.ms'
+        overwrite = False
+        datacolumn = 'float_data'
+
+        # First run
+        try:
+            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
+        except Exception as e:
+            print('first run failed')
+            raise e
+
+        # Keep blparam.txt, and remove outfile only
+        shutil.rmtree(outfile)
+        self.assertFalse(os.path.exists(outfile), msg='{} should not exist'.format(outfile))
+        blparamfile = infile + '_blparam.txt'
+        self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
+
+        # Second run, which must be successful
+        try:
+            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
+        except Exception as e:
+            raise e
 
 
 class sdbaseline_maskTest(sdbaseline_unittest_base):
@@ -2004,12 +2064,12 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 self.assertEqual(tb.getcell('FUNC_TYPE', irow)[ipol], self.ftype[blfunc])
                 self.assertEqual(tb.getcell('FUNC_PARAM', irow)[ipol], order)
                 ref = self._getStats(filename=outms, spw=str(irow), pol=str(ipol), mask=mask[irow])
-                #tolerance value in the next line is temporarily set a bit large 
-                #since rms in bltable is smaller than expected because it is
-                #calculated based on masklist currently stored in bltable, which 
-                #is after an extra clipping.
-                #this bug is already fixed in trunk of Sakura, so once libsakura
-                #is updated we can set smaller tolerance value. (2015/4/22 WK)
+                # tolerance value in the next line is temporarily set a bit large 
+                # since rms in bltable is smaller than expected because it is
+                # calculated based on masklist currently stored in bltable, which 
+                # is after an extra clipping.
+                # this bug is already fixed in trunk of Sakura, so once libsakura
+                # is updated we can set smaller tolerance value. (2015/4/22 WK)
                 self._checkValue(ref[0]['rms'], tb.getcell('RMS', irow)[ipol][0], 2.0e-2)
         tb.close()
 
@@ -2136,7 +2196,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         for i in range(len(blfunc)):
             for j in range(len(testmode)):
                 print('testing blfunc='+blfunc[i]+', testmode='+testmode[j]+'...')
-                #prepare input data
+                # prepare input data
                 if os.path.exists(infile):
                     shutil.rmtree(infile)
                 shutil.copytree(os.path.join(self.datapath,self.infile), infile)
@@ -2162,7 +2222,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                     nrow_bltable = tb.nrows()
                 self.assertTrue((nrow_bltable == nrow_data - 1), 
                                 msg="The baseline table is not shortened...")
-                #delete used data
+                # delete used data
                 if (os.path.exists(self.infile)):
                     shutil.rmtree(self.infile)
                 os.system('rm -rf '+self.outroot+'*')
@@ -2184,7 +2244,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         polval = ['', 'RR', 'LL']
         for j in range(len(testmode)):
             print('testing blfunc='+blfunc+', testmode='+testmode[j]+'...')
-            #prepare input data
+            # prepare input data
             if os.path.exists(self.infile):
                 shutil.rmtree(self.infile)
             shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
@@ -2211,7 +2271,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 nrow_bltable = tb.nrows()
             self.assertTrue((nrow_bltable == nrow_data - 1), 
                             msg="The baseline table is not shortened...")
-            #delete used data
+            # delete used data
             if (os.path.exists(self.infile)):
                 shutil.rmtree(self.infile)
             os.system('rm -rf '+self.outroot+'*')
@@ -2252,7 +2312,7 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
             shutil.rmtree(self.infile+ '_blparam.btable')
 
         
-        #create baseline table
+        # create baseline table
         blparam = self.outroot+'.blparam'
         self._createBlparamFile(blparam, self.blparam_order, self.blparam_dic, '')
         result = sdbaseline(infile=self.infile,datacolumn='float_data',
@@ -2574,7 +2634,7 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
 Basic unit tests for task sdbaseline. No interactive testing.
 
     List of tests:
-    #'poly'
+    # 'poly'
     test000 --- blformat=['csv','text','table'], bloutput=['test.csv','test.txt','test.table']
     test001 --- blformat=['text','csv','table'], bloutput=['test.txt','test.csv','test.table'] 
     test002 --- blformat=['table','text','csv'], bloutput=['test.table','test.txt','test.csv']
@@ -2591,7 +2651,7 @@ Basic unit tests for task sdbaseline. No interactive testing.
     test012 --- blformat='',                     bloutput='test.csv'
 
 
-    #'cspline'
+    # 'cspline'
     test016 --- blformat=['csv','text','table'], bloutput=['test.csv','test.txt','test.table']
     test017 --- blformat=['text','csv','table'], bloutput=['test.txt','test.csv','test.table'] 
     test018 --- blformat=['table','text','csv'], bloutput=['test.table','test.txt','test.csv']
@@ -2607,7 +2667,7 @@ Basic unit tests for task sdbaseline. No interactive testing.
     test028 --- blformat='',                     bloutput='test.csv'
 
 
-    #'variable'
+    # 'variable'
     test013 --- blformat=['csv','text','table'], bloutput=['test.csv','test.txt','test.table'] 
     test014 --- blformat=['table','text','csv'], bloutput=['test.table','','test.csv'] 
     test015 --- blformat=['table','text','csv'], bloutput=['test.table','test.txt','']
@@ -4484,7 +4544,7 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
     csplstat = {'rms': 0.20181625130943376, 'min': -0.42370939254760742,
                 'max': 2.0274257659912109, 'median': 0.0038695335388183594,
                 'stddev': 0.20181625130943376}
-#     sinustat = {'max': , 'min': , 'median': , 'rms': , 'stddev': }
+    #sinustat = {'max': , 'min': , 'median': , 'rms': , 'stddev': }
 
     def setUp(self):
         for prevout in glob.glob(self.outroot+'*'):
@@ -4603,7 +4663,7 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
 #         self.run_test(self.sinustat, spw=self.spw, edge=self.noedge, blfunc='sinusoid')
 
 class sdbaseline_selection(unittest.TestCase):
-    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
+    datapath = ctsys_resolve('unittest/sdbaseline/')
     infile = "analytic_type1.bl.ms"
     outfile = "baselined.ms"
     bloutfile = infile + "_blparam.txt"
@@ -4653,9 +4713,9 @@ class sdbaseline_selection(unittest.TestCase):
             raise ValueError("Invalid selection parameter %s" % key)
         pols = [0,1]
         rows = [0,1]
-        if key == 'pol':  #self.selection stores pol ids
+        if key == 'pol':  # self.selection stores pol ids
             pols = self.selections[key][1]
-        else: #self.selection stores row ids
+        else: # self.selection stores row ids
             rows = self.selections[key][1]
         return (rows, pols)
 
@@ -4698,7 +4758,7 @@ class sdbaseline_selection(unittest.TestCase):
         poltest = (sel_param == "pol")
         if dcol.startswith("float"):
             testcolumn = "FLOAT_DATA"
-        else: #output is in DATA column
+        else: # output is in DATA column
             testcolumn = "DATA"
         tb.open(msname)
         try:
@@ -4834,6 +4894,261 @@ class sdbaseline_selection(unittest.TestCase):
                 shutil.rmtree(outfile)
                 os.remove('%s_blparam.txt' % self.common_param['infile'])
 
+
+class sdbaseline_updateweightTest(sdbaseline_unittest_base):
+    """
+    Tests for updateweight=True
+    to confirm if WEIGHT_SPECTRUM column is removed
+    """
+
+    datapath = ctsys_resolve('unittest/sdbaseline/')
+    infile = 'uid___A002_X6218fb_X264.ms'
+    outroot = sdbaseline_unittest_base.taskname+'_updateweighttest'
+    outfile = outroot + '.ms'
+    params = {'infile': infile, 'outfile': outfile, 
+              'intent': 'OBSERVE_TARGET#ON_SOURCE', 
+              'spw': '9', 'datacolumn': 'data', 
+              'updateweight': True}
+
+    def setUp(self):
+        remove_files_dirs(self.infile)
+        shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
+        default(sdbaseline)
+
+    def tearDown(self):
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
+
+    def test000(self):
+        with tbmanager(self.infile) as tb:
+            colnames_in = tb.colnames()
+        infile_has_wspec = 'WEIGHT_SPECTRUM' in colnames_in
+        self.assertTrue(infile_has_wspec,
+                        msg='WEIGHT_SPECTRUM not found in the input data.')
+        
+        sdbaseline(**self.params)
+
+        with tbmanager(self.outfile) as tb:
+            colnames_out = tb.colnames()
+        outfile_no_wspec = 'WEIGHT_SPECTRUM' not in colnames_out
+        self.assertTrue(outfile_no_wspec,
+                        msg='WEIGHT_SPECTRUM is not removed.')
+
+
+class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
+    """
+    Tests for updateweight=True cases
+
+    test000 --- updateweight=False - WEIGHT column must not be updated
+    test010 --- updateweight=True, sigmavalue=default('stddev')
+    test011 --- updateweight=True, sigmavalue=default('stddev'), channels 4500~6500 flagged in input data
+    test012 --- updateweight=True, sigmavalue=default('stddev'), spw to flag channels 4500-6499
+    test020 --- updateweight=True, sigmavalue='stddev'
+    test021 --- updateweight=True, sigmavalue='stddev', channels 4500~6500 flagged in input data
+    test022 --- updateweight=True, sigmavalue='stddev', spw to flag channels 4500-6499
+    test030 --- updateweight=True, sigmavalue='rms'
+    test031 --- updateweight=True, sigmavalue='rms', channels 4500~6500 flagged in input data
+    test032 --- updateweight=True, sigmavalue='rms', spw to flag channels 4500-6499
+    test040 --- blfunc='variable'
+    test041 --- blfunc='variable', channels 4500~6500 flagged in input data
+    test042 --- blfunc='variable', spw to flag channels 4500-6499
+    test050 --- blmode='apply'
+    test051 --- blmode='apply', channels 4500~6500 flagged in input data
+    test052 --- blmode='apply', spw to flag channels 4500-6499
+    """
+
+    datapath = ctsys_resolve('unittest/sdbaseline/')
+    infile = 'analytic_order3_withoffset.ms'
+    outroot = sdbaseline_unittest_base.taskname + '_updateweighttest'
+    outfile = outroot + '.ms'
+    spw = '*:0~4499;6500~8191'
+    params = {'infile': infile, 'outfile': outfile, 
+              'intent': 'OBSERVE_TARGET#ON_SOURCE', 
+              'datacolumn': 'float_data'}
+
+    def init_params(self):
+        self.params['updateweight'] = True
+        for key in ['sigmavalue', 'spw',
+                    'blmode', 'blformat', 'bloutput',
+                    'bltable', 'blfunc', 'blparam']:
+            if key in self.params:
+                del self.params[key]
+
+    def _check_weight_identical(self):
+        with tbmanager(self.infile) as tb:
+            wgt_in = tb.getcol('WEIGHT')
+        with tbmanager(self.outfile) as tb:
+            wgt_out = tb.getcol('WEIGHT')
+        self.assertTrue(numpy.array_equal(wgt_in, wgt_out),
+                        msg='WEIGHT column is unexpectedly updated!')
+
+    def _check_weight_values(self, sigmavalue='stddev'):
+        """
+        Check if the values in the WEIGHT column are identical 
+        to those calculated per polarisation and per row 
+        as 1/(sigma(pol, row)^2), where sigma is 
+        - the standard deviation if sigmavalue is 'stddev', 
+          in which case sigma^2 is the variance, or
+        - the root mean square if sigmavalue is 'rms',
+          in which case sigma^2 is the mean square
+        calculated over all *valid* spectra
+        along the frequency channels axis of (pol, row).
+        Note that the values in the WEIGHT column should be
+        zero in case all channels are flagged.
+        """
+        with tbmanager(self.outfile) as tb:
+            wgt = tb.getcol('WEIGHT')
+            data = tb.getcol('FLOAT_DATA')
+            flag = tb.getcol('FLAG')
+            if 'spw' in self.params.keys():
+                flag[:, 4500:6500, :] = True
+
+        mdata = numpy.ma.masked_array(data, mask=flag)
+        if sigmavalue == 'stddev':
+            mwgt_ref = 1.0 / numpy.var(mdata, axis=1)
+        elif sigmavalue == 'rms':
+            mwgt_ref = 1.0 / numpy.mean(numpy.square(mdata), axis=1)
+        else:
+            raise ValueError("Illegal argument: sigmavalue={}: must be \
+                             'stddev' or 'rms'".format(sigmavalue))
+        wgt_ref = numpy.ma.filled(mwgt_ref, fill_value=0.0)
+
+        self.assertTrue(numpy.allclose(wgt, wgt_ref, rtol=1.0e-2, atol=1.0e-5))
+
+    def run_test(self):
+        sdbaseline(**self.params)
+
+        if self.params['updateweight']:
+            sigmavalue = self.params['sigmavalue'] if 'sigmavalue' in self.params else 'stddev'
+            self._check_weight_values(sigmavalue)
+        else:
+            self._check_weight_identical()
+
+    def write_param_file(self, param_file):
+        params = [[''] * 2 for i in range(2)]
+        params[0][0] = '0,0,,0,3.,false,,,,,poly,3,0,[]\n'
+        params[0][1] = '0,1,,0,3.,false,,,,,chebyshev,2,0,[]\n'
+        params[1][0] = '1,0,,0,3.,false,,,,,cspline,,1,[]\n'
+        params[1][1] = '1,1,,0,3.,false,,,,,cspline,,2,[]\n'
+
+        with open(param_file, mode='w') as f:
+            for irow in range(len(params)):
+                for ipol in range(len(params[0])):
+                    f.write(params[irow][ipol])
+
+    def add_mask(self):
+        # flag channels from 4500 to 6499 for each spectrum
+        with tbmanager(self.infile, nomodify=False) as tb:
+            flag = tb.getcol('FLAG')
+            for ipol in range(len(flag)):
+                for irow in range(len(flag[0][0])):
+                    for ichan in range(4500, 6500):
+                        flag[ipol][ichan][irow] = True
+            tb.putcol('FLAG', flag)
+
+    def setUp(self):
+        self.init_params()
+        remove_files_dirs(self.infile)
+        shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
+        default(sdbaseline)
+
+    def tearDown(self):
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
+
+    def test000(self):
+        self.params['updateweight'] = False
+        self.run_test()
+
+    def test010(self):
+        self.run_test()
+
+    def test011(self):
+        self.add_mask()
+        self.run_test()
+
+    def test012(self):
+        self.params['spw'] = self.spw
+        self.run_test()
+
+    def test020(self):
+        self.params['sigmavalue'] = 'stddev'
+        self.run_test()
+
+    def test021(self):
+        self.add_mask()
+        self.params['sigmavalue'] = 'stddev'
+        self.run_test()
+
+    def test022(self):
+        self.params['spw'] = self.spw
+        self.params['sigmavalue'] = 'stddev'
+        self.run_test()
+
+    def test030(self):
+        self.params['sigmavalue'] = 'rms'
+        self.run_test()
+
+    def test031(self):
+        self.add_mask()
+        self.params['sigmavalue'] = 'rms'
+        self.run_test()
+
+    def test032(self):
+        self.params['spw'] = self.spw
+        self.params['sigmavalue'] = 'rms'
+        self.run_test()
+
+    def test040(self):
+        self.params['blfunc'] = 'variable'
+        self.params['blparam'] = self.outroot + '_param.txt'
+        self.write_param_file(self.params['blparam'])
+        self.run_test()
+
+    def test041(self):
+        self.add_mask()
+        self.params['blfunc'] = 'variable'
+        self.params['blparam'] = self.outroot + '_param.txt'
+        self.write_param_file(self.params['blparam'])
+        self.run_test()
+
+    def test042(self):
+        self.params['spw'] = self.spw
+        self.params['blfunc'] = 'variable'
+        self.params['blparam'] = self.outroot + '_param.txt'
+        self.write_param_file(self.params['blparam'])
+        self.run_test()
+
+    def run_apply_test(self):
+        self.params['blformat'] = 'table'
+        bltable = self.infile + '.bltable'
+        self.params['bloutput'] = bltable
+        self.params['bltable'] = bltable
+
+        # make a baseline table
+        self.params['blmode'] = 'fit'
+        self.params['updateweight'] = False
+        sdbaseline(**self.params)
+        self._checkfile(bltable)
+        remove_single_file_dir(self.outfile)
+
+        # apply
+        self.params['blmode'] = 'apply'
+        self.params['updateweight'] = True
+        self.run_test()
+
+    def test050(self):
+        self.run_apply_test()
+
+    def test051(self):
+        self.add_mask()
+        self.run_apply_test()
+
+    def test052(self):
+        self.params['spw'] = self.spw
+        self.run_apply_test()
+
+
 def suite():
     return [sdbaseline_basicTest, 
             sdbaseline_maskTest,
@@ -4843,7 +5158,9 @@ def suite():
             sdbaseline_variableTest,
             sdbaseline_bloutputTest,
             sdbaseline_autoTest,
-            sdbaseline_selection
+            sdbaseline_selection,
+            sdbaseline_updateweightTest,
+            sdbaseline_updateweightTest2
             ]
 
 if is_CASA6:

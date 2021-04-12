@@ -36,74 +36,37 @@ except ImportError:
 
 import sys
 import os
-import testhelper as th
 import unittest
 import shutil
 import numpy as np
 import pylab as pl
 
+from casatestutils import testhelper as th
+
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/vla/gaincaltest2.ms')
-    compCal = casatools.ctsys.resolve('caltables/gaincaltest2.ms.G0')
-    tCal = casatools.ctsys.resolve('caltables/gaincaltest2.ms.T0')
-    # Reference Cals
-    combinedRef = casatools.ctsys.resolve('caltables/genDataCombine.G0')
-    preTRef = casatools.ctsys.resolve('caltables/genDataPreT.G0')
-    preGRef = casatools.ctsys.resolve('caltables/genDataPreG.T0')
-    calModeP = casatools.ctsys.resolve('caltables/calModeTest.G0')
-    calModeA = casatools.ctsys.resolve('caltables/calModeTest.G1')
-    typeCalK = casatools.ctsys.resolve('caltables/gaintypek.G0')
-    typeCalSpline = casatools.ctsys.resolve('caltables/gaintypeSpline.G0')
-    spwMapCal = casatools.ctsys.resolve('caltables/spwMap.G0')
-    # From merged test
-    merged_dataset1 = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms')
-    merged_refcal1 = casatools.ctsys.resolve('caltables/ngc5921.ref1a.gcal')
-    merged_refcal2 = casatools.ctsys.resolve('caltables/ngc5921.ref2a.gcal')
-    merged_dataset2 = casatools.ctsys.resolve('visibilities/vla/ngc4826.ms')
-    merged_refcal3 = casatools.ctsys.resolve('caltables/ngc4826.ref1b.gcal')
-    
+    rootpath = casatools.ctsys.resolve('unittest/gaincal/')
     
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/gaincaltest2.ms'
-        compCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/gaincaltest2.ms.G0'
-        tCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/gaincaltest2.ms.T0'
-        
-        combinedRef = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/genDataCombine.G0'
-        preTRef = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/genDataPreT.G0'
-        preGRef = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/genDataPreG.T0'
-        calModeP = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/calModeTest.G0'
-        calModeA = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/calModeTest.G1'
-        typeCalK = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/gaintypek.G0'
-        typeCalSpline = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/gaintypeSpline.G0'
-        spwMapCal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/spwMap.G0'
-        # From merged test
-        merged_dataset1 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms'
-        merged_refcal1 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.ref1a.gcal'
-        merged_refcal2 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc5921.ref2a.gcal'
-        merged_dataset2 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc4826.ms'
-        merged_refcal3 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngc4826.ref1b.gcal'
-        
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/gaincaltest2.ms'
-        compCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaincaltest2.ms.G0'
-        tCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaincaltest2.ms.T0'
-        
-        combinedRef = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/genDataCombine.G0'
-        preTRef = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/genDataPreT.G0'
-        preGRef = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/genDataPreG.T0'
-        calModeP = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/calModeTest.G0'
-        calModeA = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/calModeTest.G1'
-        typeCalK = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaintypek.G0'
-        typeCalSpline = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/gaintypeSpline.G0'
-        spwMapCal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/spwMap.G0'
-        # From merged test
-        merged_dataset1 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms/'
-        merged_refcal1 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.ref1a.gcal'
-        merged_refcal2 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc5921.ref2a.gcal'
-        merged_dataset2 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc4826.ms'
-        merged_refcal3 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngc4826.ref1b.gcal'
+    rootpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/gaincal/'
+
+datapath = rootpath + 'gaincaltest2.ms'
+compCal = rootpath + 'gaincaltest2.ms.G0'
+tCal = rootpath + 'gaincaltest2.ms.T0'
+# Reference Cals
+combinedRef = rootpath + 'genDataCombine.G0'
+preTRef = rootpath + 'genDataPreT.G0'
+preGRef = rootpath + 'genDataPreG.T0'
+calModeP = rootpath + 'calModeTest.G0'
+calModeA = rootpath + 'calModeTest.G1'
+typeCalK = rootpath + 'gaintypek.G0'
+typeCalSpline = rootpath + 'gaintypeSpline.G0'
+spwMapCal = rootpath + 'spwMap.G0'
+# From merged test
+merged_dataset1 = rootpath + 'ngc5921.ms'
+merged_refcal1 = rootpath + 'ngc5921.ref1a.gcal'
+merged_refcal2 = rootpath + 'ngc5921.ref2a.gcal'
+merged_dataset2 = rootpath + 'ngc4826.ms'
+merged_refcal3 = rootpath + 'ngc4826.ref1b.gcal'
         
         
 fullRangeCal = 'testgaincal.cal'
@@ -219,6 +182,12 @@ class gaincal_test(unittest.TestCase):
             
         if os.path.exists(tempCal2):
             shutil.rmtree(tempCal2)
+        if os.path.exists('testcorrdepflags.ms'):
+            shutil.rmtree('testcorrdepflags.ms')
+        if os.path.exists('testcorrdepflagsF.G'):
+            shutil.rmtree('testcorrdepflagsF.G')
+        if os.path.exists('testcorrdepflagsT.G'):
+            shutil.rmtree('testcorrdepflagsT.G')
 
         if os.path.exists('testspwmap.ms'):
             shutil.rmtree('testspwmap.ms')
@@ -474,7 +443,7 @@ class gaincal_test(unittest.TestCase):
         
     def test_gainTypeSpline(self):
         '''
-            test_gainTypeK
+            test_gainTypeSpline
             ----------------
             
             Check that the output with gaintype GSPLINE is equal to a reference calibration table
@@ -594,6 +563,118 @@ class gaincal_test(unittest.TestCase):
         
         self.assertTrue(th.compTables(tempCal, merged_refcal3, ['WEIGHT']))
 
+
+    def test_corrDepFlags(self):
+        '''
+            test_corrDepFlags
+            -----------------
+        '''
+
+
+        # This test exercises the corrdepflags parameter 
+        #
+        #  With corrdepflags=False (the default), one (or more) flagged correlations causes
+        #  all correlations (per channel, per baseline) to behave as flagged, thereby
+        #  causing both polarizations to be flagged in the output cal table
+        #
+        #  With corrdepflags=True, unflagged correlations will be used as normal, and
+        #  only the implicated polarization will be flagged in the output cal table
+        #
+        #  NB: when some data are flagged, we expect solutions to change slightly,
+        #      since available data is different.  For now, we are testing only the
+        #      resulting flags.
+
+        cdfdata='testcorrdepflags.ms'
+        # slice out just scan 2
+        mstransform(vis=datacopy,outputvis=cdfdata,scan='2',datacolumn='data')
+
+        # modify flags in interesting corr-dep ways in scan 2 for subset of antennas
+        tb.open(cdfdata,nomodify=False)
+
+        # we modify the flags as follows:
+        #  spw=0:  one antenna, one correlation (YY)
+        #  spw=1:  one antenna, one correlation (XX)
+        #  spw=2:  two antennas, opposite correlations
+        #  spw=3:  one antenna, both cross-hands flagged
+
+        # set flags for spw=0, antenna=3, corr=YY
+        st=tb.query('SCAN_NUMBER==2 && DATA_DESC_ID==0 && (ANTENNA1==3 || ANTENNA2==3)')
+        fl=st.getcol('FLAG')
+        fl[3,:,:]=True
+        st.putcol('FLAG',fl)
+        st.close()
+
+        # set flags for spw=1, antenna=6, corr=XX
+        st=tb.query('SCAN_NUMBER==2 && DATA_DESC_ID==1 && (ANTENNA1==6 || ANTENNA2==6)')
+        fl=st.getcol('FLAG')
+        fl[0,:,:]=True
+        st.putcol('FLAG',fl)
+        st.close()
+
+        # set flags for spw=2, antenna=2, corr=XX
+        st=tb.query('SCAN_NUMBER==2 && DATA_DESC_ID==2 && (ANTENNA1==2 || ANTENNA2==2)')
+        fl=st.getcol('FLAG')
+        fl[0,:,:]=True
+        st.putcol('FLAG',fl)
+        st.close()
+        # set flags for spw=2, antenna=7, corr=YY
+        st=tb.query('SCAN_NUMBER==2 && DATA_DESC_ID==2 && (ANTENNA1==7 || ANTENNA2==7)')
+        fl=st.getcol('FLAG')
+        fl[3,:,:]=True
+        st.putcol('FLAG',fl)
+        st.close()
+
+        # set flags for spw=3, antenna=8, corr=XY,YX
+        st=tb.query('SCAN_NUMBER==2 && DATA_DESC_ID==3 && (ANTENNA1==8 || ANTENNA2==8)')
+        fl=st.getcol('FLAG')
+        fl[1:3,:,:]=True
+        st.putcol('FLAG',fl)
+        st.close()
+        
+        tb.close()
+        
+        # Run gaincal on scan 2, solint='inf' with corrdepflags=False
+        #   expect both pols to be flagged for ants with one or more corr flagged
+        cdfF='testcorrdepflagsF.G'
+        gaincal(vis=cdfdata,caltable=cdfF,solint='inf',refant='0',smodel=[1,0,0,0],corrdepflags=False)
+
+        tb.open(cdfF)
+        flF=tb.getcol('FLAG')
+        tb.close()
+
+        # flag count per spw  (both pols in every case)
+        self.assertTrue(np.sum(flF[:,0,0:10])==2)    
+        self.assertTrue(np.sum(flF[:,0,10:20])==2)
+        self.assertTrue(np.sum(flF[:,0,20:30])==4)
+        self.assertTrue(np.sum(flF[:,0,30:40])==2)
+
+        # check flags set for specific antennas, each spw  (both pols each antenna)
+        self.assertTrue(np.all(flF[:,0,0:10][:,3]))        # spw 0
+        self.assertTrue(np.all(flF[:,0,10:20][:,6]))       # spw 1
+        self.assertTrue(np.all(flF[:,0,20:30][:,[2,7]]))   # spw 2
+        self.assertTrue(np.all(flF[:,0,30:40][:,8]))       # spw 3
+
+        # Run gaincal on scan 2, solint='inf' with corrdepflags=True
+        #   expect unflagged solutions for unflagged pol
+        cdfT='testcorrdepflagsT.G'
+        gaincal(vis=cdfdata,caltable=cdfT,solint='inf',refant='0',smodel=[1,0,0,0],corrdepflags=True)
+
+        tb.open(cdfT)
+        flT=tb.getcol('FLAG')
+        tb.close()
+
+        # flag count per spw (one pol per antenna, at most)
+        self.assertTrue(np.sum(flT[:,0,0:10])==1)
+        self.assertTrue(np.sum(flT[:,0,10:20])==1)
+        self.assertTrue(np.sum(flT[:,0,20:30])==2)
+        self.assertTrue(np.sum(flT[:,0,30:40])==0)
+
+        # check flags set for specific antennas, each spw (one pol per antenna, at most)
+        self.assertTrue(flT[1,0,0:10][3])        # spw 0, antenna 3, pol=Y
+        self.assertTrue(flT[0,0,10:20][6])       # spw 1, antenna 6, pol=X
+        self.assertTrue(flT[0,0,20:30][2])       # spw 2, antenna 2, pol=X
+        self.assertTrue(flT[1,0,20:30][7])       # spw 2, antenna 7, pol=Y
+        # (spw 3 tested above)
 
 def suite():
     return[gaincal_test]

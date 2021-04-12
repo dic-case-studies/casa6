@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import copy
 import numpy as np
@@ -61,8 +60,8 @@ def flagcmd(
 
     try:
         from xml.dom import minidom
-    except:
-        raise Exception( 'Failed to load xml.dom.minidom into python' )
+    except Exception as exc:
+        raise ImportError('Failed to load xml.dom.minidom into python: {}'.format(exc))
 
     casalog.origin('flagcmd')
 
@@ -79,7 +78,7 @@ def flagcmd(
         if (type(vis) == str) & os.path.exists(vis):
             aflocal.open(vis, ntime)
         else:
-            raise Exception( 'Visibility data set not found - please verify the name' )
+            raise ValueError( 'Visibility data set not found - please verify the name' )
 
         # Check if vis is a cal table:
         # typevis = 1 --> cal table
@@ -111,7 +110,7 @@ def flagcmd(
                         
             # Apply flag cmds
             if len(flagcmds.keys( )) == 0:
-                raise Exception( 'There are no unapplied flags in the input. '\
+                raise RuntimeError( 'There are no unapplied flags in the input. '\
                                  'Set useapplied=True to also use the previously-applied flags.' )
             
             # List flags on the screen/logger
@@ -126,7 +125,7 @@ def flagcmd(
             # Save the flag cmds to an output file
             if savepars:
                 if not overwrite and os.path.exists(outfile):
-                    raise Exception( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
+                    raise ValueError( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
                     
                 fh.writeFlagCommands(vis, flagcmds, False, '', outfile, False)
                                                                 
@@ -164,7 +163,7 @@ def flagcmd(
                 else:
                     casalog.post('Safety Mode: you chose not to set clearall=True, no action'
                                  )
-                return True
+                return
             
             elif inpmode == 'table':
     
@@ -226,8 +225,7 @@ def flagcmd(
                     casalog.post('%s'%myflagcmd,'DEBUG1')
                                                                                             
                 except Exception as instance:
-                    casalog.post('%s'%instance,'ERROR')
-                    raise Exception( 'Error reading the input list ' )
+                    raise Exception( 'Error reading the input list: {} '.format(instance))
                 
     
             elif inpmode == 'xml':
@@ -247,8 +245,8 @@ def flagcmd(
                 # Actually parse table. Fail if Flag.xml or Antenna.xml is not found
                 try:
                     myflags = fh.parseXML(flagtable, mytbuff=tbuff)            
-                except:
-                    raise Exception
+                except Exception as exc:
+                    raise RuntimeError('Error while parsing XML: {}'.format(exc))
     
                 casalog.post('%s' % myflags, 'DEBUG')
     
@@ -262,12 +260,12 @@ def flagcmd(
                 listmode = 'xml'
                 
             else:
-                raise Exception( 'Input type is not supported' )
+                raise ValueError( 'Input type is not supported' )
 
             # Before performing any action on the flag cmds, check them! 
             vrows = list(myflagcmd.keys())
             if len(vrows) == 0:
-                raise Exception( 'There are no unapplied flags in the input. Set useapplied=True to also use the previously-applied flags.' )
+                raise RuntimeError( 'There are no unapplied flags in the input. Set useapplied=True to also use the previously-applied flags.' )
             else:
                 casalog.post('Read ' + str(len(vrows))
                              + ' lines from input')
@@ -297,7 +295,7 @@ def flagcmd(
                             fh.writeFlagCommands(vis, myflagcmd, False, 
                                                  '', '', True)
                     elif not overwrite and os.path.exists(outfile):
-                        raise Exception( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
+                        raise RuntimeError( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
 
                     else:
                         casalog.post('Saving commands to ' + outfile)
@@ -374,7 +372,7 @@ def flagcmd(
                                     myval=apply, myrowlist=vrows)
 
                         if not overwrite and os.path.exists(outfile):
-                            raise Exception( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
+                            raise RuntimeError( 'You have set overwrite to False. Remove %s before saving the flag commands'%outfile )
 
                         else:
                             casalog.post('Saving commands to file '+ outfile)
@@ -394,10 +392,8 @@ def flagcmd(
                     casalog.post('Warning: will only reliably plot individual per-antenna flags'
                                  )
                     fns = newplotflags(myflagcmd, plotfile, t1sdata, t2sdata)
-                    if fns:
-                        return {'plotfiles': fns}
-                    else:
-                        return True
+                    return {'plotfiles': fns}
+
                 else:
                     casalog.post('Warning: empty flag dictionary, nothing to plot'
                                  )
@@ -416,34 +412,26 @@ def flagcmd(
                 return outdict
             
     
-    except Exception as instance:
-
+    finally:
         aflocal.done()
-        casalog.post('%s' % instance, 'ERROR')
-        raise
-#        return False
         
     # Write history only to action='apply' or 'unapply'
-    else:
-        # write history
-        if not iscal and (action == 'apply' or action == 'unapply'):
-            retval = True
-            try:
-                param_names = flagcmd.__code__.co_varnames[:flagcmd.__code__.co_argcount]
-                if is_python3:
-                    vars = locals( )
-                    param_vals = [vars[p] for p in param_names]
-                else:
-                    param_vals = [eval(p) for p in param_names]
+    # write history
+    if not iscal and (action == 'apply' or action == 'unapply'):
+        try:
+            param_names = flagcmd.__code__.co_varnames[:flagcmd.__code__.co_argcount]
+            if is_python3:
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
 
-                retval &= write_history(mslocal, vis, 'flagcmd', param_names,
-                                        param_vals, casalog)
-                
-            except Exception as instance:
-                casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
-                             'WARN')
+            write_history(mslocal, vis, 'flagcmd', param_names,
+                          param_vals, casalog)
 
-    return True
+        except Exception as instance:
+            casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
+                         'WARN')
 
 
 # ************************************************************************
@@ -643,7 +631,7 @@ def readFromCmd(cmdlist, ms_startmjds, ms_endmjds):
                 try:
                     (xkey, val) = keyv.split('=')
                 except:
-                    print('Not a key=val pair: ' + keyv)
+                    casalog.post('Not a key=val pair: ' + keyv, 'WARN')
                     break
                 xval = val
                 # Use eval to deal with conversion from string
@@ -679,13 +667,12 @@ def readFromCmd(cmdlist, ms_startmjds, ms_endmjds):
                             (startstr, endstr) = timstr.split('~')
                         except:
                             if timstr.count('~') == 0:
-                            # print('Assuming a single start time ')
+                            # casalog.post('Assuming a single start time ')
                                 startstr = timstr
                                 endstr = timstr
                             else:
-                                print('Not a start~end range: ' + timstr)
-                                print("ERROR: too may ~'s ")
-                                raise Exception( 'Error parsing ' + timstr )
+                                raise Exception("too may ~'s. Not a start~end range. Error "
+                                                "parsing " + timstr )
                         t = qalocal.totime(startstr)
                         starts = qalocal.convert(t, 's')
                         if starts['value'] < 1.E6:
@@ -849,7 +836,7 @@ def readFromFile(
                 try:
                     (xkey, val) = keyv.split('=')
                 except:
-                    print('Not a key=val pair: ' + keyv)
+                    casalog.post('Not a key=val pair: ' + keyv, "WARN")
                     break
                 xval = val
                 # Use eval to deal with conversion from string
@@ -886,13 +873,12 @@ def readFromFile(
                             (startstr, endstr) = timstr.split('~')
                         except:
                             if timstr.count('~') == 0:
-                            # print('Assuming a single start time ')
+                            # casalog.post('Assuming a single start time ')
                                 startstr = timstr
                                 endstr = timstr
                             else:
-                                print('Not a start~end range: ' + timstr)
-                                print("ERROR: too may ~'s ")
-                                raise Exception( 'Error parsing ' + timstr )
+                                raise Exception( "too may ~'s. Not a start~end range. Error "
+                                                 "parsing " + timstr )
                         t = qalocal.totime(startstr)
                         starts = qalocal.convert(t, 's')
                         if starts['value'] < 1.E6:
@@ -1038,10 +1024,9 @@ def listFlagCommands(myflags=None, listmode=''):
             'Applied',
             'Command'
             )
-        print(phdr)
+        casalog.post(phdr)
         mydash=80*'-'
-        print('%-80s'%mydash)
-#        casalog.post(phdr)
+        casalog.post('%-80s'%mydash)
         for k in myflags.keys():
 #            time = myflags[k]['TIME']
             row = myflags[k]['id']
@@ -1058,18 +1043,16 @@ def listFlagCommands(myflags=None, listmode=''):
                     val = cmdstr
                 cmdline = cmdline + key + '=' + str(val) + ' '
             
-            # Print to screen
+            # Print to logger
             pstr = '%-8s %-32s %-7s %s' % (
                 row, reason,applied,cmdline)
-            print(pstr)
-#            casalog.post(pstr)
+            casalog.post(pstr)
 
     elif listmode == 'list':
         phdr = '%-8s %-32s %s' % ('Key', 'Reason', 'Command')
-        print(phdr)
+        casalog.post(phdr)
         mydash=80*'-'
-        print('%-80s'%mydash)
-#        casalog.post(phdr)
+        casalog.post('%-80s'%mydash)
         for k in myflags.keys():
             cmddict = myflags[k]['command']
             reason = myflags[k]['reason']
@@ -1085,19 +1068,16 @@ def listFlagCommands(myflags=None, listmode=''):
                     val = cmdstr
                 cmdline = cmdline + key + '=' + str(val) + ' '
             
-            # Print to screen
+            # Print to logger
             pstr = '%-8s %-32s %s' % (k, reason, cmdline)
-            print(pstr)
-#            casalog.post(pstr)
+            casalog.post(pstr)
             
     elif listmode == 'xml':
         phdr = '%-8s %-8s %-48s %-32s' % ('Key', 'Antenna',
                 'Timerange', 'Reason')
-        print(phdr)
+        casalog.post(phdr)
         mydash=80*'-'
-        print('%-80s'%mydash)
-        print(phdr)
-#        casalog.post(phdr)
+        casalog.post('%-80s'%mydash)
         for k in myflags.keys():
             reason = ''
             antenna = ''
@@ -1111,8 +1091,7 @@ def listFlagCommands(myflags=None, listmode=''):
                 timerange = cmddict['timerange']
                 
             pstr = '%-8s %-8s %-48s %-32s' % (k, antenna,timerange,reason)
-            print(pstr)
-#            casalog.post(pstr)
+            casalog.post(pstr)
 
     return
 
@@ -1148,7 +1127,6 @@ def listFlagCmd(
     #
 
     useid = False
-    doterm = False
 
     if myoutfile != '':
         try:
@@ -1196,12 +1174,9 @@ def listFlagCmd(
 
     if myoutfile != '':
         # list to output file
-        print(phdr, file=lfout)
+        lfout.write(phdr + '\n')
     else:
-        # list to logger and screen
-        if doterm:
-            print(phdr)
-
+        # list to logger
         casalog.post(phdr)
 
     # Loop over flags
@@ -1293,11 +1268,9 @@ def listFlagCmd(
                     pstr = '%8s %32s %s' % (skey, reas, cmdline)
                 if myoutfile != '':
                     # list to output file
-                    print(pstr, file=lfout)
+                    lfout.write(pstr + '\n')
                 else:
-                    # list to logger and screen
-                    if doterm:
-                        print(pstr)
+                    # list to logger
                     casalog.post(pstr)
     if myoutfile != '':
         lfout.close()
@@ -1339,20 +1312,17 @@ def selectXMLFlags(
     #
     # Check if any operation is needed
     if myantenna == '' and myreason == '':
-        print('No selection or sorting needed - sortflags returning input dictionary')
-        casalog.post('No selection or sorting needed - sortflags returning input dictionary'
-                     )
+        casalog.post('No selection or sorting needed - sortflags returning input dictionary')
         flagd = myflags
         return flagd
     #
     flagd = {}
     nflagd = 0
     keylist = myflags.keys()
-    print('Selecting from ' + str(len(keylist)) \
-        + ' flagging commands')
+    casalog.post('Selecting from ' + str(len(keylist)) \
+                 + ' flagging commands')
         
     if len(keylist) == 0:
-        print('No flags found in input dictionary')
         casalog.post('No flags found in input dictionary')
         return myflags
 
@@ -1363,19 +1333,16 @@ def selectXMLFlags(
     #
     # Construct flag command list for selected ant,reason
     #
-# print 'Selecting flags by antenna="'+str(myantenna)+'"'
     casalog.post('Selecting flags by antenna="' + str(myantenna)
                  + '"')
     myantlist = myantenna.split(',')
 
-# print 'Selecting flags by reason="'+str(myreason)+'"'
     casalog.post('Selecting flags by reason="' + str(myreason) + '"'
                  )
     myreaslist = []
 # Parse myreason
     if type(myreason) == str:
         if myreason == '':
-            print('WARNING: reason= is treated as selection on a blank REASON!')
             casalog.post('WARNING: reason= is treated as selection on a blank REASON!'
                          , 'WARN')
         if myreason != 'any':
@@ -1383,12 +1350,10 @@ def selectXMLFlags(
     elif type(myreason) == list:
         myreaslist = myreason
     else:
-        print('ERROR: reason contains unallowed variable type')
         casalog.post('ERROR: reason contains unknown variable type'
                      , 'SEVERE')
         return
     if len(myreaslist) > 0:
-        print('Selecting for reasons: ' + str(myreaslist))
         casalog.post('Selecting for reasons: ' + str(myreaslist))
 
 # Note antenna and reason selection checks for inclusion not exclusivity
@@ -1458,12 +1423,9 @@ def selectXMLFlags(
         nflagd = len(flagdlist)
 
     if nflagd > 0:
-        print('Found total of ' + str(nflagd) \
-            + ' flags meeting selection criteria')
         casalog.post('Found total of ' + str(nflagd)
                      + ' flags meeting selection criteria')
     else:
-        print('No flagging commands found meeting criteria')
         casalog.post('No flagging commands found meeting criteria')
 
     return flagd
@@ -1505,127 +1467,6 @@ def clearFlagCmd(msfile, myrowlist=[]):
 
     tblocal.close()
 
-# DEPRECATED. Use newplotflags
-# def plotflags(
-#     myflags,
-#     plotname,
-#     t1sdata,
-#     t2sdata,
-#     ):
-# 
-#     try:
-#         import casac
-#     except ImportError, e:
-#         print 'failed to load casa:\n', e
-#         exit(1)
-#     qatool = casac.quanta()
-#     qa = casac.qa = qatool
-# 
-#     try:
-#         import pylab as pl
-#     except ImportError, e:
-#         print 'failed to load pylab:\n', e
-#         exit(1)
-# 
-#     # get list of flag keys
-#     keylist = myflags.keys()
-# 
-#     # get list of antennas
-#     myants = []
-#     for key in keylist:
-#         ant = myflags[key]['antenna']
-#         if myants.count(ant) == 0:
-#             myants.append(ant)
-#     myants.sort()
-# 
-#     antind = 0
-#     if plotname == '':
-#         pl.ion()
-#     else:
-#         pl.ioff()
-# 
-#     f1 = pl.figure()
-#     ax1 = f1.add_axes([.15, .1, .75, .85])
-# #    ax1.set_ylabel('antenna')
-# #    ax1.set_xlabel('time')
-#     badflags = []
-#     for thisant in myants:
-#         antind += 1
-#         for thisflag in myflags:
-#             if myflags[thisflag]['antenna'] == thisant:
-#             # print thisant, myflags[thisflag]['reason'], myflags[thisflag]['timerange']
-#                 thisReason = myflags[thisflag]['reason']
-#                 if thisReason == 'FOCUS_ERROR':
-#                     thisColor = 'red'
-#                     thisOffset = 0.3
-#                 elif thisReason == 'SUBREFLECTOR_ERROR':
-#                     thisColor = 'blue'
-#                     thisOffset = .15
-#                 elif thisReason == 'ANTENNA_NOT_ON_SOURCE':
-#                     thisColor = 'green'
-#                     thisOffset = 0
-#                 elif thisReason == 'ANTENNA_NOT_IN_SUBARRAY':
-#                     thisColor = 'black'
-#                     thisOffset = -.15
-#                 else:
-#                     thisColor = 'orange'
-#                     thisOffset = 0.3
-#                 mytimerange = myflags[thisflag]['timerange']
-#                 if mytimerange != '':
-#                     t1 = mytimerange[:mytimerange.find('~')]
-#                     t2 = mytimerange[mytimerange.find('~') + 1:]
-#                     (t1s, t2s) = (qalocal.convert(t1, 's')['value'],
-#                                   qalocal.convert(t2, 's')['value'])
-#                 else:
-#                     t1s = t1sdata
-#                     t2s = t2sdata
-#                 myTimeSpan = t2s - t1s
-#                 if myTimeSpan < 10000:
-#                     ax1.plot([t1s, t2s], [antind + thisOffset, antind
-#                              + thisOffset], color=thisColor, lw=2,
-#                              alpha=.7)
-#                 else:
-#                     badflags.append((thisant, myTimeSpan, thisReason))
-# 
-#     # #badflags are ones which span a time longer than that used above
-#     # #they can be so long that including them compresses the time axis so that none of the other flags are visible
-# #    print 'badflags', badflags
-#     myXlim = ax1.get_xlim()
-#     myXrange = myXlim[1] - myXlim[0]
-#     legendFontSize = 12
-#     ax1.text(myXlim[0] + 0.050000000000000003 * myXrange, 29, 'FOCUS',
-#              color='red', size=legendFontSize)
-#     ax1.text(myXlim[0] + .17 * myXrange, 29, 'SUBREFLECTOR',
-#              color='blue', size=legendFontSize)
-#     ax1.text(myXlim[0] + .42 * myXrange, 29, 'OFF SOURCE', color='green'
-#              , size=legendFontSize)
-#     ax1.text(myXlim[0] + .62 * myXrange, 29, 'NOT IN SUBARRAY',
-#              color='black', size=legendFontSize)
-#     ax1.text(myXlim[0] + .90 * myXrange, 29, 'Other', color='orange',
-#              size=legendFontSize)
-#     ax1.set_ylim([0, 30])
-# 
-#     ax1.set_yticks(range(1, len(myants) + 1))
-#     ax1.set_yticklabels(myants)
-#     ax1.set_xticks(pl.linspace(myXlim[0], myXlim[1], 3))
-# 
-#     mytime = [myXlim[0], (myXlim[1] + myXlim[0]) / 2.0, myXlim[1]]
-#     myTimestr = []
-#     for time in mytime:
-#         q1 = qalocal.quantity(time, 's')
-#         time1 = qalocal.time(q1, form='ymd', prec=9)[0]
-#         myTimestr.append(time1)
-# 
-#     ax1.set_xticklabels([myTimestr[0], (myTimestr[1])[11:],
-#                         (myTimestr[2])[11:]])
-#     # print myTimestr
-#     if plotname == '':
-#         pl.draw()
-#     else:
-#         pl.savefig(plotname, dpi=150)
-#     return
-
-
 def newplotflags(
     myflags,
     plotname,
@@ -1640,23 +1481,14 @@ def newplotflags(
     # Updated STM v4.2 2012-04-10 bug fix in trim flag times to data times
     # Updated STM v4.2 2012-04-10 messages to logger
 
-    # this CASA5 code seems unnecessary now since casac is already imported early on
-    # and casac.qa is already available - but not even needed here as it was
-    # try:
-    #     import casac
-    # except ImportError as e:
-    #     print('failed to load casa:\n', e)
-    #    exit(1)
-
     # After the swig converstion, it seems that the following
     # line is not needed anymore
-#    qa = casac.qa = qatool = casac.quanta()
+    #    qa = casac.qa = qatool = casac.quanta()
 
     try:
         import pylab as pl
-    except ImportError as e:
-        print('failed to load pylab:\n', e)
-        exit(1)
+    except ImportError as exc:
+        raise ImportError('Failed to load pylab, required by flagcmd: {}'.format(exc))
 
     # list of supported colors (in order)
     colorlist = [
@@ -1903,10 +1735,11 @@ def newplotflags(
     casalog.post('Plotted %d flags' % nplotted)
 
     figs = []
+    figsize = (8, 6)
     # maximum number of antennas per plot page (CAS-5187)
     antlimit = 28
     if len(myants) <= antlimit:
-        figs.append(pl.figure())
+        figs.append(pl.figure(figsize=figsize))
         _plotants(figs[0], plotflagperant, myants, readict)
     else:
         # prefer DA on first page
@@ -1918,12 +1751,12 @@ def newplotflags(
             da = da[:antlimit]
 
         if da:
-            figs.append(pl.figure())
+            figs.append(pl.figure(figsize=figsize))
             _plotants(figs[-1], plotflagperant, da, readict)
 
         # stuff the rest on other figures
         while no_da:
-            figs.append(pl.figure())
+            figs.append(pl.figure(figsize=figsize))
             _plotants(figs[-1], plotflagperant, no_da[:antlimit], readict)
             no_da = no_da[antlimit:]
 
@@ -1963,11 +1796,14 @@ def _plotants(figure, plotflagperant, antlist, readict_inp):
     nants = len(antlist)
     readict = dict()
     used_reasons = set()
+    # These style params can be critical to produce meaningful (or not too
+    # misleading) plots (CAS-13100)
+    style_params = {'alpha': .7, 'marker': '.', 'markersize': 1, 'linewidth': 1}
     for antind, thisant in enumerate(antlist):
         for flag in plotflagperant[thisant]:
             thisoffset = flag['offset'] + antind + 1
             ax1.plot([flag['t1s'], flag['t2s']], [thisoffset] * 2,
-                     color=flag['color'], lw=2, alpha=.7)
+                     color=flag['color'], **style_params)
             used_reasons.add(flag['reason'])
 
     # remove reasons that are not needed
@@ -1986,7 +1822,7 @@ def _plotants(figure, plotflagperant, antlist, readict_inp):
         ax1.set_xlim(x0, x1)
         myXrange = x1 - x0
     else:
-        # print '  Rescaled x axis'
+        # casalog.post('  Rescaled x axis')
         x0 = myXlim[0]
         x1 = myXlim[1]
 
@@ -2001,7 +1837,7 @@ def _plotants(figure, plotflagperant, antlist, readict_inp):
 
     ax1.set_yticks(range(1, len(antlist) + 1))
     ax1.set_yticklabels(antlist)
-    # print '  Relabled y axis'
+    # casalog.post('  Relabled y axis')
 
     nxticks = 3
     ax1.set_xticks(np.linspace(myXlim[0], myXlim[1], nxticks))

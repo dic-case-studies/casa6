@@ -153,21 +153,24 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     itsNTerms = ntaylorterms;
 
-    itsPsfs.resize(2 * itsNTerms - 1);
-    itsModels.resize(itsNTerms);
-    itsResiduals.resize(itsNTerms);
-    itsWeights.resize(2 * itsNTerms - 1);
-    itsImages.resize(itsNTerms);
-    itsPBs.resize(itsNTerms);
-    itsSumWts.resize(2 * itsNTerms - 1);
+    auto fltPtrReset = [](Block<shared_ptr<ImageInterface<Float> > >&a) {for(uInt i=0; i < a.nelements(); ++i) a[i].reset();  };
+    itsPsfs.resize(2 * itsNTerms - 1); fltPtrReset(itsPsfs);
+    itsModels.resize(itsNTerms); fltPtrReset(itsModels);
+    itsResiduals.resize(itsNTerms); fltPtrReset(itsResiduals);
+    itsWeights.resize(2 * itsNTerms - 1); fltPtrReset(itsWeights);
+    itsImages.resize(itsNTerms); fltPtrReset(itsImages);
+    itsPBs.resize(itsNTerms); fltPtrReset(itsPBs);
+    itsSumWts.resize(2 * itsNTerms - 1); fltPtrReset(itsSumWts);
     itsMask.reset( );
     itsGridWt.reset( );
-    itsImagePBcors.resize(itsNTerms);
-
+    itsImagePBcors.resize(itsNTerms); fltPtrReset(itsImagePBcors);
+    
+    
+    
     itsMiscInfo=Record();
-
-    itsForwardGrids.resize(itsNTerms);
-    itsBackwardGrids.resize(2 * itsNTerms - 1);
+    auto cmplxPtrReset = [](Block<shared_ptr<ImageInterface<Complex> > >&a) {for(uInt i=0; i < a.nelements(); ++i) a[i].reset();  };
+    itsForwardGrids.resize(itsNTerms); cmplxPtrReset(itsForwardGrids);
+    itsBackwardGrids.resize(2 * itsNTerms - 1); cmplxPtrReset(itsBackwardGrids);
 
     itsImageName = imagename;
 
@@ -180,11 +183,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     Bool exists=true;
     Bool sumwtexists=true;
+    Bool modelexists=true;
     for(uInt tix=0;tix<2*itsNTerms-1;tix++) 
       {
 	if( tix<itsNTerms ) {
 	    exists &= ( doesImageExist( itsImageName+String(".residual.tt")+String::toString(tix) ) ||
-			doesImageExist( itsImageName+String(".psf.tt")+String::toString(tix) ) );
+			doesImageExist( itsImageName+String(".psf.tt")+String::toString(tix) )  );
+	    modelexists &= ( doesImageExist( itsImageName+String(".model.tt")+String::toString(tix) ) ||
+			doesImageExist( itsImageName+String(".model.tt")+String::toString(tix) )  );
+	    sumwtexists &= ( doesImageExist( itsImageName+String(".sumwt.tt")+String::toString(tix) ) );
 	  }else {
 	    exists &= ( doesImageExist( itsImageName+String(".psf.tt")+String::toString(tix) ) );
 	    sumwtexists &= ( doesImageExist( itsImageName+String(".sumwt.tt")+String::toString(tix) ) );
@@ -193,22 +200,45 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     // The PSF or Residual images must exist. ( or the gridwt image)
     //  All this is just for the shape and coordinate system.
-    if( exists || doesImageExist(itsImageName+String(".gridwt")) )
+    if( exists || modelexists || doesImageExist(itsImageName+String(".gridwt")) )
       {
 	std::shared_ptr<ImageInterface<Float> > imptr;
 	if( doesImageExist(itsImageName+String(".psf.tt0")) )
-	  imptr.reset( new PagedImage<Float> (itsImageName+String(".psf.tt0")) );
+	  {
+	    buildImage( imptr, (itsImageName+String(".psf.tt0")) );
+
+	    //cout << "Opening PSF image to read csys" << endl;
+	    //	    imptr.reset( new PagedImage<Float> (itsImageName+String(".psf.tt0")) );
+	  }
 	else if( doesImageExist(itsImageName+String(".residual.tt0")) )
-	  imptr.reset( new PagedImage<Float> (itsImageName+String(".residual.tt0")) );
+	  {
+	    buildImage( imptr, (itsImageName+String(".residual.tt0")) );
+	    //cout << "Opening Residual image to read csys" << endl;
+	    //	  imptr.reset( new PagedImage<Float> (itsImageName+String(".residual.tt0")) );
+	  }
+	else if( doesImageExist(itsImageName+String(".model.tt0")) )
+	  {
+	    buildImage( imptr, (itsImageName+String(".model.tt0")) );
+	    //cout << "Opening Model image to read csys" << endl;
+	    //	    imptr.reset( new PagedImage<Float> (itsImageName+String(".model.tt0")) );
+	  }
 	else
-	  imptr.reset( new PagedImage<Float> (itsImageName+String(".gridwt")) );
+	  {
+	    // How can this be right ?
+	    //cout << "Opening Sumwt image to read csys" << endl;
+	    buildImage( imptr, (itsImageName+String(".gridwt")) );
+	    //	  imptr.reset( new PagedImage<Float> (itsImageName+String(".gridwt")) );
+	  }
 	  
+	itsObjectName=imptr->imageInfo().objectName();
 	itsImageShape = imptr->shape();
 	itsCoordSys = imptr->coordinates();
+	itsMiscInfo=imptr->miscInfo();
+
       }
     else
       {
-	throw( AipsError( "Multi-term PSF or Residual Images do not exist. Please create one of them." ) );
+	throw( AipsError( "Multi-term PSF,  Residual or Model Images do not exist. Please create one of them." ) );
       }
 
     if( doesImageExist(itsImageName+String(".residual.tt0")) || 
@@ -217,7 +247,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if( sumwtexists )
       {
 	std::shared_ptr<ImageInterface<Float> > imptr;
-	imptr.reset( new PagedImage<Float> (itsImageName+String(".sumwt.tt0")) );
+	//	imptr.reset( new PagedImage<Float> (itsImageName+String(".sumwt.tt0")) );
+	buildImage( imptr, (itsImageName+String(".sumwt.tt0")) );
 	itsNFacets = imptr->shape()[0];
 	itsFacetId = 0;
 	itsUseWeight = getUseWeightImage( *imptr );
@@ -231,7 +262,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
     else
       {
-	throw( AipsError( "Multi-term SumWt does not exist. Please create PSFs or Residuals." ) );
+	//throw( AipsError( "Multi-term SumWt does not exist. Please create PSFs or Residuals." ) );
+	std::shared_ptr<ImageInterface<Float> > imptr;
+	//	imptr.reset( new PagedImage<Float> (itsImageName+String(".sumwt.tt0")) );
+	if( doesImageExist(itsImageName+String(".residual.tt0")) )
+	  {buildImage( imptr, (itsImageName+String(".residual.tt0")) );}
+	  else
+	  {buildImage( imptr, (itsImageName+String(".psf.tt0")) );}
+	    
+	itsNFacets = 1;
+	itsFacetId = 0;
+	  itsUseWeight = False;
+	itsCoordSys = imptr->coordinates();
+	itsMiscInfo=imptr->miscInfo();
       }
       }// if psf0 or res0 exist
 
@@ -528,7 +571,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return mods;
   }
 
-  void SIImageStoreMultiTerm::setModelImage( Vector<String> modelnames )
+  void SIImageStoreMultiTerm::setModelImage( const Vector<String> &modelnames )
   {
     LogIO os( LogOrigin("SIImageStoreMultiTerm","setModelImage",WHERE) );
 
@@ -596,6 +639,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   std::shared_ptr<ImageInterface<Float> > SIImageStoreMultiTerm::residual(uInt term)
   {
     accessImage( itsResiduals[term], itsParentResiduals[term], imageExts(RESIDUAL)+".tt"+String::toString(term) );
+    //    Record mi = itsResiduals[term]->miscInfo(); ostringstream oss;mi.print(oss);cout<<"MiscInfo(res) " << term << " : " << oss.str() << endl;
+
     return itsResiduals[term];
   }
   std::shared_ptr<ImageInterface<Float> > SIImageStoreMultiTerm::weight(uInt term)
@@ -654,11 +699,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     cimageShape=itsImageShape;
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
     cimageShape(2)=whichStokes.nelements();
     itsForwardGrids[term].reset(new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()));
     return itsForwardGrids[term];
   }
   std::shared_ptr<ImageInterface<Complex> > SIImageStoreMultiTerm::backwardGrid(uInt term){
+
   	  if( itsBackwardGrids[term] && (itsBackwardGrids[term]->shape() == itsImageShape))
   		  return itsBackwardGrids[term];
 	  //	  cout << "MT : Making backward grid of shape : " << itsImageShape << endl;
@@ -667,6 +714,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     cimageShape=itsImageShape;
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
     cimageShape(2)=whichStokes.nelements();
     itsBackwardGrids[term].reset(new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()));
     return itsBackwardGrids[term];
@@ -974,14 +1022,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
 
-  void SIImageStoreMultiTerm::restore(GaussianBeam& rbeam, String& usebeam, uInt /*term*/)
+  void SIImageStoreMultiTerm::restore(GaussianBeam& rbeam, String& usebeam, uInt /*term*/, Float psfcutoff)
   {
 
     LogIO os( LogOrigin("SIImageStoreMultiTerm","restore",WHERE) );
 
     for(uInt tix=0; tix<itsNTerms; tix++)
       {
-	SIImageStore::restore(rbeam, usebeam, tix);
+	SIImageStore::restore(rbeam, usebeam, tix, psfcutoff);
       }	
    
     calculateAlphaBeta("image");

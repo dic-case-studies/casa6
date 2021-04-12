@@ -181,7 +181,7 @@ def _momentTest_debug_msg( msgNum=0 ):
     print str(msgNum)+":  "+debug_msgs[idx]
     return
 
-datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/immoment/'
+datapath = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/immoments/'
 
 
 # input files
@@ -251,7 +251,10 @@ class immoment_test1(unittest.TestCase):
         #######################################################################
 #        _momentTest_debug_msg( 5 )
         results = None
-        results = immoments( 'n1333_both', moments=[0], outfile='input_test_1' )
+        try:
+            results = immoments( 'n1333_both', moments=[0], outfile='input_test_1' )
+        except RuntimeError:
+            pass
         if ( results != None ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -444,9 +447,16 @@ class immoment_test1(unittest.TestCase):
                  +"\nError: Bad axis value, '-1', was not reported as bad."
         self.assertTrue(results)
 #        _momentTest_debug_msg( 19 )
-        results = immoments( 'n1333_both.image', moments=[0], axis=4, outfile='input_test_bad_axis' )
+        results = None
+        try:
+            results = immoments( 'n1333_both.image', moments=[0], axis=4, outfile='input_test_bad_axis' )
+        except Exception:
+            pass
         self.assertFalse(results)
-        results = immoments( 'n1333_both.image', moments=[0], axis='whatever', outfile='input_test_bad_axis' )
+        try:
+            results = immoments( 'n1333_both.image', moments=[0], axis='whatever', outfile='input_test_bad_axis' )
+        except Exception:
+            pass
         if ( results != None ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -462,7 +472,10 @@ class immoment_test1(unittest.TestCase):
         self.assertTrue(len(tb.showcache()) == 0)
 
         results = None
-        results = immoments( 'n1333_both.image', region=3, outfile='input_test_bad_rgn' )
+        try:
+            results = immoments( 'n1333_both.image', region=3, outfile='input_test_bad_rgn' )
+        except Exception:
+            pass
         if ( results ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -470,7 +483,10 @@ class immoment_test1(unittest.TestCase):
     
 #        _momentTest_debug_msg( 22 )
         results = None
-        results = immoments( 'n1333_both.image', region='garbage.rgn', outfile='input_test_bad_rgn' )
+        try:
+            results = immoments( 'n1333_both.image', region='garbage.rgn', outfile='input_test_bad_rgn' )
+        except Exception:
+            pass
         if ( results != None ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -481,7 +497,10 @@ class immoment_test1(unittest.TestCase):
         fp.write('This file does NOT contain a valid CASA region specification')
         fp.close()
         results = None
-        results = immoments( 'n1333_both.image', region='garbage.rgn', outfile='input_test_bad_rgn' )
+        try:
+            results = immoments( 'n1333_both.image', region='garbage.rgn', outfile='input_test_bad_rgn' )
+        except Exception:
+            None
         if ( results != None ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -507,7 +526,10 @@ class immoment_test1(unittest.TestCase):
         
 #        _momentTest_debug_msg( 34 )
         results = None
-        results = immoments( 'n1333_both.image', box='-3,0,799,799', outfile='input_test_bad_box' )
+        try:
+            results = immoments( 'n1333_both.image', box='-3,0,799,799', outfile='input_test_bad_box' )
+        except Exception:
+            pass
         if ( results != None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -515,7 +537,10 @@ class immoment_test1(unittest.TestCase):
     
 #        _momentTest_debug_msg( 26 )
         results = None
-        results = immoments( 'n1333_both.image', box='0,-3,799,799', outfile='input_test_bad_box' )
+        try:
+            results = immoments( 'n1333_both.image', box='0,-3,799,799', outfile='input_test_bad_box' )
+        except Exception:
+            pass
         if ( results != None ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -526,7 +551,10 @@ class immoment_test1(unittest.TestCase):
         self.assertTrue(len(tb.showcache()) == 0)
 
         results = None
-        results = immoments( 'n1333_both.image', box='-2,0,798,798', outfile='input_test_bad_box' )
+        try:
+            results = immoments( 'n1333_both.image', box='-2,0,798,798', outfile='input_test_bad_box' )
+        except Exception:
+            pass
         if ( results!=None or results==True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -534,7 +562,10 @@ class immoment_test1(unittest.TestCase):
     
 #        _momentTest_debug_msg( 28 )
         results = None
-        results = immoments( 'n1333_both.image', box='0,-2,799,799', outfile='input_test_bad_box' )
+        try:
+            results = immoments( 'n1333_both.image', box='0,-2,799,799', outfile='input_test_bad_box' )
+        except Exception:
+            pass
         if ( results != None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -542,7 +573,10 @@ class immoment_test1(unittest.TestCase):
     
 #        _momentTest_debug_msg( 29 )
         results = None
-        results = immoments( 'n1333_both.image', box='0,0,800,799', outfile='input_test_bad_box' )
+        try:
+            results = immoments( 'n1333_both.image', box='0,0,800,799', outfile='input_test_bad_box' )
+        except Exception:
+            pass
         if ( results != None ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -552,7 +586,10 @@ class immoment_test1(unittest.TestCase):
         self.assertTrue(len(tb.showcache()) == 0)
 
         results = None
-        results = immoments( 'n1333_both.image', box='0,0,799,800', outfile='input_test_bad_box' )
+        try:
+            results = immoments( 'n1333_both.image', box='0,0,799,800', outfile='input_test_bad_box' )
+        except Exception:
+            pass
         if ( results != None ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -560,7 +597,10 @@ class immoment_test1(unittest.TestCase):
     
 #        _momentTest_debug_msg( 31 )
         results = None
-        results = immoments( 'n1333_both.image', box='0, 0,820,799', outfile='input_test_bad_box' )
+        try:
+            results = immoments( 'n1333_both.image', box='0, 0,820,799', outfile='input_test_bad_box' )
+        except Exception:
+            pass
         if ( results != None ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -568,7 +608,10 @@ class immoment_test1(unittest.TestCase):
     
 #        _momentTest_debug_msg( 32 )
         results = None
-        results = immoments( 'n1333_both.image', box='0,0,799,820', outfile='input_test_bad_box' )
+        try:
+            results = immoments( 'n1333_both.image', box='0,0,799,820', outfile='input_test_bad_box' )
+        except Exception:
+            pass
         if ( results != None ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -600,7 +643,10 @@ class immoment_test1(unittest.TestCase):
         
 #        _momentTest_debug_msg( 34 )
         results = None
-        results = immoments( 'n1333_both.image', chans='-5', outfile='input_test_bad_chans' )
+        try:
+            results = immoments( 'n1333_both.image', chans='-5', outfile='input_test_bad_chans' )
+        except Exception:
+            pass
         if ( results!=None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -609,7 +655,10 @@ class immoment_test1(unittest.TestCase):
 #        _momentTest_debug_msg( 35 )
         results = None
         self.assertTrue(len(tb.showcache()) == 0)
-        results = immoments( 'n1333_both.image', chans='-2', outfile='input_test_bad_chans' )
+        try:
+            results = immoments( 'n1333_both.image', chans='-2', outfile='input_test_bad_chans' )
+        except Exception:
+            pass
         if ( results!=None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -619,7 +668,10 @@ class immoment_test1(unittest.TestCase):
 #        _momentTest_debug_msg( 36 )
         self.assertTrue(len(tb.showcache()) == 0)
         results = None
-        results = immoments( 'n1333_both.image', chans='18', outfile='input_test_bad_chans' )
+        try:
+            results = immoments( 'n1333_both.image', chans='18', outfile='input_test_bad_chans' )
+        except Exception:
+            pass
         if ( results!=None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -627,7 +679,10 @@ class immoment_test1(unittest.TestCase):
     
 #        _momentTest_debug_msg( 37 )
         results = None
-        results = immoments( 'n1333_both.image', chans='32', outfile='input_test_bad_chans' )
+        try:
+            results = immoments( 'n1333_both.image', chans='32', outfile='input_test_bad_chans' )
+        except Exception:
+            pass
         if ( results!=None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -665,7 +720,10 @@ class immoment_test1(unittest.TestCase):
 #        _momentTest_debug_msg( 41 )
         self.assertTrue(results)
         results = None
-        results = immoments( 'n1333_both.image', stokes='Q', outfile='input_test_bad_stokes' )
+        try:
+            results = immoments( 'n1333_both.image', stokes='Q', outfile='input_test_bad_stokes' )
+        except Exception:
+            pass
         if ( results!=None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -674,7 +732,10 @@ class immoment_test1(unittest.TestCase):
 #        _momentTest_debug_msg( 42 )
         self.assertTrue(len(tb.showcache()) == 0)
         results = None
-        results = immoments( 'n1333_both.image', stokes='yellow', outfile='input_test_bad_stokess' )
+        try:
+            results = immoments( 'n1333_both.image', stokes='yellow', outfile='input_test_bad_stokess' )
+        except Exception:
+            pass
         if ( results!=None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -710,7 +771,10 @@ class immoment_test1(unittest.TestCase):
     
 #        _momentTest_debug_msg( 44 )
         results = None
-        results = immoments( 'n1333_both.image', mask='blarg', outfile='input_test_bad_mask' )
+        try:
+            results = immoments( 'n1333_both.image', mask='blarg', outfile='input_test_bad_mask' )
+        except Exception:
+            pass
         if ( results!=None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -718,14 +782,20 @@ class immoment_test1(unittest.TestCase):
     
         self.assertTrue(len(tb.showcache()) == 0)
 #        _momentTest_debug_msg( 45 )
-        results = immoments( 'n1333_both.image', mask='n133_both.image:mask1', outfile='input_test_bad_mask' )
+        try:
+            results = immoments( 'n1333_both.image', mask='n133_both.image:mask1', outfile='input_test_bad_mask' )
+        except Exception:
+            pass
         if ( results!=None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                  +"\nError: Bad mask value, 'n133_both.image:mask1', was not reported."
     
 #        _momentTest_debug_msg( 46 )
-        results = immoments( 'n1333_both.image', mask='bad_files.image:mask', outfile='input_test_bad_mask' )
+        try:
+            results = immoments( 'n1333_both.image', mask='bad_files.image:mask', outfile='input_test_bad_mask' )
+        except Exception:
+            pass
         if ( results!=None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -768,7 +838,11 @@ class immoment_test1(unittest.TestCase):
     
 #        _momentTest_debug_msg( 49 )
         self.assertTrue(len(tb.showcache()) == 0)
-        results = immoments( 'n1333_both.image', includepix='bad', outfile='input_test_bad_incpix' )
+        results = None
+        try:
+            results = immoments( 'n1333_both.image', includepix='bad', outfile='input_test_bad_incpix' )
+        except Exception:
+            pass
         self.assertFalse(results)
         try:
             results = immoments( 'n1333_both.image', includepix=[-0.1,0.1], outfile='input_test_incpix_2' )
@@ -788,7 +862,11 @@ class immoment_test1(unittest.TestCase):
         casalog.post( "The EXCLUDEPIX parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
     
 #        _momentTest_debug_msg( 51 )
-        results = immoments( 'n1333_both.image', excludepix='badpix', outfile='input_test_bad_expix' )
+        results = None
+        try:
+            results = immoments( 'n1333_both.image', excludepix='badpix', outfile='input_test_bad_expix' )
+        except Exception:
+            pass
         self.assertFalse(results)
 #        _momentTest_debug_msg( 52 )
         try:
@@ -814,7 +892,11 @@ class immoment_test1(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']\
                        +"\nError: Unable to create moments in file 'input_test_outfile_1'"
         self.assertTrue(results)
-        results = immoments( 'n1333_both.image', outfile='input_test_outfile_1' )
+        results = None
+        try:
+            results = immoments( 'n1333_both.image', outfile='input_test_outfile_1' )
+        except Exception:
+            pass
         if ( results!=None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -822,7 +904,10 @@ class immoment_test1(unittest.TestCase):
     
     
 #        _momentTest_debug_msg( 55 )
-        results = immoments( 'n1333_both.image', outfile='/usr/input_test_outfile_2' )
+        try:
+            results = immoments( 'n1333_both.image', outfile='/usr/input_test_outfile_2' )
+        except Exception:
+            pass
         if ( results!=None and results!=True ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
@@ -1144,10 +1229,13 @@ class immoment_test2(unittest.TestCase):
             func = ""
             for j in [0, 1]:
                 if j == 0:
-                    ret = immoments(
-                        imagename="myim.im", outfile=outfile,
-                        mask=mask, stretch=stretch
-                    )
+                    try:
+                        ret = immoments(
+                            imagename="myim.im", outfile=outfile,
+                            mask=mask, stretch=stretch
+                        )
+                    except Exception:
+                        pass
                 if j == 1:
                     myia.open("myim.im")
                     ret = True
@@ -1165,7 +1253,7 @@ class immoment_test2(unittest.TestCase):
                     self.assertTrue(myia.open(outfile))
                     self.assertTrue(myia.shape().tolist() == exp)
                     myia.done()
-                else:
+                elif j!=0:
                     self.assertFalse(ret)
                 if os.path.exists(outfile):
                     shutil.rmtree(outfile)

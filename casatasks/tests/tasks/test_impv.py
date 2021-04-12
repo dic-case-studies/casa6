@@ -75,11 +75,11 @@ try:
     from casatools import image as iatool
     from casatools import quanta
     from casatools import table, ctsys
-    datapath = ctsys.resolve('regression/unittest/imageanalysis/ImageAnalysis/')
+    datapath = ctsys.resolve('unittest/impv/')
 except ImportError:
     from tasks import *
     from taskinit import *   
-    datapath = 'regression/unittest/imageanalysis/ImageAnalysis/'
+    datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/impv/')
     
 _tb = table( )
 
@@ -245,13 +245,14 @@ class impv_test(unittest.TestCase):
             Exception, impv, imagename="kk", outfile="x1.im", start=[2,2],
             end=[20,2], mask=mymask + ">0", stretch=False
         )
-        self.assertTrue(
-            impv(
-                 imagename="kk", outfile="xyz", start=[2,2], end=[20,2],
-                 mask=mymask + ">0", stretch=True
-            )
+
+        outfile = "xyz"
+        impv(
+            imagename="kk", outfile=outfile, start=[2,2], end=[20,2],
+            mask=mymask + ">0", stretch=True
         )
-    
+        self.assertTrue(os.path.exists(outfile))
+
     def test_CAS_2996(self):
         """ia.pv(): Test issues raised in CAS-2996"""
         # the only tests necessary here are to ensure ia.pv() runs 
@@ -301,12 +302,12 @@ class impv_test(unittest.TestCase):
 
     def test_machine_precision_fix(self):
         """Test fix for finite machine precision issue, CAS-6043"""
-        self.assertTrue(
-            impv(
-                imagename=datapath + 'CAS-6043.im', outfile="CAS-6043.out.im",
-                start=[187,348], end=[228,383]
-            )
-        ) 
+        outfile = "CAS-6043.out.im"
+        impv(
+            imagename=datapath + 'CAS-6043.im', outfile=outfile,
+            start=[187,348], end=[228,383]
+        )
+        self.assertTrue(os.path.exists(outfile))
         
     def test_pa(self):
         """Test that when pa is given, the start of the slice is at pa and end is at pa-180deg"""
@@ -345,21 +346,20 @@ class impv_test(unittest.TestCase):
         length = "14arcmin"
         center = [15, 15]
         outfile = "90deg_" + str(length) + ".im"
-        self.assertTrue(
-            impv(
-                 imagename=imagename, outfile=outfile,
-                 center=center, length=length, pa="90deg",
-                 mode="length"
-            )
+        impv(
+            imagename=imagename, outfile=outfile,
+            center=center, length=length, pa="90deg",
+            mode="length"
         )
+        self.assertTrue(os.path.exists(outfile))
+
         outfile = "270deg_" + str(length) + ".im"
-        self.assertTrue(
-            impv(
-                 imagename=imagename, outfile=outfile,
-                 center=center, length=length, pa="270deg",
-                 mode="length"
-            )
+        impv(
+            imagename=imagename, outfile=outfile,
+            center=center, length=length, pa="270deg",
+            mode="length"
         )
+        self.assertTrue(os.path.exists(outfile))
 
     def test_history(self):
         """Verify history is written to created image"""

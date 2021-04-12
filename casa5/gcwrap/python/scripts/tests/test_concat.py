@@ -25,7 +25,7 @@ if is_CASA6:
     tb = tbtool( )
     ms = mstool( )
 
-    ctsys_resolve = ctsys.resolve
+    datapath = ctsys.resolve('unittest/concat/')
 else:
     from __main__ import default
     from tasks import *
@@ -33,9 +33,9 @@ else:
 
     cb = cbtool( )
 
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
-        return os.path.join(dataPath,apath)
+    dataroot = os.environ.get('CASAPATH').split()[0]
+    datapath = os.path.join(dataroot,'casatestdata/unittest/concat/')
+    ephempath = os.path.join(dataroot, 'data/')
 
 myname = 'test_concat'
 
@@ -101,12 +101,19 @@ def checktable(thename, theexpectation, multims=False):
 # beginning of actual test 
 
 class test_concat(unittest.TestCase):
-
-    def setUp(self):
+#     @classmethod
+#     def setUpClass(cls):
+#         '''A class method called before tests in an individual class run'''
+#         # MS used for all tests of this class.
+#         cls.msfile = 'vlass1.1_rowtest_6fields.ms'
+#         os.symlink(data_path+cls.msfile, cls.msfile)
+        
+    @classmethod
+    def setUpClass(cls):
+        '''Copy input files only once for the class'''
         global testmms
         res = None
 
-        datapath=ctsys_resolve('regression/unittest/concat/input')
         datapathmms = ''
         # Pick up alternative data directory to run tests on MMSs
         testmms = False
@@ -133,25 +140,26 @@ class test_concat(unittest.TestCase):
             for mymsname in myinputmslist:
                 if not ((mymsname in filespresent) or (mymsname in nonmmsinput)):
                     print("Copying MMS", mymsname)
-                    rval = os.system('cp -R '+datapathmms+'/'+mymsname+' .')
+                    rval = os.system('cp -RH '+datapathmms+'/'+mymsname+' .')
                     if rval!=0:
                         raise Exception('Error while copying input data.')
 
             for mymsname in nonmmsinput:
                 if not mymsname in filespresent:
                     print("Copying non-MMS ", mymsname)
-                    rval = os.system('cp -R '+datapath+'/'+mymsname+' .')
+                    rval = os.system('cp -RH '+datapath+'/'+mymsname+' .')
                     if rval!=0:
                         raise Exception('Error while copying input data.')
                     
         else:
             os.chdir(datapath)
             myinputmslist = sorted(glob.glob("*.ms"))
+            print(myinputmslist)
             os.chdir(cpath)
             for mymsname in myinputmslist:
                 if not mymsname in filespresent:
                     print("Copying ", mymsname)
-                    rval = os.system('cp -R '+os.path.join(datapath,mymsname)+' .')
+                    rval = os.system('cp -RH '+os.path.join(datapath,mymsname)+' .')
                     if rval!=0:
                         raise Exception('Error while copying input data.')
 
@@ -187,11 +195,19 @@ class test_concat(unittest.TestCase):
             shutil.copytree('xy1.ms', 'xy1-noephem.ms')
 
             ms.open('xy1.ms', nomodify=False)
-            ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
-                            'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
-            ms.addephemeris(1,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
-                            'Jupiter_54708-55437dUTC', 0)
+            if is_CASA6:
+                ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+                                'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
+                ms.addephemeris(1,ctsys.resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
+                                'Jupiter_54708-55437dUTC', 0)
+            else:
+                ms.addephemeris(0,os.path.join(ephempath,'ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+                                'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
+                ms.addephemeris(1,os.path.join(ephempath,'ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
+                                'Jupiter_54708-55437dUTC', 0)
             ms.close()
+            myinputmslist.append('xy1.ms')
+            myinputmslist.append('xy1-noephem.ms')
 
         if not 'xy2.ms' in filespresent:
             split(vis='part1.ms', outputvis='xy2.ms', scan="58~65", datacolumn='data')
@@ -217,9 +233,15 @@ class test_concat(unittest.TestCase):
             tb.close()
 
             ms.open('xy2.ms', nomodify=False)
-            ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
-                            'Uranus_54708-55437dUTC', '1908-201')
+            if is_CASA6:
+                ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+                                'Uranus_54708-55437dUTC', '1908-201')
+            else:
+                ms.addephemeris(0,os.path.join(ephempath,'ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+                                'Uranus_54708-55437dUTC', '1908-201')
+                
             ms.close()
+            myinputmslist.append('xy2.ms')
 
         if not 'xy2late.ms' in filespresent:
             split(vis='part1.ms', outputvis='xy2late.ms', scan="58~65", datacolumn='data')
@@ -245,32 +267,52 @@ class test_concat(unittest.TestCase):
             tb.close()
 
             ms.open('xy2late.ms', nomodify=False)
-            ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
-                            'Uranus_55437-56293dUTC', '1908-201')
+            if is_CASA6:
+                ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
+                                'Uranus_55437-56293dUTC', '1908-201')
+            else:
+                ms.addephemeris(0,os.path.join(ephempath,'ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
+                                'Uranus_55437-56293dUTC', '1908-201')
+                
             ms.close()
+            myinputmslist.append('xy2late.ms')
 
         if not 'xy2-jup-ur.ms' in filespresent:
             split(vis='xy2.ms', outputvis='xy2-jup-ur.ms', field = 'jupiter, 1908-201', datacolumn='data')
+            myinputmslist.append('xy2-jup-ur.ms')
 
         if not 'xya.ms' in filespresent:
             split(vis='xy1.ms', outputvis='xya.ms', spw='0:0~63', datacolumn='data')
+            myinputmslist.append('xya.ms')
             
         if not 'xyb.ms' in filespresent:
             split(vis='xy1.ms', outputvis='xyb.ms', spw='0:64~127', datacolumn='data')
+            myinputmslist.append('xyb.ms')
+
+        cls.listoffiles = myinputmslist
 
         if not is_CASA6:
             default(concat)
         return True
+
         
     def tearDown(self):
         shutil.rmtree(msname,ignore_errors=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        '''A class method called after tests in an individual class have run'''
+        # remove all the generated data
+        for ifile in cls.listoffiles:
+            print(ifile)
+            os.system('rm -rf '+ifile)
+            shutil.rmtree(ifile,ignore_errors=True)
 
     def test1(self):
         '''Concat 1: 4 parts, same sources but different spws'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
         
-        self.res = concat(vis=['part1.ms','part2.ms','part3.ms','part4.ms'],concatvis=msname)
-        self.assertEqual(self.res,True)
+        concat(vis=['part1.ms','part2.ms','part3.ms','part4.ms'],concatvis=msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -326,9 +368,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test1.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test1.ms',ignore_errors=True)
-            shutil.copytree(msname,'test1.ms')
+#             if 'test1.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test1.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test1.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -360,8 +402,8 @@ class test_concat(unittest.TestCase):
     def test2(self):
         '''Concat 2: 3 parts, different sources, different spws,  copypointing=False, visweightscale=[3.,2.,1.]'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
-        self.res = concat(vis=['part1.ms','part2-mod.ms','part3.ms'],concatvis=msname, copypointing=False, visweightscale=[3.,2.,1.])
-        self.assertEqual(self.res,True)
+        concat(vis=['part1.ms','part2-mod.ms','part3.ms'],concatvis=msname,
+               copypointing=False, visweightscale=[3.,2.,1.])
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -417,9 +459,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test2.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test2.ms',ignore_errors=True)
-            shutil.copytree(msname,'test2.ms')
+#             if 'test2.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test2.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test2.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -498,8 +540,7 @@ class test_concat(unittest.TestCase):
     def test3(self):
         '''Concat 3: 3 parts, different sources, same spws'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
-        self.res = concat(vis=['part1.ms','part2-mod2.ms','part3.ms'],concatvis=msname)
-        self.assertEqual(self.res,True)
+        concat(vis=['part1.ms','part2-mod2.ms','part3.ms'],concatvis=msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -555,9 +596,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test3.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test3.ms',ignore_errors=True)
-            shutil.copytree(msname,'test3.ms')
+#             if 'test3.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test3.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test3.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -590,9 +631,9 @@ class test_concat(unittest.TestCase):
         '''Concat 4: five MSs with identical sources but different time/intervals on them (CSV-268)'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis = ['shortpart1.ms', 'shortpart2.ms', 'shortpart3.ms', 'shortpart4.ms', 'shortpart5.ms'],
-                          concatvis = msname)
-        self.assertEqual(self.res,True)
+        concat(vis = ['shortpart1.ms', 'shortpart2.ms', 'shortpart3.ms', 'shortpart4.ms',
+                      'shortpart5.ms'],
+               concatvis = msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -648,9 +689,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test4.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test4.ms',ignore_errors=True)
-            shutil.copytree(msname,'test4.ms')
+#             if 'test4.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test4.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test4.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
         
@@ -721,9 +762,7 @@ class test_concat(unittest.TestCase):
         '''Concat 5: two MSs with different state table (CAS-2601)'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis = ['A2256LC2_4.5s-1.ms','A2256LC2_4.5s-2.ms'],
-                          concatvis = msname)
-        self.assertEqual(self.res,True)
+        concat(vis = ['A2256LC2_4.5s-1.ms','A2256LC2_4.5s-2.ms'], concatvis = msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -779,9 +818,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test5.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test5.ms',ignore_errors=True)
-            shutil.copytree(msname,'test5.ms')
+#             if 'test5.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test5.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test5.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
     
@@ -804,9 +843,7 @@ class test_concat(unittest.TestCase):
         '''Concat 6: two MSs with different state table and feed table'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis = ['A2256LC2_4.5s-1.ms','A2256LC2_4.5s-2b.ms'],
-                          concatvis = msname)
-        self.assertEqual(self.res,True)
+        concat(vis = ['A2256LC2_4.5s-1.ms','A2256LC2_4.5s-2b.ms'], concatvis = msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -862,9 +899,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test6.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test6.ms',ignore_errors=True)
-            shutil.copytree(msname,'test6.ms')
+#             if 'test6.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test6.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test6.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
     
@@ -889,9 +926,7 @@ class test_concat(unittest.TestCase):
         '''Concat 7: two MSs with different antenna table such that baseline label reversal becomes necessary'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis = ['sim7.ms','sim8.ms'],
-                          concatvis = msname)
-        self.assertEqual(self.res,True)
+        concat(vis = ['sim7.ms','sim8.ms'], concatvis = msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -947,14 +982,15 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test7.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test7.ms',ignore_errors=True)
-            shutil.copytree(msname,'test7.ms')
+#             if 'test7.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test7.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test7.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
     
             # check Main table
-            tb.open('test7.ms')
+#            tb.open('test7.ms')
+            tb.open(msname)
             ant1 = tb.getcol('ANTENNA1')
             ant2 = tb.getcol('ANTENNA2')
             tb.close()
@@ -977,9 +1013,7 @@ class test_concat(unittest.TestCase):
         '''Concat 8: two MSs with different antenna tables, copypointing = False'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis = ['sim7.ms','sim8.ms'],
-                          concatvis = msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis = ['sim7.ms','sim8.ms'], concatvis = msname, copypointing=False)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1034,15 +1068,16 @@ class test_concat(unittest.TestCase):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
-            ms.close()
-            if 'test8.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test8.ms',ignore_errors=True)
-            shutil.copytree(msname,'test8.ms')
+            ms.close()                
+#             if 'test8.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test8.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test8.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
     
             # check Main table
-            tb.open('test8.ms')
+#            tb.open('test8.ms')
+            tb.open(msname)
             ant1 = tb.getcol('ANTENNA1')
             ant2 = tb.getcol('ANTENNA2')
             tb.close()
@@ -1057,7 +1092,7 @@ class test_concat(unittest.TestCase):
             if not result:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table '+name+' failed'
-                
+
         self.assertTrue(retValue['success'])
 
 
@@ -1076,11 +1111,10 @@ class test_concat(unittest.TestCase):
         if testmms:
             print("Expecting an Error ... ")
 
-        self.res = concat(vis=['part1.ms','part2-mod2-wscratch.ms','part3.ms'],concatvis=msname)
+        concat(vis=['part1.ms','part2-mod2-wscratch.ms','part3.ms'],concatvis=msname)
+        shutil.rmtree('part2-mod2-wscratch.ms',ignore_errors=True)
 
         if not testmms:
-
-            self.assertEqual(self.res,True)
 
             print(myname, ": Now checking output ...")
             mscomponents = set(["table.dat",
@@ -1136,9 +1170,9 @@ class test_concat(unittest.TestCase):
                 retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
             else:
                 ms.close()
-                if 'test9.ms' in glob.glob("*.ms"):
-                    shutil.rmtree('test9.ms',ignore_errors=True)
-                shutil.copytree(msname,'test9.ms')
+#                 if 'test9.ms' in glob.glob("*.ms"):
+#                     shutil.rmtree('test9.ms',ignore_errors=True)
+#                 shutil.copytree(msname,'test9.ms')
                 print(myname, ": OK. Checking tables in detail ...")
                 retValue['success']=True
 
@@ -1180,8 +1214,8 @@ class test_concat(unittest.TestCase):
             cb.open('part1-wscratch.ms') # calibrator-open creates scratch columns
             cb.close()
 
-            self.res = concat(vis=['part1-wscratch.ms','part2-mod2.ms','part3.ms'],concatvis=msname)
-            self.assertEqual(self.res,True)
+            concat(vis=['part1-wscratch.ms','part2-mod2.ms','part3.ms'],concatvis=msname)
+            shutil.rmtree('part1-wscratch.ms',ignore_errors=True)
 
             print(myname, ": Now checking output ...")
             mscomponents = set(["table.dat",
@@ -1237,9 +1271,9 @@ class test_concat(unittest.TestCase):
                 retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
             else:
                 ms.close()
-                if 'test10.ms' in glob.glob("*.ms"):
-                    shutil.rmtree('test10.ms',ignore_errors=True)
-                shutil.copytree(msname,'test10.ms')
+#                 if 'test10.ms' in glob.glob("*.ms"):
+#                     shutil.rmtree('test10.ms',ignore_errors=True)
+#                 shutil.copytree(msname,'test10.ms')
                 print(myname, ": OK. Checking tables in detail ...")
                 retValue['success']=True
 
@@ -1272,8 +1306,7 @@ class test_concat(unittest.TestCase):
         '''Concat 11: 2 parts of same MS split in time,  use of ephemerides, first ephemeris covers both MS time ranges'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['xy1.ms','xy2.ms'],concatvis=msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis=['xy1.ms','xy2.ms'],concatvis=msname, copypointing=False)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1331,11 +1364,12 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test11.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test11.ms',ignore_errors=True)
-            shutil.copytree(msname,'test11.ms')
+#             if 'test11.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test11.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test11.ms')
             print(myname, ": OK. Checking tables in detail ...")
-            tb.open('test11.ms/FIELD')
+#            tb.open('test11.ms/FIELD')
+            tb.open(msname+'/FIELD')
             a = list(tb.getcol('NAME'))
             tb.close()
             tb.open('xy1.ms/FIELD')
@@ -1355,8 +1389,7 @@ class test_concat(unittest.TestCase):
         '''Concat 12: 2 parts of same MS split in spw,  use of ephemerides'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['xya.ms','xyb.ms'],concatvis=msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis=['xya.ms','xyb.ms'],concatvis=msname, copypointing=False)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1427,9 +1460,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test12.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test12.ms',ignore_errors=True)
-            shutil.copytree(msname,'test12.ms')
+#             if 'test12.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test12.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test12.ms')
             #print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -1440,8 +1473,7 @@ class test_concat(unittest.TestCase):
         '''Concat 13: 2 parts of same MS split in time,  use of ephemerides only in second part'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['xy1-noephem.ms','xy2.ms'],concatvis=msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis=['xy1-noephem.ms','xy2.ms'],concatvis=msname, copypointing=False)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1498,9 +1530,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test13.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test13.ms',ignore_errors=True)
-            shutil.copytree(msname,'test13.ms')
+#             if 'test13.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test13.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test13.ms')
             #print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -1510,8 +1542,7 @@ class test_concat(unittest.TestCase):
         '''Concat 14: 2 parts of same MS split in time,  use of ephemerides, first ephemeris covers both MS time ranges, not chronologically ordered'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['xy2.ms', 'xy1.ms'],concatvis=msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis=['xy2.ms', 'xy1.ms'],concatvis=msname, copypointing=False)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1569,11 +1600,12 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test14.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test14.ms',ignore_errors=True)
-            shutil.copytree(msname,'test14.ms')
+#             if 'test14.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test14.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test14.ms')
             print(myname, ": OK. Checking tables in detail ...")
-            tb.open('test14.ms/FIELD')
+#            tb.open('test14.ms/FIELD')
+            tb.open(msname+'/FIELD')
             a = list(tb.getcol('NAME'))
             tb.close()
             tb.open('xy1.ms/FIELD')
@@ -1594,8 +1626,7 @@ class test_concat(unittest.TestCase):
         '''Concat 15: 2 parts of same MS split in time,  use of ephemerides, first ephemeris does not cover both MS time ranges'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['xy1.ms','xy2late.ms'],concatvis=msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis=['xy1.ms','xy2late.ms'],concatvis=msname, copypointing=False)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1654,11 +1685,12 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test15.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test15.ms',ignore_errors=True)
-            shutil.copytree(msname,'test15.ms')
+#             if 'test15.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test15.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test15.ms')
             print(myname, ": OK. Checking tables in detail ...")
-            tb.open('test15.ms/FIELD')
+#            tb.open('test15.ms/FIELD')
+            tb.open(msname+'/FIELD')
             a = list(tb.getcol('NAME'))
             tb.close()
             tb.open('xy1.ms/FIELD')
@@ -1678,8 +1710,7 @@ class test_concat(unittest.TestCase):
     def test16(self):
         '''Concat 16: 3 parts, SD data, one non-concurrent, two concurrent (CAS-5316)'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
-        self.res = concat(vis=['X39a.pm03.scan3.ms', 'X425.pm03.scan4.ms', 'X425.pm04.scan4.ms'],concatvis=msname)
-        self.assertEqual(self.res,True)
+        concat(vis=['X39a.pm03.scan3.ms', 'X425.pm03.scan4.ms', 'X425.pm04.scan4.ms'],concatvis=msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1729,13 +1760,14 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test16.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test16.ms',ignore_errors=True)
-            shutil.copytree(msname,'test16.ms')
+#             if 'test16.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test16.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test16.ms')
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
-            tb.open('test16.ms')
+#            tb.open('test16.ms')
+            tb.open(msname)
             a = tb.getcol('SCAN_NUMBER')
             tb.close()
             if not (a[0]==3 and a[59]==3 and a[60]==4 and a[len(a)-1]==4):
@@ -1748,8 +1780,8 @@ class test_concat(unittest.TestCase):
         '''Concat 17: 2 completely different MSs, use of ephemerides'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['uid___A002_Xab8dc1_X95a-shrunk.ms','uid___A002_Xab8dc1_Xf13-shrunk.ms'],concatvis=msname, copypointing=False)
-        self.assertEqual(self.res,True)
+        concat(vis=['uid___A002_Xab8dc1_X95a-shrunk.ms','uid___A002_Xab8dc1_Xf13-shrunk.ms'],
+               concatvis=msname, copypointing=False)
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1807,9 +1839,9 @@ class test_concat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
         else:
             ms.close()
-            if 'test17.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test17.ms',ignore_errors=True)
-            shutil.copytree(msname,'test17.ms')
+#             if 'test17.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test17.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test17.ms')
             #print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -1820,9 +1852,8 @@ class test_concat(unittest.TestCase):
         '''Concat 18: 3 MSs, use of ephemerides with parameter forcesingleephemfield'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis=['nep2-shrunk.ms','nep1-shrunk.ms','nep3-shrunk.ms'],concatvis=msname, 
-                          copypointing=False, forcesingleephemfield=['Neptune'])
-        self.assertEqual(self.res,True)
+        concat(vis=['nep2-shrunk.ms','nep1-shrunk.ms','nep3-shrunk.ms'],concatvis=msname, 
+               copypointing=False, forcesingleephemfield=['Neptune'])
         
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -1889,9 +1920,9 @@ class test_concat(unittest.TestCase):
         else:
             ms.close()
             tb.close()
-            if 'test18.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test18.ms',ignore_errors=True)
-            shutil.copytree(msname,'test18.ms')
+#             if 'test18.ms' in glob.glob("*.ms"):
+#                 shutil.rmtree('test18.ms',ignore_errors=True)
+#             shutil.copytree(msname,'test18.ms')
             #print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -1901,9 +1932,7 @@ class test_concat(unittest.TestCase):
         '''Concat 19: two MSs with different PROCESSOR table (CAS-12937)'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
-        self.res = concat(vis = ['X1127a.smaller.ms','Xd21.smaller.ms'],
-                          concatvis = msname)
-        self.assertEqual(self.res,True)
+        concat(vis = ['X1127a.smaller.ms','Xd21.smaller.ms'], concatvis = msname)
 
         print(myname, ": Now checking output ...")
         mscomponents = set(["table.dat",
@@ -2011,7 +2040,131 @@ class test_concat(unittest.TestCase):
                 retValue['error_msgs']=retValue['error_msgs']+'Reindexing of main table not correct.'
             tb.close()
 
+        self.assertTrue(retValue['success'])
+
+    def test20(self):
+        '''Concat 20: two MSs with different antenna table in full polarization (CAS-12872)'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
+        
+        concat(vis=['n08c1_swap1.ms','n08c1_swap2_swapped.ms'],concatvis=msname)
+        
+        print(myname, ": Now checking output ...")
+        mscomponents = set(["table.dat",
+                            "table.f1",
+                            "table.f2",
+                            "table.f3",
+                            "table.f4",
+                            "table.f5",
+                            "table.f6",
+                            "table.f7",
+                            "table.f8",
+                            "ANTENNA/table.dat",
+                            "DATA_DESCRIPTION/table.dat",
+                            "FEED/table.dat",
+                            "FIELD/table.dat",
+                            "FLAG_CMD/table.dat",
+                            "HISTORY/table.dat",
+                            "OBSERVATION/table.dat",
+                            "POINTING/table.dat",
+                            "POLARIZATION/table.dat",
+                            "PROCESSOR/table.dat",
+                            "SPECTRAL_WINDOW/table.dat",
+                            "STATE/table.dat",
+                            "ANTENNA/table.f0",
+                            "DATA_DESCRIPTION/table.f0",
+                            "FEED/table.f0",
+                            "FIELD/table.f0",
+                            "FLAG_CMD/table.f0",
+                            "HISTORY/table.f0",
+                            "OBSERVATION/table.f0",
+                            "POINTING/table.f0",
+                            "POLARIZATION/table.f0",
+                            "PROCESSOR/table.f0",
+                            "SPECTRAL_WINDOW/table.f0",
+                            "STATE/table.f0"
+                            ])
+        for name in mscomponents:
+            if not os.access(msname+"/"+name, os.F_OK):
+                print(myname, ": Error  ", msname+"/"+name, "doesn't exist ...")
+                retValue['success']=False
+                retValue['error_msgs']=retValue['error_msgs']+msname+'/'+name+' does not exist'
+            else:
+                print(myname, ": ", name, "present.")
                 
+        self.assertTrue(retValue['success'])
+        print(myname, ": MS exists. All tables present. Try opening as MS ...")
+        try:
+            ms.open(msname)
+        except:
+            print(myname, ": Error  Cannot open MS table", tablename)
+            retValue['success']=False
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+        else:
+            ms.close()
+            tb.close()
+            if 'test20.ms' in glob.glob("*.ms"):
+                shutil.rmtree('test20.ms',ignore_errors=True)
+            shutil.copytree(msname,'test20.ms')
+            print(myname, ": OK. Checking tables in detail ...")
+            retValue['success']=True
+
+            # check Main table
+            nrows = 12
+            msnrows = []
+            for myms in ['n08c1_swap1.ms','n08c1_swap2_swapped.ms']:
+                tb.open(myms)
+                msnrows.append(tb.nrows())
+                tb.close()
+            tb.open('n08c1_swap2.ms')
+            olddata = tb.getcol('DATA', 0, nrows)
+            oldflag = tb.getcol('FLAG', 0, nrows)
+            oldweight = tb.getcol('WEIGHT', 0, nrows)
+            oldwtspec = tb.getcol('WEIGHT_SPECTRUM', 0, nrows)
+            oldsigma = tb.getcol('SIGMA', 0, nrows)
+            oldsgspec = tb.getcol('SIGMA_SPECTRUM', 0, nrows)
+            olduvw = tb.getcol('UVW', 0, nrows)
+            tb.close()
+
+            ms.open('test20.ms',nomodify=False)
+            ms.sort(columns=['TIME','ANTENNA1','ANTENNA2'])
+            ms.done()
+            tb.open('test20.ms')
+            newdata = tb.getcol('DATA', msnrows[0], nrows)
+            newflag = tb.getcol('FLAG', msnrows[0], nrows)
+            newweight = tb.getcol('WEIGHT', msnrows[0], nrows)
+            newwtspec = tb.getcol('WEIGHT_SPECTRUM', msnrows[0], nrows)
+            newsigma = tb.getcol('SIGMA', msnrows[0], nrows)
+            newsgspec = tb.getcol('SIGMA_SPECTRUM', msnrows[0], nrows)
+            newuvw = tb.getcol('UVW', msnrows[0], nrows)
+            tb.close()
+            result = True
+            if not (olddata == newdata).all():
+                print('Mismatch in DATA column')
+                result = False
+            if not (oldflag == newflag).all():
+                print('Mismatch in FLAG column')
+                result = False
+            if not (oldweight == newweight).all():
+                print('Mismatch in WEIGHT column')
+                result = False
+            if not (oldwtspec == newwtspec).all():
+                print('Mismatch in WEIGHT_SPECTRUM column')
+                result = False
+            if not (oldsigma == newsigma).all():
+                print('Mismatch in SIGMA column')
+                result = False
+            if not (oldsgspec == newsgspec).all():
+                print('Mismatch in SIGMA_SPECTRUM column')
+                result = False
+            if not (olduvw == newuvw).all():
+                print('Mismatch in UVW column')
+                result = False
+
+            if not result:
+                retValue['success']=False
+                retValue['error_msgs']=retValue['error_msgs']+'Check of MAIN table failed'
+
+        shutil.rmtree('test20.ms',ignore_errors=True)
         self.assertTrue(retValue['success'])
 
 

@@ -32,12 +32,13 @@
 //# Includes
 #include <casa/aips.h>
 #include <casa/Containers/Block.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casacore{
 
 class RecordInterface;
 class String;
-template <class T> class Vector;
+
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN

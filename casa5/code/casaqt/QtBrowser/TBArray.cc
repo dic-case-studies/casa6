@@ -28,6 +28,7 @@
 #include <casaqt/QtBrowser/TBTable.h>
 #include <casaqt/QtBrowser/TBField.h>
 #include <casaqt/QtBrowser/TBKeyword.h>
+#include <vector>
 
 using namespace casacore;
 namespace casa {
@@ -65,8 +66,8 @@ TBArray::TBArray(String tp, String tb) : dimensions(), data(), valid(false),
 TBArray::~TBArray() {
     int n = dimensions.size();
     for(unsigned int i = 0; i < data.size(); i++) {
-        deleteData((vector<void*>*)(data.at(i)), n - 1);
-        delete (vector<void*>*)(data.at(i));
+        deleteData((std::vector<void*>*)(data.at(i)), n - 1);
+        delete (std::vector<void*>*)(data.at(i));
     }
 }
 
@@ -74,7 +75,7 @@ TBArray::~TBArray() {
 
 bool TBArray::isValid() { return valid; }
 
-vector<int> TBArray::getDimensions() { return vector<int>(dimensions); }
+std::vector<int> TBArray::getDimensions() { return std::vector<int>(dimensions); }
 
 unsigned int TBArray::dim() { return dimensions.size(); }
 
@@ -87,7 +88,7 @@ bool TBArray::isOneDimensional() { return oneDim; }
 
 String TBArray::getType() { return type; }
 
-vector<void*>* TBArray::getData() { return &data; }
+std::vector<void*>* TBArray::getData() { return &data; }
 
 int TBArray::getRow() { return row; }
 
@@ -123,35 +124,35 @@ String TBArray::getName(TBTable* table) {
     return ss.str();
 }
 
-String TBArray::dataAt(vector<int> d) {
+String TBArray::dataAt(std::vector<int> d) {
     if(oneDim && d.size() == 1)
         d.insert(d.begin(), 0);
         
     if(!dimensionIsValid(d)) return "";
 
     // go to the "last" dimension
-    vector<void*>* row = &data;
+    std::vector<void*>* row = &data;
     for(unsigned int i = 0; i < d.size() - 1; i++) {
-        row = (vector<void*>*)row->at(d.at(i));
+        row = (std::vector<void*>*)row->at(d.at(i));
     }
     String s = *(String*)(row->at(d.at(d.size() - 1)));
     return s;
 }
 
-void TBArray::setDataAt(vector<int> d, String newVal) {
+void TBArray::setDataAt(std::vector<int> d, String newVal) {
     if(!valid || !dimensionIsValid(d)) return;
     
     // go to the "last" dimension
-    vector<void*>* row = &data;
+    std::vector<void*>* row = &data;
     for(unsigned int i = 0; i < d.size() - 1; i++) {
-        row = (vector<void*>*)(row->at(d.at(i)));
+        row = (std::vector<void*>*)(row->at(d.at(i)));
     }
     
     delete (String*)(*row)[d.at(d.size() - 1)];
     (*row)[d.at(d.size() - 1)] = new String(newVal);
 }
 
-bool TBArray::dimensionIsValid(vector<int> d) {
+bool TBArray::dimensionIsValid(std::vector<int> d) {
     if(d.size() != dimensions.size()) return false;
     for(unsigned int i = 0; i < d.size(); i++) {
         if(d.at(i) < 0 || d.at(i) >= dimensions.at(i)) return false;
@@ -164,7 +165,7 @@ String TBArray::toFlattenedString() {
     int d = dimensions.size() - 1;
     
     for(unsigned int i = 0; i < data.size(); i++) {
-        str += toFlattenedString((vector<void*>*)data.at(i), d);
+        str += toFlattenedString((std::vector<void*>*)data.at(i), d);
     }
     return str;
 }
@@ -172,7 +173,7 @@ String TBArray::toFlattenedString() {
 bool TBArray::contains(String v) {
     int d = dimensions.size() - 1;
     for(unsigned int i = 0; i < data.size(); i++)
-        if(contains((vector<void*>*)data.at(i), d, v))
+        if(contains((std::vector<void*>*)data.at(i), d, v))
             return true;
 
     return false;
@@ -193,7 +194,7 @@ bool TBArray::containsBetween(String v1, String v2) {
 
     int d = dimensions.size() - 1;
     for(unsigned int i = 0; i < data.size(); i++)
-        if(containsBetween((vector<void*>*)data.at(i), d, dv1, dv2))
+        if(containsBetween((std::vector<void*>*)data.at(i), d, dv1, dv2))
             return true;
 
     return false;
@@ -207,7 +208,7 @@ bool TBArray::containsLessThan(String v) {
 
     int d = dimensions.size() - 1;
     for(unsigned int i = 0; i < data.size(); i++)
-        if(containsLessThan((vector<void*>*)data.at(i), d, dv))
+        if(containsLessThan((std::vector<void*>*)data.at(i), d, dv))
             return true;
 
     return false;
@@ -221,7 +222,7 @@ bool TBArray::containsGreaterThan(String v) {
     
     int d = dimensions.size() - 1;
     for(unsigned int i = 0; i < data.size(); i++)
-        if(containsGreaterThan((vector<void*>*)data.at(i), d, dv))
+        if(containsGreaterThan((std::vector<void*>*)data.at(i), d, dv))
             return true;
 
     return false;
@@ -284,7 +285,7 @@ void TBArray::parseArray(String* tbl) {
             
             else if(i < tbl->length() && j <tbl->length()) {
                 String tStr = tbl->substr(i + 1, (j - i - 1));
-                vector<int> d(dimensions);
+                std::vector<int> d(dimensions);
                 d.erase(d.begin());
                 
                 data.resize(dimensions.at(0));
@@ -299,7 +300,7 @@ void TBArray::parseArray(String* tbl) {
             dimensions.push_back(1);
             int x = 0;
             String tStr = tbl->substr(i + 1, (k - i - 1));
-            vector<void*>* row = new vector<void*>();
+            std::vector<void*>* row = new std::vector<void*>();
             
             i = 0;
             j = tStr.find(',');
@@ -329,9 +330,9 @@ void TBArray::parseArray(String* tbl) {
     }
 }
 
-String TBArray::parseRow(String& str, vector<void*>* r, vector<int> d, int x) {
+String TBArray::parseRow(String& str, std::vector<void*>* r, std::vector<int> d, int x) {
     if(d.size() == 1) { // on "last" dimension
-        vector<void*>* row = new vector<void*>(d.at(0));
+        std::vector<void*>* row = new std::vector<void*>(d.at(0));
 
         unsigned int i = TBConstants::findWS(str);
         for(int k = 0; k < d.at(0); k++) {
@@ -357,9 +358,9 @@ String TBArray::parseRow(String& str, vector<void*>* r, vector<int> d, int x) {
         return str;
     } else {
         int s = d.at(0);
-        vector<void*>* row = new vector<void*>(s);
+        std::vector<void*>* row = new std::vector<void*>(s);
 
-        vector<int> d2;
+        std::vector<int> d2;
         for(unsigned int i = 1; i < d.size(); i++)
             d2.push_back(d.at(i));
 
@@ -373,7 +374,7 @@ String TBArray::parseRow(String& str, vector<void*>* r, vector<int> d, int x) {
 
 void TBArray::parseMultidimensionalTable(String str) {
     // first insert placeholders
-    vector<int> d(dimensions);
+    std::vector<int> d(dimensions);
     d.erase(d.begin());
 
     data.resize(dimensions.at(0));
@@ -396,7 +397,7 @@ void TBArray::parseMultidimensionalTable(String str) {
         unsigned int y = cell.find(']', x + 1);
         String coord = cell.substr(x + 1, y - x - 1);
 
-        d = vector<int>();
+        d = std::vector<int>();
         unsigned int a = 0, b = TBConstants::findWS(coord);
         while(a < coord.length()) {
             int temp;
@@ -452,16 +453,16 @@ void TBArray::parseMultidimensionalTable(String str) {
     }
 }
 
-void TBArray::insertPlaceholders(vector<void*>* r, vector<int> d, int x) {
+void TBArray::insertPlaceholders(std::vector<void*>* r, std::vector<int> d, int x) {
     if(d.size() == 1) {
-        vector<void*>* row = new vector<void*>(d.at(0));
+        std::vector<void*>* row = new std::vector<void*>(d.at(0));
 
         (*r)[x] = row;
     } else {
         int s = d.at(0);
-        vector<void*>* row = new vector<void*>(s);
+        std::vector<void*>* row = new std::vector<void*>(s);
 
-        vector<int> d2;
+        std::vector<int> d2;
         for(unsigned int i = 1; i < d.size(); i++)
             d2.push_back(d.at(i));
 
@@ -472,7 +473,7 @@ void TBArray::insertPlaceholders(vector<void*>* r, vector<int> d, int x) {
     }
 }
 
-String TBArray::toFlattenedString(vector<void*>* row, int d) {
+String TBArray::toFlattenedString(std::vector<void*>* row, int d) {
     String str;
     if(d == 1) { // "last" dimension
         for(unsigned int i = 0; i < row->size(); i++) {
@@ -481,13 +482,13 @@ String TBArray::toFlattenedString(vector<void*>* row, int d) {
     } else {
         d--;
         for(unsigned int i = 0; i < row->size(); i++) {
-            str += toFlattenedString((vector<void*>*)row->at(i), d);
+            str += toFlattenedString((std::vector<void*>*)row->at(i), d);
         }
     }
     return str;
 }
 
-bool TBArray::contains(vector<void*>* data, int n, String v) {
+bool TBArray::contains(std::vector<void*>* data, int n, String v) {
     if(n == 1) { // "last" dimension
         for(unsigned int i = 0; i < data->size(); i++) {
             String s = *(String*)data->at(i);
@@ -496,13 +497,13 @@ bool TBArray::contains(vector<void*>* data, int n, String v) {
         return false;
     } else {
         for(unsigned int i = 0; i < data->size(); i++) {
-            if(contains((vector<void*>*)data->at(i), n - 1, v)) return true;
+            if(contains((std::vector<void*>*)data->at(i), n - 1, v)) return true;
         }
         return false;
     }
 }
 
-bool TBArray::containsBetween(vector<void*>* data,int n,double v1, double v2) {
+bool TBArray::containsBetween(std::vector<void*>* data,int n,double v1, double v2) {
     if(n == 1) { // "last" dimension
         String t = TBConstants::arrayType(type);
         for(unsigned int i = 0; i < data->size(); i++) {
@@ -515,14 +516,14 @@ bool TBArray::containsBetween(vector<void*>* data,int n,double v1, double v2) {
         return false;
     } else {
         for(unsigned int i = 0; i < data->size(); i++) {
-            if(containsBetween((vector<void*>*)data->at(i), n - 1, v1, v2))
+            if(containsBetween((std::vector<void*>*)data->at(i), n - 1, v1, v2))
                 return true;
         }
         return false;
     }
 }
 
-bool TBArray::containsLessThan(vector<void*>* data, int n, double v) {
+bool TBArray::containsLessThan(std::vector<void*>* data, int n, double v) {
     if(n == 1) { // "last" dimension
         String t = TBConstants::arrayType(type);
         for(unsigned int i = 0; i < data->size(); i++) {
@@ -535,14 +536,14 @@ bool TBArray::containsLessThan(vector<void*>* data, int n, double v) {
         return false;
     } else {
         for(unsigned int i = 0; i < data->size(); i++) {
-            if(containsLessThan((vector<void*>*)data->at(i), n - 1, v))
+            if(containsLessThan((std::vector<void*>*)data->at(i), n - 1, v))
                 return true;
         }
         return false;
     }
 }
 
-bool TBArray::containsGreaterThan(vector<void*>* data, int n, double v) {
+bool TBArray::containsGreaterThan(std::vector<void*>* data, int n, double v) {
     if(n == 1) { // "last" dimension
         String t = TBConstants::arrayType(type);
         for(unsigned int i = 0; i < data->size(); i++) {
@@ -555,21 +556,21 @@ bool TBArray::containsGreaterThan(vector<void*>* data, int n, double v) {
         return false;
     } else {
         for(unsigned int i = 0; i < data->size(); i++) {
-            if(containsGreaterThan((vector<void*>*)data->at(i), n - 1, v))
+            if(containsGreaterThan((std::vector<void*>*)data->at(i), n - 1, v))
                 return true;
         }
         return false;
     }
 }
 
-void TBArray::deleteData(vector<void*>* data, int n) {
+void TBArray::deleteData(std::vector<void*>* data, int n) {
     if(n == 1) {
         for(unsigned int i = 0; i < data->size(); i++)
             delete (String*)data->at(i);
     } else {
         for(unsigned int i = 0; i < data->size(); i++) {
-            deleteData((vector<void*>*)(data->at(i)), n - 1);
-            delete (vector<void*>*)(data->at(i));
+            deleteData((std::vector<void*>*)(data->at(i)), n - 1);
+            delete (std::vector<void*>*)(data->at(i));
         }
     }
 }

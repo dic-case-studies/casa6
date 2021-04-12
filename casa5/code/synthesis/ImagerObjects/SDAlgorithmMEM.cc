@@ -134,7 +134,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 					    Int &iterdone)
   {
     LogIO os( LogOrigin("SDAlgorithmMEM","takeOneStep",WHERE) );
-
     // tmp
     itsImages->residual()->get( itsMatResidual, true );
     itsImages->mask()->get( itsMatMask, true );
@@ -149,8 +148,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     cout << "Flux at start of step : " << sum(itsMatModel) << endl;
 
     // Set model to zero
+    
+    LatticeLocker lockmod(*(itsImages->model()), FileLocker::Write);
     itsImages->model()->set( 0.0 );
-
+    
     // Add to construction params
     Float targetFlux=1.0;
     Bool constrainTargetFlux=false;
@@ -232,6 +233,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   void SDAlgorithmMEM::finalizeDeconvolver()
   {
+    LatticeLocker lock1(*(itsImages->residual()), FileLocker::Write);
+    LatticeLocker lock2(*(itsImages->model()), FileLocker::Write);
     (itsImages->residual())->put( itsMatResidual );
     (itsImages->model())->put( itsMatModel );
   }

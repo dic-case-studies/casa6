@@ -14,6 +14,8 @@ else:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 
     _tb = tbtool()
 
@@ -42,9 +44,9 @@ class smoothcal_test(unittest.TestCase):
         if not is_CASA6:
             default(smoothcal)
         if is_CASA6:
-            datapath = ctsys.resolve('regression/unittest/smoothcal')
+            datapath = ctsys.resolve('unittest/smoothcal/')
         else:
-            datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/smoothcal')
+            datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/smoothcal/')
 
         shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
         shutil.copytree(os.path.join(datapath,self.gcal), self.gcal)
@@ -70,14 +72,14 @@ class smoothcal_test(unittest.TestCase):
     def test0(self):
         '''Test 0: Missing input table caught by parameter checking (exception thrown)
         '''
-        # CASA5 returns False
+        # CASA5 returns False (depending on __rethrow_casa_exceptions)
         try:
             OK = False
             self.res = smoothcal()
             if not is_CASA6:
                 OK = not self.res
         except:
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 OK = True
         self.assertTrue(OK)
 
@@ -85,14 +87,14 @@ class smoothcal_test(unittest.TestCase):
         """Test 1: Wrong input MS caught by parameter checking (exception thrown)
         """
         msfile = 'badmsfile'
-        # CASA5 returns False
+        # CASA5 returns False (depending on __rethrow_casa_exceptions)
         try:
             OK = False
             self.res = smoothcal(vis=msfile,tablein=self.gcal,caltable=self.out)
             if not is_CASA6:
                 OK = not self.res
         except:
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 OK = True
         self.assertTrue(OK)
 
@@ -107,7 +109,7 @@ class smoothcal_test(unittest.TestCase):
             if not is_CASA6:
                 OK = not self.res
         except:
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 OK = True
         self.assertTrue(OK)
 
@@ -126,7 +128,7 @@ class smoothcal_test(unittest.TestCase):
             if not is_CASA6:
                 OK = not self.res
         except:
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 OK = True
         self.assertTrue(OK)
 
@@ -145,7 +147,7 @@ class smoothcal_test(unittest.TestCase):
             if not is_CASA6:
                 OK = not self.res
         except:
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 OK = True
         self.assertTrue(OK)
 
@@ -165,7 +167,7 @@ class smoothcal_test(unittest.TestCase):
             if not is_CASA6:
                 OK = not self.res
         except:
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 OK = True
         self.assertTrue(OK)
 

@@ -460,10 +460,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	                              Float xstretch, Float ystretch) {
 		Float theta = pangle * (Float)C::degree;
 		Float ang, temp;
-		uInt nsegments = uInt( min(5000.,
+		uInt nsegments = uInt( std::min(5000.,
 		                           2 * C::pi *
-		                           max(abs(smajor), abs(sminor)) *
-		                           max(abs(xstretch), abs(ystretch)) + 0.5) );
+		                           std::max(abs((double)smajor), abs((double)sminor)) *
+		                           std::max(abs((double)xstretch), abs((double)ystretch)) + 0.5) );
 		if (nsegments < 4) nsegments = 4;
 
 		Vector<Float> px(nsegments), py(nsegments);

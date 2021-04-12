@@ -288,7 +288,7 @@ namespace casa{
   using namespace vi;
   Bool IChangeDetector::changed(const VisBuffer2 &vb) const
   {
-     for (Int i=0;i<vb.nRows();++i)
+     for (rownr_t i=0;i<vb.nRows();++i)
           if (changed(vb,i)) return true;
      return false;
   }

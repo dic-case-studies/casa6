@@ -74,7 +74,7 @@ from __main__ import *
 import unittest
 import numpy
 
-datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imsubimage/'
+datapath = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/ia_subimage/'
 
 class ia_subimage_test(unittest.TestCase):
     
@@ -101,19 +101,19 @@ class ia_subimage_test(unittest.TestCase):
         mm = myia.subimage("", mask=mask1)
         self.assertTrue(mm)
         mm.done()
-        res = imsubimage(imagename=imname, outfile="stretch1", mask=mask1)
-        self.assertTrue(res)
+        imsubimage(imagename=imname, outfile="stretch1", mask=mask1)
         myia.done()
         self.assertTrue(len(tb.showcache()) == 0)
         mask2 = "mask2.im > 10"
         self.assertRaises(Exception, myia.subimage, "", mask=mask2, stretch=False)
-        self.assertFalse(imsubimage(imname, "stretch4", mask=mask2, stretch=False))
+        with self.assertRaises(RuntimeError):
+            imsubimage(imname, "stretch4", mask=mask2, stretch=False)
         myia.open(imname)
         mm = myia.subimage("", mask=mask2, stretch=True)
         myia.done()
         mm.done()
         self.assertTrue(len(tb.showcache()) == 0)
-        self.assertTrue(imsubimage(imname, outfile="stretch2", mask=mask2, stretch=True))
+        imsubimage(imname, outfile="stretch2", mask=mask2, stretch=True)
         mask3 = "mask3.im > 10"
         zz = None
         try:
@@ -125,7 +125,8 @@ class ia_subimage_test(unittest.TestCase):
             pass
         myia.done()
         myia.done()
-        self.assertFalse(imsubimage(imname, "junk", mask=mask3, stretch=True))
+        with self.assertRaises(RuntimeError):
+            imsubimage(imname, "junk", mask=mask3, stretch=True)
 
     def test_beams(self):
         """ Test per plane beams """
@@ -221,12 +222,12 @@ class ia_subimage_test(unittest.TestCase):
         myia.open(outfile)
         self.assertTrue((myia.shape() == numpy.array([19, 19, 20, 4])).all())
         myia.done()
-        self.assertFalse(
+        with self.assertRaises(RuntimeError):
             imsubimage(
                 imagename=imagename, outfile=outfile, overwrite=True, region=region,
                 chans="5~6,9~10"
             )
-        )
+
         imsubimage(
             imagename=imagename, outfile=outfile, overwrite=True, region=region,
             chans="5~10"
@@ -323,7 +324,7 @@ class ia_subimage_test(unittest.TestCase):
     def test_history(self):
         """verify history writing"""
         myia = iatool()
-        imagename = "zz.im"
+        imagename = "zz_zz.im"
         myia.fromshape(imagename, [20, 20])
         myia = myia.subimage()
         msgs = myia.history()

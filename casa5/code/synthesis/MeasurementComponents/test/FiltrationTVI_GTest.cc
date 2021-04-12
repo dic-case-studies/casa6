@@ -600,19 +600,19 @@ protected:
         // ROW IDs
         cout << "Examining ROW ID";
         cout.flush();
-        Vector<uInt> row_ids;
-        Vector<uInt> row_ids_ref;
+        Vector<rownr_t> row_ids;
+        Vector<rownr_t> row_ids_ref;
         vi->getImpl()->getRowIds(row_ids);
         refvi->getImpl()->getRowIds(row_ids_ref);
         Vector<bool> is_filtrate;
         auto const num_filtrates = Validator::IsFiltratePerRow(vb_ref,
             is_filtrate);
         ASSERT_GE(num_filtrates, 0);
-        ASSERT_EQ(refvi->getImpl()->nRows(), num_filtrates);
+        ASSERT_EQ(refvi->getImpl()->nRows(), (size_t)num_filtrates);
         ASSERT_EQ((unsigned long )num_filtrates, is_filtrate.nelements());
-        EXPECT_EQ(num_filtrates, vi->getImpl()->nRows());
+        EXPECT_EQ((size_t)num_filtrates, vi->getImpl()->nRows());
         int j = 0;
-        for (int i = 0; i < vb_ref->nRows(); ++i) {
+        for (rownr_t i = 0; i < vb_ref->nRows(); ++i) {
           if (is_filtrate[i]) {
             EXPECT_EQ(row_ids_ref[i], row_ids[j]);
             ++j;

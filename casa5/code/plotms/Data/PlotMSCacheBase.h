@@ -321,7 +321,9 @@ public:
   // These support generic non-complex calibration
   inline casacore::Double getPar(casacore::Int chnk,casacore::Int irel)  { return *(par_[chnk]->data()+irel); };
   inline casacore::Double getSnr(casacore::Int chnk,casacore::Int irel)  { return *(snr_[chnk]->data()+irel); };
+  inline casacore::Double getTec(casacore::Int chnk,casacore::Int irel)  { return *(tec_[chnk]->data()+irel); };
   inline casacore::Double getAntPos(casacore::Int chnk,casacore::Int irel)  { return *(antpos_[chnk]->data()+irel); };
+
 
   // Curve overlays
   inline casacore::Double getAtm(casacore::Int chnk,casacore::Int irel) { return *(atm_[chnk]->data()+irel); };
@@ -343,7 +345,7 @@ public:
   inline casacore::Vector<casacore::Int>& ant1(casacore::Int chnk) { return *(antenna1_[chnk]); };
   inline casacore::Vector<casacore::Int>& ant2(casacore::Int chnk) { return *(antenna2_[chnk]); };
   inline casacore::Vector<casacore::Int>& bsln(casacore::Int chnk) { return *(baseline_[chnk]); };
-  inline casacore::Vector<casacore::uInt>& row(casacore::Int chnk) { return *(row_[chnk]); };
+  inline casacore::Vector<casacore::rownr_t>& row(casacore::Int chnk) { return *(row_[chnk]); };
   inline casacore::Vector<casacore::Int>& obsid(casacore::Int chnk) { return *(obsid_[chnk]); };
   inline casacore::Vector<casacore::Int>& intent(casacore::Int chnk) { return *(intent_[chnk]); };
   inline casacore::Vector<casacore::Int>& feed1(casacore::Int chnk) { return *(feed1_[chnk]); };
@@ -441,6 +443,7 @@ public:
   // calibration axes
   inline casacore::Array<casacore::Float>& par(casacore::Int chnk)  { return *(par_[chnk]); };
   inline casacore::Array<casacore::Float>& snr(casacore::Int chnk)  { return *(snr_[chnk]); };
+  inline casacore::Array<casacore::Float>& tec(casacore::Int chnk)  { return *(tec_[chnk]); };
   inline casacore::Array<casacore::Float>& antpos(casacore::Int chnk)  { return *(antpos_[chnk]); };
 
   // curve overlay axes
@@ -613,7 +616,7 @@ protected:
   casacore::Vector<casacore::Bool> goodChunk_;
   casacore::Vector<casacore::Double> time_, timeIntr_;
   casacore::Vector<casacore::Int> field_, spw_, scan_;
-  casacore::PtrBlock<casacore::Vector<casacore::uInt>*> row_;
+  casacore::PtrBlock<casacore::Vector<casacore::rownr_t>*> row_;
   casacore::PtrBlock<casacore::Vector<casacore::Int>*> antenna1_, antenna2_, baseline_;
   casacore::PtrBlock<casacore::Vector<casacore::Double>*> uvdist_, u_, v_, w_;
   casacore::PtrBlock<casacore::Matrix<casacore::Double>*> uvdistL_, uwave_, vwave_, wwave_;
@@ -669,8 +672,7 @@ protected:
   casacore::PtrBlock<casacore::Vector<casacore::Double>*> atm_, tsky_, imageSideband_;
 
   // for cal tables
-  casacore::PtrBlock<casacore::Array<casacore::Float>*> par_, snr_;
-  casacore::PtrBlock<casacore::Array<casacore::Float>*> antpos_; 
+  casacore::PtrBlock<casacore::Array<casacore::Float>*> par_, snr_, tec_, antpos_;
 
   // Current setup/state.
   bool dataLoaded_;

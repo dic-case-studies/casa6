@@ -35,16 +35,16 @@
 #include <casa/Containers/Record.h>
 #include <display/Display/DParameterChoice.h>
 #include <display/Display/DParameterRange.h>
+#include <casacore/casa/Arrays/Array.h>
+#include <casacore/lattices/Lattices/MaskedLattice.h>
+#include <casacore/lattices/LatticeMath/LatticeStatistics.h>
 
 namespace casacore{
 
 	class IPosition;
 	class ImageRegion;
 	class WCLELMask;
-	template <class T> class Array;
-	template <class T> class Lattice;
-	template <class T> class MaskedLattice;
-	template <class T> class LatticeStatistics;
+
 }
 
 namespace casa { //# NAMESPACE CASA - BEGIN
