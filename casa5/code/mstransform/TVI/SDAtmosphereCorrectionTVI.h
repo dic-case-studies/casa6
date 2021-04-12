@@ -50,17 +50,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 namespace vi { // # NAMESPACE VI - BEGIN
 
-//# forward decl
-
-class VisBuffer2;
-
-class ChannelSelector;
-class ChannelSelectorCache;
-typedef casacore::Vector<casacore::Vector<casacore::Slice> > ChannelSlicer;
-class SpectralWindowChannelsCache;
-class SpectralWindowChannels;
-class SubtableColumns;
-
 class SDAtmosphereCorrectionVi2Factory;
 
 // <summary>
