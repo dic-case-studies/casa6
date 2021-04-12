@@ -1279,14 +1279,13 @@ void MSTransformManager::parsePointingsInterpolationParams(casacore::Record &con
 }
 
 void MSTransformManager::parseAtmCorrectionParams(casacore::Record &configuration) {
-	String key("atmCor");
-	if (configuration.isDefined(key)) {
-	    doAtmCor_p = configuration.asBool(key);
-		atmCorConfig_p = configuration;
-	} else {
-		doAtmCor_p = False;
-	}
-
+    String key("atmCor");
+    if (configuration.isDefined(key)) {
+        doAtmCor_p = configuration.asBool(key);
+    atmCorConfig_p = configuration;
+    } else {
+    doAtmCor_p = False;
+    }
 }
 
 // -----------------------------------------------------------------------
