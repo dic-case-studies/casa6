@@ -1282,9 +1282,9 @@ void MSTransformManager::parseAtmCorrectionParams(casacore::Record &configuratio
     String key("atmCor");
     if (configuration.isDefined(key)) {
         doAtmCor_p = configuration.asBool(key);
-    atmCorConfig_p = configuration;
+        atmCorConfig_p = configuration;
     } else {
-    doAtmCor_p = False;
+        doAtmCor_p = False;
     }
 }
 
