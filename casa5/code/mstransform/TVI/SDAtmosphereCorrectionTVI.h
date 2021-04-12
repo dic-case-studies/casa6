@@ -122,7 +122,6 @@ public:
   }
 
   // Methods to control and monitor subchunk iteration
-
   virtual void origin() override;
   virtual void next() override;
   virtual void originChunks(casacore::Bool forceRewind = false) override;
@@ -137,7 +136,6 @@ public:
   virtual void floatData(casacore::Cube<casacore::Float> & fcube) const override;
 
 protected:
-
   // Constructor
   SDAtmosphereCorrectionTVI(ViImplementation2 * inputVi,
     casacore::Record const &configuration);
@@ -255,7 +253,6 @@ public:
   virtual ~SDAtmosphereCorrectionTVILayerFactory() = default;
 
 protected:
-
   ViImplementation2 * createInstance(ViImplementation2* vii0) const;
 
   casacore::Record configuration_p;
