@@ -61,6 +61,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+import sys
 import shutil
 import os.path
 import unittest
@@ -79,10 +80,16 @@ else:
         return os.path.join(dataPath,apath)
 
 class msview_test(unittest.TestCase):
+    def checkDisplay(self):
+        if self.gui:
+            self.assertGreater(len(self.display), 0, 'DISPLAY not set, cannot run test')
     
     @classmethod
     def setUpClass(self):
         """copying data"""
+        self.display = os.environ.get("DISPLAY")
+        # default to no GUI except for CASA 6 on non-linux systems to avoid an exception where no GUI is unsupported
+        self.gui = is_CASA6 and sys.platform != 'linux'
         self.testms = "tms"+str(os.getpid())+".ms"
         self.outfiles = { }
         for t in ['jpg', 'pdf', 'eps', 'ps', 'png', 'xbm', 'xpm', 'ppm']:
@@ -100,48 +107,58 @@ class msview_test(unittest.TestCase):
                 os.system('rm -rf ' + thisOutfile)
         
     def setUp(self):
-        pass
+        self.checkDisplay()
 
     def test_xbm(self):
         """Test production of Xbm file"""
-        msview(self.testms,outfile=self.outfiles['xbm'],gui=False)
+        msview(self.testms,outfile=self.outfiles['xbm'],gui=self.gui)
         self.assertTrue(os.path.isfile(self.outfiles['xbm']),"viewer failed to produce an Xbm file")
 
     def test_jpg(self):
         """Test production of JPEG file"""
-        msview(self.testms,outfile=self.outfiles['jpg'],gui=False)
+        msview(self.testms,outfile=self.outfiles['jpg'],gui=self.gui)
         self.assertTrue(os.path.isfile(self.outfiles['jpg']),"viewer failed to produce an JPEG file")
 
     def test_pdf(self):
         """Test production of PDF file"""
-        msview(self.testms,outfile=self.outfiles['pdf'],gui=False)
+        msview(self.testms,outfile=self.outfiles['pdf'],gui=self.gui)
         self.assertTrue(os.path.isfile(self.outfiles['pdf']),"viewer failed to produce an PDF file")
 
     def test_eps(self):
         """Test production of EPS file"""
-        msview(self.testms,outfile=self.outfiles['eps'],gui=False)
+        msview(self.testms,outfile=self.outfiles['eps'],gui=self.gui)
         self.assertTrue(os.path.isfile(self.outfiles['eps']),"viewer failed to produce an EPS file")
 
     def test_ps(self):
         """Test production of PS file"""
-        msview(self.testms,outfile=self.outfiles['ps'],gui=False)
+        msview(self.testms,outfile=self.outfiles['ps'],gui=self.gui)
         self.assertTrue(os.path.isfile(self.outfiles['ps']),"viewer failed to produce an PS file")
 
     def test_xpm(self):
         """Test production of XPM file"""
-        msview(self.testms,outfile=self.outfiles['xpm'],gui=False)
+        msview(self.testms,outfile=self.outfiles['xpm'],gui=self.gui)
         self.assertTrue(os.path.isfile(self.outfiles['xpm']),"viewer failed to produce an XPM file")
 
     def test_ppm(self):
         """Test production of PPM file"""
-        msview(self.testms,outfile=self.outfiles['ppm'],gui=False)
+        msview(self.testms,outfile=self.outfiles['ppm'],gui=self.gui)
         self.assertTrue(os.path.isfile(self.outfiles['ppm']),"viewer failed to produce an PPM file")
 
     def test_png(self):
         """Test production of PNG file"""
-        msview(self.testms,outfile=self.outfiles['png'],gui=False)
+        msview(self.testms,outfile=self.outfiles['png'],gui=self.gui)
         self.assertTrue(os.path.isfile(self.outfiles['png']),"viewer failed to produce an PNG file")
 
+    def test_nogui_exception(self):
+        """Test gui=False, expect exception for non-linux systems in CASA 6"""
+        # exception expected if self.gui is True
+        try:
+            msview(self.testms,outfile=self.outfiles['ps'],gui=False)
+            # if this is_CASA6 and self.gui is True then this should have thrown an exception
+            # it should only get here if self.gui is False (linux system) OR not CASA 6
+            self.assertFalse(self.gui, "viewer failed to throw expected exception for gui=False")
+        except:
+            self.assertTrue(self.gui, "viewer throw an unexpected exception for gui=False")
 def suite():
     return [msview_test]
 
