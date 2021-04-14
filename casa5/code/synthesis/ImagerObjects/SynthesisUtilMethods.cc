@@ -69,6 +69,9 @@
 #include <sys/time.h>
 #include<sys/resource.h>
 
+#include <synthesis/ImagerObjects/SIImageStore.h>
+#include <synthesis/ImagerObjects/SIImageStoreMultiTerm.h>
+
 using namespace std;
 
 using namespace casacore;
@@ -180,6 +183,39 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     return factors;
   }
+
+
+  Bool SynthesisUtilMethods::fitPsfBeam(const String& imagename, const Int nterms, const Float psfcutoff)
+  {
+    LogIO os(LogOrigin("SynthesisUtilMethods", "fitPsfBeam"));
+
+    if (psfcutoff >=1.0 || psfcutoff<=0.0)
+      {
+	os << "psfcutoff must be >0 and <1" << LogIO::WARN;
+	return false;
+      }
+
+    std::shared_ptr<SIImageStore> imstore;
+    if( nterms>1 )
+      { imstore = std::shared_ptr<SIImageStore>(new SIImageStoreMultiTerm( imagename, nterms, true ));   }
+    else
+      { imstore = std::shared_ptr<SIImageStore>(new SIImageStore( imagename, true ));   }
+  
+
+    os << "Fitting PSF beam for Imagestore : " << imstore->getName() << LogIO::POST;
+
+    imstore->makeImageBeamSet(psfcutoff, true);
+
+    imstore->printBeamSet();
+
+    imstore->releaseLocks();
+    
+    return true;
+  }
+
+
+
+
 
   /***make a record of synthesisimager::weight parameters***/
   Record SynthesisUtilMethods::fillWeightRecord(const String& type, const String& rmode,
