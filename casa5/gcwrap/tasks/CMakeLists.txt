@@ -7,7 +7,6 @@ bandpass.xml
 blcal.xml
 browsetable.xml
 calstat.xml
-clean.xml
 clearcal.xml
 clearstat.xml
 concat.xml
