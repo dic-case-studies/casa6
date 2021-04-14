@@ -49,7 +49,7 @@ try:
     ctsys_resolve = ctsys.resolve
 except ImportError:
     from __main__ import default
-    from tasks import flagdata, phaseshift, tclean
+    from tasks import flagdata, imstat, phaseshift, tclean
     from taskinit import (
         cltool, iatool, metool, msmdtool, mstool, qatool, rgtool, smtool,
         tbtool
@@ -68,8 +68,8 @@ except ImportError:
         os.environ.get('CASAPATH').split()[0], 'casatestdata'
     )
 
-    def ctsys_reolve(mypath):
-        return os.join(dataroot, mypath)
+    def ctsys_resolve(mypath):
+        return os.path.join(dataroot, mypath)
 
 datadir = os.path.join('unittest', 'phaseshift')
 datapath = ctsys_resolve(os.path.join(datadir, 'refim_twopoints_twochan.ms'))
@@ -826,7 +826,7 @@ class reference_frame_tests(unittest.TestCase):
                 md.nfields(), exp_nfields,
                 msg='Wrong number of fields for field ' + myfield
             )
-            sep = me.separation(md.refdir(), expdir)
+            sep = me.separation(md.refdir(field=0), expdir)
             md.done()
             self.assertEqual(
                 qa.getvalue(sep), 0,
@@ -842,7 +842,6 @@ class reference_frame_tests(unittest.TestCase):
                     md.open(self.orig_ms)
                     field_id = md.fieldsforname(myfield)[0]
                     md.done()
-            print('field_id', field_id)
             if field_id == 0:
                 exp_ms = ctsys_resolve(
                     os.path.join(

@@ -104,7 +104,27 @@ Bool PhaseShiftingTVI::parseConfiguration(const Record &configuration)
 		}
 		else
 		{
-			wideFieldMode_p = true;
+            MDirection::Types mdtype;
+            const auto myFrame = phaseCenter_p.getRefString();
+            MDirection::getType(mdtype, myFrame);
+            ThrowIf(
+                mdtype == MDirection::HADEC || mdtype == MDirection::AZEL
+                || mdtype == MDirection::AZELSW || mdtype == MDirection::AZELNE
+                || mdtype == MDirection::AZELGEO || mdtype == MDirection::AZELSWGEO
+                || mdtype == MDirection::MECLIPTIC || mdtype == MDirection::TECLIPTIC
+                || mdtype == MDirection::TOPO,
+                myFrame + " is a time dependent reference frame and so is not supported" 
+            );
+            ThrowIf(
+                mdtype == MDirection::MERCURY || mdtype == MDirection::VENUS
+                || mdtype == MDirection::MARS || mdtype == MDirection::JUPITER
+                || mdtype == MDirection::SATURN || mdtype == MDirection::URANUS
+                || mdtype == MDirection::NEPTUNE || mdtype == MDirection::PLUTO
+                || mdtype == MDirection::SUN || mdtype == MDirection::MOON
+                || mdtype == MDirection::COMET,
+                myFrame + " denotes an ephemeris object and so is not supported" 
+            );
+            wideFieldMode_p = true;
 			logger_p << LogIO::NORMAL << LogOrigin("PhaseShiftingTVI", __FUNCTION__)
 					<< "Phase center " << phaseCenterName_p << " successfully parsed"<< LogIO::POST;
 		}
@@ -156,7 +176,7 @@ void PhaseShiftingTVI::shiftUVWPhases()
 	if (phaseCenter_p.getRefString() != vb->phaseCenter().getRefString()) {
 		MDirection::Types mdtype;
 		MDirection::getType(mdtype, vb->phaseCenter().getRefString());
-		convertedPhaseCenter = MDirection::Convert(phaseCenter_p, mdtype)();
+        convertedPhaseCenter = MDirection::Convert(phaseCenter_p, mdtype)();
 	}
 
 	// Initialize epoch corresponding to current buffer
