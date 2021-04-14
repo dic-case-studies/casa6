@@ -485,12 +485,67 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	                    int nc, int &ic, double *cache, int &ierr) {
 		int idents_len=80, opt_len=1, nlcprm_len = 1;
 
-		PGSBOX(blc, trc, idents, opt,
+        //Original
+/*
+        PGSBOX(blc, trc, idents, opt,
+               &labctl, &labden, ci, gcode,
+               &tiklen, &ng1, grid1, &ng2,
+               grid2,  &doeq, nlfunc, &nlc, &nli,
+               &nld,  nlcprm, nliprm, nldprm,
+               &nc, &ic, cache, &ierr, idents_len, opt_len, nlcprm_len);
+*/
+        std::cout << "Idents:" << std::endl;
+        std::cout << sizeof(idents) << std::endl;
+        std::cout << idents << std::endl;
+        std::cout << opt << std::endl;
+        std::cout << nlcprm << std::endl;
+        char idents2[240];       
+        strncpy(idents2, idents, 240);
+        char opt2[2];       
+        strncpy(opt2, opt, 2);
+        char nlcprm2[1];       
+        strncpy(nlcprm2, nlcprm, 1);
+        std::cout << "Idents2:" << std::endl;
+        std::cout << "'"<< idents2 << "'" << std::endl;
+        std::cout << opt2 << std::endl;
+        std::cout << nlcprm2 << std::endl;
+         
+		PGSBOX(blc, trc, idents2, opt2,
 		       &labctl, &labden, ci, gcode,
 		       &tiklen, &ng1, grid1, &ng2,
 		       grid2,  &doeq, nlfunc, &nlc, &nli,
-		       &nld,  nlcprm, nliprm, nldprm,
+		       &nld,  nlcprm2, nliprm, nldprm,
 		       &nc, &ic, cache, &ierr, idents_len, opt_len, nlcprm_len);
+        std::cout << "Done with PGSBOX" << std::endl;
+        std::cout << "Idents:" << std::endl;
+        std::cout << "'"<< idents << "'" << std::endl;
+        std::cout << "Idents2:" << std::endl;
+        std::cout << "'"<< idents2 << "'" << std::endl;
+        
+        //memset(&idents2[240], 0x00, 1);
+        //memset(&opt2[2], 0x00, 1);
+        //memset(&nlcprm2[1], 0x00, 1);
+        //idents = idents2;
+        //opt = opt2;
+        //nlcprm = nlcprm2;
+        
+        strncpy(idents, idents2, 240);
+        std::cout << "Copied Idents:" << std::endl;
+        //std::cout << "Idents After:" << std::endl;
+        std::cout << "'"<< idents << "'" << std::endl;
+        strncpy(opt, opt2, 2);
+        std::cout << "Copied opt:" << std::endl;
+        std::cout << "'"<< opt << "'" << std::endl;
+        strncpy(nlcprm, nlcprm2, 1);
+        std::cout << "Copied nlcprm:" << std::endl;
+        std::cout << "'"<< nlcprm << "'" << std::endl;
+        
+        /*memset(&idents2[240], 0x00, 1);
+        memset(&opt2[2], 0x00, 1);
+        memset(&nlcprm2[1], 0x00, 1);
+        memset(&idents[240], 0x00, 1);
+        memset(&opt[2], 0x00, 1);
+        memset(&nlcprm[1], 0x00, 1);*/
 	}
 
 
@@ -853,9 +908,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			}
 			String titleText = displayedTitleText();
 			strncpy(idents + 2*nl, /*titleText().chars()*/titleText.chars(), nl);
-			for (ididx = /*titleText().length()*/titleText.length(); ididx < nl; ididx++) {
+			for (ididx = /*titleText().length()*/titleText.length(); ididx < nl-1; ididx++) {
 				idents[2*nl + ididx] = 32;
 			}
+            std::cout << "AA Idents"<<std::endl;
+            std::cout << idents<<std::endl;
 			titleChanged = false;
 //
 			cpgsch(charSize());
@@ -960,6 +1017,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			}
 
 // Do the real work
+            std::cout << "Hello?" <<std::endl;
+            std::cout << idents <<std::endl;
 			cpgsbox(blc, trc, idents, opt, labctl, labden, ci, gcode,
 			        tiklen, ng1, grid1, ng2, grid2, doeq, nlfunc,
 			        nlc, nli, nld, nlcprm, nliprm, nldprm,
@@ -1019,8 +1078,33 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 						zLabel += tStr;
 
 						// plot the z-axis label
-						cpgmtxt(cpgp_side, cpgp_disp, cpgp_coord, cpgp_fjust, zLabel.chars());
-
+						// VS: This keeps crashing
+					    /*cout << "zlabel: " <<  "'" << zLabel  << "'" << " tStr: "<<tStr<< " World value: "<< tWrld(2)<<endl;
+                        std::cout << "zLabel.size" << zLabel.length()<<std::endl;
+                        char zLabel_chars[2];
+                        char cpgp_side2[1];
+                        strncpy(zLabel_chars, zLabel.chars(),1);
+                        strncpy(cpgp_side2, cpgp_side, 1);
+                        cpgmtxt(cpgp_side, cpgp_disp, cpgp_coord, cpgp_fjust, zLabel_chars);
+                        std::cout << "Done with cpgmtxt" << std::endl;
+                        std::cout << "'" << cpgp_side << "'"  << std::endl;
+                        std::cout << "'" << cpgp_disp << "'"  << std::endl;
+                        std::cout << "'" << cpgp_coord << "'"  << std::endl;
+                        std::cout << "'" << cpgp_coord << "'"  << std::endl;
+                        std::cout << "Before'" << zLabel << "'"  << std::endl;
+                        zLabel = zLabel_chars;
+                        std::cout << "After'" << zLabel << "'"  << std::endl;
+                        */
+                        //std::cout << "'" << zLabel_chars << "'"  << std::endl;
+                        // Original    
+                        //cpgmtxt(cpgp_side, cpgp_disp, cpgp_coord, cpgp_fjust, zLabel.chars());
+                        /*std::cout << "Done with cpgmtxt" << std::endl;
+                        std::cout << "'" << cpgp_side << "'"  << std::endl;
+                        std::cout << "'" << cpgp_disp << "'"  << std::endl;
+                        std::cout << "'" << cpgp_coord << "'"  << std::endl;
+                        std::cout << "'" << cpgp_coord << "'"  << std::endl;
+                        std::cout << "'" << zLabel << "'"  << std::endl;*
+                        */
 					}
 				}
 				cpgstbg(bgcol);
