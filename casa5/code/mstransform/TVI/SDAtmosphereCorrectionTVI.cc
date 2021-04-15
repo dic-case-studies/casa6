@@ -727,7 +727,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
     Vector<Double> lB = configuration.asArrayDouble("layerBoundaries");
     Vector<Double> lT = configuration.asArrayDouble("layerTemperatures");
     std::transform(lB.begin(), lB.end(), std::back_inserter(layerBoundaries),
-      [](Double x) {return atm::Length(x, atm::Length::UnitKiloMeter);});
+      [](Double x) {return atm::Length(x, atm::Length::UnitMeter);});
     std::transform(lT.begin(), lT.end(), std::back_inserter(layerTemperatures),
       [](Double x) {return atm::Temperature(x, atm::Temperature::UnitKelvin);});
     if (layerBoundaries.size() != layerTemperatures.size()) {
@@ -737,7 +737,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   os << "user-defined layer:" << endl;
   if (layerBoundaries.size() > 0) {
     for (size_t i = 0; i < layerBoundaries.size(); ++i) {
-      os << "  Height " << layerBoundaries[i].get(atm::Length::UnitKiloMeter)
+      os << "  Height " << layerBoundaries[i].get(atm::Length::UnitMeter)
          << " Temperature " << layerTemperatures[i].get(atm::Temperature::UnitKelvin)
          << endl;
     }
