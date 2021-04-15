@@ -649,6 +649,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   // lapse rate (K/km)
   double tropoLapseRate = (configuration.isDefined("lapseRate")) ?
     configuration.asDouble("lapseRate") : -5.6;
+  os << "temperature lapse rate = " << tropoLapseRate << LogIO::POST;
 
   // relative humidity
   double defaultRelHumidityValue = kValueUnset;
@@ -700,7 +701,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereModel(Record const &configur
   Double pressureStepValue = (configuration.isDefined("pressureStep")) ?
     configuration.asDouble("pressureStep") : 10.0;
   atm::Pressure pressureStep(pressureStepValue, atm::Pressure::UnitMilliBar);
-  os << "pressure step = " << pressureStep.get() << LogIO::POST;
+  os << "pressure step = " << pressureStep.get(atm::Pressure::UnitMilliBar) << LogIO::POST;
 
   // pressure step factor
   double pressureStepFactor = (configuration.isDefined("pressureStepFactor")) ?
