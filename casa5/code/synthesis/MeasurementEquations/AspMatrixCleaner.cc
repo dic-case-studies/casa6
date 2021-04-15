@@ -576,6 +576,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
 Bool AspMatrixCleaner::destroyAspScales()
 {
+	destroyInitScales();
   destroyScales();
 
   for(uInt scale=0; scale < itsDirtyConvInitScales.nelements(); scale++)
@@ -744,12 +745,23 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
 
 void AspMatrixCleaner::setInitScaleXfrs(const Float width)
 {
-  if(itsInitScales.nelements() > 0)
+  if(itsInitScales.nelements() > 0) 
     destroyAspScales();
 
-  // try 0, width, 2width, 4width and 8width
-  itsInitScaleSizes.resize(itsNInitScales, false);
-  itsInitScaleSizes = {0.0f, width, 2.0f*width, 4.0f*width, 8.0f*width};
+  if (itsSwitchedToHogbom)
+  {
+  	itsNInitScales = 1;
+  	itsInitScaleSizes.resize(itsNInitScales, false);
+    itsInitScaleSizes = {0.0f};
+  }
+  else
+  {
+  	// try 0, width, 2width, 4width and 8width
+  	itsNInitScales = 5;
+  	itsInitScaleSizes.resize(itsNInitScales, false);
+  	itsInitScaleSizes = {0.0f, width, 2.0f*width, 4.0f*width, 8.0f*width};
+  }
+
   itsInitScales.resize(itsNInitScales, false);
   itsInitScaleXfrs.resize(itsNInitScales, false);
   fft = FFTServer<Float,Complex>(psfShape_p);
@@ -810,7 +822,7 @@ Bool AspMatrixCleaner::setInitScaleMasks(const Array<Float> arrmask, const Float
     return false;
 
   // make scale masks
-  if(itsInitScaleSizes.size() <= 1)
+  if(itsInitScaleSizes.size() < 1)
   {
     os << "Initial scales are not yet set - cannot set initial scale masks"
        << LogIO::EXCEPTION;
@@ -1052,7 +1064,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   fft.fft0(dirtyFT, *itsDirty);
   itsDirtyConvInitScales.resize(0);
   itsDirtyConvInitScales.resize(itsNInitScales); // 0, 1width, 2width, 4width and 8width
-
+  //cout << "itsInitScaleSizes.size() " << itsInitScaleSizes.size() << " itsInitScales.size() " << itsInitScales.size() << " NInitScales # " << itsNInitScales << endl;
   for (int scale=0; scale < itsNInitScales; scale++)
   {
     Matrix<Complex> cWork;
@@ -1062,8 +1074,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     fft.fft0((itsDirtyConvInitScales[scale]), cWork, false);
     fft.flip((itsDirtyConvInitScales[scale]), false, false);
 
-    // cout << "remake itsDirtyConvInitScales " << scale << " max itsInitScales[" << scale << "] = " << max(fabs(itsInitScales[scale])) << endl;
-    // cout << " max itsInitScaleXfrs[" << scale << "] = " << max(fabs(itsInitScaleXfrs[scale])) << endl;
+    //cout << "remake itsDirtyConvInitScales " << scale << " max itsInitScales[" << scale << "] = " << max(fabs(itsInitScales[scale])) << endl;
+    //cout << " max itsInitScaleXfrs[" << scale << "] = " << max(fabs(itsInitScaleXfrs[scale])) << endl;
   }
 
   float strengthOptimum = 0.0;
@@ -1236,7 +1248,6 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     // AlwaysAssert(itsAspScaleSizes.size() == itsAspAmplitude.size(), AipsError);
     // AlwaysAssert(itsAspScaleSizes.size() == itsAspCenter.size(), AipsError);
 
-
     // No longer needed. heuristiclly determine active set for speed up
     /*Float resArea = 0.0;
     Int nX = itsDirty->shape()(0);
@@ -1307,9 +1318,6 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //fdf
     gsl_multimin_function_fdf my_func;
     gsl_multimin_fdfminimizer *s = NULL;
-    // f only
-    /*gsl_multimin_function my_func;
-    gsl_multimin_fminimizer *s = NULL;* /
 
     // setupSolver
     ParamObj optParam(*itsDirty, *itsXfr, activeSetCenter);
@@ -1324,60 +1332,19 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     my_func.df     = my_df;
     my_func.fdf    = my_fdf;
     my_func.params = (void *)ptrParam;
-    // f only
-    /*const gsl_multimin_fminimizer_type *T;
-    T = gsl_multimin_fminimizer_nmsimplex2rand;
-    s = gsl_multimin_fminimizer_alloc(T, length);
-    my_func.n      = length;
-    my_func.f      = my_f; //my_f
-    my_func.params = (void *)ptrParam;* /
 
     // fdf
     const float InitStep = gsl_blas_dnrm2(x);
-    gsl_multimin_fdfminimizer_set(s, &my_func, x, InitStep, 0.1/*1e-3* /);
-    // f only
-    /*gsl_vector *ss = NULL;
-    ss = gsl_vector_alloc (length);
-    gsl_vector_set_all (ss, gsl_blas_dnrm2(x));
-    gsl_multimin_fminimizer_set(s, &my_func, x, ss);* /
+    gsl_multimin_fdfminimizer_set(s, &my_func, x, InitStep, 0.1);
 
     // ---------- BFGS algorithm begin ----------
     // fdf
     findComponent(5, s); // has to be > =5
-
-    // f only
-    /*size_t iter = 0;
-    int status = 0;
-    double size;
-    do
-      {
-        iter++;
-        status = gsl_multimin_fminimizer_iterate(s);
-
-        if (status)
-          break;
-
-        size = gsl_multimin_fminimizer_size (s);
-        status = gsl_multimin_test_size (size, 1e-2);
-
-        if (status == GSL_SUCCESS)
-          {
-            printf ("converged to minimum at\n");
-          }
-
-        printf ("%5d %10.3e %10.3e f() = %7.3f size = %.3f\n",
-                iter,
-                gsl_vector_get (s->x, 0),
-                gsl_vector_get (s->x, 1),
-                s->fval, size);
-      }
-    while (status == GSL_CONTINUE && iter < 20);* /
     //----------  BFGS algorithm end  ----------
 
     // update x is needed here.
     gsl_vector *optx = NULL;
     optx = gsl_multimin_fdfminimizer_x(s); //fdf
-    //optx = gsl_multimin_fminimizer_x(s); // f only
     // end GSL optimization
 
     // put the updated latest Aspen back to the active-set. Permanent list is no longer needed.
@@ -1406,7 +1373,6 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 
     // free GSL stuff
     gsl_multimin_fdfminimizer_free(s); //fdf
-    //gsl_multimin_fminimizer_free(s); // f only
     gsl_vector_free(x);
     //gsl_vector_free(optx); // Dont do it. Free this causes seg fault!!!
 

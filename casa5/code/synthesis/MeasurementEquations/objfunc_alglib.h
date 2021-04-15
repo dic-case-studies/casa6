@@ -165,7 +165,13 @@ void objfunc_alglib(const alglib::real_1d_array &x, double &func, alglib::real_1
       // gradient. 0: amplitude; 1: scale
       // returns the gradient evaluated on x
       casacore::Matrix<casacore::Complex> dAspFT;
+
+      //auto start = std::chrono::high_resolution_clock::now();
       MyP->fft.fft0(dAspFT, dAsp);
+      //auto stop = std::chrono::high_resolution_clock::now();
+      //auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start) ;
+      //std::cout << "BFGS fft0 runtime " << duration.count() << " us" << std::endl;
+
       casacore::Matrix<casacore::Complex> dcWork;
       dcWork = dAspFT * itsPsfFT;
       MyP->fft.fft0(dAspConvPsf, dcWork, false);

@@ -61,13 +61,15 @@
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
-  SDAlgorithmAAspClean::SDAlgorithmAAspClean(Float fusedThreshold, Int stoppointmode):
+  SDAlgorithmAAspClean::SDAlgorithmAAspClean(Float fusedThreshold, bool isSingle, Int stoppointmode):
     SDAlgorithmBase(),
     itsMatPsf(), itsMatResidual(), itsMatModel(),
     itsCleaner(),
     itsStopPointMode(stoppointmode),
-    itsMCsetup(false),
-    itsFusedThreshold(fusedThreshold)
+    itsMCsetup(true),
+    itsFusedThreshold(fusedThreshold),
+    itsPrevPsfWidth(0),
+    itsIsSingle(isSingle)
   {
     itsAlgorithmName = String("asp");
   }
@@ -88,23 +90,30 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsImages->mask()->get( itsMatMask, true );
 
     // Initialize the AspMatrixCleaner.
-    //  ----------- do once ----------
-    if( itsMCsetup == false)
-    {
+    // If it's single channel, this only needs to be computed once. 
+    // Otherwise, it needs to be called repeatedly at each minor cycle start to
+    // get psf for each channel
+    if (itsMCsetup)
+    { 
       Matrix<Float> tempMat(itsMatPsf);
       itsCleaner.setPsf(tempMat);
-      // Initial scales and masks are unchanged and only need to be
-      // computed once
+      // Initial scales are unchanged and only need to be
+      // computed when psf width is updated
       const Float width = itsCleaner.getPsfGaussianWidth(*(itsImages->psf()));
-      itsCleaner.setInitScaleXfrs(width);
-      itsCleaner.setInitScaleMasks(itsMatMask);
+      if (itsPrevPsfWidth != width)
+      {
+        itsPrevPsfWidth = width;
+        itsCleaner.setInitScaleXfrs(width);
+      }
 
       itsCleaner.stopPointMode( itsStopPointMode );
       itsCleaner.ignoreCenterBox( true ); // Clean full image
-      itsMCsetup = true;
-      //for unit test
-      Matrix<Float> tempMat1(itsMatResidual);
-      itsCleaner.setOrigDirty( tempMat1 );
+      // If it's single channel, we do not do the expensive set up repeatedly
+      if (itsIsSingle)
+        itsMCsetup = false; 
+      // Not used. Kept for unit test
+      //Matrix<Float> tempMat1(itsMatResidual);
+      //itsCleaner.setOrigDirty( tempMat1 );
 
       if (itsFusedThreshold < 0)
       {
@@ -116,6 +125,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     }
 
     // Parts to be repeated at each minor cycle start....
+    itsCleaner.setInitScaleMasks(itsMatMask);
     itsCleaner.setaspcontrol(0, 0, 0, Quantity(0.0, "%"));/// Needs to come before the rest
 
     Matrix<Float> tempMat1(itsMatResidual);

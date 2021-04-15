@@ -146,7 +146,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  }
 	else if (decpars.algorithm==String("asp"))
 	  {
-	    itsDeconvolver.reset(new SDAlgorithmAAspClean(decpars.fusedThreshold));
+      bool isSingle = false;
+      if (decpars.specmode == String("mfs"))
+        isSingle = true;
+
+	    itsDeconvolver.reset(new SDAlgorithmAAspClean(decpars.fusedThreshold, isSingle));
 	  }
 	else
 	  {

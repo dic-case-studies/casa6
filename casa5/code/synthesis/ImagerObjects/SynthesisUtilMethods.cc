@@ -3955,6 +3955,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           else 
             err += "fusedthreshold must be a float or double";
         }
+         if (inrec.isDefined("specmode"))
+        {
+          if(inrec.dataType("specmode") == TpString)
+            err += readVal(inrec, String("specmode"), specmode);
+          else 
+            err += "specmode must be a string";
+        }
         //params for the new automasking algorithm
         if( inrec.isDefined("sidelobethreshold"))
           {
@@ -4231,6 +4238,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     interactive=false;
     autoAdjust=False;
     fusedThreshold = 0.0;
+    specmode="mfs";
   }
 
   Record SynthesisParamsDeconv::toRecord() const
@@ -4246,6 +4254,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     decpar.define("scalebias",scalebias);
     decpar.define("usemask",maskType);
     decpar.define("fusedthreshold", fusedThreshold);
+    decpar.define("specmode", specmode);
     if( maskList.nelements()==1 && maskList[0]=="") 
       {
         decpar.define("mask",maskString);
