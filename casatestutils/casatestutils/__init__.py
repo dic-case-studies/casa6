@@ -58,7 +58,6 @@ def import_casamods():
         logging.debug("Import casa6 errors. Trying casa5...")
         from __main__ import default
         from taskinit import tbtool, mstool, iatool
-        from taskinit import *
         from casa_stack_manip import stack_find, find_casa
 
         try:
