@@ -599,6 +599,7 @@ def get_configuration_for_atmcor(infile, spw, outputspw, gainfactor, user_inputs
         ATMScalarParameterConfigurator(
             key='humidity', user_input=user_inputs['humidity'],
             impl_default=0, default_unit='%',
+            api_default=-1,
             is_mandatory=False, is_effective=user_inputs['atmdetail']
         ),
         ATMScalarParameterConfigurator(
