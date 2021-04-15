@@ -494,6 +494,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                &nld,  nlcprm, nliprm, nldprm,
                &nc, &ic, cache, &ierr, idents_len, opt_len, nlcprm_len);
 */
+        // CAS-13411 
+        // For some reason passing the character arrays directly
+        // fails on Big Sur. Creating temporary copies helps and
+        // allows pgsbox to run to completion
         std::cout << "Idents:" << std::endl;
         std::cout << sizeof(idents) << std::endl;
         std::cout << idents << std::endl;
@@ -522,13 +526,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         std::cout << "Idents2:" << std::endl;
         std::cout << "'"<< idents2 << "'" << std::endl;
         
-        //memset(&idents2[240], 0x00, 1);
-        //memset(&opt2[2], 0x00, 1);
-        //memset(&nlcprm2[1], 0x00, 1);
-        //idents = idents2;
-        //opt = opt2;
-        //nlcprm = nlcprm2;
-        
         strncpy(idents, idents2, 240);
         std::cout << "Copied Idents:" << std::endl;
         //std::cout << "Idents After:" << std::endl;
@@ -540,12 +537,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         std::cout << "Copied nlcprm:" << std::endl;
         std::cout << "'"<< nlcprm << "'" << std::endl;
         
-        /*memset(&idents2[240], 0x00, 1);
-        memset(&opt2[2], 0x00, 1);
-        memset(&nlcprm2[1], 0x00, 1);
-        memset(&idents[240], 0x00, 1);
-        memset(&opt[2], 0x00, 1);
-        memset(&nlcprm[1], 0x00, 1);*/
 	}
 
 
@@ -908,6 +899,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			}
 			String titleText = displayedTitleText();
 			strncpy(idents + 2*nl, /*titleText().chars()*/titleText.chars(), nl);
+            //CAS-13411 Fix buffer overflow
 			for (ididx = /*titleText().length()*/titleText.length(); ididx < nl-1; ididx++) {
 				idents[2*nl + ididx] = 32;
 			}
@@ -1017,7 +1009,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			}
 
 // Do the real work
-            std::cout << "Hello?" <<std::endl;
+            std::cout << "Calling cpgspbox. Idents:" <<std::endl;
             std::cout << idents <<std::endl;
 			cpgsbox(blc, trc, idents, opt, labctl, labden, ci, gcode,
 			        tiklen, ng1, grid1, ng2, grid2, doeq, nlfunc,

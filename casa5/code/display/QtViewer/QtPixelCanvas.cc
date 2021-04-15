@@ -1190,7 +1190,7 @@ namespace casa {
 		// unmuddled and really working right), but is receiving little revision
 		// now during Qt migration (dk 8/05).
 
-        // VS
+        // CAS-13411, Fix double free
 		//p_end_();
 		// Although begin() and end() are poorly documented in Qt,
 		// my suspicion is that this is necessary to assure that all
