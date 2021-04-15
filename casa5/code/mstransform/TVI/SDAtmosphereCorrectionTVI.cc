@@ -542,7 +542,7 @@ void SDAtmosphereCorrectionTVI::initializeAtmosphereCorrection(Record const &con
     }
     os << "Spw " << spw << " in BB_" << baseband << " "
        << "(total Nchan within BB is " << numChanPol << ", "
-       << " sp avg likely " << ((doSmooth_[spw]) ? "not" : "") << " applied). "
+       << " sp avg likely " << ((doSmooth_[spw]) ? "not " : " ") << "applied). "
        << "dosmooth=" << ((doSmooth_[spw]) ? "True" : "False") << LogIO::POST;
   }
 
