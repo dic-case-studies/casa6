@@ -1787,7 +1787,7 @@
             "maintainerEmail":"rurvashi@aoc.nrao.edu",
             "testOptions":["mpi"],
             "testGroup":["sdintimaging","Imaging"],
-            "timeout":0,
+            "timeout":3600,
             "comment":""
         },
         {
