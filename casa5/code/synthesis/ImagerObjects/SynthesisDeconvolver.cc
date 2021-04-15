@@ -323,7 +323,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       //tim.mark();
       itsLoopController.setPeakResidualNoMask( peakresnomask );
       itsLoopController.setMaxPsfSidelobe( itsImages->getPSFSidelobeLevel() );
-
       
       //re-calculate current nsigma threhold
       //os<<"Calling calcRobustRMS ....syndeconv."<<LogIO::POST;

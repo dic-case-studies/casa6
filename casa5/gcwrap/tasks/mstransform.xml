@@ -88,7 +88,6 @@
 
 
     <param name="createmms" type="bool"><shortdescription>Create a multi-MS output from an input MS.</shortdescription><description>Create a multi-MS output from an input MS.</description>
-
     <value>False</value>
     </param>
 
@@ -422,16 +421,37 @@
 
             <value>True</value>
         </param>
+
     <constraints>
-          <when param="createmms">
-            <equals value="False" type="bool" />
-            <equals value="True" type="bool">
-                  <default param="separationaxis"><value type="string">auto</value></default>
-                  <default param="numsubms"><value type="string">auto</value></default>
-                  <!-- avoid giving values to the hidden parameters so that they are not
-                       shown in the inp help listing -->
-            </equals>
-          </when>
+
+      <when param="createmms">
+        <equals value="False" type="bool">
+          <!-- The first two suparameters, separationaxis and numsubms
+               are legitimate suparameters of createmms, although it
+               should not be necessary to give them a value when
+               createmms is False (but keeping them in here for
+               consistency in the 'inp'.listing). The other 4,
+               disableparallel, ddistart, taql, reindex (all
+               supposedly hidden) have complex interactions. See
+               CAS-13397 -->
+          <default param="separationaxis"><value type="string">auto</value></default>
+          <default param="numsubms"><value type="string">auto</value></default>
+
+          <default param="disableparallel"><value type="bool">False</value></default>
+          <default param="ddistart"><value type="int">-1</value></default>
+          <default param="taql"><value type="string"/></default>
+          <default param="reindex"><value type="bool">True</value></default>
+        </equals>
+        <equals value="True" type="bool">
+          <default param="separationaxis"><value type="string">auto</value></default>
+          <default param="numsubms"><value type="string">auto</value></default>
+
+          <default param="disableparallel"><value type="bool">False</value></default>
+          <default param="ddistart"><value type="int">-1</value></default>
+          <default param="taql"><value type="string"/></default>
+          <default param="reindex"><value type="bool">True</value></default>
+        </equals>
+      </when>
 
           <when param="datacolumn">
             <equals value="corrected" type="string"/>
