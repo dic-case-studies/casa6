@@ -486,14 +486,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		int idents_len=80, opt_len=1, nlcprm_len = 1;
 
         //Original
-/*
+
         PGSBOX(blc, trc, idents, opt,
                &labctl, &labden, ci, gcode,
                &tiklen, &ng1, grid1, &ng2,
                grid2,  &doeq, nlfunc, &nlc, &nli,
                &nld,  nlcprm, nliprm, nldprm,
                &nc, &ic, cache, &ierr, idents_len, opt_len, nlcprm_len);
-*/
+/*
         // CAS-13411 
         // For some reason passing the character arrays directly
         // fails on Big Sur. Creating temporary copies helps and
@@ -536,7 +536,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         strncpy(nlcprm, nlcprm2, 1);
         std::cout << "Copied nlcprm:" << std::endl;
         std::cout << "'"<< nlcprm << "'" << std::endl;
-        
+  */      
 	}
 
 
@@ -1070,7 +1070,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 						zLabel += tStr;
 
 						// plot the z-axis label
-						// VS: This keeps crashing
+						// CAS-13411: This keeps crashing on Big Sur
+                        // https://trac.macports.org/ticket/57726
 					    /*cout << "zlabel: " <<  "'" << zLabel  << "'" << " tStr: "<<tStr<< " World value: "<< tWrld(2)<<endl;
                         std::cout << "zLabel.size" << zLabel.length()<<std::endl;
                         char zLabel_chars[2];
@@ -1089,7 +1090,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                         */
                         //std::cout << "'" << zLabel_chars << "'"  << std::endl;
                         // Original    
-                        //cpgmtxt(cpgp_side, cpgp_disp, cpgp_coord, cpgp_fjust, zLabel.chars());
+                        cpgmtxt(cpgp_side, cpgp_disp, cpgp_coord, cpgp_fjust, zLabel.chars());
                         /*std::cout << "Done with cpgmtxt" << std::endl;
                         std::cout << "'" << cpgp_side << "'"  << std::endl;
                         std::cout << "'" << cpgp_disp << "'"  << std::endl;
