@@ -454,7 +454,7 @@ public:
   int nMask;
   bool autoAdjust;
   casacore::Float fusedThreshold;
-
+  casacore::String specmode;
 
  
   casacore::Bool interactive;

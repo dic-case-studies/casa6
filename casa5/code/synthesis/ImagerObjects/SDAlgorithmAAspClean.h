@@ -52,7 +52,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   public:
 
     // Empty constructor
-    SDAlgorithmAAspClean(casacore::Float fusedThreshold = 0.0, casacore::Int stoppointmode = -1);
+    SDAlgorithmAAspClean(casacore::Float fusedThreshold = 0.0, bool isSingle = true, casacore::Int stoppointmode = -1);
     virtual  ~SDAlgorithmAAspClean();
 
   protected:
@@ -89,7 +89,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     casacore::Float itsModelFlux;
     */
     private:
-    casacore::Bool itsMCsetup;
+    casacore::Bool itsMCsetup; // if we should do setup or not   
+    casacore::Float itsPrevPsfWidth;
+    bool itsIsSingle;
 
   };
 
