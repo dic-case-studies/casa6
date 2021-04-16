@@ -1,21 +1,21 @@
 // Copyright (2008,2009) Bojan Nikolic <b.nikolic@mrao.cam.ac.uk>
-// 
+//
 // This file is part of AATM
 //
 // AATM is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // AATM is distributed in the hope that it will be useful, but WITHOUT
 // ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 // or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
 // License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with AATM.  If not, see <http://www.gnu.org/licenses/>.
 //
-// Comments regarding this example welcome at: 
+// Comments regarding this example welcome at:
 // Bojan Nikolic <b.nikolic@mrao.cam.ac.uk>
 //
 
@@ -32,7 +32,7 @@ void oHeader(std::ostream &os)
     <<"\t"
     <<"Wet Non-Disp,"
     <<"\t\t"
-    <<"Wet Disp," 
+    <<"Wet Disp,"
     <<"\t\t"
     <<"Dry Non-Disp"
     <<std::endl;
@@ -51,7 +51,7 @@ void oRow(std::ostream &os,
     <<d_h2o
     <<",\t\t"
     <<nd_dry
-    <<std::endl;    
+    <<std::endl;
 }
 
 void dispersive(const boost::program_options::variables_map &vm)
@@ -59,8 +59,8 @@ void dispersive(const boost::program_options::variables_map &vm)
   pAtmProf atmo(AOSAtmo_pwv(vm));
 
   const double freq=vm["freq"].as<double>();
-  atm::RefractiveIndexProfile rip(atm::Frequency(freq, "GHz"),
-				  *atmo);  
+  atm::RefractiveIndexProfile rip(atm::Frequency(freq, atm::Frequency::UnitGigaHertz),
+				  *atmo);
 
   oHeader(std::cout);
   oRow(std::cout,
@@ -74,7 +74,7 @@ void dispersive_fgrid(const boost::program_options::variables_map &vm)
 {
   pAtmProf atmo;
   if (vm.count("pwv"))
-  { 
+  {
     atmo=AOSAtmo_pwv(vm);
   }
   else if (vm.count("ghum"))
@@ -97,9 +97,9 @@ void dispersive_fgrid(const boost::program_options::variables_map &vm)
   atm::SpectralGrid grid(nc,
 			 0,
 			 atm::Frequency(fmin,
-					"GHz"),
+					atm::Frequency::UnitGigaHertz),
 			 atm::Frequency(fstep,
-					"GHz"));
+					atm::Frequency::UnitGigaHertz));
 
   atm::RefractiveIndexProfile rip(grid,
 				  *atmo);
@@ -110,24 +110,24 @@ void dispersive_fgrid(const boost::program_options::variables_map &vm)
   {
     oRow(std::cout,
 	 grid.getChanFreq(i).get(),
-	 rip.getNonDispersiveH2OPathLength(atm::Length(pwv,"mm"),i).get(),
-	 rip.getDispersiveH2OPathLength(atm::Length(pwv,"mm"),i).get(),
+	 rip.getNonDispersiveH2OPathLength(atm::Length(pwv,atm::Length::UnitMilliMeter),i).get(),
+	 rip.getDispersiveH2OPathLength(atm::Length(pwv,atm::Length::UnitMilliMeter),i).get(),
 	 rip.getNonDispersiveDryPathLength(i).get());
   }
 }
 
 int main(int ac, char* av[])
-{   
+{
   using namespace boost::program_options;
-  
+
   options_description desc("Allowed options");
 
-  addStdOutputOptions(desc);  
+  addStdOutputOptions(desc);
   addAtmoOptions(desc);
-  
-  variables_map vm;        
+
+  variables_map vm;
   store(parse_command_line(ac, av, desc), vm);
-  notify(vm);    
+  notify(vm);
 
   if (vm.count("help"))
   {
@@ -152,6 +152,6 @@ int main(int ac, char* av[])
       dispersive(vm);
     }
   }
-  
+
   return 0;
-}  
+}

@@ -19,7 +19,7 @@ else:
     from taskinit import *
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 '''
@@ -33,21 +33,23 @@ Features tested:
   5. Does the use of an ephemeris via the direction parameter work
 
 '''
+datapath = ctsys_resolve('unittest/fixplanets/')
 outms = 'uid___A002_X1c6e54_X223-thinned.ms'
-inpms = os.path.join('regression/unittest/listvis',outms)
-outms2 = 'uid___A002_X1c6e54_X223-thinned.mms'
-inpms2 = os.path.join('regression/unittest/listvis',outms2)
+inpms = os.path.join(datapath, outms)
+outms2 = 'uid___A002_X1c6e54_X223-thinned.mms/'
+inpms2 = os.path.join(datapath,outms2)
+
 mymst = mstool()
 mymsmdt = msmdtool()
+
 
 class fixplanets_test1(unittest.TestCase):
     def setUp(self):
         res = None
         shutil.rmtree(outms, ignore_errors=True)
-        shutil.copytree(ctsys_resolve(inpms), outms)
+        shutil.copytree(inpms, outms)
         shutil.rmtree(outms2, ignore_errors=True)
-        os.system('cp -R '+ctsys_resolve(inpms2) + ' ' + outms2) 
-        #shutil.copytree(ctsys_resolve(inpms2), outms2)
+        os.system('cp -R '+ inpms2 + ' ' + outms2) 
         if not is_CASA6:
             default(fixplanets)
         
@@ -113,14 +115,14 @@ class fixplanets_test1(unittest.TestCase):
         '''test8: Does a fixplanets with an ephemeris work'''
         for myms in [outms,outms2]:
             fixplanets(vis=myms, field='Titan', fixuvw=True,
-                       direction=ctsys_resolve('regression/unittest/fixplanets/Titan_55437-56293dUTC.tab') )
+                       direction=os.path.join(datapath,'Titan_55437-56293dUTC.tab') )
                 
             self.assertTrue(os.path.exists(myms+'/FIELD/EPHEM0_Titan.tab'))
             self.assertTrue(self.verify(myms, 'Titan', 'APP'))
 
     def test9(self):
         '''test9: Does a fixplanets with an ephemeris in mime format work'''
-        os.system('cp '+ctsys_resolve('regression/unittest/fixplanets/titan.eml')+' .')
+        os.system('cp '+ os.path.join(datapath,'titan.eml')+' .')
         for myms in [outms,outms2]:
             os.system("rm -rf titan.eml.tab")
             fixplanets( vis=myms, field='Titan', fixuvw=True, direction='titan.eml' )

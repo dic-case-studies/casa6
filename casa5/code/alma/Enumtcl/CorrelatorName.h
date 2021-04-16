@@ -23,7 +23,7 @@
 #include <alma/Enumtcl/Enum.hpp>
 
 template<>
- struct enum_set_traits<CorrelatorNameMod::CorrelatorName> : public enum_set_traiter<CorrelatorNameMod::CorrelatorName,10,CorrelatorNameMod::NRAO_WIDAR> {};
+ struct enum_set_traits<CorrelatorNameMod::CorrelatorName> : public enum_set_traiter<CorrelatorNameMod::CorrelatorName,11,CorrelatorNameMod::NRAO_WIDAR> {};
 
 template<>
 class enum_map_traits<CorrelatorNameMod::CorrelatorName,void> : public enum_map_traiter<CorrelatorNameMod::CorrelatorName,void> {
@@ -37,6 +37,8 @@ public:
     EnumPar<void> ep;
     m_.insert(std::pair<CorrelatorNameMod::CorrelatorName,EnumPar<void> >
      (CorrelatorNameMod::ALMA_ACA,ep((int)CorrelatorNameMod::ALMA_ACA,"ALMA_ACA","un-documented")));
+    m_.insert(std::pair<CorrelatorNameMod::CorrelatorName,EnumPar<void> >
+     (CorrelatorNameMod::ALMA_ACASPEC,ep((int)CorrelatorNameMod::ALMA_ACASPEC,"ALMA_ACASPEC","un-documented")));
     m_.insert(std::pair<CorrelatorNameMod::CorrelatorName,EnumPar<void> >
      (CorrelatorNameMod::ALMA_BASELINE,ep((int)CorrelatorNameMod::ALMA_BASELINE,"ALMA_BASELINE","un-documented")));
     m_.insert(std::pair<CorrelatorNameMod::CorrelatorName,EnumPar<void> >

@@ -73,7 +73,7 @@ from __main__ import *
 import unittest
 import numpy
 
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/ia_modify/'
+datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/ia_modify/'
 
 class ia_modify_test(unittest.TestCase):
     

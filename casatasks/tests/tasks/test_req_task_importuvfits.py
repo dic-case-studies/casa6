@@ -58,28 +58,21 @@ import numpy as np
 
 
 if CASA6:
-    vlapath = ctsys.resolve('uvfits/3C219D_CAL.UVFITS')
-    path = ctsys.resolve('visibilities/evla/refim_Cband.G37line.ms')
+    vlapath = ctsys.resolve('unittest/importuvfits/3C219D_CAL.UVFITS')
+    path = ctsys.resolve('unittest/importuvfits/refim_Cband.G37line.ms')
 
     exportuvfits(vis=path, fitsfile='EVLAUV.UVFITS')
     evlapath = ctsys.resolve('EVLAUV.UVFITS')
-    carmapath = ctsys.resolve('uvfits/mirsplit.UVFITS')
+    carmapath = ctsys.resolve('unittest/importuvfits/mirsplit.UVFITS')
     
     #filepath = ctsys.resolve('EVLAUV.UVFITS')
     
     #testlogpath = ctsys.resolve('testlog.log')
 else:
     dataroot = os.environ.get('CASAPATH').split()[0] + '/'
-    #cwd = os.getcwd()
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/uvfits/3C219D_CAL.UVFITS'):
-        vlapath = dataroot + 'data/casa-data-req/uvfits/3C219D_CAL.UVFITS'
-        carmapath = dataroot + 'data/casa-data-req/uvfits/mirsplit.UVFITS'
-        exportuvfits(vis=dataroot + 'data/casa-data-req/visibilities/evla/refim_Cband.G37line.ms', fitsfile='EVLAUV.UVFITS', overwrite=True)
-
-    else:
-        vlapath = dataroot + 'casa-data-req/uvfits/3C219D_CAL.UVFITS'
-        carmapath = dataroot + 'casa-data-req/uvfits/mirsplit.UVFITS'
-        exportuvfits(vis=dataroot + 'casa-data-req/visibilities/evla/refim_Cband.G37line.ms', fitsfile='EVLAUV.UVFITS', overwrite=True)
+    vlapath = dataroot + 'casatestdata/unittest/importuvfits/3C219D_CAL.UVFITS'
+    carmapath = dataroot + 'casatestdata/unittest/importuvfits/mirsplit.UVFITS'
+    exportuvfits(vis=dataroot + 'casatestdata/unittest/importuvfits/refim_Cband.G37line.ms', fitsfile='EVLAUV.UVFITS', overwrite=True)
 
     evlapath = 'EVLAUV.UVFITS'
 

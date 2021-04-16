@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 
 from scipy import fftpack
 import numpy as np
@@ -28,7 +27,7 @@ _mytb = table()
 class SDINT_helper:
 
 #    def __init__(self):
-#      print 'Init Helper'
+#      casalog.post('Init Helper')
 
 ################################################
     def getFreqList(self,imname=''):
@@ -60,12 +59,12 @@ class SDINT_helper:
 #        ia.open(fromthis);
 #        ib.open(tothis)
         freqlist = self.getFreqList(fromthis)
-#        print freqlist
+        # casalog.post(freqlist)
         for i in range(len(freqlist)):
             _ia.open(fromthis);
             beam = _ia.restoringbeam(channel = i);
             _ia.close()
-            #print beam
+            # casalog.post(beam)
             _ia.open(tothis)
             _ia.setrestoringbeam(beam = beam, channel = i, polarization = 0);
             _ia.close()
@@ -121,7 +120,7 @@ class SDINT_helper:
                         imFea.done( )
                         del imFea
                     except Exception as instance:
-                        print('*** Error *** %s' % instance)
+                        casalog.post('*** Error *** %s' % instance, 'ERROR')
                         raise 
 
                     _ib.open('tmp_jointplane')
@@ -155,7 +154,7 @@ class SDINT_helper:
         _ia.close()
 
         if shp[0]>1:
-            print("WARNING : Cannot use this task with faceting")
+            casalog.post("WARNING : Cannot use this task with faceting", 'WARN')
 
         _ia.open(jointname+'.psf')
         for i in range(0, shp[3]):
@@ -167,7 +166,7 @@ class SDINT_helper:
         _ia.putchunk(vals)
         _ia.close()
 
-        print("********************Re-norm with "+str(vals))
+        casalog.post("********************Re-norm with "+str(vals))
 
 
 ################################################
@@ -181,7 +180,7 @@ class SDINT_helper:
         vals = _ia.getchunk()   ## This is one pixel per channel.
         _ia.close()
         
-        print("********************Re-norm with "+str(vals))
+        casalog.post("********************Re-norm with "+str(vals))
 
         _ia.open(imname)
         for i in range(0, shp[3]):
@@ -311,7 +310,7 @@ class SDINT_helper:
         _ia.open(inpimage)
         defaultmaskname=_ia.maskhandler('default')[0]
         allmasknames = _ia.maskhandler('get')
-        #print("defaultmaskname=",defaultmaskname)
+        # casalog.post("defaultmaskname=",defaultmaskname)
         if mode=='replace':
             if defaultmaskname!='' and defaultmaskname!='mask0':
                 _ia.calcmask(mask='"'+pbimage+'"'+'>'+str(pblimit), name=defaultmaskname);
@@ -350,7 +349,7 @@ class SDINT_helper:
 
         refnu = _qa.convert( _qa.quantity(reffreq) ,'Hz' )['value']
 
-        #print("&&&&&&&&& REF FREQ : " + str(refnu))
+        # casalog.post("&&&&&&&&& REF FREQ : " + str(refnu))
 
         pix=[]
 
@@ -636,7 +635,7 @@ class SDINT_helper:
 ,'WARN')    
             if allowshift:
                 modsdpsf=inpsf+'_mod'
-                casalog.post("Modifying the input SD psf, "+sdpsf+" by shifting the field center of sd psf to that of int psf. Modified SD psf image:"+modsdpsf)
+                casalog.post("Modifying the input SD psf, "+inpsf+" by shifting the field center of sd psf to that of int psf. Modified SD psf image:"+modsdpsf)
                 shutil.copytree(inpsf, inpsf+'_mod')
                 _ia.open(modsdpsf)
                 thecsys = _ia.coordsys()
@@ -721,6 +720,15 @@ class SDINT_helper:
             implane.fill(0.0)
             _ia.putchunk(implane, blc=[0,0,0,ch])
             _ia.modify(model=_cl.torecord(), subtract=False, region=_rg.box(blc=[0,0,0,ch],trc=[shp[0],shp[1],0,ch]))
+            ## Now, normalize it.
+            implane = _ia.getchunk(blc=[0,0,0,ch],trc=[shp[0],shp[1],0,ch])
+            pmax = np.max(implane)
+            #print(pmax)
+            if pmax>0.0:
+                implane = implane/pmax
+            else:
+                implane.fill(0.0)
+            _ia.putchunk(implane, blc=[0,0,0,ch])
 
         _ia.close()
             
@@ -824,30 +832,47 @@ class SDINT_helper:
         csys = _ia.coordsys()
         shp = _ia.shape()
         ctypes = csys.axiscoordinatetypes()
-        print("Shape of SD cube : "+str(shp))
-        print("Coordinate ordering : "+str(ctypes))
+        casalog.post("Shape of SD cube : "+str(shp))
+        casalog.post("Coordinate ordering : "+str(ctypes))
         if len(ctypes) !=4 or ctypes[3] != 'Spectral':
-            print("The SD cube needs to have 4 axes, in the RA/DEC/Stokes/Spectral order")
+            casalog.post("The SD cube needs to have 4 axes, in the RA/DEC/Stokes/Spectral order", 'ERROR')
             _ia.close()
             return False
         nchan = shp[3]
         start = str( csys.referencevalue()['numeric'][3] ) + csys.units()[3]
         width = str( csys.increment()['numeric'][3]) + csys.units()[3] 
         ## Number of channels
-        print("nchan = "+str(nchan))
+        casalog.post("nchan = "+str(nchan))
         ## Start Frequency
-        print("start = " + start  )
+        casalog.post("start = " + start  )
         ## Width
-        print("width = " + width  ) 
+        casalog.post("width = " + width  )
         ## Test for restoringbeams
         rbeams = _ia.restoringbeam()
         #if not rbeams.has_key('nChannels') or rbeams['nChannels']!= shp[3]:
         if not 'nChannels' in rbeams or rbeams['nChannels']!= shp[3]:
-            print("The SD Cube needs to have per-plane restoringbeams")
+            casalog.post("The SD Cube needs to have per-plane restoringbeams", 'ERROR')
             _ia.close()
             return False
         else:
-            print("Found " + str(rbeams['nChannels']) + " per-plane restoring beams")
-        print("\n(For specmode='mfs' in sdintimaging, please remember to set 'reffreq' to a value within the freq range of the cube)\n")
+            casalog.post("Found " + str(rbeams['nChannels']) + " per-plane restoring beams")
+        casalog.post("\n(For specmode='mfs' in sdintimaging, please remember to set 'reffreq' to a value within the freq range of the cube)\n")
         _ia.close()
         return {'nchan':nchan, 'start':start, 'width':width}
+
+### Using Old Imager. Does not work for cubes ? 
+#    def fit_psf_beam(self,msname = '', psfname =''):
+#        _im.open(msname)  
+#        _ia.open(psfname)
+#        csys = _ia.coordsys()
+#        rbeam_old = _ia.restoringbeam()
+#        print(rbeam_old)
+#        shp = _ia.shape()
+#        _ia.close()
+#        cellx = csys.increment()['numeric'][0];
+#        celly = csys.increment()['numeric'][1];
+#        _im.defineimage(nx=shp[0],ny=shp[1],cellx=str(cellx)+'rad',celly=str(celly)+'rad',nchan=3)  
+#        params =_im.fitpsf(psfname)
+#        print(params)
+#        _im.close() 
+#

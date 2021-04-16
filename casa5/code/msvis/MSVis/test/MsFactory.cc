@@ -192,7 +192,8 @@ MsFactory::addSpectralWindow (const String & name,
                               Int nChannels,
                               Double frequency,
                               Double frequencyDelta,
-                              const String & stokes)
+                              const String & stokes,
+                              casacore::Double endingTime)
 {
     simulator_p->initSpWindows (name,
                                 nChannels,
@@ -202,10 +203,27 @@ MsFactory::addSpectralWindow (const String & name,
                                 MFrequency::TOPO,
                                 stokes);
 
-//    ThrowIf (! ok, String::format ("Failed to add spectral window "
-//                                   "(name=%s, nChannels=%d, fr=%f, dFr=%f, stokes=%s",
-//                                   name.c_str(), nChannels, frequency, frequencyDelta,
-//                                   stokes));
+    // If so specified, mark that the ending time for this SPW is different
+    if(endingTime != -1 )
+    {
+      // Get how many SPWs are present
+      Int currentNSpectralWindows;
+      Vector<String> currentSpWindowNames;
+      Vector<Int> currentNChannels;
+      Vector<Quantity> currentStartFrequencies;
+      Vector<Quantity> currentFrequencyDeltas;
+      Vector<String> currentStokesString;
+
+      simulator_p->getSpWindows(currentNSpectralWindows,
+                                currentSpWindowNames,
+                                currentNChannels,
+                                currentStartFrequencies,
+                                currentFrequencyDeltas,
+                                currentStokesString);
+
+      // There are currentNSpectralWindows SPWs added so far.
+      endingTimePerSpw_p[currentNSpectralWindows - 1] = endingTime;
+    }
 }
 
 void
@@ -316,7 +334,7 @@ MsFactory::attachColumns ()
 
 }
 
-pair<MeasurementSet *, Int>
+pair<MeasurementSet *, rownr_t>
 MsFactory::createMs ()
 {
     addColumns ();
@@ -325,7 +343,7 @@ MsFactory::createMs ()
 
     ms_p->flush();
 
-    pair<MeasurementSet *, Int> result = make_pair (ms_p, nRows_p);
+    pair<MeasurementSet *, rownr_t> result = make_pair (ms_p, nRows_p);
 
     ms_p = 0; // give up all ownership and access
 
@@ -363,17 +381,22 @@ MsFactory::fillData ()
                               stokesString);
 
     while (time < timeEnd_p){
-
         fillState.time_p = time;
 
         for (Int j = 0; j < nSpectralWindows; j++){
-
-            fillState.spectralWindow_p = j;
-            fillState.nChannels_p = nChannels [j];
-            vector<String> stokesComponents = utilj::split (stokesString [j], " ", true);
-            fillState.nCorrelations_p = stokesComponents.size();
-
-            fillRows (fillState);
+            // Only add this time to this SPW if either this SPW does not have
+            // a custom end time or if the timestamp is less than this
+            // SPW custom end time 
+            bool addThisTime = (endingTimePerSpw_p.find(j) == endingTimePerSpw_p.end()) ? 
+                true : time < endingTimePerSpw_p[j];
+            if(addThisTime)
+            {
+                fillState.spectralWindow_p = j;
+                fillState.nChannels_p = nChannels [j];
+                vector<String> stokesComponents = utilj::split (stokesString [j], " ", true);
+                fillState.nCorrelations_p = stokesComponents.size();
+                fillRows (fillState);
+            }
         }
 
         time += timeInterval_p;

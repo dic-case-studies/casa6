@@ -40,10 +40,8 @@ except ImportError:
     from casa_stack_manip import stack_frame_find
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     def ctsys_resolve(data):
-        if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-            return os.path.join(os.environ.get('CASAPATH').split()[0], 'data/casa-data-req', data)
-        else:
-            return os.path.join(os.environ.get('CASAPATH').split()[0], 'casa-data-req', data)
+        dataroot = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
+        return os.path.join(dataroot, data)
 
     is_CASA6 = False
 
@@ -54,7 +52,10 @@ import shutil
 import numpy as np
 import re
 
-datapath = ctsys_resolve('image/ngc5921.clean.image')
+
+datapath = ctsys_resolve('unittest/imhead/')
+impath = os.path.join(datapath,'ngc5921.clean.imhead.image')
+
 logfile = casalog.logfile()
 datacopy = 'clean.image'
 testlog = 'testlog.log'
@@ -62,7 +63,7 @@ newlog = 'casa_new.log'
 cas4355 = 'cas4355.im'
 cas6352 = 'CAS-6352.im'
 cas5901 = 'CAS-5901.im'
-ncpim = os.path.join('image', 'ncp_proj.im')
+ncpim = 'ncp_proj.im'
 cas6727 = 'CAS-6727.im'
 cas8095 = 'CAS-8095.im'
 myfits = "reorder_in.fits"
@@ -87,7 +88,7 @@ class imhead_test(unittest.TestCase):
     def setUp(self):
         if not is_CASA6:
             default(imhead)
-        shutil.copytree(datapath, datacopy)
+        shutil.copytree(impath, datacopy)
         os.chmod(datacopy, 493)
         for root, dirs, files in os.walk(datacopy):
             for d in dirs:
@@ -198,21 +199,13 @@ class imhead_test(unittest.TestCase):
         deleted_beam = False
         for key in expectedKeys:
             if key in undeletable or (deleted_beam and key in beam):
-                if is_CASA6:
-                    self.assertRaises(
-                        Exception, imhead, datacopy, mode='del', hdkey=key,
-                        msg='Unexpectedly deleted hdkey ' + key
-                    )
-                else:
-                    self.assertFalse(
-                        imhead(datacopy, mode='del', hdkey=key),
-                        'Unexpectedly deleted hdkey ' + key
-                    )
-            else:
-                self.assertTrue(
-                    imhead(datacopy, mode='del', hdkey=key),
-                    'Did not delete hdkey ' + key
+                self.assertRaises(
+                    Exception, imhead, datacopy, mode='del', hdkey=key,
+                    msg='Unexpectedly deleted hdkey ' + key
                 )
+            else:
+                # returns None
+                imhead(datacopy, mode='del', hdkey=key)
                 if key in ['bunit', 'object', 'observer', 'telescope']:
                     self.assertTrue(imhead(datacopy, mode='get', hdkey=key) == '',
                     'Unexpected value after del ' + key
@@ -303,20 +296,12 @@ class imhead_test(unittest.TestCase):
         beam = ['beammajor', 'beamminor']
         for key in expectedKeys:
             if key in unaddable or (beam_done and key in beam): 
-                if is_CASA6:
-                    self.assertRaises(
-                        Exception, imhead, datacopy, mode='add', hdkey=key, hdvalue=endDict[key]
-                    )
-                else:
-                    self.assertFalse(
-                        imhead(datacopy, mode='add', hdkey=key, hdvalue=endDict[key]),
-                        'unexpectedly added hdkey ' + key
-                    )
-            else:        
-                self.assertTrue(
-                    imhead(datacopy, mode='add', hdkey=key, hdvalue=endDict[key]),
-                    'unable to add hdkey ' + key
+                self.assertRaises(
+                    Exception, imhead, datacopy, mode='add', hdkey=key, hdvalue=endDict[key]
                 )
+            else:
+                # returns None        
+                imhead(datacopy, mode='add', hdkey=key, hdvalue=endDict[key])
             if key in beam:
                 beam_done = True
 
@@ -332,10 +317,8 @@ class imhead_test(unittest.TestCase):
         # add a user-specified key
         hdkey = 'mykey'
         hdval = 'myval'
-        self.assertTrue(
-            imhead(datacopy, mode='add', hdkey=hdkey, hdvalue=hdval),
-            'Unable to add user-specific key ' + hdkey
-        )
+        # returns None
+        imhead(datacopy, mode='add', hdkey=hdkey, hdvalue=hdval)
         gotval = imhead(datacopy, mode='get', hdkey=hdkey)
         self.assertTrue(
             gotval == hdval,
@@ -391,22 +374,13 @@ class imhead_test(unittest.TestCase):
         }        
         for k in myDict.keys():
             if k in immutable:
-                if is_CASA6:
-                    self.assertRaises(
-                        Exception, imhead, datacopy, mode='put', hdkey=k,
-                        msg="Incorrectly put hdkey " + k
-                    )
-                else:
-                    self.assertFalse(
-                        imhead(
-                            datacopy, mode='put', hdkey=k, hdvalue=myDict[k]
-                        ), "Incorrectly put hdkey " + k
-                    )
-            else:
-                self.assertTrue(
-                    imhead(datacopy, mode='put', hdkey=k, hdvalue=myDict[k]),
-                    "Did not put hdkey " + k
+                self.assertRaises(
+                    Exception, imhead, datacopy, mode='put', hdkey=k,
+                    msg="Incorrectly put hdkey " + k
                 )
+            else:
+                # returns None
+                imhead(datacopy, mode='put', hdkey=k, hdvalue=myDict[k])
         # do after first loop because we are not gauranteed the order things
         # are put, so everything must be put before we can check values
         for k in myDict.keys():
@@ -475,7 +449,7 @@ class imhead_test(unittest.TestCase):
                 self.assertEqual(x, exp_dict[k], msg)
         # test bogus key fails
         k = 'boguskey'
-        if is_CASA6:
+        if is_CASA6 or casa_stack_rethrow:
             self.assertRaises(
                 Exception, imhead, datacopy, mode='get', hdkey=k,
                 msg='Incorrectly found bogus key'
@@ -547,10 +521,8 @@ class imhead_test(unittest.TestCase):
         myia.done()
         ra = "14:33:10.5"
         key = "crval1"
-        self.assertTrue(
-            imhead(imagename=myim, mode="put", hdkey=key, hdvalue=ra),
-            'Failed to put hdkey ' + key + ' value=' + ra
-        )
+        # returns None
+        imhead(imagename=myim, mode="put", hdkey=key, hdvalue=ra)
         got = imhead(imagename=myim, mode="get", hdkey=key)
         self.assertTrue(got, 'Failed to get new ra value')
         got = _qa.canon(got)
@@ -562,10 +534,8 @@ class imhead_test(unittest.TestCase):
         )
         dec = "-22.44.55.66"
         key = "crval2"
-        self.assertTrue(
-            imhead(imagename=myim, mode="put", hdkey=key, hdvalue=dec),
-            'Failed to put hdkey ' + key + ' value=' + dec
-        )
+        # returns None
+        imhead(imagename=myim, mode="put", hdkey=key, hdvalue=dec)
         got = imhead(imagename=myim, mode="get", hdkey=key)
         self.assertTrue(got, 'Failed to get new value for dec')
         got = _qa.canon(got)
@@ -582,7 +552,7 @@ class imhead_test(unittest.TestCase):
         myia.fromshape(cas6352, [1, 1, 3])
         myia.done()
         msg = 'Incorrectly put a length 1 array, should need three elements'
-        if is_CASA6:
+        if is_CASA6 or casa_stack_rethrow:
             self.assertRaises(
                 Exception, imhead, cas6352, mode="put", hdkey="crval3", hdvalue="I",
                 msg=msg
@@ -594,11 +564,8 @@ class imhead_test(unittest.TestCase):
                 ), msg
         )
         expec = ["Q", "XX", "LL"]
-        self.assertTrue(
-            imhead(
-                cas6352, mode="put", hdkey="crval3", hdvalue=expec
-            ), 'Failed to put length three array for stokes'
-        )
+        # returns None
+        imhead(cas6352, mode="put", hdkey="crval3", hdvalue=expec)
         self.assertTrue(
             (
                 imhead(cas6352, mode="get", hdkey="crval3") == expec
@@ -618,7 +585,7 @@ class imhead_test(unittest.TestCase):
             not 'restfreq' in a.keys() and len(a.keys()) > 0,
             'dictionary incorrectly has key restfreq'
         )
-        if is_CASA6:
+        if is_CASA6 or casa_stack_rethrow:
             self.assertRaises(
                 Exception, imhead, cas5901, mode="get", hdkey="restfreq",
                 msg='Incorrectly found key restfreq'
@@ -639,7 +606,7 @@ class imhead_test(unittest.TestCase):
 
     def test_ncp(self):
         """Test NCP projection is reported, CAS-6568"""
-        imagename = ctsys_resolve(ncpim)
+        imagename = os.path.join(datapath,ncpim)
         res = imhead(imagename, mode="list")
         proj = res['projection']
         self.assertTrue(proj.count("NCP") == 1, 'Failed to get NCP projection')
@@ -686,7 +653,7 @@ class imhead_test(unittest.TestCase):
 
     def test_open_fits(self):
         """Verify running on fits file works"""
-        shutil.copy(ctsys_resolve(os.path.join('image', myfits)), myfits)
+        shutil.copy(os.path.join(datapath,myfits), myfits)
         self.assertTrue(imhead(myfits, mode='list'))
 
     def test_masked(self):
@@ -717,11 +684,9 @@ class imhead_test(unittest.TestCase):
             elif mode == "put":
                 hdvalue = "K"
             else:
-                hdvalue = "" 
-            self.assertTrue(
-                imhead(zz, mode=mode, hdkey=hdkey, hdvalue=hdvalue),
-                'Failed to run imhead mode=' + mode
-            )
+                hdvalue = ""
+            # returns None
+            imhead(zz, mode=mode, hdkey=hdkey, hdvalue=hdvalue)
             myia.open(zz)
             msgs = myia.history()
             myia.done()

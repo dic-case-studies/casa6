@@ -18,6 +18,8 @@
 #include <tools/utils/stdBaseInterface.h>
 #if ! defined(CASATOOLS)
 #include <tools/xerces/stdcasaXMLUtil.h>
+#else
+#include <climits>
 #endif
 #include <casa/Logging/LogIO.h>
 #include <casa/BasicSL/String.h>
@@ -37,6 +39,11 @@
 #include <casacore/casa/Quanta/UnitMap.h>
 #include <casatools/Config/State.h>
 #ifdef CASATOOLS
+#include <fftw3.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+#include <casacore/scimath/Mathematics/FFTW.h>
 #include <asdmstman/AsdmStMan.h>
 #include <casacore/derivedmscal/DerivedMC/Register.h>
 #include <toolversion.h>
@@ -293,7 +300,7 @@ utils::removetable(const std::vector<std::string> &tablenames)
 	result->insert("lockstatus", "unknown");
     }
 
-    result->insert("lockpid", info[1]);
+    result->insert("lockpid", (long) info[1]);
     result->insert("lockperm", info[2] ? true : false);
     return result;
 }
@@ -308,33 +315,33 @@ std::vector<std::string> utils::lockedtables( ) {
 }
 
 
-typedef int SIZETCAST;
+typedef long NUMCAST;
 ::casac::record *utils::hostinfo( ) {
     ::casac::record *result = new record( );
 
     ::casac::record *swap = new record( );
-    swap->insert( "total", (SIZETCAST) HostInfo::swapTotal( ) );
-    swap->insert( "used", (SIZETCAST) HostInfo::swapUsed( ) );
-    swap->insert( "free", (SIZETCAST) HostInfo::swapFree( ) );
+    swap->insert( "total", (NUMCAST) HostInfo::swapTotal( ) );
+    swap->insert( "used", (NUMCAST) HostInfo::swapUsed( ) );
+    swap->insert( "free", (NUMCAST) HostInfo::swapFree( ) );
     result->insert( "swap", swap );
 
     ::casac::record *memory = new record( );
-    memory->insert( "total", (SIZETCAST) HostInfo::memoryTotal( ) );
-    memory->insert( "available", (SIZETCAST) HostInfo::memoryTotal(true) );
-    memory->insert( "used", (SIZETCAST) HostInfo::memoryUsed( ) );
-    memory->insert( "free", (SIZETCAST) HostInfo::memoryFree( ) );
+    memory->insert( "total", (NUMCAST) HostInfo::memoryTotal( ) );
+    memory->insert( "available", (NUMCAST) HostInfo::memoryTotal(true) );
+    memory->insert( "used", (NUMCAST) HostInfo::memoryUsed( ) );
+    memory->insert( "free", (NUMCAST) HostInfo::memoryFree( ) );
     result->insert( "memory", memory );
 
     ::casac::record *cpus = new record( );
-    cpus->insert( "total", HostInfo::numCPUs( ) );
-    cpus->insert( "available", HostInfo::numCPUs(true) );
+    cpus->insert( "total", (NUMCAST) HostInfo::numCPUs( ) );
+    cpus->insert( "available", (NUMCAST) HostInfo::numCPUs(true) );
     result->insert( "cpus", cpus );
 
     result->insert( "endian", HostInfo::bigEndian( ) ? "big" : "little" );
     result->insert( "hostname", HostInfo::hostName( ) );
-    result->insert( "pid", HostInfo::processID( ) );
+    result->insert( "pid", (NUMCAST) HostInfo::processID( ) );
 
-    result->insert( "seconds", HostInfo::secondsFrom1970( ) );
+    result->insert( "seconds", (NUMCAST) HostInfo::secondsFrom1970( ) );
 
     return result;
 }
@@ -380,7 +387,7 @@ utils::_crash_reporter_initialize (const string & crashDirectory,
 }
 
 bool
-utils::_trigger_segfault (int faultType)
+utils::_trigger_segfault (long faultType)
 {
     // *NOTE*: Not intended for casual use!
 
@@ -411,6 +418,18 @@ utils::_trigger_segfault (int faultType)
 static std::vector<std::string> default_data_path;
 static std::string python_path;
 #ifdef CASATOOLS
+
+long utils::maxint( ) { return INT_MAX; }
+long utils::minint( ) { return INT_MIN; }
+long utils::maxlong( ) { return LONG_MAX; }
+long utils::minlong( ) { return LONG_MIN; }
+
+double utils::tryit(const ::casac::record &input) {
+    auto found = input.find("value");
+    fprintf(stderr,"\t\t<<%s>>\n",(*found).second.typeString( ).c_str( ));
+    return (*found).second.toDouble( );
+}
+
 // CASA 6
 bool utils::initialize( const std::string &pypath, 
                         const std::string &distro_data,
@@ -430,13 +449,40 @@ bool utils::initialize(const std::vector<std::string> &default_path) {
     casatools::get_state( ).setPythonPath(python_path);
     // configure quanta/measures customizations...
     UnitMap::putUser( "pix", UnitVal(1.0), "pixel units" );
+
 #ifdef CASATOOLS
     casa::AsdmStMan::registerClass( );
     register_derivedmscal();
+
+    // --- --- --- configure fftw --- CAS-13342 --- --- --- --- --- --- --- --- 
+    casacore::FFTW init_casacore_fftw;
+#ifdef _OPENMP
+    int numCPUs = omp_get_max_threads();
+#else
+    int numCPUs = HostInfo::numCPUs();
+#endif
+    int nthreads = 1;
+    if (numCPUs > 1) {
+        nthreads = numCPUs;
+    }
+    fftwf_plan_with_nthreads(nthreads);
+    fftw_plan_with_nthreads(nthreads);
 #endif
     initialized = true;
     return true;
 }
+
+// ------------------------------------------------------------
+// -------------------- handling rundata path -----------------
+#ifdef CASATOOLS
+std::string utils::rundata( ) {
+    return casatools::get_state( ).measuresDir( );
+}
+
+void utils::setrundata( const std::string &data ) {
+    casatools::get_state( ).setDistroDataPath(data);
+}
+#endif
 
 // ------------------------------------------------------------
 // -------------------- handling data path --------------------
@@ -488,7 +534,7 @@ std::string utils::resolve(const std::string &subdir) {
         sub->insert("id",it->id( ));
         sub->insert("uri",it->uri( ));
         sub->insert("types",std::vector<std::string>(it->types( ).begin( ),it->types( ).end( )));
-        sub->insert("priority",it->priority( ));
+        sub->insert("priority",(NUMCAST) it->priority( ));
         regrec->insert(std::to_string(count++),sub);
     }
     return regrec;
@@ -502,9 +548,9 @@ void utils::shutdown( ) {
 
 // ------------------------------------------------------------
 
-std::vector<int>
+std::vector<long>
 utils::version( ) {
-    std::vector<int> result = {
+    std::vector<long> result = {
         VersionInfo::major( ),
         VersionInfo::minor( ),
         VersionInfo::patch( ),
@@ -526,13 +572,13 @@ utils::version_info( ) { return VersionInfo::info( ); }
 std::string
 utils::version_string( ) { return VersionInfo::str( ); }
 
-bool utils::compare_version(const  string& comparitor,  const std::vector<int>& vec) {
-    return VersionInfo::compare(comparitor,vec);
+bool utils::compare_version(const  string& comparitor,  const std::vector<long>& vec) {
+    return VersionInfo::compare(comparitor,vector<int>(vec.begin(),vec.end()));
 }
 
-std::vector<int>
+std::vector<long>
 utils::toolversion( ) {
-    std::vector<int> result = {
+    std::vector<long> result = {
 #ifdef CASATOOLS
         ToolVersionInfo::major( ),
         ToolVersionInfo::minor( ),

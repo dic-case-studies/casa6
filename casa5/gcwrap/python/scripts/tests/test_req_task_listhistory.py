@@ -46,18 +46,13 @@ import shutil
 logpath = casalog.logfile()
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/alma/Itziar.ms')
-    fakepath = casatools.ctsys.resolve('visibilities/')
+    datapath = casatools.ctsys.resolve('unittest/listhistory/Itziar.ms')
+    fakepath = casatools.ctsys.resolve('unittest/listhistory/')
     #filepath = casatools.ctsys.resolve('testlog.log')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        dataroot = os.environ.get('CASAPATH').split()[0] + '/'
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/Itziar.ms'
-        fakepath = dataroot + 'data/casa-data-req/visibilities/'
-    else:
-        dataroot = os.environ.get('CASAPATH').split()[0] + '/'
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/Itziar.ms'
-        fakepath = dataroot + 'casa-data-req/visibilities/'
+    dataroot = os.environ.get('CASAPATH').split()[0] + '/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listhistory/Itziar.ms'
+    fakepath = dataroot + '/casatestdata/unittest/listhistory/'
     #filepath = 'testlog.log'
 
 # This is for tests that check what the parameter validator does when parameters are
@@ -106,7 +101,8 @@ class listhistory_test(unittest.TestCase):
         '''test logfile: Checks to see that a log file is written and populated'''
         casalog.setlogfile('testlog.log')
         listhistory(datapath)
-        self.assertTrue('History table entries' in open('testlog.log').read())
+        with open ('testlog.log') as tlf:
+            self.assertTrue('History table entries' in tlf.read())
         
     # Here is the start of the merged test cases
     # -----------------------------------------------
@@ -135,21 +131,18 @@ class listhistory_test(unittest.TestCase):
         casalog.setlogfile(logfile)
         res = listhistory(datapath)
 
-        # Get the number of lines in file
-        # the number of expected lines differs
+        refnum = 13
+        # In CASA6, this +1 accounts for the following log line (which is not in CASA5):
+        # Task listhistory complete. Start time: 2020-10-19 11:33:40.195569 End time: ...
         if CASA6:
-            refnum=17
-            
-        else:
-            # for CASA5, get only the relevant lines in the logfile
-            newfile= "newlisth.log"
-            cmd="sed -n \"/Begin Task/,/End Task/p\" %s > %s " %(logfile,newfile)
-            print(cmd)
-            os.system(cmd)
-            logfile = newfile
+            refnum += 1
 
-            refnum = 13
-            
+        # Get only the relevant lines in the logfile, between 'Begin/End Task'
+        newfile= "newlisth.log"
+        cmd="sed -n \"/Begin Task/,/End Task/p\" %s > %s " %(logfile,newfile)
+        print(cmd)
+        os.system(cmd)
+        logfile = newfile
 
         if CASA6:
             cmd=['wc', '-l', logfile]

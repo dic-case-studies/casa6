@@ -41,16 +41,12 @@ import shutil
 
 if CASA6:
     # Real and fake datapaths
-    datapath = casatools.ctsys.resolve('visibilities/evla/TOSR0001_sb1308595_1.55294.83601028935')
-    falsepath = casatools.ctsys.resolve('visibilities/evla')
+    datapath = casatools.ctsys.resolve('unittest/listsdm/TOSR0001_sb1308595_1.55294.83601028935')
+    falsepath = casatools.ctsys.resolve('unittest/listsdm/')
     filepath = casatools.ctsys.resolve('testlog.log')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/TOSR0001_sb1308595_1.55294.83601028935'
-        falsepath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/TOSR0001_sb1308595_1.55294.83601028935'
-        falsepath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listsdm/TOSR0001_sb1308595_1.55294.83601028935'
+    falsepath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listsdm/'
     filepath = 'testlog.log'
         
 logpath = casalog.logfile()

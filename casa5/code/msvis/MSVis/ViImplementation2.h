@@ -98,6 +98,7 @@ class WeightScaling;
 enum VisBufferType : int;
 enum VisBufferOptions : int;
 
+typedef enum {UnknownScope = 0, ChunkScope = 1, SubchunkScope = 2, RowScope = 3} MetadataScope;
 // <summary>
 // VisibilityIterator2 iterates through one or more readonly MeasurementSets
 // </summary>
@@ -209,7 +210,7 @@ public:
     // set, up to nRows can be returned in one go. The chunk
     // size determines the actual maximum.
 
-    virtual void setRowBlocking (casacore::Int nRows = 0) = 0;
+    virtual void setRowBlocking (casacore::rownr_t nRows = 0) = 0;
 
     virtual casacore::Bool existsColumn (VisBufferComponent2 id) const = 0;
 
@@ -221,8 +222,19 @@ public:
     virtual casacore::Bool isNewSpectralWindow () const = 0;
 
     // Return the number of rows in the current iteration
+    virtual casacore::rownr_t nRows () const = 0;
 
-    virtual casacore::Int nRows () const = 0;
+    // Return the number of distinct array/cube shapes in the current iteration
+    virtual casacore::rownr_t nShapes () const = 0;
+
+    // Return the number of rows for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::rownr_t>& nRowsPerShape () const = 0;
+
+    // Return the number of channels for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::Int>& nChannelsPerShape () const = 0;
+
+    // Return the number of correlations for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::Int>& nCorrelationsPerShape () const = 0;
 
     // Return the row ids as from the original root table. This is useful
     // to find correspondance between a given row in this iteration to the
@@ -284,6 +296,7 @@ public:
     // Return flag for each polarization, channel and row
 
     virtual void flag (casacore::Cube<casacore::Bool> & flags) const = 0;
+    virtual void flag (casacore::Vector<casacore::Cube<casacore::Bool>> & flags) const = 0;
 
     // Return flag for each channel & row
 
@@ -337,12 +350,13 @@ public:
     // Return sigma
 
     virtual void sigma (casacore::Matrix<casacore::Float> & sigmat) const = 0;
+    virtual void sigma (casacore::Vector<casacore::Matrix<casacore::Float>> & sigmat) const = 0;
 
-    // Return current SpectralWindow
-
-    virtual casacore::Int spectralWindow () const = 0;
-
+    // Return all the spectral windows ids for each row of the current buffer
     virtual void spectralWindows (casacore::Vector<casacore::Int> & spws) const = 0;
+
+    // Return all the polarizations Ids for each row of the current buffer
+    virtual void polarizationIds (casacore::Vector<casacore::Int> & polIds) const = 0;
 
     // Return MJD midpoint of interval.
 
@@ -363,12 +377,16 @@ public:
     // Return the visibilities as found in the casacore::MS, casacore::Cube (npol,nchan,nrow).
 
     virtual void visibilityCorrected (casacore::Cube<casacore::Complex> & vis) const = 0;
+    virtual void visibilityCorrected (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const = 0;
     virtual void visibilityModel (casacore::Cube<casacore::Complex> & vis) const = 0;
+    virtual void visibilityModel (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const = 0;
     virtual void visibilityObserved (casacore::Cube<casacore::Complex> & vis) const = 0;
+    virtual void visibilityObserved (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const = 0;
 
     // Return FLOAT_DATA as a casacore::Cube (npol, nchan, nrow) if found in the MS.
 
     virtual void floatData (casacore::Cube<casacore::Float> & fcube) const = 0;
+    virtual void floatData (casacore::Vector<casacore::Cube<casacore::Float>> & fcube) const = 0;
 
     // Return the visibility 4-vector of polarizations for each channel.
     // If the casacore::MS doesn't contain all polarizations, it is assumed it
@@ -385,6 +403,7 @@ public:
     // Return weight
 
     virtual void weight (casacore::Matrix<casacore::Float> & wtmat) const = 0;
+    virtual void weight (casacore::Vector<casacore::Matrix<casacore::Float>> & wtmat) const = 0;
 
     // Determine whether WEIGHT_SPECTRUM exists.
 
@@ -397,10 +416,12 @@ public:
     // Return weightspectrum (a weight for each channel)
 
     virtual void weightSpectrum (casacore::Cube<casacore::Float> & wtsp) const = 0;
+    virtual void weightSpectrum (casacore::Vector<casacore::Cube<casacore::Float>> & wtsp) const = 0;
 
     // Return sgimaspectrum (a sigma for each channel)
 
     virtual void sigmaSpectrum (casacore::Cube<casacore::Float> & wtsp) const = 0;
+    virtual void sigmaSpectrum (casacore::Vector<casacore::Cube<casacore::Float>> & wtsp) const = 0;
 
 
     virtual void setWeightScaling (casacore::CountedPtr<WeightScaling> weightscaling) = 0;
@@ -551,8 +572,8 @@ public:
     virtual casacore::Int nAntennas () const = 0;
     virtual casacore::Int nDataDescriptionIds () const = 0;
     virtual casacore::Int nPolarizationIds () const = 0;
-    virtual casacore::Int nRowsInChunk () const = 0; // number rows in current chunk
-    virtual casacore::Int nRowsViWillSweep () const = 0; // number of rows in all selected ms's
+    virtual casacore::rownr_t nRowsInChunk () const = 0; // number rows in current chunk
+    virtual casacore::rownr_t nRowsViWillSweep () const = 0; // number of rows in all selected ms's
     virtual casacore::Int nSpectralWindows () const = 0;
     // number of unique time stamps in chunk
     virtual casacore::Int nTimes() const = 0;

@@ -139,10 +139,11 @@ std::vector<IPosition> MSTransformIteratorFactory::getVisBufferStructure()
 				IPosition firstBufferShape = manager_p->getTransformedShape(visBuffer);
 
 				// Find max number of baselines in this chunk
-				Int maxnRows = firstBufferShape(2);
+				rownr_t maxnRows = firstBufferShape(2);
 				while (visIter->more())
 				{
-					if (visBuffer->nRows() > maxnRows) maxnRows = visBuffer->nRows();
+					if (visBuffer->nRows() > maxnRows)
+					    maxnRows = visBuffer->nRows();
 					visIter->next();
 				}
 

@@ -134,7 +134,7 @@ class ia_fft_test(unittest.TestCase):
 
         # Open test image (has sky coordinates)
         data = os.environ.get("CASAPATH").split()[0]
-        testname = data + '/data/regression/unittest/ia_fft/test_image'
+        testname = data + '/casatestdata/unittest/ia_fft/test_image.im'
         myia = iatool()
         testim = iatool()
         testim.open(testname)

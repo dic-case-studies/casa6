@@ -18,7 +18,7 @@ _rg = rgtool( )
 Unit tests for task ia.deviation().
 '''
 
-datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/ia_deviation/'
+datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ia_deviation/'
 
 input0 = datapath + "100x100x2.im"
 ref0 = datapath + "ref0.im"
@@ -131,13 +131,13 @@ class ia_deviation_test(unittest.TestCase):
             self._myia.open(input0)
             zz = self._myia.deviation(
                 "", grid=grid, xlength="4pix", ylength="4pix", stattype="npts",
-                interp="cub",anchor=anchor, statalg="cl"
+                interp="lin",anchor=anchor, statalg="cl"
             )
             self._myia.open(ref2)
             self._compare(self._myia.getchunk(), zz.getchunk(), "test001 compare")
             zz = self._myia.deviation(
                 "", grid=grid, xlength="4pix", ylength="4pix", stattype="sigma",
-                interp="cub",anchor=anchor, statalg="cl"
+                interp="lin",anchor=anchor, statalg="cl"
             )
             self._myia.open(ref3)
         self._myia.done()
@@ -151,13 +151,13 @@ class ia_deviation_test(unittest.TestCase):
         for anchor in [[2,2], [17,11]]:
             zz = self._myia.deviation(
                 "", grid=grid, xlength="4pix", ylength="4pix", stattype="npts",
-                interp="cub", anchor=anchor, statalg="cl"
+                interp="lin", anchor=anchor, statalg="cl"
             )
             self._myia.open(ref4)
             self._compare(self._myia.getchunk(), zz.getchunk(), "test005 compare")
             zz = self._myia.deviation(
                 "", grid=grid, xlength="4pix", ylength="4pix", stattype="sigma",
-                interp="cub", anchor=anchor, statalg="cl"
+                interp="lin", anchor=anchor, statalg="cl"
             )
             self._myia.open(ref5)
         self._myia.done()
@@ -173,11 +173,11 @@ class ia_deviation_test(unittest.TestCase):
         length = "10.001pix"
         zz = self._myia.deviation(
             grid=grid, xlength=length, ylength=length, stattype="sigma",
-            interp="cub", anchor=anchor, statalg="cl"
+            interp="lin", anchor=anchor, statalg="cl"
         )
         yy = self._myia.deviation(
             grid=grid, xlength=length, ylength=length, stattype="sigma",
-            interp="cub", anchor=anchor, statalg="cl", region=reg
+            interp="lin", anchor=anchor, statalg="cl", region=reg
         )
         self._myia.done()
         sub0 = zz.subimage(region=myrg.box([27,27,0],[66,66,0]))
