@@ -903,8 +903,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			for (ididx = /*titleText().length()*/titleText.length(); ididx < nl-1; ididx++) {
 				idents[2*nl + ididx] = 32;
 			}
-            std::cout << "AA Idents"<<std::endl;
-            std::cout << idents<<std::endl;
+            //std::cout << "AA Idents"<<std::endl;
+            //std::cout << idents<<std::endl;
 			titleChanged = false;
 //
 			cpgsch(charSize());
@@ -1009,8 +1009,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			}
 
 // Do the real work
-            std::cout << "Calling cpgspbox. Idents:" <<std::endl;
-            std::cout << idents <<std::endl;
+            //std::cout << "Calling cpgspbox. Idents:" <<std::endl;
+            //std::cout << idents <<std::endl;
 			cpgsbox(blc, trc, idents, opt, labctl, labden, ci, gcode,
 			        tiklen, ng1, grid1, ng2, grid2, doeq, nlfunc,
 			        nlc, nli, nld, nlcprm, nliprm, nldprm,
