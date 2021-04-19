@@ -105,11 +105,11 @@ static pid_t manager_xvfb_pid = 0;
 static bool sigterm_received = false;
 static void preprocess_args( int argc, const char *argv[], int &numargs, char **&args,
                              char *&server_string, bool &do_dbus, bool &inital_run,
-                             bool &server_startup, bool &daemon,
+                             bool &server_startup, bool &daemon, bool &xvfb_self_start,
                              bool &without_gui, bool &persistent, bool &casapy_start,
                              char *&logfile_path, char *&data_path, bool &do_not_fork );
 static void start_manager_root( const char *origname, int numargs, char **args,
-                                const char *dbusname, bool without_gui, pid_t root_pid );
+                                const char *dbusname, bool without_gui, bool daemon, pid_t root_pid );
 static void launch_server( const char *origname, int numargs, char **args,
                            const char *dbusname, bool without_gui,
                            bool persistent, bool casapy_start );
@@ -256,6 +256,7 @@ int main( int argc, const char *argv[] ) {
 	bool server_startup = false;
     bool do_not_fork = false;
     bool daemon = false;
+    bool xvfb_self_start = false;
 	bool without_gui = false;
 	bool persistent = false;
 	bool casapy_start = false;
@@ -286,7 +287,7 @@ int main( int argc, const char *argv[] ) {
 //     QCoreApplication::setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);
 
 	preprocess_args( argc, argv, numargs, args, server_string, with_dbus,
-	                 initial_run, server_startup, daemon, without_gui,
+	                 initial_run, server_startup, daemon, xvfb_self_start, without_gui,
                      persistent, casapy_start, logfile_path, command_line_data_path, do_not_fork );
 
 	//
@@ -406,174 +407,184 @@ int main( int argc, const char *argv[] ) {
             launch_server( argv[0], numargs, args, server_string, without_gui,
                            persistent, casapy_start );
         } else {
-            start_manager_root( argv[0], numargs, args, server_string, without_gui, getpid( ) );
+            start_manager_root( argv[0], numargs, args, server_string, without_gui, false, getpid( ) );
         }
 		exit(0);
 	}
 
 	INITIALIZE_PGPLOT
 	try {
+		Int qappExitStatus = -1;
 
-		ViewerApp qapp(numargs, args, true);
+		// Create a scope here, which causes the destructor of qapp to be called before killing the manager_xvfb_pid.
+		{ // qapp scope
+			ViewerApp qapp(numargs, args, true);
 
-		// if it's a server, stick around even if all windows are closed...
-		if ( server_startup ) {
-			qapp.setQuitOnLastWindowClosed(false);
-		}
-
-		String	   filename    = "",
-		           displaytype = "",
-		           datatype    = "",
-		           arg2        = "",
-		           arg3        = "";
-
-
-		Int narg;
-
-#ifndef AIPS_DARWIN
-		narg = qapp.argc();
-		if(narg>1) filename = qapp.argv()[1];
-		if(narg>2) arg2     = qapp.argv()[2];
-		if(narg>3) arg3     = qapp.argv()[3];
-#else
-		narg = numargs;
-		if(narg>1) filename = args[1];
-		if(narg>2) arg2     = args[2];
-		if(narg>3) arg3     = args[3];
-#endif
-
-		// Workaround for python task's "empty parameter" disability....
-		if(filename==".") filename="";
-
-		if ( filename != "" && filename[0] == '-' && filename[1] == '-' ) {
-			struct stat statbuf;
-			if ( stat( filename.c_str( ), &statbuf ) == -1 ) {
-				filename = "";
+			// if it's a server, stick around even if all windows are closed...
+			if ( server_startup ) {
+				qapp.setQuitOnLastWindowClosed(false);
 			}
-		}
 
-		// Pass along the remaining arguments to QtViewer...
-		// instead of littering the ctor arguments...
-		std::list<std::string> stdargs;
-		for ( int arg_index=0; args[arg_index]; ++arg_index )
-			stdargs.push_back(args[arg_index]);
-
-		QtViewer* v = new QtViewer( stdargs, server_startup || with_dbus, server_string );
-		qapp.subscribe(v);
-
-		if ( ! server_startup ) {
-
-			// define the panel
-			QtDisplayPanelGui* dpg;
-
-			dpg = v->createDPG( );
-
-			QtDisplayData* qdd = 0;
-
-			// Data files are now typed automatically (see v_->filetype(filename),
-			// below; e.g.: "image" or "ms").  arg2 need be used only to specify a
-			// displaytype, and then only when it is not the default displaytype
-			// for the datatype (e.g.  viewer "my.im", "contour" ).
-			//
-			// The user can enter an lel expression in place of filename, but such
-			// an expression _cannot_ be automatically typed.  In this case the user
-			// must have "lel" in arg2 (or in arg3: the only case where arg3 is vaguely
-			// useful is something like:
-			//
-			//   casaviewer "'my.im'-'other.im'"  contour  lel
-			//
-			// arg3 is not even offered in the viewer casapy task).
-			//
-			// The logic below allows displaytypes or datatypes to be entered in
-			// either order, and for old datatypes to be used other than "lel" (these
-			// are simply ignored).  This allows old (deprecated) parameter usage in
-			// scripts (such as viewer("my.ms", "ms")) to continue to be understood.
-			//
-			// However, the canonical 'allowed' parameter set (per user documentation)
-			// is now just:
-			//
-			//   viewer [filename [displaytype]]
-			//
-
-			if(filename!="") {
-
-				Bool tryDDcreate = true;
-
-				if(arg3=="lel" || arg2=="lel") {
-
-					// (this means that first ('filename') parameter is supposed to
-					// contain a valid lel (image expression) string; this is advanced
-					// (and undocumented) parameter usage).
-
-					datatype = "lel";
-					displaytype = (arg3=="lel")? arg2 : arg3;
-					v->dataDisplaysAs(datatype, displaytype);
-				} else {
-
-					datatype = v->filetype(filename);
+			String	   filename    = "",
+			           displaytype = "",
+			           datatype    = "",
+			           arg2        = "",
+			           arg3        = "";
 
 
-					if(datatype=="restore") {
+			Int narg;
 
-						// filename is a restore file.
+	#ifndef AIPS_DARWIN
+			narg = qapp.argc();
+			if(narg>1) filename = qapp.argv()[1];
+			if(narg>2) arg2     = qapp.argv()[2];
+			if(narg>3) arg3     = qapp.argv()[3];
+	#else
+			narg = numargs;
+			if(narg>1) filename = args[1];
+			if(narg>2) arg2     = args[2];
+			if(narg>3) arg3     = args[3];
+	#endif
 
-						tryDDcreate = false;
+			// Workaround for python task's "empty parameter" disability....
+			if(filename==".") filename="";
 
-						dpg->restorePanelState(filename);
-					}
-
-					else {
-
-						if(datatype=="nonexistent") {
-							cerr << "***Can't find  " << filename << "***" << endl;
-							tryDDcreate = false;
-						}
-
-						if(datatype=="unknown") {
-							cerr << "***Unknown file type for  " << filename << "***" << endl;
-							tryDDcreate = false;
-						}
-
-						// filename names a normal data file.  If user has passed a valid
-						// displaytype in either arg2 or arg3, use it; otherwise, the
-						// default displaytype for datatype will be inserted.
-
-						displaytype = arg2;
-						if(!v->dataDisplaysAs(datatype, displaytype)) {
-							displaytype = arg3;
-							v->dataDisplaysAs(datatype, displaytype);
-						}
-					}
-				}
-
-
-				if(tryDDcreate) {
-
-					qdd = dpg->createDD(filename, datatype, displaytype, true,
-										-1, false, false, false/*, ddo*/ );
-					dpg->addedData( QString::fromStdString(displaytype), qdd );
-
-
-					if(qdd==0)  cerr << dpg->errMsg() << endl;
+			if ( filename != "" && filename[0] == '-' && filename[1] == '-' ) {
+				struct stat statbuf;
+				if ( stat( filename.c_str( ), &statbuf ) == -1 ) {
+					filename = "";
 				}
 			}
 
-			dpg->show();
+			// Pass along the remaining arguments to QtViewer...
+			// instead of littering the ctor arguments...
+			std::list<std::string> stdargs;
+			for ( int arg_index=0; args[arg_index]; ++arg_index )
+				stdargs.push_back(args[arg_index]);
 
-			if( dpg->isEmptyDD() ) dpg->showDataManager();
+			QtViewer* v = new QtViewer( stdargs, server_startup || with_dbus, server_string );
+			qapp.subscribe(v);
 
+			if ( ! server_startup ) {
+
+				// define the panel
+				QtDisplayPanelGui* dpg;
+
+				dpg = v->createDPG( );
+
+				QtDisplayData* qdd = 0;
+
+				// Data files are now typed automatically (see v_->filetype(filename),
+				// below; e.g.: "image" or "ms").  arg2 need be used only to specify a
+				// displaytype, and then only when it is not the default displaytype
+				// for the datatype (e.g.  viewer "my.im", "contour" ).
+				//
+				// The user can enter an lel expression in place of filename, but such
+				// an expression _cannot_ be automatically typed.  In this case the user
+				// must have "lel" in arg2 (or in arg3: the only case where arg3 is vaguely
+				// useful is something like:
+				//
+				//   casaviewer "'my.im'-'other.im'"  contour  lel
+				//
+				// arg3 is not even offered in the viewer casapy task).
+				//
+				// The logic below allows displaytypes or datatypes to be entered in
+				// either order, and for old datatypes to be used other than "lel" (these
+				// are simply ignored).  This allows old (deprecated) parameter usage in
+				// scripts (such as viewer("my.ms", "ms")) to continue to be understood.
+				//
+				// However, the canonical 'allowed' parameter set (per user documentation)
+				// is now just:
+				//
+				//   viewer [filename [displaytype]]
+				//
+
+				if(filename!="") {
+
+					Bool tryDDcreate = true;
+
+					if(arg3=="lel" || arg2=="lel") {
+
+						// (this means that first ('filename') parameter is supposed to
+						// contain a valid lel (image expression) string; this is advanced
+						// (and undocumented) parameter usage).
+
+						datatype = "lel";
+						displaytype = (arg3=="lel")? arg2 : arg3;
+						v->dataDisplaysAs(datatype, displaytype);
+					} else {
+
+						datatype = v->filetype(filename);
+
+
+						if(datatype=="restore") {
+
+							// filename is a restore file.
+
+							tryDDcreate = false;
+
+							dpg->restorePanelState(filename);
+						}
+
+						else {
+
+							if(datatype=="nonexistent") {
+								cerr << "***Can't find  " << filename << "***" << endl;
+								tryDDcreate = false;
+							}
+
+							if(datatype=="unknown") {
+								cerr << "***Unknown file type for  " << filename << "***" << endl;
+								tryDDcreate = false;
+							}
+
+							// filename names a normal data file.  If user has passed a valid
+							// displaytype in either arg2 or arg3, use it; otherwise, the
+							// default displaytype for datatype will be inserted.
+
+							displaytype = arg2;
+							if(!v->dataDisplaysAs(datatype, displaytype)) {
+								displaytype = arg3;
+								v->dataDisplaysAs(datatype, displaytype);
+							}
+						}
+					}
+
+
+					if(tryDDcreate) {
+
+						qdd = dpg->createDD(filename, datatype, displaytype, true,
+											-1, false, false, false/*, ddo*/ );
+						dpg->addedData( QString::fromStdString(displaytype), qdd );
+
+
+						if(qdd==0)  cerr << dpg->errMsg() << endl;
+					}
+				}
+
+				dpg->show();
+
+				if( dpg->isEmptyDD() ) dpg->showDataManager();
+
+			}
+
+			qappExitStatus = qapp.exec();
+
+			//delete dpg;		// Used to lead to crash (double-deletion
+			// of MWCTools); should work now.
+			delete v;
+		} // qapp scope
+
+		// Once qapp has destructed, it is safe to kill the xvfb instance
+		// that we created in launch_server->start_manager_root.
+		if (xvfb_self_start && manager_xvfb_pid != 0) {
+			// Not killing the xvfb process causes mpi runs to hang.
+			kill( manager_xvfb_pid, SIGTERM );
 		}
 
-		Int stat = qapp.exec();
+		// cerr<<"Normal exit -- status: "<<qappExitStatus<<endl;	//#diag
 
-		//delete dpg;		// Used to lead to crash (double-deletion
-		// of MWCTools); should work now.
-
-		delete v;
-
-		// cerr<<"Normal exit -- status: "<<stat<<endl;	//#diag
-
-		return stat;
+		return qappExitStatus;
 	}
 
 	catch (const casacore::AipsError& err) {
@@ -588,8 +599,9 @@ int main( int argc, const char *argv[] ) {
 // of args, and the last arg (not included in numargs count) is null (for execvp)
 static void preprocess_args( int argc, const char *argv[], int &numargs, char **&args,
                              char *&server_string, bool &with_dbus, bool &initial_run,
-                             bool &server_startup, bool &daemon, bool &without_gui, bool &persistent,
+                             bool &server_startup, bool &daemon, bool &xvfb_self_start, bool &without_gui, bool &persistent,
                              bool &casapy_start, char *&logfile_path, char *&data_path, bool &do_not_fork ) {
+
 
 	without_gui = false;
 	persistent = false;
@@ -695,6 +707,8 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
 			}
 		} else if ( ! strncmp(argv[x],"--xvfb-pid=",11) ) {
 			sscanf( argv[x], "--xvfb-pid=%u", &manager_xvfb_pid );
+		} else if ( ! strcmp(argv[x],"--xvfb-self-start") ) {
+			xvfb_self_start = true;
 		}
 	}
 
@@ -743,7 +757,8 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
 		            strcmp( argv[x], "--persist" ) &&
 		            strcmp( argv[x], "--casapy" ) &&
 		            strcmp( argv[x], "--eso3d" ) &&
-		            strncmp( argv[x],"--dbusname",10) )
+		            strncmp( argv[x],"--dbusname",10) &&
+		            strncmp( argv[x],"--xvfb-self-start",10) )
 			args[numargs++] = strdup(argv[x]);
 	}
 	args[numargs] = 0;
@@ -775,10 +790,12 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
 	        iter != flags.end( ); ++iter ) {
 		args[offset++] = *iter;
 	}
+
 }
 
 void start_manager_root( const char *origname, int numargs, char **args, const char */*dbusname*/,
-                         bool without_gui, pid_t root_pid ) {
+                         bool without_gui, bool daemon, pid_t root_pid ) {
+
 
 	char *display = 0;
 	char *authority = 0;
@@ -803,16 +820,25 @@ void start_manager_root( const char *origname, int numargs, char **args, const c
 	free(name);
 
 	char **newargs = 0;
+	char xvfbb[124];
 	if ( manager_xvfb_pid == 0 )
 		newargs = args;
 	else {
-		newargs = (char**) malloc( sizeof(char*)*(numargs+2) );
+		int newnumargs = numargs+2;
+		newargs = (char**) malloc( sizeof(char*)*(newnumargs) );
 		for (int i=0; i < numargs; ++i)
 			newargs[i] = args[i];
-		char xvfbb[124];
 		sprintf( xvfbb, "--xvfb-pid=%u", manager_xvfb_pid );
 		newargs[numargs] = xvfbb;
 		newargs[numargs+1] = 0;
+
+		if (!daemon) {
+			// let the next instance of this process know that it should kill xvfb when it exits
+			newnumargs++;
+			newargs = (char**) realloc( newargs, sizeof(char*)*(newnumargs) );
+			newargs[newnumargs-2] = "--xvfb-self-start";
+			newargs[newnumargs-1] = 0;
+		}
 	}
 
 	execvp( origname, newargs );
@@ -884,7 +910,7 @@ void launch_server( const char *origname, int numargs, char **args,
 		write( vio[1], buffer, strlen(buffer) + 1 );
 		close(vio[1]);
 
-		start_manager_root( origname, numargs, args, dbusname, without_gui, root_pid );
+		start_manager_root( origname, numargs, args, dbusname, without_gui, true, root_pid );
 		fprintf( stderr, "start_manager_root( ) should not have returned...%d...\n", getpid() );
 		exit(1);
 	}
