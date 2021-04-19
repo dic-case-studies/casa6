@@ -758,7 +758,7 @@ static void preprocess_args( int argc, const char *argv[], int &numargs, char **
 		            strcmp( argv[x], "--casapy" ) &&
 		            strcmp( argv[x], "--eso3d" ) &&
 		            strncmp( argv[x],"--dbusname",10) &&
-		            strncmp( argv[x],"--xvfb-self-start",10) )
+		            strcmp( argv[x],"--xvfb-self-start") )
 			args[numargs++] = strdup(argv[x]);
 	}
 	args[numargs] = 0;
