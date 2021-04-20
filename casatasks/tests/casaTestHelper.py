@@ -1189,7 +1189,7 @@ def get_peak_res(summ):
     """Get Peak Res"""
     if summ.has_key('summaryminor'):
         reslist = summ['summaryminor'][1,:]
-        peakres = reslist[ len(reslist)-1 ]
+        peakres = max(reslist)
     else:
         peakres = None
     return peakres
@@ -1214,7 +1214,8 @@ def get_mod_flux(summ):
     """Get Mod Flux"""
     if summ.has_key('summaryminor'):
         modlist = summ['summaryminor'][2,:]
-        modflux = modlist[ len(modlist)-1 ]
+        reslist = summ['summaryminor'][1,:]
+        modflux = modlist[numpy.argmax(numpy.array(reslist))]
     else:
         modflux = None
     return modflux

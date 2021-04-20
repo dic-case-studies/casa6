@@ -175,8 +175,7 @@ class TestHelpers():
           if 'summaryminor' in summ:
                modlist = summ['summaryminor'][2,:]
                reslist = summ['summaryminor'][1,:]
-               maxres = max(reslist)
-               modflux = modlist[reslist.index(maxres)]
+               modflux = modlist[np.argmax(np.array(reslist))]
           else:
                modflux = None
           return modflux
