@@ -77,7 +77,7 @@ void CubeMinorCycleAlgorithm::get() {
 	//cerr <<"GET statsRec " << statsRec_p << endl;
 	decPars_p.fromRecord(decParsRec);
 	
-	
+
 	
 }
 void CubeMinorCycleAlgorithm::put() {
@@ -240,6 +240,7 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
 	Int chanEnd=0;
 	chanBeg=chanRange_p[0];
 	chanEnd=chanRange_p[1];
+	casacore::String imageName = decPars_p.imageName;
 	//cerr << "chanBeg " << chanBeg << " chanEnd " << chanEnd << " imId " << imId << endl;
         
 	
@@ -261,7 +262,7 @@ std::shared_ptr<SIImageStore> CubeMinorCycleAlgorithm::subImageStore(){
               }
           }
 
-            std::shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(submodel, subresid, subpsf, nullptr, nullptr, submask, nullptr, nullptr, subpb, nullptr, subposmask));
+            std::shared_ptr<SIImageStore> subimstor(new SimpleSIImageStore(imageName, submodel, subresid, subpsf, nullptr, nullptr, submask, nullptr, nullptr, subpb, nullptr, subposmask));
         
 	//cerr << "subimagestor TYPE" << subimstor->getType() << endl;
 	return subimstor;
