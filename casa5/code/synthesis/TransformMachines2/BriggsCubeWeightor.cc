@@ -407,8 +407,9 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	  itf++;
 	  itmax++;
 	}
-	swingpad=2*(Int(std::ceil((swingFreq+firstchanshift)/freqincr))+8);
-	//cerr << "CPUID " << my_cpu_id <<" swingfreq " << (swingFreq/freqincr) << " firstchanshift " << (firstchanshift/freqincr) << " SWINGPAD " << swingpad << endl;
+        Int extrapad=max(min(4, Int(imNChan/10)),1);
+	swingpad=2*(Int(std::ceil((swingFreq+firstchanshift)/freqincr))+extrapad);
+	cerr <<" swingfreq " << (swingFreq/freqincr) << " firstchanshift " << (firstchanshift/freqincr) << " SWINGPAD " << swingpad << endl;
 	////////////////
 	return swingpad;
 
