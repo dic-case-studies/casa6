@@ -56,7 +56,7 @@ def fetch_tests(work_dir, branch):
     source_dir=work_dir + "/casasources"
     if not os.path.exists(source_dir):
         os.makedirs(source_dir)
-    repositories = ["casampi", "casaplotms", "almatasks", "casa6"]
+    repositories = ["casampi", "casaplotms", "almatasks", "casa6","casaviewer"]
     # All of the repositositories have their tests in different directories
     # so we need a mapping
     def get_repo_test_paths(x):
@@ -64,7 +64,8 @@ def fetch_tests(work_dir, branch):
             "casa6": ["/casa6/casatests/regression/","/casa6/casatests/stakeholder/","/casa6/casatasks/tests/","/casa6/casatools/tests/"],
             "casampi": ["/casampi/src/casampi/tests"],
             "casaplotms": ["/casaplotms/tests/plotms"],
-            "almatasks": ["/almatasks/tests/tasks"]
+            "almatasks": ["/almatasks/tests/tasks"],
+            "casaviewer": ["/casaviewer/tests/tasks"]
         }[x]
 
     # Clone the repository and checkout branch
