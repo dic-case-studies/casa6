@@ -191,7 +191,10 @@ void CubeMinorCycleAlgorithm::task(){
 	      writeBackAutomask=False;
 	    }
 	    
-	  }
+          } else {
+            LogIO os( LogOrigin("CubeMinorCycleAlgorithm","task",WHERE) );
+            os << "Processing channels in range " << chanRange_p << LogIO::POST;
+          } // end if(autoMaskOn_p)
           //subDeconv.setupMask();
 	  if(doDeconv)
 	    returnRec_p=subDeconv.executeCoreMinorCycle(iterBotRec_p);
