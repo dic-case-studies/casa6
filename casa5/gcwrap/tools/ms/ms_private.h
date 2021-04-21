@@ -49,7 +49,6 @@ template <typename T> void addVectorToRec(casacore::Vector<T>& inputvec,
 // If averaging requested
 void getAveragedValues(casacore::Vector<casacore::String> fieldnames, 
         casacore::Record& rec);
-void getWeightSum(casacore::Array<casacore::Float>& weight);
 void getAvgSigma(casacore::Array<casacore::Float>& sigma);
 
 // for putdata2

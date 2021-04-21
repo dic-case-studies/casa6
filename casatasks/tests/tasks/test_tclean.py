@@ -201,7 +201,7 @@ class testref_base(unittest.TestCase):
           #pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  casa -c `echo $CASAPATH | awk '{print $1}'`/gcwrap/python/scripts/regressions/admin/runUnitTest.py test_refimager["+ inspect.stack()[1][3] +"]"
           pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_tclean["+ inspect.stack()[1][3] +"]'])"
           casalog.post(pstr,'INFO')
-          if( pstr.count("(Fail") > 0 ):
+          if( pstr.count("(Fail") > 0 ): ## or pstr.count("( Fail") > 0):
                self.fail("\n"+pstr)
 
 ##############################################
@@ -656,6 +656,38 @@ class test_onefield(testref_base):
           checkimage += "["+testname+"] The image in ARC projection : (" + self.th.verdict(retARC['projection']=='ARC') + ")\n"
           
           self.checkfinal(pstr=checkimage+report)
+          
+     def test_onefield_psf_fit(self):
+          """ [onefield] test_onefield_psf_fit : test psf fitting algorithm for different pixels per beam """
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['28.8arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_3ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          _, report1 = self.th.check_val(beam_3ppb[0], 55.77472686767578, valname='Beam Major Axis', exact=False)
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['14.4arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_5ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          _, report2 = self.th.check_val(beam_5ppb[0], 51.443878173828125, valname='Beam Major Axis', exact=False)
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['3.6arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_20ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          _, report3 = self.th.check_val(beam_20ppb[0], 51.55984878540039, valname='Beam Major Axis', exact=False)
+
+          self.checkfinal(report1+report2+report3)
 
 ##############################################
 ##############################################
@@ -800,7 +832,7 @@ class test_iterbot(testref_base):
           report=self.th.checkall(ret=ret,iterdone=10,nmajordone=3,imgexist=[self.img+'.psf', self.img+'.image'])
 
      def test_iterbot_mfs_deconvolvers(self):
-          """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? No ! """
+          """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? Now they do. """
           # clark and hogbom reach niter first, but multiscale gets to cyclethreshold first. Check peakres and iterdone.
           self.prepData('refim_twochan.ms')
           ret1 = tclean(vis=self.msfile,imagename=self.img+'1',imsize=100,cell='8.0arcsec',niter=10,threshold='0.1Jy', interactive=0,deconvolver='clark',parallel=self.parallel)
@@ -812,6 +844,24 @@ class test_iterbot(testref_base):
           ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=100,cell='8.0arcsec',niter=10,threshold='0.1Jy', interactive=0,deconvolver='multiscale',parallel=self.parallel,smallscalebias=0.6)
           report3=self.th.checkall(ret=ret3, peakres=0.3922, modflux=0.7327, iterdone=10, nmajordone=2,imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image'])
      
+
+          self.checkfinal(report1+report2+report3)
+
+     def test_iterbot_cube_deconvolvers(self):
+          """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? Let's see ! """
+          # clark, hogbom and multiscale reach niter. Check peakres and iterdone
+          self.prepData('refim_eptwochan.ms')
+          ret1 = tclean(vis=self.msfile,imagename=self.img+'1',imsize=200,cell='10.0arcsec',niter=100,threshold='0.1Jy', interactive=0,deconvolver='clark',specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report1=self.th.checkall(ret=ret1, iterdone=114, nmajordone=2,imgexist=[self.img+'1.psf', self.img+'1.residual', self.img+'1.image'],
+                                   imgval=[(self.img+'1.image',0.935,[100,100,0,0]), (self.img+'1.image',0.282,[100,100,0,2])  ])
+
+          ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=200,cell='10.0arcsec',niter=100,threshold='0.1Jy', interactive=0,deconvolver='hogbom',specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report2=self.th.checkall(ret=ret2, iterdone=116, nmajordone=2,imgexist=[self.img+'2.psf', self.img+'2.residual', self.img+'2.image'],
+                                   imgval=[(self.img+'2.image',0.939,[100,100,0,0]), (self.img+'2.image',0.282,[100,100,0,2])  ])
+
+          ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=200,cell='10.0arcsec',niter=100,threshold='0.1Jy', interactive=0,deconvolver='multiscale',specmode='cube',interpolation='nearest',parallel=self.parallel,smallscalebias=0.6,scales=[0,6,10,20,40])
+          report3=self.th.checkall(ret=ret3, iterdone=100, nmajordone=3,imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image'], 
+                                   imgval=[(self.img+'3.image',0.888,[100,100,0,0]), (self.img+'3.image',0.1601,[100,100,0,2])  ])
 
           self.checkfinal(report1+report2+report3)
 
@@ -2188,6 +2238,7 @@ class test_cube(testref_base):
                                   imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
           self.checkfinal(pstr=report)
 
+     @unittest.skip('Skip test.')
      def test_cube_flagged_mosaic_mtmfs(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
           # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in mtmfs.
@@ -4065,6 +4116,32 @@ class test_mosaic_mtmfs(testref_base):
 ###########################################################
 ###########################################################
 class test_mosaic_cube(testref_base):
+
+     def test_mosaic_briggsbwtaper(self):
+          self.prepData('refim_alma_mosaic.ms')
+          
+          tclean(vis=self.msfile,imagename=self.img+'1',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggsbwtaper',robust=0.5 ,perchanweightdensity=True)
+          report1=self.th.checkall(imgval=[(self.img+'1.image', 1,[175,140,0,0])])
+          
+          _ia.open(self.img+'1.image')
+          nchan = _ia.shape()[3]
+          briggsbwtaper_beamarea = np.zeros(nchan)
+          for k in range(nchan):
+            briggsbwtaper_beamarea[k]= _ia.beamarea(k,0)['arcsec2']
+          _ia.close()
+          
+          _, report2 = self.th.check_val(briggsbwtaper_beamarea[0], 0.31155618 , valname='beam_area_chan_0', exact=False)
+          _, report3 = self.th.check_val(briggsbwtaper_beamarea[1], 0.30887386 , valname='beam_area_chan_1', exact=False)
+          _, report4 = self.th.check_val(briggsbwtaper_beamarea[2], 0.30639076 , valname='beam_area_chan_2', exact=False)
+ 
+          tclean(vis=self.msfile,imagename=self.img+'2',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggs',robust=0.5 ,perchanweightdensity=True)
+          report5=self.th.checkall(imgval=[(self.img+'2.image', 1,[175,140,0,0])])
+          
+          self.assertTrue(self.th.check_beam_compare(self.img+'1.image', self.img+'2.image'))
+          
+          self.checkfinal(pstr = report1+report2+report3+report4+report5)
+
+
      def test_cube_standard_onefield(self):
           """ [mosaic_cube] Test_cube_standard_onefield : One field, standard gridder  """
           self.prepData('refim_oneshiftpoint.mosaic.ms')

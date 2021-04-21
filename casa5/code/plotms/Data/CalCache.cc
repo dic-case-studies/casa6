@@ -23,11 +23,13 @@
 //#                        520 Edgemont Road
 //#                        Charlottesville, VA 22903-2475 USA
 //#
-//# $Id: $
+
 #include <plotms/Data/CalCache.h>
-#include <plotms/Data/PlotMSIndexer.h>
 #include <plotms/Data/PlotMSAtm.h>
+#include <plotms/Data/PlotMSCTAverager.h>
+#include <plotms/Data/PlotMSIndexer.h>
 #include <plotms/PlotMS/PlotMS.h>
+#include <plotms/PlotMS/PlotMSLabelFormat.h>
 #include <plotms/Threads/ThreadCommunication.h>
 
 #include <casa/OS/Timer.h>
@@ -37,12 +39,12 @@
 #include <casa/System/Aipsrc.h>
 #include <casa/Utilities/Sort.h>
 #include <casa/Arrays/ArrayMath.h>
-#include <tables/Tables/Table.h>
-#include <lattices/Lattices/ArrayLattice.h>
+#include <graphics/GenericPlotter/Plotter.h>
 #include <synthesis/CalTables/CTColumns.h>
 #include <synthesis/MeasurementComponents/VisCalGlobals.h>
 #include <synthesis/MeasurementComponents/BPoly.h>
 #include <synthesis/MeasurementComponents/GSpline.h>
+#include <tables/Tables/Table.h>
 
 using namespace casacore;
 
@@ -108,16 +110,29 @@ void CalCache::loadIt(vector<PMS::Axis>& loadAxes,
 
   // this also sets calType_:
   setFilename(filename_);
-
-  // Trap unsupported modes: averaging, transforms, poln ratio
   logLoad("Plotting a " + calType_ + " calibration table.");
-  // Warn that averaging and transformations will be ignored
-  if (averaging().anyAveraging())
-    logWarn("CalCache::loadIt",
-      "Averaging ignored: not supported for calibration tables");
-  if (transformations().anyTransform())
+
+  // Trap unsupported cal types, averaging, transforms, poln ratio
+  if ((calType_[0]=='X') && calType_.contains("Mueller")) {
+    throw AipsError("Cal table type " + calType_ + " is unsupported in plotms. Please continue to use plotcal.");
+  }
+
+  // No averaging for BPOLY and GSPLINE
+  if (((calType_=="BPOLY") || (calType_=="GSPLINE")) && averaging().anyAveraging()) {
+    throw AipsError("Averaging not supported for cal table type " + calType_);
+  }
+
+  // No averaging with channel selection
+  if (averaging().anyAveraging() && selection_.spw().contains(":")) {
+    throw AipsError("Averaging not supported with channel selection for calibration tables");
+  }
+
+  // Warn that transformations will be ignored
+  if (transformations().anyTransform()) {
     logWarn("CalCache::loadIt",
       "Transformations ignored: not supported for calibration tables");
+  }
+
   // poln ratio
   polnRatio_ = false;
   if (selection_.corr()=="/") {
@@ -154,18 +169,20 @@ void CalCache::loadIt(vector<PMS::Axis>& loadAxes,
 
 void CalCache::loadNewCalTable(vector<PMS::Axis>& loadAxes,
     vector<PMS::DataColumn>& loadData, ThreadCommunication* thread) {
-  // Get various names, properties from cal table
+  // Load requested axes from NewCalTable
+  // Get various names, properties
   TableLock lock(TableLock::AutoNoReadLocking);
   NewCalTable* ct = new NewCalTable(filename_, lock, Table::Old, Table::Plain);
+
   basis_ = ct->polBasis();
   parsAreComplex_ = ct->isComplex();
   ROCTColumns ctCol(*ct);
   antnames_ = ctCol.antenna().name().getColumn();
   stanames_ = ctCol.antenna().station().getColumn();
-  antstanames_ = antnames_ + String("@") + stanames_;
-  fldnames_ = ctCol.field().name().getColumn();
   positions_ = ctCol.antenna().position().getColumn();    
   nAnt_ = ctCol.antenna().nrow();
+  fldnames_ = ctCol.field().name().getColumn();
+  antstanames_ = antnames_ + String("@") + stanames_;
 
   // Apply selection to get selected cal table
   NewCalTable* selct = new NewCalTable();
@@ -174,10 +191,26 @@ void CalCache::loadNewCalTable(vector<PMS::Axis>& loadAxes,
     throw(AipsError("Selection resulted in zero rows"));
   }
 
-  Bool readonly(True); // no write access for loading cache
-  setUpCalIter(*selct, readonly);
-  countChunks(*ci_p, loadAxes, loadData, thread);
-  loadCalChunks(*ci_p, loadAxes, thread);
+  PlotMSAveraging pmsAveraging(averaging());
+  casacore::Bool readonly(True);
+  setUpCalIter(*selct, pmsAveraging, readonly);
+  ci_p->reset();
+  parshape_ = ci_p->flag().shape();
+
+  // Size cache arrays based on number of chunks
+  if (pmsAveraging.anyAveraging()) {
+    // Use PlotMSCTAverager
+    casacore::Vector<int> nIterPerAve; // number of chunks per average
+
+    countChunks(*ci_p, pmsAveraging, nIterPerAve, loadAxes, loadData, thread);
+    if (!userCanceled_) {
+      loadCalChunks(*ci_p, pmsAveraging, nIterPerAve, loadAxes, thread);
+    }
+  } else {
+    countChunks(*ci_p, loadAxes, loadData, thread);
+    loadCalChunks(*ci_p, loadAxes, thread);
+  }
+
 
   // delete NCT and iter to release table locks
   if (ct != nullptr) {
@@ -194,13 +227,29 @@ void CalCache::loadNewCalTable(vector<PMS::Axis>& loadAxes,
   }
 }
 
-void CalCache::setUpCalIter(NewCalTable& selct, Bool readonly) {
-  Int nsortcol(4);
+void CalCache::setUpCalIter(
+  NewCalTable& selct, PlotMSAveraging& pmsAveraging, Bool readonly) {
+  // Set up cal table iterator for counting and loading chunks
+  // Order of sort columns depends on averaging options
+  Int nsortcol(3 + Int(!pmsAveraging.scan())), col(0);
   Block<String> columns(nsortcol);
-  columns[0]="SCAN_NUMBER";
-  columns[1]="FIELD_ID";
-  columns[2]="SPECTRAL_WINDOW_ID";
-  columns[3]="TIME";
+  if (!pmsAveraging.scan()) {
+    columns[col++]="SCAN_NUMBER";
+  }
+  if (!pmsAveraging.field()) {
+    columns[col++]="FIELD_ID";
+  }
+  if (!pmsAveraging.spw()) {
+    columns[col++]="SPECTRAL_WINDOW_ID";
+  }
+  columns[col++]="TIME";
+  if (pmsAveraging.field()) {
+    columns[col++]="FIELD_ID";
+  }
+  if (pmsAveraging.spw()) {
+    columns[col++]="SPECTRAL_WINDOW_ID";
+  }
+  sortColumns_ = columns;
 
   if (readonly) {
     // Readonly version, for caching
@@ -212,25 +261,175 @@ void CalCache::setUpCalIter(NewCalTable& selct, Bool readonly) {
     ci_p = wci_p;  // const access
   }
 }
-      
-void CalCache::countChunks(ROCTIter& ci,
-    vector<PMS::Axis>& loadAxes,
-    vector<PMS::DataColumn>& loadData,
-    ThreadCommunication* thread) {
-  // for NewCalTable
-  if (thread!=nullptr) {
+
+void CalCache::countChunks(ROCTIter& ci, vector<PMS::Axis>& loadAxes,
+    vector<PMS::DataColumn>& loadData, ThreadCommunication* thread) {
+  // for NewCalTable (no averaging)
+  // loadData not applicable but needed for setCache()
+  if (thread) {
     thread->setStatus("Establishing cache size.  Please wait...");
     thread->setAllowedOperations(false,false,false);
   }
 
-  // Count number of chunks.
+  // Iterate and count number of chunks.
   int chunk(0);
   ci.reset();
   while (!ci.pastEnd()) {
     ++chunk;
     ci.next0();
   }
+
   setCache(chunk, loadAxes, loadData);
+}
+
+void CalCache::countChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
+    Vector<int>& nIterPerAve, vector<PMS::Axis>& loadAxes,
+    vector<PMS::DataColumn>& loadData, ThreadCommunication* thread) {
+  // for NewCalTable (with averaging)
+  // loadData not applicable but needed for setCache()
+  if (pmsAveraging.time() || pmsAveraging.baseline() || pmsAveraging.antenna()
+      || pmsAveraging.spw() || pmsAveraging.scalarAve()) {
+    // Set number of iterations per averaged chunk (nIterPerAve)
+    // Allow user to cancel
+    if (thread) {
+      thread->setStatus("Establishing cache size.  Please wait...");
+      thread->setAllowedOperations(false,false,true);
+    }
+
+    bool debug(false);
+
+    Bool combScan(pmsAveraging.scan());
+    Bool combField(pmsAveraging.field());
+    Bool combSpw(pmsAveraging.spw());
+
+    // Keep track of time and averaging interval
+    Double thistime(0.0), avetime0(-1.0);
+    Double interval(0.0);
+    if (pmsAveraging.time()) {
+      interval = pmsAveraging.timeValue();
+    }
+
+    // Keep track of other boundaries
+    Int thisscan(-1),lastscan(-1);
+    Int thisfield(-1), lastfield(-1);
+    Int thisspw(-1),lastspw(-1);
+    Int thisobsid(-1),lastobsid(-1);
+
+    // Averaging stats
+    Int chunk(0);
+    Int maxAveNRows(0);
+    nIterPerAve.resize(100);
+    nIterPerAve = 0;
+    Int nAveInterval(-1);
+
+    ci.reset();
+    while (!ci.pastEnd()) {
+      // If a thread is given, check if the user canceled.
+      if (thread != nullptr) {
+        if (thread->wasCanceled()) {
+          dataLoaded_ = false;
+          userCanceled_ = true;
+        } else {
+          // else users think it's hung...
+          if ((chunk % 100) == 0) {
+            thread->setProgress(chunk/100);
+          }
+        }
+      }
+
+      thistime = ci.thisTime();
+      thisscan = ci.thisScan();
+      thisfield = ci.thisField();
+      thisspw = ci.thisSpw();
+      thisobsid = ci.thisObs();
+
+      if ( ((thistime - avetime0) > interval) ||           // past avgtime interval
+           ((thistime - avetime0) < 0.0) ||                // negative timestep
+           (!combScan && (thisscan != lastscan)) ||        // new scan
+           (!combField && (thisfield != lastfield)) ||     // new field
+           (!combSpw && (thisspw != lastspw)) ||           // new spw
+           (thisobsid != lastobsid) ||                     // new obs id
+           (nAveInterval == -1)) {                         // first interval
+        // New averaging interval
+
+        if (debug) {
+          stringstream ss;
+          ss << "--------------------------------\n";
+          ss << "New averaging interval\n";
+          ss << "time elapsed=" << ((thistime - avetime0) > interval) << " "
+             << " neg step=" << ((thistime - avetime0) < 0.0) << " "
+             << " scan=" << (!combScan && (thisscan != lastscan)) << " "
+             << " spw=" << (!combSpw && (thisspw != lastspw)) << " "
+             << " field=" << (!combField && (thisfield != lastfield)) << " "
+             << " obsid=" << (thisobsid!=lastobsid) << " "
+             << " first=" << (nAveInterval == -1) << "\n";
+          logInfo("count_chunks", ss.str());
+        }
+
+        // If we have accumulated enough info, reset the ave'd row counter
+        maxAveNRows = 0;
+        nAveInterval++;
+
+        if (debug) {
+          stringstream ss;
+          ss << "ave = " << nAveInterval << "\n";
+          logInfo("count_chunks", ss.str());
+        }
+
+        // increase size of nIterPerAve array, if needed
+        if (nIterPerAve.nelements() < uInt(nAveInterval + 1)) {
+          nIterPerAve.resize(nIterPerAve.nelements()+100, true);
+        }
+
+        // initialize next ave interval
+        nIterPerAve(nAveInterval) = 0;
+        avetime0 = thistime; // first timestamp in this averaging interval
+      }
+
+      // Keep track of the maximum # of rows that might get averaged
+      maxAveNRows = max(maxAveNRows, ci.nrow());
+
+      // Increment chunk-per-average count for current solution
+      nIterPerAve(nAveInterval)++;
+
+      if (debug) {
+        stringstream ss;
+        ss << "Completed chunk=" << chunk << "\n";
+        ss << "time=" << thistime << " ";
+        ss << "scan" << thisscan << " ";
+        ss << "fieldId=" << thisfield << " ";
+        ss << "spw=" << thisspw << " ";
+        ss << "obsId=" << thisobsid << "\n";
+        logInfo("count_chunks", ss.str());
+      }
+
+      // Store last values for next iteration
+      lastscan = thisscan;
+      lastfield  = thisfield;
+      lastspw  = thisspw;
+      lastobsid = thisobsid;
+
+      ci.next();
+      chunk++;
+    }
+
+    Int nAve(nAveInterval + 1);
+    nIterPerAve.resize(nAve, True);
+    setCache(nAve, loadAxes, loadData);  // initialize cache size, nChunk_
+
+    if (debug) {
+      stringstream ss;
+      ss << "nIterPerAve = " << nIterPerAve << "\n";
+      ss << "Found " << nChunk_ << " chunks." << endl;
+      logInfo("count_chunks", ss.str());
+    }
+  } else {
+    // In-row (channel) averaging does not change number of chunks
+    countChunks(ci, loadAxes, loadData, thread);
+    // Each chunk can be averaged separately
+    nIterPerAve.resize(nChunk_);
+    nIterPerAve = 1;
+  }
 }
 
 void CalCache::loadCalChunks(ROCTIter& ci,
@@ -248,98 +447,97 @@ void CalCache::loadCalChunks(ROCTIter& ci,
   goodChunk_.set(False);
   double progress;
 
-  // Channel selection to apply to various axes
-  casacore::Matrix<casacore::Int> selectedChans = selection_.getSelectedChannels();
-
   // Reset iterator
   ci.reset();
   while (!ci.pastEnd()) {
-      // If a thread is given, check if the user canceled.
-      if(thread != nullptr && thread->wasCanceled()) {
-        dataLoaded_ = false;
-        return;
-      }
+    // If a thread is given, check if the user canceled.
+    if (thread != nullptr && thread->wasCanceled()) {
+      dataLoaded_ = false;
+      return;
+    }
 
-      // If a thread is given, update it.
-      if(thread != nullptr && (nChunk_ <= (int)THREAD_SEGMENT ||
-         chunk % THREAD_SEGMENT == 0)) {
-          thread->setStatus("Loading chunk " + String::toString(chunk) +
-              " / " + String::toString(nChunk_) + ".");
-      }
+    // If a thread is given, update it.
+    if (thread != nullptr && (nChunk_ <= (int)THREAD_SEGMENT ||
+      chunk % THREAD_SEGMENT == 0)) {
+      thread->setStatus("Loading chunk " + String::toString(chunk) +
+        " / " + String::toString(nChunk_) + ".");
+    }
 
-      // Discern npol/nchan shape
-      IPosition pshape(ci.flag().shape());
+    // Discern npol/nchan shape
+    IPosition pshape(ci.flag().shape());
 
-      // Determine data axis for param slice for npol
-      String pol = selection_.corr();
-      String paramAxis = toVisCalAxis(PMS::AMP);
-      size_t nPol;
-      if (polnRatio_) {  // length is for 1 poln, pick first one
-          nPol = getParSlice(paramAxis, "R").length();
-      } else {
-          nPol = getParSlice(paramAxis, pol).length();
-      }
+    // Use viscal to determine nPol
+    String pol = selection_.corr();
+    String paramAxis = toVisCalAxis(PMS::AMP);
+    size_t nPol;
+    if (polnRatio_) {  // pick one!
+      nPol = getParSlice(paramAxis, "R").length();
+    } else {
+      nPol = getParSlice(paramAxis, pol).length();
+    }
 
-      size_t nChan(pshape[1]);
-      std::vector<casacore::Slice> chansel;
-      if (selectedChans.empty()) {
-          chansel.push_back(Slice());
-      } else {
-          size_t nChanSelectedThisSpw(0);
-          for (size_t i = 0; i < selectedChans.nrow(); ++i) {
-              auto row = selectedChans.row(i);
-              if (row(0) == ci.thisSpw()) {
-                  casacore::Slice chanSlice(row(1), row(2), row(3), false);
-                  chansel.push_back(chanSlice);
-                  nChanSelectedThisSpw += chanSlice.length();
-              }
-          }
-          if (nChanSelectedThisSpw) {
-              nChan = nChanSelectedThisSpw;
-          }
-      }
-
-      // Cache the data shapes
-      chshapes_(0,chunk) = nPol;
-      chshapes_(1,chunk) = nChan;
-      chshapes_(2,chunk) = ci.nrow();
-      chshapes_(3,chunk) = nAnt_;
-      goodChunk_(chunk) = True;
-
-      for(unsigned int i = 0; i < loadAxes.size(); i++) {
-        loadCalAxis(ci, chunk, loadAxes[i], pol, chansel);
-        // print atm stats once per scan
-        if (loadAxes[i]==PMS::ATM || loadAxes[i]==PMS::TSKY) {
-            thisscan = ci.thisScan();
-            if (thisscan != lastscan) {
-                printAtmStats(thisscan);
-                lastscan = thisscan;
-            }
-            thisspw = ci.thisSpw();
-            if (thisspw != lastspw) {
-                uInt vectorsize = ( loadAxes[i]==PMS::ATM ?
-                    (*atm_[chunk]).nelements() :
-                    (*tsky_[chunk]).nelements());
-                if (vectorsize==1) {
-                    logWarn("load_cache", "Setting " + 
-                        PMS::axis(loadAxes[i]) + " for spw " +
-                        String::toString(thisspw) +
-                        " to zero because it has only one channel.");
-                }
-                lastspw = thisspw;
-            }
+    // Apply channel selection to get nChan
+    size_t nChan(pshape[1]);
+    casacore::Matrix<casacore::Int> selectedChans = selection_.getSelectedChannels();
+    std::vector<casacore::Slice> chansel;
+    if (selectedChans.empty()) {
+      chansel.push_back(Slice());
+    } else {
+      size_t nChanSelectedThisSpw(0);
+      for (size_t i = 0; i < selectedChans.nrow(); ++i) {
+        auto row = selectedChans.row(i);
+        if (row(0) == ci.thisSpw()) {
+          casacore::Slice chanSlice(row(1), row(2), row(3), false);
+          chansel.push_back(chanSlice);
+          nChanSelectedThisSpw += chanSlice.length();
         }
       }
-
-      chunk++;
-      ci.next();
-      
-      // If a thread is given, update it.
-      if ((thread != nullptr) &&
-          ((nChunk_ <= (int)THREAD_SEGMENT) || (chunk % THREAD_SEGMENT == 0))) {
-          progress = ((double)chunk+1) / nChunk_;
-          thread->setProgress((unsigned int)((progress * 100) + 0.5));
+      if (nChanSelectedThisSpw) {
+          nChan = nChanSelectedThisSpw;
       }
+    }
+
+    // Cache the data shapes
+    chshapes_(0,chunk) = nPol;
+    chshapes_(1,chunk) = nChan;
+    chshapes_(2,chunk) = ci.nrow();
+    chshapes_(3,chunk) = nAnt_;
+    goodChunk_(chunk) = True;
+
+    for(unsigned int i = 0; i < loadAxes.size(); i++) {
+      loadCalAxis(ci, chunk, loadAxes[i], pol, chansel);
+
+      // print atm stats once per scan
+      if (loadAxes[i]==PMS::ATM || loadAxes[i]==PMS::TSKY) {
+        thisscan = ci.thisScan();
+        if (thisscan != lastscan) {
+          printAtmStats(thisscan);
+          lastscan = thisscan;
+        }
+        thisspw = ci.thisSpw();
+        if (thisspw != lastspw) {
+          uInt vectorsize = ( loadAxes[i]==PMS::ATM ?
+            (*atm_[chunk]).nelements() : (*tsky_[chunk]).nelements());
+          if (vectorsize==1) {
+            logWarn("load_cache", "Setting " + 
+              PMS::axis(loadAxes[i]) + " for spw " +
+              String::toString(thisspw) +
+              " to zero because it has only one channel.");
+          }
+          lastspw = thisspw;
+        }
+      }
+    }
+
+    chunk++;
+    ci.next();
+      
+    // If a thread is given, update it.
+    if ((thread != nullptr) &&
+      ((nChunk_ <= (int)THREAD_SEGMENT) || (chunk % THREAD_SEGMENT == 0))) {
+      progress = ((double)chunk+1) / nChunk_;
+      thread->setProgress((unsigned int)((progress * 100) + 0.5));
+    }
   }
 
   if (divZero_) {
@@ -347,10 +545,175 @@ void CalCache::loadCalChunks(ROCTIter& ci,
   }
 }
 
+void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
+  const casacore::Vector<int>& nIterPerAve,
+  const std::vector<PMS::Axis> loadAxes, ThreadCommunication* thread) {
+  // Load chunks using PlotMSCTAverager to accumulate and average chunks
+  logLoad("Loading chunks with averaging.....");
+  // Permit cancel in progress meter:
+  if (thread != nullptr) {
+    thread->setAllowedOperations(false,false,true);
+  }
+
+  // TBD: channel selection, for now select all
+  std::vector<casacore::Slice> chansel;
+  chansel.push_back(Slice());
+
+  // Access to header info and subtables when loading axes
+  String partype = parsAreComplex_ ? "Complex" : "Float";
+  CTDesc caltabdesc(partype, msname_, calType_, basis_);
+  ROCTColumns ctcols(ci.table());
+
+  chshapes_.resize(4, nChunk_);
+  goodChunk_.resize(nChunk_);
+  goodChunk_.set(false);
+
+  String polsel(selection_.corr()); // for slicing axis data
+  Int lastscan(0), thisscan(0);     // print atm stats once per scan
+  Int lastspw(-1), thisspw(0);      // print atm warning once per spw
+
+  double progress;
+  ci.reset();
+  for (Int chunk = 0; chunk < nChunk_; ++chunk) {
+    // Update progress with each chunk
+    if ((thread != nullptr)  &&
+        ((nChunk_ <= (int)THREAD_SEGMENT) || (chunk % THREAD_SEGMENT == 0))) {
+      thread->setStatus("Loading chunk " + String::toString(chunk) + " / " +
+        String::toString(nChunk_) + ".");
+      progress = ((double)chunk + 1) / nChunk_;
+      thread->setProgress((unsigned int)((progress * 100) + 0.5));
+    }
+
+    // Set up CT Averager for each averaged chunk
+    PlotMSCTAverager pmscta(pmsAveraging, nAnt_, parshape_(0));
+    if (calType_.contains("Mueller")) {
+      pmscta.setBaselineBased();
+    }
+
+    // Accumulate iterations into chunk
+    Int iter(0);
+    while (iter < nIterPerAve(chunk)) {
+      pmscta.accumulate(ci);
+
+      // Advance to next iteration unless finalize
+      if ((iter + 1) < nIterPerAve(chunk)) {
+        ci.next();
+      }
+      ++iter;
+    }
+
+    // Finalize average
+    pmscta.finalizeAverage();
+
+    // Get result as a memory NewCalTable with averaged main rows
+    NewCalTable avgTable("avgcaltable.cal", caltabdesc, Table::Scratch, Table::Memory);
+    pmscta.fillAvgCalTable(avgTable);
+
+    if (avgTable.nrow() > 0) {
+      // Attach iterator for accessor
+      ROCTIter avgTableCti(avgTable, sortColumns_);
+      avgTableCti.reset();
+
+      // Cache data shape
+      IPosition avgShape(avgTableCti.flag().shape());
+      chshapes_(0, chunk) = avgShape(0);
+      chshapes_(1, chunk) = avgShape(1);
+      chshapes_(2, chunk) = avgShape(2);
+      chshapes_(3, chunk) = nAnt_;
+      goodChunk_(chunk) = true;
+
+      // Load axes
+      for (auto axis : loadAxes) {
+        // Check for cancel before each axis
+        if (thread && thread->wasCanceled()) {
+          dataLoaded_ = false;
+          userCanceled_ = true;
+          goodChunk_(chunk) = false;
+          return;
+        }
+
+        switch (axis) {
+          case PMS::CHANNEL: {
+            Int nchan(pmscta.nchan());
+            Vector<Int> chans(nchan);
+            indgen(chans);
+            *chan_[chunk] = chans;
+            break;
+          }
+          case PMS::FREQUENCY: {
+            Vector<Double> freqs = pmscta.avgfreq();
+            freqs /= 1.0e9; // GHz
+            (*freq_[chunk]) = freqs;
+            break;
+          }
+          case PMS::ATM:
+          case PMS::TSKY:
+          case PMS::IMAGESB: {
+            // Use original caltable spectral window subtable for these axes
+            Int spw = avgTableCti.thisSpw();
+            Int scan = avgTableCti.thisScan();
+            Vector<Double> freqs = pmscta.avgfreq();
+            casacore::Vector<casacore::Double> curve(1, 0.0);
+
+            if (axis == PMS::ATM) {
+              if (plotmsAtm_) {
+                plotmsAtm_->calcAtmTskyCurve(curve, spw, scan, freqs);
+              }
+              *atm_[chunk] = curve;
+            } else if (axis == PMS::TSKY) {
+              if (plotmsAtm_) {
+                plotmsAtm_->calcAtmTskyCurve(curve, spw, scan, freqs);
+              }
+              *tsky_[chunk] = curve;
+            } else {
+              if (plotmsAtm_) {
+                plotmsAtm_->calcImageCurve(curve, spw, scan, freqs);
+              }
+              *imageSideband_[chunk] = curve;
+            }
+            
+            break;
+          }
+          default:
+            loadCalAxis(avgTableCti, chunk, axis, polsel, chansel);
+        }
+
+        if ((axis == PMS::ATM) || (axis == PMS::TSKY)) {
+          // Print stats when scan changes
+          thisscan = avgTableCti.thisScan();
+          if (thisscan != lastscan) {
+            printAtmStats(thisscan);
+            lastscan = thisscan;
+          }
+
+          // Print warning when one channel
+          thisspw = avgTableCti.thisSpw();
+          if (thisspw != lastspw) {
+            uInt nchan = (axis == PMS::ATM ? (*atm_[chunk]).nelements() :
+              (*tsky_[chunk]).nelements());
+            if (nchan == 1) {
+              logWarn("load_cache", "Setting " + PMS::axis(axis) +
+                " for spw " + String::toString(thisspw) +
+                " to zero because it has only one channel.");
+            }
+            lastspw = thisspw;
+          }
+        }
+      } // end load axes
+    } else {
+      // No rows in result
+      goodChunk_(chunk) = false;
+      chshapes_.column(chunk) = 0;
+    }
+
+    // Advance to next chunk
+    ci.next();
+  } // chunk loop
+}
+
 void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
       casacore::String& pol, std::vector<casacore::Slice>& chansel) {
     // for NewCalTable
-
     // Get polarization selection slice
     Slice parSlice1 = Slice();
     Slice parSlice2 = Slice();
@@ -375,7 +738,7 @@ void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
             time_(chunk) = cti.thisTime();
             break;
         /*        
-        case PMS::TIME_INTERVAL: // assumes timeInterval unique in VB
+        case PMS::TIME_INTERVAL: // assumes timeInterval unique in cti chunk
             timeIntr_(chunk) = cti.interval()(0); 
             break;
         */
@@ -442,15 +805,24 @@ void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
             *antenna2_[chunk] = cti.antenna2(); 
             break;
         case PMS::BASELINE: {
-            Vector<Int> a1(cti.antenna1());
-            Vector<Int> a2(cti.antenna2());
             baseline_[chunk]->resize(cti.nrow());
             Vector<Int> bl(*baseline_[chunk]);
-            for (Int irow=0;irow<cti.nrow();++irow) {
-                if (a1(irow)<0) a1(irow)=chshapes_(3,0);
-                if (a2(irow)<0) a2(irow)=chshapes_(3,0);
-                bl(irow) = (chshapes_(3,0)+1)*a1(irow) -
-                    (a1(irow)*(a1(irow) + 1))/2 + a2(irow);
+            if (averaging().baseline()) {
+                bl.set(0);
+            } else {
+                Vector<Int> a1(cti.antenna1());
+                Vector<Int> a2(cti.antenna2());
+                if (allEQ(a2, -1)) {
+                    bl = a1;
+                } else {
+                    for (Int irow = 0; irow < cti.nrow(); ++irow) {
+                        // Same hash as in MSCache:
+                        if (a1(irow) < 0) a1(irow) = chshapes_(3, 0);
+                        if (a2(irow) < 0) a2(irow) = chshapes_(3, 0);
+                        bl(irow) = (chshapes_(3,0)+1)*a1(irow) -
+                            (a1(irow)*(a1(irow) + 1))/2 + a2(irow);
+                    }
+                }
             }
             break;
         }
@@ -722,6 +1094,7 @@ void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
 
                     ConcatArrays<casacore::Float>(selectedSwPow, swpowSlice);
                 }
+                *par_[chunk] = selectedSwPow;
             } else {
                 throw(AipsError("SwPower has no meaning for this table"));
             }
@@ -783,7 +1156,7 @@ void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
                     ConcatArrays<casacore::Float>(selectedTec, tecSlice);
                 }
 
-                *par_[chunk] = selectedTec / 1e+16;
+                *tec_[chunk] = selectedTec / 1e+16;
             } else
                 throw(AipsError( "TEC has no meaning for this table"));
             break;
@@ -922,8 +1295,8 @@ void CalCache::flagToDisk(const PlotMSFlagging& flagging,
   NewCalTable* selct = new NewCalTable();
   selection_.apply(*ct, *selct);
 
-  Bool readonly(False); // write access for flagging
-  setUpCalIter(*selct, readonly);
+  casacore::Bool readonly(False); // write access for flagging
+  setUpCalIter(*selct, averaging(), readonly);
   ci_p->reset();
 
   Int iflag(0);
@@ -1207,7 +1580,8 @@ void CalCache::loadBPoly(vector<PMS::Axis>& loadAxes,
   selection_.apply(*nct, *selct);
 
   // Use NewCalTable implementation
-  setUpCalIter(*selct, true);
+  casacore::Bool readonly(True);
+  setUpCalIter(*selct, averaging(), readonly);
   countChunks(*ci_p, loadAxes, loadData, thread);
   loadCalChunks(*ci_p, loadAxes, thread);
 }
@@ -1806,4 +2180,4 @@ void CalCache::checkRatioArray(Array<Float>& array, Int chunk) {
     }
 }
 
-}
+} // namespace casa
