@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-casa_add_library( mstransform  
+casa_add_library( mstransform
  MSTransform/MSTransform.cc
  MSTransform/MSTransformManager.cc
  MSTransform/MSTransformDataHandler.cc
@@ -29,17 +29,18 @@ casa_add_library( mstransform
  MSTransform/MSUVBin.cc
  MSTransform/StatWt.cc
  MSTransform/StatWtColConfig.cc
- TVI/UtilsTVI.cc 
- TVI/DenoisingLib.cc 
- TVI/FreqAxisTVI.cc 
+ TVI/UtilsTVI.cc
+ TVI/DenoisingLib.cc
+ TVI/FreqAxisTVI.cc
  TVI/ChannelAverageTVI.cc
  TVI/ConvolutionTVI.cc
  TVI/HanningSmoothTVI.cc
- TVI/PhaseShiftingTVI.cc 
- TVI/RegriddingTVI.cc  
+ TVI/PhaseShiftingTVI.cc
+ TVI/RegriddingTVI.cc
  TVI/UVContSubTVI.cc
  TVI/PolAverageTVI.cc
  TVI/PointingInterpolationTVI.cc
+ TVI/SDAtmosphereCorrectionTVI.cc
  TVI/SPWCombinationTVI.cc
  TVI/StatWtClassicalDataAggregator.cc
  TVI/StatWtDataAggregator.cc
@@ -81,6 +82,7 @@ install (FILES
   TVI/UVContSubTVI.h
   TVI/PolAverageTVI.h
   TVI/PointingInterpolationTVI.h
+  TVI/SDAtmosphereCorrectionTVI.h
   TVI/SPWCombinationTVI.h
   TVI/StatWtTVI.h
   TVI/StatWtTVIFactory.h
