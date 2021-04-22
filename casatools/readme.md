@@ -176,9 +176,9 @@ Here, ```test_constructor``` is one test within the ```coordsys_test``` *TestCas
 
 #### Notes
 
-If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.62.jar*, e.g.
+If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.63.jar*, e.g.
 ```
--bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.62.jar
+-bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.63.jar
 -bash-4.2$ scripts/gcw-pick
 ```
 before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_format)) file is automatically fetched from a download site by *gcw-pick*. However, it is not fetched if it already exists. Deleting the current copy will result in a new copy being fetched which *may* be newer.
