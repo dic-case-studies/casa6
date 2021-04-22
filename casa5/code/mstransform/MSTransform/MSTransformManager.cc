@@ -24,6 +24,7 @@
 
 #include <mstransform/TVI/PolAverageTVI.h>
 #include <mstransform/TVI/PointingInterpolationTVI.h>
+#include <mstransform/TVI/SDAtmosphereCorrectionTVI.h>
 
 #include <limits>
 
@@ -325,8 +326,12 @@ void MSTransformManager::configure(Record &configuration)
 	setSpwAvg(configuration);
 	parsePolAvgParams(configuration);
 	parsePointingsInterpolationParams(configuration);
-	parsePhaseShiftSubParams(configuration);
-
+//<<<<<<< HEAD
+//	parsePhaseShiftSubParams(configuration);
+//
+// =======
+	parseAtmCorrectionParams(configuration);
+//>>>>>>> master
 
 	return;
 }
@@ -1316,6 +1321,16 @@ void MSTransformManager::parsePointingsInterpolationParams(casacore::Record &con
 	}
 }
 
+void MSTransformManager::parseAtmCorrectionParams(casacore::Record &configuration) {
+    String key("atmCor");
+    if (configuration.isDefined(key)) {
+        doAtmCor_p = configuration.asBool(key);
+        atmCorConfig_p = configuration;
+    } else {
+        doAtmCor_p = False;
+    }
+}
+
 // -----------------------------------------------------------------------
 // Method to open the input MS, select the data and create the
 // structure of the output MS filling the auxiliary tables.
@@ -1339,11 +1354,11 @@ void MSTransformManager::open()
 	inputMs_p = dataHandler_p->getInputMS();
 	// Note: We always get the input number of channels because we don't know if pre-averaging will be necessary
 	getInputNumberOfChannels();
-	
+
 	// Check available data cols to pass this information on to MSTransformDataHandler which creates the MS structure
 	checkDataColumnsAvailable();
 	checkDataColumnsToFill();
-	
+
 
 	// Check whether the MS has correlator pre-averaging and we are smoothing or averaging
 	checkCorrelatorPreaveraging();
@@ -4359,7 +4374,7 @@ void MSTransformManager::reindexDDISubTable()
     		rowIndex += 1;
     	}
 
-    	// Delete the old rows  
+    	// Delete the old rows
     	rownr_t nrowsToDelete = ddiCols.nrow()-nspws_p;
     	if (nrowsToDelete > 0)
     	{
@@ -4943,7 +4958,7 @@ void MSTransformManager::checkSPWChannelsKnownLimitation()
 {
   if (not combinespws_p)
     return;
-  
+
   auto nSpws = inputMs_p->spectralWindow().nrow();
   if (1 >= nSpws or numOfInpChanMap_p.empty() or numOfSelChanMap_p.empty())
     return;
@@ -4953,7 +4968,7 @@ void MSTransformManager::checkSPWChannelsKnownLimitation()
 			   [&firstNum](const std::pair<casacore::uInt,casacore::uInt> &other) {
 			     return firstNum != other.second; });
 
-  
+
   if (numOfSelChanMap_p.end() != diff) {
     auto otherNum = diff->second;
     throw AipsError("Currently the option 'combinespws' is only supported when the number "
@@ -5768,6 +5783,7 @@ void MSTransformManager::generateIterator()
 		visibilityIterator_p = new vi::VisibilityIterator2(vi::PointingInterpolationVi2Factory(pointingsInterpolationConfig_p, selectedInputMs_p,
 				vi::SortColumns(sortColumns_p, false), timeBin_p, isWritable));
 	}
+<<<<<<< HEAD
 	// CAS-12706 To run phase shift via a TVI which has
 	// support for shifting across large offset/angles
 	else if (tviphaseshift_p) {
@@ -5792,6 +5808,15 @@ void MSTransformManager::generateIterator()
 		TVIFactoryIdx++;
 
 		visibilityIterator_p = new vi::VisibilityIterator2 (TVIFactories);
+=======
+	// Offline ATM correction
+	else if (doAtmCor_p) {
+		visibilityIterator_p = new vi::VisibilityIterator2(
+			vi::SDAtmosphereCorrectionVi2Factory(
+				atmCorConfig_p, selectedInputMs_p, vi::SortColumns(sortColumns_p, false), timeBin_p, isWritable
+			)
+		);
+>>>>>>> master
 	}
 	// Plain VI
 	else
