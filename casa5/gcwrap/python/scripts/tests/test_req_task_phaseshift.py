@@ -891,7 +891,7 @@ class reference_frame_tests(unittest.TestCase):
                 msg='Failed ANTENNA2 column test for "' + myfield + '"'
             )
             self.assertTrue(
-                (gotuvw == expuvw).all(),
+                np.allclose(gotuvw, expuvw),
                 msg='Failed UVW column test for "' + myfield + '"'
             )
             self.assertTrue(
