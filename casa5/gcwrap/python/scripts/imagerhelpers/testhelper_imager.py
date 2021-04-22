@@ -166,7 +166,7 @@ class TestHelpers():
           if 'summaryminor' in summ:
                reslist = summ['summaryminor'][1,:]
                #print "reslist=",reslist
-               peakres = reslist[ len(reslist)-1 ]
+               peakres = max(reslist)
           else:
                peakres = None
           return peakres
@@ -174,7 +174,8 @@ class TestHelpers():
      def getmodflux(self,summ):
           if 'summaryminor' in summ:
                modlist = summ['summaryminor'][2,:]
-               modflux = modlist[ len(modlist)-1 ]
+               reslist = summ['summaryminor'][1,:]
+               modflux = modlist[np.argmax(np.array(reslist))]
           else:
                modflux = None
           return modflux
