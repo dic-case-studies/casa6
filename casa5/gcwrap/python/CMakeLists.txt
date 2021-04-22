@@ -100,7 +100,6 @@ scripts/task_bandpass.py
 scripts/task_blcal.py
 scripts/task_browsetable.py
 scripts/task_calstat.py
-scripts/task_clean.py
 scripts/task_clearcal.py
 scripts/task_clearstat.py
 scripts/task_concat.py
@@ -180,6 +179,7 @@ scripts/task_predictcomp.py
 scripts/task_rerefant.py
 scripts/task_rmfit.py
 scripts/task_rmtables.py
+scripts/task_sdatmcor.py
 scripts/task_sdbaseline.py
 scripts/task_sdcal.py
 scripts/task_sdfit.py

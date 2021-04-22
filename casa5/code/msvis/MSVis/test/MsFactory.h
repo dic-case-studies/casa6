@@ -347,7 +347,8 @@ public:
                             casacore::Int nChannels,
                             casacore::Double frequency,
                             casacore::Double frequencyDelta,
-                            const casacore::String & stokes);
+                            const casacore::String & stokes,
+                            casacore::Double endingTime = -1);
     void addSpectralWindows (int nSpectralWindows);
 
     void setDataGenerator (casacore::MSMainEnums::PredefinedColumns, GeneratorBase * generator);
@@ -524,6 +525,7 @@ private:
     casacore::Double timeEnd_p;
     casacore::Double timeInterval_p;
     casacore::Double timeStart_p;
+    std::map<casacore::Int, casacore::Double> endingTimePerSpw_p;
 };
 
 } // end namespace test

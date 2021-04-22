@@ -100,7 +100,7 @@ using namespace casa::vi;
 			   pointingDirCol_p("DIRECTION"),
 			   cfStokes_p(), cfCache_p(), cfs_p(), cfwts_p(), cfs2_p(), cfwts2_p(), 
 			   canComputeResiduals_p(false), toVis_p(true), 
-                           numthreads_p(-1), pbLimit_p(0.05),sj_p(0), cmplxImage_p( ), vbutil_p(), phaseCenterTime_p(-1.0), doneThreadPartition_p(-1), briggsWeightor_p(nullptr)
+                           numthreads_p(-1), pbLimit_p(0.05),sj_p(0), cmplxImage_p( ), vbutil_p(), phaseCenterTime_p(-1.0), doneThreadPartition_p(-1), briggsWeightor_p(nullptr), tempFileNames_p(0)
   {
     spectralCoord_p=SpectralCoordinate();
     isPseudoI_p=false;
@@ -122,7 +122,7 @@ using namespace casa::vi;
     pointingDirCol_p("DIRECTION"),
     cfStokes_p(), cfCache_p(cfcache), cfs_p(), cfwts_p(), cfs2_p(), cfwts2_p(),
     convFuncCtor_p(cf),canComputeResiduals_p(false), toVis_p(true), numthreads_p(-1), 
-    pbLimit_p(0.05),sj_p(0), cmplxImage_p( ), vbutil_p(), phaseCenterTime_p(-1.0), doneThreadPartition_p(-1), briggsWeightor_p(nullptr)
+    pbLimit_p(0.05),sj_p(0), cmplxImage_p( ), vbutil_p(), phaseCenterTime_p(-1.0), doneThreadPartition_p(-1), briggsWeightor_p(nullptr), tempFileNames_p(0)
   {
     spectralCoord_p=SpectralCoordinate();
     isPseudoI_p=false;
@@ -326,8 +326,11 @@ using namespace casa::vi;
         ///Darn vb.time()(0) may not be the earliest time due to sort issues...
         //so lets try to use the same
         ///time as SynthesisIUtilMethods::buildCoordinateSystemCore is using
-        mFrame_p.resetEpoch(romscol_p->timeMeas()(0));
-        Double firstTime=romscol_p->time()(0);
+        //mFrame_p.resetEpoch(romscol_p->timeMeas()(0));
+	mFrame_p.resetEpoch(coords.obsInfo().obsDate());
+	//Double firstTime=romscol_p->time()(0);
+									  
+	Double firstTime=coords.obsInfo().obsDate().get("s").getValue();
         //First convert to HA-DEC or AZEL for parallax correction
         MDirection::Ref outref1(MDirection::AZEL, mFrame_p);
         MDirection tmphadec;
@@ -575,8 +578,10 @@ using namespace casa::vi;
       AlwaysAssert(image, AipsError);
       if(!toRecord(error, rec))
         throw (AipsError("Could not initialize BriggsWeightor")); 
-      briggsWeightor_p->init(vi, *image, rec);
-
+      String wgtcolname=briggsWeightor_p->initImgWeightCol(vi, *image, rec);
+      tempFileNames_p.resize(tempFileNames_p.nelements()+1, True);
+      tempFileNames_p[tempFileNames_p.nelements()-1]=wgtcolname;
+      
     }
   }
 
@@ -1755,10 +1760,9 @@ using namespace casa::vi;
     if(briggsWeightor_p.null()){
       imwgt=vb.imagingWeight();
     }
-    else
-      briggsWeightor_p->weightUniform(imwgt, vb);
-
-
+    else{
+      briggsWeightor_p->weightUniform(imwgt, vb);  
+    }
 
   }
   // Make a plain straightforward honest-to-FSM image. This returns
@@ -1839,63 +1843,6 @@ using namespace casa::vi;
     return true;
   }
   
-  /*
-  Bool FTMachine::matchAllSpwChans(const vi::VisBuffer2& vb){
-
-	  //////I have no clue how to get all the channel and data selection from all
-	  ///spectral windows from Visbuffer2...
-	  /// so this function is quite useless
-
-	  Vector<Int>  elspw;
-	  Vector<Int>  elstart;
-	  Vector<Int>  elnchan;
-	  Double elfstart, elfend, elfinc;
-	  spectralCoord_p.toWorld(elfstart, 0.0);
-	  spectralCoord_p.toWorld(elfend, Double(nchan));
-	  if(elfend < elfstart){
-		  Double tmpfreq=elfstart;
-		  elfstart=elfend;
-		  elfend=tmpfreq;
-	  }
-	  elfinc=(spectralCoord_p.increment()(0));
-
-	  cerr << "elfstart " << elfstart << " elfend " << elfend << " elfinc "<< elfinc << endl;
-
-	  MSUtil::getSpwInFreqRangeAllFields(elspw, elstart,
-			  elnchan,vb.getVi()->ms(), elfstart,elfend,elfinc, MFrequency::LSRK);
-	  selectedSpw_p.resize();
-	  selectedSpw_p=elspw;
-	  nVisChan_p.resize();
-	  nVisChan_p=elnchan;
-	  cerr << "elspw " << elspw << " elstart " << elstart  << " elnchan " << endl;
-
-	  //doConversion_p.resize(max(selectedSpw_p)+1);
-	  //doConversion_p.set(true);
-
-      multiChanMap_p.resize(max(selectedSpw_p)+1, true);
-      matchChannel(vb);
-      /*Bool anymatchChan=false;
-      Bool anyTopo=false;
-      for (uInt k=0; k < selectedSpw_p.nelements(); ++k){
-        Bool matchthis=matchChannel(selectedSpw_p[k], vb);
-        anymatchChan= (anymatchChan || matchthis);
-        anyTopo=anyTopo || ((MFrequency::castType(MSColumns(vb.getVi()->ms()).spectralWindow().measFreqRef()(selectedSpw_p[k]))==MFrequency::TOPO) && freqFrameValid_p);
-      }
-
-      // if TOPO and valid frame things may match later but not now  thus we'll go
-      // through the data
-      // hoping the user made the right choice
-      if (!anymatchChan && !anyTopo){
-        logIO() << "No overlap in frequency between image channels and selected data found for this FTMachine \n"
-  	      << " Check your data selection and image parameters if you end up with a blank image"
-  	      << LogIO::WARN << LogIO::POST;
-
-      }
-     //////////////////////
-      return true;
-
-    }
-  */
 
   Vector<Int> FTMachine::channelMap(const vi::VisBuffer2& vb){
     matchChannel(vb);
@@ -2039,8 +1986,28 @@ using namespace casa::vi;
     }
 
 
+  Vector<String> FTMachine::cleanupTempFiles(const String& mess){
+    briggsWeightor_p=nullptr;
+    for(uInt k=0; k < tempFileNames_p.nelements(); ++k){
+      if(Table::isReadable(tempFileNames_p[k])){
+	if(mess.size()==0){
+	  try{
+	    Table::deleteTable(tempFileNames_p[k]);
+	  }
+	  catch(AipsError &x){
+	    logIO() << LogOrigin("FTMachine", "cleanupTempFiles") << LogIO::NORMAL;
+	    logIO() <<  LogIO::WARN<< "YOU may have to delete the temporary file " << tempFileNames_p[k] << " because " << x.getMesg()  << LogIO::POST;
 
-
+	  }
+	}
+	else{
+	  logIO() << LogOrigin("FTMachine", "cleanupTempFiles") << LogIO::NORMAL;
+	  logIO() << "YOU have to delete the temporary file " << tempFileNames_p[k] << " because " << mess << LogIO::DEBUG1 << LogIO::POST;
+	}
+      }
+    }
+    return tempFileNames_p;
+  }
   void FTMachine::gridOk(Int convSupport){
     
     if (nx <= 2*convSupport) {

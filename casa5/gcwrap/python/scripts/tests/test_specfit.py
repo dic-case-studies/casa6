@@ -87,7 +87,7 @@ birdie = "birdie.im"
 
 nanvalue = 4.53345345
 
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/specfit/'
+datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/specfit/'
 
 def run_fitprofile (
     imagename, box, region, chans, stokes,

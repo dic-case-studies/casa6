@@ -49,14 +49,11 @@ except ImportError:
     _rg = rgtool()
     image = iatool
     is_CASA6 = False
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        data_root = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'
-    else:
-        data_root = os.environ.get('CASAPATH').split()[0] + '/casa-data-req'
+    data_root = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
     def ctsys_resolve(apath):
         return os.path.join(data_root, apath)
 
-datapath = 'image'
+datapath = 'unittest/ia_statistics/'
 
 '''
 Unit tests for tool method ia.statistics().

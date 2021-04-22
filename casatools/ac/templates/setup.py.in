@@ -117,7 +117,7 @@ for arg in sys.argv:
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.56.jar'
+xml_jar_file = 'xml-casa-assembly-1.61.jar'
 real_gnu = None
 gxx_version_number = 0
 
@@ -447,7 +447,7 @@ def generate_pyinit(moduledir,tools):
         fd.write("""###########################################################################\n""")
         fd.write("from __future__ import absolute_import\n")
         fd.write("__name__ = '%s'\n" % module_name)
-        fd.write("__all__ = [ \"ctsys\", \"version\", \"version_string\",\n")
+        fd.write("__all__ = [ \"ctsys\", \"version\", \"version_string\"\n")
         for tool in tools:
             if tool != "utils":
                 fd.write("            '%s',\n" % tool)
@@ -457,11 +457,11 @@ def generate_pyinit(moduledir,tools):
                 fd.write("from .%s import %s\n" % (tool,tool))
 
         config='''\
-
-               import casatools.ctuser as __user
+               from casatools import ctuser as __user
                from .utils import utils as __utils
                import os as __os
                import sys as __sys
+
                def __find_data_path( ):
 
                    def find_mount_point(path):
@@ -495,14 +495,47 @@ def generate_pyinit(moduledir,tools):
                sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
 
                ctsys = __utils( )
-               _distro_dpath = ""
+               _distro_dpath = None
                _dpath = [ ]
-               try:
-                   import casadata
-                   _distro_dpath = casadata.datapath
-                   _dpath = [ _distro_dpath ]
-               except: pass
-               ctsys.initialize( __sys.executable, _distro_dpath, __find_user_data_path( ) + _dpath + __find_data_path( ) )
+
+               _user_data = None
+               if hasattr(__user,'rundata'):
+                    if not __os.path.isdir(__os.path.expanduser(__user.rundata)):
+                        if __sys.argv[0] != '-m':
+                            print("ignoring rundata setting (%s) because it is not a directory" % __user.rundata,file=__sys.stderr)
+                    else:
+                        _user_data = __os.path.expanduser(__user.rundata)
+
+               if _user_data is None:
+                   try:
+                       import casashell as __cs
+                       _user_data = __os.path.expanduser(__os.path.join(__cs._rcdir,'data'))
+                   except Exception as e:
+                       _user_data = __os.path.expanduser("~/.casa/data")
+
+               if __os.path.isdir(_user_data):
+                   _dpath = _dpath + [ _user_data ]
+                   _iers = __os.path.join(_user_data,'geodetic','IERSeop2000')
+                   if __os.path.isdir(_iers):
+                       _distro_dpath = _user_data
+
+               if _distro_dpath is None:
+                   try:
+                       import casadata
+                       _distro_dpath = casadata.datapath
+                       _dpath = _dpath + [ _distro_dpath ]
+                   except: pass
+
+               ctsys.initialize( __sys.executable, "" if _distro_dpath is None else _distro_dpath,
+                                 __find_user_data_path( ) + _dpath )
+
+               if __sys.argv[0] != '-m':
+                   __resolved_iers = ctsys.resolve('geodetic/IERSeop2000')
+                   if __resolved_iers == 'geodetic/IERSeop2000':
+                       raise ImportError('measures data is not available, visit http://go.nrao.edu/casadata-info for more information')
+                   if len(ctsys.rundata( )) == 0:
+                       ctsys.setrundata(__resolved_iers[:-21])
+                                                                                                               
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
@@ -2275,7 +2308,7 @@ class create_makefile(Command):
         copy_to_dirs = {}
         files_to_copy.append(xml_casa)
         copy_to_dirs[os.path.basename(xml_casa)] = bindir
-        assembly_jar = "xml-casa-assembly-1.56.jar"
+        assembly_jar = "xml-casa-assembly-1.61.jar"
         files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
         copy_to_dirs[assembly_jar] = bindir + os.sep + "java"
         copy_to_list = []
@@ -2470,7 +2503,10 @@ if __name__ == '__main__':
     grpc_srcdir = generate_grpc( [ os.path.join('casa-source','code','casatools','protos','registrar.proto'),
                                    os.path.join('casa-source','code','casatools','protos','shutdown.proto'),
                                    os.path.join('casa-source','code','casatools','protos','ping.proto'),
-                                   os.path.join('casa-source','code','display','protos','img.proto') ] )
+                                   os.path.join('casa-source','code','display','protos','img.proto'),
+                                   os.path.join('casa-source','code','casaqt','protos','plotserver.proto'),
+                                   os.path.join('casa-source','code','casaqt','protos','plotserver_events.proto')
+                               ] )
     GRPC_SRC = ['%s/%s' % (grpc_srcdir,f) for f in listdir(grpc_srcdir) if f.endswith(".cc")] if len(grpc_srcdir) != 0 else [ ]
     BINDING_SRC = ['binding/source/%s' % f for f in listdir('binding/source') if f.endswith(".cc")] + GRPC_SRC
     CODE_SRC = source_files("casa-source/code",file_suffix_filter=".cc",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','convert','Filling','ImagerObjects2'],file_filter=['MeasurementComponents/rGridFT.cc'],
@@ -2562,4 +2598,4 @@ if __name__ == '__main__':
                                    if wheel_build \
                                    else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile, 'ia': create_makefile_ia },
            ext_modules=ext,
-           install_requires=[ 'numpy', 'casadata' ] )
+           install_requires=[ 'numpy' ] )

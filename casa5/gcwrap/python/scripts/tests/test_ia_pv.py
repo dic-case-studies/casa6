@@ -72,7 +72,7 @@ from __main__ import *
 import unittest
 import numpy
 
-datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/imageanalysis/ImageAnalysis/'
+datapath = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/ia_pv/'
 
 def run_ia_pv(
     imagename, outfile, start, end, width,

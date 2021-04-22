@@ -27,11 +27,14 @@ try:
     import casatools
     from casatasks import polcal, casalog
     tb = casatools.table()
+    dataroot = casatools.ctsys.resolve('unittest/polcal/')
     CASA6 = True
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    dataroot = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/polcal/'
+    
 import sys
 import os
 import unittest
@@ -39,28 +42,11 @@ import shutil
 import numpy as np
 
 ### DATA ###
-
-if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/alma/polcal_LINEAR_BASIS.ms')
-    calpathLin = casatools.ctsys.resolve('caltables/polcal_LINEAR_BASIS.ms.Dtrue')
-    # circular data
-    datapathCirc = casatools.ctsys.resolve('visibilities/vla/polcal_CIRCULAR_BASIS.ms')
-    calpathCirc = casatools.ctsys.resolve('caltables/polcal_CIRCULAR_BASIS.ms.Dtrue')
-
-else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/polcal_LINEAR_BASIS.ms'
-        calpathLin = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/polcal_LINEAR_BASIS.ms.Dtrue'
-        # circular data
-        datapathCirc = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/polcal_CIRCULAR_BASIS.ms'
-        calpathCirc = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/polcal_CIRCULAR_BASIS.ms.Dtrue'
-
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/polcal_LINEAR_BASIS.ms'
-        calpathLin = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/polcal_LINEAR_BASIS.ms.Dtrue'
-        # circular data
-        datapathCirc = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/polcal_CIRCULAR_BASIS.ms'
-        calpathCirc = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/polcal_CIRCULAR_BASIS.ms.Dtrue'
+datapath = os.path.join(dataroot, 'polcal_LINEAR_BASIS.ms')
+calpathLin = os.path.join(dataroot, 'polcal_LINEAR_BASIS.ms.Dtrue')
+# circular data
+datapathCirc = os.path.join(dataroot, 'polcal_CIRCULAR_BASIS.ms')
+calpathCirc = os.path.join(dataroot, 'polcal_CIRCULAR_BASIS.ms.Dtrue')
 
 
 def getparam(caltable, colname='CPARAM'):
@@ -447,7 +433,6 @@ class polcal_test(unittest.TestCase):
 
     ### Circular Test cases ###
     # only use outcal prefix?
-    @unittest.skip("Fix in another ticket")
     def test_unpolarizedDfCirc(self):
         ''' Test unpolarized calibration Q=U=0 for Df mode'''
         polcal(vis=datacopyCirc, caltable=outcal, field='0', spw='1,2,3', preavg=101.0,
@@ -462,7 +447,6 @@ class polcal_test(unittest.TestCase):
 
         self.assertTrue(np.all(np.isclose(np.mean(calresult), np.mean(refresult), atol=1e-4)))
 
-    @unittest.skip("Fix in another ticket")
     def test_unpolarizedDfQUCirc(self):
         ''' Test unpolarized calibraion Q=U=0 for Df+QU mode '''
         polcal(vis=datacopyCirc, caltable=outcal, field='0', spw='1,2,3', preavg=101.0,
@@ -477,7 +461,6 @@ class polcal_test(unittest.TestCase):
 
         self.assertTrue(np.all(np.isclose(np.mean(calresult), np.mean(refresult), atol=1e-4)))
 
-    @unittest.skip("Fix in another ticket")
     def test_unknownPolDfQUCirc(self):
         ''' Test polarized calibration with unknown polarization for Df+QU mode '''
         polcal(vis=datacopyCirc, caltable=outcal, field='1', spw='', preavg=101.0,
