@@ -326,12 +326,8 @@ void MSTransformManager::configure(Record &configuration)
 	setSpwAvg(configuration);
 	parsePolAvgParams(configuration);
 	parsePointingsInterpolationParams(configuration);
-//<<<<<<< HEAD
-//	parsePhaseShiftSubParams(configuration);
-//
-// =======
+	parsePhaseShiftSubParams(configuration);
 	parseAtmCorrectionParams(configuration);
-//>>>>>>> master
 
 	return;
 }
@@ -5783,7 +5779,6 @@ void MSTransformManager::generateIterator()
 		visibilityIterator_p = new vi::VisibilityIterator2(vi::PointingInterpolationVi2Factory(pointingsInterpolationConfig_p, selectedInputMs_p,
 				vi::SortColumns(sortColumns_p, false), timeBin_p, isWritable));
 	}
-<<<<<<< HEAD
 	// CAS-12706 To run phase shift via a TVI which has
 	// support for shifting across large offset/angles
 	else if (tviphaseshift_p) {
@@ -5802,21 +5797,21 @@ void MSTransformManager::generateIterator()
 		TVIFactoryIdx++;
 
 		// Phaseshift layer
-		vi::PhaseShiftingTVILayerFactory *phaseShiftingTVILayerFactory = NULL;
+		vi::PhaseShiftingTVILayerFactory *phaseShiftingTVILayerFactory = nullptr;
 		phaseShiftingTVILayerFactory = new vi::PhaseShiftingTVILayerFactory (tviphaseshiftConfig_p);
 		TVIFactories[TVIFactoryIdx]=phaseShiftingTVILayerFactory;
 		TVIFactoryIdx++;
 
 		visibilityIterator_p = new vi::VisibilityIterator2 (TVIFactories);
-=======
 	// Offline ATM correction
+    }
+    // Offline ATM correction
 	else if (doAtmCor_p) {
 		visibilityIterator_p = new vi::VisibilityIterator2(
 			vi::SDAtmosphereCorrectionVi2Factory(
 				atmCorConfig_p, selectedInputMs_p, vi::SortColumns(sortColumns_p, false), timeBin_p, isWritable
 			)
 		);
->>>>>>> master
 	}
 	// Plain VI
 	else
