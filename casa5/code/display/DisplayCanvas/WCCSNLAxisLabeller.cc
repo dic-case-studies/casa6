@@ -485,8 +485,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	                    int nc, int &ic, double *cache, int &ierr) {
 		int idents_len=80, opt_len=1, nlcprm_len = 1;
 
-        //Original
-
+  
         PGSBOX(blc, trc, idents, opt,
                &labctl, &labden, ci, gcode,
                &tiklen, &ng1, grid1, &ng2,
