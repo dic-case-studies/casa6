@@ -37,11 +37,11 @@ def import_casamods():
         logging.debug("Importing CASAtools")
         import casatools
         logging.debug("Importing CASAtasks")
-        try:
-            import casatasks
-            from casatasks import casalog
-        except (ImportError, ModuleNotFoundError):
-            pass
+        #try:
+        #    import casatasks
+        #    from casatasks import casalog
+        #except (ImportError, ModuleNotFoundError):
+        #    pass
 
         try:
             from casampi.MPIEnvironment import MPIEnvironment
@@ -72,7 +72,7 @@ def import_casamods():
         if casa.has_key('state') and casa['state'].has_key('init_version') and casa['state']['init_version'] > 0:
             casaglobals=True
             casac = stack_find("casac")
-            casalog = stack_find("casalog")
+            #casalog = stack_find("casalog")
         _casa5 = True
 
 _casa6tools = set([
@@ -296,13 +296,13 @@ def time_execution(out_dict):
                 failed = True
                 t1 = time.time()
                 out_dict[function.__name__]['runtime'] = t1-t0
-                casalog.post("Total time running {}: {} seconds".format(function.__name__, str(t1-t0)))
+                #casalog.post("Total time running {}: {} seconds".format(function.__name__, str(t1-t0)))
                 out_dict[function.__name__]['status'] = False
                 out_dict[function.__name__]['Failure Message'] = e
                 raise
             t1 = time.time()
             #print ("Total time running %s: %s seconds" % (function.__name__, str(t1-t0)))
-            casalog.post("Total time running {}: {} seconds".format(function.__name__, str(t1-t0)))
+            #casalog.post("Total time running {}: {} seconds".format(function.__name__, str(t1-t0)))
             #print('======================================================')
             #print(function.__name__)
             out_dict[function.__name__]['runtime'] = t1-t0
