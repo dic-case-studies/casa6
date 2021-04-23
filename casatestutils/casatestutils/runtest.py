@@ -290,14 +290,14 @@ def unpack_dmg(pkg, work_dir, outputdir):
     print ("Unpacking dmg: " + pkg + " to " +  outputdir)
     cmd = ("hdiutil attach " + pkg + " -mountpoint " + mountpoint).split()
     r = ShellRunner()
-    output = r.runshell(cmd, default_timeout)
+    output = r.runshell(cmd, default_timeout, cwd=os.getcwd())
     installpath = outputdir + "/CASA.app"
     cmd = ("ditto " + mountpoint + "/CASA.app " + outputdir + "/CASA.app").split()
     r = ShellRunner()
-    output = r.runshell(cmd, default_timeout)
+    output = r.runshell(cmd, default_timeout, cwd=os.getcwd())
     cmd = ("hdiutil detach " + mountpoint).split()
     r = ShellRunner()
-    output = r.runshell(cmd, default_timeout)
+    output = r.runshell(cmd, default_timeout, cwd=os.getcwd())
     return installpath
     
 def unpack_tarball(pkg, outputdir):
