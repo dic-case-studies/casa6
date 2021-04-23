@@ -273,11 +273,12 @@ class TestHelpers:
         if is_CASA6:
             if 'summaryminor' in summ:
                 reslist = summ['summaryminor'][1,:]
-                peakres = max(reslist)
+                peakres = reslist[ len(reslist)-1 ]
+
         else:
             if summ.has_key('summaryminor'):
                 reslist = summ['summaryminor'][1,:]
-                peakres = max(reslist)
+                peakres = reslist[ len(reslist)-1 ]
                 
         return peakres
 
@@ -304,13 +305,11 @@ class TestHelpers:
         if is_CASA6:
             if 'summaryminor' in summ:
                 modlist = summ['summaryminor'][2,:]
-                reslist = summ['summaryminor'][1,:]
-                modflux = modlist[numpy.argmax(numpy.array(reslist))]
+                modflux = modlist[ len(modlist)-1 ]
         else:
             if summ.has_key('summaryminor'):
                 modlist = summ['summaryminor'][2,:]
-                reslist = summ['summaryminor'][1,:]
-                modflux = modlist[numpy.argmax(numpy.array(reslist))]
+                modflux = modlist[ len(modlist)-1 ]
         return modflux
 
     def check_mod_flux(self, summ,correctmod, epsilon=0.05):
