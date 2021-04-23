@@ -274,7 +274,7 @@
          number of pixels must be even and factorizable by 2,3,5,7 only.
 </description>
       <any limittypes="int intArray" type="variant"/>
-      <value type="intArray">100</value>
+      <value type="intArray"><value>100</value></value>
     </param>
 
     <param name="cell" type="any"> 

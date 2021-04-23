@@ -872,7 +872,7 @@
         },
         {
             "testScript":"test_importasdm_mms",
-            "testType":"None",
+            "testType":"casatasks",
             "maintainer":"Bob Garwood",
             "maintainerEmail":"bgarwood@nrao.edu",
             "testOptions":["mpi"],
@@ -1102,11 +1102,21 @@
         },
         {
             "testScript":"test_mstransform_mms",
-            "testType":"None",
+            "testType":"casatasks",
             "maintainer":"Enrique Garcia",
             "maintainerEmail":"cgarcia@eso.org",
             "testOptions":["mpi"],
             "testGroup":["mstransform","HPC"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_msview",
+            "testType":"casaviewer",
+            "maintainer":"Bob Garwood",
+            "maintainerEmail":"bgarwood@nrao.edu",
+            "testOptions":[],
+            "testGroup":["msview","Visualization"],
             "timeout":0,
             "comment":""
         },
@@ -1775,7 +1785,7 @@
             "testType":"casatasks",
             "maintainer":"Urvashi Rau",
             "maintainerEmail":"rurvashi@aoc.nrao.edu",
-            "testOptions":[],
+            "testOptions":["mpi"],
             "testGroup":["sdintimaging","Imaging"],
             "timeout":0,
             "comment":""
