@@ -312,7 +312,8 @@ class TestHelpers:
             if summ.has_key('summaryminor'):
                 modlist = summ['summaryminor'][2,:]
                 reslist = summ['summaryminor'][1,:]
-                modflux = modlist[numpy.argmax(numpy.array(reslist))]
+                maxres = max(reslist)
+                modflux = modlist[reslist.index(maxres)]
         return modflux
 
     def check_mod_flux(self, summ,correctmod, epsilon=0.05):
