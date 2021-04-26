@@ -2047,6 +2047,36 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
 
+    @unittest.expectedFailure
+    def test_timerange_value_default(self):
+        """TODO"""
+        self._default_test()
+
+    @unittest.expectedFailure
+    def test_timerange_value_exact(self):
+        """TODO"""
+        self._default_test()
+
+    @unittest.expectedFailure
+    def test_timerange_value_gt(self):
+        """TODO"""
+        self._default_test()
+
+    @unittest.expectedFailure
+    def test_timerange_value_interval(self):
+        """TODO"""
+        self._default_test()
+
+    @unittest.expectedFailure
+    def test_timerange_value_lt(self):
+        """TODO"""
+        self._default_test()
+
+    @unittest.expectedFailure
+    def test_timerange_value_range(self):
+        """TODO"""
+        self._default_test()
+
     ####################
     # Helper functions
     ####################
