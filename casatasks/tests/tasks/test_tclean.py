@@ -2110,22 +2110,22 @@ class test_cube(testref_base):
 
      # Now works for parallel  with CAS-9396 
      #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily for 5.5")
-     def test_cube_chanchunks(self):
-          """ [cube] Test channel chunking for large cubes """
-          self.prepData('refim_point.ms')
-#          ret = tclean(vis=self.msfile,imagename=self.img,specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom', savemodel='modelcolumn')
-#          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
-#          report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.5002,[50,50,0,0]) , (self.img+'.image',0.769,[50,50,0,19]) ])
-
-          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',chanchunks=7,parallel=self.parallel)
-          self.assertTrue(os.path.exists(self.img+'cc.psf') and os.path.exists(self.img+'cc.image') )
-          report=self.th.checkall(imgexist=[self.img+'cc.image'],imgval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
-          self.checkfinal(report)
+#     def test_cube_chanchunks(self):
+#          """ [cube] Test channel chunking for large cubes """
+#          self.prepData('refim_point.ms')
+##          ret = tclean(vis=self.msfile,imagename=self.img,specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom', savemodel='modelcolumn')
+##          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
+##          report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.5002,[50,50,0,0]) , (self.img+'.image',0.769,[50,50,0,19]) ])
+#
+#          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',parallel=self.parallel)
+#          self.assertTrue(os.path.exists(self.img+'cc.psf') and os.path.exists(self.img+'cc.image') )
+#          report=self.th.checkall(imgexist=[self.img+'cc.image'],imgval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
+#          self.checkfinal(report)
 
      def test_cube_chanchunks_auto(self):
           """ [cube] Test channel chunking for large cubes : automatic calc of nchanchunks """
           self.prepData('refim_point.ms')
-          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',chanchunks=-1,parallel=self.parallel)
+          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',parallel=self.parallel)
           self.assertTrue(os.path.exists(self.img+'cc.psf') and os.path.exists(self.img+'cc.image') )
           report=self.th.checkall(imgexist=[self.img+'cc.image'],imgval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
           self.checkfinal(report)
@@ -2136,8 +2136,7 @@ class test_cube(testref_base):
      def test_cube_chanchunks_savemodel(self):
           """ [cube] Test channel chunking for large cubes and save model """
           self.prepData('refim_point.ms')
-          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',
-                       chanchunks=2,savemodel='modelcolumn',parallel=self.parallel)
+          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom', savemodel='modelcolumn',parallel=self.parallel)
           self.assertTrue(os.path.exists(self.img+'cc.psf') and os.path.exists(self.img+'cc.image') )
           report=self.th.checkall(imgexist=[self.img+'cc.image'],imgval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
           self.assertTrue( self.th.check_modelchan(self.msfile,5) > 0.0 and self.th.check_modelchan(self.msfile,18) > 0.0 )
