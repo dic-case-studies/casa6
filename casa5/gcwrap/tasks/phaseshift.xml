@@ -6,38 +6,39 @@
       file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
 <task type="function" name="phaseshift" category="manipulation">
-    <shortdescription>Changes the phase center for either short or large offsets/angles w.r.t. the original</shortdescription>
-<description>
-This function changes the phase center for either short offsets/angles (e.g. bad pointing), 
-or large offsets/angles (e.g. multiple source mosaic), by taking into account the full 3D 
-geometry in the UVW plane like the imaging tasks. 
-</description>
+    <shortdescription>Rotate a Measurement Set to a new phase-center</shortdescription>
+        <description>
+This application changes the phase center of a selected subset of an input MS, by taking into
+account the full 3D geometry in the UVW plane (similar to the phasecenter setting in the
+imaging tasks). This function produces an output MS with modified UVW values, visibility
+phases, and a new phase_direction entry in the FIELD sub-table.
+        </description>
 
-    <input>
-        <param type="string" name="vis" mustexist="true">
-<shortdescription>Name of input visibility file</shortdescription>
-<description>Name of input visibility file
+        <input>
+            <param type="string" name="vis" mustexist="true">
+                <shortdescription>Name of input visibility file</shortdescription>
+                <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
-</description>
-        <value type="string"></value>
-    </param>
+                </description>
+                <value type="string"/>
+            </param>
 
-    <param type="string" name="outputvis">
-<shortdescription>Name of output visibility file</shortdescription>
-<description>Name of output visibility file
+            <param type="string" name="outputvis">
+                <shortdescription>Name of output visibility file</shortdescription>
+                <description>Name of output visibility file
                      Default: '' (same as vis)
 
                         Example: outputvis='ngc5921_out.ms'
-</description>
-        <value></value>
-    </param>
+                </description>
+                <value/>
+            </param>
 
-        <!-- MMS-CASE parameters -->
-    <param type="bool" name="keepmms">
-<shortdescription>Create a Multi-MS as the output if the input is a Multi-MS.</shortdescription>
-<description>Create a Multi-MS as the output if the input is a
+            <!-- MMS-CASE parameters -->
+            <param type="bool" name="keepmms">
+                <shortdescription>Create a Multi-MS as the output if the input is a Multi-MS.</shortdescription>
+                <description>Create a Multi-MS as the output if the input is a
 Multi-MS.
 
                      Default: True
@@ -48,14 +49,14 @@ Multi-MS.
                      have the same partition axis of the input
                      MMS. See CASA Docs for more information on
                      the MMS format.
-</description>
-    <value>True</value>
-    </param>
+                </description>
+                <value>True</value>
+            </param>
     
-    <!-- SELECTION parameters -->    
-    <param type="any" name="field">
-<shortdescription>Select field using field id(s) or field name(s)</shortdescription>
-<description>Select field using field id(s) or field name(s)
+            <!-- SELECTION parameters -->    
+            <param type="any" name="field">
+                <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
+                <description>Select field using field id(s) or field name(s)
                      Default: '' (all fields)
                      
                      Use 'go listobs' to obtain the list id's or
@@ -70,14 +71,14 @@ Multi-MS.
                         3C295
                         field = '3,4C*'; field id 3, all names
                         starting with 4C
-</description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
-    </param>
+                </description>
+                <any type="variant" limittypes="string stringArray int intArray"/>
+                <value type="string"/>
+            </param>
 
-    <param type="any" name="spw">
-<shortdescription>Select spectral window/channels</shortdescription>
-<description>Select spectral window/channels
+            <param type="any" name="spw">
+                <shortdescription>Select spectral window/channels</shortdescription>
+                <description>Select spectral window/channels
                      Default: ''=all spectral windows and channels
            
                         Examples:
@@ -93,146 +94,57 @@ Multi-MS.
 
                      NOTE: mstransform does not support multiple
                      channel ranges per spectral window (';').
-</description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
-    </param>
+                </description>
+                <any type="variant" limittypes="string stringArray int intArray"/>
+                <value type="string"/>
+            </param>
     
-    <param type="any" name="scan" >
-<shortdescription>Scan number range</shortdescription>
-<description>Scan number range
+            <param type="any" name="scan" >
+                <shortdescription>Scan number range</shortdescription>
+                <description>Scan number range
                      Subparameter of selectdata=True
                      Default: '' = all
-</description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
-    </param>
+                </description>
+                <any type="variant" limittypes="string stringArray int intArray"/>
+                <value type="string"/>
+            </param>
 
-    <param type="any" name="antenna">
-<shortdescription>Select data based on antenna/baseline</shortdescription>
-<description>Select data based on antenna/baseline
-                     Subparameter of selectdata=True
-                     Default: '' (all)
-
-                     If antenna string is a non-negative integer, it
-                     is assumed an antenna index, otherwise, it is
-                     assumed as an antenna name
-  
-                         Examples: 
-                         antenna='5&amp;6'; baseline between antenna
-                         index 5 and index 6.
-                         antenna='VA05&amp;VA06'; baseline between VLA
-                         antenna 5 and 6.
-                         antenna='5&amp;6;7&amp;8'; baselines with
-                         indices 5-6 and 7-8
-                         antenna='5'; all baselines with antenna index
-                         5
-                         antenna='05'; all baselines with antenna
-                         number 05 (VLA old name)
-                         antenna='5,6,10'; all baselines with antennas
-                         5,6,10 index numbers
-                          antenna='!ea03,ea12,ea17': all baselines
-                          except those that include EVLA antennas
-                          ea03, ea12, or ea17.
-</description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
-    </param>
-    
-    <param type="any" name="correlation">
-<shortdescription>Select data based on correlation</shortdescription>
-<description>Select data based on correlation
-                     Default: '' ==> all
-
-                        Example: correlation="XX,YY".
-</description>
-        <any type="variant" limittypes="string stringArray" />
-        <value type="string" />
-    </param>
-
-    <param type="any" name="timerange" >
-<shortdescription>Select data based on time range</shortdescription>
-<description>Select data based on time range
-                     Subparameter of selectdata=True
-                     Default = '' (all)
-
-                        Examples:
-                        timerange =
-                        'YYYY/MM/DD/hh:mm:ss~YYYY/MM/DD/hh:mm:ss'
-                        (Note: if YYYY/MM/DD is missing date defaults
-                        to first day in data set.)
-                        timerange='09:14:0~09:54:0' picks 40 min on
-                        first day 
-                        timerange= '25:00:00~27:30:00' picks 1 hr to 3
-                        hr 30min on NEXT day
-                        timerange='09:44:00' pick data within one
-                        integration of time
-                        timerange='>10:24:00' data after this time
-</description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
-    </param>
-    
-    <param type="any" name="intent" >
-<shortdescription>Select observing intent</shortdescription>
-<description>Select observing intent
+            <param type="any" name="intent" >
+                <shortdescription>Select observing intent</shortdescription>
+                <description>Select observing intent
                      Default: '' (no selection by intent)
 
                         Example: intent='*BANDPASS*'  (selects data
                         labelled with BANDPASS intent)
-</description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
-    </param>
+                </description>
+                <any type="variant" limittypes="string stringArray int intArray"/>
+                <value type="string"/>
+            </param>
     
-    <param type="any" name="array">
-<shortdescription>Select (sub)array(s) by array ID number.</shortdescription>
-<description>(Sub)array number range
+            <param type="any" name="array">
+                <shortdescription>Select (sub)array(s) by array ID number.</shortdescription>
+                <description>(Sub)array number range
                      Default: '' (all)
-</description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
-    </param>
+                </description>
+                <any type="variant" limittypes="string stringArray int intArray"/>
+                <value type="string"/>
+            </param>
     
-    <param type="any" name="uvrange" >
-<shortdescription>Select data by baseline length.</shortdescription>
-<description>Select data by baseline length.
-                     Default = '' (all)
-
-                        Examples:
-                        uvrange='0~1000klambda'; uvrange from 0-1000 kilo-lambda
-                        uvrange='>4klambda';uvranges greater than 4 kilo-lambda
-                        uvrange='0~1000km'; uvrange in kilometers
-</description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
-    </param>
-    
-    <param type="any" name="observation">
-<shortdescription>Select by observation ID(s)</shortdescription>
-<description>Select by observation ID(s)
+            <param type="any" name="observation">
+                <shortdescription>Select by observation ID(s)</shortdescription>
+                <description>Select by observation ID(s)
                      Subparameter of selectdata=True
                      Default: '' = all
 
                          Example: observation='0~2,4'
-</description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
-    </param>
+                </description>
+                <any type="variant" limittypes="string stringArray int intArray"/>
+                <value type="string"/>
+            </param>
 
-    <param type="any" name="feed">
-<shortdescription>Multi-feed numbers: Not yet implemented.</shortdescription>
-<description>Selection based on the feed 
-                     NOT IMPLEMENTED YET!
-                     Default: '' = all
-</description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
-    </param>
-        
-    <param type="string" name="datacolumn" ignorecase="True">
-<shortdescription>Which data column(s) to use for processing</shortdescription>
-<description>Which data column(s) to use for processing
+            <param type="string" name="datacolumn" ignorecase="True">
+                <shortdescription>Which data column(s) to process</shortdescription>
+                <description>Which data column(s) to process
                      (case-insensitive).
                      Default: 'all' (= whichever of the options that
                      are present)
@@ -241,49 +153,44 @@ Multi-MS.
                      'float_data,data', 'lag_data,data'
 
                         Example: datacolumn='data'
-</description>
-        <value>all</value>
-        <allowed kind="enum" ignorecase="True">
-            <value>all</value>
-            <value>corrected</value>
-            <value>data</value>
-            <value>model</value>
-            <value>data,model,corrected</value>
-            <value>float_data</value>
-            <value>lag_data</value>
-            <value>float_data,data</value>
-            <value>lag_data,data</value>
-        </allowed>
-    </param>
+                </description>
+                <value>all</value>
+                <allowed kind="enum" ignorecase="True">
+                    <value>all</value>
+                    <value>corrected</value>
+                    <value>data</value>
+                    <value>model</value>
+                    <value>data,model,corrected</value>
+                    <value>float_data</value>
+                    <value>lag_data</value>
+                    <value>float_data,data</value>
+                    <value>lag_data,data</value>
+                </allowed>
+            </param>
     
-    <param type="string" name="phasecenter">
-    	<shortdescription>Sky coordinates of the desired center</shortdescription>
-    	<description>Sky coordinates of the desired center, for example 
-    	
-    			phasecenter='J2000 19h53m50 40d06m00'
+            <param type="string" name="phasecenter">
+    	        <shortdescription>Direction coordinates of the desired center. MUST BE SPECIFIED</shortdescription>
+    	        <description>Direction coordinates of new phase center, specified as absolute
+                     world coordinates including frame, eg 
+ 
+                phasecenter = 'J2000 19h53m50 40d06m00'
+                phasecenter = 'B1950 292.5deg -40.0deg'
+                phasecenter = 'ICRS 13:05:27.2780 -049.28.04.458'
+                phasecenter = 'GALACTIC 47.5rad -60.22rad'
+
+            Time dependent systems (eg, AZEL) are not supported, nor are ephemeris objects.
     	
     		This will change the phase of the baseline visibilities so that the 
     		final image is centered at the new location. Additionally the uvw 
     		coordinates and the the PHASE_DIR column from the FIELD sub-table 
     		will be changed accordingly. 
     	
-    		Notice that this operation will be done for all selected fields, 
-    		so all fields in the output MS will have as center the new location.
-    	
-    		This task does essentially the same thing as fixvis, but it is valid 
-    		for a longer range of shifts, as long as the new location still falls 
-    		into the field of view of your image. Fixvis was designed for smaller
-    		shifts like pointing errors, but this task is designed to change the 
-    		image center for multi-field images.
-    	</description>
-    	<value type="string"></value>
-    </param>
-
-    </input>
-
-<example>
-FOR MORE INFORMATION, SEE THE TASK PAGES OF PHASESHIFT IN CASA DOCS:
-https://casa.nrao.edu/casadocs/
- </example>
- </task>
+    		This operation will be done for all selected fields, so all fields in the output
+            MS will have as center the new location. The new phase center is not constrained to
+            be located inside any images to be created.
+                </description>
+    	        <value type="string"/>
+            </param>
+        </input>
+    </task>
  </casaxml>

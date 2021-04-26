@@ -298,6 +298,20 @@ class phaseshift_test(unittest.TestCase):
         Check that this parameter sets the sky coordinates of the new
         phasecenter
         '''
+        msg = 'Empty phasecenter param incorrectly runs'
+        if CASA6:
+            with self.assertRaises(ValueError, msg=msg):
+                phaseshift(
+                    datacopy_nep, outputvis=output,
+                    phasecenter=''
+                )
+        else:
+            self.assertFalse(
+                phaseshift(
+                    datacopy_nep, outputvis=output, phasecenter=''
+                ), msg
+            )
+            
         phaseshift(
             datacopy_nep, outputvis=output,
             phasecenter='ICRS 00h06m14 -08d23m35'

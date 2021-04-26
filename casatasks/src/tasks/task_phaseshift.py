@@ -17,15 +17,17 @@ else:
 
 def phaseshift(
     vis=None, outputvis=None, keepmms=None, field=None,
-    spw=None, scan=None, antenna=None, correlation=None,
-    timerange=None, intent=None, array=None, uvrange=None,
-    observation=None, feed=None, datacolumn=None, phasecenter=None,
+    spw=None, scan=None, intent=None, array=None, 
+    observation=None, datacolumn=None, phasecenter=None
 ):
     """
     Changes the phase center for either short or large
     offsets/angles w.r.t. the original
     """
     casalog.origin('phaseshift')
+
+    if len(phasecenter) == 0:
+        raise ValueError('phasecenter parameter must be specified')
     # Initiate the helper class
     pdh = ParallelDataHelper("phaseshift", locals())
 
@@ -71,10 +73,8 @@ def phaseshift(
 
             config = pdh.setupParameters(
                 inputms=vis, outputms=outputvis, field=field,
-                spw=spw, array=array, scan=scan, antenna=antenna,
-                correlation=correlation, uvrange=uvrange,
-                timerange=timerange, intent=intent, observation=observation,
-                feed=feed
+                spw=spw, array=array, scan=scan, intent=intent,
+                observation=observation
             )
 
             # Check if CORRECTED column exists, when requested
