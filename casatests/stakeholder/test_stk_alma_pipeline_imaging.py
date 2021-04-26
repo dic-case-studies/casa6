@@ -950,7 +950,7 @@ class Test_standard(test_tclean_base):
                 calcres=False, calcpsf=False, savemodel='none', \
                 parallel=True, verbose=True)
 
-            # retrieve per-channel beam statistics (only in parallel)
+            # retrieve per-channel beam statistics 
             bmin_dict, bmaj_dict, pa_dict = \
                 self.cube_beam_stats(image=img+'.image')
 
@@ -993,6 +993,10 @@ class Test_standard(test_tclean_base):
                 minpercentchange=1.0, fastnoise=False, restart=True, \
                 calcres=False, calcpsf=False, savemodel='none', \
                 restoringbeam='common', parallel=False, verbose=True)
+
+            # retrieve per-channel beam statistics 
+            bmin_dict, bmaj_dict, pa_dict = \
+                self.cube_beam_stats(image=img+'.psf')
 
 
         report0 = th.checkall(imgexist = self.image_list(img, 'standard'))
@@ -1246,10 +1250,11 @@ class Test_standard(test_tclean_base):
             savedict['resid_stats_dict']=resid_stats_dict
             savedict['sumwt_stats_dict']=sumwt_stats_dict
             
-            if self.parallel:
-                savedict['bmin_dict']=bmin_dict
-                savedict['bmaj_dict']=bmaj_dict
-                savedict['pa_dict']=pa_dict
+            #if self.parallel: 
+            # for serial get it from *.psf
+            savedict['bmin_dict']=bmin_dict
+            savedict['bmaj_dict']=bmaj_dict
+            savedict['pa_dict']=pa_dict
 
             self.save_dict_to_file(test_name, savedict, test_name+'_cas13317mod_stats')
 
@@ -4079,6 +4084,10 @@ class Test_mosaic(test_tclean_base):
                 savemodel='none', calcres=False, calcpsf=False, \
                 restoringbeam='common', parallel=False, verbose=True)
 
+            # retrieve per-channel beam statistics
+            bmin_dict, bmaj_dict, pa_dict = \
+                self.cube_beam_stats(img+'.psf')
+
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
 
         # .image report (test_mosaic_cube_briggsbwtaper)
@@ -4371,10 +4380,10 @@ class Test_mosaic(test_tclean_base):
             savedict['sumwt_stats_dict']=sumwt_stats_dict
             savedict['wt_stats_dict']=wt_stats_dict
             
-            if self.parallel:
-                savedict['bmin_dict']=bmin_dict
-                savedict['bmaj_dict']=bmaj_dict
-                savedict['pa_dict']=pa_dict
+            #if self.parallel:
+            savedict['bmin_dict']=bmin_dict
+            savedict['bmaj_dict']=bmaj_dict
+            savedict['pa_dict']=pa_dict
 
             self.save_dict_to_file(test_name,savedict, test_name+'_cas13317_stats')
 
@@ -5791,11 +5800,6 @@ class Test_mosaic(test_tclean_base):
             savedict['sumwt_stats_dict']=sumwt_stats_dict
             savedict['wt_stats_dict']=wt_stats_dict
             
-            #if self.parallel:
-            #    savedict['bmin_dict']=bmin_dict
-            #    savedict['bmaj_dict']=bmaj_dict
-            #    savedict['pa_dict']=pa_dict
-
             self.save_dict_to_file(test_name,savedict, test_name+'_cas13317_stats')
 
         self.assertTrue(th.check_final(pstr = report), \
