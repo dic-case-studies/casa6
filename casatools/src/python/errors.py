@@ -13,8 +13,13 @@ def create_error_string( errors ):
                     vec = True
                 if v[0] == 'must be of cReqPath type':
                     variable = k
-    if variable is not None and value is not None:
-        return ( "all elements of the %s vector parameter must be a path that exists (at least one element of \"%s\" does not exist)"
-                 if vec else "the %s parameter must be a path that exists ('%s' does not exist)" ) % (variable, value)
+
+    if value is not None:
+        if variable is not None:
+            return ( "all elements of the %s vector parameter must be a path that exists (at least one element of \"%s\" does not exist)"
+                     if vec else "the %s parameter must be a path that exists ('%s' does not exist)" ) % (variable, value)
+        else:
+            return ( "all elements of the vector parameter must be a path that exists (at least one element of \"%s\" does not exist)"
+                     if vec else "the path parameter must contain a path that exists ('%s' does not exist)" ) % value
     else:
         return str(errors)
