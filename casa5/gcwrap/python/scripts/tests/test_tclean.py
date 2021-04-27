@@ -201,7 +201,8 @@ class testref_base(unittest.TestCase):
           #pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  casa -c `echo $CASAPATH | awk '{print $1}'`/gcwrap/python/scripts/regressions/admin/runUnitTest.py test_refimager["+ inspect.stack()[1][3] +"]"
           pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_tclean["+ inspect.stack()[1][3] +"]'])"
           casalog.post(pstr,'INFO')
-          if( pstr.count("(Fail") > 0 ): ## or pstr.count("( Fail") > 0):
+
+          if( pstr.count("(Fail") > 0 or pstr.count("( Fail") > 0):
                self.fail("\n"+pstr)
 
 ##############################################
@@ -312,6 +313,30 @@ class test_onefield(testref_base):
           self.assertTrue(self.th.check_beam_compare(self.img+'3.image', self.img+'4.image'))
      
           self.checkfinal(pstr = report+report2+report3+report4+report5+report6+report7)
+          
+     def test_onefield_pcwdT_and_pcwdF(self):
+     
+          self.prepData('refim_twochan.ms')
+          
+          ret = tclean(self.msfile , imagename=self.img+'1', imsize=20, cell='8.0arcsec', niter=0, nchan=1, spw='0:1', interactive=0, gridder='standard',perchanweightdensity=True,specmode='cube',weighting='briggs',robust=0.5)
+	
+          ret = tclean(self.msfile , imagename=self.img+'2', imsize=20, cell='8.0arcsec', niter=0, nchan=1, spw='0:1', interactive=0, gridder='standard',perchanweightdensity=False,specmode='cube',weighting='briggs',robust=0.5)
+          
+          _ia.open(self.img+'1.psf')
+          pcwdT_img = _ia.getchunk()
+          _ia.close()
+        
+          _ia.open(self.img+'2.psf')
+          pcwdF_img = _ia.getchunk()
+          _ia.close()
+      
+          abs_dif = np.sum(np.abs(pcwdF_img-pcwdT_img))
+          _, report1 = self.th.check_val_less_than(abs_dif, 3, valname='abs_dif',testname ="test_onefield_pcwdT_and_pcwdF")
+
+          self.checkfinal(report1)   
+     
+          
+        
 
      def test_onefield_twoMS(self):
           """ [onefield] Test_Onefield_twoMS : One field, two input MSs, also
@@ -2819,7 +2844,7 @@ class test_wproject(testref_base):
 
 ##Task level tests : awproject and mosaics
 class test_widefield(testref_base):
-     
+     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_widefield_aproj_mfs(self):
           """ [widefield] Test_Widefield_aproj : MFS with narrowband AWProjection (wbawp=F, 1spw)  stokes I """
           # casalog.post("EMPTY TEST")
@@ -2856,7 +2881,7 @@ class test_widefield(testref_base):
 
      ## Test normtype too somewhere..
 
-
+     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_widefield_wbaproj_mfs(self):
           """ [widefield] Test_Widefield_wbaproj_mfs : MFS with wideband AWProjection (wbawp=T, allspw) and nt=1 stokes I  """
 
@@ -3398,7 +3423,7 @@ class test_startmodel(testref_base):
           self.checkfinal(report)
 
 
-
+     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_csys_startmodel_restart_cube(self):
           """ [startmodel] test_csys_startmodel_restart_cube : Check that csys differences w.r.to latpoles for parallel vs serial runs are appropriately squashed. 
 
@@ -4115,11 +4140,12 @@ class test_mosaic_mtmfs(testref_base):
 ###########################################################
 ###########################################################
 class test_mosaic_cube(testref_base):
-
+     
+     @unittest.skip('Skip test.') #Skip until CAS-13420 is resolved
      def test_mosaic_briggsbwtaper(self):
           self.prepData('refim_alma_mosaic.ms')
           
-          tclean(vis=self.msfile,imagename=self.img+'1',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggsbwtaper',robust=0.5 ,perchanweightdensity=True)
+          tclean(vis=self.msfile,imagename=self.img+'1',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggsbwtaper',robust=0.5 ,perchanweightdensity=True,parallel=self.parallel)
           report1=self.th.checkall(imgval=[(self.img+'1.image', 1,[175,140,0,0])])
           
           _ia.open(self.img+'1.image')
@@ -4133,7 +4159,7 @@ class test_mosaic_cube(testref_base):
           _, report3 = self.th.check_val(briggsbwtaper_beamarea[1], 0.30887386 , valname='beam_area_chan_1', exact=False)
           _, report4 = self.th.check_val(briggsbwtaper_beamarea[2], 0.30639076 , valname='beam_area_chan_2', exact=False)
  
-          tclean(vis=self.msfile,imagename=self.img+'2',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggs',robust=0.5 ,perchanweightdensity=True)
+          tclean(vis=self.msfile,imagename=self.img+'2',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggs',robust=0.5 ,perchanweightdensity=True,parallel=self.parallel)
           report5=self.th.checkall(imgval=[(self.img+'2.image', 1,[175,140,0,0])])
           
           self.assertTrue(self.th.check_beam_compare(self.img+'1.image', self.img+'2.image'))
