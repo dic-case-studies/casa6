@@ -338,6 +338,11 @@ def unpack_pkg(pkg, work_dir, outputdir):
     return exec_path, casatestutils_exec_path
 
 def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None, test_paths = [], test_config_path=None, ncores=2, verbosity=False):
+
+    if args.test_list is not None:
+        test_list = [x.strip() for x in args.test_list.split(',')]
+    if args.test_group is not None:
+        test_group = [x.strip() for x in args.test_group.split(',')]
     # Unpack the distribution
 
     if pkg is None:
