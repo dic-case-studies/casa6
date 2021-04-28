@@ -337,7 +337,7 @@ def unpack_pkg(pkg, work_dir, outputdir):
         raise Exception("Couldn't find casatestutils")
     return exec_path, casatestutils_exec_path
 
-def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None, test_paths = [], test_config=None, ncores=2, verbosity=False):
+def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None, test_paths = [], test_config_path=None, ncores=2, verbosity=False):
     # Unpack the distribution
 
     if pkg is None:
@@ -354,11 +354,12 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     if sys.platform != "darwin":
         xvfb.start_virtual_frame_buffer()
 
-    test_config = test_config
-    if test_config == None:
-       test_config = work_dir + "/casasources/casa6/casatestutils/casatestutils/component_to_test_map.json"
+    test_config = None
+    if test_config_path == None:
+       test_config_path = work_dir + "/casasources/casa6/casatestutils/casatestutils/component_to_test_map.json"
     # Read the JSON configuration
-    with open(test_config ) as f:
+    print ("Reading config from" + test_config_path)
+    with open(test_config_path ) as f:
       test_config = json.load(f)
 
     # Get the actual tests as list
@@ -443,7 +444,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
                     found = True
             # Throw an exception is user provides a component that doesn't exist
             if not found:
-                print ("WARNING: No tests found for jira_component " + jira_component + ". Check the contents of " + test_config)
+                print ("WARNING: No tests found for jira_component " + jira_component + ". Check the contents of " + test_config_path)
         # Remove duplicates
         tests_to_run = set(tmp_tests_to_run)
 
