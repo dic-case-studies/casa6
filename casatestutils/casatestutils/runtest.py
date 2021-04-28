@@ -339,12 +339,13 @@ def unpack_pkg(pkg, work_dir, outputdir):
 
 def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None, test_paths = [], test_config_path=None, ncores=2, verbosity=False):
 
-    if args.test_list is not None:
-        test_list = [x.strip() for x in args.test_list.split(',')]
+    if test_list is not None:
+        test_list = [x.strip() for x in test_list.split(',')]
     if args.test_group is not None:
-        test_group = [x.strip() for x in args.test_group.split(',')]
+        test_group = [x.strip() for x in test_group.split(',')]
     # Unpack the distribution
-
+    print ("Test list: " + str (test_list))
+    print ("Test group: " + str (test_group))
     if pkg is None:
         raise Exception("Missing pkg")
     if work_dir is None:
@@ -408,7 +409,6 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     # Filter tests by test list
     if test_list is not None and len(test_list)>0:
         print ("Test list provided. Filtering tests.")
-        test_list = [x.strip() for x in test_list.split(',')]
         tmp_tests_to_run = []
         for test in test_list:
             found = False
@@ -438,7 +438,6 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
 
     # Filter by Jira components
     if test_group is not None and len(test_group)>0:
-        test_group = [x.strip() for x in test_group.split(',')]
         print("Jira component list provided. Filtering tests.")
         tmp_tests_to_run = []
         for jira_component in test_group:
