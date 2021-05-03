@@ -2844,7 +2844,6 @@ class test_wproject(testref_base):
 
 ##Task level tests : awproject and mosaics
 class test_widefield(testref_base):
-     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_widefield_aproj_mfs(self):
           """ [widefield] Test_Widefield_aproj : MFS with narrowband AWProjection (wbawp=F, 1spw)  stokes I """
           # casalog.post("EMPTY TEST")
@@ -2881,7 +2880,6 @@ class test_widefield(testref_base):
 
      ## Test normtype too somewhere..
 
-     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_widefield_wbaproj_mfs(self):
           """ [widefield] Test_Widefield_wbaproj_mfs : MFS with wideband AWProjection (wbawp=T, allspw) and nt=1 stokes I  """
 
@@ -3423,7 +3421,6 @@ class test_startmodel(testref_base):
           self.checkfinal(report)
 
 
-     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_csys_startmodel_restart_cube(self):
           """ [startmodel] test_csys_startmodel_restart_cube : Check that csys differences w.r.to latpoles for parallel vs serial runs are appropriately squashed. 
 

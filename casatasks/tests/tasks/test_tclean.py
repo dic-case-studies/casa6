@@ -204,7 +204,7 @@ class testref_base(unittest.TestCase):
 
           if( pstr.count("(Fail") > 0 or pstr.count("( Fail") > 0):
                self.fail("\n"+pstr)
-               
+
 ##############################################
 ##############################################
 
@@ -313,8 +313,7 @@ class test_onefield(testref_base):
           self.assertTrue(self.th.check_beam_compare(self.img+'3.image', self.img+'4.image'))
      
           self.checkfinal(pstr = report+report2+report3+report4+report5+report6+report7)
-
-
+          
      def test_onefield_pcwdT_and_pcwdF(self):
      
           self.prepData('refim_twochan.ms')
@@ -334,10 +333,10 @@ class test_onefield(testref_base):
           abs_dif = np.sum(np.abs(pcwdF_img-pcwdT_img))
           _, report1 = self.th.check_val_less_than(abs_dif, 3, valname='abs_dif',testname ="test_onefield_pcwdT_and_pcwdF")
 
-          self.checkfinal(report1) 
-
-
-
+          self.checkfinal(report1)   
+     
+          
+        
 
      def test_onefield_twoMS(self):
           """ [onefield] Test_Onefield_twoMS : One field, two input MSs, also
@@ -2845,7 +2844,6 @@ class test_wproject(testref_base):
 
 ##Task level tests : awproject and mosaics
 class test_widefield(testref_base):
-     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_widefield_aproj_mfs(self):
           """ [widefield] Test_Widefield_aproj : MFS with narrowband AWProjection (wbawp=F, 1spw)  stokes I """
           # casalog.post("EMPTY TEST")
@@ -2882,7 +2880,6 @@ class test_widefield(testref_base):
 
      ## Test normtype too somewhere..
 
-     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_widefield_wbaproj_mfs(self):
           """ [widefield] Test_Widefield_wbaproj_mfs : MFS with wideband AWProjection (wbawp=T, allspw) and nt=1 stokes I  """
 
@@ -3424,7 +3421,6 @@ class test_startmodel(testref_base):
           self.checkfinal(report)
 
 
-     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_csys_startmodel_restart_cube(self):
           """ [startmodel] test_csys_startmodel_restart_cube : Check that csys differences w.r.to latpoles for parallel vs serial runs are appropriately squashed. 
 
@@ -4141,7 +4137,8 @@ class test_mosaic_mtmfs(testref_base):
 ###########################################################
 ###########################################################
 class test_mosaic_cube(testref_base):
-     @unittest.skip('Skip test.')
+     
+     @unittest.skip('Skip test.') #Skip until CAS-13420 is resolved
      def test_mosaic_briggsbwtaper(self):
           self.prepData('refim_alma_mosaic.ms')
           
