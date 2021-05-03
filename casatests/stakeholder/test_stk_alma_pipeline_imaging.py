@@ -1130,6 +1130,9 @@ class Test_standard(test_tclean_base):
             'fit_pix_2': [False, [39.99905497352608, 39.992896143439694]]}
 
 
+        report5 = th.check_dict_vals(exp_psf_stats, psf_stats_dict, '.psf', epsilon=self.epsilon)
+
+
         # .residual report
         resid_stats_dict = self.image_stats(image=img+'.residual', fit_region = \
             'ellipse[[11.47881897deg, -73.25881015deg], [9.0414arcsec, 8.4854arcsec], 90.00000000deg]')
