@@ -2854,7 +2854,7 @@ class test_widefield(testref_base):
                        niter=30,gridder='awproject',cfcache='',wbawp=False,conjbeams=True,psterm=False,computepastep=360.0,
                        rotatepastep=360.0,deconvolver='hogbom',savemodel='modelcolumn',parallel=self.parallel)
          ## ret = tclean(vis=self.msfile,spw='2',field='*',imagename=self.img,imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",niter=30,gridder='awproject',wbawp=False,conjbeams=True,psterm=False,computepastep=360.0,rotatepastep=360.0,deconvolver='hogbom')
-          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.96,[256,256,0,0]),(self.img+'.weight',0.493,[256,256,0,0]) ] )
+          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.96,[256,256,0,0]),(self.img+'.pb',0.96,[256,256,0,0]),(self.img+'.weight',0.496,[256,256,0,0]) ] )
           #
           # Changed to the following for 5.5.0 release of AWP.  Will revisit and replace the test MS later.
           #
@@ -4133,6 +4133,13 @@ class test_mosaic_mtmfs(testref_base):
           self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
           
 
+     def test_mtmfs_mosaic_mwFalse_briggs_twofield(self):  ## Added in CAS-13438 to catch failing case (pb os zero). 
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=5,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel,mosweight=False,weighting='briggs')
+          report1=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.9794,[512,596,0,0]),(self.img+'.pb.tt0', 0.9817,[512,596,0,0]),(self.img+'.alpha', -0.797,[512,596,0,0])])
+          
 ###########################################################
 ###########################################################
 ###########################################################
