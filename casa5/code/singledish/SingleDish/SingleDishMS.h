@@ -50,7 +50,7 @@ public:
   // Destructor
   ~SingleDishMS();
 
-  /* 
+  /*
    * Return the name of the MeasurementSet
    */
   string name() const {
@@ -95,9 +95,9 @@ public:
                         int const minwidth,
                         std::vector<int> const& edge);
 
-  //Cubicspline  
+  //Cubicspline
   void subtractBaselineCspline(string const& in_column_name,
-                               string const& out_ms_name, 
+                               string const& out_ms_name,
                                string const& out_bloutput_name,
                                bool const& do_subtract,
                                string const& in_spw,
@@ -112,7 +112,7 @@ public:
                                int const minwidth,
                                std::vector<int> const& edge);
 
-  //Sinusoid  
+  //Sinusoid
    void subtractBaselineSinusoid(string const& in_column_name,
                                  string const& out_ms_name,
                                  string const& out_bloutput_name,
@@ -164,6 +164,9 @@ public:
   void smooth(string const& kernelType, float const kernelWidth,
       string const& columnName, string const& outMsName);
 
+  // C++ implementation of sdatmcor
+  void atmcor(casacore::Record const &config, string const &columnName, string const &outMsName);
+
 private:
   /////////////////////////
   /// Utility functions ///
@@ -213,11 +216,11 @@ private:
      [out] chan : a vector of selected SPW IDs and channel ranges
                   returned by msseltoindex. [[SPWID, start, end, stride], ...]
      [out] nchan : a vector of length spw.size() initialized by zero
-     [out] mask : an uninitialized vector of length spw.size() 
+     [out] mask : an uninitialized vector of length spw.size()
      [out] nchan_set: a vector of length spw.size() initilazed by false
    */
   void parse_spw(string const& in_spw,
-                 casacore::Vector<casacore::Int>& spw, 
+                 casacore::Vector<casacore::Int>& spw,
                  casacore::Matrix<casacore::Int>& chan,
                  casacore::Vector<size_t>& nchan,
                  casacore::Vector<casacore::Vector<casacore::Bool> >& mask,
@@ -234,7 +237,7 @@ private:
     [in] num_chan: a vector of the number of channels in current chunk.
                    the number of elements is equals to the number
                    of rows in the chunk.
-    [out] nchan: a vector of length spw.size(). the number of channels 
+    [out] nchan: a vector of length spw.size(). the number of channels
                  in the corresponding SPW is set when the loop traverses
                  the SPW for the first time.
     [out] mask: a vector of length spw.size().
@@ -366,7 +369,7 @@ private:
                           bool out_mask[/*num_data*/]);
   template<typename Func0, typename Func1, typename Func2, typename Func3>
   void doSubtractBaseline(string const& in_column_name,
-                          string const& out_ms_name, 
+                          string const& out_ms_name,
                           string const& out_bloutput_name,
                           bool const& do_subtract,
                           string const& in_spw,
@@ -469,12 +472,15 @@ private:
   void (*visCubeAccessor_)(vi::VisBuffer2 const &vb, casacore::Cube<casacore::Float> &cube);
   // smoothing flag
   casacore::Bool doSmoothing_;
+  // offline ATM correction flag
+  casacore::Bool doAtmCor_;
+  casacore::Record atmCorConfig_;
 
   string bloutputname_csv;
   string bloutputname_text;
   string bloutputname_table;
 
-  //split the name  
+  //split the name
   void split_bloutputname(string str);
 
 public:

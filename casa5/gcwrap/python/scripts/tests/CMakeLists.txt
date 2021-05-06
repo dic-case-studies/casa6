@@ -26,7 +26,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_bandpass.py
 #  test_caltabconvert.py
   test_calanalysis.py
-  test_clean.py
   test_cleanhelper.py
   test_clearstat.py
   test_componentlist.py
@@ -137,6 +136,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_partition.py
   test_plotants.py
   test_plotcal.py
+  test_plotbandpass.py
   test_plotms.py
   test_plotprofilemap.py
   test_plotuv.py
