@@ -223,6 +223,16 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 			IPosition end(4,nx_p-1,ny_p-1,0,chan);
 			Matrix<Float> gwt(griddedWeight(start, end).reform(IPosition(2, nx_p, ny_p)));
 			if ((rmode_p=="norm" || rmode_p=="bwtaper") && (sumWgts(0,chan)> 0.0)) { //See CAS-13021 for bwtaper algorithm details
+                
+//                ///TESTOO
+//                {
+//                   CoordinateSystem cstemp=CoordinateUtil::makeCoordinateSystem(gwt.shape(), True);
+//                   PagedImage<Float> gulu(gwt.shape(), cstemp, "BWweightdensity_v3"+String::toString(chan));
+//                   gulu.put(gwt);
+//                }
+
+                
+                
 			//os << "Normal robustness, robust = " << robust << LogIO::POST;
 				Double sumlocwt = 0.;
 				for(Int vgrid=0;vgrid<ny_p;vgrid++) {
@@ -230,8 +240,12 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 						if(gwt(ugrid, vgrid)>0.0) sumlocwt+=square(gwt(ugrid,vgrid));
 					}
 				}
-				f2_p[0][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumWgts(0,chan));
+				f2_p[0][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / (2*sumWgts(0,chan)));
 				d2_p[0][chan] = 1.0;
+                
+                //cout << "sumlocwt " << sumlocwt << endl;
+                //cout << "sumWgts "  << sumWgts << endl;
+                //cout << "f2_p[0]" << f2_p[0] << endl;
 
 			}
 			else if (rmode_p=="abs") {
@@ -309,6 +323,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
     Double freqbeg=cs.toWorld(IPosition(4,0,0,0,0))[3];
 	Double freqend=cs.toWorld(IPosition(4,0,0,0,imNChan-1))[3];
 	Double freqincr=fabs(cs.increment()[3]);
+        
 	SpectralCoordinate spCoord=cs.spectralCoordinate(cs.findCoordinate(Coordinate::SPECTRAL));
 	MFrequency::Types freqframe=spCoord.frequencySystem(True);
 	uInt swingpad=16;
@@ -332,7 +347,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	      spwID = vb->spectralWindows()(0);
 	      Double localBeg, localEnd;
 	      Double localNchan=imNChan >1 ? Double(imNChan-1) : 1.0;
-	      Double localStep=abs(freqend-freqbeg)/localNchan;
+	      
 	      if(freqbeg < freqend){
 		localBeg=freqbeg;
 		localEnd=freqend;
@@ -341,6 +356,9 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 		localBeg=freqend;
 		localEnd=freqbeg;
 	      }
+              localBeg-=freqincr/2.0;
+              localEnd+=freqincr/2.0;
+              Double localStep=fabs(localEnd-localBeg)/localNchan;
 	      Vector<Int> spw, start, nchan;
 	      if(ephemtab.size() != 0){
 		MSUtil::getSpwInSourceFreqRange( spw,start,nchan,vb->ms(), 
@@ -354,7 +372,8 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 					  fieldID);
 		
 	      }
-		  for (uInt spwk=0; spwk < spw.nelements() ; ++spwk){
+              //if(spw.nelements()==0 || start.nelements()
+              for (uInt spwk=0; spwk < spw.nelements() ; ++spwk){
 		    if(spw[spwk]==spwID){
 		      Vector<Double> mschanfreq=(vb->subtableColumns()).spectralWindow().chanFreq()(spw[spwk]);
 		      if(mschanfreq[start[spwk]+nchan[spwk]-1] > mschanfreq[start[spwk]]){
@@ -376,12 +395,16 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 		  
 		    }
 		  
-		  }
-		  }
+              }
+            }
 		
 	  }
 	}
-	
+
+        if(firstchanfreq.size()==0){
+          return 16;
+        }
+          
 	auto itf=firstchanfreq.begin();
 	auto itmax=localmaxfreq.begin();
 	Double firstchanshift=0.0;
@@ -397,7 +420,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	  itmax++;
 	}
 	swingpad=2*(Int(std::ceil((swingFreq+firstchanshift)/freqincr))+4);
-	//cerr << "CPUID " << my_cpu_id <<" swingfreq " << (swingFreq/freqincr) << " firstchanshift " << (firstchanshift/freqincr) << " SWINGPAD " << swingpad << endl;
+	//cerr <<"swingfreq " << (swingFreq/freqincr) << " firstchanshift " << (firstchanshift/freqincr) << " SWINGPAD " << swingpad << endl;
 	////////////////
 	return swingpad;
 
@@ -555,7 +578,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
         if(gwt(ugrid, vgrid)>0.0) sumlocwt+=square(gwt(ugrid,vgrid));
       }
     }
-    f2_p[index][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumWgts[index](0,chan));
+    f2_p[index][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / (2*sumWgts[index](0,chan)));
     d2_p[index][chan] = 1.0;
 
       }
@@ -647,7 +670,7 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
                   nCellsBW = fracBW*sqrt(pow(uscale_p*u,2.0) + pow(vscale_p*v,2.0));
                   uvDistanceFactor = nCellsBW + 0.5;
                   if(uvDistanceFactor < 1.5) uvDistanceFactor = (4.0 - nCellsBW)/(4.0 - 2.0*nCellsBW);
-                  imweight(chn,row)/= gwt*f2_p[index][pos[3]]*2/uvDistanceFactor +d2_p[index][pos[3]];
+                  imweight(chn,row)/= gwt*f2_p[index][pos[3]]/uvDistanceFactor +d2_p[index][pos[3]];
               }
               else{
                   imweight(chn,row)/=gwt*f2_p[index][pos[3]]+d2_p[index][pos[3]];
@@ -766,7 +789,7 @@ void BriggsCubeWeightor::getWeightUniform(const Array<Float>& wgtDensity, Matrix
                   nCellsBW = fracBW*sqrt(pow(uscale_p*u,2.0) + pow(vscale_p*v,2.0));
                   uvDistanceFactor = nCellsBW + 0.5;
                   if(uvDistanceFactor < 1.5) uvDistanceFactor = (4.0 - nCellsBW)/(4.0 - 2.0*nCellsBW);
-                  imweight(chn,row)/= gwt*f2_p[0][pos[3]]*2/uvDistanceFactor +d2_p[0][pos[3]];
+                  imweight(chn,row)/= gwt*f2_p[0][pos[3]]/uvDistanceFactor +d2_p[0][pos[3]];
               }
               else{
                   imweight(chn,row)/=gwt*f2_p[0][pos[3]]+d2_p[0][pos[3]];
