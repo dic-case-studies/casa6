@@ -40,13 +40,13 @@
             "timeout":0,
             "comment":""
         },
-        {
-            "testScript":"test_calstat",
-            "testType":"casatasks",
-            "maintainer":"George Moellenbrock",
-            "maintainerEmail":"gmoellen@nrao.edu",
-            "testOptions":[],
-            "testGroup":["calstat","Calibration"],
+         {
+            "testScript":"test_casampi",
+            "testType":"casampi",
+            "maintainer":"Federico Montesino",
+            "maintainerEmail":"fpouzols@eso.org",
+            "testOptions":["mpi"],
+            "testGroup":["casampi","HPC"],
             "timeout":0,
             "comment":""
         },
@@ -872,23 +872,13 @@
         },
         {
             "testScript":"test_importasdm_mms",
-            "testType":"None",
+            "testType":"casatasks",
             "maintainer":"Bob Garwood",
             "maintainerEmail":"bgarwood@nrao.edu",
-            "testOptions":["importasdm"],
-            "testGroup":[],
+            "testOptions":["mpi"],
+            "testGroup":["importasdm","HPC"],
             "timeout":0,
             "comment":""
-        },
-        {
-            "testScript":"test_importasdm_sd",
-            "testType":"casatasks",
-            "maintainer":"Takeshi Nakazato",
-            "maintainerEmail":"takeshi.nakazato@nao.ac.jp",
-            "testOptions":[],
-            "testGroup":["Data Import-Export","importasdm","default"],
-            "timeout":0,
-            "comment":"DEFAULT"
         },
         {
             "testScript":"test_importatca",
@@ -1081,16 +1071,6 @@
             "comment":""
         },
         {
-            "testScript":"test_casampi",
-            "testType":"casampi",
-            "maintainer":"Federico Montesino",
-            "maintainerEmail":"fpouzols@eso.org",
-            "testOptions":["mpi"],
-            "testGroup":["casampi","HPC"],
-            "timeout":0,
-            "comment":""
-        },
-        {
             "testScript":"test_msmetadata",
             "testType":"casatools",
             "maintainer":"Dave Mehringer",
@@ -1116,29 +1096,29 @@
             "maintainer":"Enrique Garcia",
             "maintainerEmail":"cgarcia@eso.org",
             "testOptions":[],
-            "testGroup":["mstransform"],
+            "testGroup":["mstransform", "HPC"],
             "timeout":0,
             "comment":""
         },
         {
             "testScript":"test_mstransform_mms",
-            "testType":"None",
+            "testType":"casatasks",
             "maintainer":"Enrique Garcia",
             "maintainerEmail":"cgarcia@eso.org",
-            "testOptions":[],
-            "testGroup":["mstransform"],
+            "testOptions":["mpi"],
+            "testGroup":["mstransform","HPC"],
             "timeout":0,
             "comment":""
         },
         {
             "testScript":"test_msview",
-            "testType":"casatasks",
-            "maintainer":"Darrell Schiebel",
-            "maintainerEmail":"drs@nrao.edu",
+            "testType":"casaviewer",
+            "maintainer":"Bob Garwood",
+            "maintainerEmail":"bgarwood@nrao.edu",
             "testOptions":[],
-            "testGroup":["msview", "Visualization","default"],
+            "testGroup":["msview","Visualization"],
             "timeout":0,
-            "comment":"DEFAULT"
+            "comment":""
         },
         {
             "testScript":"test_nrobeamaverage",
@@ -1157,16 +1137,6 @@
             "maintainerEmail":"scastro@eso.org",
             "testOptions":["mpi"],
             "testGroup":["HPC","partition"],
-            "timeout":0,
-            "comment":""
-        },
-         {
-            "testScript":"test_req_task_phaseshift",
-            "testType":"casatasks",
-            "maintainer":"Dave Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["phaseshift","fixvis"],
             "timeout":0,
             "comment":""
         },
@@ -1189,6 +1159,16 @@
             "testGroup":["default","plotants","Visualization"],
             "timeout":0,
             "comment":"DEFAULT"
+        },
+        {
+            "testScript":"test_plotbandpass",
+            "testType":"casatasks",
+            "maintainer":"Jorge Lopez",
+            "maintainerEmail":"jalopez@nrao.edu",
+            "testOptions":[],
+            "testGroup":["plotbandpass","Visualization"],
+            "timeout":0,
+            "comment":""
         },
         {
             "testScript":"test_plotcal",
@@ -1215,8 +1195,8 @@
             "testType":"casatasks",
             "maintainer":"Takeshi Nakazato",
             "maintainerEmail":"takeshi.nakazato@nao.ac.jp",
-            "testOptions":["plotprofilemap"],
-            "testGroup":[],
+            "testOptions":[],
+            "testGroup":["plotprofilemap"],
             "timeout":0,
             "comment":""
         },
@@ -1411,12 +1391,92 @@
             "comment":""
         },
         {
+            "testScript":"test_regression_alma_M100_if",
+            "testType":"regression",
+            "maintainer":"Sandra Castro",
+            "maintainerEmail":"scastro@eso.org",
+            "testOptions":["mpi"],
+            "testGroup":["regression"],
+            "timeout":14400,
+            "comment":""
+        },
+        {
             "testScript":"test_regression_fits_import_export",
             "testType":"regression",
             "maintainer":"Akeem Wells",
             "maintainerEmail":"awells@nrao.edu",
             "testOptions":[],
             "testGroup":["regression","importfits","exportfits"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_regression_sim_TP",
+            "testType":"regression",
+            "maintainer":"Andrew McNichols",
+            "maintainerEmail":"amcnicho@nrao.edu",
+            "testOptions":[],
+            "testGroup":["regression","Simulation","simobserve","simanalyze"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_regression_sim_components",
+            "testType":"regression",
+            "maintainer":"Andrew McNichols",
+            "maintainerEmail":"amcnicho@nrao.edu",
+            "testOptions":[],
+            "testGroup":["regression","Simulation","simobserve","simanalyze"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_regression_sim_components_and_skymodel",
+            "testType":"regression",
+            "maintainer":"Andrew McNichols",
+            "maintainerEmail":"amcnicho@nrao.edu",
+            "testOptions":[],
+            "testGroup":["regression","Simulation","simobserve","simanalyze"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_regression_sim_cube",
+            "testType":"regression",
+            "maintainer":"Andrew McNichols",
+            "maintainerEmail":"amcnicho@nrao.edu",
+            "testOptions":[],
+            "testGroup":["regression","Simulation","simobserve","simanalyze"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_regression_sim_multi_arrays_and_TP",
+            "testType":"regression",
+            "maintainer":"Andrew McNichols",
+            "maintainerEmail":"amcnicho@nrao.edu",
+            "testOptions":[],
+            "testGroup":["regression","Simulation","simobserve","simanalyze"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_regression_simalma_12m_ACA_combination",
+            "testType":"regression",
+            "maintainer":"Andrew McNichols",
+            "maintainerEmail":"amcnicho@nrao.edu",
+            "testOptions":[],
+            "testGroup":["regression","Simulation","simalma","simobserve","simanalyze","feather"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_regression_tclean_startmodel_restart",
+            "testType":"regression",
+            "maintainer":"Bob Garwood",
+            "maintainerEmail":"bgarwood@nrao.edu",
+            "testOptions":["mpi"],
+            "testGroup":["regression","Imaging"],
             "timeout":0,
             "comment":""
         },
@@ -1517,6 +1577,16 @@
             "maintainerEmail":"gmoellen@nrao.edu",
             "testOptions":[],
             "testGroup":["Calibration","gaincal","default"],
+            "timeout":0,
+            "comment":"DEFAULT"
+        },
+        {
+            "testScript":"test_req_task_imdev",
+            "testType":"casatasks",
+            "maintainer":"David Mehringer",
+            "maintainerEmail":"dmehring@nrao.edu",
+            "testOptions":[],
+            "testGroup":["imdev","Image Analysis","default"],
             "timeout":0,
             "comment":"DEFAULT"
         },
@@ -1651,6 +1721,26 @@
             "comment":""
         },
         {
+            "testScript":"test_req_task_phaseshift",
+            "testType":"casatasks",
+            "maintainer":"Dave Mehringer",
+            "maintainerEmail":"dmehring@nrao.edu",
+            "testOptions":[],
+            "testGroup":["phaseshift","fixvis"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_req_task_polcal",
+            "testType":"casatasks",
+            "maintainer":"Neal Schweighart",
+            "maintainerEmail":"nschweig@nrao.edu",
+            "testOptions":[],
+            "testGroup":["polcal","Calibration"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_req_task_polfromgain",
             "testType":"casatasks",
             "maintainer":"Neal Schweighart",
@@ -1695,7 +1785,7 @@
             "testType":"casatasks",
             "maintainer":"Urvashi Rau",
             "maintainerEmail":"rurvashi@aoc.nrao.edu",
-            "testOptions":[],
+            "testOptions":["mpi"],
             "testGroup":["sdintimaging","Imaging"],
             "timeout":0,
             "comment":""
@@ -1841,6 +1931,16 @@
             "comment":""
         },
         {
+            "testScript":"test_sdatmcor",
+            "testType":"casatasks",
+            "maintainer":"Takeshi Nakazato",
+            "maintainerEmail":"takeshi.nakazato@nao.ac.jp",
+            "testOptions":[],
+            "testGroup":["casatasks","Single Dish","sdatmcor"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_sdbaseline",
             "testType":"casatasks",
             "maintainer":"Kana Sugimoto",
@@ -1915,8 +2015,8 @@
             "testType":"casatools",
             "maintainer":"Bob Garwood",
             "maintainerEmail":"bgarwood@nrao.edu",
-            "testOptions":["casatools","default"],
-            "testGroup":[],
+            "testOptions":[],
+            "testGroup":["casatools","default"],
             "timeout":0,
             "comment":"DEFAULT"
         },
@@ -2091,16 +2191,6 @@
             "comment":""
         },
         {
-            "testScript":"test_task_req_vishead",
-            "testType":"None",
-            "maintainer":"Neal Schweighart",
-            "maintainerEmail":"nschweig@nrao.edu",
-            "testOptions":[],
-            "testGroup":["vishead"],
-            "timeout":0,
-            "comment":""
-        },
-        {
             "testScript":"test_tclean",
             "testType":"casatasks",
             "maintainer":"Kumar Golap",
@@ -2131,12 +2221,12 @@
             "comment":""
         },
         {
-            "testScript":"test_uvcontsub3",
-            "testType":"None",
-            "maintainer":"Takahiro Tsutsumi",
-            "maintainerEmail":"ttsutsum@nrao.edu",
+            "testScript":"test_uvfits",
+            "testType":"casatools",
+            "maintainer":"David Mehringer",
+            "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["uvcontsub","uvconstsub3"],
+            "testGroup":["casatools","default"],
             "timeout":0,
             "comment":""
         },
