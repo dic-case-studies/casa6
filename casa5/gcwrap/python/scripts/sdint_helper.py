@@ -635,7 +635,7 @@ class SDINT_helper:
 ,'WARN')    
             if allowshift:
                 modsdpsf=inpsf+'_mod'
-                casalog.post("Modifying the input SD psf, "+sdpsf+" by shifting the field center of sd psf to that of int psf. Modified SD psf image:"+modsdpsf)
+                casalog.post("Modifying the input SD psf, "+inpsf+" by shifting the field center of sd psf to that of int psf. Modified SD psf image:"+modsdpsf)
                 shutil.copytree(inpsf, inpsf+'_mod')
                 _ia.open(modsdpsf)
                 thecsys = _ia.coordsys()
@@ -720,6 +720,15 @@ class SDINT_helper:
             implane.fill(0.0)
             _ia.putchunk(implane, blc=[0,0,0,ch])
             _ia.modify(model=_cl.torecord(), subtract=False, region=_rg.box(blc=[0,0,0,ch],trc=[shp[0],shp[1],0,ch]))
+            ## Now, normalize it.
+            implane = _ia.getchunk(blc=[0,0,0,ch],trc=[shp[0],shp[1],0,ch])
+            pmax = np.max(implane)
+            #print(pmax)
+            if pmax>0.0:
+                implane = implane/pmax
+            else:
+                implane.fill(0.0)
+            _ia.putchunk(implane, blc=[0,0,0,ch])
 
         _ia.close()
             
@@ -850,3 +859,20 @@ class SDINT_helper:
         casalog.post("\n(For specmode='mfs' in sdintimaging, please remember to set 'reffreq' to a value within the freq range of the cube)\n")
         _ia.close()
         return {'nchan':nchan, 'start':start, 'width':width}
+
+### Using Old Imager. Does not work for cubes ? 
+#    def fit_psf_beam(self,msname = '', psfname =''):
+#        _im.open(msname)  
+#        _ia.open(psfname)
+#        csys = _ia.coordsys()
+#        rbeam_old = _ia.restoringbeam()
+#        print(rbeam_old)
+#        shp = _ia.shape()
+#        _ia.close()
+#        cellx = csys.increment()['numeric'][0];
+#        celly = csys.increment()['numeric'][1];
+#        _im.defineimage(nx=shp[0],ny=shp[1],cellx=str(cellx)+'rad',celly=str(celly)+'rad',nchan=3)  
+#        params =_im.fitpsf(psfname)
+#        print(params)
+#        _im.close() 
+#
