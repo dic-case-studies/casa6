@@ -169,7 +169,6 @@ from bandpass import bandpass
 from blcal import  blcal
 from browsetable import  browsetable
 from calstat import  calstat
-from clean import  clean
 from clearcal import  clearcal
 from clearstat import  clearstat
 from concat import  concat

@@ -397,6 +397,7 @@ protected:
 	void setSpwAvg(casacore::Record &configuration);
 	void parsePolAvgParams(casacore::Record &configuration);
 	void parsePointingsInterpolationParams(casacore::Record &configuration);
+	void parseAtmCorrectionParams(casacore::Record &configuration);
 
 	// From input MS
 	void initDataSelectionParams();
@@ -488,7 +489,7 @@ protected:
 	void colCheckInfo(const casacore::String& inputColName, const casacore::String& outputColName);
 	void checkSPWChannelsKnownLimitation();
 	void checkCorrelatorPreaveraging();
-	
+
 	// Iterator set-up
 	virtual void setIterationApproach();
 	void generateIterator();
@@ -1505,6 +1506,8 @@ protected:
 	// single dish specific
 	casacore::Bool smoothFourier_p;
 	map<casacore::Int, casacore::Convolver<casacore::Float> > convolverPool_;
+	casacore::Bool doAtmCor_p;
+	casacore::Record atmCorConfig_p;
 
 	// Logging
 	casacore::LogIO logger_p;
