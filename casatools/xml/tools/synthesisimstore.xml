@@ -1,13 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/tools/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
  
-        <tool name="synthesisimstore" module="synthesisimstore">
+        <tool module="synthesisimstore" name="synthesisimstore">
         <shortdescription>tool for synthesis imaging</shortdescription>
        
 <description>
@@ -15,17 +10,17 @@ synthesisimstore is an tool that accomplishes gather/scatter for parallel major 
 </description>
 
 <code>
-	<include>tools/synthesis/synthesisimstore_forward.h</include>
+	<include>synthesisimstore_forward.h</include>
 <private>
-	<include>tools/synthesis/synthesisimstore_private.h</include>
+	<include>synthesisimstore_private.h</include>
 </private>
 
 </code>
 
 
-<!-- ===================================== -->
+
  
-   <method type="constructor" name="synthesisimstore">
+   <method name="synthesisimstore" type="constructor">
    <shortdescription>Construct an synthesisimstore tool</shortdescription>
    
 <description>
@@ -44,9 +39,9 @@ This is used to construct {\tt synthesisimstore} tool.
 
 
 
-<!-- ===================================== -->
 
-   <method type="function" name="done">
+
+   <method name="done" type="function">
    <shortdescription>Close the tool</shortdescription>
 
 <description>
