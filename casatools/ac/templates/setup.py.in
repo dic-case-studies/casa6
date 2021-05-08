@@ -89,6 +89,10 @@ from os.path import isfile, join, islink
 from itertools import chain
 import argparse
 
+from urllib import request, urlretrieve
+import tarfile
+import ssl
+
 lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
 
 parser=argparse.ArgumentParser()
@@ -118,6 +122,9 @@ module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
 xml_jar_file = 'xml-casa-assembly-1.65.jar'
+xml_jar_path = os.path.join( 'scripts', 'java', xml_jar_file)
+xml_jar_url = 'http://casa.nrao.edu/download/devel/xml-casa/java/%s' % xml_jar_file
+
 real_gnu = None
 gxx_version_number = 0
 
@@ -160,6 +167,10 @@ elif sys.platform == 'linux2' or sys.platform == 'linux':
         return l.find('.so') > 3
 else:
     sys.exit("oops, had not planned on building on %s" % sys.platform)
+
+def xml_jar_fetch( ):
+    if not os.path.exists(xml_jar_path):
+        urlretrieve( xml_jar_url, xml_jar_path )
 
 def compute_version( ):
     if (args.version != None ):
@@ -312,6 +323,19 @@ def distutils_loadable_object(base):
     f = "_{name}{so}"
     return f.format(name=base,so=sysconfig.get_config_var('SO'))
 
+def sakura_fetch( ):
+
+    if not os.path.isdir('sakura-source'):
+        sakura_release = "libsakura-4.0.2065-01.tar.gz"
+        url = "http://casa.nrao.edu/download/devel/libsakura/%s" % sakura_release
+        print( "fetching %s" % url )
+        ctx = ssl._create_unverified_context( )
+        s = request.urlopen(url,context=ctx)
+        tf = tarfile.open(fileobj=s, mode="r|gz")
+        tf.extractall( )
+        os.rename('libsakura','sakura-source')
+        
+
 def sakura_files( ):
     return [ 'sakura-source/src/baseline.cc', 'sakura-source/src/bit_operation.cc',
              'sakura-source/src/bool_filter_collection.cc', 'sakura-source/src/concurrent.cc',
@@ -396,7 +420,7 @@ def so_version( ):
 
 def install_xml_casa( ):
     script = os.path.join('scripts','xml-casa')
-    jar = os.path.join('scripts','java',xml_jar_file)
+    jar = xml_jar_path
     bindir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin")
     javadir = os.path.join(bindir,'java')
     mkpath(javadir)
@@ -610,6 +634,13 @@ def generate_binding(sources,swig_dir='binding/generated/tools', header_dir='bin
     """
     xml_casa = props['build.compiler.xml_casa']
     assert os.path.isfile(xml_casa) and os.access(xml_casa,os.X_OK), "casa xml generation script not found..."
+    if not os.path.isdir(swig_dir):
+        mkpath(swig_dir)
+    for xml_file in sources:
+        toolbase = os.path.splitext((os.path.basename(xml_file)))[0]
+        toolsubdir = os.path.join(swig_dir,toolbase)
+        if not os.path.isdir(toolsubdir):
+            mkpath(toolsubdir)
     proc = Popen([xml_casa, '-all', '-output-tool-subdir','output-i=%s' % swig_dir, 'output-h=%s' % header_dir, 'output-c=%s' % source_dir, 'output-tool=%s' % tool_dir ] + sources, stdout=PIPE, stderr=PIPE)
     out,err = pipe_decode(proc.communicate( ))
     if proc.returncode != 0:
@@ -2308,9 +2339,8 @@ class create_makefile(Command):
         copy_to_dirs = {}
         files_to_copy.append(xml_casa)
         copy_to_dirs[os.path.basename(xml_casa)] = bindir
-        assembly_jar = "xml-casa-assembly-1.65.jar"
-        files_to_copy.append("scripts" + os.sep + "java" + os.sep + assembly_jar)
-        copy_to_dirs[assembly_jar] = bindir + os.sep + "java"
+        files_to_copy.append(xml_jar_path)
+        copy_to_dirs[xml_jar_file] = bindir + os.sep + "java"
         copy_to_list = []
         with open("makefile", "a") as mk:
             mk.write("\n\n# straight file copies\n")
@@ -2456,6 +2486,9 @@ if __name__ == '__main__':
         sys.exit('Configuration error, not compiler found... try again...')
     if not os.path.exists('scripts/java'):
         sys.exit('Run scripts/gcw-pick first...')
+
+    sakura_fetch( )
+    xml_jar_fetch( )
 
     TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
     tools = [ os.path.splitext(os.path.basename(f))[0] for f in TOOL_XML ]

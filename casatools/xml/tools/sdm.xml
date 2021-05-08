@@ -1,0 +1,343 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd                              file:///opt/casa/code/tools/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <tool module="sdm" name="sdm">
+
+    <code>
+	  <include>sdm_forward.h</include>
+      <private>
+	    <include>sdm_private.h</include>
+      </private>
+    </code>
+    <shortdescription>Manipulate or examine SDM datasets</shortdescription>
+
+    <description/>
+
+    <method name="sdm" type="constructor">
+
+      <shortdescription>Construct an SDM tool</shortdescription>
+      <description/>
+
+      <input>
+        <param name="path" type="path">
+	      <description>Path to the SDM</description>
+	      <value/>
+        </param>
+      </input>
+
+      <returns type="sdm"/>
+
+      <example/>
+
+    </method>
+
+    <method name="sdmversion" type="function">
+
+      <shortdescription>Returns SDM version number on which this tool operates</shortdescription>
+
+      <description/>
+
+      <input/>
+
+      <returns type="string"/>
+
+      <example/>
+
+    </method>    
+
+    <method name="summarystr" type="function">
+
+      
+      <shortdescription>Returns a summary of the SDM as a string</shortdescription>
+
+      <description/>
+
+      <input/>
+
+      <returns type="string"/>
+
+      <example/>
+
+    </method>    
+
+    <method name="fromms" type="function">
+
+      <shortdescription>convert measurement set into an SDM (stored path)</shortdescription>
+      <description>
+        Create an sdm object with a non-existant path, and then use this function to populate
+        the directory (which will be created) with the specified measurement set.
+      </description>
+
+      <input>
+        <param name="mspath" mustexist="true" type="path">
+	      <description>Path to the MS to import</description>
+          <value/>
+        </param>
+        <param name="datacolumn" type="string">
+	      <description>
+            specifies which of the MS data columns (DATA, CORRECTED_DATA, or MODEL_DATA)
+            should be used as the visibilities in the ASDM
+          </description>
+          <value>DATA</value>
+        </param>
+        <param name="archiveid" type="string">
+	      <description>
+            the X0 in uid://X0/X1/X&lt;running&gt;
+          </description>
+          <value>S0</value>
+        </param>
+        <param name="rangeid" type="string">
+	      <description>
+            the X1 in uid://X0/X1/X&lt;running&gt;
+          </description>
+          <value>X1</value>
+        </param>
+        <param name="subscanduration" type="double">
+	      <description>
+            maximum duration of a subscan in the output ASDM
+          </description>
+          <value>24.0*3600.0</value>
+        </param>
+        <param name="sbduration" type="double">
+	      <description>
+            maximum duration of a scheduling block in the output ASDM
+          </description>
+          <value>2700.0</value>
+        </param>
+        <param name="apcorrected" type="bool">
+	      <description>
+            If true, the data in column datacolumn should be regarded
+            as having atmospheric phase correction
+          </description>
+          <value>false</value>
+        </param>
+        <param name="verbose" type="bool">
+	      <description>produce log output</description>
+          <value>true</value>
+        </param>
+        <param name="useversion" type="string">
+	      <description>
+            Selects the version of MS2asdm to be used ('v3')
+          </description>
+	      <value>v3</value>
+	      <allowed kind="enum">
+	        <value>v3</value>
+	        <value/>
+	      </allowed>
+        </param>
+      </input>
+
+      <returns type="bool"/>
+
+      <example/>
+
+    </method>    
+
+    <method name="toms" type="function">
+      <shortdescription>Convert a Science Data Model observation into a CASA visibility file (MS)</shortdescription>
+      <input>
+
+        <param kind="ms" name="vis" type="string">
+          <description>Root name of the ms to be created. Note the .ms is NOT added </description>
+          <value/>
+        </param>
+
+        <param name="createmms" type="bool">
+          <description>Create a Multi-MS output</description>
+          <value>false</value>
+        </param>
+
+        <param subparam="true" ignorecase="true" name="separationaxis" type="string">
+          <description>Axis to do parallelization across(scan, spw, baseline, auto)</description>
+          <value>auto</value>
+          <allowed ignorecase="true" kind="enum">
+            <value>auto</value>
+            <value>scan</value>
+            <value>spw</value>
+            <value>baseline</value>
+          </allowed>
+        </param>
+
+        <param subparam="true" name="numsubms" type="any">
+          <description>The number of SubMSs to create (auto or any number)</description>
+          <type>string</type><type>int</type>
+          <value type="string">auto</value>
+        </param>
+    
+        <param name="corr_mode" type="string">
+	      <description>specifies the correlation mode to be considered on input. A quoted string containing a sequence of ao, co, ac,or all separated by whitespaces is expected</description>
+	      <value>all</value>
+        </param>
+
+        <param name="srt" type="string">
+	      <description>specifies the spectral resolution type to be considered on input. A quoted string containing a sequence of fr, ca, bw, or all separated by whitespaces is expected</description>
+	      <value>all</value>
+        </param>
+
+        <param name="time_sampling" type="string">
+	      <description>specifies the time sampling (INTEGRATION and/or SUBINTEGRATION)  to be considered on input. A quoted string containing a sequence of i, si, or all separated by whitespaces is expected</description>
+	      <value>all</value>
+        </param>
+
+        <param name="ocorr_mode" type="string">
+	      <description>output data for correlation mode AUTO_ONLY (ao) or CROSS_ONLY (co) or CROSS_AND_AUTO (ca)</description>
+	      <value>ca</value>
+	      <allowed kind="enum">
+	        <value>co</value>
+	        <value>ao</value>
+	        <value>ca</value>
+	      </allowed>
+        </param>
+
+        <param name="compression" type="bool">
+	      <description>Flag for turning on data compression</description>
+	      <value>false</value>
+        </param>
+
+        <param name="lazy" type="bool">
+	      <description>Make the MS DATA column read the ASDM Binary data directly (faster import, smaller MS)</description>
+	      <value>false</value>
+        </param>
+
+        <param name="asis" type="string">
+	      <description>Creates verbatim copies of the ASDMtables in the ouput measurement set.  Value given must be a string of table names separated by spaces; A * wildcard is allowed.</description>
+	      <value/>
+        </param>
+
+        <param name="wvr_corrected_data" type="string">
+	      <description>Specifies which values are considerd in the SDM binary data to fill the DATA column in the MAIN table of the MS. Expected values for this option are: no, for uncorrected data (default), yes, for the corrected data, and both, for for corrected and uncorrected data. Note if both is selected two measurement sets are created, one with uncorrected data and the other with corrected data.  </description>
+	      <value>no</value>
+	      <allowed kind="enum">
+	        <value>no</value>
+	        <value>yes</value>
+	        <value>both</value>
+	      </allowed>
+        </param>
+
+        <param name="scans" type="string">
+	      <description>processes only the specified scans. This value is a semicolon separated list of scan specifications. A scan specification consists in an exec bock index followed by the : character;  followed by a comma separated list of scan indexes or scan index ranges. A scan index is relative to the exec block it belongs to. Scan indexes are 1-based while exec blocks are 0-based. &quot;0:1&quot; or &quot;2:2~6&quot; or &quot;0:1,1:2~6,8;2:,3:24~30&quot; &quot;1,2&quot; are valid values for the option. &quot;3:&quot; alone will be interpreted as, all the scans of the exec block#3.  An scan index or a scan index range not preceded by an exec block index will be interpreted as, all the scans with such indexes in all the exec blocks.  By default all the scans are considered. </description>
+	      <value/>
+        </param>
+
+        <param name="ignore_time" type="bool">
+          <description>All the rows of the tables Feed, History, Pointing, Source, SysCal, CalDevice, SysPower, and Weather are processed independently of the time range of the selected exec block / scan.</description>
+          <value>false</value>
+        </param>
+    
+        <param name="process_syspower" type="bool">
+          <description> The SysPower table is processed if and only if this parameter is set to true.</description>
+          <value>true</value>
+        </param>
+
+        <param name="process_caldevice" type="bool">
+          <description>The CalDevice table is processed if and only if this parameter is set to true.</description>
+          <value>true</value>
+        </param>
+
+        <param name="process_pointing" type="bool">
+          <description>The Pointing table is processed if and only if this parameter is set to true. If set to false, the POINTING table is empty in the resulting MS</description>
+          <value>true</value>
+        </param>
+
+        <param name="process_flags" type="bool">
+          <description>Create online flags in the FLAG_CMD sub-table.</description>
+          <value>true</value>
+        </param>
+
+        <param subparam="true" name="tbuff" type="double">
+          <description> Time padding buffer (seconds)</description>
+          <value>0.0</value>
+        </param> 
+
+        <param subparam="true" name="applyflags" type="bool">
+          <description>Apply the flags to the MS.</description>
+          <value>false</value>
+        </param>
+
+        <param subparam="true" name="savecmds" type="bool">
+          <description>Save flag commands to an ASCII file</description>
+          <value>false</value>
+        </param>
+
+        <param subparam="true" name="outfile" type="any">
+          <description>Name of ASCII file to save flag commands</description>
+          <type>string</type><type>stringVec</type>
+          <value type="string"/>
+        </param>
+
+        <param name="flagbackup" type="bool">
+          <description>Back up flag column before applying flags.</description>
+          <value>true</value>
+        </param>
+
+        <param name="verbose" type="bool">
+	      <description>Output lots of information while the filler is working</description>
+	      <value>false</value>
+        </param>
+
+        <param name="overwrite" type="bool">
+	      <description>Over write an existing MS(s)</description>
+	      <value>false</value>
+        </param>
+
+        <param name="showversion" type="bool">
+	      <description>Report the version of asdm2MS being used</description>
+	      <value>false</value>
+        </param>
+
+        <constraints>
+          <when param="createmms">
+            <equals value="false" type="bool"/>
+            <equals value="true" type="bool">
+              <default param="separationaxis"><value type="string">auto</value></default>
+              <default param="numsubms"><value type="string">auto</value></default>
+            </equals>
+          </when>
+          <when param="process_flags">
+            <equals value="true" type="bool">
+              <default param="tbuff"><value type="float">0.0</value></default>
+              <default param="applyflags"><value type="bool">false</value></default>
+              <default param="savecmds"><value type="bool">false</value></default>
+              <default param="outfile"><value type="string"/></default>
+            </equals>
+            <equals value="false" type="bool"/>
+          </when>
+        </constraints>
+
+        <param name="useversion" type="string">
+	      <description>Version of asdm2MS to be used (\'v3\' (default, should work for all data))</description>
+	      <value>v3</value>
+	      <allowed kind="enum">
+	        <value>v3</value>
+	        <value/>
+	      </allowed>
+        </param>
+
+        <param name="bdfflags" type="bool">
+	      <description>Set the MS FLAG column according to the ASDM _binary_ flags</description>
+	      <value>false</value>
+        </param>
+
+        <param name="with_pointing_correction" type="bool">
+          <description> add (ASDM::Pointing::encoder - ASDM::Pointing::pointingDirection) to the value to be written in MS::Pointing::direction</description>
+          <value>false</value>
+        </param>
+
+        <param name="convert_ephem2geo" type="bool">
+          <description>if true, convert any attached ephemerides to the GEO reference frame (time-spacing not changed)</description>
+          <value>true</value>
+        </param>
+
+        <param name="polyephem_tabtimestep" type="double">
+          <description>Timestep (days) for the tabulation of polynomial ephemerides. A value &lt;= 0 disables tabulation.</description>
+          
+          <value>0.</value>
+        </param>
+
+      </input>
+
+      <returns type="bool"/>
+
+    </method>    
+    
+  </tool>
+</casaxml>
