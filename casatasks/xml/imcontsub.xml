@@ -1,19 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<!-- This is the image continuum subtraction task                           -->
-<!-- step 1: construct region with the region manger tool, rg               -->
-<!-- step 2: do the subtraction, with ia.continuumsub (image analysis tool) -->
-<!--                                                                        -->
-<!-- TODO: Expand region selection                                          -->
 
-<task type="function" name="imcontsub" category="analysis, imaging">
+
+
+
+
+
+<task category="analysis, imaging" name="imcontsub" type="function">
 <shortdescription>Estimates and subtracts continuum emission from an image cube</shortdescription>
 <description>
 Estimates and subtracts continuum emission from an image cube
@@ -26,40 +20,40 @@ continuum estimate is saved in contfile, and subtracted from imagename
 linefile.
 </description>
 <input>
-    <param type="string" name="imagename" mustexist="true" >
+    <param mustexist="true" name="imagename" type="path">
 <shortdescription>Name of the input spectral line image</shortdescription>
 <description>Input image cube.
                      Default: none
 
                         Example: imagename='ngc5921_task.im'
 </description>
-        <value></value>
+        <value/>
         <example>inputfile=ngc5921_task.image</example>
     </param>
 
-    <param type="string" name="linefile" >
+    <param name="linefile" type="string">
 <shortdescription>Output continuum-subtracted image file name</shortdescription>
 <description>Name of continuum-subtracted output spectral line cube
                      Default: none
 
                         Example: outline='ngc5921_line.im'
 </description>
-        <value></value>
+        <value/>
         <example>outline=ngc5921_line.image</example>
     </param>
 
-    <param type="string" name="contfile" >
+    <param name="contfile" type="string">
 <shortdescription>Output continuum image file name</shortdescription>
 <description>Name of output continuum cube
                      Default: none
 
                         Example: contfile='ngc5921_cont.im'
 </description>
-        <value></value>
+        <value/>
         <example>outcont=ngc5921_cont.image</example>
     </param>
 
-    <param type="int" name="fitorder" >
+    <param name="fitorder" type="int">
 <shortdescription>Polynomial order for the continuum estimation</shortdescription>
 <description>Polynomial order for the continuum estimation
                      Default: 0
@@ -71,29 +65,29 @@ linefile.
         <example>fitorder=2</example>
     </param>
 
-    <param type="string" name="region">
+    <param name="region" type="string">
 <shortdescription>Region selection.</shortdescription>
 <description>Region selection. 
                      Default: '' (use the full image)
 </description>
         <value/>
     </param>
-    <param type="any" name="box">
+    <param name="box" type="any">
 <shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription>
 <description>Rectangular region to select in direction plane.
                      Default: '' (use the entire direction plane)
 </description>
-        <any type="variant" limittypes="string intArray stringArray"/>
+        <type>string</type><type>intVec</type><type>stringVec</type>
         <value type="string"/>
     </param>
-    <param type="string" name="chans" >
+    <param name="chans" type="string">
 <shortdescription>Channels to use.</shortdescription>
 <description>Channels to use. 
                      Default: '' (use all channels)
 </description>
         <value/>
     </param>
-    <param type="string" name="stokes">
+    <param name="stokes" type="string">
 <shortdescription>Stokes planes to use.</shortdescription>
 <description>Stokes planes to use.
                      Default: '' (use all Stokes planes)

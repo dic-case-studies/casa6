@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="analysis" name="immath" type="function">
+<task type="function" name="immath" category="analysis">
 
 <shortdescription>Perform math operations on images</shortdescription>
 
@@ -8,12 +8,12 @@
 </description>
 
 <input>
-    <param name="imagename" type="any"><shortdescription>a list of input images </shortdescription><description>a list of input images </description>
+    <param type="any" name="imagename"><shortdescription>a list of input images </shortdescription><description>a list of input images </description>
         
-        <any limttypes="string stringArray" type="variant"/>
+        <any type="variant" limttypes="string stringArray"/>
         <value type="string"/>
     </param>
-    <param name="mode" type="string"><shortdescription>mode for math operation (evalexpr, spix, pola, poli, lpoli, tpoli)</shortdescription><description>mode for math operation (evalexpr, spix, pola, poli, lpoli, tpoli)</description>
+    <param type="string" name="mode"><shortdescription>mode for math operation (evalexpr, spix, pola, poli, lpoli, tpoli)</shortdescription><description>mode for math operation (evalexpr, spix, pola, poli, lpoli, tpoli)</description>
         
         <value>evalexpr</value>
             <allowed kind="enum">
@@ -26,60 +26,60 @@
         </allowed>
         <example>'evalexpr', 'spix', 'pola', or 'poli' </example>
     </param>
-    <param name="outfile" type="string"><shortdescription>File where the output is saved</shortdescription><description>File where the output is saved</description>
+    <param type="string" name="outfile"><shortdescription>File where the output is saved</shortdescription><description>File where the output is saved</description>
         
         <value>immath_results.im</value>
         <example>outfile=&quot;newimage&quot;</example>
     </param>
-    <param subparam="true" name="expr" type="string"><shortdescription>Mathematical expression using images</shortdescription><description>Mathematical expression using images</description>
+    <param type="string" name="expr" subparam="true"><shortdescription>Mathematical expression using images</shortdescription><description>Mathematical expression using images</description>
         
         <value>IM0</value>
         <example>expr='&quot;sin(image1.im)+(image2.im*2)+real(image3.im)&quot;'</example>
     </param>
-    <param subparam="true" name="varnames" type="any"><shortdescription>a list of variable names to use with the image files</shortdescription><description>a list of variable names to use with the image files</description>
+    <param type="any" name="varnames" subparam="true"><shortdescription>a list of variable names to use with the image files</shortdescription><description>a list of variable names to use with the image files</description>
         
-        <any limttypes="string stringArray" type="variant"/>
+        <any type="variant" limttypes="string stringArray"/>
         <value type="string"/>
     </param>
-    <param subparam="true" name="sigma" type="string"><shortdescription>standard deviation of noise for debiasing</shortdescription><description>standard deviation of noise for debiasing</description>
+    <param type="string" name="sigma" subparam="true"><shortdescription>standard deviation of noise for debiasing</shortdescription><description>standard deviation of noise for debiasing</description>
         
         <value>0.0mJy/beam</value>
     </param>
-    <param subparam="true" name="polithresh" type="string"><shortdescription>Threshold in linear polarization intensity image below which to mask pixels.</shortdescription><description>Threshold in linear polarization intensity image below which to mask pixels.</description>
+    <param type="string" name="polithresh" subparam="true"><shortdescription>Threshold in linear polarization intensity image below which to mask pixels.</shortdescription><description>Threshold in linear polarization intensity image below which to mask pixels.</description>
         
         <value type="string"/>
     </param>
-    <param name="mask" type="string"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
+    <param type="string" name="mask"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
         
         <value/>
     </param>
-    <param name="region" type="string"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+    <param type="string" name="region"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
         
         <value/>
     </param>
-    <param name="box" type="string"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
+    <param type="string" name="box"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
         
         <value/>
     </param>
-    <param name="chans" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+    <param type="string" name="chans"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
         
         <value/>
     </param>
-    <param name="stokes" type="string"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
+    <param type="string" name="stokes"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
         
         <value/>
         <example>stokes='IQ'</example>
         <example>stokes='RR,LL'</example>
     </param>
-    <param subparam="true" name="stretch" direction="in" type="bool"><shortdescription>Stretch the mask if necessary and possible? See help stretch.par </shortdescription><description>Stretch the mask if necessary and possible? See help stretch.par </description>
+    <param type="bool" direction="in" name="stretch" subparam="true"><shortdescription>Stretch the mask if necessary and possible? See help stretch.par </shortdescription><description>Stretch the mask if necessary and possible? See help stretch.par </description>
         
         <value>False</value>
     </param>
-    <param name="imagemd" type="string"><shortdescription>An image name from which metadata should be copied. The input can be either an image listed under imagename or any other image on disk. Leaving this parameter unset may copy header metadata from any of the input images, which one is not guaranteed. </shortdescription><description>An image name from which metadata should be copied. The input can be either an image listed under imagename or any other image on disk. Leaving this parameter unset may copy header metadata from any of the input images, which one is not guaranteed. </description>
+    <param type="string" name="imagemd"><shortdescription>An image name from which metadata should be copied. The input can be either an image listed under imagename or any other image on disk. Leaving this parameter unset may copy header metadata from any of the input images, which one is not guaranteed. </shortdescription><description>An image name from which metadata should be copied. The input can be either an image listed under imagename or any other image on disk. Leaving this parameter unset may copy header metadata from any of the input images, which one is not guaranteed. </description>
         
         <value/>
     </param>
-    <param name="prec" type="string"><shortdescription>Precision for the output image pixels if mode=&quot;evalexpr&quot; or &quot;spix&quot;. &quot;float&quot; or &quot;double&quot; (minimum match supported)</shortdescription><description>Precision for the output image pixels if mode=&quot;evalexpr&quot; or &quot;spix&quot;. &quot;float&quot; or &quot;double&quot; (minimum match supported)</description>
+    <param type="string" name="prec"><shortdescription>Precision for the output image pixels if mode=&quot;evalexpr&quot; or &quot;spix&quot;. &quot;float&quot; or &quot;double&quot; (minimum match supported)</shortdescription><description>Precision for the output image pixels if mode=&quot;evalexpr&quot; or &quot;spix&quot;. &quot;float&quot; or &quot;double&quot; (minimum match supported)</description>
         
         <value>float</value>
     </param>
@@ -106,7 +106,7 @@
             <equals value="spix"/>
         </when>
         <when param="mask">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="stretch"><value type="bool">False</value></default>
             </notequals>
         </when>

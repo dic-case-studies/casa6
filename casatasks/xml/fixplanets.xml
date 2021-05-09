@@ -1,14 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
-<!-- Documentation here.                                                -->
 
-<task type="function" name="fixplanets" category="manipulation, calibration" >
+<task category="manipulation, calibration" name="fixplanets" type="function">
 
 <shortdescription>Changes FIELD and SOURCE table entries based on user-provided direction or POINTING table, optionally fixes the UVW coordinates</shortdescription>
 <description>
@@ -20,18 +14,18 @@ the visibilties in an MS, you should use task fixvis.
 </description>
 
 <input>
-    <param type="string" name="vis" kind="ms" mustexist="true">
+    <param mustexist="true" kind="ms" name="vis" type="path">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-        <value></value>
+        <value/>
         <example>vis='ngc5921.ms'</example>
     </param>
 
-    <param type="any" direction="in" name="field">
+    <param name="field" direction="in" type="any">
 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
 <description>Select field using field id(s) or field name(s)
                      Default: '' (all fields)
@@ -50,10 +44,10 @@ the visibilties in an MS, you should use task fixvis.
                         starting with 4C
 </description>
       <any type="variant"/>
-      <value>""</value>
+      <value>&quot;&quot;</value>
     </param>
 
-    <param type="bool" name="fixuvw">
+    <param name="fixuvw" type="bool">
 <shortdescription>Recalculate Fourier-plane u,v,w coordinates</shortdescription>
 <description>Recalculate Fourier-plane u,v,w coordinates?
                      Default: False
@@ -62,7 +56,7 @@ the visibilties in an MS, you should use task fixvis.
       <value>False</value>
     </param>
 
-    <param type="any" name="direction">
+    <param name="direction" type="any">
 <shortdescription>If set, do not use pointing table but set direction to this value</shortdescription>
 <description>If set, do not use pointing table but set direction to
 this value
@@ -78,10 +72,10 @@ this value
                      CASA Docs (https://casa.nrao.edu/casadocs/).
 </description>
       <any type="variant"/>
-      <value type="string"></value>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="refant">
+    <param name="refant" type="any">
 <shortdescription>Reference antenna name(s)</shortdescription>
 <description>Reference antenna name(s); a prioritized list may be
 specified
@@ -100,7 +94,7 @@ specified
       <value type="int">0</value>
     </param>
 
-    <param type="string" name="reftime">
+    <param name="reftime" type="string">
 <shortdescription>If using pointing table information, use it from this timestamp</shortdescription>
 <description>If using pointing table information, use it from this
 timestamp
@@ -129,6 +123,6 @@ https://casa.nrao.edu/casadocs/
 
 </example>
 
-</task>
+<returns>void</returns></task>
 
 </casaxml>

@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="single dish" name="sdpolaverage" type="function">
+<task type="function" name="sdpolaverage" category="single dish">
      <shortdescription>Average SD spectra over polarisation</shortdescription>
 
 <description>
@@ -16,47 +16,47 @@
 </description>
 
 <input>
-    <param mustexist="true" name="infile" type="string"><shortdescription>name of input SD dataset</shortdescription><description>name of input SD dataset</description>
+    <param type="path" name="infile" mustexist="true"><shortdescription>name of input SD dataset</shortdescription><description>name of input SD dataset</description>
         
         <value/>
     </param>
     
-    <param ignorecase="true" name="datacolumn" type="string"><shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</shortdescription><description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</description>
+    <param type="string" name="datacolumn" ignorecase="true"><shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</shortdescription><description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</description>
         
         <value>data</value>
     </param>
 
-    <param name="antenna" type="string"><shortdescription>select data by antenna name or ID, e.g. &quot;PM03&quot;</shortdescription><description>select data by antenna name or ID, e.g. &quot;PM03&quot;</description>
+    <param type="string" name="antenna"><shortdescription>select data by antenna name or ID, e.g. &quot;PM03&quot;</shortdescription><description>select data by antenna name or ID, e.g. &quot;PM03&quot;</description>
         
         <value/>
     </param>
     
-    <param name="field" type="string"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="field"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="spw" type="string"><shortdescription>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</shortdescription><description>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="spw"><shortdescription>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</shortdescription><description>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
     
-    <param name="timerange" type="string"><shortdescription>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</shortdescription><description>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</description>
+    <param type="string" name="timerange"><shortdescription>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</shortdescription><description>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</description>
         
         <value/>
     </param>
     
-    <param name="scan" type="string"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="scan"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="intent" type="string"><shortdescription>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</shortdescription><description>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="intent"><shortdescription>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</shortdescription><description>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="polaverage" type="string"><shortdescription>polarization averaging mode (&quot;&quot;, &quot;stokes&quot; or &quot;geometric&quot;).</shortdescription><description>polarization averaging mode (&quot;&quot;, &quot;stokes&quot; or &quot;geometric&quot;).</description>
+    <param type="string" name="polaverage"><shortdescription>polarization averaging mode (&quot;&quot;, &quot;stokes&quot; or &quot;geometric&quot;).</shortdescription><description>polarization averaging mode (&quot;&quot;, &quot;stokes&quot; or &quot;geometric&quot;).</description>
         
         <allowed kind="enum">
             <value/>
@@ -66,7 +66,7 @@
         <value/>
     </param>
 
-    <param name="outfile" type="string"><shortdescription>name of output file</shortdescription><description>name of output file</description>
+    <param type="string" name="outfile"><shortdescription>name of output file</shortdescription><description>name of output file</description>
         
         <value/>
     </param>
@@ -137,5 +137,5 @@ data reduction. The averaged data is given by weighted average
 of XX and YY, or RR and LL. 
 
 </example> 
-</task>
+<returns>void</returns></task>
 </casaxml>

@@ -1,40 +1,35 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="importmiriad" category="import/export">
+<task category="import/export" name="importmiriad" type="function">
         <shortdescription>Convert a Miriad visibility file into a CASA MeasurementSet</shortdescription>
         <description>
 Convert a Miriad visibility file into a CASA MeasurementSet with
 optional selection of spectral windows and weighting scheme
         </description>
         <input>
-                <param type="string" name="mirfile" mustexist="true">
+                <param mustexist="true" name="mirfile" type="path">
 <shortdescription>Name of input Miriad visibility file</shortdescription>
 <description>Name of input Miriad visibility file
                      Default: none
 
                         Example: mirfile='mydata.uv'
 </description>
-                        <value></value>
+                        <value/>
                         <example>mirfile='mydata.uv'</example>
                 </param>
                 
-                <param type="string" name="vis">
+                <param name="vis" type="string">
 <shortdescription>Name of output MeasurementSet</shortdescription>
 <description>Name of output MeasurementSet
                      Default: none
 
                         Example: vis='mydata.ms'
 </description>
-                        <value></value>
+                        <value/>
                         <example>vis='mydata.ms'</example>
                 </param>
 
-                <param type="bool" name="tsys">
+                <param name="tsys" type="bool">
 <shortdescription>Use the Tsys to set the visibility weights</shortdescription>
 <description>Use the Tsys to set the visibility weights
                      Default: False
@@ -43,7 +38,7 @@ optional selection of spectral windows and weighting scheme
                         <value>False</value>
                 </param>
                 
-                <param type="intArray" name="spw">
+                <param name="spw" type="intVec">
 <shortdescription>Select spectral window/channels</shortdescription>
 <description>Select spectral window/channels
                      Default: '' (all spectral windows and channels)
@@ -59,24 +54,24 @@ optional selection of spectral windows and weighting scheme
                         spw = '*:3~64'  channels 3 through 64 for all sp id's
                         spw = ' :3~64' will NOT work.
 </description>
-                        <value>-1</value>
+                        <value><value>-1</value></value>
                         <example>spw='1,3,4'</example>
                 </param>
 
-                <param type="string" name="vel">
+                <param name="vel" type="string">
 <shortdescription>Select velocity reference (TOPO,LSRK,LSRD)</shortdescription>
 <description>Select velocity reference
-                     Default: telescope dependent, ATCA -> TOPO, CARMA
-                     -> LSRK
+                     Default: telescope dependent, ATCA -&gt; TOPO, CARMA
+                     -&gt; LSRK
                      Options: TOPO|LSRK|LSRD
 
                         Example: vel='LSRK'
 </description>
-                        <value></value>
+                        <value/>
                         <example>vel='LSRK'</example>
                 </param>
 
-                <param type="bool" name="linecal">
+                <param name="linecal" type="bool">
 <shortdescription>(CARMA) Apply line calibration</shortdescription>
 <description>(CARMA) Apply line calibration
                      Default: False
@@ -87,17 +82,17 @@ optional selection of spectral windows and weighting scheme
                         <value>False</value>
                 </param>
 
-                <param type="intArray" name="wide">
+                <param name="wide" type="intVec">
 <shortdescription>(CARMA) Select wide window averages</shortdescription>
 <description>(CARMA) Select wide window averages
 
                      Select which of the wide-band channels should be loaded 
                      Only useful for CARMA data
 </description>
-                        <value></value>
+                        <value/>
                 </param>
 
-                <param type="int" name="debug">
+                <param name="debug" type="int">
 <shortdescription>Display increasingly verbose debug messages</shortdescription>
 <description>Display increasingly verbose debug messages
                      Default: 0

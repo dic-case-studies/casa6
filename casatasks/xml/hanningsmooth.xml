@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="hanningsmooth" category="manipulation">
+<task category="manipulation" name="hanningsmooth" type="function">
     <shortdescription>Hanning smooth frequency channel data to remove Gibbs ringing</shortdescription>
 <description>
 The hanningsmooth task uses the MSTransform framework underneath but
@@ -25,28 +20,28 @@ WARNING: by default, all visibility columns will be smoothed.
 </description>
 
     <input>
-        <param type="string" name="vis" mustexist="true">
+        <param mustexist="true" name="vis" type="path">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-        <value type="string"></value>
+        <value type="string"/>
     </param>
 
-    <param type="string" name="outputvis">
+    <param name="outputvis" type="string">
 <shortdescription>Name of output visibility file</shortdescription>
 <description>Name of output visibility file
                      Default: '' (same as vis)
 
                         Example: outputvis='ngc5921_out.ms'
 </description>
-        <value></value>
+        <value/>
     </param>
 
-        <!-- MMS-CASE parameters -->
-    <param type="bool" name="keepmms">
+        
+    <param name="keepmms" type="bool">
 <shortdescription>Create a Multi-MS as the output if the input is a Multi-MS.</shortdescription>
 <description>Create a Multi-MS as the output if the input is a
 Multi-MS.
@@ -63,8 +58,8 @@ Multi-MS.
     <value>True</value>
     </param>
     
-    <!-- SELECTION parameters -->    
-    <param type="any" name="field">
+        
+    <param name="field" type="any">
 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
 <description>Select field using field id(s) or field name(s)
                      Default: '' (all fields)
@@ -82,11 +77,11 @@ Multi-MS.
                         field = '3,4C*'; field id 3, all names
                         starting with 4C
 </description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
+        <value type="string"/>
     </param>
 
-    <param type="any" name="spw">
+    <param name="spw" type="any">
 <shortdescription>Select spectral window/channels</shortdescription>
 <description>Select spectral window/channels
                      Default: ''=all spectral windows and channels
@@ -105,21 +100,21 @@ Multi-MS.
                      NOTE: mstransform does not support multiple
                      channel ranges per spectral window (';').
 </description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
+        <value type="string"/>
     </param>
     
-    <param type="any" name="scan" >
+    <param name="scan" type="any">
 <shortdescription>Scan number range</shortdescription>
 <description>Scan number range
                      Subparameter of selectdata=True
                      Default: '' = all
 </description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
+        <value type="string"/>
     </param>
 
-    <param type="any" name="antenna">
+    <param name="antenna" type="any">
 <shortdescription>Select data based on antenna/baseline</shortdescription>
 <description>Select data based on antenna/baseline
                      Subparameter of selectdata=True
@@ -146,22 +141,22 @@ Multi-MS.
                           except those that include EVLA antennas
                           ea03, ea12, or ea17.
 </description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
+        <value type="string"/>
     </param>
     
-    <param type="any" name="correlation">
+    <param name="correlation" type="any">
 <shortdescription>Select data based on correlation</shortdescription>
 <description>Select data based on correlation
-                     Default: '' ==> all
+                     Default: '' ==&gt; all
 
-                        Example: correlation="XX,YY".
+                        Example: correlation=&quot;XX,YY&quot;.
 </description>
-        <any type="variant" limittypes="string stringArray" />
-        <value type="string" />
+        <type>string</type><type>stringVec</type>
+        <value type="string"/>
     </param>
 
-    <param type="any" name="timerange" >
+    <param name="timerange" type="any">
 <shortdescription>Select data based on time range</shortdescription>
 <description>Select data based on time range
                      Subparameter of selectdata=True
@@ -178,13 +173,13 @@ Multi-MS.
                         hr 30min on NEXT day
                         timerange='09:44:00' pick data within one
                         integration of time
-                        timerange='>10:24:00' data after this time
+                        timerange='&gt;10:24:00' data after this time
 </description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
+        <value type="string"/>
     </param>
     
-    <param type="any" name="intent" >
+    <param name="intent" type="any">
 <shortdescription>Select observing intent</shortdescription>
 <description>Select observing intent
                      Default: '' (no selection by intent)
@@ -192,34 +187,34 @@ Multi-MS.
                         Example: intent='*BANDPASS*'  (selects data
                         labelled with BANDPASS intent)
 </description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
+        <value type="string"/>
     </param>
     
-    <param type="any" name="array">
+    <param name="array" type="any">
 <shortdescription>Select (sub)array(s) by array ID number.</shortdescription>
 <description>(Sub)array number range
                      Default: '' (all)
 </description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
+        <value type="string"/>
     </param>
     
-    <param type="any" name="uvrange" >
+    <param name="uvrange" type="any">
 <shortdescription>Select data by baseline length.</shortdescription>
 <description>Select data by baseline length.
                      Default = '' (all)
 
                         Examples:
                         uvrange='0~1000klambda'; uvrange from 0-1000 kilo-lambda
-                        uvrange='>4klambda';uvranges greater than 4 kilo-lambda
+                        uvrange='&gt;4klambda';uvranges greater than 4 kilo-lambda
                         uvrange='0~1000km'; uvrange in kilometers
 </description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
+        <value type="string"/>
     </param>
     
-    <param type="any" name="observation">
+    <param name="observation" type="any">
 <shortdescription>Select by observation ID(s)</shortdescription>
 <description>Select by observation ID(s)
                      Subparameter of selectdata=True
@@ -227,21 +222,21 @@ Multi-MS.
 
                          Example: observation='0~2,4'
 </description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
+        <value type="string"/>
     </param>
 
-    <param type="any" name="feed">
+    <param name="feed" type="any">
 <shortdescription>Multi-feed numbers: Not yet implemented.</shortdescription>
 <description>Selection based on the feed 
                      NOT IMPLEMENTED YET!
                      Default: '' = all
 </description>
-        <any type="variant" limittypes="string stringArray int intArray"/>
-        <value type="string"></value>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
+        <value type="string"/>
     </param>
         
-    <param type="string" name="datacolumn" ignorecase="True">
+    <param ignorecase="True" name="datacolumn" type="string">
 <shortdescription>Which data column(s) to use for processing</shortdescription>
 <description>Which data column(s) to use for processing
                      (case-insensitive).
@@ -254,7 +249,7 @@ Multi-MS.
                         Example: datacolumn='data'
 </description>
         <value>all</value>
-        <allowed kind="enum" ignorecase="True">
+        <allowed ignorecase="True" kind="enum">
             <value>all</value>
             <value>corrected</value>
             <value>data</value>
@@ -273,5 +268,5 @@ Multi-MS.
 FOR MORE INFORMATION, SEE THE TASK PAGES OF HANNINGSMOOTH IN CASA DOCS:
 https://casa.nrao.edu/casadocs/
  </example>
- </task>
+ <returns>void</returns></task>
  </casaxml>

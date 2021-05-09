@@ -1,28 +1,23 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="fluxscale" category="calibration">
+<task category="calibration" name="fluxscale" type="function">
     <shortdescription>Bootstrap the flux density scale from standard calibrators</shortdescription>
     <description>
 Bootstrap the flux density scale from standard calibrators.
     </description>
 
     <input>
-        <param type="string" name="vis" mustexist="true">
+        <param mustexist="true" name="vis" type="path">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-            <value></value>
+            <value/>
         </param>
 
-        <param type="string" name="caltable">
+        <param name="caltable" type="string">
 <shortdescription>Name of input calibration table</shortdescription>
 <description>Name of input calibration table
                      Default: none
@@ -30,10 +25,10 @@ Bootstrap the flux density scale from standard calibrators.
                         Example: caltable='ngc5921.gcal'. This cal
                         table was obtained from task gaincal.=
 </description>
-            <value></value>
+            <value/>
         </param>
 
-        <param type="string" name="fluxtable">
+        <param name="fluxtable" type="string">
 <shortdescription>Name of output, flux-scaled calibration table (required)</shortdescription>
 <description>Name of output, flux-scaled calibration table (required)
                      Default: none
@@ -46,10 +41,10 @@ Bootstrap the flux density scale from standard calibrators.
                      flux density of the calibrator.  Use setjy to do
                      this if it is a point source.
 </description>
-            <value></value>
+            <value/>
         </param>
 
-        <param type="stringArray" name="reference">
+        <param name="reference" type="stringVec">
 <shortdescription>Reference field name(s) (transfer flux scale FROM)</shortdescription>
 <description>Reference field name(s) (transfer flux scale FROM)
                      Default: none
@@ -62,10 +57,10 @@ Bootstrap the flux density scale from standard calibrators.
                      not in the CASA system. The syntax is similar to
                      field.  Hence field index or names can be used.
 </description>
-            <value></value>
+            <value/>
         </param>
 
-        <param type="stringArray" name="transfer">
+        <param name="transfer" type="stringVec">
 <shortdescription>Transfer field name(s) (transfer flux scale TO), \'\' -&gt; all</shortdescription>
 <description>Transfer field name(s) (transfer flux scale TO)
                      Default: '' (all sources in caltable that are not
@@ -83,10 +78,10 @@ Bootstrap the flux density scale from standard calibrators.
                      NOTE: All fields in reference and transfer must
                      have solutions in the caltable.
 </description>
-            <value></value>
+            <value/>
         </param>
 
-        <param type="string" direction="in" name="listfile">
+        <param name="listfile" direction="in" type="string">
 <shortdescription>Name of listfile that contains the fit information.  Default is '' (no file).</shortdescription>
 <description>Name of listfile that contains the fit information.
                      Default: '' (no fit listfile will be created)
@@ -97,10 +92,10 @@ Bootstrap the flux density scale from standard calibrators.
                      NOTE: The nominal spectral window frequencies
                      will be included in the future.
 </description>
-            <value></value>
+            <value/>
         </param>
 
-        <param type="bool" name="append">
+        <param name="append" type="bool">
 <shortdescription>Append solutions?</shortdescription>
 <description>Append fluxscaled solutions to the fluxtable?
                      Default: False (the fluxtable must not exist)
@@ -109,7 +104,7 @@ Bootstrap the flux density scale from standard calibrators.
             <value>False</value>
         </param>
 
-        <param type="intArray" name="refspwmap">
+        <param name="refspwmap" type="intVec">
 <shortdescription>Scale across spectral window boundaries</shortdescription>
 <description>Vector of spectral windows enabling scaling across
 spectral windows
@@ -124,10 +119,10 @@ spectral windows
                         be referenced to reference field solutions
                         only in spw 1 or 3.
 </description>
-            <value>-1</value>
+            <value><value>-1</value></value>
         </param>
 
-        <param type="double" name="gainthreshold">
+        <param name="gainthreshold" type="double">
 <shortdescription>Threshold (fractional deviation from the median) on gain amplitudes to be used in the flux scale calculation</shortdescription>
 <description>Threshold in the input gain solutions to be used in fractional deviation from median values.
                      Default: -1 (no threshold)
@@ -138,7 +133,7 @@ spectral windows
 </description>
             <value>-1.0</value>
         </param>
-        <param type="string" name="antenna">
+        <param name="antenna" type="string">
 <shortdescription>Select data based on antenna/baseline</shortdescription>
 <description>Select data based on antenna/baseline
                      Subparameter of antenna
@@ -162,10 +157,10 @@ spectral windows
                          antenna='5,6,10'; all baselines with antennas
                          5,6,10 index numbers
 </description>
-            <value></value>
+            <value/>
         </param>
 
-        <param type="string" name="timerange" subparam="true">
+        <param subparam="true" name="timerange" type="string">
 <shortdescription>Select data based on time range</shortdescription>
 <description>Select data based on time range
                      Subparameter of antenna
@@ -182,21 +177,21 @@ spectral windows
                         hr 30min on NEXT day
                         timerange='09:44:00' pick data within one
                         integration of time
-                        timerange='>10:24:00' data after this time
+                        timerange='&gt;10:24:00' data after this time
 </description>
-            <value></value>
+            <value/>
         </param>
 
-        <param type="string" name="scan" subparam="true">
+        <param subparam="true" name="scan" type="string">
 <shortdescription>Scan number range</shortdescription>
 <description>Scan number range
                      Subparameter of antenna
                      Default: '' = all
 </description>
-            <value></value>
+            <value/>
         </param>
                 
-        <param type="bool" name="incremental">
+        <param name="incremental" type="bool">
 <shortdescription>Incremental caltable</shortdescription>
 <description>Create an incremental caltable containing only gain
 correction factors ( flux density= 1/(gain correction factor)**2)?
@@ -214,7 +209,7 @@ correction factors ( flux density= 1/(gain correction factor)**2)?
             <value>False</value>
         </param>
               
-                <param type="int" name="fitorder">
+                <param name="fitorder" type="int">
 <shortdescription>Order of spectral fitting</shortdescription>
 <description>Polynomial order of the spectral fitting for valid flux
 densities
@@ -227,7 +222,7 @@ densities
                         <value>1</value> 
                 </param>
     
-                <param type="bool" name="display">
+                <param name="display" type="bool">
 <shortdescription>Display some statistics of flux scaling</shortdescription>
 <description>Display statistics and/or spectral fitting results.
                      Default: False
@@ -240,22 +235,16 @@ densities
                         <value>False</value>
                 </param>
         <constraints>
-            <when  param="antenna"> 
+            <when param="antenna"> 
               <notequals value="">
-                  <default param="timerange"><value type="string"></value></default>
-                  <default param="scan"><value type="string"></value></default>
+                  <default param="timerange"><value type="string"/></default>
+                  <default param="scan"><value type="string"/></default>
               </notequals> 
             </when>
         </constraints>
     </input>
-        <output>
-            <param type="any" name="fluxd">
-            <description>Dictionary containing the transfer fluxes and their errors.</description>
-        <any type="variant"/>
-        <value>{}</value>
-        </param>
-        </output>
-<returns type="void"/>
+        
+<returns>any</returns>
 
 <example>
 For more information, see the task pages of fluxscale in CASA Docs:

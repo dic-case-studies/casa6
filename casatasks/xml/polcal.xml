@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="calibration" name="polcal" type="function">
+<task type="function" name="polcal" category="calibration">
 <shortdescription>Determine instrumental polarization calibrations</shortdescription>
 
 <description>
@@ -9,100 +9,100 @@ are determined from the data for the specified calibrator sources. Previous
 calibrations can be applied on the fly.
 </description>
 <input>
-        <param mustexist="true" name="vis" type="string"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
+        <param type="path" name="vis" mustexist="true"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
                 
                 <value/>
         </param>
 
-        <param name="caltable" type="string"><shortdescription>Name of output gain calibration table</shortdescription><description>Name of output gain calibration table</description>
+        <param type="string" name="caltable"><shortdescription>Name of output gain calibration table</shortdescription><description>Name of output gain calibration table</description>
                 
                 <value/>
         </param>
 
-        <param name="field" type="string"><shortdescription>Select field using field id(s) or field name(s)</shortdescription><description>Select field using field id(s) or field name(s)</description>
+        <param type="string" name="field"><shortdescription>Select field using field id(s) or field name(s)</shortdescription><description>Select field using field id(s) or field name(s)</description>
                 
                 <value/>
         </param>
 
-        <param name="spw" type="string"><shortdescription>Select spectral window/channels</shortdescription><description>Select spectral window/channels</description>
+        <param type="string" name="spw"><shortdescription>Select spectral window/channels</shortdescription><description>Select spectral window/channels</description>
                 
                 <value/>
         </param>
 
-        <param name="intent" type="string"><shortdescription>Select observing intent</shortdescription><description>Select observing intent</description>
+        <param type="string" name="intent"><shortdescription>Select observing intent</shortdescription><description>Select observing intent</description>
                 
                 <value/>
         </param>
 
-        <param name="selectdata" type="bool"><shortdescription>Other data selection parameters</shortdescription><description>Other data selection parameters</description>
+        <param type="bool" name="selectdata"><shortdescription>Other data selection parameters</shortdescription><description>Other data selection parameters</description>
                 
                 <value>True</value>
         </param>
 
-        <param subparam="true" name="timerange" type="string"><shortdescription>Select data based on time range</shortdescription><description>Select data based on time range</description>
+        <param type="string" name="timerange" subparam="true"><shortdescription>Select data based on time range</shortdescription><description>Select data based on time range</description>
                 
                 <value/>
         </param>
 
-        <param subparam="true" name="uvrange" type="any"><shortdescription>Select data within uvrange (default units meters)</shortdescription><description>Select data within uvrange (default units meters)</description>
+        <param type="any" name="uvrange" subparam="true"><shortdescription>Select data within uvrange (default units meters)</shortdescription><description>Select data within uvrange (default units meters)</description>
                 
                 <any type="variant"/>
                 <value type="string"/>
         </param>
 
-        <param subparam="true" name="antenna" type="string"><shortdescription>Select data based on antenna/baseline</shortdescription><description>Select data based on antenna/baseline</description>
+        <param type="string" name="antenna" subparam="true"><shortdescription>Select data based on antenna/baseline</shortdescription><description>Select data based on antenna/baseline</description>
                 
                 <value/>
         </param>
 
-        <param subparam="true" name="scan" type="string"><shortdescription>Scan number range</shortdescription><description>Scan number range</description>
+        <param type="string" name="scan" subparam="true"><shortdescription>Scan number range</shortdescription><description>Scan number range</description>
                 
                 <value/>
         </param>
 
-        <param subparam="true" name="observation" type="any"><shortdescription>Select by observation ID(s)</shortdescription><description>Select by observation ID(s)</description>
+        <param type="any" name="observation" subparam="true"><shortdescription>Select by observation ID(s)</shortdescription><description>Select by observation ID(s)</description>
                 
-                <any limittypes="string int" type="variant"/>
+                <type>string</type><type>int</type>
                 <value type="string"/>
         </param>
 
-        <param subparam="true" name="msselect" type="string"><shortdescription>Optional complex data selection (ignore for now)</shortdescription><description>Optional complex data selection (ignore for now)</description>
+        <param type="string" name="msselect" subparam="true"><shortdescription>Optional complex data selection (ignore for now)</shortdescription><description>Optional complex data selection (ignore for now)</description>
                 
                 <value/>
         </param>
 
-        <param name="solint" type="any"><shortdescription>Solution interval</shortdescription><description>Solution interval</description>
+        <param type="any" name="solint"><shortdescription>Solution interval</shortdescription><description>Solution interval</description>
                 
                 <any type="variant"/>
                 <value type="string">inf</value>
         </param>
 
-        <param name="combine" type="string"><shortdescription>Data axes which to combine for solve (obs, scan, spw, and/or field)</shortdescription><description>Data axes which to combine for solve (obs, scan, spw, and/or field)</description> 
+        <param type="string" name="combine"><shortdescription>Data axes which to combine for solve (obs, scan, spw, and/or field)</shortdescription><description>Data axes which to combine for solve (obs, scan, spw, and/or field)</description> 
                 
                 <value>obs,scan</value>
         </param>
 
-        <param name="preavg" type="double"><shortdescription>Pre-averaging interval (sec)</shortdescription><description>Pre-averaging interval (sec)</description>
+        <param type="double" name="preavg"><shortdescription>Pre-averaging interval (sec)</shortdescription><description>Pre-averaging interval (sec)</description>
                 
                 <value>300.0</value>
         </param>
 
-        <param name="refant" type="string"><shortdescription>Reference antenna name(s)</shortdescription><description>Reference antenna name(s)</description>
+        <param type="string" name="refant"><shortdescription>Reference antenna name(s)</shortdescription><description>Reference antenna name(s)</description>
                 
                 <value/>
         </param>
 
-        <param name="minblperant" type="int"><shortdescription>Minimum baselines _per antenna_ required for solve</shortdescription><description>Minimum baselines _per antenna_ required for solve</description>
+        <param type="int" name="minblperant"><shortdescription>Minimum baselines _per antenna_ required for solve</shortdescription><description>Minimum baselines _per antenna_ required for solve</description>
                 
                 <value>4</value>
         </param>
 
-        <param name="minsnr" type="double"><shortdescription>Reject solutions below this SNR</shortdescription><description>Reject solutions below this SNR</description>
+        <param type="double" name="minsnr"><shortdescription>Reject solutions below this SNR</shortdescription><description>Reject solutions below this SNR</description>
                 
                 <value>3.0</value>
         </param>
 
-        <param name="poltype" type="string"><shortdescription>Type of instrumental polarization solution (see help)</shortdescription><description>Type of instrumental polarization solution (see help)</description>
+        <param type="string" name="poltype"><shortdescription>Type of instrumental polarization solution (see help)</shortdescription><description>Type of instrumental polarization solution (see help)</description>
                 
                 <value>D+QU</value>
                 <allowed kind="enum">
@@ -129,42 +129,42 @@ calibrations can be applied on the fly.
                 </allowed>
         </param>
 
-        <param name="smodel" type="doubleArray"><shortdescription>Point source Stokes parameters for source model.</shortdescription><description>Point source Stokes parameters for source model.</description>
+        <param type="doubleVec" name="smodel"><shortdescription>Point source Stokes parameters for source model.</shortdescription><description>Point source Stokes parameters for source model.</description>
                
                <value/>
         </param>
 
-        <param name="append" type="bool"><shortdescription>Append solutions to the (existing) table</shortdescription><description>Append solutions to the (existing) table</description>
+        <param type="bool" name="append"><shortdescription>Append solutions to the (existing) table</shortdescription><description>Append solutions to the (existing) table</description>
                 
                 <value>False</value>
         </param>
 
-        <param name="docallib" type="bool"><shortdescription>Use callib or traditional cal apply parameters</shortdescription><description>Use callib or traditional cal apply parameters</description>
+        <param type="bool" name="docallib"><shortdescription>Use callib or traditional cal apply parameters</shortdescription><description>Use callib or traditional cal apply parameters</description>
                 
                 <value>False</value>
         </param>
 
-        <param subparam="true" name="callib" type="string"><shortdescription>Cal Library filename</shortdescription><description>Cal Library filename</description>
+        <param type="string" name="callib" subparam="true"><shortdescription>Cal Library filename</shortdescription><description>Cal Library filename</description>
                 
                 <value type="string"/>
         </param>
 
-        <param subparam="true" name="gaintable" type="stringArray"><shortdescription>Gain calibration table(s) to apply</shortdescription><description>Gain calibration table(s) to apply</description>
+        <param type="stringVec" name="gaintable" subparam="true"><shortdescription>Gain calibration table(s) to apply</shortdescription><description>Gain calibration table(s) to apply</description>
                 
                 <value/>
         </param>
 
-        <param subparam="true" name="gainfield" type="stringArray"><shortdescription>Select a subset of calibrators from gaintable(s)</shortdescription><description>Select a subset of calibrators from gaintable(s)</description>
+        <param type="stringVec" name="gainfield" subparam="true"><shortdescription>Select a subset of calibrators from gaintable(s)</shortdescription><description>Select a subset of calibrators from gaintable(s)</description>
                 
                 <value/>
         </param>
 
-        <param subparam="true" name="interp" type="stringArray"><shortdescription>Interpolation mode (in time) to use for each gaintable</shortdescription><description>Interpolation mode (in time) to use for each gaintable</description>
+        <param type="stringVec" name="interp" subparam="true"><shortdescription>Interpolation mode (in time) to use for each gaintable</shortdescription><description>Interpolation mode (in time) to use for each gaintable</description>
                 
                 <value/>
         </param>
 
-        <param subparam="true" name="spwmap" type="intArray">
+        <param type="intVec" name="spwmap" subparam="true">
 	  <shortdescription>Spectral window mappings to form for gaintable(s)</shortdescription>
 	  <description>Spectral window mappings to form for gaintable(s)
                      Only used if callib=False
@@ -185,7 +185,7 @@ calibrations can be applied on the fly.
 
    <constraints>
         <when param="selectdata">
-                <equals value="True" type="bool">
+                <equals type="bool" value="True">
                         <default param="timerange"><value type="string"/></default>
                         <default param="uvrange"><value type="string"/></default>
                         <default param="antenna"><value type="string"/></default>
@@ -193,16 +193,16 @@ calibrations can be applied on the fly.
                         <default param="observation"><value type="string"/></default>
                         <default param="msselect"><value type="string"/></default>
                 </equals>
-                <equals value="False" type="bool"/>
+                <equals type="bool" value="False"/>
         </when>
         <when param="docallib">
-                <equals value="False" type="bool">
-                        <default param="gaintable"><value type="stringArray"/></default>
-                        <default param="gainfield"><value type="stringArray"/></default>
-                        <default param="interp"><value type="stringArray"/></default>
-                        <default param="spwmap"><value type="intArray"/></default>
+                <equals type="bool" value="False">
+                        <default param="gaintable"><value type="stringVec"/></default>
+                        <default param="gainfield"><value type="stringVec"/></default>
+                        <default param="interp"><value type="stringVec"/></default>
+                        <default param="spwmap"><value type="intVec"/></default>
                 </equals>
-                <equals value="True" type="bool">
+                <equals type="bool" value="True">
                         <default param="callib"><value type="string"/></default>
                 </equals>
         </when>
@@ -433,5 +433,5 @@ calibrations can be applied on the fly.
                           spwmap=[[0,0,1,1],[0,1,0,1]]
 </example> 
 
-</task>
+<returns>void</returns></task>
 </casaxml>

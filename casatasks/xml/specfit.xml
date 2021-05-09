@@ -1,8 +1,8 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
-<task category="analysis" name="specfit" type="function">
+<task type="function" name="specfit" category="analysis">
 
 <shortdescription>Fit 1-dimensional gaussians and/or polynomial models to an image or image region</shortdescription>
 
@@ -10,17 +10,17 @@
 </description>
 
 <input>
-    <param mustexist="true" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+    <param type="path" name="imagename" mustexist="true"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
         
         <value/>
         <example>imagename='ngc5921_task.image'</example>
     </param>
-    <param name="box" direction="in" type="string"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
+    <param type="string" direction="in" name="box"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
         
         <value/>
         <example>box=&quot;4,4,10,10&quot;</example>
     </param>
-    <param name="region" direction="in" type="string"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+    <param type="string" direction="in" name="region"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
         
         <type>path</type>
         <type>string</type>
@@ -28,206 +28,206 @@
         <value/>
         <example>region=&quot;myregion.rgn&quot;</example>
     </param>
-    <param name="chans" direction="in" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+    <param type="string" direction="in" name="chans"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
         
         <value/>
     </param>
-    <param name="stokes" direction="in" type="string"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
+    <param type="string" direction="in" name="stokes"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
         
         <value/>
         <example>stokes=&quot;I&quot;</example>
     </param>
-    <param name="axis" direction="in" type="int"><shortdescription>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</shortdescription><description>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</description>
+    <param type="int" direction="in" name="axis"><shortdescription>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</shortdescription><description>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</description>
         
         <value>-1</value>
         <example>axis=3</example>
     </param>
-    <param name="mask" direction="in" type="string"><shortdescription>Mask to use. Default is none..</shortdescription><description>Mask to use. Default is none..</description>
+    <param type="string" direction="in" name="mask"><shortdescription>Mask to use. Default is none..</shortdescription><description>Mask to use. Default is none..</description>
       <type>string</type><type>stringVec</type>
         
         <value type="string"/>
     </param>
-    <param subparam="true" name="ngauss" direction="in" type="int"><shortdescription>Number of Gaussian elements.  Default: 1.</shortdescription><description>Number of Gaussian elements.  Default: 1.</description>
+    <param type="int" direction="in" name="ngauss" subparam="true"><shortdescription>Number of Gaussian elements.  Default: 1.</shortdescription><description>Number of Gaussian elements.  Default: 1.</description>
         
         <value>1</value>
         <example>ngauss=2</example>
     </param>
-    <param name="poly" direction="in" type="int"><shortdescription>Order of polynomial element.  Default: do not fit a polynomial (&lt;0).</shortdescription><description>Order of polynomial element.  Default: do not fit a polynomial (&lt;0).</description>
+    <param type="int" direction="in" name="poly"><shortdescription>Order of polynomial element.  Default: do not fit a polynomial (&lt;0).</shortdescription><description>Order of polynomial element.  Default: do not fit a polynomial (&lt;0).</description>
         
         <value>-1</value>
         <example>poly=4</example>
     </param>
-    <param name="estimates" direction="in" type="string"><shortdescription>Name of file containing initial estimates.  Default: No initial estimates (&quot;&quot;).</shortdescription><description>Name of file containing initial estimates.  Default: No initial estimates (&quot;&quot;).</description>
+    <param type="string" direction="in" name="estimates"><shortdescription>Name of file containing initial estimates.  Default: No initial estimates (&quot;&quot;).</shortdescription><description>Name of file containing initial estimates.  Default: No initial estimates (&quot;&quot;).</description>
         
         <value/>
         <type>path</type>
     </param>
-    <param name="minpts" direction="in" type="int"><shortdescription>Minimum number of unmasked points necessary to attempt fit.</shortdescription><description>Minimum number of unmasked points necessary to attempt fit.</description>
+    <param type="int" direction="in" name="minpts"><shortdescription>Minimum number of unmasked points necessary to attempt fit.</shortdescription><description>Minimum number of unmasked points necessary to attempt fit.</description>
         
         <value>1</value>
     </param>
-    <param name="multifit" direction="in" type="bool"><shortdescription>If true, fit a profile along the desired axis at each pixel in the specified region. If false, average the non-fit axis pixels and do a single fit to that average profile. Default False.</shortdescription><description>If true, fit a profile along the desired axis at each pixel in the specified region. If false, average the non-fit axis pixels and do a single fit to that average profile. Default False.</description>
+    <param type="bool" direction="in" name="multifit"><shortdescription>If true, fit a profile along the desired axis at each pixel in the specified region. If false, average the non-fit axis pixels and do a single fit to that average profile. Default False.</shortdescription><description>If true, fit a profile along the desired axis at each pixel in the specified region. If false, average the non-fit axis pixels and do a single fit to that average profile. Default False.</description>
         
         <value>False</value>
         <example>multifit=True</example>
      </param>
-    <param name="model" direction="in" type="string"><shortdescription>Name of model image. Default: do not write the model image (&quot;&quot;).</shortdescription><description>Name of model image. Default: do not write the model image (&quot;&quot;).</description>
+    <param type="string" direction="in" name="model"><shortdescription>Name of model image. Default: do not write the model image (&quot;&quot;).</shortdescription><description>Name of model image. Default: do not write the model image (&quot;&quot;).</description>
         
         <value/>
         <example>model=&quot;mymodel.im&quot;</example>
     </param>
-    <param name="residual" direction="in" type="string"><shortdescription>Name of residual image. Default: do not write the residual image (&quot;&quot;).</shortdescription><description>Name of residual image. Default: do not write the residual image (&quot;&quot;).</description>
+    <param type="string" direction="in" name="residual"><shortdescription>Name of residual image. Default: do not write the residual image (&quot;&quot;).</shortdescription><description>Name of residual image. Default: do not write the residual image (&quot;&quot;).</description>
         
         <value/>
         <example>residual=&quot;myresid.im&quot;</example>
     </param>
-    <param subparam="true" name="amp" direction="in" type="string"><shortdescription>Name of amplitude solution image. Default: do not write the image (&quot;&quot;).</shortdescription><description>Name of amplitude solution image. Default: do not write the image (&quot;&quot;).</description>
+    <param type="string" direction="in" name="amp" subparam="true"><shortdescription>Name of amplitude solution image. Default: do not write the image (&quot;&quot;).</shortdescription><description>Name of amplitude solution image. Default: do not write the image (&quot;&quot;).</description>
         
         <value/>
         <example>amp=&quot;amp&quot;</example>
     </param>
-    <param subparam="true" name="amperr" direction="in" type="string"><shortdescription>Name of amplitude solution error image. Default: do not write the image (&quot;&quot;).</shortdescription><description>Name of amplitude solution error image. Default: do not write the image (&quot;&quot;).</description>
+    <param type="string" direction="in" name="amperr" subparam="true"><shortdescription>Name of amplitude solution error image. Default: do not write the image (&quot;&quot;).</shortdescription><description>Name of amplitude solution error image. Default: do not write the image (&quot;&quot;).</description>
         
         <value/>
         <example>amperr=&quot;ampErr&quot;</example>
     </param>
-    <param subparam="true" name="center" direction="in" type="string"><shortdescription>Name of center solution image. Default: do not write the image (&quot;&quot;).</shortdescription><description>Name of center solution image. Default: do not write the image (&quot;&quot;).</description>
+    <param type="string" direction="in" name="center" subparam="true"><shortdescription>Name of center solution image. Default: do not write the image (&quot;&quot;).</shortdescription><description>Name of center solution image. Default: do not write the image (&quot;&quot;).</description>
         
         <value/>
         <example>center=&quot;center&quot;</example>
     </param>
-    <param subparam="true" name="centererr" direction="in" type="string"><shortdescription>Name of center solution error image. Default: do not write the image (&quot;&quot;).</shortdescription><description>Name of center solution error image. Default: do not write the image (&quot;&quot;).</description>
+    <param type="string" direction="in" name="centererr" subparam="true"><shortdescription>Name of center solution error image. Default: do not write the image (&quot;&quot;).</shortdescription><description>Name of center solution error image. Default: do not write the image (&quot;&quot;).</description>
         
         <value/>
         <example>centererr=&quot;centerErr&quot;</example>
     </param>
-    <param subparam="true" name="fwhm" direction="in" type="string"><shortdescription>Name of fwhm solution image. Default: do not write the image (&quot;&quot;).</shortdescription><description>Name of fwhm solution image. Default: do not write the image (&quot;&quot;).</description>
+    <param type="string" direction="in" name="fwhm" subparam="true"><shortdescription>Name of fwhm solution image. Default: do not write the image (&quot;&quot;).</shortdescription><description>Name of fwhm solution image. Default: do not write the image (&quot;&quot;).</description>
         
         <value/>
         <example>fwhm=&quot;fwhm&quot;</example>
     </param>
-    <param subparam="true" name="fwhmerr" direction="in" type="string"><shortdescription>Name of fwhm solution error image. Default: do not write the image (&quot;&quot;).</shortdescription><description>Name of fwhm solution error image. Default: do not write the image (&quot;&quot;).</description>
+    <param type="string" direction="in" name="fwhmerr" subparam="true"><shortdescription>Name of fwhm solution error image. Default: do not write the image (&quot;&quot;).</shortdescription><description>Name of fwhm solution error image. Default: do not write the image (&quot;&quot;).</description>
         
         <value/>
         <example>fwhmerr=&quot;fwhmErr&quot;</example>
     </param>
-    <param subparam="true" name="integral" direction="in" type="string"><shortdescription>Prefix of ame of integral solution image. Name of image will have gaussian component number appended.  Default: do not write the image (&quot;&quot;).</shortdescription><description>Prefix of ame of integral solution image. Name of image will have gaussian component number appended.  Default: do not write the image (&quot;&quot;).</description>
+    <param type="string" direction="in" name="integral" subparam="true"><shortdescription>Prefix of ame of integral solution image. Name of image will have gaussian component number appended.  Default: do not write the image (&quot;&quot;).</shortdescription><description>Prefix of ame of integral solution image. Name of image will have gaussian component number appended.  Default: do not write the image (&quot;&quot;).</description>
         
         <value/>
         <example>integral=&quot;integral&quot;</example>
     </param>
-    <param subparam="true" name="integralerr" direction="in" type="string"><shortdescription>Prefix of name of integral error solution image. Name of image will have gaussian component number appended.  Default: do not write the image (&quot;&quot;).</shortdescription><description>Prefix of name of integral error solution image. Name of image will have gaussian component number appended.  Default: do not write the image (&quot;&quot;).</description>
+    <param type="string" direction="in" name="integralerr" subparam="true"><shortdescription>Prefix of name of integral error solution image. Name of image will have gaussian component number appended.  Default: do not write the image (&quot;&quot;).</shortdescription><description>Prefix of name of integral error solution image. Name of image will have gaussian component number appended.  Default: do not write the image (&quot;&quot;).</description>
         
         <value/>
         <example>integralerr=&quot;integralErr&quot;</example>
     </param>
-    <param name="wantreturn" type="bool"><shortdescription>Should a record summarizing the results be returned?</shortdescription><description>Should a record summarizing the results be returned?</description>
+    <param type="bool" name="wantreturn"><shortdescription>Should a record summarizing the results be returned?</shortdescription><description>Should a record summarizing the results be returned?</description>
         
         <value>True</value>
         <example>wantreturn=True</example>
     </param>
-    <param subparam="true" name="stretch" direction="in" type="bool"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
+    <param type="bool" direction="in" name="stretch" subparam="true"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
         
         <value>False</value>
     </param>
-    <param name="logresults" direction="in" type="bool"><shortdescription>Output results to logger?</shortdescription><description>Output results to logger?</description>
+    <param type="bool" direction="in" name="logresults"><shortdescription>Output results to logger?</shortdescription><description>Output results to logger?</description>
         
         <value>True</value>
     </param>
-    <param subparam="true" name="pampest" type="variant"><shortdescription>Initial estimate of PCF profile (gaussian or lorentzian) amplitudes.</shortdescription><description>Initial estimate of PCF profile (gaussian or lorentzian) amplitudes.</description>
-        <type>double</type><type>doubleVec</type>
-        <any limittypes="string double doubleArray int intArray" type="variant"/>
-        
-        <value type="doubleArray"/>
-    </param>
-    <param subparam="true" name="pcenterest" type="variant"><shortdescription>Initial estimate PCF profile centers, in pixels.</shortdescription><description>Initial estimate PCF profile centers, in pixels.</description>
-        <type>double</type><type>doubleVec</type>
-        <any limittypes="string double doubleArray int intArray" type="variant"/>
-        
-        <value type="doubleArray"/>
-    </param>
-    <param subparam="true" name="pfwhmest" type="variant"><shortdescription>Initial estimate PCF profile FWHMs, in pixels.</shortdescription><description>Initial estimate PCF profile FWHMs, in pixels.</description>
-        <any limittypes="string double doubleArray int intArray" type="variant"/>
+    <param type="variant" name="pampest" subparam="true"><shortdescription>Initial estimate of PCF profile (gaussian or lorentzian) amplitudes.</shortdescription><description>Initial estimate of PCF profile (gaussian or lorentzian) amplitudes.</description>
         <type>double</type><type>doubleVec</type>
         
-        <value type="doubleArray"/>
-    </param>
-    <param subparam="true" name="pfix" direction="in" type="variant"><shortdescription>PCF profile parameters to fix during fit.</shortdescription><description>PCF profile parameters to fix during fit.</description>
-        <type>double</type><type>doubleVec</type>
-        <any limittypes="string stringArray" type="variant"/>
         
-        <value type="doubleArray"/>
+        <value type="doubleVec"/>
     </param>
-    <param name="gmncomps" direction="in" type="variant"><shortdescription>Number of components in each gaussian multiplet to fit</shortdescription><description>Number of components in each gaussian multiplet to fit</description>
+    <param type="variant" name="pcenterest" subparam="true"><shortdescription>Initial estimate PCF profile centers, in pixels.</shortdescription><description>Initial estimate PCF profile centers, in pixels.</description>
+        <type>double</type><type>doubleVec</type>
+        
+        
+        <value type="doubleVec"/>
+    </param>
+    <param type="variant" name="pfwhmest" subparam="true"><shortdescription>Initial estimate PCF profile FWHMs, in pixels.</shortdescription><description>Initial estimate PCF profile FWHMs, in pixels.</description>
+        
+        <type>double</type><type>doubleVec</type>
+        
+        <value type="doubleVec"/>
+    </param>
+    <param type="variant" direction="in" name="pfix" subparam="true"><shortdescription>PCF profile parameters to fix during fit.</shortdescription><description>PCF profile parameters to fix during fit.</description>
+        <type>double</type><type>doubleVec</type>
+        
+        
+        <value type="doubleVec"/>
+    </param>
+    <param type="variant" direction="in" name="gmncomps"><shortdescription>Number of components in each gaussian multiplet to fit</shortdescription><description>Number of components in each gaussian multiplet to fit</description>
         <type>int</type><type>intVec</type>
-        <any limittypes="int intArray" type="variant"/>
+        
         
         <value type="int">0</value>
     </param>
-    <param name="gmampcon" direction="in" type="variant"><shortdescription>The amplitude ratio constraints for non-reference components to reference component in gaussian multiplets.</shortdescription><description>The amplitude ratio constraints for non-reference components to reference component in gaussian multiplets.</description>
+    <param type="variant" direction="in" name="gmampcon"><shortdescription>The amplitude ratio constraints for non-reference components to reference component in gaussian multiplets.</shortdescription><description>The amplitude ratio constraints for non-reference components to reference component in gaussian multiplets.</description>
         <type>double</type><type>doubleVec</type>
-        <any limittypes="string double doubleArray int intArray" type="variant"/>
         
-        <value type="doubleArray"/>
+        
+        <value type="doubleVec"/>
     </param>
-    <param name="gmcentercon" direction="in" type="variant"><shortdescription>The center offset constraints (in pixels) for non-reference components to reference component in gaussian multiplets.</shortdescription><description>The center offset constraints (in pixels) for non-reference components to reference component in gaussian multiplets.</description>
+    <param type="variant" direction="in" name="gmcentercon"><shortdescription>The center offset constraints (in pixels) for non-reference components to reference component in gaussian multiplets.</shortdescription><description>The center offset constraints (in pixels) for non-reference components to reference component in gaussian multiplets.</description>
         <type>double</type><type>doubleVec</type>
-        <any limittypes="string double doubleArray int intArray" type="variant"/>
         
-        <value type="doubleArray"/>
+        
+        <value type="doubleVec"/>
     </param>
-    <param name="gmfwhmcon" direction="in" type="variant"><shortdescription>The FWHM  ratio constraints for non-reference components to reference component in gaussian multiplets.</shortdescription><description>The FWHM  ratio constraints for non-reference components to reference component in gaussian multiplets.</description>
+    <param type="variant" direction="in" name="gmfwhmcon"><shortdescription>The FWHM  ratio constraints for non-reference components to reference component in gaussian multiplets.</shortdescription><description>The FWHM  ratio constraints for non-reference components to reference component in gaussian multiplets.</description>
         <type>double</type><type>doubleVec</type>
-        <any limittypes="string double doubleArray int intArray" type="variant"/>
         
-        <value type="doubleArray"/>
-    </param>
-    <param name="gmampest" direction="in" type="doubleArray"><shortdescription>Initial estimate of individual gaussian amplitudes in gaussian multiplets.</shortdescription><description>Initial estimate of individual gaussian amplitudes in gaussian multiplets.</description>
         
-        <value>0.0</value>
+        <value type="doubleVec"/>
     </param>
-    <param name="gmcenterest" direction="in" type="doubleArray"><shortdescription>Initial estimate of individual gaussian centers in gaussian multiplets, in pixels.</shortdescription><description>Initial estimate of individual gaussian centers in gaussian multiplets, in pixels.</description>
+    <param type="doubleVec" direction="in" name="gmampest"><shortdescription>Initial estimate of individual gaussian amplitudes in gaussian multiplets.</shortdescription><description>Initial estimate of individual gaussian amplitudes in gaussian multiplets.</description>
         
-        <value>0.0</value>
+        <value><value>0.0</value></value>
     </param>
-    <param name="gmfwhmest" direction="in" type="doubleArray"><shortdescription>Initial estimate of individual gaussian FWHMss in gaussian multiplets, in pixels.</shortdescription><description>Initial estimate of individual gaussian FWHMss in gaussian multiplets, in pixels.</description>
+    <param type="doubleVec" direction="in" name="gmcenterest"><shortdescription>Initial estimate of individual gaussian centers in gaussian multiplets, in pixels.</shortdescription><description>Initial estimate of individual gaussian centers in gaussian multiplets, in pixels.</description>
         
-        <value>0.0</value>
+        <value><value>0.0</value></value>
     </param>
-    <param name="gmfix" direction="in" type="variant"><shortdescription>Parameters of individual gaussians in gaussian multiplets to fix during fit.</shortdescription><description>Parameters of individual gaussians in gaussian multiplets to fix during fit.</description>
+    <param type="doubleVec" direction="in" name="gmfwhmest"><shortdescription>Initial estimate of individual gaussian FWHMss in gaussian multiplets, in pixels.</shortdescription><description>Initial estimate of individual gaussian FWHMss in gaussian multiplets, in pixels.</description>
+        
+        <value><value>0.0</value></value>
+    </param>
+    <param type="variant" direction="in" name="gmfix"><shortdescription>Parameters of individual gaussians in gaussian multiplets to fix during fit.</shortdescription><description>Parameters of individual gaussians in gaussian multiplets to fix during fit.</description>
         <type>string</type><type>stringVec</type>
-        <any limittypes="string stringArray" type="variant"/>
+        
         
         <value type="string"/>
     </param>
-    <param name="logfile" direction="in" type="string"><shortdescription>File in which to log results. Default is not to write a logfile.</shortdescription><description>File in which to log results. Default is not to write a logfile.</description>
+    <param type="string" direction="in" name="logfile"><shortdescription>File in which to log results. Default is not to write a logfile.</shortdescription><description>File in which to log results. Default is not to write a logfile.</description>
         
         <value/>
     </param>
-    <param subparam="true" name="append" direction="in" type="bool"><shortdescription>Append results to logfile? Logfile must be specified. Default is to append. False means overwrite existing file if it exists.</shortdescription><description>Append results to logfile? Logfile must be specified. Default is to append. False means overwrite existing file if it exists.</description>
+    <param type="bool" direction="in" name="append" subparam="true"><shortdescription>Append results to logfile? Logfile must be specified. Default is to append. False means overwrite existing file if it exists.</shortdescription><description>Append results to logfile? Logfile must be specified. Default is to append. False means overwrite existing file if it exists.</description>
         
         <value>True</value>
     </param>
-    <param subparam="true" name="pfunc" direction="in" type="any"><shortdescription>PCF singlet functions to fit. &quot;gaussian&quot; or &quot;lorentzian&quot; (minimal match supported). Unspecified means all gaussians.</shortdescription><description>PCF singlet functions to fit. &quot;gaussian&quot; or &quot;lorentzian&quot; (minimal match supported). Unspecified means all gaussians.</description>
+    <param type="any" direction="in" name="pfunc" subparam="true"><shortdescription>PCF singlet functions to fit. &quot;gaussian&quot; or &quot;lorentzian&quot; (minimal match supported). Unspecified means all gaussians.</shortdescription><description>PCF singlet functions to fit. &quot;gaussian&quot; or &quot;lorentzian&quot; (minimal match supported). Unspecified means all gaussians.</description>
         <type>string</type><type>stringVec</type>
-        <any limittypes="string stringArray" type="variant"/>
+        
         
         <value type="string"/>
     </param>
-    <param name="goodamprange" direction="in" type="doubleArray"><shortdescription>Acceptable amplitude solution range. [0.0] =&gt; all amplitude solutions are acceptable.</shortdescription><description>Acceptable amplitude solution range. [0.0] =&gt; all amplitude solutions are acceptable.</description>
+    <param type="doubleVec" direction="in" name="goodamprange"><shortdescription>Acceptable amplitude solution range. [0.0] =&gt; all amplitude solutions are acceptable.</shortdescription><description>Acceptable amplitude solution range. [0.0] =&gt; all amplitude solutions are acceptable.</description>
         
-        <value>0.0</value>
+        <value><value>0.0</value></value>
     </param>
-    <param name="goodcenterrange" direction="in" type="doubleArray"><shortdescription>Acceptable center solution range in pixels relative to region start. [0.0] =&gt; all center solutions are acceptable.</shortdescription><description>Acceptable center solution range in pixels relative to region start. [0.0] =&gt; all center solutions are acceptable.</description>
+    <param type="doubleVec" direction="in" name="goodcenterrange"><shortdescription>Acceptable center solution range in pixels relative to region start. [0.0] =&gt; all center solutions are acceptable.</shortdescription><description>Acceptable center solution range in pixels relative to region start. [0.0] =&gt; all center solutions are acceptable.</description>
         
-        <value>0.0</value>
+        <value><value>0.0</value></value>
     </param>
-    <param name="goodfwhmrange" direction="in" type="doubleArray"><shortdescription>Acceptable FWHM solution range in pixels. [0.0] =&gt; all FWHM solutions are acceptable.</shortdescription><description>Acceptable FWHM solution range in pixels. [0.0] =&gt; all FWHM solutions are acceptable.</description>
+    <param type="doubleVec" direction="in" name="goodfwhmrange"><shortdescription>Acceptable FWHM solution range in pixels. [0.0] =&gt; all FWHM solutions are acceptable.</shortdescription><description>Acceptable FWHM solution range in pixels. [0.0] =&gt; all FWHM solutions are acceptable.</description>
         
-        <value>0.0</value>
+        <value><value>0.0</value></value>
     </param>
-    <param name="sigma" direction="in" type="any"><shortdescription>Standard deviation array or image name.</shortdescription><description>Standard deviation array or image name.</description>
-        <any limittypes="string doubleArray intArray" type="variant"/>
+    <param type="any" direction="in" name="sigma"><shortdescription>Standard deviation array or image name.</shortdescription><description>Standard deviation array or image name.</description>
+        
         
         <type>string</type>
         <type>intVec</type>
@@ -236,18 +236,18 @@
         <type>doubleArray</type>
         <value type="string"/>
     </param>
-    <param subparam="true" name="outsigma" direction="in" type="string"><shortdescription>Name of output image used for standard deviation. Ignored if sigma is empty.</shortdescription><description>Name of output image used for standard deviation. Ignored if sigma is empty.</description>
+    <param type="string" direction="in" name="outsigma" subparam="true"><shortdescription>Name of output image used for standard deviation. Ignored if sigma is empty.</shortdescription><description>Name of output image used for standard deviation. Ignored if sigma is empty.</description>
         
         <value/>
     </param>
     <constraints>
         <when param="mask">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="stretch"><value type="bool">False</value></default>
             </notequals>
         </when>
         <when param="estimates">
-            <equals value="" type="string">
+            <equals type="string" value="">
                 <default param="ngauss">
                     <value>1</value>
                 </default>
@@ -271,8 +271,8 @@
         </when>
         <when param="multifit">
             
-            <equals value="False" type="bool"/>
-            <equals value="True" type="bool">
+            <equals type="bool" value="False"/>
+            <equals type="bool" value="True">
                 <default param="amp">
                     <value>&quot;&quot;</value>
                 </default>
@@ -300,7 +300,7 @@
             </equals>
         </when>
         <when param="gmncomps">
-            <notequals value="0" type="int">
+            <notequals type="int" value="0">
                 <default param="gmampcon">
                     <value type="string"/>
                 </default>
@@ -325,14 +325,14 @@
             </notequals>
         </when>
         <when param="logfile">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="append">
                     <value>True</value>
                 </default>
             </notequals>
         </when>
         <when param="sigma">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="outsigma"><value type="string"/></default>
             </notequals>
         </when>

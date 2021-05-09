@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="exportuvfits" category="import/export">
+<task category="import/export" name="exportuvfits" type="function">
 <shortdescription>Convert a CASA visibility data set to a UVFITS file:</shortdescription>
 <description>
  This task writes a UVFITS file, a general format data set used to
@@ -23,27 +18,27 @@ exportuvfits. The associated input parameters are being slowly
 deprecated and removed.
 </description>
 <input>
-        <param type="string" name="vis" mustexist="true">
+        <param mustexist="true" name="vis" type="path">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="string" name="fitsfile">
+        <param name="fitsfile" type="string">
 <shortdescription>Name of output UV FITS file</shortdescription>
 <description>Name of output UV FITS file
                      Default: none
 
                         Example: vis='ngc5921XC1.fits'
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="string" name="datacolumn">
+        <param name="datacolumn" type="string">
 <shortdescription>Visibility file data column</shortdescription>
 <description>Visibility file data column
                      Default: corrected
@@ -60,10 +55,10 @@ deprecated and removed.
                 </allowed>
         </param>
 
-        <param type="any" name="field">
+        <param name="field" type="any">
 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
 <description>Select field using field id(s) or field name(s)
-                     Default: '' --> all fields
+                     Default: '' --&gt; all fields
                      
                      Use 'go listobs' to obtain the list id's or
                      names. If field string is a non-negative integer,
@@ -78,12 +73,12 @@ deprecated and removed.
                         field = '3,4C*'; field id 3, all names
                         starting with 4C
 </description>
-                <any type="variant" limittypes="string stringArray int intArray"/>
-                <value type="string"></value>
+                <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
+                <value type="string"/>
         </param>
 
 
-        <param type="string" name="spw">
+        <param name="spw" type="string">
 <shortdescription>Select spectral window/channels</shortdescription>
 <description>Select spectral window/channels
 
@@ -106,10 +101,10 @@ deprecated and removed.
                         0,2,4,6,8,10, spw 1, channels 20,25,30 
                         type 'help par.selection' for more examples.
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="string" name="antenna" >
+        <param name="antenna" type="string">
 <shortdescription>Select data based on antenna/baseline</shortdescription>
 <description>Select data based on antenna/baseline
                      Subparameter of selectdata=True
@@ -133,10 +128,10 @@ deprecated and removed.
                          antenna='5,6,10'; all baselines with antennas
                          5,6,10 index numbers
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="string" name="timerange" >
+        <param name="timerange" type="string">
 <shortdescription>Select data based on time range</shortdescription>
 <description>Select data based on time range
                      Subparameter of selectdata=True
@@ -153,12 +148,12 @@ deprecated and removed.
                         hr 30min on NEXT day
                         timerange='09:44:00' pick data within one
                         integration of time
-                        timerange='>10:24:00' data after this time
+                        timerange='&gt;10:24:00' data after this time
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="bool" name="writesyscal">
+        <param name="writesyscal" type="bool">
 <shortdescription>Write GC and TY tables (not yet available)</shortdescription>
 <description>Write GC and TY tables. Not yet available.
                      Default: False
@@ -166,7 +161,7 @@ deprecated and removed.
                 <value>False</value>
         </param>
 
-        <param type="bool" name="multisource">
+        <param name="multisource" type="bool">
 <shortdescription>Write in multi-source format?</shortdescription>
 <description>Write in multi-source format? 
                      Default: True
@@ -184,7 +179,7 @@ deprecated and removed.
                 <value>True</value>
         </param>
 
-        <param type="bool" name="combinespw">
+        <param name="combinespw" type="bool">
 <shortdescription>Export the spectral windows as IFs</shortdescription>
 <description>Export the spectral windows as IFs?
                      Default: True
@@ -197,7 +192,7 @@ deprecated and removed.
                 <value>True</value>
         </param>
 
-        <param type="bool" name="writestation">
+        <param name="writestation" type="bool">
 <shortdescription>Write station name instead of antenna name</shortdescription>
 <description>Write station name instead of antenna name
                      Default: True
@@ -205,7 +200,7 @@ deprecated and removed.
                 <value>True</value>
         </param>
 
-        <param type="bool" name="padwithflags" subparam="true">
+        <param subparam="true" name="padwithflags" type="bool">
 <shortdescription>Fill in missing data with flags to fit IFs</shortdescription>
 <description>Fill in missing data with flags to fit IFs
                      Subparameter of combinespw=True
@@ -224,7 +219,7 @@ deprecated and removed.
 </description>
                 <value>False</value>
         </param>
-    <param type="bool" name="overwrite">
+    <param name="overwrite" type="bool">
 <shortdescription>Overwrite output file if it exists?</shortdescription>
  <description>Overwrite output file if it exists?
                      Default: False
@@ -234,10 +229,10 @@ deprecated and removed.
     </param>
     <constraints>
           <when param="combinespw">
-            <equals type="bool" value="True">
+            <equals value="True" type="bool">
               <default param="padwithflags"><value type="bool">True</value> </default>
             </equals>
-            <equals type="bool" value="False"/>
+            <equals value="False" type="bool"/>
           </when>
     </constraints>
 </input>
@@ -249,5 +244,5 @@ https://casa.nrao.edu/casadocs/
 
 </example> 
 
-</task>
+<returns>void</returns></task>
 </casaxml>

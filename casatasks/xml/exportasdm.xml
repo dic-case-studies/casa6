@@ -1,12 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<task type="function" name="exportasdm" category="import/export">
+<task category="import/export" name="exportasdm" type="function">
 
   <shortdescription>Convert a CASA visibility file (MS) into an ALMA or EVLA Science Data Model</shortdescription>
 <description>
@@ -14,26 +9,26 @@ Convert a CASA visibility file (MS) into an ALMA or EVLA Science Data Model
 </description>
   <input>
 
-    <param type="string" name="vis" kind="ms" mustexist="true">
+    <param mustexist="true" kind="ms" name="vis" type="path">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-          <value></value>
+          <value/>
     </param>
 
 
-    <param type="string" name="asdm" kind="asdm" mustexist="false">
-<shortdescription>>Name of output ASDM directory (on disk)</shortdescription>
+    <param mustexist="false" kind="asdm" name="asdm" type="path">
+<shortdescription>&gt;Name of output ASDM directory (on disk)</shortdescription>
 <description>Name of output ASDM directory (on disk)
                      Default: none
 </description>
-          <value></value>
+          <value/>
     </param>
 
-    <param type="string" name="datacolumn"  ignorecase="True">
+    <param ignorecase="True" name="datacolumn" type="string">
 <shortdescription>Which data column(s) to process.</shortdescription>
 <description>Which data column(s) to use for processing
                      (case-insensitive).
@@ -55,28 +50,28 @@ Convert a CASA visibility file (MS) into an ALMA or EVLA Science Data Model
          <value>model</value>
       </allowed>
     </param>
-    <param type="string" name="archiveid">
+    <param name="archiveid" type="string">
 <shortdescription>The X0 in uid://X0/X1/X2</shortdescription>
 <description>The X0 in uid://X0/X1/X2
                      Default: 'S0'
 </description>
       <value>S0</value>
     </param>
-    <param type="string" name="rangeid">
+    <param name="rangeid" type="string">
 <shortdescription>The X1 in uid://X0/X1/X2</shortdescription>
 <description>The X1 in uid://X0/X1/X2
                      Default: 'X1'
 </description>
       <value>X1</value>
     </param>
-    <param type="string" name="subscanduration">
+    <param name="subscanduration" type="string">
 <shortdescription>Maximum duration of a subscan in the output ASDM</shortdescription>
 <description>Maximum duration of a subscan in the output ASDM
                      Default: 24h
 </description>
       <value>24h</value>
     </param>
-    <param type="string" name="sbduration">
+    <param name="sbduration" type="string">
 <shortdescription>Maximum duration of a scheduling block (and therefore exec block) in the output ASDM</shortdescription>
 <description>Maximum duration of a scheduling block (and therefore
 exec block) in the output ASDM
@@ -91,7 +86,7 @@ exec block) in the output ASDM
 </description>
       <value>2700s</value>
     </param>
-    <param type="bool" name="apcorrected">
+    <param name="apcorrected" type="bool">
 <shortdescription>Data to be marked as having atmospheric phase correction</shortdescription>
 <description>Data to be marked as having atmospheric phase correction
                      Default: False
@@ -99,7 +94,7 @@ exec block) in the output ASDM
 </description>
       <value>False</value>
     </param>
-    <param type="bool" name="verbose">
+    <param name="verbose" type="bool">
 <shortdescription>Produce log output</shortdescription>
 <description>Produce log output?
                      Default: True
@@ -107,7 +102,7 @@ exec block) in the output ASDM
 </description>
       <value>True</value>
     </param>
-    <param type="bool" name="showversion">
+    <param name="showversion" type="bool">
 <shortdescription>Report the version of ASDM class set being used</shortdescription>
 <description>Report the version of ASDM class set being used
                      Default: True
@@ -116,7 +111,7 @@ exec block) in the output ASDM
       <value>True</value>
     </param>
 
-    <param type="string" name="useversion" >
+    <param name="useversion" type="string">
 <shortdescription>Selects the version of MS2asdm to be used</shortdescription>
 <description>Selects the version of MS2asdm to be used
                      Default: 'v3'
@@ -124,7 +119,7 @@ exec block) in the output ASDM
       <value>v3</value>
       <allowed kind="enum">
         <value>v3</value>
-        <value></value>
+        <value/>
       </allowed>
     </param>
 

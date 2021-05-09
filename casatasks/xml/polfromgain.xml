@@ -1,27 +1,27 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="calibration" name="polfromgain" type="function">
+<task type="function" name="polfromgain" category="calibration">
         <shortdescription>Derive linear polarization from gain ratio</shortdescription>
         <description>
           TBD
         </description>
         <input>
-                <param mustexist="true" name="vis" type="string"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
+                <param type="path" name="vis" mustexist="true"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
                         
                         <value/>
                 </param>
 
-                <param mustexist="true" name="tablein" type="string"><shortdescription>Input calibration table</shortdescription><description>Input calibration table</description>
+                <param type="path" name="tablein" mustexist="true"><shortdescription>Input calibration table</shortdescription><description>Input calibration table</description>
                         
                         <value/>
                 </param>
 
-                <param name="caltable" type="string"><shortdescription>Output calibration table (forces polarization correction if specified)</shortdescription><description>Output calibration table (forces polarization correction if specified)</description>
+                <param type="string" name="caltable"><shortdescription>Output calibration table (forces polarization correction if specified)</shortdescription><description>Output calibration table (forces polarization correction if specified)</description>
                         
                         <value/>
                 </param>
 
-                <param name="paoffset" type="double"><shortdescription>Manual position angle offset</shortdescription><description>Manual position angle offset</description>
+                <param type="double" name="paoffset"><shortdescription>Manual position angle offset</shortdescription><description>Manual position angle offset</description>
                         
                         <value>0.0</value>
                 </param>

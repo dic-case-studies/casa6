@@ -1,17 +1,17 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd                              file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd                              file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-    <task category="information" name="visstat" type="function">
+    <task type="function" name="visstat" category="information">
         <shortdescription>Displays statistical information from a MeasurementSet, or from a Multi-MS</shortdescription>
 
         <input>
-            <param mustexist="true" kind="ms" name="vis" type="string"><shortdescription>Name of MeasurementSet or Multi-MS</shortdescription><description>Name of MeasurementSet or Multi-MS</description>
+            <param type="path" name="vis" kind="ms" mustexist="true"><shortdescription>Name of MeasurementSet or Multi-MS</shortdescription><description>Name of MeasurementSet or Multi-MS</description>
                 
                 <value/>
                 <example>vis='ngc5921.ms'</example>
             </param>
 
 
-            <param name="axis" type="string"><shortdescription>Values on which to compute statistics</shortdescription><description>Values on which to compute statistics</description>
+            <param type="string" name="axis"><shortdescription>Values on which to compute statistics</shortdescription><description>Values on which to compute statistics</description>
                 
                 <value type="string">amplitude</value>
                 <allowed kind="enum">
@@ -42,7 +42,7 @@
                 </allowed>
             </param>
 
-            <param subparam="true" name="datacolumn" type="string"><shortdescription>Which data column to use (data, corrected, model, float_data)</shortdescription><description>Which data column to use (data, corrected, model, float_data)</description>
+            <param type="string" name="datacolumn" subparam="true"><shortdescription>Which data column to use (data, corrected, model, float_data)</shortdescription><description>Which data column to use (data, corrected, model, float_data)</description>
                 
                 <value type="string">data</value>
                 <allowed kind="enum">
@@ -53,111 +53,111 @@
                 </allowed>
             </param>
 
-            <param name="useflags" type="bool"><shortdescription>Take flagging into account?</shortdescription><description>Take flagging into account?</description>
+            <param type="bool" name="useflags"><shortdescription>Take flagging into account?</shortdescription><description>Take flagging into account?</description>
                 
                 <value>True</value>
                 <example>useflags=True</example>
             </param>
 
-            <param name="spw" type="string"><shortdescription>spectral-window/frequency/channel</shortdescription><description>spectral-window/frequency/channel</description>
+            <param type="string" name="spw"><shortdescription>spectral-window/frequency/channel</shortdescription><description>spectral-window/frequency/channel</description>
                 
                 <value type="string"/>
             </param>
 
-            <param name="field" type="string"><shortdescription>Field names or field index numbers: \'\'==&gt;all, field=\'0~2,3C286\'</shortdescription><description>Field names or field index numbers: \'\'==&gt;all, field=\'0~2,3C286\'</description>
+            <param type="string" name="field"><shortdescription>Field names or field index numbers: \'\'==&gt;all, field=\'0~2,3C286\'</shortdescription><description>Field names or field index numbers: \'\'==&gt;all, field=\'0~2,3C286\'</description>
                 
                 <value type="string"/>
             </param>
 
-            <param name="selectdata" type="bool"><shortdescription>More data selection parameters (antenna, timerange etc)</shortdescription><description>More data selection parameters (antenna, timerange etc)</description>
+            <param type="bool" name="selectdata"><shortdescription>More data selection parameters (antenna, timerange etc)</shortdescription><description>More data selection parameters (antenna, timerange etc)</description>
                 
                 <value>True</value>
             </param>
 
-            <param subparam="true" name="antenna" type="string"><shortdescription>antenna/baselines: \'\'==&gt;all, antenna = \'3,VA04\'</shortdescription><description>antenna/baselines: \'\'==&gt;all, antenna = \'3,VA04\'</description>
+            <param type="string" name="antenna" subparam="true"><shortdescription>antenna/baselines: \'\'==&gt;all, antenna = \'3,VA04\'</shortdescription><description>antenna/baselines: \'\'==&gt;all, antenna = \'3,VA04\'</description>
                 
                 <value type="string"/>
             </param>
 
-            <param subparam="true" name="uvrange" type="string"><shortdescription>uv range: \'\'==&gt;all; uvrange = \'0~100klambda\', default units=meters</shortdescription><description>uv range: \'\'==&gt;all; uvrange = \'0~100klambda\', default units=meters</description>
+            <param type="string" name="uvrange" subparam="true"><shortdescription>uv range: \'\'==&gt;all; uvrange = \'0~100klambda\', default units=meters</shortdescription><description>uv range: \'\'==&gt;all; uvrange = \'0~100klambda\', default units=meters</description>
                 
                 <value type="string"/>
             </param>
 
-            <param subparam="true" name="timerange" type="string"><shortdescription>time range: \'\'==&gt;all, timerange=\'09:14:0~09:54:0\'</shortdescription><description>time range: \'\'==&gt;all, timerange=\'09:14:0~09:54:0\'</description>
+            <param type="string" name="timerange" subparam="true"><shortdescription>time range: \'\'==&gt;all, timerange=\'09:14:0~09:54:0\'</shortdescription><description>time range: \'\'==&gt;all, timerange=\'09:14:0~09:54:0\'</description>
                 
                 <value type="string"/>
             </param>
 
-            <param subparam="true" name="correlation" type="string"><shortdescription>Select data based on correlation</shortdescription><description>Select data based on correlation</description>
+            <param type="string" name="correlation" subparam="true"><shortdescription>Select data based on correlation</shortdescription><description>Select data based on correlation</description>
                 
                 <value type="string"/>
             </param>
 
-            <param subparam="true" name="scan" type="string"><shortdescription>scan numbers: \'\'==&gt;all</shortdescription><description>scan numbers: \'\'==&gt;all</description>
+            <param type="string" name="scan" subparam="true"><shortdescription>scan numbers: \'\'==&gt;all</shortdescription><description>scan numbers: \'\'==&gt;all</description>
                 
                 <value type="string"/>
             </param>
 
-            <param subparam="true" name="array" type="string"><shortdescription>(sub)array numbers: \'\'==&gt;all</shortdescription><description>(sub)array numbers: \'\'==&gt;all</description>
+            <param type="string" name="array" subparam="true"><shortdescription>(sub)array numbers: \'\'==&gt;all</shortdescription><description>(sub)array numbers: \'\'==&gt;all</description>
                 
                 <value type="string"/>
             </param>
 
-            <param subparam="true" name="observation" type="any"><shortdescription>observation ID number(s): \'\' = all</shortdescription><description>observation ID number(s): \'\' = all</description>
+            <param type="any" name="observation" subparam="true"><shortdescription>observation ID number(s): \'\' = all</shortdescription><description>observation ID number(s): \'\' = all</description>
                 
-                <any limittypes="string int" type="variant"/>
+                <type>string</type><type>int</type>
                 <value type="string"/>
             </param>
 
-            <param name="timeaverage" type="bool"><shortdescription>Average data in time.</shortdescription><description>Average data in time.</description>
+            <param type="bool" name="timeaverage"><shortdescription>Average data in time.</shortdescription><description>Average data in time.</description>
                 
                 <value>False</value>
             </param>
 
-            <param subparam="true" name="timebin" type="string"><shortdescription>Bin width for time averaging.</shortdescription><description>Bin width for time averaging.</description>
+            <param type="string" name="timebin" subparam="true"><shortdescription>Bin width for time averaging.</shortdescription><description>Bin width for time averaging.</description>
                 
                 <value type="string">0s</value>
             </param>
 
-            <param subparam="true" name="timespan" type="any"><shortdescription>Span the timebin across scan, state or both.</shortdescription><description>Span the timebin across scan, state or both.</description>
+            <param type="any" name="timespan" subparam="true"><shortdescription>Span the timebin across scan, state or both.</shortdescription><description>Span the timebin across scan, state or both.</description>
                 
-                <any limittypes="string stringArray" type="variant"/>
+                <type>string</type><type>stringVec</type>
                 <value type="string"/>
             </param>
 
-            <param subparam="true" name="maxuvwdistance" type="double"><shortdescription>Maximum separation of start-to-end baselines that can be included in an average. (meters)</shortdescription><description>Maximum separation of start-to-end baselines that can be included in an average. (meters)</description>
+            <param type="double" name="maxuvwdistance" subparam="true"><shortdescription>Maximum separation of start-to-end baselines that can be included in an average. (meters)</shortdescription><description>Maximum separation of start-to-end baselines that can be included in an average. (meters)</description>
                 
                 <value type="double">0.0</value>
             </param>
 
             
-            <param visibility="hidden" subparam="true" name="disableparallel" type="bool"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
+            <param type="bool" name="disableparallel" subparam="true" visibility="hidden"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
                 
                 <value>False</value>
             </param>
-            <param visibility="hidden" subparam="true" name="ddistart" type="int"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
+            <param type="int" name="ddistart" subparam="true" visibility="hidden"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
                 
                 <value>-1</value>
             </param>
-            <param visibility="hidden" subparam="true" name="taql" type="string"><shortdescription>Table query for nested selections</shortdescription><description>Table query for nested selections</description>
+            <param type="string" name="taql" subparam="true" visibility="hidden"><shortdescription>Table query for nested selections</shortdescription><description>Table query for nested selections</description>
                 
                 <value type="string"/>
             </param>
-            <param visibility="hidden" subparam="true" name="monolithic_processing" type="bool"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
+            <param type="bool" name="monolithic_processing" subparam="true" visibility="hidden"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
                 
                 <value>False</value>
             </param>
 
 
-            <param name="intent" type="any"><shortdescription>Select data by scan intent.</shortdescription><description>Select data by scan intent.</description>
+            <param type="any" name="intent"><shortdescription>Select data by scan intent.</shortdescription><description>Select data by scan intent.</description>
                 
-                <any limittypes="string stringArray int intArray" type="variant"/>
+                <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
                 <value type="string"/>
             </param>
 
 
-            <param name="reportingaxes" type="string"><shortdescription>Which reporting axis to use (ddid, field, integration)</shortdescription><description>Which reporting axis to use (ddid, field, integration)</description>
+            <param type="string" name="reportingaxes"><shortdescription>Which reporting axis to use (ddid, field, integration)</shortdescription><description>Which reporting axis to use (ddid, field, integration)</description>
                 
                 <value type="string">ddid</value>
                 <allowed kind="enum">
@@ -167,35 +167,35 @@
                 </allowed>
             </param>
 
-            <param type="bool" name="doquantiles">
+            <param name="doquantiles" type="bool">
                 <description>If False, quantile-like statistics are not computed. These include the first and third quartiles, the median, and the median of the absolute deviation from the median.</description>
                 <value>True</value>
             </param>
 
             <constraints>
                 <when param="axis">
-                    <equals value="amp" type="string">
+                    <equals type="string" value="amp">
                         <default param="datacolumn"><value type="string">data</value></default>
                     </equals>
-                    <equals value="amplitude" type="string">
+                    <equals type="string" value="amplitude">
                         <default param="datacolumn"><value type="string">data</value></default>
                     </equals>
-                    <equals value="phase" type="string">
+                    <equals type="string" value="phase">
                         <default param="datacolumn"><value type="string">data</value></default>
                     </equals>
-                    <equals value="real" type="string">
+                    <equals type="string" value="real">
                         <default param="datacolumn"><value type="string">data</value></default>
                     </equals>
-                    <equals value="imag" type="string">
+                    <equals type="string" value="imag">
                         <default param="datacolumn"><value type="string">data</value></default>
                     </equals>
-                    <equals value="imaginary" type="string">
+                    <equals type="string" value="imaginary">
                         <default param="datacolumn"><value type="string">data</value></default>
                     </equals>
                 </when>
 
                 <when param="selectdata">
-                    <equals value="True" type="bool">
+                    <equals type="bool" value="True">
                         <default param="antenna"><value type="string"/></default>
                         <default param="timerange"><value type="string"/></default>
                         <default param="correlation"><value type="string"/></default>
@@ -204,12 +204,12 @@
                         <default param="observation"><value type="string"/></default>
                         <default param="uvrange"><value type="string"/></default>
                     </equals>
-                    <equals value="False" type="bool"/>
+                    <equals type="bool" value="False"/>
                 </when>
 
                 <when param="timeaverage">
-                    <equals value="False" type="bool"/>
-                    <equals value="True" type="bool">
+                    <equals type="bool" value="False"/>
+                    <equals type="bool" value="True">
                         <default param="timebin"><value type="string">0s</value></default>
                         <default param="timespan"><value type="string"/></default>
                         <default param="maxuvwdistance"><value type="double">0.0</value></default>

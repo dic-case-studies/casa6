@@ -1,12 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<task type="function" name="apparentsens" category="imaging">
+<task category="imaging" name="apparentsens" type="function">
 
   <shortdescription>Imaging sensitivity estimataion</shortdescription>
 
@@ -17,23 +12,23 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
   <input>
 
-<!--============================================== -->
-<!--                            Data Selection Parameters                                            -->
-<!--============================================== -->
 
-    <param type="any" name="vis" kind="ms" mustexist="true">
+
+
+
+    <param mustexist="true" kind="ms" name="vis" type="any">
    <shortdescription>Name of input visibility file(s)</shortdescription>
 <description>Name(s) of input visibility file(s)
                default: none;
                example: vis='ngc5921.ms'
                         vis=['ngc5921a.ms','ngc5921b.ms']; multiple MSes
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <type>string</type><type>stringVec</type>
+      <value type="string"/>
     </param>
 
 
-    <param type="any" name="field" subparam="true">
+    <param subparam="true" name="field" type="any">
      <shortdescription>field(s) to select</shortdescription>
 <description>Select fields to image or mosaic.  Use field id(s) or name(s).
                   ['go listobs' to obtain the list id's or names]
@@ -51,11 +46,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                  field = '0~2'; field ids 0-2 for all input MSes
 
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <type>string</type><type>stringVec</type>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="spw" subparam="true">
+    <param subparam="true" name="spw" type="any">
      <shortdescription>spw(s)/channels to select</shortdescription>
 <description>Select spectral window/channels
                NOTE: channels de-selected here will contain all zeros if
@@ -77,11 +72,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                  spw='1~4;6:15~48' for channels 15 through 48 for spw ids 1,2,3,4 and 6
 
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <type>string</type><type>stringVec</type>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="intent" subparam="true">
+    <param subparam="true" name="intent" type="any">
      <shortdescription>Scan Intent(s)</shortdescription>
 <description>Scan Intent(s)
 
@@ -90,11 +85,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                    example: intent='TARGET_SOURCE1,TARGET_SOURCE2'
                    example: intent='TARGET_POINTING*'
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <type>string</type><type>stringVec</type>
+      <value type="string"/>
     </param>
 
-    <param type="bool" name="selectdata" visibility="hidden">
+    <param visibility="hidden" name="selectdata" type="bool">
      <shortdescription>Enable data selection parameters</shortdescription>
 <description>Enable data selection parameters.
 </description>
@@ -102,7 +97,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
     </param>
 
 
-    <param type="any" name="timerange" subparam="true">
+    <param subparam="true" name="timerange" type="any">
      <shortdescription>Range of time to select from data</shortdescription>
 <description>Range of time to select from data
 
@@ -123,11 +118,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                                                  all input MSes
 
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <type>string</type><type>stringVec</type>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="uvrange" subparam="true">
+    <param subparam="true" name="uvrange" type="any">
      <shortdescription>Select data within uvrange</shortdescription>
 <description>Select data within uvrange (default unit is meters)
                    default: '' (all); example:
@@ -139,11 +134,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                    uvrange='0~1000klambda'; apply 0-1000 kilo-lambda for all
                                             input MSes
  </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <type>string</type><type>stringVec</type>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="antenna" subparam="true">
+    <param subparam="true" name="antenna" type="any">
      <shortdescription>Select data based on antenna/baseline</shortdescription>
 <description>Select data based on antenna/baseline
 
@@ -168,11 +163,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                    antenna='!DV14'; use all antennas except DV14
 
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <type>string</type><type>stringVec</type>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="scan" subparam="true">
+    <param subparam="true" name="scan" type="any">
      <shortdescription>Scan number range</shortdescription>
 <description>Scan number range
 
@@ -183,27 +178,27 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                    scan='0~100; scan ids 0-100 for all input MSes
 
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <type>string</type><type>stringVec</type>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="observation" subparam="true">
+    <param subparam="true" name="observation" type="any">
      <shortdescription>Observation ID range</shortdescription>
 <description>Observation ID range
                    default: '' (all)
                    example: observation='1~5'
 </description>
-      <any type="variant" limittypes="string int"/>
-      <value type="string"></value>
+      <type>string</type><type>int</type>
+      <value type="string"/>
     </param>
 
 
 
-<!--============================================== -->
-<!--                            Image Definition Parameters                                         -->
-<!--============================================== -->
 
-    <param type="any" name="imsize" > <!-- subparam="true"> -->
+
+
+
+    <param name="imsize" type="any"> 
      <shortdescription>Number of pixels</shortdescription>
 <description>Number of pixels
          example :  imsize = [350,250]
@@ -211,22 +206,22 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
          To take proper advantage of internal optimized FFT routines, the
          number of pixels must be even and factorizable by 2,3,5,7 only.
 </description>
-      <any type="variant" limittypes="int intArray"/>
-      <value type="intArray"><value>100</value></value>
+      <type>int</type><type>intVec</type>
+      <value type="intVec"><value>100</value></value>
     </param>
 
-    <param type="any" name="cell" > <!-- subparam="true"> -->
+    <param name="cell" type="any"> 
      <shortdescription>Cell size</shortdescription>
 <description>Cell size
                example: cell=['0.5arcsec,'0.5arcsec'] or
                cell=['1arcmin', '1arcmin']
                cell = '1arcsec' is equivalent to ['1arcsec','1arcsec']
 </description>
-      <any type="variant" limittypes="int double intArray doubleArray string stringArray"/>
-      <value type="stringArray">"1arcsec"</value>
+      <type>int</type><type>double</type><type>intVec</type><type>doubleVec</type><type>string</type><type>stringVec</type>
+      <value type="stringVec">&quot;1arcsec&quot;</value>
     </param>
 
-    <param type="string" name="stokes" > <!-- subparam="true"> -->
+    <param name="stokes" type="string"> 
      <shortdescription>Stokes Planes to make (I only, for now)</shortdescription>
 <description>Stokes Planes to make (I only, for now)
                default='I'; example: stokes='IQUV';
@@ -267,13 +262,13 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
     </param>
 
 
-<!--============================================== -->
 
-<!--============================================== -->
-<!--                            Spectral Parameters                                                     -->
-<!--============================================== -->
 
-    <param type="any" name="specmode" required="true">
+
+
+
+
+    <param required="true" name="specmode" type="any">
      <shortdescription>Spectral definition mode (mfs only, for now)</shortdescription>
 <description>Spectral definition mode (mfs only, for now)
 
@@ -303,11 +298,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                                                            data display options window.)
 
 
-                                               <!--(Note : If the input parameters are specified in a frame
-                                                           other than LSRK, the viewer can be used to relabel
-                                                           the spectral axis in that frame - via the spectral
-                                                           reference option under axis label properties in the
-                                                           data display options window.)-->
+                                               
 
                         mode='cubedata' : Spectral line imaging with one or more channels
                                                         There is no internal software Doppler tracking so
@@ -328,11 +319,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
     </param>
 
 
-<!--============================================== -->
-<!--                            Weighting Parameters                                            -->
-<!--============================================== -->
 
-    <param type="string" name="weighting">
+
+
+
+    <param name="weighting" type="string">
            <shortdescription>Weighting scheme (natural,uniform,briggs)</shortdescription>
 <description>Weighting scheme (natural,uniform,briggs,superuniform,radial)
 
@@ -406,7 +397,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
     </param>
 
-    <param type="double" name="robust" subparam="true">
+    <param subparam="true" name="robust" type="double">
            <shortdescription>Robustness parameter</shortdescription>
 <description>Robustness parameter for Briggs weighting.
 
@@ -422,7 +413,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
             </allowed>
     </param>
 
-    <param type="int" name="npixels" subparam="true">
+    <param subparam="true" name="npixels" type="int">
            <shortdescription>Number of pixels to determine uv-cell size (0 : -/+ 3 pixels)</shortdescription>
 <description>Number of pixels to determine uv-cell size for super-uniform weighting
                       (0 defaults to -/+ 3 pixels)
@@ -442,15 +433,9 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
             <value type="int">0</value>
     </param>
 
-<!--
-    <param type="bool" name="uvtaper">
-           <shortdescription>xxx</shortdescription>
-<description>Apply additional uv tapering of visibilities</description>
-            <value type="bool">False</value>
-    </param>
--->
 
-    <param type="stringArray" name="uvtaper" subparam="true">
+
+    <param subparam="true" name="uvtaper" type="stringVec">
            <shortdescription>uv-taper on outer baselines in uv-plane</shortdescription>
 <description>uv-taper on outer baselines in uv-plane
 
@@ -475,37 +460,37 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
 </description>
             <value type="vector">
-              <value></value>
+              <value/>
             </value>
     </param>
 
-<!--=============================================== -->
-<!--===============  Constraints                        ============== -->
+
+
 
    <constraints>
 
 
      <when param="selectdata">
-      <equals type="bool" value="True">
-         <default param="field"><value>""</value></default>
-         <default param="spw"><value>""</value></default>
-         <default param="timerange"><value>""</value></default>
-         <default param="uvrange"><value>""</value></default>
-         <default param="antenna"><value>""</value></default>
-         <default param="scan"><value>""</value></default>
-         <default param="observation"><value>""</value></default>
-         <default param="intent"><value>""</value></default>
+      <equals value="True" type="bool">
+         <default param="field"><value>&quot;&quot;</value></default>
+         <default param="spw"><value>&quot;&quot;</value></default>
+         <default param="timerange"><value>&quot;&quot;</value></default>
+         <default param="uvrange"><value>&quot;&quot;</value></default>
+         <default param="antenna"><value>&quot;&quot;</value></default>
+         <default param="scan"><value>&quot;&quot;</value></default>
+         <default param="observation"><value>&quot;&quot;</value></default>
+         <default param="intent"><value>&quot;&quot;</value></default>
        </equals>
       </when>
 
 
      <when param="weighting">
-       <equals type="string" value="natural">
+       <equals value="natural" type="string">
          <default param="uvtaper"><value>[]</value></default>
        </equals>
-       <equals type="string" value="uniform">
+       <equals value="uniform" type="string">
        </equals>
-       <equals type="string" value="briggs">
+       <equals value="briggs" type="string">
          <default param="robust"><value>0.5</value></default>
          <default param="npixels"><value>0</value></default>
          <default param="uvtaper"><value>[]</value></default>

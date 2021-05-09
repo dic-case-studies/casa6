@@ -1,10 +1,10 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
 
-<task category="information, calibration" name="listcal" type="function">
+<task type="function" name="listcal" category="information, calibration">
 
   <shortdescription>List antenna gain solutions</shortdescription>
 
@@ -79,41 +79,41 @@ pagerows    rows per page of listing
 
   <input>
 
-    <param mustexist="true" kind="ms" name="vis" type="string"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
+    <param type="path" name="vis" kind="ms" mustexist="true"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
           
           <value/>
     </param>
 
-    <param mustexist="true" name="caltable" type="string"><shortdescription>Input calibration table to list</shortdescription><description>Input calibration table to list</description>
+    <param type="path" name="caltable" mustexist="true"><shortdescription>Input calibration table to list</shortdescription><description>Input calibration table to list</description>
       
       <value/>
     </param>
 
-    <param name="field" type="string"><shortdescription>Field name or index</shortdescription><description>Field name or index</description>
+    <param type="string" name="field"><shortdescription>Field name or index</shortdescription><description>Field name or index</description>
           
           <value/>
           <example>''==&gt;all</example>
     </param>
 
-    <param name="antenna" type="string"><shortdescription>Antenna name or index</shortdescription><description>Antenna name or index</description>
+    <param type="string" name="antenna"><shortdescription>Antenna name or index</shortdescription><description>Antenna name or index</description>
       
       <value/>
         <example>''==&gt;all; antenna='3'</example>
     </param>
 
-    <param name="spw" type="string"><shortdescription>Spectral window and channel</shortdescription><description>Spectral window and channel</description>
+    <param type="string" name="spw"><shortdescription>Spectral window and channel</shortdescription><description>Spectral window and channel</description>
       
       <value/>
         <example>''==&gt;all; spw='5:0~10'</example>
     </param>
 
-    <param name="listfile" type="string"><shortdescription>Disk file to write output</shortdescription><description>Disk file to write output</description>
+    <param type="string" name="listfile"><shortdescription>Disk file to write output</shortdescription><description>Disk file to write output</description>
           
           <value/>
           <example>''==&gt;to terminal</example>
     </param>
 
-    <param name="pagerows" type="int"><shortdescription>Rows per page</shortdescription><description>Rows per page</description>
+    <param type="int" name="pagerows"><shortdescription>Rows per page</shortdescription><description>Rows per page</description>
           
           <value>50</value>
     </param>

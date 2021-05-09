@@ -578,34 +578,6 @@ def mkpath(path):
         else:
             raise
 
-def upgrade_xml( conversions ):
-    mkpath("xml")
-    for k in conversions.keys( ):
-        if not os.path.exists(conversions[k]) or os.path.getmtime(conversions[k]) < os.path.getmtime(k):
-
-            print("upgrading %s" % k)
-
-            proc = Popen( [tools_config['build.compiler.xml-casa'], "-upgrade", k],
-                          stdout=subprocess.PIPE )
-
-            (output, error) = pipe_decode(proc.communicate( ))
-
-            exit_code = proc.wait( )
-            if exit_code != 0:
-                sys.exit('upgrading %s failed' % conversions[k])
-
-            if k.endswith("/imval.xml"):
-                print("fixing %s" % k)
-                ## one test case test_imval.py is fundamentally broken, and fixing this through
-                ## a commit causes the test case to proceed past the broken spot... so here
-                ## we revert to patching at build time...
-                output = output.replace('<output>','<bogus_output>')
-                output = output.replace('</output>','</bogus_output>')
-
-            xmlfd = open(conversions[k], 'w')
-            xmlfd.write(output)
-            xmlfd.close( )
-
 def generate_pyinit(moduledir,tasks):
     """Generate __init__.py for the module
     """
@@ -742,8 +714,7 @@ class BuildCasa(build):
         build.finalize_options(self)
 
     def run(self):
-        upgrade_xml(xml_xlate)
-        #scripts/xml-casa output-task=/tmp/debug/task -task taskxml/imhead.xml > /Users/drs/develop/casa/casatools/build/lib.macosx-10.12-x86_64-3.6/casatasks/imhead.py
+
         libdir = os.path.join("build",distutils_dir_name('lib'))
         moduledir = os.path.join(libdir,"casatasks")
         privatedir = os.path.join(moduledir,"private")

@@ -1,137 +1,137 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="manipulation" name="statwt" type="function">
+<task type="function" name="statwt" category="manipulation">
     <shortdescription>Compute and set weights based on variance of data.</shortdescription>
 
     <input>
-        <param mustexist="true" name="vis" type="string"><shortdescription>Name of measurement set</shortdescription><description>Name of measurement set</description>
+        <param type="path" name="vis" mustexist="true"><shortdescription>Name of measurement set</shortdescription><description>Name of measurement set</description>
             
             <value/>
         </param>
-        <param name="selectdata" type="bool"><shortdescription>Enable data selection parameters</shortdescription><description>Enable data selection parameters</description>
+        <param type="bool" name="selectdata"><shortdescription>Enable data selection parameters</shortdescription><description>Enable data selection parameters</description>
            
            <value type="bool">True</value>
         </param>
-        <param subparam="true" name="field" type="string"><shortdescription>Selection based on field names or field index numbers. Default is all.</shortdescription><description>Selection based on field names or field index numbers. Default is all.</description>
+        <param type="string" name="field" subparam="true"><shortdescription>Selection based on field names or field index numbers. Default is all.</shortdescription><description>Selection based on field names or field index numbers. Default is all.</description>
             
             <value/>
             <example>&quot;0~2&quot;, or &quot;3C286&quot;</example>
         </param>
-        <param subparam="true" name="spw" type="string"><shortdescription>Selection based on spectral windows:channels. Default is all.</shortdescription><description>Selection based on spectral windows:channels. Default is all.</description>
+        <param type="string" name="spw" subparam="true"><shortdescription>Selection based on spectral windows:channels. Default is all.</shortdescription><description>Selection based on spectral windows:channels. Default is all.</description>
             
             <value/>
             <example>&quot;3&quot;</example>
         </param>
-        <param subparam="true" name="intent" type="string"><shortdescription>Selection based on intents. Default is all.</shortdescription><description>Selection based on intents. Default is all.</description>
+        <param type="string" name="intent" subparam="true"><shortdescription>Selection based on intents. Default is all.</shortdescription><description>Selection based on intents. Default is all.</description>
             
             <value/>
             <example>&quot;my_intent&quot;</example>
         </param>
-        <param subparam="true" name="array" type="string"><shortdescription>Selection based on array IDs. Default is all.</shortdescription><description>Selection based on array IDs. Default is all.</description>
+        <param type="string" name="array" subparam="true"><shortdescription>Selection based on array IDs. Default is all.</shortdescription><description>Selection based on array IDs. Default is all.</description>
             
             <value/>
             <example>&quot;1&quot;</example>
         </param>
-        <param subparam="true" name="observation" type="string"><shortdescription>Selection based on observation IDs. Default is all.</shortdescription><description>Selection based on observation IDs. Default is all.</description>
+        <param type="string" name="observation" subparam="true"><shortdescription>Selection based on observation IDs. Default is all.</shortdescription><description>Selection based on observation IDs. Default is all.</description>
             
             <value/>
             <example>&quot;1&quot;</example>
         </param>
-        <param subparam="true" name="scan" type="string"><shortdescription>Select data by scan numbers.</shortdescription><description>Select data by scan numbers.</description>
+        <param type="string" name="scan" subparam="true"><shortdescription>Select data by scan numbers.</shortdescription><description>Select data by scan numbers.</description>
             
             <value/>
             <example>&quot;5&quot;</example>
         </param>
-        <param name="combine" type="string"><shortdescription>Ignore changes in these columns (scan, field, and/or state) when aggregating samples to compute weights. The value &quot;corr&quot; is also supported to aggregate samples across correlations.</shortdescription><description>Ignore changes in these columns (scan, field, and/or state) when aggregating samples to compute weights. The value &quot;corr&quot; is also supported to aggregate samples across correlations.</description>
+        <param type="string" name="combine"><shortdescription>Ignore changes in these columns (scan, field, and/or state) when aggregating samples to compute weights. The value &quot;corr&quot; is also supported to aggregate samples across correlations.</shortdescription><description>Ignore changes in these columns (scan, field, and/or state) when aggregating samples to compute weights. The value &quot;corr&quot; is also supported to aggregate samples across correlations.</description>
             
             <value/>
             <example>&quot;scan,field&quot;</example>
         </param>
-        <param name="timebin" type="any"><shortdescription>Length for binning in time to determine statistics. Can either be integer to be multiplied by the representative integration time, a quantity (string) in time units</shortdescription><description>Length for binning in time to determine statistics. Can either be integer to be multiplied by the representative integration time, a quantity (string) in time units</description>
+        <param type="any" name="timebin"><shortdescription>Length for binning in time to determine statistics. Can either be integer to be multiplied by the representative integration time, a quantity (string) in time units</shortdescription><description>Length for binning in time to determine statistics. Can either be integer to be multiplied by the representative integration time, a quantity (string) in time units</description>
             
-            <any limittypes="string int" type="variant"/>
+            <type>string</type><type>int</type>
             <value type="int">1</value>
             <example>5 or &quot;100s&quot;</example>
         </param>
-        <param name="slidetimebin" type="bool"><shortdescription>Use a sliding window for time binning, as opposed to time block processing?</shortdescription><description>Use a sliding window for time binning, as opposed to time block processing?</description>
+        <param type="bool" name="slidetimebin"><shortdescription>Use a sliding window for time binning, as opposed to time block processing?</shortdescription><description>Use a sliding window for time binning, as opposed to time block processing?</description>
             
             <value>False</value>
             <example>True</example>
         </param>
-        <param name="chanbin" type="any"><shortdescription>Channel bin width for computing weights. Can either be integer, in which case it is interpreted as number of channels to include in each bin, or a string &quot;spw&quot; or quantity with frequency units.</shortdescription><description>Channel bin width for computing weights. Can either be integer, in which case it is interpreted as number of channels to include in each bin, or a string &quot;spw&quot; or quantity with frequency units.</description>
-            <any limittypes="string int" type="variant"/>
+        <param type="any" name="chanbin"><shortdescription>Channel bin width for computing weights. Can either be integer, in which case it is interpreted as number of channels to include in each bin, or a string &quot;spw&quot; or quantity with frequency units.</shortdescription><description>Channel bin width for computing weights. Can either be integer, in which case it is interpreted as number of channels to include in each bin, or a string &quot;spw&quot; or quantity with frequency units.</description>
+            <type>string</type><type>int</type>
             
             <value type="string">spw</value>
             <example>5 or &quot;1.5MHz&quot;</example>
         </param>
-        <param name="minsamp" type="int"><shortdescription>Minimum number of unflagged visibilities required for computing weights in a sample. Must be &gt;= 2.</shortdescription><description>Minimum number of unflagged visibilities required for computing weights in a sample. Must be &gt;= 2.</description>
+        <param type="int" name="minsamp"><shortdescription>Minimum number of unflagged visibilities required for computing weights in a sample. Must be &gt;= 2.</shortdescription><description>Minimum number of unflagged visibilities required for computing weights in a sample. Must be &gt;= 2.</description>
             
             <value>2</value>
             <example>10</example>
         </param>
-        <param name="statalg" type="string"><shortdescription>Statistics algorithm to use for computing variances. Supported values are &quot;chauvenet&quot;, &quot;classic&quot;, &quot;fit-half&quot;, and &quot;hinges-fences&quot;. Minimum match is supported, although the full string must be specified for the subparameters to appear in the inputs list.</shortdescription><description>Statistics algorithm to use for computing variances. Supported values are &quot;chauvenet&quot;, &quot;classic&quot;, &quot;fit-half&quot;, and &quot;hinges-fences&quot;. Minimum match is supported, although the full string must be specified for the subparameters to appear in the inputs list.</description>
+        <param type="string" name="statalg"><shortdescription>Statistics algorithm to use for computing variances. Supported values are &quot;chauvenet&quot;, &quot;classic&quot;, &quot;fit-half&quot;, and &quot;hinges-fences&quot;. Minimum match is supported, although the full string must be specified for the subparameters to appear in the inputs list.</shortdescription><description>Statistics algorithm to use for computing variances. Supported values are &quot;chauvenet&quot;, &quot;classic&quot;, &quot;fit-half&quot;, and &quot;hinges-fences&quot;. Minimum match is supported, although the full string must be specified for the subparameters to appear in the inputs list.</description>
             
             <value>classic</value>
             <example>&quot;cl&quot;, &quot;ch&quot;, &quot;f&quot;, or &quot;h&quot;</example>
         </param>
-        <param subparam="true" name="fence" type="double"><shortdescription>Fence value for statalg=&quot;hinges-fences&quot;. A negative value means use the entire data set (ie default to the &quot;classic&quot; algorithm). Ignored if statalg is not &quot;hinges-fences&quot;.</shortdescription><description>Fence value for statalg=&quot;hinges-fences&quot;. A negative value means use the entire data set (ie default to the &quot;classic&quot; algorithm). Ignored if statalg is not &quot;hinges-fences&quot;.</description>
+        <param type="double" name="fence" subparam="true"><shortdescription>Fence value for statalg=&quot;hinges-fences&quot;. A negative value means use the entire data set (ie default to the &quot;classic&quot; algorithm). Ignored if statalg is not &quot;hinges-fences&quot;.</shortdescription><description>Fence value for statalg=&quot;hinges-fences&quot;. A negative value means use the entire data set (ie default to the &quot;classic&quot; algorithm). Ignored if statalg is not &quot;hinges-fences&quot;.</description>
             
             <value>-1</value>
             <example>0.2</example>
         </param>
-        <param subparam="true" name="center" type="string"><shortdescription>Center to use for statalg=&quot;fit-half&quot;. Valid choices are &quot;mean&quot;, &quot;median&quot;, and &quot;zero&quot;. Ignored if statalg is not &quot;fit-half&quot;.</shortdescription><description>Center to use for statalg=&quot;fit-half&quot;. Valid choices are &quot;mean&quot;, &quot;median&quot;, and &quot;zero&quot;. Ignored if statalg is not &quot;fit-half&quot;.</description>
+        <param type="string" name="center" subparam="true"><shortdescription>Center to use for statalg=&quot;fit-half&quot;. Valid choices are &quot;mean&quot;, &quot;median&quot;, and &quot;zero&quot;. Ignored if statalg is not &quot;fit-half&quot;.</shortdescription><description>Center to use for statalg=&quot;fit-half&quot;. Valid choices are &quot;mean&quot;, &quot;median&quot;, and &quot;zero&quot;. Ignored if statalg is not &quot;fit-half&quot;.</description>
             
             <value>mean</value>
             <example>&quot;mean&quot;, &quot;median&quot;, or &quot;zero&quot;</example>
         </param>
-        <param subparam="true" name="lside" type="bool"><shortdescription>For statalg=&quot;fit-half&quot;, real data are &lt;=; center? If false, real data are &gt;= center. Ignored if statalg is not &quot;fit-half&quot;.</shortdescription><description>For statalg=&quot;fit-half&quot;, real data are &lt;=; center? If false, real data are &gt;= center. Ignored if statalg is not &quot;fit-half&quot;.</description>
+        <param type="bool" name="lside" subparam="true"><shortdescription>For statalg=&quot;fit-half&quot;, real data are &lt;=; center? If false, real data are &gt;= center. Ignored if statalg is not &quot;fit-half&quot;.</shortdescription><description>For statalg=&quot;fit-half&quot;, real data are &lt;=; center? If false, real data are &gt;= center. Ignored if statalg is not &quot;fit-half&quot;.</description>
             
             <value>True</value>
             <example>True</example>
         </param>
-        <param subparam="true" name="zscore" type="double"><shortdescription>For statalg=&quot;chauvenet&quot;, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet\'s criterion. Ignored if statalg is not &quot;chauvenet&quot;.</shortdescription><description>For statalg=&quot;chauvenet&quot;, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet\'s criterion. Ignored if statalg is not &quot;chauvenet&quot;.</description>
+        <param type="double" name="zscore" subparam="true"><shortdescription>For statalg=&quot;chauvenet&quot;, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet\'s criterion. Ignored if statalg is not &quot;chauvenet&quot;.</shortdescription><description>For statalg=&quot;chauvenet&quot;, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet\'s criterion. Ignored if statalg is not &quot;chauvenet&quot;.</description>
             
             <value>-1</value>
             <example>3.5</example>
         </param>
-        <param subparam="true" name="maxiter" type="int"><shortdescription>For statalg=&quot;chauvenet&quot;, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if statalg is not &quot;chauvenet&quot;.</shortdescription><description>For statalg=&quot;chauvenet&quot;, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if statalg is not &quot;chauvenet&quot;.</description>
+        <param type="int" name="maxiter" subparam="true"><shortdescription>For statalg=&quot;chauvenet&quot;, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if statalg is not &quot;chauvenet&quot;.</shortdescription><description>For statalg=&quot;chauvenet&quot;, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if statalg is not &quot;chauvenet&quot;.</description>
             
             <value>-1</value>
             <example>10</example>
         </param>
-        <param name="fitspw" type="string"><shortdescription>Channels to include in the computation of weights. Specified as an MS select channel selection string.</shortdescription><description>Channels to include in the computation of weights. Specified as an MS select channel selection string.</description>
+        <param type="string" name="fitspw"><shortdescription>Channels to include in the computation of weights. Specified as an MS select channel selection string.</shortdescription><description>Channels to include in the computation of weights. Specified as an MS select channel selection string.</description>
             
             <value/>
             <example>&quot;0:5~30&quot;</example>
         </param>
-        <param name="excludechans" type="bool"><shortdescription>If True: invert the channel selection in fitspw and exclude the fitspw selection from the computation of the weights.</shortdescription><description>If True: invert the channel selection in fitspw and exclude the fitspw selection from the computation of the weights.</description>
+        <param type="bool" name="excludechans"><shortdescription>If True: invert the channel selection in fitspw and exclude the fitspw selection from the computation of the weights.</shortdescription><description>If True: invert the channel selection in fitspw and exclude the fitspw selection from the computation of the weights.</description>
             
             <value>False</value>
             <example>True</example>
         </param>
-        <param name="wtrange" type="doubleArray"><shortdescription>Range of acceptable weights. Data with weights outside this range will be flagged. Empty array (default) means all weights are good.</shortdescription><description>Range of acceptable weights. Data with weights outside this range will be flagged. Empty array (default) means all weights are good.</description>
+        <param type="doubleVec" name="wtrange"><shortdescription>Range of acceptable weights. Data with weights outside this range will be flagged. Empty array (default) means all weights are good.</shortdescription><description>Range of acceptable weights. Data with weights outside this range will be flagged. Empty array (default) means all weights are good.</description>
             
             <value/>
             <example>[0.1, 10]</example>
         </param>
-        <param name="flagbackup" type="bool"><shortdescription>Back up the state of flags before the run?</shortdescription><description>Back up the state of flags before the run?</description>
+        <param type="bool" name="flagbackup"><shortdescription>Back up the state of flags before the run?</shortdescription><description>Back up the state of flags before the run?</description>
             
             <value>True</value>
             <example>True, False</example>
         </param>
-        <param name="preview" type="bool"><shortdescription>Preview mode. If True, no data is changed, although the amount of data that would have been flagged is reported.</shortdescription><description>Preview mode. If True, no data is changed, although the amount of data that would have been flagged is reported.</description>
+        <param type="bool" name="preview"><shortdescription>Preview mode. If True, no data is changed, although the amount of data that would have been flagged is reported.</shortdescription><description>Preview mode. If True, no data is changed, although the amount of data that would have been flagged is reported.</description>
             
             <value>False</value>
             <example>True or False</example>
         </param>
-        <param name="datacolumn" type="string"><shortdescription>Data column to use to compute weights. Supported values are &quot;data&quot;, &quot;corrected&quot;, &quot;residual&quot;, and &quot;residual_data&quot; (case insensitive, minimum match supported).</shortdescription><description>Data column to use to compute weights. Supported values are &quot;data&quot;, &quot;corrected&quot;, &quot;residual&quot;, and &quot;residual_data&quot; (case insensitive, minimum match supported).</description>
+        <param type="string" name="datacolumn"><shortdescription>Data column to use to compute weights. Supported values are &quot;data&quot;, &quot;corrected&quot;, &quot;residual&quot;, and &quot;residual_data&quot; (case insensitive, minimum match supported).</shortdescription><description>Data column to use to compute weights. Supported values are &quot;data&quot;, &quot;corrected&quot;, &quot;residual&quot;, and &quot;residual_data&quot; (case insensitive, minimum match supported).</description>
             
             <value>corrected</value>
             <example>&quot;data&quot; or &quot;corrected&quot;</example>
         </param>
         <constraints>
             <when param="selectdata">
-                <equals value="True" type="bool">
+                <equals type="bool" value="True">
                     <default param="field"><value>&quot;&quot;</value></default>
                     <default param="spw"><value>&quot;&quot;</value></default>
                     <default param="observation"><value>&quot;&quot;</value></default>
@@ -141,13 +141,13 @@
                 </equals>
             </when>
             <when param="statalg">
-                <equals value="classic" type="string"/>
-                <equals value="hinges-fences" type="string">
+                <equals type="string" value="classic"/>
+                <equals type="string" value="hinges-fences">
                     <default param="fence">
                         <value>-1</value>
                     </default>
                 </equals>
-                <equals value="fit-half" type="string">
+                <equals type="string" value="fit-half">
                     <default param="center">
                         <value type="string">mean</value>
                     </default>
@@ -155,7 +155,7 @@
                         <value>True</value>
                     </default>
                 </equals>
-                <equals value="chauvenet" type="string">
+                <equals type="string" value="chauvenet">
                     <default param="zscore">
                         <value>-1</value>
                     </default>
@@ -343,5 +343,5 @@
         # update the weights of an MS using time binning of 300s
         statwt(&quot;my.ms&quot;, timebin=&quot;300s&quot;)
     </example>
-</task>
+<returns>void</returns></task>
 </casaxml>

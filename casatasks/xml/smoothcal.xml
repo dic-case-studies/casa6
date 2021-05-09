@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="calibration" name="smoothcal" type="function">
+<task type="function" name="smoothcal" category="calibration">
         <shortdescription>Smooth calibration solution(s) derived from one or more sources:</shortdescription>
         <description>
         A G- or T-type gain calibration can be smoothed.  Amplitude and
@@ -8,27 +8,27 @@
         will be smoothed over all fields.
         </description>
         <input>
-                <param mustexist="true" name="vis" type="string"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
+                <param type="path" name="vis" mustexist="true"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
                         
                         <value/>
                 </param>
 
-                <param mustexist="true" name="tablein" type="string"><shortdescription>Input calibration table</shortdescription><description>Input calibration table</description>
+                <param type="path" name="tablein" mustexist="true"><shortdescription>Input calibration table</shortdescription><description>Input calibration table</description>
                         
                         <value/>
                 </param>
 
-                <param name="caltable" type="string"><shortdescription>Output calibration table (overwrite tablein if unspecified)</shortdescription><description>Output calibration table (overwrite tablein if unspecified)</description>
+                <param type="string" name="caltable"><shortdescription>Output calibration table (overwrite tablein if unspecified)</shortdescription><description>Output calibration table (overwrite tablein if unspecified)</description>
                         
                         <value/>
                 </param>
 
-                <param name="field" type="stringArray"><shortdescription>Field name list</shortdescription><description>Field name list</description>
+                <param type="stringVec" name="field"><shortdescription>Field name list</shortdescription><description>Field name list</description>
                         
                         <value/>
                 </param>
 
-                <param name="smoothtype" type="string"><shortdescription>Smoothing filter to use</shortdescription><description>Smoothing filter to use</description>
+                <param type="string" name="smoothtype"><shortdescription>Smoothing filter to use</shortdescription><description>Smoothing filter to use</description>
                         
                         <value>median</value>
                         <allowed kind="enum">
@@ -37,9 +37,9 @@
                         </allowed>
                 </param>
 
-                <param name="smoothtime" type="any"><shortdescription>Smoothing time (sec)</shortdescription><description>Smoothing time (sec)</description>
+                <param type="any" name="smoothtime"><shortdescription>Smoothing time (sec)</shortdescription><description>Smoothing time (sec)</description>
                         
-                        <any limittypes="double int" type="variant"/>
+                        <type>double</type><type>int</type>
                         <value type="double">60.0</value>
                 </param>
 

@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="manipulation" name="partition" type="function">
+<task type="function" name="partition" category="manipulation">
      <shortdescription>Task to produce Multi-MSs using parallelism</shortdescription>
 
 <description>
@@ -56,43 +56,43 @@
 </description>
 
 <input>
-    <param mustexist="true" name="vis" type="string"><shortdescription>Name of input measurement set</shortdescription><description>Name of input measurement set</description>
+    <param type="path" name="vis" mustexist="true"><shortdescription>Name of input measurement set</shortdescription><description>Name of input measurement set</description>
         
         <value/>
     </param>
 
-    <param name="outputvis" type="string"><shortdescription>Name of output measurement set</shortdescription><description>Name of output measurement set</description>
+    <param type="string" name="outputvis"><shortdescription>Name of output measurement set</shortdescription><description>Name of output measurement set</description>
         
         <value/>
     </param>
-        <param name="createmms" type="bool"><shortdescription>Should this create a multi-MS output</shortdescription><description>Should this create a multi-MS output</description>
+        <param type="bool" name="createmms"><shortdescription>Should this create a multi-MS output</shortdescription><description>Should this create a multi-MS output</description>
             
             <value>True</value>
         </param>
-        <param subparam="true" ignorecase="true" name="separationaxis" type="string"><shortdescription>Axis to do parallelization across(scan, spw, baseline, auto)</shortdescription><description>Axis to do parallelization across(scan, spw, baseline, auto)</description>
+        <param type="string" name="separationaxis" ignorecase="true" subparam="true"><shortdescription>Axis to do parallelization across(scan, spw, baseline, auto)</shortdescription><description>Axis to do parallelization across(scan, spw, baseline, auto)</description>
             
             <value>auto</value>
-            <allowed ignorecase="true" kind="enum">
+            <allowed kind="enum" ignorecase="true">
                 <value>auto</value>
                 <value>scan</value>
                 <value>spw</value>
                 <value>baseline</value>
             </allowed>
         </param>
-        <param subparam="true" name="numsubms" type="any"><shortdescription>The number of SubMSs to create (auto or any number)</shortdescription><description>The number of SubMSs to create (auto or any number)</description>
+        <param type="any" name="numsubms" subparam="true"><shortdescription>The number of SubMSs to create (auto or any number)</shortdescription><description>The number of SubMSs to create (auto or any number)</description>
             
-            <any limittypes="string int" type="variant"/>
+            <type>string</type><type>int</type>
          <value type="string">auto</value>
         </param>
-        <param subparam="true" name="flagbackup" type="bool"><shortdescription>Create a backup of the FLAG column in the MMS.</shortdescription><description>Create a backup of the FLAG column in the MMS.</description>
+        <param type="bool" name="flagbackup" subparam="true"><shortdescription>Create a backup of the FLAG column in the MMS.</shortdescription><description>Create a backup of the FLAG column in the MMS.</description>
             
             <value>True</value>
         </param>
 
-    <param ignorecase="True" name="datacolumn" type="string"><shortdescription>Which data column(s) to process.</shortdescription><description>Which data column(s) to process.</description>
+    <param type="string" name="datacolumn" ignorecase="True"><shortdescription>Which data column(s) to process.</shortdescription><description>Which data column(s) to process.</description>
         
         <value>all</value>
-        <allowed ignorecase="True" kind="enum">
+        <allowed kind="enum" ignorecase="True">
             <value>all</value>
             <value>data</value>
             <value>corrected</value>
@@ -106,89 +106,89 @@
     </param>
 
         
-    <param name="field" type="any"><shortdescription>Select field using ID(s) or name(s).</shortdescription><description>Select field using ID(s) or name(s).</description>
+    <param type="any" name="field"><shortdescription>Select field using ID(s) or name(s).</shortdescription><description>Select field using ID(s) or name(s).</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
 
-    <param name="spw" type="any"><shortdescription>Select spectral window/channels.</shortdescription><description>Select spectral window/channels.</description>
+    <param type="any" name="spw"><shortdescription>Select spectral window/channels.</shortdescription><description>Select spectral window/channels.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
     
-    <param name="scan" type="any"><shortdescription>Select data by scan numbers.</shortdescription><description>Select data by scan numbers.</description>
+    <param type="any" name="scan"><shortdescription>Select data by scan numbers.</shortdescription><description>Select data by scan numbers.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
 
-    <param name="antenna" type="any"><shortdescription>Select data based on antenna/baseline.</shortdescription><description>Select data based on antenna/baseline.</description>
+    <param type="any" name="antenna"><shortdescription>Select data based on antenna/baseline.</shortdescription><description>Select data based on antenna/baseline.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
     
-    <param name="correlation" type="any"><shortdescription>Correlation: '' ==&gt; all, correlation=&quot;XX,YY&quot;.</shortdescription><description>Correlation: '' ==&gt; all, correlation=&quot;XX,YY&quot;.</description>
+    <param type="any" name="correlation"><shortdescription>Correlation: '' ==&gt; all, correlation=&quot;XX,YY&quot;.</shortdescription><description>Correlation: '' ==&gt; all, correlation=&quot;XX,YY&quot;.</description>
         
-        <any limittypes="string stringArray" type="variant"/>
+        <type>string</type><type>stringVec</type>
         <value type="string"/>
     </param>
 
-    <param name="timerange" type="any"><shortdescription>Select data by time range.</shortdescription><description>Select data by time range.</description>
+    <param type="any" name="timerange"><shortdescription>Select data by time range.</shortdescription><description>Select data by time range.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
     
-    <param name="intent" type="any"><shortdescription>Select data by scan intent.</shortdescription><description>Select data by scan intent.</description>
+    <param type="any" name="intent"><shortdescription>Select data by scan intent.</shortdescription><description>Select data by scan intent.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
     
-    <param name="array" type="any"><shortdescription>Select (sub)array(s) by array ID number.</shortdescription><description>Select (sub)array(s) by array ID number.</description>
+    <param type="any" name="array"><shortdescription>Select (sub)array(s) by array ID number.</shortdescription><description>Select (sub)array(s) by array ID number.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
     
-    <param name="uvrange" type="any"><shortdescription>Select data by baseline length.</shortdescription><description>Select data by baseline length.</description>
+    <param type="any" name="uvrange"><shortdescription>Select data by baseline length.</shortdescription><description>Select data by baseline length.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
     
-    <param name="observation" type="any"><shortdescription>Select by observation ID(s).</shortdescription><description>Select by observation ID(s).</description>
+    <param type="any" name="observation"><shortdescription>Select by observation ID(s).</shortdescription><description>Select by observation ID(s).</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
 
-    <param name="feed" type="any"><shortdescription>Multi-feed numbers: Not yet implemented.</shortdescription><description>Multi-feed numbers: Not yet implemented.</description>
+    <param type="any" name="feed"><shortdescription>Multi-feed numbers: Not yet implemented.</shortdescription><description>Multi-feed numbers: Not yet implemented.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param> 
 
                 
-    <param visibility="hidden" subparam="true" name="disableparallel" type="bool"><shortdescription>Create a multi-MS in parallel.</shortdescription><description>Create a multi-MS in parallel.</description>
+    <param type="bool" name="disableparallel" subparam="true" visibility="hidden"><shortdescription>Create a multi-MS in parallel.</shortdescription><description>Create a multi-MS in parallel.</description>
         
         <value>False</value>
     </param>        
-    <param visibility="hidden" subparam="true" name="ddistart" type="int"><shortdescription>Do not change this parameter. For internal use only.</shortdescription><description>Do not change this parameter. For internal use only.</description>
+    <param type="int" name="ddistart" subparam="true" visibility="hidden"><shortdescription>Do not change this parameter. For internal use only.</shortdescription><description>Do not change this parameter. For internal use only.</description>
         
         <value>-1</value>
     </param>
-    <param visibility="hidden" subparam="true" name="taql" type="string"><shortdescription>Table query for nested selections</shortdescription><description>Table query for nested selections</description>
+    <param type="string" name="taql" subparam="true" visibility="hidden"><shortdescription>Table query for nested selections</shortdescription><description>Table query for nested selections</description>
         
         <value type="string"/>
     </param>             
         
     <constraints>
       <when param="createmms">
-        <equals value="True" type="bool">
+        <equals type="bool" value="True">
           <default param="separationaxis"><value type="string">auto</value></default>
           <default param="numsubms"><value type="string">auto</value></default>
           <default param="flagbackup"><value type="bool">True</value></default>
@@ -198,7 +198,7 @@
           <default param="taql"><value type="string"/></default>
         </equals>
 
-        <equals value="False" type="bool">
+        <equals type="bool" value="False">
           <default param="separationaxis"><value type="string">auto</value></default>
           <default param="numsubms"><value type="string">auto</value></default>
           <default param="flagbackup"><value type="bool">True</value></default>
@@ -371,5 +371,5 @@ column.
 
 
 </example> 
-</task>
+<returns>void</returns></task>
 </casaxml>

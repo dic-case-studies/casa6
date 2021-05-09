@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="calibration" name="bandpass" type="function">
+<task type="function" name="bandpass" category="calibration">
 <shortdescription>Calculates a bandpass calibration solution</shortdescription>
 <description>
 Determines the amplitude and phase as a function of frequency for each
@@ -13,7 +13,7 @@ time interval, and is recommended if each channel has good
 signal-to-noise.
 </description>
 <input>
-        <param mustexist="true" name="vis" type="string">
+        <param type="path" name="vis" mustexist="true">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      default: non
@@ -23,7 +23,7 @@ signal-to-noise.
                 <value/>
         </param>
 
-        <param name="caltable" type="string">
+        <param type="string" name="caltable">
 <shortdescription>Name of output bandpass calibration table</shortdescription>
 <description>Name of output bandpass calibration table
                      default: none
@@ -33,7 +33,7 @@ signal-to-noise.
                 <value/>
         </param>
 
-        <param name="field" type="string">
+        <param type="string" name="field">
 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
 <description>Select field using field id(s) or field name(s)
                      default: '' --&gt; all fields
@@ -54,7 +54,7 @@ signal-to-noise.
                 <value/>
         </param>
 
-        <param name="spw" type="string">
+        <param type="string" name="spw">
 <shortdescription>Select spectral window/channels</shortdescription>
 <description>Select spectral window/channels
 
@@ -80,7 +80,7 @@ signal-to-noise.
                 <value/>
         </param>
 
-        <param name="intent" type="string">
+        <param type="string" name="intent">
 <shortdescription>Select observing intent</shortdescription>
 <description>Select observing intent
                      default: '' (no selection by intent)
@@ -91,7 +91,7 @@ signal-to-noise.
                 <value/>
         </param>
 
-        <param name="selectdata" type="bool">
+        <param type="bool" name="selectdata">
 <shortdescription>Other data selection parameters</shortdescription>
 <description>Other data selection parameters
                      default: True 
@@ -99,7 +99,7 @@ signal-to-noise.
                 <value>True</value>
         </param>
 
-        <param subparam="true" name="timerange" type="string">
+        <param type="string" name="timerange" subparam="true">
 <shortdescription>Select data based on time range</shortdescription>
 <description>Select data based on time range
                      Subparameter of selectdata=True
@@ -121,7 +121,7 @@ signal-to-noise.
                 <value/>
         </param>
 
-        <param subparam="true" name="uvrange" type="any">
+        <param type="any" name="uvrange" subparam="true">
 <shortdescription>Select data within uvrange (default units meters)</shortdescription>
 <description>Select data within uvrange (default units meters)
                      Subparameter of selectdata=True
@@ -137,7 +137,7 @@ signal-to-noise.
                 <value type="string"/>
         </param>
 
-        <param subparam="true" name="antenna" type="string">
+        <param type="string" name="antenna" subparam="true">
 <shortdescription>Select data based on antenna/baseline</shortdescription>
 <description>Select data based on antenna/baseline
                      Subparameter of selectdata=True
@@ -168,7 +168,7 @@ signal-to-noise.
                 <value/>
         </param>
 
-        <param subparam="true" name="scan" type="string">
+        <param type="string" name="scan" subparam="true">
 <shortdescription>Scan number range</shortdescription>
 <description>Scan number range
                      Subparameter of selectdata=True
@@ -180,7 +180,7 @@ signal-to-noise.
                 <value/>
         </param>
 
-        <param subparam="true" name="observation" type="any">
+        <param type="any" name="observation" subparam="true">
 <shortdescription>Select by observation ID(s)</shortdescription>
 <description>Select by observation ID(s)
                      Subparameter of selectdata=True
@@ -188,16 +188,16 @@ signal-to-noise.
 
                          Example: observation='0~2,4'
 </description>
-                <any limittypes="string int" type="variant"/>
+                <type>string</type><type>int</type>
                 <value type="string"/>
         </param>
 
-        <param subparam="true" name="msselect" type="string"><shortdescription>Optional complex data selection (ignore for now)</shortdescription><description>Optional complex data selection (ignore for now)</description>
+        <param type="string" name="msselect" subparam="true"><shortdescription>Optional complex data selection (ignore for now)</shortdescription><description>Optional complex data selection (ignore for now)</description>
                 
                 <value/>
         </param>
 
-        <param name="solint" type="any">
+        <param type="any" name="solint">
 <shortdescription>Solution interval in time[,freq]</shortdescription>
 <description>Solution interval in time[,freq]
                      default: 'inf' (~infinite, up to boundaries
@@ -229,7 +229,7 @@ signal-to-noise.
                 <value type="string">inf</value>
         </param>
 
-        <param name="combine" type="string">
+        <param type="string" name="combine">
 <shortdescription>Data axes which to combine for solve (obs, scan, spw, and/or field)</shortdescription>
 <description>Data axes to combine for solving
                      default: 'scan' --&gt; solutions will break at obs,
@@ -246,7 +246,7 @@ signal-to-noise.
                 <value>scan</value>
         </param>
 
-        <param name="refant" type="string">
+        <param type="string" name="refant">
 <shortdescription>Reference antenna name(s)</shortdescription>
 <description>Reference antenna name(s); a prioritized list may be
 specified
@@ -264,7 +264,7 @@ specified
                 <value/>
         </param>
 
-        <param name="minblperant" type="int">
+        <param type="int" name="minblperant">
 <shortdescription>Minimum baselines _per antenna_ required for solve</shortdescription>
 <description>Minimum baselines _per antenna_ required for solve
                      default: 4
@@ -282,7 +282,7 @@ specified
                 <value>4</value>
         </param>
 
-        <param name="minsnr" type="double">
+        <param type="double" name="minsnr">
 <shortdescription>Reject solutions below this SNR (only applies for bandtype = B)</shortdescription>
 <description>Reject solutions below this SNR (only applies for
 bandtype = B)
@@ -291,7 +291,7 @@ bandtype = B)
                 <value>3.0</value>
         </param>
 
-        <param name="solnorm" type="bool">
+        <param type="bool" name="solnorm">
 <shortdescription>Normalize average solution amplitudes to 1.0 </shortdescription>
 <description>Normalize bandpass amplitudes and phase for each spw,
 pol, ant, and timestamp
@@ -300,7 +300,7 @@ pol, ant, and timestamp
                 <value>False</value>
         </param>
 
-        <param name="bandtype" type="string">
+        <param type="string" name="bandtype">
 <shortdescription>Type of bandpass solution (B or BPOLY)</shortdescription>
 <description>Type of bandpass solution (B or BPOLY)
                       default: 'B'
@@ -324,13 +324,13 @@ pol, ant, and timestamp
                 </allowed>
         </param>
 
-        <param name="smodel" type="doubleArray">
+        <param type="doubleVec" name="smodel">
 <shortdescription>Point source Stokes parameters for source model.</shortdescription>
 <description>Point source Stokes parameters for source model.</description>
                <value/>
         </param>
 
-    <param name="corrdepflags" type="bool">
+    <param type="bool" name="corrdepflags">
       <shortdescription>Respect correlation-dependent flags</shortdescription>
       <description> If False (default), if any correlation is flagged, treat all correlations in
         the visibility vector as flagged when solving (per channel, per baseline).
@@ -355,7 +355,7 @@ pol, ant, and timestamp
 
 
 
-        <param name="append" type="bool">
+        <param type="bool" name="append">
 <shortdescription>Append solutions to the (existing) table</shortdescription>
 <description>Append solutions to the (existing) table
                      default: False (overwrite existing table or make
@@ -370,7 +370,7 @@ pol, ant, and timestamp
                 <value>False</value>
         </param>
 
-        <param subparam="true" name="fillgaps" type="int">
+        <param type="int" name="fillgaps" subparam="true">
 <shortdescription>Fill flagged solution channels by interpolation</shortdescription>
 <description>Fill flagged solution channels by interpolation
                      Subparameter of bandtype='B'  
@@ -382,7 +382,7 @@ pol, ant, and timestamp
                 <value>0</value>
         </param>
 
-        <param subparam="true" name="degamp" type="int">
+        <param type="int" name="degamp" subparam="true">
 <shortdescription>Polynomial degree for BPOLY amplitude solution</shortdescription>
 <description>Polynomial degree for BPOLY amplitude solution
                      Subparameter of bandtype='BPOLY'
@@ -393,7 +393,7 @@ pol, ant, and timestamp
                 <value>3</value>
         </param>
 
-        <param subparam="true" name="degphase" type="int">
+        <param type="int" name="degphase" subparam="true">
 <shortdescription>Polynomial degree for BPOLY phase solution</shortdescription>
 <description>Polynomial degree for BPOLY phase solution
                      Subparameter of bandtype='BPOLY'
@@ -404,7 +404,7 @@ pol, ant, and timestamp
                 <value>3</value>
         </param>
 
-        <param subparam="true" name="visnorm" type="bool">
+        <param type="bool" name="visnorm" subparam="true">
 <shortdescription>Normalize data prior to BPOLY solution</shortdescription>
 <description>Normalize data prior to BPOLY solution
                      Subparameter of bandtype='BPOLY'
@@ -415,7 +415,7 @@ pol, ant, and timestamp
                 <value>False</value>
         </param>
 
-        <param subparam="true" name="maskcenter" type="int">
+        <param type="int" name="maskcenter" subparam="true">
 <shortdescription>Number of channels to avoid in center of each band</shortdescription>
 <description>Number of channels to avoid in center of each band
                      Subparameter of bandtype='BPOLY'
@@ -426,7 +426,7 @@ pol, ant, and timestamp
                 <value>0</value>
         </param>
 
-        <param subparam="true" name="maskedge" type="int">
+        <param type="int" name="maskedge" subparam="true">
 <shortdescription>Fraction of channels to avoid at each band edge (in %)</shortdescription>
 <description>Fraction of channels to avoid at each band edge (in %)
                      Subparameter of bandtype='BPOLY'
@@ -437,7 +437,7 @@ pol, ant, and timestamp
                 <value>5</value>
         </param>
 
-        <param name="docallib" type="bool">
+        <param type="bool" name="docallib">
 <shortdescription>Use callib or traditional cal apply parameters</shortdescription>
 <description>Control means of specifying the caltables
                      default: False --&gt; Use gaintable, gainfield,
@@ -449,7 +449,7 @@ pol, ant, and timestamp
                 <value>False</value>
         </param>
 
-        <param subparam="true" name="callib" type="string">
+        <param type="string" name="callib" subparam="true">
 <shortdescription>Cal Library filename</shortdescription>
 <description>Cal Library filename
                      Subparameter of callib=True
@@ -460,7 +460,7 @@ pol, ant, and timestamp
                 <value type="string"/>
         </param>
 
-        <param subparam="true" name="gaintable" type="stringArray">
+        <param type="stringVec" name="gaintable" subparam="true">
 <shortdescription>Gain calibration table(s) to apply on the fly</shortdescription>
 <description>Gain calibration table(s) to apply on the fly
                      Subparameter of callib=False
@@ -472,7 +472,7 @@ pol, ant, and timestamp
                 <value/>
         </param>
 
-        <param subparam="true" name="gainfield" type="stringArray">
+        <param type="stringVec" name="gainfield" subparam="true">
 <shortdescription>Select a subset of calibrators from gaintable(s)</shortdescription>
 <description>Select a subset of calibrators from gaintable(s)
                      Subparameter of callib=False
@@ -491,7 +491,7 @@ pol, ant, and timestamp
                 <value/>
         </param>
 
-        <param subparam="true" name="interp" type="stringArray">
+        <param type="stringVec" name="interp" subparam="true">
 <shortdescription>Interpolation parameters for each gaintable, as a list</shortdescription>
 <description>Interpolation parmameters (in time[,freq]) for each gaintable, as a list of strings.
                      Default: '' --&gt; 'linear,linear' for all gaintable(s)
@@ -537,7 +537,7 @@ pol, ant, and timestamp
         <value/>
         </param>
 
-        <param subparam="true" name="spwmap" type="intArray">
+        <param type="intVec" name="spwmap" subparam="true">
 <shortdescription>Spectral window mappings to form for gaintable(s)</shortdescription>
 <description>Spectral window mappings to form for gaintable(s)
                      Only used if callib=False
@@ -556,7 +556,7 @@ pol, ant, and timestamp
                 <value/>
         </param>
 
-        <param name="parang" type="bool">
+        <param type="bool" name="parang">
 <shortdescription>Apply parallactic angle correction</shortdescription>
 <description>Apply parallactic angle correction
                      default: False
@@ -569,7 +569,7 @@ pol, ant, and timestamp
         </param>
    <constraints>
         <when param="selectdata">
-                <equals value="True" type="bool">
+                <equals type="bool" value="True">
                         <default param="timerange"><value type="string"/></default>
                         <default param="uvrange"><value type="string"/></default>
                         <default param="antenna"><value type="string"/></default>
@@ -577,7 +577,7 @@ pol, ant, and timestamp
                         <default param="observation"><value type="string"/></default>
                         <default param="msselect"><value type="string"/></default>
                 </equals>
-                <equals value="False" type="bool"/>
+                <equals type="bool" value="False"/>
         </when>
         <when param="bandtype">
                 <equals value="B">
@@ -592,13 +592,13 @@ pol, ant, and timestamp
                 </equals>
         </when>
         <when param="docallib">
-                <equals value="False" type="bool">
-                        <default param="gaintable"><value type="stringArray"/></default>
-                        <default param="gainfield"><value type="stringArray"/></default>
-                        <default param="interp"><value type="stringArray"/></default>
-                        <default param="spwmap"><value type="intArray"/></default>
+                <equals type="bool" value="False">
+                        <default param="gaintable"><value type="stringVec"/></default>
+                        <default param="gainfield"><value type="stringVec"/></default>
+                        <default param="interp"><value type="stringVec"/></default>
+                        <default param="spwmap"><value type="intVec"/></default>
                 </equals>
-                <equals value="True" type="bool">
+                <equals type="bool" value="True">
                         <default param="callib"><value type="string"/></default>
                 </equals>
         </when>
@@ -612,5 +612,5 @@ https://casa.nrao.edu/casadocs/
 
 </example> 
 
-</task>
+<returns>void</returns></task>
 </casaxml>

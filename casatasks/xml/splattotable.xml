@@ -1,16 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<!-- This is the task interface for sl.splattocasa        -->
-<!--                                                          -->
 
-<task type="function" name="splattotable" category="import/export">
+
+
+<task category="import/export" name="splattotable" type="function">
 <shortdescription>Convert a downloaded Splatalogue spectral line list to a casa table.</shortdescription>
 <description>
 This task reads a spectral line list(s) downloaded from Splatalogue
@@ -20,7 +14,7 @@ queried via eg the slsearch task.
 
 
 <input>
-        <param type="stringArray" direction="in" name="filenames" mustexist="true">
+        <param mustexist="true" name="filenames" direction="in" type="pathVec">
 <shortdescription>Files containing Splatalogue lists.</shortdescription>
 <description>Files containing Splatalogue lists.
 
@@ -30,14 +24,14 @@ queried via eg the slsearch task.
                      (https://casa.nrao.edu/casadocs/)
 </description>
             <value/>
-            <example>["mysplat1.txt", "mysplat2,txt"]</example>
+            <example>[&quot;mysplat1.txt&quot;, &quot;mysplat2,txt&quot;]</example>
         </param>
 
-        <param type="string" direction="in" name="table">
+        <param name="table" direction="in" type="string">
 <shortdescription>Output table name. Must be specified.</shortdescription>
 <description>Output table name. Must be specified.</description>
             <value/>
-            <example>"mysplat.tbl"</example>
+            <example>&quot;mysplat.tbl&quot;</example>
         </param>
 </input>
 <returns type="bool"/>

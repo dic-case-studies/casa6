@@ -1,37 +1,32 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-      <task type="function" name="importfits" category="import/export">
+      <task category="import/export" name="importfits" type="function">
     <shortdescription>Convert an image FITS file into a CASA image</shortdescription>
 <description>
 Convert an image FITS file into a CASA image
 </description>
     <input>
-        <param type="string" mustexist="true" name="fitsimage">
+        <param name="fitsimage" mustexist="true" type="path">
 <shortdescription>Name of input image FITS file</shortdescription>
 <description>Name of input image FITS file
                      Default: none
 
                         Example: fitsimage='3C273XC1.fits'
 </description>
-            <value></value>
+            <value/>
         </param>
 
-        <param type="string" name="imagename">
+        <param name="imagename" type="string">
 <shortdescription>Name of output CASA image</shortdescription>
 <description>Name of output CASA image
                      Default: none
 
                         Example: fitsimage='3C273XC1.image'
 </description>
-            <value></value>
+            <value/>
         </param>
 
-        <param type="int" name="whichrep">
+        <param name="whichrep" type="int">
 <shortdescription>If fits image has multiple coordinate reps, choose one.</shortdescription>
 <description>If fits image has multiple coordinate reps, choose one.
                      Default: 0 (means first)
@@ -41,7 +36,7 @@ Convert an image FITS file into a CASA image
             <value>0</value>
         </param>
 
-        <param type="int" name="whichhdu">
+        <param name="whichhdu" type="int">
 <shortdescription>If fits file contains multiple images, choose one (0 = first HDU, -1 = first valid image).</shortdescription>
 <description>If fits file contains multiple images, choose one
                      Default: -1 (use the first valid one)
@@ -53,7 +48,7 @@ Convert an image FITS file into a CASA image
             <value>-1</value>
         </param>
 
-        <param type="bool" name="zeroblanks">
+        <param name="zeroblanks" type="bool">
 <shortdescription>Set blanked pixels to zero (not NaN)</shortdescription>
 <description>Set blanked pixels to zero (not NaN)
                      Default: True
@@ -62,7 +57,7 @@ Convert an image FITS file into a CASA image
             <value>True</value>
         </param>
 
-        <param type="bool" name="overwrite">
+        <param name="overwrite" type="bool">
 <shortdescription>Overwrite output file if it exists?</shortdescription>
  <description>Overwrite output file if it exists?
                      Default: False
@@ -71,7 +66,7 @@ Convert an image FITS file into a CASA image
             <value>False</value>
         </param>
 
-        <param type="bool" name="defaultaxes">
+        <param name="defaultaxes" type="bool">
 <shortdescription>Add the default 4D coordinate axes where they are missing; value True requires setting defaultaxesvalues</shortdescription>
 <description>Add the default 4D coordinate axes where they are
 missing
@@ -83,7 +78,7 @@ missing
             <value>False</value>
         </param>
 
-        <param type="variant" name="defaultaxesvalues">
+        <param name="defaultaxesvalues" type="variant">
 <shortdescription>List of values to assign to added degenerate axes when defaultaxes==True (ra,dec,freq,stokes)</shortdescription>
 <description>List of values to assign to added degenerate axes when
 defaultaxes==True (ra,dec,freq,stokes)
@@ -100,7 +95,7 @@ defaultaxes==True (ra,dec,freq,stokes)
             <value>[]</value>
         </param>
 
-        <param type="variant" name="beam">
+        <param name="beam" type="variant">
 <shortdescription>List of values to be used to define the synthesized beam [BMAJ,BMIN,BPA] (as in the FITS keywords)</shortdescription>
 <description>List of values to be used to define the synthesized beam
 [BMAJ,BMIN,BPA] (as in the FITS keywords)
@@ -117,5 +112,5 @@ defaultaxes==True (ra,dec,freq,stokes)
 FOR MORE INFORMATION, SEE THE TASK PAGES OF IMPORTFITS IN CASA DOCS:
 https://casa.nrao.edu/casadocs/
  </example>
- </task>
+ <returns>void</returns></task>
  </casaxml>

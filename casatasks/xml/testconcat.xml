@@ -1,37 +1,32 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="testconcat" category="manipulation">
+<task category="manipulation" name="testconcat" type="function">
 <shortdescription>Concatenate the subtables of several visibility data sets, not the MAIN bulk data.</shortdescription>
 
 <input>
-  <param type="stringArray" name="vis" mustexist="true">
+  <param mustexist="true" name="vis" type="pathVec">
     <description>Name(s) of input visibility files to be test-concatenated</description>
-    <value></value>
+    <value/>
   </param>
 
-  <param type="string" name="testconcatvis">
+  <param name="testconcatvis" type="string">
     <description>Name of output MS containing the merged subtables</description>
-    <value></value>
+    <value/>
   </param>
   
-  <param type="any" name="freqtol" >
+  <param name="freqtol" type="any">
     <description>Frequency shift tolerance for considering data as the same spwid</description>
     <any type="variant"/>
-    <value type="string"></value>
+    <value type="string"/>
   </param>
 
-  <param type="any" name="dirtol">
+  <param name="dirtol" type="any">
     <description>Direction shift tolerance for considering data as the same field</description>
     <any type="variant"/>
-    <value type="string"></value>
+    <value type="string"/>
   </param>
 
-  <param type="bool" name="copypointing">
+  <param name="copypointing" type="bool">
     <description>Copy all rows of the POINTING table.</description>
     <value>True</value>
   </param>
@@ -73,5 +68,5 @@ copypointing -- Make a proper copy of the POINTING subtable (can be time consumi
 
 </example> 
 
-</task>
+<returns>void</returns></task>
 </casaxml>

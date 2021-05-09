@@ -1,13 +1,13 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="information" name="listfits" type="function">
+<task type="function" name="listfits" category="information">
     <shortdescription>List the HDU and typical data rows of a fits file:</shortdescription>
     <description>
         List the HDU and typical data rows of a fits file:
         The list will be given in the logger.
     </description>
     <input>
-        <param mustexist="true" name="fitsfile" type="string"><shortdescription>Name of input fits file</shortdescription><description>Name of input fits file</description>
+        <param type="path" name="fitsfile" mustexist="true"><shortdescription>Name of input fits file</shortdescription><description>Name of input fits file</description>
             
             <value/>
         </param>

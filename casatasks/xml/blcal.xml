@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="blcal" category="calibration">
+<task category="calibration" name="blcal" type="function">
 <shortdescription>Calculate a baseline-based calibration solution (gain or bandpass)</shortdescription>
 <description>
 This task determines a baseline by baseline gain (time) or bandpass
@@ -15,27 +10,27 @@ is recommended, even with only one to three baselines.  For arrays
 with closure errors, use blcal.
 </description>
 <input>
-        <param type="string" name="vis" mustexist="true">
+        <param mustexist="true" name="vis" type="path">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="string" name="caltable">
+        <param name="caltable" type="string">
 <shortdescription>Name of output gain calibration table</shortdescription>
 <description>Name of output gain calibration table
                      Default: none
 
                         Example: caltable='ngc5921.gcal'
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="string" name="field">
+        <param name="field" type="string">
 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
 <description>Select field using field id(s) or field name(s)
                      Default: '' (all fields)
@@ -53,10 +48,10 @@ with closure errors, use blcal.
                         field = '3,4C*'; field id 3, all names
                         starting with 4C
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="string" name="spw">
+        <param name="spw" type="string">
 <shortdescription>Select spectral window/channels</shortdescription>
 <description>Select spectral window/channels
                      Default: '' (all spectral windows and channels)
@@ -79,10 +74,10 @@ with closure errors, use blcal.
                         spw='0:0~10^2,1:20~30^5'; spw 0, channels
                         0,2,4,6,8,10, spw 1, channels 20,25,30 
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="string" name="intent">
+        <param name="intent" type="string">
 <shortdescription>Select observing intent</shortdescription>
 <description>Select observing intent
                      Default: '' (no selection by intent)
@@ -90,10 +85,10 @@ with closure errors, use blcal.
                         Example: intent='*BANDPASS*'  (selects data
                         labelled with BANDPASS intent)
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="bool" name="selectdata">
+        <param name="selectdata" type="bool">
 <shortdescription>Other data selection parameters</shortdescription>
 <description>Other data selection parameters
                      Default: True
@@ -102,7 +97,7 @@ with closure errors, use blcal.
                 <value>True</value>
         </param>
 
-        <param type="string" name="timerange" subparam="true">
+        <param subparam="true" name="timerange" type="string">
 <shortdescription>Select data based on time range</shortdescription>
 <description>Select data based on time range
                      Subparameter of selectdata=True
@@ -119,26 +114,26 @@ with closure errors, use blcal.
                         hr 30min on NEXT day
                         timerange='09:44:00' pick data within one
                         integration of time
-                        timerange='>10:24:00' data after this time
+                        timerange='&gt;10:24:00' data after this time
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="any" name="uvrange" subparam="true">
+        <param subparam="true" name="uvrange" type="any">
 <shortdescription>Select data by baseline length.</shortdescription>
 <description>Select data by baseline length.
                      Default = '' (all)
 
                         Examples:
                         uvrange='0~1000klambda'; uvrange from 0-1000 kilo-lambda
-                        uvrange='>4klambda';uvranges greater than 4 kilo-lambda
+                        uvrange='&gt;4klambda';uvranges greater than 4 kilo-lambda
                         uvrange='0~1000km'; uvrange in kilometers
 </description>
                 <any type="variant"/>
-                <value type="string"></value>
+                <value type="string"/>
         </param>
 
-        <param type="string" name="antenna" subparam="true">
+        <param subparam="true" name="antenna" type="string">
 <shortdescription>Select data based on antenna/baseline</shortdescription>
 <description>Select data based on antenna/baseline
                      Subparameter of selectdata=True
@@ -162,19 +157,19 @@ with closure errors, use blcal.
                          antenna='5,6,10'; all baselines with antennas
                          5,6,10 index numbers
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="string" name="scan" subparam="true">
+        <param subparam="true" name="scan" type="string">
 <shortdescription>Scan number range</shortdescription>
 <description>Scan number range
                      Subparameter of selectdata=True
                      Default: '' = all
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="any" name="observation" subparam="true">
+        <param subparam="true" name="observation" type="any">
 <shortdescription>Select by observation ID(s)</shortdescription>
 <description>Select by observation ID(s)
                      Subparameter of selectdata=True
@@ -182,17 +177,17 @@ with closure errors, use blcal.
 
                          Example: observation='0~2,4'
 </description>
-                <any type="variant" limittypes="string int"/>
-                <value type="string"></value>
+                <type>string</type><type>int</type>
+                <value type="string"/>
         </param>
 
-        <param type="string" name="msselect" subparam="true">
+        <param subparam="true" name="msselect" type="string">
 <shortdescription>Optional complex data selection (ignore for now)</shortdescription>
 <description>Optional complex data selection (ignore for now)</description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="any" name="solint">
+        <param name="solint" type="any">
 <shortdescription>Solution interval</shortdescription>
 <description>Solution interval
                      Default: 'inf' (infinite, up to boundaries
@@ -212,7 +207,7 @@ with closure errors, use blcal.
                 <value type="string">inf</value>
         </param>
 
-        <param type="string" name="combine">
+        <param name="combine" type="string">
 <shortdescription>Data axes which to combine for solve (obs, scan, spw, and/or field)</shortdescription>
 <description>Data axes which to combine for solve
                      Default: 'scan' (solutions will break at obs,
@@ -229,7 +224,7 @@ with closure errors, use blcal.
                 <value>scan</value>
         </param>
 
-        <param type="bool" name="freqdep">
+        <param name="freqdep" type="bool">
 <shortdescription>Solve for frequency dependent solutions</shortdescription>
 <description>Solve for frequency dependent solutions
                      Default: False (gain; True=bandpass)
@@ -238,9 +233,9 @@ with closure errors, use blcal.
                 <value>False</value>
         </param>
 
-        <param type="string" name="calmode">
-<shortdescription>Type of solution" (\'ap\', \'p\', \'a\')</shortdescription>
-<description>Type of solution" ('ap', 'p', 'a')
+        <param name="calmode" type="string">
+<shortdescription>Type of solution&quot; (\'ap\', \'p\', \'a\')</shortdescription>
+<description>Type of solution&quot; ('ap', 'p', 'a')
                      Default: 'ap' (amp and phase)
                      Options: 'p' (phase) ,'a' (amplitude), 'ap'
                      (amplitude and phase)
@@ -255,7 +250,7 @@ with closure errors, use blcal.
                 </allowed>
         </param>
 
-        <param type="bool" name="solnorm">
+        <param name="solnorm" type="bool">
 <shortdescription>Normalize average solution amplitudes to 1.0</shortdescription>
 <description>Normalize average solution amplitudes to 1.0
                      Default: False (no normalization)
@@ -268,7 +263,7 @@ with closure errors, use blcal.
                 <value>False</value>
         </param>
 
-        <param type="stringArray" name="gaintable">
+        <param name="gaintable" type="stringVec">
 <shortdescription>Gain calibration table(s) to apply on the fly</shortdescription>
 <description>Gain calibration table(s) to apply on the fly
                      Default: '' (none)
@@ -277,28 +272,28 @@ with closure errors, use blcal.
                         gaintable='ngc5921.gcal'
                         gaintable=['ngc5921.ampcal','ngc5921.phcal']
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="stringArray" name="gainfield">
+        <param name="gainfield" type="stringVec">
 <shortdescription>Select a subset of calibrators from gaintable(s)</shortdescription>
 <description>Select a subset of calibrators from gaintable(s)
                      Default: '' (all sources on the sky)
 
-                     'nearest' ==> nearest (on sky) available field in
+                     'nearest' ==&gt; nearest (on sky) available field in
                      table otherwise, same syntax as field
 
                         Examples: 
                         gainfield='0~3'
                         gainfield=['0~3','4~6']
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="stringArray" name="interp">
+        <param name="interp" type="stringVec">
 <shortdescription>Interpolation parameters for each gaintable, as a list</shortdescription>
 <description>Interpolation parmameters (in time[,freq]) for each gaintable, as a list of strings.
-                     Default: '' --> 'linear,linear' for all gaintable(s)
+                     Default: '' --&gt; 'linear,linear' for all gaintable(s)
                      Options: Time: 'nearest', 'linear'
                               Freq: 'nearest', 'linear', 'cubic',
                               'spline'
@@ -312,7 +307,7 @@ with closure errors, use blcal.
                    * Specifications for frequency are ignored when the
                      calibration table has no channel-dependence. 
                    * Time-dependent interp options ending in 'PD'
-                     enable a "phase delay" correction per spw for
+                     enable a &quot;phase delay&quot; correction per spw for
                      non-channel-dependent calibration types.
                    * For multi-obsId datasets, 'perobs' can be
                      appended to the time-dependent interpolation
@@ -338,10 +333,10 @@ with closure errors, use blcal.
                         interp=['nearest,spline','linear']  (for
                         multiple gaintables)
 </description>
-        <value></value>
+        <value/>
         </param>
 
-        <param type="intArray" name="spwmap">
+        <param name="spwmap" type="intVec">
 <shortdescription>Spectral window mappings to form for gaintable(s)</shortdescription>
 <description>Spectral window mappings to form for gaintable(s)
                      default: [] (apply solutions from each calibration spw to
@@ -355,10 +350,10 @@ with closure errors, use blcal.
                           gaintables)
 </description>
                 <type>any</type>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="bool" name="parang">
+        <param name="parang" type="bool">
 <shortdescription>Apply parallactic angle correction</shortdescription>
 <description>Apply parallactic angle correction
                      Default: False
@@ -370,7 +365,7 @@ with closure errors, use blcal.
         </param>
    <constraints>
         <when param="selectdata">
-                <equals type="bool" value="True">
+                <equals value="True" type="bool">
                         <default param="timerange"><value type="string"/></default>
                         <default param="uvrange"><value type="string"/></default>
                         <default param="antenna"><value type="string"/></default>
@@ -378,7 +373,7 @@ with closure errors, use blcal.
                         <default param="observation"><value type="string"/></default>
                         <default param="msselect"><value type="string"/></default>
                 </equals>
-                <equals type="bool" value="False"/>
+                <equals value="False" type="bool"/>
         </when>
    </constraints>
 </input>
@@ -390,5 +385,5 @@ https://casa.nrao.edu/casadocs/
 
 </example> 
 
-</task>
+<returns>void</returns></task>
 </casaxml>

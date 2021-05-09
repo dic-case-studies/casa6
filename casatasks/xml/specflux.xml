@@ -1,69 +1,69 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
-<task visibility="experimental" category="analysis" name="specflux" type="function">
+<task type="function" name="specflux" category="analysis" visibility="experimental">
 
 <shortdescription>Report spectral profile and calculate spectral flux over a user specified region</shortdescription>
 
 <input>
-    <param mustexist="true" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+    <param type="path" name="imagename" mustexist="true"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
         
         <value/>
         <example>imagename='ngc5921.im'</example>
     </param>
-    <param name="region" type="any"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+    <param type="any" name="region"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
         <any type="variant"/>
         
         <value type="string"/>
         <example>region=&quot;my.rgn&quot;</example>
     </param>
-    <param name="box" type="string"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
+    <param type="string" name="box"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
         
         <value/>
         <example>box=&quot;100,100,200,200&quot;</example>
     </param>
-    <param name="chans" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+    <param type="string" name="chans"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
         
         <value/>
     </param>
-    <param name="stokes" type="string"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
+    <param type="string" name="stokes"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
         
         <value/>
         <example>stokes=&quot;iq&quot;</example>
     </param>
-    <param name="mask" type="string"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
+    <param type="string" name="mask"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
         
         <value/>
     </param>
-    <param subparam="true" name="stretch" direction="in" type="bool"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
+    <param type="bool" direction="in" name="stretch" subparam="true"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
         
         <value>False</value>
     </param>
-    <param name="function" type="string"><shortdescription>Aggregate function to use for computing per channel values. Supported values are &quot;flux density&quot;, &quot;mean&quot;, &quot;median&quot;, &quot;sum&quot;. Minimal match supported.</shortdescription><description>Aggregate function to use for computing per channel values. Supported values are &quot;flux density&quot;, &quot;mean&quot;, &quot;median&quot;, &quot;sum&quot;. Minimal match supported.</description>
+    <param type="string" name="function"><shortdescription>Aggregate function to use for computing per channel values. Supported values are &quot;flux density&quot;, &quot;mean&quot;, &quot;median&quot;, &quot;sum&quot;. Minimal match supported.</shortdescription><description>Aggregate function to use for computing per channel values. Supported values are &quot;flux density&quot;, &quot;mean&quot;, &quot;median&quot;, &quot;sum&quot;. Minimal match supported.</description>
         
         <value>flux density</value>
     </param>
-    <param name="unit" type="string"><shortdescription>Unit to use for the spectral flux calculation. Must be conformant with a typical spectral axis unit.</shortdescription><description>Unit to use for the spectral flux calculation. Must be conformant with a typical spectral axis unit.</description>
+    <param type="string" name="unit"><shortdescription>Unit to use for the spectral flux calculation. Must be conformant with a typical spectral axis unit.</shortdescription><description>Unit to use for the spectral flux calculation. Must be conformant with a typical spectral axis unit.</description>
         
         <value>km/s</value>
     </param>
-    <param name="major" type="any"><shortdescription>Major axis of overriding restoring beam. If specified, must be a valid quantity.</shortdescription><description>Major axis of overriding restoring beam. If specified, must be a valid quantity.</description>
+    <param type="any" name="major"><shortdescription>Major axis of overriding restoring beam. If specified, must be a valid quantity.</shortdescription><description>Major axis of overriding restoring beam. If specified, must be a valid quantity.</description>
         <any type="variant"/>
         
         <value type="string"/>
         <example>&quot;4arcsec&quot;</example>
     </param>
-    <param name="minor" type="any"><shortdescription>Minor axis of overriding restoring beam. If specified, must be a valid quantity</shortdescription><description>Minor axis of overriding restoring beam. If specified, must be a valid quantity</description>
+    <param type="any" name="minor"><shortdescription>Minor axis of overriding restoring beam. If specified, must be a valid quantity</shortdescription><description>Minor axis of overriding restoring beam. If specified, must be a valid quantity</description>
         <any type="variant"/>
         
         <value type="string"/>
         <example>&quot;3arcsec&quot;</example>
     </param>
-    <param name="logfile" type="string"><shortdescription>File which to write details. Default is to not write to a file.</shortdescription><description>File which to write details. Default is to not write to a file.</description>
+    <param type="string" name="logfile"><shortdescription>File which to write details. Default is to not write to a file.</shortdescription><description>File which to write details. Default is to not write to a file.</description>
         
         <value/>
     </param>
-    <param subparam="true" name="overwrite" type="bool"><shortdescription>Overwrite exisitng ouput file if it exists?</shortdescription><description>Overwrite exisitng ouput file if it exists?</description>
+    <param type="bool" name="overwrite" subparam="true"><shortdescription>Overwrite exisitng ouput file if it exists?</shortdescription><description>Overwrite exisitng ouput file if it exists?</description>
         
         <value>False</value>
         <example>overwrite=true</example>
@@ -71,14 +71,14 @@
 
     <constraints>
         <when param="logfile">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="overwrite">
                     <value>False</value>
                 </default>
             </notequals>
         </when>
         <when param="mask">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="stretch">
                     <value>False</value>
                 </default>

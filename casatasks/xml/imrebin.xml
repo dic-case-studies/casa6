@@ -1,64 +1,64 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
-<task category="analysis" name="imrebin" type="function">
+<task type="function" name="imrebin" category="analysis">
 
     <shortdescription>Rebin an image by the specified integer factors</shortdescription>
 
     <input>
-        <param mustexist="true" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+        <param type="path" name="imagename" mustexist="true"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
             
             <value/>
             <example>imagename='ngc5921.im'</example>
         </param>
-        <param name="outfile" direction="in" type="string"><shortdescription>Output image name.</shortdescription><description>Output image name.</description>
+        <param type="string" direction="in" name="outfile"><shortdescription>Output image name.</shortdescription><description>Output image name.</description>
             
             <value/>
         </param>
-        <param name="factor" type="intArray"><shortdescription>Binning factors for each axis. Use imhead or ia.summary to determine axis ordering.</shortdescription><description>Binning factors for each axis. Use imhead or ia.summary to determine axis ordering.</description>
+        <param type="intVec" name="factor"><shortdescription>Binning factors for each axis. Use imhead or ia.summary to determine axis ordering.</shortdescription><description>Binning factors for each axis. Use imhead or ia.summary to determine axis ordering.</description>
             
         </param>
-        <param name="region" direction="in" type="any"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+        <param type="any" direction="in" name="region"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
             <any type="variant"/>
             
             <value type="string"/>
         </param>
-        <param name="box" direction="in" type="string"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
+        <param type="string" direction="in" name="box"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
             <value/>
             
         </param>
-        <param name="chans" direction="in" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+        <param type="string" direction="in" name="chans"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
             
             <value/>
         </param>
-        <param name="stokes" direction="in" type="string"><shortdescription>Stokes planes to use. Default is to use all Stokes planes. Stokes planes cannot be rebinned.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes. Stokes planes cannot be rebinned.</description>
+        <param type="string" direction="in" name="stokes"><shortdescription>Stokes planes to use. Default is to use all Stokes planes. Stokes planes cannot be rebinned.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes. Stokes planes cannot be rebinned.</description>
             
             <value/>
         </param>
-        <param name="mask" direction="in" type="string"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
+        <param type="string" direction="in" name="mask"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
             
             <value/>
         </param>
-        <param name="dropdeg" type="bool"><shortdescription>Drop degenerate axes?</shortdescription><description>Drop degenerate axes?</description>
+        <param type="bool" name="dropdeg"><shortdescription>Drop degenerate axes?</shortdescription><description>Drop degenerate axes?</description>
             
             <value>False</value>
         </param>
-        <param name="overwrite" direction="in" type="bool"><shortdescription>Overwrite the output if it exists? Default False</shortdescription><description>Overwrite the output if it exists? Default False</description>
+        <param type="bool" direction="in" name="overwrite"><shortdescription>Overwrite the output if it exists? Default False</shortdescription><description>Overwrite the output if it exists? Default False</description>
             
             <value>False</value>
         </param>
        
-        <param subparam="true" name="stretch" direction="in" type="bool"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
+        <param type="bool" direction="in" name="stretch" subparam="true"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
             
             <value>False</value>
         </param>
-        <param name="crop" type="bool"><shortdescription>Remove pixels from the end of an axis to be rebinned if there are not enough to form an integral bin?</shortdescription><description>Remove pixels from the end of an axis to be rebinned if there are not enough to form an integral bin?</description>
+        <param type="bool" name="crop"><shortdescription>Remove pixels from the end of an axis to be rebinned if there are not enough to form an integral bin?</shortdescription><description>Remove pixels from the end of an axis to be rebinned if there are not enough to form an integral bin?</description>
             
             <value>True</value>
         </param>
         <constraints>
             <when param="mask">
-                <notequals value="" type="string">
+                <notequals type="string" value="">
                    <default param="stretch"><value type="bool">False</value></default>
              </notequals>
          </when>

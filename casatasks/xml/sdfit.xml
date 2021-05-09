@@ -1,9 +1,9 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
-<task category="single dish" name="sdfit" type="function">
+<task type="function" name="sdfit" category="single dish">
 
   <shortdescription>Fit a spectral line</shortdescription>
 
@@ -15,62 +15,62 @@ or sdreduce.
 
   <input>
 
-    <param mustexist="true" name="infile" type="string"><shortdescription>name of input SD dataset</shortdescription><description>name of input SD dataset</description>
+    <param type="path" name="infile" mustexist="true"><shortdescription>name of input SD dataset</shortdescription><description>name of input SD dataset</description>
         
         <value/>
     </param>
 
-    <param ignorecase="true" name="datacolumn" type="string"><shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</shortdescription><description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</description>
+    <param type="string" name="datacolumn" ignorecase="true"><shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</shortdescription><description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected_data&quot;]</description>
         
         <value>data</value>
     </param>
 
-    <param name="antenna" type="string"><shortdescription>select data by antenna name or ID, e.g. &quot;PM03&quot;</shortdescription><description>select data by antenna name or ID, e.g. &quot;PM03&quot;</description>
+    <param type="string" name="antenna"><shortdescription>select data by antenna name or ID, e.g. &quot;PM03&quot;</shortdescription><description>select data by antenna name or ID, e.g. &quot;PM03&quot;</description>
         
         <value/>
     </param> 
 
-    <param name="field" type="string"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="field"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="spw" type="string"><shortdescription>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</shortdescription><description>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="spw"><shortdescription>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</shortdescription><description>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="timerange" type="string"><shortdescription>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</shortdescription><description>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</description>
+    <param type="string" name="timerange"><shortdescription>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</shortdescription><description>select data by time range, e.g. &quot;09:14:0~09:54:0&quot; (&quot;&quot;=all) (see examples in help)</description>
         
         <value/>
     </param>
 
-    <param name="scan" type="string"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="scan"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="pol" type="string"><shortdescription>select data by polarization IDs, e.g. &quot;XX,YY&quot; (&quot;&quot;=all)</shortdescription><description>select data by polarization IDs, e.g. &quot;XX,YY&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="pol"><shortdescription>select data by polarization IDs, e.g. &quot;XX,YY&quot; (&quot;&quot;=all)</shortdescription><description>select data by polarization IDs, e.g. &quot;XX,YY&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="intent" type="string"><shortdescription>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</shortdescription><description>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="intent"><shortdescription>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</shortdescription><description>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</description>
         
         <value/>
     </param>
 
-    <param name="timebin" type="string"><shortdescription>bin width for time averaging</shortdescription><description>bin width for time averaging</description>
+    <param type="string" name="timebin"><shortdescription>bin width for time averaging</shortdescription><description>bin width for time averaging</description>
         
         <value type="string"/>
     </param>
     
-    <param subparam="true" name="timespan" type="string"><shortdescription>span the timebin across &quot;scan&quot;, &quot;state&quot;, &quot;field&quot;, or a combination of them (e.g., &quot;scan,state&quot;)</shortdescription><description>span the timebin across &quot;scan&quot;, &quot;state&quot;, &quot;field&quot;, or a combination of them (e.g., &quot;scan,state&quot;)</description>
+    <param type="string" name="timespan" subparam="true"><shortdescription>span the timebin across &quot;scan&quot;, &quot;state&quot;, &quot;field&quot;, or a combination of them (e.g., &quot;scan,state&quot;)</shortdescription><description>span the timebin across &quot;scan&quot;, &quot;state&quot;, &quot;field&quot;, or a combination of them (e.g., &quot;scan,state&quot;)</description>
         
         <value type="string"/>
     </param>
 
-    <param name="polaverage" type="string"><shortdescription>polarization averaging mode (&quot;&quot;, &quot;stokes&quot; or &quot;geometric&quot;).</shortdescription><description>polarization averaging mode (&quot;&quot;, &quot;stokes&quot; or &quot;geometric&quot;).</description>
+    <param type="string" name="polaverage"><shortdescription>polarization averaging mode (&quot;&quot;, &quot;stokes&quot; or &quot;geometric&quot;).</shortdescription><description>polarization averaging mode (&quot;&quot;, &quot;stokes&quot; or &quot;geometric&quot;).</description>
         
         <allowed kind="enum">
             <value/>
@@ -80,7 +80,7 @@ or sdreduce.
         <value/>
     </param>
     
-    <param name="fitfunc" type="string">
+    <param type="string" name="fitfunc">
         <shortdescription>function for fitting [&quot;gaussian&quot;, &quot;lorentzian&quot;]</shortdescription>
         <description>function for fitting</description>
         <value>gaussian</value>
@@ -90,7 +90,7 @@ or sdreduce.
         </allowed>
     </param>
 
-    <param name="fitmode" type="string">
+    <param type="string" name="fitmode">
 
         <shortdescription>mode for setting additional channel masks. &quot;list&quot; and &quot;auto&quot; are available now.</shortdescription>
         <description>mode for setting additional channel masks.</description>
@@ -102,37 +102,37 @@ or sdreduce.
         </allowed>
     </param>
 
-    <param subparam="true" name="nfit" type="intArray"><shortdescription>list of number of lines to fit in maskline region.</shortdescription><description>list of number of lines to fit in maskline region.</description>
+    <param type="intVec" name="nfit" subparam="true"><shortdescription>list of number of lines to fit in maskline region.</shortdescription><description>list of number of lines to fit in maskline region.</description>
         
         <value type="vector"><value>0</value></value>
     </param>
 
-    <param subparam="true" name="thresh" type="double"><shortdescription>S/N threshold for linefinder</shortdescription><description>S/N threshold for linefinder</description>
+    <param type="double" name="thresh" subparam="true"><shortdescription>S/N threshold for linefinder</shortdescription><description>S/N threshold for linefinder</description>
         
         <value>5.0</value>
     </param>
 
-    <param subparam="true" name="avg_limit" type="int"><shortdescription>channel averaging for broad lines</shortdescription><description>channel averaging for broad lines</description>
+    <param type="int" name="avg_limit" subparam="true"><shortdescription>channel averaging for broad lines</shortdescription><description>channel averaging for broad lines</description>
         
         <value>4</value>
     </param>
 
-    <param subparam="true" name="minwidth" type="int"><shortdescription>the minimum channel width to detect as a line</shortdescription><description>the minimum channel width to detect as a line</description>
+    <param type="int" name="minwidth" subparam="true"><shortdescription>the minimum channel width to detect as a line</shortdescription><description>the minimum channel width to detect as a line</description>
         
         <value>4</value>
     </param>
 
-    <param subparam="true" name="edge" type="intArray"><shortdescription>channels to drop at beginning and end of spectrum</shortdescription><description>channels to drop at beginning and end of spectrum</description>
+    <param type="intVec" name="edge" subparam="true"><shortdescription>channels to drop at beginning and end of spectrum</shortdescription><description>channels to drop at beginning and end of spectrum</description>
         
         <value type="vector"><value>0</value><value>0</value></value>
     </param>
 
-    <param name="outfile" type="string"><shortdescription>name of output file</shortdescription><description>name of output file</description>
+    <param type="string" name="outfile"><shortdescription>name of output file</shortdescription><description>name of output file</description>
         
         <value/>
     </param>
 
-    <param name="overwrite" type="bool">
+    <param type="bool" name="overwrite">
         <shortdescription>overwrite the output file if already exists [True, False]</shortdescription>
         <description>overwrite the output file if already exists</description>
         <value>False</value>
@@ -140,7 +140,7 @@ or sdreduce.
 
     <constraints>
             <when param="timebin">
-                <notequals value="" type="string">
+                <notequals type="string" value="">
                         <default param="timespan"><value type="string"/></default>
                 </notequals>
             </when>
@@ -162,7 +162,7 @@ or sdreduce.
   </input>
   
 
-  <returns limittype="void record" type="variant"/>
+  <returns type="variant" limittype="void record"/>
 
   <example>
 -----------------

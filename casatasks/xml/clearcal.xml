@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="clearcal" category="calibration">
+<task category="calibration" name="clearcal" type="function">
         <shortdescription>Re-initializes the calibration for a visibility data set</shortdescription>
 <description> 
 Clearcal reinitializes the calibration columns in a measurement
@@ -19,16 +14,16 @@ for the whole dataset (field, spw, and intent will be ignored in this
 case).
 </description>
 <input>
-        <param type="string" name="vis" mustexist="true">
+        <param mustexist="true" name="vis" type="path">
 <shortdescription>Name of input visibility file (MS)</shortdescription>
 <description>Name of input visibility file (MS)
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-                <value></value>
+                <value/>
         </param>
-        <param type="string" name="field">
+        <param name="field" type="string">
 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
 <description>Select field using field id(s) or field name(s)
                      default: '' (all fields)
@@ -46,10 +41,10 @@ case).
                         field = '3,4C*'; field id 3, all names
                         starting with 4C
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="string" name="spw">
+        <param name="spw" type="string">
 <shortdescription>Select spectral window/channels</shortdescription>
 <description>Select spectral window/channels
 
@@ -72,10 +67,10 @@ case).
                         0,2,4,6,8,10, spw 1, channels 20,25,30 
                         type 'help par.selection' for more examples.
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="string" name="intent">
+        <param name="intent" type="string">
 <shortdescription>Select observing intent</shortdescription>
 <description>Select observing intent
                      default: '' (no selection by intent)
@@ -83,10 +78,10 @@ case).
                         Example: intent='*BANDPASS*'  (selects data
                         labelled with BANDPASS intent)
 </description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="bool" name="addmodel">
+        <param name="addmodel" type="bool">
 <shortdescription>Add MODEL_DATA scratch column</shortdescription>
 <description>add MODEL_DATA along with CORRECTED_DATA?
                      Default: False (model will not be added)

@@ -1,8 +1,8 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
-<task category="analysis" name="spxfit" type="function">
+<task type="function" name="spxfit" category="analysis">
 
 <shortdescription>Fit a 1-dimensional model(s) to an image(s) or region for determination of spectral index.</shortdescription>
 
@@ -10,124 +10,124 @@
 </description>
 
 <input>
-    <param name="imagename" type="any"><shortdescription>Name of the input image(s)</shortdescription><description>Name of the input image(s)</description>
-        <any listtypes="string stringArray" type="variant"/>
+    <param type="any" name="imagename"><shortdescription>Name of the input image(s)</shortdescription><description>Name of the input image(s)</description>
+        <any type="variant" listtypes="string stringArray"/>
         
         <value type="string"/>
         <example>imagename='ngc5921_task.image'</example>
     </param>
-    <param name="box" direction="in" type="string"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
+    <param type="string" direction="in" name="box"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
         
         <value/>
         <example>box=&quot;4,4,10,10&quot;</example>
     </param>
-    <param name="region" direction="in" type="string"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+    <param type="string" direction="in" name="region"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
         
         <value/>
         <example>region=&quot;myregion.rgn&quot;</example>
     </param>
-    <param name="chans" direction="in" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+    <param type="string" direction="in" name="chans"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
         
         <value/>
     </param>
-    <param name="stokes" direction="in" type="string"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
+    <param type="string" direction="in" name="stokes"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
         
         <value/>
         <example>stokes=&quot;I&quot;</example>
     </param>
-    <param name="axis" direction="in" type="int"><shortdescription>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</shortdescription><description>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</description>
+    <param type="int" direction="in" name="axis"><shortdescription>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</shortdescription><description>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</description>
         
         <value>-1</value>
         <example>axis=3</example>
     </param>
-    <param name="mask" direction="in" type="string"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
+    <param type="string" direction="in" name="mask"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
         
         <value/>
     </param>
-    <param name="minpts" direction="in" type="int"><shortdescription>Minimum number of unmasked points necessary to attempt fit.</shortdescription><description>Minimum number of unmasked points necessary to attempt fit.</description>
+    <param type="int" direction="in" name="minpts"><shortdescription>Minimum number of unmasked points necessary to attempt fit.</shortdescription><description>Minimum number of unmasked points necessary to attempt fit.</description>
         
         <value>1</value>
     </param>
-    <param name="multifit" direction="in" type="bool"><shortdescription>If true, fit a profile along the desired axis at each pixel in the specified region. If false, average the non-fit axis pixels and do a single fit to that average profile. Default False.</shortdescription><description>If true, fit a profile along the desired axis at each pixel in the specified region. If false, average the non-fit axis pixels and do a single fit to that average profile. Default False.</description>
+    <param type="bool" direction="in" name="multifit"><shortdescription>If true, fit a profile along the desired axis at each pixel in the specified region. If false, average the non-fit axis pixels and do a single fit to that average profile. Default False.</shortdescription><description>If true, fit a profile along the desired axis at each pixel in the specified region. If false, average the non-fit axis pixels and do a single fit to that average profile. Default False.</description>
         
         <value>False</value>
         <example>multifit=True</example>
      </param>
-     <param name="spxtype" direction="in" type="string"><shortdescription>Type of function to fit. &quot;plp&quot; = power logarithmic polynomial, &quot;ltp&quot; = logarithmic transformed polynomial.</shortdescription><description>Type of function to fit. &quot;plp&quot; = power logarithmic polynomial, &quot;ltp&quot; = logarithmic transformed polynomial.</description>
+     <param type="string" direction="in" name="spxtype"><shortdescription>Type of function to fit. &quot;plp&quot; = power logarithmic polynomial, &quot;ltp&quot; = logarithmic transformed polynomial.</shortdescription><description>Type of function to fit. &quot;plp&quot; = power logarithmic polynomial, &quot;ltp&quot; = logarithmic transformed polynomial.</description>
         
         <value>plp</value>
      </param>
-     <param name="spxest" type="doubleArray"><shortdescription>REQUIRED. Initial estimates as array of numerical values for the spectral index function coefficients. eg [1.5, -0.8] if fitting a plp function thought to be close to 1.5*(x/div)**(-0.8) or [0.4055, -0.8] if fitting an lpt function thought to be close to ln(1.5) - 0.8*ln(x/div).</shortdescription><description>REQUIRED. Initial estimates as array of numerical values for the spectral index function coefficients. eg [1.5, -0.8] if fitting a plp function thought to be close to 1.5*(x/div)**(-0.8) or [0.4055, -0.8] if fitting an lpt function thought to be close to ln(1.5) - 0.8*ln(x/div).</description>
+     <param type="doubleVec" name="spxest"><shortdescription>REQUIRED. Initial estimates as array of numerical values for the spectral index function coefficients. eg [1.5, -0.8] if fitting a plp function thought to be close to 1.5*(x/div)**(-0.8) or [0.4055, -0.8] if fitting an lpt function thought to be close to ln(1.5) - 0.8*ln(x/div).</shortdescription><description>REQUIRED. Initial estimates as array of numerical values for the spectral index function coefficients. eg [1.5, -0.8] if fitting a plp function thought to be close to 1.5*(x/div)**(-0.8) or [0.4055, -0.8] if fitting an lpt function thought to be close to ln(1.5) - 0.8*ln(x/div).</description>
         
         <value/>
     </param>
-    <param name="spxfix" type="boolArray"><shortdescription>Fix the corresponding spectral index function coefficients during the fit. True means hold fixed.</shortdescription><description>Fix the corresponding spectral index function coefficients during the fit. True means hold fixed.</description>
+    <param type="boolVec" name="spxfix"><shortdescription>Fix the corresponding spectral index function coefficients during the fit. True means hold fixed.</shortdescription><description>Fix the corresponding spectral index function coefficients during the fit. True means hold fixed.</description>
         
         <value/>
     </param>
-    <param name="div" type="any"><shortdescription>Divisor (numerical value or quantity) to use in the logarithmic terms of the plp or ltp function. 0 means calculate a useful value on the fly.</shortdescription><description>Divisor (numerical value or quantity) to use in the logarithmic terms of the plp or ltp function. 0 means calculate a useful value on the fly.</description>
+    <param type="any" name="div"><shortdescription>Divisor (numerical value or quantity) to use in the logarithmic terms of the plp or ltp function. 0 means calculate a useful value on the fly.</shortdescription><description>Divisor (numerical value or quantity) to use in the logarithmic terms of the plp or ltp function. 0 means calculate a useful value on the fly.</description>
         <any type="variant"/>
         
         <value>0</value>
     </param>
-    <param subparam="true" name="spxsol" type="string"><shortdescription>Name of the spectral index function coefficient solution image to write.</shortdescription><description>Name of the spectral index function coefficient solution image to write.</description>
+    <param type="string" name="spxsol" subparam="true"><shortdescription>Name of the spectral index function coefficient solution image to write.</shortdescription><description>Name of the spectral index function coefficient solution image to write.</description>
         
         <value/>
     </param>
-    <param subparam="true" name="spxerr" type="string"><shortdescription>Name of the spectral index function coefficient error image to write.</shortdescription><description>Name of the spectral index function coefficient error image to write.</description>
+    <param type="string" name="spxerr" subparam="true"><shortdescription>Name of the spectral index function coefficient error image to write.</shortdescription><description>Name of the spectral index function coefficient error image to write.</description>
         
         <value/>
     </param>
-    <param subparam="true" name="model" direction="in" type="string"><shortdescription>Name of model image. Default: do not write the model image (&quot;&quot;).</shortdescription><description>Name of model image. Default: do not write the model image (&quot;&quot;).</description>
+    <param type="string" direction="in" name="model" subparam="true"><shortdescription>Name of model image. Default: do not write the model image (&quot;&quot;).</shortdescription><description>Name of model image. Default: do not write the model image (&quot;&quot;).</description>
         
         <value/>
         <example>model=&quot;mymodel.im&quot;</example>
     </param>
-    <param subparam="true" name="residual" direction="in" type="string"><shortdescription>Name of residual image. Default: do not write the residual image (&quot;&quot;).</shortdescription><description>Name of residual image. Default: do not write the residual image (&quot;&quot;).</description>
+    <param type="string" direction="in" name="residual" subparam="true"><shortdescription>Name of residual image. Default: do not write the residual image (&quot;&quot;).</shortdescription><description>Name of residual image. Default: do not write the residual image (&quot;&quot;).</description>
         
         <value/>
         <example>residual=&quot;myresid.im&quot;</example>
     </param>
-    <param name="wantreturn" type="bool"><shortdescription>Should a record summarizing the results be returned?</shortdescription><description>Should a record summarizing the results be returned?</description>
+    <param type="bool" name="wantreturn"><shortdescription>Should a record summarizing the results be returned?</shortdescription><description>Should a record summarizing the results be returned?</description>
         
         <value>True</value>
         <example>wantreturn=True</example>
     </param>
-    <param subparam="true" name="stretch" direction="in" type="bool"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
+    <param type="bool" direction="in" name="stretch" subparam="true"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
         
         <value>False</value>
     </param>
-    <param name="logresults" direction="in" type="bool"><shortdescription>Output results to logger?</shortdescription><description>Output results to logger?</description>
+    <param type="bool" direction="in" name="logresults"><shortdescription>Output results to logger?</shortdescription><description>Output results to logger?</description>
         
         <value>True</value>
     </param>
-    <param name="logfile" direction="in" type="string"><shortdescription>File in which to log results. Default is not to write a logfile.</shortdescription><description>File in which to log results. Default is not to write a logfile.</description>
+    <param type="string" direction="in" name="logfile"><shortdescription>File in which to log results. Default is not to write a logfile.</shortdescription><description>File in which to log results. Default is not to write a logfile.</description>
         
         <value/>
     </param>
-    <param subparam="true" name="append" direction="in" type="bool"><shortdescription>Append results to logfile? Logfile must be specified. Default is to append. False means overwrite existing file if it exists.</shortdescription><description>Append results to logfile? Logfile must be specified. Default is to append. False means overwrite existing file if it exists.</description>
+    <param type="bool" direction="in" name="append" subparam="true"><shortdescription>Append results to logfile? Logfile must be specified. Default is to append. False means overwrite existing file if it exists.</shortdescription><description>Append results to logfile? Logfile must be specified. Default is to append. False means overwrite existing file if it exists.</description>
         
         <value>True</value>
     </param>
-    <param name="sigma" direction="in" type="any"><shortdescription>Standard deviation array or image name(s).</shortdescription><description>Standard deviation array or image name(s).</description>
-        <any limittypes="string stringArray doubleArray intArray" type="variant"/>
+    <param type="any" direction="in" name="sigma"><shortdescription>Standard deviation array or image name(s).</shortdescription><description>Standard deviation array or image name(s).</description>
+        <type>string</type><type>stringVec</type><type>doubleVec</type><type>intVec</type>
         
         <value type="string"/>
     </param>
-    <param subparam="true" name="outsigma" direction="in" type="string"><shortdescription>Name of output image used for standard deviation. Ignored if sigma is empty.</shortdescription><description>Name of output image used for standard deviation. Ignored if sigma is empty.</description>
+    <param type="string" direction="in" name="outsigma" subparam="true"><shortdescription>Name of output image used for standard deviation. Ignored if sigma is empty.</shortdescription><description>Name of output image used for standard deviation. Ignored if sigma is empty.</description>
         
         <value/>
     </param>
     <constraints>
         <when param="mask">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="stretch"><value type="bool">False</value></default>
             </notequals>
         </when>
         <when param="multifit">
             
-            <equals value="False" type="bool"/>
-            <equals value="True" type="bool">
+            <equals type="bool" value="False"/>
+            <equals type="bool" value="True">
                 <default param="spxsol">
                     <value>&quot;&quot;</value>
                 </default>
@@ -143,14 +143,14 @@
             </equals>
         </when>
         <when param="logfile">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="append">
                     <value>True</value>
                 </default>
             </notequals>
         </when>
         <when param="sigma">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="outsigma"><value type="string"/></default>
             </notequals>
         </when>

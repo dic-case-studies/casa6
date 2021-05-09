@@ -1,28 +1,23 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="conjugatevis" category="manipulation">
+<task category="manipulation" name="conjugatevis" type="function">
 <shortdescription>Change the sign of the phases in all visibility columns.</shortdescription>
 <description>
        Change the sign of the phases in all visibility columns.
 </description>
 
 <input>
-  <param type="string" name="vis" mustexist="true">
+  <param mustexist="true" name="vis" type="path">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-    <value></value>
+    <value/>
   </param>
 
-  <param type="any" name="spwlist">
+  <param name="spwlist" type="any">
 <shortdescription>Spectral window selection</shortdescription>
 <description>Spectral window selection
                      Default:[] (all spws will be conjugated)
@@ -30,20 +25,20 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                         Example: spw=[1,2]
 </description>
     <any type="variant"/>
-    <value>""</value>
+    <value>&quot;&quot;</value>
   </param>
 
-  <param type="string" name="outputvis">
+  <param name="outputvis" type="string">
 <shortdescription>Name of output visibility file</shortdescription>
 <description>Name of output visibility file
                      Default: 'conjugated_'+vis
 
                         Example: outputvis='conjugated.ms'
 </description>
-    <value></value>
+    <value/>
   </param>
   
-  <param type="bool" name="overwrite" >
+  <param name="overwrite" type="bool">
 <shortdescription>Overwrite the outputvis if it exists?</shortdescription>
 <description>Overwrite the outputvis if it exists?
                      Default: False
@@ -60,5 +55,5 @@ https://casa.nrao.edu/casadocs/
 
 </example> 
 
-</task>
+<returns>void</returns></task>
 </casaxml>

@@ -1,84 +1,84 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
 
-<task category="analysis" name="imsubimage" type="function">
+<task type="function" name="imsubimage" category="analysis">
     <shortdescription>Create a (sub)image from a region of the image</shortdescription>
     <input>
-        <param mustexist="true" name="imagename" type="string"><shortdescription>Input image name.  Default is unset.</shortdescription><description>Input image name.  Default is unset.</description>
+        <param type="path" name="imagename" mustexist="true"><shortdescription>Input image name.  Default is unset.</shortdescription><description>Input image name.  Default is unset.</description>
             
             <value/>
         </param>
-        <param name="outfile" type="string"><shortdescription>Output image name.  Default is unset.</shortdescription><description>Output image name.  Default is unset.</description>
+        <param type="string" name="outfile"><shortdescription>Output image name.  Default is unset.</shortdescription><description>Output image name.  Default is unset.</description>
             
             <value/>
         </param>
-            <param name="box" type="string"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
+            <param type="string" name="box"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
             
             <value/>
             <example>box=&quot;100,100,200,200&quot;</example>
         </param>
-        <param name="region" type="string"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+        <param type="string" name="region"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
             
             <value/>
             <example>region=&quot;my.rgn&quot;</example>
         </param>
-        <param name="chans" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+        <param type="string" name="chans"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
            
            <value/>
            <example>chans=&quot;5~20&quot;</example>
         </param>
-        <param name="stokes" type="string"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
+        <param type="string" name="stokes"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
             
             <value/>
             <example>stokes=&quot;iq&quot;</example>
         </param>
-        <param name="mask" type="any"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
+        <param type="any" name="mask"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
             <any type="variant"/>
             
             <value type="string"/>
         </param>
-        <param name="dropdeg" type="bool"><shortdescription>Drop degenerate axes</shortdescription><description>Drop degenerate axes</description>
+        <param type="bool" name="dropdeg"><shortdescription>Drop degenerate axes</shortdescription><description>Drop degenerate axes</description>
             
             <value>False</value>
         </param>
-        <param subparam="true" name="overwrite" type="bool"><shortdescription>Overwrite (unprompted) pre-existing output file?</shortdescription><description>Overwrite (unprompted) pre-existing output file?</description>
+        <param type="bool" name="overwrite" subparam="true"><shortdescription>Overwrite (unprompted) pre-existing output file?</shortdescription><description>Overwrite (unprompted) pre-existing output file?</description>
             
             <value>False</value>
         </param>
-        <param name="verbose" type="bool"><shortdescription>Post additional informative messages to the logger</shortdescription><description>Post additional informative messages to the logger</description>
+        <param type="bool" name="verbose"><shortdescription>Post additional informative messages to the logger</shortdescription><description>Post additional informative messages to the logger</description>
             
             <value>True</value>
         </param>
-        <param subparam="true" name="stretch" type="bool"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
+        <param type="bool" name="stretch" subparam="true"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
             
             <value>False</value>
         </param>
-        <param subparam="true" name="keepaxes" type="intArray"><shortdescription>If dropdeg=True, these are the degenerate axes to keep. Nondegenerate axes are implicitly always kept.</shortdescription><description>If dropdeg=True, these are the degenerate axes to keep. Nondegenerate axes are implicitly always kept.</description>
+        <param type="intVec" name="keepaxes" subparam="true"><shortdescription>If dropdeg=True, these are the degenerate axes to keep. Nondegenerate axes are implicitly always kept.</shortdescription><description>If dropdeg=True, these are the degenerate axes to keep. Nondegenerate axes are implicitly always kept.</description>
             
             <value/>
         </param>
         
         <constraints>
             <when param="mask">
-                <notequals value="" type="string">
+                <notequals type="string" value="">
                     <default param="stretch">
                         <value>False</value>
                     </default>
                 </notequals>
             </when>
             <when param="outfile">
-                <notequals value="" type="string">
+                <notequals type="string" value="">
                     <default param="overwrite">
                         <value>False</value>
                     </default>
                 </notequals>
             </when>
             <when param="dropdeg">
-                <equals value="True" type="bool">
-                    <default type="intArray" param="keepaxes">
+                <equals type="bool" value="True">
+                    <default param="keepaxes" type="intVec">
                         <value>[]</value>
                     </default>
                 </equals>

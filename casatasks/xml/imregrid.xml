@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="analysis" name="imregrid" type="function">
+<task type="function" name="imregrid" category="analysis">
 <shortdescription>regrid an image onto a template image</shortdescription>
 <description>
 Imregrid will regrid an input image onto a new coordinate system from a template image
@@ -8,55 +8,55 @@ or to a new directional reference frame. If a template image is used, then the i
 template images must have the same coordinate structure.
 </description>
 <input>
-     <param mustexist="true" name="imagename" type="string"><shortdescription>Name of the source image</shortdescription><description>Name of the source image</description>
+     <param type="path" name="imagename" mustexist="true"><shortdescription>Name of the source image</shortdescription><description>Name of the source image</description>
           
           <value/>
      </param>
-     <param name="template" type="any"><shortdescription>A dictionary, refcode, or name of an image that provides the output shape and coordinate system</shortdescription><description>A dictionary, refcode, or name of an image that provides the output shape and coordinate system</description>
+     <param type="any" name="template"><shortdescription>A dictionary, refcode, or name of an image that provides the output shape and coordinate system</shortdescription><description>A dictionary, refcode, or name of an image that provides the output shape and coordinate system</description>
         <any type="variant"/>
           
           <value type="string">get</value>
      </param>
 
-     <param name="output" type="string"><shortdescription>Name for the regridded image</shortdescription><description>Name for the regridded image</description>
+     <param type="string" name="output"><shortdescription>Name for the regridded image</shortdescription><description>Name for the regridded image</description>
           
           <value/>
      </param>
 
-     <param name="asvelocity" direction="in" type="bool"><shortdescription>Regrid spectral axis in velocity space rather than frequency space?</shortdescription><description>Regrid spectral axis in velocity space rather than frequency space?</description>
+     <param type="bool" direction="in" name="asvelocity"><shortdescription>Regrid spectral axis in velocity space rather than frequency space?</shortdescription><description>Regrid spectral axis in velocity space rather than frequency space?</description>
         
         <value>True</value>
      </param>
-     <param name="axes" direction="in" type="intArray"><shortdescription>The pixel axes to regrid. -1 =&gt; all.</shortdescription><description>The pixel axes to regrid. -1 =&gt; all.</description>
+     <param type="intVec" direction="in" name="axes"><shortdescription>The pixel axes to regrid. -1 =&gt; all.</shortdescription><description>The pixel axes to regrid. -1 =&gt; all.</description>
         
-         <value>-1</value>
+         <value><value>-1</value></value>
      </param>
-     <param subparam="true" name="shape" type="intArray"><shortdescription>Shape of the output image. Only used if template is an image. If not specified (-1), the output image shape will be the same as the template image shape along the axes that are regridded and the same as input image shape along the axes which are not regridded.</shortdescription><description>Shape of the output image. Only used if template is an image. If not specified (-1), the output image shape will be the same as the template image shape along the axes that are regridded and the same as input image shape along the axes which are not regridded.</description>
+     <param type="intVec" name="shape" subparam="true"><shortdescription>Shape of the output image. Only used if template is an image. If not specified (-1), the output image shape will be the same as the template image shape along the axes that are regridded and the same as input image shape along the axes which are not regridded.</shortdescription><description>Shape of the output image. Only used if template is an image. If not specified (-1), the output image shape will be the same as the template image shape along the axes that are regridded and the same as input image shape along the axes which are not regridded.</description>
         
-        <value>-1</value>
+        <value><value>-1</value></value>
      </param>
-     <param name="interpolation" type="string"><shortdescription>The interpolation method.  One of &quot;nearest&quot;, &quot;linear&quot;, &quot;cubic&quot;.</shortdescription><description>The interpolation method.  One of &quot;nearest&quot;, &quot;linear&quot;, &quot;cubic&quot;.</description>
+     <param type="string" name="interpolation"><shortdescription>The interpolation method.  One of &quot;nearest&quot;, &quot;linear&quot;, &quot;cubic&quot;.</shortdescription><description>The interpolation method.  One of &quot;nearest&quot;, &quot;linear&quot;, &quot;cubic&quot;.</description>
         
         <value>linear</value>
      </param>
-     <param name="decimate" type="int"><shortdescription>Decimation factor for coordinate grid computation</shortdescription><description>Decimation factor for coordinate grid computation</description>
+     <param type="int" name="decimate"><shortdescription>Decimation factor for coordinate grid computation</shortdescription><description>Decimation factor for coordinate grid computation</description>
      
      <value>10</value>
      </param>
   
-     <param name="replicate" type="bool"><shortdescription>Replicate image rather than regrid?</shortdescription><description>Replicate image rather than regrid?</description>
+     <param type="bool" name="replicate"><shortdescription>Replicate image rather than regrid?</shortdescription><description>Replicate image rather than regrid?</description>
      
      <value>False</value>
      </param>
      
-     <param name="overwrite" type="bool"><shortdescription>Overwrite (unprompted) pre-existing output file?</shortdescription><description>Overwrite (unprompted) pre-existing output file?</description>
+     <param type="bool" name="overwrite"><shortdescription>Overwrite (unprompted) pre-existing output file?</shortdescription><description>Overwrite (unprompted) pre-existing output file?</description>
      
      <value>False</value>
      </param>
      <constraints>
         <when param="template">
-            <notequals value="get" type="string">
-                <default param="shape"><value type="intArray"><value>-1</value></value></default>
+            <notequals type="string" value="get">
+                <default param="shape"><value type="intVec"><value>-1</value></value></default>
             </notequals>
         </when>
      </constraints>
@@ -344,5 +344,5 @@ axis listed (zero-based axis) (2), taking account of the input.image rest freque
 
 </example> 
 
-</task>
+<returns>void</returns></task>
 </casaxml>

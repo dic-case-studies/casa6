@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="delmod" category="imaging, calibration">
+<task category="imaging, calibration" name="delmod" type="function">
         <shortdescription>Deletes model representations in the MS</shortdescription>
 <description>
 This utility task is to be used to delete the model visibility data
@@ -15,12 +10,12 @@ representations in the MS.
   </example>
 
 <input>
-    <param type="string" name="vis" mustexist="true">
+    <param mustexist="true" name="vis" type="path">
 <shortdescription>Name of input visibility file (MS)</shortdescription>
 <description>Name of input visibility file (MS)</description>
-        <value></value>
+        <value/>
     </param>
-    <param type="bool" name="otf">
+    <param name="otf" type="bool">
 <shortdescription>Delete the on-the-fly model data keywords</shortdescription>
 <description>Delete the on-the-fly model data keywords
                      Default=True
@@ -42,16 +37,16 @@ representations in the MS.
         <value>True</value>
     </param>
 
-    <param type="string" name="field" subparam="true">
+    <param subparam="true" name="field" type="string">
 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
 <description>Select field using field id(s) or field name(s)
                      Subparameter of otf
                      Default: '' (all fields' models will be deleted)
 </description>
-                <value></value>
+                <value/>
     </param>
 
-    <param type="bool" name="scr">
+    <param name="scr" type="bool">
 <shortdescription>Delete the MODEL_DATA scr col (if it exists)</shortdescription>
 <description>Delete the MODEL_DATA scr col (if it exists)
                      Default: False
@@ -67,10 +62,10 @@ representations in the MS.
 
    <constraints>
         <when param="otf">
-                <equals type="bool" value="True">
+                <equals value="True" type="bool">
                         <default param="field"><value type="string"/></default>
                 </equals>
-                <equals type="bool" value="False"/>
+                <equals value="False" type="bool"/>
         </when>
    </constraints>
 

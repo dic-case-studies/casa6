@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-    <task type="function" name="flagdata" category="flagging">
+    <task category="flagging" name="flagdata" type="function">
         <shortdescription>All-purpose flagging task based on data-selections and flagging modes/algorithms.</shortdescription>
 <description>        
 This task can flag a Measurement Set or a calibration table. It has
@@ -29,17 +24,17 @@ information, see the task pages of flagdata in CASA Docs
 </description>
 
         <input>
-            <param type="string" name="vis" mustexist="true">
+            <param mustexist="true" name="vis" type="path">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-                <value />
+                <value/>
             </param>
 
-            <param type="string" name="mode">
+            <param name="mode" type="string">
 <shortdescription>Flagging mode (list/manual/clip/quack/shadow/elevation/tfcrop/rflag/antint/extent/unflag/summary)</shortdescription>
 <description>Flagging mode
                      Default: 'manual'
@@ -267,8 +262,8 @@ information, see the task pages of flagdata in CASA Docs
                 </allowed>
             </param>
 
-             <!-- MANUAL parameters -->
-            <param type="bool" name="autocorr" subparam="true">
+             
+            <param subparam="true" name="autocorr" type="bool">
 <shortdescription>Flag only the auto-correlations?</shortdescription>
 <description>Flag only the auto-correlations?
                      Subparameter of mode='manual'
@@ -276,16 +271,16 @@ information, see the task pages of flagdata in CASA Docs
                      Options: False|True
 
                      NOTE: this parameter is only active when set to
-                     True. If set to False it does NOT mean "do not
-                     flag auto-correlations". When set to True, it
+                     True. If set to False it does NOT mean &quot;do not
+                     flag auto-correlations&quot;. When set to True, it
                      will only flag data from a processor of type
                      CORRELATOR. 
 </description>
                   <value type="bool">False</value>
             </param>
  
-            <!-- LIST parameters -->
-            <param type="any" name="inpfile" subparam="true">
+            
+            <param subparam="true" name="inpfile" type="any">
 <shortdescription>Input ASCII file, list of files or Python list of strings with flag commands.</shortdescription>
 <description>Input ASCII file, list of files or Python list of strings
 with flag commands.
@@ -304,15 +299,15 @@ with flag commands.
 
                      NOTE: There should be no whitespace between
                      KEY=VALUE since the parser first breaks command
-                     lines on whitespace, then on "=". Use only one
+                     lines on whitespace, then on &quot;=&quot;. Use only one
                      whitespace to separate the parameters (no
                      commas).
 </description>
-                <any type="variant" limittypes="string stringArray"/>
-                <value type="string"></value>
+                <type>string</type><type>stringVec</type>
+                <value type="string"/>
             </param>
 
-            <param type="any" name="reason" subparam="true">
+            <param subparam="true" name="reason" type="any">
 <shortdescription>Select by REASON types</shortdescription>
 <description>Select flag commands based on REASON(s)
                      Subparameter of mode='list'
@@ -332,10 +327,10 @@ with flag commands.
                      'FOCUS_ERROR,SUBREFLECTOR_ERROR' matches this
                      compound reason string only.
 </description>
-                        <any type="variant" limittypes="string stringArray"/>
+                        <type>string</type><type>stringVec</type>
                         <value type="string">any</value>
             </param>
-            <param type="any" name="tbuff" subparam="true">
+            <param subparam="true" name="tbuff" type="any">
 <shortdescription>List of time buffers (sec) to pad timerange in flag commands</shortdescription>
 <description>A time buffer or list of time buffers to pad the
 timerange parameters in flag commands.
@@ -376,12 +371,12 @@ timerange parameters in flag commands.
                      regular time buffer should be
                      tbuff=0.5*max(integration time).
 </description>
-                    <any type="variant" limittypes="double doubleArray" />
+                    <type>double</type><type>doubleVec</type>
                     <value type="double">0.0</value>
             </param>
 
-            <!-- SELECTION parameters -->
-            <param type="any" name="spw" subparam="true">
+            
+            <param subparam="true" name="spw" type="any">
 <shortdescription>Select spectral window/channels</shortdescription>
 <description>Select spectral window/channels
                      Default: '' (all spectral windows and channels)
@@ -405,11 +400,11 @@ timerange parameters in flag commands.
                      if spectral-lines fall in channels 6~9, set the
                      selection range to spw='0:0~5;10~63'.
 </description>
-                <any type="variant" limittypes="string stringArray" />
-                <value type="string" />
+                <type>string</type><type>stringVec</type>
+                <value type="string"/>
             </param>
 
-            <param type="any" name="field" subparam="true">
+            <param subparam="true" name="field" type="any">
 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
 <description>Select field using field id(s) or field name(s)
                      Default: '' (all fields)
@@ -427,11 +422,11 @@ timerange parameters in flag commands.
                         field = '3,4C*'; field id 3, all names
                         starting with 4C
 </description>
-                <any type="variant" limittypes="string stringArray" />
-                <value type="string" />
+                <type>string</type><type>stringVec</type>
+                <value type="string"/>
             </param>
 
-            <param type="any" name="antenna" subparam="true">
+            <param subparam="true" name="antenna" type="any">
 <shortdescription>Select data based on antenna/baseline</shortdescription>
 <description>Select data based on antenna/baseline
                      Subparameter of selectdata=True
@@ -459,27 +454,27 @@ timerange parameters in flag commands.
                      selecting baselines with the &amp; syntax do not
                      apply.
 </description>
-               <any type="variant" limittypes="string stringArray" />
-                <value type="string" />
+               <type>string</type><type>stringVec</type>
+                <value type="string"/>
             </param>
 
-            <param type="any" name="uvrange" subparam="true">
+            <param subparam="true" name="uvrange" type="any">
 <shortdescription>Select data by baseline length.</shortdescription>
 <description>Select data by baseline length.
                      Default = '' (all)
 
                         Examples:
                         uvrange='0~1000klambda'; uvrange from 0-1000 kilo-lambda
-                        uvrange='>4klambda';uvranges greater than 4 kilo-lambda
+                        uvrange='&gt;4klambda';uvranges greater than 4 kilo-lambda
                         uvrange='0~1000km'; uvrange in kilometers
 
                      NOTE: uvrange selection is not supported for cal tables.  
 </description>
-                <any type="variant" limittypes="string stringArray" />
-                <value type="string" />
+                <type>string</type><type>stringVec</type>
+                <value type="string"/>
             </param>
 
-            <param type="any" name="timerange" subparam="true">
+            <param subparam="true" name="timerange" type="any">
 <shortdescription>Select data based on time range</shortdescription>
 <description>Select data based on time range
                      Subparameter of selectdata=True
@@ -496,22 +491,22 @@ timerange parameters in flag commands.
                         hr 30min on NEXT day
                         timerange='09:44:00' pick data within one
                         integration of time
-                        timerange='>10:24:00' data after this time
+                        timerange='&gt;10:24:00' data after this time
 </description>
-                <any type="variant" limittypes="string stringArray" />
-                <value type="string" />
+                <type>string</type><type>stringVec</type>
+                <value type="string"/>
             </param>
 
-            <param type="any" name="correlation" subparam="true">
+            <param subparam="true" name="correlation" type="any">
 <shortdescription>Select data based on correlation</shortdescription>
 <description>Select data based on correlation
-                     Default: '' ==> all
+                     Default: '' ==&gt; all
                      Options: Any of 'ABS', 'ARG', 'REAL', 'IMAG',
                      'NORM' followed by any of 'ALL', 'I', 'XX', 'YY',
                      'RR', 'LL', 'WVR' ('WVR' = water vapour
                      radiometer of ALMA data).
 
-                        Example: correlation="XX,YY".
+                        Example: correlation=&quot;XX,YY&quot;.
 
                      For modes clip, tfcrop or rflag, the default
                      means ABS_ALL. If the input is cal table that
@@ -524,21 +519,21 @@ timerange parameters in flag commands.
                      modes other than clip, tfcrop or rflag in cal
                      tables.   
 </description>
-                <any type="variant" limittypes="string stringArray" />
-                <value type="string" />
+                <type>string</type><type>stringVec</type>
+                <value type="string"/>
             </param>
 
-            <param type="any" name="scan" subparam="true">
+            <param subparam="true" name="scan" type="any">
 <shortdescription>Scan number range</shortdescription>
 <description>Scan number range
                      Subparameter of selectdata=True
                      Default: '' = all
 </description>
-                <any type="variant" limittypes="string stringArray" />
-                <value type="string" />
+                <type>string</type><type>stringVec</type>
+                <value type="string"/>
             </param>
 
-            <param type="any" name="intent" subparam="true">
+            <param subparam="true" name="intent" type="any">
 <shortdescription>Select observing intent</shortdescription>
 <description>Select observing intent
                      Default: '' (no selection by intent)
@@ -549,11 +544,11 @@ timerange parameters in flag commands.
                      NOTE: intent selection is not supported for cal
                      tables.
 </description>
-                <any type="variant" limittypes="string stringArray" />
-                <value type="string" />
+                <type>string</type><type>stringVec</type>
+                <value type="string"/>
             </param>
 
-            <param type="any" name="array" subparam="true">
+            <param subparam="true" name="array" type="any">
 <shortdescription>(Sub)array numbers</shortdescription>
 <description>Selection based on the antenna array
                      Default: '' (all)
@@ -561,11 +556,11 @@ timerange parameters in flag commands.
                      NOTE: array selection is not supported for cal
                      tables.
 </description>
-                <any type="variant" limittypes="string stringArray" />
-                <value type="string" />
+                <type>string</type><type>stringVec</type>
+                <value type="string"/>
             </param>
 
-            <param type="any" name="observation" subparam="true">
+            <param subparam="true" name="observation" type="any">
 <shortdescription>Select by observation ID(s)</shortdescription>
 <description>Select by observation ID(s)
                      Subparameter of selectdata=True
@@ -573,21 +568,21 @@ timerange parameters in flag commands.
 
                          Example: observation='0~2,4'
 </description>
-                <any type="variant" limittypes="string int" />
-                <value type="string" />
+                <type>string</type><type>int</type>
+                <value type="string"/>
             </param>
 
-            <param type="any" name="feed" subparam="true">
+            <param subparam="true" name="feed" type="any">
 <shortdescription>Multi-feed numbers: Not yet implemented</shortdescription>
 <description>Selection based on the feed: Not yet implemented
 </description>
-                <any type="variant" limittypes="string stringArray" />
-                <value type="string" />
+                <type>string</type><type>stringVec</type>
+                <value type="string"/>
             </param>
 
                                   
-            <!-- CLIP parameters -->
-            <param type="any" name="clipminmax" subparam="true">
+            
+            <param subparam="true" name="clipminmax" type="any">
 <shortdescription>Range to use for clipping</shortdescription>
 <description>Range to use for clipping
                      Subparameter of mode='clip'
@@ -597,11 +592,11 @@ timerange parameters in flag commands.
 
                         Example: [0.0,1.5]
 </description>
-                <any type="variant" limittypes="doubleArray" />
-                <value type="doubleArray"></value>
+                <type>doubleVec</type>
+                <value type="doubleVec"/>
             </param>
             
-<param type="any" name="datacolumn" subparam="true">
+<param subparam="true" name="datacolumn" type="any">
 <shortdescription>Data column on which to operate</shortdescription>
 <description>Data column to image (data or observed, corrected)
                      Subparameter of mode='clip|tfcrop|rflag'
@@ -611,22 +606,22 @@ timerange parameters in flag commands.
                      If 'corrected' does not exist, it will use 'data'
                      instead
 </description>
-                <any type="variant" limittypes="string stringArray" />
+                <type>string</type><type>stringVec</type>
                 <value type="string">DATA</value>
             </param>
 
-            <param type="any" name="clipoutside" subparam="true">
+            <param subparam="true" name="clipoutside" type="any">
 <shortdescription>Clip outside the range, or within it</shortdescription>
 <description>Clip outside the range?
                      Subparameter of mode='clip'
                      Default: True
                      Options: True|False
 </description>
-                <any type="variant" limittypes="bool boolArray" />
+                <type>bool</type><type>boolVec</type>
                 <value type="bool">True</value>
             </param>
 
-            <param type="any" name="channelavg" subparam="true">
+            <param subparam="true" name="channelavg" type="any">
 <shortdescription>Pre-average data across channels before analyzing visibilities for flagging</shortdescription>
 <description>Pre-average data across channels before analyzing
 visibilities for flagging
@@ -649,11 +644,11 @@ visibilities for flagging
                      NOTE 2: Pre-average across channels is not
                      supported for calibration tables 
 </description>
-                <any type="variant" limittypes="bool boolArray" />
+                <type>bool</type><type>boolVec</type>
                 <value type="bool">False</value>
             </param>
 
-            <param type="any" name="chanbin" subparam="true">
+            <param subparam="true" name="chanbin" type="any">
 <shortdescription>Bin width for channel average in number of input channels</shortdescription>
 <description>Bin width for channel average in number of input channels
                      Subparameter of mode='clip|tfcrop|rflag'
@@ -668,11 +663,11 @@ visibilities for flagging
                      compatibility with the previous pre-averaging
                      feature of clip mode.
 </description>
-                <any type="variant" limittypes="int intArray"/>            
+                <type>int</type><type>intVec</type>            
                 <value type="int">1</value>
             </param>            
 
-            <param type="any" name="timeavg" subparam="true">
+            <param subparam="true" name="timeavg" type="any">
 <shortdescription>Pre-average data across time before analyzing visibilities for flagging.</shortdescription>
 <description>Pre-average data across time before analyzing
 visibilities for flagging.
@@ -697,11 +692,11 @@ visibilities for flagging.
                      NOTE 2: Pre-average across time is not
                      supported for calibration tables 
 </description>
-                <any type="variant" limittypes="bool boolArray" />
+                <type>bool</type><type>boolVec</type>
                 <value type="bool">False</value>
             </param>
 
-                <param type="string" name="timebin" subparam="true">
+                <param subparam="true" name="timebin" type="string">
 <shortdescription>Bin width for time average in seconds</shortdescription>
 <description>Bin width for time average in seconds
                      Subparameter of mode='clip|tfcrop|rflag'
@@ -710,7 +705,7 @@ visibilities for flagging.
                     <value type="string">0s</value>
                 </param>            
 
-            <param type="bool" name="clipzeros" subparam="true">
+            <param subparam="true" name="clipzeros" type="bool">
 <shortdescription>Clip zero-value data</shortdescription>
 <description>Clip zero-value data
                      Subparameter of mode='clip'
@@ -720,8 +715,8 @@ visibilities for flagging.
                 <value type="bool">False</value>
             </param>
 
-            <!-- QUACK parameters -->
-            <param type="any" name="quackinterval" subparam="true">
+            
+            <param subparam="true" name="quackinterval" type="any">
 <shortdescription>Quack n seconds from scan beginning or end</shortdescription>
 <description>Time in seconds from scan beginning or end to flag.
                      Subparameter of mode='quack'
@@ -730,11 +725,11 @@ visibilities for flagging.
                      Note: Make time slightly smaller than the desired
                      time.
 </description>
-                <any type="variant" limittypes="double doubleArray int intArray" />
+                <type>double</type><type>doubleVec</type><type>int</type><type>intVec</type>
                 <value type="double">1.0</value>
             </param>
 
-            <param type="any" name="quackmode" subparam="true">
+            <param subparam="true" name="quackmode" type="any">
 <shortdescription>Quack mode. Flag intervals of the scan according to given mode.</shortdescription>
 <description>Quack mode flags the region of the scan given by one of the
 options below using the time set at quackinterval.
@@ -763,11 +758,11 @@ options below using the time set at quackinterval.
                      end
                      +++++++++++++++++++++++++++++++++-----------
 </description>
-                <any type="variant" limittypes="string stringArray" />
+                <type>string</type><type>stringVec</type>
                 <value type="string">beg</value>
             </param>
 
-            <param type="any" name="quackincrement" subparam="true">
+            <param subparam="true" name="quackincrement" type="any">
 <shortdescription>Increment quack flagging in time taking into account flagged data or not.</shortdescription>
 <description>Increment quack flagging in time taking into account
 flagged data or not.
@@ -791,12 +786,12 @@ flagged data or not.
                      with quackincrement=True will be ignored and the
                      task will issue a WARNING.
 </description>
-                <any type="variant" limittypes="bool boolArray" />
+                <type>bool</type><type>boolVec</type>
                 <value type="bool">False</value>
             </param>
 
-            <!-- SHADOW parameters -->
-            <param type="double" name="tolerance" subparam="true">
+            
+            <param subparam="true" name="tolerance" type="double">
 <shortdescription>Amount of shadow allowed (in meters)</shortdescription>
 <description>Amount of shadowing allowed (or tolerated), in meters. 
                      Subparameter of mode='shadow'
@@ -810,7 +805,7 @@ flagged data or not.
                 <value>0.0</value>
             </param>
 
-            <param type="any" name="addantenna" subparam="true">
+            <param subparam="true" name="addantenna" type="any">
 <shortdescription>File name or dictionary with additional antenna names, positions and diameters</shortdescription>
 <description>File name or dictionary with additional antenna names,
 positions and diameters
@@ -824,8 +819,8 @@ positions and diameters
                      dictionary from a file. 
 
                      To create a dictionary inside casapy.
-                     > import flaghelper as fh
-                     > antdic = fh.readAntennaList(antfile)
+                     &gt; import flaghelper as fh
+                     &gt; antdic = fh.readAntennaList(antfile)
                    
                      Where antfile is a text file in disk that
                      contains information such as:
@@ -838,12 +833,12 @@ positions and diameters
                      position=[-1601105.7664601889,
                      -5042022.3917835914, 3554847.245159178]
 </description>
-                <any type='variant' limittypes='string record'/>
-                <value type="string"></value>
+                <type>string</type><type>record</type>
+                <value type="string"/>
             </param>
             
-            <!-- ELEVATION parameters -->            
-            <param type="double" name="lowerlimit" subparam="true">
+                        
+            <param subparam="true" name="lowerlimit" type="double">
 <shortdescription>Lower limiting elevation (in degrees)</shortdescription>
 <description>Lower limiting elevation (in degrees)
                      Subparameter of mode='elevation'
@@ -856,7 +851,7 @@ positions and diameters
 </description>
                 <value>0.0</value>
             </param>
-            <param type="double" name="upperlimit" subparam="true">
+            <param subparam="true" name="upperlimit" type="double">
 <shortdescription>Upper limiting elevation (in degrees)</shortdescription>
 <description>Upper limiting elevation (in degrees)
                      Subparameter of mode='elevation'
@@ -870,8 +865,8 @@ positions and diameters
                 <value>90.0</value>
             </param>
 
-             <!-- TFCROP parameters -->
-            <param type="any" name="ntime" subparam="true">
+             
+            <param subparam="true" name="ntime" type="any">
 <shortdescription>Time-range to use for each chunk (in seconds or minutes)</shortdescription>
 <description>Timerange (in seconds or minutes) over which to buffer
 data before running the algorithm. 
@@ -891,11 +886,11 @@ data before running the algorithm.
                      requesting a lot of memory depending on the
                      available spws.
 </description>
-                <any type="variant" limittypes="double string" />
+                <type>double</type><type>string</type>
                 <value type="string">scan</value>
             </param>
 
-            <param type="bool" name="combinescans" subparam="true">
+            <param subparam="true" name="combinescans" type="bool">
 <shortdescription>Accumulate data across scans depending on the value of ntime.</shortdescription>
 <description>Accumulate data across scans depending on the value of
 ntime.
@@ -912,7 +907,7 @@ ntime.
 </description>
                 <value>False</value>
             </param>
-            <param type="double" name="timecutoff" subparam="true">
+            <param subparam="true" name="timecutoff" type="double">
 <shortdescription>Flagging thresholds in units of deviation from the fit</shortdescription>
 <description>Flagging thresholds in units of deviation from the fit
                      Subparameter of mode='tfcrop'
@@ -931,7 +926,7 @@ ntime.
 </description>
                 <value>4.0</value>
             </param>
-            <param type="double" name="freqcutoff" subparam="true">
+            <param subparam="true" name="freqcutoff" type="double">
 <shortdescription> Flagging thresholds in units of deviation from the fit</shortdescription>
 <description>Flag threshold in frequency.
                      Subparameter of mode='tfcrop'
@@ -946,7 +941,7 @@ ntime.
                 <value>3.0</value>
             </param>
 
-            <param type="string" name="timefit" subparam="true">
+            <param subparam="true" name="timefit" type="string">
 <shortdescription>Fitting function for the time direction (poly/line)</shortdescription>
 <description>Fitting function for the time direction (poly/line)
                      Subparameter of mode='tfcrop'
@@ -977,7 +972,7 @@ ntime.
                 <value>line</value>
             </param>
 
-            <param type="string" name="freqfit" subparam="true">
+            <param subparam="true" name="freqfit" type="string">
 <shortdescription>Fitting function for the frequency direction (poly/line)</shortdescription>
 <description>Fitting function for the frequency direction (poly/line)
                      Subparameter of mode='tfcrop'
@@ -995,10 +990,10 @@ ntime.
                 <value>poly</value>
             </param>
 
-            <param type="int" name="maxnpieces" subparam="true">
+            <param subparam="true" name="maxnpieces" type="int">
 <shortdescription>Number of pieces in the polynomial-fits (for freqfit or timefit poly)</shortdescription>
-<description>Number of pieces in the polynomial-fits (for "freqfit" or
-"timefit" = "poly")
+<description>Number of pieces in the polynomial-fits (for &quot;freqfit&quot; or
+&quot;timefit&quot; = &quot;poly&quot;)
                      Subparameter of mode='tfcrop'
                      Default: 7
                      Options: 1-9
@@ -1015,7 +1010,7 @@ ntime.
                 <value>7</value>
             </param>
 
-            <param type="string" name="flagdimension" subparam="true">
+            <param subparam="true" name="flagdimension" type="string">
 <shortdescription>Dimensions along which to calculate fits (freq, time, freqtime, timefreq)</shortdescription>
 <description>Choose the directions along which to perform flagging
                      Subparameter of mode='tfcrop'
@@ -1034,7 +1029,7 @@ ntime.
                 <value>freqtime</value>
             </param>
 
-            <param type="string" name="usewindowstats" subparam="true">
+            <param subparam="true" name="usewindowstats" type="string">
 <shortdescription>Calculate additional flags using sliding window statistics (none, sum, std, both)</shortdescription>
 <description>Use sliding-window statistics to find additional flags.
                      Subparameter of mode='tfcrop'
@@ -1065,9 +1060,9 @@ ntime.
                 <value>none</value>
             </param>
 
-            <param type="int" name="halfwin" subparam="true">
+            <param subparam="true" name="halfwin" type="int">
 <shortdescription>Half-width of sliding window to use with usewindowstats (1,2,3).</shortdescription>
-<description>Half-width of sliding window to use with "usewindowstats"
+<description>Half-width of sliding window to use with &quot;usewindowstats&quot;
 (1,2,3).
                      Subparameter of mode='tfcrop'
                      Default: 1  (a 3-point window size)
@@ -1078,7 +1073,7 @@ ntime.
                 <value>1</value>
             </param>
 
-            <param type="bool" name="extendflags" subparam="true">
+            <param subparam="true" name="extendflags" type="bool">
 <shortdescription>Extend flags along time, frequency and correlation.</shortdescription>
 <description>Extend flags along time, frequency and correlation.
                      Subparameter of mode='tfcrop|rflag'
@@ -1087,26 +1082,26 @@ ntime.
 
                      NOTE: It is usually helpful to extend the flags
                      along time, frequency, and correlation using this
-                     parameter, which will run the "extend" mode after
-                     "tfcrop" and extend the flags if more than 50% of
+                     parameter, which will run the &quot;extend&quot; mode after
+                     &quot;tfcrop&quot; and extend the flags if more than 50% of
                      the timeranges are already flagged, and if more
                      than 80% of the channels are already flagged. It
                      will also extend the flags to the other
                      polarizations. The user may also set extendflags
-                     to False and run the "extend" mode in a second
+                     to False and run the &quot;extend&quot; mode in a second
                      step within the same flagging run:
 
-                        Example: cmd=["mode='tfcrop' freqcutoff=3.0
-                        usewindowstats='sum' extendflags=False",
-                        "mode='extend' extendpols=True growtime=50.0
-                        growaround=True"]
+                        Example: cmd=[&quot;mode='tfcrop' freqcutoff=3.0
+                        usewindowstats='sum' extendflags=False&quot;,
+                        &quot;mode='extend' extendpols=True growtime=50.0
+                        growaround=True&quot;]
                         flagdata(vis, mode='list', inpfile=cmd)   
 </description>
                 <value>True</value>
             </param>
 
-            <!-- RFLAG parameters -->
-            <param type="int" name="winsize" subparam="true">
+            
+            <param subparam="true" name="winsize" type="int">
 <shortdescription>Number of timesteps in the sliding time window</shortdescription>
 <description>Number of timesteps in the sliding time window ( fparm(1)
 in AIPS )
@@ -1115,7 +1110,7 @@ in AIPS )
 </description>
                 <value>3</value>
             </param>
-            <param type="any" name="timedev" subparam="true">
+            <param subparam="true" name="timedev" type="any">
 <shortdescription>Time-series noise estimate</shortdescription>
 <description>Time-series noise estimate ( noise in AIPS )
                      Subparameter of mode='rflag'
@@ -1135,11 +1130,11 @@ in AIPS )
                         a file name which will be checked for
                         existence).
 </description>
-                <any type="variant" />
-                <value type="string"></value>
+                <any type="variant"/>
+                <value type="string"/>
             </param>
 
-            <param type="any" name="freqdev" subparam="true">
+            <param subparam="true" name="freqdev" type="any">
 <shortdescription>Spectral noise estimate</shortdescription>
 <description>Spectral noise estimate ( scutoff in AIPS )
                      Subparameter of mode='rflag'
@@ -1148,11 +1143,11 @@ in AIPS )
                      This step depends on having a relatively-flat
                      bandshape. Same parameter-options as 'timedev'.
 </description>
-                <any type="variant" />
-                <value type="string"></value>
+                <any type="variant"/>
+                <value type="string"/>
             </param>
 
-            <param type="double" name="timedevscale" subparam="true">
+            <param subparam="true" name="timedevscale" type="double">
 <shortdescription>Threshold scaling for timedev</shortdescription>
 <description>Threshold scaling for timedev( fparm(9) in AIPS ).
                      For Step 1 (time analysis), flag a point if local
@@ -1171,7 +1166,7 @@ in AIPS )
                 <value>5.0</value>
             </param>
 
-            <param type="double" name="freqdevscale" subparam="true">
+            <param subparam="true" name="freqdevscale" type="double">
 <shortdescription>Threshold scaling for freqdev.</shortdescription>
 <description>Threshold scaling for freqdev (fparm(10) in AIPS ). 
                      For Step 2 (spectral analysis), flag a point if
@@ -1190,7 +1185,7 @@ in AIPS )
                 <value>5.0</value>
             </param>
 
-            <param type="double" name="spectralmax" subparam="true">
+            <param subparam="true" name="spectralmax" type="double">
 <shortdescription>Flag whole spectrum if freqdev is greater than spectralmax</shortdescription>
 <description>Flag whole spectrum if 'freqdev' is greater than
 spectralmax ( fparm(6) in AIPS )
@@ -1200,7 +1195,7 @@ spectralmax ( fparm(6) in AIPS )
                 <value>1E6</value>
             </param>
 
-            <param type="double" name="spectralmin" subparam="true">
+            <param subparam="true" name="spectralmin" type="double">
 <shortdescription>Flag whole spectrum if freqdev is less than spectralmin</shortdescription>
 <description>Flag whole spectrum if 'freqdev' is less than spectralmin
 ( fparm(5) in AIPS )
@@ -1210,8 +1205,8 @@ spectralmax ( fparm(6) in AIPS )
                 <value>0.0</value>
             </param>
 
-            <!-- ANTINT parameters -->
-            <param type="string" name="antint_ref_antenna" subparam="true">
+            
+            <param subparam="true" name="antint_ref_antenna" type="string">
 <shortdescription>Antenna of interest. Baselines with this antenna will be checked for flagged channels.</shortdescription>
 <description>Antenna of interest. Baselines with this antenna will be
 checked for flagged channels.
@@ -1225,7 +1220,7 @@ checked for flagged channels.
 </description>
         </param>
 
-            <param type="double" name="minchanfrac" subparam="true">
+            <param subparam="true" name="minchanfrac" type="double">
 <shortdescription>Minimum fraction of flagged channels required for a baseline to be deemed as flagged</shortdescription>
 <description>Minimum fraction of flagged channels required for a
 baseline to be deemed as flagged
@@ -1247,7 +1242,7 @@ baseline to be deemed as flagged
                 <value>0.6</value>
             </param>
 
-            <param type="bool" name="verbose" subparam="true">
+            <param subparam="true" name="verbose" type="bool">
 <shortdescription>Print timestamps of flagged integrations to the log</shortdescription>
 <description>Print timestamps of flagged integrations to the log
                      Subparameter of mode='antint'
@@ -1257,7 +1252,7 @@ baseline to be deemed as flagged
                         antint_ref_antenna='ea01')
                         flagdata(vis, ..., spw='9',
                         antint_ref_antenna='ea01', minchanfrac=0.3,
-                        verbose=True) ==> reduce the fraction of
+                        verbose=True) ==&gt; reduce the fraction of
                         channels that are required to be flagged, and
                         print information for every integration that
                         is flagged.
@@ -1265,8 +1260,8 @@ baseline to be deemed as flagged
                 <value type="bool">False</value>
             </param>
 
-            <!-- EXTEND parameters -->
-            <param type="any" name="extendpols" subparam="true">
+            
+            <param subparam="true" name="extendpols" type="any">
 <shortdescription>If any correlation is flagged, flag all correlations</shortdescription>
 <description>Extend flags to all selected correlations
                      Subparameter of mode='extend'
@@ -1281,7 +1276,7 @@ baseline to be deemed as flagged
                 <value type="bool">True</value>
             </param>
 
-           <param type="double" name="growtime" subparam="true">
+           <param subparam="true" name="growtime" type="double">
 <shortdescription>Flag all ntime integrations if more than X percent of the timerange is flagged (0-100)</shortdescription>
 <description>For any channel, flag the entire timerange in the current
 2D chunk (set by 'ntime') if more than X% of the timerange is already
@@ -1296,7 +1291,7 @@ flagged.
                 <value>50.0</value>
             </param>
 
-            <param type="double" name="growfreq" subparam="true">
+            <param subparam="true" name="growfreq" type="double">
 <shortdescription>Flag all selected channels if more than X percent of the frequency range is flagged (0-100)</shortdescription>
 <description>For any timestep, flag all channels in the current 2D
 chunk (set by  data-selection) if more than X% of the channels are
@@ -1311,7 +1306,7 @@ already flagged.
                 <value>50.0</value>
             </param>
 
-            <param type="bool" name="growaround" subparam="true">
+            <param subparam="true" name="growaround" type="bool">
 <shortdescription>Flag data based on surrounding flags</shortdescription>
 <description>Flag a point based on the number of flagged points around it.
                      Subparameter of mode='extend'
@@ -1326,7 +1321,7 @@ already flagged.
                 <value type="bool">False</value>
             </param>
 
-            <param type="bool" name="flagneartime" subparam="true">
+            <param subparam="true" name="flagneartime" type="bool">
 <shortdescription>Flag one timestep before and after a flagged one (True/False)</shortdescription>
 <description>Flag points before and after every flagged one, in the
 time-direction.
@@ -1339,7 +1334,7 @@ time-direction.
                 <value type="bool">False</value>
             </param>
 
-            <param type="bool" name="flagnearfreq" subparam="true">
+            <param subparam="true" name="flagnearfreq" type="bool">
 <shortdescription>Flag one channel before and after a flagged one (True/False)</shortdescription>
 <description>Flag points before and after every flagged one, in the
 frequency-direction
@@ -1353,8 +1348,8 @@ frequency-direction
             </param>
 
 
-            <!-- SUMMARY parameters -->
-             <param type="double" name="minrel" subparam="true">
+            
+             <param subparam="true" name="minrel" type="double">
 <shortdescription>Minimum number of flags (relative)</shortdescription>
 <description>Minimum number of flags (relative) to include in
 histogram
@@ -1363,7 +1358,7 @@ histogram
 </description>
                 <value type="double">0.0</value>
             </param>             
-            <param type="double" name="maxrel" subparam="true">
+            <param subparam="true" name="maxrel" type="double">
 <shortdescription>Maximum number of flags (relative)</shortdescription>
 <description>Maximum number of flags (relative) to include in
 histogram
@@ -1372,7 +1367,7 @@ histogram
 </description>
                 <value type="double">1.0</value>
             </param>
-            <param type="int" name="minabs" subparam="true">
+            <param subparam="true" name="minabs" type="int">
 <shortdescription>Minimum number of flags (absolute)</shortdescription>
 <description>Minimum number of flags (absolute, inclusive) to include
 in histogram
@@ -1381,7 +1376,7 @@ in histogram
 </description>
                 <value type="int">0</value>
             </param>
-            <param type="int" name="maxabs" subparam="true">
+            <param subparam="true" name="maxabs" type="int">
 <shortdescription>Maximum number of flags (absolute). Use a negative value to indicate infinity.</shortdescription>
 <description>Maximum number of flags (absolute, inclusive) to include
 in histogram
@@ -1392,7 +1387,7 @@ in histogram
 </description>
                 <value type="int">-1</value>
             </param>
-            <param type="bool" name="spwchan" subparam="true">
+            <param subparam="true" name="spwchan" type="bool">
 <shortdescription>Print summary of channels per spw</shortdescription>
 <description>List the number of flags per spw and per channel.
                      Subparameter of mode='summary'
@@ -1401,7 +1396,7 @@ in histogram
 </description>
                 <value type="bool">False</value>
             </param>
-            <param type="bool" name="spwcorr" subparam="true">
+            <param subparam="true" name="spwcorr" type="bool">
 <shortdescription>Print summary of correlation per spw</shortdescription>
 <description>List the number of flags per spw and per correlation.
                      Subparameter of mode='summary'
@@ -1410,7 +1405,7 @@ in histogram
 </description>
                 <value type="bool">False</value>
             </param>
-            <param type="bool" name="basecnt" subparam="true">
+            <param subparam="true" name="basecnt" type="bool">
 <shortdescription>Print summary counts per baseline</shortdescription>
 <description>List the number of flags per baseline
                      Subparameter of mode='summary'
@@ -1419,7 +1414,7 @@ in histogram
 </description>
                 <value type="bool">False</value>
             </param>
-            <param type="bool" name="fieldcnt" subparam="true">
+            <param subparam="true" name="fieldcnt" type="bool">
 <shortdescription>Produce a separated breakdown for each field</shortdescription>
 <description>Produce a separated breakdown per field
                      Subparameter of mode='summary'
@@ -1429,7 +1424,7 @@ in histogram
                 <value type="fieldcnt">False</value>
             </param>            
 
-            <param type="string" name="name" subparam="true">
+            <param subparam="true" name="name" type="string">
 <shortdescription>Name of this summary report (key in summary dictionary)</shortdescription>
 <description>Name for this summary, to be used as a key in the
 returned Python dictionary
@@ -1454,9 +1449,9 @@ returned Python dictionary
                     Two summary commands in list mode, intercalating a
                     manual flagging command.
                     s = flagdata(..., mode='list',
-                    inpfile=["mode='summary' name='InitFlags'",
-                    "mode='manual' autocorr=True", "mode='summary'
-                    name='Autocorr'"])
+                    inpfile=[&quot;mode='summary' name='InitFlags'&quot;,
+                    &quot;mode='manual' autocorr=True&quot;, &quot;mode='summary'
+                    name='Autocorr'&quot;])
 
                     The dictionary returned in 's' will contain two
                     dictionaries, one for each of the two summary
@@ -1467,8 +1462,8 @@ returned Python dictionary
                 <value>Summary</value>
             </param>
 
-            <!-- ACTION parameters -->
-            <param type="string" name="action">
+            
+            <param name="action" type="string">
 <shortdescription>Action to perform in MS and/or in inpfile (none/apply/calculate)</shortdescription>
 <description>Action to perform in MS/cal table or in the input list of
 parameters.
@@ -1493,10 +1488,10 @@ parameters.
                     <value>apply</value>
                     <value>calculate</value>
                     <value>none</value>
-                    <value></value>
+                    <value/>
                     </allowed>
             </param>
-            <param type="string" name="display" subparam="true">
+            <param subparam="true" name="display" type="string">
 <shortdescription>Display data and/or end-of-MS reports at runtime (data/report/both).</shortdescription>
 <description>Display data and/or end-of-MS reports at runtime.
                      Subparameter of action='apply|calculate'
@@ -1522,9 +1517,9 @@ parameters.
                      * 'both': displays data per chunk and end-of-MS
                        reports on the screen
 </description>
-                <value type="string"></value>
+                <value type="string"/>
             </param>
-            <param type="bool" name="flagbackup" subparam="true">
+            <param subparam="true" name="flagbackup" type="bool">
 <shortdescription>Back up the state of flags before the run</shortdescription>
 <description>Automatically backup flags before the run?
                      Default: True
@@ -1537,8 +1532,8 @@ parameters.
             </param>
 
 
-            <!-- SAVEPARS parameter -->
-            <param type="bool" name="savepars">
+            
+            <param name="savepars" type="bool">
 <shortdescription>Save the current parameters to the FLAG_CMD table or to a file</shortdescription>
 <description>Save the current parameters to the FLAG_CMD table of the
 MS or to an output text file?
@@ -1556,7 +1551,7 @@ MS or to an output text file?
 </description>
                 <value>False</value>
             </param>
-            <param type="string" name="cmdreason" subparam="true">
+            <param subparam="true" name="cmdreason" type="string">
 <shortdescription>Reason to save to output file or to FLAG_CMD table.</shortdescription>
 <description>A string containing a reason to save to the FLAG_CMD
 table or to an output text file given by the outfile sub-parameter.
@@ -1569,9 +1564,9 @@ table or to an output text file given by the outfile sub-parameter.
 
                         Example: cmdreason='CLIP_ZEROS'
 </description>
-                    <value></value>
+                    <value/>
             </param>
-                        <param type="string" name="outfile" subparam="true">
+                        <param subparam="true" name="outfile" type="string">
 <shortdescription>Name of output file to save current parameters. If empty, save to FLAG_CMD</shortdescription>
 <description>Name of output file to save current parameters. If empty,
 save to FLAG_CMD
@@ -1582,9 +1577,9 @@ save to FLAG_CMD
                         Example: outfile='flags.txt' will save the
                         parameters in a text file.
 </description>
-                    <value></value>
+                    <value/>
             </param>
-            <param type="bool" name="overwrite" subparam="true">
+            <param subparam="true" name="overwrite" type="bool">
 <shortdescription>Overwrite an existing file to save the flag commands</shortdescription>
 <description>Overwrite the existing file given in 'outfile'
                      Default: True
@@ -1598,7 +1593,7 @@ save to FLAG_CMD
 </description>
                     <value>True</value>
             </param>
-            <param type="bool" name="writeflags" subparam="true" visibility="hidden">
+            <param visibility="hidden" subparam="true" name="writeflags" type="bool">
 <shortdescription>Internal hidden parameter. Do not modify.</shortdescription>
 <description>Internal hidden parameter. Do not modify.</description>
                 <value type="bool">True</value>
@@ -1607,117 +1602,117 @@ save to FLAG_CMD
             <constraints>                    
                 <when param="mode">
                     <equals value="manual">
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spw"><value type="string"></value></default>
-                        <default param="antenna"><value type="string"></value></default>
-                        <default param="timerange"><value type="string"></value></default>
-                        <default param="correlation"><value type="string"></value></default>
-                        <default param="scan"><value type="string"></value></default>
-                        <default param="intent"><value type="string"></value></default>
-                        <default param="array"><value type="string"></value></default>
-                        <default param="uvrange"><value type="string"></value></default>
-                        <default param="observation"><value type="string"></value></default>
-                        <default param="feed"><value type="string"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spw"><value type="string"/></default>
+                        <default param="antenna"><value type="string"/></default>
+                        <default param="timerange"><value type="string"/></default>
+                        <default param="correlation"><value type="string"/></default>
+                        <default param="scan"><value type="string"/></default>
+                        <default param="intent"><value type="string"/></default>
+                        <default param="array"><value type="string"/></default>
+                        <default param="uvrange"><value type="string"/></default>
+                        <default param="observation"><value type="string"/></default>
+                        <default param="feed"><value type="string"/></default>
                         <default param="autocorr"><value type="bool">False</value></default>
                     </equals>
                     <equals value="manualflag">
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spw"><value type="string"></value></default>
-                        <default param="antenna"><value type="string"></value></default>
-                        <default param="timerange"><value type="string"></value></default>
-                        <default param="correlation"><value type="string"></value></default>
-                        <default param="scan"><value type="string"></value></default>
-                        <default param="intent"><value type="string"></value></default>
-                        <default param="array"><value type="string"></value></default>
-                        <default param="uvrange"><value type="string"></value></default>
-                        <default param="observation"><value type="string"></value></default>
-                        <default param="feed"><value type="string"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spw"><value type="string"/></default>
+                        <default param="antenna"><value type="string"/></default>
+                        <default param="timerange"><value type="string"/></default>
+                        <default param="correlation"><value type="string"/></default>
+                        <default param="scan"><value type="string"/></default>
+                        <default param="intent"><value type="string"/></default>
+                        <default param="array"><value type="string"/></default>
+                        <default param="uvrange"><value type="string"/></default>
+                        <default param="observation"><value type="string"/></default>
+                        <default param="feed"><value type="string"/></default>
                         <default param="autocorr"><value type="bool">False</value></default>
                     </equals>
                     <equals value="list">
-                        <default param="inpfile"><value type="string"></value></default>
+                        <default param="inpfile"><value type="string"/></default>
                         <default param="reason"><value type="string">any</value></default>
                         <default param="tbuff"><value type="double">0.0</value></default>
                     </equals>
                     <equals value="clip">
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spw"><value type="string"></value></default>
-                        <default param="antenna"><value type="string"></value></default>
-                        <default param="timerange"><value type="string"></value></default>
-                        <default param="correlation"><value type="string"></value></default>
-                        <default param="scan"><value type="string"></value></default>
-                        <default param="intent"><value type="string"></value></default>
-                        <default param="array"><value type="string"></value></default>
-                        <default param="uvrange"><value type="string"></value></default>
-                        <default param="observation"><value type="string"></value></default>
-                        <default param="feed"><value type="string"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spw"><value type="string"/></default>
+                        <default param="antenna"><value type="string"/></default>
+                        <default param="timerange"><value type="string"/></default>
+                        <default param="correlation"><value type="string"/></default>
+                        <default param="scan"><value type="string"/></default>
+                        <default param="intent"><value type="string"/></default>
+                        <default param="array"><value type="string"/></default>
+                        <default param="uvrange"><value type="string"/></default>
+                        <default param="observation"><value type="string"/></default>
+                        <default param="feed"><value type="string"/></default>
                         <default param="datacolumn"><value type="string">DATA</value></default>
-                        <default param="clipminmax"><value type="doubleArray"></value></default>
+                        <default param="clipminmax"><value type="doubleVec"/></default>
                         <default param="clipoutside"><value type="bool">True</value></default>
                         <default param="channelavg"> <value type="bool">False</value></default>
                         <default param="chanbin"><value type="int">1</value></default>
                         <default param="timeavg"> <value type="bool">False</value></default>
-                        <default param="timebin"> <value type="string"></value></default>
+                        <default param="timebin"> <value type="string"/></default>
                         <default param="clipzeros"> <value type="bool">False</value></default>
                     </equals>
                     <equals value="quack">
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spw"><value type="string"></value></default>
-                        <default param="antenna"><value type="string"></value></default>
-                        <default param="timerange"><value type="string"></value></default>
-                        <default param="correlation"><value type="string"></value></default>
-                        <default param="scan"><value type="string"></value></default>
-                        <default param="intent"><value type="string"></value></default>
-                        <default param="array"><value type="string"></value></default>
-                        <default param="uvrange"><value type="string"></value></default>
-                        <default param="observation"><value type="string"></value></default>
-                        <default param="feed"><value type="string"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spw"><value type="string"/></default>
+                        <default param="antenna"><value type="string"/></default>
+                        <default param="timerange"><value type="string"/></default>
+                        <default param="correlation"><value type="string"/></default>
+                        <default param="scan"><value type="string"/></default>
+                        <default param="intent"><value type="string"/></default>
+                        <default param="array"><value type="string"/></default>
+                        <default param="uvrange"><value type="string"/></default>
+                        <default param="observation"><value type="string"/></default>
+                        <default param="feed"><value type="string"/></default>
                         <default param="quackinterval"><value type="double">0.0</value></default>
                         <default param="quackmode"><value type="string">beg</value></default>
                         <default param="quackincrement"><value type="bool">False</value></default>                   
                     </equals>                    
                     <equals value="shadow">
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spw"><value type="string"></value></default>
-                        <default param="antenna"><value type="string"></value></default>
-                        <default param="timerange"><value type="string"></value></default>
-                        <default param="correlation"><value type="string"></value></default>
-                        <default param="scan"><value type="string"></value></default>
-                        <default param="intent"><value type="string"></value></default>
-                        <default param="array"><value type="string"></value></default>
-                        <default param="uvrange"><value type="string"></value></default>
-                        <default param="observation"><value type="string"></value></default>
-                        <default param="feed"><value type="string"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spw"><value type="string"/></default>
+                        <default param="antenna"><value type="string"/></default>
+                        <default param="timerange"><value type="string"/></default>
+                        <default param="correlation"><value type="string"/></default>
+                        <default param="scan"><value type="string"/></default>
+                        <default param="intent"><value type="string"/></default>
+                        <default param="array"><value type="string"/></default>
+                        <default param="uvrange"><value type="string"/></default>
+                        <default param="observation"><value type="string"/></default>
+                        <default param="feed"><value type="string"/></default>
                         <default param="tolerance"><value type="double">0.0</value></default>
-                        <default param="addantenna"><value type="string"></value></default>
+                        <default param="addantenna"><value type="string"/></default>
                     </equals>
                     <equals value="elevation">
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spw"><value type="string"></value></default>
-                        <default param="antenna"><value type="string"></value></default>
-                        <default param="timerange"><value type="string"></value></default>
-                        <default param="correlation"><value type="string"></value></default>
-                        <default param="scan"><value type="string"></value></default>
-                        <default param="intent"><value type="string"></value></default>
-                        <default param="array"><value type="string"></value></default>
-                        <default param="uvrange"><value type="string"></value></default>
-                        <default param="observation"><value type="string"></value></default>
-                        <default param="feed"><value type="string"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spw"><value type="string"/></default>
+                        <default param="antenna"><value type="string"/></default>
+                        <default param="timerange"><value type="string"/></default>
+                        <default param="correlation"><value type="string"/></default>
+                        <default param="scan"><value type="string"/></default>
+                        <default param="intent"><value type="string"/></default>
+                        <default param="array"><value type="string"/></default>
+                        <default param="uvrange"><value type="string"/></default>
+                        <default param="observation"><value type="string"/></default>
+                        <default param="feed"><value type="string"/></default>
                         <default param="lowerlimit"><value type="double">0.0</value></default>
                         <default param="upperlimit"><value type="double">90.0</value></default>                    
                     </equals>
                     <equals value="tfcrop">
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spw"><value type="string"></value></default>
-                        <default param="antenna"><value type="string"></value></default>
-                        <default param="timerange"><value type="string"></value></default>
-                        <default param="correlation"><value type="string"></value></default>
-                        <default param="scan"><value type="string"></value></default>
-                        <default param="intent"><value type="string"></value></default>
-                        <default param="array"><value type="string"></value></default>
-                        <default param="uvrange"><value type="string"></value></default>
-                        <default param="observation"><value type="string"></value></default>
-                        <default param="feed"><value type="string"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spw"><value type="string"/></default>
+                        <default param="antenna"><value type="string"/></default>
+                        <default param="timerange"><value type="string"/></default>
+                        <default param="correlation"><value type="string"/></default>
+                        <default param="scan"><value type="string"/></default>
+                        <default param="intent"><value type="string"/></default>
+                        <default param="array"><value type="string"/></default>
+                        <default param="uvrange"><value type="string"/></default>
+                        <default param="observation"><value type="string"/></default>
+                        <default param="feed"><value type="string"/></default>
                         <default param="ntime"><value type="string">scan</value></default>
                         <default param="combinescans"><value type="bool">False</value></default>
                         <default param="datacolumn"><value type="string">DATA</value></default>
@@ -1733,26 +1728,26 @@ save to FLAG_CMD
                         <default param="channelavg"> <value type="bool">False</value></default>
                         <default param="chanbin"><value type="int">1</value></default>
                         <default param="timeavg"> <value type="bool">False</value></default>
-                        <default param="timebin"> <value type="string"></value></default>                        
+                        <default param="timebin"> <value type="string"/></default>                        
                     </equals>
                     <equals value="rflag">
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spw"><value type="string"></value></default>
-                        <default param="antenna"><value type="string"></value></default>
-                        <default param="timerange"><value type="string"></value></default>
-                        <default param="correlation"><value type="string"></value></default>
-                        <default param="scan"><value type="string"></value></default>
-                        <default param="intent"><value type="string"></value></default>
-                        <default param="array"><value type="string"></value></default>
-                        <default param="uvrange"><value type="string"></value></default>
-                        <default param="observation"><value type="string"></value></default>
-                        <default param="feed"><value type="string"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spw"><value type="string"/></default>
+                        <default param="antenna"><value type="string"/></default>
+                        <default param="timerange"><value type="string"/></default>
+                        <default param="correlation"><value type="string"/></default>
+                        <default param="scan"><value type="string"/></default>
+                        <default param="intent"><value type="string"/></default>
+                        <default param="array"><value type="string"/></default>
+                        <default param="uvrange"><value type="string"/></default>
+                        <default param="observation"><value type="string"/></default>
+                        <default param="feed"><value type="string"/></default>
                         <default param="ntime"><value type="string">scan</value></default>
                         <default param="combinescans"><value type="bool">False</value></default>           
                         <default param="datacolumn"><value type="string">DATA</value></default>                                     
                         <default param="winsize"><value type="int">3</value></default>
-                        <default param="timedev"><value type="string"></value></default>
-                        <default param="freqdev"><value type="string"></value></default>
+                        <default param="timedev"><value type="string"/></default>
+                        <default param="freqdev"><value type="string"/></default>
                         <default param="timedevscale"><value type="double">5.0</value></default>
                         <default param="freqdevscale"><value type="double">5.0</value></default>
                         <default param="spectralmax"><value type="double">1E6</value></default>
@@ -1761,29 +1756,29 @@ save to FLAG_CMD
                         <default param="channelavg"> <value type="bool">False</value></default>
                         <default param="chanbin"><value type="int">1</value></default>
                         <default param="timeavg"> <value type="bool">False</value></default>
-                        <default param="timebin"> <value type="string"></value></default>                        
+                        <default param="timebin"> <value type="string"/></default>                        
                     </equals>
                     <equals value="antint">
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spw"><value type="string"></value></default>
-                        <default param="antenna"><value type="string"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spw"><value type="string"/></default>
+                        <default param="antenna"><value type="string"/></default>
                         <default param="datacolumn"><value type="string">DATA</value></default>
-                        <default param="antint_ref_antenna"><value type="string"></value></default>
+                        <default param="antint_ref_antenna"><value type="string"/></default>
                         <default param="minchanfrac"><value type="double">.6</value></default>
                         <default param="verbose"><value type="bool">False</value></default>
                     </equals>
                     <equals value="extend">
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spw"><value type="string"></value></default>
-                        <default param="antenna"><value type="string"></value></default>
-                        <default param="timerange"><value type="string"></value></default>
-                        <default param="correlation"><value type="string"></value></default>
-                        <default param="scan"><value type="string"></value></default>
-                        <default param="intent"><value type="string"></value></default>
-                        <default param="array"><value type="string"></value></default>
-                        <default param="uvrange"><value type="string"></value></default>
-                        <default param="observation"><value type="string"></value></default>
-                        <default param="feed"><value type="string"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spw"><value type="string"/></default>
+                        <default param="antenna"><value type="string"/></default>
+                        <default param="timerange"><value type="string"/></default>
+                        <default param="correlation"><value type="string"/></default>
+                        <default param="scan"><value type="string"/></default>
+                        <default param="intent"><value type="string"/></default>
+                        <default param="array"><value type="string"/></default>
+                        <default param="uvrange"><value type="string"/></default>
+                        <default param="observation"><value type="string"/></default>
+                        <default param="feed"><value type="string"/></default>
                         <default param="ntime"><value type="string">scan</value></default>
                         <default param="combinescans"><value type="bool">False</value></default>
                         <default param="extendpols"><value type="bool">True</value></default>
@@ -1794,30 +1789,30 @@ save to FLAG_CMD
                         <default param="flagnearfreq"><value type="bool">False</value></default>                    
                     </equals>
                     <equals value="unflag">
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spw"><value type="string"></value></default>
-                        <default param="antenna"><value type="string"></value></default>
-                        <default param="timerange"><value type="string"></value></default>
-                        <default param="correlation"><value type="string"></value></default>
-                        <default param="scan"><value type="string"></value></default>
-                        <default param="intent"><value type="string"></value></default>
-                        <default param="array"><value type="string"></value></default>
-                        <default param="uvrange"><value type="string"></value></default>
-                        <default param="observation"><value type="string"></value></default>                    
-                        <default param="feed"><value type="string"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spw"><value type="string"/></default>
+                        <default param="antenna"><value type="string"/></default>
+                        <default param="timerange"><value type="string"/></default>
+                        <default param="correlation"><value type="string"/></default>
+                        <default param="scan"><value type="string"/></default>
+                        <default param="intent"><value type="string"/></default>
+                        <default param="array"><value type="string"/></default>
+                        <default param="uvrange"><value type="string"/></default>
+                        <default param="observation"><value type="string"/></default>                    
+                        <default param="feed"><value type="string"/></default>
                     </equals>
                     <equals value="summary">
-                        <default param="field"><value type="string"></value></default>
-                        <default param="spw"><value type="string"></value></default>
-                        <default param="antenna"><value type="string"></value></default>
-                        <default param="timerange"><value type="string"></value></default>
-                        <default param="correlation"><value type="string"></value></default>
-                        <default param="scan"><value type="string"></value></default>
-                        <default param="intent"><value type="string"></value></default>
-                        <default param="array"><value type="string"></value></default>
-                        <default param="uvrange"><value type="string"></value></default>
-                        <default param="observation"><value type="string"></value></default>
-                        <default param="feed"><value type="string"></value></default>
+                        <default param="field"><value type="string"/></default>
+                        <default param="spw"><value type="string"/></default>
+                        <default param="antenna"><value type="string"/></default>
+                        <default param="timerange"><value type="string"/></default>
+                        <default param="correlation"><value type="string"/></default>
+                        <default param="scan"><value type="string"/></default>
+                        <default param="intent"><value type="string"/></default>
+                        <default param="array"><value type="string"/></default>
+                        <default param="uvrange"><value type="string"/></default>
+                        <default param="observation"><value type="string"/></default>
+                        <default param="feed"><value type="string"/></default>
                         <default param="minrel"><value type="double">0.0</value></default>
                         <default param="maxrel"><value type="double">1.0</value></default>
                         <default param="minabs"><value type="int">0</value></default>
@@ -1832,21 +1827,21 @@ save to FLAG_CMD
 
                 <when param="action">
                     <equals value="apply">
-                        <default param="display"><value type="string"></value></default>
+                        <default param="display"><value type="string"/></default>
                         <default param="flagbackup"><value type="bool">True</value></default>
                     </equals>
                     <equals value="calculate">
-                        <default param="display"><value type="string"></value></default>
+                        <default param="display"><value type="string"/></default>
                     </equals>
-                    <equals value=""></equals>            
-                    <equals value="none"></equals>            
+                    <equals value=""/>            
+                    <equals value="none"/>            
                 </when>
                                
                <when param="savepars">
-                <equals type="bool" value="False" />
-                 <equals type="bool" value="True">
-                    <default param="cmdreason"><value type="string"></value></default>
-                    <default param="outfile"><value type="string"></value></default>
+                <equals value="False" type="bool"/>
+                 <equals value="True" type="bool">
+                    <default param="cmdreason"><value type="string"/></default>
+                    <default param="outfile"><value type="string"/></default>
                     <default param="overwrite"><value type="bool">True</value></default>
                 </equals>
                </when>
@@ -1864,4 +1859,3 @@ https://casa.nrao.edu/casadocs/
 
     </task>
 </casaxml>
-        

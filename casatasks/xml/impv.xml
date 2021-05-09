@@ -1,112 +1,112 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
 
-<task category="analysis" name="impv" type="function">
+<task type="function" name="impv" category="analysis">
 
     <shortdescription>Construct a position-velocity image by choosing two points in the direction plane.</shortdescription>
     <input>
-        <param mustexist="true" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+        <param type="path" name="imagename" mustexist="true"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
             
             <value/>
         </param>
-        <param name="outfile" type="string"><shortdescription>Output image name. If empty, no image is written.</shortdescription><description>Output image name. If empty, no image is written.</description>
+        <param type="string" name="outfile"><shortdescription>Output image name. If empty, no image is written.</shortdescription><description>Output image name. If empty, no image is written.</description>
             
             <value/>
         </param>
-        <param name="mode" type="string"><shortdescription>If &quot;coords&quot;, use start and end values. If &quot;length&quot;, use center, length, and pa values.</shortdescription><description>If &quot;coords&quot;, use start and end values. If &quot;length&quot;, use center, length, and pa values.</description>
+        <param type="string" name="mode"><shortdescription>If &quot;coords&quot;, use start and end values. If &quot;length&quot;, use center, length, and pa values.</shortdescription><description>If &quot;coords&quot;, use start and end values. If &quot;length&quot;, use center, length, and pa values.</description>
             
             <value>coords</value>
             <example>mode=&quot;coords&quot;</example>
         </param>
-        <param subparam="True" name="start" type="any"><shortdescription>The starting pixel in the direction plane (array of two values).</shortdescription><description>The starting pixel in the direction plane (array of two values).</description>
-            <any limittypes="string stringArray intArray doubleArray" type="variant"/>
+        <param type="any" name="start" subparam="True"><shortdescription>The starting pixel in the direction plane (array of two values).</shortdescription><description>The starting pixel in the direction plane (array of two values).</description>
+            <type>string</type><type>stringVec</type><type>intVec</type><type>doubleVec</type>
             
             <value type="string"/>
             <example>[20, 5]</example>
         </param>
-        <param subparam="True" name="end" type="any"><shortdescription>The ending pixel in the direction plane (array of two values).</shortdescription><description>The ending pixel in the direction plane (array of two values).</description>
-            <any limittypes="string stringArray intArray doubleArray" type="variant"/>
+        <param type="any" name="end" subparam="True"><shortdescription>The ending pixel in the direction plane (array of two values).</shortdescription><description>The ending pixel in the direction plane (array of two values).</description>
+            <type>string</type><type>stringVec</type><type>intVec</type><type>doubleVec</type>
             
             <value type="string"/>
             <example>[200,300]</example>
         </param>
-        <param subparam="true" name="center" type="any"><shortdescription>The center point in the direction plane (array of two values). If specified, length and pa must also be specified and neither of start nor end may be specified.</shortdescription><description>The center point in the direction plane (array of two values). If specified, length and pa must also be specified and neither of start nor end may be specified.</description>
+        <param type="any" name="center" subparam="true"><shortdescription>The center point in the direction plane (array of two values). If specified, length and pa must also be specified and neither of start nor end may be specified.</shortdescription><description>The center point in the direction plane (array of two values). If specified, length and pa must also be specified and neither of start nor end may be specified.</description>
             
-            <any limittypes="string stringArray intArray doubleArray" type="variant"/>
+            <type>string</type><type>stringVec</type><type>intVec</type><type>doubleVec</type>
             <value type="string"/>
         </param>
-        <param subparam="true" name="length" type="any"><shortdescription>The length of the segment in the direction plane. If specified, center and pa must also be specified and neither of start nor end may be specified.</shortdescription><description>The length of the segment in the direction plane. If specified, center and pa must also be specified and neither of start nor end may be specified.</description>
+        <param type="any" name="length" subparam="true"><shortdescription>The length of the segment in the direction plane. If specified, center and pa must also be specified and neither of start nor end may be specified.</shortdescription><description>The length of the segment in the direction plane. If specified, center and pa must also be specified and neither of start nor end may be specified.</description>
             
-            <any limittypes="string int double stringArray record" type="variant"/>
+            <type>string</type><type>int</type><type>double</type><type>stringVec</type><type>record</type>
             <value type="string"/>
         </param>
-        <param subparam="true" name="pa" type="any"><shortdescription>The position angle of the segment in the direction plane, measured from north through east. If specified, center and length must also be specified and neither of start nor end may be specified.</shortdescription><description>The position angle of the segment in the direction plane, measured from north through east. If specified, center and length must also be specified and neither of start nor end may be specified.</description>
+        <param type="any" name="pa" subparam="true"><shortdescription>The position angle of the segment in the direction plane, measured from north through east. If specified, center and length must also be specified and neither of start nor end may be specified.</shortdescription><description>The position angle of the segment in the direction plane, measured from north through east. If specified, center and length must also be specified and neither of start nor end may be specified.</description>
             
-            <any limittypes="string record" type="variant"/>
+            <type>string</type><type>record</type>
             <value type="string"/>
         </param>
-        <param name="width" type="any"><shortdescription>Width of slice for averaging pixels perpendicular to the slice. Must be an odd positive integer or valid quantity. See help for details.</shortdescription><description>Width of slice for averaging pixels perpendicular to the slice. Must be an odd positive integer or valid quantity. See help for details.</description>
-            <any limittypes="string int record" type="variant"/>
+        <param type="any" name="width"><shortdescription>Width of slice for averaging pixels perpendicular to the slice. Must be an odd positive integer or valid quantity. See help for details.</shortdescription><description>Width of slice for averaging pixels perpendicular to the slice. Must be an odd positive integer or valid quantity. See help for details.</description>
+            <type>string</type><type>int</type><type>record</type>
             
             <value type="int">1</value>
         </param>
-        <param name="unit" type="string"><shortdescription>Unit for the offset axis in the resulting image. Must be a unit of angular measure.</shortdescription><description>Unit for the offset axis in the resulting image. Must be a unit of angular measure.</description>
+        <param type="string" name="unit"><shortdescription>Unit for the offset axis in the resulting image. Must be a unit of angular measure.</shortdescription><description>Unit for the offset axis in the resulting image. Must be a unit of angular measure.</description>
             
             <value>arcsec</value>
         </param>
-        <param subparam="true" name="overwrite" type="bool"><shortdescription>Overwrite the output if it exists?</shortdescription><description>Overwrite the output if it exists?</description>
+        <param type="bool" name="overwrite" subparam="true"><shortdescription>Overwrite the output if it exists?</shortdescription><description>Overwrite the output if it exists?</description>
             
             <value>False</value>
         </param>
-        <param subparam="true" name="region" type="any"><shortdescription>Region selection. Default is entire image. No selection is permitted in the direction plane.</shortdescription><description>Region selection. Default is entire image. No selection is permitted in the direction plane.</description>
-            <any limittypes="string record" type="variant"/>
+        <param type="any" name="region" subparam="true"><shortdescription>Region selection. Default is entire image. No selection is permitted in the direction plane.</shortdescription><description>Region selection. Default is entire image. No selection is permitted in the direction plane.</description>
+            <type>string</type><type>record</type>
             
             <value>&quot;&quot;</value>
         </param>
-        <param name="chans" type="string"><shortdescription>Channels to use.  Channels must be contiguous. Default is to use all channels.</shortdescription><description>Channels to use.  Channels must be contiguous. Default is to use all channels.</description>
+        <param type="string" name="chans"><shortdescription>Channels to use.  Channels must be contiguous. Default is to use all channels.</shortdescription><description>Channels to use.  Channels must be contiguous. Default is to use all channels.</description>
             
             <value/>
         </param>
-        <param name="stokes" type="string"><shortdescription>Stokes planes to use. Planes must be contiguous. Default is to use all stokes.</shortdescription><description>Stokes planes to use. Planes must be contiguous. Default is to use all stokes.</description>
+        <param type="string" name="stokes"><shortdescription>Stokes planes to use. Planes must be contiguous. Default is to use all stokes.</shortdescription><description>Stokes planes to use. Planes must be contiguous. Default is to use all stokes.</description>
             
             <value/>
         </param>
-        <param name="mask" type="string"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
+        <param type="string" name="mask"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
             <any type="variant"/>
             
             <value type="string"/>
         </param>
-        <param subparam="true" name="stretch" type="bool"><shortdescription>Stretch the mask if necessary and possible? Default False</shortdescription><description>Stretch the mask if necessary and possible? Default False</description>
+        <param type="bool" name="stretch" subparam="true"><shortdescription>Stretch the mask if necessary and possible? Default False</shortdescription><description>Stretch the mask if necessary and possible? Default False</description>
             
             <value>False</value>
         </param>
         <constraints>
             <when param="outfile">
-                <notequals value="" type="string">
+                <notequals type="string" value="">
                     <default param="overwrite">
                         <value>False</value>
                     </default>
                 </notequals>
             </when>
             <when param="mask">
-                <notequals value="" type="string">
+                <notequals type="string" value="">
                     <default param="stretch">
                         <value>False</value>
                     </default>
                 </notequals>
             </when>
             <when param="chans">
-                <equals value="" type="string">
+                <equals type="string" value="">
                     <default param="region">
                         <value>&quot;&quot;</value>
                     </default>
                 </equals>
             </when>
             <when param="mode">
-                <equals value="coords" type="string">
+                <equals type="string" value="coords">
                     <default param="start">
                         <value>&quot;&quot;</value>
                     </default>
@@ -114,7 +114,7 @@
                         <value>&quot;&quot;</value>
                     </default>
                 </equals>
-                <equals value="length" type="string">
+                <equals type="string" value="length">
                     <default param="center">
                         <value>&quot;&quot;</value>
                     </default>

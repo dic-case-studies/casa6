@@ -1,34 +1,34 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="analysis, information" name="imval" type="function">
+<task type="function" name="imval" category="analysis, information">
 
 <shortdescription>Get the data value(s) and/or mask value in an image.</shortdescription>
 
 
 <input>
-    <param mustexist="true" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+    <param type="path" name="imagename" mustexist="true"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
       
       <value/>
         <example>imagename='ngc5921_task.image'</example>
     </param>
 
-    <param name="region" type="any"><shortdescription>Region selection. Empty string (default) means use rules for box/chans/stokes specification.</shortdescription><description>Region selection. Empty string (default) means use rules for box/chans/stokes specification.</description>
+    <param type="any" name="region"><shortdescription>Region selection. Empty string (default) means use rules for box/chans/stokes specification.</shortdescription><description>Region selection. Empty string (default) means use rules for box/chans/stokes specification.</description>
         
-  <any limittype="string stringArray" type="variant"/>
+  <any type="variant" limittype="string stringArray"/>
         <value type="string"/>
     </param>
 
-    <param name="box" type="string"><shortdescription>Rectangular region(s) to select in direction plane. Empty string (default) means use the reference pixel.</shortdescription><description>Rectangular region(s) to select in direction plane. Empty string (default) means use the reference pixel.</description>
+    <param type="string" name="box"><shortdescription>Rectangular region(s) to select in direction plane. Empty string (default) means use the reference pixel.</shortdescription><description>Rectangular region(s) to select in direction plane. Empty string (default) means use the reference pixel.</description>
         
         <value/>
     </param>
 
-    <param name="chans" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+    <param type="string" name="chans"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
   
       <value/>
     </param>
 
-    <param name="stokes" type="string"><shortdescription>Stokes planes to use. Planes specified must be contiguous. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Planes specified must be contiguous. Default is to use all Stokes planes.</description>
+    <param type="string" name="stokes"><shortdescription>Stokes planes to use. Planes specified must be contiguous. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Planes specified must be contiguous. Default is to use all Stokes planes.</description>
       
       <value/>
       <example>stokes=&quot;IQ&quot;</example>
@@ -37,44 +37,44 @@
     <constraints>
     </constraints>
 </input>
-    <output>
-      <param name="blc" type="any"><shortdescription>Bottom-left corner of the bounding box that encloses the region being examined..</shortdescription><description>Bottom-left corner of the bounding box that encloses the region being examined..</description>
+    <bogus_output>
+      <param type="any" name="blc"><shortdescription>Bottom-left corner of the bounding box that encloses the region being examined..</shortdescription><description>Bottom-left corner of the bounding box that encloses the region being examined..</description>
       
   <any type="variant"/>
   <value>{}</value>
       </param>
 
-      <param name="trc" type="any"><shortdescription>top-right corner of the bounding box that encloses the region being examined.</shortdescription><description>top-right corner of the bounding box that encloses the region being examined.</description>
+      <param type="any" name="trc"><shortdescription>top-right corner of the bounding box that encloses the region being examined.</shortdescription><description>top-right corner of the bounding box that encloses the region being examined.</description>
       
   <any type="variant"/>
   <value>{}</value>
       </param>
 
-     <param name="axes" type="any"><shortdescription>A listing of the axis index numbers and the data stored along that axis.</shortdescription><description>A listing of the axis index numbers and the data stored along that axis.</description>
+     <param type="any" name="axes"><shortdescription>A listing of the axis index numbers and the data stored along that axis.</shortdescription><description>A listing of the axis index numbers and the data stored along that axis.</description>
       
   <any type="variant"/>
   <value>{}</value>
       </param>
 
 
-      <param name="unit" type="any"><shortdescription>The units the data values are stored and displayed in.</shortdescription><description>The units the data values are stored and displayed in.</description>
+      <param type="any" name="unit"><shortdescription>The units the data values are stored and displayed in.</shortdescription><description>The units the data values are stored and displayed in.</description>
       
   <any type="variant"/>
   <value>{}</value>
       </param>
 
-      <param name="data" type="any"><shortdescription>The pixel values found at the given point(s).</shortdescription><description>The pixel values found at the given point(s).</description>
+      <param type="any" name="data"><shortdescription>The pixel values found at the given point(s).</shortdescription><description>The pixel values found at the given point(s).</description>
       
   <any type="variant"/>
   <value>{}</value>
       </param>
 
-      <param name="mask" type="any"><shortdescription>The mask values found at the given point(s).</shortdescription><description>The mask values found at the given point(s).</description>
+      <param type="any" name="mask"><shortdescription>The mask values found at the given point(s).</shortdescription><description>The mask values found at the given point(s).</description>
       
   <any type="variant"/>
   <value>{}</value>
       </param>
-    </output>
+    </bogus_output>
 <returns type="void"/>
 
 

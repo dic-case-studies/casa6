@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="concat" category="manipulation">
+<task category="manipulation" name="concat" type="function">
 <shortdescription>Concatenate several visibility data sets.</shortdescription>
 <description>
 The list of data sets given in the vis argument are chronologically
@@ -34,7 +29,7 @@ entries in the observation table are indeed different).
 
 
 <input>
-  <param type="stringArray" name="vis" mustexist="true">
+  <param mustexist="true" name="vis" type="pathVec">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      default: none
@@ -42,10 +37,10 @@ entries in the observation table are indeed different).
                         Example:
                         vis='['src2.ms','ngc5921.ms','ngc315.ms']
 </description>
-                <value></value>
+                <value/>
         </param>
 
-  <param type="string" name="concatvis">
+  <param name="concatvis" type="string">
 <shortdescription>Name of output visibility file</shortdescription>
 <description>Name of visibility file that will contain the
 concatenated data
@@ -58,10 +53,10 @@ concatenated data
                      file contains the concatenated data. Be careful
                      here when concatenating to an existing file.
 </description>
-    <value></value>
+    <value/>
   </param>
   
-  <param type="any" name="freqtol" >
+  <param name="freqtol" type="any">
 <shortdescription>Frequency shift tolerance for considering data as the same spwid</shortdescription>
 <description>Frequency shift tolerance for considering data as the
 same spwid. The number of channels must also be the same.
@@ -75,10 +70,10 @@ same spwid. The number of channels must also be the same.
                     caused by Doppler tracking, for example.
 </description>
     <any type="variant"/>
-    <value type="string"></value>
+    <value type="string"/>
   </param>
 
-  <param type="any" name="dirtol">
+  <param name="dirtol" type="any">
 <shortdescription>Direction shift tolerance for considering data as the same field</shortdescription>
 <description>Direction shift tolerance for considering data as the
 same field
@@ -93,10 +88,10 @@ same field
                      will be the first relevant data set in the list.
 </description>
     <any type="variant"/>
-    <value type="string"></value>
+    <value type="string"/>
   </param>
 
-  <param type="bool" name="respectname" >
+  <param name="respectname" type="bool">
 <shortdescription>If true, fields with a different name are not merged even if their direction agrees</shortdescription>
 <description>If true, fields with a different name are not merged even
 if their direction agrees (within dirtol)
@@ -105,7 +100,7 @@ if their direction agrees (within dirtol)
     <value>False</value>
   </param>
 
-  <param type="bool" name="timesort" >
+  <param name="timesort" type="bool">
 <shortdescription>If true, sort by TIME in ascending order</shortdescription>
 <description>If true, sort by TIME in ascending order
                      Default: False (data in order as read in)
@@ -120,7 +115,7 @@ if their direction agrees (within dirtol)
     <value>False</value>
   </param>
 
-  <param type="bool" name="copypointing">
+  <param name="copypointing" type="bool">
 <shortdescription>Copy all rows of the POINTING table.</shortdescription>
 <description>Make a proper copy of the POINTING subtable 
                      Default:True (can be time consuming!)
@@ -130,7 +125,7 @@ if their direction agrees (within dirtol)
     <value>True</value>
   </param>
 
-  <param type="doubleArray" name="visweightscale">
+  <param name="visweightscale" type="doubleVec">
 <shortdescription>List of the weight scaling factors to be applied to the individual MSs</shortdescription>
 <description>List of the weight scaling factors to be applied to the
 individual MSs
@@ -140,7 +135,7 @@ individual MSs
                      in the concatenated output MS by the factors in
                      this list. SIGMA will be scaled by
                      1/sqrt(factor). Useful for handling heterogeneous
-                     arrays. Use plotms to inspect the "Wt" column as
+                     arrays. Use plotms to inspect the &quot;Wt&quot; column as
                      a reference for determining the scaling factors.
  
                         Example: [1.,3.,3.] - scale the weights of the
@@ -148,10 +143,10 @@ individual MSs
                         SIGMA column of these MS by a factor
                         1/sqrt(3).
 </description>
-    <value></value>
+    <value/>
   </param>
 
-  <param type="any" name="forcesingleephemfield">
+  <param name="forcesingleephemfield" type="any">
 <shortdescription>Make sure that there is only one joint ephemeris for every field in this list</shortdescription>
 <description>Make sure that there is only one joint ephemeris for every field in this list
                      Default: '' (standard treatment of all ephemeris
@@ -174,7 +169,7 @@ individual MSs
                      the output MS
 </description>
     <any type="variant"/>
-    <value type="string"></value>
+    <value type="string"/>
   </param>
 
 </input>
@@ -188,5 +183,5 @@ https://casa.nrao.edu/casadocs/
 </example>
 
 
-</task>
+<returns>void</returns></task>
 </casaxml>

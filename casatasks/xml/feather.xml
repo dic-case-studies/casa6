@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="feather" category="imaging">
+<task category="imaging" name="feather" type="function">
     <shortdescription>Combine two images using their Fourier transforms</shortdescription>
     <description>
 This task can be used as one method of combining single-dish and
@@ -18,34 +13,34 @@ feathering to work well.  The two images must have the same flux
 density normalization scale.
 </description>
     <input>
-        <param type="string" name="imagename">
+        <param name="imagename" type="string">
 <shortdescription>Name of output feathered image</shortdescription>  
 <description>Name of output feathered image
                           Default: none
 
                              Example: imagename='orion_combined.im'
 </description>
-            <value></value>
+            <value/>
         </param>
-        <param type="string" name="highres" mustexist="true">
+        <param mustexist="true" name="highres" type="path">
 <shortdescription>Name of high resolution (interferometer) image</shortdescription>  
 <description>Name of high resolution (interferometer) image
                           Default: none
 
                              Example: imagename='orion_vla.im'
 </description>
-            <value></value>
+            <value/>
         </param>
-        <param type="string" name="lowres" mustexist="true">
+        <param mustexist="true" name="lowres" type="path">
 <shortdescription>Name of low resolution (single dish) image</shortdescription>  
 <description>Name of low resolution (single dish) image
                           Default: none
 
                              Example: imagename='orion_gbt.im'
 </description>
-            <value></value>
+            <value/>
         </param>
-        <param type="double" name="sdfactor">
+        <param name="sdfactor" type="double">
 <shortdescription>Scale factor to apply to Single Dish image</shortdescription>  
 <description>Value by which to scale the Single Dish image.
                           Default: 1.0
@@ -54,7 +49,7 @@ density normalization scale.
 </description>
             <value>1.0</value>
         </param>
-        <param type="double" name="effdishdiam">
+        <param name="effdishdiam" type="double">
 <shortdescription>New effective SingleDish diameter to use in m</shortdescription>  
 <description>New effective SingleDish diameter to use in m 
                           Default: -1.0 (leave as is)
@@ -64,7 +59,7 @@ density normalization scale.
 </description>
             <value>-1.0</value>
         </param>
-        <param type="bool" name="lowpassfiltersd">
+        <param name="lowpassfiltersd" type="bool">
 <shortdescription>Filter out the high spatial frequencies of the SD image</shortdescription>  
 <description>Filter out the high spatial frequencies of the SD image
                           Default: False
@@ -87,5 +82,5 @@ For more information, see the task pages of feather in CASA Docs:
 https://casa.nrao.edu/casadocs/
 
 </example>
-</task>
+<returns>void</returns></task>
 </casaxml>

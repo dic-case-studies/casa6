@@ -1,155 +1,155 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
 
-<task category="analysis" name="imfit" type="function">
+<task type="function" name="imfit" category="analysis">
 
 <shortdescription>Fit one or more elliptical Gaussian components on an image region(s)</shortdescription>
 
 <input>
-    <param mustexist="true" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+    <param type="path" name="imagename" mustexist="true"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
         
         <value/>
         <example>imagename='ngc5921.im'</example>
     </param>
-    <param name="box" type="string"><shortdescription>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</description>
+    <param type="string" name="box"><shortdescription>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</description>
         
         <value/>
         <example>box='100,120,200,200'</example>
     </param>
-    <param name="region" type="any"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+    <param type="any" name="region"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
         
-        <any limittype="string stringArray record" type="variant"/>
+        <any type="variant" limittype="string stringArray record"/>
         <value type="string"/>
         <example>region='myregion'</example>
     </param>
-    <param name="chans" type="any"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+    <param type="any" name="chans"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
         
-        <any limittype="string int" type="variant"/>
+        <any type="variant" limittype="string int"/>
         <value type="string"/>
     </param>
-    <param name="stokes" type="string"><shortdescription>Stokes planes to use. Default is to use first Stokes plane.</shortdescription><description>Stokes planes to use. Default is to use first Stokes plane.</description>
+    <param type="string" name="stokes"><shortdescription>Stokes planes to use. Default is to use first Stokes plane.</shortdescription><description>Stokes planes to use. Default is to use first Stokes plane.</description>
         
         <value/>
         <example>stokes='Q'</example>
     </param>
     
-   <param name="mask" type="string"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
+   <param type="string" name="mask"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
         
         <value/>
     </param>
 
-   <param name="includepix" type="intArray"><shortdescription>Range of pixel values to include for fitting.</shortdescription><description>Range of pixel values to include for fitting.</description>
+   <param type="intVec" name="includepix"><shortdescription>Range of pixel values to include for fitting.</shortdescription><description>Range of pixel values to include for fitting.</description>
         
         <value/>
         <example>includepix=[0.5,500]</example>
     </param>
     
-    <param name="excludepix" type="intArray"><shortdescription>Range of pixel values to exclude for fitting.</shortdescription><description>Range of pixel values to exclude for fitting.</description>
+    <param type="intVec" name="excludepix"><shortdescription>Range of pixel values to exclude for fitting.</shortdescription><description>Range of pixel values to exclude for fitting.</description>
         
         <value/>
         <example>excludepix=[-500,.05]</example>
     </param>
     
-    <param name="residual" type="string"><shortdescription>Name of output residual image.</shortdescription><description>Name of output residual image.</description>
+    <param type="string" name="residual"><shortdescription>Name of output residual image.</shortdescription><description>Name of output residual image.</description>
         
         <value/>
         <example>residual='ngc5921_fit_resid.im'</example>
     </param>
     
-    <param name="model" type="string"><shortdescription>Name of output model image.</shortdescription><description>Name of output model image.</description>
+    <param type="string" name="model"><shortdescription>Name of output model image.</shortdescription><description>Name of output model image.</description>
         
         <value/>
         <example>model='ngc5921_fit_model.im'</example>
     </param>
     
-    <param name="estimates" type="string"><shortdescription>Name of file containing initial estimates of component parameters.</shortdescription><description>Name of file containing initial estimates of component parameters.</description>
+    <param type="string" name="estimates"><shortdescription>Name of file containing initial estimates of component parameters.</shortdescription><description>Name of file containing initial estimates of component parameters.</description>
         
         <value/>
         <example>estimates='ngc5921_fit_estimates.txt'</example>
     </param>
     
-    <param name="logfile" type="string"><shortdescription>Name of file to write fit results.</shortdescription><description>Name of file to write fit results.</description>
+    <param type="string" name="logfile"><shortdescription>Name of file to write fit results.</shortdescription><description>Name of file to write fit results.</description>
         
         <value/>
         <example>logfile=&quot;myimfitlog.txt&quot;</example>
     </param>
 
-    <param subparam="true" name="append" type="bool"><shortdescription>If logfile exists, append to it if True or overwrite it if False</shortdescription><description>If logfile exists, append to it if True or overwrite it if False</description> 
+    <param type="bool" name="append" subparam="true"><shortdescription>If logfile exists, append to it if True or overwrite it if False</shortdescription><description>If logfile exists, append to it if True or overwrite it if False</description> 
         
         <value>True</value>
         <example>append=True</example>
     </param> 
 
-    <param name="newestimates" type="string"><shortdescription>File to write fit results which can be used as initial estimates for next run.</shortdescription><description>File to write fit results which can be used as initial estimates for next run.</description>
+    <param type="string" name="newestimates"><shortdescription>File to write fit results which can be used as initial estimates for next run.</shortdescription><description>File to write fit results which can be used as initial estimates for next run.</description>
         
         <value/>
         <example>newestimates=&quot;myestimates.txt&quot;</example>
     </param>
-    <param name="complist" type="string"><shortdescription>Name of output component list table.</shortdescription><description>Name of output component list table.</description>
+    <param type="string" name="complist"><shortdescription>Name of output component list table.</shortdescription><description>Name of output component list table.</description>
         
         <value/>
         <example>complist='myoutputcomplist.tbl'</example>
     </param>
-    <param subparam="true" name="overwrite" type="bool"><shortdescription>Overwrite component list table if it exists?</shortdescription><description>Overwrite component list table if it exists?</description>
+    <param type="bool" name="overwrite" subparam="true"><shortdescription>Overwrite component list table if it exists?</shortdescription><description>Overwrite component list table if it exists?</description>
         
         <value>False</value>
         <example>overwrite=true</example>
     </param>
-    <param name="dooff" direction="in" type="bool"><shortdescription>Also fit a zero level offset? Default is False</shortdescription><description>Also fit a zero level offset? Default is False</description>
+    <param type="bool" direction="in" name="dooff"><shortdescription>Also fit a zero level offset? Default is False</shortdescription><description>Also fit a zero level offset? Default is False</description>
         
         <value>False</value>
     </param>
-    <param subparam="true" name="offset" direction="in" type="double"><shortdescription>Initial estimate of zero-level offset. Only used if doff is True. Default is 0.0</shortdescription><description>Initial estimate of zero-level offset. Only used if doff is True. Default is 0.0</description>
+    <param type="double" direction="in" name="offset" subparam="true"><shortdescription>Initial estimate of zero-level offset. Only used if doff is True. Default is 0.0</shortdescription><description>Initial estimate of zero-level offset. Only used if doff is True. Default is 0.0</description>
         
         <value>0.0</value>
     </param>
-    <param subparam="true" name="fixoffset" direction="in" type="bool"><shortdescription>Keep the zero level offset fixed during fit? Default is False </shortdescription><description>Keep the zero level offset fixed during fit? Default is False </description>
+    <param type="bool" direction="in" name="fixoffset" subparam="true"><shortdescription>Keep the zero level offset fixed during fit? Default is False </shortdescription><description>Keep the zero level offset fixed during fit? Default is False </description>
         
         <value>False</value>
     </param>
-    <param subparam="true" name="stretch" direction="in" type="bool"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
+    <param type="bool" direction="in" name="stretch" subparam="true"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
         
         <value>False</value>
     </param>
-    <param name="rms" type="any"><shortdescription>RMS to use in calculation of uncertainties. Numeric or valid quantity (record or string). If numeric, it is given units of the input image. If quantity, units must conform to image units. If not positive, the rms of the residual image, in the region of the fit, is used.</shortdescription><description>RMS to use in calculation of uncertainties. Numeric or valid quantity (record or string). If numeric, it is given units of the input image. If quantity, units must conform to image units. If not positive, the rms of the residual image, in the region of the fit, is used.</description>
-        <any limittypes="int double record string" type="variant"/>
+    <param type="any" name="rms"><shortdescription>RMS to use in calculation of uncertainties. Numeric or valid quantity (record or string). If numeric, it is given units of the input image. If quantity, units must conform to image units. If not positive, the rms of the residual image, in the region of the fit, is used.</shortdescription><description>RMS to use in calculation of uncertainties. Numeric or valid quantity (record or string). If numeric, it is given units of the input image. If quantity, units must conform to image units. If not positive, the rms of the residual image, in the region of the fit, is used.</description>
+        <type>int</type><type>double</type><type>record</type><type>string</type>
         
         <value>-1</value>
     </param>
-    <param name="noisefwhm" type="any"><shortdescription>Noise correlation beam FWHM. If numeric value, interpreted as pixel widths. If quantity (dictionary, string), it must have angular units.</shortdescription><description>Noise correlation beam FWHM. If numeric value, interpreted as pixel widths. If quantity (dictionary, string), it must have angular units.</description>
-        <any limittypes="int double record string" type="variant"/>
+    <param type="any" name="noisefwhm"><shortdescription>Noise correlation beam FWHM. If numeric value, interpreted as pixel widths. If quantity (dictionary, string), it must have angular units.</shortdescription><description>Noise correlation beam FWHM. If numeric value, interpreted as pixel widths. If quantity (dictionary, string), it must have angular units.</description>
+        <type>int</type><type>double</type><type>record</type><type>string</type>
         
         <value type="string"/>
     </param>
-    <param name="summary" type="string"><shortdescription>File name to which to write table of fit parameters.</shortdescription><description>File name to which to write table of fit parameters.</description>
+    <param type="string" name="summary"><shortdescription>File name to which to write table of fit parameters.</shortdescription><description>File name to which to write table of fit parameters.</description>
         
         <value/>
     </param>
     <constraints>
         <when param="mask">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="stretch"><value type="bool">False</value></default>
             </notequals>
         </when>
         <when param="logfile">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="append">
                     <value>True</value>
                 </default>
             </notequals>
         </when>
         <when param="complist">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="overwrite">
                     <value>False</value>
                 </default>
             </notequals>
         </when>
         <when param="dooff">
-            <notequals value="False" type="bool">
+            <notequals type="bool" value="False">
                 <default param="offset">
                     <value>0.0</value>
                 </default>

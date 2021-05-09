@@ -1,63 +1,58 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="uvcontsub3" category="manipulation" visibility="experimental">
+<task visibility="experimental" category="manipulation" name="uvcontsub3" type="function">
 <shortdescription>An experimental clone of uvcontsub</shortdescription>
 <description>
-<!-- description is a decoy!  Use the example tag for now. -->
+
 </description>
 <input>
-        <param type="string" name="vis" mustexist="true">
-                <description>Name of input MS.  Output goes to vis + ".contsub"</description>
-                <value></value>
+        <param mustexist="true" name="vis" type="path">
+                <description>Name of input MS.  Output goes to vis + &quot;.contsub&quot;</description>
+                <value/>
         </param>
 
-        <param type="string" name="fitspw">
+        <param name="fitspw" type="string">
                 <description>Spectral window:channel selection for fitting the continuum</description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="string" name="combine">
+        <param name="combine" type="string">
                 <description>Data axes to combine for the continuum estimation (none ('') or spw)</description>
-                <value></value>
+                <value/>
         </param>
 
-        <param type="int" name="fitorder">
+        <param name="fitorder" type="int">
                 <description>Polynomial order for the fits</description>
                 <value>0</value>
         </param>
 
-        <param type="any" name="field">
+        <param name="field" type="any">
                 <description>Select field(s) using id(s) or name(s)</description>
-                <any type="variant" limittypes="string stringArray int intArray"/>
-                <value type="string"></value>
+                <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
+                <value type="string"/>
         </param>
 
-        <param type="string" name="spw">
+        <param name="spw" type="string">
                 <description>Spectral window selection for output</description>
-                <value></value>
+                <value/>
         </param>
-        <param type="string" name="scan" >
+        <param name="scan" type="string">
                 <description>Select data by scan numbers</description>
-                <value></value>
+                <value/>
         </param>
-        <param type="string" name="intent" >
+        <param name="intent" type="string">
                 <description>Select data by scan intents</description>
-                <value></value>
+                <value/>
         </param>
-        <param type="any" name="correlation">
+        <param name="correlation" type="any">
                 <description>Select correlations</description>
-                <any type="variant" limittypes="string stringArray"/>
-                <value type="string"></value>
+                <type>string</type><type>stringVec</type>
+                <value type="string"/>
         </param>
-        <param type="any" name="observation">
+        <param name="observation" type="any">
                 <description>Select by observation ID(s)</description>
-                <any type="variant" limittypes="string int"/>
-                <value type="string"></value>
+                <type>string</type><type>int</type>
+                <value type="string"/>
         </param>
 </input>
 <example>
@@ -74,7 +69,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
         
         The fitted continuum spectrum is subtracted from all channels 
         selected in spw, and the result (presumably only line emission)
-        is stored in a <em>new</em> MS (vis + ".contsub").
+        is stored in a <em>new</em> MS (vis + &quot;.contsub&quot;).
         It will read from the CORRECTED_DATA column of vis if it is present,
         or DATA if it is not.  Whichever column is read is presumed to have
         already been calibrated.
@@ -141,5 +136,5 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                        default: '' = all
 
 </example> 
-</task>
+<returns>void</returns></task>
 </casaxml>

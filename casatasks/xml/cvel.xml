@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="manipulation" name="cvel" type="function">
+<task type="function" name="cvel" category="manipulation">
      <shortdescription>regrid an MS to a new spectral window / channel structure or frame</shortdescription>
 
 <description>
@@ -29,59 +29,59 @@ Hanning smoothing may not be necessary.
 </description>
 
 <input>
-        <param mustexist="true" name="vis" type="string"><shortdescription>Name of input measurement set</shortdescription><description>Name of input measurement set</description>
+        <param type="path" name="vis" mustexist="true"><shortdescription>Name of input measurement set</shortdescription><description>Name of input measurement set</description>
              
              <value/>
         </param>
 
-        <param name="outputvis" type="string"><shortdescription>Name of output measurement set</shortdescription><description>Name of output measurement set</description>
+        <param type="string" name="outputvis"><shortdescription>Name of output measurement set</shortdescription><description>Name of output measurement set</description>
              
              <value/>
         </param>
 
-        <param name="passall" type="bool"><shortdescription>Pass through (write to output MS) non-selected data with no change</shortdescription><description>Pass through (write to output MS) non-selected data with no change</description>
+        <param type="bool" name="passall"><shortdescription>Pass through (write to output MS) non-selected data with no change</shortdescription><description>Pass through (write to output MS) non-selected data with no change</description>
              
              <value>False</value>
         </param>
 
-        <param name="field" type="any"><shortdescription>Select field using field id(s) or field name(s)</shortdescription><description>Select field using field id(s) or field name(s)</description>
+        <param type="any" name="field"><shortdescription>Select field using field id(s) or field name(s)</shortdescription><description>Select field using field id(s) or field name(s)</description>
              
-             <any limittypes="string stringArray int intArray" type="variant"/>
+             <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
              <value type="string"/>
         </param>
 
-        <param name="spw" type="any"><shortdescription>Select spectral window/channels</shortdescription><description>Select spectral window/channels</description>
+        <param type="any" name="spw"><shortdescription>Select spectral window/channels</shortdescription><description>Select spectral window/channels</description>
              
-             <any limittypes="string stringArray int intArray" type="variant"/>
+             <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
              <value type="string"/>
         </param>
 
-        <param name="selectdata" type="bool"><shortdescription>Other data selection parameters</shortdescription><description>Other data selection parameters</description>
+        <param type="bool" name="selectdata"><shortdescription>Other data selection parameters</shortdescription><description>Other data selection parameters</description>
             
             <value>True</value>
         </param>
 
-        <param subparam="true" name="antenna" type="string"><shortdescription>Select data based on antenna/baseline</shortdescription><description>Select data based on antenna/baseline</description>
+        <param type="string" name="antenna" subparam="true"><shortdescription>Select data based on antenna/baseline</shortdescription><description>Select data based on antenna/baseline</description>
              
              <value/>
         </param>
 
-        <param subparam="true" name="timerange" type="string"><shortdescription>Range of time to select from data</shortdescription><description>Range of time to select from data</description>
+        <param type="string" name="timerange" subparam="true"><shortdescription>Range of time to select from data</shortdescription><description>Range of time to select from data</description>
             
             <value/>
         </param>
 
-        <param subparam="true" name="scan" type="string"><shortdescription>scan number range</shortdescription><description>scan number range</description>
+        <param type="string" name="scan" subparam="true"><shortdescription>scan number range</shortdescription><description>scan number range</description>
             
             <value/>
         </param>
 
-        <param subparam="true" name="array" type="string"><shortdescription>(sub)array indices</shortdescription><description>(sub)array indices</description>
+        <param type="string" name="array" subparam="true"><shortdescription>(sub)array indices</shortdescription><description>(sub)array indices</description>
             
             <value/>
         </param>
 
-        <param name="mode" type="string"><shortdescription> Regridding mode </shortdescription><description> Regridding mode </description>
+        <param type="string" name="mode"><shortdescription> Regridding mode </shortdescription><description> Regridding mode </description>
             
             <value>channel</value>
             <allowed kind="enum">
@@ -92,24 +92,24 @@ Hanning smoothing may not be necessary.
         </allowed>
         </param>
 
-        <param subparam="true" name="nchan" type="int"><shortdescription>Number of channels in output spw (-1=all). Used for regridding, together with \'start\' and \'width\'.</shortdescription><description>Number of channels in output spw (-1=all). Used for regridding, together with \'start\' and \'width\'.</description>
+        <param type="int" name="nchan" subparam="true"><shortdescription>Number of channels in output spw (-1=all). Used for regridding, together with \'start\' and \'width\'.</shortdescription><description>Number of channels in output spw (-1=all). Used for regridding, together with \'start\' and \'width\'.</description>
             
             <value>-1</value>
         </param>
 
-        <param subparam="true" name="start" type="any"><shortdescription>Start of the output visibilities. Used for regridding, together with \'width\' and \'nchan\'. It can be in different units, depending on the regridding mode: first input channel (mode=\'channel\'), first velocity (mode=\'velocity\'), or first frequency (mode=\'frequency\'). Example values: \'5\', \'0.0km/s\', \'1.4GHz\', for channel, velocity, and frequency modes, respectively.</shortdescription><description>Start of the output visibilities. Used for regridding, together with \'width\' and \'nchan\'. It can be in different units, depending on the regridding mode: first input channel (mode=\'channel\'), first velocity (mode=\'velocity\'), or first frequency (mode=\'frequency\'). Example values: \'5\', \'0.0km/s\', \'1.4GHz\', for channel, velocity, and frequency modes, respectively.</description>
+        <param type="any" name="start" subparam="true"><shortdescription>Start of the output visibilities. Used for regridding, together with \'width\' and \'nchan\'. It can be in different units, depending on the regridding mode: first input channel (mode=\'channel\'), first velocity (mode=\'velocity\'), or first frequency (mode=\'frequency\'). Example values: \'5\', \'0.0km/s\', \'1.4GHz\', for channel, velocity, and frequency modes, respectively.</shortdescription><description>Start of the output visibilities. Used for regridding, together with \'width\' and \'nchan\'. It can be in different units, depending on the regridding mode: first input channel (mode=\'channel\'), first velocity (mode=\'velocity\'), or first frequency (mode=\'frequency\'). Example values: \'5\', \'0.0km/s\', \'1.4GHz\', for channel, velocity, and frequency modes, respectively.</description>
             
             <any type="variant"/>
             <value type="int">0</value>
         </param>
 
-        <param subparam="true" name="width" type="any"><shortdescription>Channel width of the output visibilities. Used for regridding, together with \'start\', and \'nchan\'. It can be in different units, depending on the regridding mode: number of input channels (mode=\'channel\'), velocity (mode=\'velocity\'), or frequency (mode=\'frequency\'. Example values: \'2\', \'1.0km/s\', \'1.0kHz\', for channel, velocity, and frequency modes, respectively.</shortdescription><description>Channel width of the output visibilities. Used for regridding, together with \'start\', and \'nchan\'. It can be in different units, depending on the regridding mode: number of input channels (mode=\'channel\'), velocity (mode=\'velocity\'), or frequency (mode=\'frequency\'. Example values: \'2\', \'1.0km/s\', \'1.0kHz\', for channel, velocity, and frequency modes, respectively.</description>
+        <param type="any" name="width" subparam="true"><shortdescription>Channel width of the output visibilities. Used for regridding, together with \'start\', and \'nchan\'. It can be in different units, depending on the regridding mode: number of input channels (mode=\'channel\'), velocity (mode=\'velocity\'), or frequency (mode=\'frequency\'. Example values: \'2\', \'1.0km/s\', \'1.0kHz\', for channel, velocity, and frequency modes, respectively.</shortdescription><description>Channel width of the output visibilities. Used for regridding, together with \'start\', and \'nchan\'. It can be in different units, depending on the regridding mode: number of input channels (mode=\'channel\'), velocity (mode=\'velocity\'), or frequency (mode=\'frequency\'. Example values: \'2\', \'1.0km/s\', \'1.0kHz\', for channel, velocity, and frequency modes, respectively.</description>
             
             <any type="variant"/>
             <value type="int">1</value>
         </param>
 
-        <param ignorecase="True" subparam="true" name="interpolation" type="string"><shortdescription>Spectral interpolation method</shortdescription><description>Spectral interpolation method</description>
+        <param type="string" name="interpolation" subparam="true" ignorecase="True"><shortdescription>Spectral interpolation method</shortdescription><description>Spectral interpolation method</description>
             
             <value>linear</value>
             <allowed kind="enum">
@@ -121,21 +121,21 @@ Hanning smoothing may not be necessary.
             </allowed>
         </param>
 
-        <param name="phasecenter" type="any"><shortdescription>Phase center direction to be used for the spectral coordinate transformation: direction measure or field index</shortdescription><description>Phase center direction to be used for the spectral coordinate transformation: direction measure or field index</description>
+        <param type="any" name="phasecenter"><shortdescription>Phase center direction to be used for the spectral coordinate transformation: direction measure or field index</shortdescription><description>Phase center direction to be used for the spectral coordinate transformation: direction measure or field index</description>
             
             <any type="variant"/>
             <value type="string"/>
         </param>
 
-        <param name="restfreq" type="string"><shortdescription>rest frequency (see help)</shortdescription><description>rest frequency (see help)</description>
+        <param type="string" name="restfreq"><shortdescription>rest frequency (see help)</shortdescription><description>rest frequency (see help)</description>
             
             <value/>
         </param>
         
-        <param ignorecase="True" name="outframe" type="string"><shortdescription>Output frame (not case-sensitive, \'\'=keep input frame)</shortdescription><description>Output frame (not case-sensitive, \'\'=keep input frame)</description>
+        <param type="string" name="outframe" ignorecase="True"><shortdescription>Output frame (not case-sensitive, \'\'=keep input frame)</shortdescription><description>Output frame (not case-sensitive, \'\'=keep input frame)</description>
                 
                 <value/>
-                <allowed ignorecase="True" kind="enum">
+                <allowed kind="enum" ignorecase="True">
                         <value>topo</value>
                         <value>geo</value>
                         <value>lsrk</value>
@@ -149,7 +149,7 @@ Hanning smoothing may not be necessary.
                 </allowed>
         </param>
 
-        <param ignorecase="True" name="veltype" type="string"><shortdescription>velocity definition</shortdescription><description>velocity definition</description>
+        <param type="string" name="veltype" ignorecase="True"><shortdescription>velocity definition</shortdescription><description>velocity definition</description>
             
             <value>radio</value>
             <allowed kind="enum">
@@ -159,14 +159,14 @@ Hanning smoothing may not be necessary.
         </param>
 
 
-        <param name="hanning" type="bool"><shortdescription> If true, Hanning smooth data before regridding to remove Gibbs ringing.</shortdescription><description> If true, Hanning smooth data before regridding to remove Gibbs ringing.</description>
+        <param type="bool" name="hanning"><shortdescription> If true, Hanning smooth data before regridding to remove Gibbs ringing.</shortdescription><description> If true, Hanning smooth data before regridding to remove Gibbs ringing.</description>
             
             <value>False</value>
         </param>
 
     <constraints>
             <when param="selectdata">
-                <equals value="True" type="bool">
+                <equals type="bool" value="True">
                     <default param="timerange"><value type="string"/>
                     </default>
                     <default param="array"><value type="string"/>
@@ -176,7 +176,7 @@ Hanning smoothing may not be necessary.
                     <default param="scan"><value type="string"/>
                     </default>
                 </equals>
-                <equals value="False" type="bool"/>
+                <equals type="bool" value="False"/>
             </when>
             <when param="mode">
                 <equals value="channel">

@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-    file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd     file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-    <task type="function" name="importvla" category="import/export">
+    <task category="import/export" name="importvla" type="function">
 importvla(archivefiles=None,vis=None,
               bandname=None,frequencytol=None,
               project=None,
@@ -21,7 +16,7 @@ The task will handle old style and new style VLA (after July 2007)
 archive data and apply the tsys to the data and to the weights.
 </description>
    <input>
-       <param type="stringArray" name="archivefiles" mustexist="true">
+       <param mustexist="true" name="archivefiles" type="pathVec">
 <shortdescription>Name of input VLA archive file(s)</shortdescription>
 <description>Name of input VLA archive file(s)
                      Default: none.  Must be supplied
@@ -31,10 +26,10 @@ archive data and apply the tsys to the data and to the weights.
                         archivefiles=['AP314_A950519.xp1',
                         'AP314_A950519.xp2']
 </description>
-           <value></value>
+           <value/>
        </param>
 
-       <param type="string" name="vis">
+       <param name="vis" type="string">
 <shortdescription>Name of output visibility file</shortdescription>
 <description>Name of output visibility file
                      Default: none.  Must be supplied
@@ -46,10 +41,10 @@ archive data and apply the tsys to the data and to the weights.
                      be made in vis.flagversions.  See help
                      flagmanager.
  </description>
-           <value></value>
+           <value/>
        </param>
 
-       <param type="string" name="bandname">
+       <param name="bandname" type="string">
 <shortdescription>VLA frequency band name:\'\'=&gt;obtain all bands in the archive file</shortdescription>
 <description>VLA frequency band name:
                      Default: '' (obtain all bands in the archive
@@ -61,7 +56,7 @@ archive data and apply the tsys to the data and to the weights.
 
                         Example: bandname='K'
 </description>
-           <value></value>
+           <value/>
            <allowed kind="enum">
                <value>4</value>
                <value>P</value>
@@ -73,11 +68,11 @@ archive data and apply the tsys to the data and to the weights.
                <value>K</value>
                <value>Ka</value>
                <value>Q</value>
-               <value></value>
+               <value/>
            </allowed>
        </param>
 
-       <param type="any" name="frequencytol">
+       <param name="frequencytol" type="any">
 <shortdescription>Frequency shift to define a unique spectra window (Hz)</shortdescription>
 <description>Tolerance in frequency shift in making spectral windows
                      Default: = 150000.0Hz'
@@ -91,7 +86,7 @@ archive data and apply the tsys to the data and to the weights.
            <value type="string">150000.0Hz</value>
        </param>
 
-       <param type="string" name="project">
+       <param name="project" type="string">
 <shortdescription>Project name: \'\' =&gt; all projects in files</shortdescription>
 <description>Project name to import from archive files
                      Default: '' (all projects in file)
@@ -102,10 +97,10 @@ archive data and apply the tsys to the data and to the weights.
                      WARNING: Do not include leading zeros; project =
                      'AL0519' will not work.
 </description>
-           <value></value>
+           <value/>
        </param>
 
-       <param type="string" name="starttime">
+       <param name="starttime" type="string">
 <shortdescription>Start time to search for data</shortdescription>
 <description>Time after which data will be considered for importing
                      Default: '' (all)
@@ -113,10 +108,10 @@ archive data and apply the tsys to the data and to the weights.
                      syntax: starttime = '2003/1/31/05:05:23'. Date
                      must be included!
 </description>
-           <value></value>
+           <value/>
        </param>
 
-       <param type="string" name="stoptime">
+       <param name="stoptime" type="string">
 <shortdescription>End time to search for data</shortdescription>
 <description>Time before which data will be considered for
 importing
@@ -125,10 +120,10 @@ importing
                      syntax: starttime = '2003/1/31/08:05:23'. Date
                      must be included!
 </description>
-           <value></value>
+           <value/>
        </param>
 
-       <param type="bool" name="applytsys">
+       <param name="applytsys" type="bool">
 <shortdescription>Apply nominal sensitivity scaling to data and weights</shortdescription>
 <description>Apply data scaling and weight scaling by nominal
 sensitivity (~Tsys)
@@ -138,7 +133,7 @@ sensitivity (~Tsys)
            <value>True</value>
        </param>
 
-       <param type="bool" name="autocorr" >
+       <param name="autocorr" type="bool">
 <shortdescription>Import autocorrelations to MS, if set to True</shortdescription>
 <description>Import autocorrelations to MS
                      Default: False (no autocorrelations)
@@ -148,7 +143,7 @@ sensitivity (~Tsys)
        </param>
 
 
-       <param type="string" name="antnamescheme" >
+       <param name="antnamescheme" type="string">
 <shortdescription>\'old\' or \'new\'; \'VA04\' or \'04\' for VLA ant 4</shortdescription>
 <description>'old' or 'new' antenna names.
                      Default: 'new'
@@ -165,7 +160,7 @@ sensitivity (~Tsys)
            </allowed>
        </param>
 
-       <param type="bool" name="keepblanks" >
+       <param name="keepblanks" type="bool">
 <shortdescription>Fill scans with blank (empty) source names (e.g. tipping scans)</shortdescription>
 <description>Should sources with blank names be filled into the data
 base?
@@ -179,7 +174,7 @@ base?
            <value>False</value>
        </param>
 
-       <param type="bool" name="evlabands" >
+       <param name="evlabands" type="bool">
 <shortdescription>Use updated eVLA frequencies and bandwidths for bands and wavelengths</shortdescription>
 <description>Use the EVLA's center frequency and bandwidths for
 frequencies specified via wavelength or band.
@@ -193,5 +188,5 @@ frequencies specified via wavelength or band.
 FOR MORE INFORMATION, SEE THE TASK PAGES OF IMPORTVLA IN CASA DOCS:
 https://casa.nrao.edu/casadocs/
    </example>
-</task>
+<returns>void</returns></task>
 </casaxml>

@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-    file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd     file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-    <task type="function" name="importatca" category="import/export">
+    <task category="import/export" name="importatca" type="function">
 importatca(files=None,vis=None,
               options=None,spw=None,
               nscans=None,
@@ -20,23 +15,23 @@ The task will handle both old ATCA and new CABB (after April 2009)
 archive data.
 </description>
    <input>
-       <param type="stringArray" name="files" mustexist="false">
+       <param mustexist="false" name="files" type="pathVec">
 <shortdescription>Name of input ATCA RPFits file(s)</shortdescription>
 <description>Name of input ATCA RPFits file(s)</description>
-           <value></value>
+           <value/>
        </param>
 
-       <param type="string" name="vis">
+       <param name="vis" type="string">
 <shortdescription>Name of output MeasurementSet</shortdescription>
 <description>Name of output MeasurementSet
                      Default: none
 
                         Example: vis='mydata.ms'
 </description>
-           <value></value>
+           <value/>
        </param>
 
-       <param type="string" name="options">
+       <param name="options" type="string">
 <shortdescription>Processing options: birdie, reweight, noxycorr, fastmosaic, hires, noac (comma separated list)</shortdescription>
 <description>Processing options
                      Default: none
@@ -63,10 +58,10 @@ archive data.
                        integration time (no bins)
                      * noac: discard the auto-correlation data
 </description>
-           <value></value>
+           <value/>
        </param>
 
-       <param type="intArray" name="spw">
+       <param name="spw" type="intVec">
 <shortdescription>Select spectral window/channels</shortdescription>
 <description>Select spectral window/channels
                      Default: '' (all spectral windows and channels)
@@ -82,26 +77,26 @@ archive data.
                         spw = '*:3~64'  channels 3 through 64 for all sp id's
                         spw = ' :3~64' will NOT work.
 </description>
-           <value>-1</value>
+           <value><value>-1</value></value>
        </param>
 
-       <param type="intArray" name="nscans">
+       <param name="nscans" type="intVec">
 <shortdescription>Number of scans to skip followed by number of scans to read</shortdescription>
 <description>Number of scans to skip followed by number of scans to
 read
                      Default: [0, 0]
 </description>
-<value>0,0</value>
+<value><value>0</value><value>0</value></value>
        </param>
 
-       <param type="double" name="lowfreq" units="GHz">
+       <param units="GHz" name="lowfreq" type="double">
 <shortdescription>Lowest reference frequency to select</shortdescription>
 <description>Lowest reference frequency to select
                      Default: 0.1GHz
 </description>
            <value>0.1</value>
        </param>
-       <param type="double" name="highfreq" units="GHz">
+       <param units="GHz" name="highfreq" type="double">
 <shortdescription>Highest reference frequency to select</shortdescription>
 <description>Highest reference frequency to select
                      Default: 999GHz
@@ -109,14 +104,14 @@ read
            <value>999</value>
        </param>
 
-       <param type="stringArray" name="fields">
+       <param name="fields" type="stringVec">
 <shortdescription>List of field names to select</shortdescription>
 <description>List of field names to select
 </description>
-           <value></value>
+           <value/>
        </param>
 
-      <param type="double" name="edge">
+      <param name="edge" type="double">
 <shortdescription>Percentage of edge channels to flag. For combined zooms, this specifies the percentage for a single zoom window</shortdescription>
 <description>The edge parameter specifies how many edge channels to
 discard as a percentage of the number of channels in each band.
@@ -129,16 +124,12 @@ discard as a percentage of the number of channels in each band.
            <value>8</value>
        </param>
 
-       <!-- opcor not implemented
-         <param type="int" name="opcor" >
-           <description>Apply interpolated opacity correction with opcor frequencies. Use 2 for linear interpolation, 0 to disable correction.</description>
-           <value>2</value>
-       </param> -->
+       
 
    </input>
    <example>
 FOR MORE INFORMATION, SEE THE TASK PAGES OF IMPORTATCA IN CASA DOCS:
 https://casa.nrao.edu/casadocs/ 
    </example>
-</task>
+<returns>void</returns></task>
 </casaxml>

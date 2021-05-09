@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="flagging" name="flagmanager" type="function">
+<task type="function" name="flagmanager" category="flagging">
         <shortdescription>Enable list, save, restore, delete and rename flag version files.</shortdescription>
         <description>
         These flag version files are copies of the flag column for a
@@ -9,13 +9,13 @@
         version call 'Original' is automatically produced.
         </description>
         <input>
-                <param mustexist="true" name="vis" type="string"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
+                <param type="path" name="vis" mustexist="true"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
                         
                         <value/>
                         <example>vis='ngc5921.ms'</example>
                 </param>
 
-                <param name="mode" type="string"><shortdescription>Operation: list, save, restore, delete, rename</shortdescription><description>Operation: list, save, restore, delete, rename</description>
+                <param type="string" name="mode"><shortdescription>Operation: list, save, restore, delete, rename</shortdescription><description>Operation: list, save, restore, delete, rename</description>
                         
                         <value>list</value>
                         <allowed kind="enum">
@@ -26,19 +26,19 @@
                                 <value>rename</value>
                         </allowed>
                 </param>
-                <param subparam="true" name="versionname" type="string"><shortdescription>Flag version name</shortdescription><description>Flag version name</description>
+                <param type="string" name="versionname" subparam="true"><shortdescription>Flag version name</shortdescription><description>Flag version name</description>
                         
                         <value/>
                 </param>
-                <param subparam="true" name="oldname" type="string"><shortdescription>Flag version to rename</shortdescription><description>Flag version to rename</description>
+                <param type="string" name="oldname" subparam="true"><shortdescription>Flag version to rename</shortdescription><description>Flag version to rename</description>
                         
                         <value/>
                 </param>
-                <param subparam="true" name="comment" type="string"><shortdescription>Short description of a versionname</shortdescription><description>Short description of a versionname</description>
+                <param type="string" name="comment" subparam="true"><shortdescription>Short description of a versionname</shortdescription><description>Short description of a versionname</description>
                         
                         <value/>
                 </param>
-                <param subparam="true" name="merge" type="string"><shortdescription>Merge option: replace will save or over-write the flags</shortdescription><description>Merge option: replace will save or over-write the flags</description>
+                <param type="string" name="merge" subparam="true"><shortdescription>Merge option: replace will save or over-write the flags</shortdescription><description>Merge option: replace will save or over-write the flags</description>
                         
                         <value>replace</value>
                 </param>

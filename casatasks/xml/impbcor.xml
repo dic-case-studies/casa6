@@ -1,16 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<!-- This is the task interface for impbcor        -->
-<!--                                                          -->
 
-<task type="function" name="impbcor" category="imaging, analysis">
+
+
+<task category="imaging, analysis" name="impbcor" type="function">
 <shortdescription>Construct a primary beam corrected image from an image and a primary beam pattern.</shortdescription>
 <description>
 Correct an image for primary beam attenuation using an image of the
@@ -25,17 +19,17 @@ values in which case the same dimensionality and shape constraints
 apply.
 
 One can choose between dividing the image by the primary beam pattern
-(mode="divide") or multiplying the image by the primary beam pattern
-(mode="multiply"). One can also choose to specify a cutoff limit for
-the primary beam pattern. For mode="divide", for all pixels below this
+(mode=&quot;divide&quot;) or multiplying the image by the primary beam pattern
+(mode=&quot;multiply&quot;). One can also choose to specify a cutoff limit for
+the primary beam pattern. For mode=&quot;divide&quot;, for all pixels below this
 cutoff in the primary beam pattern, the output image will be
-masked. In the case of mode="multiply", all pixels in the output will
+masked. In the case of mode=&quot;multiply&quot;, all pixels in the output will
 be masked corresponding to pixels with values greater than the cutoff
 in the primary beam pattern. A negative value for cutoff means that no
 cutoff will be applied, which is the default.
 </description>
     <input>
-        <param type="string" name="imagename" mustexist="true">
+        <param mustexist="true" name="imagename" type="path">
 <shortdescription>Name of the input image</shortdescription>
 <description>Name of the input (CASA, FITS, MIRIAD) image
 </description>
@@ -43,16 +37,16 @@ cutoff will be applied, which is the default.
             <example>imagename='ngc5921.im'</example>
         </param>
 
-        <param type="any" direction="in" name="pbimage">
+        <param name="pbimage" direction="in" type="any">
             <any type="variant"/>
 <shortdescription>Name of the primary beam image which must exist or array of values for the pb response.</shortdescription>
 <description>Name of the image (CASA, FITS, MIRIAD) of the primary
 beam pattern or an array of pixel values.
                      Default: ''
 </description>
-            <value>""</value>
+            <value>&quot;&quot;</value>
         </param>
-        <param type="string" direction="in" name="outfile">
+        <param name="outfile" direction="in" type="string">
 <shortdescription>Output image name. If empty, no image is written.</shortdescription>
 <description>Name of output CASA image. 
                      Default: none. Must be specified.
@@ -60,7 +54,7 @@ beam pattern or an array of pixel values.
             <value/>
         </param>
 
-        <param type="bool" direction="in" name="overwrite" subparam="true">
+        <param subparam="true" name="overwrite" direction="in" type="bool">
 <shortdescription>Overwrite the output if it exists?</shortdescription>
 <description>If output file is specified, controls if an already
 existing file by the same name can be overwritten. 
@@ -73,7 +67,7 @@ existing file by the same name can be overwritten.
             <value>False</value>
         </param>
 
-        <param type="string" direction="in" name="box">
+        <param name="box" direction="in" type="string">
             <value/>
 <shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription>
 <description>Rectangular region to select in direction plane.
@@ -81,7 +75,7 @@ existing file by the same name can be overwritten.
 </description>
         </param>
 
-        <param type="any" direction="in" name="region">
+        <param name="region" direction="in" type="any">
             <any type="variant"/>
 <shortdescription>Region selection.</shortdescription>
 <description>Region selection. 
@@ -89,7 +83,7 @@ existing file by the same name can be overwritten.
 </description>
             <value type="string"/>
         </param>
-        <param type="string" direction="in" name="chans">
+        <param name="chans" direction="in" type="string">
 <shortdescription>Channels to use.</shortdescription>
 <description>Channels to use. 
                      Default: '' (use all channels)
@@ -97,7 +91,7 @@ existing file by the same name can be overwritten.
             <value/>
         </param>
         
-        <param type="string" direction="in" name="stokes">
+        <param name="stokes" direction="in" type="string">
 <shortdescription>Stokes planes to use.</shortdescription>
 <description>Stokes planes to use.
                      Default: '' (use all Stokes planes)
@@ -105,7 +99,7 @@ existing file by the same name can be overwritten.
             <value/>
         </param>
 
-        <param type="string" direction="in" name="mask">
+        <param name="mask" direction="in" type="string">
 <shortdescription>Mask to use.</shortdescription>
 <description>Mask to use.
                      Default: none
@@ -113,7 +107,7 @@ existing file by the same name can be overwritten.
             <value/>
         </param>
 
-        <param type="string" direction="in" name="mode">
+        <param name="mode" direction="in" type="string">
 <shortdescription>Divide or multiply the image by the primary beam image. Minimal match supported.</shortdescription>
 <description>Divide or multiply the image by the primary beam image. 
                      Default: 'divide'
@@ -122,19 +116,19 @@ existing file by the same name can be overwritten.
 </description>
             <value>divide</value>
         </param>
-        <param type="double" direction="in" name="cutoff">
-<shortdescription>PB cutoff. If mode is "d", all values less than this will be masked. If "m", all values greater will be masked. Less than 0, no cutoff.</shortdescription>
+        <param name="cutoff" direction="in" type="double">
+<shortdescription>PB cutoff. If mode is &quot;d&quot;, all values less than this will be masked. If &quot;m&quot;, all values greater will be masked. Less than 0, no cutoff.</shortdescription>
 <description>Primary beam cutoff.
                      Default: -1.0 (no cutoff)
 
-                     If mode is "d", all values less than this will be
-                     masked. If "m", all values greater will be
+                     If mode is &quot;d&quot;, all values less than this will be
+                     masked. If &quot;m&quot;, all values greater will be
                      masked. Less than 0, no cutoff (default)
 </description>
             <value>-1.0</value>
         </param>
 
-        <param type="bool" direction="in" name="stretch" subparam="true">
+        <param subparam="true" name="stretch" direction="in" type="bool">
 <shortdescription>Stretch the mask if necessary and possible?</shortdescription>
 <description>Stretch the mask if necessary and possible? 
                      Default: False
@@ -144,14 +138,14 @@ existing file by the same name can be overwritten.
         </param>
         <constraints>
             <when param="outfile">
-                <notequals type="string" value="">
+                <notequals value="" type="string">
                     <default param="overwrite">
                         <value>False</value>
                     </default>
                 </notequals>
             </when>
             <when param="mask">
-                <notequals type="string" value="">
+                <notequals value="" type="string">
                    <default param="stretch"><value type="bool">False</value></default>
              </notequals>
          </when>

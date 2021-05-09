@@ -1,9 +1,9 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
-<task category="single dish" name="sdimaging" type="function">
+<task type="function" name="sdimaging" category="single dish">
 
   <shortdescription>SD task: imaging for total power and spectral data</shortdescription>
 
@@ -42,53 +42,53 @@ values. See description below for details of gridfunction available.
   </description>
 
   <input>
-    <param mustexist="true" name="infiles" type="stringArray"><shortdescription>a list of names of input SD Measurementsets (only MS is allowed for this task)</shortdescription><description>a list of names of input SD Measurementsets (only MS is allowed for this task)</description>
+    <param type="pathVec" name="infiles" mustexist="true"><shortdescription>a list of names of input SD Measurementsets (only MS is allowed for this task)</shortdescription><description>a list of names of input SD Measurementsets (only MS is allowed for this task)</description>
             
             <value/>
     </param>
 
-    <param name="outfile" type="string"><shortdescription>name of output image</shortdescription><description>name of output image</description>
+    <param type="string" name="outfile"><shortdescription>name of output image</shortdescription><description>name of output image</description>
             
             <value/>
     </param>
 
-    <param name="overwrite" type="bool">
+    <param type="bool" name="overwrite">
             <shortdescription>overwrite the output file if already exists [True, False]</shortdescription>
             <description>overwrite the output file if already exists [True, False]</description>
             <value>False</value>
     </param>
 
-    <param name="field" type="any"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</description>
+    <param type="any" name="field"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot;=all)</description>
             
-            <any limittypes="string stringArray" type="variant"/>
+            <type>string</type><type>stringVec</type>
             <value type="string"/>
     </param>
 
-    <param name="spw" type="any"><shortdescription>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</shortdescription><description>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</description>
+    <param type="any" name="spw"><shortdescription>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</shortdescription><description>select data by IF IDs (spectral windows), e.g. &quot;3,5,7&quot; (&quot;&quot;=all)</description>
             
-            <any limittypes="string stringArray" type="variant"/>
+            <type>string</type><type>stringVec</type>
             <value type="string"/>
     </param>
 
-    <param name="antenna" type="any"><shortdescription>select data by antenna names or IDs, e.g, &quot;PM03&quot; (&quot;&quot; = all antennas)</shortdescription><description>select data by antenna names or IDs, e.g, &quot;PM03&quot; (&quot;&quot; = all antennas)</description>
+    <param type="any" name="antenna"><shortdescription>select data by antenna names or IDs, e.g, &quot;PM03&quot; (&quot;&quot; = all antennas)</shortdescription><description>select data by antenna names or IDs, e.g, &quot;PM03&quot; (&quot;&quot; = all antennas)</description>
             
-            <any limittypes="string stringArray" type="variant"/>
+            <type>string</type><type>stringVec</type>
             <value type="string"/>
     </param>
 
-    <param name="scan" type="any"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
+    <param type="any" name="scan"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
             
-            <any limittypes="string stringArray" type="variant"/>
+            <type>string</type><type>stringVec</type>
             <value type="string"/>
     </param>
     
-    <param name="intent" type="any"><shortdescription>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</shortdescription><description>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</description>
+    <param type="any" name="intent"><shortdescription>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</shortdescription><description>select data by observational intent, e.g. &quot;*ON_SOURCE*&quot; (&quot;&quot;=all)</description>
             
-            <any limittypes="string stringArray" type="variant"/>
+            <type>string</type><type>stringVec</type>
             <value type="string">OBSERVE_TARGET#ON_SOURCE</value>
     </param>
 
-    <param name="mode" type="string">
+    <param type="string" name="mode">
             <description>spectral gridding type</description>
             <shortdescription>spectral gridding type [&quot;channel&quot;, &quot;frequency&quot;, &quot;velocity&quot;]</shortdescription>
             <value>channel</value> 
@@ -99,24 +99,24 @@ values. See description below for details of gridfunction available.
            </allowed>
     </param>
 
-    <param subparam="true" name="nchan" type="int"><shortdescription> number of channels (planes) in output image (-1=all)</shortdescription><description> number of channels (planes) in output image (-1=all)</description>
+    <param type="int" name="nchan" subparam="true"><shortdescription> number of channels (planes) in output image (-1=all)</shortdescription><description> number of channels (planes) in output image (-1=all)</description>
             
             <value>-1</value>
     </param>
 
-    <param subparam="true" name="start" type="any"><shortdescription>start of output spectral dimension, e.g. &quot;0&quot;, &quot;110GHz&quot;, &quot;-20km/s&quot;</shortdescription><description>start of output spectral dimension, e.g. &quot;0&quot;, &quot;110GHz&quot;, &quot;-20km/s&quot;</description>
+    <param type="any" name="start" subparam="true"><shortdescription>start of output spectral dimension, e.g. &quot;0&quot;, &quot;110GHz&quot;, &quot;-20km/s&quot;</shortdescription><description>start of output spectral dimension, e.g. &quot;0&quot;, &quot;110GHz&quot;, &quot;-20km/s&quot;</description>
             
-            <any limittypes="string int" type="variant"/>
+            <type>string</type><type>int</type>
             <value type="int">0</value>
     </param>
 
-    <param subparam="true" name="width" type="any"><shortdescription>width of output spectral channels</shortdescription><description>width of output spectral channels</description>
+    <param type="any" name="width" subparam="true"><shortdescription>width of output spectral channels</shortdescription><description>width of output spectral channels</description>
             
-            <any limittypes="string int" type="variant"/>
+            <type>string</type><type>int</type>
             <value type="int">1</value>
     </param>
 
-    <param subparam="true" name="veltype" type="string">
+    <param type="string" name="veltype" subparam="true">
             <shortdescription>velocity definition [&quot;radio&quot;, &quot;optical&quot;, &quot;true&quot; or &quot;relativistic&quot;] </shortdescription>
             <description>velocity definition</description>
             <value>radio</value>
@@ -132,7 +132,7 @@ values. See description below for details of gridfunction available.
            </allowed>
     </param>
 
-    <param name="outframe" type="string">
+    <param type="string" name="outframe">
             <shortdescription>velocity frame of output image [&quot;lsrk&quot;, &quot;lsrd&quot;, &quot;bary&quot;, &quot;geo&quot;, &quot;topo&quot;, &quot;galacto&quot;, &quot;lgroup&quot;, &quot;cmb&quot;] (&quot;&quot;=current frame or LSRK for multiple-MS inputs) </shortdescription>
             <description>velocity frame of output image (&quot;&quot;=current frame or LSRK for multiple-MS inputs)</description>
             <value/>
@@ -157,7 +157,7 @@ values. See description below for details of gridfunction available.
            </allowed>
     </param>
 
-    <param name="gridfunction" type="string">
+    <param type="string" name="gridfunction">
             <shortdescription>gridding function for imaging [&quot;BOX&quot;, &quot;SF&quot;, &quot;PB&quot;, &quot;GAUSS&quot; or &quot;GJINC&quot;] (see description in help)</shortdescription>
             <description>gridding function for imaging (see description in help)</description>
             <value>BOX</value>
@@ -175,48 +175,48 @@ values. See description below for details of gridfunction available.
             </allowed>
     </param>
 
-    <param subparam="true" name="convsupport" type="int"><shortdescription>convolution support for gridding</shortdescription><description>convolution support for gridding</description>
+    <param type="int" name="convsupport" subparam="true"><shortdescription>convolution support for gridding</shortdescription><description>convolution support for gridding</description>
             
             <value>-1</value>
     </param>
 
-    <param subparam="true" name="truncate" type="any"><shortdescription>truncation radius for gridding</shortdescription><description>truncation radius for gridding</description>
+    <param type="any" name="truncate" subparam="true"><shortdescription>truncation radius for gridding</shortdescription><description>truncation radius for gridding</description>
             
-            <any limittypes="string int double" type="variant"/>
+            <type>string</type><type>int</type><type>double</type>
             <value type="int">-1</value>
     </param>
 
-    <param subparam="true" name="gwidth" type="any"><shortdescription>HWHM for gaussian</shortdescription><description>HWHM for gaussian</description>
+    <param type="any" name="gwidth" subparam="true"><shortdescription>HWHM for gaussian</shortdescription><description>HWHM for gaussian</description>
             
-            <any limittypes="string int double" type="variant"/>
+            <type>string</type><type>int</type><type>double</type>
             <value type="int">-1</value>
     </param>
 
-    <param subparam="true" name="jwidth" type="any"><shortdescription>c-parameter for jinc function</shortdescription><description>c-parameter for jinc function</description>
+    <param type="any" name="jwidth" subparam="true"><shortdescription>c-parameter for jinc function</shortdescription><description>c-parameter for jinc function</description>
             
-            <any limittypes="string int double" type="variant"/>
+            <type>string</type><type>int</type><type>double</type>
             <value type="int">-1</value>
     </param>
 
-    <param name="imsize" type="any"><shortdescription>x and y image size in pixels, e.g., [64,64]. Single value: same for both spatial axes ([] = number of pixels to cover whole pointings in MSes)</shortdescription><description>x and y image size in pixels, e.g., [64,64]. Single value: same for both spatial axes ([] = number of pixels to cover whole pointings in MSes)</description>
+    <param type="any" name="imsize"><shortdescription>x and y image size in pixels, e.g., [64,64]. Single value: same for both spatial axes ([] = number of pixels to cover whole pointings in MSes)</shortdescription><description>x and y image size in pixels, e.g., [64,64]. Single value: same for both spatial axes ([] = number of pixels to cover whole pointings in MSes)</description>
             
-            <any limittypes="intArray doubleArray" type="variant"/>
-            <value type="intArray"/>
+            <type>intVec</type><type>doubleVec</type>
+            <value type="intVec"/>
     </param>
 
-    <param name="cell" type="any"><shortdescription>x and y cell size, (e.g., [&quot;8arcsec&quot;,&quot;8arcsec&quot;]. default unit arcmin. (&quot;&quot; = 1/3 of FWHM of primary beam)</shortdescription><description>x and y cell size, (e.g., [&quot;8arcsec&quot;,&quot;8arcsec&quot;]. default unit arcmin. (&quot;&quot; = 1/3 of FWHM of primary beam)</description>
+    <param type="any" name="cell"><shortdescription>x and y cell size, (e.g., [&quot;8arcsec&quot;,&quot;8arcsec&quot;]. default unit arcmin. (&quot;&quot; = 1/3 of FWHM of primary beam)</shortdescription><description>x and y cell size, (e.g., [&quot;8arcsec&quot;,&quot;8arcsec&quot;]. default unit arcmin. (&quot;&quot; = 1/3 of FWHM of primary beam)</description>
     
-    <any limittypes="string stringArray doubleArray" type="variant"/>
+    <type>string</type><type>stringVec</type><type>doubleVec</type>
     <value type="string"/>
     </param>
 
-    <param name="phasecenter" type="any"><shortdescription>image center direction: position or field index, e.g., &quot;J2000 17:30:15.0 -25.30.00.0&quot;. (&quot;&quot; = the center of pointing directions in MSes)</shortdescription><description>image center direction: position or field index, e.g., &quot;J2000 17:30:15.0 -25.30.00.0&quot;. (&quot;&quot; = the center of pointing directions in MSes)</description>
+    <param type="any" name="phasecenter"><shortdescription>image center direction: position or field index, e.g., &quot;J2000 17:30:15.0 -25.30.00.0&quot;. (&quot;&quot; = the center of pointing directions in MSes)</shortdescription><description>image center direction: position or field index, e.g., &quot;J2000 17:30:15.0 -25.30.00.0&quot;. (&quot;&quot; = the center of pointing directions in MSes)</description>
             
             <any type="variant"/>
             <value type="string"/>
     </param>
 
-        <param name="projection" type="string"><shortdescription>map projection type</shortdescription><description>map projection type</description>
+        <param type="string" name="projection"><shortdescription>map projection type</shortdescription><description>map projection type</description>
             
             <value>SIN</value>
             <allowed kind="enum">
@@ -231,12 +231,12 @@ values. See description below for details of gridfunction available.
             </allowed>
         </param>
 
-    <param name="ephemsrcname" type="string"><shortdescription>ephemeris source name, e.g. &quot;MARS&quot;</shortdescription><description>ephemeris source name, e.g. &quot;MARS&quot;</description>
+    <param type="string" name="ephemsrcname"><shortdescription>ephemeris source name, e.g. &quot;MARS&quot;</shortdescription><description>ephemeris source name, e.g. &quot;MARS&quot;</description>
             
             <value/>
     </param>
 
-    <param name="pointingcolumn" type="string">
+    <param type="string" name="pointingcolumn">
             <shortdescription>pointing data column to use [&quot;direction&quot;, &quot;target&quot;, &quot;pointing_offset&quot;, &quot;source_offset&quot; or &quot;encoder&quot;]</shortdescription>
             <description>pointing data column to use</description>
             <value>direction</value>
@@ -254,25 +254,25 @@ values. See description below for details of gridfunction available.
             </allowed>
     </param>
 
-    <param name="restfreq" type="any"><shortdescription>rest frequency to assign to image, e.g., &quot;114.5GHz&quot;</shortdescription><description>rest frequency to assign to image, e.g., &quot;114.5GHz&quot;</description>
+    <param type="any" name="restfreq"><shortdescription>rest frequency to assign to image, e.g., &quot;114.5GHz&quot;</shortdescription><description>rest frequency to assign to image, e.g., &quot;114.5GHz&quot;</description>
             
-            <any limittypes="string double" type="variant"/>
+            <type>string</type><type>double</type>
             <value type="string"/>
     </param>
 
-    <param name="stokes" type="string"><shortdescription>stokes parameters or polarization types to image, e.g. &quot;I&quot;, &quot;XX&quot;</shortdescription><description>stokes parameters or polarization types to image, e.g. &quot;I&quot;, &quot;XX&quot;</description>
+    <param type="string" name="stokes"><shortdescription>stokes parameters or polarization types to image, e.g. &quot;I&quot;, &quot;XX&quot;</shortdescription><description>stokes parameters or polarization types to image, e.g. &quot;I&quot;, &quot;XX&quot;</description>
             
             <value/>
     </param>
 
-    <param name="minweight" type="double">
+    <param type="double" name="minweight">
             <shortdescription>Minimum weight ratio to use</shortdescription>
             <description>Minimum weight ratio to the median of weight used in weight correction and weight beased masking</description>
             <allowed kind="range"> <value range="min">0</value> </allowed>
             <value>0.1</value>
     </param>
    
-    <param name="brightnessunit" type="string"><shortdescription>Overwrite the brightness unit in image (\'\' = respect the unit in MS) [\'K\' or \'Jy/beam\']</shortdescription><description>Overwrite the brightness unit in image (\'\' = respect the unit in MS) [\'K\' or \'Jy/beam\']</description>
+    <param type="string" name="brightnessunit"><shortdescription>Overwrite the brightness unit in image (\'\' = respect the unit in MS) [\'K\' or \'Jy/beam\']</shortdescription><description>Overwrite the brightness unit in image (\'\' = respect the unit in MS) [\'K\' or \'Jy/beam\']</description>
             
             <value/>
             <allowed kind="enum">
@@ -282,7 +282,7 @@ values. See description below for details of gridfunction available.
             </allowed>
     </param>
 
-        <param name="clipminmax" type="bool">
+        <param type="bool" name="clipminmax">
                         <shortdescription>Clip minimum and maximum value from each pixel</shortdescription>
                         <description>Clip minimum and maximum value from each pixel. Note the benefit of clipping is lost when the number of integrations contributing to each gridded pixel is small, or where the incidence of spurious datapoints is approximately or greater than the number of beams (in area) encompassed by expected image.</description>
                         <value>False</value>
@@ -320,30 +320,30 @@ values. See description below for details of gridfunction available.
                 </equals>
             </when>
             <when param="gridfunction">
-                <equals value="BOX" type="string"/>
-                <equals value="box" type="string"/>
-                <equals value="SF" type="string">
+                <equals type="string" value="BOX"/>
+                <equals type="string" value="box"/>
+                <equals type="string" value="SF">
                     <default param="convsupport"><value type="int">-1</value></default>
                 </equals>
-                <equals value="sf" type="string">
+                <equals type="string" value="sf">
                     <default param="convsupport"><value type="int">-1</value></default>
                 </equals>
-                <equals value="PB" type="string"/>
-                <equals value="pb" type="string"/>
-                <equals value="GAUSS" type="string">
+                <equals type="string" value="PB"/>
+                <equals type="string" value="pb"/>
+                <equals type="string" value="GAUSS">
                     <default param="truncate"><value type="int">-1</value></default>
                     <default param="gwidth"><value type="int">-1</value></default>
                 </equals>
-                <equals value="gauss" type="string">
+                <equals type="string" value="gauss">
                     <default param="truncate"><value type="int">-1</value></default>
                     <default param="gwidth"><value type="int">-1</value></default>
                 </equals>
-                <equals value="GJINC" type="string">
+                <equals type="string" value="GJINC">
                     <default param="truncate"><value type="int">-1</value></default>
                     <default param="gwidth"><value type="int">-1</value></default>
                     <default param="jwidth"><value type="int">-1</value></default>
                 </equals>
-                <equals value="gjinc" type="string">
+                <equals type="string" value="gjinc">
                     <default param="truncate"><value type="int">-1</value></default>
                     <default param="gwidth"><value type="int">-1</value></default>
                     <default param="jwidth"><value type="int">-1</value></default>

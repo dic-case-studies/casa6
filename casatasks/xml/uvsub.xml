@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="manipulation, calibration" name="uvsub" type="function">
+<task type="function" name="uvsub" category="manipulation, calibration">
         <shortdescription>Subtract/add model from/to the corrected visibility data.</shortdescription>
         <description>
         This function subtracts model visibility data (MODEL_DATA column) from corrected visibility
@@ -10,13 +10,13 @@
         uvsub process
         </description>
         <input>
-                <param mustexist="true" name="vis" type="string"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
+                <param type="path" name="vis" mustexist="true"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
                         
                         <value/>
                         <example>vis='ngc5921.ms'</example>
                 </param>
 
-                <param name="reverse" type="bool"><shortdescription>reverse the operation (add rather than subtract)</shortdescription><description>reverse the operation (add rather than subtract)</description>
+                <param type="bool" name="reverse"><shortdescription>reverse the operation (add rather than subtract)</shortdescription><description>reverse the operation (add rather than subtract)</description>
                         
                         <value>False</value>
                 </param>

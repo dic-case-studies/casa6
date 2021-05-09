@@ -1,12 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<task type="function" name="importasap" category="single dish, import/export" >
+<task category="single dish, import/export" name="importasap" type="function">
   <shortdescription>Convert ASAP Scantable data  into a CASA visibility file (MS)</shortdescription>
 <description>
 Convert ASAP Scantable data  into a CASA visibility file (MS)
@@ -14,17 +9,17 @@ Convert ASAP Scantable data  into a CASA visibility file (MS)
 
   <input>
 
-    <param type="string" name="infile" mustexist="true">
+    <param mustexist="true" name="infile" type="path">
 <shortdescription>Name of input ASAP Scantable data</shortdescription>
 <description>Name of input ASAP Scantable data
                      Default: none
 
                         Example: infile='mydata.asap'
 </description>
-          <value></value>
+          <value/>
     </param>
 
-    <param type="string" name="outputvis" kind="ms">
+    <param kind="ms" name="outputvis" type="string">
 <shortdescription>Root name of the ms to be created. Note the .ms is NOT added.</shortdescription>
 <description>Name of output visibility file
                      Default: '' (same as vis)
@@ -33,10 +28,10 @@ Convert ASAP Scantable data  into a CASA visibility file (MS)
 
                      NOTE: Note the .ms is NOT added 
 </description>
-          <value></value>
+          <value/>
     </param>
 
-    <param type="bool" name="flagbackup">
+    <param name="flagbackup" type="bool">
 <shortdescription>Back up flag column before applying flags.</shortdescription>
 <description>Back up flag column before applying flags.
                      Default: True
@@ -45,7 +40,7 @@ Convert ASAP Scantable data  into a CASA visibility file (MS)
       <value>True</value>
     </param>
 
-    <param type="bool" name="overwrite">
+    <param name="overwrite" type="bool">
 <shortdescription>Over write an existing MS(s)</shortdescription>
 <description>Over write an existing MS(s)
                      Default: False (do not overwrite)
@@ -54,7 +49,7 @@ Convert ASAP Scantable data  into a CASA visibility file (MS)
       <value>False</value>
     </param>
 
-    <param type="bool" name="parallel">
+    <param name="parallel" type="bool">
 <shortdescription>Turn on parallel execution</shortdescription>
 <description>Turn on parallel execution
                      Default: False (serial execution)

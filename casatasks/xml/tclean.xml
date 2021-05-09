@@ -1,7 +1,7 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
-<task category="imaging" name="tclean" type="function">
+<task type="function" name="tclean" category="imaging">
 
   <shortdescription>Radio Interferometric Image Reconstruction</shortdescription>
 
@@ -21,27 +21,27 @@
 
 
 
-    <param mustexist="true" kind="ms" name="vis" type="any">
+    <param type="any" name="vis" kind="ms" mustexist="true">
    <shortdescription>Name of input visibility file(s)</shortdescription>
 <description>Name(s) of input visibility file(s)
                default: none;
                example: vis='ngc5921.ms'
                         vis=['ngc5921a.ms','ngc5921b.ms']; multiple MSes
 </description>
-      <any limittypes="string stringArray" type="variant"/>
+      
       <type mustexist="true">path</type><type mustexist="true">pathVec</type>
       <value type="string"/>
     </param>
 
 
-    <param visibility="hidden" name="selectdata" type="bool">
+    <param type="bool" name="selectdata" visibility="hidden">
      <shortdescription>Enable data selection parameters</shortdescription>
 <description>Enable data selection parameters.
 </description>
       <value type="bool">True</value>
     </param>
 
-    <param subparam="true" name="field" type="any">
+    <param type="any" name="field" subparam="true">
      <shortdescription>field(s) to select</shortdescription>
 <description> Select fields to image or mosaic.  Use field id(s) or name(s).
                   ['go listobs' to obtain the list id's or names]
@@ -59,11 +59,11 @@
                  field = '0~2'; field ids 0-2 for all input MSes
 
 </description>
-      <any limittypes="string stringArray" type="variant"/>
+      <type>string</type><type>stringVec</type>
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="spw" type="any">
+    <param type="any" name="spw" subparam="true">
      <shortdescription>spw(s)/channels to select</shortdescription>
 <description> Select spectral window/channels
                NOTE: channels de-selected here will contain all zeros if
@@ -85,11 +85,11 @@
                  spw='1~4;6:15~48' for channels 15 through 48 for spw ids 1,2,3,4 and 6
 
 </description>
-      <any limittypes="string stringArray" type="variant"/>
+      <type>string</type><type>stringVec</type>
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="timerange" type="any">
+    <param type="any" name="timerange" subparam="true">
      <shortdescription>Range of time to select from data</shortdescription>
 <description>Range of time to select from data
 
@@ -110,11 +110,11 @@
                                                  all input MSes
 
 </description>
-      <any limittypes="string stringArray" type="variant"/>
+      <type>string</type><type>stringVec</type>
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="uvrange" type="any">
+    <param type="any" name="uvrange" subparam="true">
      <shortdescription>Select data within uvrange</shortdescription>
 <description>Select data within uvrange (default unit is meters)
                    default: '' (all); example:
@@ -126,11 +126,11 @@
                    uvrange='0~1000klambda'; apply 0-1000 kilo-lambda for all
                                             input MSes
  </description>
-      <any limittypes="string stringArray" type="variant"/>
+      <type>string</type><type>stringVec</type>
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="antenna" type="any">
+    <param type="any" name="antenna" subparam="true">
      <shortdescription>Select data based on antenna/baseline</shortdescription>
 <description>Select data based on antenna/baseline
 
@@ -155,11 +155,11 @@
                    antenna='!DV14'; use all antennas except DV14
 
 </description>
-      <any limittypes="string stringArray" type="variant"/>
+      <type>string</type><type>stringVec</type>
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="scan" type="any">
+    <param type="any" name="scan" subparam="true">
      <shortdescription>Scan number range</shortdescription>
 <description>Scan number range
 
@@ -170,21 +170,21 @@
                    scan='0~100; scan ids 0-100 for all input MSes
 
 </description>
-      <any limittypes="string stringArray" type="variant"/>
+      <type>string</type><type>stringVec</type>
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="observation" type="any">
+    <param type="any" name="observation" subparam="true">
      <shortdescription>Observation ID range</shortdescription>
 <description>Observation ID range
                    default: '' (all)
                    example: observation='1~5'
 </description>
-      <any limittypes="string int" type="variant"/>
+      <type>string</type><type>int</type>
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="intent" type="any">
+    <param type="any" name="intent" subparam="true">
      <shortdescription>Scan Intent(s)</shortdescription>
 <description>Scan Intent(s)
 
@@ -193,11 +193,11 @@
                    example: intent='TARGET_SOURCE1,TARGET_SOURCE2'
                    example: intent='TARGET_POINTING*'
 </description>
-      <any limittypes="string stringArray" type="variant"/>
+      <type>string</type><type>stringVec</type>
       <value type="string"/>
     </param>
 
-    <param name="datacolumn" type="string"> 
+    <param type="string" name="datacolumn"> 
      <shortdescription>Data column to image(data,corrected)</shortdescription>
 <description>Data column to image (data or observed, corrected)
                      default:'corrected'
@@ -212,7 +212,7 @@
 
 
 
-    <param required="true" name="imagename" type="any">
+    <param type="any" name="imagename" required="true">
      <shortdescription>Pre-name of output images</shortdescription>
 <description>Pre-name of output images
 
@@ -261,11 +261,11 @@
                                   be turned off via the 'restoration=T/F' parameter.
 
 </description>
-      <any limittypes="int string stringArray" type="variant"/>
+      <type>int</type><type>string</type><type>stringVec</type>
       <value type="string"/>
     </param>
 
-    <param name="imsize" type="any"> 
+    <param type="any" name="imsize"> 
      <shortdescription>Number of pixels</shortdescription>
 <description>Number of pixels
          example :  imsize = [350,250]
@@ -273,22 +273,22 @@
          To take proper advantage of internal optimized FFT routines, the
          number of pixels must be even and factorizable by 2,3,5,7 only.
 </description>
-      <any limittypes="int intArray" type="variant"/>
-      <value type="intArray"><value>100</value></value>
+      <type>int</type><type>intVec</type>
+      <value type="intVec"><value>100</value></value>
     </param>
 
-    <param name="cell" type="any"> 
+    <param type="any" name="cell"> 
      <shortdescription>Cell size</shortdescription>
 <description>Cell size
                example: cell=['0.5arcsec,'0.5arcsec'] or
                cell=['1arcmin', '1arcmin']
                cell = '1arcsec' is equivalent to ['1arcsec','1arcsec']
 </description>
-      <any limittypes="int double intArray doubleArray string stringArray" type="variant"/>
-      <value type="stringArray">&quot;1arcsec&quot;</value>
+      <type>int</type><type>double</type><type>intVec</type><type>doubleVec</type><type>string</type><type>stringVec</type>
+      <value type="stringVec">&quot;1arcsec&quot;</value>
     </param>
 
-    <param name="phasecenter" type="any"> 
+    <param type="any" name="phasecenter"> 
      <shortdescription>Phase center of the image</shortdescription>
 <description>Phase center of the image (string or field id); if the phasecenter is the name known major solar system object ('MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO', 'SUN', 'MOON') or is an ephemerides table then that source is tracked and the background sources get smeared. There is a special case, when phasecenter='TRACKFIELD', which will use the ephemerides or polynomial phasecenter in the FIELD table of the MS's as the source center to track.
                example: phasecenter=6
@@ -300,12 +300,12 @@
                         phasecenter='MOON'
                         phasecenter='TRACKFIELD'
 </description>
-      <any limittypes="int string" type="variant"/>
+      <type>int</type><type>string</type>
       <value type="string"/>
     </param>
 
 
-    <param name="stokes" type="string"> 
+    <param type="string" name="stokes"> 
      <shortdescription>Stokes Planes to make</shortdescription>
 <description>Stokes Planes to make
                default='I'; example: stokes='IQUV';
@@ -345,7 +345,7 @@
       </allowed>
     </param>
 
-    <param name="projection" type="string"> 
+    <param type="string" name="projection"> 
      <shortdescription>Coordinate projection </shortdescription>
 <description>Coordinate projection
                      Examples : SIN,   NCP
@@ -358,7 +358,7 @@
       <value type="string">SIN</value>
     </param>
 
-    <param name="startmodel" type="any"> 
+    <param type="any" name="startmodel"> 
      <shortdescription>Name of starting model image</shortdescription>
 <description>Name of starting model image
 
@@ -397,7 +397,7 @@
 
 
 
-    <param required="true" name="specmode" type="any">
+    <param type="any" name="specmode" required="true">
      <shortdescription>Spectral definition mode (mfs,cube,cubedata, cubesource)</shortdescription>
 <description>Spectral definition mode (mfs,cube,cubedata, cubesource)
 
@@ -457,7 +457,7 @@
      </allowed>
     </param>
 
-    <param subparam="true" name="reffreq" type="any">
+    <param type="any" name="reffreq" subparam="true">
      <shortdescription>Reference frequency</shortdescription>
 <description>Reference frequency of the output image coordinate system
 
@@ -472,7 +472,7 @@
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="nchan" type="int">
+    <param type="int" name="nchan" subparam="true">
      <shortdescription>Number of channels in the output image</shortdescription>
 <description>Number of channels in the output image
                        For default (=-1), the number of channels will be automatically determined
@@ -484,7 +484,7 @@
       <value type="int">-1</value>
     </param>
 
-    <param subparam="true" name="start" type="any">
+    <param type="any" name="start" subparam="true">
      <shortdescription>First channel (e.g. start=3,start=\'1.1GHz\',start=\'15343km/s\')</shortdescription>
 <description>First channel (e.g. start=3,start=\'1.1GHz\',start=\'15343km/s\')
                        of output cube images specified by data channel number (integer),
@@ -507,7 +507,7 @@
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="width" type="any">
+    <param type="any" name="width" subparam="true">
      <shortdescription>Channel width (e.g. width=2,width=\'0.1MHz\',width=\'10km/s\')</shortdescription>
 <description>Channel width (e.g. width=2,width=\'0.1MHz\',width=\'10km/s\') of output cube images
                       specified by data channel number (integer), velocity (string with a unit), or
@@ -528,7 +528,7 @@
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="outframe" type="string">
+    <param type="string" name="outframe" subparam="true">
      <shortdescription>Spectral reference frame in which to interpret \'start\' and \'width\'</shortdescription>
 <description>Spectral reference frame in which to interpret \'start\' and \'width\'
                       Options: '','LSRK','LSRD','BARY','GEO','TOPO','GALACTO','LGROUP','CMB'
@@ -551,7 +551,7 @@
       <value type="string">LSRK</value>
     </param>
 
-    <param subparam="true" name="veltype" type="string">
+    <param type="string" name="veltype" subparam="true">
      <shortdescription>Velocity type (radio, z, ratio, beta, gamma, optical)</shortdescription>
 <description>Velocity type (radio, z, ratio, beta, gamma, optical)
                       For start and/or width specified in velocity, specifies the velocity definition
@@ -576,7 +576,7 @@
       <value type="string">radio</value>
     </param>
 
-    <param subparam="true" name="restfreq" type="any">
+    <param type="any" name="restfreq" subparam="true">
      <shortdescription>List of rest frequencies</shortdescription>
 <description>List of rest frequencies or a rest frequency in a string.
                       Specify rest frequency to use for output image.
@@ -588,12 +588,12 @@
                                 restfreq='1.42GHz'
 
 </description>
-      <value type="stringArray"/>
+      <value type="stringVec"/>
     </param>
 
 
 
-    <param subparam="true" name="interpolation" type="string">
+    <param type="string" name="interpolation" subparam="true">
      <shortdescription>Spectral interpolation (nearest,linear,cubic)</shortdescription>
 <description>Spectral interpolation (nearest,linear,cubic)
 
@@ -615,7 +615,7 @@
               <value>cubic</value>
       </allowed>
     </param>
-<param subparam="true" name="perchanweightdensity" type="bool">
+<param type="bool" name="perchanweightdensity" subparam="true">
            <shortdescription>whether to calculate weight density per channel in Briggs style weighting or not</shortdescription>
            <description>
                          When calculating weight density for Briggs
@@ -675,7 +675,7 @@
 
 
 
-    <param name="gridder" type="string">
+    <param type="string" name="gridder">
            <shortdescription>Gridding options (standard, wproject, widefield, mosaic, awproject)</shortdescription>
 <description>Gridding options (standard, wproject, widefield, mosaic, awproject)
 
@@ -826,7 +826,7 @@
       </allowed>
     </param>
 
-    <param subparam="true" name="facets" type="int">
+    <param type="int" name="facets" subparam="true">
      <shortdescription>Number of facets on a side</shortdescription>
 <description>Number of facets on a side
 
@@ -835,14 +835,14 @@
                        (to minimize max W). Deconvolution is done on the joint
                        full size image, using a PSF from the first subregion/facet.
 
-		       In our current version of tclean, facets>1 may be used only
+		       In our current version of tclean, facets&gt;1 may be used only
 		       with parallel=False. 
 
 </description>
       <value type="int">1</value>
     </param>
 
-<param subparam="true" name="psfphasecenter" type="any"> 
+<param type="any" name="psfphasecenter" subparam="true"> 
      <shortdescription>optional direction to calculate psf for mosaic (default is image phasecenter)</shortdescription>
      <description>For mosaic use psf centered on this
                              optional direction. You may need to use
@@ -861,11 +861,11 @@
                                 psfphasecenter='J2000 5.105rad -0.698rad'
                                 psfphasecenter='ICRS 13:05:27.2780 -049.28.04.458'
 </description>
-      <any limittypes="int string" type="variant"/>
+      <type>int</type><type>string</type>
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="wprojplanes" type="int">
+    <param type="int" name="wprojplanes" subparam="true">
      <shortdescription>Number of distinct w-values for convolution functions</shortdescription>
 <description>Number of distinct w-values at which to compute and use different
                        gridding convolution functions for W-Projection
@@ -896,7 +896,7 @@
       <value type="int">1</value>
     </param>
 
-    <param subparam="true" name="vptable" type="string">
+    <param type="string" name="vptable" subparam="true">
      <shortdescription>Name of Voltage Pattern table</shortdescription>
 <description> VP table saved via the vpmanager
 
@@ -927,13 +927,13 @@
 </description>
       <value type="string"/>
     </param>
-    <param subparam="true" name="mosweight" type="bool">
+    <param type="bool" name="mosweight" subparam="true">
            <shortdescription>Indepently weight each field in a mosaic</shortdescription>
 <description>When doing Brigg's style weighting (including uniform) to perform the weight density calculation for each field indepedently if True. If False the weight density is calculated from the average uv distribution of all the fields.
 </description>
       <value type="bool">True</value>
     </param>
-    <param subparam="true" name="aterm" type="bool">
+    <param type="bool" name="aterm" subparam="true">
            <shortdescription>Use aperture illumination functions during gridding</shortdescription>
 <description>Use aperture illumination functions during gridding
 
@@ -945,7 +945,7 @@
       <value type="bool">True</value>
     </param>
 
-    <param subparam="true" name="psterm" type="bool">
+    <param type="bool" name="psterm" subparam="true">
            <shortdescription>Use prolate spheroidal during gridding</shortdescription>
      <description>Include the Prolate Spheroidal (PS) funtion as the anti-aliasing 
                         operator in the gridding convolution functions used for gridding.
@@ -976,7 +976,7 @@
       <value type="bool">False</value>
     </param>
 
-    <param subparam="true" name="wbawp" type="bool">
+    <param type="bool" name="wbawp" subparam="true">
            <shortdescription>Use wideband A-terms</shortdescription>
 <description>Use frequency dependent A-terms
                        Scale aperture illumination functions appropriately with frequency
@@ -985,7 +985,7 @@
       <value type="bool">True</value>
     </param>
 
-    <param subparam="true" name="conjbeams" type="bool">
+    <param type="bool" name="conjbeams" subparam="true">
            <shortdescription>Use conjugate frequency for wideband A-terms</shortdescription>
 <description>Use conjugate frequency for wideband A-terms
 
@@ -1008,7 +1008,7 @@
       <value type="bool">False</value>
     </param>
 
-    <param subparam="true" name="cfcache" type="string">
+    <param type="string" name="cfcache" subparam="true">
            <shortdescription>Convolution function cache directory name</shortdescription>
 <description>Convolution function cache directory name
 
@@ -1033,14 +1033,14 @@
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="usepointing" type="bool">
+    <param type="bool" name="usepointing" subparam="true">
      <shortdescription>The parameter makes the gridder utilize the pointing table phase directions while computing the residual image.</shortdescription>
 <description>The usepointing flag informs the gridder that it should utilize the pointing table
 to use the correct direction in which the antenna is pointing with respect to the pointing phasecenter. </description>
       <value type="bool">False</value>
     </param>
 
-    <param subparam="true" name="computepastep" type="double">
+    <param type="double" name="computepastep" subparam="true">
      <shortdescription>Parallactic angle interval after the AIFs are recomputed (deg)</shortdescription>
 <description>Parallactic angle interval after the AIFs are recomputed (deg)
 
@@ -1057,7 +1057,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">360.0</value>
     </param>
 
-    <param subparam="true" name="rotatepastep" type="double">
+    <param type="double" name="rotatepastep" subparam="true">
      <shortdescription>Parallactic angle interval after which the nearest AIF is rotated (deg) </shortdescription>
 <description>Parallactic angle interval after which the nearest AIF is rotated (deg) 
 
@@ -1076,7 +1076,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
     
     
-    <param subparam="true" name="pointingoffsetsigdev" type="any">
+    <param type="any" name="pointingoffsetsigdev" subparam="true">
      <shortdescription> Pointing offset threshold to determine heterogeneity of pointing corrections for the AWProject gridder</shortdescription>
 <description> 
                          Corrections for heterogenous and time-dependent pointing 
@@ -1136,13 +1136,13 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 </description>
-      <any limittypes="intArray doubleArray" type="variant"/>
-      <value type="doubleArray"/>
+      <type>intVec</type><type>doubleVec</type>
+      <value type="doubleVec"/>
     </param>   
     
     
 
-    <param subparam="true" name="pblimit" type="double">
+    <param type="double" name="pblimit" subparam="true">
      <shortdescription>PB gain level at which to cut off normalizations </shortdescription>
 <description>PB gain level at which to cut off normalizations
 
@@ -1166,7 +1166,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">0.2</value>
     </param>
 
-    <param subparam="true" name="normtype" type="string">
+    <param type="string" name="normtype" subparam="true">
      <shortdescription>Normalization type (flatnoise, flatsky,pbsquare)</shortdescription>
 <description>Normalization type (flatnoise, flatsky, pbsquare)
 
@@ -1202,7 +1202,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 
-    <param name="deconvolver" type="string">
+    <param type="string" name="deconvolver">
       <shortdescription>Minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes)</shortdescription>
 <description>Name of minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes)
 
@@ -1286,7 +1286,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       </allowed>
     </param>
 
-    <param subparam="true" name="scales" type="any">
+    <param type="any" name="scales" subparam="true">
            <shortdescription>List of scale sizes (in pixels) for multi-scale algorithms</shortdescription>
      <description>List of scale sizes (in pixels) for multi-scale and mtmfs algorithms.
                                   --&gt;  scales=[0,6,20]
@@ -1306,11 +1306,11 @@ to use the correct direction in which the antenna is pointing with respect to th
                                   instrument is sensitive to is unconstrained by the data making
                                   it harder to recovery from errors during the minor cycle).
      </description>
-      <any limittypes="intArray doubleArray" type="variant"/>
-      <value type="intArray"/>
+      <type>intVec</type><type>doubleVec</type>
+      <value type="intVec"/>
     </param>
 
-    <param subparam="true" name="nterms" type="int">
+    <param type="int" name="nterms" subparam="true">
      <shortdescription>Number of Taylor coefficients in the spectral model</shortdescription>
 <description>Number of Taylor coefficients in the spectral model
 
@@ -1359,7 +1359,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="int">2</value>
     </param>
 
-    <param subparam="true" name="smallscalebias" type="double">
+    <param type="double" name="smallscalebias" subparam="true">
      <shortdescription>Biases the scale selection when using multi-scale or mtmfs deconvolvers </shortdescription>
      <description>A numerical control to bias the scales when using multi-scale or mtmfs algorithms.
                       The peak from each scale's smoothed residual is
@@ -1376,7 +1376,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
 
-    <param name="restoration" type="bool">
+    <param type="bool" name="restoration">
      <shortdescription>Do restoration steps (or not)</shortdescription>
 <description> Restore the model image.
 
@@ -1395,7 +1395,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
 
-    <param subparam="true" name="restoringbeam" type="any">
+    <param type="any" name="restoringbeam" subparam="true">
            <shortdescription>Restoring beam shape to use. Default is the PSF main lobe</shortdescription>
 <description> Restoring beam shape/size to use.
 
@@ -1417,11 +1417,11 @@ to use the correct direction in which the antenna is pointing with respect to th
                                   residuals that have been convolved to the same target resolution.
 
 </description>
-      <any limittypes="string stringArray" type="variant"/>
-      <value type="stringArray"/>
+      <type>string</type><type>stringVec</type>
+      <value type="stringVec"/>
     </param>
 
-    <param subparam="true" name="pbcor" type="bool">
+    <param type="bool" name="pbcor" subparam="true">
      <shortdescription>Apply PB correction on the output restored image</shortdescription>
 <description> Apply PB correction on the output restored image
 
@@ -1453,7 +1453,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 
-    <param name="outlierfile" type="string">
+    <param type="string" name="outlierfile">
      <shortdescription>Name of outlier-field image definitions</shortdescription>
 <description>Name of outlier-field image definitions
 
@@ -1513,7 +1513,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 
-    <param name="weighting" type="string">
+    <param type="string" name="weighting">
            <shortdescription>Weighting scheme (natural,uniform,briggs, briggsabs[experimental], briggsbwtaper[experimental])</shortdescription>
 <description>Weighting scheme (natural,uniform,briggs,superuniform,radial, briggsabs, briggsbwtaper)
 
@@ -1602,7 +1602,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
     </param>
 
-    <param subparam="true" name="robust" type="double">
+    <param type="double" name="robust" subparam="true">
            <shortdescription>Robustness parameter</shortdescription>
 <description>Robustness parameter for Briggs weighting.
 
@@ -1618,13 +1618,13 @@ to use the correct direction in which the antenna is pointing with respect to th
       </allowed>
     </param>
 
-    <param subparam="true" name="noise" type="any"><shortdescription>noise parameter for briggs abs mode weighting</shortdescription><description>noise parameter for briggs abs mode weighting</description>
+    <param type="any" name="noise" subparam="true"><shortdescription>noise parameter for briggs abs mode weighting</shortdescription><description>noise parameter for briggs abs mode weighting</description>
       
       <any type="variant"/>
       <value type="string">1.0Jy</value>
     </param>
     
-    <param subparam="true" name="npixels" type="int">
+    <param type="int" name="npixels" subparam="true">
            <shortdescription>Number of pixels to determine uv-cell size </shortdescription>
 <description>Number of pixels to determine uv-cell size for super-uniform weighting
                       (0 defaults to -/+ 3 pixels)
@@ -1646,7 +1646,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 
-    <param subparam="true" name="uvtaper" type="stringArray">
+    <param type="stringVec" name="uvtaper" subparam="true">
      <shortdescription>uv-taper on outer baselines in uv-plane</shortdescription>
 <description>uv-taper on outer baselines in uv-plane
 
@@ -1683,7 +1683,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 
-    <param name="niter" type="int">
+    <param type="int" name="niter">
      <shortdescription>Maximum number of iterations</shortdescription>
 <description>Maximum number of iterations
 
@@ -1734,7 +1734,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="int">0</value>
     </param>
 
-    <param subparam="true" name="gain" type="double">
+    <param type="double" name="gain" subparam="true">
      <shortdescription>Loop gain</shortdescription>
 <description>Loop gain
 
@@ -1755,7 +1755,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">0.1</value>
     </param>
 
-    <param subparam="true" name="threshold" type="any">
+    <param type="any" name="threshold" subparam="true">
      <shortdescription>Stopping threshold </shortdescription>
 <description>Stopping threshold (number in units of Jy, or string)
 
@@ -1793,7 +1793,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">0.0</value>
     </param>
 
-    <param subparam="true" name="nsigma" type="double">
+    <param type="double" name="nsigma" subparam="true">
      <shortdescription>Multiplicative factor for rms-based threshold stopping</shortdescription>
 <description>Multiplicative factor for rms-based threshold stopping
 
@@ -1811,7 +1811,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">0.0</value>
     </param>
 
-    <param subparam="true" name="cycleniter" type="int">
+    <param type="int" name="cycleniter" subparam="true">
      <shortdescription>Maximum number of minor-cycle iterations</shortdescription>
 <description>Maximum number of minor-cycle iterations (per plane) before triggering
                        a major cycle
@@ -1831,7 +1831,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="int">-1</value>
     </param>
 
-    <param subparam="true" name="cyclefactor" type="double">
+    <param type="double" name="cyclefactor" subparam="true">
      <shortdescription>Scaling on PSF sidelobe level to compute the minor-cycle stopping threshold.</shortdescription>
 <description>Scaling on PSF sidelobe level to compute the minor-cycle stopping threshold.
 
@@ -1848,7 +1848,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">1.0</value>
     </param>
 
-    <param subparam="true" name="minpsffraction" type="double">
+    <param type="double" name="minpsffraction" subparam="true">
      <shortdescription>PSF fraction that marks the max depth of cleaning in the minor cycle</shortdescription>
 <description>PSF fraction that marks the max depth of cleaning in the minor cycle
 
@@ -1862,7 +1862,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">0.05</value>
     </param>
 
-    <param subparam="true" name="maxpsffraction" type="double">
+    <param type="double" name="maxpsffraction" subparam="true">
      <shortdescription>PSF fraction that marks the minimum depth of cleaning in the minor cycle </shortdescription>
 <description>PSF fraction that marks the minimum depth of cleaning in the minor cycle
 
@@ -1879,7 +1879,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
 
-    <param subparam="true" name="interactive" type="any">
+    <param type="any" name="interactive" subparam="true">
      <shortdescription>Modify masks and parameters at runtime</shortdescription>
 <description>Modify masks and parameters at runtime
 
@@ -1935,7 +1935,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                          return an imaging summary dictionary to python ]
 
 </description>
-      <any limittypes="bool int" type="variant"/>
+      <type>bool</type><type>int</type>
       <value type="bool">False</value>
     </param>
 
@@ -1944,7 +1944,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
     
 
-    <param name="usemask" type="string">
+    <param type="string" name="usemask">
            <shortdescription>Type of mask(s) for deconvolution:  user, pb, or auto-multithresh</shortdescription>
 
 <description>Type of mask(s) to be used for deconvolution
@@ -1988,7 +1988,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
     
-    <param subparam="true" name="mask" type="any">
+    <param type="any" name="mask" subparam="true">
      <shortdescription>Mask (a list of image name(s) or region file(s) or region string(s) )</shortdescription>
 <description>Mask (a list of image name(s) or region file(s) or region string(s)
 
@@ -2043,12 +2043,12 @@ to use the correct direction in which the antenna is pointing with respect to th
 </description>
 
 
-      <any limittypes="string stringArray" type="variant"/>
+      <type>string</type><type>stringVec</type>
       <value type="string"/>
     </param>
 
 
-    <param subparam="true" name="pbmask" type="double">
+    <param type="double" name="pbmask" subparam="true">
      <shortdescription>primary beam mask</shortdescription>
 <description>Sub-parameter for usemask='auto-multithresh': primary beam mask
 
@@ -2062,14 +2062,14 @@ to use the correct direction in which the antenna is pointing with respect to th
     
     
     
-    <param subparam="true" name="sidelobethreshold" type="double">
+    <param type="double" name="sidelobethreshold" subparam="true">
            <shortdescription>sidelobethreshold *  the max sidelobe level * peak residual</shortdescription>
            <value type="double">3.0</value>
 <description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on sidelobe levels:  sidelobethreshold * max_sidelobe_level * peak residual
 
 </description>
     </param>
-    <param subparam="true" name="noisethreshold" type="double">
+    <param type="double" name="noisethreshold" subparam="true">
     <shortdescription>noisethreshold * rms in residual image + location(median) </shortdescription>
            <value type="double">5.0</value>
 <description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on the noise level: noisethreshold * rms + location (=median)
@@ -2077,7 +2077,7 @@ to use the correct direction in which the antenna is pointing with respect to th
               The rms is calculated from MAD with rms = 1.4826*MAD.
 </description>
     </param>
-    <param subparam="true" name="lownoisethreshold" type="double">
+    <param type="double" name="lownoisethreshold" subparam="true">
     <shortdescription>lownoisethreshold * rms in residual image + location(median) </shortdescription>
            <value type="double">1.5</value>
 <description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold to grow previously masked regions via binary dilation:   lownoisethreshold * rms in residual image + location (=median)
@@ -2085,7 +2085,7 @@ to use the correct direction in which the antenna is pointing with respect to th
               The rms is calculated from MAD with rms = 1.4826*MAD.
 </description>
     </param>
-    <param subparam="true" name="negativethreshold" type="double">
+    <param type="double" name="negativethreshold" subparam="true">
            <shortdescription>negativethreshold * rms in residual image + location(median) </shortdescription>
            <value type="double">0.0</value>
 <description>Sub-parameter for &quot;auto-multithresh&quot;: mask threshold  for negative features: -1.0* negativethreshold * rms + location(=median)
@@ -2093,47 +2093,47 @@ to use the correct direction in which the antenna is pointing with respect to th
               The rms is calculated from MAD with rms = 1.4826*MAD.
 </description>
     </param>
-    <param subparam="true" name="smoothfactor" type="double">
+    <param type="double" name="smoothfactor" subparam="true">
            <shortdescription>smoothing factor in a unit of the beam</shortdescription>
            <value type="double">1.0</value>
 <description>Sub-parameter for &quot;auto-multithresh&quot;:  smoothing factor in a unit of the beam
 </description>
     </param>
-    <param subparam="true" name="minbeamfrac" type="double">
+    <param type="double" name="minbeamfrac" subparam="true">
            <shortdescription>minimum beam fraction for pruning</shortdescription>
            <value type="double">0.3</value>
 <description>Sub-parameter for &quot;auto-multithresh&quot;:  minimum beam fraction in size to prune masks smaller than mimbeamfrac * beam
                        &lt;=0.0 : No pruning
 </description>
     </param>
-    <param subparam="true" name="cutthreshold" type="double">
+    <param type="double" name="cutthreshold" subparam="true">
            <shortdescription>threshold to cut the smoothed mask to create a final mask</shortdescription>
            <value type="double">0.01</value>
 <description>Sub-parameter for &quot;auto-multithresh&quot;: threshold to cut the smoothed mask to create a final mask: cutthreshold * peak of the smoothed mask
 </description>
     </param>
-    <param subparam="true" name="growiterations" type="int">
+    <param type="int" name="growiterations" subparam="true">
            <shortdescription>number of binary dilation iterations for growing the mask</shortdescription>
            <value type="int">75</value>
 <description>Sub-parameter for &quot;auto-multithresh&quot;: Maximum number of iterations to perform using binary dilation for growing the mask
 </description>
     </param>
 
-    <param subparam="true" name="dogrowprune" type="bool">
+    <param type="bool" name="dogrowprune" subparam="true">
            <shortdescription>Do pruning on the grow mask</shortdescription>
            <value type="bool">True</value>
 <description>Experimental sub-parameter for &quot;auto-multithresh&quot;: Do pruning on the grow mask
 </description>
     </param>
 
-    <param subparam="true" name="minpercentchange" type="double">
+    <param type="double" name="minpercentchange" subparam="true">
            <shortdescription>minimum percentage change in mask size (per channel plane) to trigger updating of mask by automask </shortdescription>
            <value type="double">-1.0</value>
 <description>If the change in the mask size in a particular channel is less than minpercentchange, stop masking that channel in subsequent cycles. This check is only applied when noise based threshold is used and when the previous clean major cycle had a cyclethreshold value equal to the clean threshold. Values equal to -1.0 (or any value less than 0.0) will turn off this check (the default). Automask will still stop masking if the current channel mask is an empty mask and the noise threshold was used to determine the mask.
 </description>
     </param>
 
-    <param subparam="true" name="verbose" type="bool">
+    <param type="bool" name="verbose" subparam="true">
            <shortdescription>True: print more automasking information in the logger</shortdescription>
            <value type="bool">False</value>
 <description> If it is set to True, the summary of automasking at the end of each automasking process
@@ -2154,7 +2154,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                         Note that for a large cube, extra logging may slow down the process.
 </description>
     </param>
-    <param name="fastnoise" type="bool">
+    <param type="bool" name="fastnoise">
            <shortdescription>True: use the faster (old) noise calculation. False: use the new improved noise calculations</shortdescription>
            <value type="bool">True</value>
 <description> Only relevant when automask (user='multi-autothresh') and/or n-sigma stopping threshold (nsigma&gt;0.0) are/is used. If it is set to True,  a simpler but faster noise calucation is used. 
@@ -2178,7 +2178,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 
-    <param name="restart" type="bool">
+    <param type="bool" name="restart">
      <shortdescription>True : Re-use existing images. False : Increment imagename</shortdescription>
 <description> Restart using existing images (and start from an existing model image)
                         or automatically increment the image name and make a new image set.
@@ -2234,7 +2234,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
 
-    <param name="savemodel" type="string">
+    <param type="string" name="savemodel">
      <shortdescription>Options to save model visibilities (none, virtual, modelcolumn)</shortdescription>
 <description>Options to save model visibilities (none, virtual, modelcolumn)
 
@@ -2294,7 +2294,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 
-    <param name="calcres" type="bool">
+    <param type="bool" name="calcres">
      <shortdescription>Calculate initial residual image</shortdescription>
 <description>Calculate initial residual image
 
@@ -2321,7 +2321,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
 
-    <param name="calcpsf" type="bool">
+    <param type="bool" name="calcpsf">
       <shortdescription>Calculate PSF</shortdescription>
       <description>Calculate PSF
 
@@ -2334,7 +2334,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
     
     
-    <param subparam="true" name="psfcutoff" type="double">
+    <param type="double" name="psfcutoff" subparam="true">
         <shortdescription> All pixels in the main lobe of the PSF above psfcutoff are used to fit a Gaussian beam (the Clean beam).</shortdescription>
         <description>
             When the .psf image is created a 2 dimensional Gaussian is fit to the main lobe of the PSF.
@@ -2359,17 +2359,13 @@ to use the correct direction in which the antenna is pointing with respect to th
             (This is not the support size for clark clean.)
         </description>
         <value type="double">0.35</value>
-<!--       <allowed kind="range">
-          <value range="min">0.01</value>
-          <value range="max">0.99</value>
-          </allowed>
--->
+
     </param>
     
     
   
 
-    <param name="parallel" type="bool">
+    <param type="bool" name="parallel">
       <shortdescription>Run major cycles in parallel</shortdescription>
       <description>Run major cycles in parallel (this feature is experimental)
 
@@ -2414,14 +2410,14 @@ to use the correct direction in which the antenna is pointing with respect to th
    <constraints>
 
      <when param="calcpsf">
-           <equals value="True" type="bool">
+           <equals type="bool" value="True">
              <default param="psfcutoff"><value>0.35</value></default>
            </equals>
     </when>
     
 
      <when param="selectdata">
-      <equals value="True" type="bool">
+      <equals type="bool" value="True">
          <default param="field"><value>&quot;&quot;</value></default>
          <default param="spw"><value>&quot;&quot;</value></default>
          <default param="timerange"><value>&quot;&quot;</value></default>
@@ -2436,11 +2432,11 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
      <when param="specmode">
-       <equals value="mfs" type="string">
+       <equals type="string" value="mfs">
          <default param="reffreq"><value>&quot;&quot;</value></default>
 
        </equals>
-       <equals value="cube" type="string">
+       <equals type="string" value="cube">
          <default param="nchan"><value>-1</value></default>
          <default param="start"><value>&quot;&quot;</value></default>
          <default param="width"><value>&quot;&quot;</value></default>
@@ -2450,7 +2446,7 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="interpolation"><value>&quot;linear&quot;</value></default>
          <default param="perchanweightdensity"><value>True</value></default>
        </equals>
-       <equals value="cubesource" type="string">
+       <equals type="string" value="cubesource">
          <default param="nchan"><value>-1</value></default>
          <default param="start"><value>&quot;&quot;</value></default>
          <default param="width"><value>&quot;&quot;</value></default>
@@ -2461,7 +2457,7 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="perchanweightdensity"><value>True</value></default>
        </equals>
        
-       <equals value="cubedata" type="string">
+       <equals type="string" value="cubedata">
          <default param="nchan"><value>-1</value></default>
          <default param="start"><value>&quot;&quot;</value></default>
          <default param="width"><value>&quot;&quot;</value></default>
@@ -2473,27 +2469,27 @@ to use the correct direction in which the antenna is pointing with respect to th
      </when>
 
      <when param="gridder">
-       <equals value="standard" type="string">
+       <equals type="string" value="standard">
          <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
-       <equals value="widefield" type="string">
+       <equals type="string" value="widefield">
          <default param="wprojplanes"><value>1</value></default>
          <default param="facets"><value>1</value></default>
          <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
-       <equals value="wproject" type="string">
+       <equals type="string" value="wproject">
          <default param="wprojplanes"><value>1</value></default>
          <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
-       <equals value="wprojectft" type="string">
+       <equals type="string" value="wprojectft">
          <default param="wprojplanes"><value>1</value></default>
          <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
-       <equals value="mosaic" type="string">
+       <equals type="string" value="mosaic">
          <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
          <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="usepointing"><value>False</value></default> 
@@ -2502,7 +2498,7 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="conjbeams"><value>False</value></default>
          <default param="psfphasecenter"><value>&quot;&quot;</value></default>
        </equals>
-       <equals value="mosaicft" type="string">
+       <equals type="string" value="mosaicft">
          <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
          <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="usepointing"><value>False</value></default>
@@ -2511,20 +2507,20 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="conjbeams"><value>False</value></default>
          <default param="psfphasecenter"><value>&quot;&quot;</value></default>
        </equals>
-       <equals value="ftmosaic" type="string">
+       <equals type="string" value="ftmosaic">
          <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
          <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="usepointing"><value>False</value></default>
          <default param="mosweight"><value>True</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
-       <equals value="imagemosaic" type="string">
+       <equals type="string" value="imagemosaic">
          <default param="wprojplanes"><value>1</value></default>
          <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
          <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
-       <equals value="awproject" type="string">
+       <equals type="string" value="awproject">
 	 <default param="wprojplanes"><value>1</value></default>
 	 <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
 	 <default param="psterm"><value>False</value></default>
@@ -2532,7 +2528,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 	 <default param="cfcache"><value>&quot;&quot;</value></default>
 	 <default param="computepastep"><value>360.0</value></default>
 	 <default param="rotatepastep"><value>360.0</value></default>
-         <default param="pointingoffsetsigdev"><value type="doubleArray"/></default>
+         <default param="pointingoffsetsigdev"><value type="doubleVec"/></default>
 	 <default param="wbawp"><value>True</value></default>
 	 <default param="mosweight"><value>False</value></default>
 	 
@@ -2541,7 +2537,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 	 <default param="mosweight"><value>False</value></default>
 	 <default param="usepointing"><value>False</value></default>
        </equals>
-       <equals value="awprojectft" type="string">
+       <equals type="string" value="awprojectft">
 	 <default param="wprojplanes"><value>1</value></default>
 	 <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
 	 <default param="psterm"><value>False</value></default>
@@ -2549,7 +2545,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 	 <default param="cfcache"><value>&quot;&quot;</value></default>
 	 <default param="computepastep"><value>360.0</value></default>
 	 <default param="rotatepastep"><value>360.0</value></default>
-         <default param="pointingoffsetsigdev"><value type="doubleArray"/></default>
+         <default param="pointingoffsetsigdev"><value type="doubleVec"/></default>
 	 <default param="wbawp"><value>True</value></default>
 	 <default param="mosweight"><value>False</value></default>
 
@@ -2560,23 +2556,23 @@ to use the correct direction in which the antenna is pointing with respect to th
      </when>
 
      <when param="weighting">
-       <equals value="natural" type="string">
+       <equals type="string" value="natural">
          <default param="uvtaper"><value>[]</value></default>
        </equals>
-       <equals value="uniform" type="string">
+       <equals type="string" value="uniform">
        </equals>
-       <equals value="briggs" type="string">
+       <equals type="string" value="briggs">
          <default param="robust"><value>0.5</value></default>
          <default param="npixels"><value>0</value></default>
          <default param="uvtaper"><value>[]</value></default>
        </equals>
-       <equals value="briggsabs" type="string">
+       <equals type="string" value="briggsabs">
          <default param="robust"><value>0.5</value></default>
          <default param="noise"><value>&quot;1.0Jy&quot;</value></default>
          <default param="npixels"><value>0</value></default>
          <default param="uvtaper"><value>[]</value></default>
        </equals>
-       <equals value="briggsbwtaper" type="string">
+       <equals type="string" value="briggsbwtaper">
          <default param="robust"><value>0.5</value></default>
          <default param="uvtaper"><value>[]</value></default>
        </equals>
@@ -2585,32 +2581,32 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
      <when param="deconvolver">
-       <equals value="hogbom" type="string">
+       <equals type="string" value="hogbom">
        </equals>
-       <equals value="clark" type="string">
+       <equals type="string" value="clark">
        </equals>
-       <equals value="multiscale" type="string">
-         <default param="scales"><value type="intArray"/></default>
+       <equals type="string" value="multiscale">
+         <default param="scales"><value type="intVec"/></default>
          <default param="smallscalebias"><value>0.0</value></default>
        </equals>
-       <equals value="mtmfs" type="string">
-         <default param="scales"><value type="intArray"/></default>
+       <equals type="string" value="mtmfs">
+         <default param="scales"><value type="intVec"/></default>
          <default param="nterms"><value>2</value></default>
 	 <default param="smallscalebias"><value>0.0</value></default>
        </equals>
-       <equals value="aasp" type="string">
+       <equals type="string" value="aasp">
        </equals>
      </when>
 
      <when param="restoration">
-       <equals value="True" type="bool">
-         <default param="restoringbeam"><value type="stringArray"/></default>
+       <equals type="bool" value="True">
+         <default param="restoringbeam"><value type="stringVec"/></default>
          <default param="pbcor"><value>False</value></default>
        </equals>
      </when>
 
      <when param="niter">
-       <notequals value="0" type="int">
+       <notequals type="int" value="0">
          <default param="gain"><value>0.1</value></default>
          <default param="threshold"><value>0.0</value></default>
          <default param="nsigma"><value>0.0</value></default>
@@ -2629,11 +2625,11 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
    <when param="usemask">
-       <equals value="user" type="string">
+       <equals type="string" value="user">
          <default param="mask"><value>&quot;&quot;</value></default>
          <default param="pbmask"><value>0.0</value></default>
        </equals>
-       <equals value="pb" type="string">
+       <equals type="string" value="pb">
          <default param="pbmask"><value type="double">0.2</value></default>
        </equals>
        
@@ -2641,7 +2637,7 @@ to use the correct direction in which the antenna is pointing with respect to th
        
        
        
-       <equals value="auto-multithresh" type="string">
+       <equals type="string" value="auto-multithresh">
          <default param="pbmask"><value>0.2</value></default>
          <default param="sidelobethreshold"><value>3.0</value></default>
          <default param="noisethreshold"><value>5.0</value></default>

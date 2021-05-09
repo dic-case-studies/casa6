@@ -1,14 +1,14 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="calibration" name="initweights" type="function">
+<task type="function" name="initweights" category="calibration">
       <shortdescription>Initializes weight information in the MS</shortdescription>
 
 <input>
-      <param mustexist="true" name="vis" type="string"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
+      <param type="path" name="vis" mustexist="true"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
             
             <value/>
       </param>
-      <param name="wtmode" type="string"><shortdescription>Initialization mode</shortdescription><description>Initialization mode</description>
+      <param type="string" name="wtmode"><shortdescription>Initialization mode</shortdescription><description>Initialization mode</description>
             
             <value>nyq</value>
                 <allowed kind="enum">
@@ -22,27 +22,27 @@
                        <value>tinttsys</value>
                 </allowed>
       </param>
-      <param subparam="true" mustexist="false" name="tsystable" type="string"><shortdescription>Tsys calibration table to apply on the fly</shortdescription><description>Tsys calibration table to apply on the fly</description>
+      <param type="path" name="tsystable" mustexist="false" subparam="true"><shortdescription>Tsys calibration table to apply on the fly</shortdescription><description>Tsys calibration table to apply on the fly</description>
             
             <value/>
       </param>
 
-      <param subparam="true" name="gainfield" type="string"><shortdescription>Select a subset of calibrators from Tsys table</shortdescription><description>Select a subset of calibrators from Tsys table</description>
+      <param type="string" name="gainfield" subparam="true"><shortdescription>Select a subset of calibrators from Tsys table</shortdescription><description>Select a subset of calibrators from Tsys table</description>
             
             <value/>
       </param>
 
-      <param subparam="true" name="interp" type="string"><shortdescription>Interpolation type in time[,freq]. default==\'linear,linear\'</shortdescription><description>Interpolation type in time[,freq]. default==\'linear,linear\'</description>
+      <param type="string" name="interp" subparam="true"><shortdescription>Interpolation type in time[,freq]. default==\'linear,linear\'</shortdescription><description>Interpolation type in time[,freq]. default==\'linear,linear\'</description>
             
             <value/>
       </param>
 
-      <param subparam="true" name="spwmap" type="intArray"><shortdescription>Spectral windows combinations to form for gaintable(s)</shortdescription><description>Spectral windows combinations to form for gaintable(s)</description>
+      <param type="intVec" name="spwmap" subparam="true"><shortdescription>Spectral windows combinations to form for gaintable(s)</shortdescription><description>Spectral windows combinations to form for gaintable(s)</description>
             
             <value/>
       </param>
 
-      <param name="dowtsp" type="bool"><shortdescription>Initialize the WEIGHT_SPECTRUM column</shortdescription><description>Initialize the WEIGHT_SPECTRUM column</description>
+      <param type="bool" name="dowtsp"><shortdescription>Initialize the WEIGHT_SPECTRUM column</shortdescription><description>Initialize the WEIGHT_SPECTRUM column</description>
             
             <value>False</value>
       </param>
@@ -59,13 +59,13 @@
                         <default param="tsystable"><value type="string"/></default>
                         <default param="gainfield"><value type="string"/></default>
                         <default param="interp"><value type="string"/></default>
-                        <default param="spwmap"><value type="intArray"/></default>
+                        <default param="spwmap"><value type="intVec"/></default>
             </equals>
                 <equals value="tinttsys">
                         <default param="tsystable"><value type="string"/></default>
                         <default param="gainfield"><value type="string"/></default>
                         <default param="interp"><value type="string"/></default>
-                        <default param="spwmap"><value type="intArray"/></default>
+                        <default param="spwmap"><value type="intVec"/></default>
             </equals>
         </when>
    </constraints>

@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="gaincal" category="calibration">
+<task category="calibration" name="gaincal" type="function">
 <shortdescription>Determine temporal gains from calibrator observations</shortdescription>
 <description>
 The complex gains for each antenna/spwid are determined from the data
@@ -19,27 +14,27 @@ be applied on the fly. At present with dual-polarized data, both
 polarizations must be unflagged for any solution to be obtained.
 </description>
 <input>
-    <param type="string" name="vis" mustexist="true">
+    <param mustexist="true" name="vis" type="path">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="string" name="caltable">
+    <param name="caltable" type="string">
 <shortdescription>Name of output gain calibration table</shortdescription>
 <description>Name of output gain calibration table
                      Default: none
 
                         Example: caltable='ngc5921.gcal'
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="string" name="field">
+    <param name="field" type="string">
 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
 <description>Select field using field id(s) or field name(s)
                      Default: '' (all fields)
@@ -57,10 +52,10 @@ polarizations must be unflagged for any solution to be obtained.
                         field = '3,4C*'; field id 3, all names
                         starting with 4C
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="string" name="spw">
+    <param name="spw" type="string">
 <shortdescription>Select spectral window/channels</shortdescription>
 <description>Select spectral window/channels
                      Default: '' (all spectral windows and channels)
@@ -83,10 +78,10 @@ polarizations must be unflagged for any solution to be obtained.
                         spw='0:0~10^2,1:20~30^5'; spw 0, channels
                         0,2,4,6,8,10, spw 1, channels 20,25,30 
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="string" name="intent">
+    <param name="intent" type="string">
 <shortdescription>Select observing intent</shortdescription>
 <description>Select observing intent
                      Default: '' (no selection by intent)
@@ -94,10 +89,10 @@ polarizations must be unflagged for any solution to be obtained.
                         Example: intent='*BANDPASS*'  (selects data
                         labelled with BANDPASS intent)
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="bool" name="selectdata">
+    <param name="selectdata" type="bool">
 <shortdescription>Other data selection parameters</shortdescription>
 <description>Other data selection parameters
                      Default: True
@@ -106,7 +101,7 @@ polarizations must be unflagged for any solution to be obtained.
         <value>True</value>
     </param>
 
-    <param type="string" name="timerange" subparam="true">
+    <param subparam="true" name="timerange" type="string">
 <shortdescription>Select data based on time range</shortdescription>
 <description>Select data based on time range
                      Subparameter of selectdata=True
@@ -123,26 +118,26 @@ polarizations must be unflagged for any solution to be obtained.
                         hr 30min on NEXT day
                         timerange='09:44:00' pick data within one
                         integration of time
-                        timerange='>10:24:00' data after this time
+                        timerange='&gt;10:24:00' data after this time
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="any" name="uvrange" subparam="true">
+    <param subparam="true" name="uvrange" type="any">
 <shortdescription>Select data by baseline length.</shortdescription>
 <description>Select data by baseline length.
                      Default = '' (all)
 
                         Examples:
                         uvrange='0~1000klambda'; uvrange from 0-1000 kilo-lambda
-                        uvrange='>4klambda';uvranges greater than 4 kilo-lambda
+                        uvrange='&gt;4klambda';uvranges greater than 4 kilo-lambda
                         uvrange='0~1000km'; uvrange in kilometers
 </description>
         <any type="variant"/>
-        <value type="string"></value>
+        <value type="string"/>
     </param>
 
-    <param type="string" name="antenna" subparam="true">
+    <param subparam="true" name="antenna" type="string">
 <shortdescription>Select data based on antenna/baseline</shortdescription>
 <description>Select data based on antenna/baseline
                      Subparameter of selectdata=True
@@ -166,10 +161,10 @@ polarizations must be unflagged for any solution to be obtained.
                          antenna='5,6,10'; all baselines with antennas
                          5,6,10 index numbers
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="string" name="scan" subparam="true">
+    <param subparam="true" name="scan" type="string">
 <shortdescription>Scan number range</shortdescription>
 <description>Scan number range
                      Subparameter of selectdata=True
@@ -178,10 +173,10 @@ polarizations must be unflagged for any solution to be obtained.
                      Check 'go listobs' to insure the scan numbers are
                      in order.
 </description>
-        <value></value>
+        <value/>
     </param>
 
-        <param type="any" name="observation" subparam="true">
+        <param subparam="true" name="observation" type="any">
 <shortdescription>Select by observation ID(s)</shortdescription>
 <description>Select by observation ID(s)
                      Subparameter of selectdata=True
@@ -189,17 +184,17 @@ polarizations must be unflagged for any solution to be obtained.
 
                          Example: observation='0~2,4'
 </description>
-        <any type="variant" limittypes="string int"/>
-        <value type="string"></value>
+        <type>string</type><type>int</type>
+        <value type="string"/>
         </param>
 
-    <param type="string" name="msselect" subparam="true">
+    <param subparam="true" name="msselect" type="string">
 <shortdescription>Optional complex data selection (ignore for now)</shortdescription>
 <description>Optional complex data selection (ignore for now)</description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="any" name="solint">
+    <param name="solint" type="any">
 <shortdescription>Solution interval</shortdescription>
 <description>Solution interval
                      Default: 'inf' (infinite, up to boundaries
@@ -219,7 +214,7 @@ polarizations must be unflagged for any solution to be obtained.
         <value type="string">inf</value>
     </param>
 
-    <param type="string" name="combine">
+    <param name="combine" type="string">
 <shortdescription>Data axes which to combine for solve (obs, scan, spw, and/or field)</shortdescription>
 <description>Data axes which to combine for solve
                      Default: 'scan' (solutions will break at obs,
@@ -231,10 +226,10 @@ polarizations must be unflagged for any solution to be obtained.
                         over scan boundaries (up to the solint), and
                         combine spws for solving
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="double" name="preavg">
+    <param name="preavg" type="double">
 <shortdescription>Pre-averaging interval (sec) (rarely needed)</shortdescription>
 <description>Pre-averaging interval (sec)
                      Default: -1.0 (none)
@@ -245,7 +240,7 @@ polarizations must be unflagged for any solution to be obtained.
         <value>-1.0</value>
     </param>
 
-    <param type="string" name="refant">
+    <param name="refant" type="string">
 <shortdescription>Reference antenna name(s)</shortdescription>
 <description>Reference antenna name(s); a prioritized list may be
 specified
@@ -260,10 +255,10 @@ specified
 
                      Use taskname=listobs for antenna listing
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="string" name="refantmode">
+    <param name="refantmode" type="string">
 <shortdescription>Reference antenna mode</shortdescription>
 <description>Reference antenna mode
 </description>
@@ -274,7 +269,7 @@ specified
         </allowed>
     </param>
 
-    <param type="int" name="minblperant">
+    <param name="minblperant" type="int">
 <shortdescription>Minimum baselines _per antenna_ required for solve</shortdescription>
 <description>Minimum number of baselines required per antenna for each
 solve
@@ -283,7 +278,7 @@ solve
                      Antennas with fewer baselines are excluded from
                      solutions.
 
-                        Example: minblperant=10 --> Antennas
+                        Example: minblperant=10 --&gt; Antennas
                         participating on 10 or more baselines are
                         included in the solve
 
@@ -296,7 +291,7 @@ solve
         <value>4</value>
     </param>
 
-    <param type="double" name="minsnr">
+    <param name="minsnr" type="double">
 <shortdescription>Reject solutions below this SNR</shortdescription>
 <description>Reject solutions below this SNR
                      Default: 3.0
@@ -304,7 +299,7 @@ solve
         <value>3.0</value>
     </param>
 
-    <param type="bool" name="solnorm">
+    <param name="solnorm" type="bool">
 <shortdescription>Normalize (squared) solution amplitudes (G, T only)</shortdescription>
 <description>Normalize (squared) solution amplitudes (G, T only)
                      Default: False (no normalization)
@@ -312,7 +307,7 @@ solve
         <value>False</value>
     </param>
 
-    <param type="string" name="normtype" subparam="true">
+    <param subparam="true" name="normtype" type="string">
 <shortdescription>Solution normalization calculation type: mean or median</shortdescription>
 <description>Solution normalization calculation type: mean or median
                      Default: 'mean'
@@ -324,7 +319,7 @@ solve
         </allowed>
     </param>
 
-    <param type="string" name="gaintype">
+    <param name="gaintype" type="string">
 <shortdescription>Type of gain solution (G,T,GSPLINE,K,KCROSS)</shortdescription>
 <description>Type of gain solution (G,T,GSPLINE,K,KCROSS)
                      Default: 'G'
@@ -365,7 +360,7 @@ solve
     </param>
 
 
-        <param type="doubleArray" name="smodel">
+        <param name="smodel" type="doubleVec">
 <shortdescription>Point source Stokes parameters for source model.</shortdescription>
 <description>Point source Stokes parameters for source model
 (experimental).
@@ -373,13 +368,13 @@ solve
 
                         Example: [1,0,0,0] (I=1, unpolarized)
 </description>
-               <value></value>
+               <value/>
         </param>
 
 
-    <param type="string" name="calmode">
-<shortdescription>Type of solution" (\'ap\', \'p\', \'a\')</shortdescription>
-<description>Type of solution" ('ap', 'p', 'a')
+    <param name="calmode" type="string">
+<shortdescription>Type of solution&quot; (\'ap\', \'p\', \'a\')</shortdescription>
+<description>Type of solution&quot; ('ap', 'p', 'a')
                      Default: 'ap' (amp and phase)
                      Options: 'p' (phase) ,'a' (amplitude), 'ap'
                      (amplitude and phase)
@@ -394,21 +389,21 @@ solve
         </allowed>
     </param>
 
-    <param type="string" name="solmode">
+    <param name="solmode" type="string">
 <shortdescription>Robust solving mode: (\'\', \'L1\', \'R\',\'L1R\')</shortdescription>
 <description>Robust solving mode: 
                      Options: '', 'L1', 'R', 'L1R'
 </description>
-        <value></value>
+        <value/>
         <allowed kind="enum">
-            <value></value>
+            <value/>
             <value>L1</value>
             <value>L1R</value>
             <value>R</value>
         </allowed>
     </param>
 
-    <param type="doubleArray" name="rmsthresh">
+    <param name="rmsthresh" type="doubleVec">
 <shortdescription>RMS Threshold sequence (for solmode=\'R\' or \'L1R\'; see help)</shortdescription>
 <description>RMS Threshold sequence
                      Subparameter of solmode='R' or 'L1R'
@@ -416,10 +411,10 @@ solve
                      See CASA Docs for more information
                      (https://casa.nrao.edu/casadocs/)
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="bool" name="corrdepflags">
+    <param name="corrdepflags" type="bool">
 <shortdescription>Respect correlation-dependent flags</shortdescription>
 <description> If False (default), if any correlation is flagged, treat all correlations in
               the visibility vector as flagged when solving (per channel, per baseline).
@@ -442,7 +437,7 @@ solve
         <value>False</value>
     </param>
 
-    <param type="bool" name="append">
+    <param name="append" type="bool">
 <shortdescription>Append solutions to the (existing) table</shortdescription>
 <description>Append solutions to the (existing) table
                      Default: False (overwrite existing table or make
@@ -456,7 +451,7 @@ solve
         <value>False</value>
     </param>
 
-    <param type="double" name="splinetime" subparam="true">
+    <param subparam="true" name="splinetime" type="double">
 <shortdescription>Spline timescale(sec); All spw\'s are first averaged.</shortdescription>
 <description>Spline timescale(sec); All spw\'s are first averaged.
                      Subparameter of gaintype='GSPLINE'
@@ -470,7 +465,7 @@ solve
         <value>3600.0</value>
     </param>
 
-    <param type="int" name="npointaver" subparam="true">
+    <param subparam="true" name="npointaver" type="int">
 <shortdescription>The phase-unwrapping algorithm</shortdescription>
 <description>Tune phase-unwrapping algorithm
                      Subparameter of gaintype='GSPLINE'
@@ -479,7 +474,7 @@ solve
         <value>3</value>
     </param>
 
-    <param type="double" name="phasewrap" subparam="true">
+    <param subparam="true" name="phasewrap" type="double">
 <shortdescription>Wrap the phase for jumps greater than this value (degrees)</shortdescription>
 <description>Wrap the phase for jumps greater than this value
 (degrees)
@@ -489,7 +484,7 @@ solve
         <value>180.0</value>
     </param>
 
-    <param type="bool" name="docallib" >
+    <param name="docallib" type="bool">
 <shortdescription>Use callib or traditional cal apply parameters</shortdescription>
 <description>Control means of specifying the caltables
                      Default: False (Use gaintable, gainfield, interp,
@@ -502,15 +497,15 @@ solve
             <value>False</value>
     </param>
 
-    <param type="string" name="callib" subparam="true" >
+    <param subparam="true" name="callib" type="string">
 <shortdescription>Cal Library filename</shortdescription>
 <description>Specify a file containing cal library directives
                      Subparameter of docallib=True
 </description>
-                <value type="string"></value>
+                <value type="string"/>
     </param>
 
-    <param type="stringArray" name="gaintable" subparam="true">
+    <param subparam="true" name="gaintable" type="stringVec">
 <shortdescription>Gain calibration table(s) to apply on the fly</shortdescription>
 <description>Gain calibration table(s) to apply on the fly
                      Default: '' (none)
@@ -519,15 +514,15 @@ solve
                         gaintable='ngc5921.gcal'
                         gaintable=['ngc5921.ampcal','ngc5921.phcal']
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="stringArray" name="gainfield" subparam="true">
+    <param subparam="true" name="gainfield" type="stringVec">
 <shortdescription>Select a subset of calibrators from gaintable(s)</shortdescription>
 <description>Select a subset of calibrators from gaintable(s)
                      Default: '' (all sources on the sky)
 
-                     'nearest' ==> nearest (on sky) available field in
+                     'nearest' ==&gt; nearest (on sky) available field in
                      table otherwise, same syntax as field
 
                         Examples: 
@@ -536,13 +531,13 @@ solve
                         gainfield=['0~3','4~6'] means use field 0
                         through 3
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="stringArray" name="interp" subparam="true">
+    <param subparam="true" name="interp" type="stringVec">
 <shortdescription>Interpolation parameters for each gaintable, as a list</shortdescription>
 <description>Interpolation parmameters (in time[,freq]) for each gaintable, as a list of strings.
-                     Default: '' --> 'linear,linear' for all gaintable(s)
+                     Default: '' --&gt; 'linear,linear' for all gaintable(s)
                      Options: Time: 'nearest', 'linear'
                               Freq: 'nearest', 'linear', 'cubic',
                               'spline'
@@ -556,7 +551,7 @@ solve
                    * Specifications for frequency are ignored when the
                      calibration table has no channel-dependence. 
                    * Time-dependent interp options ending in 'PD'
-                     enable a "phase delay" correction per spw for
+                     enable a &quot;phase delay&quot; correction per spw for
                      non-channel-dependent calibration types.
                    * For multi-obsId datasets, 'perobs' can be
                      appended to the time-dependent interpolation
@@ -582,10 +577,10 @@ solve
                         interp=['nearest,spline','linear']  (for
                         multiple gaintables)
 </description>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="intArray" name="spwmap" subparam="true">
+    <param subparam="true" name="spwmap" type="intVec">
 <shortdescription>Spectral window mappings to form for gaintable(s)</shortdescription>
 <description>Spectral window mappings to form for gaintable(s)
                      Only used if callib=False
@@ -600,10 +595,10 @@ solve
                           gaintables)
 </description>
         <type>any</type>
-        <value></value>
+        <value/>
     </param>
 
-    <param type="bool" name="parang">
+    <param name="parang" type="bool">
 <shortdescription>Apply parallactic angle correction</shortdescription>
 <description>Apply parallactic angle correction
                      Default: False
@@ -615,7 +610,7 @@ solve
     </param>
    <constraints>
     <when param="selectdata">
-        <equals type="bool" value="True">
+        <equals value="True" type="bool">
             <default param="timerange"><value type="string"/></default>
             <default param="uvrange"><value type="string"/></default>
             <default param="antenna"><value type="string"/></default>
@@ -623,7 +618,7 @@ solve
             <default param="observation"><value type="string"/></default>
             <default param="msselect"><value type="string"/></default>
         </equals>
-        <equals type="bool" value="False"/>
+        <equals value="False" type="bool"/>
     </when>
     <when param="gaintype">
         <equals value="G"/>
@@ -638,19 +633,19 @@ solve
         </equals>
     </when>
         <when param="solnorm">
-        <equals type="bool" value="False"/>
-                <equals type="bool" value="True">
+        <equals value="False" type="bool"/>
+                <equals value="True" type="bool">
                         <default param="normtype"><value type="string">mean</value></default>
         </equals>
         </when>
         <when param="docallib">
-                <equals type="bool" value="False">
-                        <default param="gaintable"><value type="stringArray"/></default>
-                        <default param="gainfield"><value type="stringArray"/></default>
-                        <default param="interp"><value type="stringArray"/></default>
-                        <default param="spwmap"><value type="intArray"/></default>
+                <equals value="False" type="bool">
+                        <default param="gaintable"><value type="stringVec"/></default>
+                        <default param="gainfield"><value type="stringVec"/></default>
+                        <default param="interp"><value type="stringVec"/></default>
+                        <default param="spwmap"><value type="intVec"/></default>
         </equals>
-                <equals type="bool" value="True">
+                <equals value="True" type="bool">
                         <default param="callib"><value type="string"/></default>
         </equals>
         </when>
@@ -664,5 +659,5 @@ https://casa.nrao.edu/casadocs/
 
 </example> 
 
-</task>
+<returns>void</returns></task>
 </casaxml>

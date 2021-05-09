@@ -1,28 +1,28 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
 
-<task category="analysis" name="imtrans" type="function">
+<task type="function" name="imtrans" category="analysis">
 
 <shortdescription>Reorder image axes</shortdescription>
 
 <input>
-    <param mustexist="true" name="imagename" type="string"><shortdescription>Name of the input image which must be specified.</shortdescription><description>Name of the input image which must be specified.</description>
+    <param type="path" name="imagename" mustexist="true"><shortdescription>Name of the input image which must be specified.</shortdescription><description>Name of the input image which must be specified.</description>
             
             <value/>
         <example>imagename='ngc5921.im'</example>
     </param>
 
-    <param name="outfile" type="string"><shortdescription>Name of output CASA image.</shortdescription><description>Name of output CASA image.</description>
+    <param type="string" name="outfile"><shortdescription>Name of output CASA image.</shortdescription><description>Name of output CASA image.</description>
         
         <value/>
         <example>outfile='reordered.im'</example>
     </param>
-    <param name="order" type="any"><shortdescription>New zero-based axes order.</shortdescription><description>New zero-based axes order.</description>
+    <param type="any" name="order"><shortdescription>New zero-based axes order.</shortdescription><description>New zero-based axes order.</description>
         
-        <any limittype="string stringArray int" type="variant"/>
+        <any type="variant" limittype="string stringArray int"/>
         <value type="string"/>
         <example>order=&quot;120&quot;</example>
         <example>order=120</example>

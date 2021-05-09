@@ -1,63 +1,63 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="manipulation, calibration" name="uvmodelfit" type="function">
+<task type="function" name="uvmodelfit" category="manipulation, calibration">
 <shortdescription>Fit a single component source model to the uv data</shortdescription>
 <description>
         Fit a single component source model to the uv data
 </description>
 <input>
-  <param mustexist="true" name="vis" type="string"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
+  <param type="path" name="vis" mustexist="true"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
   
   <value/>
   </param>
 
-  <param name="field" type="string"><shortdescription>Select field using field id(s) or field name(s)</shortdescription><description>Select field using field id(s) or field name(s)</description>
+  <param type="string" name="field"><shortdescription>Select field using field id(s) or field name(s)</shortdescription><description>Select field using field id(s) or field name(s)</description>
   
   <value/>
   </param>
 
-  <param name="spw" type="string"><shortdescription>Select spectral window/channels</shortdescription><description>Select spectral window/channels</description>
+  <param type="string" name="spw"><shortdescription>Select spectral window/channels</shortdescription><description>Select spectral window/channels</description>
   
   <value/>
   </param>
 
-  <param name="selectdata" type="bool"><shortdescription>Other data selection parameters</shortdescription><description>Other data selection parameters</description>
+  <param type="bool" name="selectdata"><shortdescription>Other data selection parameters</shortdescription><description>Other data selection parameters</description>
   
   <value>True</value>
   </param>
 
-  <param subparam="true" name="timerange" type="string"><shortdescription>Select data based on time range</shortdescription><description>Select data based on time range</description>
+  <param type="string" name="timerange" subparam="true"><shortdescription>Select data based on time range</shortdescription><description>Select data based on time range</description>
   
   <value/>
   </param>
 
-  <param subparam="true" name="uvrange" type="any"><shortdescription>Select data within uvrange (default units meters)</shortdescription><description>Select data within uvrange (default units meters)</description>
+  <param type="any" name="uvrange" subparam="true"><shortdescription>Select data within uvrange (default units meters)</shortdescription><description>Select data within uvrange (default units meters)</description>
   
   <any type="variant"/>
   <value type="string"/>
   </param>
 
-  <param subparam="true" name="antenna" type="string"><shortdescription>Select data based on antenna/baseline</shortdescription><description>Select data based on antenna/baseline</description>
+  <param type="string" name="antenna" subparam="true"><shortdescription>Select data based on antenna/baseline</shortdescription><description>Select data based on antenna/baseline</description>
   
   <value/>
   </param>
 
-  <param subparam="true" name="scan" type="string"><shortdescription>Scan number range</shortdescription><description>Scan number range</description>
+  <param type="string" name="scan" subparam="true"><shortdescription>Scan number range</shortdescription><description>Scan number range</description>
   
   <value/>
   </param>
 
-  <param subparam="true" name="msselect" type="string"><shortdescription>Optional complex data selection (ignore for now)</shortdescription><description>Optional complex data selection (ignore for now)</description>
+  <param type="string" name="msselect" subparam="true"><shortdescription>Optional complex data selection (ignore for now)</shortdescription><description>Optional complex data selection (ignore for now)</description>
   
   <value/>
   </param>
 
-  <param name="niter" type="int"><shortdescription>Number of fitting iterations to execute</shortdescription><description>Number of fitting iterations to execute</description>
+  <param type="int" name="niter"><shortdescription>Number of fitting iterations to execute</shortdescription><description>Number of fitting iterations to execute</description>
   
   <value>5</value>
   </param>
 
-  <param name="comptype" type="string"><shortdescription>component model type: P(oint), G(aussian), or D(isk)</shortdescription><description>component model type: P(oint), G(aussian), or D(isk)</description>
+  <param type="string" name="comptype"><shortdescription>component model type: P(oint), G(aussian), or D(isk)</shortdescription><description>component model type: P(oint), G(aussian), or D(isk)</description>
   
   <value>P</value>
   <allowed kind="enum">
@@ -67,7 +67,7 @@
   </allowed>
   </param>
 
-  <param name="sourcepar" type="doubleArray"><shortdescription>Starting guess for component parameters (3 values for type P, 5 for G and D)</shortdescription><description>Starting guess for component parameters (3 values for type P, 5 for G and D)</description>
+  <param type="doubleVec" name="sourcepar"><shortdescription>Starting guess for component parameters (3 values for type P, 5 for G and D)</shortdescription><description>Starting guess for component parameters (3 values for type P, 5 for G and D)</description>
   
   <value>
                    <value>1.0</value>
@@ -76,25 +76,25 @@
   </value>
   </param>
 
-  <param name="varypar" type="boolArray"><shortdescription>Control which parameters to let vary in the fit</shortdescription><description>Control which parameters to let vary in the fit</description>
+  <param type="boolVec" name="varypar"><shortdescription>Control which parameters to let vary in the fit</shortdescription><description>Control which parameters to let vary in the fit</description>
   
   <value/>
   </param>
 
-  <param name="outfile" type="string"><shortdescription>Optional output component list table</shortdescription><description>Optional output component list table</description>
+  <param type="string" name="outfile"><shortdescription>Optional output component list table</shortdescription><description>Optional output component list table</description>
   
   <value/>
   </param>
    <constraints>
   <when param="selectdata">
-    <equals value="True" type="bool">
+    <equals type="bool" value="True">
       <default param="timerange"><value type="string"/></default>
       <default param="uvrange"><value type="string"/></default>
       <default param="antenna"><value type="string"/></default>
       <default param="scan"><value type="string"/></default>
       <default param="msselect"><value type="string"/></default>
     </equals>
-    <equals value="False" type="bool"/>
+    <equals type="bool" value="False"/>
   </when>
    </constraints>
 </input>
@@ -204,5 +204,5 @@
 
 </example> 
 
-</task>
+<returns>void</returns></task>
 </casaxml>

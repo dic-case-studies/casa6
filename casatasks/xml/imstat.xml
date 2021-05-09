@@ -1,112 +1,112 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
-<task category="information, analysis" name="imstat" type="function">
+<task type="function" name="imstat" category="information, analysis">
 <shortdescription>Displays statistical information from an image or image region</shortdescription>
 
 <input>
-    <param mustexist="true" kind="image" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+    <param type="path" name="imagename" kind="image" mustexist="true"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
         
         <value/>
         <example>imagename=ngc5921_task.image</example>
     </param>
-    <param name="axes" type="any"><shortdescription>List of axes to evaluate statistics over. Default is all axes.</shortdescription><description>List of axes to evaluate statistics over. Default is all axes.</description>
+    <param type="any" name="axes"><shortdescription>List of axes to evaluate statistics over. Default is all axes.</shortdescription><description>List of axes to evaluate statistics over. Default is all axes.</description>
         <any type="variant"/>
         
         <value>-1</value>
         <example>[0, 1]</example> 
     </param>
-    <param name="region" type="string"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+    <param type="string" name="region"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
         
         <type>path</type>
         <type>string</type>
         <type>record</type>
         <value type="string"/>
     </param>
-    <param name="box" type="string"><shortdescription>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</description>
+    <param type="string" name="box"><shortdescription>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</description>
         
         <value/>
     </param>
-    <param name="chans" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+    <param type="string" name="chans"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
     
         <value/>
     </param>
-    <param name="stokes" type="string"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
+    <param type="string" name="stokes"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
         
         <value/>
         <example>stokes=&quot;IQ&quot;</example>
         <example>stokes=&quot;RR,LL&quot;</example>
     </param>
-    <param name="listit" type="bool"><shortdescription>Print stats and bounding box to logger?</shortdescription><description>Print stats and bounding box to logger?</description>
+    <param type="bool" name="listit"><shortdescription>Print stats and bounding box to logger?</shortdescription><description>Print stats and bounding box to logger?</description>
         
         <value>True</value>
     </param>
-    <param name="verbose" type="bool"><shortdescription>Print additional messages to logger?</shortdescription><description>Print additional messages to logger?</description>
+    <param type="bool" name="verbose"><shortdescription>Print additional messages to logger?</shortdescription><description>Print additional messages to logger?</description>
         
         <value>True</value>
     </param>
-    <param name="mask" direction="in" type="string"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
+    <param type="string" direction="in" name="mask"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
         
         <value/>
     </param>
-    <param subparam="true" name="stretch" direction="in" type="bool"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
+    <param type="bool" direction="in" name="stretch" subparam="true"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
         
         <value>False</value>
     </param>
-    <param name="logfile" type="string"><shortdescription>Name of file to write fit results.</shortdescription><description>Name of file to write fit results.</description>
+    <param type="string" name="logfile"><shortdescription>Name of file to write fit results.</shortdescription><description>Name of file to write fit results.</description>
         
         <value/>
         <example>logfile=&quot;myimfitlog.txt&quot;</example>
     </param>
-    <param subparam="true" name="append" type="bool"><shortdescription>If logfile exists, append to it if True or overwrite it if False</shortdescription><description>If logfile exists, append to it if True or overwrite it if False</description> 
+    <param type="bool" name="append" subparam="true"><shortdescription>If logfile exists, append to it if True or overwrite it if False</shortdescription><description>If logfile exists, append to it if True or overwrite it if False</description> 
         
         <value>True</value>
         <example>append=True</example>
     </param>
-    <param name="algorithm" type="string"><shortdescription>Algorithm to use. Supported values are &quot;biweight&quot;, &quot;chauvenet&quot;, &quot;classic&quot;, &quot;fit-half&quot;, and &quot;hinges-fences&quot;. Minimum match is supported.</shortdescription><description>Algorithm to use. Supported values are &quot;biweight&quot;, &quot;chauvenet&quot;, &quot;classic&quot;, &quot;fit-half&quot;, and &quot;hinges-fences&quot;. Minimum match is supported.</description>
+    <param type="string" name="algorithm"><shortdescription>Algorithm to use. Supported values are &quot;biweight&quot;, &quot;chauvenet&quot;, &quot;classic&quot;, &quot;fit-half&quot;, and &quot;hinges-fences&quot;. Minimum match is supported.</shortdescription><description>Algorithm to use. Supported values are &quot;biweight&quot;, &quot;chauvenet&quot;, &quot;classic&quot;, &quot;fit-half&quot;, and &quot;hinges-fences&quot;. Minimum match is supported.</description>
           
           <value>classic</value>
      </param>
-     <param subparam="true" name="fence" type="double"><shortdescription>Fence value for hinges-fences. A negative value means use the entire data set (ie default to the &quot;classic&quot; algorithm). Ignored if algorithm is not &quot;hinges-fences&quot;.</shortdescription><description>Fence value for hinges-fences. A negative value means use the entire data set (ie default to the &quot;classic&quot; algorithm). Ignored if algorithm is not &quot;hinges-fences&quot;.</description>
+     <param type="double" name="fence" subparam="true"><shortdescription>Fence value for hinges-fences. A negative value means use the entire data set (ie default to the &quot;classic&quot; algorithm). Ignored if algorithm is not &quot;hinges-fences&quot;.</shortdescription><description>Fence value for hinges-fences. A negative value means use the entire data set (ie default to the &quot;classic&quot; algorithm). Ignored if algorithm is not &quot;hinges-fences&quot;.</description>
           
           <value>-1</value>
      </param>
-     <param subparam="true" name="center" type="string"><shortdescription>Center to use for fit-half. Valid choices are &quot;mean&quot;, &quot;median&quot;, and &quot;zero&quot;. Ignored if algorithm is not &quot;fit-half&quot;.</shortdescription><description>Center to use for fit-half. Valid choices are &quot;mean&quot;, &quot;median&quot;, and &quot;zero&quot;. Ignored if algorithm is not &quot;fit-half&quot;.</description>
+     <param type="string" name="center" subparam="true"><shortdescription>Center to use for fit-half. Valid choices are &quot;mean&quot;, &quot;median&quot;, and &quot;zero&quot;. Ignored if algorithm is not &quot;fit-half&quot;.</shortdescription><description>Center to use for fit-half. Valid choices are &quot;mean&quot;, &quot;median&quot;, and &quot;zero&quot;. Ignored if algorithm is not &quot;fit-half&quot;.</description>
           
           <value>mean</value>
      </param>
-     <param subparam="true" name="lside" type="bool"><shortdescription>For fit-half, use values &lt;= center for real data if True? If False, use values &gt;= center as real data. Ignored if algorithm is not &quot;fit-half&quot;.</shortdescription><description>For fit-half, use values &lt;= center for real data if True? If False, use values &gt;= center as real data. Ignored if algorithm is not &quot;fit-half&quot;.</description>
+     <param type="bool" name="lside" subparam="true"><shortdescription>For fit-half, use values &lt;= center for real data if True? If False, use values &gt;= center as real data. Ignored if algorithm is not &quot;fit-half&quot;.</shortdescription><description>For fit-half, use values &lt;= center for real data if True? If False, use values &gt;= center as real data. Ignored if algorithm is not &quot;fit-half&quot;.</description>
           
           <value>True</value>
      </param>
-     <param subparam="true" name="zscore" type="double"><shortdescription>For chauvenet, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet&quot;s criterion. Ignored if algorithm is not &quot;chauvenet&quot;.</shortdescription><description>For chauvenet, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet&quot;s criterion. Ignored if algorithm is not &quot;chauvenet&quot;.</description>
+     <param type="double" name="zscore" subparam="true"><shortdescription>For chauvenet, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet&quot;s criterion. Ignored if algorithm is not &quot;chauvenet&quot;.</shortdescription><description>For chauvenet, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet&quot;s criterion. Ignored if algorithm is not &quot;chauvenet&quot;.</description>
           
           <value>-1</value>
      </param>
-     <param subparam="true" name="maxiter" type="int"><shortdescription>For chauvenet, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if algorithm is not &quot;chauvenet&quot;.</shortdescription><description>For chauvenet, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if algorithm is not &quot;chauvenet&quot;.</description>
+     <param type="int" name="maxiter" subparam="true"><shortdescription>For chauvenet, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if algorithm is not &quot;chauvenet&quot;.</shortdescription><description>For chauvenet, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if algorithm is not &quot;chauvenet&quot;.</description>
          
          <value>-1</value>
      </param>
-     <param subparam="true" name="clmethod" type="string"><shortdescription>Method to use for calculating classical statistics. Supported methods are &quot;auto&quot;, &quot;tiled&quot;, and &quot;framework&quot;. Ignored if algorithm is not &quot;classic&quot;.</shortdescription><description>Method to use for calculating classical statistics. Supported methods are &quot;auto&quot;, &quot;tiled&quot;, and &quot;framework&quot;. Ignored if algorithm is not &quot;classic&quot;.</description>
+     <param type="string" name="clmethod" subparam="true"><shortdescription>Method to use for calculating classical statistics. Supported methods are &quot;auto&quot;, &quot;tiled&quot;, and &quot;framework&quot;. Ignored if algorithm is not &quot;classic&quot;.</shortdescription><description>Method to use for calculating classical statistics. Supported methods are &quot;auto&quot;, &quot;tiled&quot;, and &quot;framework&quot;. Ignored if algorithm is not &quot;classic&quot;.</description>
          
          <value>auto</value>
      </param>
-     <param subparam="true" name="niter" type="int"><shortdescription>For biweight, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, do a fast, simple computation (see description). Ignored if the algorithm is not &quot;biweight&quot;.</shortdescription><description>For biweight, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, do a fast, simple computation (see description). Ignored if the algorithm is not &quot;biweight&quot;.</description>
+     <param type="int" name="niter" subparam="true"><shortdescription>For biweight, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, do a fast, simple computation (see description). Ignored if the algorithm is not &quot;biweight&quot;.</shortdescription><description>For biweight, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, do a fast, simple computation (see description). Ignored if the algorithm is not &quot;biweight&quot;.</description>
           
           <value>3</value>
      </param>
      <constraints>
         <when param="mask">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="stretch">
                     <value type="bool">False</value>
                 </default>
             </notequals>
         </when>
         <when param="logfile">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="append">
                     <value>True</value>
                 </default>
@@ -114,17 +114,17 @@
         </when>
         <when param="algorithm">
             
-            <equals value="classic" type="string">
+            <equals type="string" value="classic">
                 <default param="clmethod">
                     <value type="string">auto</value>
                 </default>
             </equals>
-            <equals value="hinges-fences" type="string">
+            <equals type="string" value="hinges-fences">
                 <default param="fence">
                     <value>-1</value>
                 </default>
             </equals>
-            <equals value="fit-half" type="string">
+            <equals type="string" value="fit-half">
                 <default param="center">
                     <value type="string">mean</value>
                 </default>
@@ -132,7 +132,7 @@
                     <value>True</value>
                 </default>
             </equals>
-            <equals value="chauvenet" type="string">
+            <equals type="string" value="chauvenet">
                 <default param="zscore">
                     <value>-1</value>
                 </default>
@@ -140,7 +140,7 @@
                     <value>-1</value>
                 </default>
             </equals>
-            <equals value="biweight" type="string">
+            <equals type="string" value="biweight">
                 <default param="niter">
                     <value>3</value>
                 </default>

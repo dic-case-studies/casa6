@@ -1,21 +1,21 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-      <task category="import/export" name="importuvfits" type="function">
+      <task type="function" name="importuvfits" category="import/export">
     <shortdescription>Convert a UVFITS file to a CASA visibility data set</shortdescription>
     <description>Convert a UVITS file to a CASA visiblity data set.
                 Don\'t forget to flag autocorrelations using taskname flagdata, autocorr = true
     </description>
     <input>
-        <param name="fitsfile" mustexist="true" type="string"><shortdescription>Name of input UV FITS file</shortdescription><description>Name of input UV FITS file</description>
+        <param type="path" mustexist="true" name="fitsfile"><shortdescription>Name of input UV FITS file</shortdescription><description>Name of input UV FITS file</description>
             
             <value/>
         </param>
 
-        <param name="vis" type="string"><shortdescription>Name of output visibility file (MS)</shortdescription><description>Name of output visibility file (MS)</description>
+        <param type="string" name="vis"><shortdescription>Name of output visibility file (MS)</shortdescription><description>Name of output visibility file (MS)</description>
             
             <value/>
         </param>
-        <param name="antnamescheme" type="string"><shortdescription>VLA/EVLA/CARMA only; \'new\' or \'old\'; \'VA04\' or \'04\' for VLA ant 4</shortdescription><description>VLA/EVLA/CARMA only; \'new\' or \'old\'; \'VA04\' or \'04\' for VLA ant 4</description>
+        <param type="string" name="antnamescheme"><shortdescription>VLA/EVLA/CARMA only; \'new\' or \'old\'; \'VA04\' or \'04\' for VLA ant 4</shortdescription><description>VLA/EVLA/CARMA only; \'new\' or \'old\'; \'VA04\' or \'04\' for VLA ant 4</description>
                   
           <value>old</value>
           <allowed kind="enum">
@@ -47,5 +47,5 @@
            taskname flagdata, autocorr = true
 
  </example>
- </task>
+ <returns>void</returns></task>
  </casaxml>

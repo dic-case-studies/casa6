@@ -1,92 +1,92 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
-<task category="analysis" name="immoments" type="function">
+<task type="function" name="immoments" category="analysis">
 <shortdescription>Compute moments from an image</shortdescription>
 
 <description>
 </description>
 
 <input>
-    <param mustexist="true" kind="image" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+    <param type="path" name="imagename" kind="image" mustexist="true"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
         
         <value/>
         <example>imagename=ngc5921_task.image</example>
     </param>
 
-    <param name="moments" type="intArray"><shortdescription>List of moments you would like to compute</shortdescription><description>List of moments you would like to compute</description>
+    <param type="intVec" name="moments"><shortdescription>List of moments you would like to compute</shortdescription><description>List of moments you would like to compute</description>
         
-        <value>0</value>
+        <value><value>0</value></value>
         <example>moments=1</example>
     </param>
 
-    <param name="axis" type="any"><shortdescription>The momement axis: ra, dec, lat, long, spectral, or stokes</shortdescription><description>The momement axis: ra, dec, lat, long, spectral, or stokes</description>
+    <param type="any" name="axis"><shortdescription>The momement axis: ra, dec, lat, long, spectral, or stokes</shortdescription><description>The momement axis: ra, dec, lat, long, spectral, or stokes</description>
     
-    <any limittypes="string int" type="variant"/>
+    <type>string</type><type>int</type>
         <value type="string">spectral</value>
         <example>axis=&quot;ra&quot;</example>
     </param>
 
-    <param name="region" type="any"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+    <param type="any" name="region"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
         
-    <any limittypes="string stringArray" type="variant"/>
+    <type>string</type><type>stringVec</type>
         <value type="string"/>
         <example>region=&quot;myregion.crtf&quot;</example>
     </param>
 
-    <param name="box" type="string"><shortdescription>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</description>
+    <param type="string" name="box"><shortdescription>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</description>
         
         <value/>
         <example>box=&quot;40,40,120,120&quot;</example>
     </param>
 
-    <param name="chans" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+    <param type="string" name="chans"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
     
         <value/>
         <example>chans=&quot;1~4&quot;</example>
     </param>
 
-    <param name="stokes" type="string"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
+    <param type="string" name="stokes"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
         
         <value/>
         <example>stokes=&quot;IQ&quot;</example>
     </param>
 
-    <param name="mask" type="string"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
+    <param type="string" name="mask"><shortdescription>Mask to use. Default is none.</shortdescription><description>Mask to use. Default is none.</description>
         
         <any type="variant"/>
-        <value type="stringArray"/>
+        <value type="stringVec"/>
         <example>mask=&quot;my.im &gt; 5&quot;</example>
     </param>
 
-    <param name="includepix" type="any"><shortdescription>Range of pixel values to include</shortdescription><description>Range of pixel values to include</description>
+    <param type="any" name="includepix"><shortdescription>Range of pixel values to include</shortdescription><description>Range of pixel values to include</description>
         
-    <any limittypes="int doubleArray intArray" type="variant"/>
+    <type>int</type><type>doubleVec</type><type>intVec</type>
     <value type="int">-1</value>
     <example>includepix=[4, 5]</example>
     </param>
 
-    <param name="excludepix" type="any"><shortdescription>Range of pixel values to exclude</shortdescription><description>Range of pixel values to exclude</description>
+    <param type="any" name="excludepix"><shortdescription>Range of pixel values to exclude</shortdescription><description>Range of pixel values to exclude</description>
         
-    <any limittypes="int doubleArray intArray" type="variant"/>
+    <type>int</type><type>doubleVec</type><type>intVec</type>
     <value type="int">-1</value>
     <example>excludepix=[-10, 0]</example>
     </param>
 
-    <param name="outfile" type="string"><shortdescription>Output image file name (or root for multiple moments) </shortdescription><description>Output image file name (or root for multiple moments) </description>
+    <param type="string" name="outfile"><shortdescription>Output image file name (or root for multiple moments) </shortdescription><description>Output image file name (or root for multiple moments) </description>
         
     <value/>
     <example>outfile=&quot;mymoments.im&quot;</example>
     </param>
     
-    <param subparam="true" name="stretch" direction="in" type="bool"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
+    <param type="bool" direction="in" name="stretch" subparam="true"><shortdescription>Stretch the mask if necessary and possible? </shortdescription><description>Stretch the mask if necessary and possible? </description>
         
         <value>False</value>
         <example>stretch=true</example>
     </param>
     <constraints>
         <when param="mask">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="stretch"><value type="bool">False</value></default>
             </notequals>
         </when>

@@ -1,9 +1,9 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
-<task visibility="experimental" category="single dish" name="sdsidebandsplit" type="function">
+<task type="function" name="sdsidebandsplit" category="single dish" visibility="experimental">
 
   <shortdescription>[EXPERIMENTAL] invoke sideband separation using FFT</shortdescription>
 
@@ -14,13 +14,13 @@
   <input>
 
 
-    <param mustexist="True" name="imagename" type="stringArray">
+    <param type="pathVec" name="imagename" mustexist="True">
     <shortdescription>a list of names of input images</shortdescription>
     <description>a list of names of input images. At least two valid images are required for processing</description>
     <value/>
     </param>
 
-    <param name="outfile" type="string">
+    <param type="string" name="outfile">
       <shortdescription>Prefix of output image name</shortdescription>
       <description>Prefix of output image name.
       A suffix, &quot;.signalband&quot; or &quot;.imageband&quot; is added to 
@@ -28,20 +28,20 @@
       <value/>
     </param>
 
-    <param name="overwrite" type="bool"><shortdescription>overwrite option</shortdescription><description>overwrite option</description>
+    <param type="bool" name="overwrite"><shortdescription>overwrite option</shortdescription><description>overwrite option</description>
       
       <value>False</value>
     </param>
 
 
-    <param name="signalshift" type="doubleArray">
+    <param type="doubleVec" name="signalshift">
       <shortdescription>a list of channel number shifts in signal side band</shortdescription>
       <description>a list of channel number shifts in signal side band.
       The number of elements must be equal to that of imagename</description>
       <value/>
     </param>
 
-    <param name="imageshift" type="doubleArray">
+    <param type="doubleVec" name="imageshift">
       <shortdescription>a list of channel number shifts in image side band</shortdescription>
       <description> a list of channel number shifts in image side band.
       The number of elements must be either zero or equal to that of imagename.
@@ -50,27 +50,27 @@
       <value/>
     </param>
 
-    <param name="getbothside" type="bool"><shortdescription>sideband separation (True) or supression (False)</shortdescription><description>sideband separation (True) or supression (False)</description>
+    <param type="bool" name="getbothside"><shortdescription>sideband separation (True) or supression (False)</shortdescription><description>sideband separation (True) or supression (False)</description>
       
             <value>False</value>
     </param>
 
-    <param subparam="true" name="refchan" type="double"><shortdescription>reference channel of spectral axis in image sideband</shortdescription><description>reference channel of spectral axis in image sideband</description>
+    <param type="double" name="refchan" subparam="true"><shortdescription>reference channel of spectral axis in image sideband</shortdescription><description>reference channel of spectral axis in image sideband</description>
         
         <value>0.0</value>
     </param>
 
-     <param subparam="true" name="refval" type="string"><shortdescription>frequency at the reference channel of spectral axis in image sideband (e.g., &quot;100GHz&quot;)</shortdescription><description>frequency at the reference channel of spectral axis in image sideband (e.g., &quot;100GHz&quot;)</description>
+     <param type="string" name="refval" subparam="true"><shortdescription>frequency at the reference channel of spectral axis in image sideband (e.g., &quot;100GHz&quot;)</shortdescription><description>frequency at the reference channel of spectral axis in image sideband (e.g., &quot;100GHz&quot;)</description>
         
         <value/>
     </param>
  
-    <param name="otherside" type="bool"><shortdescription>solve the solution of the other side band side and subtract the solution</shortdescription><description>solve the solution of the other side band side and subtract the solution</description>
+    <param type="bool" name="otherside"><shortdescription>solve the solution of the other side band side and subtract the solution</shortdescription><description>solve the solution of the other side band side and subtract the solution</description>
       
             <value>False</value>
     </param>
 
-    <param name="threshold" type="double">
+    <param type="double" name="threshold">
       <shortdescription>Rejection limit of solution</shortdescription>
       <description>Rejection limit of solution. The value must be greater than 0.0 and less than 1.0.</description>
       <value>0.2</value>
@@ -83,8 +83,8 @@
 
     <constraints>
             <when param="getbothside">
-                <equals value="False" type="bool"/>
-                <equals value="True" type="bool">
+                <equals type="bool" value="False"/>
+                <equals type="bool" value="True">
                     <default param="refchan"><value>0.0</value></default>
                     <default param="refval"><value type="string"/></default>
                 </equals>

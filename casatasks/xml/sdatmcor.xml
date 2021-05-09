@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="sdatmcor" category="single dish">
+<task category="single dish" name="sdatmcor" type="function">
      <shortdescription>Offline correction of residual atmospheric features</shortdescription>
 
 <description>
@@ -32,13 +32,13 @@
 
 <input>
 
-    <param type="string" name="infile">
+    <param name="infile" type="string">
         <shortdescription>name of input MS.</shortdescription>
         <description>name of input MS.</description>
         <value/>
     </param>
 
-    <param type="string" name="datacolumn" ignorecase="true">
+    <param ignorecase="true" name="datacolumn" type="string">
         <shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</shortdescription>
         <description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</description>
 
@@ -50,19 +50,19 @@
        </allowed>
     </param>
 
-    <param type="string" name="outfile">
+    <param name="outfile" type="string">
         <shortdescription>name of output MS.</shortdescription>
         <description>name of output MS.</description>
         <value/>
     </param>
 
-    <param type="bool" name="overwrite">
+    <param name="overwrite" type="bool">
             <shortdescription>allow to overwrite the output file if already exists.</shortdescription>
             <description>allow to overwrite the output file if already exists.</description>
             <value type="bool">False</value>
     </param>
 
-    <param type="string" name="field">
+    <param name="field" type="string">
         <shortdescription>field(s) to select</shortdescription>
         <description>Select fields. Use field id(s) or name(s).
 
@@ -81,7 +81,7 @@
         <value/>
     </param>
 
-    <param type="string" name="spw">
+    <param name="spw" type="string">
         <shortdescription>spws to select</shortdescription>
         <description>Select spectral windows
 
@@ -100,7 +100,7 @@
         <value/>
     </param>
 
-    <param type="string" name="scan">
+    <param name="scan" type="string">
         <shortdescription>Scan number range</shortdescription>
         <description>Scan number range
 
@@ -110,7 +110,7 @@
         <value/>
     </param>
 
-    <param type="string" name="antenna">
+    <param name="antenna" type="string">
         <shortdescription>Select data based on antenna</shortdescription>
         <description>Select data based on antenna/baseline
 
@@ -136,20 +136,20 @@
                                        index number
 
         </description>
-        <value type="string"></value>
+        <value type="string"/>
     </param>
 
-    <param  type="string" name="correlation">
+    <param name="correlation" type="string">
         <shortdescription>Correlation (polarization) types or expression</shortdescription>
         <description>Correlation (polarization) types or expression
 
                        Default: '' (all correlations)
                        Example: correlation='XX,YY'
         </description>
-        <value type="string"></value>
+        <value type="string"/>
     </param>
 
-    <param type="string" name="timerange">
+    <param name="timerange" type="string">
         <shortdescription>Range of time to select from data</shortdescription>
         <description>Range of time to select from data
 
@@ -169,7 +169,7 @@
         <value/>
     </param>
 
-    <param name="intent" type="string">
+    <param type="string" name="intent">
         <shortdescription>Scan Intent(s)</shortdescription>
         <description>Scan Intent(s)
 
@@ -179,30 +179,30 @@
                        intent='TARGET_SOURCE1,TARGET_SOURCE2'
                        intent='TARGET_POINTING*'
         </description>
-        <value type="string"></value>
+        <value type="string"/>
     </param>
 
-    <param name="observation" type="string">
+    <param type="string" name="observation">
         <shortdescription>Observation ID range</shortdescription>
         <description>Observation ID range
 
                        Default: '' (all observations)
                        Example: observation='0~5'
         </description>
-        <value type="string"></value>
+        <value type="string"/>
     </param>
 
-    <param name="feed" type="string">
+    <param type="string" name="feed">
         <shortdescription>feed selection</shortdescription>
         <description>feed selection
 
                        Default: '' (all feeds)
                        Example: feed='0,1'
         </description>
-        <value type="string"></value>
+        <value type="string"/>
     </param>
 
-    <param name="msselect" type="string">
+    <param type="string" name="msselect">
         <shortdescription>Complicated data selection using TaQL</shortdescription>
         <description>Complicated data selection using TaQL
 
@@ -217,10 +217,10 @@
                        msselect='ABS(DATA) &lt; 1 &amp;&amp; ANTENNA1 == ANTENNA2 + 1'
                        msselect='ROWNUMBER() &lt; 100'
         </description>
-        <value type="string"></value>
+        <value type="string"/>
     </param>
 
-    <param name="outputspw" type="string">
+    <param type="string" name="outputspw">
         <shortdescription>select spws to output, same syntax of spw.(&quot;&quot; = all)</shortdescription>
         <description>select spws to output, same syntax of spw.(&quot;&quot; = all)
 
@@ -230,10 +230,10 @@
                        Note also that channel selection is not available for this task.
 
         </description>
-        <value type="string"></value>
+        <value type="string"/>
     </param>
 
-    <param name="gainfactor" type="any">
+    <param type="any" name="gainfactor">
         <shortdescription>Gain factor to multiply correction term</shortdescription>
         <description>Gain factor to multiply correction term.
 
@@ -259,11 +259,11 @@
                                 'k2jycal.tbl'
 
         </description>
-        <any type="variant" limittypes="double record string"/>
+        <type>double</type><type>record</type><type>string</type>
         <value type="double">1.0</value>
     </param>
 
-    <param name="dtem_dh" type="any">
+    <param type="any" name="dtem_dh">
         <shortdescription>temperature gradient [K/km], e.g. -5.6. (&quot;&quot; = Tool default) </shortdescription>
         <description>temperature gradient [K/km], e.g. -5.6. (&quot;&quot; = Tool default)
 
@@ -275,11 +275,11 @@
                        Default: '' (tool default, -5.6K/km, is used)
 
         </description>
-        <any type="variant"  limittypes="string double"/>
-        <value type="string"></value>
+        <type>string</type><type>double</type>
+        <value type="string"/>
     </param>
 
-    <param name="h0" type="any">
+    <param type="any" name="h0">
         <shortdescription>scale height for water [km], e.g. 2.0. (&quot;&quot; = Tool default)</shortdescription>
         <description>scale height for water [km], e.g. 2.0. (&quot;&quot; = Tool default)
 
@@ -289,11 +289,11 @@
                        unit compatible with length, such as '2km' or '2000m'.
 
         </description>
-        <any type="variant"  limittypes="string double"/>
-        <value type="string"></value>
+        <type>string</type><type>double</type>
+        <value type="string"/>
     </param>
 
-    <param name="atmtype" type="int">
+    <param type="int" name="atmtype">
         <shortdescription>Specify atmtype as integer. Options are 1: tropical, 2: mid latitude summer, 3: mid latitude winter, 4: subarctic summer, 5: subarctic winter</shortdescription>
         <description>Atmospheric type.
                        The value is directly passed to initialization method for ATM model.
@@ -309,7 +309,7 @@
         <value>2</value>
     </param>
 
-    <param name="atmdetail" type="bool">
+    <param type="bool" name="atmdetail">
         <shortdescription>Expose sub-parameters if True.</shortdescription>
         <description>Expose parameters for detailed configuration of ATM model if True.
 
@@ -329,11 +329,9 @@
         <value type="bool">False</value>
     </param>
 
-<!--
-   SubParameters  when 'atmdetail' is True
--->
 
-    <param name="altitude" type="any" subparam="true" >
+
+    <param subparam="true" type="any" name="altitude">
         <shortdescription>Site altitude [m]. (&quot;&quot; = value from MS.)</shortdescription>
         <description>Site altitude [m].
 
@@ -345,11 +343,11 @@
                        Default value is taken from the input MS (ANTENNA table).
 
         </description>
-        <any type="variant"  limittypes="string double"/>
-        <value type="string"></value>
+        <type>string</type><type>double</type>
+        <value type="string"/>
     </param>
 
-    <param name="temperature" type="any" subparam="true">
+    <param subparam="true" type="any" name="temperature">
         <shortdescription>Ambient temperature [K]. (&quot;&quot; = value from MS.)</shortdescription>
         <description>Ambient temperature [K].
 
@@ -361,11 +359,11 @@
                        Default value is taken from the input MS (ASDM_CALATMOSPHERE table).
 
         </description>
-        <any type="variant"  limittypes="string double"/>
-        <value type="string"></value>
+        <type>string</type><type>double</type>
+        <value type="string"/>
     </param>
 
-    <param name="pressure" type="any" subparam="true">
+    <param subparam="true" type="any" name="pressure">
         <shortdescription>Ambient pressure [mbar]. (&quot;&quot; = value from MS.)</shortdescription>
         <description>Ambient pressure [mbar].
 
@@ -377,11 +375,11 @@
                        Default value is taken from the input MS (ASDM_CALATMOSPHERE table).
 
         </description>
-        <any type="variant"  limittypes="string double"/>
-        <value type="string"></value>
+        <type>string</type><type>double</type>
+        <value type="string"/>
     </param>
 
-    <param name="humidity" type="double" subparam="true">
+    <param subparam="true" type="double" name="humidity">
         <shortdescription>Relative humidity [percent]. -1 or the value (0.0 - 100.0) (-1 = Tool default)</shortdescription>
         <description>Relative humidity [percent].
 
@@ -394,7 +392,7 @@
         <value type="double">-1</value>
     </param>
 
-    <param name="pwv" type="any" subparam="true">
+    <param subparam="true" type="any" name="pwv">
         <shortdescription>Zenith water vapor [mm]. (&quot;&quot; = Tool default)</shortdescription>
         <description>Zenith water vapor [mm].
 
@@ -406,11 +404,11 @@
                        Default value is taken from the input MS (ASDM_CALWVR table).
 
         </description>
-        <any type="variant"  limittypes="string double"/>
-        <value type="string"></value>
+        <type>string</type><type>double</type>
+        <value type="string"/>
     </param>
 
-    <param name="dp" type="any" subparam="true">
+    <param subparam="true" type="any" name="dp">
         <shortdescription>Initial pressure step [mbar].(&quot;&quot; = Tool default)</shortdescription>
         <description>Initial pressure step.
 
@@ -422,11 +420,11 @@
                        Default value ('') indicates to use tool default (10mbar).
 
         </description>
-        <any type="variant"  limittypes="string double"/>
-        <value type="string"></value>
+        <type>string</type><type>double</type>
+        <value type="string"/>
     </param>
 
-    <param name="dpm" type="double" subparam="true">
+    <param subparam="true" type="double" name="dpm">
         <shortdescription>Pressure multiplicative factor for steps. (-1 = Tool default)</shortdescription>
         <description>Pressure multiplicative factor for steps.
 
@@ -437,7 +435,7 @@
         <value type="double">-1</value>
     </param>
 
-    <param name="layerboundaries" type="any" subparam="true">
+    <param subparam="true" type="any" name="layerboundaries">
         <shortdescription>Altitude of user-defined temperature profile [m]. (&quot;&quot; = Tool default)</shortdescription>
         <description>Altitude of user-defined temperature profile.
 
@@ -461,11 +459,11 @@
                                 '1km,2km'
 
         </description>
-        <any type="variant"  limittypes="string stringArray doubleArray"/>
-        <value type="string"></value>
+        <type>string</type><type>stringVec</type><type>doubleVec</type>
+        <value type="string"/>
     </param>
 
-    <param name="layertemperature" type="any" subparam="true">
+    <param subparam="true" type="any" name="layertemperature">
         <shortdescription>User-defined temperature profile [K]. (&quot;&quot; = Tool default)</shortdescription>
         <description>User-defined temperature profile [K].
 
@@ -485,26 +483,24 @@
                                 '250K,240K'
 
         </description>
-        <any type="variant"  limittypes="string stringArray doubleArray"/>
-        <value type="string"></value>
+        <type>string</type><type>stringVec</type><type>doubleVec</type>
+        <value type="string"/>
     </param>
 
-<!--
-    Constraints (activate subpram)
--->
+
     <constraints>
       <when param="atmdetail">
-        <equals value="False" type="bool"/>
-        <equals value="True" type="bool">
-            <default param="altitude"><value type="string"></value></default>
-            <default param="temperature"><value type="string"></value></default>
-            <default param="pressure"><value type="string"></value></default>
+        <equals type="bool" value="False"/>
+        <equals type="bool" value="True">
+            <default param="altitude"><value type="string"/></default>
+            <default param="temperature"><value type="string"/></default>
+            <default param="pressure"><value type="string"/></default>
             <default param="humidity"><value type="double">-1</value></default>
-            <default param="pwv"><value type="string"></value></default>
-            <default param="dp"><value type="string"></value></default>
+            <default param="pwv"><value type="string"/></default>
+            <default param="dp"><value type="string"/></default>
             <default param="dpm"><value type="double">-1</value></default>
-            <default param="layerboundaries"><value type="string"></value></default>
-            <default param="layertemperature"><value type="string"></value></default>
+            <default param="layerboundaries"><value type="string"/></default>
+            <default param="layertemperature"><value type="string"/></default>
         </equals>
       </when>
     </constraints>

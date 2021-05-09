@@ -1,12 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
-
-<task type="function" name="calstat" category="information, calibration">
+<task category="information, calibration" name="calstat" type="function">
 <shortdescription>Displays statistical information on a calibration table</shortdescription>
   <description>
 This task returns statistical information about a column in a
@@ -19,17 +13,17 @@ square.
   </example>
 
 <input>
-    <param type="string" name="caltable" mustexist="true">
+    <param mustexist="true" name="caltable" type="path">
 <shortdescription>Name of input calibration table</shortdescription>
 <description>Name of input calibration table
                      Default: ''
 
                         Example: vis='ggtau.1mm.amp.gcal'
 </description>
-            <value></value>
+            <value/>
     </param>
 
-    <param type="string" name="axis">
+    <param name="axis" type="string">
 <shortdescription>Which values to use</shortdescription>
 <description>Which data to analyze.
                      Default: 'amplitude'
@@ -44,7 +38,7 @@ square.
         <value type="string">amplitude</value>
     </param>
 
-    <param type="string" name="datacolumn" subparam="true">
+    <param subparam="true" name="datacolumn" type="string">
 <shortdescription>Which data column to use</shortdescription>
 <description>Which data column to use if axis is 'amp', 'amplitude', 'phase', 'real', 'imag' or 'imaginary'.
                      Default: 'gain'
@@ -54,22 +48,22 @@ square.
 
     <constraints>
     <when param="axis">
-      <equals type="string" value="amp">
+      <equals value="amp" type="string">
         <default param="datacolumn"><value type="string">gain</value></default>
       </equals>
-      <equals type="string" value="amplitude">
+      <equals value="amplitude" type="string">
         <default param="datacolumn"><value type="string">gain</value></default>
       </equals>
-      <equals type="string" value="phase">
+      <equals value="phase" type="string">
         <default param="datacolumn"><value type="string">gain</value></default>
       </equals>
-      <equals type="string" value="real">
+      <equals value="real" type="string">
         <default param="datacolumn"><value type="string">gain</value></default>
       </equals>
-      <equals type="string" value="imag">
+      <equals value="imag" type="string">
         <default param="datacolumn"><value type="string">gain</value></default>
       </equals>
-      <equals type="string" value="imaginary">
+      <equals value="imaginary" type="string">
         <default param="datacolumn"><value type="string">gain</value></default>
       </equals>
     </when>
@@ -77,15 +71,9 @@ square.
 
 </input>
 
-    <output>
-    <param type="any" name="xstat">
-            <description>Statistical information for the calibration table</description>
-        <any type="variant"/>
-        <value>{}</value>
-    </param>
-    </output>
+    
 
-<returns type="void"/>
+<returns>any</returns>
 
 <example>
 

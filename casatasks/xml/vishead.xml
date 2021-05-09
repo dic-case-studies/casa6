@@ -1,8 +1,8 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
-<task category="information, manipulation" name="vishead" type="function">
+<task type="function" name="vishead" category="information, manipulation">
 
 <shortdescription>List, summary, get, and put metadata in a measurement set</shortdescription>
 <description>
@@ -47,13 +47,13 @@
 
 
 <input>
-    <param mustexist="true" kind="ms" name="vis" type="string"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
+    <param type="path" name="vis" kind="ms" mustexist="true"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
         
         <value/>
         <example>vis='ngc5921.ms'</example>
     </param>
 
-    <param name="mode" type="string"><shortdescription>Mode of operation for vishead</shortdescription><description>Mode of operation for vishead</description>
+    <param type="string" name="mode"><shortdescription>Mode of operation for vishead</shortdescription><description>Mode of operation for vishead</description>
         
         <allowed kind="enum">
             <value>list</value>
@@ -82,9 +82,9 @@
          </example>
     </param>
 
-    <param subparam="true" name="listitems" type="stringArray"><shortdescription>Keyword items to list. This parameter is only relevant in list mode. Note that the default list is a subset of the possible keywords. To get all the keywords set listitems=[]</shortdescription><description>Keyword items to list. This parameter is only relevant in list mode. Note that the default list is a subset of the possible keywords. To get all the keywords set listitems=[]</description>
+    <param type="stringVec" name="listitems" subparam="true"><shortdescription>Keyword items to list. This parameter is only relevant in list mode. Note that the default list is a subset of the possible keywords. To get all the keywords set listitems=[]</shortdescription><description>Keyword items to list. This parameter is only relevant in list mode. Note that the default list is a subset of the possible keywords. To get all the keywords set listitems=[]</description>
       
-         <value type="stringArray">
+         <value type="stringVec">
                    <value type="string">telescope</value>
                    <value type="string">observer</value>
                    <value type="string">project</value>
@@ -98,19 +98,19 @@
       <example>listitems = ['field', 'ptcs']; see description for list of keywords</example>
     </param>
 
-    <param subparam="true" name="hdkey" type="string"><shortdescription>Keyword to get/put</shortdescription><description>Keyword to get/put</description>
+    <param type="string" name="hdkey" subparam="true"><shortdescription>Keyword to get/put</shortdescription><description>Keyword to get/put</description>
         
-        <value type="stringArray"/>
+        <value type="stringVec"/>
         <example>hdkey='telescope'; see description for list of keywords</example>
     </param>
 
-    <param subparam="true" name="hdindex" type="string"><shortdescription>Index (counting from 0) if keyword is an array (used in get/put mode only). The empty string means all elements</shortdescription><description>Index (counting from 0) if keyword is an array (used in get/put mode only). The empty string means all elements</description>
+    <param type="string" name="hdindex" subparam="true"><shortdescription>Index (counting from 0) if keyword is an array (used in get/put mode only). The empty string means all elements</shortdescription><description>Index (counting from 0) if keyword is an array (used in get/put mode only). The empty string means all elements</description>
         
         <value/>
         <example>hdindex='3'; see description for list of keywords</example>
     </param>
 
-    <param subparam="true" name="hdvalue" type="any"><shortdescription>Value of the keywords to be put in the MS (used in put mode only)</shortdescription><description>Value of the keywords to be put in the MS (used in put mode only)</description>
+    <param type="any" name="hdvalue" subparam="true"><shortdescription>Value of the keywords to be put in the MS (used in put mode only)</shortdescription><description>Value of the keywords to be put in the MS (used in put mode only)</description>
         <any type="variant"/>
         
         <value type="string"/>
@@ -119,9 +119,9 @@
 
     <constraints>
           <when param="mode">
-             <equals value="list" type="string">
+             <equals type="string" value="list">
            <default param="listitems">
-         <value type="stringArray">
+         <value type="stringVec">
            <value type="string">'telescope'</value>
            <value type="string">'observer'</value>
            <value type="string">'project'</value>
@@ -134,12 +134,12 @@
          </value>
            </default>
          </equals>
-             <equals value="summary" type="string"/>
-             <equals value="get" type="string">
+             <equals type="string" value="summary"/>
+             <equals type="string" value="get">
                    <default param="hdkey"><value type="string"/></default>
                    <default param="hdindex"><value type="string"/></default>
              </equals>
-             <equals value="put" type="string">
+             <equals type="string" value="put">
                    <default param="hdkey"><value type="string"/></default>
                    <default param="hdindex"><value type="string"/></default>
                    <default param="hdvalue"><value type="string"/></default>
@@ -153,6 +153,6 @@
 
 </example>
 
-</task>
+<returns>void</returns></task>
 
 </casaxml>

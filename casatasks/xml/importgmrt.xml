@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-      <task type="function" name="importgmrt" category="import/export" visibility="experimental">
+      <task visibility="experimental" category="import/export" name="importgmrt" type="function">
 <shortdescription>Convert a UVFITS file to a CASA visibility data set</shortdescription>
     <description>
 Convert a GRMT FITS file to a CASA visiblity data set.
@@ -13,17 +8,17 @@ Also read GMRT flag file(s) and flag data based on the contents of the
 files.
     </description>
     <input>
-        <param type="string" mustexist="true" name="fitsfile">
+        <param name="fitsfile" mustexist="true" type="path">
 <shortdescription>Name of input UV FITS file</shortdescription>
 <description>Name of input UV FITS file
                      Default: none
 
                         Example: fitsimage='3C273XC1.fits'
 </description>
-            <value></value>
+            <value/>
         </param>
 
-        <param type="any" name="flagfile">
+        <param name="flagfile" type="any">
 <shortdescription>List of files containing flagging information.</shortdescription>
 <description>List of files containing flagging information.
                      Default: none
@@ -32,18 +27,18 @@ files.
                         flagfile='3c273XC1.flag'
                         flagfile=['3c273Cc1_1.flag','3c273Cc2_1.flag',']
 </description>
-            <any type="variant" limittypes="string stringArray"/>
-            <value type="string"></value>
+            <type>string</type><type>stringVec</type>
+            <value type="string"/>
         </param>
 
-        <param type="string" name="vis">
+        <param name="vis" type="string">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-            <value></value>
+            <value/>
         </param>
 
     </input>
@@ -52,5 +47,5 @@ files.
 FOR MORE INFORMATION, SEE THE TASK PAGES OF IMPORTGMRT IN CASA DOCS:
 https://casa.nrao.edu/casadocs/
  </example>
- </task>
+ <returns>void</returns></task>
  </casaxml>

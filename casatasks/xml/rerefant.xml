@@ -1,27 +1,27 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="calibration" name="rerefant" type="function">
+<task type="function" name="rerefant" category="calibration">
         <shortdescription>Re-apply refant to a caltable</shortdescription>
         <description>
           TBD
         </description>
         <input>
-                <param mustexist="true" name="vis" type="string"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
+                <param type="path" name="vis" mustexist="true"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
                         
                         <value/>
                 </param>
 
-                <param mustexist="true" name="tablein" type="string"><shortdescription>Input calibration table</shortdescription><description>Input calibration table</description>
+                <param type="path" name="tablein" mustexist="true"><shortdescription>Input calibration table</shortdescription><description>Input calibration table</description>
                         
                         <value/>
                 </param>
 
-                <param name="caltable" type="string"><shortdescription>Output calibration table (overwrite tablein if unspecified)</shortdescription><description>Output calibration table (overwrite tablein if unspecified)</description>
+                <param type="string" name="caltable"><shortdescription>Output calibration table (overwrite tablein if unspecified)</shortdescription><description>Output calibration table (overwrite tablein if unspecified)</description>
                         
                         <value/>
                 </param>
 
-                <param name="refantmode" type="string"><shortdescription>Refant algorithm to use</shortdescription><description>Refant algorithm to use</description>
+                <param type="string" name="refantmode"><shortdescription>Refant algorithm to use</shortdescription><description>Refant algorithm to use</description>
                         
                         <value>flex</value>
                         <allowed kind="enum">
@@ -30,7 +30,7 @@
                         </allowed>
                 </param>
 
-                <param name="refant" type="string"><shortdescription>Reference antenna name(s)</shortdescription><description>Reference antenna name(s)</description>
+                <param type="string" name="refant"><shortdescription>Reference antenna name(s)</shortdescription><description>Reference antenna name(s)</description>
                         
                         <value/>
                 </param>

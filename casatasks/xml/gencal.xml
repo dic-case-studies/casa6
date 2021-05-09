@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="gencal" category="calibration">
+<task category="calibration" name="gencal" type="function">
    <shortdescription>Specify Calibration Values of Various Types</shortdescription>
    <description>
 The gencal task provides a means of specifying antenna-based
@@ -32,17 +27,17 @@ Current antenna-based gencal options (caltype) are:
 * 'tecim' = Time-dep TEC image specified in infile
    </description>
    <input>
-      <param type="string" name="vis" mustexist="true">
+      <param mustexist="true" name="vis" type="path">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-         <value></value>
+         <value/>
       </param>
 
-      <param type="string" name="caltable">
+      <param name="caltable" type="string">
 <shortdescription>Name of input calibration table</shortdescription>
 <description>Name of input calibration table
                      Default: none
@@ -57,10 +52,10 @@ Current antenna-based gencal options (caltype) are:
 
                         Example: caltable='test.G'
 </description>
-         <value></value>
+         <value/>
       </param>
 
-      <param type="string" name="caltype">
+      <param name="caltype" type="string">
 <shortdescription>The calibration type: (amp, ph, sbd, mbd, antpos, antposvla, tsys, evlagain, opac, gc, gceff, eff, tecim)</shortdescription>
 <description>The calibration parameter type being specified
                      Default: none
@@ -97,7 +92,7 @@ Current antenna-based gencal options (caltype) are:
 
                         Example: caltype='ph'
 </description>
-         <value></value>
+         <value/>
                         <allowed kind="enum">
                             <value>amp</value>
                             <value>ph</value>
@@ -119,17 +114,17 @@ Current antenna-based gencal options (caltype) are:
       </param>
 
 
-      <param type="string" name="infile" subparam="true">
+      <param subparam="true" name="infile" type="string">
 <shortdescription>Input ancilliary file</shortdescription>
 <description>Input ancilliary file
                     Subparameter of caltype='gc|gceff|tecim'
                     Default: none
 </description>
-         <value></value>
+         <value/>
       </param>
 
       
-      <param type="string" name="spw">
+      <param name="spw" type="string">
 <shortdescription>Select spectral window/channels</shortdescription>
 <description>Select spectral window/channels
                      Default: '' (all spectral windows and channels)
@@ -145,10 +140,10 @@ Current antenna-based gencal options (caltype) are:
                         spw = '*:3~64'  channels 3 through 64 for all sp id's
                         spw = ' :3~64' will NOT work.
 </description>
-         <value></value>
+         <value/>
       </param>
       
-      <param type="string" name="antenna">
+      <param name="antenna" type="string">
 <shortdescription>Select data based on antenna/baseline</shortdescription>
 <description>Select data based on antenna/baseline
                      Subparameter of selectdata=True
@@ -172,10 +167,10 @@ Current antenna-based gencal options (caltype) are:
                          antenna='5,6,10'; all baselines with antennas
                          5,6,10 index numbers
 </description>
-         <value></value>
+         <value/>
       </param>
 
-      <param type="string" name="pol">
+      <param name="pol" type="string">
 <shortdescription>Calibration polarizations(s) selection</shortdescription>
 <description>Polarization selection for specified parameters
                      Default: pol='' (specified parameters apply to
@@ -184,10 +179,10 @@ Current antenna-based gencal options (caltype) are:
                         Example: pol='R' (specified parameters to
                         apply to R only)
 </description>
-         <value></value>
+         <value/>
       </param>
 
-      <param type="doubleArray" name="parameter">
+      <param name="parameter" type="doubleVec">
 <shortdescription>The calibration values</shortdescription>
 <description>The calibration values
 
@@ -195,7 +190,7 @@ Current antenna-based gencal options (caltype) are:
                      to store in the caltable for the spw, antenna,
                      and pol selection.  The required length of the
                      list is determined by the caltype and the spw,
-                     antenna, pol selection.  One "set" of parameters
+                     antenna, pol selection.  One &quot;set&quot; of parameters
                      (e.g., one value for 'amp', 'ph', etc., three
                      values for 'antpos') specified the same value for
                      all indicated spw, antenna, and pol.
@@ -207,10 +202,10 @@ Current antenna-based gencal options (caltype) are:
                      (if spw!='').  Unspecified selection axes must
                      not be enumerated in the parameter list
 </description>
-         <value></value>
+         <value/>
       </param>
 
-      <param type="bool" name="uniform" subparam="true">
+      <param subparam="true" name="uniform" type="bool">
 <shortdescription>Assume uniform calibration values across the array</shortdescription>
 <description>Assume uniform calibration values across the array
                     Subparameter of caltype='tsys'
@@ -224,13 +219,13 @@ Current antenna-based gencal options (caltype) are:
             <constraints>
               <when param="caltype">
                 <equals value="tecim">
-                   <default param="infile"><value type="string"></value></default>
+                   <default param="infile"><value type="string"/></default>
                 </equals>
                 <equals value="gc">
-                   <default param="infile"><value type="string"></value></default>
+                   <default param="infile"><value type="string"/></default>
                 </equals>
                 <equals value="gceff">
-                   <default param="infile"><value type="string"></value></default>
+                   <default param="infile"><value type="string"/></default>
                 </equals>
       <equals value="tsys">
         <default param="uniform"><value type="bool">True</value></default>
@@ -247,5 +242,3 @@ https://casa.nrao.edu/casadocs/
  </example>
  </task>
  </casaxml>
-
-

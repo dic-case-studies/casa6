@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="flagcmd" category="flagging">
+<task category="flagging" name="flagcmd" type="function">
     <shortdescription>Flagging task based on batches of flag-commands</shortdescription>
     <description>
     The flagcmd task will flag the visibility data or calibration
@@ -39,17 +34,17 @@
 
         </description>
         <input>
-                <param type="string" name="vis" mustexist="true">
+                <param mustexist="true" name="vis" type="path">
 <shortdescription>Name of MS file or calibration table to flag</shortdescription>                        
 <description>Name of input visibility file or calibration table.
                      default: '' (none) 
 
                         example: vis='uid___A002_X2a5c2f_X54.ms'
 </description>
-                        <value></value>
+                        <value/>
                 </param>
 
-                <param type="string" name="inpmode">
+                <param name="inpmode" type="string">
 <shortdescription>Input mode for flag commands(table/list/xml)</shortdescription> 
 <description>Input mode for flag commands(table/list/xml)
                      options: 'table','list','xml'
@@ -77,7 +72,7 @@
                         </allowed>
                 </param>
 
-                <param type="any" name="inpfile" subparam="true">
+                <param subparam="true" name="inpfile" type="any">
 <shortdescription>Source of flag commands</shortdescription>                        
 <description>Source of flag commands. Subparameter of
 inpmode='table/list'.
@@ -97,11 +92,10 @@ inpmode='table/list'.
                      from an MS given in inpfile and apply them to
                      another MS or cal table given in vis.
 </description>
-                        <any type="variant" limittypes="string stringArray"/>
-                        <value type="string"></value>
+                        <type>string</type><type>stringVec</type>
+                        <value type="string"/>
                 </param>
-                <param type="intArray" name="tablerows"
-                       subparam="true">
+                <param subparam="true" name="tablerows" type="intVec">
 <shortdescription>Rows of inpfile to read</shortdescription>
 <description>List of rows of the FLAG_CMD table to read. Subparameter
 of inpmode='table/list'.
@@ -115,9 +109,9 @@ of inpmode='table/list'.
                      = range(0,30) + range(50,55) instead of
                      '0~29,50~54' for now.
 </description>
-                        <value type="vector"></value>
+                        <value type="vector"/>
                 </param>
-                <param type="any" name="reason" subparam="true">
+                <param subparam="true" name="reason" type="any">
 <shortdescription>Select by REASON types</shortdescription>
 <description>Select flag commands based on REASON(s). Subparameter of
 inpmode.
@@ -136,10 +130,10 @@ inpmode.
                      ='FOCUS_ERROR,SUBREFLECTOR_ERROR' matches this
                      compound reason string only
 </description>
-                        <any type="variant" limittypes="string stringArray"/>
+                        <type>string</type><type>stringVec</type>
                         <value type="string">any</value>
                 </param>
-                <param type="bool" name="useapplied" subparam="true">
+                <param subparam="true" name="useapplied" type="bool">
 <shortdescription>Select commands whose rows have APPLIED column set to True</shortdescription>
 <description>Select commands whose rows have APPLIED column set to
 True. Subparameter of inpmode='table'.
@@ -157,7 +151,7 @@ True. Subparameter of inpmode='table'.
                         <value>False</value>
                 </param>
                 
-                <param type="double" name="tbuff" subparam="true">
+                <param subparam="true" name="tbuff" type="double">
 <shortdescription>Time buffer (sec) to pad flags</shortdescription>
 <description>Time buffer (sec) to pad flags. Subparameter of
 inpmode='xml'.
@@ -166,15 +160,15 @@ inpmode='xml'.
                         <value>0.0</value>
                 </param>
 
-                <param type="string" name="ants" subparam="true">
+                <param subparam="true" name="ants" type="string">
 <shortdescription>Allowed flag antenna names to select by</shortdescription>
 <description>Allowed flag antenna names to select by. Subparameter of
 inpmode='xml'.
 </description>
-                        <value></value>
+                        <value/>
                 </param>
 
-                <param type="string" name="action">
+                <param name="action" type="string">
 <shortdescription>Action to perform in MS and/or in inpfile (apply/unapply/list/plot/clear/extract)</shortdescription>
 <description>Action to perform in MS and/or in inpfile
                      options: apply/unapply/list/plot/clear/extract
@@ -236,7 +230,7 @@ inpmode='xml'.
                         </allowed>
                 </param>
 
-                <param type="bool" name="flagbackup" subparam="true">
+                <param subparam="true" name="flagbackup" type="bool">
 <shortdescription>Automatically backup the FLAG column before execution</shortdescription>
 <description>Automatically backup the FLAG column before
 execution. Subparameter of action='apply/unapply'.
@@ -246,7 +240,7 @@ execution. Subparameter of action='apply/unapply'.
                         <value>True</value>
                 </param>
 
-                <param type="bool" name="clearall" subparam="true">
+                <param subparam="true" name="clearall" type="bool">
 <shortdescription>Delete all rows from FLAG_CMD</shortdescription>
 <description>Delete all rows from FLAG_CMD. Subparameter of
 action='clear'.
@@ -255,7 +249,7 @@ action='clear'.
                         <value>False</value>
                 </param>
 
-                <param type="intArray" name="rowlist" subparam="true">
+                <param subparam="true" name="rowlist" type="intVec">
 <shortdescription>FLAG_CMD rows to clear</shortdescription>
 <description>FLAG_CMD rows to clear. Subparameter of action='clear'.
                      default: [] (all flags in table)
@@ -276,10 +270,10 @@ action='clear'.
                      range(0,30) + range(50,55) instead of
                      '0~29,50~54' for now.
 </description>
-                        <value type="vector"></value>
+                        <value type="vector"/>
                 </param>
 
-            <param type="string" name="plotfile" subparam="true">
+            <param subparam="true" name="plotfile" type="string">
 <shortdescription>Name of output file to save plot</shortdescription>  
 <description>Name of output file to save plot
                      default: '' (plot to matplotlib window)
@@ -287,10 +281,10 @@ action='clear'.
                      WARNING: will only reliably plot individual flags
                      per antenna and timerange (e.g. direct from xml)   
 </description>
-                    <value></value>
+                    <value/>
             </param>
 
-            <param type="bool" name="savepars">
+            <param name="savepars" type="bool">
 <shortdescription>Save flag commands to the MS or file</shortdescription>
 <description>Save the flag commands to the FLAG_CMD table of the MS or
 to an output text file.
@@ -299,7 +293,7 @@ to an output text file.
 </description>
                 <value>False</value>
             </param>
-            <param type="string" name="outfile" subparam="true">
+            <param subparam="true" name="outfile" type="string">
 <shortdescription>Name of output file to save commands</shortdescription>
 <description>Name of output file to save commands. Subparameter of
 savepars=True.
@@ -309,9 +303,9 @@ savepars=True.
                         example: outfile='flags.txt' will save the
                         parameters in a text file.
 </description>
-                    <value></value>
+                    <value/>
             </param>
-            <param type="bool" name="overwrite" subparam="true">
+            <param subparam="true" name="overwrite" type="bool">
 <shortdescription>Overwrite an existing file to save the flag commands</shortdescription>
 <description>Overwrite an existing file given in 'outfile' to save the
 flag commands. Subparameter of savepars=True.
@@ -329,18 +323,18 @@ flag commands. Subparameter of savepars=True.
                 <constraints>
                     <when param="inpmode">
                             <equals value="table">
-                                    <default param="inpfile"><value type="string"></value></default>
-                                    <default param="tablerows"><value type="vector"></value></default>
+                                    <default param="inpfile"><value type="string"/></default>
+                                    <default param="tablerows"><value type="vector"/></default>
                                     <default param="reason"><value type="string">any</value></default>
                                     <default param="useapplied"><value type="bool">False</value></default>
                             </equals>
                             <equals value="list">
-                                    <default param="inpfile"><value type="string"></value></default>
+                                    <default param="inpfile"><value type="string"/></default>
                                     <default param="reason"><value type="string">any</value></default>
                             </equals>
                             <equals value="xml">
                                     <default param="tbuff"><value>0.0</value></default>
-                                    <default param="ants"><value type="string"></value></default>
+                                    <default param="ants"><value type="string"/></default>
                                     <default param="reason"><value type="string">any</value></default>
                             </equals>
                     </when>
@@ -352,20 +346,20 @@ flag commands. Subparameter of savepars=True.
                             <equals value="unapply">
                                     <default param="flagbackup"><value>True</value></default>
                             </equals>
-                            <equals value="list"></equals>
+                            <equals value="list"/>
                             <equals value="plot">
-                                    <default param="plotfile"><value type="string"></value></default>
+                                    <default param="plotfile"><value type="string"/></default>
                             </equals>
                             <equals value="clear">
                                     <default param="clearall"><value>False</value></default>
-                                    <default param="rowlist"><value type="vector"></value></default>
+                                    <default param="rowlist"><value type="vector"/></default>
                             </equals>
                     </when>
                                         
                     <when param="savepars">
-                        <equals type="bool" value="False" />
-                        <equals type="bool" value="True">
-                            <default param="outfile"><value type="string"></value></default>
+                        <equals value="False" type="bool"/>
+                        <equals value="True" type="bool">
+                            <default param="outfile"><value type="string"/></default>
                             <default param="overwrite"><value type="bool">True</value></default>
                         </equals>
                     </when>

@@ -1,9 +1,9 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
-<task category="single dish" name="sdcal" type="function">
+<task type="function" name="sdcal" category="single dish">
 
   <shortdescription> MS SD calibration task</shortdescription>
 
@@ -60,12 +60,12 @@ spectrum is
 
   <input>
 
-    <param mustexist="true" name="infile" type="string"><shortdescription>name of input SD dataset (must be MS)</shortdescription><description>name of input SD dataset (must be MS)</description>
+    <param type="path" name="infile" mustexist="true"><shortdescription>name of input SD dataset (must be MS)</shortdescription><description>name of input SD dataset (must be MS)</description>
       
       <value/>
     </param>
 
-    <param name="calmode" type="string">
+    <param type="string" name="calmode">
       <shortdescription>SD calibration mode [&quot;ps&quot;,&quot;otfraster&quot;,&quot;otf&quot;,&quot;tsys&quot;,&quot;apply&quot;, and allowed combinations]</shortdescription>
       <description>SD calibration mode</description>
       <value>ps</value>
@@ -85,71 +85,71 @@ spectrum is
       </allowed>
     </param>
 
-    <param subparam="true" name="fraction" type="any"><shortdescription>fraction of the OFF data to mark</shortdescription><description>fraction of the OFF data to mark</description>
+    <param type="any" name="fraction" subparam="true"><shortdescription>fraction of the OFF data to mark</shortdescription><description>fraction of the OFF data to mark</description>
       
-      <any limittype="string double" type="variant"/>
+      <any type="variant" limittype="string double"/>
       <value type="string">10%</value>
     </param>
 
-    <param subparam="true" name="noff" type="int"><shortdescription>number of the OFF data to mark</shortdescription><description>number of the OFF data to mark</description>
+    <param type="int" name="noff" subparam="true"><shortdescription>number of the OFF data to mark</shortdescription><description>number of the OFF data to mark</description>
       
       <value>-1</value>
     </param>
 
-    <param subparam="true" name="width" type="double"><shortdescription>width of the pixel for edge detection</shortdescription><description>width of the pixel for edge detection</description>
+    <param type="double" name="width" subparam="true"><shortdescription>width of the pixel for edge detection</shortdescription><description>width of the pixel for edge detection</description>
       
       <value>0.5</value>
     </param>
 
-    <param subparam="true" name="elongated" type="bool"><shortdescription>whether observed area is elongated in one direction or not</shortdescription><description>whether observed area is elongated in one direction or not</description>
+    <param type="bool" name="elongated" subparam="true"><shortdescription>whether observed area is elongated in one direction or not</shortdescription><description>whether observed area is elongated in one direction or not</description>
       
       <value>False</value>
     </param>
 
-    <param subparam="true" name="applytable" type="any"><shortdescription>(List of) sky and/or tsys tables</shortdescription><description>(List of) sky and/or tsys tables</description>
+    <param type="any" name="applytable" subparam="true"><shortdescription>(List of) sky and/or tsys tables</shortdescription><description>(List of) sky and/or tsys tables</description>
       
-      <any limittype="string stringArray" type="variant"/>
+      <any type="variant" limittype="string stringArray"/>
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="interp" type="string"><shortdescription>Interpolation type in time[,freq]. Valid options for time are &quot;nearest&quot;, &quot;linear&quot;, and &quot;cubic&quot;, while valid options for frequency include &quot;nearest&quot;, &quot;linear&quot;, &quot;cspline&quot;, or any numeric string that indicates an order of polynomial interpolation. You can specify interpolation type for time and frequency separately by joining two of the above options by comma (e.g., &quot;linear,cspline&quot;).</shortdescription><description>Interpolation type in time[,freq]. Valid options for time are &quot;nearest&quot;, &quot;linear&quot;, and &quot;cubic&quot;, while valid options for frequency include &quot;nearest&quot;, &quot;linear&quot;, &quot;cspline&quot;, or any numeric string that indicates an order of polynomial interpolation. You can specify interpolation type for time and frequency separately by joining two of the above options by comma (e.g., &quot;linear,cspline&quot;).</description>
+    <param type="string" name="interp" subparam="true"><shortdescription>Interpolation type in time[,freq]. Valid options for time are &quot;nearest&quot;, &quot;linear&quot;, and &quot;cubic&quot;, while valid options for frequency include &quot;nearest&quot;, &quot;linear&quot;, &quot;cspline&quot;, or any numeric string that indicates an order of polynomial interpolation. You can specify interpolation type for time and frequency separately by joining two of the above options by comma (e.g., &quot;linear,cspline&quot;).</shortdescription><description>Interpolation type in time[,freq]. Valid options for time are &quot;nearest&quot;, &quot;linear&quot;, and &quot;cubic&quot;, while valid options for frequency include &quot;nearest&quot;, &quot;linear&quot;, &quot;cspline&quot;, or any numeric string that indicates an order of polynomial interpolation. You can specify interpolation type for time and frequency separately by joining two of the above options by comma (e.g., &quot;linear,cspline&quot;).</description>
       
       <value/>
     </param>
 
-    <param subparam="true" name="spwmap" type="any"><shortdescription>A dictionary indicating spw combinations to apply Tsys calibration to target. The key should be spw for Tsys calibration and its associated value must be a list of science spws to be applied.</shortdescription><description>A dictionary indicating spw combinations to apply Tsys calibration to target. The key should be spw for Tsys calibration and its associated value must be a list of science spws to be applied.</description>
+    <param type="any" name="spwmap" subparam="true"><shortdescription>A dictionary indicating spw combinations to apply Tsys calibration to target. The key should be spw for Tsys calibration and its associated value must be a list of science spws to be applied.</shortdescription><description>A dictionary indicating spw combinations to apply Tsys calibration to target. The key should be spw for Tsys calibration and its associated value must be a list of science spws to be applied.</description>
       
       <any type="variant"/>
       <value type="record"/>
     </param>
 
-    <param subparam="true" name="outfile" type="string"><shortdescription>name of output file (See a WARNING in help)</shortdescription><description>name of output file (See a WARNING in help)</description>
+    <param type="string" name="outfile" subparam="true"><shortdescription>name of output file (See a WARNING in help)</shortdescription><description>name of output file (See a WARNING in help)</description>
       
       <value/>
     </param>
 
-    <param subparam="true" name="overwrite" type="bool">
+    <param type="bool" name="overwrite" subparam="true">
       <shortdescription>overwrite the output file if already exists [True, False]</shortdescription>
       <description>overwrite the output file if already exists</description>
       <value>False</value>
     </param>
 
-    <param name="field" type="string"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot; = all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot; = all)</description>
+    <param type="string" name="field"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot; = all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot; = all)</description>
       
       <value/>
     </param>
 
-    <param name="spw" type="string"><shortdescription>select data by spw IDs (spectral windows), e.g., &quot;3,5,7&quot; (&quot;&quot; = all)</shortdescription><description>select data by spw IDs (spectral windows), e.g., &quot;3,5,7&quot; (&quot;&quot; = all)</description>
+    <param type="string" name="spw"><shortdescription>select data by spw IDs (spectral windows), e.g., &quot;3,5,7&quot; (&quot;&quot; = all)</shortdescription><description>select data by spw IDs (spectral windows), e.g., &quot;3,5,7&quot; (&quot;&quot; = all)</description>
       
       <value/>
     </param>
 
-    <param name="scan" type="string"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="scan"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
       
       <value/>
     </param>
     
-    <param subparam="true" name="intent" type="string"><shortdescription>select data by observation intent, e.g. &quot;OBSERVE_TARGET#ON_SOURCE&quot; (&quot;&quot;=all)</shortdescription><description>select data by observation intent, e.g. &quot;OBSERVE_TARGET#ON_SOURCE&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="intent" subparam="true"><shortdescription>select data by observation intent, e.g. &quot;OBSERVE_TARGET#ON_SOURCE&quot; (&quot;&quot;=all)</shortdescription><description>select data by observation intent, e.g. &quot;OBSERVE_TARGET#ON_SOURCE&quot; (&quot;&quot;=all)</description>
       
       <value/>
     </param>

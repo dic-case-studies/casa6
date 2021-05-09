@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="analysis" name="specsmooth" type="function">
+<task type="function" name="specsmooth" category="analysis">
 
 <shortdescription>Smooth an image region in one dimension</shortdescription>
 
@@ -8,85 +8,85 @@
 </description>
 
 <input>
-    <param mustexist="true" name="imagename" type="string"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
+    <param type="path" name="imagename" mustexist="true"><shortdescription>Name of the input image</shortdescription><description>Name of the input image</description>
         
         <value/>
         <example>imagename='ngc5921_task.image'</example>
     </param>
-    <param name="outfile" type="string"><shortdescription>Output image name.</shortdescription><description>Output image name.</description>
+    <param type="string" name="outfile"><shortdescription>Output image name.</shortdescription><description>Output image name.</description>
         
         <value/>
         <example>outfile='mysmoothed.im'</example>
     </param>
-    <param name="box" type="string"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
+    <param type="string" name="box"><shortdescription>Rectangular region to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region to select in direction plane. Default is to use the entire direction plane.</description>
         
         <value/>
         <example>box=&quot;4,4,10,10&quot;</example>
     </param>
-    <param name="chans" type="string"><shortdescription>Channels to use. Channels must be contiguous. Default is to use all channels.</shortdescription><description>Channels to use. Channels must be contiguous. Default is to use all channels.</description>
+    <param type="string" name="chans"><shortdescription>Channels to use. Channels must be contiguous. Default is to use all channels.</shortdescription><description>Channels to use. Channels must be contiguous. Default is to use all channels.</description>
         
         <value/>
     </param>
-    <param name="stokes" type="string"><shortdescription>Stokes planes to use. Planes specified must be contiguous. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Planes specified must be contiguous. Default is to use all Stokes planes.</description>
+    <param type="string" name="stokes"><shortdescription>Stokes planes to use. Planes specified must be contiguous. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Planes specified must be contiguous. Default is to use all Stokes planes.</description>
         
         <value/>
         <example>stokes=&quot;I&quot;</example>
     </param>
-    <param name="region" type="any"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+    <param type="any" name="region"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
         <any type="variant"/>
         
         <value type="string"/>
         <example>region=&quot;myregion.rgn&quot;</example>
     </param>
-    <param name="mask" type="string"><shortdescription>Mask to use. Default is none..</shortdescription><description>Mask to use. Default is none..</description>
+    <param type="string" name="mask"><shortdescription>Mask to use. Default is none..</shortdescription><description>Mask to use. Default is none..</description>
         
         <value/>
     </param>
-    <param subparam="true" name="overwrite" type="bool"><shortdescription>Overwrite the output if it exists?</shortdescription><description>Overwrite the output if it exists?</description>
+    <param type="bool" name="overwrite" subparam="true"><shortdescription>Overwrite the output if it exists?</shortdescription><description>Overwrite the output if it exists?</description>
         
         <value>False</value>
     </param>
-    <param subparam="true" name="stretch" type="bool"><shortdescription>Stretch the mask if necessary and possible? Default False</shortdescription><description>Stretch the mask if necessary and possible? Default False</description>
+    <param type="bool" name="stretch" subparam="true"><shortdescription>Stretch the mask if necessary and possible? Default False</shortdescription><description>Stretch the mask if necessary and possible? Default False</description>
         
         <value>False</value>
     </param>
-    <param name="axis" type="int"><shortdescription>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</shortdescription><description>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</description>
+    <param type="int" name="axis"><shortdescription>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</shortdescription><description>The profile axis. Default: use the spectral axis if one exists, axis 0 otherwise (&lt;0).</description>
         
         <value>-1</value>
         <example>axis=3</example>
     </param>
-    <param name="function" type="string"><shortdescription>Convolution function. hanning and boxcar are supported functions. Minimum match is supported.</shortdescription><description>Convolution function. hanning and boxcar are supported functions. Minimum match is supported.</description>
+    <param type="string" name="function"><shortdescription>Convolution function. hanning and boxcar are supported functions. Minimum match is supported.</shortdescription><description>Convolution function. hanning and boxcar are supported functions. Minimum match is supported.</description>
         
         <value>hanning</value>
         <example>function=&quot;boxcar&quot;</example>
     </param>
-    <param subparam="True" name="width" type="int"><shortdescription>Width of boxcar, in pixels.</shortdescription><description>Width of boxcar, in pixels.</description>
+    <param type="int" name="width" subparam="True"><shortdescription>Width of boxcar, in pixels.</shortdescription><description>Width of boxcar, in pixels.</description>
         
         <value>2</value>
         <example>width=2</example>
     </param>
-    <param name="dmethod" type="string"><shortdescription>Decimation method. &quot;&quot; means no decimation, &quot;copy&quot; and &quot;mean&quot; are also supported (minimum match).</shortdescription><description>Decimation method. &quot;&quot; means no decimation, &quot;copy&quot; and &quot;mean&quot; are also supported (minimum match).</description>
+    <param type="string" name="dmethod"><shortdescription>Decimation method. &quot;&quot; means no decimation, &quot;copy&quot; and &quot;mean&quot; are also supported (minimum match).</shortdescription><description>Decimation method. &quot;&quot; means no decimation, &quot;copy&quot; and &quot;mean&quot; are also supported (minimum match).</description>
         
         <value>copy</value>
         <example>dmethod=&quot;mean&quot;</example>
     </param>
     <constraints>
         <when param="outfile">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="overwrite">
                     <value>False</value>
                 </default>
             </notequals>
         </when>
         <when param="mask">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="stretch">
                     <value>False</value>
                 </default>
             </notequals>
         </when>
         <when param="function">
-            <notequals value="hanning" type="string">
+            <notequals type="string" value="hanning">
                 <default param="width">
                     <value>2</value>
                 </default>

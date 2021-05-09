@@ -1,8 +1,8 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
-<task category="imaging" name="makemask" type="function">
+<task type="function" name="makemask" category="imaging">
 
   <shortdescription>Makes and manipulates image masks</shortdescription>
 
@@ -12,7 +12,7 @@
 
     
 
-    <param name="mode" type="string"><shortdescription>Mask method (list, copy,expand,delete,setdefaultmask)</shortdescription><description>Mask method (list, copy,expand,delete,setdefaultmask)</description>
+    <param type="string" name="mode"><shortdescription>Mask method (list, copy,expand,delete,setdefaultmask)</shortdescription><description>Mask method (list, copy,expand,delete,setdefaultmask)</description>
       
       <value>list</value>
       <allowed kind="enum">
@@ -31,43 +31,43 @@
     
 
             
-            <param subparam="true" name="inpimage" type="any"><shortdescription>Name of input image.</shortdescription><description>Name of input image.</description>
+            <param type="any" name="inpimage" subparam="true"><shortdescription>Name of input image.</shortdescription><description>Name of input image.</description>
             
-            <any limittypes="string stringArray" type="variant"/>
+            <type>string</type><type>stringVec</type>
             <value type="string"/>
             </param>
 
             
             
-            <param subparam="true" name="inpmask" type="any"><shortdescription>mask(s) to be processed: image masks,T/F internal masks(Need to include parent image names),regions(for copy mode)</shortdescription><description>mask(s) to be processed: image masks,T/F internal masks(Need to include parent image names),regions(for copy mode)</description>
+            <param type="any" name="inpmask" subparam="true"><shortdescription>mask(s) to be processed: image masks,T/F internal masks(Need to include parent image names),regions(for copy mode)</shortdescription><description>mask(s) to be processed: image masks,T/F internal masks(Need to include parent image names),regions(for copy mode)</description>
             
-              <any limittypes="string stringArray" type="variant"/>
+              <type>string</type><type>stringVec</type>
               
 
               <value type="string"/>
             </param>
 
-            <param subparam="true" name="output" type="string"><shortdescription>Name of output mask (imagename or imagename:internal_maskname)</shortdescription><description>Name of output mask (imagename or imagename:internal_maskname)</description>
+            <param type="string" name="output" subparam="true"><shortdescription>Name of output mask (imagename or imagename:internal_maskname)</shortdescription><description>Name of output mask (imagename or imagename:internal_maskname)</description>
                
                <value/>
             </param>
 
-            <param subparam="true" name="overwrite" type="bool"><shortdescription>overwrite output if exists?</shortdescription><description>overwrite output if exists?</description>
+            <param type="bool" name="overwrite" subparam="true"><shortdescription>overwrite output if exists?</shortdescription><description>overwrite output if exists?</description>
                
                <value>False</value>
             </param>
 
             
-      <param subparam="true" name="inpfreqs" type="any"><shortdescription>List of chans/freqs (in inpmask) to read masks from </shortdescription><description>List of chans/freqs (in inpmask) to read masks from </description>
+      <param type="any" name="inpfreqs" subparam="true"><shortdescription>List of chans/freqs (in inpmask) to read masks from </shortdescription><description>List of chans/freqs (in inpmask) to read masks from </description>
               
-              <any limittypes="string intArray" type="variant"/>
-              <value type="intArray"/>
+              <type>string</type><type>intVec</type>
+              <value type="intVec"/>
             </param>
 
-      <param subparam="true" name="outfreqs" type="any"><shortdescription>List of chans/freqs (in output) on which to expand the mask</shortdescription><description>List of chans/freqs (in output) on which to expand the mask</description>
+      <param type="any" name="outfreqs" subparam="true"><shortdescription>List of chans/freqs (in output) on which to expand the mask</shortdescription><description>List of chans/freqs (in output) on which to expand the mask</description>
               
-              <any limittypes="string intArray" type="variant"/>
-              <value type="intArray"/>
+              <type>string</type><type>intVec</type>
+              <value type="intVec"/>
             </param>
 
            
@@ -101,8 +101,8 @@
                     <equals value="expand">
                         <default param="inpimage"><value type="string"/></default>
                         <default param="inpmask"><value type="string"/></default>
-                        <default param="inpfreqs"><value type="intArray"/></default>
-                        <default param="outfreqs"><value type="intArray"/></default>
+                        <default param="inpfreqs"><value type="intVec"/></default>
+                        <default param="outfreqs"><value type="intVec"/></default>
                         <default param="output"><value type="string"/></default>
                         <default param="overwrite"><value type="bool">False</value></default>
                         

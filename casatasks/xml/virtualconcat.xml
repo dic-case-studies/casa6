@@ -1,47 +1,47 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="manipulation" name="virtualconcat" type="function">
+<task type="function" name="virtualconcat" category="manipulation">
 <shortdescription>Concatenate several visibility data sets into a multi-MS</shortdescription>
 
 <input>
-  <param mustexist="true" name="vis" type="stringArray"><shortdescription>List of names of input visibility files to be concatenated</shortdescription><description>List of names of input visibility files to be concatenated</description>
+  <param type="pathVec" name="vis" mustexist="true"><shortdescription>List of names of input visibility files to be concatenated</shortdescription><description>List of names of input visibility files to be concatenated</description>
     
     <value/>
   </param>
 
-  <param name="concatvis" type="string"><shortdescription>Name of the output visibility file (a multi-MS)</shortdescription><description>Name of the output visibility file (a multi-MS)</description>
+  <param type="string" name="concatvis"><shortdescription>Name of the output visibility file (a multi-MS)</shortdescription><description>Name of the output visibility file (a multi-MS)</description>
     
     <value/>
   </param>
   
-  <param name="freqtol" type="any"><shortdescription>Frequency shift tolerance for considering data as the same spwid</shortdescription><description>Frequency shift tolerance for considering data as the same spwid</description>
+  <param type="any" name="freqtol"><shortdescription>Frequency shift tolerance for considering data as the same spwid</shortdescription><description>Frequency shift tolerance for considering data as the same spwid</description>
     
     <any type="variant"/>
     <value type="string"/>
   </param>
 
-  <param name="dirtol" type="any"><shortdescription>Direction shift tolerance for considering data as the same field</shortdescription><description>Direction shift tolerance for considering data as the same field</description>
+  <param type="any" name="dirtol"><shortdescription>Direction shift tolerance for considering data as the same field</shortdescription><description>Direction shift tolerance for considering data as the same field</description>
     
     <any type="variant"/>
     <value type="string"/>
   </param>
 
-  <param name="respectname" type="bool"><shortdescription>If true, fields with a different name are not merged even if their direction agrees</shortdescription><description>If true, fields with a different name are not merged even if their direction agrees</description>
+  <param type="bool" name="respectname"><shortdescription>If true, fields with a different name are not merged even if their direction agrees</shortdescription><description>If true, fields with a different name are not merged even if their direction agrees</description>
     
     <value>True</value>
   </param>
 
-  <param name="visweightscale" type="doubleArray"><shortdescription>List of the weight scaling factors to be applied to the individual MSs</shortdescription><description>List of the weight scaling factors to be applied to the individual MSs</description>
+  <param type="doubleVec" name="visweightscale"><shortdescription>List of the weight scaling factors to be applied to the individual MSs</shortdescription><description>List of the weight scaling factors to be applied to the individual MSs</description>
     
     <value/>
   </param>
 
-  <param name="keepcopy" type="bool"><shortdescription>If true, a copy of the input MSs is kept in their original place.</shortdescription><description>If true, a copy of the input MSs is kept in their original place.</description>
+  <param type="bool" name="keepcopy"><shortdescription>If true, a copy of the input MSs is kept in their original place.</shortdescription><description>If true, a copy of the input MSs is kept in their original place.</description>
     
     <value>False</value>
   </param>
 
-  <param name="copypointing" type="bool"><shortdescription>If true, keep the POINTING table information in the output MMS. If false, don\'t.</shortdescription><description>If true, keep the POINTING table information in the output MMS. If false, don\'t.</description>
+  <param type="bool" name="copypointing"><shortdescription>If true, keep the POINTING table information in the output MMS. If false, don\'t.</shortdescription><description>If true, keep the POINTING table information in the output MMS. If false, don\'t.</description>
     
     <value>True</value>
   </param>
@@ -135,5 +135,5 @@ copypointing -- If true, the POINTING table information will be present in the o
 
 </example> 
 
-</task>
+<returns>void</returns></task>
 </casaxml>

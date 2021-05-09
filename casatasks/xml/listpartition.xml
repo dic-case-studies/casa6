@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="information" name="listpartition" type="function">
+<task type="function" name="listpartition" category="information">
        <shortdescription>List the summary of a multi-MS data set in the logger or in a file</shortdescription>
        <description>
        Lists the following properties of a multi-measurement set:
@@ -8,17 +8,17 @@
        number of rows for all scans.
        </description>
        <input>
-              <param mustexist="true" name="vis" type="string"><shortdescription>Name of Multi-MS or normal MS.</shortdescription><description>Name of Multi-MS or normal MS.</description>
+              <param type="path" name="vis" mustexist="true"><shortdescription>Name of Multi-MS or normal MS.</shortdescription><description>Name of Multi-MS or normal MS.</description>
                      
                      <value/>
               </param>
 
-        <param name="createdict" type="bool"><shortdescription>Create and return a dictionary with Sub-MS information</shortdescription><description>Create and return a dictionary with Sub-MS information</description>
+        <param type="bool" name="createdict"><shortdescription>Create and return a dictionary with Sub-MS information</shortdescription><description>Create and return a dictionary with Sub-MS information</description>
             
             <value>False</value>
         </param>
               
-              <param name="listfile" type="string"><shortdescription>Name of ASCII file to save output: ''==&gt;to terminal</shortdescription><description>Name of ASCII file to save output: ''==&gt;to terminal</description>
+              <param type="string" name="listfile"><shortdescription>Name of ASCII file to save output: ''==&gt;to terminal</shortdescription><description>Name of ASCII file to save output: ''==&gt;to terminal</description>
                      
                      <value/>
               </param>

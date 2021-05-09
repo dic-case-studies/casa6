@@ -1,9 +1,9 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
-<task category="single dish" name="sdgaincal" type="function">
+<task type="function" name="sdgaincal" category="single dish">
 
   <shortdescription> MS SD gain calibration task</shortdescription>
 
@@ -13,12 +13,12 @@
 
   <input>
 
-    <param mustexist="true" name="infile" type="string"><shortdescription>name of input SD dataset (must be MS)</shortdescription><description>name of input SD dataset (must be MS)</description>
+    <param type="path" name="infile" mustexist="true"><shortdescription>name of input SD dataset (must be MS)</shortdescription><description>name of input SD dataset (must be MS)</description>
       
       <value/>
     </param>
 
-    <param name="calmode" type="string">
+    <param type="string" name="calmode">
       <shortdescription>gain calibration mode (&quot;doublecircle&quot;)</shortdescription>
       <description>gain calibration mode</description>
       <value>doublecircle</value>
@@ -27,55 +27,55 @@
       </allowed>
     </param>
 
-    <param subparam="true" name="radius" type="any"><shortdescription>radius of central region to be used for calibration</shortdescription><description>radius of central region to be used for calibration</description>
+    <param type="any" name="radius" subparam="true"><shortdescription>radius of central region to be used for calibration</shortdescription><description>radius of central region to be used for calibration</description>
       
-      <any limittype="string double" type="variant"/>
+      <any type="variant" limittype="string double"/>
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="smooth" type="bool"><shortdescription>smooth data or not</shortdescription><description>smooth data or not</description>
+    <param type="bool" name="smooth" subparam="true"><shortdescription>smooth data or not</shortdescription><description>smooth data or not</description>
       
       <value>True</value>
     </param>
 
-    <param name="antenna" type="string"><shortdescription>select data by antenna name or ID, e.g. &quot;PM03&quot;</shortdescription><description>select data by antenna name or ID, e.g. &quot;PM03&quot;</description>
+    <param type="string" name="antenna"><shortdescription>select data by antenna name or ID, e.g. &quot;PM03&quot;</shortdescription><description>select data by antenna name or ID, e.g. &quot;PM03&quot;</description>
       
       <value/>
     </param>
 
-    <param name="field" type="string"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot; = all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot; = all)</description>
+    <param type="string" name="field"><shortdescription>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot; = all)</shortdescription><description>select data by field IDs and names, e.g. &quot;3C2*&quot; (&quot;&quot; = all)</description>
       
       <value/>
     </param>
 
-    <param name="spw" type="string"><shortdescription>select data by spw IDs (spectral windows), e.g., &quot;3,5,7&quot; (&quot;&quot; = all)</shortdescription><description>select data by spw IDs (spectral windows), e.g., &quot;3,5,7&quot; (&quot;&quot; = all)</description>
+    <param type="string" name="spw"><shortdescription>select data by spw IDs (spectral windows), e.g., &quot;3,5,7&quot; (&quot;&quot; = all)</shortdescription><description>select data by spw IDs (spectral windows), e.g., &quot;3,5,7&quot; (&quot;&quot; = all)</description>
       
       <value/>
     </param>
 
-    <param name="scan" type="string"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="scan"><shortdescription>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</shortdescription><description>select data by scan numbers, e.g. &quot;21~23&quot; (&quot;&quot;=all)</description>
       
       <value/>
     </param>
 
-    <param subparam="true" name="intent" type="string"><shortdescription>select data by observation intent, e.g. &quot;OBSERVE_TARGET#ON_SOURCE&quot; (&quot;&quot;=all)</shortdescription><description>select data by observation intent, e.g. &quot;OBSERVE_TARGET#ON_SOURCE&quot; (&quot;&quot;=all)</description>
+    <param type="string" name="intent" subparam="true"><shortdescription>select data by observation intent, e.g. &quot;OBSERVE_TARGET#ON_SOURCE&quot; (&quot;&quot;=all)</shortdescription><description>select data by observation intent, e.g. &quot;OBSERVE_TARGET#ON_SOURCE&quot; (&quot;&quot;=all)</description>
       
       <value/>
     </param>
 
-    <param name="applytable" type="any"><shortdescription>(List of) sky and/or tsys tables for pre-application</shortdescription><description>(List of) sky and/or tsys tables for pre-application</description>
+    <param type="any" name="applytable"><shortdescription>(List of) sky and/or tsys tables for pre-application</shortdescription><description>(List of) sky and/or tsys tables for pre-application</description>
       
-      <any limittype="string stringArray" type="variant"/>
+      <any type="variant" limittype="string stringArray"/>
       <value type="string"/>
     </param>
 
-  <param subparam="true" name="interp" type="any"><shortdescription>Interp type in time[,freq], per gaintable. default==linear,linear</shortdescription><description>Interp type in time[,freq], per gaintable. default==linear,linear</description>
+  <param type="any" name="interp" subparam="true"><shortdescription>Interp type in time[,freq], per gaintable. default==linear,linear</shortdescription><description>Interp type in time[,freq], per gaintable. default==linear,linear</description>
     
-      <any limittype="string stringArray" type="variant"/>
+      <any type="variant" limittype="string stringArray"/>
     <value type="string"/>
   </param>
 
-  <param subparam="true" name="spwmap" type="intArray">
+  <param type="intVec" name="spwmap" subparam="true">
     <shortdescription>Spectral window mappings to form for applytable(s)</shortdescription>
     <description>Spectral window mappings to form for applytable(s)
                      Only used if callib=False
@@ -93,12 +93,12 @@
     <value/>
   </param>
 
-    <param name="outfile" type="string"><shortdescription>name of output caltable</shortdescription><description>name of output caltable</description>
+    <param type="string" name="outfile"><shortdescription>name of output caltable</shortdescription><description>name of output caltable</description>
       
       <value/>
     </param>
 
-    <param name="overwrite" type="bool">
+    <param type="bool" name="overwrite">
       <shortdescription>overwrite the output file if already exists [True, False]</shortdescription>
       <description>overwrite the output file if already exists</description>
       <value>False</value>
@@ -112,9 +112,9 @@
         </equals>
       </when>
       <when param="applytable">
-        <notequals type="string" value=""> 
+        <notequals value="" type="string"> 
           <default param="interp"><value type="string"/></default>
-          <default param="spwmap"><value type="intArray">-1</value></default>
+          <default param="spwmap"><value type="intVec">-1</value></default>
         </notequals>
       </when>
     </constraints>

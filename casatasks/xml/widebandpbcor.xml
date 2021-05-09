@@ -1,8 +1,8 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
-<task visibility="experimental" category="imaging" name="widebandpbcor" type="function">
+<task type="function" name="widebandpbcor" category="imaging" visibility="experimental">
 
   <shortdescription>Wideband PB-correction on the output of the MS-MFS algorithm</shortdescription>
 
@@ -12,27 +12,27 @@
 
     
 
-    <param mustexist="true" kind="ms" name="vis" type="string"><shortdescription>Name of measurement set. </shortdescription><description>Name of measurement set. </description>
+    <param type="path" name="vis" kind="ms" mustexist="true"><shortdescription>Name of measurement set. </shortdescription><description>Name of measurement set. </description>
       
       <value/>
     </param>
 
-    <param name="imagename" type="string"><shortdescription>Name-prefix of multi-termimages to operate on. </shortdescription><description>Name-prefix of multi-termimages to operate on. </description>
+    <param type="string" name="imagename"><shortdescription>Name-prefix of multi-termimages to operate on. </shortdescription><description>Name-prefix of multi-termimages to operate on. </description>
       
       <value/>
     </param>
 
-    <param name="nterms" type="int"><shortdescription>Number of taylor terms to use</shortdescription><description>Number of taylor terms to use</description>
+    <param type="int" name="nterms"><shortdescription>Number of taylor terms to use</shortdescription><description>Number of taylor terms to use</description>
       
       <value>2</value>
     </param>
 
-    <param name="threshold" type="string"><shortdescription>Intensity above which to re-calculate spectral index </shortdescription><description>Intensity above which to re-calculate spectral index </description>
+    <param type="string" name="threshold"><shortdescription>Intensity above which to re-calculate spectral index </shortdescription><description>Intensity above which to re-calculate spectral index </description>
       
       <value/>
     </param>
 
-    <param name="action" type="string"><shortdescription>PB-correction (pbcor) or only calc spectral-index (calcalpha)</shortdescription><description>PB-correction (pbcor) or only calc spectral-index (calcalpha)</description>
+    <param type="string" name="action"><shortdescription>PB-correction (pbcor) or only calc spectral-index (calcalpha)</shortdescription><description>PB-correction (pbcor) or only calc spectral-index (calcalpha)</description>
       
       <value>pbcor</value>
       <allowed kind="enum">
@@ -44,36 +44,36 @@
     
 
             
-      <param subparam="true" name="reffreq" type="string"><shortdescription>Reference frequency (if specified in clean)</shortdescription><description>Reference frequency (if specified in clean)</description>
+      <param type="string" name="reffreq" subparam="true"><shortdescription>Reference frequency (if specified in clean)</shortdescription><description>Reference frequency (if specified in clean)</description>
         
         <value/>
       </param>
 
-            <param subparam="true" name="pbmin" type="double"><shortdescription>PB threshold below which to not correct</shortdescription><description>PB threshold below which to not correct</description>
+            <param type="double" name="pbmin" subparam="true"><shortdescription>PB threshold below which to not correct</shortdescription><description>PB threshold below which to not correct</description>
               
               <value>0.2</value>
             </param>
         
-            <param subparam="true" name="field" type="string"><shortdescription>Fields to include in the PB calculation</shortdescription><description>Fields to include in the PB calculation</description>
+            <param type="string" name="field" subparam="true"><shortdescription>Fields to include in the PB calculation</shortdescription><description>Fields to include in the PB calculation</description>
               
               <value/>
             </param>
         
-            <param subparam="true" name="spwlist" type="intArray"><shortdescription>List of N spw ids</shortdescription><description>List of N spw ids</description>
+            <param type="intVec" name="spwlist" subparam="true"><shortdescription>List of N spw ids</shortdescription><description>List of N spw ids</description>
               
               <value type="vector">
     <value/>
         </value>
             </param>
         
-            <param subparam="true" name="chanlist" type="intArray"><shortdescription>List of N channel ids</shortdescription><description>List of N channel ids</description>
+            <param type="intVec" name="chanlist" subparam="true"><shortdescription>List of N channel ids</shortdescription><description>List of N channel ids</description>
               
               <value type="vector">
     <value/>
         </value>
             </param>
         
-            <param subparam="true" name="weightlist" type="doubleArray"><shortdescription>List of N weights (relative)</shortdescription><description>List of N weights (relative)</description>
+            <param type="doubleVec" name="weightlist" subparam="true"><shortdescription>List of N weights (relative)</shortdescription><description>List of N weights (relative)</description>
               
               <value type="vector">
     <value/>
@@ -87,13 +87,13 @@
             <constraints>                    
 
                 <when param="action">
-      <equals value="pbcor" type="string">
+      <equals type="string" value="pbcor">
                         <default param="reffreq"><value type="string"/></default>
                         <default param="pbmin"><value type="double">0.2</value></default>
                         <default param="field"><value type="string"/></default>
-                        <default param="spwlist"><value type="intArray"/></default>
-                        <default param="chanlist"><value type="intArray"/></default>
-                        <default param="weightlist"><value type="doubleArray"/></default>
+                        <default param="spwlist"><value type="intVec"/></default>
+                        <default param="chanlist"><value type="intVec"/></default>
+                        <default param="weightlist"><value type="doubleVec"/></default>
                     </equals>
     </when>
 

@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="simulation" name="simalma" type="function">
+<task type="function" name="simalma" category="simulation">
 <needs>simanalyze</needs>
 <needs>simobserve</needs>
 <needs>feather</needs>
@@ -198,12 +198,12 @@ calls to the other CASA tasks.
 
   <input>
 
-    <param name="project" type="string"><shortdescription>root prefix for output file names</shortdescription><description>root prefix for output file names</description>
+    <param type="string" name="project"><shortdescription>root prefix for output file names</shortdescription><description>root prefix for output file names</description>
       
       <value>sim</value>
     </param>
 
-    <param name="dryrun" type="bool"><shortdescription>dryrun=True will only produce the informative report, not run simobserve/analyze</shortdescription><description>dryrun=True will only produce the informative report, not run simobserve/analyze</description>
+    <param type="bool" name="dryrun"><shortdescription>dryrun=True will only produce the informative report, not run simobserve/analyze</shortdescription><description>dryrun=True will only produce the informative report, not run simobserve/analyze</description>
       
       <value>True</value>
     </param>
@@ -213,46 +213,46 @@ calls to the other CASA tasks.
 
     
 
-    <param name="skymodel" type="string"><shortdescription>model image to observe</shortdescription><description>model image to observe</description>
+    <param type="string" name="skymodel"><shortdescription>model image to observe</shortdescription><description>model image to observe</description>
       
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="inbright" type="string"><shortdescription>scale surface brightness of brightest pixel e.g. &quot;1.2Jy/pixel&quot;</shortdescription><description>scale surface brightness of brightest pixel e.g. &quot;1.2Jy/pixel&quot;</description>
+    <param type="string" name="inbright" subparam="true"><shortdescription>scale surface brightness of brightest pixel e.g. &quot;1.2Jy/pixel&quot;</shortdescription><description>scale surface brightness of brightest pixel e.g. &quot;1.2Jy/pixel&quot;</description>
        
        <value type="string"/>
     </param>
     
     
 
-    <param subparam="true" name="indirection" type="string"><shortdescription>set new direction e.g. &quot;J2000 19h00m00 -40d00m00&quot;</shortdescription><description>set new direction e.g. &quot;J2000 19h00m00 -40d00m00&quot;</description>
+    <param type="string" name="indirection" subparam="true"><shortdescription>set new direction e.g. &quot;J2000 19h00m00 -40d00m00&quot;</shortdescription><description>set new direction e.g. &quot;J2000 19h00m00 -40d00m00&quot;</description>
       
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="incell" type="string"><shortdescription>set new cell/pixel size e.g. &quot;0.1arcsec&quot;</shortdescription><description>set new cell/pixel size e.g. &quot;0.1arcsec&quot;</description>
+    <param type="string" name="incell" subparam="true"><shortdescription>set new cell/pixel size e.g. &quot;0.1arcsec&quot;</shortdescription><description>set new cell/pixel size e.g. &quot;0.1arcsec&quot;</description>
       
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="incenter" type="string"><shortdescription>set new frequency of center channel e.g. &quot;89GHz&quot; (required even for 2D model)</shortdescription><description>set new frequency of center channel e.g. &quot;89GHz&quot; (required even for 2D model)</description>
+    <param type="string" name="incenter" subparam="true"><shortdescription>set new frequency of center channel e.g. &quot;89GHz&quot; (required even for 2D model)</shortdescription><description>set new frequency of center channel e.g. &quot;89GHz&quot; (required even for 2D model)</description>
       
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="inwidth" type="string"><shortdescription>set new channel width e.g. &quot;10MHz&quot; (required even for 2D model)</shortdescription><description>set new channel width e.g. &quot;10MHz&quot; (required even for 2D model)</description>
+    <param type="string" name="inwidth" subparam="true"><shortdescription>set new channel width e.g. &quot;10MHz&quot; (required even for 2D model)</shortdescription><description>set new channel width e.g. &quot;10MHz&quot; (required even for 2D model)</description>
       
       <value type="string"/>
     </param>
 
 
 
-    <param name="complist" type="string"><shortdescription>componentlist to observe</shortdescription><description>componentlist to observe</description>
+    <param type="string" name="complist"><shortdescription>componentlist to observe</shortdescription><description>componentlist to observe</description>
       
       <value/>
     </param>
 
-    <param subparam="true" name="compwidth" type="string"><shortdescription>bandwidth of components</shortdescription><description>bandwidth of components</description>
+    <param type="string" name="compwidth" subparam="true"><shortdescription>bandwidth of components</shortdescription><description>bandwidth of components</description>
       
       <value>&quot;8GHz&quot;</value>
     </param>
@@ -263,27 +263,27 @@ calls to the other CASA tasks.
 
 
 
-    <param name="setpointings" type="bool"><shortdescription></shortdescription><description/>
+    <param type="bool" name="setpointings"><shortdescription/><description/>
       
       <value>True</value>
     </param>
 
-    <param subparam="true" name="ptgfile" type="string"><shortdescription>list of pointing positions</shortdescription><description>list of pointing positions</description>
+    <param type="string" name="ptgfile" subparam="true"><shortdescription>list of pointing positions</shortdescription><description>list of pointing positions</description>
       
       <value type="string">$project.ptg.txt</value>
     </param>
 
-    <param subparam="true" name="integration" type="string"><shortdescription>integration (sampling) time</shortdescription><description>integration (sampling) time</description>
+    <param type="string" name="integration" subparam="true"><shortdescription>integration (sampling) time</shortdescription><description>integration (sampling) time</description>
       
       <value>10s</value>
     </param>
 
-    <param subparam="true" name="direction" type="stringArray"><shortdescription>&quot;J2000 19h00m00 -40d00m00&quot; or &quot;&quot; to center on model</shortdescription><description>&quot;J2000 19h00m00 -40d00m00&quot; or &quot;&quot; to center on model</description>
+    <param type="stringVec" name="direction" subparam="true"><shortdescription>&quot;J2000 19h00m00 -40d00m00&quot; or &quot;&quot; to center on model</shortdescription><description>&quot;J2000 19h00m00 -40d00m00&quot; or &quot;&quot; to center on model</description>
       
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="mapsize" type="stringArray"><shortdescription>angular size of map or &quot;&quot; to cover model</shortdescription><description>angular size of map or &quot;&quot; to cover model</description>
+    <param type="stringVec" name="mapsize" subparam="true"><shortdescription>angular size of map or &quot;&quot; to cover model</shortdescription><description>angular size of map or &quot;&quot; to cover model</description>
       
       <value type="vector">
   <value type="string"/>
@@ -296,7 +296,7 @@ calls to the other CASA tasks.
 
 
 
-    <param name="antennalist" type="stringArray"><shortdescription>antenna position files of ALMA 12m and 7m arrays</shortdescription><description>antenna position files of ALMA 12m and 7m arrays</description>
+    <param type="stringVec" name="antennalist"><shortdescription>antenna position files of ALMA 12m and 7m arrays</shortdescription><description>antenna position files of ALMA 12m and 7m arrays</description>
       
       <value type="vector">
         <value type="string">alma.cycle1.1.cfg</value>
@@ -304,12 +304,12 @@ calls to the other CASA tasks.
       </value>
     </param>
 
-    <param name="hourangle" type="string"><shortdescription>hour angle of observation center e.g. -3:00:00, or &quot;transit&quot;</shortdescription><description>hour angle of observation center e.g. -3:00:00, or &quot;transit&quot;</description>
+    <param type="string" name="hourangle"><shortdescription>hour angle of observation center e.g. -3:00:00, or &quot;transit&quot;</shortdescription><description>hour angle of observation center e.g. -3:00:00, or &quot;transit&quot;</description>
       
       <value>transit</value>
     </param>
 
-    <param name="totaltime" type="stringArray"><shortdescription>total time of observation; vector corresponding to antennalist</shortdescription><description>total time of observation; vector corresponding to antennalist</description>
+    <param type="stringVec" name="totaltime"><shortdescription>total time of observation; vector corresponding to antennalist</shortdescription><description>total time of observation; vector corresponding to antennalist</description>
       
       <value type="vector">
         <value>20min</value>
@@ -317,7 +317,7 @@ calls to the other CASA tasks.
       </value>
     </param>
 
-    <param name="tpnant" type="int"><shortdescription>Number of total power antennas to use (0-4)</shortdescription><description>Number of total power antennas to use (0-4)</description>
+    <param type="int" name="tpnant"><shortdescription>Number of total power antennas to use (0-4)</shortdescription><description>Number of total power antennas to use (0-4)</description>
       
       <value type="int">0</value>
       <allowed kind="range">
@@ -326,7 +326,7 @@ calls to the other CASA tasks.
       </allowed>
     </param>
 
-    <param subparam="true" name="tptime" type="string"><shortdescription>total observation time for total power</shortdescription><description>total observation time for total power</description>
+    <param type="string" name="tptime" subparam="true"><shortdescription>total observation time for total power</shortdescription><description>total observation time for total power</description>
       
       <value type="string">0s</value>
     </param>
@@ -336,7 +336,7 @@ calls to the other CASA tasks.
 
 
 
-    <param name="pwv" type="double"><shortdescription>Precipitable Water Vapor in mm. 0 for noise-free simulation</shortdescription><description>Precipitable Water Vapor in mm. 0 for noise-free simulation</description>
+    <param type="double" name="pwv"><shortdescription>Precipitable Water Vapor in mm. 0 for noise-free simulation</shortdescription><description>Precipitable Water Vapor in mm. 0 for noise-free simulation</description>
       
       <value>0.5</value>
       <allowed kind="range"><value range="min">0</value></allowed>
@@ -347,34 +347,34 @@ calls to the other CASA tasks.
 
 
 
-    <param name="image" type="bool"><shortdescription>image simulated data</shortdescription><description>image simulated data</description>
+    <param type="bool" name="image"><shortdescription>image simulated data</shortdescription><description>image simulated data</description>
       
       <value>True</value>
     </param>
 
 
 
-    <param subparam="true" name="imsize" type="intArray"><shortdescription>output image size in pixels (x,y) or 0 to match model</shortdescription><description>output image size in pixels (x,y) or 0 to match model</description>
+    <param type="intVec" name="imsize" subparam="true"><shortdescription>output image size in pixels (x,y) or 0 to match model</shortdescription><description>output image size in pixels (x,y) or 0 to match model</description>
       
       <value><value>128</value><value>128</value></value>
     </param>
 
-    <param subparam="true" name="imdirection" type="string"><shortdescription>set output image direction, (otherwise center on the model)</shortdescription><description>set output image direction, (otherwise center on the model)</description>
+    <param type="string" name="imdirection" subparam="true"><shortdescription>set output image direction, (otherwise center on the model)</shortdescription><description>set output image direction, (otherwise center on the model)</description>
       
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="cell" type="string"><shortdescription>cell size with units or &quot;&quot; to equal model</shortdescription><description>cell size with units or &quot;&quot; to equal model</description>
+    <param type="string" name="cell" subparam="true"><shortdescription>cell size with units or &quot;&quot; to equal model</shortdescription><description>cell size with units or &quot;&quot; to equal model</description>
       
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="niter" type="int"><shortdescription>maximum number of iterations (0 for dirty image)</shortdescription><description>maximum number of iterations (0 for dirty image)</description>
+    <param type="int" name="niter" subparam="true"><shortdescription>maximum number of iterations (0 for dirty image)</shortdescription><description>maximum number of iterations (0 for dirty image)</description>
       
       <value>0</value>
     </param>
 
-    <param subparam="true" name="threshold" type="string"><shortdescription>flux level (+units) to stop cleaning</shortdescription><description>flux level (+units) to stop cleaning</description>
+    <param type="string" name="threshold" subparam="true"><shortdescription>flux level (+units) to stop cleaning</shortdescription><description>flux level (+units) to stop cleaning</description>
       
       <value>0.1mJy</value>
     </param>
@@ -387,7 +387,7 @@ calls to the other CASA tasks.
 
 
 
-    <param name="graphics" type="string"><shortdescription>display graphics at each stage to [screen|file|both|none]</shortdescription><description>display graphics at each stage to [screen|file|both|none]</description>
+    <param type="string" name="graphics"><shortdescription>display graphics at each stage to [screen|file|both|none]</shortdescription><description>display graphics at each stage to [screen|file|both|none]</description>
       
       <value type="string">both</value>
       <allowed kind="enum">
@@ -399,12 +399,12 @@ calls to the other CASA tasks.
       </allowed>
     </param>
 
-    <param name="verbose" type="bool"><shortdescription></shortdescription><description/>
+    <param type="bool" name="verbose"><shortdescription/><description/>
       
       <value>False</value>
     </param>
 
-    <param name="overwrite" type="bool"><shortdescription>overwrite files starting with $project</shortdescription><description>overwrite files starting with $project</description>
+    <param type="bool" name="overwrite"><shortdescription>overwrite files starting with $project</shortdescription><description>overwrite files starting with $project</description>
       
       <value>False</value>
     </param>
@@ -441,13 +441,13 @@ calls to the other CASA tasks.
       </when>
       
       <when param="setpointings">
-  <equals value="True" type="bool">
+  <equals type="bool" value="True">
     <default param="integration"><value type="string">10s</value></default>
     <default param="direction">
       <description>center of map or &quot;&quot; to center on the model</description>
       <value type="string"/>
     </default>
-    <default type="stringArray" param="mapsize">
+    <default param="mapsize" type="stringVec">
       <value type="vector">
         <value type="string">''</value>
         <value type="string">''</value>
@@ -455,7 +455,7 @@ calls to the other CASA tasks.
     </default>
 
   </equals>
-  <equals value="False" type="bool">
+  <equals type="bool" value="False">
     <default param="ptgfile"><value type="string">$project.ptg.txt</value></default>
     <default param="integration"><value type="string">10s</value>
     <description>integration time (see below)</description></default>
@@ -463,14 +463,14 @@ calls to the other CASA tasks.
       </when>
       
       <when param="tpnant">
-  <notequals value="0" type="int">
+  <notequals type="int" value="0">
     <default param="tptime"><value type="string">0s</value></default>
   </notequals>
 
       </when>
       
       <when param="image">
-  <equals value="True" type="bool">
+  <equals type="bool" value="True">
 
     <default param="imsize">
       <value><value>0</value></value>
@@ -483,7 +483,7 @@ calls to the other CASA tasks.
     <default param="threshold"><value type="string">0.1mJy</value></default>
 
   </equals>
-  <equals value="False" type="bool"/>
+  <equals type="bool" value="False"/>
       </when>
       
     </constraints>

@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="manipulation" name="mstransform" type="function">
+<task type="function" name="mstransform" category="manipulation">
      <shortdescription>Split the MS, combine/separate/regrid spws and do channel and time averaging</shortdescription>
 
 <description>
@@ -75,26 +75,26 @@
 
 <input>
 
-    <param mustexist="true" name="vis" type="string"><shortdescription>Name of input Measurement set or Multi-MS.</shortdescription><description>Name of input Measurement set or Multi-MS.</description>
+    <param type="path" name="vis" mustexist="true"><shortdescription>Name of input Measurement set or Multi-MS.</shortdescription><description>Name of input Measurement set or Multi-MS.</description>
         
         <value type="string"/>
     </param>
     
         
-    <param name="outputvis" type="string"><shortdescription>Name of output Measurement Set or Multi-MS.</shortdescription><description>Name of output Measurement Set or Multi-MS.</description>
+    <param type="string" name="outputvis"><shortdescription>Name of output Measurement Set or Multi-MS.</shortdescription><description>Name of output Measurement Set or Multi-MS.</description>
         
         <value/>
     </param>
 
 
-    <param name="createmms" type="bool"><shortdescription>Create a multi-MS output from an input MS.</shortdescription><description>Create a multi-MS output from an input MS.</description>
+    <param type="bool" name="createmms"><shortdescription>Create a multi-MS output from an input MS.</shortdescription><description>Create a multi-MS output from an input MS.</description>
     <value>False</value>
     </param>
 
-    <param subparam="true" ignorecase="true" name="separationaxis" type="string"><shortdescription>Axis to do parallelization across(scan,spw,auto,baseline).</shortdescription><description>Axis to do parallelization across(scan,spw,auto,baseline).</description>
+    <param type="string" name="separationaxis" ignorecase="true" subparam="true"><shortdescription>Axis to do parallelization across(scan,spw,auto,baseline).</shortdescription><description>Axis to do parallelization across(scan,spw,auto,baseline).</description>
 
     <value>auto</value>
-    <allowed ignorecase="true" kind="enum">
+    <allowed kind="enum" ignorecase="true">
       <value>auto</value>
       <value>spw</value>
       <value>scan</value>
@@ -102,88 +102,88 @@
     </allowed>
     </param>
 
-    <param subparam="true" name="numsubms" type="any"><shortdescription>The number of Sub-MSs to create (auto or any number)</shortdescription><description>The number of Sub-MSs to create (auto or any number)</description>
+    <param type="any" name="numsubms" subparam="true"><shortdescription>The number of Sub-MSs to create (auto or any number)</shortdescription><description>The number of Sub-MSs to create (auto or any number)</description>
 
-    <any limittypes="string int" type="variant"/>
+    <type>string</type><type>int</type>
     <value type="string">auto</value>
     </param>
 
-    <param name="tileshape" type="intArray"><shortdescription>List with 1 or 3 elements giving the tile shape of the disk data columns.</shortdescription><description>List with 1 or 3 elements giving the tile shape of the disk data columns.</description>
+    <param type="intVec" name="tileshape"><shortdescription>List with 1 or 3 elements giving the tile shape of the disk data columns.</shortdescription><description>List with 1 or 3 elements giving the tile shape of the disk data columns.</description>
         
-        <value type="intArray">0</value>
+        <value><value>0</value></value>
     </param>
 
         
-    <param name="field" type="any"><shortdescription>Select field using ID(s) or name(s).</shortdescription><description>Select field using ID(s) or name(s).</description>
+    <param type="any" name="field"><shortdescription>Select field using ID(s) or name(s).</shortdescription><description>Select field using ID(s) or name(s).</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
 
-    <param name="spw" type="any"><shortdescription>Select spectral window/channels.</shortdescription><description>Select spectral window/channels.</description>
+    <param type="any" name="spw"><shortdescription>Select spectral window/channels.</shortdescription><description>Select spectral window/channels.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
     
-    <param name="scan" type="any"><shortdescription>Select data by scan numbers.</shortdescription><description>Select data by scan numbers.</description>
+    <param type="any" name="scan"><shortdescription>Select data by scan numbers.</shortdescription><description>Select data by scan numbers.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
 
-    <param name="antenna" type="any"><shortdescription>Select data based on antenna/baseline.</shortdescription><description>Select data based on antenna/baseline.</description>
+    <param type="any" name="antenna"><shortdescription>Select data based on antenna/baseline.</shortdescription><description>Select data based on antenna/baseline.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
     
-    <param name="correlation" type="any"><shortdescription>Correlation: '' ==&gt; all, correlation=&quot;XX,YY&quot;.</shortdescription><description>Correlation: '' ==&gt; all, correlation=&quot;XX,YY&quot;.</description>
+    <param type="any" name="correlation"><shortdescription>Correlation: '' ==&gt; all, correlation=&quot;XX,YY&quot;.</shortdescription><description>Correlation: '' ==&gt; all, correlation=&quot;XX,YY&quot;.</description>
         
-        <any limittypes="string stringArray" type="variant"/>
+        <type>string</type><type>stringVec</type>
         <value type="string"/>
     </param>
 
-    <param name="timerange" type="any"><shortdescription>Select data by time range.</shortdescription><description>Select data by time range.</description>
+    <param type="any" name="timerange"><shortdescription>Select data by time range.</shortdescription><description>Select data by time range.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
     
-    <param name="intent" type="any"><shortdescription>Select data by scan intent.</shortdescription><description>Select data by scan intent.</description>
+    <param type="any" name="intent"><shortdescription>Select data by scan intent.</shortdescription><description>Select data by scan intent.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
     
-    <param name="array" type="any"><shortdescription>Select (sub)array(s) by array ID number.</shortdescription><description>Select (sub)array(s) by array ID number.</description>
+    <param type="any" name="array"><shortdescription>Select (sub)array(s) by array ID number.</shortdescription><description>Select (sub)array(s) by array ID number.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
     
-    <param name="uvrange" type="any"><shortdescription>Select data by baseline length.</shortdescription><description>Select data by baseline length.</description>
+    <param type="any" name="uvrange"><shortdescription>Select data by baseline length.</shortdescription><description>Select data by baseline length.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
     
-    <param name="observation" type="any"><shortdescription>Select by observation ID(s).</shortdescription><description>Select by observation ID(s).</description>
+    <param type="any" name="observation"><shortdescription>Select by observation ID(s).</shortdescription><description>Select by observation ID(s).</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
 
-    <param name="feed" type="any"><shortdescription>Multi-feed numbers: Not yet implemented.</shortdescription><description>Multi-feed numbers: Not yet implemented.</description>
+    <param type="any" name="feed"><shortdescription>Multi-feed numbers: Not yet implemented.</shortdescription><description>Multi-feed numbers: Not yet implemented.</description>
         
-        <any limittypes="string stringArray int intArray" type="variant"/>
+        <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
         <value type="string"/>
     </param>
 
-    <param ignorecase="True" name="datacolumn" type="string"><shortdescription>Which data column(s) to process.</shortdescription><description>Which data column(s) to process.</description>
+    <param type="string" name="datacolumn" ignorecase="True"><shortdescription>Which data column(s) to process.</shortdescription><description>Which data column(s) to process.</description>
         
         <value>corrected</value>
-        <allowed ignorecase="True" kind="enum">
+        <allowed kind="enum" ignorecase="True">
             <value>corrected</value>
             <value>data</value>
             <value>model</value>
@@ -196,53 +196,53 @@
         </allowed>
     </param>
 
-        <param subparam="true" name="realmodelcol" type="bool"><shortdescription>Make real a virtual MODEL column.</shortdescription><description>Make real a virtual MODEL column.</description>
+        <param type="bool" name="realmodelcol" subparam="true"><shortdescription>Make real a virtual MODEL column.</shortdescription><description>Make real a virtual MODEL column.</description>
             
             <value>False</value>
         </param>
 
-    <param name="keepflags" type="bool"><shortdescription>Keep *completely flagged rows* or drop them from the output.</shortdescription><description>Keep *completely flagged rows* or drop them from the output.</description>
+    <param type="bool" name="keepflags"><shortdescription>Keep *completely flagged rows* or drop them from the output.</shortdescription><description>Keep *completely flagged rows* or drop them from the output.</description>
         
         <value>True</value>
     </param>
                 
-    <param name="usewtspectrum" type="bool"><shortdescription>Force creation of the columns WEIGHT_SPECTRUM and SIGMA_SPECTRUM in the output MS, even if not present in the input MS.</shortdescription><description>Force creation of the columns WEIGHT_SPECTRUM and SIGMA_SPECTRUM in the output MS, even if not present in the input MS.</description>
+    <param type="bool" name="usewtspectrum"><shortdescription>Force creation of the columns WEIGHT_SPECTRUM and SIGMA_SPECTRUM in the output MS, even if not present in the input MS.</shortdescription><description>Force creation of the columns WEIGHT_SPECTRUM and SIGMA_SPECTRUM in the output MS, even if not present in the input MS.</description>
         
         <value>False</value>
     </param>
 
     
-    <param name="combinespws" type="bool"><shortdescription>Combine the input spws into a new output spw. Only supported when the number of channels is the same for all the spws.</shortdescription><description>Combine the input spws into a new output spw. Only supported when the number of channels is the same for all the spws.</description>
+    <param type="bool" name="combinespws"><shortdescription>Combine the input spws into a new output spw. Only supported when the number of channels is the same for all the spws.</shortdescription><description>Combine the input spws into a new output spw. Only supported when the number of channels is the same for all the spws.</description>
         
         <value>False</value>
     </param>
     
     
-    <param name="chanaverage" type="bool"><shortdescription>Average data in channels.</shortdescription><description>Average data in channels.</description>
+    <param type="bool" name="chanaverage"><shortdescription>Average data in channels.</shortdescription><description>Average data in channels.</description>
         
         <value>False</value>
     </param>
 
-        <param subparam="true" name="chanbin" type="any"><shortdescription>Width (bin) of input channels to average to form an output channel.</shortdescription><description>Width (bin) of input channels to average to form an output channel.</description>
+        <param type="any" name="chanbin" subparam="true"><shortdescription>Width (bin) of input channels to average to form an output channel.</shortdescription><description>Width (bin) of input channels to average to form an output channel.</description>
             
-            <any limittypes="int intArray" type="variant"/>            
+            <type>int</type><type>intVec</type>            
             <value type="int">1</value>
         </param>
 
 
     
-    <param name="hanning" type="bool"><shortdescription>Hanning smooth data to remove Gibbs ringing.</shortdescription><description>Hanning smooth data to remove Gibbs ringing.</description>
+    <param type="bool" name="hanning"><shortdescription>Hanning smooth data to remove Gibbs ringing.</shortdescription><description>Hanning smooth data to remove Gibbs ringing.</description>
         
         <value>False</value>
     </param>
    
     
-    <param name="regridms" type="bool"><shortdescription>Transform channel labels and visibilities to a different spectral reference frame. Notice that u,v,w data is not transformed. </shortdescription><description>Transform channel labels and visibilities to a different spectral reference frame. Notice that u,v,w data is not transformed. </description>
+    <param type="bool" name="regridms"><shortdescription>Transform channel labels and visibilities to a different spectral reference frame. Notice that u,v,w data is not transformed. </shortdescription><description>Transform channel labels and visibilities to a different spectral reference frame. Notice that u,v,w data is not transformed. </description>
         
         <value>False</value>
     </param>
 
-        <param subparam="true" name="mode" type="string"><shortdescription>Regridding mode (channel/velocity/frequency/channel_b).</shortdescription><description>Regridding mode (channel/velocity/frequency/channel_b).</description>
+        <param type="string" name="mode" subparam="true"><shortdescription>Regridding mode (channel/velocity/frequency/channel_b).</shortdescription><description>Regridding mode (channel/velocity/frequency/channel_b).</description>
             
             <value>channel</value>
             <allowed kind="enum">
@@ -253,29 +253,29 @@
             </allowed>
         </param>
 
-        <param subparam="true" name="nchan" type="int"><shortdescription>Number of channels in the output spw (-1=all). Used for regridding, together with \'start\' and \'width\'.</shortdescription><description>Number of channels in the output spw (-1=all). Used for regridding, together with \'start\' and \'width\'.</description>
+        <param type="int" name="nchan" subparam="true"><shortdescription>Number of channels in the output spw (-1=all). Used for regridding, together with \'start\' and \'width\'.</shortdescription><description>Number of channels in the output spw (-1=all). Used for regridding, together with \'start\' and \'width\'.</description>
             
             <value>-1</value>
         </param>
 
-        <param subparam="true" name="start" type="any"><shortdescription>Start of the output visibilities. Used for regridding, together with \'width\' and \'nchan\'. It can be in different units, depending on the regridding mode: first input channel (mode=\'channel\'), first velocity (mode=\'velocity\'), or first frequency (mode=\'frequency\'). Example values: \'5\', \'0.0km/s\', \'1.4GHz\', for channel, velocity, and frequency modes, respectively.</shortdescription><description>Start of the output visibilities. Used for regridding, together with \'width\' and \'nchan\'. It can be in different units, depending on the regridding mode: first input channel (mode=\'channel\'), first velocity (mode=\'velocity\'), or first frequency (mode=\'frequency\'). Example values: \'5\', \'0.0km/s\', \'1.4GHz\', for channel, velocity, and frequency modes, respectively.</description>
+        <param type="any" name="start" subparam="true"><shortdescription>Start of the output visibilities. Used for regridding, together with \'width\' and \'nchan\'. It can be in different units, depending on the regridding mode: first input channel (mode=\'channel\'), first velocity (mode=\'velocity\'), or first frequency (mode=\'frequency\'). Example values: \'5\', \'0.0km/s\', \'1.4GHz\', for channel, velocity, and frequency modes, respectively.</shortdescription><description>Start of the output visibilities. Used for regridding, together with \'width\' and \'nchan\'. It can be in different units, depending on the regridding mode: first input channel (mode=\'channel\'), first velocity (mode=\'velocity\'), or first frequency (mode=\'frequency\'). Example values: \'5\', \'0.0km/s\', \'1.4GHz\', for channel, velocity, and frequency modes, respectively.</description>
             
             <any type="variant"/>
             <value type="int">0</value>
         </param>
 
-        <param subparam="true" name="width" type="any"><shortdescription>Channel width of the output visibilities. Used for regridding, together with \'start\', and \'nchan\'. It can be in different units, depending on the regridding mode: number of input channels (mode=\'channel\'), velocity (mode=\'velocity\'), or frequency (mode=\'frequency\'. Example values: \'2\', \'1.0km/s\', \'1.0kHz\', for channel, velocity, and frequency modes, respectively.</shortdescription><description>Channel width of the output visibilities. Used for regridding, together with \'start\', and \'nchan\'. It can be in different units, depending on the regridding mode: number of input channels (mode=\'channel\'), velocity (mode=\'velocity\'), or frequency (mode=\'frequency\'. Example values: \'2\', \'1.0km/s\', \'1.0kHz\', for channel, velocity, and frequency modes, respectively.</description>
+        <param type="any" name="width" subparam="true"><shortdescription>Channel width of the output visibilities. Used for regridding, together with \'start\', and \'nchan\'. It can be in different units, depending on the regridding mode: number of input channels (mode=\'channel\'), velocity (mode=\'velocity\'), or frequency (mode=\'frequency\'. Example values: \'2\', \'1.0km/s\', \'1.0kHz\', for channel, velocity, and frequency modes, respectively.</shortdescription><description>Channel width of the output visibilities. Used for regridding, together with \'start\', and \'nchan\'. It can be in different units, depending on the regridding mode: number of input channels (mode=\'channel\'), velocity (mode=\'velocity\'), or frequency (mode=\'frequency\'. Example values: \'2\', \'1.0km/s\', \'1.0kHz\', for channel, velocity, and frequency modes, respectively.</description>
         
             <any type="variant"/>
             <value type="int">1</value>
         </param>
 
-        <param subparam="true" name="nspw" type="int"><shortdescription>Number of output spws to create in output MS.</shortdescription><description>Number of output spws to create in output MS.</description>
+        <param type="int" name="nspw" subparam="true"><shortdescription>Number of output spws to create in output MS.</shortdescription><description>Number of output spws to create in output MS.</description>
             
             <value type="int">1</value>
         </param>
 
-        <param ignorecase="True" subparam="true" name="interpolation" type="string"><shortdescription>Spectral interpolation method.</shortdescription><description>Spectral interpolation method.</description>
+        <param type="string" name="interpolation" subparam="true" ignorecase="True"><shortdescription>Spectral interpolation method.</shortdescription><description>Spectral interpolation method.</description>
             
             <value>linear</value>
             <allowed kind="enum">
@@ -287,21 +287,21 @@
             </allowed>
         </param>
 
-        <param subparam="true" name="phasecenter" type="any"><shortdescription>Phase center direction to be used for the spectral coordinate transformation: direction measure or field index</shortdescription><description>Phase center direction to be used for the spectral coordinate transformation: direction measure or field index</description>
+        <param type="any" name="phasecenter" subparam="true"><shortdescription>Phase center direction to be used for the spectral coordinate transformation: direction measure or field index</shortdescription><description>Phase center direction to be used for the spectral coordinate transformation: direction measure or field index</description>
             
             <any type="variant"/>
             <value type="string"/>
         </param>
 
-        <param subparam="true" name="restfreq" type="string"><shortdescription>Rest frequency to use for output.</shortdescription><description>Rest frequency to use for output.</description>
+        <param type="string" name="restfreq" subparam="true"><shortdescription>Rest frequency to use for output.</shortdescription><description>Rest frequency to use for output.</description>
             
             <value/>
         </param>
     
-        <param ignorecase="True" subparam="true" name="outframe" type="string"><shortdescription>Output reference frame (''=keep input frame).</shortdescription><description>Output reference frame (''=keep input frame).</description>
+        <param type="string" name="outframe" subparam="true" ignorecase="True"><shortdescription>Output reference frame (''=keep input frame).</shortdescription><description>Output reference frame (''=keep input frame).</description>
             
             <value/>
-            <allowed ignorecase="True" kind="enum">
+            <allowed kind="enum" ignorecase="True">
             <value>topo</value>
             <value>geo</value>
             <value>lsrk</value>
@@ -315,7 +315,7 @@
             </allowed>
         </param>
 
-        <param ignorecase="True" subparam="true" name="veltype" type="string"><shortdescription>Velocity definition.</shortdescription><description>Velocity definition.</description>
+        <param type="string" name="veltype" subparam="true" ignorecase="True"><shortdescription>Velocity definition.</shortdescription><description>Velocity definition.</description>
             
             <value>radio</value>
             <allowed kind="enum">
@@ -324,100 +324,100 @@
             </allowed>
         </param>
 
-        <param subparam="True" name="preaverage" type="bool">
+        <param type="bool" name="preaverage" subparam="True">
           <shortdescription>Pre-average channels before regridding, when the ratio between the output and and input widths is greater than 2.</shortdescription><description>Pre-average channels before regridding, when the ratio between the output and and input widths is greater than 2.</description>
           <value>False</value>
         </param>
 
     
-    <param name="timeaverage" type="bool"><shortdescription>Average data in time.</shortdescription><description>Average data in time.</description>
+    <param type="bool" name="timeaverage"><shortdescription>Average data in time.</shortdescription><description>Average data in time.</description>
         
         <value>False</value>
     </param>
     
-        <param subparam="true" name="timebin" type="string"><shortdescription>Bin width for time averaging.</shortdescription><description>Bin width for time averaging.</description>
+        <param type="string" name="timebin" subparam="true"><shortdescription>Bin width for time averaging.</shortdescription><description>Bin width for time averaging.</description>
                  
             <value type="string">0s</value>
         </param>
     
-        <param subparam="true" name="timespan" type="any"><shortdescription>Span the timebin across scan, state or both.</shortdescription><description>Span the timebin across scan, state or both.</description>
+        <param type="any" name="timespan" subparam="true"><shortdescription>Span the timebin across scan, state or both.</shortdescription><description>Span the timebin across scan, state or both.</description>
             
-            <any limittypes="string stringArray" type="variant"/>
+            <type>string</type><type>stringVec</type>
             <value type="string"/>
         </param>
 
-        <param subparam="true" name="maxuvwdistance" type="double"><shortdescription>Maximum separation of start-to-end baselines that can be included in an average. (meters)</shortdescription><description>Maximum separation of start-to-end baselines that can be included in an average. (meters)</description>
+        <param type="double" name="maxuvwdistance" subparam="true"><shortdescription>Maximum separation of start-to-end baselines that can be included in an average. (meters)</shortdescription><description>Maximum separation of start-to-end baselines that can be included in an average. (meters)</description>
             
             <value type="double">0.0</value>
         </param>
         
         
         
-        <param name="docallib" type="bool"><shortdescription>Enable on-the-fly (OTF) calibration as in task applycal</shortdescription><description>Enable on-the-fly (OTF) calibration as in task applycal</description>
+        <param type="bool" name="docallib"><shortdescription>Enable on-the-fly (OTF) calibration as in task applycal</shortdescription><description>Enable on-the-fly (OTF) calibration as in task applycal</description>
             
             <value>False</value>
         </param>
 
-        <param subparam="true" name="callib" type="string"><shortdescription>Path to calibration library file</shortdescription><description>Path to calibration library file</description>
+        <param type="string" name="callib" subparam="true"><shortdescription>Path to calibration library file</shortdescription><description>Path to calibration library file</description>
             
             <value type="string"/>
         </param>       
 
 
 
-        <param name="douvcontsub" type="bool"><shortdescription>Enable continuum subtraction as in task uvcontsub</shortdescription><description>Enable continuum subtraction as in task uvcontsub</description>
+        <param type="bool" name="douvcontsub"><shortdescription>Enable continuum subtraction as in task uvcontsub</shortdescription><description>Enable continuum subtraction as in task uvcontsub</description>
             
             <value>False</value>
         </param>
 
-        <param subparam="true" name="fitspw" type="string"><shortdescription>Spectral window:channel selection for fitting the continuum</shortdescription><description>Spectral window:channel selection for fitting the continuum</description>
+        <param type="string" name="fitspw" subparam="true"><shortdescription>Spectral window:channel selection for fitting the continuum</shortdescription><description>Spectral window:channel selection for fitting the continuum</description>
             
             <value type="string"/>
         </param>
         
-        <param subparam="true" name="fitorder" type="int"><shortdescription>Polynomial order for the fits</shortdescription><description>Polynomial order for the fits</description>
+        <param type="int" name="fitorder" subparam="true"><shortdescription>Polynomial order for the fits</shortdescription><description>Polynomial order for the fits</description>
             
             <value type="int">0</value>
         </param>
         
-        <param subparam="true" name="want_cont" type="bool"><shortdescription>Produce continuum estimate instead of continuum subtracted data</shortdescription><description>Produce continuum estimate instead of continuum subtracted data</description>
+        <param type="bool" name="want_cont" subparam="true"><shortdescription>Produce continuum estimate instead of continuum subtracted data</shortdescription><description>Produce continuum estimate instead of continuum subtracted data</description>
             
             <value>False</value>
         </param>
         
-        <param subparam="true" name="denoising_lib" type="bool"><shortdescription>Use new denoising library (based on GSL) instead of casacore fitting routines</shortdescription><description>Use new denoising library (based on GSL) instead of casacore fitting routines</description>
+        <param type="bool" name="denoising_lib" subparam="true"><shortdescription>Use new denoising library (based on GSL) instead of casacore fitting routines</shortdescription><description>Use new denoising library (based on GSL) instead of casacore fitting routines</description>
             
             <value>True</value>
         </param>
         
-        <param subparam="true" name="nthreads" type="int"><shortdescription>Number of OMP threads to use (currently maximum limited by number of polarizations)</shortdescription><description>Number of OMP threads to use (currently maximum limited by number of polarizations)</description>
+        <param type="int" name="nthreads" subparam="true"><shortdescription>Number of OMP threads to use (currently maximum limited by number of polarizations)</shortdescription><description>Number of OMP threads to use (currently maximum limited by number of polarizations)</description>
             
             <value>1</value>
         </param>
         
-        <param subparam="true" name="niter" type="int"><shortdescription>Number of iterations for re-weighted linear fit</shortdescription><description>Number of iterations for re-weighted linear fit</description>
+        <param type="int" name="niter" subparam="true"><shortdescription>Number of iterations for re-weighted linear fit</shortdescription><description>Number of iterations for re-weighted linear fit</description>
             
             <value>1</value>
         </param>
 
 
-        <param visibility="hidden" subparam="true" name="disableparallel" type="bool"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
+        <param type="bool" name="disableparallel" subparam="true" visibility="hidden"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
             <value>False</value>
         </param>
-        <param visibility="hidden" subparam="true" name="ddistart" type="int"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
+        <param type="int" name="ddistart" subparam="true" visibility="hidden"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
         <value>-1</value>
 
             <value>-1</value>
         </param>
-        <param visibility="hidden" subparam="true" name="taql" type="string"><shortdescription>Table query for nested selections</shortdescription><description>Table query for nested selections</description>
+        <param type="string" name="taql" subparam="true" visibility="hidden"><shortdescription>Table query for nested selections</shortdescription><description>Table query for nested selections</description>
 
             <value type="string"/>
         </param>
-        <param visibility="hidden" subparam="true" name="monolithic_processing" type="bool"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
+        <param type="bool" name="monolithic_processing" subparam="true" visibility="hidden"><shortdescription>Hidden parameter for internal use only. Do not change it!</shortdescription><description>Hidden parameter for internal use only. Do not change it!</description>
 
             <value>False</value>
         </param>
-        <param visibility="hidden" subparam="true" name="reindex" type="bool"><shortdescription>Hidden parameter for use in the pipeline context only</shortdescription><description>Hidden parameter for use in the pipeline context only</description>
+        <param type="bool" name="reindex" subparam="true" visibility="hidden"><shortdescription>Hidden parameter for use in the pipeline context only</shortdescription><description>Hidden parameter for use in the pipeline context only</description>
 
             <value>True</value>
         </param>
@@ -425,15 +425,8 @@
     <constraints>
 
       <when param="createmms">
-        <equals value="False" type="bool">
-          <!-- The first two suparameters, separationaxis and numsubms
-               are legitimate suparameters of createmms, although it
-               should not be necessary to give them a value when
-               createmms is False (but keeping them in here for
-               consistency in the 'inp'.listing). The other 4,
-               disableparallel, ddistart, taql, reindex (all
-               supposedly hidden) have complex interactions. See
-               CAS-13397 -->
+        <equals type="bool" value="False">
+          
           <default param="separationaxis"><value type="string">auto</value></default>
           <default param="numsubms"><value type="string">auto</value></default>
 
@@ -442,7 +435,7 @@
           <default param="taql"><value type="string"/></default>
           <default param="reindex"><value type="bool">True</value></default>
         </equals>
-        <equals value="True" type="bool">
+        <equals type="bool" value="True">
           <default param="separationaxis"><value type="string">auto</value></default>
           <default param="numsubms"><value type="string">auto</value></default>
 
@@ -454,28 +447,28 @@
       </when>
 
           <when param="datacolumn">
-            <equals value="corrected" type="string"/>
-            <equals value="model" type="string">
+            <equals type="string" value="corrected"/>
+            <equals type="string" value="model">
                   <default param="realmodelcol"><value type="bool">False</value></default>           
             </equals>         
-            <equals value="all" type="string">
+            <equals type="string" value="all">
                   <default param="realmodelcol"><value type="bool">False</value></default>           
             </equals>         
-            <equals value="data,model,corrected" type="string">
+            <equals type="string" value="data,model,corrected">
                   <default param="realmodelcol"><value type="bool">False</value></default>           
             </equals>         
           </when>
 
           <when param="chanaverage">
-            <equals value="False" type="bool"/>
-            <equals value="True" type="bool">
+            <equals type="bool" value="False"/>
+            <equals type="bool" value="True">
                   <default param="chanbin"><value type="int">1</value></default>
             </equals>
           </when>
 
         <when param="regridms">
-            <equals value="False" type="bool"/>
-            <equals value="True" type="bool">
+            <equals type="bool" value="False"/>
+            <equals type="bool" value="True">
                 <default param="mode"><value type="string">channel</value></default>
                 <default param="nchan"><value type="int">-1</value></default>
                 <default param="start"><value type="int">0</value></default>
@@ -491,8 +484,8 @@
         </when>
 
         <when param="timeaverage">
-            <equals value="False" type="bool"/>
-            <equals value="True" type="bool">
+            <equals type="bool" value="False"/>
+            <equals type="bool" value="True">
                   <default param="timebin"><value type="string">0s</value></default>
                   <default param="timespan"><value type="string"/></default>
                   <default param="maxuvwdistance"><value type="double">0.0</value></default>
@@ -500,15 +493,15 @@
         </when>
 
         <when param="docallib">
-            <equals value="False" type="bool"/>
-            <equals value="True" type="bool">
+            <equals type="bool" value="False"/>
+            <equals type="bool" value="True">
                   <default param="callib"><value type="string"/></default>
             </equals>
         </when>
 
         <when param="douvcontsub">
-            <equals value="False" type="bool"/>
-            <equals value="True" type="bool">
+            <equals type="bool" value="False"/>
+            <equals type="bool" value="True">
                   <default param="fitspw"><value type="string"/></default>
                   <default param="fitorder"><value type="int">0</value></default>
                   <default param="want_cont"><value type="bool">False</value></default>
@@ -983,5 +976,5 @@ http://www.eso.org/~scastro/ALMA/casa/MST/MSTransformDocs/MSTransformDocs.html
 
 
 </example> 
-</task>
+<returns>void</returns></task>
 </casaxml>

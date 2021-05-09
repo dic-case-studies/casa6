@@ -1,14 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
-<!-- Documentation here.                                                -->
 
-<task type="function" name="fixvis" category="manipulation" >
+<task category="manipulation" name="fixvis" type="function">
 
 <shortdescription>Recalculates (u, v, w) and/or changes Phase Center </shortdescription>
 <description>
@@ -16,34 +10,34 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
        If the phase center is changed, the corresponding modifications
        are applied to the visibility columns given by the parameter
-       "datacolumn" which is by default set to "all" (DATA, CORRECTED,
+       &quot;datacolumn&quot; which is by default set to &quot;all&quot; (DATA, CORRECTED,
        and MODEL).
 </description>
 
 <input>
-    <param type="string" name="vis" kind="ms" mustexist="true">
+    <param mustexist="true" kind="ms" name="vis" type="path">
 <shortdescription>Name of input visibility file</shortdescription>
 <description>Name of input visibility file
                      Default: none
 
                         Example: vis='ngc5921.ms'
 </description>
-        <value></value>
+        <value/>
         <example>vis='ngc5921.ms'</example>
     </param>
 
-    <param type="string" name="outputvis" kind="ms">
+    <param kind="ms" name="outputvis" type="string">
 <shortdescription>Name of output visibility file</shortdescription>
 <description>Name of output visibility file
                      Default: '' (same as vis)
 
                         Example: outputvis='ngc5921_out.ms'
 </description>
-        <value></value>
+        <value/>
         <example>vis='ngc5921fixedvis.ms'</example>
     </param>
 
-    <param type="any" direction="in" name="field">
+    <param name="field" direction="in" type="any">
 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
 <description>Select field using field id(s) or field name(s)
                      Default: '' (all fields)
@@ -62,14 +56,10 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                         starting with 4C
 </description>
       <any type="variant"/>
-      <value>""</value>
+      <value>&quot;&quot;</value>
     </param>
-<!--    <param type="any" direction="in" name="observation">
-      <description>Observation ID(s) to operate on.  '' = all.</description>
-      <any type="string int"/>
-      <value type="string"></value>
-    </param> -->
-    <param type="string" name="refcode">
+
+    <param name="refcode" type="string">
 <shortdescription>reference frame to convert UVW coordinates to</shortdescription>
 <description>Reference frame to convert UVW coordinates to
                      Default: '' (refcode of PHASE_DIR in the FIELD
@@ -77,10 +67,10 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
                         Example: refcode='B1950'
 </description>
-      <value></value>
+      <value/>
     </param>
 
-    <param type="bool" name="reuse">
+    <param name="reuse" type="bool">
 <shortdescription>base UVW calculation on the old values?</shortdescription>
       <description>Base UVW calculation on the old values?
                      Default: True
@@ -91,7 +81,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
       <value>True</value>
     </param>
 
-    <param type="string" name="phasecenter">
+    <param name="phasecenter" type="string">
 <shortdescription>use this direction as phase center</shortdescription>
 <description>If set to a valid direction: change the phase center for
 the given field to this value
@@ -111,10 +101,10 @@ the given field to this value
                      0.01deg), it is divided by the cos(DEC) before it
                      is applied.
 </description>
-      <value></value>
+      <value/>
     </param>
 
-    <param type="any" name="distances">
+    <param name="distances" type="any">
 <shortdescription>(experimental) List of the distances (as quanta) of the fields selected by field.</shortdescription>
 <description>(experimental) List of the distances (as quanta) of the
 fields selected by field.
@@ -129,10 +119,10 @@ fields selected by field.
                         distances='15au'
 </description>
       <any type="variant"/>
-      <value>""</value>
+      <value>&quot;&quot;</value>
     </param>
 
-    <param type="string" name="datacolumn">
+    <param name="datacolumn" type="string">
 <shortdescription>when applying a phase center shift, modify visibilities only in this/these column(s)</shortdescription>
 <description>when applying a phase center shift, modify visibilities
 only in this/these column(s)
@@ -154,6 +144,6 @@ https://casa.nrao.edu/casadocs/
 
 </example>
 
-</task>
+<returns>void</returns></task>
 
 </casaxml>

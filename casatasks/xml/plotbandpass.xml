@@ -1,6 +1,6 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="visualization, calibration" name="plotbandpass" type="function">
+<task type="function" name="plotbandpass" category="visualization, calibration">
 
   <shortdescription>Makes detailed plots of Tsys and bandpass solutions.</shortdescription>
       
@@ -15,30 +15,30 @@
   </description>
 
   <input>
-    <param mustexist="true" name="caltable" type="string"><shortdescription>Input table name, either a bandpass solution or a Tsys solution</shortdescription><description>Input table name, either a bandpass solution or a Tsys solution</description>
+    <param type="path" name="caltable" mustexist="true"><shortdescription>Input table name, either a bandpass solution or a Tsys solution</shortdescription><description>Input table name, either a bandpass solution or a Tsys solution</description>
       
       <value/>
     </param>
 
-    <param name="antenna" type="any"><shortdescription>A comma-delimited string list of antennas (either names or integer indices) for which to display solutions.  Default = all antennas.</shortdescription><description>A comma-delimited string list of antennas (either names or integer indices) for which to display solutions.  Default = all antennas.</description>
+    <param type="any" name="antenna"><shortdescription>A comma-delimited string list of antennas (either names or integer indices) for which to display solutions.  Default = all antennas.</shortdescription><description>A comma-delimited string list of antennas (either names or integer indices) for which to display solutions.  Default = all antennas.</description>
       
-      <any limittypes="string int stringArray intArray" type="variant"/>
+      <type>string</type><type>int</type><type>stringVec</type><type>intVec</type>
       <value type="string"/>
     </param>
 
-    <param name="field" type="any"><shortdescription>A comma-delimited string list of fields (either names or integer indices) for which to display solutions.  Default = all fields.</shortdescription><description>A comma-delimited string list of fields (either names or integer indices) for which to display solutions.  Default = all fields.</description>
+    <param type="any" name="field"><shortdescription>A comma-delimited string list of fields (either names or integer indices) for which to display solutions.  Default = all fields.</shortdescription><description>A comma-delimited string list of fields (either names or integer indices) for which to display solutions.  Default = all fields.</description>
       
-      <any limittypes="string int stringArray intArray" type="variant"/>
+      <type>string</type><type>int</type><type>stringVec</type><type>intVec</type>
       <value type="string"/>
     </param>
 
-    <param name="spw" type="any"><shortdescription>A comma-delimited string list of spws for which to display solutions.  Default = all spws.</shortdescription><description>A comma-delimited string list of spws for which to display solutions.  Default = all spws.</description>
+    <param type="any" name="spw"><shortdescription>A comma-delimited string list of spws for which to display solutions.  Default = all spws.</shortdescription><description>A comma-delimited string list of spws for which to display solutions.  Default = all spws.</description>
       
-      <any limittypes="string int stringArray intArray" type="variant"/>
+      <type>string</type><type>int</type><type>stringVec</type><type>intVec</type>
       <value type="string"/>
     </param>
 
-    <param name="yaxis" type="string"><shortdescription>The quantity to plot on the y-axis (&quot;amp&quot;, &quot;phase&quot;, &quot;both&quot;, &quot;tsys&quot;, append &quot;db&quot; for dB).</shortdescription><description>The quantity to plot on the y-axis (&quot;amp&quot;, &quot;phase&quot;, &quot;both&quot;, &quot;tsys&quot;, append &quot;db&quot; for dB).</description>
+    <param type="string" name="yaxis"><shortdescription>The quantity to plot on the y-axis (&quot;amp&quot;, &quot;phase&quot;, &quot;both&quot;, &quot;tsys&quot;, append &quot;db&quot; for dB).</shortdescription><description>The quantity to plot on the y-axis (&quot;amp&quot;, &quot;phase&quot;, &quot;both&quot;, &quot;tsys&quot;, append &quot;db&quot; for dB).</description>
       
       <value>amp</value>
       <allowed kind="enum">
@@ -53,7 +53,7 @@
       </allowed>
     </param>
 
-    <param name="xaxis" type="string"><shortdescription>The quantity to plot on the x-axis (&quot;chan&quot; or &quot;freq&quot;).</shortdescription><description>The quantity to plot on the x-axis (&quot;chan&quot; or &quot;freq&quot;).</description>
+    <param type="string" name="xaxis"><shortdescription>The quantity to plot on the x-axis (&quot;chan&quot; or &quot;freq&quot;).</shortdescription><description>The quantity to plot on the x-axis (&quot;chan&quot; or &quot;freq&quot;).</description>
       
       <value>chan</value>
       <allowed kind="enum">
@@ -62,22 +62,22 @@
       </allowed>
     </param>
 
-    <param name="figfile" type="string"><shortdescription>The name of the plot file to produce.</shortdescription><description>The name of the plot file to produce.</description>
+    <param type="string" name="figfile"><shortdescription>The name of the plot file to produce.</shortdescription><description>The name of the plot file to produce.</description>
       
       <value/>
     </param>
 
-    <param name="plotrange" type="doubleArray"><shortdescription>The axes limits to use [x0,x1,y0,y1].</shortdescription><description>The axes limits to use [x0,x1,y0,y1].</description>
+    <param type="doubleVec" name="plotrange"><shortdescription>The axes limits to use [x0,x1,y0,y1].</shortdescription><description>The axes limits to use [x0,x1,y0,y1].</description>
       
-      <value type="doubleArray">0,0,0,0</value>
+      <value><value>0</value><value>0</value><value>0</value><value>0</value></value>
     </param>
 
-    <param name="caltable2" type="string"><shortdescription>A second cal table, of type BPOLY or B, to overlay on a B table</shortdescription><description>A second cal table, of type BPOLY or B, to overlay on a B table</description>
+    <param type="string" name="caltable2"><shortdescription>A second cal table, of type BPOLY or B, to overlay on a B table</shortdescription><description>A second cal table, of type BPOLY or B, to overlay on a B table</description>
       
       <value/>
     </param>
 
-    <param name="overlay" type="string"><shortdescription>Show multiple solutions in same frame in different colors (time, antenna, spw, baseband, or time,antenna)</shortdescription><description>Show multiple solutions in same frame in different colors (time, antenna, spw, baseband, or time,antenna)</description>
+    <param type="string" name="overlay"><shortdescription>Show multiple solutions in same frame in different colors (time, antenna, spw, baseband, or time,antenna)</shortdescription><description>Show multiple solutions in same frame in different colors (time, antenna, spw, baseband, or time,antenna)</description>
       
       <value type="string"/>
       <allowed kind="enum">
@@ -91,56 +91,56 @@
       </allowed>
     </param>
 
-    <param name="showflagged" type="bool"><shortdescription>Show the values of the solution, even if flagged</shortdescription><description>Show the values of the solution, even if flagged</description>
+    <param type="bool" name="showflagged"><shortdescription>Show the values of the solution, even if flagged</shortdescription><description>Show the values of the solution, even if flagged</description>
       
       <value>False</value>
     </param>
 
-    <param name="timeranges" type="string"><shortdescription>Show only these timeranges, the first timerange being 0</shortdescription><description>Show only these timeranges, the first timerange being 0</description>
+    <param type="string" name="timeranges"><shortdescription>Show only these timeranges, the first timerange being 0</shortdescription><description>Show only these timeranges, the first timerange being 0</description>
       
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="buildpdf" type="bool"><shortdescription>If True, assemble all the pngs into a pdf</shortdescription><description>If True, assemble all the pngs into a pdf</description>
+    <param type="bool" name="buildpdf" subparam="true"><shortdescription>If True, assemble all the pngs into a pdf</shortdescription><description>If True, assemble all the pngs into a pdf</description>
       
       <value>False</value>
     </param>
 
-    <param subparam="true" name="caltable3" type="string"><shortdescription>A third cal table, of type BPOLY, to overlay on the first two tables</shortdescription><description>A third cal table, of type BPOLY, to overlay on the first two tables</description>
+    <param type="string" name="caltable3" subparam="true"><shortdescription>A third cal table, of type BPOLY, to overlay on the first two tables</shortdescription><description>A third cal table, of type BPOLY, to overlay on the first two tables</description>
       
       <value/>
     </param>
 
-    <param name="markersize" type="int"><shortdescription>Size of points</shortdescription><description>Size of points</description>
+    <param type="int" name="markersize"><shortdescription>Size of points</shortdescription><description>Size of points</description>
       
       <value>3</value>
     </param>
 
-    <param subparam="true" name="density" type="int"><shortdescription>dpi to use in creating PNGs and PDFs (default=108)</shortdescription><description>dpi to use in creating PNGs and PDFs (default=108)</description>
+    <param type="int" name="density" subparam="true"><shortdescription>dpi to use in creating PNGs and PDFs (default=108)</shortdescription><description>dpi to use in creating PNGs and PDFs (default=108)</description>
       
       <value>108</value>
     </param>
 
-    <param name="interactive" type="bool"><shortdescription>if False, then run to completion automatically without pause</shortdescription><description>if False, then run to completion automatically without pause</description>
+    <param type="bool" name="interactive"><shortdescription>if False, then run to completion automatically without pause</shortdescription><description>if False, then run to completion automatically without pause</description>
       
       <value>True</value>
     </param>
 
-    <param name="showpoints" type="any"><shortdescription>Draw points for the data (default=F for amp, T for phase)</shortdescription><description>Draw points for the data (default=F for amp, T for phase)</description>
+    <param type="any" name="showpoints"><shortdescription>Draw points for the data (default=F for amp, T for phase)</shortdescription><description>Draw points for the data (default=F for amp, T for phase)</description>
       
-      <any limittypes="string bool" type="variant"/>
+      <type>string</type><type>bool</type>
       <value type="string">auto</value>
     </param>
 
-    <param name="showlines" type="any"><shortdescription>Draw lines connecting the data (default=T for amp, F for phase)</shortdescription><description>Draw lines connecting the data (default=T for amp, F for phase)</description>
+    <param type="any" name="showlines"><shortdescription>Draw lines connecting the data (default=T for amp, F for phase)</shortdescription><description>Draw lines connecting the data (default=T for amp, F for phase)</description>
       
-      <any limittypes="string bool" type="variant"/>
+      <type>string</type><type>bool</type>
       <value type="string">auto</value>
     </param>
 
-    <param name="subplot" type="any"><shortdescription>11..81,22,32 or 42 for RowsxColumns (default=22), any 3rd digit is ignored</shortdescription><description>11..81,22,32 or 42 for RowsxColumns (default=22), any 3rd digit is ignored</description>
+    <param type="any" name="subplot"><shortdescription>11..81,22,32 or 42 for RowsxColumns (default=22), any 3rd digit is ignored</shortdescription><description>11..81,22,32 or 42 for RowsxColumns (default=22), any 3rd digit is ignored</description>
       
-      <any limittypes="string int" type="variant"/>
+      <type>string</type><type>int</type>
       <value type="string">22</value>
       <allowed kind="enum">
          <value>11</value>
@@ -157,7 +157,7 @@
       </allowed>
     </param>
 
-    <param subparam="true" name="zoom" type="string"><shortdescription>&quot;intersect&quot; will zoom to overlap region of caltable with caltable2</shortdescription><description>&quot;intersect&quot; will zoom to overlap region of caltable with caltable2</description>
+    <param type="string" name="zoom" subparam="true"><shortdescription>&quot;intersect&quot; will zoom to overlap region of caltable with caltable2</shortdescription><description>&quot;intersect&quot; will zoom to overlap region of caltable with caltable2</description>
       
       <allowed kind="enum">
       <value>intersect</value>
@@ -166,158 +166,158 @@
       <value type="string"/>
     </param>
 
-    <param name="poln" type="any"><shortdescription>Polarizations to plot: &quot;&quot; = all, or &quot;RR&quot;,&quot;RL&quot;,&quot;LR&quot;,&quot;LL&quot;,&quot;XX&quot;,&quot;XY&quot;,&quot;YX&quot;,&quot;YY&quot;,&quot;RR,LL&quot;,&quot;XX,YY&quot;</shortdescription><description>Polarizations to plot: &quot;&quot; = all, or &quot;RR&quot;,&quot;RL&quot;,&quot;LR&quot;,&quot;LL&quot;,&quot;XX&quot;,&quot;XY&quot;,&quot;YX&quot;,&quot;YY&quot;,&quot;RR,LL&quot;,&quot;XX,YY&quot;</description>
+    <param type="any" name="poln"><shortdescription>Polarizations to plot: &quot;&quot; = all, or &quot;RR&quot;,&quot;RL&quot;,&quot;LR&quot;,&quot;LL&quot;,&quot;XX&quot;,&quot;XY&quot;,&quot;YX&quot;,&quot;YY&quot;,&quot;RR,LL&quot;,&quot;XX,YY&quot;</shortdescription><description>Polarizations to plot: &quot;&quot; = all, or &quot;RR&quot;,&quot;RL&quot;,&quot;LR&quot;,&quot;LL&quot;,&quot;XX&quot;,&quot;XY&quot;,&quot;YX&quot;,&quot;YY&quot;,&quot;RR,LL&quot;,&quot;XX,YY&quot;</description>
       
-      <any limittypes="stringArray string" type="variant"/>
+      <type>stringVec</type><type>string</type>
       <value type="string"/>
     </param>
 
-    <param name="showatm" type="bool"><shortdescription>Compute and overlay the atmospheric transmission curve</shortdescription><description>Compute and overlay the atmospheric transmission curve</description>
+    <param type="bool" name="showatm"><shortdescription>Compute and overlay the atmospheric transmission curve</shortdescription><description>Compute and overlay the atmospheric transmission curve</description>
       
       <value>False</value>
     </param>
 
-    <param subparam="true" name="pwv" type="any"><shortdescription>Define the pwv to use for the showatm option: &quot;auto&quot; or value in mm</shortdescription><description>Define the pwv to use for the showatm option: &quot;auto&quot; or value in mm</description>
-      <any limittypes="double string" type="variant"/>
+    <param type="any" name="pwv" subparam="true"><shortdescription>Define the pwv to use for the showatm option: &quot;auto&quot; or value in mm</shortdescription><description>Define the pwv to use for the showatm option: &quot;auto&quot; or value in mm</description>
+      <type>double</type><type>string</type>
       
       <value type="string">auto</value>
     </param>
 
-    <param subparam="true" name="gs" type="string"><shortdescription>For buildpdf=T, full path for ghostscript command (in case it is not found)</shortdescription><description>For buildpdf=T, full path for ghostscript command (in case it is not found)</description>
+    <param type="string" name="gs" subparam="true"><shortdescription>For buildpdf=T, full path for ghostscript command (in case it is not found)</shortdescription><description>For buildpdf=T, full path for ghostscript command (in case it is not found)</description>
       
       <value>gs</value>
     </param>
 
-    <param subparam="true" name="convert" type="string"><shortdescription>For buildpdf=T, full path for the ImageMagick convert command (in case it is not found)</shortdescription><description>For buildpdf=T, full path for the ImageMagick convert command (in case it is not found)</description>
+    <param type="string" name="convert" subparam="true"><shortdescription>For buildpdf=T, full path for the ImageMagick convert command (in case it is not found)</shortdescription><description>For buildpdf=T, full path for the ImageMagick convert command (in case it is not found)</description>
       
       <value>convert</value>
     </param>
 
-    <param subparam="true" name="chanrange" type="any"><shortdescription>Set xrange (&quot;5~100&quot;) over which to autoscale y-axis for xaxis=&quot;freq&quot;</shortdescription><description>Set xrange (&quot;5~100&quot;) over which to autoscale y-axis for xaxis=&quot;freq&quot;</description>
+    <param type="any" name="chanrange" subparam="true"><shortdescription>Set xrange (&quot;5~100&quot;) over which to autoscale y-axis for xaxis=&quot;freq&quot;</shortdescription><description>Set xrange (&quot;5~100&quot;) over which to autoscale y-axis for xaxis=&quot;freq&quot;</description>
       
-      <any limittypes="string intArray" type="variant"/>
+      <type>string</type><type>intVec</type>
       <value type="string"/>
     </param>
 
-    <param name="solutionTimeThresholdSeconds" type="double"><shortdescription>Consider 2 solutions simultaneous if within this interval in seconds</shortdescription><description>Consider 2 solutions simultaneous if within this interval in seconds</description>
+    <param type="double" name="solutionTimeThresholdSeconds"><shortdescription>Consider 2 solutions simultaneous if within this interval in seconds</shortdescription><description>Consider 2 solutions simultaneous if within this interval in seconds</description>
       
       <value type="double">30.0</value>
     </param>
 
-    <param name="debug" type="bool"><shortdescription>Print verbose messages for debugging purposes</shortdescription><description>Print verbose messages for debugging purposes</description>
+    <param type="bool" name="debug"><shortdescription>Print verbose messages for debugging purposes</shortdescription><description>Print verbose messages for debugging purposes</description>
       
       <value>False</value>
     </param>
 
-    <param subparam="true" name="phase" type="any"><shortdescription>The y-axis limits to use for phase plots when yaxis=&quot;both&quot;</shortdescription><description>The y-axis limits to use for phase plots when yaxis=&quot;both&quot;</description>
+    <param type="any" name="phase" subparam="true"><shortdescription>The y-axis limits to use for phase plots when yaxis=&quot;both&quot;</shortdescription><description>The y-axis limits to use for phase plots when yaxis=&quot;both&quot;</description>
       
-      <any limittypes="intArray string" type="variant"/>
+      <type>intVec</type><type>string</type>
       <value type="string"/>
     </param>
 
-    <param name="vis" type="string"><shortdescription>name of the ms for this table, in case it does not match the string in the caltable</shortdescription><description>name of the ms for this table, in case it does not match the string in the caltable</description>
+    <param type="string" name="vis"><shortdescription>name of the ms for this table, in case it does not match the string in the caltable</shortdescription><description>name of the ms for this table, in case it does not match the string in the caltable</description>
       
       <value type="string"/>
     </param>
 
-    <param name="showtsky" type="bool"><shortdescription>Compute and overlay the sky temperature curve instead of transmission</shortdescription><description>Compute and overlay the sky temperature curve instead of transmission</description> 
+    <param type="bool" name="showtsky"><shortdescription>Compute and overlay the sky temperature curve instead of transmission</shortdescription><description>Compute and overlay the sky temperature curve instead of transmission</description> 
       
       <value>False</value>
     </param>
 
-    <param subparam="true" name="showfdm" type="bool"><shortdescription>when showing TDM spws, draw the locations of the corresponding FDM spws</shortdescription><description>when showing TDM spws, draw the locations of the corresponding FDM spws</description> 
+    <param type="bool" name="showfdm" subparam="true"><shortdescription>when showing TDM spws, draw the locations of the corresponding FDM spws</shortdescription><description>when showing TDM spws, draw the locations of the corresponding FDM spws</description> 
       
       <value>False</value>
     </param>
 
-    <param subparam="true" name="showatmfield" type="any"><shortdescription>for overlay=&quot;time&quot;, use first observation of this fieldID or name</shortdescription><description>for overlay=&quot;time&quot;, use first observation of this fieldID or name</description> 
-      <any limittypes="int string" type="variant"/>
+    <param type="any" name="showatmfield" subparam="true"><shortdescription>for overlay=&quot;time&quot;, use first observation of this fieldID or name</shortdescription><description>for overlay=&quot;time&quot;, use first observation of this fieldID or name</description> 
+      <type>int</type><type>string</type>
       
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="lo1" type="any"><shortdescription>specify the LO1 setting (in GHz) for the observation ('' = automatic)</shortdescription><description>specify the LO1 setting (in GHz) for the observation ('' = automatic)</description>
-      <any limittypes="string double" type="variant"/>
+    <param type="any" name="lo1" subparam="true"><shortdescription>specify the LO1 setting (in GHz) for the observation ('' = automatic)</shortdescription><description>specify the LO1 setting (in GHz) for the observation ('' = automatic)</description>
+      <type>string</type><type>double</type>
       
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="showimage" type="bool"><shortdescription>also show the atmospheric curve for the image sideband (in black)</shortdescription><description>also show the atmospheric curve for the image sideband (in black)</description>
+    <param type="bool" name="showimage" subparam="true"><shortdescription>also show the atmospheric curve for the image sideband (in black)</shortdescription><description>also show the atmospheric curve for the image sideband (in black)</description>
       
       <value>False</value>
     </param>
 
-    <param subparam="true" name="showatmpoints" type="bool"><shortdescription>Draw atmospheric curve with points instead of a line</shortdescription><description>Draw atmospheric curve with points instead of a line</description>
+    <param type="bool" name="showatmpoints" subparam="true"><shortdescription>Draw atmospheric curve with points instead of a line</shortdescription><description>Draw atmospheric curve with points instead of a line</description>
       
       <value>False</value>
     </param>
 
-    <param subparam="true" name="parentms" type="string"><shortdescription>if showimage=T, name of the parent ms (only needed if the ms has been previously split)</shortdescription><description>if showimage=T, name of the parent ms (only needed if the ms has been previously split)</description>
+    <param type="string" name="parentms" subparam="true"><shortdescription>if showimage=T, name of the parent ms (only needed if the ms has been previously split)</shortdescription><description>if showimage=T, name of the parent ms (only needed if the ms has been previously split)</description>
       
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="pdftk" type="string"><shortdescription>For buildpdf=T, full path for pdftk command (in case it is not found)</shortdescription><description>For buildpdf=T, full path for pdftk command (in case it is not found)</description>
+    <param type="string" name="pdftk" subparam="true"><shortdescription>For buildpdf=T, full path for pdftk command (in case it is not found)</shortdescription><description>For buildpdf=T, full path for pdftk command (in case it is not found)</description>
       
       <value>pdftk</value>
     </param>
 
-    <param name="channeldiff" type="any"><shortdescription>Set to a value &gt; 0 (sigma) to plot derivatives of the solutions</shortdescription><description>Set to a value &gt; 0 (sigma) to plot derivatives of the solutions</description>
-      <any limittypes="bool double" type="variant"/>
+    <param type="any" name="channeldiff"><shortdescription>Set to a value &gt; 0 (sigma) to plot derivatives of the solutions</shortdescription><description>Set to a value &gt; 0 (sigma) to plot derivatives of the solutions</description>
+      <type>bool</type><type>double</type>
       
       <value type="bool">False</value>
     </param>
 
-    <param subparam="true" name="edge" type="int"><shortdescription>The number of edge channels to ignore in finding outliers (for channeldiff&gt;0)</shortdescription><description>The number of edge channels to ignore in finding outliers (for channeldiff&gt;0)</description>
+    <param type="int" name="edge" subparam="true"><shortdescription>The number of edge channels to ignore in finding outliers (for channeldiff&gt;0)</shortdescription><description>The number of edge channels to ignore in finding outliers (for channeldiff&gt;0)</description>
       
       <value>8</value>
     </param>
 
-    <param subparam="true" name="resample" type="int"><shortdescription>The channel expansion factor to use when computing MAD of derivative (for channeldiff&gt;0)</shortdescription><description>The channel expansion factor to use when computing MAD of derivative (for channeldiff&gt;0)</description>
+    <param type="int" name="resample" subparam="true"><shortdescription>The channel expansion factor to use when computing MAD of derivative (for channeldiff&gt;0)</shortdescription><description>The channel expansion factor to use when computing MAD of derivative (for channeldiff&gt;0)</description>
       
       <value>1</value>
     </param>
 
-    <param subparam="true" name="platformingThreshold" type="double"><shortdescription>if platformingSigma=0, then declare platforming if the amplitude derivative exceeds this percentage of the median</shortdescription><description>if platformingSigma=0, then declare platforming if the amplitude derivative exceeds this percentage of the median</description>
+    <param type="double" name="platformingThreshold" subparam="true"><shortdescription>if platformingSigma=0, then declare platforming if the amplitude derivative exceeds this percentage of the median</shortdescription><description>if platformingSigma=0, then declare platforming if the amplitude derivative exceeds this percentage of the median</description>
       
       <value>10.0</value>
     </param>
 
-    <param subparam="true" name="platformingSigma" type="double"><shortdescription>declare platforming if the amplitude derivative exceeds this many times the MAD</shortdescription><description>declare platforming if the amplitude derivative exceeds this many times the MAD</description>
+    <param type="double" name="platformingSigma" subparam="true"><shortdescription>declare platforming if the amplitude derivative exceeds this many times the MAD</shortdescription><description>declare platforming if the amplitude derivative exceeds this many times the MAD</description>
       
       <value>10.0</value>
     </param>
 
-    <param name="basebands" type="any"><shortdescription>A baseband number or list of baseband numbers for which to display solutions.  Default = all.</shortdescription><description>A baseband number or list of baseband numbers for which to display solutions.  Default = all.</description>
+    <param type="any" name="basebands"><shortdescription>A baseband number or list of baseband numbers for which to display solutions.  Default = all.</shortdescription><description>A baseband number or list of baseband numbers for which to display solutions.  Default = all.</description>
       
-      <any limittypes="int string intArray" type="variant"/>
+      <type>int</type><type>string</type><type>intVec</type>
       <value type="string"/>
     </param>
 
-    <param name="showBasebandNumber" type="bool"><shortdescription>Put the baseband converter number (BBC_NO) in the title of each plot</shortdescription><description>Put the baseband converter number (BBC_NO) in the title of each plot</description>
+    <param type="bool" name="showBasebandNumber"><shortdescription>Put the baseband converter number (BBC_NO) in the title of each plot</shortdescription><description>Put the baseband converter number (BBC_NO) in the title of each plot</description>
       
       <value>False</value>
     </param>
 
-    <param name="scans" type="any"><shortdescription>A scan or list of scans for which to display solutions.  Default = all. Does not work with overlay=&quot;time&quot;.</shortdescription><description>A scan or list of scans for which to display solutions.  Default = all. Does not work with overlay=&quot;time&quot;.</description>
+    <param type="any" name="scans"><shortdescription>A scan or list of scans for which to display solutions.  Default = all. Does not work with overlay=&quot;time&quot;.</shortdescription><description>A scan or list of scans for which to display solutions.  Default = all. Does not work with overlay=&quot;time&quot;.</description>
       
-      <any limittypes="int string intArray" type="variant"/>
+      <type>int</type><type>string</type><type>intVec</type>
       <value type="string"/>
     </param>
 
-    <param name="figfileSequential" type="bool"><shortdescription>naming scheme for pngs: False: name by spw/antenna (default), True: figfile.000.png, figfile.001.png, etc.</shortdescription><description>naming scheme for pngs: False: name by spw/antenna (default), True: figfile.000.png, figfile.001.png, etc.</description>
+    <param type="bool" name="figfileSequential"><shortdescription>naming scheme for pngs: False: name by spw/antenna (default), True: figfile.000.png, figfile.001.png, etc.</shortdescription><description>naming scheme for pngs: False: name by spw/antenna (default), True: figfile.000.png, figfile.001.png, etc.</description>
       
       <value>False</value>
     </param>
 
-    <param subparam="true" name="chanrangeSetXrange" type="bool"><shortdescription>If True, then chanrange also sets the xrange to display</shortdescription><description>If True, then chanrange also sets the xrange to display</description>
+    <param type="bool" name="chanrangeSetXrange" subparam="true"><shortdescription>If True, then chanrange also sets the xrange to display</shortdescription><description>If True, then chanrange also sets the xrange to display</description>
       
       <value type="bool">False</value>
     </param>
 
     <constraints>
       <when param="figfile">
-        <notequals value="" type="string">
+        <notequals type="string" value="">
           <default param="density"><value type="int">108</value></default>
           <default param="buildpdf"><value type="bool">False</value></default>
           <default param="convert"><value type="string">convert</value></default>
@@ -326,7 +326,7 @@
         </notequals>
       </when>
       <when param="showatm">
-        <notequals value="False" type="bool">
+        <notequals type="bool" value="False">
           <default param="pwv"><value type="string">auto</value></default>
           <default param="showimage"><value type="bool">False</value></default>
           <default param="parentms"><value type="string"/></default>
@@ -335,7 +335,7 @@
         </notequals>
       </when>
       <when param="showtsky">
-        <notequals value="False" type="bool">
+        <notequals type="bool" value="False">
           <default param="pwv"><value type="string">auto</value></default>
           <default param="showimage"><value type="bool">False</value></default>
           <default param="parentms"><value type="string"/></default>
@@ -364,7 +364,7 @@
         </equals>
       </when>
       <when param="channeldiff">
-        <notequals value="False" type="bool">
+        <notequals type="bool" value="False">
           <default param="edge"><value type="int">8</value></default>
           <default param="resample"><value type="int">1</value></default>
           <default param="platformingSigma"><value type="double">5.0</value></default>
@@ -372,7 +372,7 @@
         </notequals>
       </when>
       <when param="caltable2">
-        <notequals value="" type="string">
+        <notequals type="string" value="">
           <default param="zoom"><value type="string"/></default>
           <default param="caltable3"><value type="string"/></default>
         </notequals>
@@ -380,7 +380,7 @@
     </constraints>
   </input>
 
-  <returns limittypes="void record" type="variant">
+  <returns type="variant" limittypes="void record">
   </returns>
 
   <example>

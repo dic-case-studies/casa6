@@ -1,41 +1,41 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-      <task category="visualization, calibration" name="plotants" type="function">
+      <task type="function" name="plotants" category="visualization, calibration">
      <shortdescription>Plot the antenna distribution in the local reference frame:</shortdescription>
      <description>
        The location of the antennas in the MS will be plotted with
        X-toward local east; Y-toward local north.
      </description>
      <input>
-          <param mustexist="true" name="vis" type="string"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
+          <param type="path" name="vis" mustexist="true"><shortdescription>Name of input visibility file (MS)</shortdescription><description>Name of input visibility file (MS)</description>
                
                <value/>
           </param>
-          <param name="figfile" type="string"><shortdescription>Save the plotted figure to this file</shortdescription><description>Save the plotted figure to this file</description>
+          <param type="string" name="figfile"><shortdescription>Save the plotted figure to this file</shortdescription><description>Save the plotted figure to this file</description>
                
                <value/>
           </param>
-          <param name="antindex" type="bool"><shortdescription>Label antennas with name and antenna ID</shortdescription><description>Label antennas with name and antenna ID</description>
+          <param type="bool" name="antindex"><shortdescription>Label antennas with name and antenna ID</shortdescription><description>Label antennas with name and antenna ID</description>
                
                <value>False</value>
           </param>
-          <param name="logpos" type="bool"><shortdescription>Whether to plot logarithmic positions</shortdescription><description>Whether to plot logarithmic positions</description>
+          <param type="bool" name="logpos"><shortdescription>Whether to plot logarithmic positions</shortdescription><description>Whether to plot logarithmic positions</description>
                
                <value>False</value>
           </param>
-          <param name="exclude" type="string"><shortdescription>Antenna name/id selection to exclude from plot</shortdescription><description>Antenna name/id selection to exclude from plot</description>
+          <param type="string" name="exclude"><shortdescription>Antenna name/id selection to exclude from plot</shortdescription><description>Antenna name/id selection to exclude from plot</description>
                
                <value/>
           </param>
-          <param name="checkbaselines" type="bool"><shortdescription>Whether to check baselines in the main table.</shortdescription><description>Whether to check baselines in the main table.</description>
+          <param type="bool" name="checkbaselines"><shortdescription>Whether to check baselines in the main table.</shortdescription><description>Whether to check baselines in the main table.</description>
                
                <value>False</value>
           </param>
-          <param name="title" type="string"><shortdescription>Title for the plot</shortdescription><description>Title for the plot</description>
+          <param type="string" name="title"><shortdescription>Title for the plot</shortdescription><description>Title for the plot</description>
                
                <value/>
           </param>
-          <param name="showgui" type="bool"><shortdescription>Show plot on gui.</shortdescription><description>Show plot on gui.</description>
+          <param type="bool" name="showgui"><shortdescription>Show plot on gui.</shortdescription><description>Show plot on gui.</description>
                
                <value>True</value>
           </param>

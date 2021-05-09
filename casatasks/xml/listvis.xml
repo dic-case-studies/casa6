@@ -1,11 +1,11 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
 
 
 
 
-<task category="information, analysis" name="listvis" type="function">
+<task type="function" name="listvis" category="information, analysis">
 
   <shortdescription>List measurement set visibilities.</shortdescription>
 
@@ -114,17 +114,17 @@ listfile    write output to disk; will not overwrite
 
   <input>
 
-    <param mustexist="true" kind="ms" name="vis" type="string"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
+    <param type="path" name="vis" kind="ms" mustexist="true"><shortdescription>Name of input visibility file</shortdescription><description>Name of input visibility file</description>
           
           <value/>
     </param>
 
-    <param name="options" type="string"><shortdescription>List options: ap only </shortdescription><description>List options: ap only </description>
+    <param type="string" name="options"><shortdescription>List options: ap only </shortdescription><description>List options: ap only </description>
           
           <value>ap</value>
     </param>
 
-    <param name="datacolumn" type="string"><shortdescription>Column to list: data, float_data, corrected, model, residual</shortdescription><description>Column to list: data, float_data, corrected, model, residual</description>
+    <param type="string" name="datacolumn"><shortdescription>Column to list: data, float_data, corrected, model, residual</shortdescription><description>Column to list: data, float_data, corrected, model, residual</description>
           
           <value>data</value>
           <allowed kind="enum">
@@ -136,69 +136,69 @@ listfile    write output to disk; will not overwrite
           </allowed>
     </param>
 
-    <param name="field" type="string"><shortdescription>Field names or index to be listed</shortdescription><description>Field names or index to be listed</description>
+    <param type="string" name="field"><shortdescription>Field names or index to be listed</shortdescription><description>Field names or index to be listed</description>
           
           <value/>
           <example>''==&gt;all</example>
     </param>
 
-    <param name="spw" type="string"><shortdescription>Spectral window channels </shortdescription><description>Spectral window channels </description>
+    <param type="string" name="spw"><shortdescription>Spectral window channels </shortdescription><description>Spectral window channels </description>
     
     <value>*</value>
     <example>'*'==&gt;all, spw='1:5~57'</example>
     </param>
 
-    <param name="selectdata" type="bool"><shortdescription>Other data selection parameters</shortdescription><description>Other data selection parameters</description>
+    <param type="bool" name="selectdata"><shortdescription>Other data selection parameters</shortdescription><description>Other data selection parameters</description>
           
           <value>False</value>
     </param>
 
-    <param subparam="true" name="antenna" type="string"><shortdescription>Antenna/baselines</shortdescription><description>Antenna/baselines</description>
+    <param type="string" name="antenna" subparam="true"><shortdescription>Antenna/baselines</shortdescription><description>Antenna/baselines</description>
           
           <value/>
         <example>''==&gt;all, antenna = '3'</example>
     </param>
 
-    <param subparam="true" name="timerange" type="string"><shortdescription>Time range</shortdescription><description>Time range</description>
+    <param type="string" name="timerange" subparam="true"><shortdescription>Time range</shortdescription><description>Time range</description>
           
           <value/>
         <example>''==&gt;all</example>
     </param>
 
-    <param subparam="true" name="correlation" type="string"><shortdescription>Correlations</shortdescription><description>Correlations</description>
+    <param type="string" name="correlation" subparam="true"><shortdescription>Correlations</shortdescription><description>Correlations</description>
           
           <value/>
         <example>''==&gt;all, correlation = 'RR RL'</example>
     </param>
 
-    <param subparam="true" name="scan" type="string"><shortdescription>Scan numbers</shortdescription><description>Scan numbers</description>
+    <param type="string" name="scan" subparam="true"><shortdescription>Scan numbers</shortdescription><description>Scan numbers</description>
           
           <value/>
     </param>
 
-    <param subparam="true" name="feed" type="string"><shortdescription>Multi-feed numbers (Not yet implemented)</shortdescription><description>Multi-feed numbers (Not yet implemented)</description>
+    <param type="string" name="feed" subparam="true"><shortdescription>Multi-feed numbers (Not yet implemented)</shortdescription><description>Multi-feed numbers (Not yet implemented)</description>
           
           <value/>
     </param>
 
-    <param subparam="true" name="array" type="string"><shortdescription>Array numbers (Not yet implemented)</shortdescription><description>Array numbers (Not yet implemented)</description>
+    <param type="string" name="array" subparam="true"><shortdescription>Array numbers (Not yet implemented)</shortdescription><description>Array numbers (Not yet implemented)</description>
           
           <value/>
     </param>
 
-    <param name="observation" type="any"><shortdescription>Select by observation ID(s)</shortdescription><description>Select by observation ID(s)</description>
+    <param type="any" name="observation"><shortdescription>Select by observation ID(s)</shortdescription><description>Select by observation ID(s)</description>
       
-      <any limittypes="string int" type="variant"/>
+      <type>string</type><type>int</type>
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="uvrange" type="string"><shortdescription>uv range</shortdescription><description>uv range</description>
+    <param type="string" name="uvrange" subparam="true"><shortdescription>uv range</shortdescription><description>uv range</description>
           
           <value/>
         <example>''==&gt;all; not yet implemented</example>
     </param>
 
-    <param name="average" type="string"><shortdescription>Averaging mode </shortdescription><description>Averaging mode </description>
+    <param type="string" name="average"><shortdescription>Averaging mode </shortdescription><description>Averaging mode </description>
           
           <value/>
           <allowed kind="enum">
@@ -211,25 +211,25 @@ listfile    write output to disk; will not overwrite
           <example>''==&gt;none (Not yet implemented)</example>
     </param>
 
-    <param name="showflags" type="bool"><shortdescription>Show flagged data (Not yet implemented)</shortdescription><description>Show flagged data (Not yet implemented)</description>
+    <param type="bool" name="showflags"><shortdescription>Show flagged data (Not yet implemented)</shortdescription><description>Show flagged data (Not yet implemented)</description>
           
           <value>False</value>
     </param>
 
-    <param name="pagerows" type="int"><shortdescription>Rows per page</shortdescription><description>Rows per page</description>
+    <param type="int" name="pagerows"><shortdescription>Rows per page</shortdescription><description>Rows per page</description>
           
           <value>50</value>
     </param>
 
-    <param name="listfile" type="string"><shortdescription>Output file</shortdescription><description>Output file</description>
+    <param type="string" name="listfile"><shortdescription>Output file</shortdescription><description>Output file</description>
           
           <value/>
     </param>
 
     <constraints>
           <when param="selectdata">
-             <equals value="False" type="bool"/>
-             <equals value="True" type="bool">
+             <equals type="bool" value="False"/>
+             <equals type="bool" value="True">
                    <default param="antenna"><value type="string"/></default>
                    <default param="timerange"><value type="string"/></default>
                    <default param="correlation"><value type="string"/></default>

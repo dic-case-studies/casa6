@@ -1,62 +1,62 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="manipulation" name="uvcontsub" type="function">
+<task type="function" name="uvcontsub" category="manipulation">
 <shortdescription>Continuum fitting and subtraction in the uv plane</shortdescription>
 <description>
 
 </description>
 <input>
-        <param mustexist="true" name="vis" type="string"><shortdescription>Name of input MS.  Output goes to vis + &quot;.contsub&quot; (will be overwritten if already exists)</shortdescription><description>Name of input MS.  Output goes to vis + &quot;.contsub&quot; (will be overwritten if already exists)</description>
+        <param type="path" name="vis" mustexist="true"><shortdescription>Name of input MS.  Output goes to vis + &quot;.contsub&quot; (will be overwritten if already exists)</shortdescription><description>Name of input MS.  Output goes to vis + &quot;.contsub&quot; (will be overwritten if already exists)</description>
                 
                 <value/>
         </param>
 
-        <param name="field" type="any"><shortdescription>Select field(s) using id(s) or name(s)</shortdescription><description>Select field(s) using id(s) or name(s)</description>
+        <param type="any" name="field"><shortdescription>Select field(s) using id(s) or name(s)</shortdescription><description>Select field(s) using id(s) or name(s)</description>
                 
-                <any limittypes="string stringArray int intArray" type="variant"/>
+                <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
                 <value type="string"/>
         </param>
 
-        <param name="fitspw" type="string"><shortdescription>Spectral window:channel selection for fitting the continuum</shortdescription><description>Spectral window:channel selection for fitting the continuum</description>
+        <param type="string" name="fitspw"><shortdescription>Spectral window:channel selection for fitting the continuum</shortdescription><description>Spectral window:channel selection for fitting the continuum</description>
                 
                 <value/>
         </param>
 
-        <param subparam="true" name="excludechans" type="bool"><shortdescription>exclude Spectral window:channel selection in fitspw for fitting</shortdescription><description>exclude Spectral window:channel selection in fitspw for fitting</description>
+        <param type="bool" name="excludechans" subparam="true"><shortdescription>exclude Spectral window:channel selection in fitspw for fitting</shortdescription><description>exclude Spectral window:channel selection in fitspw for fitting</description>
                 
                 <value>False</value>
         </param>
         
 
-        <param name="combine" type="string"><shortdescription>Data axes to combine for the continuum estimation (none, or spw and/or scan)</shortdescription><description>Data axes to combine for the continuum estimation (none, or spw and/or scan)</description>
+        <param type="string" name="combine"><shortdescription>Data axes to combine for the continuum estimation (none, or spw and/or scan)</shortdescription><description>Data axes to combine for the continuum estimation (none, or spw and/or scan)</description>
                 
                 <value/>
         </param>
 
-        <param name="solint" type="any"><shortdescription>Continuum fit timescale (int recommended!)</shortdescription><description>Continuum fit timescale (int recommended!)</description>
+        <param type="any" name="solint"><shortdescription>Continuum fit timescale (int recommended!)</shortdescription><description>Continuum fit timescale (int recommended!)</description>
                 
                 <any type="variant"/>
                 <value type="string">int</value>
         </param>
 
-        <param name="fitorder" type="int"><shortdescription>Polynomial order for the fits</shortdescription><description>Polynomial order for the fits</description>
+        <param type="int" name="fitorder"><shortdescription>Polynomial order for the fits</shortdescription><description>Polynomial order for the fits</description>
                 
                 <value>0</value>
         </param>
 
-        <param name="spw" type="string"><shortdescription>Spectral window selection for output</shortdescription><description>Spectral window selection for output</description>
+        <param type="string" name="spw"><shortdescription>Spectral window selection for output</shortdescription><description>Spectral window selection for output</description>
                 
                 <value/>
         </param>
 
-        <param name="want_cont" type="bool"><shortdescription>Create vis + &quot;.cont&quot; to hold the continuum estimate.</shortdescription><description>Create vis + &quot;.cont&quot; to hold the continuum estimate.</description>
+        <param type="bool" name="want_cont"><shortdescription>Create vis + &quot;.cont&quot; to hold the continuum estimate.</shortdescription><description>Create vis + &quot;.cont&quot; to hold the continuum estimate.</description>
                 
                 <value>False</value>
         </param>
         
   <constraints>
             <when param="fitspw">
-                  <notequals value="" type="string">
+                  <notequals type="string" value="">
                     <default param="excludechans"><value type="bool">False</value>
                     </default>
                   </notequals>
@@ -162,5 +162,5 @@
                 The continuum estimate will be placed in vis + '.cont'
 
 </example> 
-</task>
+<returns>void</returns></task>
 </casaxml>

@@ -1,101 +1,101 @@
-<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-<task category="analysis" name="imdev" type="function">
+<task type="function" name="imdev" category="analysis">
 
 <shortdescription>Create an image that can represent the statistical deviations of the input image.</shortdescription>
 
 <input>
-    <param mustexist="true" name="imagename" type="string"><shortdescription>Input image name</shortdescription><description>Input image name</description>
+    <param type="path" name="imagename" mustexist="true"><shortdescription>Input image name</shortdescription><description>Input image name</description>
         
         <value/>
     </param>
-    <param name="outfile" type="string"><shortdescription>Output image file name. If left blank (the default), no image is written but a new image tool referencing the collapsed image is returned.</shortdescription><description>Output image file name. If left blank (the default), no image is written but a new image tool referencing the collapsed image is returned.</description>
+    <param type="string" name="outfile"><shortdescription>Output image file name. If left blank (the default), no image is written but a new image tool referencing the collapsed image is returned.</shortdescription><description>Output image file name. If left blank (the default), no image is written but a new image tool referencing the collapsed image is returned.</description>
         
         <value/>
     </param>
-    <param name="region" direction="in" type="any"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
-        <any limittypes="string record" type="variant"/>
+    <param type="any" direction="in" name="region"><shortdescription>Region selection. Default is to use the full image.</shortdescription><description>Region selection. Default is to use the full image.</description>
+        <type>string</type><type>record</type>
         
         <value type="string"/>
     </param>
-    <param name="box" type="string"><shortdescription>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</description>
+    <param type="string" name="box"><shortdescription>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</shortdescription><description>Rectangular region(s) to select in direction plane. Default is to use the entire direction plane.</description>
         
         <value/>
     </param>
-    <param name="chans" type="string"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
+    <param type="string" name="chans"><shortdescription>Channels to use. Default is to use all channels.</shortdescription><description>Channels to use. Default is to use all channels.</description>
         
         <value/>
     </param>
-    <param name="stokes" type="string"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
+    <param type="string" name="stokes"><shortdescription>Stokes planes to use. Default is to use all Stokes planes.</shortdescription><description>Stokes planes to use. Default is to use all Stokes planes.</description>
         
         <value/>
         <example>stokes=&quot;IQ&quot;</example>
         <example>stokes=&quot;RR,LL&quot;</example>
     </param>
-    <param name="mask" type="string"><shortdescription>Mask to use. Default setting is none. </shortdescription><description>Mask to use. Default setting is none. </description>
+    <param type="string" name="mask"><shortdescription>Mask to use. Default setting is none. </shortdescription><description>Mask to use. Default setting is none. </description>
         
         <value type="string"/>
     </param>
-    <param name="overwrite" type="bool"><shortdescription>Overwrite (unprompted) pre-existing output file? Ignored if &quot;outfile&quot; is left blank. </shortdescription><description>Overwrite (unprompted) pre-existing output file? Ignored if &quot;outfile&quot; is left blank. </description>
+    <param type="bool" name="overwrite"><shortdescription>Overwrite (unprompted) pre-existing output file? Ignored if &quot;outfile&quot; is left blank. </shortdescription><description>Overwrite (unprompted) pre-existing output file? Ignored if &quot;outfile&quot; is left blank. </description>
         
         <value>False</value>
     </param>
-    <param subparam="true" name="stretch" type="bool"><shortdescription>Stretch the mask if necessary and possible? Default value is False.</shortdescription><description>Stretch the mask if necessary and possible? Default value is False.</description>
+    <param type="bool" name="stretch" subparam="true"><shortdescription>Stretch the mask if necessary and possible? Default value is False.</shortdescription><description>Stretch the mask if necessary and possible? Default value is False.</description>
         
         <value>False</value>
     </param>
-    <param name="grid" type="intArray"><shortdescription>x,y grid spacing. Array of exactly two positive integers.</shortdescription><description>x,y grid spacing. Array of exactly two positive integers.</description>
+    <param type="intVec" name="grid"><shortdescription>x,y grid spacing. Array of exactly two positive integers.</shortdescription><description>x,y grid spacing. Array of exactly two positive integers.</description>
         
         <value type="vector">
             <value>1</value><value>1</value>
         </value>
     </param>
-    <param name="anchor" type="variant"><shortdescription>x,y anchor pixel location. Either &quot;ref&quot; to use the image reference pixel, or an array of exactly two integers.</shortdescription><description>x,y anchor pixel location. Either &quot;ref&quot; to use the image reference pixel, or an array of exactly two integers.</description>
-        <any limittypes="string intArray" type="variant"/>
+    <param type="variant" name="anchor"><shortdescription>x,y anchor pixel location. Either &quot;ref&quot; to use the image reference pixel, or an array of exactly two integers.</shortdescription><description>x,y anchor pixel location. Either &quot;ref&quot; to use the image reference pixel, or an array of exactly two integers.</description>
+        <type>string</type><type>intVec</type>
         
         
         <value type="string">ref</value>
     </param>
-    <param name="xlength" type="variant"><shortdescription>Either x coordinate length of box, or diameter of circle. Circle is used if ylength is empty string.</shortdescription><description>Either x coordinate length of box, or diameter of circle. Circle is used if ylength is empty string.</description>
-        <any limittypes="string int" type="variant"/>
+    <param type="variant" name="xlength"><shortdescription>Either x coordinate length of box, or diameter of circle. Circle is used if ylength is empty string.</shortdescription><description>Either x coordinate length of box, or diameter of circle. Circle is used if ylength is empty string.</description>
+        <type>string</type><type>int</type>
         
         <value type="string">1pix</value>
     </param>
-    <param name="ylength" type="variant"><shortdescription>y coordinate length of box. Use a circle if ylength is empty string.</shortdescription><description>y coordinate length of box. Use a circle if ylength is empty string.</description>
-        <any limittypes="string int" type="variant"/>
+    <param type="variant" name="ylength"><shortdescription>y coordinate length of box. Use a circle if ylength is empty string.</shortdescription><description>y coordinate length of box. Use a circle if ylength is empty string.</description>
+        <type>string</type><type>int</type>
         
         <value type="string">1pix</value>
     </param>
-    <param name="interp" type="string"><shortdescription>Interpolation algorithm to use. One of &quot;nearest&quot;, &quot;linear&quot;, or &quot;cubic&quot;. Minimum match supported.</shortdescription><description>Interpolation algorithm to use. One of &quot;nearest&quot;, &quot;linear&quot;, or &quot;cubic&quot;. Minimum match supported.</description>
+    <param type="string" name="interp"><shortdescription>Interpolation algorithm to use. One of &quot;nearest&quot;, &quot;linear&quot;, or &quot;cubic&quot;. Minimum match supported.</shortdescription><description>Interpolation algorithm to use. One of &quot;nearest&quot;, &quot;linear&quot;, or &quot;cubic&quot;. Minimum match supported.</description>
         
         <value>cubic</value>
     </param>
-    <param name="stattype" type="string"><shortdescription>Statistic to compute. See full description for supported statistics.</shortdescription><description>Statistic to compute. See full description for supported statistics.</description>
+    <param type="string" name="stattype"><shortdescription>Statistic to compute. See full description for supported statistics.</shortdescription><description>Statistic to compute. See full description for supported statistics.</description>
         
         <value>sigma</value>
     </param>
-    <param name="statalg" type="string"><shortdescription>Statistics computation algorithm to use. Supported values are &quot;chauvenet&quot; and &quot;classic&quot;, Minimum match is supported.</shortdescription><description>Statistics computation algorithm to use. Supported values are &quot;chauvenet&quot; and &quot;classic&quot;, Minimum match is supported.</description>
+    <param type="string" name="statalg"><shortdescription>Statistics computation algorithm to use. Supported values are &quot;chauvenet&quot; and &quot;classic&quot;, Minimum match is supported.</shortdescription><description>Statistics computation algorithm to use. Supported values are &quot;chauvenet&quot; and &quot;classic&quot;, Minimum match is supported.</description>
         
         <value>classic</value>
     </param>
-    <param subparam="true" name="zscore" type="double"><shortdescription>For chauvenet, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet&quot;s criterion. Ignored if algorithm is not &quot;chauvenet&quot;.</shortdescription><description>For chauvenet, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet&quot;s criterion. Ignored if algorithm is not &quot;chauvenet&quot;.</description>
+    <param type="double" name="zscore" subparam="true"><shortdescription>For chauvenet, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet&quot;s criterion. Ignored if algorithm is not &quot;chauvenet&quot;.</shortdescription><description>For chauvenet, this is the target maximum number of standard deviations data may have to be included. If negative, use Chauvenet&quot;s criterion. Ignored if algorithm is not &quot;chauvenet&quot;.</description>
         
         <value>-1</value>
     </param>
-    <param subparam="true" name="maxiter" type="int"><shortdescription>For chauvenet, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if algortihm is not &quot;chauvenet&quot;.</shortdescription><description>For chauvenet, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if algortihm is not &quot;chauvenet&quot;.</description>
+    <param type="int" name="maxiter" subparam="true"><shortdescription>For chauvenet, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if algortihm is not &quot;chauvenet&quot;.</shortdescription><description>For chauvenet, this is the maximum number of iterations to attempt. Iterating will stop when either this limit is reached, or the zscore criterion is met. If negative, iterate until the zscore criterion is met. Ignored if algortihm is not &quot;chauvenet&quot;.</description>
         
         <value>-1</value>
     </param>
     <constraints>
         <when param="mask">
-            <notequals value="" type="string">
+            <notequals type="string" value="">
                 <default param="stretch"><value type="bool">False</value></default>
             </notequals>
         </when>
         <when param="statalg">
-            <equals value="classic" type="string">
+            <equals type="string" value="classic">
             </equals>
-            <equals value="chauvenet" type="string">
+            <equals type="string" value="chauvenet">
                 <default param="zscore">
                     <value>-1</value>
                 </default>
