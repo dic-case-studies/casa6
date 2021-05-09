@@ -7082,7 +7082,6 @@ class Test_mosaic(test_tclean_base):
             'fit_loc_freq': [1e-10, 261.88011504139996],
             'fit_pix': [False, [240.74284782362395, 210.1445947261468]]}
 
-        exp_pb_stats = {'npts': [True, 191116800],
 
         report4 = th.check_dict_vals(exp_pb_stats, pb_stats_dict, '.pb', epsilon=self.epsilon)
 
