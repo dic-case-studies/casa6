@@ -72,7 +72,7 @@ from subprocess import Popen, PIPE
 from datetime import datetime
 from inspect import currentframe, getframeinfo
 from textwrap import dedent
-from shutil import copy2, move
+from shutil import copy2, move, copyfileobj
 import subprocess
 import sysconfig
 import platform
@@ -89,7 +89,7 @@ from os.path import isfile, join, islink
 from itertools import chain
 import argparse
 
-from urllib import request, urlretrieve
+from urllib import request
 import tarfile
 import ssl
 
@@ -168,10 +168,6 @@ elif sys.platform == 'linux2' or sys.platform == 'linux':
 else:
     sys.exit("oops, had not planned on building on %s" % sys.platform)
 
-def xml_jar_fetch( ):
-    if not os.path.exists(xml_jar_path):
-        urlretrieve( xml_jar_url, xml_jar_path )
-
 def compute_version( ):
     if (args.version != None ):
         print (args.version.split("."))
@@ -212,13 +208,33 @@ if devbranchversion !="":
 print(casatools_version)
 
 
+def mkpath(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
+def xml_jar_fetch( ):
+    if not os.path.exists(os.path.dirname(xml_jar_path)):
+        mkpath(os.path.dirname(xml_jar_path))
+    if not os.path.exists( xml_jar_path ):
+        with request.urlopen(xml_jar_url) as istream, open(xml_jar_path,'wb') as fd:
+            copyfileobj( istream, fd )
+
 def install_version_header( major, minor, patch, feature, verstr ):
+    if not os.path.isdir("binding/include"):
+        mkpath("binding/include")
     with open("binding/include/toolversion.h","w") as out, open("ac/templates/toolversion.h.in") as f:
         for line in f:
             l = line.replace("@CASATOOLS_MAJOR@",str(major)).replace("@CASATOOLS_MINOR@",str(minor)).replace("@CASATOOLS_PATCH@",str(patch)).replace("@CASATOOLS_FEATURE@",str(feature)).replace("@CASATOOLS_VERSION_STRING@",verstr)
             out.write(l)
 
 def install_version_cc( major, minor, patch, feature,  verstr ):
+    if not os.path.isdir("binding/source"):
+        mkpath("binding/source")
     with open("binding/source/version.cc","w") as out, open("casa-source/code/stdcasa/version.cc.in") as f:
         for line in f:
             l = line.replace("@CASA_VERSION_MAJOR@",str(major))\
@@ -298,15 +314,6 @@ def isexe(f):
 
 def clean_args(l):
     return [a for a in l if len(a) > 0]
-
-def mkpath(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
 
 ## https://stackoverflow.com/questions/14320220/testing-python-c-libraries-get-build-path
 def distutils_dir_name(dname):
@@ -2484,11 +2491,10 @@ if __name__ == '__main__':
         sys.exit('Run configure to create build properties, then try again...')
     if 'build.compiler.cxx' not in props:
         sys.exit('Configuration error, not compiler found... try again...')
-    if not os.path.exists('scripts/java'):
-        sys.exit('Run scripts/gcw-pick first...')
+    if not os.path.exists(xml_jar_path):
+        xml_jar_fetch( )
 
     sakura_fetch( )
-    xml_jar_fetch( )
 
     TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
     tools = [ os.path.splitext(os.path.basename(f))[0] for f in TOOL_XML ]
