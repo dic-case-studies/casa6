@@ -2496,7 +2496,7 @@ if __name__ == '__main__':
 
     sakura_fetch( )
 
-    TOOL_XML = source_files("xml/tools",file_suffix_filter=".xml")
+    TOOL_XML = source_files("xml",file_suffix_filter=".xml")
     tools = [ os.path.splitext(os.path.basename(f))[0] for f in TOOL_XML ]
     # moduledir = os.path.join('build', distutils_dir_name('lib'), module_name)
     moduledir = get_module_dir()
