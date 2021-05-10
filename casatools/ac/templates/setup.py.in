@@ -913,7 +913,7 @@ def build_protobuf( prefix, srcdir, collectdir ):
 
 
 def tool_files(tool):
-    src = ['binding/tools/%s/%s' % (tool,f) for f in listdir('binding/tools/%s' % tool) if f.endswith(".cc")]
+    src = ['src/tools/%s/%s' % (tool,f) for f in listdir('src/tools/%s' % tool) if f.endswith(".cc")]
     src += ['binding/generated/tools/%s/%s' % (tool,f) for f in listdir('binding/generated/tools/%s' % tool) if f.endswith(".cc")]
     src += ['binding/generated/tools/%s/%s' % (tool,f) for f in listdir('binding/generated/tools/%s' % tool) if f.endswith(".i")]
 
@@ -922,9 +922,9 @@ def tool_files(tool):
     if len(incs) > 0:
         inc.append('binding/generated/tools/%s' % tool)
 
-    incs = ['binding/tools/%s/%s' % (tool,f) for f in listdir('binding/tools/%s' % tool) if f.endswith(".h")]
+    incs = ['src/tools/%s/%s' % (tool,f) for f in listdir('src/tools/%s' % tool) if f.endswith(".h")]
     if len(incs) > 0:
-        inc.append('binding/tools/%s' % tool)
+        inc.append('src/tools/%s' % tool)
     return (inc,src)
 
 
@@ -961,6 +961,13 @@ module_cflags = { 'casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_
                                       '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-fPIC' ] \
                                       + mpi_cxx_flags + platform_cflags[sys.platform],
                        'binding/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
+                                        '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
+                                        '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DQWT6', \
+                                        '-DUseCasacoreNamespace', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', \
+                                        '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
+                                        '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-fPIC' ] \
+                                        + platform_cflags[sys.platform],
+                       'src/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
                                         '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
                                         '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DQWT6', \
                                         '-DUseCasacoreNamespace', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', \
@@ -2198,7 +2205,7 @@ class create_makefile(Command):
         # the wrap files won't be there for the initial run of this script, so we
         # cannot use source_files() to find them
         WRAP_CPP = [filename.replace('_statics.cc', '_wrap.cpp') for filename in STATICS_CC]
-        CODE_BINDING = source_files("binding/tools", file_suffix_filter=".cc")
+        CODE_BINDING = source_files("src/tools", file_suffix_filter=".cc")
         obj_name = os.path.join('build',distutils_dir_name('temp')) + os.sep + '{base}.o'
         dep_name = os.path.join("$(DEPDIR)", build_distutils_temp, "{base}.d")
         obj_create = (
@@ -2208,8 +2215,8 @@ class create_makefile(Command):
         )
         dep_targ = dep_name + ": ;\nPRECIOUS: " + dep_name
         cflags = module_cflags['binding/'] + platform_cflags[sys.platform]
-        includes = sep.join(get_new_cxx_compiler_includes() + get_cflags() + ["-Ibinding"])
-        tool_inc = "-Ibinding/generated/tools/{toolname} -Ibinding/tools/{toolname}"
+        includes = sep.join(get_new_cxx_compiler_includes() + get_cflags() + ["-Isrc"])
+        tool_inc = "-Ibinding/generated/tools/{toolname} -Isrc/tools/{toolname}"
         flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
         add_cflags = sysconfig.get_config_var('CFLAGS')
         duse_grpc = get_use_grpc()
@@ -2576,7 +2583,7 @@ if __name__ == '__main__':
     # grpc_libs = get_grpc_libs()
     # ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + archlibs ) ]
     tp_libs = get_tp_libs()
-    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=gldflags+rpath+archflags, libraries=gprop_libs + tp_libs + archlibs ) ]
+    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['src',grpc_srcdir,grpc_incdir], extra_link_args=gldflags+rpath+archflags, libraries=gprop_libs + tp_libs + archlibs ) ]
 
     # casacdir = os.path.join(moduledir, '__casac__')
     casacdir = get_casac_dir()
@@ -2602,7 +2609,7 @@ if __name__ == '__main__':
         # ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
 
         # ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline','gfortran','dl'] + archlibs ))
-        ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['binding'] + incdirs[lb], extra_link_args=gldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + gprop_libs + tp_libs + archlibs ))
+        ext.append(Extension( module_name + ".__casac__.lib.%s" % lb, language='c++', sources=libsrc[lb], include_dirs=['src'] + incdirs[lb], extra_link_args=gldflags + ['-L'+libdir] + rpath + archflags, swig_opts=swig_opt, libraries=[module_name] + gprop_libs + tp_libs + archlibs ))
 
     for t in TOOLS:
         inc = [ ]; lib = [ ]; src = [ ]
@@ -2616,7 +2623,7 @@ if __name__ == '__main__':
         if sys.platform == 'darwin':
             rpath = [ '-Wl,-rpath,@loader_path/lib','-Wl,-rpath,@loader_path' ]
         # ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + lib + archlibs + closure_libraries ))
-        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding',grpc_incdir] + inc, extra_link_args=gldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + gprop_libs + tp_libs + lib + archlibs + closure_libraries ))
+        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['src',grpc_incdir] + inc, extra_link_args=gldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + gprop_libs + tp_libs + lib + archlibs + closure_libraries ))
 
     setup( name="casatools",version=casatools_version,
            maintainer="Darrell Schiebel",
