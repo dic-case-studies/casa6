@@ -127,7 +127,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_makemask.py
   test_me_shift.py
   test_measures.py
-  test_msmd.py
+  test_msmetadata.py
   test_mstransform.py
   test_mstransform_mms.py
   test_nrobeamaverage.py
