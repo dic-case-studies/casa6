@@ -1096,6 +1096,10 @@ casa_find( GSL
    	      DEPENDS GSLCBLAS
 	      PREFIX_HINTS /opt/casa/03 /opt/casa/02 )
 
+if( APPLE )
+    message(STATUS "Including eigen3")
+    INCLUDE_DIRECTORIES ( "${casa_packages}/include/eigen3" )
+endif()
 #
 # gsl drags in dependencencies on atlas libraries, if they are not explicitly
 # referenced, loading is left until runtime based upon transitive dependencies.
