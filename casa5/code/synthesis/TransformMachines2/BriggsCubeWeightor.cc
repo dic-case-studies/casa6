@@ -143,7 +143,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	}
 	wgtTab_p=nullptr;
 	ostringstream oss;
-	oss << std::setprecision(12) << nrows << "_" << freqbeg << "_" << freqend << "_"<< rmode_p << "_" << robust_p;
+	oss << std::setprecision(12) << nrows << "_" << freqbeg << "_" << freqend << "_"<< rmode_p << "_" << robust_p <<"_interp_"<< freqInterpMethod_p;
 
 	//cerr << "STRING " << oss.str() << endl;;
 	imWgtColName_p=makeScratchImagingWeightTable(wgtTab_p, oss.str());
@@ -336,7 +336,8 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	  for (vi.origin(); vi.more(); vi.next()) {
             //process for required msid
             if(msid==vb->msId()){
-              if((msID != vb->msId()) || (fieldID != vb->fieldId()(0)) || (spwID!=vb->spectralWindows()(0))){
+            
+             if((msID != vb->msId()) || (fieldID != vb->fieldId()(0)) || (spwID!=vb->spectralWindows()(0))){
                 msID=vb->msId();
                 fieldID = vb->fieldId()(0);
                 spwID = vb->spectralWindows()(0);
@@ -409,7 +410,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	}
         Int extrapad=max(min(4, Int(imNChan/10)),1);
 	swingpad=2*(Int(std::ceil((swingFreq+firstchanshift)/freqincr))+extrapad);
-	cerr <<" swingfreq " << (swingFreq/freqincr) << " firstchanshift " << (firstchanshift/freqincr) << " SWINGPAD " << swingpad << endl;
+	//cerr <<" swingfreq " << (swingFreq/freqincr) << " firstchanshift " << (firstchanshift/freqincr) << " SWINGPAD " << swingpad << endl;
 	////////////////
 	return swingpad;
 
