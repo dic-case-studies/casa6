@@ -10,9 +10,9 @@ import unittest
 import json
 import datetime
 import platform
-from casatestutils.testrunner.shell_runner import ShellRunner
-from casatestutils.testrunner import xvfb_helper
-from casatestutils.testrunner.xunit import Xunit
+from testrunner.shell_runner import ShellRunner
+from testrunner import xvfb_helper
+from testrunner.xunit import Xunit
 default_timeout = 1800
 sys.path.insert(0,'')
 
