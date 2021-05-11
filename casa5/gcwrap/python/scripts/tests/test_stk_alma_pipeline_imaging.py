@@ -119,7 +119,7 @@ data_path = ctsys_resolve('stakeholder/alma/')
 # mostly useful for the maintenace (updating the expected metric i
 # parameters based
 # on the current metrics)
-savemetricdict=True
+savemetricdict=False
 
 ## Base Test class with Utility functions
 class test_tclean_base(unittest.TestCase):
