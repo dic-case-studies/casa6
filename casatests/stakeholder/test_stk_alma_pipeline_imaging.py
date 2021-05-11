@@ -603,31 +603,6 @@ class Test_standard(test_tclean_base):
                 minpercentchange=1.0, fastnoise=False, restart=True, \
                 calcres=False, calcpsf=False, savemodel='none', \
                 parallel=True, verbose=True)
-
-            # retrieve per-channel beam statistics (only in parallel)
-            #bmin_dict, bmaj_dict, pa_dict = \
-            #    self.cube_beam_stats(image=img+'.image')
-
-            #tclean(vis=self.msfile, imagename=file_name+'1', spw=['0'], \
-            #    field='1', imsize=[80, 80], cell=['1.1arcsec'], \
-            #    phasecenter='ICRS 00:45:54.3836 -073.15.29.413', stokes='I', \
-            #    antenna=['0,1,2,3,4,5,6,7,8'], scan=['8,12,16'], \
-            #    intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
-            #    specmode='cube', nchan=508, start='220.2526743594GHz', \
-            #    width='0.2441741MHz', outframe='LSRK', \
-            #    perchanweightdensity=False, gridder='standard', \
-            #    mosweight=False, usepointing=False, \
-            #    pblimit=0.2, deconvolver='hogbom', restoration=True, \
-            #    restoringbeam='common', pbcor=True, weighting='briggs', \
-            #    robust=0.5, npixels=0, niter=0, threshold='0.354Jy', \
-            #    nsigma=0.0, interactive=0, usemask='auto-multithresh', \
-            #    sidelobethreshold=1.25, noisethreshold=5.0, \
-            #    lownoisethreshold=2.0, negativethreshold=0.0, \
-            #    minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
-            #    minpercentchange=1.0, fastnoise=False, restart=True, \
-            #    calcres=False, calcpsf=False, savemodel='none', \
-            #    parallel=False, verbose=True)
-
         else:
             tclean(vis=self.msfile, imagename=file_name+'1', field='1', \
                 spw=['0'], imsize=[80, 80], antenna=['0,1,2,3,4,5,6,7,8'], \
@@ -972,31 +947,6 @@ class Test_standard(test_tclean_base):
                 minpercentchange=1.0, fastnoise=False, restart=True, \
                 calcres=False, calcpsf=False, savemodel='none', \
                 parallel=True, verbose=True)
-
-            # retrieve per-channel beam statistics 
-            #bmin_dict, bmaj_dict, pa_dict = \
-            #    self.cube_beam_stats(image=img+'.image')
-
-            #tclean(vis=self.msfile, imagename=file_name+'1', spw=['0'], \
-            #    field='1', imsize=[80, 80], cell=['1.1arcsec'], \
-            #    phasecenter='ICRS 00:45:54.3836 -073.15.29.413', stokes='I', \
-            #    antenna=['0,1,2,3,4,5,6,7,8'], scan=['8,12,16'], \
-            #    intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
-            #    specmode='cube', nchan=508, start='220.2526743594GHz', \
-            #    width='0.2441741MHz', outframe='LSRK', \
-            #    perchanweightdensity=True, gridder='standard', \
-            #    mosweight=False, usepointing=False, \
-            #    pblimit=0.2, deconvolver='hogbom', restoration=True, \
-            #    restoringbeam='common', pbcor=True, weighting='briggs', \
-            #    robust=0.5, npixels=0, niter=0, threshold='0.354Jy', \
-            #    nsigma=0.0, interactive=0, usemask='auto-multithresh', \
-            #    sidelobethreshold=1.25, noisethreshold=5.0, \
-            #    lownoisethreshold=2.0, negativethreshold=0.0, \
-            #    minbeamfrac=0.08, growiterations=75, dogrowprune=True, \
-            #    minpercentchange=1.0, fastnoise=False, restart=True, \
-            #    calcres=False, calcpsf=False, savemodel='none', \
-            #    parallel=False, verbose=True)
-
         else:
             tclean(vis=self.msfile, imagename=file_name+'1', field='1', \
                 spw=['0'], imsize=[80, 80], antenna=['0,1,2,3,4,5,6,7,8'], \
@@ -1344,31 +1294,6 @@ class Test_standard(test_tclean_base):
                 minpercentchange=1.0, fastnoise=False, restart=True, \
                 calcres=False, calcpsf=False, savemodel='none', \
                 parallel=True, verbose=True)
-
-            # retrieve per-channel beam statistics 
-            #bmin_dict, bmaj_dict, pa_dict = \
-            #    self.cube_beam_stats(image=img+'.image')
-
-            #tclean(vis=self.msfile, imagename=file_name+'1', spw=['0'], \
-            #    field='1', imsize=[80, 80], cell=['1.1arcsec'], \
-            #    phasecenter='ICRS 00:45:54.3836 -073.15.29.413', stokes='I', \
-            #    antenna=['0,1,2,3,4,5,6,7,8'], scan=['8,12,16'], \
-            #    intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
-            #    specmode='cube', nchan=508, start='220.2526743594GHz', \
-            #    width='0.2441741MHz', outframe='LSRK', \
-            #    perchanweightdensity=True, gridder='standard', \
-            #    mosweight=False, usepointing=False, \
-            #    pblimit=0.2, deconvolver='hogbom', restoration=True, \
-            #    restoringbeam='common', pbcor=True, weighting='briggsbwtaper', \
-            #    robust=0.5, npixels=0, niter=0, threshold='0.354Jy', \
-            #    nsigma=0.0, interactive=0, usemask='auto-multithresh', \
-            #    sidelobethreshold=1.25, noisethreshold=5.0, \
-            #    lownoisethreshold=2.0, negativethreshold=0.0, \
-            #    minbeamfrac=0.08, growiterations=75, dogrowprune=True, \
-            #    minpercentchange=1.0, fastnoise=False, restart=True, \
-            #    calcres=False, calcpsf=False, savemodel='none', \
-            #    parallel=False, verbose=True)
-
         else:
             tclean(vis=self.msfile, imagename=file_name+'1', field='1', \
                 spw=['0'], imsize=[80, 80], antenna=['0,1,2,3,4,5,6,7,8'], \
@@ -4397,31 +4322,6 @@ class Test_mosaic(test_tclean_base):
                 minpercentchange=1.0, fastnoise=False, restart=True, \
                 savemodel='none', calcres=False, calcpsf=False, \
                 parallel=True, verbose=True)
-
-            # retrieve per-channel beam statistics
-            #bmin_dict, bmaj_dict, pa_dict = \
-            #    self.cube_beam_stats(img+'.image')
-
-            #tclean(vis=self.msfile, field='SMIDGE_NWCloud', spw=['0'], \
-            #    antenna=['0,1,2,3,4,5,6,7,8'], scan=['8,12,16'], \
-            #    intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
-            #    imagename=file_name+'1', imsize=[108, 108], \
-            #    cell=['1.1arcsec'], phasecenter='ICRS 00:45:54.3836'
-            #    ' -073.15.29.413', stokes='I', specmode='cube', nchan=508, \
-            #    start='220.2526743594GHz', width='0.2441741MHz', \
-            #    outframe='LSRK', perchanweightdensity=False, \
-            #    gridder='mosaic',  mosweight=True, \
-            #    usepointing=False, pblimit=0.2, deconvolver='hogbom', \
-            #    restoration=True, restoringbeam='common', pbcor=True, \
-            #    weighting='briggs', robust=0.5, npixels=0, niter=0, \
-            #    threshold='0.354Jy', nsigma=0.0, interactive=0, usemask='auto'
-            #    '-multithresh', sidelobethreshold=1.25, noisethreshold=5.0, \
-            #    lownoisethreshold=2.0, negativethreshold=0.0, \
-            #    minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
-            #    minpercentchange=1.0, fastnoise=False, restart=True, \
-            #    savemodel='none', calcres=False, calcpsf=False, 
-            #    parallel=False, verbose=True)
-
         else:
             tclean(vis=self.msfile, field='SMIDGE_NWCloud', spw=['0'], \
                 antenna=['0,1,2,3,4,5,6,7,8'],scan=['8,12,16'], \
@@ -4762,7 +4662,8 @@ class Test_mosaic(test_tclean_base):
                 outframe='LSRK', perchanweightdensity=True, \
                 gridder='mosaic', mosweight=True, \
                 usepointing=False, pblimit=0.2, deconvolver='hogbom', \
-                restoration=True, pbcor=True, weighting='briggs', robust=0.5,\
+                restoration=True, restoringbeam='common', pbcor=True, \
+                weighting='briggs', robust=0.5,\
                 npixels=0, niter=20000, threshold='0.354Jy', nsigma=0.0, \
                 interactive=0, usemask='auto-multithresh', \
                 sidelobethreshold=1.25, noisethreshold=5.0, \
@@ -4771,31 +4672,6 @@ class Test_mosaic(test_tclean_base):
                 minpercentchange=1.0, fastnoise=False, restart=True, \
                 savemodel='none', calcres=False, calcpsf=False, \
                 parallel=True, verbose=True)
-
-            # retrieve per-channel beam statistics
-            bmin_dict, bmaj_dict, pa_dict = \
-                self.cube_beam_stats(img+'.image')
-
-            tclean(vis=self.msfile, field='SMIDGE_NWCloud', spw=['0'], \
-                antenna=['0,1,2,3,4,5,6,7,8'], scan=['8,12,16'], \
-                intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
-                imagename=file_name+'1', imsize=[108, 108], \
-                cell=['1.1arcsec'], phasecenter='ICRS 00:45:54.3836'
-                ' -073.15.29.413', stokes='I', specmode='cube', nchan=508, \
-                start='220.2526743594GHz', width='0.2441741MHz', \
-                outframe='LSRK', perchanweightdensity=True, \
-                gridder='mosaic', mosweight=True, \
-                usepointing=False, pblimit=0.2, deconvolver='hogbom', \
-                restoration=True, restoringbeam='common', pbcor=True, \
-                weighting='briggs', robust=0.5, npixels=0, niter=0, \
-                threshold='0.354Jy', nsigma=0.0, interactive=0, usemask='auto'
-                '-multithresh', sidelobethreshold=1.25, noisethreshold=5.0, \
-                lownoisethreshold=2.0, negativethreshold=0.0, \
-                minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
-                minpercentchange=1.0, fastnoise=False, restart=True, \
-                savemodel='none', calcres=False, calcpsf=False, 
-                parallel=False, verbose=True)
-
         else:
             tclean(vis=self.msfile, field='SMIDGE_NWCloud', spw=['0'], \
                 antenna=['0,1,2,3,4,5,6,7,8'],scan=['8,12,16'], \
@@ -4817,9 +4693,9 @@ class Test_mosaic(test_tclean_base):
                 savemodel='none', calcres=False, calcpsf=False, \
                 restoringbeam='common', parallel=False, verbose=True)
 
-            # retrieve per-channel beam statistics
-            bmin_dict, bmaj_dict, pa_dict = \
-                self.cube_beam_stats(img+'.psf')
+        # retrieve per-channel beam statistics
+        bmin_dict, bmaj_dict, pa_dict = \
+        self.cube_beam_stats(img+'.psf')
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
 
@@ -5177,31 +5053,6 @@ class Test_mosaic(test_tclean_base):
                 minpercentchange=1.0, fastnoise=False, restart=True, \
                 savemodel='none', calcres=False, calcpsf=False, \
                 parallel=True, verbose=True)
-
-            # retrieve per-channel beam statistics
-            #bmin_dict, bmaj_dict, pa_dict = \
-            #    self.cube_beam_stats(img+'.image')
-
-            #tclean(vis=self.msfile, field='SMIDGE_NWCloud', spw=['0'], \
-            #    antenna=['0,1,2,3,4,5,6,7,8'], scan=['8,12,16'], \
-            #    intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
-            #    imagename=file_name+'1', imsize=[108, 108], \
-            #    cell=['1.1arcsec'], phasecenter='ICRS 00:45:54.3836'
-            #    ' -073.15.29.413', stokes='I', specmode='cube', nchan=508, \
-            #    start='220.2526743594GHz', width='0.2441741MHz', \
-            #    outframe='LSRK', perchanweightdensity=True, \
-            #    gridder='mosaic', mosweight=True, \
-            #    usepointing=False, pblimit=0.2, deconvolver='hogbom', \
-            #    restoration=True, restoringbeam='common', pbcor=True, \
-            #    weighting='briggsbwtaper', robust=0.5, npixels=0, niter=0, \
-            #    threshold='0.354Jy', nsigma=0.0, interactive=0, usemask='auto'
-            #    '-multithresh', sidelobethreshold=1.25, noisethreshold=5.0, \
-            #    lownoisethreshold=2.0, negativethreshold=0.0, \
-            #    minbeamfrac=0.1, growiterations=75, dogrowprune=True, \
-            #    minpercentchange=1.0, fastnoise=False, restart=True, \
-            #    savemodel='none', calcres=False, calcpsf=False, 
-            #    parallel=False, verbose=True)
-
         else:
             tclean(vis=self.msfile, field='SMIDGE_NWCloud', spw=['0'], \
                 antenna=['0,1,2,3,4,5,6,7,8'],scan=['8,12,16'], \
