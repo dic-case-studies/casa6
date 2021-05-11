@@ -612,7 +612,7 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti) {
 
         // Accumulate data, if appropriate
         if (accum_i) {
-          IPosition ipos(3, ipol, ichan, obln_i);
+          IPosition ipos(3, ipol, outchan, obln_i);
           if (isComplex_p) {
             accumCParam_(ipos) += wt * iterCParam(inPos);
           } else {
@@ -624,7 +624,7 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti) {
         }
 
         if (accum_j) { 
-          IPosition jpos(3, ipol, ichan, obln_j);
+          IPosition jpos(3, ipol, outchan, obln_j);
           if (isComplex_p) {
             accumCParam_(jpos) += wt * iterCParam(inPos);
           } else {
