@@ -503,7 +503,7 @@ class Test_standard(test_tclean_base):
             ' 00:45:54.3836 -073.15.29.413', stokes='I', specmode='cube', \
             nchan=508, start='220.2526743594GHz', width='0.2441741MHz', \
             outframe='LSRK', pblimit=0.2, perchanweightdensity=False, \
-            gridder='standard', chanchunks=-1, mosweight=False, \
+            gridder='standard',  mosweight=False, \
             deconvolver='hogbom', usepointing=False, restoration=False, \
             pbcor=False, weighting='briggs', restoringbeam='common', \
             robust=0.5, npixels=0, niter=0, threshold='0.0mJy', nsigma=0.0, \
@@ -530,7 +530,7 @@ class Test_standard(test_tclean_base):
                 nchan=508, start='220.2526743594GHz', width='0.2441741MHz',\
                 outframe='LSRK', perchanweightdensity=False, \
                 usepointing=False, pblimit=0.2, nsigma=0.0, \
-                gridder='standard', chanchunks=-1, mosweight=False, \
+                gridder='standard',  mosweight=False, \
                 deconvolver='hogbom', restoration=True, pbcor=True, \
                 weighting='briggs', robust=0.5, npixels=0, niter=20000, \
                 threshold='0.354Jy', interactive=0, usemask='auto'
@@ -553,7 +553,7 @@ class Test_standard(test_tclean_base):
                 specmode='cube', nchan=508, start='220.2526743594GHz', \
                 width='0.2441741MHz', outframe='LSRK', \
                 perchanweightdensity=False, gridder='standard', \
-                chanchunks=-1, mosweight=False, usepointing=False, \
+                 mosweight=False, usepointing=False, \
                 pblimit=0.2, deconvolver='hogbom', restoration=True, \
                 restoringbeam='common', pbcor=True, weighting='briggs', \
                 robust=0.5, npixels=0, niter=0, threshold='0.354Jy', \
@@ -574,7 +574,7 @@ class Test_standard(test_tclean_base):
                 nchan=508, start='220.2526743594GHz', width='0.2441741MHz',\
                 outframe='LSRK', perchanweightdensity=False, \
                 usepointing=False, pblimit=0.2, nsigma=0.0, \
-                gridder='standard', chanchunks=-1, mosweight=False, \
+                gridder='standard',  mosweight=False, \
                 deconvolver='hogbom', restoration=True, pbcor=True, \
                 weighting='briggs', robust=0.5, npixels=0, niter=20000, \
                 threshold='0.354Jy', interactive=0, usemask='auto'
@@ -836,7 +836,7 @@ class Test_standard(test_tclean_base):
             imagename=file_name+'0', stokes='I', imsize=[80, 80], \
             cell=['2arcsec'], phasecenter='ICRS 13:56:07.2100 '
             '+005.15.17.200', specmode='mfs', nchan=-1, outframe='LSRK', \
-            perchanweightdensity=False, gridder='standard', chanchunks=-1, \
+            perchanweightdensity=False, gridder='standard',  \
             mosweight=False, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', nterms=2, restoration=False, \
             restoringbeam='common', pbcor=False, weighting='briggs', \
@@ -863,7 +863,7 @@ class Test_standard(test_tclean_base):
             imagename=file_name+'1', stokes='I', imsize=[80, 80], \
             cell=['2arcsec'], phasecenter='ICRS 13:56:07.2100 '
             '+005.15.17.200', specmode='mfs', nchan=-1, outframe='LSRK', \
-            perchanweightdensity=False, gridder='standard', chanchunks=-1, \
+            perchanweightdensity=False, gridder='standard',  \
             mosweight=False, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', nterms=2, restoration=True, \
             restoringbeam='common', pbcor=True, weighting='briggs', \
@@ -1100,7 +1100,7 @@ class Test_standard(test_tclean_base):
             imagename=file_name+'0', stokes='I', imsize=[80, 80], \
             cell=['2arcsec'], phasecenter='ICRS 13:56:07.2100 '
             '+005.15.17.200', specmode='mfs', nchan=-1, outframe='LSRK', \
-            perchanweightdensity=False, gridder='standard', chanchunks=-1, \
+            perchanweightdensity=False, gridder='standard',  \
             mosweight=False, usepointing=False, pblimit=0.2, \
             deconvolver='mtmfs', nterms=2, restoration=False, \
             restoringbeam='common', pbcor=False, weighting='briggs', \
@@ -1127,7 +1127,7 @@ class Test_standard(test_tclean_base):
             imagename=file_name+'1', stokes='I', imsize=[80, 80], \
             cell=['2arcsec'], phasecenter='ICRS 13:56:07.2100 '
             '+005.15.17.200', specmode='mfs', nchan=-1, outframe='LSRK', \
-            perchanweightdensity=False, gridder='standard', chanchunks=-1, \
+            perchanweightdensity=False, gridder='standard',  \
             mosweight=False, usepointing=False, pblimit=0.2, \
             deconvolver='mtmfs', nterms=2, restoration=True, \
             restoringbeam='common', pbcor=True, weighting='briggs', \
@@ -1460,7 +1460,7 @@ class Test_standard(test_tclean_base):
             imagename=file_name+'0', imsize=[80, 80], cell=['0.66arcsec'], \
             phasecenter='TRACKFIELD', stokes='I', specmode='cubesource', \
             nchan=1000, start=1550, width=1, perchanweightdensity=False, \
-            gridder='standard', chanchunks=-1, mosweight=False, \
+            gridder='standard',  mosweight=False, \
             usepointing=False, pblimit=0.2, deconvolver='hogbom', \
             restoration=False, restoringbeam='common', pbcor=False, \
             weighting='briggs', robust=0.5, npixels=0, niter=0, \
@@ -1485,7 +1485,7 @@ class Test_standard(test_tclean_base):
             imagename=file_name+'1', imsize=[80, 80], cell=['0.66arcsec'], \
             phasecenter='TRACKFIELD', stokes='I', specmode='cubesource', \
             nchan=1000, start=1550, width=1, perchanweightdensity=False, \
-            gridder='standard', chanchunks=-1, mosweight=False, \
+            gridder='standard',  mosweight=False, \
             usepointing=False, pblimit=0.2, deconvolver='hogbom', \
             restoration=True, restoringbeam='common', pbcor=True, \
             weighting='briggs', robust=0.5, npixels=0, niter=30000, \
@@ -1737,7 +1737,7 @@ class Test_standard(test_tclean_base):
             intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
             imagename=file_name+'0', imsize=[288, 288], cell=['0.14arcsec'], \
             phasecenter='TRACKFIELD', stokes='I', specmode='mfs', nchan=-1, \
-            perchanweightdensity=False, gridder='standard', chanchunks=-1, \
+            perchanweightdensity=False, gridder='standard',  \
             mosweight=False, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=False, restoringbeam='common', \
             pbcor=False, weighting='briggs', robust=0.5, npixels=0, niter=0, \
@@ -1763,7 +1763,7 @@ class Test_standard(test_tclean_base):
             intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
             imagename=file_name+'1', imsize=[288, 288], cell=['0.14arcsec'], \
             phasecenter='TRACKFIELD', stokes='I', specmode='mfs', nchan=-1, \
-            perchanweightdensity=False, gridder='standard', chanchunks=-1, \
+            perchanweightdensity=False, gridder='standard',  \
             mosweight=False, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=True, restoringbeam='common', \
             pbcor=True, weighting='briggs', robust=0.5, npixels=0, \
@@ -1996,7 +1996,7 @@ class Test_standard(test_tclean_base):
             imagename=file_name+'0', imsize=[288, 288], nterms=2, \
             cell=['0.14arcsec'], phasecenter='TRACKFIELD', stokes='I', \
             specmode='mfs', nchan=-1, perchanweightdensity=False, \
-            gridder='standard', chanchunks=-1, mosweight=False, \
+            gridder='standard',  mosweight=False, \
             usepointing=False, pblimit=0.2, deconvolver='mtmfs', \
             restoration=False, restoringbeam='common', pbcor=False, \
             weighting='briggs', robust=0.5, npixels=0, niter=0, \
@@ -2023,7 +2023,7 @@ class Test_standard(test_tclean_base):
             imagename=file_name+'1', imsize=[288, 288], nterms=2, \
             cell=['0.14arcsec'], phasecenter='TRACKFIELD', stokes='I', \
             specmode='mfs', nchan=-1, perchanweightdensity=False, \
-            gridder='standard', chanchunks=-1, mosweight=False, \
+            gridder='standard',  mosweight=False, \
             usepointing=False, pblimit=0.2, deconvolver='mtmfs', \
             restoration=True, restoringbeam='common', pbcor=True, \
             weighting='briggs', robust=0.5, npixels=0, niter=7000000, \
@@ -2347,7 +2347,7 @@ class Test_standard(test_tclean_base):
             imagename=file_name+'0', imsize=[90, 90], stokes='I', \
             cell=['0.85arcsec'], phasecenter='ICRS 22:58:05.9629 '
             '-027.58.21.257', specmode='mfs', nchan=-1, outframe='LSRK', \
-            perchanweightdensity=False, gridder='standard', chanchunks=-1, \
+            perchanweightdensity=False, gridder='standard',  \
             mosweight=False, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=False, restoringbeam='common', \
             pbcor=False, weighting='briggs', robust=0.5, npixels=0, niter=0, \
@@ -2371,7 +2371,7 @@ class Test_standard(test_tclean_base):
             imagename=file_name+'1', imsize=[90, 90], stokes='I', \
             cell=['0.85arcsec'], phasecenter='ICRS 22:58:05.9629 '
             '-027.58.21.257', specmode='mfs', nchan=-1, outframe='LSRK', \
-            perchanweightdensity=False, gridder='standard', chanchunks=-1, \
+            perchanweightdensity=False, gridder='standard',  \
             mosweight=False, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=True, restoringbeam='common', \
             pbcor=True, weighting='briggs', robust=0.5, npixels=0, \
@@ -2608,7 +2608,7 @@ class Test_standard(test_tclean_base):
             intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
             imagename=file_name+'0', imsize=[288, 288], cell=['0.14arcsec'], \
             phasecenter='TRACKFIELD', stokes='I', specmode='mfs', nchan=-1, \
-            perchanweightdensity=False, gridder='standard', chanchunks=-1, \
+            perchanweightdensity=False, gridder='standard',  \
             mosweight=False, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=False, restoringbeam='common', \
             pbcor=False, weighting='briggs', robust=0.5, npixels=0, niter=0, \
@@ -2634,7 +2634,7 @@ class Test_standard(test_tclean_base):
             intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
             imagename=file_name+'1', imsize=[288, 288], cell=['0.14arcsec'], \
             phasecenter='TRACKFIELD', stokes='I', specmode='mfs', nchan=-1, \
-            perchanweightdensity=False, gridder='standard', chanchunks=-1, \
+            perchanweightdensity=False, gridder='standard',  \
             mosweight=False, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=True, restoringbeam='common', \
             pbcor=True, weighting='briggs', robust=0.5, npixels=0, \
@@ -2869,7 +2869,7 @@ class Test_mosaic(test_tclean_base):
             phasecenter='ICRS 00:45:54.3836 -073.15.29.413', stokes='I', \
             specmode='cube', nchan=508, start='220.2526743594GHz', \
             width='0.2441741MHz', outframe='LSRK', \
-            perchanweightdensity=False, gridder='mosaic', chanchunks=-1, \
+            perchanweightdensity=False, gridder='mosaic',  \
             mosweight=True, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=False, restoringbeam='common', \
             pbcor=False, weighting='briggs', robust=0.5, npixels=0, niter=0, \
@@ -2896,7 +2896,7 @@ class Test_mosaic(test_tclean_base):
                 ' -073.15.29.413', stokes='I', specmode='cube', nchan=508, \
                 start='220.2526743594GHz', width='0.2441741MHz', \
                 outframe='LSRK', perchanweightdensity=False, \
-                gridder='mosaic', chanchunks=-1, mosweight=True, \
+                gridder='mosaic',  mosweight=True, \
                 usepointing=False, pblimit=0.2, deconvolver='hogbom', \
                 restoration=True, pbcor=True, weighting='briggs', robust=0.5,\
                 npixels=0, niter=20000, threshold='0.354Jy', nsigma=0.0, \
@@ -2920,7 +2920,7 @@ class Test_mosaic(test_tclean_base):
                 ' -073.15.29.413', stokes='I', specmode='cube', nchan=508, \
                 start='220.2526743594GHz', width='0.2441741MHz', \
                 outframe='LSRK', perchanweightdensity=False, \
-                gridder='mosaic', chanchunks=-1, mosweight=True, \
+                gridder='mosaic',  mosweight=True, \
                 usepointing=False, pblimit=0.2, deconvolver='hogbom', \
                 restoration=True, restoringbeam='common', pbcor=True, \
                 weighting='briggs', robust=0.5, npixels=0, niter=0, \
@@ -2941,7 +2941,7 @@ class Test_mosaic(test_tclean_base):
                 ' -073.15.29.413', stokes='I', specmode='cube', nchan=508, \
                 start='220.2526743594GHz', width='0.2441741MHz', \
                 outframe='LSRK', perchanweightdensity=False, \
-                gridder='mosaic', chanchunks=-1, mosweight=True, \
+                gridder='mosaic',  mosweight=True, \
                 usepointing=False, pblimit=0.2, deconvolver='hogbom', \
                 restoration=True, pbcor=True, weighting='briggs', robust=0.5,\
                 npixels=0, niter=20000, threshold='0.354Jy', nsigma=0.0, \
@@ -3239,7 +3239,7 @@ class Test_mosaic(test_tclean_base):
             imagename=file_name+'0', imsize=[126, 126], cell=['2arcsec'], \
             phasecenter='ICRS 13:56:07.2100 +005.15.17.200', stokes='I', \
             specmode='mfs', nchan=-1, outframe='LSRK', \
-            perchanweightdensity=False, gridder='mosaic', chanchunks=-1, \
+            perchanweightdensity=False, gridder='mosaic',  \
             mosweight=True, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=False, restoringbeam='common',\
             pbcor=False, weighting='briggs', robust=0.5, npixels=0, niter=0, \
@@ -3266,7 +3266,7 @@ class Test_mosaic(test_tclean_base):
             imagename=file_name+'1', imsize=[126, 126], cell=['2arcsec'], \
             phasecenter='ICRS 13:56:07.2100 +005.15.17.200', stokes='I', \
             specmode='mfs', nchan=-1, outframe='LSRK', \
-            perchanweightdensity=False, gridder='mosaic', chanchunks=-1, \
+            perchanweightdensity=False, gridder='mosaic',  \
             mosweight=True, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=True, restoringbeam='common', \
             pbcor=True, weighting='briggs', robust=0.5, npixels=0, \
@@ -3554,7 +3554,7 @@ class Test_mosaic(test_tclean_base):
             cell=['2arcsec'], phasecenter='ICRS 13:56:07.2100 '
             '+005.15.17.200', stokes='I', specmode='mfs', nchan=-1, \
             outframe='LSRK', perchanweightdensity=False, gridder='mosaic', \
-            chanchunks=-1, mosweight=True, usepointing=False, pblimit=0.2, \
+             mosweight=True, usepointing=False, pblimit=0.2, \
             deconvolver='mtmfs', restoration=False, restoringbeam='common', \
             pbcor=False, weighting='briggs', robust=0.5, npixels=0, niter=0, \
             threshold='0.0mJy', nsigma=0.0, interactive=0, usemask='auto'
@@ -3580,7 +3580,7 @@ class Test_mosaic(test_tclean_base):
             cell=['2arcsec'], phasecenter='ICRS 13:56:07.2100 '
             '+005.15.17.200', stokes='I', specmode='mfs', nchan=-1, \
             outframe='LSRK', perchanweightdensity=False, gridder='mosaic', \
-            chanchunks=-1, mosweight=True, usepointing=False, pblimit=0.2, \
+             mosweight=True, usepointing=False, pblimit=0.2, \
             deconvolver='mtmfs', restoration=True, restoringbeam='common', \
             pbcor=True, weighting='briggs', robust=0.5, npixels=0, \
             niter=30000, threshold='0.00723Jy', nsigma=0.0, interactive=0, \
@@ -3986,7 +3986,7 @@ class Test_mosaic(test_tclean_base):
             datacolumn='corrected', imagename=file_name+'0', \
             imsize=[480, 420], cell=['0.14arcsec'], phasecenter='TRACKFIELD',\
             stokes='I', specmode='cubesource', nchan=948, start=5, width=1, \
-            perchanweightdensity=False, gridder='mosaic', chanchunks=-1, \
+            perchanweightdensity=False, gridder='mosaic',  \
             mosweight=True, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=False, restoringbeam='common', \
             pbcor=False, weighting='briggs', robust=0.5, npixels=0, niter=0, \
@@ -4010,7 +4010,7 @@ class Test_mosaic(test_tclean_base):
             datacolumn='corrected', imagename=file_name+'1', \
             imsize=[480, 420], cell=['0.14arcsec'], phasecenter='TRACKFIELD',\
             stokes='I', specmode='cubesource', nchan=948, start=5, width=1, \
-            perchanweightdensity=False, gridder='mosaic', chanchunks=-1, \
+            perchanweightdensity=False, gridder='mosaic',  \
             mosweight=True, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=True, restoringbeam='common', \
             pbcor=True, weighting='briggs', robust=0.5, npixels=0, \
@@ -4308,7 +4308,7 @@ class Test_mosaic(test_tclean_base):
             intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
             imagename=file_name+'0', imsize=[480, 420], cell=['0.14arcsec'], \
             phasecenter='TRACKFIELD', stokes='I', specmode='mfs', nchan=-1, \
-            perchanweightdensity=False, gridder='mosaic', chanchunks=-1, \
+            perchanweightdensity=False, gridder='mosaic',  \
             mosweight=True, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=False, restoringbeam='common', \
             pbcor=False, weighting='briggs', robust=0.5, npixels=0, niter=0, \
@@ -4334,7 +4334,7 @@ class Test_mosaic(test_tclean_base):
             intent='OBSERVE_TARGET#ON_SOURCE', datacolumn='data', \
             imagename=file_name+'1', imsize=[480, 420], cell=['0.14arcsec'], \
             phasecenter='TRACKFIELD', specmode='mfs', nchan=-1, \
-            perchanweightdensity=False, gridder='mosaic', chanchunks=-1, \
+            perchanweightdensity=False, gridder='mosaic',  \
             mosweight=True, usepointing=False, pblimit=0.2, \
             deconvolver='hogbom', restoration=True, restoringbeam='common', \
             pbcor=True, weighting='briggs', robust=0.5, npixels=0, \
@@ -4621,7 +4621,7 @@ class Test_mosaic(test_tclean_base):
             imagename=file_name+'0', imsize=[480, 420], nterms=2, \
             cell=['0.14arcsec'], phasecenter='TRACKFIELD', stokes='I', \
             specmode='mfs', nchan=-1, perchanweightdensity=False, \
-            gridder='mosaic', chanchunks=-1, mosweight=True, \
+            gridder='mosaic',  mosweight=True, \
             usepointing=False, pblimit=0.2, deconvolver='mtmfs', \
             restoration=False, restoringbeam='common', pbcor=False, \
             weighting='briggs', robust=0.5, npixels=0, niter=0, \
@@ -4648,7 +4648,7 @@ class Test_mosaic(test_tclean_base):
             imagename=file_name+'1', imsize=[480, 420], nterms=2, \
             cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', \
             nchan=-1, perchanweightdensity=False, gridder='mosaic', \
-            chanchunks=-1, mosweight=True, usepointing=False, pblimit=0.2, \
+            mosweight=True, usepointing=False, pblimit=0.2, \
             deconvolver='mtmfs', restoration=True, restoringbeam='common', \
             pbcor=True, weighting='briggs', robust=0.5, npixels=0, \
             niter=7000000, threshold='0.0316Jy', nsigma=0.0, interactive=0, \
