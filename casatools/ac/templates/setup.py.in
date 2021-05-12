@@ -2172,7 +2172,7 @@ class create_makefile(Command):
         swig = self.swig
         flags = sep.join(['-python'] + get_swig_flags())
         xml_casa = 'scripts' + os.sep + 'xml-casa'
-        xml_tool_dir = os.sep.join(["xml", "tools"])
+        xml_tool_dir = "xml"
         wrap_cpp_create = (
             wrap_cpp_name + ': {base}.i ' + xml_tool_dir + os.sep + '{toolname}.xml '
             + xml_casa + '\n\t' + swig + ' ' + flags + ' -o $@ $<'
