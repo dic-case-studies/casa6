@@ -204,7 +204,7 @@ class testref_base(unittest.TestCase):
 
           if( pstr.count("(Fail") > 0 or pstr.count("( Fail") > 0):
                self.fail("\n"+pstr)
-               
+
 ##############################################
 ##############################################
 
@@ -313,8 +313,7 @@ class test_onefield(testref_base):
           self.assertTrue(self.th.check_beam_compare(self.img+'3.image', self.img+'4.image'))
      
           self.checkfinal(pstr = report+report2+report3+report4+report5+report6+report7)
-
-
+          
      def test_onefield_pcwdT_and_pcwdF(self):
      
           self.prepData('refim_twochan.ms')
@@ -334,10 +333,10 @@ class test_onefield(testref_base):
           abs_dif = np.sum(np.abs(pcwdF_img-pcwdT_img))
           _, report1 = self.th.check_val_less_than(abs_dif, 3, valname='abs_dif',testname ="test_onefield_pcwdT_and_pcwdF")
 
-          self.checkfinal(report1) 
-
-
-
+          self.checkfinal(report1)   
+     
+          
+        
 
      def test_onefield_twoMS(self):
           """ [onefield] Test_Onefield_twoMS : One field, two input MSs, also
@@ -2845,7 +2844,6 @@ class test_wproject(testref_base):
 
 ##Task level tests : awproject and mosaics
 class test_widefield(testref_base):
-     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_widefield_aproj_mfs(self):
           """ [widefield] Test_Widefield_aproj : MFS with narrowband AWProjection (wbawp=F, 1spw)  stokes I """
           # casalog.post("EMPTY TEST")
@@ -2856,7 +2854,7 @@ class test_widefield(testref_base):
                        niter=30,gridder='awproject',cfcache='',wbawp=False,conjbeams=True,psterm=False,computepastep=360.0,
                        rotatepastep=360.0,deconvolver='hogbom',savemodel='modelcolumn',parallel=self.parallel)
          ## ret = tclean(vis=self.msfile,spw='2',field='*',imagename=self.img,imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",niter=30,gridder='awproject',wbawp=False,conjbeams=True,psterm=False,computepastep=360.0,rotatepastep=360.0,deconvolver='hogbom')
-          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.96,[256,256,0,0]),(self.img+'.weight',0.493,[256,256,0,0]) ] )
+          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.96,[256,256,0,0]),(self.img+'.pb',0.96,[256,256,0,0]),(self.img+'.weight',0.496,[256,256,0,0]) ] )
           #
           # Changed to the following for 5.5.0 release of AWP.  Will revisit and replace the test MS later.
           #
@@ -2882,7 +2880,6 @@ class test_widefield(testref_base):
 
      ## Test normtype too somewhere..
 
-     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_widefield_wbaproj_mfs(self):
           """ [widefield] Test_Widefield_wbaproj_mfs : MFS with wideband AWProjection (wbawp=T, allspw) and nt=1 stokes I  """
 
@@ -3424,7 +3421,6 @@ class test_startmodel(testref_base):
           self.checkfinal(report)
 
 
-     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_csys_startmodel_restart_cube(self):
           """ [startmodel] test_csys_startmodel_restart_cube : Check that csys differences w.r.to latpoles for parallel vs serial runs are appropriately squashed. 
 
@@ -4137,11 +4133,19 @@ class test_mosaic_mtmfs(testref_base):
           self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
           
 
+     def test_mtmfs_mosaic_mwFalse_briggs_twofield(self):  ## Added in CAS-13438 to catch failing case (pb os zero). 
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=5,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel,mosweight=False,weighting='briggs')
+          report1=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.9794,[512,596,0,0]),(self.img+'.pb.tt0', 0.9817,[512,596,0,0]),(self.img+'.alpha', -0.797,[512,596,0,0])])
+          
 ###########################################################
 ###########################################################
 ###########################################################
 class test_mosaic_cube(testref_base):
-     @unittest.skip('Skip test.')
+     
+     @unittest.skip('Skip test.') #Skip until CAS-13420 is resolved
      def test_mosaic_briggsbwtaper(self):
           self.prepData('refim_alma_mosaic.ms')
           
