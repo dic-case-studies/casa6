@@ -150,7 +150,7 @@ def predictcomp(objname=None, standard=None, epoch=None,
     else:
         casalog.post('Error creating a local im instance.', 'SEVERE')
         return False
-    #print "FREQS=",freqs
+    # casalog.post("FREQS="+freqs)
      # output CL file name is fixed : prefix+"spw0_"+minfreq+mepoch.cl
     minfreqGHz = _qa.convert(_qa.quantity(minfreq), 'GHz')['value']
     decimalfreq = minfreqGHz - int(minfreqGHz)
@@ -175,7 +175,7 @@ def predictcomp(objname=None, standard=None, epoch=None,
         clist = predictSolarObjectCompList(objname, mepoch, freqs.tolist(), prefix)
     else:
         clist = myim.predictcomp(objname, standard, mepoch, freqs.tolist(), prefix)
-    #print "created componentlist =",clist
+    # casalog.post("created componentlist =" +clist)
     if os.path.isdir(clist):
         # The spw0 is useless here, but it is added by FluxStandard for the sake of setjy.
         casalog.post('The component list was saved to ' + clist)

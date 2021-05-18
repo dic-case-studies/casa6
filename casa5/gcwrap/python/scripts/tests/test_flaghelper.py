@@ -51,7 +51,7 @@ def create_input(str_text, filename):
     return
 
 # Path for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
+datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/flagdata/"
 
 # Base class which defines setUp functions
 # for importing different data sets
@@ -65,7 +65,7 @@ class test_base(unittest.TestCase):
             print "The MS is already around, just unflag"
         else:
             print "Moving data..."
-            os.system('cp -r '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
 
     def setUp_4ants(self):
         '''EVLA MS, 4 ants, scan=30,31 spw=0~15, 64 chans, RR,RL,LR,LL'''
@@ -75,22 +75,21 @@ class test_base(unittest.TestCase):
             print "The MS is already around, just unflag"
         else:
             print "Moving data..."
-            os.system('cp -r '+datapath + self.vis +' '+ self.vis)
+            os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
 
     def setUp_onlineFlags(self):
         '''Large file with online flags'''
         self.inpfile = "BigOnlineFlags.txt"
 
         if not os.path.exists(self.inpfile):
-            os.system('cp '+datapath + self.inpfile +' '+ self.inpfile)
+            os.system('cp -RH '+datapath + self.inpfile +' '+ self.inpfile)
             
     def setUp_mockasdm(self):
         '''Mock ASDM containing only XML files'''
-        datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/importasdm/"
         self.inpfile = 'uid___MockASDM'
 
         if not os.path.exists(self.inpfile):
-            os.system('cp -RL ' +datapath + self.inpfile +' '+ self.inpfile)
+            os.system('cp -RH ' +datapath + self.inpfile +' '+ self.inpfile)
             
     def tearDown_all(self):
         '''Remove used files'''

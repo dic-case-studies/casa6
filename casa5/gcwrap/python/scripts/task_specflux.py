@@ -31,17 +31,29 @@
 #
 
 ###########################################################################
-from taskinit import *
 import os.path
 import numpy
+from casatasks.private.casa_transition import *
+if is_CASA6:
+    from casatools import image, regionmanager, quanta
+    from casatasks import casalog
+    from .ialib import write_image_history, get_created_images
+else:
+    from taskinit import *
+    from taskinit import iatool as image
+    from ialib import write_image_history, get_created_images
+    image = iatool
+    regionmanager = rgtool
+    quanta = qatool
 
 def specflux(
     imagename, region, box, chans, stokes, mask, stretch,
     function, unit, major, minor, logfile, overwrite
 ):
     casalog.origin('specflux')
-    myia = iatool()
-    myrg = rgtool()
+    myia = image()
+    myrg = regionmanager()
+    _qa = quanta()
     try:
         if logfile and not overwrite and os.path.exists(logfile):
             raise Exception(logfile + " exists and overwrite is False")
@@ -64,8 +76,8 @@ def specflux(
             _no_unit_no_beam_message()
         try:
             axis = myia.coordsys().axiscoordinatetypes().index("Spectral")
-        except Exception, instance:
-            raise Exception("Image does not have a spectral coordinate, cannot proceed")
+        except Exception:
+            raise RuntimeError("Image does not have a spectral coordinate, cannot proceed")
         if myia.shape()[axis] == 1:
             raise Exception("This application only supports multi-channel images")
         csys = myia.coordsys()
@@ -94,7 +106,7 @@ def specflux(
         header = "# " + imagename + ", " + wreg + "\n"
         beamrec = myia.restoringbeam()
         if beamrec:
-            if beamrec.has_key("major"):
+            if 'major' in beamrec:
                 beamsize = myia.beamarea()
                 header += "# beam size: " + str(beamsize['arcsec2'])
                 header += " arcsec2, " + str(beamsize["pixels"]) + " pixels\n"
@@ -112,7 +124,8 @@ def specflux(
         fd = rec['values']
         vals = fd
         flux = numpy.sum(fd*increments)
-        header += "# Total flux: " + str(flux) + " " + rec['yUnit'] + "." + xunit + "\n"
+        # formatting commands are necessarily different between CASA 5 and 6
+        header += "# Total flux: " + '{:.12g}'.format(flux) + " " + rec['yUnit'] + "." + xunit + "\n"
         # now compute the requested function
         real_func = ""
         agg_title = "Flux_density"
@@ -135,12 +148,12 @@ def specflux(
             yUnit = zz['yUnit']
         need_freq = True
         need_vel = True
-        myq = qa.quantity("1" + xunit)
-        if qa.convert(myq, "km/s")['unit'] == "km/s":
+        myq = _qa.quantity("1" + xunit)
+        if _qa.convert(myq, "km/s")['unit'] == "km/s":
             need_vel = False
             vels = rec['coords']
             vel_unit = xunit
-        elif qa.convert(myq, "MHz")['unit'] == "MHz":
+        elif _qa.convert(myq, "MHz")['unit'] == "MHz":
             need_freq = False
             freqs = rec['coords']
             freq_unit = xunit
@@ -181,18 +194,15 @@ def specflux(
         if (logfile):
             with open(logfile, "w") as myfile:
                 myfile.write(header)
-        return True
-    except Exception, instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        raise
+        # tasks no longer return bool
     finally:
-        if (myia):
-            myia.done()
-            myrg.done()
+        myia.done()
+        myrg.done()
+        _qa.done()
 
 def _no_unit_no_beam_message():
     # CAS-10791
-    raise Exception(
+    raise RuntimeError(
         "This application is required to do a flux density calculation but cannot "
         + "because the image has no beam and/or appropriate brightness unit. Please "
         + "define a beam using the relevant task parameter inputs. To add a beam "

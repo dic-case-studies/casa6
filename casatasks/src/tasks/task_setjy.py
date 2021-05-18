@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 from glob import glob
 import os
 import re
@@ -182,13 +181,13 @@ def setjy_core(vis=None, field=None, spw=None,
                 for d in ssmoddirs:
                     lsmodims(d,modpat='*Tb*.dat', header='Tb models of solar system objects available for %s' % standard) 
                 for d in sstpmdirs:
-                    lsmodims(d,modpat='*fd_time.dat', header='Time variable models of asteroids available for %s [only applicable for the observation date 2015.01.01 0UT and beyond]' % standard) 
+                    lsmodims(d,modpat='*fd_time.dat', header='Time variable models of asteroids available for %s [only applicable for the observation date 2014.01.01 0UT and beyond]' % standard) 
             elif standard=='Butler-JPL-Horizons 2010':
                 availmodellist=['Venus', 'Mars', 'Jupiter', 'Uranus', 'Neptune', 'Pluto',
                                 'Io', 'Europa', 'Ganymede', 'Callisto', 'Titan','Triton',
                                 'Ceres', 'Pallas', 'Vesta', 'Juno', 'Victoria', 'Davida']
-                print("Solar system objects recognized by %s:" % standard)
-                print(availmodellist) 
+                casalog.post("Solar system objects recognized by %s:" % standard)
+                casalog.posta(vailmodellist)
             else:
                 lsmodims('.', modpat='*.im* *.mod*')
                 calmoddirs = findCalModels()
@@ -429,12 +428,12 @@ def lsmodims(path, modpat='*', header='Candidate modimages'):
     """
     if os.path.isdir(path):
         if better_glob(os.path.join(path,modpat)):
-            print("\n%s (%s) in %s:" % (header, modpat, path))
+            casalog.post("\n%s (%s) in %s:" % (header, modpat, path))
             sys.stdout.flush()
             os.system('cd ' + path + ';ls -d ' + modpat)
         else:
-            print("\nNo %s matching '%s' found in %s" % (header.lower(),
-                                                   modpat, path))
+            casalog.post("\nNo %s matching '%s' found in %s" % (header.lower(),
+                                                                modpat, path))
 
 
 def findCalModels(target='CalModels',
@@ -532,7 +531,7 @@ def nselrows(vis, field='', spw='', obs='', timerange='', scan='', intent='', us
     # whether the main table has any rows matching the selection.
 #    try:
 #        selindices = myms.msseltoindex(**msselargs)
-#        print("msselargs=",msselargs," selindices=",selindices)
+#        casalog.post("msselargs=",msselargs," selindices=",selindices)
 #    except Exception, instance:
 #        casalog.post('nselrowscore exception: %s' % instance,'SEVERE')
 #        raise instance
@@ -557,7 +556,7 @@ def nselrows(vis, field='', spw='', obs='', timerange='', scan='', intent='', us
 #    if intent:
 #        query.append("STATE_ID in [select from ::STATE where OBS_MODE==pattern(\""+\
 #                  intent+"\") giving [ROWID()]]")
-#    print("query=",query)
+#    casalog.post("query=",query)
 #    mytb = tbtool()
 #    mytb.open(vis)
     myms = ms()

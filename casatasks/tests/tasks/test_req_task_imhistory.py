@@ -46,16 +46,12 @@ import unittest
 import shutil
 
 if CASA6:
-    casaimagepath = casatools.ctsys.resolve('image/ngc5921.clean.image')
-    fitspath = casatools.ctsys.resolve('fits/1904-66_AIR.fits')
+    casaimagepath = casatools.ctsys.resolve('unittest/imhistory/ngc5921.clean.image')
+    fitspath = casatools.ctsys.resolve('unittest/imhistory/1904-66_AIR.fits')
     #miriadpath = casatools.ctsys.resolve('visibilities/other/compact.vis')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        casaimagepath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image'
-        fitspath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/fits/1904-66_AIR.fits'
-    else:
-        casaimagepath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image'
-        fitspath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/fits/1904-66_AIR.fits'
+    casaimagepath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imhistory/ngc5921.clean.image'
+    fitspath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imhistory/1904-66_AIR.fits'
         
 def change_perms(path):
     os.chmod(path, 0o777)

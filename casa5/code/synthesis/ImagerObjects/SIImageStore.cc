@@ -41,7 +41,7 @@
 #include <casa/OS/DirectoryIterator.h>
 #include <casa/OS/File.h>
 #include <casa/OS/Path.h>
-
+#include <lattices/Lattices/LatticeLocker.h>
 #include <casa/OS/HostInfo.h>
 #include <components/ComponentModels/GaussianDeconvolver.h>
 #include <images/Images/TempImage.h>
@@ -105,8 +105,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////
   
-  SIImageStore::SIImageStore() 
+  SIImageStore::SIImageStore()
   {
+      
     itsPsf.reset( );
     itsModel.reset( );
     itsResidual.reset( );
@@ -116,6 +117,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsGridWt.reset( );
     itsPB.reset( );
     itsImagePBcor.reset();
+    itsTempWorkIm.reset();
 
     itsSumWt.reset( );
     itsOverWrite=False;
@@ -135,6 +137,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsMiscInfo=Record();
     init();
     
+    
     //    validate();
 
   }
@@ -151,6 +154,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   // TODO : Add parameter to indicate weight image shape. 
   {
     LogIO os( LogOrigin("SIImageStore","Open new Images",WHERE) );
+      
 
     itsPsf.reset( );
     itsModel.reset( );
@@ -161,6 +165,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsGridWt.reset( );
     itsPB.reset( );
     itsImagePBcor.reset( );
+    itsTempWorkIm.reset();
 
     itsSumWt.reset( );
     itsOverWrite=False; // Hard Coding this. See CAS-6937. overwrite;
@@ -186,9 +191,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
   // Used from SynthesisNormalizer::makeImageStore()
-  SIImageStore::SIImageStore(const String &imagename, const Bool ignorefacets)
+  SIImageStore::SIImageStore(const String &imagename, const Bool ignorefacets, const Bool ignoresumwt)
   {
     LogIO os( LogOrigin("SIImageStore","Open existing Images",WHERE) );
+      
 
     itsPsf.reset( );
     itsModel.reset( );
@@ -199,6 +205,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsGridWt.reset( );
     itsPB.reset( );
     itsImagePBcor.reset( );
+    itsTempWorkIm.reset();
     itsMiscInfo=Record();
 
     itsSumWt.reset( );
@@ -210,6 +217,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsPolId = 0;
     
     itsOverWrite=False;
+    //need to to this init now so that imageExts is initialized
+    init();
 
     itsImageName = imagename;
 
@@ -277,9 +286,26 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  }
 	else
 	  {
-	    throw( AipsError( "SumWt information does not exist. Please create either a PSF or Residual" ) );
+	    if(!ignoresumwt)
+	      {throw( AipsError( "SumWt information does not exist. Please create either a PSF or Residual" ) );}
+	    else
+	      {
+		os << "SumWt does not exist. Proceeding only with PSF" << LogIO::POST;
+		std::shared_ptr<ImageInterface<Float> > imptr;
+		//imptr.reset( new PagedImage<Float> (itsImageName+String(".sumwt")) );
+		if( doesImageExist(itsImageName+String(".residual") ) )
+		  { buildImage( imptr, (itsImageName+String(".residual")) ); }
+		else
+		  { buildImage( imptr, (itsImageName+String(".psf")) ); }
+		
+		itsNFacets=1;
+		itsFacetId=0;
+		itsUseWeight=False;
+		itsPBScaleFactor=1.0;
+		itsCoordSys = imptr->coordinates();
+		itsMiscInfo=imptr->miscInfo();
+	      }
 	  }
-	
       }// if psf or residual exist...
 
     if( ignorefacets==True ) itsNFacets= 1;
@@ -302,6 +328,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			     const std::shared_ptr<ImageInterface<Float> > &gridwtim,
 			     const std::shared_ptr<ImageInterface<Float> > &pbim,
 			     const std::shared_ptr<ImageInterface<Float> > &restoredpbcorim,
+                             const std::shared_ptr<ImageInterface<Float> > & tempworkimage,
 			     const CoordinateSystem &csys,
 			     const IPosition &imshape,
 			     const String &imagename,
@@ -312,10 +339,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			     const Int pol, const Int npolchunks,
 			     const Bool useweightimage)
   {
+      
 
     itsPsf=psfim;
     itsModel=modelim;
     itsResidual=residim;
+    /* if(residim){
+     LatticeLocker lock1(*itsResidual, FileLocker::Read);
+     cerr << "RESIDMAX " << max(itsResidual->get()) <<  "   " << max(residim->get()) << endl;
+     }*/
     itsWeight=weightim;
     itsImage=restoredim;
     itsMask=maskim;
@@ -325,6 +357,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsGridWt=gridwtim;
     itsPB=pbim;
     itsImagePBcor=restoredpbcorim;
+    itsTempWorkIm=tempworkimage;
 
     itsPBScaleFactor=1.0;// No need to set properly here as it will be computed in makePSF.
 
@@ -428,7 +461,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 							  const Int chan, const Int nchanchunks, 
 							  const Int pol, const Int npolchunks)
   {
-    return std::make_shared<SIImageStore>(itsModel, itsResidual, itsPsf, itsWeight, itsImage, itsMask, itsSumWt, itsGridWt, itsPB, itsImagePBcor, itsCoordSys, itsImageShape, itsImageName, itsObjectName, itsMiscInfo, facet, nfacets, chan, nchanchunks, pol, npolchunks, itsUseWeight);
+   
+    return std::make_shared<SIImageStore>(itsModel, itsResidual, itsPsf, itsWeight, itsImage, itsMask, itsSumWt, itsGridWt, itsPB, itsImagePBcor, itsTempWorkIm, itsCoordSys, itsImageShape, itsImageName, itsObjectName, itsMiscInfo, facet, nfacets, chan, nchanchunks, pol, npolchunks, itsUseWeight);
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -474,6 +508,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    if(dbg) cout << "Trying to overwrite and open new image named : " << imagenamefull << " ow:"<< overwrite << endl;
 	    try{
 	      buildImage(imPtr, useShape, itsParentCoordSys, imagenamefull) ;
+              LatticeLocker lock1(*imPtr, FileLocker::Write);
 	      // initialize to zeros...
 	      imPtr->set(0.0);
 	    }
@@ -564,7 +599,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  try{
 	    buildImage(imPtr, useShape, itsParentCoordSys, imagenamefull) ;
 	    // initialize to zeros...
+            {
+            LatticeLocker lock1(*imPtr, FileLocker::Write);
 	    imPtr->set(0.0);
+	    imPtr->flush();
+            imPtr->unlock();
+            }
 	  }
 	  catch (AipsError &x){
 	    throw( AipsError("Cannot make new image. : " + x.getMesg() ) );
@@ -614,9 +654,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     os  <<"Opening image, name: " << name << LogIO::DEBUG1;
 
     itsOpened++;
-    imptr.reset( new PagedImage<Float> (shape, csys, name) );
-    initMetaInfo(imptr, name);
-
+    //For some reason cannot open a new paged image with UserNoread directly
+    {
+      PagedImage<Float> godot(shape, csys, name);
+      godot.unlock();
+    }
+    TableLock::LockOption locktype=TableLock::AutoNoReadLocking;
+    /*if((name.contains(imageExts(PSF)) && !name.contains(imageExts(PSF)+".tt"))|| (name.contains(imageExts(RESIDUAL))&& !name.contains(imageExts(RESIDUAL)+".tt")) || (name.contains(imageExts(SUMWT)) && !name.contains(imageExts(SUMWT)+".tt"))){
+      locktype=TableLock::UserNoReadLocking;
+      }*/
+    imptr.reset( new PagedImage<Float> (name, locktype) );
+    {
+      LatticeLocker lock1(*imptr, FileLocker::Write);
+      initMetaInfo(imptr, name);
+      imptr->unlock();
+    }
     /*
     Int MEMFACTOR = 18;
     Double memoryMB=HostInfo::memoryTotal(True)/1024/(MEMFACTOR*itsOpened);
@@ -638,8 +690,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     os  <<"Opening image, name: " << name << LogIO::DEBUG1;
 
     itsOpened++;
-    //imptr.reset( new PagedImage<Float>( name ) );
+    if(Table::isReadable(name)){
+      TableLock::LockOption locktype=TableLock::AutoNoReadLocking;
+      /*if((name.contains(imageExts(PSF)) && !name.contains(imageExts(PSF)+".tt"))|| (name.contains(imageExts(RESIDUAL))&& !name.contains(imageExts(RESIDUAL)+".tt")) || (name.contains(imageExts(SUMWT)) && !name.contains(imageExts(SUMWT)+".tt"))){
+        locktype=TableLock::UserNoReadLocking;
+        }*/
+      Table table(name, locktype);
+      String type = table.tableInfo().type();
+      if (type != TableInfo::type(TableInfo::PAGEDIMAGE)) {
 
+        imptr.reset( new PagedImage<Float>( table ) );
+        imptr->unlock();
+        return;
+      }
+    }
         LatticeBase* latt =ImageOpener::openImage(name);
     if(!latt)
       {
@@ -691,6 +755,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
       // Check objectname, as one of the mandatory fields. What this is meant to check is -
       // has the metainfo been initialized? If not, grab info from associated PSF
+    LatticeLocker lock1(*imptr, FileLocker::Write);
       if (not itsObjectName.empty()) {
           ImageInfo info = imptr->imageInfo();
           info.setObjectName(itsObjectName);
@@ -703,6 +768,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
               imptr->setMiscInfo(srcImg->miscInfo());
           }
       }
+      imptr->unlock();
   }
 
 
@@ -765,8 +831,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     // Now create the sub image
     std::shared_ptr<ImageInterface<Float> >  referenceImage( new SubImage<Float>(image, imslice, True) );
-    referenceImage->setMiscInfo(image.miscInfo());
-    referenceImage->setUnits(image.units());
+    {
+      LatticeLocker lock1(*referenceImage, FileLocker::Write);
+      referenceImage->setMiscInfo(image.miscInfo());
+      referenceImage->setUnits(image.units());
+
+    }
 
     // cout << "Made Ref subimage of shape : " << referenceImage->shape() << endl;
 
@@ -818,6 +888,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   void SIImageStore::releaseImage( std::shared_ptr<ImageInterface<Float> > &im )
   {
+    //cerr << this << " releaseimage " << im.get() << endl;
     //LogIO os( LogOrigin("SIImageStore","releaseLocks",WHERE) );
     im->flush();
     //os << LogIO::WARN << "clear cache" << LogIO::POST;
@@ -825,9 +896,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //os << LogIO::WARN << "unlock" << LogIO::POST;
     im->unlock();
     //os << LogIO::WARN << "tempClose" << LogIO::POST;
-    im->tempClose();
+    //im->tempClose();
     //os << LogIO::WARN << "NULL" << LogIO::POST;
-    im = NULL;  // This was added to allow modification by modules independently
+    im.reset();  // This was added to allow modification by modules independently
   }
   
   void SIImageStore::releaseImage( std::shared_ptr<ImageInterface<Complex> > &im )
@@ -848,11 +919,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //right now this is estimated at 2MB for the 2 complex lattices;
     return Long(2000);
   }
-  void SIImageStore::setModelImage( Vector<String> modelnames)
+  void SIImageStore::setModelImage( const Vector<String> &modelnames)
   {
     LogIO os( LogOrigin("SIImageStore","setModelImage",WHERE) );
 
-    if( modelnames.nelements() > 1 ) 
+    if( modelnames.nelements() > 1 )
       {throw( AipsError("Multiple starting model images are currently not supported. Please merge them before supplying as input to startmodel"));
 	/// If needed, THIS is the place to add code to support lists of model images... perhaps regrid separately and add them up or some such thing.
       }
@@ -862,7 +933,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
 
-  void SIImageStore::setModelImageOne( String modelname , Int nterm)
+  void SIImageStore::setModelImageOne( const String &modelname , Int nterm)
   {
     LogIO os( LogOrigin("SIImageStore","setModelImageOne",WHERE) );
 
@@ -995,6 +1066,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     // if ptr is not null, assume it's OK. Perhaps add more checks.
 
+    //cerr << "ACCIM itsptr" << ptr.get() << " parent " << parentptr.get() << " label " << label << endl;
+    
     Bool sw=False;
     if( label.contains(imageExts(SUMWT)) ) sw=True;
     
@@ -1027,12 +1100,20 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     
 	  }
 	else
-	  {
+	  { //no facets of chanchunks
+	    if(!parentptr){
 	    ///coordsys for psf can be different ...shape should be the same.
-	    ptr = openImage(itsImageName+label , itsOverWrite, sw, 1, !(label.contains(imageExts(PSF)))); 
+	      ptr = openImage(itsImageName+label , itsOverWrite, sw, 1, !(label.contains(imageExts(PSF)))); }
+	    else{
+	      ptr=parentptr;
+	    }
 	    //cout << "Opening image : " << itsImageName+label << " of shape " << ptr->shape() << endl;
 	  }
       }
+
+    //cerr << "ACCIM2 ptr " << ptr.get() << " lock " << itsReadLock.get() << endl;
+    //itsReadLock.reset(new LatticeLocker(*ptr, FileLocker::Read));
+    
     //    DirectionCoordinate dcord = ptr->coordinates().directionCoordinate();
     //    cout << "Latpole from " << label << " : " << dcord.longLatPoles() << endl;
 
@@ -1042,6 +1123,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   std::shared_ptr<ImageInterface<Float> > SIImageStore::psf(uInt /*nterm*/)
   {
     accessImage( itsPsf, itsParentPsf, imageExts(PSF) );
+    
     return itsPsf;
   }
   std::shared_ptr<ImageInterface<Float> > SIImageStore::residual(uInt /*nterm*/)
@@ -1071,7 +1153,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   std::shared_ptr<ImageInterface<Float> > SIImageStore::model(uInt /*nterm*/)
   {
     accessImage( itsModel, itsParentModel, imageExts(MODEL) );
-
+    LatticeLocker lock1(*itsModel, FileLocker::Write);
     // Set up header info the first time. 
     itsModel->setUnits("Jy/pixel");
 
@@ -1080,7 +1162,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   std::shared_ptr<ImageInterface<Float> > SIImageStore::image(uInt /*nterm*/)
   {
     accessImage( itsImage, itsParentImage, imageExts(IMAGE) );
-
+    LatticeLocker lock1(*itsImage, FileLocker::Write);
     itsImage->setUnits(Unit("Jy/beam"));
     return itsImage;
   }
@@ -1104,14 +1186,25 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  Matrix<Double> pc(1,1);      pc = 1.0;
 	  LinearCoordinate zc(Vector<String>(1, "FIELD_ORDER"), Vector<String>(1, ""), Vector<Double>(1, 0.0), Vector<Double>(1,1.0), pc, Vector<Double>(1,0.0));
 	  newcoordsys.addCoordinate(zc);
+        }
 	  itsGridWt.reset(new PagedImage<Float>(newshape, newcoordsys, itsImageName+ imageExts(GRIDWT)));
-	}
+	  initMetaInfo(itsGridWt, itsImageName+ imageExts(GRIDWT));
 
       }
     }
     /// change the coordinate system here, to uv.
     return itsGridWt;
   }
+
+  std::shared_ptr<ImageInterface<Float> > SIImageStore::tempworkimage(uInt /*term*/){
+    if(itsTempWorkIm) return itsTempWorkIm;
+    itsTempWorkIm.reset(new PagedImage<Float>(itsImageShape, itsCoordSys, itsImageName+ ".work.temp"));
+    static_cast<PagedImage<Float>* > (itsTempWorkIm.get())->set(0.0);
+    itsTempWorkIm->flush();
+    static_cast<PagedImage<Float>* > (itsTempWorkIm.get())->table().markForDelete();
+    return itsTempWorkIm;
+  }
+  
   std::shared_ptr<ImageInterface<Float> > SIImageStore::pb(uInt /*nterm*/)
   {
     accessImage( itsPB, itsParentPB, imageExts(PB) );
@@ -1120,6 +1213,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   std::shared_ptr<ImageInterface<Float> > SIImageStore::imagepbcor(uInt /*nterm*/)
   {
     accessImage( itsImagePBcor, itsParentImagePBcor, imageExts(IMAGEPBCOR) );
+    LatticeLocker lock1(*itsImagePBcor, FileLocker::Write);
     itsImagePBcor->setUnits(Unit("Jy/beam"));
     return itsImagePBcor;
   }
@@ -1139,13 +1233,16 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       { itsCoordSys.setSpectralConversion("LSRK"); }
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
-    cimageShape(2)=whichStokes.nelements();
-      
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
+    cimageShape(2)=whichStokes.nelements();      
     //cout << "Making forward grid of shape : " << cimageShape << " for imshape : " << itsImageShape << endl;
     itsForwardGrid.reset( new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()) );
     //if(image())
-    if(hasRestored())
+    if(hasRestored()){
+      LatticeLocker lock1(*itsForwardGrid, FileLocker::Write);
       itsForwardGrid->setImageInfo((image())->imageInfo());
+
+    }
     return itsForwardGrid;
   }
 
@@ -1164,12 +1261,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       { itsCoordSys.setSpectralConversion("LSRK"); }
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
     cimageShape(2)=whichStokes.nelements();
     //cout << "Making backward grid of shape : " << cimageShape << " for imshape : " << itsImageShape << endl;
     itsBackwardGrid.reset( new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()) );
     //if(image())
-    if(hasRestored())
+    if(hasRestored()){
+      LatticeLocker lock1(*itsBackwardGrid, FileLocker::Write);
       itsBackwardGrid->setImageInfo((image())->imageInfo());
+    }
     return itsBackwardGrid;
     }
   Double SIImageStore::memoryBeforeLattice(){
@@ -1192,13 +1292,24 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   void SIImageStore::resetImages( Bool resetpsf, Bool resetresidual, Bool resetweight )
   {
-    if( resetpsf ) psf()->set(0.0);
+    if( resetpsf ){
+      LatticeLocker lock1(*(psf()), FileLocker::Write);
+      psf()->set(0.0);
+
+    }
     if( resetresidual ) {
       //      removeMask( residual() );
+      LatticeLocker lock1(*(residual()), FileLocker::Write);
       residual()->set(0.0);
     }
-    if( resetweight && itsWeight ) weight()->set(0.0);
-    if( resetweight ) sumwt()->set(0.0);
+    if( resetweight && itsWeight ){
+      LatticeLocker lock1(*(weight()), FileLocker::Write);
+      weight()->set(0.0);
+    }
+    if( resetweight ){
+      LatticeLocker lock1(*(sumwt()), FileLocker::Write);
+      sumwt()->set(0.0);
+    }
   }
 
   void SIImageStore::addImages( std::shared_ptr<SIImageStore> imagestoadd,
@@ -1336,6 +1447,8 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 	      }
 
 	  }
+	weight()->unlock();
+	pb()->unlock();
   }
 
   void  SIImageStore::makePBImage(const Float pblimit)
@@ -1393,10 +1506,12 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     //cout << "Calling makeMask for mask0 for " << outimage->name() << endl;
     try
       {
+        LatticeLocker lock1(*outimage, FileLocker::Write);
 	ImageRegion outreg = outimage->makeMask("mask0",False,True);
 	LCRegion& outmask=outreg.asMask();
 	outmask.copyData(lemask);
 	outimage->defineRegion("mask0",outreg, RegionHandler::Masks, True);
+        
 	outimage->setDefaultMask("mask0");
 	
 	outimage->unlock();
@@ -1419,7 +1534,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     try
       {
 	if( (inimage->getDefaultMask()).matches("mask0") ) // input mask exists.
-	  {
+	  {LatticeLocker lock1(*outimage, FileLocker::Write);
 	    removeMask(outimage);
 	    
 	    // // clear output image mask
@@ -1450,6 +1565,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 	//   {im->setDefaultMask(""); 
 	// 	im->removeRegion("mask0");}
 	///Remove the old mask as it is no longer valid
+        LatticeLocker lock1(*im, FileLocker::Write);
 	if (im-> getDefaultMask() != String(""))
 	  {
 	    String strung=im->getDefaultMask();
@@ -1515,6 +1631,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
   {
     LogIO os( LogOrigin("SIImageStore","dividePSFByWeight",WHERE) );
 
+    LatticeLocker lock1 (*(psf()), FileLocker::Write);
     normPSF();
 
     if( itsUseWeight )
@@ -1522,7 +1639,8 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 	
 	divideImageByWeightVal( *weight() ); 
     }
-
+    (psf())->unlock();
+    
   }
 
   void SIImageStore::normalizePrimaryBeam(const Float pblimit)
@@ -1552,7 +1670,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
   void SIImageStore::divideResidualByWeight(Float pblimit,String normtype)
   {
     LogIO os( LogOrigin("SIImageStore","divideResidualByWeight",WHERE) );
-    
+    LatticeLocker lock1 (*(residual()), FileLocker::Write);
 
     // Normalize by the sumwt, per plane. 
     Bool didNorm = divideImageByWeightVal( *residual() );
@@ -1652,7 +1770,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 
 	if( pblimit <0.0 && (residual()->getDefaultMask()).matches("mask0") ) removeMask( residual() );
 
-
+        residual()->unlock();
 
 
   }
@@ -1890,15 +2008,15 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
       }
   }
   
-  GaussianBeam SIImageStore::getPSFGaussian()
+  GaussianBeam SIImageStore::getPSFGaussian(Float psfcutoff)
   {
-
     GaussianBeam beam;
     try
       {
 	if( psf()->ndim() > 0 )
 	  {
-	    StokesImageUtil::FitGaussianPSF( *(psf()), beam );
+          LatticeLocker lock2 (*(psf()), FileLocker::Read);
+          StokesImageUtil::FitGaussianPSF( *(psf()), beam, psfcutoff);
 	  }
       }
     catch(AipsError &x)
@@ -1911,23 +2029,32 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     return beam;
   }
 
-  void SIImageStore::makeImageBeamSet()
+  void SIImageStore::makeImageBeamSet(Float psfcutoff, const Bool forcefit)
   {
+    clock_t begin = clock();
+      
     LogIO os( LogOrigin("SIImageStore","getPSFGaussian",WHERE) );
     // For all chans/pols, call getPSFGaussian() and put it into ImageBeamSet(chan,pol).
     AlwaysAssert( itsImageShape.nelements() == 4, AipsError );
-    Int nx = itsImageShape[0];
-    Int ny = itsImageShape[1];
-    Int npol = itsImageShape[2];
-    Int nchan = itsImageShape[3];
+    uInt nx = itsImageShape[0];
+    uInt ny = itsImageShape[1];
+    uInt npol = itsImageShape[2];
+    uInt nchan = itsImageShape[3];
+    ImageInfo ii = psf()->imageInfo();
+    ImageBeamSet iibeamset=ii.getBeamSet();
+    if(iibeamset.nchan()==nchan && iibeamset.nstokes()==npol && forcefit==False){
+      itsPSFBeams=iibeamset;
+      itsRestoredBeams=iibeamset;
+      return;
+    }
     itsPSFBeams.resize( nchan, npol );
     itsRestoredBeams.resize(nchan, npol);
     //    cout << "makeImBeamSet : imshape : " << itsImageShape << endl;
 
     String blankpsfs="";
-
-    for( Int chanid=0; chanid<nchan;chanid++) {
-      for( Int polid=0; polid<npol; polid++ ) {
+    for( uInt chanid=0; chanid<nchan;chanid++) {
+      for( uInt polid=0; polid<npol; polid++ ) {
+    LatticeLocker lock2 (*(psf()), FileLocker::Read);
 
 	IPosition substart(4,0,0,polid,chanid);
 	IPosition substop(4,nx-1,ny-1,polid,chanid);
@@ -1936,14 +2063,14 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 	GaussianBeam beam;
 
 	Bool tryfit=True;
-	LatticeExprNode le( max(subPsf) );
-	tryfit = le.getFloat()>0.0;
-
+        
+        LatticeExprNode le( max(subPsf) );
+        tryfit = le.getFloat()>0.0;
 	if(tryfit)
 	  {
 	    try
 	      {
-		StokesImageUtil::FitGaussianPSF( subPsf, beam );
+		StokesImageUtil::FitGaussianPSF( subPsf, beam,psfcutoff );
 		itsPSFBeams.setBeam( chanid, polid, beam );
 		itsRestoredBeams.setBeam(chanid, polid, beam);
 	      }
@@ -1981,8 +2108,8 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
       defaultbeam.setMajorMinor(majax,minax);
       defaultbeam.setPA(pa);
     }
-    for( Int chanid=0; chanid<nchan;chanid++) {
-      for( Int polid=0; polid<npol; polid++ ) {
+    for( uInt chanid=0; chanid<nchan;chanid++) {
+      for( uInt polid=0; polid<npol; polid++ ) {
 	if( (itsPSFBeams.getBeam(chanid, polid)).isNull() ) 
 	  { itsPSFBeams.setBeam( chanid, polid, defaultbeam );
 	    itsRestoredBeams.setBeam( chanid, polid, defaultbeam );
@@ -2011,19 +2138,49 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 
 
     /// For lack of a better place, store this inside the PSF image. To be read later and used to restore
-    ImageInfo ii = psf()->imageInfo();
+   
     ii.setBeams( itsPSFBeams );
-    psf()->setImageInfo(ii);
-    
+    {
+      LatticeLocker lock1(*(psf()), FileLocker::Write);
+      psf()->setImageInfo(ii);
+      psf()->unlock();
+    }
+    clock_t end = clock();
+    os << LogIO::NORMAL << "Time to fit Gaussian to PSF " << double(end - begin) / CLOCKS_PER_SEC << LogIO::POST;
   }// end of make beam set
 
 
+  ImageBeamSet SIImageStore::getChannelBeamSet(const Int channel){
 
-  ImageBeamSet SIImageStore::getBeamSet()
-  { 
+    return getChannelSliceBeamSet(channel, channel);
+  }
+
+
+  ImageBeamSet SIImageStore::getChannelSliceBeamSet(const Int begChan, const Int endChan){
+     ImageBeamSet bs=getBeamSet();
+    if(bs.shape()[0]==1)
+      return bs;
+    if(begChan > endChan || begChan <0)
+      throw(AipsError("Inconsistent slice of beam in channel requested"));
+    if(bs.shape()[0] < (endChan-1))
+      throw(AipsError("beam of channel "+String::toString(endChan)+" does not exist"));
+    IPosition blc(2, begChan, 0);
+    IPosition trc(2, endChan, bs.shape()[1]-1);
+    Matrix<GaussianBeam> sliceBeam=bs.getBeams()(blc, trc);
+    ImageBeamSet subBeamSet(sliceBeam);
+    return subBeamSet;
+
+  }
+  void SIImageStore::setBeamSet(const ImageBeamSet& bs){
+
+    itsPSFBeams=bs;
+  }
+  
+  ImageBeamSet SIImageStore::getBeamSet(Float psfcutoff)
+  {
     IPosition beamshp = itsPSFBeams.shape();
     AlwaysAssert( beamshp.nelements()==2 , AipsError );
-    if( beamshp[0]==0 || beamshp[1]==0 ) {makeImageBeamSet();}
+    if( beamshp[0]==0 || beamshp[1]==0 ) {makeImageBeamSet(psfcutoff);}
     return itsPSFBeams; 
   }
 
@@ -2083,9 +2240,8 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
   
   /////////////////////////////// Restore all planes.
 
-  void SIImageStore::restore(GaussianBeam& rbeam, String& usebeam, uInt term)
+  void SIImageStore::restore(GaussianBeam& rbeam, String& usebeam, uInt term, Float psfcutoff)
   {
-
     LogIO os( LogOrigin("SIImageStore","restore",WHERE) );
     //     << ". Optionally, PB-correct too." << LogIO::POST;
 
@@ -2120,7 +2276,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 	  {
 	    // Make new beams.
 	    os << LogIO::WARN << "Couldn't find pre-computed restoring beams. Re-fitting." << LogIO::POST;
-	    makeImageBeamSet();
+	    makeImageBeamSet(psfcutoff);
 	  }
       }
 
@@ -2160,16 +2316,20 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     /// (for CAS-8271 : make output restored image even if .model is zero... )
     Bool emptymodel = isModelEmpty();
     if(emptymodel) os << LogIO::WARN << "Restoring with an empty model image. Only residuals will be processed to form the output restored image." << LogIO::POST;
-    
+
+
+    LatticeLocker lock1(*(image(term)), FileLocker::Write);
+    LatticeLocker lock2(*(residual(term)), FileLocker::Write);
+    LatticeLocker lock3(*(model(term)), FileLocker::Read);
     //// Use beamset to restore
     for( Int chanid=0; chanid<nchan;chanid++) {
       for( Int polid=0; polid<npol; polid++ ) {
 	
 	IPosition substart(4,0,0,polid,chanid);
 	IPosition substop(4,nx-1,ny-1,polid,chanid);
-	Slicer imslice(substart, substop,Slicer::endIsLast);
+	Slicer imslice(substart, substop,Slicer::endIsLast);             
 	SubImage<Float> subRestored( *image(term) , imslice, True );
-	SubImage<Float> subModel( *model(term) , imslice, True );
+	SubImage<Float> subModel( *model(term) , imslice, False );
 	SubImage<Float> subResidual( *residual(term) , imslice, True );
 	
 	GaussianBeam beam = itsRestoredBeams.getBeam( chanid, polid );;
@@ -2499,6 +2659,9 @@ Float SIImageStore :: calcStd(Vector<Float> &vect, Vector<Bool> &flag, Float mea
 	os << LogIO::WARN << "Cannot pbcor without restored image and pb" << LogIO::POST;
 	return;
       }
+    LatticeLocker lock1(*(image(term)), FileLocker::Write);
+        LatticeLocker lock2(*(pb(term)), FileLocker::Write);
+        LatticeLocker lock3(*(imagepbcor(term)), FileLocker::Write);
 
 	for(Int pol=0; pol<itsImageShape[2]; pol++)
 	  {
@@ -2567,6 +2730,7 @@ Float SIImageStore :: calcStd(Vector<Float> &vect, Vector<Bool> &flag, Float mea
   {
     Record miscinfo = target.miscInfo();
     miscinfo.define("sumwt", sumwt);
+    LatticeLocker lock1(target, FileLocker::Write);
     target.setMiscInfo( miscinfo );
   }
   
@@ -2594,6 +2758,7 @@ Float SIImageStore :: calcStd(Vector<Float> &vect, Vector<Bool> &flag, Float mea
   {
     Record miscinfo = target.miscInfo();
     miscinfo.define("useweightimage", useweightimage);
+    LatticeLocker lock1(target, FileLocker::Write);
     target.setMiscInfo( miscinfo );
   }
   
@@ -2604,10 +2769,11 @@ Float SIImageStore :: calcStd(Vector<Float> &vect, Vector<Bool> &flag, Float mea
 
     Array<Float> lsumwt;
     sumwt()->get( lsumwt , False ); // For MT, this will always pick the zeroth sumwt, which it should.
-
+    LatticeLocker lock2(target, FileLocker::Write);
+    
     IPosition imshape = target.shape();
 
-    //cout << " SumWt  : " << lsumwt << " sumwtshape : " << lsumwt.shape() << " image shape : " << imshape << endl;
+    //cerr << " SumWt  : " << lsumwt << " sumwtshape : " << lsumwt.shape() << " image shape : " << imshape << endl;
 
     AlwaysAssert( lsumwt.shape()[2] == imshape[2] , AipsError ); // polplanes
     AlwaysAssert( lsumwt.shape()[3] == imshape[3] , AipsError ); // chanplanes
@@ -2665,6 +2831,7 @@ Float SIImageStore :: calcStd(Vector<Float> &vect, Vector<Bool> &flag, Float mea
 								  pol, itsImageShape[2], 
 								  (*psf(0)) );
 
+            LatticeLocker lock1(*(subim), FileLocker::Write);
 
 	    LatticeExprNode themax( max(*(subim0)) );
 	    Float maxim = themax.getFloat();
@@ -2730,35 +2897,36 @@ Float SIImageStore :: calcStd(Vector<Float> &vect, Vector<Bool> &flag, Float mea
 Float SIImageStore::getPeakResidual()
 {
     LogIO os( LogOrigin("SIImageStore","getPeakResidual",WHERE) );
-
+    LatticeLocker lock2 (*(residual()), FileLocker::Read);
     ArrayLattice<Bool> pixelmask(residual()->getMask());
     LatticeExpr<Float> resd(iif(pixelmask,abs(*residual()),0));
     //LatticeExprNode pres( max(abs( *residual() ) ));
-    LatticeExprNode pres( max(abs(resd) ));
+    LatticeExprNode pres( max(resd) );
     Float maxresidual = pres.getFloat();
-
-
+    
     return maxresidual;
   }
-
+  
 Float SIImageStore::getPeakResidualWithinMask()
   {
     LogIO os( LogOrigin("SIImageStore","getPeakResidualWithinMask",WHERE) );
-        Float minresmask, maxresmask, minres, maxres;
+    //Float minresmask, maxresmask, minres, maxres;
     //findMinMax( residual()->get(), mask()->get(), minres, maxres, minresmask, maxresmask );
 
     ArrayLattice<Bool> pixelmask(residual()->getMask());
-    findMinMaxLattice(*residual(), *mask() , pixelmask, maxres,maxresmask, minres, minresmask);
-    
-    //return maxresmask;
-    return max( abs(maxresmask), abs(minresmask) );
+    //findMinMaxLattice(*residual(), *mask() , pixelmask, maxres,maxresmask, minres, minresmask);
+    LatticeExpr<Float> resd(iif(((*mask()) > 0) && pixelmask ,abs((*residual())),0));
+    LatticeExprNode pres( max(resd) );
+    Float maxresidual = pres.getFloat();
+    //Float maxresidual=max( abs(maxresmask), abs(minresmask) );
+    return maxresidual;
   }
 
   // Calculate the total model flux
 Float SIImageStore::getModelFlux(uInt term)
   {
     //    LogIO os( LogOrigin("SIImageStore","getModelFlux",WHERE) );
-
+    LatticeLocker lock2 (*(model(term)), FileLocker::Read);
     LatticeExprNode mflux( sum( *model(term) ) );
     Float modelflux = mflux.getFloat();
     //    Float modelflux = sum( model(term)->get() );
@@ -2769,21 +2937,27 @@ Float SIImageStore::getModelFlux(uInt term)
   // Check for non-zero model (this is different from getting model flux, for derived SIIMMT)
 Bool SIImageStore::isModelEmpty()
   {
-    if( ! doesImageExist(itsImageName+imageExts(MODEL)) ) return True;
+    if( !itsModel && (! hasModel()) ) return True;
     else return  ( fabs( getModelFlux(0) ) < 1e-08 );
   }
 
+
+void SIImageStore::setPSFSidelobeLevel(const Float level){
+
+  itsPSFSideLobeLevel=level;
+}
   // Calculate the PSF sidelobe level...
   Float SIImageStore::getPSFSidelobeLevel()
   {
     LogIO os( LogOrigin("SIImageStore","getPSFSidelobeLevel",WHERE) );
-
+    //cerr << "*****PSF sidelobe "<< itsPSFSideLobeLevel << endl;
     /// Calculate only once, store and return for all subsequent calls.
     if( itsPSFSideLobeLevel == 0.0 )
       {
 
 	ImageBeamSet thebeams = getBeamSet();
-
+        LatticeLocker lock2 (*(psf()), FileLocker::Read);
+        
 	//------------------------------------------------------------
 	IPosition oneplaneshape( itsImageShape );
 	AlwaysAssert( oneplaneshape.nelements()==4, AipsError );
@@ -2830,6 +3004,8 @@ Bool SIImageStore::isModelEmpty()
 
 		if( minval < allmin ) allmin = minval;
 		if( maxval > allmax ) allmax = maxval;
+
+		//cout << "Chan : " << chan << "   minval : " << minval << "  maxval : " << maxval << endl;
 		
 	      }//chan
 	  }//pol
@@ -2868,6 +3044,7 @@ Array<Double> SIImageStore::calcRobustRMS(Array<Double>& mdns, const Float pbmas
   LogIO os( LogOrigin("SIImageStore","calcRobustRMS",WHERE) );
   Record*  regionPtr=0;
   String LELmask("");
+  LatticeLocker lockres (*(residual()), FileLocker::Read);
   ArrayLattice<Bool> pbmasklat(residual()->shape());
   pbmasklat.set(False);
   LatticeExpr<Bool> pbmask(pbmasklat);
@@ -2930,9 +3107,11 @@ Array<Double> SIImageStore::calcRobustRMS(Array<Double>& mdns, const Float pbmas
     LogIO os( LogOrigin("SIImageStore","printImageStats",WHERE) );
     Float minresmask=0, maxresmask=0, minres=0, maxres=0;
     //    findMinMax( residual()->get(), mask()->get(), minres, maxres, minresmask, maxresmask );
+    LatticeLocker lock1 (*(residual()), FileLocker::Read);
     ArrayLattice<Bool> pixelmask(residual()->getMask());
     if(hasMask())
       {
+        LatticeLocker lock2 (*(mask()), FileLocker::Read);
 	findMinMaxLattice(*residual(), *mask() , pixelmask, maxres,maxresmask, minres, minresmask);
       }
     else
@@ -2969,7 +3148,7 @@ Array<Double> SIImageStore::calcRobustRMS(Array<Double>& mdns, const Float pbmas
   Float SIImageStore::getMaskSum()
   {
     LogIO os( LogOrigin("SIImageStore","getMaskSum",WHERE) );
-
+    LatticeLocker lock2 (*(mask()), FileLocker::Read);
     LatticeExprNode msum( sum( *mask() ) );
     Float masksum = msum.getFloat();
 
@@ -2990,7 +3169,9 @@ Bool SIImageStore::findMinMaxLattice(const Lattice<Float>& lattice,
 
   maxAbs=0.0;maxAbsMask=0.0;
   minAbs=1e+10;minAbsMask=1e+10;
-
+  LatticeLocker lock1 (const_cast<Lattice<Float>& > (lattice), FileLocker::Read);
+  LatticeLocker lock2 (const_cast<Lattice<Float>& >(mask), FileLocker::Read);
+  LatticeLocker lock3 (const_cast<Lattice<Bool>& >(pixelmask), FileLocker::Read);
   const IPosition tileShape = lattice.niceCursorShape();
   TiledLineStepper ls(lattice.shape(), tileShape, 0);
   {
@@ -3010,8 +3191,8 @@ Bool SIImageStore::findMinMaxLattice(const Lattice<Float>& lattice,
 
       // skip if lattice chunk is masked entirely.
       if(ntrue(pmi.cursor()) > 0 ) {
-        MaskedArray<Float> marr(li.cursor(), pmi.cursor());
-        MaskedArray<Float> marrinmask(li.cursor() * mi.cursor(), pmi.cursor());
+        const MaskedArray<Float> marr(li.cursor(), pmi.cursor());
+        const MaskedArray<Float> marrinmask(li.cursor() * mi.cursor(), pmi.cursor());
       //minMax( minVal, maxVal, posMin, posMax, li.cursor() );
       minMax( minVal, maxVal, posMin, posMax, marr );
       //minMaxMasked(minValMask, maxValMask, posMin, posMax, li.cursor(), mi.cursor());
@@ -3079,7 +3260,8 @@ Bool SIImageStore::findMinMaxLattice(const Lattice<Float>& lattice,
     itsOpened=0;
 
     itsPSFSideLobeLevel=0.0;
-
+    itsReadLock=nullptr;
+    itsDataPolRep=StokesImageUtil::UNKNOWN; //Should throw an exception if it is not initialized properly
   }
 
 
@@ -3175,7 +3357,7 @@ void SIImageStore::regridToModelImage( ImageInterface<Float> &inputimage, Int te
     LogIO logIO(LogOrigin("SIImageStore", "recreate"));
     ifstream inFile; inFile.open(fileName.c_str(),std::ofstream::out);
     if (!inFile) logIO << "Failed to open filed \"" << fileName << "\"" << LogIO::EXCEPTION;
-      
+
     String token;
     inFile >> token; if (token == "itsImageNameBase:") inFile >> itsImageName;
 
@@ -3240,7 +3422,47 @@ void SIImageStore::regridToModelImage( ImageInterface<Float> &inputimage, Int te
       }
 
   }
+//////////////
+  Bool SIImageStore::intersectComplexImage(const String& ComplexImageName){
+        Vector<Int> whichStokes(0);
+	CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
+								  whichStokes, itsDataPolRep);
 
+
+        //cerr <<"itsDataPolRep " << itsDataPolRep << endl;
+        
+        CountedPtr<PagedImage<Complex> > compliantImage =nullptr;
+        {
+          PagedImage<Complex>inputImage(ComplexImageName);
+          IPosition theShape=itsImageShape;
+          theShape(0)=inputImage.shape()(0);
+          theShape(1)=inputImage.shape()(1);
+          CoordinateSystem inpcsys=inputImage.coordinates();
+          Vector<Double> refpix=cimageCoord.referencePixel();
+          refpix(0)+=(theShape(0)-itsImageShape(0))/2.0;
+          refpix(1)+=(theShape(1)-itsImageShape(1))/2.0;
+          cimageCoord.setReferencePixel(refpix);
+          String tmpImage=File::newUniqueName(".", "TempImage").absoluteName();
+          compliantImage=new PagedImage<Complex>(theShape, cimageCoord, tmpImage);
+          compliantImage->set(0.0);
+          IPosition iblc(theShape.nelements(),0);
+          IPosition itrc=theShape-1;
+          //cerr << "blc "  << iblc << " trc " << itrc  << " shape " << theShape << endl;
+          LCBox lbox(iblc, itrc, theShape);
+          ImageRegion imagreg(WCBox(lbox, cimageCoord));
+		
+          
+          SubImage<Complex> subim(inputImage, imagreg, false);
+          //cerr << "shapes " << inputImage.shape() << "  sub " << subim.shape() << " compl " << compliantImage->shape() << endl;
+          compliantImage->copyData(subim);
+			
+        }
+        Table::deleteTable(ComplexImageName);
+        compliantImage->rename(ComplexImageName);
+        return True;
+		
+  }
+	
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////////

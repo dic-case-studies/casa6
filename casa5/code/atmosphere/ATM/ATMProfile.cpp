@@ -107,7 +107,7 @@ AtmProfile::AtmProfile(const Length &altitude,
   unsigned int nL1 = v_layerBoundaries.size();
   unsigned int nL2 = v_layerTemperature.size();
   if(nL1 == nL2 ) {
-    double h=altitude_.get("m");
+    double h=altitude_.get(Length::UnitMeter);
     double h0;
     double h1;
     double counter;
@@ -118,9 +118,9 @@ AtmProfile::AtmProfile(const Length &altitude,
       counter = 0.0;
       avT = 0.0;
       for(unsigned int m = 0; m < nL1; m++) {
-	if( h0 <= v_layerBoundaries[m].get("m") && h1 >= v_layerBoundaries[m].get("m") ){
-	  //	  std::cout << "n=" << n << " h0=" << h0 << " h1=" << h1 << " v_layerBoundaries[" << m << "]=" <<  v_layerBoundaries[m].get("m") << std::endl;
-	  avT = avT + v_layerTemperature[m].get("K");
+	if( h0 <= v_layerBoundaries[m].get(Length::UnitMeter) && h1 >= v_layerBoundaries[m].get(Length::UnitMeter) ){
+	  //	  std::cout << "n=" << n << " h0=" << h0 << " h1=" << h1 << " v_layerBoundaries[" << m << "]=" <<  v_layerBoundaries[m].get(Length::UnitMeter) << std::endl;
+	  avT = avT + v_layerTemperature[m].get(Temperature::UnitKelvin);
 	  counter = counter + 1.0;
 	}
       }
@@ -145,8 +145,8 @@ AtmProfile::AtmProfile(const Length &altitude,
       typeAtm_(atmType), groundTemperature_(groundTemperature),
       tropoLapseRate_(tropoLapseRate), groundPressure_(groundPressure),
       relativeHumidity_(relativeHumidity), wvScaleHeight_(wvScaleHeight),
-      pressureStep_(10.0, "mb"), pressureStepFactor_(1.2), altitude_(altitude),
-      topAtmProfile_(48.0, "km")
+      pressureStep_(10.0, Pressure::UnitMilliBar), pressureStepFactor_(1.2), altitude_(altitude),
+      topAtmProfile_(48.0, Length::UnitKiloMeter)
 {
   numLayer_ = 0;
   numLayer_ = mkAtmProfile();
@@ -174,16 +174,16 @@ AtmProfile::AtmProfile(const Length &altitude,
       v_layerN2O_.push_back(0.0);
       v_layerNO2_.push_back(0.0);
       v_layerSO2_.push_back(0.0);
-      v_layerThickness_.push_back(v_layerThickness[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
-      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
-      v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
-      v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
-      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get("kgm**-3"))+ log(v_layerWaterVapor[n + 1].get("kgm**-3")))/2.0));
-      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get("kgm**-3"));
-      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get("kgm**-3"));
+      v_layerThickness_.push_back(v_layerThickness[n].get(Length::UnitMeter));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
+      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get(Pressure::UnitMilliBar))+ log(v_layerPressure[n + 1].get(Pressure::UnitMilliBar)))/2.0));
+      v_layerPressure0_.push_back(v_layerPressure[n].get(Pressure::UnitMilliBar));
+      v_layerPressure1_.push_back(v_layerPressure[n+1].get(Pressure::UnitMilliBar));
+      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter))+ log(v_layerWaterVapor[n + 1].get(MassDensity::UnitKiloGramPerCubicMeter)))/2.0));
+      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter));
+      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get(MassDensity::UnitKiloGramPerCubicMeter));
     }
   } else {
     numLayer_ = 0;
@@ -211,16 +211,16 @@ AtmProfile::AtmProfile(const vector<Length> &v_layerBoundaries,
       v_layerN2O_.push_back(0.0);
       v_layerNO2_.push_back(0.0);
       v_layerSO2_.push_back(0.0);
-      v_layerThickness_.push_back(v_layerBoundaries[n+1].get("m") - v_layerBoundaries[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
-      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
-      v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
-      v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
-      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get("kgm**-3"))+ log(v_layerWaterVapor[n + 1].get("kgm**-3")))/2.0));
-      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get("kgm**-3"));
-      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get("kgm**-3"));
+      v_layerThickness_.push_back(v_layerBoundaries[n+1].get(Length::UnitMeter) - v_layerBoundaries[n].get(Length::UnitMeter));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
+      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get(Pressure::UnitMilliBar))+ log(v_layerPressure[n + 1].get(Pressure::UnitMilliBar)))/2.0));
+      v_layerPressure0_.push_back(v_layerPressure[n].get(Pressure::UnitMilliBar));
+      v_layerPressure1_.push_back(v_layerPressure[n+1].get(Pressure::UnitMilliBar));
+      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter))+ log(v_layerWaterVapor[n + 1].get(MassDensity::UnitKiloGramPerCubicMeter)))/2.0));
+      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter));
+      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get(MassDensity::UnitKiloGramPerCubicMeter));
     }
   } else {
     numLayer_ = 0;
@@ -248,18 +248,18 @@ AtmProfile::AtmProfile(const Length &altitude,
       v_layerN2O_.push_back(0.0);
       v_layerNO2_.push_back(0.0);
       v_layerSO2_.push_back(0.0);
-      v_layerThickness_.push_back(v_layerThickness[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
-      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
-      v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
-      v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
-      v_layerWaterVapor_.push_back( (exp((log(v_layerWaterVapor[n].get("m**-3"))+ log(v_layerWaterVapor[n + 1].get("m**-3")))/2.0))* 18.0
+      v_layerThickness_.push_back(v_layerThickness[n].get(Length::UnitMeter));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
+      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get(Pressure::UnitMilliBar))+ log(v_layerPressure[n + 1].get(Pressure::UnitMilliBar)))/2.0));
+      v_layerPressure0_.push_back(v_layerPressure[n].get(Pressure::UnitMilliBar));
+      v_layerPressure1_.push_back(v_layerPressure[n+1].get(Pressure::UnitMilliBar));
+      v_layerWaterVapor_.push_back( (exp((log(v_layerWaterVapor[n].get(NumberDensity::UnitInverseCubicMeter))+ log(v_layerWaterVapor[n + 1].get(NumberDensity::UnitInverseCubicMeter)))/2.0))* 18.0
 				    / (1000.0 * 6.023e23));
-      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get("m**-3") * 18.0
+      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get(NumberDensity::UnitInverseCubicMeter) * 18.0
           / (1000.0 * 6.023e23));
-      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get("m**-3") * 18.0
+      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get(NumberDensity::UnitInverseCubicMeter) * 18.0
           / (1000.0 * 6.023e23));
     }
   } else {
@@ -288,18 +288,18 @@ AtmProfile::AtmProfile(const vector<Length> &v_layerBoundaries,
       v_layerN2O_.push_back(0.0);
       v_layerNO2_.push_back(0.0);
       v_layerSO2_.push_back(0.0);
-      v_layerThickness_.push_back(v_layerBoundaries[n+1].get("m") - v_layerBoundaries[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
-      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
-      v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
-      v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
-      v_layerWaterVapor_.push_back( (exp((log(v_layerWaterVapor[n].get("m**-3"))+ log(v_layerWaterVapor[n + 1].get("m**-3")))/2.0))* 18.0
+      v_layerThickness_.push_back(v_layerBoundaries[n+1].get(Length::UnitMeter) - v_layerBoundaries[n].get(Length::UnitMeter));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
+      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get(Pressure::UnitMilliBar))+ log(v_layerPressure[n + 1].get(Pressure::UnitMilliBar)))/2.0));
+      v_layerPressure0_.push_back(v_layerPressure[n].get(Pressure::UnitMilliBar));
+      v_layerPressure1_.push_back(v_layerPressure[n+1].get(Pressure::UnitMilliBar));
+      v_layerWaterVapor_.push_back( (exp((log(v_layerWaterVapor[n].get(NumberDensity::UnitInverseCubicMeter))+ log(v_layerWaterVapor[n + 1].get(NumberDensity::UnitInverseCubicMeter)))/2.0))* 18.0
 				     / (1000.0 * 6.023e23));
-      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get("m**-3") * 18.0
+      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get(NumberDensity::UnitInverseCubicMeter) * 18.0
           / (1000.0 * 6.023e23));
-      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get("m**-3") * 18.0
+      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get(NumberDensity::UnitInverseCubicMeter) * 18.0
           / (1000.0 * 6.023e23));
     }
   } else {
@@ -325,21 +325,21 @@ AtmProfile::AtmProfile(const Length &altitude,
   if(nL1 * 1 == nL2 && nL2 == nL3 && nL3 == nL4 && nL4 == nL5) {
     numLayer_ = nL1;
     for(unsigned int n = 0; n < numLayer_; n++) {
-      v_layerO3_.push_back(v_layerO3[n].get("m**-3"));
+      v_layerO3_.push_back(v_layerO3[n].get(NumberDensity::UnitInverseCubicMeter));
       v_layerCO_.push_back(0.0);
       v_layerN2O_.push_back(0.0);
       v_layerNO2_.push_back(0.0);
       v_layerSO2_.push_back(0.0);
-      v_layerThickness_.push_back(v_layerThickness[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
-      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
-      v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
-      v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
-      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get("kgm**-3"))+ log(v_layerWaterVapor[n + 1].get("kgm**-3")))/2.0));
-      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get("kgm**-3"));
-      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get("kgm**-3"));
+      v_layerThickness_.push_back(v_layerThickness[n].get(Length::UnitMeter));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
+      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get(Pressure::UnitMilliBar))+ log(v_layerPressure[n + 1].get(Pressure::UnitMilliBar)))/2.0));
+      v_layerPressure0_.push_back(v_layerPressure[n].get(Pressure::UnitMilliBar));
+      v_layerPressure1_.push_back(v_layerPressure[n+1].get(Pressure::UnitMilliBar));
+      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter))+ log(v_layerWaterVapor[n + 1].get(MassDensity::UnitKiloGramPerCubicMeter)))/2.0));
+      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter));
+      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get(MassDensity::UnitKiloGramPerCubicMeter));
     }
   } else {
     numLayer_ = 0;
@@ -364,23 +364,23 @@ AtmProfile::AtmProfile(const Length &altitude,
   if(nL1 + 1 == nL2 && nL2 == nL3 && nL3 == nL4 && nL4 == nL5) {
     numLayer_ = nL1;
     for(unsigned int n = 0; n < numLayer_; n++) {
-      v_layerO3_.push_back(v_layerO3[n].get("m**-3"));
+      v_layerO3_.push_back(v_layerO3[n].get(NumberDensity::UnitInverseCubicMeter));
       v_layerCO_.push_back(0.0);
       v_layerN2O_.push_back(0.0);
       v_layerNO2_.push_back(0.0);
       v_layerSO2_.push_back(0.0);
-      v_layerThickness_.push_back(v_layerThickness[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
-      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
-      v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
-      v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
-      v_layerWaterVapor_.push_back( (exp((log(v_layerWaterVapor[n].get("m**-3"))+ log(v_layerWaterVapor[n + 1].get("m**-3")))/2.0))* 18.0
+      v_layerThickness_.push_back(v_layerThickness[n].get(Length::UnitMeter));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
+      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get(Pressure::UnitMilliBar))+ log(v_layerPressure[n + 1].get(Pressure::UnitMilliBar)))/2.0));
+      v_layerPressure0_.push_back(v_layerPressure[n].get(Pressure::UnitMilliBar));
+      v_layerPressure1_.push_back(v_layerPressure[n+1].get(Pressure::UnitMilliBar));
+      v_layerWaterVapor_.push_back( (exp((log(v_layerWaterVapor[n].get(NumberDensity::UnitInverseCubicMeter))+ log(v_layerWaterVapor[n + 1].get(NumberDensity::UnitInverseCubicMeter)))/2.0))* 18.0
 				    / (1000.0 * 6.023e23));
-      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get("m**-3") * 18.0
+      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get(NumberDensity::UnitInverseCubicMeter) * 18.0
           / (1000.0 * 6.023e23));
-      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get("m**-3") * 18.0
+      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get(NumberDensity::UnitInverseCubicMeter) * 18.0
           / (1000.0 * 6.023e23));
     }
   } else {
@@ -415,21 +415,21 @@ AtmProfile::AtmProfile(const Length &altitude,
       == nL7 && nL7 == nL8 && nL8 == nL9) {
     numLayer_ = nL1;
     for(unsigned int n = 0; n < numLayer_; n++) {
-      v_layerO3_.push_back(v_layerO3[n].get("m**-3"));
-      v_layerCO_.push_back(v_layerCO[n].get("m**-3"));
-      v_layerN2O_.push_back(v_layerN2O[n].get("m**-3"));
-      v_layerNO2_.push_back(v_layerNO2[n].get("m**-3"));
-      v_layerSO2_.push_back(v_layerSO2[n].get("m**-3"));
-      v_layerThickness_.push_back(v_layerThickness[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
-      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
-      v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
-      v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
-      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get("kgm**-3"))+ log(v_layerWaterVapor[n + 1].get("kgm**-3")))/2.0));
-      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get("kgm**-3"));
-      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get("kgm**-3"));
+      v_layerO3_.push_back(v_layerO3[n].get(NumberDensity::UnitInverseCubicMeter));
+      v_layerCO_.push_back(v_layerCO[n].get(NumberDensity::UnitInverseCubicMeter));
+      v_layerN2O_.push_back(v_layerN2O[n].get(NumberDensity::UnitInverseCubicMeter));
+      v_layerNO2_.push_back(v_layerNO2[n].get(NumberDensity::UnitInverseCubicMeter));
+      v_layerSO2_.push_back(v_layerSO2[n].get(NumberDensity::UnitInverseCubicMeter));
+      v_layerThickness_.push_back(v_layerThickness[n].get(Length::UnitMeter));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
+      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get(Pressure::UnitMilliBar))+ log(v_layerPressure[n + 1].get(Pressure::UnitMilliBar)))/2.0));
+      v_layerPressure0_.push_back(v_layerPressure[n].get(Pressure::UnitMilliBar));
+      v_layerPressure1_.push_back(v_layerPressure[n+1].get(Pressure::UnitMilliBar));
+      v_layerWaterVapor_.push_back(exp((log(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter))+ log(v_layerWaterVapor[n + 1].get(MassDensity::UnitKiloGramPerCubicMeter)))/2.0));
+      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get(MassDensity::UnitKiloGramPerCubicMeter));
+      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get(MassDensity::UnitKiloGramPerCubicMeter));
     }
   } else {
     numLayer_ = 0;
@@ -463,23 +463,23 @@ AtmProfile::AtmProfile(const Length &altitude,
       == nL7 && nL7 == nL8 && nL8 == nL9) {
     numLayer_ = nL1;
     for(unsigned int n = 0; n < numLayer_; n++) {
-      v_layerO3_.push_back(v_layerO3[n].get("m**-3"));
-      v_layerCO_.push_back(v_layerCO[n].get("m**-3"));
-      v_layerN2O_.push_back(v_layerN2O[n].get("m**-3"));
-      v_layerNO2_.push_back(v_layerNO2[n].get("m**-3"));
-      v_layerSO2_.push_back(v_layerSO2[n].get("m**-3"));
-      v_layerThickness_.push_back(v_layerThickness[n].get("m"));
-      v_layerTemperature_.push_back((v_layerTemperature[n].get("K") + v_layerTemperature[n+1].get("K"))/2.0);
-      v_layerTemperature0_.push_back(v_layerTemperature[n].get("K"));
-      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get("K"));
-      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get("mb"))+ log(v_layerPressure[n + 1].get("mb")))/2.0));
-      v_layerPressure0_.push_back(v_layerPressure[n].get("mb"));
-      v_layerPressure1_.push_back(v_layerPressure[n+1].get("mb"));
-      v_layerWaterVapor_.push_back( (exp((log(v_layerWaterVapor[n].get("m**-3"))+ log(v_layerWaterVapor[n + 1].get("m**-3")))/2.0))* 18.0
+      v_layerO3_.push_back(v_layerO3[n].get(NumberDensity::UnitInverseCubicMeter));
+      v_layerCO_.push_back(v_layerCO[n].get(NumberDensity::UnitInverseCubicMeter));
+      v_layerN2O_.push_back(v_layerN2O[n].get(NumberDensity::UnitInverseCubicMeter));
+      v_layerNO2_.push_back(v_layerNO2[n].get(NumberDensity::UnitInverseCubicMeter));
+      v_layerSO2_.push_back(v_layerSO2[n].get(NumberDensity::UnitInverseCubicMeter));
+      v_layerThickness_.push_back(v_layerThickness[n].get(Length::UnitMeter));
+      v_layerTemperature_.push_back((v_layerTemperature[n].get(Temperature::UnitKelvin) + v_layerTemperature[n+1].get(Temperature::UnitKelvin))/2.0);
+      v_layerTemperature0_.push_back(v_layerTemperature[n].get(Temperature::UnitKelvin));
+      v_layerTemperature1_.push_back(v_layerTemperature[n+1].get(Temperature::UnitKelvin));
+      v_layerPressure_.push_back(exp((log(v_layerPressure[n].get(Pressure::UnitMilliBar))+ log(v_layerPressure[n + 1].get(Pressure::UnitMilliBar)))/2.0));
+      v_layerPressure0_.push_back(v_layerPressure[n].get(Pressure::UnitMilliBar));
+      v_layerPressure1_.push_back(v_layerPressure[n+1].get(Pressure::UnitMilliBar));
+      v_layerWaterVapor_.push_back( (exp((log(v_layerWaterVapor[n].get(NumberDensity::UnitInverseCubicMeter))+ log(v_layerWaterVapor[n + 1].get(NumberDensity::UnitInverseCubicMeter)))/2.0))* 18.0
 				    / (1000.0 * 6.023e23));
-      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get("m**-3") * 18.0
+      v_layerWaterVapor0_.push_back(v_layerWaterVapor[n].get(NumberDensity::UnitInverseCubicMeter) * 18.0
           / (1000.0 * 6.023e23));
-      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get("m**-3") * 18.0
+      v_layerWaterVapor1_.push_back(v_layerWaterVapor[n+1].get(NumberDensity::UnitInverseCubicMeter) * 18.0
           / (1000.0 * 6.023e23));
     }
   } else {
@@ -542,7 +542,7 @@ AtmProfile::AtmProfile(const AtmProfile &a)
   groundTemperatureThreshold_ = a.groundTemperatureThreshold_;
   tropoLapseRateThreshold_ = a.tropoLapseRateThreshold_;
   relativeHumidityThreshold_ = a.relativeHumidityThreshold_;
-  wvScaleHeightThreshold_ = a.wvScaleHeightThreshold_; 
+  wvScaleHeightThreshold_ = a.wvScaleHeightThreshold_;
 }
 void AtmProfile::setBasicAtmosphericParameterThresholds(const Length &altitudeThreshold,
 							const Pressure &groundPressureThreshold,
@@ -556,17 +556,17 @@ void AtmProfile::setBasicAtmosphericParameterThresholds(const Length &altitudeTh
   groundTemperatureThreshold_ = groundTemperatureThreshold;
   tropoLapseRateThreshold_ = tropoLapseRateThreshold;
   relativeHumidityThreshold_ = relativeHumidityThreshold;
-  wvScaleHeightThreshold_ =wvScaleHeightThreshold; 
+  wvScaleHeightThreshold_ =wvScaleHeightThreshold;
 }
 
 void AtmProfile::initBasicAtmosphericParameterThresholds()
 {
-  altitudeThreshold_ = Length(1.0,"m");
-  groundPressureThreshold_ =  Pressure(99.,"Pa");  // DB 2014-03-06 : Choose 99 Pascal instead of 100 Pascal because the threshold must be lower than the value of delta_pressure used in getAverageDispersiveDryPathLength_GroundPressureDerivative()  
-  groundTemperatureThreshold_ =  Temperature(0.3,"K");
+  altitudeThreshold_ = Length(1.0,Length::UnitMeter);
+  groundPressureThreshold_ =  Pressure(99.,Pressure::UnitPascal);  // DB 2014-03-06 : Choose 99 Pascal instead of 100 Pascal because the threshold must be lower than the value of delta_pressure used in getAverageDispersiveDryPathLength_GroundPressureDerivative()
+  groundTemperatureThreshold_ =  Temperature(0.3,Temperature::UnitKelvin);
   tropoLapseRateThreshold_ = 0.01;
-  relativeHumidityThreshold_ = Humidity(100.,"%");
-  wvScaleHeightThreshold_ = Length(20.,"m");
+  relativeHumidityThreshold_ = Humidity(100.,Percent::UnitPercent);
+  wvScaleHeightThreshold_ = Length(20.,Length::UnitMeter);
 }
 
 bool AtmProfile::updateAtmProfile(const Length &altitude,
@@ -583,7 +583,7 @@ bool AtmProfile::updateAtmProfile(const Length &altitude,
 
   unsigned int numLayer;
   bool mkNewProfile = false;
-  
+
 //   if(altitude_.get() != altitude.get()) mkNewProfile = true; //if(mkNewProfile)cout<<"altitude has changed"          <<endl;
 //   if(groundPressure_.get() != groundPressure.get()) mkNewProfile = true; //if(mkNewProfile)cout<<"ground pressure has changed"   <<endl;
 //   if(groundTemperature_.get() != groundTemperature.get()) mkNewProfile = true; //if(mkNewProfile)cout<<"ground temperature has changed"<<endl;
@@ -591,29 +591,29 @@ bool AtmProfile::updateAtmProfile(const Length &altitude,
 //   if(tropoLapseRate_ != tropoLapseRate) mkNewProfile = true; //if(mkNewProfile)cout<<"tropo lapse rate has changed"  <<endl;
 //   if(relativeHumidity_.get() != relativeHumidity.get()) mkNewProfile = true; //if(mkNewProfile)cout<<"relative humidity has changed" <<endl;
   //! all these thresholds shoudl be parametrized.
-  if(fabs(altitude_.get()-altitude.get())> altitudeThreshold_.get()) { // Length(0.1,"m").get())  {
-    mkNewProfile = true; 
+  if(fabs(altitude_.get()-altitude.get())> altitudeThreshold_.get()) { // Length(0.1,Length::UnitMeter).get())  {
+    mkNewProfile = true;
     //cout<<"altitude has changed"          <<endl;
   }
-  if(fabs(groundPressure_.get()-groundPressure.get())> groundPressureThreshold_.get()) { // Pressure(100.,"Pa").get()) {
-    mkNewProfile = true; 
+  if(fabs(groundPressure_.get()-groundPressure.get())> groundPressureThreshold_.get()) { // Pressure(100.,Pressure::UnitPascal).get()) {
+    mkNewProfile = true;
     //cout<<"ground pressure has changed"   <<endl;
   }
-  if(fabs(groundTemperature_.get()-groundTemperature.get()) > groundTemperatureThreshold_.get()) { //  Temperature(0.3,"K").get()) {
-    mkNewProfile = true; 
+  if(fabs(groundTemperature_.get()-groundTemperature.get()) > groundTemperatureThreshold_.get()) { //  Temperature(0.3,Temperature::UnitKelvin).get()) {
+    mkNewProfile = true;
     //cout<<"ground temperature has changed"<<endl;
   }
-  if(fabs(wvScaleHeight_.get()-wvScaleHeight.get()) > wvScaleHeightThreshold_.get()) { // Length(20.,"m").get() ) {
-    mkNewProfile = true; 
+  if(fabs(wvScaleHeight_.get()-wvScaleHeight.get()) > wvScaleHeightThreshold_.get()) { // Length(20.,Length::UnitMeter).get() ) {
+    mkNewProfile = true;
     //cout<<"wv scale height has changed"   <<endl;
   }
   if(fabs(tropoLapseRate_-tropoLapseRate) > tropoLapseRateThreshold_) { // 0.01) {
-    mkNewProfile = true; 
+    mkNewProfile = true;
     //cout<<"tropo lapse rate has changed"  <<endl;
   }
   // we use WVR...
-  if(fabs(relativeHumidity_.get()-relativeHumidity.get())> relativeHumidityThreshold_.get()) { // Humidity(100.,"%").get()) {
-    mkNewProfile = true; 
+  if(fabs(relativeHumidity_.get()-relativeHumidity.get())> relativeHumidityThreshold_.get()) { // Humidity(100.,Percent::UnitPercent).get()) {
+    mkNewProfile = true;
     //cout<<"relative humidity has changed" <<endl;
   }
   if(mkNewProfile) {
@@ -661,12 +661,12 @@ string AtmProfile::getAtmosphereType(unsigned int typeAtm)
     string type;
     string typeNames[] = { "TROPICAL", "MIDLATSUMMER", "MIDLATWINTER",
                            "SUBARTSUMMER", "SUBARTWINTER","US_ST76"};
-    
+
     if(typeAtm < typeATM_end) {
       type = typeNames[typeAtm-1];
     } else {
       type = "DEFAULT";
-    }  
+    }
     return type;
 }
 
@@ -675,7 +675,7 @@ vector<Temperature> AtmProfile::getTemperatureProfile() const
   vector<Temperature> t;
   t.reserve(v_layerTemperature_.size());
   for(unsigned int i = 0; i < v_layerTemperature_.size(); i++) {
-    Temperature tt(v_layerTemperature_[i], "K");
+    Temperature tt(v_layerTemperature_[i], Temperature::UnitKelvin);
     t.push_back(tt);
   }
   return t;
@@ -684,10 +684,10 @@ vector<Temperature> AtmProfile::getTemperatureProfile() const
 Temperature AtmProfile::getLayerTemperature(unsigned int i) const
 {
   /*if(i > v_layerTemperature_.size() - 1) {
-    Temperature t(-999.0, "K");
+    Temperature t(-999.0, Temperature::UnitKelvin);
     return t;
   } else {
-    Temperature t(v_layerTemperature_[i], "K");
+    Temperature t(v_layerTemperature_[i], Temperature::UnitKelvin);
     return t;
   }*/
   if(i > v_layerTemperature_.size() - 1) {
@@ -695,7 +695,7 @@ Temperature AtmProfile::getLayerTemperature(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return Temperature(v_layerTemperature_[i], "K");
+  return Temperature(v_layerTemperature_[i], Temperature::UnitKelvin);
 }
 
 Temperature AtmProfile::getLayerBottomTemperature(unsigned int i) const
@@ -705,7 +705,7 @@ Temperature AtmProfile::getLayerBottomTemperature(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return Temperature(v_layerTemperature0_[i], "K");
+  return Temperature(v_layerTemperature0_[i], Temperature::UnitKelvin);
 }
 
 Temperature AtmProfile::getLayerTopTemperature(unsigned int i) const
@@ -715,7 +715,7 @@ Temperature AtmProfile::getLayerTopTemperature(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return Temperature(v_layerTemperature1_[i], "K");
+  return Temperature(v_layerTemperature1_[i], Temperature::UnitKelvin);
 }
 
 
@@ -723,14 +723,14 @@ void AtmProfile::setAltitude(const Length &groundaltitude)
 {
 
   if (groundaltitude <= altitude_){
-    
+
     // std::cout << "extrapolar para abajo" << std::endl;
 
-    int nextralayers = int( 0.50001+(altitude_-groundaltitude).get("m")/v_layerThickness_[0]);
+    int nextralayers = int( 0.50001+(altitude_-groundaltitude).get(Length::UnitMeter)/v_layerThickness_[0]);
     if (nextralayers == 0) {nextralayers=1;}
-    //    std::cout << "aaa=" << ( 0.50001+(altitude_-groundaltitude).get("m")/v_layerThickness_[0]) << std::endl;
-    double newThickness = (altitude_-groundaltitude).get("m") / nextralayers;
-    
+    //    std::cout << "aaa=" << ( 0.50001+(altitude_-groundaltitude).get(Length::UnitMeter)/v_layerThickness_[0]) << std::endl;
+    double newThickness = (altitude_-groundaltitude).get(Length::UnitMeter) / nextralayers;
+
     //  std::cout << "Number of extra layers: " << nextralayers << " of thickness = " <<  newThickness << " m"  << std::endl;
     //  std::cout << "nextralayers-1 " << nextralayers-1 << std::endl;
 
@@ -749,7 +749,7 @@ void AtmProfile::setAltitude(const Length &groundaltitude)
       v_layerO3_.push_back(v_layerO3_[0]);
       v_layerN2O_.push_back(v_layerN2O_[0]);
       v_layerNO2_.push_back(v_layerNO2_[0]);
-      v_layerSO2_.push_back(v_layerSO2_[0]);     
+      v_layerSO2_.push_back(v_layerSO2_[0]);
     }
 
     for(int i=v_layerThickness_.size()-1; i>nextralayers-1; i--){
@@ -771,7 +771,7 @@ void AtmProfile::setAltitude(const Length &groundaltitude)
     }
 
     //    std::cout << "nextralayers=" << nextralayers << std::endl;
-    
+
     for(int i=nextralayers; i>0 ; i--){
 
       v_layerThickness_[i-1] = newThickness;
@@ -780,9 +780,9 @@ void AtmProfile::setAltitude(const Length &groundaltitude)
       v_layerTemperature_[i-1] = (v_layerTemperature0_[i]+v_layerTemperature1_[i])/2.0;
 
       v_layerPressure1_[i-1] = v_layerPressure0_[i];
-      v_layerPressure0_[i-1] = v_layerPressure0_[i]* exp(-0.0341695 * 
+      v_layerPressure0_[i-1] = v_layerPressure0_[i]* exp(-0.0341695 *
 					 (-newThickness)/ v_layerTemperature_[i-1] );
-      v_layerPressure_[i-1] = exp((log(v_layerPressure0_[i-1])+ log(v_layerPressure1_[i-1]))/2.0); 
+      v_layerPressure_[i-1] = exp((log(v_layerPressure0_[i-1])+ log(v_layerPressure1_[i-1]))/2.0);
 
       v_layerWaterVapor1_[i-1] = v_layerWaterVapor0_[i];
       v_layerWaterVapor0_[i-1] = v_layerWaterVapor0_[i]*(v_layerPressure0_[i-1]/v_layerPressure0_[i]);
@@ -801,11 +801,11 @@ void AtmProfile::setAltitude(const Length &groundaltitude)
 
   }else{
     //    std::cout << "extrapolar para arriba" << std::endl;
-    double extraheight = fabs(groundaltitude.get("m")-altitude_.get("m"));
+    double extraheight = fabs(groundaltitude.get(Length::UnitMeter)-altitude_.get(Length::UnitMeter));
     double cumulheight = 0.0;
 
     // std::cout << "before v_layerTemperature_.size()=" << v_layerTemperature_.size() << std::endl;
-    
+
     for(unsigned int i=0; i<numLayer_; i++){
       cumulheight = cumulheight +  v_layerThickness_[i];
       // std::cout << i << " cumulheight = " << cumulheight <<  " extraheight= " << extraheight << std::endl;
@@ -822,12 +822,12 @@ void AtmProfile::setAltitude(const Length &groundaltitude)
 	v_layerTemperature_.erase(v_layerTemperature_.begin(),v_layerTemperature_.begin()+i);
         v_layerTemperature0_[0] = v_layerTemperature0_[1]-tropoLapseRate_*0.001*v_layerThickness_[0];
         v_layerTemperature_[0] = (v_layerTemperature0_[0]+v_layerTemperature1_[0])/2.0;
-		  
+
 	v_layerPressure0_.erase(v_layerPressure0_.begin(),v_layerPressure0_.begin()+i);
 	// std::cout << "v_layerPressure1_[0]=" << v_layerPressure1_[0] << " remainingheight=" << remainingheight << std::endl;
 	v_layerPressure1_.erase(v_layerPressure1_.begin(),v_layerPressure1_.begin()+i);
 	v_layerPressure_.erase(v_layerPressure_.begin(),v_layerPressure_.begin()+i);
-	v_layerPressure0_[0] = v_layerPressure1_[0]* exp(-0.0341695 * 
+	v_layerPressure0_[0] = v_layerPressure1_[0]* exp(-0.0341695 *
 					 (-remainingheight)/ v_layerTemperature_[0] );
 	v_layerPressure_[0] = exp((log(v_layerPressure0_[0])+ log(v_layerPressure1_[0]))/2.0);
 
@@ -836,7 +836,7 @@ void AtmProfile::setAltitude(const Length &groundaltitude)
 	v_layerWaterVapor_.erase(v_layerWaterVapor_.begin(),v_layerWaterVapor_.begin()+i);
 	v_layerWaterVapor0_[0] = v_layerWaterVapor1_[0]*(v_layerPressure0_[0]/v_layerPressure1_[0]);
 	v_layerWaterVapor_[0] = exp((log(v_layerWaterVapor0_[0])+ log(v_layerWaterVapor1_[0]))/2.0);
-	
+
 	v_layerCO_.erase(v_layerCO_.begin(),v_layerCO_.begin()+i);
 	v_layerO3_.erase(v_layerO3_.begin(),v_layerO3_.begin()+i);
 	v_layerN2O_.erase(v_layerN2O_.begin(),v_layerN2O_.begin()+i);
@@ -844,39 +844,39 @@ void AtmProfile::setAltitude(const Length &groundaltitude)
 	v_layerSO2_.erase(v_layerSO2_.begin(),v_layerSO2_.begin()+i);
 
 	tropoLayer_ = tropoLayer_ - i;
-	  
+
 	// std::cout << "after v_layerTemperature_.size()=" << v_layerTemperature_.size() << std::endl;
 	break;
       }
     }
 
     numLayer_ = v_layerThickness_.size();
-    
+
   }
 
   altitude_ = groundaltitude;
   groundTemperature_ = v_layerTemperature0_[0];
 
   //  std::cout << "v_layerPressure0_[0]=" << v_layerPressure0_[0] << std::endl;
-  
+
   groundPressure_ = v_layerPressure0_[0]*100.0;  // default units for Pressure are Pascals
-  
+
   /*
-  const Temperature Tdif(((true_antenna_altitude.get("km")-altitude.get("km"))*tropoLapseRate),"K");
+  const Temperature Tdif(((true_antenna_altitude.get(Length::UnitKiloMeter)-altitude.get(Length::UnitKiloMeter))*tropoLapseRate),Temperature::UnitKelvin);
   groundTemperature_ = groundTemperature+Tdif;
-  groundPressure_ = groundPressure * exp(-0.0341695 * pow((6.371/(6.371+altitude.get("km"))),2.0)
-					 * (true_antenna_altitude.get("m")-altitude.get("m"))
-					 / ((groundTemperature.get("K")+Tdif.get("K"))/2.0) );
+  groundPressure_ = groundPressure * exp(-0.0341695 * pow((6.371/(6.371+altitude.get(Length::UnitKiloMeter))),2.0)
+					 * (true_antenna_altitude.get(Length::UnitMeter)-altitude.get(Length::UnitMeter))
+					 / ((groundTemperature.get(Temperature::UnitKelvin)+Tdif.get(Temperature::UnitKelvin))/2.0) );
   */
 
 
-  
+
 }
 
 void AtmProfile::setLayerTemperature(unsigned int i, const Temperature &layerTemperature)
 {
   if(i < v_layerTemperature_.size()) {
-    v_layerTemperature_[i] = layerTemperature.get("K");
+    v_layerTemperature_[i] = layerTemperature.get(Temperature::UnitKelvin);
   }
 }
 
@@ -885,7 +885,7 @@ vector<Length> AtmProfile::getThicknessProfile() const
   vector<Length> l;
   l.reserve(v_layerThickness_.size());
   for(unsigned int i = 0; i < v_layerThickness_.size(); i++) {
-    Length ll(v_layerThickness_[i], "m");
+    Length ll(v_layerThickness_[i], Length::UnitMeter);
     l.push_back(ll);
   }
   return l;
@@ -894,10 +894,10 @@ vector<Length> AtmProfile::getThicknessProfile() const
 Length AtmProfile::getLayerThickness(unsigned int i) const
 {
   /*if(i > v_layerThickness_.size() - 1) {
-    Length l(-999.0, "m");
+    Length l(-999.0, Length::UnitMeter);
     return l;
   } else {
-    Length l(v_layerThickness_[i], "m");
+    Length l(v_layerThickness_[i], Length::UnitMeter);
     return l;
   }*/
   if(i > v_layerThickness_.size() - 1) {
@@ -905,7 +905,7 @@ Length AtmProfile::getLayerThickness(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return Length(v_layerThickness_[i], "m");
+  return Length(v_layerThickness_[i], Length::UnitMeter);
 }
 
 Length AtmProfile::getLayerBottomHeightAboveGround(unsigned int i) const
@@ -919,7 +919,7 @@ Length AtmProfile::getLayerBottomHeightAboveGround(unsigned int i) const
   for(unsigned int j = 0; j < i; j++) {
     h = h + v_layerThickness_[j];
   }
-  return Length(h, "m");
+  return Length(h, Length::UnitMeter);
 }
 
 Length AtmProfile::getLayerTopHeightAboveGround(unsigned int i) const
@@ -933,7 +933,7 @@ Length AtmProfile::getLayerTopHeightAboveGround(unsigned int i) const
   for(unsigned int j = 0; j < i+1; j++) {
     h = h + v_layerThickness_[j];
   }
-  return Length(h, "m");
+  return Length(h, Length::UnitMeter);
 }
 
 Length AtmProfile::getLayerBottomHeightAboveSeaLevel(unsigned int i) const
@@ -943,11 +943,11 @@ Length AtmProfile::getLayerBottomHeightAboveSeaLevel(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  double h=altitude_.get("m");
+  double h=altitude_.get(Length::UnitMeter);
   for(unsigned int j = 0; j < i; j++) {
     h = h + v_layerThickness_[j];
   }
-  return Length(h, "m");
+  return Length(h, Length::UnitMeter);
 }
 
 Length AtmProfile::getLayerTopHeightAboveSeaLevel(unsigned int i) const
@@ -957,28 +957,28 @@ Length AtmProfile::getLayerTopHeightAboveSeaLevel(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  double h=altitude_.get("m");
+  double h=altitude_.get(Length::UnitMeter);
   for(unsigned int j = 0; j < i+1; j++) {
     h = h + v_layerThickness_[j];
   }
-  return Length(h, "m");
+  return Length(h, Length::UnitMeter);
 }
 
 
 void AtmProfile::setLayerThickness(unsigned int i, const Length &layerThickness)
 {
   if(i < v_layerThickness_.size()) {
-    v_layerThickness_[i] = layerThickness.get("m");
+    v_layerThickness_[i] = layerThickness.get(Length::UnitMeter);
   }
 }
 
 MassDensity AtmProfile::getLayerWaterVaporMassDensity(unsigned int i) const
 {
   /*if(i > v_layerWaterVapor_.size() - 1) {
-    MassDensity m(-999.0, "kgm**-3");
+    MassDensity m(-999.0, MassDensity::UnitKiloGramPerCubicMeter);
     return m;
   } else {
-    MassDensity m(v_layerWaterVapor_[i], "kgm**-3");
+    MassDensity m(v_layerWaterVapor_[i], MassDensity::UnitKiloGramPerCubicMeter);
     return m;
   }*/
   if(i > v_layerWaterVapor_.size() - 1) {
@@ -986,7 +986,7 @@ MassDensity AtmProfile::getLayerWaterVaporMassDensity(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return MassDensity(v_layerWaterVapor_[i], "kgm**-3");
+  return MassDensity(v_layerWaterVapor_[i], MassDensity::UnitKiloGramPerCubicMeter);
 }
 MassDensity AtmProfile::getLayerBottomWaterVaporMassDensity(unsigned int i) const
 {
@@ -995,7 +995,7 @@ MassDensity AtmProfile::getLayerBottomWaterVaporMassDensity(unsigned int i) cons
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return MassDensity(v_layerWaterVapor0_[i], "kgm**-3");
+  return MassDensity(v_layerWaterVapor0_[i], MassDensity::UnitKiloGramPerCubicMeter);
 }
 MassDensity AtmProfile::getLayerTopWaterVaporMassDensity(unsigned int i) const
 {
@@ -1004,17 +1004,17 @@ MassDensity AtmProfile::getLayerTopWaterVaporMassDensity(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return MassDensity(v_layerWaterVapor1_[i], "kgm**-3");
+  return MassDensity(v_layerWaterVapor1_[i], MassDensity::UnitKiloGramPerCubicMeter);
 }
 
 NumberDensity AtmProfile::getLayerWaterVaporNumberDensity(unsigned int i) const
 {
   /*if(i > v_layerWaterVapor_.size() - 1) {
-    NumberDensity m(-999.0, "m**-3");
+    NumberDensity m(-999.0, NumberDensity::UnitInverseCubicMeter);
     return m;
   } else {
     NumberDensity
-        m(v_layerWaterVapor_[i] * 6.023e23 * 1000.0 / 18.0, "m**-3");
+        m(v_layerWaterVapor_[i] * 6.023e23 * 1000.0 / 18.0, NumberDensity::UnitInverseCubicMeter);
     return m;
   }*/
   if(i > v_layerWaterVapor_.size() - 1) {
@@ -1022,7 +1022,7 @@ NumberDensity AtmProfile::getLayerWaterVaporNumberDensity(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return NumberDensity(v_layerWaterVapor_[i] * 6.023e23 * 1000.0 / 18.0, "m**-3");
+  return NumberDensity(v_layerWaterVapor_[i] * 6.023e23 * 1000.0 / 18.0, NumberDensity::UnitInverseCubicMeter);
 }
 NumberDensity AtmProfile::getLayerBottomWaterVaporNumberDensity(unsigned int i) const
 {
@@ -1031,7 +1031,7 @@ NumberDensity AtmProfile::getLayerBottomWaterVaporNumberDensity(unsigned int i) 
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return NumberDensity(v_layerWaterVapor0_[i] * 6.023e23 * 1000.0 / 18.0, "m**-3");
+  return NumberDensity(v_layerWaterVapor0_[i] * 6.023e23 * 1000.0 / 18.0, NumberDensity::UnitInverseCubicMeter);
 }
 NumberDensity AtmProfile::getLayerTopWaterVaporNumberDensity(unsigned int i) const
 {
@@ -1040,20 +1040,20 @@ NumberDensity AtmProfile::getLayerTopWaterVaporNumberDensity(unsigned int i) con
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return NumberDensity(v_layerWaterVapor1_[i] * 6.023e23 * 1000.0 / 18.0, "m**-3");
+  return NumberDensity(v_layerWaterVapor1_[i] * 6.023e23 * 1000.0 / 18.0, NumberDensity::UnitInverseCubicMeter);
 }
 
 void AtmProfile::setLayerWaterVaporMassDensity(unsigned int i, const MassDensity &layerWaterVapor)
 {
   if(i <= v_layerWaterVapor_.size() - 1) {
-    v_layerWaterVapor_[i] = layerWaterVapor.get("kgm**-3");
+    v_layerWaterVapor_[i] = layerWaterVapor.get(MassDensity::UnitKiloGramPerCubicMeter);
   }
 }
 
 void AtmProfile::setLayerWaterVaporNumberDensity(unsigned int i, const NumberDensity &layerWaterVapor)
 {
   if(i <= v_layerWaterVapor_.size() - 1) {
-    v_layerWaterVapor_[i] = layerWaterVapor.get("m**-3") * 18.0 / (6.023e23 * 1000.0);
+    v_layerWaterVapor_[i] = layerWaterVapor.get(NumberDensity::UnitInverseCubicMeter) * 18.0 / (6.023e23 * 1000.0);
   }
 }
 
@@ -1062,7 +1062,7 @@ vector<Pressure> AtmProfile::getPressureProfile() const
   vector<Pressure> p;
   p.reserve(v_layerPressure_.size());
   for(unsigned int i = 0; i < v_layerPressure_.size(); i++) {
-    Pressure pp(v_layerPressure_[i], "mb");
+    Pressure pp(v_layerPressure_[i], Pressure::UnitMilliBar);
     p.push_back(pp);
   }
   return p;
@@ -1071,10 +1071,10 @@ vector<Pressure> AtmProfile::getPressureProfile() const
 Pressure AtmProfile::getLayerPressure(unsigned int i) const
 {
   /*if(i > v_layerPressure_.size() - 1) {
-    Pressure p(-999.0, "mb");
+    Pressure p(-999.0, Pressure::UnitMilliBar);
     return p;
   } else {
-    Pressure p(v_layerPressure_[i], "mb");
+    Pressure p(v_layerPressure_[i], Pressure::UnitMilliBar);
     return p;
   }*/
   if(i > v_layerPressure_.size() - 1) {
@@ -1082,7 +1082,7 @@ Pressure AtmProfile::getLayerPressure(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return Pressure(v_layerPressure_[i], "mb");
+  return Pressure(v_layerPressure_[i], Pressure::UnitMilliBar);
 }
 
 Pressure AtmProfile::getLayerBottomPressure(unsigned int i) const
@@ -1092,7 +1092,7 @@ Pressure AtmProfile::getLayerBottomPressure(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return Pressure(v_layerPressure0_[i], "mb");
+  return Pressure(v_layerPressure0_[i], Pressure::UnitMilliBar);
 }
 
 Pressure AtmProfile::getLayerTopPressure(unsigned int i) const
@@ -1102,7 +1102,7 @@ Pressure AtmProfile::getLayerTopPressure(unsigned int i) const
     oss << "Not a valid layer: " << i;
     throw AtmException(ATM_EXCEPTION_ARGS(oss.str().c_str()));
   }
-  return Pressure(v_layerPressure1_[i], "mb");
+  return Pressure(v_layerPressure1_[i], Pressure::UnitMilliBar);
 }
 
 
@@ -1119,27 +1119,27 @@ Length AtmProfile::getGroundWH2O() const
 
 MassDensity AtmProfile::rwat(const Temperature &tt, const Humidity &rh, const Pressure &pp) const
 {
-  double t = tt.get("K");
-  double p = pp.get("mb");
-  double u = rh.get("%");
+  double t = tt.get(Temperature::UnitKelvin);
+  double p = pp.get(Pressure::UnitMilliBar);
+  double u = rh.get(Percent::UnitPercent);
   double e, es, rwat0;
 
   if(p <= 0 || t <= 0 || u <= 0) {
-    return MassDensity(0.0, "gm**-3");
+    return MassDensity(0.0, MassDensity::UnitGramPerCubicMeter);
   } else {
     es = 6.105 * exp(25.22 / t * (t - 273.0) - 5.31 * log(t / 273.0));
     e = 1.0 - (1.0 - u / 100.0) * es / p;
     e = es * u / 100.0 / e;
     rwat0 = e * 216.502 / t; //(en g/m*3)
   }
-  return MassDensity(rwat0, "gm**-3");
+  return MassDensity(rwat0, MassDensity::UnitGramPerCubicMeter);
 }
 
 Humidity AtmProfile::rwat_inv(const Temperature &tt, const MassDensity &dd, const Pressure &pp) const
 {
-  double p = pp.get("mb");
-  double t = tt.get("K");
-  double r = dd.get("gm**-3");
+  double p = pp.get(Pressure::UnitMilliBar);
+  double t = tt.get(Temperature::UnitKelvin);
+  double r = dd.get(MassDensity::UnitGramPerCubicMeter);
   double es, e, rinv;
 
   if(p <= 0 || t <= 0 || r <= 0) {
@@ -1150,7 +1150,7 @@ Humidity AtmProfile::rwat_inv(const Temperature &tt, const MassDensity &dd, cons
     rinv = 100 * (e * (p - es) / (es * (p - e)));
     if(rinv < 0 && p < 3) rinv = 0.0;
   }
-  return Humidity(rinv, "%");
+  return Humidity(rinv, Percent::UnitPercent);
 }
 
 vector<NumberDensity> AtmProfile::st76(const Length &h, unsigned int tip) const
@@ -1162,7 +1162,7 @@ vector<NumberDensity> AtmProfile::st76(const Length &h, unsigned int tip) const
   static const double avogad = 6.022045E+23;
   static const double airmwt = 28.964;
   //    static const double h2omwt=18.015;
-  double ha = h.get("km");
+  double ha = h.get(Length::UnitKiloMeter);
 
 
   static const double
@@ -1373,40 +1373,40 @@ vector<NumberDensity> AtmProfile::st76(const Length &h, unsigned int tip) const
  //   --------------------------------------------[ altitude for interpolation ]
 
   if((ha < 0.0) || (ha > 120.0)) {
-    
-    o3den = NumberDensity(0.0, "m**-3");
-    n2oden = NumberDensity(0.0, "m**-3");
-    coden = NumberDensity(0.0, "m**-3");
-    no2den = NumberDensity(0.0, "m**-3");
-    so2den = NumberDensity(0.0, "m**-3");
-    
+
+    o3den = NumberDensity(0.0, NumberDensity::UnitInverseCubicMeter);
+    n2oden = NumberDensity(0.0, NumberDensity::UnitInverseCubicMeter);
+    coden = NumberDensity(0.0, NumberDensity::UnitInverseCubicMeter);
+    no2den = NumberDensity(0.0, NumberDensity::UnitInverseCubicMeter);
+    so2den = NumberDensity(0.0, NumberDensity::UnitInverseCubicMeter);
+
   } else {
-    
+
     i1 = 0; i2 = 0; i3 = 0;
     x1 = 0.0; x2 = 0.0; x3 = 0.0;
-    
+
     for(i_layer = 0; i_layer < 50; i_layer++) {
-      
+
       if(ha < alt[i_layer]) {
-	
+
         if(i_layer == 49) {
-	  
+
           i1 = i_layer - 2; i2 = i_layer - 1; i3 = i_layer;
-	  
+
         } else {
-	  
+
           if(i_layer == 0) {
-	    
+
             i1 = i_layer; i2 = i_layer + 1; i3 = i_layer + 2;
-	    
+
           } else {
-	    
+
             i1 = i_layer - 1; i2 = i_layer; i3 = i_layer + 1;
-	    
+
           }
-	  
+
         }
-	
+
         x1 = alt[i1]; x2 = alt[i2]; x3 = alt[i3];
         goto calc;
       }
@@ -1416,11 +1416,11 @@ vector<NumberDensity> AtmProfile::st76(const Length &h, unsigned int tip) const
 
     if(x1 == 0.0 && x2 == 0.0 && x3 == 0.0) {
 
-      o3den = NumberDensity(0.0, "m**-3");
-      n2oden = NumberDensity(0.0, "m**-3");
-      coden = NumberDensity(0.0, "m**-3");
-      no2den = NumberDensity(0.0, "m**-3");
-      so2den = NumberDensity(0.0, "m**-3");
+      o3den = NumberDensity(0.0, NumberDensity::UnitInverseCubicMeter);
+      n2oden = NumberDensity(0.0, NumberDensity::UnitInverseCubicMeter);
+      coden = NumberDensity(0.0, NumberDensity::UnitInverseCubicMeter);
+      no2den = NumberDensity(0.0, NumberDensity::UnitInverseCubicMeter);
+      so2den = NumberDensity(0.0, NumberDensity::UnitInverseCubicMeter);
 
     } else {
 
@@ -1446,36 +1446,36 @@ vector<NumberDensity> AtmProfile::st76(const Length &h, unsigned int tip) const
 
       //     --------------------------------------------[ OZONE ]
 
-      o3den= NumberDensity(poli2(ha, x1, x2, x3, ozone[tip - 1][i1], ozone[tip- 1][i2], ozone[tip - 1][i3])   
-			   * 1e-12 * d * avogad / airmwt,"cm**-3");
+      o3den= NumberDensity(poli2(ha, x1, x2, x3, ozone[tip - 1][i1], ozone[tip- 1][i2], ozone[tip - 1][i3])
+			   * 1e-12 * d * avogad / airmwt,NumberDensity::UnitInverseCubicCentiMeter);
       if(i2 < 30){         // FIX 15/11/2018
 	o3den=o3den*0.82;  // FIX 15/11/2018
       }else{               // FIX 15/11/2018
 	o3den=o3den*1.65;  // FIX 15/11/2018
       }                    // FIX 15/11/2018
-      
+
       //   std::cout << "ha o3den " << ha << " " << o3den.get() << std::endl;
-      
+
       //  OZONO=A+B*HA+C*HA2     // en ppmv
 
       //     --------------------------------------------[ N2O ]
 
       n2oden = NumberDensity(poli2(ha, x1, x2, x3, n2o[tip - 1][i1], n2o[tip - 1][i2], n2o[tip - 1][i3])
-			     * 1e-12 * d * avogad / airmwt, "cm**-3");
+			     * 1e-12 * d * avogad / airmwt, NumberDensity::UnitInverseCubicCentiMeter);
       //  N2O=A+B*HA+C*HA2       // en ppmv
 
       //    --------------------------------------------[ NO2 ]
 
-      no2den = NumberDensity(poli2(ha, x1, x2, x3, no2[i1], no2[i2], no2[i3]) * 1e-12 * d * avogad / airmwt, "cm**-3");
+      no2den = NumberDensity(poli2(ha, x1, x2, x3, no2[i1], no2[i2], no2[i3]) * 1e-12 * d * avogad / airmwt, NumberDensity::UnitInverseCubicCentiMeter);
 
       //    --------------------------------------------[ SO2 ]
 
-      so2den = NumberDensity(poli2(ha, x1, x2, x3, no2[i1], so2[i2], so2[i3]) * 1e-12 * d * avogad / airmwt, "cm**-3");
+      so2den = NumberDensity(poli2(ha, x1, x2, x3, no2[i1], so2[i2], so2[i3]) * 1e-12 * d * avogad / airmwt, NumberDensity::UnitInverseCubicCentiMeter);
 
       //    --------------------------------------------[ CO ]
 
       coden = NumberDensity(poli2(ha,x1,x2,x3,co[tip-1][i1],co[tip-1][i2],co[tip-1][i3])
-			    * 1e-12 * d * avogad / airmwt,"cm**-3");
+			    * 1e-12 * d * avogad / airmwt,NumberDensity::UnitInverseCubicCentiMeter);
 
     }
 
@@ -1556,18 +1556,18 @@ unsigned int AtmProfile::mkAtmProfile()
 		      227.340, 236.110, 252.746, 268.936, 265.057, 250.174, 233.026, 212.656, 196.466,
                       187.260, 189.204}   };
 
-  double T_ground = groundTemperature_.get("K"); //  std::cout<<"T_ground: " << T_ground <<"K"<<endl;
-  double P_ground = groundPressure_.get("mb"); //  std::cout<<"P_ground: " << P_ground <<"mb"<<endl;
-  double rh = relativeHumidity_.get("%"); //  std::cout<<"rh:       " << rh <<"%"<<endl;
-  double h0 = wvScaleHeight_.get("km"); //  std::cout<<"h0:       " << h0 <<"km"<<endl;
-  double dp = pressureStep_.get("mb"); //  std::cout<<"dp:       " << dp <<"mb"<<endl;
-  double alti = altitude_.get("km"); //  std::cout<<"alti:     " << alti <<"km"<<endl;
-  double atmh = topAtmProfile_.get("km"); //  std::cout<<"atmh:     " << atmh <<"km"<<endl;
+  double T_ground = groundTemperature_.get(Temperature::UnitKelvin); //  std::cout<<"T_ground: " << T_ground <<"K"<<endl;
+  double P_ground = groundPressure_.get(Pressure::UnitMilliBar); //  std::cout<<"P_ground: " << P_ground <<"mb"<<endl;
+  double rh = relativeHumidity_.get(Percent::UnitPercent); //  std::cout<<"rh:       " << rh <<"%"<<endl;
+  double h0 = wvScaleHeight_.get(Length::UnitKiloMeter); //  std::cout<<"h0:       " << h0 <<"km"<<endl;
+  double dp = pressureStep_.get(Pressure::UnitMilliBar); //  std::cout<<"dp:       " << dp <<"mb"<<endl;
+  double alti = altitude_.get(Length::UnitKiloMeter); //  std::cout<<"alti:     " << alti <<"km"<<endl;
+  double atmh = topAtmProfile_.get(Length::UnitKiloMeter); //  std::cout<<"atmh:     " << atmh <<"km"<<endl;
   double dp1 = pressureStepFactor_; //  std::cout<<"dp1:      " << dp1 <<" "<<endl;
   double dt = tropoLapseRate_; // TODO implementer des unites (K/km) ici localement
   double prLimit;
   double minmin;
-  
+
   if(typeAtm_ == 1) {
     prLimit = 100.0;   // 100.0 230.2;
   } else if(typeAtm_ == 2) {
@@ -1602,8 +1602,8 @@ unsigned int AtmProfile::mkAtmProfile()
   double www, altura;
   // double abun_ozono, abun_n2o, abun_co;
   NumberDensity ozono, n2o, co;
-  double wgr, dh; 
-// double humrel; // [-Wunused_but_set_variable]  
+  double wgr, dh;
+// double humrel; // [-Wunused_but_set_variable]
   // bool   errcode;
 
   //int    nmaxLayers=40;  // FV peut etre devrions nos avoir un garde-fou au cas ou le nb de couches serait stupidement trop grand
@@ -1645,9 +1645,9 @@ unsigned int AtmProfile::mkAtmProfile()
   v_layerThickness.push_back(alti * 1000);
   v_layerTemperature.push_back(T_ground);
 
-  wgr = rwat(Temperature(v_layerTemperature[0], "K"),
-             Humidity(rh, "%"),
-             Pressure(v_layerPressure[0], "mb")).get("gm**-3");
+  wgr = rwat(Temperature(v_layerTemperature[0], Temperature::UnitKelvin),
+             Humidity(rh, Percent::UnitPercent),
+             Pressure(v_layerPressure[0], Pressure::UnitMilliBar)).get(MassDensity::UnitGramPerCubicMeter);
 
   // Absolute Humidity in gr/m**3 at altitude alti
   wgr0 = wgr * exp(alti / h0); // h0 in km ==> wgr0 would be the absolute humidity (gr/m**3) at sea level
@@ -1673,7 +1673,7 @@ unsigned int AtmProfile::mkAtmProfile()
     if( (v_layerPressure[i - 1] - dp * pow(dp1, i - 1) <= prLimit ) ) { //&& (v_layerTemperature[i - 1] <= tx[typeAtm_ - 1][0]) ) {  //  &&(fabs(prLimit-v_layerPressure[i - 1]-dp*pow(dp1,i-1))>=20.0) ) {
 
       if(control) {
-	
+
 	//std::cout << "capa " << i-1 << " temperature=" << v_layerTemperature[i - 1] << " K " <<  " tx[0]=" << tx[typeAtm_ - 1][0] << std::endl;
 
 	//	std::cout <<  "prLimit=" << prLimit << std::endl;
@@ -1699,18 +1699,18 @@ unsigned int AtmProfile::mkAtmProfile()
 	      (fabs(v_layerPressure[i - 1] - dp * pow(dp1, i - 1) - px[typeAtm_ - 1][k])) <= minmin ) {
 
 	    j = k;
-	    
+
 	    /*	    std::cout << "P=" << v_layerPressure[i - 1] - dp * pow(dp1, i - 1)
 		      << " prLimit=" << prLimit << " px[" << typeAtm_ - 1 << "][" << k << "]="
 		      << px[typeAtm_ - 1][k] << std::endl; */
 	    minmin = fabs(v_layerPressure[i - 1] - dp * pow(dp1, i - 1) - px[typeAtm_ - 1][k]);
 	    /* std::cout << " minmin=" << minmin << std::endl; */
-	    
+
 	  }
-	  
+
 	}
 
-	
+
       }
 
       //      std::cout << "i,j,v_layerPressure.size()-1=" << i << "," << j << "," << v_layerPressure.size() - 1 << std::endl;
@@ -1773,7 +1773,7 @@ unsigned int AtmProfile::mkAtmProfile()
     } else {
 
       //      std::cout << "i,j,v_layerPressure.size()-1=" << i << "," << j << "," << v_layerPressure.size() - 1 << std::endl;
-  
+
       if(i > v_layerPressure.size() - 1) {
         v_layerPressure.push_back(v_layerPressure[i - 1] - dp * pow(dp1, i - 1));
 
@@ -1805,11 +1805,11 @@ unsigned int AtmProfile::mkAtmProfile()
 	  // std::cout << "old prLimit =" << prLimit << std::endl;
 	  prLimit=v_layerPressure[i];  //14NOV2017
       	  // std::cout << "new prLimit =" << prLimit << std::endl;
-	} 
-      
-//       humrel = rwat_inv(Temperature(v_layerTemperature[i], "K"),    
-//                         MassDensity(v_layerWaterVapor[i], "gm**-3"),
-//                         Pressure(v_layerPressure[i], "mb")).get("%");
+	}
+
+//       humrel = rwat_inv(Temperature(v_layerTemperature[i], Temperature::UnitKelvin),
+//                         MassDensity(v_layerWaterVapor[i], MassDensity::UnitGramPerCubicMeter),
+//                         Pressure(v_layerPressure[i], Pressure::UnitMilliBar)).get(Percent::UnitPercent);
 
 
       /*	cout << "layer " << i
@@ -1827,13 +1827,13 @@ unsigned int AtmProfile::mkAtmProfile()
 
   // std::cout << "npp=" << npp << std::endl;
   // std::cout << "tropoLayer=" << tropoLayer_ << std::endl;
-  tropoTemperature_ = Temperature(v_layerTemperature[tropoLayer_], "K");
-  tropoAltitude_ = Length(v_layerThickness[tropoLayer_], "m");
-  // std::cout << "tropoAltitude=" << tropoAltitude_.get("km") << " km" << std::endl;
-  // std::cout << "tropoTemperature=" << tropoTemperature_.get("K") << " K" << std::endl;
-  // std::cout << "ground Altitude=" << altitude_.get("km") << " km" << std::endl;
-  // std::cout << "ground Temperature=" << groundTemperature_.get("K") << " K" << std::endl;
-  // std::cout << "Calculated Lapse Rate=" << (tropoTemperature_.get("K")-groundTemperature_.get("K"))/(tropoAltitude_.get("km")-altitude_.get("km")) << " K/km" << std::endl;
+  tropoTemperature_ = Temperature(v_layerTemperature[tropoLayer_], Temperature::UnitKelvin);
+  tropoAltitude_ = Length(v_layerThickness[tropoLayer_], Length::UnitMeter);
+  // std::cout << "tropoAltitude=" << tropoAltitude_.get(Length::UnitKiloMeter) << " km" << std::endl;
+  // std::cout << "tropoTemperature=" << tropoTemperature_.get(Temperature::UnitKelvin) << " K" << std::endl;
+  // std::cout << "ground Altitude=" << altitude_.get(Length::UnitKiloMeter) << " km" << std::endl;
+  // std::cout << "ground Temperature=" << groundTemperature_.get(Temperature::UnitKelvin) << " K" << std::endl;
+  // std::cout << "Calculated Lapse Rate=" << (tropoTemperature_.get(Temperature::UnitKelvin)-groundTemperature_.get(Temperature::UnitKelvin))/(tropoAltitude_.get(Length::UnitKiloMeter)-altitude_.get(Length::UnitKiloMeter)) << " K/km" << std::endl;
 
 
   altura = alti;
@@ -1854,12 +1854,12 @@ unsigned int AtmProfile::mkAtmProfile()
     v_layerTemperature0.push_back(v_layerTemperature[jj]);
     v_layerTemperature1.push_back(v_layerTemperature[jj + 1]);
     v_layerPressure0.push_back(v_layerPressure[jj]);
-    v_layerPressure1.push_back(v_layerPressure[jj + 1]); 
+    v_layerPressure1.push_back(v_layerPressure[jj + 1]);
     v_layerWaterVapor0.push_back(1.0E-3*v_layerWaterVapor[jj]);
-    v_layerWaterVapor1.push_back(1.0E-3*v_layerWaterVapor[jj + 1]); 
-      
+    v_layerWaterVapor1.push_back(1.0E-3*v_layerWaterVapor[jj + 1]);
+
       }
-  
+
   for(j = 0; j < npp; j++) {
 
     v_layerThickness[j] = (v_layerThickness[j + 1] - v_layerThickness[j]); // in m
@@ -1879,11 +1879,11 @@ unsigned int AtmProfile::mkAtmProfile()
 
     //      std::cout << "going to minorden with atmType=" << atmType << std::endl;
 
-    minorden = st76(Length(altura, "km"), atmType);
+    minorden = st76(Length(altura, Length::UnitKiloMeter), atmType);
 
-    //      std::cout << "Ozone: " << abun_ozono << "  " << ozono.get("cm**-3") << std::endl;
-    // std::cout << "N2O  : " << abun_n2o << "  " << n2o.get("cm**-3") << std::endl;
-    // std::cout << "CO   : " << abun_co  << "  " << co.get("cm**-3") << std::endl;
+    //      std::cout << "Ozone: " << abun_ozono << "  " << ozono.get(NumberDensity::UnitInverseCubicCentiMeter) << std::endl;
+    // std::cout << "N2O  : " << abun_n2o << "  " << n2o.get(NumberDensity::UnitInverseCubicCentiMeter) << std::endl;
+    // std::cout << "CO   : " << abun_co  << "  " << co.get(NumberDensity::UnitInverseCubicCentiMeter) << std::endl;
 
 
     /* std::cout << j << " " << v_layerO3_.size()-1 << std::endl; */
@@ -1899,8 +1899,8 @@ unsigned int AtmProfile::mkAtmProfile()
 
     /*    v_layerO3_[j]  = 1.E6*abun_ozono;        // in m**-3
      v_layerCO_[j]  = 1.E6*abun_co;           // in m**-3
-     v_layerN2O_[j] = 1.E6*abun_n2o;          // in m**-3 
-     v_layerNO2_[j] = 1.E6*abun_no2;          // in m**-3 
+     v_layerN2O_[j] = 1.E6*abun_n2o;          // in m**-3
+     v_layerNO2_[j] = 1.E6*abun_no2;          // in m**-3
      v_layerSO2_[j] = 1.E6*abun_so2;          // in m**-3 */
 
     // v_layerO3.push_back(1.E6*abun_ozono);        // in m**-3
@@ -1909,11 +1909,11 @@ unsigned int AtmProfile::mkAtmProfile()
     // v_layerNO2.push_back(1.E6*abun_no2);          // in m**-3
     // v_layerSO2.push_back(1.E6*abun_so2);          // in m**-3
 
-    v_layerO3.push_back(1.E6 * minorden[0].get("cm**-3")); // in m**-3
-    v_layerCO.push_back(1.E6 * minorden[2].get("cm**-3")); // in m**-3
-    v_layerN2O.push_back(1.E6 * minorden[1].get("cm**-3")); // in m**-3
-    v_layerNO2.push_back(1.E6 * minorden[3].get("cm**-3")); // in m**-3
-    v_layerSO2.push_back(1.E6 * minorden[4].get("cm**-3")); // in m**-3
+    v_layerO3.push_back(1.E6 * minorden[0].get(NumberDensity::UnitInverseCubicCentiMeter)); // in m**-3
+    v_layerCO.push_back(1.E6 * minorden[2].get(NumberDensity::UnitInverseCubicCentiMeter)); // in m**-3
+    v_layerN2O.push_back(1.E6 * minorden[1].get(NumberDensity::UnitInverseCubicCentiMeter)); // in m**-3
+    v_layerNO2.push_back(1.E6 * minorden[3].get(NumberDensity::UnitInverseCubicCentiMeter)); // in m**-3
+    v_layerSO2.push_back(1.E6 * minorden[4].get(NumberDensity::UnitInverseCubicCentiMeter)); // in m**-3
 
 
 
@@ -1988,7 +1988,7 @@ unsigned int AtmProfile::mkAtmProfile()
   v_layerSO2_ = v_layerSO2_aux;
 
   // first = false; // ?????    [-Wunused_but_set_variable]
- 
+
   return npp;
 }
 

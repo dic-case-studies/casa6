@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 # get is_CASA6 and is_python3
@@ -9,6 +8,7 @@ if is_CASA6:
     from casatasks import casalog
 
     from .mstools import write_history
+    from .parallel.parallel_data_helper import ParallelDataHelper
     from .parallel.parallel_task_helper import ParallelTaskHelper
 else:
     from taskinit import *

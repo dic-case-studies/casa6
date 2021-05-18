@@ -130,7 +130,7 @@ TEST( ViiLayerFactoryTest , ViiLayerFactoryRealDataBasicTest ) {
       */
 
       ASSERT_EQ(4,vb->nAntennas());
-      ASSERT_EQ(6,vb->nRows());
+      ASSERT_EQ(6U,vb->nRows());
       ASSERT_EQ(64,vb->nChannels());  // all spws
       ASSERT_EQ(4,vb->nCorrelations());
 
@@ -436,6 +436,146 @@ TEST_F(DataAccessTest, AccessDataInSwappingDataTVIWhenMissingCorrectedData)
   //throw
   ASSERT_THROW(visitIterator([&]() -> void {vb_p->visCube().shape();}),
                AipsError);
+}
+
+/*
+ * Gtest fixture used to test the access to the different data columns
+ * when the VI/VB2 is configured with rowBlocking().
+ * This class will create a synthetic MS in a temporary directory.
+ */
+class DataAccessRowBlockingTest : public MsFactoryTVITester
+{
+public:
+
+  /*
+   * Constructor: create the temporary dir and the MsFactory used later on
+   * to create the MS.
+   */
+  DataAccessRowBlockingTest() :
+    MsFactoryTVITester("test_tViiLayerFactory","DataAccessRowBlockingTest"),
+    nRowBlocking_p(-1),
+    lastSPWEndTime_p(-1)
+  {
+  }
+
+  /*
+   * Create the synthetic MS and a VisibilityIteratorImpl2 to access it.
+   */
+  void createVI()
+  {
+
+    // If so specified create a last SPW which finishes before the other ones.
+    // Without lastSPWEndTime_p enabled, it will create 4 SPWs (the default)
+    // that are observed from time 0 to time 14.
+    // With lastSPWEndTime_p enable, it will create 4 SPWs (now explicitely)
+    // observed in time range [0, 14] and a last SPW observed in range [0, 9]
+    // The default adds 4 antennas, i.e., 6 baselines. This gives 15*6=90 rows
+    // per SPW and 10*6=60 rows in the case a 5th SPW is added.
+    if(lastSPWEndTime_p != -1)
+    {
+      int nChannels = 100;
+      double frequency = 1e11;
+      double frequencyDelta = 1e9;
+      std::string stokes("XX YY");
+      double endTimeThisSPW = 10;
+      msf_p->addSpectralWindows(4);
+      msf_p->addSpectralWindow("SPW5", nChannels,
+                               frequency, frequencyDelta, stokes, endTimeThisSPW);
+    }
+
+    // Create the MS
+    createMS();
+
+    // Create a disk layer type VI Factory
+    IteratingParameters ipar;
+    VisIterImpl2LayerFactory diskItFac(ms_p.get(),ipar,false);
+
+    // Create a layered factory with all the layers of factories
+    std::vector<ViiLayerFactory*> factories(1);
+    factories[0]=&diskItFac;
+
+    instantiateVI(factories, nRowBlocking_p);
+  }
+
+  // Destructor
+  ~DataAccessRowBlockingTest()
+  {
+  }
+
+  rownr_t nRowBlocking_p;
+
+  double lastSPWEndTime_p;
+
+};
+
+/*
+ * This test will access data when row blocking is configured
+ */
+TEST_F(DataAccessRowBlockingTest, AccessDataRowBlocking)
+{
+  // Set rowBlocking
+  nRowBlocking_p = 7;
+
+  // This creates a MS with a total of 360 rows in four SPWs.
+  // The VI created to iterate that MS
+  createVI();
+
+  // Traverse the iterator accessing the proper number of rows.
+  // There are 4 chunks (one per SPW), each with 90 rows. With rowBlocking
+  // the number of rows in each subchunk is actually nRowBlocking+1
+  size_t nRowsSubchunk = 90;
+  size_t nSubChunk = nRowsSubchunk / (nRowBlocking_p + 1) + 1;
+  size_t iSubChunk = 0;
+  visitIterator([&]() -> void {
+    if(iSubChunk < nSubChunk - 1)
+      ASSERT_EQ(vb_p->nRows() , nRowBlocking_p + 1);
+    else // Last subchunk has less rows than nRowBlocking_p + 1
+      ASSERT_EQ(vb_p->nRows() , nRowsSubchunk - (nSubChunk - 1 ) * (nRowBlocking_p + 1));
+    iSubChunk++;
+    if(iSubChunk == nSubChunk)
+      iSubChunk = 0;
+    vb_p->visCube().shape();
+  });
+
+}
+
+/*
+ * This test will access data when row blocking is configured
+ * and the chunk size of the last chunk is smaller than the rest.
+ */
+TEST_F(DataAccessRowBlockingTest, AccessDataRowBlockingDecreasingChunkSize)
+{
+  // Set rowBlocking
+  nRowBlocking_p = 7;
+
+  // Create a SPW with fewer timestamps
+  lastSPWEndTime_p = 10;
+
+  // This creates a total of 420 rows in five SPWs.
+  createVI();
+
+  // Traverse the iterator accessing the proper number of rows.
+  // There are 5 chunks (one per SPW), 4 with 90 rows and a last one with 60.
+  // With rowBlocking the number of rows in each subchunk is
+  // actually nRowBlocking+1
+  size_t iSubChunk = 0, iChunk = 0;
+  size_t nChunk = 5;
+  visitIterator([&]() -> void {
+    size_t nRowsSubchunk = iChunk < nChunk - 1 ? 90 : 60;
+    size_t nSubChunk = nRowsSubchunk / (nRowBlocking_p + 1) + 1;
+    if(iSubChunk < nSubChunk - 1)
+      ASSERT_EQ(vb_p->nRows() , nRowBlocking_p + 1);
+    else // Last subchunk has less rows than nRowBlocking_p + 1
+      ASSERT_EQ(vb_p->nRows() , nRowsSubchunk - (nSubChunk - 1 ) * (nRowBlocking_p + 1));
+    iSubChunk++;
+    if(iSubChunk == nSubChunk)
+    {
+      iSubChunk = 0;
+      iChunk++;
+    }
+    vb_p->visCube().shape();
+  });
+
 }
 
 /*
@@ -994,3 +1134,104 @@ TEST_F(FullSortingDefinitionTest, NoSortingFuncAtAll)
   visitIterator([&]() -> void {totalSubchunks++;});
   ASSERT_EQ(totalSubchunks, (size_t)1);
 }
+
+class SeveralShapesInSubchunkTest : public MsFactoryTVITester {
+
+public:
+
+    SeveralShapesInSubchunkTest() :
+        MsFactoryTVITester("SeveralShapesInSubchunkTest","MSFactoryCreated")
+    {
+    }
+
+    void createTVIs()
+    {
+        //Setting the parameters to generate a synthetic MS 
+        double timeInterval = 10;
+        double timeSpan = 100;
+        msf_p->setTimeInfo (0, timeSpan, timeInterval);
+        msf_p->addAntennas(6);
+        //Adding two spectral windows with different number of channels
+        int nChannels = 100;
+        double frequency = 1e11;
+        double frequencyDelta = 1e9;
+        std::string stokes("XX YY");
+        msf_p->addSpectralWindow("SPW0", nChannels,
+                                 frequency, frequencyDelta, stokes);
+        nChannels = 50;
+        frequency = 2e11;
+        msf_p->addSpectralWindow("SPW1", nChannels,
+                                 frequency, frequencyDelta, stokes);
+        msf_p->addFeeds (10); //Need antenna and spw to be set up first
+
+        //Creates the synthetic MS 
+        createMS();
+
+        //Create a VI Factory that access directly the MS (or the selected MS)
+        //In order to have several SPWs in the same subchunk the DDID cannot be
+        //in the sorting columns
+        SortColumns sortColumnsChunk(false);
+        SortColumns sortColumnsSubchunk(false);
+        sortColumnsChunk.addSortingColumn(MS::ARRAY_ID, nullptr);
+        sortColumnsChunk.addSortingColumn(MS::STATE_ID, nullptr);
+        sortColumnsChunk.addSortingColumn(MS::FIELD_ID, nullptr);
+        sortColumnsSubchunk.addSortingColumn(MS::TIME, nullptr);
+        sortColumnsSubchunk.addSortingColumn(MS::ANTENNA1, nullptr);
+        sortColumnsSubchunk.addSortingColumn(MS::ANTENNA2, nullptr);
+        std::unique_ptr<VisIterImpl2LayerFactory> diskItFac;
+        diskItFac.reset(new VisIterImpl2LayerFactory(ms_p.get(),sortColumnsChunk,
+                                                     sortColumnsSubchunk, false));
+
+        //Create a layered factory with all the layers of factories
+        std::vector<ViiLayerFactory*> factories;
+        factories.push_back(diskItFac.get());
+        //Finally create the VI resulting from all the layered TVIs
+        instantiateVI(factories);
+    }
+
+};
+
+TEST_F(SeveralShapesInSubchunkTest, CheckVbColumns)
+{
+    createTVIs();
+    size_t nRows = 0;
+    //Check that after averaging with chanbin=5 the first spectral window has 20
+    //channels and the second spectral window has 10 channel
+    visitIterator([&]() -> void {//auto shape = vb_p->visCube().shape();
+                                 //ASSERT_EQ(allEQ(vb_p->spectralWindows(), 2), true);
+                                 ASSERT_EQ(vb_p->nChannelsPerShape(), IPosition(2, 100, 50));
+                                 ASSERT_EQ(vb_p->nShapes(), 2u);
+                                 ASSERT_EQ(vi_p->nSpectralWindows(), 2);
+                                 ASSERT_EQ(vb_p->visCubes().size(),2u);
+                                 ASSERT_EQ(vb_p->visCubes()[0].shape(),IPosition(3, 2, 100, 1));
+                                 ASSERT_EQ(vb_p->visCubes()[1].shape(),IPosition(3, 2, 50, 1));
+                                 ASSERT_EQ(vb_p->visCubesCorrected().size(),2u);
+                                 ASSERT_EQ(vb_p->visCubesCorrected()[0].shape(),IPosition(3, 2, 100, 1));
+                                 ASSERT_EQ(vb_p->visCubesModel().size(),2u);
+                                 ASSERT_EQ(vb_p->visCubesModel()[0].shape(),IPosition(3, 2, 100, 1));
+                                 ASSERT_EQ(vb_p->visCubesModel()[1].shape(),IPosition(3, 2, 50, 1));
+                                 ASSERT_EQ(vb_p->sigmas().size(),2u);
+                                 ASSERT_EQ(vb_p->sigmas()[0].shape(),IPosition(2, 2, 1));
+                                 ASSERT_EQ(vb_p->sigmas()[1].shape(),IPosition(2, 2, 1));
+                                 ASSERT_EQ(vb_p->sigmaSpectra().size(),2u);
+                                 ASSERT_EQ(vb_p->sigmaSpectra()[0].shape(),IPosition(3, 2, 100, 1));
+                                 ASSERT_EQ(vb_p->sigmaSpectra()[1].shape(),IPosition(3, 2, 50, 1));
+                                 ASSERT_EQ(vb_p->weights().size(),2u);
+                                 ASSERT_EQ(vb_p->weights()[0].shape(),IPosition(2, 2, 1));
+                                 ASSERT_EQ(vb_p->weights()[1].shape(),IPosition(2, 2, 1));
+                                 ASSERT_EQ(vb_p->weightSpectra().size(),2u);
+                                 ASSERT_EQ(vb_p->weightSpectra()[0].shape(),IPosition(3, 2, 100, 1));
+                                 ASSERT_EQ(vb_p->weightSpectra()[1].shape(),IPosition(3, 2, 50, 1));
+                                 ASSERT_EQ(vb_p->flagCubes().size(),2u);
+                                 ASSERT_EQ(vb_p->flagCubes()[0].shape(),IPosition(3, 2, 100, 1));
+                                 ASSERT_EQ(vb_p->flagCubes()[1].shape(),IPosition(3, 2, 50, 1));
+                                 nRows+=vb_p->visCubes()[0].shape()[2] + vb_p->visCubes()[1].shape()[2];
+                                 });
+
+    //All the original rows divided by 2
+    size_t expectedRows = 300;
+
+    //Check that we get the number of expected rows for each spw
+    ASSERT_EQ(nRows, expectedRows);
+}
+

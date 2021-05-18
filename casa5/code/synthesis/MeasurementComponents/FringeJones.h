@@ -87,7 +87,7 @@ private:
     std::map< casacore::Int, casacore::Vector<casacore::Double> const * > spwIdToFreqMap;
 public:
     SDBListGridManager(SDBList& sdbs_);
-    casacore::Int nSPW() { return spwins.size();   }
+    size_t nSPW() { return spwins.size();   }
     casacore::Int bigFreqGridIndex(casacore::Double f) { return round( (f - fmin)/df ); }
     casacore::Int getTimeIndex(casacore::Double t) { return round( (t - tmin)/dt ); }
     casacore::Int nChannels() { return totalChans;  }

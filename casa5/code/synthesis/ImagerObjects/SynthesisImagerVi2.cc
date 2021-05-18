@@ -69,7 +69,8 @@
 #include <synthesis/ImagerObjects/SynthesisUtilMethods.h>
 #include <synthesis/ImagerObjects/SIImageStore.h>
 #include <synthesis/ImagerObjects/SIImageStoreMultiTerm.h>
-
+#include <synthesis/ImagerObjects/CubeMajorCycleAlgorithm.h>
+#include <synthesis/ImagerObjects/CubeMakeImageAlgorithm.h>
 #include <synthesis/MeasurementEquations/VPManager.h>
 #include <imageanalysis/Utilities/SpectralImageUtil.h>
 #include <msvis/MSVis/MSUtil.h>
@@ -104,16 +105,23 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <iomanip>
-
+#include <synthesis/Parallel/Applicator.h>
 
 using namespace std;
 
 using namespace casacore;
 
 namespace casa { //# NAMESPACE CASA - BEGIN
-
-  SynthesisImagerVi2::SynthesisImagerVi2() : SynthesisImager(), vi_p(0), fselections_p(nullptr) {
-
+  extern Applicator applicator;
+  SynthesisImagerVi2::SynthesisImagerVi2() : SynthesisImager(), vi_p(0), fselections_p(nullptr), imparsVec_p(0), gridparsVec_p(0) {
+	/*cerr << "is applicator initialized " << applicator.initialized() << endl;
+	if(!applicator.initialized()){
+	  int argc=1;
+        char **argv;
+        casa::applicator.init ( argc, argv );
+        cerr << "controller ?" <<  applicator.isController() <<  " worker? " <<  applicator.isWorker() <<  " numprocs " << applicator.numProcs() <<  endl;
+	}
+	*/
     mss_p.resize(0);
   }
 
@@ -130,28 +138,67 @@ namespace casa { //# NAMESPACE CASA - BEGIN
  Bool retval=True;
 
     SynthesisUtilMethods::getResource("Start Run");
-
+    
     try
       {
 
-    //Respect the readonly flag...necessary for multi-process access
-    MeasurementSet thisms(selpars.msname, TableLock(TableLock::AutoNoReadLocking),
-				selpars.readonly ? Table::Old : Table::Update);
-    thisms.setMemoryResidentSubtables (MrsEligibility::defaultEligible());
 
+	MeasurementSet thisms;
+	{ ///Table system seems to have a bug when running in multi-process as the source table disappears
+	  /// temporarily when other processes are updating it 
+	  uInt exceptCounter=0;
+	  
+	  while(true){
+	    try{
+	      //Respect the readonly flag...necessary for multi-process access
+	      thisms=MeasurementSet(selpars.msname, TableLock(TableLock::UserNoReadLocking),
+				    selpars.readonly ? Table::Old : Table::Update);
+	      break;
+	    }
+	    catch(AipsError &x){
+	      
+	      String mes=x.getMesg();
+	      if(mes.contains("FilebufIO::readBlock") || mes.contains("SOURCE")){
+		sleep(0.05);
+		os << LogIO::WARN << "#####CATCHING a sleep because "<< mes<< LogIO::POST;
+	      }
+	      else
+		throw(AipsError("Error in selectdata: "+mes));
+	      
+	      if(exceptCounter > 100){
+		throw(AipsError("Error in selectdata got 100 of this exeception: "+mes));
+		
+	      }
+	      
+	    }
+	    ++exceptCounter;
+	  }
+	}//End of work around for table disappearing bug
+	
+
+    
     useScratch_p=selpars.usescratch;
     readOnly_p = selpars.readonly;
+    lockMS(thisms);	
+    thisms.setMemoryResidentSubtables (MrsEligibility::defaultEligible());
+
+    
     //    cout << "**************** usescr : " << useScratch_p << "     readonly : " << readOnly_p << endl;
     //if you want to use scratch col...make sure they are there
-    if(selpars.usescratch && !selpars.readonly){
-      VisSetUtil::addScrCols(thisms, true, false, true, false);
-      refim::VisModelData::clearModel(thisms);
-    }
-
-    if(!selpars.incrmodel && !selpars.usescratch && !selpars.readonly)
-      refim::VisModelData::clearModel(thisms, selpars.field, selpars.spw);
-
-    unlockMSs();
+    ///Need to clear this in first pass only...child processes or loops for cube ///should skip it
+    if(!(impars_p.mode.contains("cube")) || ((impars_p.mode.contains("cube")) && doingCubeGridding_p)){
+      if(selpars.usescratch && !selpars.readonly){
+	VisSetUtil::addScrCols(thisms, true, false, true, false);
+	refim::VisModelData::clearModel(thisms);
+      }
+    ////TESTOO
+    //Int CPUID;
+	//MPI_Comm_rank(MPI_COMM_WORLD, &CPUID);
+    //cerr  << " SELPARS " << selpars.toRecord()  << endl;
+      if(!selpars.incrmodel && !selpars.usescratch && !selpars.readonly)
+	refim::VisModelData::clearModel(thisms, selpars.field, selpars.spw);
+    }//end of first pass if for cubes
+    // unlockMSs();
 
 
     os << "MS : " << selpars.msname << " | ";
@@ -225,7 +272,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  mss_p[mss_p.nelements()-1]=new MeasurementSet(thisMSSelected0);
 	  
 	os << "  NRows selected : " << (mss_p[mss_p.nelements()-1])->nrow() << LogIO::POST;
-	unlockMSs();
+	//	unlockMSs();
       }
     else{
       throw(AipsError("Selection for given MS "+selpars.msname+" is invalid"));
@@ -237,6 +284,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	throw(AipsError("Data selection ended with 0 rows"));
       //Sill have some valid ms's so return false and do not proceed to do 
       //channel selection
+      unlockMSs();
       return False;
     }
 
@@ -303,17 +351,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           //cerr << "begin " << lowfreq << "  " << topfreq << endl; 
 	      //vi::VisibilityIterator2 tmpvi(mss_p, vi::SortColumns(), false); 
 	      //VisBufferUtil::getFreqRangeFromRange(lowfreq, topfreq,  freqFrame, lowfreq,  topfreq, tmpvi, selFreqFrame_p);
-		  if(MSUtil::getFreqRangeInSpw( lowfreq,
+	      //    lockMS(*(const_cast<MeasurementSet*> (mss_p[mss_p.nelements()-1])));
+              if(MSUtil::getFreqRangeInSpw( lowfreq,
 				  topfreq, Vector<Int>(1,chanlist(k,0)), Vector<Int>(1,chanlist(k,1)),
 				  Vector<Int>(1, chanlist(k,2)-chanlist(k,1)+1),
 				 *mss_p[mss_p.nelements()-1] , 
 				  selFreqFrame_p,
 						 fieldList, False))
-		    {
-		      selectionValid=True;
-		      thisSpwSelValid=True;
-		    }
-		    
+                {
+                  selectionValid=True;
+                  thisSpwSelValid=True;
+                }
+	      //  unlockMSs();
 		    
 	    }
 	    
@@ -353,7 +402,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     	  //fselections_p->add(channelSelector);
 
       }
-    }
+    }//End of channel selection
+          
     writeAccess_p=writeAccess_p && !selpars.readonly;
     createVisSet(writeAccess_p);
 
@@ -373,9 +423,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
     dataSel_p.resize(dataSel_p.nelements()+1, true);
-
     dataSel_p[dataSel_p.nelements()-1]=selpars;
-
+	//cerr << "AT THE end of DATASEL " << selpars.toRecord() << endl;
 
     unlockMSs();
       }
@@ -550,7 +599,6 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
     CountedPtr<refim::FTMachine> ftm, iftm;
     impars_p = impars;
     gridpars_p = gridpars; 
-    
 
     try
       {
@@ -558,23 +606,22 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 
 	os << "Define image coordinates for [" << impars.imageName << "] : " << LogIO::POST;
 
-	
-	csys = impars.buildCoordinateSystem( *vi_p, channelSelections_p, mss_p );
+	csys = impars_p.buildCoordinateSystem( *vi_p, channelSelections_p, mss_p );
 	//use the location defined for coordinates frame;
-	mLocation_p=impars.obslocation;
-	IPosition imshape = impars.shp();
+	mLocation_p=impars_p.obslocation;
+	IPosition imshape = impars_p.shp();
 
-	os << "Impars : start " << impars.start << LogIO::POST;
+	os << "Impars : start " << impars_p.start << LogIO::POST;
 	os << "Shape : " << imshape << "Spectral : " << csys.spectralCoordinate().referenceValue() << " at " << csys.spectralCoordinate().referencePixel() << " with increment " << csys.spectralCoordinate().increment() << LogIO::POST;
 
 	if( (itsMappers.nMappers()==0) || 
-	    (impars.imsize[0]*impars.imsize[1] > itsMaxShape[0]*itsMaxShape[1]))
+	    (impars_p.imsize[0]*impars_p.imsize[1] > itsMaxShape[0]*itsMaxShape[1]))
 	  {
 	    itsMaxShape=imshape;
 	    itsMaxCoordSys=csys;
 	  }
         itsNchan = imshape[3];
-        itsCsysRec = impars.getcsys();
+        itsCsysRec = impars_p.getcsys();
 	/*
 	os << "Define image  [" << impars.imageName << "] : nchan : " << impars.nchan 
 	   //<< ", freqstart:" << impars.freqStart.getValue() << impars.freqStart.getUnit() 
@@ -585,14 +632,14 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 	   << LogIO::POST;
 	*/
         // phasecenter
-        if (impars.phaseCenterFieldId == -1) {
+        if (impars_p.phaseCenterFieldId == -1) {
           // user-specified
-          phaseCenter_p = impars.phaseCenter;
-        } else if (impars.phaseCenterFieldId >= 0) {
+          phaseCenter_p = impars_p.phaseCenter;
+        } else if (impars_p.phaseCenterFieldId >= 0) {
           // FIELD_ID
           auto const msobj = mss_p[0];
           MSFieldColumns msfield(msobj->field());
-          phaseCenter_p=msfield.phaseDirMeas(impars.phaseCenterFieldId);
+          phaseCenter_p=msfield.phaseDirMeas(impars_p.phaseCenterFieldId);
         } else {
           // use default FIELD_ID (0)
           auto const msobj = mss_p[0];
@@ -609,13 +656,15 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 	
     try
       {
-	os << "Set Gridding options for [" << impars.imageName << "] with ftmachine : " << gridpars.ftmachine << LogIO::POST;
+	os << "Set Gridding options for [" << impars_p.imageName << "] with ftmachine : " << gridpars.ftmachine << LogIO::POST;
 
 	itsVpTable=gridpars.vpTable;
 	itsMakeVP= ( gridpars.ftmachine.contains("mosaicft") ||
 		             gridpars.ftmachine.contains("awprojectft") )?False:True;
 
-	createFTMachine(ftm, iftm, gridpars.ftmachine, impars.nTaylorTerms, gridpars.mType, 
+	//cerr << "DEFINEimage " << impars_p.toRecord() << endl; 				 
+					 
+	createFTMachine(ftm, iftm, gridpars.ftmachine, impars_p.nTaylorTerms, gridpars.mType, 
 			gridpars.facets, gridpars.wprojplanes,
 			gridpars.padding,gridpars.useAutoCorr,gridpars.useDoublePrec,
 			gridpars.convFunc,
@@ -623,10 +672,10 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 			gridpars.wbAWP,gridpars.cfCache,gridpars.usePointing,gridpars.pointingOffsetSigDev.tovector(),
 			gridpars.doPBCorr,gridpars.conjBeams,
 			gridpars.computePAStep,gridpars.rotatePAStep,
-			gridpars.interpolation, impars.freqFrameValid, 1000000000,  16, impars.stokes,
-			impars.imageName, gridpars.pointingDirCol, gridpars.skyPosThreshold,
+			gridpars.interpolation, impars_p.freqFrameValid, 1000000000,  16, impars_p.stokes,
+			impars_p.imageName, gridpars.pointingDirCol, gridpars.skyPosThreshold,
 			gridpars.convSupport, gridpars.truncateSize, gridpars.gwidth, gridpars.jwidth,
-			gridpars.minWeight, gridpars.clipMinMax, impars.pseudoi);
+			gridpars.minWeight, gridpars.clipMinMax, impars_p.pseudoi);
 
       }
     catch(AipsError &x)
@@ -637,10 +686,10 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
     try
       {
 
-		appendToMapperList(impars.imageName,  csys,  impars.shp(),
+		appendToMapperList(impars_p.imageName,  csys,  impars_p.shp(),
 			   ftm, iftm,
-			   gridpars.distance, gridpars.facets, gridpars.chanchunks,impars.overwrite,
-			   gridpars.mType, gridpars.padding, impars.nTaylorTerms, impars.startModel);
+			   gridpars.distance, gridpars.facets, gridpars.chanchunks,impars_p.overwrite,
+			   gridpars.mType, gridpars.padding, impars_p.nTaylorTerms, impars_p.startModel);
 	
 	imageDefined_p=true;
       }
@@ -648,19 +697,185 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
       {
 	os << "Error in adding Mapper : "+x.getMesg() << LogIO::EXCEPTION;
       }
-
+	imparsVec_p.resize(imparsVec_p.nelements()+1, true);
+	imparsVec_p[imparsVec_p.nelements()-1]=impars_p;
+	///For now cannot deal with cube and mtmfs in C++ parallel mode
+	if(imparsVec_p[0].deconvolver=="mtmfs") setCubeGridding(False);
+	//cerr <<"DECONV " << imparsVec_p[0].deconvolver << " cube gridding " << doingCubeGridding_p << endl;
+	gridparsVec_p.resize(gridparsVec_p.nelements()+1, true);
+	gridparsVec_p[imparsVec_p.nelements()-1]=gridpars_p;
+	//For now as awproject does not work with the c++ mpi cube gridding make sure it works the old way as mfs
+	if(gridparsVec_p[0].ftmachine.contains("awproject"))
+	   setCubeGridding(False);
+	
     return true;
   }
+Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor, SynthesisParamsImage& impars, 
+			   const SynthesisParamsGrid& gridpars){
+	
+	Int id=itsMappers.nMappers();
+    CoordinateSystem csys =imstor->getCSys();
+    IPosition imshape=imstor->getShape();
+    Int nx=imshape[0], ny=imshape[1];
+    if( (id==0) || (nx*ny > itsMaxShape[0]*itsMaxShape[1]))
+      {
+	itsMaxShape=imshape;
+	itsMaxCoordSys=csys;
+      }
+    mLocation_p=impars.obslocation;
+    // phasecenter
+    if (impars.phaseCenterFieldId == -1) {
+          // user-specified
+          phaseCenter_p = impars.phaseCenter;
+        } else if (impars.phaseCenterFieldId >= 0) {
+          // FIELD_ID
+          auto const msobj = mss_p[0];
+          MSFieldColumns msfield(msobj->field());
+          phaseCenter_p=msfield.phaseDirMeas(impars.phaseCenterFieldId);
+        } else {
+          // use default FIELD_ID (0)
+          auto const msobj = mss_p[0];
+          MSFieldColumns msfield(msobj->field());
+          phaseCenter_p=msfield.phaseDirMeas(0);
+        }
+	itsVpTable=gridpars.vpTable;
+	itsMakeVP= ( gridpars.ftmachine.contains("mosaicft") ||
+		             gridpars.ftmachine.contains("awprojectft") )?False:True;
+	CountedPtr<refim::FTMachine> ftm, iftm;
+	createFTMachine(ftm, iftm, gridpars.ftmachine, impars.nTaylorTerms, gridpars.mType, 
+			gridpars.facets, gridpars.wprojplanes,
+			gridpars.padding,gridpars.useAutoCorr,gridpars.useDoublePrec,
+			gridpars.convFunc,
+			gridpars.aTermOn,gridpars.psTermOn, gridpars.mTermOn,
+			gridpars.wbAWP,gridpars.cfCache,gridpars.usePointing,
+			gridpars.pointingOffsetSigDev.tovector(),
+			gridpars.doPBCorr,gridpars.conjBeams,
+			gridpars.computePAStep,gridpars.rotatePAStep,
+			gridpars.interpolation, impars.freqFrameValid, 1000000000,  16, impars.stokes,
+			impars.imageName, gridpars.pointingDirCol, gridpars.skyPosThreshold,
+			gridpars.convSupport, gridpars.truncateSize, gridpars.gwidth, gridpars.jwidth,
+			gridpars.minWeight, gridpars.clipMinMax, impars.pseudoi);  
+	
+	if(gridpars.facets >1)
+	{
+	      // Make and connect the list.
+		Block<CountedPtr<SIImageStore> > imstorList = createFacetImageStoreList( imstor, gridpars.facets );
+		for( uInt facet=0; facet<imstorList.nelements(); facet++)
+		{
+		  CountedPtr<refim::FTMachine> new_ftm, new_iftm;
+		  if(facet==0){ new_ftm = ftm;  new_iftm = iftm; }
+		  else{ new_ftm=ftm->cloneFTM();  new_iftm=iftm->cloneFTM(); }
+		  itsMappers.addMapper(createSIMapper( gridpars.mType, imstorList[facet], new_ftm, new_iftm));
+		}
+	}
+	else{
+		itsMappers.addMapper(  createSIMapper( gridpars.mType, imstor, ftm, iftm ) );	
+	}
+        impars_p=impars;
+        gridpars_p=gridpars;
+	imageDefined_p=true;
+	return true;
+}
+Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor, 
+				    const String& ftmachine)
+  {
+    CountedPtr<refim::FTMachine> ftm, iftm;
 
+    // The following call to createFTMachine() uses the
+    // following defaults
+    //
+    // facets=1, wprojplane=1, padding=1.0, useAutocorr=false, 
+    // useDoublePrec=true, gridFunction=String("SF")
+    //
+    createFTMachine(ftm, iftm, ftmachine);
+    
+    Int id=itsMappers.nMappers();
+    CoordinateSystem csys =imstor->getCSys();
+    IPosition imshape=imstor->getShape();
+    Int nx=imshape[0], ny=imshape[1];
+    if( (id==0) || (nx*ny > itsMaxShape[0]*itsMaxShape[1]))
+      {
+	itsMaxShape=imshape;
+	itsMaxCoordSys=csys;
+      }
 
+    itsMappers.addMapper(  createSIMapper( "default", imstor, ftm, iftm ) );
+    imageDefined_p=true;
+    return true;
+  }
+Bool SynthesisImagerVi2::defineImage(CountedPtr<SIImageStore> imstor, 
+				    const Record& ftmRec, const Record& iftmRec)
+  {
+    CountedPtr<refim::FTMachine> ftm, iftm;
+	ftm=refim::VisModelData::NEW_FT(ftmRec);
+	iftm=refim::VisModelData::NEW_FT(iftmRec);
+    
+    Int id=itsMappers.nMappers();
+    CoordinateSystem csys =imstor->getCSys();
+    IPosition imshape=imstor->getShape();
+    Int nx=imshape[0], ny=imshape[1];
+    if( (id==0) || (nx*ny > itsMaxShape[0]*itsMaxShape[1]))
+      {
+	itsMaxShape=imshape;
+	itsMaxCoordSys=csys;
+      }
+
+    itsMappers.addMapper(  createSIMapper( "default", imstor, ftm, iftm, id ) );
+    imageDefined_p=true;
+    return true;
+  }
+ Bool SynthesisImagerVi2::weight(const Record& inrec){
+	String type, rmode, filtertype;
+	Quantity noise, fieldofview,filterbmaj,filterbmin, filterbpa;  
+	Double robust, fracBW;
+	Int npixels;
+	Bool multiField, useCubeBriggs;
+	SynthesisUtilMethods::getFromWeightRecord(type, rmode,noise, robust,fieldofview,npixels, multiField, useCubeBriggs,
+				  filtertype, filterbmaj,filterbmin, filterbpa, fracBW, inrec);
+	return weight(type, rmode,noise, robust,fieldofview,npixels, multiField, useCubeBriggs,
+				  filtertype, filterbmaj,filterbmin, filterbpa, fracBW );
+				
+	 
+ }
  Bool SynthesisImagerVi2::weight(const String& type, const String& rmode,
 			       const Quantity& noise, const Double robust,
 			       const Quantity& fieldofview,
 				 const Int npixels, const Bool multiField, const Bool useCubeBriggs,
 			       const String& filtertype, const Quantity& filterbmaj,
-			       const Quantity& filterbmin, const Quantity& filterbpa   )
+			       const Quantity& filterbmin, const Quantity& filterbpa, Double fracBW)
   {
-    LogIO os(LogOrigin("SynthesisImagerVi2", "weight()", WHERE));
+      LogIO os(LogOrigin("SynthesisImagerVi2", "weight()", WHERE));
+      if(rmode=="bwtaper") //See CAS-13021 for bwtaper algorithm details
+      {
+          if(fracBW == 0.0)
+          {
+              Double minFreq = 0.0;
+              Double maxFreq = 0.0;
+              
+              if(itsMaxShape(3) < 1) {
+                cout << "SynthesisImagerVi2::weight Only one channel in image " << endl;
+              }
+              else{
+                  minFreq=abs(SpectralImageUtil::worldFreq(itsMaxCoordSys, 0.0));
+                  maxFreq=abs(SpectralImageUtil::worldFreq(itsMaxCoordSys,itsMaxShape(3)-1));
+
+                  if(maxFreq < minFreq){
+                    Double tmp=minFreq;
+                    minFreq=maxFreq;
+                    maxFreq=tmp;
+                  }
+                  
+                  if((maxFreq != 0.0) || (minFreq != 0.0)) fracBW = 2*(maxFreq - minFreq)/(maxFreq + minFreq);
+                  
+                  os << LogIO::NORMAL << " Fractional bandwidth used by briggsbwtaper " << fracBW << endl;  //<< LogIO::POST;
+                  
+              }
+          }
+      }
+      
+	weightParams_p=SynthesisUtilMethods::fillWeightRecord(type, rmode,noise, robust,fieldofview,
+				 npixels, multiField, useCubeBriggs,filtertype, filterbmaj,filterbmin, filterbpa, fracBW);
+
        try {
     	//Int nx=itsMaxShape[0];
     	//Int ny=itsMaxShape[1];
@@ -758,18 +973,20 @@ Bool SynthesisImagerVi2::defineImage(SynthesisParamsImage& impars,
 		  //timer.mark();
 		  //Construct imwgt_p with old vi for now if old vi is in use as constructing with vi2 is slower
 		  //Determine if any image is cube
-		  if(isSpectralCube() && useCubeBriggs){
+		  if(useCubeBriggs){
 		    String outstr=String("Doing spectral cube Briggs weighting formula --  " + rmode + (rmode=="abs" ? " with estimated noise "+ String::toString(noise.getValue())+noise.getUnit()  : "")); 
 		    os << outstr << LogIO::POST;
 		    //VisImagingWeight nat("natural");
 		    //vi_p->useImagingWeight(nat);
 		    if(rmode=="abs" && robust==0.0 && noise.getValue()==0.0)
 		      throw(AipsError("Absolute Briggs formula does not allow for robust 0 and estimated noise per visibility 0"));
-		    CountedPtr<refim::BriggsCubeWeightor> bwgt=new refim::BriggsCubeWeightor(wtype=="Uniform" ? "none" : rmode, noise, robust, npixels, multiField);
-		    for (Int k=0; k < itsMappers.nMappers(); ++k){
-		      itsMappers.getFTM2(k)->setBriggsCubeWeight(bwgt);
-
-		    }
+                
+            CountedPtr<refim::BriggsCubeWeightor> bwgt=new refim::BriggsCubeWeightor(wtype=="Uniform" ? "none" : rmode, noise, robust,fracBW, npixels, multiField);
+            for (Int k=0; k < itsMappers.nMappers(); ++k){
+                      itsMappers.getFTM2(k)->setBriggsCubeWeight(bwgt);
+                    }
+              
+              
 		  }
 		  else
 		  {
@@ -829,14 +1046,14 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 					   IPosition imshape,
 					    CountedPtr<refim::FTMachine>& ftm,
 					    CountedPtr<refim::FTMachine>& iftm,
-					   Quantity distance, 
+					   Quantity distance,
 					   Int facets,
 					   Int chanchunks,
 					   const Bool overwrite,
 					   String mappertype,
 					   Float padding,
 					   uInt ntaylorterms,
-					   Vector<String> startmodel)
+					   const Vector<String> &startmodel)
     {
       LogIO log_l(LogOrigin("SynthesisImagerVi2", "appendToMapperList(ftm)"));
       //---------------------------------------------
@@ -845,70 +1062,41 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
       if(facets > 1 && itsMappers.nMappers() > 0)
 	log_l << "Facetted image has to be the first of multifields" << LogIO::EXCEPTION;
 
+     TcleanProcessingInfo procInfo;
+     CompositeNumber cn(uInt(imshape[0] * 2));
+     // heuristic factors multiplied to imshape based on gridder
+     size_t fudge_factor = 15;
+     if (ftm->name()=="MosaicFTNew") {
+         fudge_factor = 20;
+     }
+     else if (ftm->name()=="GridFT") {
+         fudge_factor = 9;
+     }
+     std::tie(procInfo, std::ignore, std::ignore) =
+         nSubCubeFitInMemory(fudge_factor, imshape, padding);
+
+     // chanchunks auto-calculation block, for now still here for awproject (CAS-12204)
      if(chanchunks<1)
 	{
-	  log_l << "Automatically calculate chanchunks";
+	  log_l << "Automatically calculated chanchunks";
 	  log_l << " using imshape : " << imshape << LogIO::POST;
 
 	  // Do calculation here.
 	  // This runs once per image field (for multi-field imaging)
 	  // This runs once per cube partition, and will see only its own partition's shape
-	  chanchunks=1;
+		//chanchunks=1;
 
-          CompositeNumber cn(uInt(imshape[0] * 2));
-          // heuristic factors multiplied to imshape based on gridder
-          size_t fudge_factor = 15;
-          if (ftm->name()=="MosaicFTNew") {
-              fudge_factor = 20;
-          }
-          else if (ftm->name()=="GridFT") {
-              fudge_factor = 9;
-          }
+                chanchunks = procInfo.chnchnks;
 
-          Double required_mem = fudge_factor * sizeof(Float);
-          for (size_t i = 0; i < imshape.nelements(); i++) {
-              // gridding pads image and increases to composite number
-              if (i < 2) {
-                  required_mem *= cn.nextLargerEven(Int(padding*Float(imshape[i])-0.5));
-              }
-              else {
-                  required_mem *= imshape[i];
-              }
-          }
-
-          // get number of tclean processes running on the same machine
-          size_t nlocal_procs = 1;
-          if (getenv("OMPI_COMM_WORLD_LOCAL_SIZE")) {
-              std::stringstream ss(getenv("OMPI_COMM_WORLD_LOCAL_SIZE"));
-              ss >> nlocal_procs;
-          }
-          // assumes all processes need the same amount of memory
-          required_mem *= nlocal_procs;
-          Double usr_memfrac, usr_mem;
-          AipsrcValue<Double>::find(usr_memfrac, "system.resources.memfrac", 80.);
-          AipsrcValue<Double>::find(usr_mem, "system.resources.memory", -1.);
-          Double memory_avail;
-          if (usr_mem > 0.) {
-              memory_avail = usr_mem * 1024. * 1024.;
-          }
-          else {
-	    memory_avail = Double(HostInfo::memoryFree()) * (usr_memfrac / 100.) * 1024.;
-          }
-          // compute required chanchunks to fit into the available memory
-          chanchunks = (int)std::ceil((Double)required_mem / memory_avail);
-          if (imshape.nelements() == 4 && imshape[3] < chanchunks) {
-              chanchunks = imshape[3];
-              // TODO make chanchunks a divisor of nchannels?
-          }
-          chanchunks = chanchunks < 1 ? 1 : chanchunks;
-
-	  log_l << "Required memory " << required_mem / nlocal_procs / 1024. / 1024. / 1024.
+		/*log_l << "Required memory " << required_mem / nlocal_procs / 1024. / 1024. / 1024.
                  << "\nAvailable memory " << memory_avail / 1024. / 1024 / 1024.
                  << " (rc: memory fraction " << usr_memfrac << "% rc memory " << usr_mem / 1024.
                  << ")\n" << nlocal_procs << " other processes on node\n"
                  << "Setting chanchunks to " << chanchunks << LogIO::POST;
+		*/
 	}
-
+	//record this in gridpars_p
+	gridpars_p.chanchunks=chanchunks;
       if( imshape.nelements()==4 && imshape[3]<chanchunks )
 	{
 	  log_l << LogIO::WARN << "An image with " << imshape[3] << " channel(s) cannot be divided into " << chanchunks << " chunks. Please set chanchunks=1 or choose chanchunks<nchan." << LogIO::EXCEPTION;
@@ -927,7 +1115,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
       // Create the ImageStore object
       CountedPtr<SIImageStore> imstor;
       MSColumns msc(*(mss_p[0]));
-      imstor = createIMStore(imagename, csys, imshape, overwrite,msc, mappertype, ntaylorterms, distance,facets, iftm->useWeightImage(), startmodel );
+      imstor = createIMStore(imagename, csys, imshape, overwrite,msc, mappertype, ntaylorterms, distance, procInfo, facets, iftm->useWeightImage(), startmodel );
 
       // Create the Mappers
       if( facets<2 && chanchunks<2) // One facet. Just add the above imagestore to the mapper list.
@@ -946,6 +1134,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		  CountedPtr<refim::FTMachine> new_ftm, new_iftm;
 		  if(facet==0){ new_ftm = ftm;  new_iftm = iftm; }
 		  else{ new_ftm=ftm->cloneFTM();  new_iftm=iftm->cloneFTM(); }
+// 		  imstorList[facet]->setDataPolFrame(imstor->getDataPolFrame());
 		  itsMappers.addMapper(createSIMapper( mappertype, imstorList[facet], new_ftm, new_iftm, ntaylorterms));
 		}
 	    }// facets
@@ -963,7 +1152,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 		  else{ 
 		    new_ftm=ftm->cloneFTM();  
 		    new_iftm=iftm->cloneFTM(); }
-		 
+		  imstorList[chunk]->setDataPolFrame(imstor->getDataPolFrame());
 		  itsMappers.addMapper(createSIMapper( mappertype, imstorList[chunk], new_ftm, new_iftm, ntaylorterms));
 		}
 	    }// chanchunks
@@ -977,13 +1166,152 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
     }
 
   /////////////////////////
+  /**
+   * Calculations of memory required / available -> nchunks .
+   *
+   * Returns a tuple with a TcleanProcessingInfo, vector of start channels per subchunk,
+   * vector of end channels.
+   */
+  std::tuple<TcleanProcessingInfo, Vector<Int>, Vector<Int> > SynthesisImagerVi2::nSubCubeFitInMemory(const Int fudge_factor, const IPosition& imshape, const Float padding){
+	LogIO log_l(LogOrigin("SynthesisImagerVi2", "nSubCubeFitInMemory"));
+
+	Double required_mem = fudge_factor * sizeof(Float);
+	int nsubcube=1;
+	CompositeNumber cn(uInt(imshape[0] * 2));
+	for (size_t i = 0; i < imshape.nelements(); i++) {
+			// gridding pads image and increases to composite number
+			if (i < 2) {
+				required_mem *= cn.nextLargerEven(Int(padding*Float(imshape[i])-0.5));
+			}
+			else {
+				required_mem *= imshape[i];
+			}
+	}
+
+	// get number of tclean processes running on the same machine
+	size_t nlocal_procs = 1;
+	if (getenv("OMPI_COMM_WORLD_LOCAL_SIZE")) {
+		std::stringstream ss(getenv("OMPI_COMM_WORLD_LOCAL_SIZE"));
+		ss >> nlocal_procs;
+	}
+        //cerr << "NUM_PROC " << nlocal_procs << endl;
+	// assumes all processes need the same amount of memory
+	required_mem *= nlocal_procs;
+	Double usr_memfrac, usr_mem;
+	AipsrcValue<Double>::find(usr_memfrac, "system.resources.memfrac", 80.);
+	AipsrcValue<Double>::find(usr_mem, "system.resources.memory", -1.);
+	Double memory_avail;
+	if (usr_mem > 0.) {
+		memory_avail = usr_mem * 1024. * 1024.;
+	}
+	else {
+	    memory_avail = Double(HostInfo::memoryFree()) * (usr_memfrac / 100.) * 1024.;
+	}
+	// compute required chanchunks to fit into the available memory
+	nsubcube = (int)std::ceil((Double)required_mem / memory_avail);
+        Int nworkers= applicator.numProcs() < 2 ? 1 : applicator.numProcs()-1;
+        if((nsubcube/nworkers) >1 && nworkers !=1){
+          nsubcube=(Int(std::floor(Float(nsubcube)/Float(nworkers)))+1)*nworkers;
+
+        }
+	if (imshape.nelements() == 4 && imshape[3] < nsubcube) {
+		nsubcube = imshape[3];
+              // TODO make chanchunks a divisor of nchannels?
+	}
+	nsubcube = nsubcube < 1 ? 1 : nsubcube;
+        if( (imshape[3] >= nworkers) && (nsubcube < nworkers)){
+          nsubcube=nworkers;
+          ///TESTOO
+          //if(imshape[3] > 2*nworkers)
+          //  nsubcube=2*nworkers;
+
+        }
+	 else if(imshape[3] < (applicator.numProcs()-1)){
+		nsubcube=imshape[3]; 
+	 }
+	Int chunksize=imshape[3]/nsubcube;
+	Int rem=imshape[3] % nsubcube;
+	//case of nchan < numprocs
+	if(chunksize==0 && rem > 0){
+		nsubcube=rem;
+		chunksize=1;
+		rem=0;
+	}
+	///Avoid an extra chunk with 1 channel as it cause bumps in linear interpolation
+	///See CAS-12625
+        /*
+	while((rem==1) && (chunksize >1)){
+		nsubcube +=1;
+		chunksize=imshape[3]/nsubcube;
+		rem=imshape[3] % nsubcube;
+	}
+	if(rem !=0) ++nsubcube;
+        . */
+	Vector<Int> start(nsubcube,0);
+	Vector<Int> end(nsubcube,chunksize-1);
+        if(rem >0){
+          end(0)+=1;
+          --rem;
+        }
+	for (Int k=1; k < nsubcube; ++k){
+		start(k)=end(k-1)+1;
+                //	end(k)=((k !=nsubcube-1) || rem==0)? (start(k)+chunksize-1) : (start(k)+rem-1);
+                end(k)=(start(k)+chunksize-1);
+                if(rem > 0){
+                  end(k)+=1;
+                  --rem;
+                }
+	}
+
+        // print mem related info to log
+        const float toGB = 1024.0 * 1024.0 * 1024.0;
+        std::ostringstream usr_mem_msg;
+        if (usr_mem > 0.) {
+            usr_mem_msg << usr_mem / 1024.;
+        } else {
+            usr_mem_msg << "-";
+        }
+        std::ostringstream oss;
+        oss << setprecision(4);
+        oss << "Required memory: " << required_mem / toGB
+            << " GB. Available mem.: " << memory_avail / toGB
+            << " GB (rc, mem. fraction: " << usr_memfrac
+            << "%, memory: " << usr_mem_msg.str()
+            << ") => Subcubes: " << nsubcube
+            << ". Processes on node: " << nlocal_procs << ".\n";
+        log_l << oss << LogIO::POST;
+
+        TcleanProcessingInfo procInfo;
+        procInfo.mpiprocs = nlocal_procs;
+        procInfo.chnchnks = nsubcube;
+        procInfo.memavail = memory_avail / toGB;
+        procInfo.memreq = required_mem / toGB;
+        return make_tuple(procInfo, start, end);
+  }
+  
+ void SynthesisImagerVi2::runMajorCycleCube( const Bool dopsf, 
+				      const Record inpcontrol) {
+	LogIO os( LogOrigin("SynthesisImagerVi2","runMajorCycleCube",WHERE) );		  
+	if(dopsf){
+	  runCubeGridding(True);
+	  ///Store the beamsets in ImageInfo
+	  for(Int k=0; k < itsMappers.nMappers(); ++k){
+	   
+	    (itsMappers.imageStore(k))->getBeamSet();
+	  }
+	}
+	else
+		runCubeGridding(False, inpcontrol);
+	
+			  
+			  
+	}
  void SynthesisImagerVi2::runMajorCycle(const Bool dopsf, 
 				      const Bool savemodel)
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","runMajorCycle",WHERE) );
 
     //    cout << "Savemodel : " << savemodel << "   readonly : " << readOnly_p << "   usescratch : " << useScratch_p << endl;
-
     Bool savemodelcolumn = savemodel && !readOnly_p && useScratch_p;
     Bool savevirtualmodel = savemodel && !readOnly_p && !useScratch_p;
 
@@ -1003,13 +1331,24 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	numcoh+=Double(mss_p[k]->nrow());
       ProgressMeter pm(1.0, numcoh, 
 			 dopsf?"Gridding Weights and PSF":"Major Cycle", "","","",true);
-	Int cohDone=0;
+      rownr_t cohDone=0;
 
 
     	if(!dopsf)itsMappers.initializeDegrid(*vb);
     	itsMappers.initializeGrid(*vi_p,dopsf);
 	SynthesisUtilMethods::getResource("After initGrid for all mappers");
-
+        ////Under some peculiar selection criterion and low channel ms  vb2 seems to return more channels than in spw
+        {
+          vi_p->originChunks();
+          vi_p->origin();
+          Int nchannow=vb->nChannels();
+          Int spwnow=vb->spectralWindows()[0];
+          Int nchaninms=MSColumns(vb->ms()).spectralWindow().numChan()(spwnow);
+          //cerr << "chans " << nchaninms << "   " << nchannow << endl;
+          if (nchaninms < nchannow)
+            throw(AipsError("A nasty Visbuffer2 error occured...wait for CNGI"));
+        }
+          //////
     	for (vi_p->originChunks(); vi_p->moreChunks();vi_p->nextChunk())
     	{
 
@@ -1024,8 +1363,11 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 			    vb->setVisCubeModel(mod); 
 			  }
 			  itsMappers.degrid(*vb, savevirtualmodel );
-			  if(savemodelcolumn && writeAccess_p ){			    
+			  if(savemodelcolumn && writeAccess_p ){	
+				const_cast<MeasurementSet& >((vi_p->ms())).lock(true);
 			    vi_p->writeVisModel(vb->visCubeModel());
+				const_cast<MeasurementSet& >((vi_p->ms())).unlock();
+				
 			    //static_cast<VisibilityIteratorImpl2 *> (vi_p->getImpl())->writeVisModel(vb->visCubeModel());
 
 			    // Cube<Complex> tt=vb->visCubeModel();
@@ -1095,7 +1437,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	  numcoh+=Double(mss_p[k]->nrow());
 	ProgressMeter pm(1.0, numcoh, 
 			 dopsf?"Seting model column to zero":"pre-Major Cycle", "","","",True);
-	Int cohDone=0;
+        rownr_t cohDone=0;
     	for (vi_p->originChunks(); vi_p->moreChunks();vi_p->nextChunk())
 	  {
 	    
@@ -1146,7 +1488,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 
 	 ProgressMeter pm(1.0, numcoh, 
 			  dopsf?"Gridding Weights and PSF":"Major Cycle", "","","",true);
-	Int cohDone=0;
+	rownr_t cohDone=0;
 
 
 	itsMappers.getFTM2(gmap, False)->reset();
@@ -1228,8 +1570,287 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 
   }// end runMajorCycle2
 
+//////////////////////////////
+ 
+  ////////////////////////////////////////////////////////////////////////////////////////////////
 
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  bool SynthesisImagerVi2::runCubeGridding(Bool dopsf, const Record inpcontrol){
+
+	LogIO logger(LogOrigin("SynthesisImagerVi2", "runCubeGridding", WHERE));
+
+	  //dummy for now as init is overloaded on this signature
+        int argc=1;
+        char **argv=nullptr;
+        casa::applicator.init ( argc, argv );
+	  //For serial or master only
+	if ( applicator.isController() ) {
+		CubeMajorCycleAlgorithm cmc;
+		//casa::applicator.defineAlgorithm(cmc);
+		//Initialize everything to get the setup as serial
+		{
+                
+			vi_p->originChunks();
+			vi_p->origin();
+		
+		}
+		///Break things into chunks for parallelization or memory availabbility
+		Vector<Int> startchan;
+		Vector<Int> endchan; 
+		Int numchunks;
+		Int fudge_factor = 15;
+		if ((itsMappers.getFTM2(0))->name()=="MosaicFTNew") {
+			fudge_factor = 20;
+		}
+		else if ((itsMappers.getFTM2(0))->name()=="GridFT") {
+			fudge_factor = 9;
+		}
+                TcleanProcessingInfo procInfo;
+		std::tie(procInfo, startchan, endchan)=nSubCubeFitInMemory(fudge_factor, itsMaxShape, gridpars_p.padding);
+                numchunks = procInfo.chnchnks;
+		////TESTOO
+		//numchunks=2;
+		//startchan.resize(2);startchan[0]=0; startchan[1]=2;
+		//endchan.resize(2); endchan[0]=1; endchan[1]=2;
+		
+		/////END TESTOO
+		//cerr << "NUMCHUNKS " << numchunks << " start " <<  startchan << " end " << endchan << endl;
+		Record controlRecord=inpcontrol;
+		//For now just field 0 but should loop over all
+		///This is to pass in explicit model, residual names etc
+		controlRecord.define("nfields", Int(imparsVec_p.nelements()));
+        //CountedPtr<SIImageStore> imstor = imageStore ( 0 );
+        // checking that psf,  residual and sumwt is allDone
+        //cerr << "shapes "  <<  imstor->residual()->shape() <<  " " <<  imstor->sumwt()->shape() <<  endl;
+		if(!dopsf){
+		        
+		  //controlRecord.define("lastcycle",  savemodel);
+		  controlRecord.define("nmajorcycles", nMajorCycles);
+			Vector<String> modelnames(Int(imparsVec_p.nelements()),"");
+			for(uInt k=0; k < imparsVec_p.nelements(); ++k){
+				Int imageStoreId=k;
+				if(k>0){
+					if(gridparsVec_p[0].chanchunks >1 && uInt(itsMappers.nMappers()) >=    (gridparsVec_p[0].chanchunks + gridparsVec_p.nelements()))
+						imageStoreId+=gridparsVec_p[0].chanchunks-1;
+					if(gridparsVec_p[0].facets >1)
+						imageStoreId+=gridparsVec_p[0].facets*gridparsVec_p[0].facets-1;
+				}
+				if((itsMappers.imageStore(imageStoreId))->hasModel()){
+					modelnames(k)=imparsVec_p[k].imageName+".model";
+					(itsMappers.imageStore(k))->model()->unlock();
+					controlRecord.define("modelnames", modelnames);
+				}
+			}
+			
+		}
+		Vector<String> weightnames(Int(imparsVec_p.nelements()),"");
+                Vector<String> pbnames(Int(imparsVec_p.nelements()),"");
+		for(uInt k=0; k < imparsVec_p.nelements(); ++k){
+			Int imageStoreId=k;
+			if(k>0){
+					if(gridparsVec_p[0].chanchunks >1 && uInt(itsMappers.nMappers()) >=    (gridparsVec_p[0].chanchunks + gridparsVec_p.nelements()))
+						imageStoreId+=gridparsVec_p[0].chanchunks-1;
+					if(gridparsVec_p[0].facets >1)
+						imageStoreId+=gridparsVec_p[0].facets*gridparsVec_p[0].facets-1;
+				}
+			//cerr << "FTMachine name " << (itsMappers.getFTM2(imageStoreId))->name() << endl;
+			if((itsMappers.getFTM2(imageStoreId))->useWeightImage()){
+                          //cerr << "Mosaic weight image " << max(itsMappers.imageStore(imageStoreId)->weight(k)->get()) << endl;
+				weightnames(k)=itsMappers.imageStore(imageStoreId)->weight(k)->name();
+                                
+                                
+			}
+			if(itsMakeVP)
+			  pbnames(k)=itsMappers.imageStore(imageStoreId)->pb(k)->name();
+		}
+		controlRecord.define("weightnames", weightnames);
+                controlRecord.define("pbnames", pbnames);
+        // Tell the child processes not to do the dividebyweight process as this is done
+		// tell each child to do the normars stuff
+		controlRecord.define("dividebyweight",  True);
+                controlRecord.defineRecord("normpars", normpars_p); 
+		///Let's see if no per chan weight density was chosen
+		String weightdensityimage=getWeightDensity();
+		if(weightdensityimage != "")
+			controlRecord.define("weightdensity", weightdensityimage);
+        
+		Record vecSelParsRec, vecImParsRec, vecGridParsRec;
+		Vector<Int>vecRange(2);
+		for (uInt k = 0; k < dataSel_p.nelements(); ++k) {
+			Record selparsRec = dataSel_p[k].toRecord();
+			vecSelParsRec.defineRecord(String::toString(k), selparsRec);
+		}
+		for (uInt k=0; k < imparsVec_p.nelements(); ++k){
+			Record imparsRec = imparsVec_p[k].toRecord();
+			//need to send polrep
+			imparsRec.define("polrep", Int((itsMappers.imageStore(k))->getDataPolFrame()));
+                        //need to send movingSourceName if any
+                        imparsRec.define("movingsource", movingSource_p);
+			Record gridparsRec = gridparsVec_p[k].toRecord();
+			/* Might need this to pass the state of the global ftmachines...test for parallel when needed
+			String err;
+			Record ftmrec, iftmrec;
+			if(!( (itsMappers.getFTM2(k)->toRecord(err, iftmrec,False)) && (itsMappers.getFTM2(k, false)->toRecord(err, ftmrec,False))))
+				throw(AipsError("FTMachines serialization failed"));
+			gridparsRec.defineRecord("ftmachine", ftmrec);
+			gridparsRec.defineRecord("iftmachine", iftmrec);
+			*/
+			vecImParsRec.defineRecord(String::toString(k), imparsRec);
+			vecGridParsRec.defineRecord(String::toString(k), gridparsRec);
+		}
+		String workingdir="";
+		//Int numchan=(dopsf) ? imstor->psf()->shape()[3] : imstor->residual()->shape() [3];
+		//copy the imageinfo of main image here
+		if(dopsf)
+		  cubePsfImageInfo_p=(itsMappers.imageStore(0)->psf())->imageInfo();
+        for(Int k=0; k < itsMappers.nMappers(); ++k){
+	 
+			if(dopsf){
+			   
+				for(uInt j =0; j <(itsMappers.imageStore(k)->getNTaylorTerms(true)); ++j){
+                                  ///TESTOO
+                                  //(itsMappers.imageStore(k))->psf(j)->set(0.0);
+                                  /////////
+					(itsMappers.imageStore(k))->psf(j)->unlock();
+				}
+			}
+			else{
+				for(uInt j =0; j <(itsMappers.imageStore(k)->getNTaylorTerms(false)); ++j){
+                                  /////////TESTOO
+                                  //(itsMappers.imageStore(k))->residual(j)->set(0.0);
+                                    ///////
+					(itsMappers.imageStore(k))->residual(j)->unlock();
+				}
+			}
+			for(uInt j =0; j <(itsMappers.imageStore(k)->getNTaylorTerms(true)); ++j){
+			//cerr << k << " type " << (itsMappers.imageStore(k))->sumwt(j)->imageType() << " name " << (itsMappers.imageStore(k))->sumwt(j)->name() << endl;
+				
+			       
+				Path namewgt( (itsMappers.imageStore(k))->sumwt(j)->name());
+				workingdir=namewgt.dirName();
+                                ///TESTOO
+                                //(itsMappers.imageStore(k))->sumwt(j)->set(0.0);
+                                ////
+				(itsMappers.imageStore(k))->sumwt(j)->unlock();
+				(itsMappers.imageStore(k))->releaseLocks();
+			}
+	}		
+		//Send the working directory as the child and master may be at different places
+		
+		controlRecord.define("workingdirectory", workingdir);
+		// For now this contains lastcycle if necessary in the future this
+		// should come from the master control record
+        
+                //Int numprocs = applicator.numProcs();
+        //cerr << "Number of procs: " << numprocs << endl;
+        Int rank ( 0 );
+        Bool assigned; //(casa::casa::applicator.nextAvailProcess(pwrite, rank));
+        Bool allDone ( false );
+        Vector<Bool> retvals(numchunks, False);
+        Int indexofretval=0;
+        for ( Int k=0; k < numchunks; ++k ) {
+            assigned=casa::applicator.nextAvailProcess ( cmc, rank );
+            //cerr << "assigned "<< assigned << endl;
+            while ( !assigned ) {
+                rank = casa::applicator.nextProcessDone ( cmc, allDone );
+                //cerr << "while rank " << rank << endl;
+                Bool status;
+		Record returnRec;
+		casa::applicator.get(returnRec);
+                casa::applicator.get ( status );
+                retvals(indexofretval)=status;
+		if(dopsf)
+		  updateImageBeamSet(returnRec);
+		if(returnRec.isDefined("tempfilenames")){
+		  std::vector<String> b=returnRec.asArrayString("tempfilenames").tovector();
+		  tempFileNames_p.insert(std::end(tempFileNames_p), std::begin(b), std::end(b));
+		}
+		  
+                ++indexofretval;
+                if ( status )
+                  //cerr << k << " rank " << rank << " successful " << endl;
+                  cerr << "" ;
+                else
+                    logger << k << " rank " << rank << " failed " << LogIO::SEVERE;
+                assigned = casa::applicator.nextAvailProcess ( cmc, rank );
+
+            }
+
+            ///send process info
+            // put data sel params #1
+            applicator.put ( vecSelParsRec );
+            // put image sel params #2
+            applicator.put ( vecImParsRec );
+            // put gridders params #3
+            applicator.put ( vecGridParsRec );
+            // put which channel to process #4
+			vecRange(0)=startchan(k);
+			vecRange(1)=endchan(k);
+            applicator.put ( vecRange );
+            // psf or residual CubeMajorCycleAlgorithm #5
+            applicator.put ( dopsf );
+            // store modelvis and other controls #6
+            applicator.put ( controlRecord );
+			// weighting scheme #7
+			applicator.put( weightParams_p);
+            /// Tell worker to process it
+            applicator.apply ( cmc );
+
+        }
+        // Wait for all outstanding processes to return
+        rank = casa::applicator.nextProcessDone ( cmc, allDone );
+        while ( !allDone ) {
+            Bool status;
+	    Record returnRec;
+	    casa::applicator.get(returnRec);
+            casa::applicator.get ( status );
+	    if(dopsf)
+	      updateImageBeamSet(returnRec);
+	    if(returnRec.isDefined("tempfilenames")){
+	      std::vector<String> b=returnRec.asArrayString("tempfilenames").tovector();
+	      tempFileNames_p.insert(std::end(tempFileNames_p), std::begin(b), std::end(b));
+	    }
+            retvals(indexofretval)=status;
+            ++indexofretval;
+            if ( status )
+              //cerr << "remainder rank " << rank << " successful " << endl;
+              cerr << "";
+            else
+                logger << "remainder rank " << rank << " failed " << LogIO::SEVERE;
+
+            rank = casa::applicator.nextProcessDone ( cmc, allDone );
+			if(casa::applicator.isSerial())
+				allDone=true;
+        }
+        if(anyEQ(retvals, False)){
+          //cerr << retvals << endl;
+          ostringstream oss;
+          oss << "One or more  of the cube section failed in de/gridding. Return values for "
+              "the sections: " << retvals;
+          throw(AipsError(oss));
+        }
+        if(!dopsf){
+          try{
+            (itsMappers.imageStore(0))->copyMask(itsMappers.imageStore(0)->pb(), itsMappers.imageStore(0)->residual());
+          }
+          catch(AipsError &x) {
+            if(!String(x.getMesg()).contains("T/F"))
+              throw(AipsError(x.getMesg()));
+            ///ignore copy mask error and proceed as this happens with interactive
+          }
+        }
+	else{
+	  LatticeLocker lock1 (*(itsMappers.imageStore(0)->psf()), FileLocker::Write);
+	  itsMappers.imageStore(0)->psf()->setImageInfo(cubePsfImageInfo_p);
+	  itsMappers.imageStore(0)->psf()->unlock();
+	}
+
+        }  
+	  
+  
+	return true;
+  
+  }
+  /////////////////////////
   void SynthesisImagerVi2::predictModel(){
     LogIO os( LogOrigin("SynthesisImagerVi2","predictModel ",WHERE) );
 
@@ -1253,7 +1874,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	numberCoh+=Double(mss_p[k]->nrow());
 
       ProgressMeter pm(1.0, numberCoh, "Predict Model", "","","",true);
-      Int cohDone=0;
+      rownr_t cohDone=0;
 
       itsMappers.initializeDegrid(*vb);
       for (vi_p->originChunks(); vi_p->moreChunks();vi_p->nextChunk())
@@ -1266,10 +1887,15 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 	      vb->setVisCubeModel(Complex(0.0, 0.0));
 	      itsMappers.degrid(*vb, savevirtualmodel);
 
-	      if(savemodelcolumn && writeAccess_p )
+	      if(savemodelcolumn && writeAccess_p ){
+
+		const_cast<MeasurementSet& >((vi_p->ms())).lock(true);
+
 		vi_p->writeVisModel(vb->visCubeModel());
 
 	      //cerr << "nRows "<< vb->nRows() << "   " << max(vb->visCubeModel()) <<  endl;
+		const_cast<MeasurementSet& >((vi_p->ms())).unlock();
+	      }
 
 	      cohDone += vb->nRows();
 	      pm.update(Double(cohDone));
@@ -1303,7 +1929,7 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         numberCoh+=Double(mss_p[k]->nrow());
 
       ProgressMeter pm(1.0, numberCoh, "Predict Model", "","","",true);
-      Int cohDone=0;
+      rownr_t cohDone=0;
 
       itsMappers.initializeGrid(*vi_p,dopsf);
       for (vi_p->originChunks(); vi_p->moreChunks(); vi_p->nextChunk())
@@ -1397,7 +2023,16 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
     //cerr << "name " << (itsMappers.getFTM2(whichModel))->name() << endl;
  if(((itsMappers.getFTM2(whichModel))->name())!="MultiTermFTNew"){
    ////Non multiterm case    
-    PagedImage<Float> theImage((itsMappers.imageStore(whichModel))->getShape(), (itsMappers.imageStore(whichModel))->getCSys(), imagename);
+	//cerr << "whichModel " << whichModel << " itsMappers num " << itsMappers.nMappers() << " shape " << (itsMappers.imageStore(whichModel))->getShape() << endl;
+	///the SIImageStore sometimes return 0 shape...
+	CoordinateSystem csys=itsMaxCoordSys;
+	IPosition shp=itsMaxShape;
+	if((itsMappers.imageStore(whichModel))->getShape().product()!=0 ){
+		csys=	(itsMappers.imageStore(whichModel))->getCSys();
+		shp=(itsMappers.imageStore(whichModel))->getShape();
+	}
+	itsMappers.releaseImageLocks();
+    PagedImage<Float> theImage( shp, csys, imagename);
     PagedImage<Complex> cImageImage(theImage.shape(),
 				    theImage.coordinates(),
 				    cImageName);
@@ -1406,9 +2041,14 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
 
 
     Matrix<Float> weight;
-    
+    if(cImageImage.shape()[3] > 1){
+		cImageImage.set(Complex(0.0));
+		cImageImage.tempClose();
+		makeComplexCubeImage(cImageName, seType, whichModel);
+	}
+	else{
     (itsMappers.getFTM2(whichModel))->makeImage(seType, *vi_p, cImageImage, weight);
-
+	}
     if(seType==refim::FTMachine::PSF){
        StokesImageUtil::ToStokesPSF(theImage, cImageImage);
        StokesImageUtil::normalizePSF(theImage);
@@ -1463,7 +2103,95 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
   }// end makeImage
   /////////////////////////////////////////////////////
 
+void SynthesisImagerVi2::makeComplexCubeImage(const String& cimage, const refim::FTMachine::Type imtype, const Int whichmodel){
+	CubeMakeImageAlgorithm *cmi=new CubeMakeImageAlgorithm();
+	// Dummies for using the right signature for init
+	Path cimpath(cimage);
+	String cimname=cimpath.absoluteName();
+	//cerr << "ABSOLUTE path " << cimname << endl;
+	Int argc = 1;
+	char **argv = nullptr;
+	casa::applicator.init(argc, argv);
+	if(applicator.isController())
+    {
+		Record vecSelParsRec;
+		for (uInt k = 0; k < dataSel_p.nelements(); ++k) {
+			Record selparsRec = dataSel_p[k].toRecord();
+			vecSelParsRec.defineRecord(String::toString(k), selparsRec);
+		}
+		Record imparsRec = imparsVec_p[whichmodel].toRecord();
+		//cerr << "which model " << whichmodel << " record " << imparsRec << endl;
+		Record gridparsRec = gridparsVec_p[whichmodel].toRecord();
+        ///Break things into chunks for parallelization or memory availabbility
+        Vector<Int> startchan;
+        Vector<Int> endchan;
+        Int numchunks;
+        Int fudge_factor = 15;
+        if ((itsMappers.getFTM2(0))->name()=="MosaicFTNew") {
+            fudge_factor = 20;
+        }
+        else if ((itsMappers.getFTM2(0))->name()=="GridFT") {
+            fudge_factor = 9;
+        }
+        TcleanProcessingInfo  procInfo;
+        std::tie(procInfo, startchan, endchan)=nSubCubeFitInMemory(fudge_factor, itsMaxShape, gridpars_p.padding);
+        numchunks = procInfo.chnchnks;
+        
+		Int imageType=Int(imtype);
+		Int rank(0);
+		Bool assigned; 
+		Bool allDone(false);
+		Vector<Int> chanRange(2);
+		for (Int k=0; k < numchunks; ++k) {
+			assigned=casa::applicator.nextAvailProcess ( *cmi, rank );
+            //cerr << "assigned "<< assigned << endl;
+            while ( !assigned ) {
+                rank = casa::applicator.nextProcessDone ( *cmi, allDone );
+                //cerr << "while rank " << rank << endl;
+                Bool status;
+                casa::applicator.get(status);
+                /*if ( status )
+                  cerr << k << " rank " << rank << " successful " << endl;
+                else
+                    cerr << k << " rank " << rank << " failed " << endl;
+                */
+                assigned = casa::applicator.nextAvailProcess ( *cmi, rank );
 
+            }
+            applicator.put(vecSelParsRec);
+			// put image sel params #2
+			applicator.put(imparsRec);
+			// put gridder params #3
+			applicator.put(gridparsRec);
+			// put which channel to process #4
+			chanRange(0)=startchan(k);
+			chanRange(1)=endchan(k);
+			applicator.put(chanRange);
+			//Type of image #5
+			applicator.put(imageType);
+			// weighting parameters #6
+			applicator.put( weightParams_p);
+			// complex imagename #7
+			applicator.put(cimname);
+			applicator.apply(*cmi);
+		}
+		// Wait for all outstanding processes to return
+        rank = casa::applicator.nextProcessDone(*cmi, allDone);
+        while (!allDone) {
+            Bool status;
+            casa::applicator.get(status);
+            /*
+            if(status)
+                cerr << "remainder rank " << rank << " successful " << endl;
+            else
+                cerr << "remainder rank " << rank << " failed " << endl;
+            */
+            rank = casa::applicator.nextProcessDone(*cmi, allDone);
+			if(casa::applicator.isSerial())
+				allDone=true;
+        }
+    }//applicator controller section
+}
 
 
 
@@ -1500,7 +2228,67 @@ CountedPtr<SIMapper> SynthesisImagerVi2::createSIMapper(String mappertype,
     return localMapper;
   }
   
+void SynthesisImagerVi2::lockMS(MeasurementSet& thisms){
+  thisms.lock(!readOnly_p);
+    thisms.antenna().lock(false);
+	thisms.dataDescription().lock(false);
+    thisms.feed().lock(false);
+    thisms.field().lock(false);
+    thisms.observation().lock(false);
+    thisms.polarization().lock(false);
+    thisms.processor().lock(false);
+	thisms.spectralWindow().lock(false);
+    thisms.state().lock(false);
+    if(!thisms.doppler().isNull())
+      thisms.doppler().lock(false);
+    if(!thisms.flagCmd().isNull())
+      thisms.flagCmd().lock(false);
+    if(!thisms.freqOffset().isNull())
+      thisms.freqOffset().lock(false);
+	//True here as we can write in that
+    if(!thisms.history().isNull())
+    // thisms.history().lock(!readOnly_p);
+      thisms.history().lock(false);
+    if(!thisms.pointing().isNull())
+      thisms.pointing().lock(false);
+	//we write virtual model here
+    if(!thisms.source().isNull())
+      thisms.source().lock(!readOnly_p);
+    if(!thisms.sysCal().isNull())
+      thisms.sysCal().lock(false);
+    if(!thisms.weather().isNull())
+      thisms.weather().lock(false);
+	
+}
+///////////////////////
+  
+  Vector<SynthesisParamsSelect> SynthesisImagerVi2::tuneSelectData(){
+    vi_p->originChunks();
+    vi_p->origin();
+    vi::VisBuffer2* vb=vi_p->getVisBuffer();
+    Int spwnow=vb->spectralWindows()[0];
+    Int nchaninms=MSColumns(vb->ms()).spectralWindow().numChan()(spwnow);
+    //For some small number of channels in the ms vi/vb2 retuning the selection
+    //will sometimes return more channels than what is in the ms...this is a
+    //kludge here to bypass it...mostly seen in test_tclean
+    /// write to the test !!  till someboody fixes this is vi2 or wait for cngi
+    //if savescratch column we have tune...otherwise some channel may be 0
+    // when chunking or in parallel
+    if(nchaninms <30 && !(!readOnly_p && useScratch_p))
+      return dataSel_p;
+    
+    return SynthesisImager::tuneSelectData();
+  }
+//////////////////////
+  void SynthesisImagerVi2::lockMSs(){
+    for(uInt i=0;i<mss_p.nelements();i++)
+      { 
+       
+	MeasurementSet *ms_l = 	const_cast<MeasurementSet* >(mss_p[i]);
+	lockMS(*ms_l);
+      }
 
+  }
 void SynthesisImagerVi2::unlockMSs()
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","unlockMSs",WHERE) );
@@ -2041,8 +2829,10 @@ void SynthesisImagerVi2::unlockMSs()
 	  Table::isReadable(weightimagename, True);
 	  PagedImage<Float> im(weightimagename);
 	  imwgt_p=VisImagingWeight(im);
+          im.unlock();
 	}
 	else{
+          ////In memory weight densities is being deprecated...we should get rid of this bit
 	  Int ndensities=1;
 	  if((itsMappers.imageStore(0)->gridwt()->nelements())==5)
 	    ndensities=(itsMappers.imageStore(0)->gridwt())->shape()[4];
@@ -2089,6 +2879,7 @@ void SynthesisImagerVi2::unlockMSs()
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","createVisSet",WHERE) );
     //cerr << "mss_p num" << mss_p.nelements() <<  " sel  " << fselections_p->size() << endl;
+    lockMSs();
     if(mss_p.nelements() > uInt(fselections_p->size()) && (fselections_p->size() !=0)){
       throw(AipsError("Discrepancy between Number of MSs and Frequency selections"));
     }
@@ -2114,6 +2905,7 @@ void SynthesisImagerVi2::unlockMSs()
     vi_p->origin();
     ////make sure to use the latest imaging weight scheme
     vi_p->useImagingWeight(imwgt_p);
+    unlockMSs();
   }// end of createVisSet
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2130,7 +2922,8 @@ void SynthesisImagerVi2::unlockMSs()
   {
     LogIO os( LogOrigin("SynthesisImagerVi2","dryGridding",WHERE) );
 
-    Int cohDone=0, whichFTM=0;
+    rownr_t cohDone=0;
+    Int whichFTM=0;
     (void)cfList;
     // If not an AWProject-class FTM, make this call a NoOp.  Might be
     // useful to extend it to other projection FTMs -- but later.
@@ -2344,7 +3137,28 @@ void SynthesisImagerVi2::unlockMSs()
       // 	}
   }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void SynthesisImagerVi2::loadMosaicSensitivity(){
+    String ftmname=itsMappers.getFTM2(0)->name();
+    
+    if(ftmname.contains("Mosaic")){
+      //sumwt has been calcuated
+      Bool donesumwt=(max(itsMappers.imageStore(0)->sumwt()->get()) > 0.0);
+      //cerr << "Done sumwght " << donesumwt << max(itsMappers.imageStore(0)->sumwt()->get()) << endl;
+      if(donesumwt){
+        IPosition shp=itsMappers.imageStore(0)->weight()->shape();
+        CoordinateSystem cs=itsMappers.imageStore(0)->weight()->coordinates();
+        CountedPtr<TempImage<Float> > wgtim=new TempImage<Float>(shp, cs);
+        wgtim->copyData(*(itsMappers.imageStore(0)->weight()));
+        (static_cast<refim::MosaicFTNew &>( *(itsMappers.getFTM2(0,False)))).setWeightImage(wgtim);
+        static_cast<refim::MosaicFTNew &>( *(itsMappers.getFTM2(0,True))).setWeightImage(wgtim);
 
+      }
+
+
+    }
+
+  }
+  /////////////////////////////////////////////////
   Record SynthesisImagerVi2::apparentSensitivity() 
   {
     LogIO os(LogOrigin("SynthesisImagerVi2", "apparentSensitivity()", WHERE));
@@ -2377,7 +3191,7 @@ void SynthesisImagerVi2::unlockMSs()
 	{
 	  for (vi_p->origin(); vi_p->more(); vi_p->next())
 	    {
-	      Int nRow=vb->nRows();
+	      auto nRow=vb->nRows();
 	      const Vector<Bool>& rowFlags(vb->flagRow());
 
 	      const Vector<Int>& a1(vb->antenna1()), a2(vb->antenna2());
@@ -2396,7 +3210,7 @@ void SynthesisImagerVi2::unlockMSs()
 	      Int nChanWt=wtc.shape()(1);  // Might be 1 (no WtSp)
 
 	      Cube<Bool> flagCube(vb->flagCube());
-	      for (Int row=0; row<nRow; row++) {
+	      for (rownr_t row=0; row<nRow; row++) {
 		if (!rowFlags(row) && a1(row)!=a2(row)) {  // exclude ACs
 
 		  for (Int ich=0;ich<vb->nChannels();++ich) {
@@ -2507,7 +3321,7 @@ void SynthesisImagerVi2::unlockMSs()
     ///////if tracking a moving source
     MDirection origMovingDir;
     MDirection newPhaseCenter;
-    Bool trackBeam=getMovingDirection(*vb, origMovingDir);
+    Bool trackBeam=getMovingDirection(*vb, origMovingDir, True);
     //////
     for(vi_p->originChunks(); vi_p->moreChunks(); vi_p->nextChunk())
       {
@@ -2540,10 +3354,15 @@ void SynthesisImagerVi2::unlockMSs()
     return True;
   }// end makePB
 
-  Bool SynthesisImagerVi2::getMovingDirection(const vi::VisBuffer2& vb,  MDirection& outDir){
+  Bool SynthesisImagerVi2::getMovingDirection(const vi::VisBuffer2& vb,  MDirection& outDir, const Bool useImageEpoch){
     MDirection movingDir;
     Bool trackBeam=False;
+      
     MeasFrame mFrame(MEpoch(Quantity(vb.time()(0), "s"), MSColumns(vb.ms()).timeMeas()(0).getRef()), mLocation_p);
+    if(useImageEpoch){
+      mFrame.resetEpoch((itsMappers.imageStore(0))->getCSys().obsInfo().obsDate());
+
+    }
     if(movingSource_p != ""){
       MDirection::Types refType;
       trackBeam=True;
@@ -2564,7 +3383,7 @@ void SynthesisImagerVi2::unlockMSs()
       }
       else if(upcase(movingSource_p)=="TRACKFIELD"){
         VisBufferUtil vbU(vb);
-	movingDir=vbU.getEphemDir(vb, -1.0);
+	movingDir=vbU.getEphemDir(vb, MEpoch(mFrame.epoch()).get("s").getValue());
       }
       else{
 	throw(AipsError("Erroneous tracking direction set to make pb"));
@@ -2572,7 +3391,7 @@ void SynthesisImagerVi2::unlockMSs()
       MDirection::Ref outref1(MDirection::AZEL, mFrame);
       MDirection tmphazel=MDirection::Convert(movingDir, outref1)();
       MDirection::Ref outref(vb.phaseCenter().getRef().getType(), mFrame);
-      outDir=MDirection::Convert(tmphazel, outref)();
+      outDir=MDirection::Convert(tmphazel, outref)();  
     }
     else{
       outDir=vb.phaseCenter();
@@ -2580,8 +3399,49 @@ void SynthesisImagerVi2::unlockMSs()
     }
       return trackBeam;
 
-  }
 
+  }
+  CountedPtr<vi::VisibilityIterator2> SynthesisImagerVi2::getVi(){
+	return vi_p;  
+  }
+  CountedPtr<refim::FTMachine> SynthesisImagerVi2::getFTM(const Int fid, Bool ift){
+	if(itsMappers.nMappers() <=fid)
+		throw(AipsError("Mappers have not been set for field "+String::toString(fid)));
+	return (itsMappers.getFTM2(fid, ift));
+	  
+  }
+  void SynthesisImagerVi2::updateImageBeamSet(Record& returnRec){
+    if(returnRec.isDefined("imageid") && returnRec.asInt("imageid")==0){
+      //ImageInfo ii=(itsMappers.imageStore(0)->psf())->imageInfo();
+      Vector<Int> chanRange(0);
+      if(returnRec.isDefined("chanrange"))
+	chanRange=returnRec.asArrayInt("chanrange");
+      Int npol=(itsMappers.imageStore(0)->getShape())(2);
+      Int nchan=(itsMappers.imageStore(0)->getShape())(3);
+      if(chanRange.nelements() ==2 && chanRange(1) < nchan){
+
+	ImageBeamSet iibeamset=cubePsfImageInfo_p.getBeamSet();
+	Matrix<GaussianBeam> mbeams=iibeamset.getBeams();
+	if(mbeams.nelements()==0){
+	  mbeams.resize(itsMappers.imageStore(0)->getShape()(3), itsMappers.imageStore(0)->getShape()(2));
+	  mbeams.set(GaussianBeam(Vector<Quantity>(3, Quantity(1e-12, "arcsec"))));
+	}
+	Cube<Float> recbeams(returnRec.asArrayFloat("beams"));
+	for(Int c=chanRange[0]; c <= chanRange[1]; ++c){
+	  for(Int p=0; p < npol; ++p){
+	    mbeams(c,p)=GaussianBeam(Quantity(recbeams(c-chanRange[0], p, 0),"arcsec"), Quantity(recbeams(c-chanRange[0], p, 1),"arcsec"), Quantity(recbeams(c-chanRange[0], p, 2),"deg"));
+
+	  }
+	}
+	cubePsfImageInfo_p.setBeams(ImageBeamSet(mbeams));
+
+      }
+      //itsMappers.imageStore(0)->psf()->setImageInfo(ii);
+      //itsMappers.imageStore(0)->psf()->unlock();
+
+      
+    }
+  }
 
 } //# NAMESPACE CASA - END
 

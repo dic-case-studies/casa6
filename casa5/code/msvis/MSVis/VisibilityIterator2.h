@@ -245,13 +245,17 @@ public:
 
     // Add a sorting column to the existing definitions.
     // It will be added at the end, i. e., it will be "running" faster
+    // If sortingFunction = nullptr then a unique sorting function
+    // for the type of the column will be used (ObjCompare<T>)
     void addSortingColumn(casacore::MS::PredefinedColumns colId,
-        casacore::CountedPtr<casacore::BaseCompare> sortingFunction);
+        casacore::CountedPtr<casacore::BaseCompare> sortingFunction = nullptr);
 
     // Add a sorting column to the existing definitions.
     // It will be added at the end, i. e., it will be "running" faster
+    // If sortingFunction = nullptr then a unique sorting function
+    // for the type of the column will be used (ObjCompare<T>)
     void addSortingColumn(casacore::String colName,
-        casacore::CountedPtr<casacore::BaseCompare> sortingFunction);
+        casacore::CountedPtr<casacore::BaseCompare> sortingFunction = nullptr);
 
     bool usingDefaultSortingFunctions () const;
 
@@ -593,7 +597,7 @@ public:
   // when the row visibility shape changes from one row to the next.
 
   casacore::Int getRowBlocking() const;
-  void setRowBlocking(casacore::Int nRows=0);
+  void setRowBlocking(casacore::rownr_t nRows=0);
 
   // In this context the interval determines what rows will be contained
   // in a chunk.  A chunk is all the rows in an casacore::MS that have the same values
@@ -706,7 +710,7 @@ public:
 
   // Return the numbers of rows in the current chunk
 
-  casacore::Int nRowsInChunk() const;
+  casacore::rownr_t nRowsInChunk() const;
 
   // Assign a VisImagingWeight object to this iterator.  This object is used
   // to generate imaging weights.

@@ -73,7 +73,7 @@ from __main__ import *
 import unittest
 import scipy.constants
 
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/po_tool/'
+datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata//unittest/imagepol/'
 eq_beams = datapath + "pol_eq_beams.fits"
 neq_beams = datapath + "pol_neq_beams.fits"
 
@@ -105,7 +105,7 @@ class po_rotationmeasure_test(unittest.TestCase):
         myia.addnoise()
         myia.done()
         myrm = "rm1.im"
-        self.assertTrue(rmfit(imagename=outfile, rm=myrm))
+        rmfit(imagename=outfile, rm=myrm)
         myia.open(myrm)
         self.assertTrue((myia.shape() == [20, 20]).all())
         got1 = myia.statistics(list=True, verbose=True)['sumsq']
@@ -123,7 +123,7 @@ class po_rotationmeasure_test(unittest.TestCase):
         myia.done()
         images = ["xx.im", "yy.im"]
         myrm = "rm2.im"
-        self.assertTrue(rmfit(imagename=images, rm=myrm))
+        rmfit(imagename=images, rm=myrm)
         myia.open(myrm)
         self.assertTrue((myia.shape() == [20, 20]).all())
         got2 = myia.statistics(list=True, verbose=True)['sumsq']

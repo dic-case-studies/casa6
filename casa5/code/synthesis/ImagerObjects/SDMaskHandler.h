@@ -71,15 +71,15 @@ public:
   // blctrcs and circles are applied to all the spectral and stokes while regions specified in record can specify selections 
   // in spectral and stokes axes.
   //static casacore::Bool regionToImageMask(const casacore::String& maskimage, casacore::Record* regionRec, casacore::Matrix<casacore::Quantity> & blctrcs,
-  static casacore::Bool regionToImageMask(casacore::ImageInterface<casacore::Float>&  maskImage, casacore::Record* regionRec, casacore::Matrix<casacore::Quantity> & blctrcs,
-                    casacore::Matrix<casacore::Float>& circles, const casacore::Float& value=1.0);
+  static casacore::Bool regionToImageMask(casacore::ImageInterface<casacore::Float>&  maskImage, const casacore::Record* regionRec, const casacore::Matrix<casacore::Quantity> & blctrcs,
+                    const casacore::Matrix<casacore::Float>& circles, const casacore::Float& value=1.0);
   
   // Convert boxes defined with blcs and trcs to ImageRegion
   static void boxRegionToImageRegion(const casacore::ImageInterface<casacore::Float>& maskImage, const casacore::Matrix<casacore::Quantity>& blctrcs, casacore::ImageRegion*& boxImageRegions);
   // Convert circles (in pixels)  to ImageRegion
   static void circleRegionToImageRegion(const casacore::ImageInterface<casacore::Float>& maskImage, const casacore::Matrix<casacore::Float>& circles, casacore::ImageRegion*& circleImageRegions);
   // Convert region defined by record to Imageregion
-  static void recordRegionToImageRegion(casacore::Record* imageRegRec, casacore::ImageRegion*& imageRegion );
+  static void recordRegionToImageRegion(const casacore::Record* imageRegRec, casacore::ImageRegion*& imageRegion );
   // Convert casacore::ImageRegion to a mask image with the value
   static casacore::Bool regionToMask(casacore::ImageInterface<casacore::Float>& maskImage, casacore::ImageRegion& imageregion, const casacore::Float& value);
   // Read CRTF format text or the text file contains CRTF definitions and convert it to a ImageRegion
@@ -133,7 +133,7 @@ public:
   // @param[in] pblimit Primary beam cut off level
   //
   void autoMask(std::shared_ptr<SIImageStore> imstore, 
-                casacore::TempImage<casacore::Float>& posmask,
+                casacore::ImageInterface<casacore::Float>& posmask,
                 const casacore::Int iterdone,
                 casacore::Vector<casacore::Bool>& chanflag,
                 casacore::Record& robuststatsrec,
@@ -186,7 +186,7 @@ public:
 
   // implementation of Amanda's automasking algorithm using multiple thresholds
   void autoMaskByMultiThreshold(casacore::ImageInterface<float>& mask,
-                                          casacore::TempImage<casacore::Float>& posmask,
+                                          casacore::ImageInterface<casacore::Float>& posmask,
                                           const casacore::ImageInterface<casacore::Float>& res, 
                                           const casacore::ImageInterface<casacore::Float>& psf, 
                                           const casacore::Record& stats, 
@@ -278,7 +278,7 @@ public:
   void makePBMask(std::shared_ptr<SIImageStore> imstore, casacore::Float pblimit=0.1, casacore::Bool combinemask=false);
 
   void autoMaskWithinPB(std::shared_ptr<SIImageStore> imstore, 
-                        casacore::TempImage<casacore::Float>& posmask,
+                        casacore::ImageInterface<casacore::Float>& posmask,
                         const casacore::Int iterdone,
                         casacore::Vector<casacore::Bool>& chanflag,
                         casacore::Record& robuststatsrec,
@@ -382,7 +382,7 @@ public:
                                     const casacore::ImageInterface<casacore::Float>& outImage);
   static casacore::Bool cloneImShape(const casacore::ImageInterface<casacore::Float>& inImage, const casacore::String& outImageName);
   // max MB of memory to use in TempImage
-  static inline casacore::Double memoryToUse() {return 1.0;};
+  static inline casacore::Double memoryToUse() {return -1.0;};
 
   // Calculate statistics on a residual image with additional region and LEL mask specifications
   // using classical method

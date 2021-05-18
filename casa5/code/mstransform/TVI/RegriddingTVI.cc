@@ -342,16 +342,19 @@ void RegriddingTVI::initialize()
 // -----------------------------------------------------------------------
 void RegriddingTVI::origin()
 {
-	// Drive underlying ViImplementation2
-	getVii()->origin();
+    // Drive underlying ViImplementation2
+    getVii()->origin();
 
-	// Define output grid for this chunk (also defines shape)
-	initFrequencyGrid();
+    // Define output grid for this chunk (also defines shape)
+    initFrequencyGrid();
 
-	// Synchronize own VisBuffer
-	configureNewSubchunk();
+    // Define the shapes in the VB2
+    configureShapes();
 
-	return;
+    // Synchronize own VisBuffer
+    configureNewSubchunk();
+
+    return;
 }
 
 // -----------------------------------------------------------------------
@@ -437,7 +440,7 @@ void RegriddingTVI::initFrequencyTransformationEngine() const
 	VisBuffer2 *vb = getVii()->getVisBuffer();
 
 	// Check if frequency transformation engine has to be re-constructed
-	uInt rowId = vb->rowIds()[0];
+	auto rowId = vb->rowIds()[0];
 	if (freqTransEngineRowId_p != rowId)
 	{
 		// Mark this rowId as the current one
