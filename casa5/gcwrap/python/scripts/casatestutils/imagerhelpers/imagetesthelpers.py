@@ -940,12 +940,11 @@ class TestHelpers:
 
     def check_final(self, pstr=""):
 
-        if not isinstance(pstr, six.string_types):
-            return False
+        import re
+        import unittest
         casalog.post(pstr, 'INFO')
-        if pstr.count("Fail") > 0:
-            return False
-        return True
+        if len(re.findall("\(.?Fail",pstr)) > 0:
+            unittest.TestCase.fail("\n"+pstr)
         
     def write_file(self,filename,str_text):
         """Save the string in a text file"""
