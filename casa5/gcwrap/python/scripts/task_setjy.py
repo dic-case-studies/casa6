@@ -181,7 +181,7 @@ def setjy_core(vis=None, field=None, spw=None,
                 for d in ssmoddirs:
                     lsmodims(d,modpat='*Tb*.dat', header='Tb models of solar system objects available for %s' % standard) 
                 for d in sstpmdirs:
-                    lsmodims(d,modpat='*fd_time.dat', header='Time variable models of asteroids available for %s [only applicable for the observation date 2015.01.01 0UT and beyond]' % standard) 
+                    lsmodims(d,modpat='*fd_time.dat', header='Time variable models of asteroids available for %s [only applicable for the observation date 2014.01.01 0UT and beyond]' % standard) 
             elif standard=='Butler-JPL-Horizons 2010':
                 availmodellist=['Venus', 'Mars', 'Jupiter', 'Uranus', 'Neptune', 'Pluto',
                                 'Io', 'Europa', 'Ganymede', 'Callisto', 'Titan','Triton',
