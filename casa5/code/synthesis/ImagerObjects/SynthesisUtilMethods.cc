@@ -197,9 +197,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     std::shared_ptr<SIImageStore> imstore;
     if( nterms>1 )
-      { imstore = std::shared_ptr<SIImageStore>(new SIImageStoreMultiTerm( imagename, nterms, true ));   }
+      { imstore = std::shared_ptr<SIImageStore>(new SIImageStoreMultiTerm( imagename, nterms, true, true ));   }
     else
-      { imstore = std::shared_ptr<SIImageStore>(new SIImageStore( imagename, true ));   }
+      { imstore = std::shared_ptr<SIImageStore>(new SIImageStore( imagename, true, true ));   }
   
 
     os << "Fitting PSF beam for Imagestore : " << imstore->getName() << LogIO::POST;
