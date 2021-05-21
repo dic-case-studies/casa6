@@ -1159,10 +1159,12 @@ class ParallelDataHelper(ParallelTaskHelper):
         # I wonder why the concern about uniqueness. mstool.getspectralwindowinfo() should
         # not return duplicated SPW IDs...
         # Return a unique sorted list:
-        sorted = list(set(self.__spwList))
-#        sorted.sort()
+        sorted_spws = list(set(self.__spwList))
 
-        return sorted
+        # Effectively sort by spw ID (as ints) before distributing to sub-MSs
+        sorted_spws.sort()
+
+        return sorted_spws
 
     def __getBaselineList(self):
         """ This method returns the baseline list from the current MS.  Be careful
