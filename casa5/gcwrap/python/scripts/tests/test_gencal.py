@@ -32,6 +32,7 @@ else:
 evndata = 'n08c1.ms'
 vlbadata = 'ba123a.ms'
 vlbacal = os.path.join(datapath,'ba123a.gc')
+evncal = os.path.join(datapath,'n08c1.tsys')
 
 caltab = 'cal.A'
 evncopy = 'evn_copy.ms'
@@ -434,7 +435,7 @@ class gencal_test_tec_vla(unittest.TestCase):
             # should catch case of internet access failure?
             raise
 
-class gencal_test(unittest.TestCase):
+class gencal_gaincurve_test(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -471,12 +472,57 @@ class gencal_test(unittest.TestCase):
 
         self.assertFalse(os.path.exists(caltab))
 
+class gencal_tsys_test(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        shutil.copytree(os.path.join(datapath,evndata), evncopy)
+        shutil.copytree(os.path.join(datapath,vlbadata), vlbacopy)
+
+    def setUp(self):
+        if not is_CASA6:
+            default(gencal)
+
+    def tearDown(self):
+        rmtables(caltab)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(evncopy)
+        shutil.rmtree(vlbacopy)
+
+    def test_tsys(self):
+        ''' Test calibration table produced when gencal is run on an MS with a SYSCAL table'''
+
+        gencal(vis=evncopy, caltable=caltab, caltype='tsys', uniform=False)
+
+        self.assertTrue(os.path.exists(caltab))
+        self.assertTrue(th.compTables(caltab, evncal, ['WEIGHT']))
+
+    def test_tsys_nan(self):
+        ''' Test calibration table produced when gencal is run on an MS with a SYSCAL table that contains NaNs'''
+
+        # Change negative values in SYSCAL to NaNs.
+        # This should result in the same calibration table entries
+        # being flagged.
+        _tb.open(evncopy + '/SYSCAL', nomodify=False)
+        tsys = _tb.getcol('TSYS')
+        tsys = np.where(tsys < 0, float('nan'), tsys)
+        _tb.putcol('TSYS', tsys)
+        _tb.close()
+
+        gencal(vis=evncopy, caltable=caltab, caltype='tsys', uniform=False)
+
+        self.assertTrue(os.path.exists(caltab))
+        self.assertTrue(th.compTables(caltab, evncal, ['FPARAM', 'WEIGHT']))
+
 
 def suite():
     return [gencal_antpostest,
             test_gencal_antpos_alma,
             gencal_test_tec_vla,
-            gencal_test]
+            gencal_gaincurve_test,
+            gencal_tsys_test]
 
 if is_CASA6:
     if __name__ == '__main__':
