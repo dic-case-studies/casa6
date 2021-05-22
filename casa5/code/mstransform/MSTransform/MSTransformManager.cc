@@ -3076,7 +3076,7 @@ void MSTransformManager::separateSpwSubtable()
                     if (spwTable.tableDesc().isColumn("SDM_CORR_BIT") &&
                         spwTable.tableDesc().columnDescSet().isDefined("SDM_CORR_BIT"))
                     {
-                        ScalarColumn<Int> corrBitCol(spwTable, "SDM_CORR_BIT");
+                        ScalarColumn<String> corrBitCol(spwTable, "SDM_CORR_BIT");
                         corrBitCol.put(rowIndex, corrBitCol(0));
                     }
 

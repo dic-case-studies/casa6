@@ -2235,8 +2235,8 @@ Bool MSTransformDataHandler::fillSPWTable()
         }
         if (haveSpwCorrBit) 
         {
-            ScalarColumn<Int> inCorrBitCol(mssel_p.spectralWindow(), "SDM_CORR_BIT");
-            ScalarColumn<Int> outCorrBitCol(msOut_p.spectralWindow(), "SDM_CORR_BIT");
+            ScalarColumn<String> inCorrBitCol(mssel_p.spectralWindow(), "SDM_CORR_BIT");
+            ScalarColumn<String> outCorrBitCol(msOut_p.spectralWindow(), "SDM_CORR_BIT");
             outCorrBitCol.put(outSPWId, inCorrBitCol(spw_p[k]));
         }
 
@@ -3356,8 +3356,8 @@ Bool MSTransformDataHandler::mergeSpwSubTables(Vector<String> filenames)
                         if (spwTable_i.tableDesc().isColumn("SDM_CORR_BIT") &&
                             spwTable_i.tableDesc().columnDescSet().isDefined("SDM_CORR_BIT"))
                         {
-                            ScalarColumn<Int> corrBitCol_i(spwTable_i, "SDM_CORR_BIT");
-                            ScalarColumn<Int> corrBitCol_0(spwTable_0, "SDM_CORR_BIT");
+                            ScalarColumn<String> corrBitCol_i(spwTable_i, "SDM_CORR_BIT");
+                            ScalarColumn<String> corrBitCol_0(spwTable_0, "SDM_CORR_BIT");
                             corrBitCol_0.put(rowIndex, corrBitCol_i(subms_row_index));
                         }
 
