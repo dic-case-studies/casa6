@@ -56,8 +56,8 @@ ATM_NAMESPACE_BEGIN
 			   (1.0-exp(-1556.38*1.43/temperature))+
 			   mkSpecificRefractivity_16o16o_vib(temperature,pressure,wvpressure,frequency)*(1.0-2.0*(abun_18o+abun_17o))*
 			   exp(-1556.38*1.43/temperature)
-			   +mkSpecificRefractivity_16o18o(temperature,pressure,wvpressure,frequency)*2.0*abun_18o    
-			   +mkSpecificRefractivity_16o17o(temperature,pressure,wvpressure,frequency)*2.0*abun_17o    
+			   +mkSpecificRefractivity_16o18o(temperature,pressure,wvpressure,frequency)*2.0*abun_18o
+			   +mkSpecificRefractivity_16o17o(temperature,pressure,wvpressure,frequency)*2.0*abun_17o
 			   )*o2_mixing_ratio*pressure*100.0/(1.380662e-23*temperature);
 
     //      if(frequency<143&&frequency>142.21){cout << "O2: " << frequency << "  " << ccc << "  " << pressure <<  endl;}
@@ -118,23 +118,23 @@ ATM_NAMESPACE_BEGIN
     std::complex<double> averagen(real(average)/n,imag(average)/n);
     return averagen;
   }
-  
- 
+
+
   std::complex<double> RefractiveIndex::getSpecificRefractivity_o3(double temperature, double pressure, double frequency){
-    
+
     static const double abun_18o=0.0020439;
     static const double abun_17o=0.0003750;
     static const double Tex_nu2=1009.5;   //(in Kelvin)  Degeneracy=1  http://www.cfa.harvard.edu/hitran/vibrational.html
     static const double Tex_nu1=1588.41;  //(in Kelvin)  Degeneracy=1
     static const double Tex_nu3=1500.48;  //(in Kelvin)  Degeneracy=1
-    
-    
+
+
     double pob_v2=exp(-Tex_nu2/temperature);
     double pob_v1=exp(-Tex_nu1/temperature);
     double pob_v3=exp(-Tex_nu3/temperature);
-    
-    
-    std::complex<double> ccc =  
+
+
+    std::complex<double> ccc =
       ((1-pob_v2-pob_v1-pob_v3)/(1.0+3.0*(abun_18o+abun_17o)))*
       (
        mkSpecificRefractivity_16o16o16o(temperature,pressure,frequency)
@@ -142,17 +142,17 @@ ATM_NAMESPACE_BEGIN
        +mkSpecificRefractivity_16o16o18o(temperature,pressure,frequency)*(2*abun_18o)
        +mkSpecificRefractivity_16o17o16o(temperature,pressure,frequency)*(abun_17o)
        +mkSpecificRefractivity_16o18o16o(temperature,pressure,frequency)*(abun_18o)
-       )				
-      +mkSpecificRefractivity_16o16o16o_v2(temperature,pressure,frequency)*pob_v2    
-      +mkSpecificRefractivity_16o16o16o_v1(temperature,pressure,frequency)*pob_v1    
+       )
+      +mkSpecificRefractivity_16o16o16o_v2(temperature,pressure,frequency)*pob_v2
+      +mkSpecificRefractivity_16o16o16o_v1(temperature,pressure,frequency)*pob_v1
       +mkSpecificRefractivity_16o16o16o_v3(temperature,pressure,frequency)*pob_v3;    //m^2
-   
+
     //cout << "temperature=" << temperature << " pob_v2=" << pob_v2 << endl;
-    
+
     return ccc;
-    
+
   }
-  
+
   std::complex<double> RefractiveIndex::getSpecificRefractivity_o3(double temperature,double pressure,double frequency,
 							      double width,unsigned int n)
   {
@@ -169,7 +169,7 @@ ATM_NAMESPACE_BEGIN
     std::complex<double> averagen(real(average)/n,imag(average)/n);
     return averagen;
   }
- 
+
   unsigned int RefractiveIndex::vpIndex(double nu)
   {
     unsigned int vp;
@@ -184,8 +184,8 @@ ATM_NAMESPACE_BEGIN
 
   double RefractiveIndex::linebroadening(double nu, double temp, double pr, double mmol, double dv0_lines, double texp_lines){
 
-    // pr = pp.get("mb");
-    // temp = tt.get("K");
+    // pr = pp.get(Pressure::UnitMilliBar);
+    // temp = tt.get(Temperature::UnitKelvin);
     double dv0;
     double dv;
 
@@ -203,9 +203,9 @@ ATM_NAMESPACE_BEGIN
 
   double RefractiveIndex::linebroadening_o2(double nu, double temp, double pr, double eh2o, double mmol, double ensanche1, double ensanche2){
 
-    // pr = pp.get("mb");
-    // eh2o = ph2o.get("mb");
-    // temp = tt.get("K");
+    // pr = pp.get(Pressure::UnitMilliBar);
+    // eh2o = ph2o.get(Pressure::UnitMilliBar);
+    // temp = tt.get(Temperature::UnitKelvin);
     // nu in GHz
     double dv0;
     double dv;
@@ -216,7 +216,7 @@ ATM_NAMESPACE_BEGIN
 
     if((dv0/beta_dop)<1.25){
       dv=0.535*dv0+sqrt(0.217*pow(dv0,2)+0.6931*pow(beta_dop,2));   // "Atmospheric Remote Sensing", Janssen, pag. 59
-      //      cout << pp.get("mb") << "mb: usando beta_dop" << endl;
+      //      cout << pp.get(Pressure::UnitMilliBar) << "mb: usando beta_dop" << endl;
     }else{
       dv=dv0;
     }
@@ -228,7 +228,7 @@ ATM_NAMESPACE_BEGIN
 
   double RefractiveIndex::interf_o2(double temp, double pp, double ensanche3,double ensanche4){
 
-    // temp = tt.get("K");
+    // temp = tt.get(Temperature::UnitKelvin);
 
     double interf=1e-3*(ensanche3+ensanche4*(300/temp))*pp*pow(300/temp,0.8);
     return interf;   // GHz
@@ -241,9 +241,9 @@ ATM_NAMESPACE_BEGIN
     static const double mmol=18.0;
 
     // nu GHz
-    // pr = pp.get("mb");
-    // eh2o = ph2o.get("mb");
-    // temp = tt.get("K");
+    // pr = pp.get(Pressure::UnitMilliBar);
+    // eh2o = ph2o.get(Pressure::UnitMilliBar);
+    // temp = tt.get(Temperature::UnitKelvin);
     double dv0;
     double dv;
 
@@ -258,21 +258,21 @@ ATM_NAMESPACE_BEGIN
 
     if((dv0/beta_dop)<1.25){
       dv=0.535*dv0+sqrt(0.217*pow(dv0,2)+0.6931*pow(beta_dop,2));   // "Atmospheric Remote Sensing", Janssen, pag. 59
-      //      cout << pp.get("mb") << "mb: usando beta_dop" << endl;
+      //      cout << pp.get(Pressure::UnitMilliBar) << "mb: usando beta_dop" << endl;
     }else{
       dv=dv0;
     }
 
-    //    cout << nu.get("GHz") << "  " << pr << "  " <<  eh2o << "  " << dv << endl;
+    //    cout << nu.get(Frequency::UnitGigaHertz) << "  " << pr << "  " <<  eh2o << "  " << dv << endl;
 
     return dv; // GHz
   }
 
   double RefractiveIndex::linebroadening_hh18o_hh17o(double temp, double pr, double eh2o, double dv0, double dvlm, double temp_exp){
 
-    // pr = pp.get("mb");
-    // eh2o = ph2o.get("mb");
-    // temp = tt.get("K");
+    // pr = pp.gPressure::UnitMilliBar);
+    // eh2o = ph2o.get(Pressure::UnitMilliBar);
+    // temp = tt.get(Temperature::UnitKelvin);
     double dv;
     double rho=18.0*eh2o*100/(8.315727226*temp);   // Na*Kb=8.315727226
     double c2=4.6E-03*rho*temp/pr;
@@ -293,10 +293,10 @@ ATM_NAMESPACE_BEGIN
     //    *   {[(vl-v)/((v-vl)**2+dv**2)]-[(vl+v)/((v+vl)**2+dv**2)]} REAL (UNITS 1/freq) *
     //    *********************************************************************************
 
-    //    dv  = linebroad.get("GHz");      LINE BROADENING PARAMETER
-    //    itf = interf.get("GHz");         LINE INTERFERENCE
-    //    vl  = linefreq.get("GHz");       FREQUENCY OF RESONANT LINE
-    //    v   = nu.get("GHz");             CURRENT WORKING FREQUENCY
+    //    dv  = linebroad.get(Frequency::UnitGigaHertz);      LINE BROADENING PARAMETER
+    //    itf = interf.get(Frequency::UnitGigaHertz);         LINE INTERFERENCE
+    //    vl  = linefreq.get(Frequency::UnitGigaHertz);       FREQUENCY OF RESONANT LINE
+    //    v   = nu.get(Frequency::UnitGigaHertz);             CURRENT WORKING FREQUENCY
 
     //    double lf=dv*itf;
     //    double dv2=dv*dv;
@@ -310,7 +310,7 @@ ATM_NAMESPACE_BEGIN
     //    double fv=((dv-(vl-v)*itf)/a1+(dv-(vl+v)*itf)/a2);	   //   ! line profile (imaginary)
                                                                    //   !          in 1/frec units
     //    double frv=((vl-v+lf)/a1-(vl+v+lf)/a2);                  //   ! delay profile (real part)
- 
+
     //  return std::complex<double> (frv,fv)*(v/vl);
 
     return std::complex<double> (v/vl)*(std::complex<double>(1.0,-itf)/std::complex<double>(vl-v,-dv)
@@ -328,7 +328,7 @@ ATM_NAMESPACE_BEGIN
 
 
   std::complex<double>  RefractiveIndex::mkSpecificRefractivity(unsigned int species,
-							   double tt, double pp, double eh2o,  
+							   double tt, double pp, double eh2o,
 							   double nu, double width, unsigned int n)
   {
     std::complex<double> average(0.0,0.0);
@@ -345,9 +345,9 @@ ATM_NAMESPACE_BEGIN
     std::complex<double> averagen(real(average)/n,imag(average)/n);
     return averagen;
   }
-  
+
   std::complex<double>  RefractiveIndex::mkSpecificRefractivity(unsigned int species,
-							   double tt, double pp, double eh2o,  
+							   double tt, double pp, double eh2o,
 							   double nu)
   {
     if(species==1){return mkSpecificRefractivity_16o16o(tt,pp,eh2o,nu);}
@@ -377,7 +377,7 @@ ATM_NAMESPACE_BEGIN
     std::complex<double> aa(0.0,0.0);
     return aa;
   }
-  
+
 
   //////////////////////// Opacity Source Number: 8 //////////////////////////////
 
@@ -418,7 +418,7 @@ ATM_NAMESPACE_BEGIN
       459.52841,459.66837,459.79990,459.87900,459.93613,459.96918,459.98718,461.87595,463.01144,463.32639,464.28793,465.41611,465.62198,465.75122,465.88190,466.78979,466.88785,469.42245,
       471.19046,471.55963,471.89441,472.03772,472.13968,472.52078,472.70630,472.85135,475.19659,475.86591,476.62155,477.46619,478.82608,479.73309,481.16629,481.23663,482.50317,483.99429,
       484.20007,484.22736,484.27087,485.20999,488.72867,488.77545,489.81982,490.73245,491.88474,491.93472,494.55759,494.77975,495.84152,496.81067,498.97610,500.43149,500.65533,501.10776};
-    
+
 
 
     static const double flin[594]={
@@ -526,7 +526,7 @@ ATM_NAMESPACE_BEGIN
       2.9565,2.8500,2.7967,2.8500,2.8677,3.1281,2.8056,2.8884,3.0334,2.7612,2.9180,2.7760,2.9890,2.8411,2.9683,2.8292,2.8529,2.9535,3.0690,2.9447,
       2.8411,2.9003,2.8292,3.0867,2.8559,3.1193,2.8115,3.0778,3.0423,2.7671,2.8352,2.9979,2.9091,2.9417};
 
-    
+
     static const double pi=3.141592654;
     static const double picube8div3hcesu=4.1623755E-19;  // (8*pi**3/(3*h*c))*(1e-18)**2 = 4.1623755E-19
     static const double mu=1.62;  //Debyes
@@ -697,7 +697,7 @@ ATM_NAMESPACE_BEGIN
       2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,1.9947,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000};
 
 
-    
+
     static const double pi=3.141592654;
     static const double picube8div3hcesu=4.1623755E-19;  // (8*pi**3/(3*h*c))*(1e-18)**2 = 4.1623755E-19
     static const double mu=0.3161;  //Debyes
@@ -800,7 +800,7 @@ ATM_NAMESPACE_BEGIN
       2.1989,2.1841,2.1722,2.1604,2.1486,2.1367,2.1278,2.1190,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.0627};
 
 
-    
+
     static const unsigned int ifin1[500]={
        1,   1,   1,   1,   1,   1,   1,   1,   1,   1,  1,   2,   2,   2,   2,   2,   2,   2,   2,   2,  2,   2,   2,   3,   3,   3,   3,   3,   3,   3,
        3,   3,   3,   3,   3,   3,   4,   4,   4,   4,  4,   4,   4,   4,   4,   4,   4,   4,   5,   5,  5,   5,   5,   5,   5,   5,   5,   5,   5,   5,
@@ -938,11 +938,11 @@ ATM_NAMESPACE_BEGIN
       if(pp<25){ ini=ini3[vp]; ifin=ifin3[vp]; }else{ if(pp<300){ ini=ini2[vp]; ifin=ifin2[vp]; }else{ ini=ini1[vp]; ifin=ifin1[vp]; } }
 
       if(ini>4){ini=ini-3;}else{ini=1;}        // NEW PATCH 02 SEP 2016
-      if(ifin<37){ifin=ifin+3;}else{ifin=39;}  // NEW PATCH 02 SEP 2016  
-      
+      if(ifin<37){ifin=ifin+3;}else{ifin=39;}  // NEW PATCH 02 SEP 2016
+
       if(ini>0){ini=ini-1;}else{ifin=0;}
       if(ifin>0){ifin=ifin-1;}else{ifin=0;}
-      
+
       if(ifin==0||ifin<ini){
 
 	return std::complex<double> (0.0,0.0);
@@ -1044,7 +1044,7 @@ ATM_NAMESPACE_BEGIN
       8,   8,   8,   8,   8,   8,   8,   8,   8,   8,  8,   8,   8,   8,   8,   8,   8,   8,   8,   8,  8,   8,   8,   8,   8,   8,   8,   8,   8,   8,
       8,   8,   8,   8,   8,   8,   8,   8,   8,   8,  8,   8,   0,   0,   0,   0,   0,   0,   0,   0,  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
       0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
-    
+
     static const unsigned int ini2[500]={
       1,   1,   1,   1,   1,   1,   1,   1,   1,   1,  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
       1,   1,   1,   1,   1,   1,   1,   1,   1,   1,  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,  1,   1,   1,   1,   1,   1,   1,   1,   2,   2,
@@ -1192,7 +1192,7 @@ ATM_NAMESPACE_BEGIN
     double delayh2o=(4.163*t300+0.239)*eh2o*t300*nu*1.2008e-3/57.29578;   // VERSIÓN INSTALADA ANTES DE 16/12/2015 // AÑADIR REFERENCIA
 
     // double delayh2o=eh2o*pow(t300,2.5)*.791e-6*pow(nu,2)*nu*1.2008e-3/57.29578; //VERSION DE PRUEBA 16/12/2015
-    
+
     return std::complex<double> (delayh2o,cnth2o);       // (  rad m^-1 , m^-1 )
 
   }
@@ -2102,7 +2102,7 @@ ATM_NAMESPACE_BEGIN
 
     }
 
-    
+
     if(ifin==0||ifin<ini){
 
       return std::complex<double> (0.0,0.0);
@@ -3164,9 +3164,9 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
     }else{
 
       vp=vpIndex(nu);
-      
+
       if(pp<25){ ini=ini2[vp]; ifin=ifin2[vp]; }else{ if(pp<300){ ini=ini1[vp]; ifin=ifin1[vp]; }else{ ini=ini1[vp]; ifin=ifin1[vp];  }}  // NEW PATCH 16 SEP 2016
-      
+
 
       if(ini<38&&nu>135.0){ini=38;}
       if(ini>0){ini=ini-1;}else{ifin=0;}
@@ -3243,7 +3243,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       934.66297,935.01694, 935.07653, 935.29581, 935.67426, 938.35059,938.81009,941.94142, 943.26205, 943.33399, 944.81071, 947.68152,948.47843,950.27326, 953.02120, 957.08315, 959.02762, 959.96394,
       960.39622,960.49677, 960.83281, 961.09020, 961.90512, 961.93041,962.17344,963.87630, 966.24899, 966.41783, 967.70572, 968.43274,969.25619,969.47424, 969.84707, 973.41999, 973.61940, 975.44060,
       975.56576,981.37877, 981.53804, 982.66663, 983.57350, 984.81783,986.50649,987.26748, 987.81624, 988.47613, 988.83493, 988.94762,989.44755,989.44802, 995.03809, 995.24924, 997.58337, 998.35617 };
-    
+
     static const double texpO3[666] ={
       0.77,0.78,0.77,0.76,0.79,0.77,0.79,0.79,0.80,0.77,0.80,0.76,0.77,0.78,0.81,0.76,0.78,0.80,0.80,0.78,0.82,0.76,0.76,0.77,0.77,0.80,0.77,0.79,0.81,0.77,0.77,0.82,0.78,
       0.83,0.77,0.77,0.80,0.77,0.81,0.76,0.76,0.82,0.79,0.76,0.83,0.78,0.80,0.79,0.82,0.77,0.77,0.83,0.82,0.81,0.77,0.78,0.83,0.83,0.78,0.76,0.79,0.76,0.77,0.83,0.81,0.78,
@@ -3265,11 +3265,11 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       0.78,0.76,0.76,0.79,0.76,0.76,0.77,0.76,0.76,0.76,0.83,0.76,0.77,0.80,0.78,0.82,0.77,0.84,0.77,0.76,0.77,0.84,0.78,0.78,0.76,0.76,0.76,0.78,0.78,0.76,0.77,0.76,0.82,
       0.76,0.80,0.76,0.77,0.76,0.84,0.82,0.83,0.76,0.76,0.78,0.78,0.76,0.76,0.82,0.77,0.79,0.76,0.83,0.76,0.79,0.76,0.76,0.76,0.77,0.76,0.83,0.76,0.78,0.76,0.78,0.76,0.83,
       0.83,0.77,0.79,0.76,0.78,0.76,0.76,0.76,0.79,0.76,0.77,0.76,0.76,0.83,0.76,0.83,0.76,0.76,0.78,0.83,0.76,0.76,0.83,0.76,0.76,0.77,0.79,0.79,0.76,0.84,0.76,0.76,0.77,
-      0.76,0.76,0.76,0.83,0.83,0.78}; 
+      0.76,0.76,0.76,0.83,0.83,0.78};
 
 
 
-      
+
     static const double brdO3air[666] ={
       2.4859,2.2877,2.3439,2.5155,2.1574,2.3883,2.1870,2.2018,2.1338,2.4060,2.1130,2.5895,2.3498,2.2314,2.0953,2.5244,2.3291,2.1130,2.1249,2.2314,2.0687,2.5392,2.7405,2.4149,2.4386,2.1249,2.4771,
       2.2166,2.0835,2.3705,2.3439,2.0716,2.2314,2.0598,2.3735,2.3942,2.1338,2.3291,2.0775,2.6428,2.5540,2.0716,2.2018,2.5925,2.0568,2.2492,2.1042,2.1456,2.0598,2.3735,2.2936,2.0568,2.0627,2.0835,
@@ -3298,7 +3298,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       2.0509,1.9444,2.3000,2.3000,2.3735,2.1722,2.1574,2.3000,2.0627,2.3000,2.3000,2.4711,2.0450,2.0450,2.5540,2.0598,2.0746,2.3084};
 
 
-    
+
     static const double flin[666] = {
       .148E+01, .278E+01, .144E+01, .281E+01, .318E+01, .284E+01, .392E+01, .378E+01, .301E+01, .125E+01, .275E+01, .253E+01, .236E+01, .386E+01, .501E+01, .443E+01, .244E+01, .498E+01,
       .506E+01, .613E+01, .638E+01, .908E+00, .102E+01, .754E+01, .415E+01, .478E+01, .955E+00, .353E+01, .508E+01, .860E+01, .366E+01, .600E+01, .334E+01, .664E+01, .205E+01, .189E+01,
@@ -3339,7 +3339,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       .266E+02, .373E+02, .141E-01, .126E+02, .515E+01, .252E+01, .720E+01, .251E+02, .251E+02, .256E+02, .630E+01, .171E+00, .838E+01, .327E+02, .466E+01, .498E+01, .237E+02, .115E+01};
 
 
-    
+
 
     static const double el[666] = {
       47.992,  201.070,   80.695,    20.970,  403.476,   96.488, 373.096,  346.143,  465.831,   56.122,  533.230,    2.479, 144.689,  269.119,  633.829,   10.918,  161.444,  597.026,
@@ -3385,7 +3385,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
     static const double picube8div3hcesu=4.1623755E-19;  // (8*pi**3/(3*h*c))*(1e-18)**2 = 4.1623755E-19
     static const double mu=0.53;  //Debyes
     static const double mmol=48.0;
-    
+
     //double q=0.6531261*pow(tt,1.5);
     double q=0.6531261*tt*sqrt(tt);
     //    unsigned int vp;
@@ -3393,54 +3393,54 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
     unsigned int ifin;
     std::complex<double>  lshape;
     std::complex<double>  lshapeacum;
-    
+
     if(nu>999.9){
-      
+
       return std::complex<double> (0.0,0.0);
-      
+
     }else{
 
       // vp=vpIndex(nu);
-      
+
       // if(pp<100){ ini=ini3[vp]; ifin=ifin3[vp]; }else{ if(pp<300){ ini=ini2[vp]; ifin=ifin2[vp]; }else{ ini=ini1[vp]; ifin=ifin1[vp]; } }
-      
+
       ini=1;   ifin=666;
-      
-      //      cout << "  16O16O16O_V1 LINES: " << INI << " TO " << IFIN << ENDL; 
+
+      //      cout << "  16O16O16O_V1 LINES: " << INI << " TO " << IFIN << ENDL;
       if(ini>0){ini=ini-1;}else{ifin=0;}
       if(ifin>0){ifin=ifin-1;}else{ifin=0;}
 
-      //      COUT << "16O16O16O_V1 LINES: " << INI << " TO " << IFIN << ENDL; 
+      //      COUT << "16O16O16O_V1 LINES: " << INI << " TO " << IFIN << ENDL;
       if(ifin==0||ifin<ini){
-	
+
 	return std::complex<double> (0.0,0.0);
-	
+
       }else{
-	
+
 	for(unsigned int i=ini; i<ifin+1; i++){
 
 	  lshape=lineshape(nu,fre[i],linebroadening(fre[i],tt,pp,mmol,brdO3air[i]*0.001,texpO3[i]),0.0);   // BROADENING EN GHZ/MB 13/11/2018
-	  //  lshape=lineshape(nu,FRE[I],linebroadening(FRE[I],TT,PP,MMOL,0.0025,0.76),0.0);      
-	  
-	  lshape=lshape*flin[i]*exp(-el[i]/tt)*fre[i];	  
+	  //  lshape=lineshape(nu,FRE[I],linebroadening(FRE[I],TT,PP,MMOL,0.0025,0.76),0.0);
+
+	  lshape=lshape*flin[i]*exp(-el[i]/tt)*fre[i];
           lshapeacum=lshapeacum+lshape;
-	  
+
 	}
-	
+
 	lshapeacum=lshapeacum*(nu/pi)*(picube8div3hcesu*pow(mu,2)/q)  // IMAGINARY PART: ABSORPTION COEFFICIENT IN CM^2
 	  *(0.047992745509/tt);                                                               // REAL PART: DELAY IN RAD*CM^2
-	
+
 	return lshapeacum*1e-4;    // TO GIVE IT IN SI UNITS (M^2)    // (  RAD M^2 , M^2 )
-	
-	
+
+
       }
-      
+
     }
-    
+
   }
-  
-  
-  
+
+
+
   //////////////////////// OPACITY SOURCE nuMBER: 19 /////////////////////////////
 
   std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o16o16o_v3(double tt, double pp, double nu){
@@ -3516,7 +3516,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       0.76,0.78,0.76,0.82,0.82,0.77,0.82,0.76,0.81,0.81,0.76,0.77,0.81,0.76};
 
 
-      
+
     static const double brdO3air[714] ={
       2.1456,2.4120,2.3291,2.3143,2.1042,2.1042,2.5126,2.3735,2.0568,2.1130,2.3084,2.6250,2.4771,2.5570,2.0687,2.2018,2.1338,2.2166,2.0894,2.4948,
       2.4386,2.0716,2.3676,2.4415,2.0716,2.3735,2.0598,2.1249,2.0775,2.3498,2.3912,2.1338,2.6901,2.0687,2.5658,2.0598,2.5155,2.2314,2.0775,2.0568,
@@ -3557,7 +3557,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       2.3000,2.4978,2.1456,2.3000};
 
 
-    
+
     static const double flin[714] = {
       .450e+01, .515e+01, .527e+01, .274e+01, .934e+01, .103e+02, .244e+01, .259e+01, .740e+01, .100e+02, .515e+01, .309e+01, .715e+01, .706e+01, .124e+02, .743e+01, .978e+01, .717e+01,
       .933e+01, .106e+02, .218e+01, .124e+02, .681e+01, .136e+02, .121e+02, .429e+01, .126e+02, .954e+01, .701e+01, .448e+01, .159e+02, .919e+01, .309e+01, .856e+01, .131e+01, .787e+01,
@@ -3646,7 +3646,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
     static const double picube8div3hcesu=4.1623755e-19;  // (8*pi**3/(3*h*c))*(1e-18)**2 = 4.1623755e-19
     static const double mu=0.53;  //debyes
     static const double mmol=48.0;
-    
+
     //double q=1.321477358*pow(tt,1.5);
     double q=1.321477358*tt*sqrt(tt);
     //    unsigned int vp;
@@ -3654,16 +3654,16 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
     unsigned int ifin;
     std::complex<double>  lshape;
     std::complex<double>  lshapeacum;
-    
+
     if(nu>999.9){
-      
+
       return std::complex<double> (0.0,0.0);
-      
+
     }else{
-      
+
       // vp=vpIndex(nu);
 
-      
+
       //      if(pp<100){
       //	ini=ini3[vp];
       //	ifin=ifin3[vp];
@@ -3676,36 +3676,36 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       //      	  ifin=ifin1[vp];
       //      	}
       //      }
-      
+
       ini=0;
       ifin=712;
-      
+
       if(ini>0){ini=ini-1;}else{ifin=0;}
       if(ifin>0){ifin=ifin-1;}else{ifin=0;}
-      
+
       if(ifin==0||ifin<ini){
-	
+
 	return std::complex<double> (0.0,0.0);
-	
+
       }else{
-	
+
 	for(unsigned int i=ini; i<ifin+1; i++){
 
 	  lshape=lineshape(nu,fre[i],linebroadening(fre[i],tt,pp,mmol,brdO3air[i]*0.001,texpO3[i]),0.0);   // broadening en ghz/mb 13/11/2018
 	  //     lshape=lineshape(nu,fre[i],linebroadening(fre[i],tt,pp,mmol,0.0025,0.76),0.0);
-	  lshape=lshape*flin[i]*exp(-el[i]/tt)*fre[i];	  
+	  lshape=lshape*flin[i]*exp(-el[i]/tt)*fre[i];
           lshapeacum=lshapeacum+lshape;
-	  
+
 	}
-	
+
 	lshapeacum=lshapeacum*(nu/pi)*(picube8div3hcesu*pow(mu,2)/q)  // imaginary part: absorption coefficient in cm^2
 	  *(0.047992745509/tt);                                                               // real part: delay in rad*cm^2
-	
+
 	return lshapeacum*1e-4;    // to give it in si units (m^2)    // (  rad m^2 , m^2 )
-	
-	
+
+
       }
-      
+
     }
 
   }
@@ -4102,7 +4102,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       0.78,0.77,0.81,0.79,0.77,0.76,0.78,0.76,0.76,0.77,0.79,0.81,0.76,0.78,0.81, 0.77,0.79,0.82,0.78,0.76,0.76,0.71,0.76,0.77,0.82,0.79,0.77,0.79,0.81,0.83,
       0.81,0.76,0.76,0.76,0.76,0.77,0.80,0.80,0.82,0.78,0.78,0.76,0.76,0.76,0.77, 0.80,0.79,0.83,0.82,0.76,0.82,0.76,0.76,0.83,0.78,0.76,0.80,0.76,0.76,0.76,
       0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76};
-    
+
     static const double brdO3air[1151] ={ // MHz/mb
       2.0894,2.0835,2.0450,2.2166,2.4356,2.0716,2.5984,2.0568,2.1722,2.1338, 2.2492,2.0509,2.0598,2.1959,2.0627,2.0568,2.1574,2.3084,2.2403,2.1604,
       2.0450,2.1870,2.2669,2.0835,2.6901,2.2877,2.0598,2.1278,2.0953,2.0627, 2.1456,2.0391,2.4859,2.1574,2.0568,2.1130,2.0953,2.1042,2.2877,2.0775,
@@ -4234,7 +4234,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       .4830E+01,  .4440E+00,  .3640E+01,  .2480E+01,  .3920E+01, .9150E+01,  .4950E+00,  .9600E+01,  .8550E+01,  .1000E-01, .4610E+01,  .3150E+00,  .2280E+01,  .4010E+01,  .9330E+01,
       .8740E+01,  .9810E+01,  .9260E+01,  .2020E+00,  .5640E+01, .3220E+01,  .2080E+01,  .8180E+01,  .2000E-01,  .2590E+02, .9500E+01,  .2530E+02,  .2470E+02,  .2410E+02,  .2350E+02,
       .2290E+02,  .2230E+02,  .2170E+02,  .2110E+02,  .2050E+02, .2000E+02,  .1940E+02,  .1880E+02,  .1820E+02,  .1760E+02};
-    
+
     static const double el[1151]={
       712.962,  751.948, 1527.675,  295.458,   72.409,  769.490, 11.568, 1105.888,  405.486,  497.424,   246.754, 1470.888, 1057.475,  183.068,  856.081, 1154.462, 434.109,  184.357,
       144.750,  226.134, 1584.658,  347.970,  225.783,  686.506, 3.643,  110.903, 1010.594,  273.645,   673.097,   833.248, 465.603, 1642.703,   49.321,  405.541, 1414.963,  564.310,
@@ -4507,7 +4507,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
 
       if(pp<25){ ini=ini3[vp]; ifin=ifin3[vp]; }else{ if(pp<300){ ini=ini2[vp]; ifin=ifin2[vp]; }else{ ini=ini1[vp]; ifin=ifin1[vp];} }
       if(ini>21){ini=ini-20;}else{ini=1;}           // NEW PATCH 02 SEP 2016
-      if(ifin<1132){ifin=ifin+20;}else{ifin=1151;}  // NEW PATCH 02 SEP 2016  
+      if(ifin<1132){ifin=ifin+20;}else{ifin=1151;}  // NEW PATCH 02 SEP 2016
       if(ini>0){ini=ini-1;}else{ifin=0;}
       if(ifin>0){ifin=ifin-1;}else{ifin=0;}
 
@@ -4778,7 +4778,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       1050.215,  626.296,  626.296, 1296.265,1332.850, 1332.850,  1244.700, 1288.576, 1004.263, 1194.231, 524.304, 1144.861,  959.428, 1039.114, 1168.604, 1039.093, 1096.791, 1049.720,
       915.808, 1003.851,   95.041,   95.041,  372.623,  372.623,  873.402,  959.183};
 
-    
+
     static const double texpO3[1376] ={
       0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76, 0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76, 0.76,0.76,0.76,0.76,0.76,0.77,0.76,0.76,0.76,0.76,0.76,0.76,
       0.76,0.76,0.76,0.77,0.76,0.76,0.76,0.76,0.76,0.78,0.76,0.76, 0.76,0.76,0.76,0.76,0.76,0.76,0.78,0.79,0.76,0.76,0.76,0.77, 0.76,0.76,0.78,0.76,0.76,0.76,0.79,0.76,0.78,0.76,0.76,0.76,
@@ -4819,7 +4819,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.77,0.77,0.79,0.76,0.77, 0.77,0.83,0.84,0.83,0.76,0.76,0.76,0.76,0.76,0.76,0.80,0.76, 0.84,0.84,0.84,0.78,0.76,0.76,0.78,0.78,0.80,0.84,0.76,0.76,
       0.76,0.78,0.76,0.76,0.77,0.77,0.83,0.83,0.77,0.77,0.80,0.83, 0.76,0.76,0.76,0.84,0.76,0.76,0.83,0.77,0.77,0.76,0.79,0.79, 0.84,0.76,0.83,0.84,0.80,0.83,0.82,0.84,0.76,0.84,0.83,0.83,
       0.82,0.83,0.77,0.77,0.76,0.76,0.82,0.82};
-    
+
     static const double brdO3air[1376] ={
       2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000, 2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000, 2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,
       2.3000,2.3000,2.4120,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000, 2.3000,2.3000,2.5540,2.4623,2.3000,2.3000,2.3000,2.3000,2.3000, 2.2492,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,
@@ -4873,7 +4873,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       2.2314,2.5540,2.5540,2.2877,2.2877,2.1249,2.0687,2.3000,2.3000, 2.3000,2.1426,2.3000,2.3000,2.3498,2.3498,2.0746,1.9680,2.4711, 2.4711,2.1130,2.0835,2.0331,2.0391,2.0450,1.9621,2.0509,2.3000,
       2.0923,2.3498,2.3498,2.0568,2.1841,2.1841,2.0627,2.3000,2.0983, 2.0687,2.1042,2.0746,2.1071,1.9177,2.0627,1.9177,2.0835,2.0923, 2.1160,2.0983,2.5244,2.5244,2.3000,2.3000,2.1249,2.1071};
 
-    
+
     static const unsigned int ifin1[500]={
          5,   8,   9,  12,  15,  17,  19,  21,  24,  27,  27,  30,  33,  36,  40,  45,  45,  48,  51,  52,  56,  58,  61,  63,  67,  68,  70,  77,  79,  82,
         86,  86,  87,  91,  91,  91,  94,  97,  99, 103, 106, 108, 110, 111, 112, 115, 118, 120, 122, 122, 127, 130, 132, 136, 137, 142, 144, 146, 149, 151,
@@ -5316,7 +5316,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       0.78,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.77,0.77,0.76, 0.76,0.76,0.76,0.76,0.76,0.77,0.83,0.77,0.76,0.76,0.76,0.76, 0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76,
       0.76,0.76,0.76,0.76,0.78,0.77,0.77,0.76,0.83,0.76,0.76,0.76, 0.76,0.76,0.77,0.77,0.76,0.76,0.76,0.76,0.84,0.76,0.76,0.76, 0.76,0.76,0.84,0.76,0.76,0.76,0.76,0.76,0.83,0.76,0.76,0.77,
       0.77,0.76,0.83,0.83,0.76,0.76,0.76,0.76,0.76,0.83,0.76,0.76, 0.76,0.78,0.77,0.76,0.77,0.76,0.76,0.83,0.76,0.76,0.76,0.76, 0.76,0.76,0.76,0.76,0.82,0.76,0.76};
-    
+
     static const double brdO3air[1363] ={
       2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000, 2.3000,2.5984,2.2877,2.3000,2.3000,2.3000,2.3000,2.3000,2.6428, 2.3000,2.3000,2.0716,2.0894,2.0894,2.3000,2.2669,2.3000,2.3000,
       2.1959,2.1782,2.2166,2.4623,2.1604,2.3000,2.3000,2.3000,2.3000, 2.1722,2.3000,2.2403,2.2403,2.1456,2.3000,2.3000,2.3000,2.4120, 2.5540,2.2640,2.0775,2.3000,2.3000,2.3084,2.3000,2.3000,2.3000,
@@ -5371,7 +5371,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       2.3000,2.0983,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000, 2.3000,2.1071,2.3000,2.3000};
 
 
-    
+
     static const unsigned int ifin1[500]={
          9,   9,  13,  14,  14,  16,  17,  21,  22,  25,  27,  30,  32,  37,  42,  45,  47,  49,  51,  55,  57,  59,  61,  64,  65,  67,  72,  75,  76,  79,
         83,  87,  90,  92,  93,  94,  95,  96, 100, 104, 104, 104, 107, 108, 112, 115, 117, 118, 123, 125, 127, 129, 133, 137, 139, 139, 142, 144, 146, 148,
@@ -5697,7 +5697,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       0.79,0.83,0.76,0.76,0.76,0.82,0.77,0.76,0.76,0.84,0.78,0.76, 0.82,0.82,0.76,0.76,0.76,0.79,0.76,0.78,0.84,0.76,0.82,0.82, 0.83,0.76,0.76,0.83,0.81,0.76,0.76,0.82,0.78,0.83,0.77,0.82,
       0.76,0.81,0.76,0.81,0.77,0.76,0.76,0.80,0.80,0.81,0.83,0.80, 0.80,0.80,0.79,0.79,0.79,0.76,0.79,0.79,0.79,0.78,0.78,0.78, 0.78,0.78,0.78,0.77,0.77,0.77,0.77,0.77,0.77,0.77,0.77,0.76,
       0.76,0.83,0.76,0.80,0.77,0.76,0.77,0.76,0.76,0.83,0.77,0.76, 0.81,0.76,0.76,0.83,0.76,0.83,0.76,0.77,0.78,0.76,0.76,0.77, 0.81,0.76,0.78,0.76,0.76,0.76,0.83,0.83,0.77,0.76,0.83};
-    
+
     static const double brdO3air[755] ={
       2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000, 2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000, 2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,
       2.4356,2.3000,2.3000,2.3000,2.3000,2.3439,2.1722,2.3000,2.3000, 2.3498,2.3000,2.3000,2.3000,2.3000,2.1338,2.3000,2.3000,2.3000, 2.3000,2.3000,2.3291,2.2166,2.4060,2.5155,2.3000,2.2314,2.3000,
@@ -5728,7 +5728,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       2.1722,2.1841,2.1959,2.2078,2.2196,2.2344,2.2462,2.2610,2.2788, 2.2936,2.3113,2.3291,2.3498,2.3705,2.3912,2.4149,2.4415,2.4682, 2.3000,1.9532,2.3000,2.1130,2.5244,2.3000,2.3498,2.3000,2.3000,
       1.9858,2.3735,2.3000,2.0953,2.3000,2.3000,1.9799,2.3000,1.9444, 2.3000,2.4978,2.3291,2.3000,2.3000,2.3942,2.0835,2.3000,2.2314, 2.3000,2.0568,2.3000,1.9355,2.0568,2.4711,2.3000,1.9710};
 
-    
+
     static const unsigned int ifin1[500]={
         3,   4,   5,   6,   6,   7,   9,  11,  12,  13,  14,  18,  18,  21,  24,  27,  30,  30,  30,  30,  31,  33,  34,  36,  38,  39,  41,  41,  43,  44,
        45,  46,  48,  49,  49,  51,  53,  54,  55,  56,  58,  61,  63,  63,  64,  65,  65,  66,  67,  70,  71,  72,  73,  74,  77,  79,  81,  82,  83,  84,
@@ -5823,7 +5823,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
 	616, 618, 619, 619, 620, 621, 623, 625, 627, 627, 627, 628, 630, 633, 634, 635, 637, 639, 640, 642, 644, 645, 646, 646, 648, 648, 649, 650, 651, 653,
 	655, 656, 658, 661, 662, 662, 664, 670, 672, 676, 677, 680, 683, 686, 687, 690, 696, 698, 700, 702, 707, 720, 722, 722, 726, 726, 729, 731, 733, 733,
 	733, 733, 735, 737, 738, 739, 739, 742, 742, 743, 745, 747, 748, 748, 748, 750, 750, 752, 753, 755};
-	
+
 
       static const unsigned int ini3[500]={
 	  1,   1,   2,   3,   5,   6,   6,   6,   8,  10,  12,  13,  14,  18,  18,  20,  22,  25,  29,  30,  30,  30,  30,  33,  33,  36,  38,  39,  41,  41,
@@ -6010,7 +6010,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       0.76,0.76,0.76,0.77,0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.76, 0.76,0.76,0.76,0.76,0.77,0.76,0.76,0.76,0.76,0.76,0.76,0.76, 0.76,0.79,0.76,0.76,0.77,0.76,0.76,0.76,0.76,0.76,0.76,0.76,
       0.76,0.76,0.76,0.76,0.80,0.76,0.76,0.76,0.76,0.76,0.76,0.76, 0.76,0.76,0.76,0.76,0.76,0.76,0.80,0.76,0.76,0.77,0.76,0.76, 0.76,0.76,0.76,0.76,0.77,0.76,0.76,0.76,0.76,0.76,0.76,0.76,
       0.76,0.76,0.76,0.76,0.76,0.76,0.76,0.77,0.76,0.76,0.76,0.81, 0.76,0.76};
-    
+
     static const double brdO3air[518] ={
       2.3000,2.3498,2.5155,2.4060,2.3000,2.3000,2.3883,2.5895,2.3000, 2.5244,2.5392,2.3000,2.4682,2.7405,2.4771,2.3000,2.4149,2.3735, 2.4386,2.3942,2.3000,2.3000,2.3705,2.3000,2.5540,2.3000,2.6428,
       2.3000,2.3000,2.3291,2.3000,2.4208,2.3735,2.4445,2.3000,2.3000, 2.3000,2.5540,2.3000,2.3000,2.3000,2.3000,2.4711,2.2610,2.2610, 2.3000,2.3291,2.2344,2.3000,2.3705,2.3000,2.2078,2.4978,2.4771,
@@ -6033,7 +6033,7 @@ std::complex<double>  RefractiveIndex::mkSpecificRefractivity_16o18o(double tt, 
       2.1130,2.3000,2.3000,2.3498,2.3000,2.3000,2.3000,2.3000,2.3000, 2.3000,2.5244,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000, 2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.3000,2.4415,2.3000,
       2.3000,2.3000,2.0953,2.3000,2.3000};
 
-    
+
     static const unsigned int ifin1[500]={
        1,   1,   1,   1,   1,   1,   1,   1,   1,   1,  1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   2,
        2,   2,   2,   2,   4,   4,   4,   4,   4,   4,  5,   6,   7,   8,   9,   9,   9,  11,  11,  12,  12,  13,  14,  14,  14,  15,  15,  17,  17,  18,

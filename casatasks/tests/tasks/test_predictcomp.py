@@ -16,7 +16,7 @@ else:
     from tasks import predictcomp 
     from taskinit import *
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
@@ -34,7 +34,7 @@ else:
 
 '''
 
-datapath = 'alma/simmos'
+datapath = ctsys_resolve('alma/simmos/')
 
 
 class predictcomp_test(unittest.TestCase):

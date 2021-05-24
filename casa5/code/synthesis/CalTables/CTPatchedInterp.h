@@ -47,12 +47,14 @@
 //#include <casa/Logging/LogSink.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
-
+    
+class MSMetaInfoForCal;
 
 class CTPatchedInterp
 {
 public:
-
+    
+  //msmetadata(const casacore::MeasurementSet * const & s, const float maxcache);
   // From NewCalTable only 
   CTPatchedInterp(NewCalTable& ct,
 		  VisCalEnum::MatrixType mtype,
@@ -72,6 +74,7 @@ public:
 		  const casacore::String& freqtype,
 		  const casacore::String& fieldtype,
 		  const casacore::MeasurementSet& ms,
+          const MSMetaInfoForCal& msmc,
 		  casacore::Vector<casacore::Int> spwmap=casacore::Vector<casacore::Int>(),
 		  const CTTIFactoryPtr cttifactoryptr=&CTTimeInterp1::factory);
 
@@ -85,6 +88,17 @@ public:
 		  const casacore::MSColumns& mscol,
 		  casacore::Vector<casacore::Int> spwmap=casacore::Vector<casacore::Int>(),
 		  const CTTIFactoryPtr cttifactoryptr=&CTTimeInterp1::factory);
+
+  // From NewCalTable and casacore::MS without  metadata
+  CTPatchedInterp(NewCalTable& ct,
+          VisCalEnum::MatrixType mtype,
+          casacore::Int nPar,
+          const casacore::String& timetype,
+          const casacore::String& freqtype,
+          const casacore::String& fieldtype,
+          const casacore::MeasurementSet& ms,
+          casacore::Vector<casacore::Int> spwmap=casacore::Vector<casacore::Int>(),
+          const CTTIFactoryPtr cttifactoryptr=&CTTimeInterp1::factory);
 
 
   // Destructor
@@ -113,6 +127,13 @@ public:
 
   // Report state
   void state();
+    
+    // Access to the MSMetaInfoForCal (throws if none)
+  const MSMetaInfoForCal& msmc() const
+  {
+      if (msmc_) return *msmc_;
+      else throw(casacore::AipsError("VisCal::msmc(): No MSMetaInfoForCal object!"));
+  };
 
 private:
 
@@ -126,6 +147,9 @@ private:
   void makeInterpolators();
 
   casacore::Int thisobs(casacore::Int obs) { return (byObs_?obs:0); };
+    
+  // The MSMetaInfoForCal pointer
+  const MSMetaInfoForCal* msmc_;
 
   // Methods to set up 1:1 patch-panel maps
   //  Private for now as not yet ready to control from outside

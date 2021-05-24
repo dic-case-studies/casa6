@@ -39,6 +39,11 @@
 #include <casacore/casa/Quanta/UnitMap.h>
 #include <casatools/Config/State.h>
 #ifdef CASATOOLS
+#include <fftw3.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+#include <casacore/scimath/Mathematics/FFTW.h>
 #include <asdmstman/AsdmStMan.h>
 #include <casacore/derivedmscal/DerivedMC/Register.h>
 #include <toolversion.h>
@@ -453,13 +458,40 @@ bool utils::initialize(const std::vector<std::string> &default_path) {
     casatools::get_state( ).setPipeline(pipeline);
     // configure quanta/measures customizations...
     UnitMap::putUser( "pix", UnitVal(1.0), "pixel units" );
+
 #ifdef CASATOOLS
     casa::AsdmStMan::registerClass( );
     register_derivedmscal();
+
+    // --- --- --- configure fftw --- CAS-13342 --- --- --- --- --- --- --- --- 
+    casacore::FFTW init_casacore_fftw;
+#ifdef _OPENMP
+    int numCPUs = omp_get_max_threads();
+#else
+    int numCPUs = HostInfo::numCPUs();
+#endif
+    int nthreads = 1;
+    if (numCPUs > 1) {
+        nthreads = numCPUs;
+    }
+    fftwf_plan_with_nthreads(nthreads);
+    fftw_plan_with_nthreads(nthreads);
 #endif
     initialized = true;
     return true;
 }
+
+// ------------------------------------------------------------
+// -------------------- handling rundata path -----------------
+#ifdef CASATOOLS
+std::string utils::rundata( ) {
+    return casatools::get_state( ).measuresDir( );
+}
+
+void utils::setrundata( const std::string &data ) {
+    casatools::get_state( ).setDistroDataPath(data);
+}
+#endif
 
 // ------------------------------------------------------------
 // -------------------- handling data path --------------------

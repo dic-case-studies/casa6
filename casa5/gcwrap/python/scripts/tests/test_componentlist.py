@@ -70,11 +70,17 @@
 #
 
 ###########################################################################
-import casac
-from tasks import *
-from taskinit import *
-from __main__ import *
 import unittest
+
+is_CASA6 = False
+try:
+    from casatools import componentlist as cltool
+    is_CASA6 = True
+except:
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+
 
 class componentlist_test(unittest.TestCase):
     
@@ -109,3 +115,6 @@ class componentlist_test(unittest.TestCase):
         
 def suite():
     return [componentlist_test]
+
+if __name__ == '__main__':
+    unittest.main()

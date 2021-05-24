@@ -133,6 +133,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     static casacore::Int getOptimumSize(const casacore::Int npix);
 
+    static casacore::Bool fitPsfBeam(const casacore::String& imagename="", const casacore::Int nterms=1, const casacore::Float psfcutoff=0.35);
+
     static void getResource(casacore::String label="", casacore::String fname="");
     
     // return comprehensible direction string from given MDirection object
@@ -170,7 +172,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	      const casacore::String& filtertype=casacore::String("Gaussian"),
 	      const casacore::Quantity& filterbmaj=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
-	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg")  );
+	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg"), const casacore::Double& fracBW=0.0);
     static void getFromWeightRecord( casacore::String& type,casacore::String& rmode,
                                 casacore::Quantity& noise,casacore::Double& robust,
                                 casacore::Quantity& fieldofview, casacore::Int& npixels,
@@ -178,7 +180,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                  casacore::String& filtertype,
                                  casacore::Quantity& filterbmaj,
                                  casacore::Quantity& filterbmin,
-                                 casacore::Quantity& filterbpa, const casacore::Record& inrec);
+                                 casacore::Quantity& filterbpa, casacore::Double& fracBW, const casacore::Record& inrec);
     
 
   protected:
@@ -290,7 +292,7 @@ public:
 		 const casacore::MFrequency::Types& dataFrame, const casacore::Quantity& qrestfreq, 
 		 const casacore::Double& freqmin, const casacore::Double& freqmax,
 		 const casacore::MDirection& phaseCenter );
-  
+  casacore::Double getCubeImageStartFreq();
   casacore::String findSpecMode(const casacore::String& mode) const;
   casacore::String MDopToVelString(casacore::Record &rec);
   casacore::Record getcsys() const;

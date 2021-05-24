@@ -23,8 +23,8 @@ The script runs in one of three modes:
    assessment of whether the scripts are working and (2) to produce useful
    benchmarks of performance, e.g., as a function of machine.
 '''
-from __future__ import print_function
 
+#from __future__ import print_function
 
 # =====================
 # IMPORTS

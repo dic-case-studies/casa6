@@ -5,14 +5,14 @@ import numpy
 
 from casatasks import imsubimage
 
-from casatools import image
+from casatools import image, ctsys
 from casatools import quanta
 from casatools import regionmanager
 from casatools import table
 
 _tb = table()
 
-datapath = 'regression/unittest/imsubimage/'
+datapath = ctsys.resolve('unittest/imsubimage/')
 
 class imsubimage_test(unittest.TestCase):
     

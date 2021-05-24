@@ -53,7 +53,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     virtual const CTField& field()                    {return asCT()->field();}
     virtual const CTSpectralWindow& spectralWindow()  {return asCT()->spectralWindow();}
     virtual casacore::Bool isMS()                               {return false;};
-    virtual casacore::MSSelectableTable::MSSDataType dataType();//                    {return casacore::MSSelectableTable::BASELINE_BASED;}
+
+    // BASELINE_BASED, PURE_ANTENNA_BASED, REF_ANTENNA_BASED
+    virtual casacore::MSSelectableTable::MSSDataType dataType();
 
     virtual const casacore::MSDataDescription& dataDescription();
     virtual casacore::String columnName(casacore::MSMainEnums::PredefinedColumns nameEnum);

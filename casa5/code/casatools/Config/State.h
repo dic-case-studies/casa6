@@ -56,10 +56,20 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
             return data_path;
         }
 
+        // get directory containing IERS measures data
+        // an exception is thrown if it does not exist or
+        // does not contain the IERS tables
+        //   * should contain IERS tables
+        std::string measuresDir( ) const {
+            return distro_data_path;
+        }
+
         virtual std::string pythonPath( ) const {
             return python_path;
         }
 
+        //   * should contain viewer colormap tables
+        //   * should contain IERS tables
         virtual std::string distroDataPath( ) const {
             return distro_data_path;
         }
@@ -175,6 +185,7 @@ namespace casatools {   /** namespace for CASAtools classes within "CASA code" *
         std::string python_path;
         std::string log_path;
         std::string distro_data_path;			// path to data as provide by casadata pkg
+        std::string measures_dir;
         bool no_gui, do_agg, do_pipeline;
         Registrar registrar;
     };
