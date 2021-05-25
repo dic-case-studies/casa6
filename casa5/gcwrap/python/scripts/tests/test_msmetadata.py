@@ -30,7 +30,7 @@
 # </author>
 #
 # <summary>
-# Test suite for the CASA tool msmd
+# Test suite for the CASA tool msmetadata
 # </summary>
 #
 # <reviewed reviwer="" date="" tests="" demos="">
@@ -43,54 +43,71 @@
 # </prerequisite>
 #
 # <etymology>
-# Test for the msmd tool
+# Test for the msmetadata tool
 # </etymology>
 #
 # <synopsis>
-# Test the msmd tool
+# Test the msmetadata tool
 # </synopsis>
 #
 # <example>
 #
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-#
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_msmd[test1,test2,...]
-#
 # </example>
 #
 # <motivation>
-# To provide a test standard for the ia.subimage tool method to ensure
+# To provide a test standard for the msmetadata tool to ensure
 # coding changes do not break the associated bits
 # </motivation>
 #
 
 ###########################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 import shutil
-import casac
-from tasks import *
-from taskinit import *
-from __main__ import *
 import unittest
 import numpy
 
-datadir = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/msmetadata/'
-fixture = datadir + 'MSMetaData.ms'
-
-writeable = datadir + 'checker.ms'
+is_CASA6 = False
+try:
+    import casac
+    from tasks import *
+    from taskinit import *
+    from __main__ import *
+    _md = msmdtool()
+    _tb = tbtool()
+    _me = metool()
+    _qa = qatool()
+    _ms = mstool()
+    datadir = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/msmetadata/'
+    fixture = datadir + 'MSMetaData.ms'
+    writeable = datadir + 'checker.ms'
+    tdm2fdm = datadir + 'uid___A002_Xd7be9d_X4838-spw16-18-20-22.ms'
+except ImportError:
+    import os
+    from casatools import msmetadata, table, ctsys, ms, measures, quanta, ms
+    _md = msmetadata()
+    _tb = table()
+    _me = measures()
+    _qa = quanta()
+    _ms = ms()
+    is_CASA6 = True
+    datadir = ctsys.resolve('unittest/msmetadata/')
+    fixture = os.path.join(datadir,'MSMetaData.ms')
+    writeable = os.path.join(datadir,'checker.ms')
+    tdm2fdm = os.path.join(datadir, 'uid___A002_Xd7be9d_X4838-spw16-18-20-22.ms')
 
 def near(a, b, epsilon):
     return abs((a-b)/max(a,b)) <= epsilon
 
-class msmd_test(unittest.TestCase):
+class msmetadata_test(unittest.TestCase):
 
     def setUp(self):
-        self.md = msmdtool()
+        self.md = _md
         self.md.open(fixture)
 
     def tearDown(self):
         self.md.done()
-        self.assertTrue(len(tb.showcache()) == 0)
+        self.assertTrue(len(_tb.showcache()) == 0)
 
     def test_antennanames_and_antennaids(self):
         """Test antennanames() and antennaids()"""
@@ -122,11 +139,11 @@ class msmd_test(unittest.TestCase):
         expec =  [ 8, 0,  1,  7,  9, 10, 11, 12, 13, 14]
         self.assertTrue((got == expec).all())
 
-        got = self.md.antennaids(["DV12", "DA*", "DV1*"], "1m", qa.quantity(15,"m"))
+        got = self.md.antennaids(["DV12", "DA*", "DV1*"], "1m", _qa.quantity(15,"m"))
         expec =  [ 8, 0,  1,  7,  9, 10, 11, 12, 13, 14]
         self.assertTrue((got == expec).all())
 
-        got = self.md.antennaids(["DV12", "DA*", "DV1*"], "1m", qa.quantity(2,"m"))
+        got = self.md.antennaids(["DV12", "DA*", "DV1*"], "1m", _qa.quantity(2,"m"))
         self.assertTrue(len(got) == 0)
 
         got = self.md.antennaids([], mindiameter="25m")
@@ -146,13 +163,13 @@ class msmd_test(unittest.TestCase):
         # no DDID for spwid=0, polid=0
         self.assertRaises(Exception,self.md.exposuretime, scan=30, spwid=0, polid=0)
         got = self.md.exposuretime(scan=30, spwid=0, polid=1)
-        self.assertTrue(got == qa.quantity("1.152s"))
+        self.assertTrue(got == _qa.quantity("1.152s"))
         got = self.md.exposuretime(scan=30, spwid=0)
-        self.assertTrue(got == qa.quantity("1.152s"))
+        self.assertTrue(got == _qa.quantity("1.152s"))
         got = self.md.exposuretime(scan=17, spwid=10, polid=0)
-        self.assertTrue(got == qa.quantity("1.008s"))
+        self.assertTrue(got == _qa.quantity("1.008s"))
         got = self.md.exposuretime(scan=17, spwid=10)
-        self.assertTrue(got == qa.quantity("1.008s"))
+        self.assertTrue(got == _qa.quantity("1.008s"))
 
     def test_fdmspws(self):
         """Test fdmspws()"""
@@ -239,7 +256,7 @@ class msmd_test(unittest.TestCase):
             self.assertTrue((got==names[expec2]).all())
         self.assertRaises(Exception, self.md.fieldsforscans, asmap=True)
         mymap = self.md.fieldsforscans(asmap=True, obsid=0, arrayid=0)
-        for k, v in mymap.iteritems():
+        for k, v in mymap.items():
             self.assertTrue(len(v) == 1)
             ik = int(k)
             if ik in [1, 2, 3, 4]:
@@ -480,7 +497,6 @@ class msmd_test(unittest.TestCase):
             self.assertTrue(got == [names[i]])
         self.assertTrue(self.md.namesforfields() == names)
         got = self.md.namesforfields([4, 0, 2])
-        print "*** got " + str(got)
         self.assertTrue(got == ["V866 Sco", "3C279", "Titan"])
 
     def test_nantennas(self):
@@ -658,7 +674,6 @@ class msmd_test(unittest.TestCase):
         """Test spwsforbasebands()"""
         for mode in ("i", "e", "o"):
             got = self.md.spwsforbaseband(sqldmode=mode)
-            print "*** got " + str(got)
             self.assertTrue(len(got) == 5)
             if mode == "o":
                 self.assertTrue(len(got['0']) == 0)
@@ -1041,7 +1056,7 @@ class msmd_test(unittest.TestCase):
         got = self.md.almaspws(sqld=True)
         self.assertTrue(len(got) == 1 and got[0] == 3)
         got = self.md.almaspws(sqld=True, complement=True)
-        expec = range(40)
+        expec = list(range(40))
         expec.remove(3)
         self.assertTrue((got == expec).all())
 
@@ -1052,7 +1067,7 @@ class msmd_test(unittest.TestCase):
         ])
         self.assertTrue((got == expec).all())
         got = self.md.almaspws(chavg=True, complement=True)
-        jj = range(40)
+        jj = list(range(40))
         for i in expec:
             jj.remove(i)
         expec = jj
@@ -1062,17 +1077,17 @@ class msmd_test(unittest.TestCase):
         expec = [17, 19, 21, 23]
         self.assertTrue((got == expec).all())
         got = self.md.almaspws(fdm=True, complement=True)
-        jj = range(40)
+        jj = list(range(40))
         for i in expec:
             jj.remove(i)
         expec = jj
         self.assertTrue((got == expec).all())
 
         got = self.md.almaspws(tdm=True)
-        expec = [0, 1, 3, 5, 7, 9, 11, 13, 15] + range(25,40)
+        expec = [0, 1, 3, 5, 7, 9, 11, 13, 15] + list(range(25,40))
         self.assertTrue((got == expec).all())
         got = self.md.almaspws(tdm=True, complement=True)
-        jj = range(40)
+        jj = list(range(40))
         for i in expec:
             jj.remove(i)
         expec = jj
@@ -1082,7 +1097,7 @@ class msmd_test(unittest.TestCase):
         expec = []
         self.assertTrue((got == expec).all())
         got = self.md.almaspws(wvr=True, complement=True)
-        expec = range(0, 40)
+        expec = list(range(0, 40))
         self.assertTrue((got == expec).all())
 
     def test_bandwidths(self):
@@ -1134,55 +1149,52 @@ class msmd_test(unittest.TestCase):
 
     def test_datadescids(self):
         """Test datadescids()"""
-        md = self.md;
-        got = md.datadescids()
+        got = self.md.datadescids()
         self.assertTrue((got == range(25)).all())
-        got = md.datadescids(-1, -1)
+        got = self.md.datadescids(-1, -1)
         self.assertTrue((got == range(25)).all())
         for i in range(25):
-            got = md.datadescids(i, -1)
+            got = self.md.datadescids(i, -1)
             self.assertTrue(got == [i])
-        got = md.datadescids(pol=1)
+        got = self.md.datadescids(pol=1)
         self.assertTrue(got == [0])
-        got = md.datadescids(pol=0)
+        got = self.md.datadescids(pol=0)
         self.assertTrue((got == range(1, 25)).all())
-        got = md.datadescids(spw=10, pol=1)
+        got = self.md.datadescids(spw=10, pol=1)
         self.assertTrue(len(got) == 0)
 
     def test_antennastations(self):
         """Test antennastations()"""
-        md = self.md
-        got = md.antennastations()
+        got = self.md.antennastations()
         expec = numpy.array([
             'A075', 'A068', 'A077', 'A137', 'A082', 'A076', 'A021', 'A071',
             'A011', 'A072', 'A025', 'A074', 'A069', 'A138', 'A053'
         ])
         self.assertTrue((got == expec).all())
-        got = md.antennastations(-1)
+        got = self.md.antennastations(-1)
         self.assertTrue((got == expec).all())
-        got = md.antennastations([-1])
+        got = self.md.antennastations([-1])
         self.assertTrue((got == expec).all())
-        got = md.antennastations([])
+        got = self.md.antennastations([])
         self.assertTrue((got == expec).all())
-        got = md.antennastations(2)
+        got = self.md.antennastations(2)
         self.assertTrue((got == numpy.array(["A077"])).all())
-        self.assertRaises(Exception, md.antennastations, [2, -1])
-        got = md.antennastations([4, 2])
+        self.assertRaises(Exception, self.md.antennastations, [2, -1])
+        got = self.md.antennastations([4, 2])
         expec = numpy.array(['A082', 'A077'])
         self.assertTrue((got == expec).all())
-        self.assertRaises(Exception, md.antennastations, [1, 20])
-        self.assertRaises(Exception, md.antennastations, 20)
-        got = md.antennastations('DV13')
+        self.assertRaises(Exception, self.md.antennastations, [1, 20])
+        self.assertRaises(Exception, self.md.antennastations, 20)
+        got = self.md.antennastations('DV13')
         expec = numpy.array(["A072"])
         self.assertTrue((got == expec).all())
         expec = numpy.array(["A072", "A075"])
-        got = md.antennastations(['DV13', 'DA43'])
+        got = self.md.antennastations(['DV13', 'DA43'])
         self.assertTrue((got == expec).all())
 
     def test_namesforspws(self):
         """Test namesforspws()"""
-        md = self.md
-        got = md.namesforspws()
+        got = self.md.namesforspws()
         i = 0
         for name in got:
             if i == 3:
@@ -1191,38 +1203,36 @@ class msmd_test(unittest.TestCase):
                 expec = ""
             self.assertTrue(name == expec)
             i += 1
-        got = md.namesforspws([4, 3])
+        got = self.md.namesforspws([4, 3])
         self.assertTrue((got == numpy.array(["", "BB_1#SQLD"])).all())
-        got = md.namesforspws(3)
+        got = self.md.namesforspws(3)
         self.assertTrue((got == numpy.array(["BB_1#SQLD"])).all())
 
-        self.assertRaises(Exception, md.namesforspws, -2)
-        self.assertRaises(Exception, md.namesforspws, [0,-2])
-        self.assertRaises(Exception, md.namesforspws, 85)
-        self.assertRaises(Exception, md.namesforspws, [0,85])
+        self.assertRaises(Exception, self.md.namesforspws, -2)
+        self.assertRaises(Exception, self.md.namesforspws, [0,-2])
+        self.assertRaises(Exception, self.md.namesforspws, 85)
+        self.assertRaises(Exception, self.md.namesforspws, [0,85])
 
     def test_spwsfornames(self):
         """Test spwsfornames()"""
-        md = self.md
-        got = md.spwsfornames()
-        for k,v in got.iteritems():
+        got = self.md.spwsfornames()
+        for k,v in got.items():
             if (k == ""):
                 self.assertEqual(len(v), 39)
             elif k == 'BB_1#SQLD':
                 self.assertEqual(len(v), 1)
                 self.assertEqual(v[0], 3)
 
-        got = md.spwsfornames("BB_1#SQLD")
+        got = self.md.spwsfornames("BB_1#SQLD")
         self.assertEqual(len(got), 1)
         v = got["BB_1#SQLD"]
         self.assertEqual(len(v), 1)
         self.assertEqual(v[0], 3)
-        got = md.spwsfornames("blah")
+        got = self.md.spwsfornames("blah")
         self.assertEqual(len(got), 0)
 
     def test_fieldsforsource(self):
         """Test fieldsforsource() and fieldsforsources()"""
-        md = self.md
         mynames = self.md.fieldsforsources(True)
         myids = self.md.fieldsforsources(False)
         names = [
@@ -1230,7 +1240,7 @@ class msmd_test(unittest.TestCase):
             "J1625-254", "V866 Sco", "RNO 90"
         ]
         for i in range(7):
-            res = md.fieldsforsource(i, False)
+            res = self.md.fieldsforsource(i, False)
             if i == 6:
                 self.assertTrue(len(res) == 0)
             else:
@@ -1238,7 +1248,7 @@ class msmd_test(unittest.TestCase):
                 self.assertTrue(
                     len(myids[str(i)]) == 1 and myids[str(i)][0] == i
                 )
-            res2 = md.fieldsforsource(i, True)
+            res2 = self.md.fieldsforsource(i, True)
             if i == 6:
                 self.assertTrue(len(res2) == 0)
             else:
@@ -1249,8 +1259,7 @@ class msmd_test(unittest.TestCase):
 
     def test_pointingdirection(self):
         """Test pointingdirection(), CAS-5878"""
-        md = self.md
-        ret = md.pointingdirection(500)
+        ret = self.md.pointingdirection(500)
         self.assertTrue(ret['antenna1']['id'] == 7)
         self.assertTrue(ret['antenna2']['id'] == 11)
         eps = 1e-10
@@ -1264,16 +1273,14 @@ class msmd_test(unittest.TestCase):
 
     def test_name(self):
         """Test name(), CAS-6817"""
-        md = self.md
-        name = md.name()
+        name = self.md.name()
         self.assertTrue(name == os.path.abspath(fixture))
 
     def test_timesforintent(self):
         """Test timesforintent(), CAS-6919"""
-        md = self.md
-        intents = md.intents()
+        intents = self.md.intents()
         for intent in intents:
-            times = md.timesforintent(intent)
+            times = self.md.timesforintent(intent)
             ntimes = len(times)
             expec = 0
             if intent == "CALIBRATE_AMPLI#ON_SOURCE":
@@ -1302,13 +1309,11 @@ class msmd_test(unittest.TestCase):
             self.assertTrue(ntimes == expec)
 
     def test_CAS7463(self):
-        md = self.md
-        self.assertTrue((md.chanwidths(0) == [1.5e9, 2.5e9, 2e9, 1.5e9]).all())
-        self.assertTrue((md.chanwidths(0, "GHz") == [1.5, 2.5, 2, 1.5]).all())
-        self.assertRaises(Exception, md.chanwidths, 0, "km/s")
+        self.assertTrue((self.md.chanwidths(0) == [1.5e9, 2.5e9, 2e9, 1.5e9]).all())
+        self.assertTrue((self.md.chanwidths(0, "GHz") == [1.5, 2.5, 2, 1.5]).all())
+        self.assertRaises(Exception, self.md.chanwidths, 0, "km/s")
 
     def test_sideband(self):
-        md = self.md
         expec = [
             -1, -1, -1, -1, -1,  1,  1,  1,  1,  1,  1,  1,  1,
             -1, -1, -1, -1, 1,  1,  1,  1, -1, -1, -1, -1, -1, -1,
@@ -1316,60 +1321,54 @@ class msmd_test(unittest.TestCase):
         ]
         expec = numpy.array(expec)
         got = []
-        for i in range(md.nspw()):
-            got.append(md.sideband(i))
+        for i in range(self.md.nspw()):
+            got.append(self.md.sideband(i))
         get = numpy.array(got)
         self.assertTrue((got == expec).all())
 
     def test_fieldnames(self):
-        md = self.md
-        got = md.fieldnames()
+        got = self.md.fieldnames()
         expec = ['3C279', 'J1337-129', 'Titan', 'J1625-254', 'V866 Sco', 'RNO 90']
         self.assertTrue(got == expec)
 
     def test_projects(self):
-        """Test msmd.projects()"""
-        md = self.md
-        projects = md.projects()
+        """Test msmetadata.projects()"""
+        projects = self.md.projects()
         self.assertTrue(len(projects) == 1)
         self.assertTrue(projects[0] == "T.B.D.")
 
     def test_observers(self):
-        """Test msmd.observers()"""
-        md = self.md
-        observers = md.observers()
+        """Test msmetadata.observers()"""
+        observers = self.md.observers()
         self.assertTrue(len(observers) == 1)
         self.assertTrue(observers[0] == "csalyk")
 
     def test_schedule(self):
-        """Test msmd.schedule()"""
-        md = self.md
-        schedule = md.schedule(0)
+        """Test msmetadata.schedule()"""
+        schedule = self.md.schedule(0)
         self.assertTrue(len(schedule) == 2)
         self.assertTrue(schedule[0] == "SchedulingBlock uid://A002/X391d0b/X5e")
         self.assertTrue(schedule[1] == "ExecBlock uid://A002/X3f6a86/X5da")
 
     def test_timerforobs(self):
-        """Test msmd.timerforobs()"""
-        md = self.md
-        timer = md.timerangeforobs(0)
+        """Test msmetadata.timerforobs()"""
+        timer = self.md.timerangeforobs(0)
         self.assertTrue(
             near(
-                qa.convert(me.getvalue(timer['begin'])['m0'],"s")['value'],
+                _qa.convert(_me.getvalue(timer['begin'])['m0'],"s")['value'],
                 4842824633.472, 1e-10
             )
         )
         self.assertTrue(
             near(
-                qa.convert(me.getvalue(timer['end'])['m0'],"s")['value'],
+                _qa.convert(_me.getvalue(timer['end'])['m0'],"s")['value'],
                 4842830031.632, 1e-10
             )
         )
 
     def test_reffreq(self):
-        """Test msmd.reffreq"""
-        md = self.md
-        nspw = md.nspw()
+        """Test msmetadata.reffreq"""
+        nspw = self.md.nspw()
         expec = [
                  1.83300000e+11, 2.15250000e+11, 2.15250000e+11,
                  2.17250000e+11, 2.17250000e+11, 2.29250000e+11,
@@ -1387,115 +1386,104 @@ class msmd_test(unittest.TestCase):
                  1.83450000e+11
                 ]
         for i in range(nspw):
-            freq = md.reffreq(i)
-            self.assertTrue(me.getref(freq) == 'TOPO')
-            v = me.getvalue(freq)['m0']
-            self.assertTrue(qa.getunit(v) == "Hz")
-            got = qa.getvalue(v)
+            freq = self.md.reffreq(i)
+            self.assertTrue(_me.getref(freq) == 'TOPO')
+            v = _me.getvalue(freq)['m0']
+            self.assertTrue(_qa.getunit(v) == "Hz")
+            got = _qa.getvalue(v)
             self.assertTrue(abs((got - expec[i])/expec[i]) < 1e-8)
 
     def test_antennadiamter(self):
-        """Test msmd.antennadiameter"""
-        md = self.md
-        nants = md.nantennas()
+        """Test msmetadata.antennadiameter"""
+        nants = self.md.nantennas()
         for i in range(nants):
-            diam = md.antennadiameter(i)
-            self.assertTrue(qa.getvalue(diam) == 12)
-            self.assertTrue(qa.getunit(diam) == 'm')
+            diam = self.md.antennadiameter(i)
+            self.assertTrue(_qa.getvalue(diam) == 12)
+            self.assertTrue(_qa.getunit(diam) == 'm')
 
     def test_spwfordatadesc(self):
-        """Test msmd.spwfordatadesc()"""
-        md = self.md
+        """Test msmetadata.spwfordatadesc()"""
         for i in range(25):
-            self.assertTrue(md.spwfordatadesc(i) == i)
-        spws = md.spwfordatadesc(-1)
+            self.assertTrue(self.md.spwfordatadesc(i) == i)
+        spws = self.md.spwfordatadesc(-1)
         expec = numpy.array(range(25))
         self.assertTrue((spws == expec).all())
 
     def test_polidfordatadesc(self):
-        """Test msmd.polidfordatadesc()"""
-        md = self.md
+        """Test msmetadata.polidfordatadesc()"""
         for i in range(25):
-            polid = md.polidfordatadesc(i)
+            polid = self.md.polidfordatadesc(i)
             if i == 0:
                 self.assertTrue(polid == 1)
             else:
                 self.assertTrue(polid == 0)
-        polids = md.polidfordatadesc(-1)
+        polids = self.md.polidfordatadesc(-1)
         expec = numpy.zeros([25])
         expec[0] = 1
         self.assertTrue((polids == expec).all())
 
     def test_ncorrforpol(self):
-        """Test msmd.ncorrforpol()"""
-        md = self.md
+        """Test msmetadata.ncorrforpol()"""
         for i in [0, 1]:
-            ncorr = md.ncorrforpol(i)
+            ncorr = self.md.ncorrforpol(i)
             if i == 0:
                 expec = 2
             else:
                 expec = 1
             self.assertTrue(ncorr == expec)
-        ncorrs = md.ncorrforpol(-1)
+        ncorrs = self.md.ncorrforpol(-1)
         self.assertTrue(len(ncorrs) == 2)
-        print "ncorrs", ncorrs
         self.assertTrue(ncorrs[0] == 2 and ncorrs[1] == 1)
 
     def test_corrtypesforpol(self):
-        """Test msmd.corrtypesforpol()"""
-        md = self.md
+        """Test msmetadata.corrtypesforpol()"""
         for i in [-1, 0, 1, 2]:
             if i == -1 or i == 2:
-                self.assertRaises(Exception, md.corrtypesforpol, i)
+                self.assertRaises(Exception, self.md.corrtypesforpol, i)
             elif i == 0:
-                ct = md.corrtypesforpol(i)
+                ct = self.md.corrtypesforpol(i)
                 self.assertTrue(len(ct) == 2)
                 self.assertTrue(ct[0] == 9 and ct[1] == 12)
             else:
-                ct = md.corrtypesforpol(i)
+                ct = self.md.corrtypesforpol(i)
                 self.assertTrue(len(ct) == 1 and ct[0] == 1)
 
     def test_corrprodsforpol(self):
-        """Test msmd.corrprodssforpol()"""
-        md = self.md
+        """Test msmetadata.corrprodssforpol()"""
         for i in [-1, 0, 1, 2]:
             if i == -1 or i == 2:
-                self.assertRaises(Exception, md.corrprodsforpol, i)
+                self.assertRaises(Exception, self.md.corrprodsforpol, i)
             elif i == 0:
-                ct = md.corrprodsforpol(i)
-                print "got", ct
+                ct = self.md.corrprodsforpol(i)
                 self.assertTrue(ct.size == 4)
                 self.assertTrue(ct[0][0] == 0 and ct[1][1] == 1)
                 self.assertTrue(ct[0][1] == 1 and ct[1][0] == 0)
             else:
-                ct = md.corrprodsforpol(i)
+                ct = self.md.corrprodsforpol(i)
                 self.assertTrue(ct.size == 2 and (ct == 0).all())
 
     def test_sourceidforfield(self):
-        """Test msmd.sourceidforfield()"""
-        md = self.md
+        """Test msmetadata.sourceidforfield()"""
         for i in range(6):
-            self.assertTrue(md.sourceidforfield(i) == i)
-        self.assertRaises(Exception, md.sourceidforfield, -1)
-        self.assertRaises(Exception, md.sourceidforfield, 6)
+            self.assertTrue(self.md.sourceidforfield(i) == i)
+        self.assertRaises(Exception, self.md.sourceidforfield, -1)
+        self.assertRaises(Exception, self.md.sourceidforfield, 6)
 
     def test_antennasforscan(self):
-        """Test msmd.antennasforscan()"""
-        md = self.md
+        """Test msmetadata.antennasforscan()"""
         expec = numpy.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13])
         expec9 = numpy.array([0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 13])
         for i in range(1, 33):
-            got = md.antennasforscan(i, 0, 0)
+            got = self.md.antennasforscan(i, 0, 0)
             myexpec = expec
             if i == 9:
                 myexpec = expec9
             self.assertTrue((got == myexpec).all())
-        self.assertRaises(Exception, md.antennasforscan, 0)
-        self.assertRaises(Exception, md.antennasforscan, 33)
+        self.assertRaises(Exception, self.md.antennasforscan, 0)
+        self.assertRaises(Exception, self.md.antennasforscan, 33)
 
     def test_sourceidsfromsourcetable(self):
-        """Test msmd.sourceidsfromsourcetable()"""
-        md = self.md
+        """Test msmetadata.sourceidsfromsourcetable()"""
         expec = numpy.array([
              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
@@ -1507,11 +1495,10 @@ class msmd_test(unittest.TestCase):
              3, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
              4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
         ])
-        self.assertTrue((md.sourceidsfromsourcetable() == expec).all())
+        self.assertTrue((self.md.sourceidsfromsourcetable() == expec).all())
 
     def test_sourcenames(self):
-        """Test msmd.sourcenames()"""
-        md = self.md
+        """Test msmetadata.sourcenames()"""
         expec = numpy.array([
             "3C279", "3C279", "3C279", "3C279", "3C279", "3C279", "3C279",
             "3C279", "3C279", "3C279", "3C279", "3C279", "3C279", "3C279",
@@ -1549,11 +1536,10 @@ class msmd_test(unittest.TestCase):
             "RNO 90", "RNO 90", "RNO 90", "RNO 90", "RNO 90", "RNO 90",
             "RNO 90", "RNO 90", "RNO 90", "RNO 90", "RNO 90"
         ])
-        self.assertTrue((md.sourcenames() == expec).all())
+        self.assertTrue((self.md.sourcenames() == expec).all())
 
     def test_sourcedirs(self):
-        """Test msmd.sourcedirs()"""
-        md = self.md;
+        """Test msmetadata.sourcedirs()"""
         elong = [
             -2.8964345 , -2.8964345 , -2.8964345 , -2.8964345 , -2.8964345 ,
             -2.8964345 , -2.8964345 , -2.8964345 , -2.8964345 , -2.8964345 ,
@@ -1638,43 +1624,40 @@ class msmd_test(unittest.TestCase):
             -0.27584353, -0.27584353, -0.27584353, -0.27584353, -0.27584353,
             -0.27584353, -0.27584353, -0.27584353, -0.27584353, -0.27584353
         ]
-        dirs = md.sourcedirs()
+        dirs = self.md.sourcedirs()
         n = len(dirs.keys())
         for i in range(n):
             d = dirs[str(i)]
-            self.assertTrue(me.getref(d) == "J2000")
-            v = me.getvalue(d)
+            self.assertTrue(_me.getref(d) == "J2000")
+            v = _me.getvalue(d)
             ra = v['m0']
             dec = v['m1']
-            self.assertTrue(qa.getunit(ra) == "rad")
-            self.assertTrue(qa.getunit(dec) == "rad")
-            self.assertTrue(near(qa.getvalue(ra), elong[i], 1e-7))
-            self.assertTrue(near(qa.getvalue(dec), elat[i], 1e-7))
+            self.assertTrue(_qa.getunit(ra) == "rad")
+            self.assertTrue(_qa.getunit(dec) == "rad")
+            self.assertTrue(near(_qa.getvalue(ra), elong[i], 1e-7))
+            self.assertTrue(near(_qa.getvalue(dec), elat[i], 1e-7))
 
     def test_propermotions(self):
-        """Test msmd.propermotions()"""
-        md = self.md;
-        mu = md.propermotions()
+        """Test msmetadata.propermotions()"""
+        mu = self.md.propermotions()
         self.assertTrue(len(mu.keys()) == 200)
         for i in range(200):
             mymu = mu[str(i)]
             lon = mymu['longitude']
             lat = mymu['latitude']
-            self.assertTrue(qa.getvalue(lon) == 0)
-            self.assertTrue(qa.getunit(lon) == "rad/s")
-            self.assertTrue(qa.getvalue(lat) == 0)
-            self.assertTrue(qa.getunit(lat) == "rad/s")
+            self.assertTrue(_qa.getvalue(lon) == 0)
+            self.assertTrue(_qa.getunit(lon) == "rad/s")
+            self.assertTrue(_qa.getvalue(lat) == 0)
+            self.assertTrue(_qa.getunit(lat) == "rad/s")
 
     def test_nsources(self):
-        md = self.md
-        self.assertTrue(md.nsources() == 6)
+        self.assertTrue(self.md.nsources() == 6)
 
     def test_refdir(self):
-        """Test msmd.refdir()"""
-        md = self.md
+        """Test msmetadata.refdir()"""
         epsilon = 1e-6
-        for i in range(md.nfields()):
-            res = md.refdir(i)
+        for i in range(self.md.nfields()):
+            res = self.md.refdir(i)
             if i == 0:
                 self.assertTrue(abs(1 - res['m0']['value']/-2.8964345) < epsilon)
                 self.assertTrue(abs(1 - res['m1']['value']/-0.10104256) < epsilon)
@@ -1696,18 +1679,23 @@ class msmd_test(unittest.TestCase):
 
     def test_CAS7837(self):
         """Test corner case with no intents to make sure it doesn't segfault"""
-        md = self.md
-        importuvfits(datadir + 'W3OH_MC.UVFITS', 'lala.ms')
-        md.open('lala.ms')
-        self.assertTrue((md.fieldsforintent('*') == numpy.array([0])).all())
+        lala = 'lala.ms'
+        if os.path.exists(lala):
+            shutil.rmtree(lala)
+        _ms.fromfits(lala, os.path.join(datadir,'W3OH_MC.UVFITS'))
+        _ms.done()
+        self.md.open(lala)
+        self.assertTrue((_md.fieldsforintent('*') == numpy.array([0])).all())
+        _md.done()
+        if os.path.exists(lala):
+            shutil.rmtree(lala)
 
     def test_chaneffbws(self):
         """Test chaneffbws()"""
-        md = self.md
-        nspw = md.nspw()
+        nspw = self.md.nspw()
         for i in range(nspw):
-            ebw = md.chaneffbws(i)
-            ebw2 = md.chaneffbws(i, "MHz")
+            ebw = self.md.chaneffbws(i)
+            ebw2 = self.md.chaneffbws(i, "MHz")
             nchans = len(ebw);
             if (nchans == 1):
                 continue
@@ -1723,19 +1711,18 @@ class msmd_test(unittest.TestCase):
             for w2 in ebw2:
                 self.assertTrue(w2 == expec/1e6)
         self.assertTrue(
-            near(md.chaneffbws(9, asvel=True)[0], 20.23684342, 1e-8)
+            near(self.md.chaneffbws(9, asvel=True)[0], 20.23684342, 1e-8)
         )
         self.assertTrue(
-            near(md.chaneffbws(9, "m/s", True)[0], 20236.84342, 1e-8)
+            near(self.md.chaneffbws(9, "m/s", True)[0], 20236.84342, 1e-8)
         )
 
     def test_chanres(self):
         """Test chanres()"""
-        md = self.md
-        nspw = md.nspw()
+        nspw = self.md.nspw()
         for i in range(nspw):
-            ebw = md.chanres(i)
-            ebw2 = md.chanres(i, "MHz")
+            ebw = self.md.chanres(i)
+            ebw2 = self.md.chanres(i, "MHz")
             nchans = len(ebw);
             if (nchans == 1):
                 continue
@@ -1750,21 +1737,20 @@ class msmd_test(unittest.TestCase):
             for w2 in ebw2:
                 self.assertTrue(w2 == expec/1e6)
         self.assertTrue(
-            near(md.chanres(9, asvel=True)[0], 20.23684342, 1e-8)
+            near(self.md.chanres(9, asvel=True)[0], 20.23684342, 1e-8)
         )
         self.assertTrue(
-            near(md.chanres(9, "m/s", True)[0], 20236.84342, 1e-8)
+            near(self.md.chanres(9, "m/s", True)[0], 20236.84342, 1e-8)
         )
 
     def test_restfreqs(self):
         """Test restfreqs()"""
-        md = self.md
-        self.assertRaises(Exception, md.restfreqs, -1, 0)
-        self.assertRaises(Exception, md.restfreqs, 0, -1)
-        self.assertRaises(Exception, md.restfreqs, 50, 0)
-        self.assertRaises(Exception, md.restfreqs, 0, 50)
+        self.assertRaises(Exception, self.md.restfreqs, -1, 0)
+        self.assertRaises(Exception, self.md.restfreqs, 0, -1)
+        self.assertRaises(Exception, self.md.restfreqs, 50, 0)
+        self.assertRaises(Exception, self.md.restfreqs, 0, 50)
         for i in range(40):
-            res = md.restfreqs(0, i)
+            res = self.md.restfreqs(0, i)
             if i == 34:
                 self.assertTrue(len(res) == 2)
                 self.assertTrue(res['0']['m0']['value'] == 1e10)
@@ -1776,13 +1762,12 @@ class msmd_test(unittest.TestCase):
 
     def test_transitions(self):
         """Test transitions()"""
-        md = self.md
-        self.assertRaises(Exception, md.transitions, -1, 0)
-        self.assertRaises(Exception, md.transitions, 0, -1)
-        self.assertRaises(Exception, md.transitions, 50, 0)
-        self.assertRaises(Exception, md.transitions, 0, 50)
+        self.assertRaises(Exception, self.md.transitions, -1, 0)
+        self.assertRaises(Exception, self.md.transitions, 0, -1)
+        self.assertRaises(Exception, self.md.transitions, 50, 0)
+        self.assertRaises(Exception, self.md.transitions, 0, 50)
         for i in range(40):
-            res = md.transitions(0, i)
+            res = self.md.transitions(0, i)
             if i == 34:
                 self.assertTrue(len(res) == 2)
                 self.assertTrue(res[0] == "myline")
@@ -1792,35 +1777,32 @@ class msmd_test(unittest.TestCase):
 
     def test_CAS7986(self):
         """Verify datasets with referential integrity issues cause errors"""
-        myms = mstool()
-        mymsmd = msmdtool()
-        mytb = tbtool()
         vis = "cas7986.ms"
         def allgood():
             if (os.path.exists(vis)):
                 shutil.rmtree(vis)
             shutil.copytree(writeable, vis)
-            self.assertTrue(myms.open(vis))
-            self.assertTrue(myms.open(vis, check=True))
-            myms.done()
-            self.assertTrue(mymsmd.open(vis))
-            mymsmd.done()
+            self.assertTrue(_ms.open(vis))
+            self.assertTrue(_ms.open(vis, check=True))
+            _ms.done()
+            self.assertTrue(self.md.open(vis))
+            self.md.done()
 
         allgood()
 
         def dobad(colname):
-            mytb.open(vis, nomodify=False)
-            mytb.putcell(colname, 20, 9)
-            mytb.done()
-            self.assertTrue(myms.open(vis))
+            _tb.open(vis, nomodify=False)
+            _tb.putcell(colname, 20, 9)
+            _tb.done()
+            self.assertTrue(_ms.open(vis))
             self.assertRaises(
-                Exception, myms.open, vis, check=True
+                Exception, _ms.open, vis, check=True
             )
-            myms.done()
+            _ms.done()
             self.assertRaises(
-                Exception, mymsmd.open, vis
+                Exception, self.md.open, vis
             )
-            mymsmd.done()
+            self.md.done()
 
         # insert a bad antenna
         dobad("ANTENNA1")
@@ -1831,21 +1813,23 @@ class msmd_test(unittest.TestCase):
         allgood()
         dobad("FIELD_ID")
 
+        # cleanup
+        if (os.path.exists(vis)):
+            shutil.rmtree(vis) 
+
     def test_nbaselines(self):
         """Verify nbaselines()"""
-        md = self.md
-        self.assertTrue(md.nbaselines() == 21, "wrong number of baselines for default value of ac")
-        self.assertTrue(md.nbaselines(True) == 25, "wrong number of baselines for ac = True")
-        self.assertTrue(md.nbaselines(False) == 21, "wrong number of baselines for ac = False")
+        self.assertTrue(self.md.nbaselines() == 21, "wrong number of baselines for default value of ac")
+        self.assertTrue(self.md.nbaselines(True) == 25, "wrong number of baselines for ac = True")
+        self.assertTrue(self.md.nbaselines(False) == 21, "wrong number of baselines for ac = False")
 
     def test_timesforspws(self):
         """Verify timesforspws()"""
-        md = self.md
         expec = [
             351, 75, 150, 75, 150, 75, 150, 75, 150, 69, 138, 69, 138,
             69, 138, 69, 138, 385, 2310, 385, 2310, 385, 2310, 385, 2310
         ]
-        got = md.timesforspws()
+        got = self.md.timesforspws()
         self.assertTrue(len(got.keys()) == 40, "Wrong number of keys")
         for i in range(40):
             expeclen = 0
@@ -1882,8 +1866,20 @@ class msmd_test(unittest.TestCase):
                 4.842826404288e+09, 4.842826406304e+09, 4.842826408320e+09
             ]
         )
-        got = md.timesforspws(1)
+        got = self.md.timesforspws(1)
         self.assertTrue(numpy.all(numpy.isclose(got, expectimes, 0, 1e-6)), "Wrong times")
 
+    def test_tdm_fdm(self):
+        """Verify change to algorithm used for FDM and TDM windows CAS-13362"""
+        self.md.open(tdm2fdm)
+        self.assertTrue(
+            (self.md.almaspws(fdm=True) == [0, 1, 2, 3]).all(),
+            'Incorrect FDM windows'
+        )
+        self.md.done()
+
 def suite():
-    return [msmd_test]
+    return [msmetadata_test]
+
+if __name__ == '__main__':
+    unittest.main()

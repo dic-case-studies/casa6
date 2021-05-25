@@ -295,7 +295,7 @@ class failureTestCase(sdsidebandsplitTestBase):
         invalid_name = 'invalid.image'
         imagename = self.standard_param['imagename'][:-2] + [invalid_name]
         if is_CASA6:
-            ref_message = '.*cReqPathVec type.*'
+            ref_message = '.*must be a path that exists.*'
         else:
             ref_message = 'Could not find %s' % invalid_name
         self.run_exception(ref_message, imagename=imagename)
