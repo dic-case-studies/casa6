@@ -2274,7 +2274,7 @@ class create_makefile(Command):
             global link_libs
             ldflags2 += sepl + sepl.join([os.path.basename(libcasatools)[3:][:-3]] + link_libs)
 
-            tool_bind_dir = os.sep.join(["binding", "tools", "{toolname}"])
+            tool_bind_dir = os.sep.join(["src", "tools", "{toolname}"])
             tool_gen_dir = os.sep.join(["binding", "generated", "tools", "{toolname}"])
             # make targets for libraries on which tool libraries depend
             tool_shared_lib = os.sep.join([casac_dir, "lib", "{libname}." + soabi + "." + lib_ext])
