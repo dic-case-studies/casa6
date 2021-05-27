@@ -30,20 +30,14 @@
 #define SYNTHESIS_MATRIXCLEANER_H
 
 //# Includes
-
-#include <casa/aips.h>
-#include <casa/Quanta/Quantum.h>
-#include <lattices/Lattices/TempLattice.h>
-#include <casa/Arrays/IPosition.h>
-#include <casa/Arrays/Vector.h>
-#include <casa/Containers/Block.h>
-#include <lattices/LatticeMath/LatticeCleaner.h>
-#include <images/Images/ImageInterface.h>
-
-// namespace casacore{
-
-// template <class T> class Matrix;
-// }
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Quanta/Quantum.h>
+#include <casacore/lattices/Lattices/TempLattice.h>
+#include <casacore/casa/Arrays/IPosition.h>
+#include <casacore/casa/Arrays/Vector.h>
+#include <casacore/casa/Containers/Block.h>
+#include <casacore/lattices/LatticeMath/LatticeCleaner.h>
+#include <casacore/casa/Arrays/ArrayFwd.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -120,7 +114,8 @@ public:
   //can be done by calling  makeDirtyScales or setscales if one want to redo the
   //psfscales too.
   void setDirty(const casacore::Matrix<casacore::Float>& dirty);
-  //Calculate the convolutions of the dirty image
+  //Calculate the convolutions for the dirt
+  //Obviously the
   void makeDirtyScales();
   // Update the dirty image only (equiv of setDirty + makeDirtyScales)
   void update(const casacore::Matrix<casacore::Float> & dirty);
@@ -311,6 +306,7 @@ protected:
   //# about the current state and implicit side-effects are not possible
   //# because all information must be supplied in the input arguments
 
+
   casacore::CountedPtr<casacore::Matrix<casacore::Float> > itsDirty;
   casacore::CountedPtr<casacore::Matrix<casacore::Complex> >itsXfr;
 
@@ -320,6 +316,7 @@ protected:
   casacore::Block<casacore::Matrix<casacore::Float> > itsPsfConvScales;
   casacore::Block<casacore::Matrix<casacore::Float> > itsDirtyConvScales;
 
+
   casacore::Int itsIteration;	// what iteration did we get to?
   casacore::Int itsStartingIter;	// what iteration did we get to?
   casacore::Quantum<casacore::Double> itsFracThreshold;
@@ -327,10 +324,11 @@ protected:
   casacore::Float itsMaximumResidual;
   casacore::Float itsStrengthOptimum;
 
+
   casacore::Vector<casacore::Float> itsTotalFluxScale;
   casacore::Float itsTotalFlux;
 
-   // Calculate index into PsfConvScales
+  // Calculate index into PsfConvScales
   casacore::Int index(const casacore::Int scale, const casacore::Int otherscale);
 
   casacore::Bool destroyScales();
@@ -363,7 +361,6 @@ private:
 
   // threshold for masks. If negative, mask values are used as weights and no pixels are
   // discarded (although effectively they would be discarded if the mask value is 0.)
-
 };
 
 } //# NAMESPACE CASA - END
