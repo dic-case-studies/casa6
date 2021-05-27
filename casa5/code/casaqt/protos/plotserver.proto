@@ -1,0 +1,102 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+package rpc.gui;
+
+service plotserver {
+    rpc panel(NewPanel) returns (Id);
+    rpc colors(google.protobuf.Empty) returns (Colors);
+    rpc colormaps(google.protobuf.Empty) returns (ColorMaps);
+    rpc symbols(google.protobuf.Empty) returns (Symbols);
+    rpc line(NewLine) returns (Id);
+    rpc scatter(NewScatter) returns (Id);
+    rpc histogram(NewHistogram) returns (Id);
+    rpc raster(NewRaster) returns (Id);
+    rpc setlabel(Label) returns (google.protobuf.Empty);
+    rpc erase(Id) returns (google.protobuf.Empty);
+    rpc close(Id) returns (google.protobuf.Empty);
+    rpc release(Id) returns (google.protobuf.Empty);
+    rpc hide(Id) returns (google.protobuf.Empty);
+    rpc show(Id) returns (google.protobuf.Empty);
+    rpc loaddock(DockSpec) returns (Id);
+    rpc done (google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message Id {
+    int32 id = 1;
+}
+
+message NewPanel {
+    string title = 1;
+    string xlabel = 2;
+    string ylabel = 3;
+    string window_title = 4;
+    repeated int32 size = 5;
+    string legend = 6;
+    string zoom = 7;
+    int32 with_panel = 8;
+    bool new_row = 9;
+    bool hidden = 10;
+}
+
+message Colors {
+    repeated string names = 1;
+}
+
+message ColorMaps {
+    repeated string names = 1;
+}
+
+message Symbols {
+    repeated string names = 1;
+};
+
+message NewLine {
+    repeated double x = 1;
+    repeated double y = 2;
+    string color = 3;
+    string label = 4;
+    Id panel = 5;
+}
+
+message NewScatter {
+    repeated double x = 1;
+    repeated double y = 2;
+    string color = 3;
+    string label = 4;
+    string symbol = 5;
+    int32 symbol_size = 6;
+    int32 dot_size = 7;
+    Id panel = 8;
+}
+
+message NewHistogram {
+    repeated double values = 1;
+    int32 bins = 2;
+    string color = 3;
+    string label = 4;
+    Id panel = 5;
+}
+
+message NewRaster {
+    repeated double matrix = 1;
+    int32 sizex = 2;
+    int32 sizey = 3;
+    string colormap = 4;
+    Id panel = 5;
+}
+
+message Label {
+    string xlabel = 1;
+    string ylabel = 2;
+    string title = 3;
+    Id panel = 4;
+}
+
+message DockSpec {
+    string file_or_xml = 1;
+    string loc = 2;
+    repeated string dockable = 3;
+    Id panel = 4;
+}

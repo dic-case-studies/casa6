@@ -26,12 +26,10 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_bandpass.py
 #  test_caltabconvert.py
   test_calanalysis.py
-  test_clean.py
   test_cleanhelper.py
   test_clearstat.py
   test_componentlist.py
   test_concat.py
-  test_conjugatevis.py
   test_coordsys.py
   test_cvel.py
   test_cvel2.py
@@ -45,7 +43,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_flagdata.py
   test_flaghelper.py
   test_flagmanager.py
-  test_fluxscale.py
   test_fringefit.py
   test_getchunk.py
   test_gencal.py
@@ -128,7 +125,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_makemask.py
   test_me_shift.py
   test_measures.py
-  test_msmd.py
+  test_msmetadata.py
   test_mstransform.py
   test_mstransform_mms.py
   test_nrobeamaverage.py
@@ -137,6 +134,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_partition.py
   test_plotants.py
   test_plotcal.py
+  test_plotbandpass.py
   test_plotms.py
   test_plotprofilemap.py
   test_plotuv.py

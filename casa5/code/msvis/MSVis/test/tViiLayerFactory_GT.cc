@@ -439,6 +439,146 @@ TEST_F(DataAccessTest, AccessDataInSwappingDataTVIWhenMissingCorrectedData)
 }
 
 /*
+ * Gtest fixture used to test the access to the different data columns
+ * when the VI/VB2 is configured with rowBlocking().
+ * This class will create a synthetic MS in a temporary directory.
+ */
+class DataAccessRowBlockingTest : public MsFactoryTVITester
+{
+public:
+
+  /*
+   * Constructor: create the temporary dir and the MsFactory used later on
+   * to create the MS.
+   */
+  DataAccessRowBlockingTest() :
+    MsFactoryTVITester("test_tViiLayerFactory","DataAccessRowBlockingTest"),
+    nRowBlocking_p(-1),
+    lastSPWEndTime_p(-1)
+  {
+  }
+
+  /*
+   * Create the synthetic MS and a VisibilityIteratorImpl2 to access it.
+   */
+  void createVI()
+  {
+
+    // If so specified create a last SPW which finishes before the other ones.
+    // Without lastSPWEndTime_p enabled, it will create 4 SPWs (the default)
+    // that are observed from time 0 to time 14.
+    // With lastSPWEndTime_p enable, it will create 4 SPWs (now explicitely)
+    // observed in time range [0, 14] and a last SPW observed in range [0, 9]
+    // The default adds 4 antennas, i.e., 6 baselines. This gives 15*6=90 rows
+    // per SPW and 10*6=60 rows in the case a 5th SPW is added.
+    if(lastSPWEndTime_p != -1)
+    {
+      int nChannels = 100;
+      double frequency = 1e11;
+      double frequencyDelta = 1e9;
+      std::string stokes("XX YY");
+      double endTimeThisSPW = 10;
+      msf_p->addSpectralWindows(4);
+      msf_p->addSpectralWindow("SPW5", nChannels,
+                               frequency, frequencyDelta, stokes, endTimeThisSPW);
+    }
+
+    // Create the MS
+    createMS();
+
+    // Create a disk layer type VI Factory
+    IteratingParameters ipar;
+    VisIterImpl2LayerFactory diskItFac(ms_p.get(),ipar,false);
+
+    // Create a layered factory with all the layers of factories
+    std::vector<ViiLayerFactory*> factories(1);
+    factories[0]=&diskItFac;
+
+    instantiateVI(factories, nRowBlocking_p);
+  }
+
+  // Destructor
+  ~DataAccessRowBlockingTest()
+  {
+  }
+
+  rownr_t nRowBlocking_p;
+
+  double lastSPWEndTime_p;
+
+};
+
+/*
+ * This test will access data when row blocking is configured
+ */
+TEST_F(DataAccessRowBlockingTest, AccessDataRowBlocking)
+{
+  // Set rowBlocking
+  nRowBlocking_p = 7;
+
+  // This creates a MS with a total of 360 rows in four SPWs.
+  // The VI created to iterate that MS
+  createVI();
+
+  // Traverse the iterator accessing the proper number of rows.
+  // There are 4 chunks (one per SPW), each with 90 rows. With rowBlocking
+  // the number of rows in each subchunk is actually nRowBlocking+1
+  size_t nRowsSubchunk = 90;
+  size_t nSubChunk = nRowsSubchunk / (nRowBlocking_p + 1) + 1;
+  size_t iSubChunk = 0;
+  visitIterator([&]() -> void {
+    if(iSubChunk < nSubChunk - 1)
+      ASSERT_EQ(vb_p->nRows() , nRowBlocking_p + 1);
+    else // Last subchunk has less rows than nRowBlocking_p + 1
+      ASSERT_EQ(vb_p->nRows() , nRowsSubchunk - (nSubChunk - 1 ) * (nRowBlocking_p + 1));
+    iSubChunk++;
+    if(iSubChunk == nSubChunk)
+      iSubChunk = 0;
+    vb_p->visCube().shape();
+  });
+
+}
+
+/*
+ * This test will access data when row blocking is configured
+ * and the chunk size of the last chunk is smaller than the rest.
+ */
+TEST_F(DataAccessRowBlockingTest, AccessDataRowBlockingDecreasingChunkSize)
+{
+  // Set rowBlocking
+  nRowBlocking_p = 7;
+
+  // Create a SPW with fewer timestamps
+  lastSPWEndTime_p = 10;
+
+  // This creates a total of 420 rows in five SPWs.
+  createVI();
+
+  // Traverse the iterator accessing the proper number of rows.
+  // There are 5 chunks (one per SPW), 4 with 90 rows and a last one with 60.
+  // With rowBlocking the number of rows in each subchunk is
+  // actually nRowBlocking+1
+  size_t iSubChunk = 0, iChunk = 0;
+  size_t nChunk = 5;
+  visitIterator([&]() -> void {
+    size_t nRowsSubchunk = iChunk < nChunk - 1 ? 90 : 60;
+    size_t nSubChunk = nRowsSubchunk / (nRowBlocking_p + 1) + 1;
+    if(iSubChunk < nSubChunk - 1)
+      ASSERT_EQ(vb_p->nRows() , nRowBlocking_p + 1);
+    else // Last subchunk has less rows than nRowBlocking_p + 1
+      ASSERT_EQ(vb_p->nRows() , nRowsSubchunk - (nSubChunk - 1 ) * (nRowBlocking_p + 1));
+    iSubChunk++;
+    if(iSubChunk == nSubChunk)
+    {
+      iSubChunk = 0;
+      iChunk++;
+    }
+    vb_p->visCube().shape();
+  });
+
+}
+
+/*
  * This class is a simplistic TVI that modifies the subtables
  * antenna, spw and dd
  */
