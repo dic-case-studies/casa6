@@ -978,6 +978,7 @@ casa_add_google_test( MODULES synthesis SOURCES MeasurementComponents/test/tTsys
 casa_add_google_test( MODULES synthesis SOURCES MeasurementComponents/test/tVisVectorJonesMueller_GT.cc )
 casa_add_google_test( MODULES synthesis SOURCES MeasurementComponents/test/tVisCal_GT.cc )
 casa_add_google_test( MODULES synthesis SOURCES MeasurementComponents/test/tGJones_GT.cc )
+casa_add_google_test( MODULES synthesis SOURCES MeasurementComponents/test/tJJones_GT.cc )
 casa_add_google_test( MODULES synthesis SOURCES MeasurementComponents/test/tVisCalGlobals_GT.cc )
 casa_add_google_test( MODULES synthesis SOURCES MeasurementComponents/test/SingleDishSkyCal_GTest.cc )
 casa_add_google_test( MODULES synthesis mstransform SOURCES MeasurementComponents/test/FiltrationTVI_GTest.cc )
