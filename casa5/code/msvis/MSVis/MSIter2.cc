@@ -401,15 +401,65 @@ void MSIter2::setState()
     checkFeed_p=True;
   curTable_p=tabIter_p[curMS_p]->table();
   colArray_p.attach(curTable_p,MS::columnName(MS::ARRAY_ID));
-  colDataDesc_p.attach(curTable_p,MS::columnName(MS::DATA_DESC_ID));
-  colField_p.attach(curTable_p,MS::columnName(MS::FIELD_ID));
   // msc_p is already defined here (it is set in setMSInfo)
   if(newMS_p)
     msc_p->antenna().mount().getColumn(antennaMounts_p,True);
-  setDataDescInfo();
+
+  if(!ddInSort_p)
+  {
+    // If Data Description is not in the sorting columns, then the DD, SPW, pol
+    // can change between elements of the same iteration, so the safest
+    // is to signal that it changes.
+    newDataDescId_p = true;
+    newSpectralWindowId_p = true;
+    newPolarizationId_p = true;
+    freqCacheOK_p= false;
+
+    // This indicates that the current DD, SPW, Pol Ids are not computed.
+    // Note that the last* variables are not set, since the new* variables
+    // are unconditionally set to true.
+    // These cur* vars wiil be computed lazily if it is needed, together
+    // with some more vars set in cacheExtraDDInfo().
+    curDataDescIdFirst_p = -1;
+    curSpectralWindowIdFirst_p = -1;
+    curPolarizationIdFirst_p = -1;
+  }
+  else
+  {
+    // First we cache the current DD, SPW, Pol since we know it changed
+    cacheCurrentDDInfo();
+
+    // In this case we know that the last* variables were computed and
+    // we can know whether there was a changed in these keywords by
+    // comparing the two.
+    newDataDescId_p=(lastDataDescId_p!=curDataDescIdFirst_p);
+    newSpectralWindowId_p=(lastSpectralWindowId_p!=curSpectralWindowIdFirst_p);
+    newPolarizationId_p=(lastPolarizationId_p!=curPolarizationIdFirst_p);
+
+    lastDataDescId_p=curDataDescIdFirst_p;
+    lastSpectralWindowId_p = curSpectralWindowIdFirst_p;
+    lastPolarizationId_p = curPolarizationIdFirst_p;
+
+    // Some extra information depends on the new* keywords, so compute
+    // it now that new* have been set.
+    cacheExtraDDInfo();
+  }
+
   setArrayInfo();
-  setFeedInfo();
-  setFieldInfo();
+  feedInfoCached_p = false;
+  curFieldIdFirst_p=-1;
+  //If field is not in the sorting columns, then the field id
+  //can change between elements of the same iteration, so the safest
+  //is to signal that it changes.
+  if(!fieldInSort_p)
+    newFieldId_p = true;
+  else
+  {
+    setFieldInfo();
+    newFieldId_p=(lastFieldId_p!=curFieldIdFirst_p);
+    lastFieldId_p = curFieldIdFirst_p;
+  }
+
 
   // If time binning, update the MSInterval's offset to account for glitches.
   // For example, if averaging to 5s and the input is
