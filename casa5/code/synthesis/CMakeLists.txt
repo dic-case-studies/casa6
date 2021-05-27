@@ -343,19 +343,19 @@ casa_add_library( synthesis
  MeasurementEquations/StokesUtil2.cc
  MeasurementEquations/VisEquation.cc
  MeasurementEquations/VPManager.cc
- MeasurementEquations/lbfgs/alglibinternal.cpp
- MeasurementEquations/lbfgs/alglibmisc.cpp
- MeasurementEquations/lbfgs/ap.cpp
- MeasurementEquations/lbfgs/dataanalysis.cpp
- MeasurementEquations/lbfgs/diffequations.cpp
- MeasurementEquations/lbfgs/fasttransforms.cpp
- MeasurementEquations/lbfgs/integration.cpp
- MeasurementEquations/lbfgs/interpolation.cpp
- MeasurementEquations/lbfgs/linalg.cpp
- MeasurementEquations/lbfgs/optimization.cpp
- MeasurementEquations/lbfgs/solvers.cpp
- MeasurementEquations/lbfgs/specialfunctions.cpp
- MeasurementEquations/lbfgs/statistics.cpp
+ MeasurementEquations/lbfgs/alglibinternal.cc
+ MeasurementEquations/lbfgs/alglibmisc.cc
+ MeasurementEquations/lbfgs/ap.cc
+ MeasurementEquations/lbfgs/dataanalysis.cc
+ MeasurementEquations/lbfgs/diffequations.cc
+ MeasurementEquations/lbfgs/fasttransforms.cc
+ MeasurementEquations/lbfgs/integration.cc
+ MeasurementEquations/lbfgs/interpolation.cc
+ MeasurementEquations/lbfgs/linalg.cc
+ MeasurementEquations/lbfgs/optimization.cc
+ MeasurementEquations/lbfgs/solvers.cc
+ MeasurementEquations/lbfgs/specialfunctions.cc
+ MeasurementEquations/lbfgs/statistics.cc
  TransformMachines/ALMAAperture.cc
  TransformMachines/ALMABeamCalcParams.cc
  TransformMachines/ALMACalcIlluminationConvFunc.cc

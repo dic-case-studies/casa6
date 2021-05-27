@@ -1096,6 +1096,10 @@ casa_find( GSL
    	      DEPENDS GSLCBLAS
 	      PREFIX_HINTS /opt/casa/03 /opt/casa/02 )
 
+if( APPLE )
+    message(STATUS "Including eigen3")
+    INCLUDE_DIRECTORIES ( "${casa_packages}/include/eigen3" )
+endif()
 #
 # gsl drags in dependencencies on atlas libraries, if they are not explicitly
 # referenced, loading is left until runtime based upon transitive dependencies.
@@ -1396,13 +1400,6 @@ else()
     casa_add_module( graphics CASACORE X11 WCSLIB )
   endif()
 endif()
-
-#find_package(CudaLBFGS REQUIRED)
-#SET(LBFGS_LIBRARIES /home/tesla/mhsieh/work/dev/bfgsGPU/build/liblbfgs.so)
-#SET(LBFGS_INCLUDES /home/tesla/mhsieh/work/dev/bfgsGPU/include/CudaLBFGS)
-#SET(cuLBFGSB_LIBRARIES /home/tesla/mhsieh/work/dev/lbfgsb-gpu-master/build/culbfgsb/libcuLBFGSB.so)
-#SET(cuLBFGSB_INCLUDE_DIRS /home/tesla/mhsieh/work/dev/lbfgsb-gpu-master)
-
 casa_add_module( atmosphere )
 casa_add_module( casatools CASACORE )
 casa_add_module( stdcasa CASACORE )
@@ -1413,7 +1410,7 @@ casa_add_module( components stdcasa casatools CASACORE GSL )
 casa_add_module( imageanalysis CASACORE components)
 casa_add_module( asdmstman CASACORE )
 casa_add_module( msvis CASACORE asdmstman ) # WarningsAsErrors)
-casa_add_module( mstransform CASACORE stdcasa imageanalysis msvis)
+casa_add_module( mstransform CASACORE stdcasa imageanalysis msvis atmosphere)
 casa_add_module( synthesis CASACORE atmosphere stdcasa casadbus asdmstman SQLITE ${CASAMPI} imageanalysis msvis mstransform LIBSAKURA)
 casa_add_module( flagging CASACORE stdcasa casadbus synthesis casaqt QT4 msvis mstransform)
 casa_add_module( spectrallines CASACORE imageanalysis SQLITE)
