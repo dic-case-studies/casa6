@@ -2268,6 +2268,13 @@ VisibilityIteratorImpl2::next()
 
         configureNewSubchunk();
     }
+    else
+    {
+        // Leave the columns referencing a valid table. This ensures that some
+        // TVIs can still get some valid metadata when they are not at the end
+        // of iteration (even if the underlying VI2 is already at the end).
+        attachColumns(msIter_p->table());
+    }
 }
 
 Subchunk
