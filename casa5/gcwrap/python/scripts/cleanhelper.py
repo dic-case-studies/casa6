@@ -1,9 +1,10 @@
 from __future__ import absolute_import
 
+import glob
 import os
 import math
-#import pdb
 import numpy
+import re
 import shutil
 import pwd
 from numpy import unique
@@ -17,6 +18,7 @@ if is_CASA6:
     from casatasks import casalog as default_casalog
     from casatools import table, quanta, measures, regionmanager, image, imager, msmetadata
     from casatools import ms as mstool
+    from casatools import ctsys
 
     ms = mstool( )
     tb = table( )
@@ -27,6 +29,13 @@ if is_CASA6:
     im = imager( )
     msmd=msmetadata( )
 
+    # trying to avoid sharing a single instance with all other functions in this module
+    iatool = image
+
+    def _casa_version_string():
+        """ produce a version string with the same format as the mstools.write_history. """
+        return  'version: ' + ctsys.version_string() + ' ' + ctsys.version_desc()
+
 else:
     # possibly not an exact equivalent, but as used here it is
     import commands as subprocess
@@ -34,7 +43,6 @@ else:
     import string
     from odict import odict
     from taskinit import *
-
     ###some helper tools
     from  casac import *
     ms = casac.ms()
@@ -46,6 +54,13 @@ else:
     im = casac.imager()
     msmd=casac.msmetadata()
     default_casalog = casalog
+    # trying to avoid sharing a single instance with all other functions in this module
+    iatool = casac.image
+
+    def _casa_version_string():
+        casa_glob = find_casa()
+        return 'version: ' + casa_glob['build']['version'] + ' ' + casa_glob['build']['time']
+
 
 class cleanhelper:
     def __init__(self, imtool='', vis='', usescratch=False, casalog=default_casalog):
@@ -3535,3 +3550,82 @@ def convert_numpydtype(listobj):
       temparr = listobj
       return temparr
     return temparr.tolist()
+
+def get_func_params(func, loc_vars):
+    """ returns a dictionary of parameter name:vale for all the parameters of a function
+
+    :param func: function object (for example a task function)
+    :param loc_vars: locals() from inside the function.
+    """
+    param_names = func.__code__.co_varnames[:func.__code__.co_argcount]
+    params = [(name, loc_vars[name]) for name in param_names]
+    return params
+
+def write_tclean_history(imagename, tname, params, clog):
+        """
+        Update image/logtable with the taskname, CASA version and all task parameters
+        CASR-571. Replicates the same format as mstools.write_history.
+
+        :param imagename: imagename prefi as used in tclean
+        :param tname: task name to use as origin of the history
+        :param params: list of task parameters as a tuple (name, value)
+        :param clog: casa log object
+        """
+
+        def filter_img_names(img_exts):
+            """
+            Applies name (extension) exclusions to not try to open tclean outputs files
+            and/or leftovers that are not images (even if they share the same name as the
+            proper images).
+
+            Some of the files excluded here can cause spurious messages (image tool will
+            print a SEVERE error to the log when open fails) if for example while running
+            several test cases one of them fails or misbehaves leaving temporary files
+            behind.
+
+            :param img_exts: list of image names (different extensions)
+            :returns: list of image names after filtering out undesired ones
+            """
+            accept = []
+            regex = re.compile(imagename + '[0-9]*_?[0-9]*\..+')
+            for img in img_exts:
+                if img.endswith(('.cf', '.cfcache', '.workdirectory', '.work.temp', '.txt')):
+                    continue
+
+                # ensure only 'imgname' + optional integer + .*
+                res = re.match(regex, img)
+                if res:
+                    accept.append(img)
+            return accept
+
+        iat = iatool()
+
+        img_exts = glob.glob(imagename + '*.*')
+        img_exts = filter_img_names(img_exts)
+        clog.post("Writing history into these images: {}".format(img_exts))
+
+        history = ['taskname={0}'.format(tname)]
+        history.append(_casa_version_string())
+        # Add all task arguments.
+        for name, val in params:#range(len(param_names)):
+            msg = "%-11s = " % name
+            if type(val) == str:
+                msg += '"'
+            msg += str(val)
+            if type(val) == str:
+                msg += '"'
+            history.append(msg)
+
+        for img in img_exts:
+            iat_open = False
+            try:
+                iat.open(img)
+                iat_open = True
+                iat.sethistory(origin=tname, history=history)
+            except RuntimeError:
+                clog.post('Could not open this directory as an image to write history: {}'.
+                          format(img), 'DEBUG')
+            finally:
+                if iat_open:
+                    iat.close()
+        iat.done()

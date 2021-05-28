@@ -108,7 +108,7 @@ else:
     myia = iatool()
     _rg = rgtool()
     mytb = tbtool()
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     from casa_stack_manip import stack_frame_find
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 
@@ -116,7 +116,7 @@ else:
         return os.path.join(dataRoot,apath)
 
 sep = os.sep
-datapath = ctsys_resolve(os.path.join('regression','unittest','immath'))
+datapath = ctsys_resolve(os.path.join('unittest','immath'))
 
 cas1452_1_im = 'CAS-1452-1.im'
 cas1910_im = 'CAS-1910.im'
@@ -860,7 +860,7 @@ class immath_test2(unittest.TestCase):
     def copy_img(self):
         '''Copy images to local disk'''
         for img in imageList3:
-            os.system('cp -r ' + os.path.join(datapath, img) + ' ' + img)
+            os.system('cp -RH ' + os.path.join(datapath, img) + ' ' + img)
 
     def rm_img(self):
         '''Remove images from disk'''
@@ -1284,7 +1284,7 @@ class immath_test3(unittest.TestCase):
         try:
             immath(imagename=UV_im, outfile=outfile, mode=mode)
             # should not get here
-            self.assertTrue(false)
+            self.assertTrue(False)
         except:
             self.assertFalse(os.path.exists(outfile))
 
@@ -1293,7 +1293,7 @@ class immath_test3(unittest.TestCase):
         try:
             immath(imagename=Q_im, outfile=outfile, mode=mode)
             # should not get here
-            self.assertTrue(false)
+            self.assertTrue(False)
         except:
             self.assertFalse(os.path.exists(outfile))
 
@@ -1302,7 +1302,7 @@ class immath_test3(unittest.TestCase):
         try:
             immath(imagename=[Q_im, V_im], outfile=outfile, mode=mode)
             # should not get here
-            self.assertTrue(false)
+            self.assertTrue(False)
         except:
             self.assertFalse(os.path.exists(outfile))
 
@@ -1353,7 +1353,7 @@ class immath_test3(unittest.TestCase):
         try:
             immath(imagename=[Q_im, V_im], outfile=outfile, mode=mode)
             # should not get here
-            self.assertTrue(false)
+            self.assertTrue(False)
         except:
             self.assertFalse(os.path.exists(outfile))
 
@@ -1362,7 +1362,7 @@ class immath_test3(unittest.TestCase):
         try:
             immath(imagename=UV_im, outfile=outfile, mode=mode)
             # should not get here
-            self.assertTrue(false)
+            self.assertTrue(False)
         except:
             self.assertFalse(os.path.exists(outfile))
 

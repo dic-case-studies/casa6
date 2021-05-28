@@ -29,7 +29,7 @@ try:
     from casatools import ctsys, image, table
     _ia = image()
     _tb = table()
-    datapath = ctsys.resolve('image')
+    datapath = ctsys.resolve('unittest/ia_pbcor/')
     is_CASA6 = True
 except ImportError:
     import casac
@@ -39,10 +39,7 @@ except ImportError:
     image = iatool
     _ia = iatool()
     _tb = tbtool()
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ia_pbcor/'
     is_CASA6 = False
 
 im1 = "pbtest1_im.fits"

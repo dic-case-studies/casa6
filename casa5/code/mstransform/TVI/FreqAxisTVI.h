@@ -80,8 +80,10 @@ public:
 
     // Common transformation for all sub-classes
     void writeFlagRow (const casacore::Vector<casacore::Bool> & flag);
-    casacore::Vector<casacore::Int> getChannels (	casacore::Double time, casacore::Int frameOfReference,
-    							casacore::Int spectralWindowId, casacore::Int msId) const;
+    casacore::Vector<casacore::Int> getChannels (casacore::Double time, casacore::Int frameOfReference,
+                                                 casacore::Int spectralWindowId, casacore::Int msId) const;
+    const casacore::Vector<casacore::Int>& nChannelsPerShape () const;
+
     void flagRow (casacore::Vector<casacore::Bool> & flagRow) const;
     void weight (casacore::Matrix<casacore::Float> & weight) const;
     void sigma (casacore::Matrix<casacore::Float> & sigma) const;
@@ -181,6 +183,10 @@ protected:
 
 	// Form spwInpChanIdxMap_p via calls to underlying Vii
 	void formChanMap();
+
+    void configureShapes();
+
+    casacore::Vector<casacore::Int> nChannPerShape_;
 
 	mutable casacore::LogIO logger_p;
 	mutable std::map<casacore::Int,casacore::uInt > spwOutChanNumMap_p; // Must be accessed from const methods

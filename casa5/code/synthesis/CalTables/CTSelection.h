@@ -159,21 +159,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     // Accessors for items selected:
 
-    // Accessor for the list of antenna-1 selected.
+    // Accessors for the list of antenna1 and antenna2 selected.
     // Antennas affected by the baseline negation operator have the
     // antenna IDs multiplied by -1.
-    // TBD: does this work with taql?
-    inline casacore::Vector<casacore::Int> getAntenna1List(
-            const casacore::MeasurementSet* ms=NULL) 
-    { return msSelection_p->getAntenna1List(ms); }
-    
-    // Accessor for the list of antenna-2 of the selected baselines.
-    // Antennas affected by the baseline negation operator have the
-    // antenna IDs multiplied by -1.
-    inline casacore::Vector<casacore::Int> getAntenna2List(
-            const casacore::MeasurementSet* ms=NULL) 
-    { return msSelection_p->getAntenna2List(ms); }
-    
+    // This does not work with taql selection, so mimic MSSelection behavior here:
+	// - Ensure toTableExprNode has been called
+	// - Return stored antenna lists
+    casacore::Vector<casacore::Int> getAntenna1List();
+    casacore::Vector<casacore::Int> getAntenna2List();
+
     // Accessor for the list of selected field IDs.
     inline casacore::Vector<casacore::Int> getFieldList(
             const casacore::MeasurementSet* ms=NULL) 
@@ -201,18 +195,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             const casacore::MeasurementSet* ms=NULL) 
     { return msSelection_p->getScanList(ms); }
 
-    // // casacore::Matrix<casacore::Int> getChanList(
-    // //               const casacore::MeasurementSet* ms=NULL, 
-    // // 			    const casacore::Int defaultStep=1,
-    // // 			    const casacore::Bool sorted=false);
-    // // { return msSelection_p->getChanList(ms, defaultStep, sorted); }
+    inline casacore::Matrix<casacore::Int> getChanList(
+            const casacore::MeasurementSet* ms=NULL,
+            const casacore::Int defaultStep=1,
+            const casacore::Bool sorted=false)
+    { return msSelection_p->getChanList(ms, defaultStep, sorted); }
 
     // // //
     // // // Same as getChanList, except that the channels and steps are in Hz.
     // // //    
     // // casacore::Matrix<casacore::Double> getChanFreqList(
     // //                  const casacore::MeasurementSet* ms=NULL, 
-    // // 				   const casacore::Bool sorted=false);
+    // //                  const casacore::Bool sorted=false);
     // // { return msSelection_p->getChanFreqList(ms, sorted); }
 
     // This version of reset() works with generic MSSelectableTable
@@ -220,48 +214,61 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // this interface is recommended over the version of reset() that
     // uses MeasurementSet.
     void reset(casacore::MSSelectableTable& msLike,
-	       const casacore::MSSelection::MSSMode& mode = 
+           const casacore::MSSelection::MSSMode& mode = 
                casacore::MSSelection::PARSE_NOW,
-	       const casacore::String& timeExpr        = "",
-	       const casacore::String& antennaExpr     = "",
-	       const casacore::String& fieldExpr       = "",
-	       const casacore::String& spwExpr         = "",
-	       // const String& uvDistExpr             = "", // not supported
-	       const casacore::String& taqlExpr        = "",
-	       // const String& polnExpr               = "", // not supported
-	       const casacore::String& scanExpr        = "",
-	       // const String& arrayExpr              = "", // not supported
-	       const casacore::String& stateExpr       = "",
-	       const casacore::String& observationExpr = "");
+           const casacore::String& timeExpr        = "",
+           const casacore::String& antennaExpr     = "",
+           const casacore::String& fieldExpr       = "",
+           const casacore::String& spwExpr         = "",
+           // const String& uvDistExpr             = "", // not supported
+           const casacore::String& taqlExpr        = "",
+           // const String& polnExpr               = "", // not supported
+           const casacore::String& scanExpr        = "",
+           // const String& arrayExpr              = "", // not supported
+           const casacore::String& stateExpr       = "",
+           const casacore::String& observationExpr = "");
 
 private:
 
-    // Resets msSelection_p expressions for antenna selection:
-    // use taqlExpr to select on ANTENNA1 only for antenna selection,
-    // use antennaExpr for baseline selection
-    void doCalAntennaSel(const casacore::String& antennaExpr,
-        casacore::MSSelectableTable* msLike);
-    // append baseline selection and set taql selection
-    void setAntennaSelections(casacore::String antsel,
-          casacore::MSSelectableTable* msLike);
+    // For pure antenna-based tables, select/exclude ant1 only
+    void doAntenna1Selection(
+      const casacore::String& antennaExpr, casacore::MSSelectableTable* msLike);
 
-    // Reference antenna:
-    // get reference antenna ids from cal table ANTENNA2 column
+    // Check selection string for leading exclude syntax '!'
+    bool isSelectionExcluded(casacore::String& selection);
+
+    // Apply selection to table and get list of antenna (1 or 2) ids
+    casacore::Vector<casacore::Int> getAntennaList(
+      const casacore::String& selection, casacore::MSSelectableTable* msLike,
+      bool getAnt1=true);
+
+    // Handle refant-based antenna selection
+    void doRefAntennaSelection(const casacore::String& antennaExpr,
+      casacore::MSSelectableTable* msLike);
+
+    // Refant-based selection helpers:
+    // Get reference antenna ids from cal table ANTENNA2 column
     casacore::Vector<casacore::Int> getRefAntIds(
-        casacore::MSSelectableTable* msLike);
-    // check if antennaId is a reference antenna
-    bool isRefAntenna(casacore::Int antennaId, 
-        casacore::Vector<casacore::Int> refantIds);
-    // make baseline strings for ref ant with all ref ants
-    casacore::String getRefAntBaselines(casacore::Int antId,
-        casacore::Vector<casacore::Int> refantIds, casacore::String neg);
-
-    // Antenna ID 0:
-    // check if zero is selected (else it is negated but there is no -0)
-    bool zeroIsSelected(casacore::String antennaExpr,
-        casacore::MSSelectableTable* msLike);
+      casacore::MSSelectableTable* msLike);
+    // Return antId list for selected and excluded antennas
+    void setAntSelectExclude(const casacore::Vector<casacore::Int>& ant1list,
+      const casacore::String& selection, casacore::MSSelectableTable* msLike,
+      casacore::String& ant1select, casacore::String& ant1exclude,
+      casacore::Vector<casacore::Int>& antIds,
+      casacore::Vector<casacore::Int>& notAntIds);
+    // Excluded IDs are -id; cannot tell with id 0
+    bool zeroIsExcluded(const casacore::String& antennaExpr,
+      casacore::MSSelectableTable* msLike);
+    // For setting antenna lists from included and excluded antennas
+    casacore::Vector<casacore::Int> appendAntennaLists(
+      const casacore::Vector<casacore::Int>& v1,
+      const casacore::Vector<casacore::Int>& v2);
 
     casacore::MSSelection* msSelection_p;
+
+    // antenna selection: cannot use msselection for antennas if taql is used
+    bool toTENCalled_p;
+    casacore::Vector<casacore::Int> antenna1List_p, antenna2List_p;
   };
 
 } //# NAMESPACE CASA - END

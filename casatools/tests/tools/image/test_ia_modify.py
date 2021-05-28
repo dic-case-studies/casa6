@@ -82,10 +82,10 @@ except ImportError:
     from tasks import *
     from taskinit import *
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
-datapath = ctsys_resolve('regression/unittest/ia_modify/')
+datapath = ctsys_resolve('unittest/ia_modify/')
 
 class ia_modify_test(unittest.TestCase):
     

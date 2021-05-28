@@ -49,7 +49,7 @@ ATM_NAMESPACE_BEGIN
  *   The absorption coefficient in each layer can be used
  *   later for radiative transfer purposes. The atmospheric P/T/gas profile is inherited
  *   from an object of type AtmProfile. The absorption coefficient profile
- *   is provided separately for O2 lines, H2O lines, CO lines, O3 lines, N2O lines, NO2 lines, 
+ *   is provided separately for O2 lines, H2O lines, CO lines, O3 lines, N2O lines, NO2 lines,
  *   SO2 lines dry and wet continuum. The total absorption coefficient profile (addition of
  *   those just described) is also available, since it is the only profile really needed
  *   for the WaterVaporRetrieval class which derives from this
@@ -121,7 +121,7 @@ public:
   inline void addNewSpectralWindow(unsigned int numChan,
                                    unsigned int refChan,
                                    double* chanFreq,
-                                   const string &freqUnits)
+                                   Frequency::Units freqUnits)
   {
     SpectralGrid::add(numChan, refChan, chanFreq, freqUnits);
     mkRefractiveIndexProfile();
@@ -130,7 +130,7 @@ public:
   inline void addNewSpectralWindow(unsigned int numChan,
                                    double refFreq,
                                    double* chanFreq,
-                                   const string &freqUnits)
+                                   Frequency::Units freqUnits)
   {
     SpectralGrid::add(numChan, refFreq, chanFreq, freqUnits);
     mkRefractiveIndexProfile();
@@ -139,7 +139,7 @@ public:
   inline void addNewSpectralWindow(unsigned int numChan,
                                    double refFreq,
                                    const vector<double> &chanFreq,
-                                   const string &freqUnits)
+                                   Frequency::Units freqUnits)
   {
     SpectralGrid::add(numChan, refFreq, chanFreq, freqUnits);
     mkRefractiveIndexProfile();
@@ -184,7 +184,7 @@ public:
   /** Accessor to the single frequency (or the frequency of the first grid point
    *  in case of a spectrum) in specified unit
    */
-  inline double getFrequency(const string &freqUnits) const
+  inline double getFrequency(Frequency::Units freqUnits) const
   {
     return getChanFreq(0).get(freqUnits);
   }
@@ -194,12 +194,12 @@ public:
   /** Accessor to get H2O lines Absorption Coefficient at layer nl, for single frequency RefractiveIndexProfile object */
   InverseLength getAbsH2OLines(unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_H2OLinesPtr_[0]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_H2OLinesPtr_[0]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Accessor to get H2O lines Absorption Coefficient at layer nl and frequency channel nf, for RefractiveIndexProfile object with a spectral grid */
   InverseLength getAbsH2OLines(unsigned int nf, unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_H2OLinesPtr_[nf]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_H2OLinesPtr_[nf]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Accessor to get H2O Continuum Absorption Coefficient at layer nl, spectral window spwid and channel nf */
   InverseLength getAbsH2OLines(unsigned int spwid,
@@ -207,18 +207,18 @@ public:
                                unsigned int nl) const
   {
     unsigned int j = v_transfertId_[spwid] + nf;
-    return InverseLength(imag((vv_N_H2OLinesPtr_[j]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_H2OLinesPtr_[j]->at(nl))), InverseLength::UnitInverseMeter);
   }
 
   /** Accessor to get H2O Continuum Absorption Coefficient at layer nl, for single frequency RefractiveIndexProfile object */
   InverseLength getAbsH2OCont(unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_H2OContPtr_[0]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_H2OContPtr_[0]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Accessor to get H2O Continuum Absorption Coefficient at layer nl and frequency channel nf, for RefractiveIndexProfile object with a spectral grid */
   InverseLength getAbsH2OCont(unsigned int nf, unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_H2OContPtr_[nf]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_H2OContPtr_[nf]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Accessor to get H2O Continuum Absorption Coefficient at layer nl, spectral window spwid and channel nf */
   InverseLength getAbsH2OCont(unsigned int spwid,
@@ -226,18 +226,18 @@ public:
                               unsigned int nl) const
   {
     unsigned int j = v_transfertId_[spwid] + nf;
-    return InverseLength(imag((vv_N_H2OContPtr_[j]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_H2OContPtr_[j]->at(nl))), InverseLength::UnitInverseMeter);
   }
 
   /** Function to retrieve O2 lines Absorption Coefficient at layer nl, for single frequency RefractiveIndexProfile object */
   InverseLength getAbsO2Lines(unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_O2LinesPtr_[0]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_O2LinesPtr_[0]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve O2 lines Absorption Coefficient at layer nl and frequency channel nf, for RefractiveIndexProfile object with a spectral grid */
   InverseLength getAbsO2Lines(unsigned int nf, unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_O2LinesPtr_[nf]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_O2LinesPtr_[nf]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve O2 lines Absorption Coefficient at layer nl, spectral window spwid and channel nf */
   InverseLength getAbsO2Lines(unsigned int spwid,
@@ -245,18 +245,18 @@ public:
                               unsigned int nl) const
   {
     unsigned int j = v_transfertId_[spwid] + nf;
-    return InverseLength(imag((vv_N_O2LinesPtr_[j]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_O2LinesPtr_[j]->at(nl))), InverseLength::UnitInverseMeter);
   }
 
   /** Function to retrieve Dry continuum Absorption Coefficient at layer nl, for single frequency RefractiveIndexProfile object */
   InverseLength getAbsDryCont(unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_DryContPtr_[0]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_DryContPtr_[0]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve Dry continuum Absorption Coefficient at layer nl and frequency channel nf, for RefractiveIndexProfile object with a spectral grid */
   InverseLength getAbsDryCont(unsigned int nf, unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_DryContPtr_[nf]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_DryContPtr_[nf]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve Dry continuum Absorption Coefficient at layer nl, spectral window spwid and channel nf */
   InverseLength getAbsDryCont(unsigned int spwid,
@@ -264,18 +264,18 @@ public:
                               unsigned int nl) const
   {
     unsigned int j = v_transfertId_[spwid] + nf;
-    return InverseLength(imag((vv_N_DryContPtr_[j]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_DryContPtr_[j]->at(nl))), InverseLength::UnitInverseMeter);
   }
 
   /** Function to retrieve O3 lines Absorption Coefficient at layer nl, for single frequency RefractiveIndexProfile object */
   InverseLength getAbsO3Lines(unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_O3LinesPtr_[0]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_O3LinesPtr_[0]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve O3 lines Absorption Coefficient at layer nl and frequency channel nf, for RefractiveIndexProfile object with a spectral grid */
   InverseLength getAbsO3Lines(unsigned int nf, unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_O3LinesPtr_[nf]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_O3LinesPtr_[nf]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve O3 lines Absorption Coefficient at layer nl, spectral window spwid and channel nf */
   InverseLength getAbsO3Lines(unsigned int spwid,
@@ -283,18 +283,18 @@ public:
                               unsigned int nl) const
   {
     unsigned int j = v_transfertId_[spwid] + nf;
-    return InverseLength(imag((vv_N_O3LinesPtr_[j]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_O3LinesPtr_[j]->at(nl))), InverseLength::UnitInverseMeter);
   }
 
   /** Function to retrieve CO lines Absorption Coefficient at layer nl, for single frequency RefractiveIndexProfile object */
   InverseLength getAbsCOLines(unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_COLinesPtr_[0]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_COLinesPtr_[0]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve CO lines Absorption Coefficient at layer nl and frequency channel nf, for RefractiveIndexProfile object with a spectral grid */
   InverseLength getAbsCOLines(unsigned int nf, unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_COLinesPtr_[nf]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_COLinesPtr_[nf]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve CO lines Absorption Coefficient at layer nl, spectral window spwid and channel nf */
   InverseLength getAbsCOLines(unsigned int spwid,
@@ -302,7 +302,7 @@ public:
                               unsigned int nl) const
   {
     unsigned int j = v_transfertId_[spwid] + nf;
-    return InverseLength(imag((vv_N_COLinesPtr_[j]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_COLinesPtr_[j]->at(nl))), InverseLength::UnitInverseMeter);
   }
 
 
@@ -310,12 +310,12 @@ public:
   /** Function to retrieve N2O lines Absorption Coefficient at layer nl, for single frequency RefractiveIndexProfile object */
   InverseLength getAbsN2OLines(unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_N2OLinesPtr_[0]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_N2OLinesPtr_[0]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve N2O lines Absorption Coefficient at layer nl and frequency channel nf, for RefractiveIndexProfile object with a spectral grid */
   InverseLength getAbsN2OLines(unsigned int nf, unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_N2OLinesPtr_[nf]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_N2OLinesPtr_[nf]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve N2O lines Absorption Coefficient at layer nl, spectral window spwid and channel nf */
   InverseLength getAbsN2OLines(unsigned int spwid,
@@ -323,18 +323,18 @@ public:
                                unsigned int nl) const
   {
     unsigned int j = v_transfertId_[spwid] + nf;
-    return InverseLength(imag((vv_N_N2OLinesPtr_[j]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_N2OLinesPtr_[j]->at(nl))), InverseLength::UnitInverseMeter);
   }
 
   /** Function to retrieve NO2 lines Absorption Coefficient at layer nl, for single frequency RefractiveIndexProfile object */
   InverseLength getAbsNO2Lines(unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_NO2LinesPtr_[0]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_NO2LinesPtr_[0]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve NO2 lines Absorption Coefficient at layer nl and frequency channel nf, for RefractiveIndexProfile object with a spectral grid */
   InverseLength getAbsNO2Lines(unsigned int nf, unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_NO2LinesPtr_[nf]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_NO2LinesPtr_[nf]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve NO2 lines Absorption Coefficient at layer nl, spectral window spwid and channel nf */
   InverseLength getAbsNO2Lines(unsigned int spwid,
@@ -342,19 +342,19 @@ public:
                                unsigned int nl) const
   {
     unsigned int j = v_transfertId_[spwid] + nf;
-    return InverseLength(imag((vv_N_NO2LinesPtr_[j]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_NO2LinesPtr_[j]->at(nl))), InverseLength::UnitInverseMeter);
   }
 
 
   /** Function to retrieve SO2 lines Absorption Coefficient at layer nl, for single frequency RefractiveIndexProfile object */
   InverseLength getAbsSO2Lines(unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_SO2LinesPtr_[0]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_SO2LinesPtr_[0]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve SO2 lines Absorption Coefficient at layer nl and frequency channel nf, for RefractiveIndexProfile object with a spectral grid */
   InverseLength getAbsSO2Lines(unsigned int nf, unsigned int nl) const
   {
-    return InverseLength(imag((vv_N_SO2LinesPtr_[nf]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_SO2LinesPtr_[nf]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve SO2 lines Absorption Coefficient at layer nl, spectral window spwid and channel nf */
   InverseLength getAbsSO2Lines(unsigned int spwid,
@@ -362,7 +362,7 @@ public:
                                unsigned int nl) const
   {
     unsigned int j = v_transfertId_[spwid] + nf;
-    return InverseLength(imag((vv_N_SO2LinesPtr_[j]->at(nl))), "m-1");
+    return InverseLength(imag((vv_N_SO2LinesPtr_[j]->at(nl))), InverseLength::UnitInverseMeter);
   }
 
 
@@ -381,7 +381,7 @@ public:
 			      vv_N_O2LinesPtr_[nf]->at(nl)
 			      + vv_N_DryContPtr_[nf]->at(nl) + vv_N_O3LinesPtr_[nf]->at(nl)
 			      + vv_N_COLinesPtr_[nf]->at(nl) + vv_N_N2OLinesPtr_[nf]->at(nl)
-			      + vv_N_NO2LinesPtr_[nf]->at(nl) + vv_N_SO2LinesPtr_[nf]->at(nl)), "m-1");
+			      + vv_N_NO2LinesPtr_[nf]->at(nl) + vv_N_SO2LinesPtr_[nf]->at(nl)), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve total Dry Absorption Coefficient at layer nl, spectral window spwid and channel nf */
   InverseLength getAbsTotalDry(unsigned int spwid,
@@ -393,7 +393,7 @@ public:
 			      vv_N_O2LinesPtr_[j]->at(nl)
 			      + vv_N_DryContPtr_[j]->at(nl) + vv_N_O3LinesPtr_[j]->at(nl)
 			      + vv_N_COLinesPtr_[j]->at(nl) + vv_N_N2OLinesPtr_[j]->at(nl)
-			      + vv_N_NO2LinesPtr_[j]->at(nl) + vv_N_SO2LinesPtr_[j]->at(nl)), "m-1");
+			      + vv_N_NO2LinesPtr_[j]->at(nl) + vv_N_SO2LinesPtr_[j]->at(nl)), InverseLength::UnitInverseMeter);
   }
 
   /** Function to retrieve total Wet Absorption Coefficient at layer nl, for single frequency RefractiveIndexProfile object */
@@ -405,7 +405,7 @@ public:
   InverseLength getAbsTotalWet(unsigned int nf, unsigned int nl) const
   {
     return InverseLength(imag((vv_N_H2OLinesPtr_[nf]->at(nl)
-        + vv_N_H2OContPtr_[nf]->at(nl))), "m-1");
+        + vv_N_H2OContPtr_[nf]->at(nl))), InverseLength::UnitInverseMeter);
   }
   /** Function to retrieve total Wet Absorption Coefficient at layer nl, spectral window spwid and channel nf */
   InverseLength getAbsTotalWet(unsigned int spwid,
@@ -414,7 +414,7 @@ public:
   {
     unsigned int j = v_transfertId_[spwid] + nf;
     return InverseLength(imag((vv_N_H2OLinesPtr_[j]->at(nl)
-        + vv_N_H2OContPtr_[j]->at(nl))), "m-1");
+        + vv_N_H2OContPtr_[j]->at(nl))), InverseLength::UnitInverseMeter);
   }
 
   Opacity getAverageO2LinesOpacity(unsigned int spwid);
@@ -479,7 +479,7 @@ public:
    corresponding to the 1st guess water column (from AtmProfile object) or the
     for single frequency RefractiveIndexProfile object */
   Opacity getWetOpacity() {return getWetOpacity(getGroundWH2O());}
-  /** Function to retrieve the integrated Wet Opacity along the atmospheric path 
+  /** Function to retrieve the integrated Wet Opacity along the atmospheric path
    for a given integratedwatercolumn */
   Opacity getWetOpacity(const Length &integratedwatercolumn);
   /** Function to retrieve the integrated Wet Opacity along the atmospheric path
@@ -496,7 +496,7 @@ public:
    corresponding to a given water vapor column
     for single frequency RefractiveIndexProfile object */
 
- 
+
   /** Function to retrieve the integrated H2O Lines Opacity along the atmospheric path
    corresponding to the 1st guess water column (from AtmProfile object)  */
   Opacity getH2OLinesOpacity() {return getH2OLinesOpacity(getGroundWH2O());}
@@ -786,7 +786,7 @@ public:
 
 
   /** Function to retrieve the integrated Atmospheric Phase Delay (Dispersive part) along the atmospheric path
-   corresponding to the 1st guess water column (from AtmProfile object) 
+   corresponding to the 1st guess water column (from AtmProfile object)
     for single frequency RefractiveIndexProfile object */
   Angle getDispersiveH2OPhaseDelay() {return getDispersiveH2OPhaseDelay(getGroundWH2O());}
   /** Function to retrieve the integrated Atmospheric Phase Delay (Dispersive part) along the atmospheric path
@@ -794,7 +794,7 @@ public:
     for single frequency RefractiveIndexProfile object */
   Angle getDispersiveH2OPhaseDelay(const Length &integratedwatercolumn);
   /** Function to retrieve the integrated Atmospheric Path length (Dispersive part) along the atmospheric path
-   corresponding to the 1st guess water column (from AtmProfile object) 
+   corresponding to the 1st guess water column (from AtmProfile object)
     for single frequency RefractiveIndexProfile object */
   Length getDispersiveH2OPathLength() {return getDispersiveH2OPathLength(getGroundWH2O());}
   /** Function to retrieve the integrated Atmospheric Path length (Dispersive part) along the atmospheric path
@@ -822,7 +822,7 @@ public:
   /** Function to retrieve the average integrated Atmospheric Path Length (Dispersive part) in spectral Window spwid */
   Length getAverageDispersiveH2OPathLength(const Length &integratedwatercolumn, unsigned int spwid);
   /** Function to retrieve the integrated Atmospheric Phase Delay (Non-Dispersive part) along the atmospheric path
-   corresponding to the 1st guess water column (from AtmProfile object) 
+   corresponding to the 1st guess water column (from AtmProfile object)
     for single frequency RefractiveIndexProfile object */
   Angle getNonDispersiveH2OPhaseDelay() {return getNonDispersiveH2OPhaseDelay(getGroundWH2O());}
   /** Function to retrieve the integrated Atmospheric Phase Delay (Non-Dispersive part) along the atmospheric path
@@ -830,7 +830,7 @@ public:
     for single frequency RefractiveIndexProfile object */
   Angle getNonDispersiveH2OPhaseDelay(const Length &integratedwatercolumn);
   /** Function to retrieve the integrated Atmospheric Path Length (Non-Dispersive part) along the atmospheric path
-   corresponding to the 1st guess water column (from AtmProfile object) 
+   corresponding to the 1st guess water column (from AtmProfile object)
     for single frequency RefractiveIndexProfile object */
   Length getNonDispersiveH2OPathLength() {return getNonDispersiveH2OPathLength(getGroundWH2O());}
   /** Function to retrieve the integrated Atmospheric Path Length (Non-Dispersive part) along the atmospheric path

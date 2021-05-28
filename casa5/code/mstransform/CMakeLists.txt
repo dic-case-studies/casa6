@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-casa_add_library( mstransform  
+casa_add_library( mstransform
  MSTransform/MSTransform.cc
  MSTransform/MSTransformManager.cc
  MSTransform/MSTransformDataHandler.cc
@@ -29,17 +29,19 @@ casa_add_library( mstransform
  MSTransform/MSUVBin.cc
  MSTransform/StatWt.cc
  MSTransform/StatWtColConfig.cc
- TVI/UtilsTVI.cc 
- TVI/DenoisingLib.cc 
- TVI/FreqAxisTVI.cc 
+ TVI/UtilsTVI.cc
+ TVI/DenoisingLib.cc
+ TVI/FreqAxisTVI.cc
  TVI/ChannelAverageTVI.cc
  TVI/ConvolutionTVI.cc
- TVI/HanningSmoothTVI.cc	 
- TVI/PhaseShiftingTVI.cc 
- TVI/RegriddingTVI.cc  
+ TVI/HanningSmoothTVI.cc
+ TVI/PhaseShiftingTVI.cc
+ TVI/RegriddingTVI.cc
  TVI/UVContSubTVI.cc
  TVI/PolAverageTVI.cc
  TVI/PointingInterpolationTVI.cc
+ TVI/SDAtmosphereCorrectionTVI.cc
+ TVI/SPWCombinationTVI.cc
  TVI/StatWtClassicalDataAggregator.cc
  TVI/StatWtDataAggregator.cc
  TVI/StatWtFloatingWindowDataAggregator.cc
@@ -50,47 +52,49 @@ casa_add_library( mstransform
 )
 
 install (FILES
-    	MSTransform/MSTransform.h
-	MSTransform/MSTransformManager.h
-	MSTransform/MSTransformDataHandler.h
-	MSTransform/MSTransformRegridder.h
-	MSTransform/MSTransformBufferImpl.h
-	MSTransform/MSTransformIterator.h
-	MSTransform/MSTransformIteratorFactory.h
-	MSTransform/MSUVBin.h
-	MSTransform/StatWt.h
-    MSTransform/StatWtColConfig.h
-	DESTINATION include/casacode/mstransform/MSTransform
-	)
-	
+  MSTransform/MSTransform.h
+  MSTransform/MSTransformManager.h
+  MSTransform/MSTransformDataHandler.h
+  MSTransform/MSTransformRegridder.h
+  MSTransform/MSTransformBufferImpl.h
+  MSTransform/MSTransformIterator.h
+  MSTransform/MSTransformIteratorFactory.h
+  MSTransform/MSUVBin.h
+  MSTransform/StatWt.h
+  MSTransform/StatWtColConfig.h
+  DESTINATION include/casacode/mstransform/MSTransform
+)
+
 install (FILES
- 	MSTransform/test/tMSTransformIterator.h	
-	DESTINATION include/casacode/mstransform/MSTransform/test
-	)		
-	
+  MSTransform/test/tMSTransformIterator.h
+  DESTINATION include/casacode/mstransform/MSTransform/test
+)
+
 install (FILES
- 	TVI/UtilsTVI.h	
- 	TVI/DenoisingLib.h	
- 	TVI/FreqAxisTVI.h	
-	TVI/ChannelAverageTVI.h	
-	TVI/ConvolutionTVI.h	
-	TVI/HanningSmoothTVI.h
-	TVI/PhaseShiftingTVI.h		
- 	TVI/RegriddingTVI.h
- 	TVI/UVContSubTVI.h 	
- 	TVI/PolAverageTVI.h
- 	TVI/PointingInterpolationTVI.h
-    TVI/StatWtTVI.h
-    TVI/StatWtTVIFactory.h
-    TVI/StatWtTVILayerFactory.h
-    TVI/StatWtTypes.h
-    TVI/StatWtClassicalDataAggregator.h
-    TVI/StatWtDataAggregator.h
-    TVI/StatWtFloatingWindowDataAggregator.h
-    TVI/StatWtVarianceAndWeightCalculator.h
-	DESTINATION include/casacode/mstransform/TVI
-	)
-	
+  TVI/UtilsTVI.h
+  TVI/DenoisingLib.h
+  TVI/FreqAxisTVI.h
+  TVI/ChannelAverageTVI.h
+  TVI/ConvolutionTVI.h
+  TVI/HanningSmoothTVI.h
+  TVI/PhaseShiftingTVI.h
+  TVI/RegriddingTVI.h
+  TVI/UVContSubTVI.h
+  TVI/PolAverageTVI.h
+  TVI/PointingInterpolationTVI.h
+  TVI/SDAtmosphereCorrectionTVI.h
+  TVI/SPWCombinationTVI.h
+  TVI/StatWtTVI.h
+  TVI/StatWtTVIFactory.h
+  TVI/StatWtTVILayerFactory.h
+  TVI/StatWtTypes.h
+  TVI/StatWtClassicalDataAggregator.h
+  TVI/StatWtDataAggregator.h
+  TVI/StatWtFloatingWindowDataAggregator.h
+  TVI/StatWtVarianceAndWeightCalculator.h
+  DESTINATION include/casacode/mstransform/TVI
+)
+
 casa_add_assay( mstransform MSTransform/test/tMSBin.cc )
 #casa_add_assay( mstransform MSTransform/test/tStatWt.cc )
 casa_add_executable( mstransform msuvbin apps/msuvbin/msuvbin.cc )
@@ -98,6 +102,7 @@ casa_add_executable( mstransform msuvbin apps/msuvbin/msuvbin.cc )
 
 casa_add_google_test( MODULES mstransform SOURCES TVI/test/tRecursiveVi2Layers_GT.cc )
 casa_add_google_test( MODULES mstransform SOURCES TVI/test/PolAverageTVI_GTest.cc )
+casa_add_google_test( MODULES mstransform SOURCES TVI/test/tSPWCombinationTVI.cc ../msvis/MSVis/test/TestUtilsTVI.cc ../msvis/MSVis/test/MsFactory.cc)
 #casa_add_google_test( MODULES mstransform SOURCES TVI/test/tChannelAverageTransformEngine_GT.cc )
 #casa_add_google_test( MODULES mstransform SOURCES TVI/test/tStatWtTVI.cc  ../msvis/MSVis/test/TestUtilsTVI.cc ../msvis/MSVis/test/MsFactory.cc)
 casa_add_google_test( MODULES mstransform SOURCES TVI/test/tStatWtVarianceAndWeightCalculator.cc)

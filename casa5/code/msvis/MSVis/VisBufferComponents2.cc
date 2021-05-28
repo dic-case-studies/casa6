@@ -148,6 +148,7 @@ VisBufferComponents2::name (VisBufferComponent2 id)
     //names [VisBufferComponent2::Flag] = "Flag";
     names [VisBufferComponent2::FlagCategory] = "FlagCategory";
     names [VisBufferComponent2::FlagCube] = "FlagCube";
+    names [VisBufferComponent2::FlagCubes] = "FlagCubes";
     names [VisBufferComponent2::FlagRow] = "FlagRow";
     names [VisBufferComponent2::FloatData] = "FloatData";
     names [VisBufferComponent2::Frequencies] = "Frequencies";
@@ -157,6 +158,10 @@ VisBufferComponents2::name (VisBufferComponent2 id)
     names [VisBufferComponent2::NChannels] = "NChannels";
     names [VisBufferComponent2::NCorrelations] = "NCorrelations";
     names [VisBufferComponent2::NRows] = "NRows";
+    names [VisBufferComponent2::NShapes] = "NShapes";
+    names [VisBufferComponent2::NRowsPerShape] = "NRowsPerShape";
+    names [VisBufferComponent2::NChannelsPerShape] = "NChannelsPerShape";
+    names [VisBufferComponent2::NCorrelationsPerShape] = "NCorrelationsPerShape";
     names [VisBufferComponent2::ObservationId] = "ObservationId";
     names [VisBufferComponent2::PhaseCenter] = "PhaseCenter";
     names [VisBufferComponent2::PolFrame] = "PolFrame";
@@ -166,15 +171,19 @@ VisBufferComponents2::name (VisBufferComponent2 id)
     names [VisBufferComponent2::RowIds] = "RowIds";
     names [VisBufferComponent2::Scan] = "Scan";
     names [VisBufferComponent2::Sigma] = "Sigma";
+    names [VisBufferComponent2::Sigmas] = "Sigmas";
     names [VisBufferComponent2::SpectralWindows] = "SpectralWindows";
     names [VisBufferComponent2::StateId] = "StateId";
     names [VisBufferComponent2::Time] = "Time";
     names [VisBufferComponent2::TimeCentroid] = "TimeCentroid";
     names [VisBufferComponent2::TimeInterval] = "TimeInterval";
     names [VisBufferComponent2::Weight] = "Weight";
+    names [VisBufferComponent2::Weights] = "Weights";
     names [VisBufferComponent2::WeightScaled] = "WeightScaled";
     names [VisBufferComponent2::WeightSpectrum] = "WeightSpectrum";
+    names [VisBufferComponent2::WeightSpectra] = "WeightSpectra";
     names [VisBufferComponent2::SigmaSpectrum] = "SigmaSpectrum";
+    names [VisBufferComponent2::SigmaSpectra] = "SigmaSpectra";
     names [VisBufferComponent2::WeightSpectrumScaled] = "WeightSpectrumScaled";
     names [VisBufferComponent2::Uvw] = "Uvw";
     names [VisBufferComponent2::VisibilityCorrected] = "VisibilityCorrected";
@@ -184,6 +193,10 @@ VisBufferComponents2::name (VisBufferComponent2 id)
     names [VisBufferComponent2::VisibilityCubeModel] = "VisibilityCubeModel";
     names [VisBufferComponent2::VisibilityCubeObserved] = "VisibilityCubeObserved";
     names [VisBufferComponent2::VisibilityCubeFloat] = "VisibilityCubeFloat";
+    names [VisBufferComponent2::VisibilityCubesCorrected] = "VisibilityCubesCorrected";
+    names [VisBufferComponent2::VisibilityCubesModel] = "VisibilityCubesModel";
+    names [VisBufferComponent2::VisibilityCubesObserved] = "VisibilityCubesObserved";
+    names [VisBufferComponent2::VisibilityCubesFloat] = "VisibilityCubesFloat";
 
     assert (names.size() == static_cast<int> (VisBufferComponent2::N_VisBufferComponents2));
 
