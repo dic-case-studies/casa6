@@ -138,7 +138,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     LogIO os( LogOrigin("SynthesisImager","destructor",WHERE) );
     os << LogIO::DEBUG1 << "SynthesisImager destroyed" << LogIO::POST;
-
+    cleanupTempFiles();
     if(rvi_p) delete rvi_p;
     rvi_p=NULL;
     //    cerr << "IN DESTR"<< endl;
@@ -962,15 +962,17 @@ bool SynthesisImager::unlockImages()
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
-  void SynthesisImager::executeMajorCycle(const Record& controlRecord)
+  Record SynthesisImager::executeMajorCycle(const Record& controlRecord)
   {
     LogIO os( LogOrigin("SynthesisImager","executeMajorCycle",WHERE) );
 
     nMajorCycles++;
     if(controlRecord.isDefined("nmajorcycles"))
       controlRecord.get("nmajorcycles", nMajorCycles);
-
+    Record outRec=controlRecord;
     Bool lastcycle=false;
+
+    
     if( controlRecord.isDefined("lastcycle") )
       {
 	controlRecord.get( "lastcycle" , lastcycle );
@@ -985,7 +987,7 @@ bool SynthesisImager::unlockImages()
     try
       {
 	if( (itsMaxShape[3] > 1 || impars_p.mode.contains("cube"))&& doingCubeGridding_p ){/// and valid ftmachines
-		runMajorCycleCube(false, lastcycle);
+		runMajorCycleCube(false, controlRecord);
 	}
 	else{
 	 if( itsDataLoopPerMapper == false )
@@ -994,6 +996,15 @@ bool SynthesisImager::unlockImages()
 		{	runMajorCycle2(false, lastcycle);}
 	
 	}
+	if(lastcycle){
+	  String mess="In Major Cycle";
+	  if(controlRecord.isDefined("usemask")  && controlRecord.asString("usemask").contains("auto")){
+	    mess="\nFor Automasking most  major cycles may appear wrongly as  the last one ";
+	  }
+
+	  std::vector<String> tmpfiles=itsMappers.cleanupTempFiles(mess);
+	  outRec.define("tempfilenames", Vector<String>(tmpfiles));
+	}
 	itsMappers.releaseImageLocks();
 
       }
@@ -1001,13 +1012,31 @@ bool SynthesisImager::unlockImages()
       {
 	throw( AipsError("Error in running Major Cycle : "+x.getMesg()) );
       }    
-
+    return outRec;
   }// end of executeMajorCycle
   //////////////////////////////////////////////
   /////////////////////////////////////////////
+  void SynthesisImager::cleanupTempFiles(){
+    LogIO os( LogOrigin("SynthesisImager","cleanupTempFiles",WHERE) );
+    for (auto it = tempFileNames_p.begin(); it != tempFileNames_p.end(); ++it) {
+      //cerr <<"Trying to cleanup " << (*it) << endl;
+      if(Table::isReadable(*it)){
+	try{
+	  Table::deleteTable(*it);
+	 }
+	 catch(AipsError &x){
+	   os << LogIO::WARN<< "YOU may have to delete the temporary file " << *it << " because " << x.getMesg()  << LogIO::POST;
+	 }
+      }
 
-  void SynthesisImager::makePSF()
+      
+    }
+
+
+  }
+  Record SynthesisImager::makePSF()
     {
+      Record outRec=Record();
       LogIO os( LogOrigin("SynthesisImager","makePSF",WHERE) );
 
       os << "----------------------------------------------------------- Make PSF ---------------------------------------------" << LogIO::POST;
@@ -1015,7 +1044,7 @@ bool SynthesisImager::unlockImages()
       try
       {
 	if(  (itsMaxShape[3] >1 || impars_p.mode.contains("cube")) && doingCubeGridding_p){///and valid ftmachines
-		runMajorCycleCube(true, false);
+		runMajorCycleCube(true);
 	}
 	else{
 	 if( itsDataLoopPerMapper == false )
@@ -1025,6 +1054,9 @@ bool SynthesisImager::unlockImages()
 	}
 	//	makeImage();
 
+	String mess("PSF wieghting scheme");
+	std::vector<String> tmpfiles=itsMappers.cleanupTempFiles(mess);
+	outRec.define("tempfilenames", Vector<String>(tmpfiles));
     	  itsMappers.releaseImageLocks();
 
       }
@@ -1032,7 +1064,7 @@ bool SynthesisImager::unlockImages()
       {
     	  throw( AipsError("Error in making PSF : "+x.getMesg()) );
       }
-
+      return outRec;
     }
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1055,7 +1087,7 @@ bool SynthesisImager::unlockImages()
 			       const Int npixels, const Bool multiField,
 			       const Bool /*useCubeBriggs*/,
 			       const String& filtertype, const Quantity& filterbmaj,
-			       const Quantity& filterbmin, const Quantity& filterbpa   )
+			       const Quantity& filterbmin, const Quantity& filterbpa, Double /*fracBW*/   )
   {
     LogIO os(LogOrigin("SynthesisImager", "weight()", WHERE));
 
@@ -1289,9 +1321,10 @@ bool SynthesisImager::unlockImages()
 							  String mappertype,
 							  uInt ntaylorterms,
 							  Quantity distance,
+							  const TcleanProcessingInfo& procInfo,
 							  uInt facets,
 							  Bool useweightimage,
-							  Vector<String> startmodel)
+							  const Vector<String> &startmodel)
   {
     LogIO os( LogOrigin("SynthesisImager","createIMStore",WHERE) );
 
@@ -1301,11 +1334,15 @@ bool SynthesisImager::unlockImages()
       {
 	// Prepare miscellaneous image information
 	auto objectName = msc.field().name()(msc.fieldId()(0));
-	///// misc info fpr ImageStore. This will go to the 'miscinfo' table keyword
+	///// misc info for ImageStore. This will go to the 'miscinfo' table keyword
 	Record miscInfo;
 	auto telescop=msc.observation().telescopeName()(0);
 	miscInfo.define("INSTRUME", telescop);
 	miscInfo.define("distance", distance.get("m").getValue());
+        miscInfo.define("mpiprocs", procInfo.mpiprocs);
+        miscInfo.define("chnchnks", procInfo.chnchnks);
+        miscInfo.define("memreq", procInfo.memreq);
+        miscInfo.define("memavail", procInfo.memavail);
 	
 	if( mappertype=="default" || mappertype=="imagemosaic" )
 	  {
@@ -1540,7 +1577,7 @@ bool SynthesisImager::unlockImages()
 					   String mappertype,
 					   Float padding,
 					   uInt ntaylorterms,
-					   Vector<String> startmodel)
+					   const Vector<String> &startmodel)
     {
       LogIO log_l(LogOrigin("SynthesisImager", "appendToMapperList(ftm)"));
       //---------------------------------------------
@@ -1548,6 +1585,7 @@ bool SynthesisImager::unlockImages()
       if(facets > 1 && itsMappers.nMappers() > 0)
 	log_l << "Facetted image has to be the first of multifields" << LogIO::EXCEPTION;
 
+     TcleanProcessingInfo procInfo;
      if(chanchunks<1)
 	{
 	  log_l << "Automatically calculate chanchunks";
@@ -1611,7 +1649,13 @@ bool SynthesisImager::unlockImages()
                  << " (rc: memory fraction " << usr_memfrac << "% memory " << usr_mem / 1024.
                  << ")\n" << nlocal_procs << " other processes on node\n"
                  << "Setting chanchunks to " << chanchunks << LogIO::POST;
-	}
+
+          procInfo.mpiprocs = nlocal_procs;
+          procInfo.chnchnks = chanchunks;
+          const float toGB = 1024.0 * 1024.0 * 1024.0;
+          procInfo.memavail = memory_avail / toGB;
+          procInfo.memreq = required_mem / toGB;
+        }
 
       if( imshape.nelements()==4 && imshape[3]<chanchunks )
 	{
@@ -1631,7 +1675,7 @@ bool SynthesisImager::unlockImages()
       // Create the ImageStore object
       CountedPtr<SIImageStore> imstor;
       MSColumns msc(mss4vi_p[0]);
-      imstor = createIMStore(imagename, csys, imshape, overwrite, msc, mappertype, ntaylorterms, distance,facets, iftm->useWeightImage(), startmodel );
+      imstor = createIMStore(imagename, csys, imshape, overwrite, msc, mappertype, ntaylorterms, distance, procInfo, facets, iftm->useWeightImage(), startmodel );
 
       // Create the Mappers
       if( facets<2 && chanchunks<2) // One facet. Just add the above imagestore to the mapper list.

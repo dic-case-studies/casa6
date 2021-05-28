@@ -17,7 +17,7 @@ if is_CASA6:
     from casatools import image
     from casatools import regionmanager
     from casatools import ctsys
-    datapath = ctsys.resolve('regression/unittest/imregrid/')
+    datapath = ctsys.resolve('unittest/plotprofilemap/')
 
     # default isn't used in CASA6
     def default(atask):
@@ -30,7 +30,7 @@ else:
     from taskinit import rgtool as regionmanager
 
     # Data path of input/output
-    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/imregrid/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/plotprofilemap/'
 
 myia = image()
 myrg = regionmanager()

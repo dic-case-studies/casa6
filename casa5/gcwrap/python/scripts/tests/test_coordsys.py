@@ -67,6 +67,7 @@
 
 ###########################################################################
 import shutil
+import os
 import casac
 from tasks import *
 from taskinit import *
@@ -75,7 +76,7 @@ import unittest
 
 myim = "center_0.fits"
 
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/coordsys/'
+datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/coordsys/'
 
 class coordsys_test(unittest.TestCase):
     

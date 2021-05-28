@@ -315,7 +315,7 @@ vector<PMS::Axis> PlotMSPlot::getCachedAxes() {
 	PMS_PP_MSData* d = itsParams_.typedGroup<PMS_PP_MSData>();
 	for(uInt i=0; i<c->numXAxes(); i++) {
 		if (c->xAxis(i) == PMS::NONE) {
-	        // get default x-axis for ms/caltable if not given by user
+			// get default x-axis for ms/caltable if not given by user
 			c->setXAxis(getDefaultXAxis(d->cacheType(), d->calType()), i);
 		}
 	}
@@ -430,7 +430,7 @@ PMS::Axis PlotMSPlot::getGsplineAxis(const String filename) {
 }
 
 PMS::Axis PlotMSPlot::msDataAxisToCal(PMS::Axis inputAxis, casacore::String calType) {
-	// Convert input axis to data axis for cal table type.
+	// Convert input data axis to data axis for cal table type.
 	PMS::Axis calAxis(inputAxis);
 	if (calType.empty() || !PMS::axisIsData(inputAxis)) {
 		return calAxis;
@@ -439,28 +439,25 @@ PMS::Axis PlotMSPlot::msDataAxisToCal(PMS::Axis inputAxis, casacore::String calT
 	switch (inputAxis) {
 		case PMS::AMP:
 		case PMS::GAMP:
-		case PMS::TSYS:
-		case PMS::SWP:
-		case PMS::OPAC:
-		case PMS::TEC:
-		case PMS::ANTPOS:
-		case PMS::DELAY:
-			if (calType.contains("TSYS"))
+			if (calType.contains("TSYS")) {
 				calAxis = PMS::TSYS;
-			else if (calType.contains("SWPOW"))
+			} else if (calType.contains("SWPOW")) {
 				calAxis = PMS::SWP;
-			else if (calType.contains("Opac"))
+			} else if (calType.contains("Opac")) {
 				calAxis = PMS::OPAC;
-			else if (calType.contains("SD"))
+			} else if (calType.contains("SD")) {
 				calAxis = PMS::GREAL;
-			else if (calType[0]=='F')
-				calAxis = PMS::TEC;
-			else if (calType.startsWith("KAntPos"))
-				calAxis = PMS::ANTPOS;
-			else if (calType[0]=='K')
+			} else if (calType.startsWith("Fringe")) {
 				calAxis = PMS::DELAY;
-			else 
+			} else if (calType[0]=='F') {
+				calAxis = PMS::TEC;
+			} else if (calType.startsWith("KAntPos")) {
+				calAxis = PMS::ANTPOS;
+			} else if (calType[0]=='K') {
+				calAxis = PMS::DELAY;
+			} else {
 				calAxis = PMS::GAMP;
+            }
 			break;
 		case PMS::PHASE:
 			calAxis = PMS::GPHASE;
@@ -472,6 +469,7 @@ PMS::Axis PlotMSPlot::msDataAxisToCal(PMS::Axis inputAxis, casacore::String calT
 			calAxis = PMS::GIMAG;
 			break;
 		default:
+            calAxis = inputAxis;
 			break;
 	}
 
@@ -495,6 +493,7 @@ PMS::Axis PlotMSPlot::calDataAxisToMS(PMS::Axis inputAxis) {
 		case PMS::TEC:
 		case PMS::ANTPOS:
 		case PMS::DELAY:
+		case PMS::DELAY_RATE:
 			msAxis = PMS::AMP;
 			break;
 		case PMS::GPHASE:
@@ -1837,7 +1836,6 @@ void PlotMSPlot::setCanvasProperties (PlotCanvasPtr canvas, int numplots, uInt i
 		return;
 	}
 
-
 	canvas->showAllAxes(false);
 	canvas->clearAxesLabels();
 	canvas->setAxesAutoRescale(true);
@@ -1880,27 +1878,26 @@ void PlotMSPlot::setCanvasProperties (PlotCanvasPtr canvas, int numplots, uInt i
 
 	// Default font size depends on number of plots on the grid but not less than 8
 	int defaultLabelFontSize = std::max((12.0 - numplots + 1.0), 8.0);
-	int defaultTitleFontSize = std::max((16.0 - numplots + 1.0), 8.0);
 	int commonCacheType(getCommonCacheType(dataParams));
 	bool commonPolnRatio = ((commonCacheType==PlotMSCacheBase::CAL) && getCommonPolnRatio(dataParams));
 
-	// x-axis settings: axis, label, range; return x-axis for title
+	// axis settings: axis, label, range
 	PMS::Axis xaxis;
 	PMS::DataColumn xcolumn;
+	std::vector<PMS::Axis> yaxes;
+	std::vector<PMS::DataColumn> ycolumns;
 	try {
 		setXAxisProperties(xaxis, xcolumn, canvas, axesParams, cacheParams,
 			canvasParams, dataParams, displayParams, plots, commonCacheType,
 			commonPolnRatio, iteration, defaultLabelFontSize);
+
+		setYAxesProperties(yaxes, ycolumns, canvas, axesParams, cacheParams,
+			canvasParams, dataParams, displayParams, plots, iteration,
+			defaultLabelFontSize);
 	} catch (AipsError& err) {
 		itsParent_->showError(err.getMesg());
 		return;
 	}
-
-	// y-axis settings: axes, labels, ranges; return y-axes for title
-	std::vector<PMS::Axis> yaxes;
-	std::vector<PMS::DataColumn> ycolumns;
-	setYAxesProperties(yaxes, ycolumns, canvas, axesParams, cacheParams, canvasParams,
-		dataParams, displayParams, plots, iteration, defaultLabelFontSize);
 
 	// title: use last plot's format; ref values not used for title!
 	bool xHasRef(false);
@@ -1909,6 +1906,17 @@ void PlotMSPlot::setCanvasProperties (PlotCanvasPtr canvas, int numplots, uInt i
 	std::vector<double> yRefVals(yaxes.size(), 0.0);
 	casacore::String title = canvasParams[lastPlotIndex]->titleFormat().getLabel(xaxis, yaxes,
 		xHasRef, xRefVal, yHasRefs, yRefVals, xcolumn, ycolumns, commonPolnRatio);
+	if (itsCache_->calType().startsWith("Fringe")) {
+		if (title.contains("Gain Phase")) {
+			title.gsub("Gain", "Fringe");
+		} else if (title.contains("Disp")) {
+            title.gsub("Disp Delay", "Fringe Dispersive Delay");
+		} else if (title.contains("Delay")) {
+			title.gsub("Delay", "Fringe Delay");
+		}
+	}
+
+	int defaultTitleFontSize = std::max((16.0 - numplots + 1.0), 8.0);
 	setTitleProperties(title, canvas, canvasParams, iterParams, plots, defaultTitleFontSize, iteration);
 
 	// square plot settings
@@ -1963,6 +1971,9 @@ void PlotMSPlot::getAxisBoundsForTime(double& minval, double& maxval) {
 	if (range == 0.0) { // autorange has crazy tick marks; add 2-sec margins
 		minval -= 2.0;
 		maxval += 2.0;
+	} else if ((range < 1.0)) {
+		minval -= (range / 4.0);
+		maxval += (range / 4.0);
 	} else if (range < 120.0) {
 		minval -= 1.0;
 		maxval += 1.0;
@@ -2020,6 +2031,16 @@ void PlotMSPlot::addAxisDescription(casacore::String& label, PMS::Axis axis,
 	// "Poln" for CAL types
 	if (commonCacheType == PlotMSCacheBase::CAL) {
 		label.gsub("Corr", "Poln");
+
+		if (itsCache_->calType().startsWith("Fringe")) {
+			if (label.startsWith("Delay")) {
+				label = "Fringe " + label;
+			} else if (label.startsWith("Gain Phase")) {
+				label.gsub("Gain", "Fringe");
+			} else if (label.startsWith("Disp")) {
+				label.gsub("Disp Delay", "Fringe Dispersive Delay vs. refAnt");
+			}
+		}
 	}
 }
 
@@ -2417,7 +2438,6 @@ void PlotMSPlot::setYAxesRanges(PlotCanvasPtr canvas,
 	// determine which axes need range set
 	double ymingLeft(DBL_MAX), ymaxgLeft(-DBL_MAX);   // global ymin/ymax for left axis
 	double ymingRight(DBL_MAX), ymaxgRight(-DBL_MAX); // global ymin/ymax for right axis
-	bool userRangeRight(false), userRangeLeft(false); // user set plotrange
 	bool hasOverlay(false), hasAtmCurve(false);
 
 	for (size_t plotindex=0; plotindex < plots.size(); ++plotindex) {

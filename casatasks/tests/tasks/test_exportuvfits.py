@@ -25,11 +25,11 @@ except ImportError:
     from casa_stack_manip import stack_frame_find
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 
-    data_root = os.environ.get('CASAPATH').split()[0] + '/data'
+    data_root = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
     def ctsys_resolve(apath):
         return os.path.join(data_root, apath)
 
-datapath = 'regression/unittest/uvfits'
+datapath = 'unittest/exportuvfits/'
 
 class exportuvfits_test(unittest.TestCase):
 

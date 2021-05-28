@@ -109,6 +109,7 @@ if len(sys.argv) == 1:
     tests = [ ]
     run_py = os.path.realpath(__file__)
     test_dir = os.path.dirname(run_py)
+    
     for dir, subdirs, files in os.walk(test_dir):
         for f in files:
             if f.endswith(".py") and f.startswith("test_"):

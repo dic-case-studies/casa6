@@ -1512,7 +1512,7 @@ void variant::as( TYPE t, ssize_t size ) {
 }
 
 #define GETIT(CONST,CONST2,RET_TYPE,NAME,TYPE,VAL,DEREF)        \
-CONST RET_TYPE variant::NAME( ) CONST2 throw(error) {           \
+CONST RET_TYPE variant::NAME( ) CONST2 {           \
     if ( typev != TYPE )                                        \
 	ThrowCc( create_message( #NAME " called for type") );	    \
     return DEREF val.VAL;					\

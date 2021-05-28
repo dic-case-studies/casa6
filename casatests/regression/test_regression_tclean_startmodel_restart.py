@@ -13,11 +13,14 @@
 #          in one case it reuses prev image-set. in other case it reuses    #
 #          only 'model'.                                                    #
 #   --- (d) Impbcor on the output of (b)                                    #
-                                                                            #
-# JIRA CAS-12939                                                          #
+#                                                                           #
+# JIRA CAS-12939                                                            #
 #                                                                           #
 # Input data:                                                               #
 #    from tclean's functional tests in the casatestdata repository          #
+#                                                                           #
+# Run mode:                                                                 #
+#   this test script should only be executde in parallel using mpicasa -n 4 #
 #                                                                           #
 #############################################################################
 
@@ -40,7 +43,7 @@ try:
     from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
     CASA6 = True
 
-    refdatapath = ctsys.resolve('regression/unittest/clean/refimager/')
+    refdatapath = ctsys.resolve('regression/tclean_startmodel_restart/')
 except:
 #else:
 #    from __main__ import default
@@ -49,7 +52,7 @@ except:
     from parallel.parallel_task_helper import ParallelTaskHelper
     from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
 
-    refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager/'
+    refdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/regression/tclean_startmodel_restart/'
 
 ## List to be run
 def suite():
