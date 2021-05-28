@@ -235,7 +235,7 @@ def install_version_header( major, minor, patch, feature, verstr ):
 def install_version_cc( major, minor, patch, feature,  verstr ):
     if not os.path.isdir("binding/source"):
         mkpath("binding/source")
-    with open("binding/source/version.cc","w") as out, open("casa-source/code/stdcasa/version.cc.in") as f:
+    with open("binding/source/version.cc","w") as out, open("src/code/stdcasa/version.cc.in") as f:
         for line in f:
             l = line.replace("@CASA_VERSION_MAJOR@",str(major))\
                     .replace("@CASA_VERSION_MINOR@",str(minor))\
@@ -1010,7 +1010,7 @@ def get_new_cxx_compiler_includes():
     return [
         '-Ibuild/%s/include' % distutils_dir_name('grpc-install'),
         '-Ibinding/include', '-Ibinding/generated/include', '-Ilibcasatools/generated/include',
-        '-Icasa-source/code', '-Icasa-source', '-Icasacore', '-Iinclude',
+        '-Isrc/code', '-Isrc', '-Icasacore', '-Iinclude',
         '-Isakura-source/src'
     ]
 
@@ -1079,7 +1079,7 @@ def customize_compiler(self):
         ccache + [props['build.compiler.cxx']] + get_new_cxx_compiler_flags()
         + get_new_cxx_compiler_includes() + cflags + default_compiler_so[1:]
     )
-    new_compiler_cc = ccache + [props['build.compiler.cc']] + get_optimization_flags() + ['-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include', '-Icasa-source/code','-Icasacore', '-Iinclude', 'sakura-source/src'] + cflags + default_compiler_so[1:]
+    new_compiler_cc = ccache + [props['build.compiler.cc']] + get_optimization_flags() + ['-Ibinding/include','-Ibinding/generated/include','-Ilibcasatools/generated/include', '-Isrc/code','-Icasacore', '-Iinclude', 'sakura-source/src'] + cflags + default_compiler_so[1:]
     new_compiler_fortran = [props['build.compiler.fortran']]
 
     if debug_build( ):
@@ -1679,7 +1679,7 @@ def filter_optim_debug(cmd):
 def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
     # c++ casacore and casacode + others but not gcwrap
     CODE_SRC = source_files(
-        "casa-source/code", file_suffix_filter=".cc",
+        "src/code", file_suffix_filter=".cc",
         subdir_filter=[
             'tests', 'test', 'apps', 'display', 'plotms', 'guitools', 'display3d',
             'demo', 'casaqt', 'convert', 'Filling', 'ImagerObjects2'
@@ -1694,7 +1694,7 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
     CORE_SRC = source_files("casacore", file_suffix_filter=".cc")
     #, subdir_filter=additional_subdir_filters)
     SAKURA_SRC = sakura_files() if use_sakura else []
-    CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp") if use_atm else []
+    CODE_ATM = source_files("src/code/atmosphere/ATM",file_suffix_filter=".cpp") if use_atm else []
     # the gprc registrar files may not be present when this code gets run
     duse_grpc = get_use_grpc()
     GRPC_REGISTRAR = []
@@ -1783,7 +1783,7 @@ def write_yacc(additional_casacore_filtered_dirs=[], additional_casacode_filtere
         "casacore", file_suffix_filter=".yy"
     )
     CODE_YACC = source_files(
-        "casa-source/code", file_suffix_filter=".yy",
+        "src/code", file_suffix_filter=".yy",
         subdir_filter=[
             'tests','test', 'apps', 'display', 'plotms', 'guitools',
             'display3d', 'demo', 'casaqt', 'Filling'
@@ -1816,7 +1816,7 @@ def write_lex(additional_casacore_filtered_dirs=[], additional_casacode_filtered
         "casacore",file_suffix_filter=".ll"
     )
     CODE_LEX = source_files(
-        "casa-source/code",file_suffix_filter=".ll",
+        "src/code",file_suffix_filter=".ll",
         subdir_filter=[ 'tests','test','apps','display','plotms','guitools',
         'display3d','demo','casaqt','Filling' ] + additional_casacode_filtered_dirs
     )
@@ -1847,7 +1847,7 @@ def write_fortran(do_code=True):
         ]
     )
     CODE_F77 = source_files(
-        "casa-source/code/synthesis/fortran",file_suffix_filter=".f"
+        "src/code/synthesis/fortran",file_suffix_filter=".f"
     ) if do_code else []
     obj_name = build_distutils_temp + os.sep + '{base}.o'
     mkdirs_f77_target = "mk_f77_obj_dirs"
@@ -2513,9 +2513,9 @@ if __name__ == '__main__':
     a_priori_exclusions += [ 'FlagAgentDisplay.cc', 'DistributedSynthesisIterBot.cc', 'DistSIIterBot.cc', 'InteractiveMasking.cc', 'SynthesisIterBot.cc', 'SIIterBot.cc' ]
 
     CASACORE_YACC = source_files("casacore",file_suffix_filter=".yy")
-    CODE_YACC = source_files("casa-source/code",file_suffix_filter=".yy",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
+    CODE_YACC = source_files("src/code",file_suffix_filter=".yy",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
     CASACORE_LEX = source_files("casacore",file_suffix_filter=".ll")
-    CODE_LEX = source_files("casa-source/code",file_suffix_filter=".ll",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
+    CODE_LEX = source_files("src/code",file_suffix_filter=".ll",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','Filling'])
 
     generate_lex(CASACORE_LEX + CODE_LEX)
     generate_yacc(CASACORE_YACC + CODE_YACC)
@@ -2546,20 +2546,20 @@ if __name__ == '__main__':
 
     # grpc_incdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
     grpc_incdir = get_grpc_incdir()
-    grpc_srcdir = generate_grpc( [ os.path.join('casa-source','code','casatools','protos','registrar.proto'),
-                                   os.path.join('casa-source','code','casatools','protos','shutdown.proto'),
-                                   os.path.join('casa-source','code','casatools','protos','ping.proto'),
-                                   os.path.join('casa-source','code','display','protos','img.proto'),
-                                   os.path.join('casa-source','code','casaqt','protos','plotserver.proto'),
-                                   os.path.join('casa-source','code','casaqt','protos','plotserver_events.proto')
+    grpc_srcdir = generate_grpc( [ os.path.join('src','protos','registrar.proto'),
+                                   os.path.join('src','protos','shutdown.proto'),
+                                   os.path.join('src','protos','ping.proto'),
+                                   os.path.join('src','protos','img.proto'),
+                                   os.path.join('src','protos','plotserver.proto'),
+                                   os.path.join('src','protos','plotserver_events.proto')
                                ] )
     GRPC_SRC = ['%s/%s' % (grpc_srcdir,f) for f in listdir(grpc_srcdir) if f.endswith(".cc")] if len(grpc_srcdir) != 0 else [ ]
     BINDING_SRC = ['binding/source/%s' % f for f in listdir('binding/source') if f.endswith(".cc")] + GRPC_SRC
-    CODE_SRC = source_files("casa-source/code",file_suffix_filter=".cc",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','convert','Filling','ImagerObjects2'],file_filter=['MeasurementComponents/rGridFT.cc'],
+    CODE_SRC = source_files("src/code",file_suffix_filter=".cc",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','convert','Filling','ImagerObjects2'],file_filter=['MeasurementComponents/rGridFT.cc'],
                             path_filter=['MeasurementComponents/WOnlyConvFunc.cc','TransformMachines2/EVLAConvFunc.cc','TransformMachines2/AWConvFuncEPJones.cc'])
-    CODE_ATM = source_files("casa-source/code/atmosphere/ATM",file_suffix_filter=".cpp")
-    #CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f",file_filter=['fgridsdclip.f'])
-    CODE_F77 = source_files("casa-source/code/synthesis/fortran",file_suffix_filter=".f",
+    CODE_ATM = source_files("src/code/atmosphere/ATM",file_suffix_filter=".cpp")
+    #CODE_F77 = source_files("src/code/synthesis/fortran",file_suffix_filter=".f",file_filter=['fgridsdclip.f'])
+    CODE_F77 = source_files("src/code/synthesis/fortran",file_suffix_filter=".f",
                             #file_filter=['fgridsdclip.f']
     )
     #(ldflags, prop_libs) = get_link_props()
