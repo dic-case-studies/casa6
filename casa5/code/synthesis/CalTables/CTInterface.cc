@@ -117,11 +117,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   MSSelectableTable::MSSDataType CTInterface::dataType()
   {
     const NewCalTable* nct = asCT();
+    casacore::ScalarColumn<casacore::Int> ant1col(*nct, "ANTENNA1");
+    casacore::Vector<casacore::Int> ant1 = ant1col.getColumn();
     casacore::ScalarColumn<casacore::Int> ant2col(*nct, "ANTENNA2");
     casacore::Vector<casacore::Int> ant2 = ant2col.getColumn();
 
     // Check if ant2 is -1, all antennas, or subset of antennas
-    if (ant2(0) == -1) {
+    // For SD caltables where ANT1=ANT2 in all rows, treat as pure
+    if ((ant2(0) == -1) || allEQ(ant1, ant2)) {
       return MSSelectableTable::PURE_ANTENNA_BASED;
     } else {
       std::unordered_set<casacore::Int> ant2set(ant2.begin(), ant2.end());

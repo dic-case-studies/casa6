@@ -910,7 +910,13 @@ if __name__ == "__main__":
             #elif arg.startswith("./") and arg.endswith(".py") and not RUN_ALL:
             elif arg.startswith("./") and ".py" in arg and not RUN_ALL:
 
-                testnames.append(arg[2:])
+                #testnames.append(arg[2:])
+                try:
+                    real_path = os.path.realpath(arg[2:])
+                    #print("real_path: {}".format(real_path))
+                    testnames.append(real_path)
+                except:
+                    traceback.print_exc()
 
             elif (arg.startswith("../") or arg.startswith("/"))  and ".py" in arg and not RUN_ALL:
                 try:

@@ -59,7 +59,7 @@ if CASA6:
     datapath = casatools.ctsys.resolve('unittest/visstat/outlier_ut.ms/')
     mms_data = casatools.ctsys.resolve('unittest/visstat/outlier_mms.mms/')
     selectiondata = casatools.ctsys.resolve('unittest/visstat/uid___X02_X3d737_X1_01_small.ms/')
-    mms_select = casatools.ctsys.resolve('unittest/visstat/uid_mms.mms')
+    mms_select = casatools.ctsys.resolve('unittest/visstat/uid___X02_X3d737_X1_01_small.mms')
     singledish = casatools.ctsys.resolve('unittest/visstat/analytic_spectra_tsys.ms')
     # Data for merged test
     merged_data_path = casatools.ctsys.resolve('unittest/visstat/')
@@ -68,7 +68,7 @@ else:
     datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/outlier_ut.ms/'
     mms_data = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/outlier_mms.mms/'
     selectiondata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/uid___X02_X3d737_X1_01_small.ms/'
-    mms_select = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/uid_mms.mms'
+    mms_select = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/uid___X02_X3d737_X1_01_small.mms'
     singledish = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/analytic_spectra_tsys.ms'
     # Data from merged test
     merged_data_path = os.path.join(os.environ.get('CASAPATH').split()[0], 'casatestdata/unittest/visstat/')

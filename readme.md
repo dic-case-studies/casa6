@@ -1,4 +1,4 @@
-## CASA 6
+## CASA 6 
 
 CASA 6 marks a major new chapter in CASA's development. With CASA 6, tools and
 tasks will be available as Python wheels from a [PyPI repository](https://casa-pip.nrao.edu/).
@@ -62,7 +62,7 @@ the bash command line if the casashell module has been installed:
 or from Python 3:
 ```
 -bash-4.2$ python3
-Python 3.6.7 (default, Aug 16 2019, 18:25:33) 
+Python 3.6.7 (default, Aug 16 2019, 18:25:33)
 [GCC 5.3.1 20160406 (Red Hat 5.3.1-6)] on linux
 Type "help", "copyright", "credits" or "license" for more information.
 >>> from casashell import start_casa

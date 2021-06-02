@@ -2,7 +2,7 @@
  * Tool bindings of the test single dish module that work on an MS
  *
  * @author kana
- * @version 
+ * @version
  ***/
 #include <singledishms_cmpt.h>
 #include <string>
@@ -50,7 +50,7 @@ singledishms::open(string const& ms_name)
     itsSd = new SingleDishMS(ms_name);
     if (itsSd != 0) rstat = true;
   } catch  (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
 	    << LogIO::POST;
     RETHROW(x);
   }
@@ -67,7 +67,7 @@ singledishms::close()
     itsSd = 0;
     rstat = true;
   } catch  (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
 	    << LogIO::POST;
     RETHROW(x);
   }
@@ -87,7 +87,7 @@ singledishms::assert_valid_ms()
     throw(AipsError("No MeasurementSet has been assigned, please run open."));
 }
 
-Record 
+Record
 singledishms::get_time_averaging_record(const bool& timeaverage,
 					const string& timebin,
 					const string& timespan)
@@ -146,14 +146,14 @@ singledishms::subtract_baseline(string const& datacolumn,
     assert_valid_ms();
     itsSd->subtractBaseline(datacolumn,
                             outfile,
-                            bloutput, 
+                            bloutput,
                             dosubtract,
                             toCasaString(spw),
                             updateweight,
                             sigmavalue,
                             blfunc,
                             order,
-                            clip_threshold_sigma, 
+                            clip_threshold_sigma,
                             num_fitting_max,
                             linefinding,
                             threshold,
@@ -162,7 +162,7 @@ singledishms::subtract_baseline(string const& datacolumn,
                             vector<int>(edge.begin(),edge.end()));
     rstat = true;
   } catch  (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
 	    << LogIO::POST;
     RETHROW(x);
   }
@@ -191,15 +191,15 @@ singledishms::subtract_baseline_cspline(string const& datacolumn,
   try {
     assert_valid_ms();
     itsSd->subtractBaselineCspline(datacolumn,
-                                   outfile, 
-                                   bloutput, 
+                                   outfile,
+                                   bloutput,
                                    dosubtract,
-                                   toCasaString(spw), 
+                                   toCasaString(spw),
                                    updateweight,
                                    sigmavalue,
-                                   npiece, 
+                                   npiece,
                                    clip_threshold_sigma,
-                                   num_fitting_max, 
+                                   num_fitting_max,
                                    linefinding,
                                    threshold,
                                    avg_limit,
@@ -207,7 +207,7 @@ singledishms::subtract_baseline_cspline(string const& datacolumn,
                                    vector<int>(edge.begin(),edge.end()));
     rstat = true;
   } catch  (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
 	    << LogIO::POST;
     RETHROW(x);
   }
@@ -241,9 +241,9 @@ singledishms::subtract_baseline_sinusoid(string const& datacolumn,
     assert_valid_ms();
     itsSd->subtractBaselineSinusoid(datacolumn,
                                     outfile,
-                                    bloutput, 
+                                    bloutput,
                                     dosubtract,
-                                    toCasaString(spw), 
+                                    toCasaString(spw),
                                     updateweight,
                                     sigmavalue,
                                     addwn,
@@ -260,7 +260,7 @@ singledishms::subtract_baseline_sinusoid(string const& datacolumn,
                                     vector<int>(edge.begin(),edge.end()));
     rstat = true;
   } catch  (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported1: " << x.getMesg() 
+    *itsLog << LogIO::SEVERE << "Exception Reported1: " << x.getMesg()
 	    << LogIO::POST;
     RETHROW(x);
   }
@@ -284,7 +284,7 @@ singledishms::subtract_baseline_variable(string const& datacolumn,
     assert_valid_ms();
     itsSd->subtractBaselineVariable(datacolumn,
                                     outfile,
-                                    bloutput, 
+                                    bloutput,
                                     dosubtract,
                                     toCasaString(spw),
                                     updateweight,
@@ -293,7 +293,7 @@ singledishms::subtract_baseline_variable(string const& datacolumn,
 				    verbose);
     rstat = true;
   } catch  (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
 	    << LogIO::POST;
     RETHROW(x);
   }
@@ -320,7 +320,7 @@ singledishms::apply_baseline_table(string const& bltable,
 			      outfile);
     rstat = true;
   } catch  (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
 	    << LogIO::POST;
     RETHROW(x);
   }
@@ -361,12 +361,12 @@ singledishms::fit_line(string const& datacolumn,
       itsSd->setPolAverage(average_param, True);
     }
 
-    itsSd->fitLine(datacolumn, toCasaString(spw), toCasaString(pol), 
+    itsSd->fitLine(datacolumn, toCasaString(spw), toCasaString(pol),
 		   fitfunc, nfit, linefinding, threshold, avg_limit,
 		   minwidth, vector<int>(edge.begin(),edge.end()), tempfile, tempoutfile);
     rstat = true;
   } catch  (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
 	    << LogIO::POST;
     RETHROW(x);
   }
@@ -375,14 +375,15 @@ singledishms::fit_line(string const& datacolumn,
 
 bool
 singledishms::set_selection(::casac::variant const& spw,
-		    ::casac::variant const& field, 
-		    ::casac::variant const& antenna, 
-		    ::casac::variant const& timerange, 
+		    ::casac::variant const& field,
+		    ::casac::variant const& antenna,
+		    ::casac::variant const& timerange,
 		    ::casac::variant const& scan,
 		    ::casac::variant const& observation,
 		    ::casac::variant const& polarization,
 		    ::casac::variant const& beam,
 		    ::casac::variant const& intent,
+        ::casac::variant const& feed,
 		    string const& taql,
 			bool const reindex)
 {
@@ -433,6 +434,10 @@ singledishms::set_selection(::casac::variant const& spw,
     selection_string = toCasaString(intent);
     if (selection_string != "")
       selection.define("intent", selection_string);
+    // feed
+    selection_string = toCasaString(feed);
+    if (selection_string != "")
+      selection.define("feed", selection_string);
     // taql
     selection_string = toCasaString(taql);
     if (selection_string != "")
@@ -443,7 +448,7 @@ singledishms::set_selection(::casac::variant const& spw,
     itsSd->setSelection(selection);
     rstat = true;
   } catch  (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 
+    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
 	    << LogIO::POST;
     RETHROW(x);
   }
@@ -459,6 +464,25 @@ singledishms::smooth(string const &type, float const width,
     try {
       assert_valid_ms();
       itsSd->smooth(type, width, datacolumn, outfile);
+      rstat = true;
+    } catch  (AipsError x) {
+      *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
+          << LogIO::POST;
+      RETHROW(x);
+    }
+    return rstat;
+}
+
+bool
+singledishms::atmcor(const ::casac::record& config,
+        string const &datacolumn, string const &outfile)
+{
+    bool rstat(false);
+    *itsLog << _ORIGIN;
+    try {
+      assert_valid_ms();
+      std::unique_ptr<Record> atmCorConfig(toRecord(config));
+      itsSd->atmcor(*atmCorConfig, datacolumn, outfile);
       rstat = true;
     } catch  (AipsError x) {
       *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()

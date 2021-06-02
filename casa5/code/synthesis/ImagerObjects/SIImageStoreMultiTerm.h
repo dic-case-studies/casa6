@@ -54,7 +54,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   SIImageStoreMultiTerm();
   SIImageStoreMultiTerm(const casacore::String &imagename, casacore::uInt ntaylorterms=1,
-                        const casacore::Bool ignorefacets=false);
+                        const casacore::Bool ignorefacets=casacore::False,
+			const casacore::Bool ignoresumwt=casacore::False);
 
   SIImageStoreMultiTerm(const casacore::String &imagename,
                         const casacore::CoordinateSystem &imcoordsys,
@@ -156,7 +157,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   casacore::uInt getNTaylorTerms(casacore::Bool dopsf=false);  // {return dopsf ? (2*itsNTerms-1) : itsNTerms;};
 
-  void restore(casacore::GaussianBeam& rbeam, casacore::String& usebeam,casacore::uInt term=0 );
+  void restore(casacore::GaussianBeam& rbeam, casacore::String& usebeam,casacore::uInt term=0, casacore::Float psfcutoff=0.35 );
   void calculateAlphaBeta(casacore::String imtype);
   void pbcor();
 

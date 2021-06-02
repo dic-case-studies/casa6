@@ -659,7 +659,17 @@ namespace casa {
         casacore::Table colormap_table;
 
 	casacore::String root = Aipsrc::aipsRoot();
+#if defined CASATOOLS
 	casacore::String defaultpath = root+"/data/gui/colormaps/default.tbl";
+	static std::string appdir_colormap = std::string(QCoreApplication::applicationDirPath( ).toUtf8().constData()) +
+                                         "/../data/gui/colormaps/default.tbl";
+	struct stat statbuf;
+	if ( stat( appdir_colormap.c_str( ), &statbuf ) == 0 ) {
+		defaultpath = appdir_colormap.c_str( );
+	}
+#else
+	casacore::String defaultpath = root+"/data/gui/colormaps/default.tbl";
+#endif
 	casacore::String useSystemCmap;
 	casacore::String altpath,userpath;
 	casacore::Aipsrc::find(useSystemCmap,"display.colormaps.usedefault","yes");
