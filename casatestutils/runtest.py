@@ -337,175 +337,7 @@ def unpack_pkg(pkg, work_dir, outputdir):
         raise Exception("Couldn't find casatestutils")
     return exec_path, casatestutils_exec_path
 
-def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None, test_paths = [], test_config_path=None, ncores=2, verbosity=False):
 
-    if test_list is not None:
-        test_list = [x.strip() for x in test_list.split(',')]
-    if args.test_group is not None:
-        test_group = [x.strip() for x in test_group.split(',')]
-    # Unpack the distribution
-    print ("Test list: " + str (test_list))
-    print ("Test group: " + str (test_group))
-    if pkg is None:
-        raise Exception("Missing pkg")
-    if work_dir is None:
-        raise Exception("Missing work_dir")
-    exec_path, casatestutils_exec_path = unpack_pkg(pkg, work_dir, work_dir + "/pkg")
-    #exec_path = "/tmp/work/pkg/CASA.app/Contents/MacOS"
-    print("Executable path: " + exec_path)
-    print("casatestutils path: " + casatestutils_exec_path)
-
-    # Start Xvfb on Linux
-    xvfb = xvfb_helper.XvfbHelper()
-    if sys.platform != "darwin":
-        xvfb.start_virtual_frame_buffer()
-
-    test_config = None
-    if test_config_path == None:
-       test_config_path = work_dir + "/casasources/casa6/casatestutils/casatestutils/component_to_test_map.json"
-    # Read the JSON configuration
-    print ("Reading config from" + test_config_path)
-    with open(test_config_path ) as f:
-      test_config = json.load(f)
-
-    # Get the actual tests as list
-    test_config_elems = test_config['testlist']
-
-    if args.branch == None:
-        branch = "master"
-
-    # Clone a default set of repositories to if test paths are not provided from command line
-    if len(test_paths) == 0 :
-        test_paths = fetch_tests(str(work_dir), branch)
-    # Match the test names provided in the JSON file to the actual test locations.
-    tests_to_run = []
-    for x in test_config_elems:
-        for dir in test_paths:
-            for currentpath, folders, files in os.walk(dir):
-                for file in files:
-                    if file == (x['testScript']+".py"):
-                        test_location = os.path.join(currentpath, file)
-                        if verbosity:
-                            print("Found: " + test_location)
-                            print("Script:", x['testScript'], test_location, x['testGroup'])
-                        if x['timeout'] < 1:
-                            timeout = default_timeout
-                        else:
-                            timeout = x['timeout']
-
-                        opts = x['testOptions']
-                        opts.sort()
-
-                        tests_to_run.append(casa_test(x['testScript'],
-                                                      test_location,
-                                                      x['testGroup'],
-                                                      x['testType'],
-                                                      x['maintainer'],
-                                                      x['maintainerEmail'],
-                                                      tuple(opts),
-                                                      x['comment'],
-                                                      timeout))
-
-    # Filter tests by test list
-    if test_list is not None and len(test_list)>0:
-        print ("Test list provided. Filtering tests.")
-        tmp_tests_to_run = []
-        for test in test_list:
-            found = False
-            for t1 in tests_to_run:
-                if test == t1.name:
-                    tmp_tests_to_run.append(t1)
-                    found = True
-            if not found:
-                # If there is a test in the list but no configuration, add it without any options.
-                # This can be useful for testing new scripts.
-                print ("Test " + test + " configuration not found. Searching for the test...")
-                print ("dir: " + dir )
-                # Potential test location
-                for dir in test_paths:
-                    # Search for files (needed for casatools and casatasks)
-                    for currentpath, folders, files in os.walk(dir):
-                        for file in files:
-                            if file == test + ".py":
-                                test_location = os.path.join(currentpath, file)
-                                print("Found: " + test_location)
-                                print("No JSON configuration found. Test will be added to execution list without options.")
-                                tmp_tests_to_run.append(casa_test(test, test_location, "","","","","",""))
-                                found = True
-            if not found:
-                raise Exception("Couldn't locate test: " + test)
-        tests_to_run = tmp_tests_to_run
-
-    # Filter by Jira components
-    if test_group is not None and len(test_group)>0:
-        print("Jira component list provided. Filtering tests.")
-        tmp_tests_to_run = []
-        for jira_component in test_group:
-            found = False
-            for t1 in tests_to_run:
-                if jira_component.lower() in [x.lower() for x in t1.test_group]:
-                    tmp_tests_to_run.append(t1)
-                    found = True
-            # Throw an exception is user provides a component that doesn't exist
-            if not found:
-                print ("WARNING: No tests found for jira_component " + jira_component + ". Check the contents of " + test_config_path)
-        # Remove duplicates
-        tests_to_run = set(tmp_tests_to_run)
-
-    print("Running these tests:")
-    for t in tests_to_run:
-        if verbose:
-            print(t.name + " : " +
-                  t.path + " : " +
-                  t.test_type + " : " +
-                  t.maintainer + " : " +
-                  t.email + " : " +
-                  str(t.options) + " : " +
-                  str(t.test_group) + " : " +
-                  str(t.timeout) + " : " +
-                  t.comment)
-        else:
-            print(t.name)
-
-    # Run tests
-    for test in tests_to_run:
-        r = ShellRunner()
-        xunit = Xunit()
-        casaopts = " --nogui --nologger --log2term"
-
-        # Skip MPI on Darwin for now
-        if "mpi" in test.options and sys.platform != "darwin":
-            print("Running tests in MPI mode")
-            casa_exe = exec_path + "/mpicasa"
-            casaopts = "-n " + str(ncores) + " " + exec_path + "/casa" + " --nogui --nologger --log2term --agg "
-        else:
-            casa_exe = exec_path + "/casa"
-      
-        assert (test != None)
-        #cmd = (casa_exe + " " + casaopts + " -c " + casatestutils_exec_path + " " + test.path).split()
-        cmd = (casa_exe + " " + casaopts + " -c " + test.path).split()
-        cwd = work_dir + "/" + test.name
-        if not os.path.exists(cwd):
-            os.makedirs(cwd)
-        print("Running cmd " + str(cmd))
-        print("in "  + cwd)
-        starttime = datetime.datetime.now()
-
-        output = r.runshell(cmd, test.timeout,cwd)
-
-        endtime = datetime.datetime.now()
-        runtime = endtime - starttime
-        xunit.append_result(test.name, str(runtime), len(output), output)
-    xunit.generateXml("suite")
-
-    # Close Xvfb on exit
-    import atexit
-    @atexit.register
-    def goodbye():
-        print("Stopping Xvfb.")
-        if sys.platform != "darwin":
-            xvfb.signal_stop_virtual_frame_buffer()
-        print("Xvfb stopped.")
 ########################################################################################################################
 ######################################            Imports / Constants            #######################################
 ########################################################################################################################
@@ -576,125 +408,8 @@ DRY_RUN = False
 whichtests = 0
 
 ########################################################################################################################
-#############################################            Main            ###############################################
+##############################################            Run            ###############################################
 ########################################################################################################################
-
-def main(testnames, verbose = True, DRY_RUN = False):
-    if IS_CASA6:
-        #sys.path.append(os.path.abspath(os.path.basename(__file__)))
-        if HAVE_PYTEST:
-            cwd = os.getcwd() + "/"
-            workpath = os.getcwd() +"/nosedir/"
-            workdir = os.getcwd() +"/nosedir/"
-
-            clean_working_directory(workpath)
-            # Copy Tests to Working Directory
-            os.makedirs(workdir)
-            print("Tests: {}".format(testnames))
-            gittest = True
-
-            
-            for testname in testnames:
-                nonlocalTest = False
-                cmd = []
-                if testname.startswith("../") or testname.startswith("/"):
-                    try:
-                        real_path = os.path.realpath(testname)
-                        testname = testname.split("/")[-1]
-                        nonlocalTest = True
-                    except:
-                        traceback.print_exc()
-                        
-                # Copy Test To nosedir Directory if in cwd
-                if testname.startswith("test"):
-                    test = testname
-                    # Check if specific tests are requested
-                    if "[" and "]" in test:
-                        testname = getname(test)
-                        tests = gettests(test)
-                        #print(testname)
-                        #print(tests)
-
-                        teststring = ""
-                        #print(len(tests))
-                        if len(tests) == 1:
-                            teststring = tests[0]
-                        elif len(tests) > 1:
-                            print(tests)
-                            teststring = " or ".join(tests)
-                        #workdir = os.getcwd() +"/workdir/nosedir/{}/".format(testname)
-                        #os.makedirs(workdir)
-                        #cmd = [ workdir ]
-                        #cmd = [ ".".join([testname,'py']), "-k {}".format(teststring)]
-                        cmd = ["-k {}".format(teststring)] + cmd
-                        test = testname
-                        
-                    # Set up Test Working Directory
-                    if not os.path.exists(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])):
-                        print("Setting Working Directory: {}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
-                        os.makedirs(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                        cmd = [ workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]) ] + cmd
-                        
-
-                        
-                    # Check to see if tests need to be pulled from git. Only needs to be done once
-                    if not test.endswith(".py") and gittest == True:
-                        print("Fetching Tests From Git Since No Local Test is Given")
-                        git_fetch_casa_tests( workpath + 'casa6')
-                        os.makedirs(workdir + "tests/")
-                        gather_all_tests(workpath +'casa6/', workdir + "tests/")
-                        gittest = False
-                        
-                    if test.endswith(".py"):
-                        
-                        try:
-                            if nonlocalTest:
-                                if "[" in real_path:
-                                    real_path = real_path.split("[")[0]
-                                print("Copying: {} to {}".format(real_path, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
-                                shutil.copy2(real_path, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                            else:
-                                print("Copying: {} to {}".format(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
-                                shutil.copy2(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                        except:
-                            traceback.print_exc()
-                    else:
-                        try:
-                            print("Copying: {} to {}".format(workdir + "tests/",test), workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                            shutil.copy2("{}{}.py".format(workdir + "tests/",test), workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                        except:
-                            traceback.print_exc()
-                            
-                    if verbose:
-                        cmd = ["--verbose"] + cmd
-
-
-                    if DRY_RUN:
-                        cmd = ["--collect-only"] + cmd
-                    
-                    if not os.path.isdir(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3])):
-                        os.makedirs(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3]))
-                    xmlfile = workpath + 'xml/{}/nose.xml'.format(test if not test.endswith(".py") else test[:-3])
-
-                    #########
-                    #============================================================ warnings summary =====================================================
-                    # ./lib/py/lib/python3.6/site-packages/_pytest/junitxml.py:436
-                    # ./lib/py/lib/python3.6/site-packages/_pytest/junitxml.py:436:
-                    # PytestDeprecationWarning: The 'junit_family' # default value will change to 'xunit2' in pytest 6.0.
-                    # Add 'junit_family=xunit1' to your pytest.ini file to keep the current format in future versions of pytest and silence thiswarning.
-                    #  _issue_warning_captured(deprecated.JUNIT_XML_DEFAULT_FAMILY, config.hook, 2)
-                    #########
-                    cmd = ["--junitxml={}".format(xmlfile)] + ["-s"] + cmd
-                    #print("Running Command: pytest {}".format(cmd))
-                    #print("Work Path: {}".format(workpath))
-                    if len(os.listdir(workpath)) < 1: # If only the XML dir was created
-                        print("No Tests to Run")
-                        sys.exit()
-                    else:
-                        print("Running Command: pytest {}".format(cmd))
-                        pytest.main(cmd)
-                        
-
 
 def run(testnames):
 
@@ -1085,8 +800,242 @@ def run(testnames):
                 os.chdir(PWD)
 
 ########################################################################################################################
-#############################################            Main            ###############################################
+#######################################            Run Bamboo Option            ########################################
 ########################################################################################################################
+
+def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None, test_paths = [], test_config_path=None, ncores=2, verbosity=False, pmode=None):
+
+    if test_list is not None:
+        test_list = [x.strip() for x in test_list.split(',')]
+    if args.test_group is not None:
+        test_group = [x.strip() for x in test_group.split(',')]
+    # Unpack the distribution
+    print ("Test list: " + str (test_list))
+    print ("Test group: " + str (test_group))
+    if pkg is None:
+        raise Exception("Missing pkg")
+    if work_dir is None:
+        raise Exception("Missing work_dir")
+    #exec_path, casatestutils_exec_path = unpack_pkg(pkg, work_dir, work_dir + "/pkg")
+    exec_path =  "work/pkg/casa-6.3.0-11/bin"
+    casatestutils_exec_path = "work/pkg/casa-6.3.0-11/lib/py/lib/python3.6/site-packages/casatestutils/runtest.py"
+    #exec_path = "/tmp/work/pkg/CASA.app/Contents/MacOS"
+    print("Executable path: " + exec_path)
+    print("casatestutils path: " + casatestutils_exec_path)
+
+    # Start Xvfb on Linux
+    xvfb = xvfb_helper.XvfbHelper()
+    if sys.platform != "darwin":
+        xvfb.start_virtual_frame_buffer()
+
+    if args.branch == None:
+        branch = "master"
+
+    # Clone a default set of repositories to if test paths are not provided from command line
+    #if len(test_paths) == 0 :
+    #    test_paths = fetch_tests(str(work_dir), branch)
+    test_paths = ['work/casasources//casampi/src/casampi/tests', 'work/casasources//casaplotms/tests/plotms', 'work/casasources//almatasks/tests/tasks', 'work/casasources//casa6/casatests/regression/', 'work/casasources//casa6/casatests/stakeholder/', 'work/casasources//casa6/casatasks/tests/', 'work/casasources//casa6/casatools/tests/', 'work/casasources//casaviewer/tests/tasks']
+
+    
+    test_config = None
+    if test_config_path == None:
+       test_config_path = work_dir + "/casasources/casa6/casatestutils/casatestutils/component_to_test_map.json"
+    # Read the JSON configuration
+    print ("Reading config from: " + test_config_path)
+    with open(test_config_path ) as f:
+      test_config = json.load(f)
+
+    # Get the actual tests as list
+    test_config_elems = test_config['testlist']
+
+    #print(test_config_elems)
+    print("TPS: ", test_paths)
+
+    # Match the test names provided in the JSON file to the actual test locations.
+    tests_to_run = []
+    for x in test_config_elems:
+        for dir in test_paths:
+            for currentpath, folders, files in os.walk(dir):
+                for file in files:
+                    if file == (x['testScript']+".py"):
+                        test_location = os.path.join(currentpath, file)
+                        if verbosity:
+                            print("Found: " + test_location)
+                            print("Script:", x['testScript'], test_location, x['testGroup'])
+                        if x['timeout'] < 1:
+                            timeout = default_timeout
+                        else:
+                            timeout = x['timeout']
+
+                        opts = x['testOptions']
+                        opts.sort()
+
+                        tests_to_run.append(casa_test(x['testScript'],
+                                                      test_location,
+                                                      x['testGroup'],
+                                                      x['testType'],
+                                                      x['maintainer'],
+                                                      x['maintainerEmail'],
+                                                      tuple(opts),
+                                                      x['comment'],
+                                                      timeout))
+    #print(tests_to_run)
+    # Filter tests by test list
+    if test_list is not None and len(test_list)>0:
+        print ("Test list provided. Filtering tests.")
+        tmp_tests_to_run = []
+        for test in test_list:
+            found = False
+            for t1 in tests_to_run:
+                if test == t1.name:
+                    tmp_tests_to_run.append(t1)
+                    found = True
+            if not found:
+                # If there is a test in the list but no configuration, add it without any options.
+                # This can be useful for testing new scripts.
+                print ("Test " + test + " configuration not found. Searching for the test...")
+                print ("dir: " + dir )
+                # Potential test location
+                for dir in test_paths:
+                    # Search for files (needed for casatools and casatasks)
+                    for currentpath, folders, files in os.walk(dir):
+                        for file in files:
+                            if file == test + ".py":
+                                test_location = os.path.join(currentpath, file)
+                                print("Found: " + test_location)
+                                print("No JSON configuration found. Test will be added to execution list without options.")
+                                tmp_tests_to_run.append(casa_test(test, test_location, "","","","","",""))
+                                found = True
+            if not found:
+                raise Exception("Couldn't locate test: " + test)
+        tests_to_run = tmp_tests_to_run
+
+    #print(tests_to_run)
+    # Filter by Jira components
+    if test_group is not None and len(test_group)>0:
+        print("Jira component list provided. Filtering tests.")
+        tmp_tests_to_run = []
+        #print(test_group)
+        for jira_component in test_group:
+            found = False
+            for t1 in tests_to_run:
+                if jira_component.lower() in [x.lower() for x in t1.test_group]:
+                    tmp_tests_to_run.append(t1)
+                    found = True
+            # Throw an exception is user provides a component that doesn't exist
+            if not found:
+                print ("WARNING: No tests found for jira_component " + jira_component + ". Check the contents of " + test_config_path)
+        # Remove duplicates
+        tests_to_run = set(tmp_tests_to_run)
+
+    print("Subset tests:")
+    for t in tests_to_run:
+        if verbose:
+            print(t.name + " : " +
+                  t.path + " : " +
+                  t.test_type + " : " +
+                  t.maintainer + " : " +
+                  t.email + " : " +
+                  str(t.options) + " : " +
+                  str(t.test_group) + " : " +
+                  str(t.timeout) + " : " +
+                  t.comment)
+        else:
+            print(t.name)
+
+    # Run tests
+    print("")
+    for test in tests_to_run:
+        r = ShellRunner()
+        xunit = Xunit()
+        casaopts = " --nogui --nologger --log2term"
+
+        #pmodes: pmodes = ['serial','parallel','both']
+        # Skip MPI on Darwin for now
+        if "mpi" in test.options and sys.platform != "darwin" and ( pmode == 'parallel' or pmode == 'both'):
+            print("Running test: {} in MPI mode".format(test.name))
+            casa_exe = exec_path + "/mpicasa"
+            casaopts = "-n " + str(ncores) + " " + exec_path + "/casa" + " --nogui --nologger --log2term --agg "
+            assert (test != None)
+            #cmd = (casa_exe + " " + casaopts + " -c " + casatestutils_exec_path + " " + test.path).split()
+            cmd = (casa_exe + " " + casaopts + " -c " + test.path).split()
+            cwd = work_dir + "/" + test.name
+            if pmode == 'both': 
+                cwd = work_dir + "/" + test.name + '_mpi'
+
+            if not os.path.exists(cwd):
+                os.makedirs(cwd)
+            print("Running cmd " + str(cmd))
+            print("in "  + cwd)
+            starttime = datetime.datetime.now()
+
+            output = r.runshell(cmd, test.timeout,cwd)
+
+            endtime = datetime.datetime.now()
+            runtime = endtime - starttime
+            xunit.append_result(test.name, str(runtime), len(output), output)
+            print("")
+            if pmode == 'both':
+                if "casampi" in test.name:
+                    continue
+                print("Running test: {} in Serial mode".format(test.name))
+                casaopts = " --nogui --nologger --log2term"
+                casa_exe = exec_path + "/casa"
+                assert (test != None)
+                #cmd = (casa_exe + " " + casaopts + " -c " + casatestutils_exec_path + " " + test.path).split()
+                cmd = (casa_exe + " " + casaopts + " -c " + test.path).split()
+                cwd = work_dir + "/" + test.name
+                if not os.path.exists(cwd):
+                    os.makedirs(cwd)
+                print("Running cmd " + str(cmd))
+                print("in "  + cwd)
+                starttime = datetime.datetime.now()
+
+                output = r.runshell(cmd, test.timeout,cwd)
+
+                endtime = datetime.datetime.now()
+                runtime = endtime - starttime
+                xunit.append_result(test.name, str(runtime), len(output), output)
+                print("")
+
+        #elif "mpi" not in test.options and ( pmode == 'serial'):
+        elif pmode == 'serial':
+            if "casampi" in test.name:
+                continue
+            print("Running test: {} in Serial mode".format(test.name))
+            casa_exe = exec_path + "/casa"
+            assert (test != None)
+            #cmd = (casa_exe + " " + casaopts + " -c " + casatestutils_exec_path + " " + test.path).split()
+            cmd = (casa_exe + " " + casaopts + " -c " + test.path).split()
+            cwd = work_dir + "/" + test.name
+            if not os.path.exists(cwd):
+                os.makedirs(cwd)
+            print("Running cmd " + str(cmd))
+            print("in "  + cwd)
+            starttime = datetime.datetime.now()
+
+            output = r.runshell(cmd, test.timeout,cwd)
+
+            endtime = datetime.datetime.now()
+            runtime = endtime - starttime
+            xunit.append_result(test.name, str(runtime), len(output), output)
+            print("")
+
+    xunit.generateXml("suite")
+
+    # Close Xvfb on exit
+    import atexit
+    @atexit.register
+    def goodbye():
+        print("Stopping Xvfb.")
+        if sys.platform != "darwin":
+            xvfb.signal_stop_virtual_frame_buffer()
+        print("Xvfb stopped.")
+
+########################################################################################################################
+########################################            Main-Start-Up            ###########################################
+########################################################################################################################
+
 if __name__ == "__main__":
 
     # mem mode variables
@@ -1096,6 +1045,7 @@ if __name__ == "__main__":
     print("HAVE_PYTEST: {}".format(HAVE_PYTEST))
     print("HAVE_NOSE: {}".format(HAVE_NOSE))
     print("HAVE_CASA6: {}".format(HAVE_CASA6))
+    print("")
 
     verbose = False
 
@@ -1110,8 +1060,8 @@ if __name__ == "__main__":
     parser.add_argument("-x", "--dry-run",action='store_true',help="dry run Test Execution")
     parser.add_argument("-s", "--classes",nargs='+',metavar='test',help='print the classes from a test script')
     parser.add_argument("-f", "--file",nargs='?', type=argparse.FileType('r'),help='run the tests defined in an ASCII file <list>; one test per line')
-    parser.add_argument("-m", "--mem",action='store_true',help='show the memory used by the tests and the number of files left open.')
-    
+    #parser.add_argument("-m", "--mem",action='store_true',help='show the memory used by the tests and the number of files left open.')
+
     # Component Arguments
 
     parser.add_argument("-e","--mapfile", nargs='?', type=argparse.FileType('r'), help='Component to test map file', required=False)
@@ -1127,6 +1077,8 @@ if __name__ == "__main__":
     parser.add_argument('-j','--test_group',  help='Filter tests by a comma separated list of components', required=False)
     # parser.add_argument('-b','--branch',  help='Branch for test repository checkouts', required=False) ## Duplicate
 
+    parser.add_argument('-m','--pmode',  help='Parallelization mode: serial, parallel, both', required=False)
+
     parser.add_argument('--bamboo', help='Set Bamboo Flag to True',default=False,action='store_true', required=False)
 
     if not IS_CASA6:
@@ -1137,21 +1089,18 @@ if __name__ == "__main__":
         args, unknownArgs = parser.parse_known_args()
     
     print(args)
+    print("")
     #args=parser.parse_args()
-    if args.pkg:
-        print("Package: " + args.pkg)
-    print("Test configuration file: " + str(args.test_config))
-    print("Number of cores: " + str(args.ncores))
-    print("Workdir: " + str(args.work_dir))
 
     print("Operating system: " +  platform.system())
+    print("")
     # print(unknownArgs)
-
 
     if args.test_group is not None:
         components = args.test_group
         components = components.split(",")
         print("Testing Components" + str(components))
+        print("")
         
         #
         if args.mapfile is not None:
@@ -1165,6 +1114,7 @@ if __name__ == "__main__":
             _isComponent = False
             component = c.strip()
             for myDict in component_to_test_map["testlist"]:
+                #print(component, myDict["testGroup"])
                 if component in myDict["testGroup"]:
                     _isComponent = True
                     testnames.append(myDict["testScript"])
@@ -1202,9 +1152,9 @@ if __name__ == "__main__":
             except:
                 raise Exception(" The list should contain one test per line.")
                 
-    if args.mem: # run specific tests in mem mode
-        #logger.info('Setting Mem Mode')
-        MEM = 1
+    #if args.mem: # run specific tests in mem mode
+    #    #logger.info('Setting Mem Mode')
+    #    MEM = 1
 
 
     if args.branch is not None:
@@ -1245,11 +1195,20 @@ if __name__ == "__main__":
     try:
 
         if args.bamboo:
-            run_bamboo(args.pkg, args.work_dir, args.branch, args.test_group, args.test_list, test_paths, args.test_config, args.ncores, args.verbose)
+            if args.pkg:
+                print("Package: " + args.pkg)
+            print("Test configuration file: " + str(args.test_config))
+            print("Number of cores: " + str(args.ncores))
+            print("Workdir: " + str(args.work_dir))
+            pmodes = ['serial','parallel','both']
+            if args.pmode not in pmodes:
+                raise Exception("Invalid pmode: '{}'. Valid modes: '{}'".format(args.pmode ,str(pmodes)))
+
+            run_bamboo(args.pkg, args.work_dir, args.branch, args.test_group, args.test_list, test_paths, args.test_config, args.ncores, args.verbose, args.pmode)
 
         else:
             #If no tests are given, no subet tag or --all option
-            #print(testnames)
+            print("Testnames: {}".format(testnames))
             if testnames == [] or len(testnames) == 0:
                 #TODO
                 print("List of tests is empty")
