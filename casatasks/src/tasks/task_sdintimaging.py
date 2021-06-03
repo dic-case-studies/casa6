@@ -797,11 +797,7 @@ def sdintimaging(
         imager.deleteTools()
         deconvolver.deleteTools()
    
-        if parallel==True and not (specmode =='mfs' or specmode=='cont'):
-            casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
-            #imager.concatImages(type=concattype)
-            deconvolver.concatImages(type=concattype)
-        
+
     finally:
         if imager != None:
             imager.deleteTools() 
