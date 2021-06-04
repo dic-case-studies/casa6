@@ -348,6 +348,7 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
 
   Cube<Complex> iterCParam;
   Cube<Float> iterFParam, iterParamErr, iterSnr, iterWt;
+  Cube<Bool> iterFlag;
   Vector<Double> iterFreq;
 
   if (isComplex_p) {
@@ -360,6 +361,7 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
   }
   iterParamErr.reference(cti.paramErr());
   iterSnr.reference(cti.snr());
+  iterFlag.reference(cti.flag());
   iterFreq.reference(cti.freq());
 
   try {
@@ -407,7 +409,7 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
         IPosition inPos(3, ipol, ichan, ibln);
         IPosition outPos(3, ipol, outchan, obln);
 
-        if (!cti.flag()(inPos)) { // input UNflagged
+        if (!iterFlag(inPos)) { // input UNflagged
           accumulate = true;
 
           if (avgFlag_(outPos)) {  // output flagged
@@ -504,6 +506,7 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti) {
   // Param cubes for this iteration
   Cube<Complex> iterCParam;
   Cube<Float> iterFParam, iterParamErr, iterSnr, iterWt;
+  Cube<Bool> iterFlag;
   Vector<Double> iterFreq;
 
   if (isComplex_p) {
@@ -516,6 +519,7 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti) {
   }
   iterParamErr.reference(cti.paramErr());
   iterSnr.reference(cti.snr());
+  iterFlag.reference(cti.flag());
   iterFreq.reference(cti.freq());
 
   try {
@@ -564,7 +568,7 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti) {
 
         // Consider accumulation according to state of flags
         IPosition inPos(3, ipol, ichan, ibln);
-        if (!cti.flag()(inPos)) { // input UNflagged
+        if (!iterFlag(inPos)) { // input UNflagged
           // we will accumulate both ants
           accum_i = accum_j = true;
 
@@ -608,7 +612,7 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti) {
 
         // Accumulate data, if appropriate
         if (accum_i) {
-          IPosition ipos(3, ipol, ichan, obln_i);
+          IPosition ipos(3, ipol, outchan, obln_i);
           if (isComplex_p) {
             accumCParam_(ipos) += wt * iterCParam(inPos);
           } else {
@@ -620,7 +624,7 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti) {
         }
 
         if (accum_j) { 
-          IPosition jpos(3, ipol, ichan, obln_j);
+          IPosition jpos(3, ipol, outchan, obln_j);
           if (isComplex_p) {
             accumCParam_(jpos) += wt * iterCParam(inPos);
           } else {
