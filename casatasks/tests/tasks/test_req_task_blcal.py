@@ -42,9 +42,9 @@ import numpy as np
 # Data Path using new data repo
 # Need to make a new directory in the repo for blcal
 if CASA6:
-    rootpath = casatools.ctsys.resolve('unittest/gaincal')
+    rootpath = casatools.ctsys.resolve('unittest/blcal/')
 else:
-    rootpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/gaincal/'
+    rootpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/blcal/'
 
 datapath = rootpath + 'gaincaltest2.ms'
 refpath = rootpath + 'gaincaltest2.ms.G0'
@@ -122,10 +122,6 @@ class blcal_test(unittest.TestCase):
         result = np.mean(getparam(calout))
         self.assertTrue(np.isclose(result, (0.4252234967607154+0.07460366999516284j)))
 
-    def test_timeRangeSelect(self):
-        pass
-        # Data set doesn't have time ranges in the correct format?
-
     def test_uvrangeSelect(self):
         ''' Test that the uvrange selection parameter selects a subset of the data '''
         blcal(vis=datacopy, caltable=calout, uvrange='0~500klambda')
@@ -164,7 +160,7 @@ class blcal_test(unittest.TestCase):
 
     def test_combine(self):
         '''  '''
-        blcal(vis=datacopy, caltbale=calout, combine='spw')
+        blcal(vis=datacopy, caltable=calout, combine='spw')
 
         result = np.mean(getparam(calout))
         self.assertTrue(np.isclose(result, (0.42522349675872373+0.07460367036948093j)))
