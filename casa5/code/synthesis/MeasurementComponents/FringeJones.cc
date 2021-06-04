@@ -2695,10 +2695,16 @@ void FringeJones::applyRefAnt() {
 	<< ")"
 	<< ", refant (id=" << currrefant 
 	<< ") was flagged; flagging all antennas strictly." 
+	<< "THIS MEANS IT WAS IN THAT OTHER FILE I DONT REMEMBER"
 	<< LogIO::POST;
       // Flag all solutions in this interval
       flB.set(True);
       ctiter.setflag(flB);
+      if (ichoice == nchoices){
+        logSink()
+          << "refant list exausted, flagging all solutions"
+          << LogIO::POST; 
+      }
     }
 
     // advance to the next interval

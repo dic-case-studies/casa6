@@ -6349,7 +6349,7 @@ void SolvableVisJones::applyRefAnt() {
       
     } // found
     else {
-        logSink() << LogIO::WARN
+      logSink() 
 	<< "At " 
 	<< MVTime(ctiter.thisTime()/C::day).string(MVTime::YMD,7) 
 	<< " ("
@@ -6357,17 +6357,8 @@ void SolvableVisJones::applyRefAnt() {
 	<< ", Fld=" << ctiter.thisField()
 	<< ")"
 	<< ", refant (id=" << currrefant 
-	<< ") was flagged; flagging all antennas strictly."
-        << "CURRENT CHOICE= " << ichoice
-        << "TOTAL CHOICES= " << nchoices
+	<< ") was flagged; flagging all antennas strictly." 
 	<< LogIO::POST;
-        
-      // Warn the user if there are no more antennas to choose from
-      if (currrefant == lastrefant) {
-          logSink() << LogIO::WARN
-          << "Dead-end reached, flagging all solutions"
-          << LogIO::POST;
-      }
       // Flag all solutions in this interval
       flB.set(True);
       ctiter.setflag(flB);
