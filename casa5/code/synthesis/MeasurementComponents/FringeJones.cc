@@ -2694,8 +2694,7 @@ void FringeJones::applyRefAnt() {
 	<< ", Fld=" << ctiter.thisField()
 	<< ")"
 	<< ", refant (id=" << currrefant 
-	<< ") was flagged; flagging all antennas strictly." 
-	<< "THIS MEANS IT WAS IN THAT OTHER FILE I DONT REMEMBER"
+	<< ") was flagged; flagging all antennas strictly."
 	<< LogIO::POST;
       // Flag all solutions in this interval
       flB.set(True);
