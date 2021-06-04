@@ -152,27 +152,28 @@ class blcal_test(unittest.TestCase):
         self.assertTrue(np.isclose(result, (0.4252234967607154+0.07460366999516284j)))
 
     def test_solint(self):
-        ''' '''
+        ''' Test that to solint parameter works properly '''
         blcal(vis=datacopy, caltable=calout, solint='60s')
 
         result = np.mean(getparam(calout))
         self.assertTrue(np.isclose(result, (0.4251396369380383+0.07459191235066753j)))
 
     def test_combine(self):
-        '''  '''
+        ''' Test that the combine correctly combines spectral windows '''
         blcal(vis=datacopy, caltable=calout, combine='spw')
 
         result = np.mean(getparam(calout))
         self.assertTrue(np.isclose(result, (0.42522349675872373+0.07460367036948093j)))
 
     def test_freqdep(self):
+        ''' Test that the freqdep True matches reference values'''
         blcal(vis=datacopy, caltable=calout, freqdep=True)
 
         result = np.mean(getparam(calout))
         self.assertTrue(np.isclose(result, (0.42522349749032323+0.0746036708774733j)))
 
     def test_solnorm(self):
-        '''  '''
+        ''' Test that solutions are normalized '''
         blcal(vis=datacopy, caltable=calout, solnorm=True)
 
         result = np.mean(getparam(calout))
