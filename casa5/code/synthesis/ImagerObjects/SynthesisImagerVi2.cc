@@ -1830,7 +1830,12 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         }
         if(!dopsf && normpars_p.isDefined("pblimit") && (normpars_p.asFloat("pblimit") > 0.0) ){
           try{
-            (itsMappers.imageStore(0))->copyMask(itsMappers.imageStore(0)->pb(), itsMappers.imageStore(0)->residual());
+            if(normpars_p.isDefined("pblimit") && (normpars_p.asFloat("pblimit") > 0.0)){
+              SIImageStore::copyMask(itsMappers.imageStore(0)->pb(), itsMappers.imageStore(0)->residual());
+            }
+            else{
+              SIImageStore::removeMask(itsMappers.imageStore(0)->residual());
+            }
           }
           catch(AipsError &x) {
             if(!String(x.getMesg()).contains("T/F"))
