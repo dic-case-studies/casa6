@@ -182,6 +182,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   void SDAlgorithmMSClean::takeOneStep( Float loopgain, Int cycleNiter, Float cycleThreshold, Float &peakresidual, Float &modelflux, Int &iterdone)
   {
+    // remove os warnings 2021/06/05
     LogIO os( LogOrigin("SDAlgorithmMSClean","takeOneStep",WHERE) );
 
     Quantity thresh( cycleThreshold, "Jy" );
@@ -206,9 +207,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Int retval = itsCleaner.clean( tempModel );
     iterdone = itsCleaner.numberIterations();
 
-    if( retval==-1 ) {os << LogIO::WARN << "MSClean minor cycle stopped on cleaning consecutive smallest scale" << LogIO::POST; }
-    if( retval==-2 ) {os << LogIO::WARN << "MSClean minor cycle stopped at large scale negative or diverging" << LogIO::POST;}
-    if( retval==-3 ) {os << LogIO::WARN << "MSClean minor cycle stopped because it is diverging" << LogIO::POST; }
+    // remove os warnings 2021/06/05
+    //if( retval==-1 ) {os << LogIO::WARN << "MSClean minor cycle stopped on cleaning consecutive smallest scale" << LogIO::POST; }
+    //if( retval==-2 ) {os << LogIO::WARN << "MSClean minor cycle stopped at large scale negative or diverging" << LogIO::POST;}
+    //if( retval==-3 ) {os << LogIO::WARN << "MSClean minor cycle stopped because it is diverging" << LogIO::POST; }
 
     ////This is going to be wrong if there is no 0 scale;
     ///Matrix<Float> residual(itsCleaner.residual());
