@@ -1,4 +1,4 @@
-## CASA 6
+## CASA 6 
 
 CASA 6 marks a major new chapter in CASA's development. With CASA 6, tools and
 tasks will be available as Python wheels from a [PyPI repository](https://casa-pip.nrao.edu/).

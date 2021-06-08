@@ -353,6 +353,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
     Double freqbeg=cs.toWorld(IPosition(4,0,0,0,0))[3];
 	Double freqend=cs.toWorld(IPosition(4,0,0,0,imNChan-1))[3];
 	Double freqincr=fabs(cs.increment()[3]);
+        
 	SpectralCoordinate spCoord=cs.spectralCoordinate(cs.findCoordinate(Coordinate::SPECTRAL));
 	MFrequency::Types freqframe=spCoord.frequencySystem(True);
 	uInt swingpad=16;
@@ -606,7 +607,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
         if(gwt(ugrid, vgrid)>0.0) sumlocwt+=square(gwt(ugrid,vgrid));
       }
     }
-    f2_p[index][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumWgts[index](0,chan));
+    f2_p[index][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / (2*sumWgts[index](0,chan)));
     d2_p[index][chan] = 1.0;
 
       }
@@ -698,7 +699,7 @@ void BriggsCubeWeightor::weightUniform(Matrix<Float>& imweight, const vi::VisBuf
                   nCellsBW = fracBW*sqrt(pow(uscale_p*u,2.0) + pow(vscale_p*v,2.0));
                   uvDistanceFactor = nCellsBW + 0.5;
                   if(uvDistanceFactor < 1.5) uvDistanceFactor = (4.0 - nCellsBW)/(4.0 - 2.0*nCellsBW);
-                  imweight(chn,row)/= gwt*f2_p[index][pos[3]]*2/uvDistanceFactor +d2_p[index][pos[3]];
+                  imweight(chn,row)/= gwt*f2_p[index][pos[3]]/uvDistanceFactor +d2_p[index][pos[3]];
               }
               else{
                   imweight(chn,row)/=gwt*f2_p[index][pos[3]]+d2_p[index][pos[3]];
@@ -817,7 +818,7 @@ void BriggsCubeWeightor::getWeightUniform(const Array<Float>& wgtDensity, Matrix
                   nCellsBW = fracBW*sqrt(pow(uscale_p*u,2.0) + pow(vscale_p*v,2.0));
                   uvDistanceFactor = nCellsBW + 0.5;
                   if(uvDistanceFactor < 1.5) uvDistanceFactor = (4.0 - nCellsBW)/(4.0 - 2.0*nCellsBW);
-                  imweight(chn,row)/= gwt*f2_p[0][pos[3]]*2/uvDistanceFactor +d2_p[0][pos[3]];
+                  imweight(chn,row)/= gwt*f2_p[0][pos[3]]/uvDistanceFactor +d2_p[0][pos[3]];
               }
               else{
                   imweight(chn,row)/=gwt*f2_p[0][pos[3]]+d2_p[0][pos[3]];
