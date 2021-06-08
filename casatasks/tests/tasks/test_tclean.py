@@ -99,7 +99,7 @@ import operator
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
      from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
-     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata
+     from casatasks import casalog, delgmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata
      from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
      from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
      from casatasks import impbcor
@@ -231,7 +231,7 @@ class test_onefield(testref_base):
           """ [onefield] Test_Onefield_hogbom : mfs with hogbom minor cycle """
           self.prepData('refim_twochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,parallel=self.parallel)#,phasecenter='J2000 19h59m57.5s +40d49m00.077s')
-          report=self.th.checkall(ret=ret, peakres=0.35, modflux=0.77, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[50,50,0,0])])
+          report=self.th.checkall(ret=ret, peakres=0.35, modflux=0.77, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[50,50,0,0])] , tfmask=[(self.img+'.image',['mask0'])])
           self.checkfinal(pstr=report)
 
      def test_onefield_mem(self):
@@ -2790,7 +2790,8 @@ class test_wproject(testref_base):
 
           tclean(vis=msname, imagename=self.img+'.wyes',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='wproject', wprojplanes=16, pblimit=-0.1,parallel=self.parallel)
 
-          report=self.th.checkall(imgexist=[self.img+'.wyes.image'],imgval=[(self.img+'.wyes.psf',1.0,[1024,1024,0,0]),(self.img+'.wyes.image',1.0,[1158,1384,0,0]) ] )
+          report=self.th.checkall(imgexist=[self.img+'.wyes.image'],imgval=[(self.img+'.wyes.psf',1.0,[1024,1024,0,0]),(self.img+'.wyes.image',1.0,[1158,1384,0,0]) ] , tfmask=[(self.img+'.wyes.image',['T'])])
+
           self.checkfinal(report)
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Facetted imaging tests parallel are skipped temporarily until a fix is found. ")
@@ -2818,6 +2819,7 @@ class test_wproject(testref_base):
           
           ## Current value with facets=4 is 0.988. 
           report=self.th.checkall(imgexist=[self.img+'.wp.facet.image'],imgval=[(self.img+'.wp.facet.psf',1.0,[1024,1024,0,0]),(self.img+'.wp.facet.image',1.0,[1158,1384,0,0]) ] )
+
           self.checkfinal(report)
 
   
@@ -2961,7 +2963,7 @@ class test_widefield(testref_base):
           self.prepData("refim_mawproject.ms")
           ret = tclean(vis=self.msfile,spw='1',field='*',imagename=self.img,imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",
                        niter=30,gridder='mosaicft',deconvolver='hogbom',pblimit=0.3,parallel=self.parallel)
-          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.961231,[256,256,0,0]),(self.img+'.weight',0.50576,[256,256,0,0]) ] )
+          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.961231,[256,256,0,0]),(self.img+'.weight',0.50576,[256,256,0,0]) ] , tfmask=[(self.img+'.image',['mask0'])] )
           #ret = clean(vis=self.msfile,spw='1',field='*',imagename=self.img+'.old',imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",niter=30,imagermode='mosaic',psfmode='hogbom')
           self.checkfinal(report)
 
@@ -2982,7 +2984,7 @@ class test_widefield(testref_base):
           self.prepData("refim_mawproject.ms")
           ret = tclean(vis=self.msfile,spw='*',field='*',imagename=self.img,imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",
                        niter=60,gridder='mosaicft',deconvolver='mtmfs', conjbeams=False,parallel=self.parallel)
-          report=self.th.checkall(imgexist=[self.img+'.image.tt0', self.img+'.psf.tt0', self.img+'.weight.tt0'],imgval=[(self.img+'.image.tt0',0.9413,[256,256,0,0]),(self.img+'.weight.tt0',0.50546,[256,256,0,0]),(self.img+'.alpha', 0.07367,[256,256,0,0]) ] )
+          report=self.th.checkall(imgexist=[self.img+'.image.tt0', self.img+'.psf.tt0', self.img+'.weight.tt0'],imgval=[(self.img+'.image.tt0',0.9413,[256,256,0,0]),(self.img+'.weight.tt0',0.50546,[256,256,0,0]),(self.img+'.alpha', 0.07367,[256,256,0,0]) ] , tfmask=[(self.img+'.image.tt0',['mask0'])] )
           ## alpha should represent that of the mosaic PB (twice)... and should then converge to zero
           self.checkfinal(report)
           
@@ -3630,7 +3632,7 @@ class test_pbcor(testref_base):
 
           ret2 = tclean(vis=self.msfile, imagename=self.img, field='0', imsize=512, cell='10.0arcsec', phasecenter="J2000 19:59:28.500 +40.44.01.50", 
                         niter=10, specmode='mfs', vptable='evlavp.tab', pbcor=True, calcpsf=False, calcres=False, pblimit=-0.2,parallel=self.parallel)
-          report2=self.th.checkall(imgexist=[self.img+'.image', self.img+'.pb'], imgval=[(self.img+'.pb',0.7,[256,256,0,0])] , imgmask=[(self.img+'.pb',False,[10,10,0,0]), (self.img+'.image',True,[10,10,0,0])]  )
+          report2=self.th.checkall(imgexist=[self.img+'.image', self.img+'.pb'], imgval=[(self.img+'.pb',0.7,[256,256,0,0])] , imgmask=[(self.img+'.pb',False,[10,10,0,0]), (self.img+'.image',True,[10,10,0,0])], tfmask=[(self.img+'.image',['T'])]  )
 
           self.checkfinal(report1+report2)
 
@@ -3685,7 +3687,8 @@ class test_hetarray_imaging(testref_base):
                                           ## Check that PB peak is at the expected location
                                           (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,0]), 
                                           (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,1]), 
-                                          (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,2]) ] )
+                                          (self.img+'_pcorr0_uspF.pb' ,1.0,[1024,1024,0,2]) ],
+                                          tfmask=[(self.img+'_pcorr0_uspF.image',['T'])] )
 
           ## Note : Test for PB location in the following tests. Pick the expected location (for a single PB) and test that the value is 1.0
 

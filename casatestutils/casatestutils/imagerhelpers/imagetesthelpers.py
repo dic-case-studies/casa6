@@ -893,7 +893,25 @@ class TestHelpers:
                         pstr += TestHelpers().check_ref_freq(ii[0], ii[1], epsilon=epsilon)
         return pstr
 
-    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05):
+    def check_tfmask(self, tfmask, testname="check_tfmask"):
+        pstr = ''
+        if tfmask != None:
+            if type(tfmask) == list:
+                for ii in tfmask:
+                    if type(ii) == tuple and len(ii) == 2:
+                        _ia.open(ii[0])
+                        mname = _ia.maskhandler('get')
+                        mreport = "[" + testname + "]  T/F mask name is : " + str(mname)
+                        if mname==ii[1]:
+                            mreport = mreport + " ("+TestHelpers().verdict(True) +" : should be " + str(ii[1]) + ") \n"
+                        else:
+                            mreport = mreport + " ("+TestHelpers().verdict(False) +" : should be " + str(ii[1]) + ") \n"
+                        _ia.close()
+                        pstr += mreport
+            print(pstr)
+        return pstr
+
+    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05,tfmask=None):
         """
             ret=None,
             peakres=None, # a float
@@ -908,6 +926,7 @@ class TestHelpers:
             tabcache=True,
             stopcode=None,
             reffreq=None # list of tuples of (imagename, reffreq)
+            tfmask=None # list of tuples of (imagename, maskname). 
         """
         pstr = "[ checkall ] \n"
         if ret != None and type(ret) == dict:
@@ -936,6 +955,7 @@ class TestHelpers:
         pstr += TestHelpers().check_tabcache(tabcache)
         pstr += TestHelpers().check_stopcode(stopcode, ret)
         pstr += TestHelpers().check_reffreq(reffreq, epsilon=epsilon)
+        pstr += TestHelpers().check_tfmask(tfmask)
         return pstr
 
     def check_final(self, pstr=""):

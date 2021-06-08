@@ -1554,7 +1554,6 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
       throw(AipsError("Error in copying internal T/F mask : " + x.getMesg() ));
     }
 
-    cout << " Mask in outimage at the end of copyMask() : " << outimage->getDefaultMask() << endl;
     return True;
   }
   
@@ -1772,7 +1771,6 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 
 	if( pblimit <0.0 && (residual()->getDefaultMask()).matches("mask0") ) removeMask( residual() );
 
-	cout << " Mask in residual : " << residual()->getDefaultMask() << endl;
         residual()->unlock();
 
 
