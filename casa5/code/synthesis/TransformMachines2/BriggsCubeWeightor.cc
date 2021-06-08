@@ -177,12 +177,12 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
         }
         
 
-        ///Lets process the ms independently as swingpad can become very large for MSs seperated by large epochs
+ 
         if(inOneGo){
           fillImgWeightCol(vi, inRec, -1, fieldsToUse, allSwingPad, templateimage.shape(), cs);
         }
         else{
-          
+          ///Lets process the ms independently as swingpad can become very large for MSs seperated by large epochs
           for (auto msiter=msInUse.begin(); msiter != msInUse.end(); ++msiter){
             uInt swingpad=estimateSwingChanPad(vi, *msiter, cs, templateimage.shape()[3],
                                              ephemtab);
@@ -196,9 +196,8 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	  
 }
 
-  void BriggsCubeWeightor::fillImgWeightCol(vi::VisibilityIterator2& vi, const Record&  inRec, const Int msid, std::vector<pair<Int, Int> >& fieldsToUse, const uInt swingpad, const IPosition& origShp, CoordinateSystem cs){
+  void BriggsCubeWeightor::fillImgWeightCol(vi::VisibilityIterator2& vi, const Record&  inRec, const Int msid, std::vector<pair<Int, Int> >& fieldsToUse, const uInt swingpad, const IPosition& origShp, CoordinateSystem csOrig){
     vi::VisBuffer2 *vb=vi.getVisBuffer();
-    
     for (uInt k=0; k < fieldsToUse.size(); ++k){
       vi.originChunks();
       vi.origin();
@@ -206,6 +205,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
       IPosition shp=origShp;
       nx_p=shp[0];
       ny_p=shp[1];
+      CoordinateSystem cs= csOrig;
       //CoordinateSystem cs=templateimage.coordinates();
       refFreq_p=cs.toWorld(IPosition(4,0,0,0,0))[3];
       Vector<String> units = cs.worldAxisUnits();
