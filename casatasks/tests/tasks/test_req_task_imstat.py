@@ -54,14 +54,11 @@ except ImportError:
     _rg = rgtool()
     image = iatool
     is_CASA6 = False
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        data_root = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'
-    else:
-        data_root = os.environ.get('CASAPATH').split()[0] + '/casa-data-req'
+    data_root = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
     def ctsys_resolve(apath):
         return os.path.join(data_root, apath)
 
-datapath = 'image'
+datapath = 'unittest/imstat/'
 
 '''
 Unit tests for task imstat.
@@ -79,6 +76,7 @@ class imstat_test(unittest.TestCase):
     fourdim = '4dim.im'
     kimage = "ktest.im"
     res = None
+    inpfiles = [moment, s150, s15, s0_015, s0_0015, s0_00015, linear_coords, fourdim, kimage]
 
     def _compare(self, resold, resnew, helpstr):
         mytype = type(resold)
@@ -123,19 +121,15 @@ class imstat_test(unittest.TestCase):
     def tearDown(self):
         self._myia.done()
         self.assertTrue(len(_tb.showcache()) == 0)
-        # make sure directory is clean as per verification test requirement
-        cwd = os.getcwd()
-        for filename in os.listdir(cwd):
-            file_path = os.path.join(cwd, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+        # Only delete the files created by the tests (avoid cleaning the full local directory!!)
+        for f in self.inpfiles:
+            if os.path.isdir(f):
+                shutil.rmtree(f)
+            if os.path.isfile(f):
+                os.remove(f)
+        
+        # Remove created files
+        os.system('rm -rf chauvtest.im fhtest.im hftest.im internally_excluded_region.im maskim test011.im tmp.im')
 
     def test_moment_map_flux(self):
         """Test 1: verify moment maps can have flux densities computed in statistics"""

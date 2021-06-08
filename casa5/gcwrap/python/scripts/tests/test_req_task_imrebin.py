@@ -43,19 +43,14 @@ import numpy as np
 ### DATA ###
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('image/orion_tfeather.im/')
-    stokespath = casatools.ctsys.resolve('image/image_input_processor.im/')
+    datapath = casatools.ctsys.resolve('unittest/imrebin/orion_tfeather.im/')
+    stokespath = casatools.ctsys.resolve('unittest/imrebin/image_input_processor.im/')
     tb = casatools.table()
     ia = casatools.image()
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/orion_tfeather.im/'
-        stokespath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/image_input_processor.im/'
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/orion_tfeather.im/'
-        stokespath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/image_input_processor.im/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imrebin/orion_tfeather.im/'
+    stokespath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imrebin/image_input_processor.im/'
         
 def makeImage():
     

@@ -97,7 +97,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Int fields=0;
       for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
           for (vi.origin();vi.more();vi++) {
-	    
+        
               if(vb->newFieldId()){
                   mapid=String::toString(vb->msId())+String("_")+String::toString(vb->fieldId());
                   if(multiField){
@@ -122,53 +122,53 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Int fid=0;
       for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
           for (vi.origin();vi.more();vi++) {
-	    if(vb->newFieldId()){
+        if(vb->newFieldId()){
                   mapid=String::toString(vb->msId())+String("_")+String::toString(vb->fieldId());
 
               
-		  if(multiField){
-		    if(activeFieldIndex_p >=0)
-		      gwt_p[activeFieldIndex_p]->put(a_gwt_p);
-		  }
-		  activeFieldIndex_p=multiFieldMap_p.find(mapid) !=multiFieldMap_p.end( ) ? multiFieldMap_p[mapid] : -1;
-		  if(multiField && activeFieldIndex_p >=0)
-		    gwt_p[activeFieldIndex_p]->get(a_gwt_p);
-		  
-	    }
+          if(multiField){
+            if(activeFieldIndex_p >=0)
+              gwt_p[activeFieldIndex_p]->put(a_gwt_p);
+          }
+          activeFieldIndex_p=multiFieldMap_p.find(mapid) !=multiFieldMap_p.end( ) ? multiFieldMap_p[mapid] : -1;
+          if(multiField && activeFieldIndex_p >=0)
+            gwt_p[activeFieldIndex_p]->get(a_gwt_p);
+          
+        }
             auto mapvp = multiFieldMap_p.find(mapid);
             fid= mapvp != multiFieldMap_p.end( ) ? mapvp->second : -1;
               Int nRow=vb->nRow();
               Int nChan=vb->nChannel();
 
-	      // Extract weights correctly (use WEIGHT_SPECTRUM, if available)
-	      Matrix<Float> wtm;
-	      ////////////////
-	      doWtSp=(vb->weightSpectrum().nelements()>0);
-	      //////////////
-	      if (doWtSp)                        
-		// WS available, 
-		unPolChanWeight(wtm,vb->weightSpectrum());               // collapse corr axis (parallel-hand average)
-	      else                                          
-		// WS UNavailable
-		wtm.reference(vb->weight().reform(IPosition(2,1,nRow))); // use vb.weight() (corr-collapsed, w/ 1 channel)
+          // Extract weights correctly (use WEIGHT_SPECTRUM, if available)
+          Matrix<Float> wtm;
+          ////////////////
+          doWtSp=(vb->weightSpectrum().nelements()>0);
+          //////////////
+          if (doWtSp)
+        // WS available,
+        unPolChanWeight(wtm,vb->weightSpectrum());               // collapse corr axis (parallel-hand average)
+          else
+        // WS UNavailable
+        wtm.reference(vb->weight().reform(IPosition(2,1,nRow))); // use vb.weight() (corr-collapsed, w/ 1 channel)
 
-	      // Use this to mod the channel indexing below
-	      Int nChanWt=wtm.shape()(0);
+          // Use this to mod the channel indexing below
+          Int nChanWt=wtm.shape()(0);
 
               for (Int row=0; row<nRow; row++) {
                   for (Int chn=0; chn<nChan; chn++) {
                       if(!vb->flag()(chn,row)) {
-			  Float currwt=wtm(chn%nChanWt,row);  // the weight for this chan,row
+              Float currwt=wtm(chn%nChanWt,row);  // the weight for this chan,row
                           Float f=vb->frequency()(chn)/C::c;
                           u=vb->uvw()(row)(0)*f;
                           v=vb->uvw()(row)(1)*f;
                           Int ucell=Int(uscale_p*u+uorigin_p);
                           Int vcell=Int(vscale_p*v+vorigin_p);
-			 
+             
                           if(((ucell-uBox)>0)&&((ucell+uBox)<nx)&&((vcell-vBox)>0)&&((vcell+vBox)<ny)) {
                               for (Int iv=-vBox;iv<=vBox;iv++) {
                                   for (Int iu=-uBox;iu<=uBox;iu++) {
-				      a_gwt_p(ucell+iu,vcell+iv)+=currwt;
+                      a_gwt_p(ucell+iu,vcell+iv)+=currwt;
                                       sumwt[fid]+=currwt;
                                   }
                               }
@@ -198,9 +198,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
       //Float f2, d2;
       for(fid=0; fid < Int(gwt_p.nelements()); ++fid){
-	gwt_p[fid]->get(a_gwt_p);
-	activeFieldIndex_p=fid;
-	if (rmode=="norm") {
+    gwt_p[fid]->get(a_gwt_p);
+    activeFieldIndex_p=fid;
+    if (rmode=="norm") {
               os << "Normal robustness, robust = " << robust << LogIO::POST;
               Double sumlocwt = 0.;
               for(Int vgrid=0;vgrid<ny;vgrid++) {
@@ -237,7 +237,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       wgtType_p="uniform";
       gwt_p.resize(grids.nelements(), true, false);
       for (uInt k =0; k < gwt_p.nelements(); ++k)
-	gwt_p[k]=grids[k];
+    gwt_p[k]=grids[k];
       nx_p=gwt_p[0]->shape()[0];
       ny_p=gwt_p[0]->shape()[1];
       uscale_p=(nx_p*cellx.get("rad").getValue());
@@ -249,38 +249,38 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Int fields=0;
       String mapid;
       for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
-	for (vi.origin();vi.more();vi++) {
-	  if(vb->newFieldId()){
-	    mapid=String::toString(vb->msId())+String("_")+String::toString(vb->fieldId());
-	    if(multiField){
-	      if( multiFieldMap_p.find(mapid) == multiFieldMap_p.end( ) ){
-		fields+=1;
+    for (vi.origin();vi.more();vi++) {
+      if(vb->newFieldId()){
+        mapid=String::toString(vb->msId())+String("_")+String::toString(vb->fieldId());
+        if(multiField){
+          if( multiFieldMap_p.find(mapid) == multiFieldMap_p.end( ) ){
+        fields+=1;
                    
-	      }
-	    }
-	    if( multiFieldMap_p.find(mapid) == multiFieldMap_p.end( ) )
-	      multiFieldMap_p.insert(std::pair<casacore::String, casacore::Int>(mapid, fields));
-	  }
-	}
+          }
+        }
+        if( multiFieldMap_p.find(mapid) == multiFieldMap_p.end( ) )
+          multiFieldMap_p.insert(std::pair<casacore::String, casacore::Int>(mapid, fields));
+      }
+    }
       }
       f2_p.resize(gwt_p.nelements());
       d2_p.resize(gwt_p.nelements());
       for(uInt fid=0; fid < gwt_p.nelements(); ++fid){
-	activeFieldIndex_p=fid;
-	gwt_p[fid]->get(a_gwt_p);
-	if (rmode_p=="norm") {
-	  os << "Normal robustness, robust = " << robust_p << LogIO::POST;
-	  Double sumlocwt = 0.;
-	  for(Int vgrid=0;vgrid<ny_p;vgrid++) {
-	    for(Int ugrid=0;ugrid<nx_p;ugrid++) {
-	      if(a_gwt_p(ugrid, vgrid)>0.0) sumlocwt+=square(a_gwt_p(ugrid,vgrid));
-	    }
-	  }
-	  Double sumwt_fid=sum(a_gwt_p);
-	  f2_p[fid] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumwt_fid);
-	  d2_p[fid] = 1.0;
+    activeFieldIndex_p=fid;
+    gwt_p[fid]->get(a_gwt_p);
+    if (rmode_p=="norm") {
+      os << "Normal robustness, robust = " << robust_p << LogIO::POST;
+      Double sumlocwt = 0.;
+      for(Int vgrid=0;vgrid<ny_p;vgrid++) {
+        for(Int ugrid=0;ugrid<nx_p;ugrid++) {
+          if(a_gwt_p(ugrid, vgrid)>0.0) sumlocwt+=square(a_gwt_p(ugrid,vgrid));
+        }
+      }
+      Double sumwt_fid=sum(a_gwt_p);
+      f2_p[fid] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumwt_fid);
+      d2_p[fid] = 1.0;
 
-	}
+    }
           else if (rmode=="abs") {
               os << "Absolute robustness, robust = " << robust_p << ", noise = "
                       << noise_p.get("Jy").getValue() << "Jy" << LogIO::POST;
@@ -296,7 +296,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 }
 
   VisImagingWeight::VisImagingWeight(vi::VisibilityIterator2& visIter,
-				     const String& rmode, const Quantity& noise,
+                     const String& rmode, const Quantity& noise,
                                      const Double robust, const Int nx, const Int ny,
                                      const Quantity& cellx, const Quantity& celly,
                                      const Int uBox, const Int vBox, const Bool multiField) : doFilter_p(false), robust_p(robust), rmode_p(rmode), noise_p(noise), activeFieldIndex_p(-1) {
@@ -360,47 +360,47 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Int fid=0;
       for (visIter.originChunks();visIter.moreChunks();visIter.nextChunk()) {
           for (visIter.origin();visIter.more();visIter.next()) {
-	    if(vb->isNewFieldId()){
+        if(vb->isNewFieldId()){
                   mapid=String::toString(vb->msId())+String("_")+String::toString(vb->fieldId()[0]);
 
-		  if(multiField){
-		    if(activeFieldIndex_p >=0)
-		      gwt_p[activeFieldIndex_p]->put(a_gwt_p);
-		  }
-		  activeFieldIndex_p= multiFieldMap_p.find(mapid) != multiFieldMap_p.end( ) ? multiFieldMap_p[mapid] :  -1;
-		  if(multiField && activeFieldIndex_p >=0)
-		    gwt_p[activeFieldIndex_p]->get(a_gwt_p);		  
-	    }
+          if(multiField){
+            if(activeFieldIndex_p >=0)
+              gwt_p[activeFieldIndex_p]->put(a_gwt_p);
+          }
+          activeFieldIndex_p= multiFieldMap_p.find(mapid) != multiFieldMap_p.end( ) ? multiFieldMap_p[mapid] :  -1;
+          if(multiField && activeFieldIndex_p >=0)
+            gwt_p[activeFieldIndex_p]->get(a_gwt_p);
+        }
            
               auto mapvp = multiFieldMap_p.find(mapid);
               fid= mapvp != multiFieldMap_p.end( ) ? mapvp->second : -1;
               Int nRow=vb->nRows();
               Int nChan=vb->nChannels();
 
-	      // Extract weights correctly (use WEIGHT_SPECTRUM, if available)
-	      Matrix<Float> wtm;
-	      Cube<Float> wtc;
-	      if (doWtSp)
-		// WS available [nCorr,nChan,nRow]
-		wtc.reference(vb->weightSpectrum());       
-	      else {
-		Int nCorr=vb->nCorrelations();
-		// WS UNavailable weight()[nCorr,nRow] --> [nCorr,nChan,nRow]
-	        wtc.reference(vb->weight().reform(IPosition(3,nCorr,1,nRow)));  // unchan'd weight as single-chan
-	      }
-	      unPolChanWeight(wtm,wtc);   // Collapse on corr axis
+          // Extract weights correctly (use WEIGHT_SPECTRUM, if available)
+          Matrix<Float> wtm;
+          Cube<Float> wtc;
+          if (doWtSp)
+        // WS available [nCorr,nChan,nRow]
+        wtc.reference(vb->weightSpectrum());
+          else {
+        Int nCorr=vb->nCorrelations();
+        // WS UNavailable weight()[nCorr,nRow] --> [nCorr,nChan,nRow]
+            wtc.reference(vb->weight().reform(IPosition(3,nCorr,1,nRow)));  // unchan'd weight as single-chan
+          }
+          unPolChanWeight(wtm,wtc);   // Collapse on corr axis
 
-	      // Used for mod of chn index below
-	      Int nChanWt=wtm.shape()(0);
+          // Used for mod of chn index below
+          Int nChanWt=wtm.shape()(0);
 
-	      //Oww !!! temporary implementation of old vb.flag just to see if things work
-	      Matrix<Bool> flag;
-	      cube2Matrix(vb->flagCube(), flag);
+          //Oww !!! temporary implementation of old vb.flag just to see if things work
+          Matrix<Bool> flag;
+          cube2Matrix(vb->flagCube(), flag);
               for (Int row=0; row<nRow; row++) {
                   for (Int chn=0; chn<nChan; chn++) {
-                	  
-		    Float currwt=wtm(chn%nChanWt,row);  // the weight for this chan,row
-			
+                      
+            Float currwt=wtm(chn%nChanWt,row);  // the weight for this chan,row
+            
                       if(!flag(chn,row)) {
                           Float f=vb->getFrequency(row, chn)/C::c;
                           u=vb->uvw()(0,row)*f;
@@ -410,7 +410,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                           if(((ucell-uBox)>0)&&((ucell+uBox)<nx)&&((vcell-vBox)>0)&&((vcell+vBox)<ny)) {
                               for (Int iv=-vBox;iv<=vBox;iv++) {
                                   for (Int iu=-uBox;iu<=uBox;iu++) {
-				      a_gwt_p(ucell+iu,vcell+iv)+=currwt;
+                      a_gwt_p(ucell+iu,vcell+iv)+=currwt;
                                       sumwt[fid]+=currwt;
                                   }
                               }
@@ -441,9 +441,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
       //Float f2, d2;
       for(fid=0; fid < Int(gwt_p.nelements()); ++fid){
-	gwt_p[fid]->get(a_gwt_p);
-	activeFieldIndex_p=fid;
-	if (rmode=="norm") {
+    gwt_p[fid]->get(a_gwt_p);
+    activeFieldIndex_p=fid;
+    if (rmode=="norm") {
               os << "Normal robustness, robust = " << robust << LogIO::POST;
               Double sumlocwt = 0.;
               for(Int vgrid=0;vgrid<ny;vgrid++) {
@@ -490,45 +490,45 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       //Now to recover from image density and other parameters
       Int nplanes=1;
       if(im.shape().nelements()==5)
-	nplanes=im.shape()[4];
+    nplanes=im.shape()[4];
       gwt_p.resize(nplanes, True, False);
       if(im.shape().nelements()==5){
-	  IPosition blc(Vector<Int>(5,0));
-	  for (Int fid=0;fid<nplanes;fid++)
-	    {
-	      gwt_p[fid]=new TempLattice<Float>(IPosition(2,nx_p, ny_p), 0);
-	      Array<Float> lala;
-	      blc[4]=fid;
-	      im.getSlice(lala, blc, IPosition(5, nx_p, ny_p,1,1,1), True);
-	      gwt_p[fid]->put( lala.reform(IPosition(2, nx_p, ny_p)));
+      IPosition blc(Vector<Int>(5,0));
+      for (Int fid=0;fid<nplanes;fid++)
+        {
+          gwt_p[fid]=new TempLattice<Float>(IPosition(2,nx_p, ny_p), 0);
+          Array<Float> lala;
+          blc[4]=fid;
+          im.getSlice(lala, blc, IPosition(5, nx_p, ny_p,1,1,1), True);
+          gwt_p[fid]->put( lala.reform(IPosition(2, nx_p, ny_p)));
 
-	    }
-	}
-	else{
-	  Array<Float> lala;
-	  im.get(lala, True);
-	  gwt_p[0]=new TempLattice<Float>(IPosition(2,nx_p, ny_p), 0);
-	  gwt_p[0]->put( lala.reform(IPosition(2, nx_p, ny_p)));
+        }
+    }
+    else{
+      Array<Float> lala;
+      im.get(lala, True);
+      gwt_p[0]=new TempLattice<Float>(IPosition(2,nx_p, ny_p), 0);
+      gwt_p[0]->put( lala.reform(IPosition(2, nx_p, ny_p)));
 
-	}
+    }
       const TableRecord& rec=im.miscInfo();
       if(rec.isDefined("d2")){
-	d2_p.resize();
-	rec.get("d2", d2_p);
-	f2_p.resize();
-	rec.get("f2", f2_p);
-	multiFieldMap_p.clear();
+    d2_p.resize();
+    rec.get("d2", d2_p);
+    f2_p.resize();
+    rec.get("f2", f2_p);
+    multiFieldMap_p.clear();
         Int mapsize;
         rec.get("multimapsize", mapsize);
-	for(Int k=0; k < mapsize; ++k){
-	  String key;
-	  Int val;
-	  rec.get("key"+String::toString(k), key);
-	  rec.get("val"+String::toString(k), val);
+    for(Int k=0; k < mapsize; ++k){
+      String key;
+      Int val;
+      rec.get("key"+String::toString(k), key);
+      rec.get("val"+String::toString(k), val);
           //cerr << "key and id " << key << "   "<< val << endl;
-	  multiFieldMap_p.insert(std::pair<casacore::String, casacore::Int>(key, val));
-	}
-	
+      multiFieldMap_p.insert(std::pair<casacore::String, casacore::Int>(key, val));
+    }
+    
 
       }
       activeFieldIndex_p=0;
@@ -548,7 +548,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   VisImagingWeight::~VisImagingWeight(){
     /*for (uInt fid=0; fid < gwt_p.nelements(); ++fid){
           gwt_p[fid].resize();
-	  }*/
+      }*/
     
   }
 
@@ -556,8 +556,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Vector<Int> retval(3, 0);
       retval(2)=gwt_p.nelements();
       if(retval(2) > 0){
-	retval[0]=gwt_p[0]->shape()(0);
-	retval[1]=gwt_p[0]->shape()(1);
+    retval[0]=gwt_p[0]->shape()(0);
+    retval[1]=gwt_p[0]->shape()(1);
 
       }
       
@@ -566,15 +566,15 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     void VisImagingWeight::toImageInterface(casacore::ImageInterface<casacore::Float>& im){
 
       if( wgtType_p != "uniform")
-	throw(AipsError("cannot save weight density for non-Briggs' weighting schemes"));
+    throw(AipsError("cannot save weight density for non-Briggs' weighting schemes"));
       
-      IPosition where=	IPosition(im.shape().nelements(),0);
+      IPosition where=    IPosition(im.shape().nelements(),0);
       Int lastAx=where.nelements()-1;
       for (uInt fid=0;fid<gwt_p.nelements(); ++fid){
-	activeFieldIndex_p=fid;
-	gwt_p[fid]->get(a_gwt_p);
-	where[lastAx]=fid;
-	im.putSlice(a_gwt_p, where);
+    activeFieldIndex_p=fid;
+    gwt_p[fid]->get(a_gwt_p);
+    where[lastAx]=fid;
+    im.putSlice(a_gwt_p, where);
 
       }
       Record rec(im.miscInfo());
@@ -583,8 +583,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       rec.define("numfield", Int(multiFieldMap_p.size()));
       uInt keycount=0;
       for (auto iter = multiFieldMap_p.begin( ); iter != multiFieldMap_p.end( ); ++iter, ++keycount){
-	rec.define("key"+String::toString(keycount), iter->first);
-	rec.define("val"+String::toString(keycount), iter->second);
+    rec.define("key"+String::toString(keycount), iter->first);
+    rec.define("val"+String::toString(keycount), iter->second);
       }
       rec.define("multimapsize",keycount);
       if(doFilter_p){
@@ -600,7 +600,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     }
   void VisImagingWeight::setFilter(const String& type, const Quantity& bmaj,
-				   const Quantity& bmin, const Quantity& bpa)
+                   const Quantity& bmin, const Quantity& bpa)
   {
 
      LogIO os(LogOrigin("VisImagingWeight", "setFilter()", WHERE));
@@ -610,25 +610,25 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Bool lambdafilt=false;
       
       if( bmaj.getUnit().contains("lambda"))
-	lambdafilt=true;
+    lambdafilt=true;
       if(lambdafilt){
-	os << "Filtering for Gaussian of shape: " 
-	   << bmaj.get("klambda").getValue() << " by " 
-	   << bmin.get("klambda").getValue() << " (klambda) at p.a. "
-	   << bpa.get("deg").getValue() << " (degrees)" << LogIO::POST;
-	rbmaj_p=log(2.0)/square(bmaj.get("lambda").getValue());
-	rbmin_p=log(2.0)/square(bmin.get("lambda").getValue());
+    os << "Filtering for Gaussian of shape: "
+       << bmaj.get("klambda").getValue() << " by "
+       << bmin.get("klambda").getValue() << " (klambda) at p.a. "
+       << bpa.get("deg").getValue() << " (degrees)" << LogIO::POST;
+    rbmaj_p=log(2.0)/square(bmaj.get("lambda").getValue());
+    rbmin_p=log(2.0)/square(bmin.get("lambda").getValue());
       }
       else{
-	os << "Filtering for Gaussian of shape: " 
-	   << bmaj.get("arcsec").getValue() << " by " 
-	   << bmin.get("arcsec").getValue() << " (arcsec) at p.a. "
-	   << bpa.get("deg").getValue() << " (degrees)" << LogIO::POST;
-	
-	// Convert to values that we can use
-	Double fact = 4.0*log(2.0);
-	rbmaj_p = fact*square(bmaj.get("rad").getValue());
-	rbmin_p = fact*square(bmin.get("rad").getValue());
+    os << "Filtering for Gaussian of shape: "
+       << bmaj.get("arcsec").getValue() << " by "
+       << bmin.get("arcsec").getValue() << " (arcsec) at p.a. "
+       << bpa.get("deg").getValue() << " (degrees)" << LogIO::POST;
+    
+    // Convert to values that we can use
+    Double fact = 4.0*log(2.0);
+    rbmaj_p = fact*square(bmaj.get("rad").getValue());
+    rbmin_p = fact*square(bmin.get("rad").getValue());
       }
       Double rbpa  = MVAngle(bpa).get("rad").getValue();
       cospa_p = sin(rbpa);
@@ -637,7 +637,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     }
     else {
-      os << "Unknown filtering " << type << LogIO::EXCEPTION;    
+      os << "Unknown filtering " << type << LogIO::EXCEPTION;
     }
   
 
@@ -652,9 +652,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
 
-  void VisImagingWeight::filter(Matrix<Float>& imWeight, const Matrix<Bool>& flag, 
-				const Matrix<Double>& uvw,
-				const Vector<Double>& frequency, const Matrix<Float>& weight) const{
+  void VisImagingWeight::filter(Matrix<Float>& imWeight, const Matrix<Bool>& flag,
+                const Matrix<Double>& uvw,
+                const Vector<Double>& frequency, const Matrix<Float>& weight) const{
 
     // Expecting weight[nchan,nrow], where nchan=1 or nChan (data)
     // If nchan=1 (i.e., WEIGHT_SPECTRUM unavailable), then the
@@ -666,18 +666,18 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Int nChanWt=weight.shape()(0);
     for (Int row=0; row<nRow; row++) {
       for (Int chn=0; chn<nChan; chn++) {
-	Double invLambdaC=frequency(chn)/C::c;
-	Double u = uvw(0,row);
-	Double v = uvw(1,row);
-	if(!flag(chn,row) && (weight(chn%nChanWt,row)>0.0) ) {
-	  Double ru = invLambdaC*(  cospa_p * u + sinpa_p * v);
-	  Double rv = invLambdaC*(- sinpa_p * u + cospa_p * v);
-	  Double filter = exp(-rbmaj_p*square(ru) - rbmin_p*square(rv));
-	  imWeight(chn,row)*=filter;
-	}
-	else {
-	  imWeight(chn,row)=0.0;
-	}
+    Double invLambdaC=frequency(chn)/C::c;
+    Double u = uvw(0,row);
+    Double v = uvw(1,row);
+    if(!flag(chn,row) && (weight(chn%nChanWt,row)>0.0) ) {
+      Double ru = invLambdaC*(  cospa_p * u + sinpa_p * v);
+      Double rv = invLambdaC*(- sinpa_p * u + cospa_p * v);
+      Double filter = exp(-rbmaj_p*square(ru) - rbmin_p*square(rv));
+      imWeight(chn,row)*=filter;
+    }
+    else {
+      imWeight(chn,row)=0.0;
+    }
       }
     }
 
@@ -691,19 +691,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
       //cout << " WEIG " << nx_p << "  " << ny_p << "   " << gwt_p[0].shape() << endl;
-      //cout << "f2 " << f2_p[0] << " d2 " << d2_p[0] << " uscale " << uscale_p << " vscal " << vscale_p << " origs " << uorigin_p << "  " << vorigin_p << endl; 
+      //cout << "f2 " << f2_p[0] << " d2 " << d2_p[0] << " uscale " << uscale_p << " vscal " << vscale_p << " origs " << uorigin_p << "  " << vorigin_p << endl;
       String mapid=String::toString(msId)+String("_")+String::toString(fieldId);
       //cout << "min max gwt " << min(gwt_p[0]) << "    " << max(gwt_p[0]) << " mapid " << mapid <<endl;
 
       if( multiFieldMap_p.find(mapid) == multiFieldMap_p.end( ) )
-	throw(AipsError("Imaging weight calculation is requested for a data that was not selected"));
+    throw(AipsError("Imaging weight calculation is requested for a data that was not selected"));
       
       auto mapvp = multiFieldMap_p.find(mapid);
       Int fid = mapvp != multiFieldMap_p.end( ) ? mapvp->second : -1;
       //Int ndrop=0;
       if(activeFieldIndex_p != fid){
-	a_gwt_p=gwt_p[fid]->get();
-	activeFieldIndex_p=fid;
+    a_gwt_p=gwt_p[fid]->get();
+    activeFieldIndex_p=fid;
       }
       Double sumwt=0.0;
       Int nRow=imWeight.shape()(1);
@@ -711,28 +711,28 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       Int nChanWt=weight.shape()(0);
       Float u, v;
       for (Int row=0; row<nRow; row++) {
-	for (Int chn=0; chn<nChannel; chn++) {
-	  if (!flag(chn,row)) {
-	    Float f=frequency(chn)/C::c;
-	    u=uvw(0, row)*f;
-	    v=uvw(1, row)*f;
-	    Int ucell=Int(uscale_p*u+uorigin_p);
-	    Int vcell=Int(vscale_p*v+vorigin_p);
-	    imWeight(chn,row)=weight(chn%nChanWt,row);
-	    if((ucell>0)&&(ucell<nx_p)&&(vcell>0)&&(vcell<ny_p) &&a_gwt_p(ucell,vcell)>0.0) {
-		imWeight(chn,row)/=a_gwt_p(ucell,vcell)*f2_p[fid]+d2_p[fid];
-		sumwt+=imWeight(chn,row);
-	      
-	    }
-	    else {
-	      imWeight(chn,row)=0.0;
-	      //ndrop++;
-	    }
-	  }
-	  else{
-	    imWeight(chn,row)=0.0;
-	  }
-	}
+    for (Int chn=0; chn<nChannel; chn++) {
+      if (!flag(chn,row)) {
+        Float f=frequency(chn)/C::c;
+        u=uvw(0, row)*f;
+        v=uvw(1, row)*f;
+        Int ucell=Int(uscale_p*u+uorigin_p);
+        Int vcell=Int(vscale_p*v+vorigin_p);
+        imWeight(chn,row)=weight(chn%nChanWt,row);
+        if((ucell>0)&&(ucell<nx_p)&&(vcell>0)&&(vcell<ny_p) &&a_gwt_p(ucell,vcell)>0.0) {
+        imWeight(chn,row)/=a_gwt_p(ucell,vcell)*f2_p[fid]+d2_p[fid];
+        sumwt+=imWeight(chn,row);
+          
+        }
+        else {
+          imWeight(chn,row)=0.0;
+          //ndrop++;
+        }
+      }
+      else{
+        imWeight(chn,row)=0.0;
+      }
+    }
       }
       
     }
@@ -745,11 +745,11 @@ void VisImagingWeight::weightNatural(Matrix<Float>& imagingWeight, const Matrix<
 
         Int nRow=imagingWeight.shape()(1);
         Vector<Float> wgtRow(nRow);
-	
+    
         for (Int row=0; row<nRow; row++) {
-	  wgtRow(row)=max(weight.column(row));
+      wgtRow(row)=max(weight.column(row));
         }
-	weightNatural(imagingWeight, flag, wgtRow);
+    weightNatural(imagingWeight, flag, wgtRow);
 
     }
   */
@@ -757,14 +757,14 @@ void VisImagingWeight::weightNatural(Matrix<Float>& imagingWeight, const Matrix<
                                          const Matrix<Float>& weight) const{
 
         Double sumwt=0.0;
-	//cerr << "shape of weight " << weight.shape() << " max " << max (weight.column(0) ) << " max " << min(weight.column(0)) << " " << weight.column(0).shape() << endl;
+    //cerr << "shape of weight " << weight.shape() << " max " << max (weight.column(0) ) << " max " << min(weight.column(0)) << " " << weight.column(0).shape() << endl;
         Int nRow=imagingWeight.shape()(1);
         Int nChan=imagingWeight.shape()(0);
         Int nChanWt=weight.shape()(0);
         for (Int row=0; row<nRow; row++) {
             for (Int chn=0; chn<nChan; chn++) {
                 if( !flag(chn,row) ) {
- 		    imagingWeight(chn,row)=weight(chn%nChanWt,row);
+             imagingWeight(chn,row)=weight(chn%nChanWt,row);
                     sumwt+=imagingWeight(chn,row);
                 }
                 else {
@@ -786,15 +786,15 @@ void VisImagingWeight::weightNatural(Matrix<Float>& imagingWeight, const Matrix<
         Double sumwt=0.0;
         Int nRow=imagingWeight.shape()(1);
         Int nChan=imagingWeight.shape()(0);
-	Int nChanWt=weight.shape()(0);
+    Int nChanWt=weight.shape()(0);
 
         for (Int row=0; row<nRow; row++) {
             for (Int chn=0; chn< nChan; chn++) {
                 Float f=frequency(chn)/C::c;
                 if( !flag(chn,row) ) {
                     imagingWeight(chn,row)=
-		      f*sqrt(square(uvw(0, row))+square(uvw(1, row)))
-		            *weight(chn%nChanWt,row);
+              f*sqrt(square(uvw(0, row))+square(uvw(1, row)))
+                    *weight(chn%nChanWt,row);
                     sumwt+=imagingWeight(chn,row);
                 }
                 else {
@@ -808,34 +808,34 @@ void VisImagingWeight::weightNatural(Matrix<Float>& imagingWeight, const Matrix<
 
     VisImagingWeight& VisImagingWeight::operator=(const VisImagingWeight& other){
         if(this != &other){
-	  //            gwt_p=other.gwt_p;
+      //            gwt_p=other.gwt_p;
 
-	    gwt_p.resize(other.gwt_p.nelements(), true, false);
-	    for (uInt k=0; k < gwt_p.nelements(); ++k){
-	      //gwt_p[k].resize();
-	      gwt_p[k]=other.gwt_p[k];
-	    }
+        gwt_p.resize(other.gwt_p.nelements(), true, false);
+        for (uInt k=0; k < gwt_p.nelements(); ++k){
+          //gwt_p[k].resize();
+          gwt_p[k]=other.gwt_p[k];
+        }
 
 
             wgtType_p=other.wgtType_p;
             uscale_p=other.uscale_p;
             vscale_p=other.vscale_p;
-	    f2_p.resize();
-	    d2_p.resize();
+        f2_p.resize();
+        d2_p.resize();
             f2_p=other.f2_p;
             d2_p=other.d2_p;
             uorigin_p=other.uorigin_p;
             vorigin_p=other.vorigin_p;
             nx_p=other.nx_p;
             ny_p=other.ny_p;
-	    doFilter_p=other.doFilter_p;
-	    cospa_p=other.cospa_p;
-	    sinpa_p=other.sinpa_p;
-	    rbmaj_p=other.rbmaj_p;
-	    rbmin_p=other.rbmin_p;
-	    robust_p=other.robust_p;
-	    rmode_p=other.rmode_p;
-	    multiFieldMap_p=other.multiFieldMap_p;
+        doFilter_p=other.doFilter_p;
+        cospa_p=other.cospa_p;
+        sinpa_p=other.sinpa_p;
+        rbmaj_p=other.rbmaj_p;
+        rbmin_p=other.rbmin_p;
+        robust_p=other.robust_p;
+        rmode_p=other.rmode_p;
+        multiFieldMap_p=other.multiFieldMap_p;
         }
         return *this;
     }
@@ -861,9 +861,9 @@ void VisImagingWeight::weightNatural(Matrix<Float>& imagingWeight, const Matrix<
     if(wgtType_p=="uniform"){
       gwt_p.resize(density.nelements(), true, false);
       for (uInt k=0; k < gwt_p.nelements(); ++k){
-	//gwt_p[k].resize();
-	gwt_p[k]=new TempLattice<Float>(IPosition(2, density[k].shape()[0],  density[k].shape()[1]),0);
-	gwt_p[k]->put(density[k]);
+    //gwt_p[k].resize();
+    gwt_p[k]=new TempLattice<Float>(IPosition(2, density[k].shape()[0],  density[k].shape()[1]),0);
+    gwt_p[k]->put(density[k]);
       }
       //break any old reference
       f2_p.resize();
@@ -874,28 +874,28 @@ void VisImagingWeight::weightNatural(Matrix<Float>& imagingWeight, const Matrix<
       d2_p.set(0.0);
        //Float f2, d2;
       for(uInt fid=0; fid < gwt_p.nelements(); ++fid){
-	activeFieldIndex_p=fid;
-	a_gwt_p=gwt_p[fid]->get();
-	if (rmode_p=="norm") {
-	  Double sumlocwt = 0.;
-	  for(Int vgrid=0;vgrid<a_gwt_p.shape()(1);vgrid++) {
-	      for(Int ugrid=0;ugrid<a_gwt_p.shape()(0);ugrid++) {
-		if(a_gwt_p(ugrid, vgrid)>0.0) sumlocwt+=square(a_gwt_p(ugrid,vgrid));
-	      }
-	  }
-	  Double sumwt_fid=sum(a_gwt_p);
-	  f2_p[fid] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumwt_fid);
-	  d2_p[fid] = 1.0;
-	}
-	else if (rmode_p=="abs") {
-	  f2_p[fid] = square(robust_p);
-	  d2_p[fid] = 2.0 * square(noise_p.get("Jy").getValue());
-	  
-	}
-	else {
-	  f2_p[fid] = 1.0;
-	  d2_p[fid] = 0.0;
-	}
+    activeFieldIndex_p=fid;
+    a_gwt_p=gwt_p[fid]->get();
+    if (rmode_p=="norm") {
+      Double sumlocwt = 0.;
+      for(Int vgrid=0;vgrid<a_gwt_p.shape()(1);vgrid++) {
+          for(Int ugrid=0;ugrid<a_gwt_p.shape()(0);ugrid++) {
+        if(a_gwt_p(ugrid, vgrid)>0.0) sumlocwt+=square(a_gwt_p(ugrid,vgrid));
+          }
+      }
+      Double sumwt_fid=sum(a_gwt_p);
+      f2_p[fid] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumwt_fid);
+      d2_p[fid] = 1.0;
+    }
+    else if (rmode_p=="abs") {
+      f2_p[fid] = square(robust_p);
+      d2_p[fid] = 2.0 * square(noise_p.get("Jy").getValue());
+      
+    }
+    else {
+      f2_p[fid] = 1.0;
+      d2_p[fid] = 0.0;
+    }
       }
       
     }
@@ -904,22 +904,22 @@ void VisImagingWeight::weightNatural(Matrix<Float>& imagingWeight, const Matrix<
   }
   void VisImagingWeight::cube2Matrix(const Cube<Bool>& fcube, Matrix<Bool>& fMat)
   {
-	  fMat.resize(fcube.shape()[1], fcube.shape()[2]);
-	  Bool deleteIt1;
-	  Bool deleteIt2;
-	  const Bool * pcube = fcube.getStorage (deleteIt1);
-	  Bool * pflags = fMat.getStorage (deleteIt2);
-	  for (uInt row = 0; row < fcube.shape()[2]; row++) {
-		  for (Int chn = 0; chn < fcube.shape()[1]; chn++) {
-			  *pflags = *pcube++;
-			  for (Int pol = 1; pol < fcube.shape()[0]; pol++, pcube++) {
-				  *pflags = *pcube ? *pcube : *pflags;
-			  }
-			  pflags++;
-		  }
-	  }
-	  fcube.freeStorage (pcube, deleteIt1);
-	  fMat.putStorage (pflags, deleteIt2);
+      fMat.resize(fcube.shape()[1], fcube.shape()[2]);
+      Bool deleteIt1;
+      Bool deleteIt2;
+      const Bool * pcube = fcube.getStorage (deleteIt1);
+      Bool * pflags = fMat.getStorage (deleteIt2);
+      for (uInt row = 0; row < fcube.shape()[2]; row++) {
+          for (Int chn = 0; chn < fcube.shape()[1]; chn++) {
+              *pflags = *pcube++;
+              for (Int pol = 1; pol < fcube.shape()[0]; pol++, pcube++) {
+                  *pflags = *pcube ? *pcube : *pflags;
+              }
+              pflags++;
+          }
+      }
+      fcube.freeStorage (pcube, deleteIt1);
+      fMat.putStorage (pflags, deleteIt2);
   }
 
 

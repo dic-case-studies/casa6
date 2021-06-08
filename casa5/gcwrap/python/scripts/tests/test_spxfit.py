@@ -76,7 +76,7 @@ import numpy
 
 nanvalue = 4.53345345
 
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/spxfit/'
+datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/spxfit/'
 myia = iatool()
 myfn = fntool()
 

@@ -220,8 +220,10 @@ void CubeMajorCycleAlgorithm::task(){
             ///doing it for non-psf only ...psf divides it by sumwt for some reason in
             ///SIImageStore ..so restart with psf creates havoc
           subImgr.loadMosaicSensitivity();
-            subImgr.executeMajorCycle(controlRecord_p);
-            
+            Record outrec=subImgr.executeMajorCycle(controlRecord_p);
+            if(outrec.isDefined("tempfilenames")){
+	      returnRec_p.define("tempfilenames", outrec.asArrayString("tempfilenames"));
+	    }
             for(uInt k=0; k < subImStor.nelements(); ++k){
               if(controlRecord_p.isDefined("dividebyweight") && controlRecord_p.asBool("dividebyweight")){
                 {
@@ -268,7 +270,10 @@ void CubeMajorCycleAlgorithm::task(){
             
           }
           else{
-            subImgr.makePSF();
+            Record&& outrec=subImgr.makePSF();
+	    if(outrec.isDefined("tempfilenames")){
+	      returnRec_p.define("tempfilenames", outrec.asArrayString("tempfilenames"));
+	    }
 	    ////tclean expects a PB to be always there...
 	    //so for standard make it
 	    subImgr.makePB();

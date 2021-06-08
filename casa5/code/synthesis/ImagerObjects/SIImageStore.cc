@@ -105,8 +105,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////
   
-  SIImageStore::SIImageStore() 
+  SIImageStore::SIImageStore()
   {
+      
     itsPsf.reset( );
     itsModel.reset( );
     itsResidual.reset( );
@@ -136,6 +137,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsMiscInfo=Record();
     init();
     
+    
     //    validate();
 
   }
@@ -152,6 +154,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   // TODO : Add parameter to indicate weight image shape. 
   {
     LogIO os( LogOrigin("SIImageStore","Open new Images",WHERE) );
+      
 
     itsPsf.reset( );
     itsModel.reset( );
@@ -188,9 +191,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
   // Used from SynthesisNormalizer::makeImageStore()
-  SIImageStore::SIImageStore(const String &imagename, const Bool ignorefacets)
+  SIImageStore::SIImageStore(const String &imagename, const Bool ignorefacets, const Bool ignoresumwt)
   {
     LogIO os( LogOrigin("SIImageStore","Open existing Images",WHERE) );
+      
 
     itsPsf.reset( );
     itsModel.reset( );
@@ -282,9 +286,26 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  }
 	else
 	  {
-	    throw( AipsError( "SumWt information does not exist. Please create either a PSF or Residual" ) );
+	    if(!ignoresumwt)
+	      {throw( AipsError( "SumWt information does not exist. Please create either a PSF or Residual" ) );}
+	    else
+	      {
+		os << "SumWt does not exist. Proceeding only with PSF" << LogIO::POST;
+		std::shared_ptr<ImageInterface<Float> > imptr;
+		//imptr.reset( new PagedImage<Float> (itsImageName+String(".sumwt")) );
+		if( doesImageExist(itsImageName+String(".residual") ) )
+		  { buildImage( imptr, (itsImageName+String(".residual")) ); }
+		else
+		  { buildImage( imptr, (itsImageName+String(".psf")) ); }
+		
+		itsNFacets=1;
+		itsFacetId=0;
+		itsUseWeight=False;
+		itsPBScaleFactor=1.0;
+		itsCoordSys = imptr->coordinates();
+		itsMiscInfo=imptr->miscInfo();
+	      }
 	  }
-	
       }// if psf or residual exist...
 
     if( ignorefacets==True ) itsNFacets= 1;
@@ -318,6 +339,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			     const Int pol, const Int npolchunks,
 			     const Bool useweightimage)
   {
+      
 
     itsPsf=psfim;
     itsModel=modelim;
@@ -897,11 +919,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     //right now this is estimated at 2MB for the 2 complex lattices;
     return Long(2000);
   }
-  void SIImageStore::setModelImage( Vector<String> modelnames)
+  void SIImageStore::setModelImage( const Vector<String> &modelnames)
   {
     LogIO os( LogOrigin("SIImageStore","setModelImage",WHERE) );
 
-    if( modelnames.nelements() > 1 ) 
+    if( modelnames.nelements() > 1 )
       {throw( AipsError("Multiple starting model images are currently not supported. Please merge them before supplying as input to startmodel"));
 	/// If needed, THIS is the place to add code to support lists of model images... perhaps regrid separately and add them up or some such thing.
       }
@@ -911,7 +933,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
 
-  void SIImageStore::setModelImageOne( String modelname , Int nterm)
+  void SIImageStore::setModelImageOne( const String &modelname , Int nterm)
   {
     LogIO os( LogOrigin("SIImageStore","setModelImageOne",WHERE) );
 
@@ -1211,8 +1233,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       { itsCoordSys.setSpectralConversion("LSRK"); }
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
-    cimageShape(2)=whichStokes.nelements();
-      
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
+    cimageShape(2)=whichStokes.nelements();      
     //cout << "Making forward grid of shape : " << cimageShape << " for imshape : " << itsImageShape << endl;
     itsForwardGrid.reset( new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()) );
     //if(image())
@@ -1239,6 +1261,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       { itsCoordSys.setSpectralConversion("LSRK"); }
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
     cimageShape(2)=whichStokes.nelements();
     //cout << "Making backward grid of shape : " << cimageShape << " for imshape : " << itsImageShape << endl;
     itsBackwardGrid.reset( new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()) );
@@ -1985,16 +2008,15 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
       }
   }
   
-  GaussianBeam SIImageStore::getPSFGaussian()
+  GaussianBeam SIImageStore::getPSFGaussian(Float psfcutoff)
   {
-
     GaussianBeam beam;
     try
       {
 	if( psf()->ndim() > 0 )
 	  {
-            LatticeLocker lock2 (*(psf()), FileLocker::Read);
-	    StokesImageUtil::FitGaussianPSF( *(psf()), beam );
+          LatticeLocker lock2 (*(psf()), FileLocker::Read);
+          StokesImageUtil::FitGaussianPSF( *(psf()), beam, psfcutoff);
 	  }
       }
     catch(AipsError &x)
@@ -2007,8 +2029,10 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     return beam;
   }
 
-  void SIImageStore::makeImageBeamSet()
+  void SIImageStore::makeImageBeamSet(Float psfcutoff, const Bool forcefit)
   {
+    clock_t begin = clock();
+      
     LogIO os( LogOrigin("SIImageStore","getPSFGaussian",WHERE) );
     // For all chans/pols, call getPSFGaussian() and put it into ImageBeamSet(chan,pol).
     AlwaysAssert( itsImageShape.nelements() == 4, AipsError );
@@ -2018,7 +2042,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     uInt nchan = itsImageShape[3];
     ImageInfo ii = psf()->imageInfo();
     ImageBeamSet iibeamset=ii.getBeamSet();
-    if(iibeamset.nchan()==nchan && iibeamset.nstokes()==npol){
+    if(iibeamset.nchan()==nchan && iibeamset.nstokes()==npol && forcefit==False){
       itsPSFBeams=iibeamset;
       itsRestoredBeams=iibeamset;
       return;
@@ -2046,7 +2070,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 	  {
 	    try
 	      {
-		StokesImageUtil::FitGaussianPSF( subPsf, beam );
+		StokesImageUtil::FitGaussianPSF( subPsf, beam,psfcutoff );
 		itsPSFBeams.setBeam( chanid, polid, beam );
 		itsRestoredBeams.setBeam(chanid, polid, beam);
 	      }
@@ -2121,15 +2145,16 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
       psf()->setImageInfo(ii);
       psf()->unlock();
     }
+    clock_t end = clock();
+    os << LogIO::NORMAL << "Time to fit Gaussian to PSF " << double(end - begin) / CLOCKS_PER_SEC << LogIO::POST;
   }// end of make beam set
 
 
   ImageBeamSet SIImageStore::getChannelBeamSet(const Int channel){
 
     return getChannelSliceBeamSet(channel, channel);
-
-
   }
+
 
   ImageBeamSet SIImageStore::getChannelSliceBeamSet(const Int begChan, const Int endChan){
      ImageBeamSet bs=getBeamSet();
@@ -2151,11 +2176,11 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     itsPSFBeams=bs;
   }
   
-  ImageBeamSet SIImageStore::getBeamSet()
-  { 
+  ImageBeamSet SIImageStore::getBeamSet(Float psfcutoff)
+  {
     IPosition beamshp = itsPSFBeams.shape();
     AlwaysAssert( beamshp.nelements()==2 , AipsError );
-    if( beamshp[0]==0 || beamshp[1]==0 ) {makeImageBeamSet();}
+    if( beamshp[0]==0 || beamshp[1]==0 ) {makeImageBeamSet(psfcutoff);}
     return itsPSFBeams; 
   }
 
@@ -2215,9 +2240,8 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
   
   /////////////////////////////// Restore all planes.
 
-  void SIImageStore::restore(GaussianBeam& rbeam, String& usebeam, uInt term)
+  void SIImageStore::restore(GaussianBeam& rbeam, String& usebeam, uInt term, Float psfcutoff)
   {
-
     LogIO os( LogOrigin("SIImageStore","restore",WHERE) );
     //     << ". Optionally, PB-correct too." << LogIO::POST;
 
@@ -2252,7 +2276,7 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
 	  {
 	    // Make new beams.
 	    os << LogIO::WARN << "Couldn't find pre-computed restoring beams. Re-fitting." << LogIO::POST;
-	    makeImageBeamSet();
+	    makeImageBeamSet(psfcutoff);
 	  }
       }
 
@@ -2882,7 +2906,7 @@ Float SIImageStore::getPeakResidual()
     
     return maxresidual;
   }
-
+  
 Float SIImageStore::getPeakResidualWithinMask()
   {
     LogIO os( LogOrigin("SIImageStore","getPeakResidualWithinMask",WHERE) );
@@ -2980,6 +3004,8 @@ void SIImageStore::setPSFSidelobeLevel(const Float level){
 
 		if( minval < allmin ) allmin = minval;
 		if( maxval > allmax ) allmax = maxval;
+
+		//cout << "Chan : " << chan << "   minval : " << minval << "  maxval : " << maxval << endl;
 		
 	      }//chan
 	  }//pol
@@ -3331,7 +3357,7 @@ void SIImageStore::regridToModelImage( ImageInterface<Float> &inputimage, Int te
     LogIO logIO(LogOrigin("SIImageStore", "recreate"));
     ifstream inFile; inFile.open(fileName.c_str(),std::ofstream::out);
     if (!inFile) logIO << "Failed to open filed \"" << fileName << "\"" << LogIO::EXCEPTION;
-      
+
     String token;
     inFile >> token; if (token == "itsImageNameBase:") inFile >> itsImageName;
 

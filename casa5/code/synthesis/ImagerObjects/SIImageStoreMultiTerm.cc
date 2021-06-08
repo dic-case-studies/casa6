@@ -147,7 +147,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   // Used from SynthesisNormalizer::makeImageStore()
   SIImageStoreMultiTerm::SIImageStoreMultiTerm(const String &imagename, uInt ntaylorterms,
-                                               const Bool ignorefacets)
+                                               const Bool ignorefacets, const Bool ignoresumwt)
   {
     LogIO os( LogOrigin("SIImageStoreMultiTerm","Open existing Images",WHERE) );
 
@@ -262,10 +262,27 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
     else
       {
-	throw( AipsError( "Multi-term SumWt does not exist. Please create PSFs or Residuals." ) );
+	if(!ignoresumwt)
+	  {throw( AipsError( "Multi-term SumWt does not exist. Please create PSFs or Residuals." ) );}
+	else
+	  {
+	    os << "SumWt.ttx do not exist. Proceeding only with PSFs" << LogIO::POST;
+	    std::shared_ptr<ImageInterface<Float> > imptr;
+	    //	imptr.reset( new PagedImage<Float> (itsImageName+String(".sumwt.tt0")) );
+	    if( doesImageExist(itsImageName+String(".residual.tt0")) )
+	      {buildImage( imptr, (itsImageName+String(".residual.tt0")) );}
+	    else
+	      {buildImage( imptr, (itsImageName+String(".psf.tt0")) );}
+	    
+	    itsNFacets = 1;
+	    itsFacetId = 0;
+	    itsUseWeight = False;
+	    itsCoordSys = imptr->coordinates();
+	    itsMiscInfo=imptr->miscInfo();
+	  }
       }
       }// if psf0 or res0 exist
-
+    
     if( ignorefacets==true ) itsNFacets=1;
 
     init();
@@ -559,7 +576,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return mods;
   }
 
-  void SIImageStoreMultiTerm::setModelImage( Vector<String> modelnames )
+  void SIImageStoreMultiTerm::setModelImage( const Vector<String> &modelnames )
   {
     LogIO os( LogOrigin("SIImageStoreMultiTerm","setModelImage",WHERE) );
 
@@ -687,6 +704,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     cimageShape=itsImageShape;
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
     cimageShape(2)=whichStokes.nelements();
     itsForwardGrids[term].reset(new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()));
     return itsForwardGrids[term];
@@ -701,6 +719,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     cimageShape=itsImageShape;
     CoordinateSystem cimageCoord = StokesImageUtil::CStokesCoord( itsCoordSys,
 								  whichStokes, itsDataPolRep);
+    cimageCoord.setObsInfo(itsCoordSys.obsInfo());
     cimageShape(2)=whichStokes.nelements();
     itsBackwardGrids[term].reset(new TempImage<Complex>(TiledShape(cimageShape, tileShape()), cimageCoord, memoryBeforeLattice()));
     return itsBackwardGrids[term];
@@ -1008,14 +1027,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
 
-  void SIImageStoreMultiTerm::restore(GaussianBeam& rbeam, String& usebeam, uInt /*term*/)
+  void SIImageStoreMultiTerm::restore(GaussianBeam& rbeam, String& usebeam, uInt /*term*/, Float psfcutoff)
   {
 
     LogIO os( LogOrigin("SIImageStoreMultiTerm","restore",WHERE) );
 
     for(uInt tix=0; tix<itsNTerms; tix++)
       {
-	SIImageStore::restore(rbeam, usebeam, tix);
+	SIImageStore::restore(rbeam, usebeam, tix, psfcutoff);
       }	
    
     calculateAlphaBeta("image");

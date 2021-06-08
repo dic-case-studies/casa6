@@ -543,9 +543,17 @@ Int MatrixCleaner::clean(Matrix<Float>& model,
         positionOptimum=posMaximum[scale];
       }
     }
-    
-    itsStrengthOptimum /= scaleBias(optimumScale); 
-    itsStrengthOptimum /=  (itsDirtyConvScales[optimumScale])(posMaximum[optimumScale]); 
+
+    // These checks and messages are really only here as an early alert to us if SDAlgorithmBase::deconvolve does not skip all-0 images.
+    if (abs(itsStrengthOptimum) == 0) {
+      os << LogIO::SEVERE << "Attempting to divide 0. Scale maxima for scale " << optimumScale << "is 0." << LogIO::POST;
+    } else {
+      if (abs(scaleBias(optimumScale)) == 0) {
+        os << LogIO::SEVERE << "Attempting to divide by 0. Scale bias for scale " << optimumScale << "is 0." << LogIO::POST;
+      }
+      itsStrengthOptimum /= scaleBias(optimumScale); 
+      itsStrengthOptimum /=  (itsDirtyConvScales[optimumScale])(posMaximum[optimumScale]); 
+    }
 
     AlwaysAssert(optimumScale<nScalesToClean, AipsError);
 
