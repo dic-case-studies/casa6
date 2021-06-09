@@ -31,7 +31,7 @@ if is_CASA6:
 
     from casatasks.private.task_tsdimaging import image_suffix
 
-    from casatasks.private import restfreqtool
+    from casatestutils import restfreqtool
 
 else:
     from __main__ import default
@@ -64,7 +64,10 @@ else:
 
     from task_tsdimaging import image_suffix
 
-    import restfreqtool
+    try:
+        from casatestutils import restfreqtool
+    except:
+        import restfreqtool
 
 _ia = image()
 _rg = regionmanager()

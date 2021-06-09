@@ -52,7 +52,8 @@ my_dataset_names = ['n09q2_1_1-shortened.IDI1',
                     'n09q2_1_1-shortened-part1.IDI1',
                     'n09q2_1_1-shortened-part2.IDI1',
                     'emerlin_multiuv.IDI1',
-                    '1331_3030_C-Band_5GHz__64.000_128.fits']
+                    '1331_3030_C-Band_5GHz__64.000_128.fits',
+                    'VLBA_TL015A_tl015arecor_BIN0_SRC0_1_201020T164655.idifits']
 
 # name of the resulting MS
 msname = my_dataset_names[0]+'.ms'
@@ -827,7 +828,6 @@ class test_importfitsidi(unittest.TestCase):
                 
         self.assertTrue(retValue['success'])
     
-
     def test5(self):
         '''fitsidi-import: Test e-MERLIN polarization swapping'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
@@ -936,7 +936,84 @@ class test_importfitsidi(unittest.TestCase):
 
         self.assertTrue(retValue['success'])
 
-    
+    def test6(self):
+        '''fitsidi-import: Test import of gain curves'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
+
+        self.res = importfitsidi(my_dataset_names[5], msname, 
+                                 constobsid=True, scanreindexgap_s=5)
+        print(myname, ": Success! Now checking output ...")
+        mscomponents = set(["table.dat",
+#                            "table.f0",
+                            "table.f1",
+                            "table.f2",
+                            "table.f3",
+                            "table.f4",
+                            "table.f5",
+                            "table.f6",
+                            "table.f7",
+                            "table.f8",
+                            "ANTENNA/table.dat",
+                            "DATA_DESCRIPTION/table.dat",
+                            "FEED/table.dat",
+                            "FIELD/table.dat",
+                            "FLAG_CMD/table.dat",
+                            "HISTORY/table.dat",
+                            "OBSERVATION/table.dat",
+                            "POINTING/table.dat",
+                            "POLARIZATION/table.dat",
+                            "PROCESSOR/table.dat",
+                            "SPECTRAL_WINDOW/table.dat",
+                            "STATE/table.dat",
+                            "ANTENNA/table.f0",
+                            "DATA_DESCRIPTION/table.f0",
+                            "FEED/table.f0",
+                            "FIELD/table.f0",
+                            "FLAG_CMD/table.f0",
+                            "GAIN_CURVE/table.f0",
+                            "HISTORY/table.f0",
+                            "OBSERVATION/table.f0",
+                            "POINTING/table.f0",
+                            "POLARIZATION/table.f0",
+                            "PROCESSOR/table.f0",
+                            "SPECTRAL_WINDOW/table.f0",
+                            "STATE/table.f0"
+                            ])
+        for name in mscomponents:
+            if not os.access(msname+"/"+name, os.F_OK):
+                print(myname, ": Error  ", msname+"/"+name, "doesn't exist ...")
+                retValue['success']=False
+                retValue['error_msgs']=retValue['error_msgs']+msname+'/'+name+' does not exist'
+            else:
+                print(myname, ": ", name, "present.")
+        print(myname, ": MS exists. All tables present. Try opening as MS ...")
+        try:
+            _ms.open(msname)
+        except:
+            print(myname, ": Error  Cannot open MS table", tablename)
+            retValue['success']=False
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+        else:
+            _ms.close()
+            print(myname, ": OK. Checking tables in detail ...")
+            retValue['success']=True
+
+            name = "GAIN_CURVE"
+            expected = [ ['TYPE',       8, 'POWER(ZA)', 0],
+                         ['NUM_POLY',   8, 3, 0],
+                         ['GAIN',       8, [[0.80699998, 0.01596000,
+                                             -0.00020470],
+                                            [0.80699998, 0.01596000,
+                                             -0.00020470]], 1E-8],
+                         ['SENSITIVITY', 8, [0.07699999, 0.06499999], 1E-8],
+                         ]
+            results = checktable(name, expected)
+            if not results:
+                retValue['success']=False
+                retValue['error_msgs']=retValue['error_msgs']+'Check of table '+name+' failed'
+
+        self.assertTrue(retValue['success'])
+
 def suite():
     return [test_importfitsidi]
     
