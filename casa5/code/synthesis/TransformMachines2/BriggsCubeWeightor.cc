@@ -274,7 +274,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
               if(gwt(ugrid, vgrid)>0.0) sumlocwt+=square(gwt(ugrid,vgrid));
             }
           }
-          f2_p[0][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / sumWgts(0,chan));
+          f2_p[0][chan] = square(5.0*pow(10.0,Double(-robust_p))) / (sumlocwt / (2*sumWgts(0,chan)));
           d2_p[0][chan] = 1.0;
           
         }
