@@ -1,5 +1,5 @@
 //# BriggsCubeWeight.cc: Implementation for Briggs weighting for cubes
-//# Copyright (C) 2018-2019
+//# Copyright (C) 2018-2021
 //# Associated Universities, Inc. Washington DC, USA.
 //#
 //# This library is free software; you can redistribute it and/or modify it
@@ -106,13 +106,14 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
     //cout << "BriggsCubeWeightor::initImgWeightCol " << endl;
     
     CoordinateSystem cs=templateimage.coordinates();
+    
 	if(initialized_p && nx_p==templateimage.shape()(0) && ny_p==templateimage.shape()(1)){
 		
 		Double freq=cs.toWorld(IPosition(4,0,0,0,0))[3];
 		if(freq==refFreq_p)
 		return imWgtColName_p;
 	}
-	  
+        refFreq_p=cs.toWorld(IPosition(4,0,0,0,0))[3];
 	visWgt_p=vi.getImagingWeightGenerator();
         VisImagingWeight vWghtNat("natural");
 	vi.useImagingWeight(vWghtNat);
@@ -166,8 +167,13 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	//cerr << "FIELDs to use " << Vector<pair<Int,Int> >(fieldsToUse) << endl;
 
         Bool inOneGo=True;
-        uInt allSwingPad=estimateSwingChanPad(vi, -1, cs, templateimage.shape()[3],
+        uInt allSwingPad=4;
+        //if multifield each field weight density are independent so no other field
+        //or ms  fields would contribute
+        if( !multiField_p ){
+         allSwingPad=estimateSwingChanPad(vi, -1, cs, templateimage.shape()[3],
                                                 ephemtab);
+        }
         if(msInUse.size() > 1){
           
           if((allSwingPad > 4) && (allSwingPad >   uInt(templateimage.shape()[3]/10)))
@@ -175,9 +181,11 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
           //cerr << "allSwingPad " << allSwingPad << " inOneGo " << inOneGo << endl;
 
         }
-        
+        ///////////////
+        //cerr << "###fieldsInUSE " << Vector<pair<Int, Int> >(fieldsToUse) << endl;;
+        //inOneGo=True;
 
- 
+        /////////////////////////////
         if(inOneGo){
           fillImgWeightCol(vi, inRec, -1, fieldsToUse, allSwingPad, templateimage.shape(), cs);
         }
@@ -207,7 +215,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
       ny_p=shp[1];
       CoordinateSystem cs= csOrig;
       //CoordinateSystem cs=templateimage.coordinates();
-      refFreq_p=cs.toWorld(IPosition(4,0,0,0,0))[3];
+      
       Vector<String> units = cs.worldAxisUnits();
       units[0]="rad"; units[1]="rad";
       cs.setWorldAxisUnits(units);
@@ -221,7 +229,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
       Vector<Double> refpix=cs.referencePixel();
       refpix[3]+=swingpad/2;
       cs.setReferencePixel(refpix);
-      //cerr << "REFPIX " << refpix << " new SHAPE " << shp  << " swigpad " << swingpad  << " msid " <<fieldsToUse[k].first << " fieldid " <<  fieldsToUse[k].second << endl;
+      //cerr << "REFPIX " << refpix << " new SHAPE " << shp  << " swigpad " << swingpad  << " msid "<< msid << " fieldToUse.msid " <<fieldsToUse[k].first << " fieldid " <<  fieldsToUse[k].second << endl;
       TempImage<Complex> newTemplate(shp, cs);
       Matrix<Double>  sumWgts;
             
@@ -361,7 +369,7 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	Double minFreq=1e99;
 	Double maxFreq=0.0;
 	std::vector<Double> localminfreq, localmaxfreq, firstchanfreq;
-	//Int msID=-1;
+	Int msID=-1;
 	Int fieldID=-1;
 	Int spwID=-1;
 	////TESTOO
@@ -372,11 +380,11 @@ String BriggsCubeWeightor::initImgWeightCol(vi::VisibilityIterator2& vi,
 	for (vi.originChunks();vi.moreChunks();vi.nextChunk()) {
 	  for (vi.origin(); vi.more(); vi.next()) {
             //process for required msid
-            if((msid < 0) || (msid==vb->msId()))
-             {
-               //if((msID != vb->msId()) || (fieldID != vb->fieldId()(0)) || (spwID!=vb->spectralWindows()(0))){
+            if( (msid < 0) || (msid==vb->msId()) )
+              {
+              if( (msID != vb->msId()) || (fieldID != vb->fieldId()(0)) )
                {
-                 //msID=vb->msId();
+                msID=vb->msId();
                 fieldID = vb->fieldId()(0);
                 spwID = vb->spectralWindows()(0);
                 Double localBeg, localEnd;
