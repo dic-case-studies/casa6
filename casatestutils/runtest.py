@@ -835,9 +835,9 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
         branch = "master"
 
     # Clone a default set of repositories to if test paths are not provided from command line
-    #if len(test_paths) == 0 :
-    #    test_paths = fetch_tests(str(work_dir), branch)
-    test_paths = ['work/casasources//casampi/src/casampi/tests', 'work/casasources//casaplotms/tests/plotms', 'work/casasources//almatasks/tests/tasks', 'work/casasources//casa6/casatests/regression/', 'work/casasources//casa6/casatests/stakeholder/', 'work/casasources//casa6/casatasks/tests/', 'work/casasources//casa6/casatools/tests/', 'work/casasources//casaviewer/tests/tasks']
+    if len(test_paths) == 0 :
+        test_paths = fetch_tests(str(work_dir), branch)
+    #test_paths = ['work/casasources//casampi/src/casampi/tests', 'work/casasources//casaplotms/tests/plotms', 'work/casasources//almatasks/tests/tasks', 'work/casasources//casa6/casatests/regression/', 'work/casasources//casa6/casatests/stakeholder/', 'work/casasources//casa6/casatasks/tests/', 'work/casasources//casa6/casatools/tests/', 'work/casasources//casaviewer/tests/tasks']
 
     
     test_config = None
