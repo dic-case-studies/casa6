@@ -816,9 +816,10 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
         raise Exception("Missing pkg")
     if work_dir is None:
         raise Exception("Missing work_dir")
-    #exec_path, casatestutils_exec_path = unpack_pkg(pkg, work_dir, work_dir + "/pkg")
-    exec_path =  "work/pkg/casa-6.3.0-11/bin"
-    casatestutils_exec_path = "work/pkg/casa-6.3.0-11/lib/py/lib/python3.6/site-packages/casatestutils/runtest.py"
+    exec_path, casatestutils_exec_path = unpack_pkg(pkg, work_dir, work_dir + "/pkg")
+    # Testing Lines
+    #exec_path =  "work/pkg/casa-6.3.0-11/bin"
+    #casatestutils_exec_path = "work/pkg/casa-6.3.0-11/lib/py/lib/python3.6/site-packages/casatestutils/runtest.py"
     #exec_path = "/tmp/work/pkg/CASA.app/Contents/MacOS"
     print("Executable path: " + exec_path)
     print("casatestutils path: " + casatestutils_exec_path)
@@ -879,7 +880,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
                                                       tuple(opts),
                                                       x['comment'],
                                                       timeout))
-    #print(tests_to_run)
+    print(tests_to_run)
     # Filter tests by test list
     if test_list is not None and len(test_list)>0:
         print ("Test list provided. Filtering tests.")
@@ -1102,24 +1103,27 @@ if __name__ == "__main__":
         print("Testing Components" + str(components))
         print("")
         
-        #
-        if args.mapfile is not None:
-            component_to_test_map = json.load(args.mapfile)
-        else:
-            import casatestutils as _;
-            with open("{}/{}".format(_.__path__[0], "component_to_test_map.json")) as ctt:
-                component_to_test_map = json.load(ctt)
-        
-        for c in components:
-            _isComponent = False
-            component = c.strip()
-            for myDict in component_to_test_map["testlist"]:
-                #print(component, myDict["testGroup"])
-                if component in myDict["testGroup"]:
-                    _isComponent = True
-                    testnames.append(myDict["testScript"])
-            if not _isComponent:
-                print("No Tests for Component: {}".format(component))
+        if not args.bamboo:
+            if args.mapfile is not None:
+                component_to_test_map = json.load(args.mapfile)
+            else:
+                try:
+                    import casatestutils as _;
+                    with open("{}/{}".format(_.__path__[0], "component_to_test_map.json")) as ctt:
+                        component_to_test_map = json.load(ctt)
+                except:
+                    print("No JSON file to Map")
+            
+            for c in components:
+                _isComponent = False
+                component = c.strip()
+                for myDict in component_to_test_map["testlist"]:
+                    #print(component, myDict["testGroup"])
+                    if component in myDict["testGroup"]:
+                        _isComponent = True
+                        testnames.append(myDict["testScript"])
+                if not _isComponent:
+                    print("No Tests for Component: {}".format(component))
 
     if args.verbose:
         verbose = True
