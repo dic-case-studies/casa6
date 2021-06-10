@@ -703,7 +703,7 @@ def get_brightness_unit_from_ms(msname):
 
 
 
-def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, mode, nchan, start, width, veltype,
+def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, timerange, mode, nchan, start, width, veltype,
                specmode, outframe,
                gridfunction, convsupport, truncate, gwidth, jwidth, imsize, cell, phasecenter, projection,
                pointingcolumn, restfreq, stokes, minweight, brightnessunit, clipminmax):
@@ -712,13 +712,14 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
     imager = None
 
     try:
-        # if spw starts with ':', add '*' at the beginning
+        # tweak input parameters
+        # ---- if spw starts with ':', add '*' at the beginning
         if isinstance(spw, str):
             _spw = '*' + spw if spw.startswith(':') else spw
         else:
             _spw = ['*' + v if v.startswith(':') else v for v in spw]
 
-        # if antenna doesn't contain '&&&', append it
+        # ---- if antenna doesn't contain '&&&', append it
         def antenna_to_baseline(s):
             if len(s) == 0:
                 return s
@@ -730,7 +731,6 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
             baseline = antenna_to_baseline(antenna)
         else:
             baseline = [antenna_to_baseline(a) for a in antenna]
-
 
         # handle overwrite parameter
         _outfile = outfile.rstrip('/')
@@ -748,20 +748,23 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
                     _remove_image(_outfile + _suffix)
                     assert not os.path.exists(_outfile + _suffix)
 
-        # parse parameter for spectral axis
+        # handle image spectral axis parameters
         imnchan, imstart, imwidth = _configure_spectral_axis(mode, nchan, start, width, restfreq)
+        
+        # handle image restfreq parameter's default value
         _restfreq = _get_restfreq_if_empty(infiles, _spw, field, restfreq)
 
-        # translate some default values into the ones that are consistent with the current framework
+        # handle gridder parameters
+        # ---- translate some default values into the ones that are consistent with the current framework
         gtruncate = _handle_grid_defaults(truncate)
         ggwidth = _handle_grid_defaults(gwidth)
         gjwidth = _handle_grid_defaults(jwidth)
 
+        # handle image parameters
         _ephemsrcname = ''
         if isinstance(phasecenter, str) and phasecenter.strip().upper() in ['MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO', 'SUN', 'MOON', 'TRACKFIELD']:
             _ephemsrcname = phasecenter
 
-        # handle image parameters
         if isinstance(infiles, str) or len(infiles) == 1:
             _imsize, _cell, _phasecenter = _handle_image_params(imsize, cell, phasecenter, infiles,
                                                                 field, _spw, antenna, scan, intent,
@@ -791,6 +794,7 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
             # data selection
             field=field,#'',
             spw=_spw,#'0',
+            timestr=timerange,
             antenna=baseline,
             scan=scan,
             state=intent,
