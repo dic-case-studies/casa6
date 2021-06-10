@@ -41,6 +41,7 @@ try:
     from casatasks import casalog, importuvfits, exportuvfits, rmtables
     ms = casatools.ms()
     tb = casatools.table()
+    qa = casatools.quanta()
     CASA6 = True
 except ImportError:
     from __main__ import default
@@ -53,11 +54,13 @@ import math
 import os
 import unittest
 import traceback
+import shutil
 import sys
 import numpy as np
 
 
 if CASA6:
+    mergedDataRoot = ctsys.resolve('unittest/importuvfits')
     vlapath = ctsys.resolve('unittest/importuvfits/3C219D_CAL.UVFITS')
     path = ctsys.resolve('unittest/importuvfits/refim_Cband.G37line.ms')
 
@@ -70,6 +73,7 @@ if CASA6:
     #testlogpath = ctsys.resolve('testlog.log')
 else:
     dataroot = os.environ.get('CASAPATH').split()[0] + '/'
+    mergedDataRoot = dataroot + 'casatestdata/unittest/importuvfits'
     vlapath = dataroot + 'casatestdata/unittest/importuvfits/3C219D_CAL.UVFITS'
     carmapath = dataroot + 'casatestdata/unittest/importuvfits/mirsplit.UVFITS'
     exportuvfits(vis=dataroot + 'casatestdata/unittest/importuvfits/refim_Cband.G37line.ms', fitsfile='EVLAUV.UVFITS', overwrite=True)
@@ -79,6 +83,19 @@ else:
 logpath = casalog.logfile()
 
 class importuvfits_test(unittest.TestCase):
+    # 06/13/2010: This seemed to be the only MS in the regression repo
+    # that is a good test of padwithflag.
+    inpms = 'cvel/input/ANTEN_sort_hann_for_cvel_reg.ms'
+
+    origms = 'start.ms'  # Just a copy of inpms
+    fitsfile = 'hanningsmoothed.UVF'
+    msfromfits = 'end.ms'
+
+    records = {}
+    need_to_initialize = True  # Do once, at start.
+    do_teardown = False  # Do once, after initializing and filling records.
+
+    # Its value here should not really matter.
 
     def setUp(self):
         if not CASA6:
@@ -90,6 +107,18 @@ class importuvfits_test(unittest.TestCase):
         rmtables('test_set.ms')
         if os.path.exists('testlog.log'):
             os.remove('testlog.log')
+
+        if os.path.exists('kf.ms'):
+            shutil.rmtree('kf.ms')
+        if os.path.exists('xyz.uvfits'):
+            os.remove('xyz.uvfits')
+
+        if self.do_teardown:
+            self.qa.done( )
+            shutil.rmtree(self.origms)
+            shutil.rmtree(self.msfromfits)
+            os.remove(self.fitsfile)
+            self.do_teardown = False
 
     @classmethod
     def tearDownClass(cls):
@@ -236,6 +265,27 @@ class importuvfits_test(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             importuvfits(fitsfile=vlapath, vis='test_set.ms')
         self.assertTrue('user does not want to remove it.' in open('testlog.log').read(), msg='No warning saying that the file will not overwrite was displayed')
+
+    # Merged test cases from test_importuvfits
+
+    def test_receptor_angle(self):
+        """CAS-7081: Test receptor angle is preserved"""
+        msname = os.path.join(mergedDataRoot, "uvfits_test.ms")
+        self.assertTrue(ms.open(msname), "Input dataset not found")
+        uvfits = "xyz.uvfits"
+        self.assertTrue(ms.tofits(uvfits), "Failed to write uvfits")
+        ms.done()
+        feed = "/FEED"
+        tb.open(msname + feed)
+        rec_ang = "RECEPTOR_ANGLE"
+        expec = tb.getcol(rec_ang)
+        tb.done()
+        importname = "kf.ms"
+        importuvfits(fitsfile=uvfits, vis=importname)
+        tb.open(importname + feed)
+        got = tb.getcol(rec_ang)
+        tb.done()
+        self.assertTrue(np.max(np.abs(got-expec)) < 1e-7, "Receptor angles not preserved")
 
 def suite():
     return[importuvfits_test]

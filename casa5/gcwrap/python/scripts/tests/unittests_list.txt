@@ -15,7 +15,6 @@ test_cleanhelper                ttsutsum@nrao.edu
 test_clearstat                  scastro@eso.org
 test_componentlist              dmehring@nrao.edu
 test_concat                     dpetry@eso.org
-test_conjugatevis               dpetry@eso.org
 test_coordsys                   dmehring@nrao.edu
 test_csvclean                   kgolap@aoc.nrao.edu
 test_cvel                       dpetry@eso.org
@@ -28,7 +27,6 @@ test_flagcmd                    scastro@eso.org
 test_flagdata                   scastro@eso.org
 test_flaghelper                 scastro@eso.org
 test_flagmanager                scastro@eso.org
-test_fluxscale                  ttsutsum@nrao.edu
 test_fringefit			kettenis@jive.eu
 test_gencal                     ttsutsum@nrao.edu
 test_getchunk                   dmehring@nrao.edu
@@ -170,6 +168,7 @@ test_req_task_uvmodelfit        nschweig@nrao.edu
 test_req_task_imreframe         nschweig@nrao.edu
 test_req_task_accor             nschweig@nrao.edu
 test_req_task_applycal          nschweig@nrao.edu
+test_req_task_blcal             nschweig@nrao.edu
 test_req_task_fixplanets        nschweig@nrao.edu
 test_req_task_fluxscale         nschweig@nrao.edu
 test_req_task_listsdm           nschweig@nrao.edu
@@ -180,6 +179,7 @@ test_req_task_imdev             nschweig@nrao.edu
 test_req_task_polcal            gmoellen@nrao.edu
 test_req_task_sdintimaging      ttsutsum@nrao.edu
 test_req_task_statwt            dmehring@nrao.edu
+test_req_task_conjugatevis.py   nschweig@nrao.edu
 test_stk_alma_pipeline_imaging.py  scastro@eso.org
 
 # Casaguide List
