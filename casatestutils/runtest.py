@@ -1001,6 +1001,28 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
                 xunit.append_result(test.name, str(runtime), len(output), output)
                 print("")
 
+        elif "mpi" not in test.options and sys.platform != "darwin" and ( pmode == 'parallel' or pmode == 'both'):
+            # Special Case when you have tests in the HPC / parallel list but no mpi test option
+            print("Running test: {} in Serial mode".format(test.name))
+            casaopts = " --nogui --nologger --log2term"
+            casa_exe = exec_path + "/casa"
+            assert (test != None)
+            #cmd = (casa_exe + " " + casaopts + " -c " + casatestutils_exec_path + " " + test.path).split()
+            cmd = (casa_exe + " " + casaopts + " -c " + test.path).split()
+            cwd = work_dir + "/" + test.name
+
+            if not os.path.exists(cwd):
+                os.makedirs(cwd)
+            print("Running cmd " + str(cmd))
+            print("in "  + cwd)
+            starttime = datetime.datetime.now()
+
+            output = r.runshell(cmd, test.timeout,cwd)
+
+            endtime = datetime.datetime.now()
+            runtime = endtime - starttime
+            xunit.append_result(test.name, str(runtime), len(output), output)
+            print("")
         #elif "mpi" not in test.options and ( pmode == 'serial'):
         elif pmode == 'serial':
             if "casampi" in test.name:
