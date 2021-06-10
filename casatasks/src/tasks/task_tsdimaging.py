@@ -103,7 +103,7 @@ class OldImagerBasedTools(object):
             self.imager.close()
 
     @contextlib.contextmanager
-    def open_and_select_old_imager(self, vislist, field, spw, antenna, scan, intent):
+    def open_and_select_old_imager(self, vislist, field, spw, antenna, scan, intent, timerange):
         if isinstance(vislist, str):
             with self.open_old_imager(vislist) as im:
                 im.selectvis(field=field,
@@ -113,7 +113,8 @@ class OldImagerBasedTools(object):
                              step=1,
                              baseline=antenna,
                              scan=scan,
-                             intent=intent)
+                             intent=intent,
+                             time=timerange)
                 yield im
         else:
             fieldsel = SelectionHandler(field)
@@ -121,6 +122,7 @@ class OldImagerBasedTools(object):
             antennasel = SelectionHandler(antenna)
             scansel = SelectionHandler(scan)
             intentsel = SelectionHandler(intent)
+            timerangesel = SelectionHandler(timerange)
             try:
                 for i in range(len(vislist)):
                     vis = vislist[i]
@@ -129,6 +131,7 @@ class OldImagerBasedTools(object):
                     _antenna = antennasel(i)
                     _scan = scansel(i)
                     _intent = intentsel(i)
+                    _timerangesel = timerangesel(i)
                     if len(_antenna) == 0:
                         _baseline = _antenna
                     elif len(_antenna) < 4 or _antenna[:-3] != '&&&':
@@ -136,7 +139,7 @@ class OldImagerBasedTools(object):
                     else:
                         _baseline = _antenna
                     self.imager.selectvis(vis, field=_field, spw=_spw, nchan=-1, start=0, step=1,
-                                          baseline=_baseline, scan=_scan, intent=_intent)
+                                          baseline=_baseline, scan=_scan, intent=_intent, time=_timerangesel)
                 yield self.imager
             finally:
                 self.imager.close()
@@ -146,7 +149,7 @@ class OldImagerBasedTools(object):
             casalog.post('test')
             raise RuntimeError('ERROR!')
 
-    def get_pointing_sampling_params(self, vis, field, spw, baseline, scan, intent, outref, movingsource, pointingcolumntouse, antenna_name):
+    def get_pointing_sampling_params(self, vis, field, spw, baseline, scan, intent, timerange, outref, movingsource, pointingcolumntouse, antenna_name):
         with self.open_old_imager(vis) as im:
             im.selectvis(field=field,
                         spw=spw,
@@ -155,7 +158,8 @@ class OldImagerBasedTools(object):
                         step=1,
                         baseline=baseline,
                         scan=scan,
-                        intent=intent)
+                        intent=intent,
+                        time=timerange)
             sampling_params = im.pointingsampling(pattern='raster',
                                                 ref=outref,
                                                 movingsource=movingsource,
@@ -163,19 +167,19 @@ class OldImagerBasedTools(object):
                                                 antenna='{0}&&&'.format(antenna_name))
         return sampling_params
 
-    def get_map_extent(self, vislist, field, spw, antenna, scan, intent,
+    def get_map_extent(self, vislist, field, spw, antenna, scan, intent, timerange,
                        ref, movingsource, pointingcolumntouse):
 
         with self.open_and_select_old_imager(vislist=vislist, field=field,
                                              spw=spw, antenna=antenna, scan=scan,
-                                             intent=intent) as im:
+                                             intent=intent, timerange=timerange) as im:
             map_param = im.mapextent(ref=ref, movingsource=movingsource,
                                      pointingcolumntouse=pointingcolumntouse)
         return map_param
 
-    def sort_vis(self, vislist, spw, mode, width, field, antenna, scan, intent):
+    def sort_vis(self, vislist, spw, mode, width, field, antenna, scan, intent, timerange):
         if isinstance(vislist, str) or len(vislist) == 1:
-            return vislist, field, spw, antenna, scan, intent
+            return vislist, field, spw, antenna, scan, intent, timerange
         imhelper = cleanhelper(imtool=self.imager, vis=vislist, casalog=casalog)
         imhelper.sortvislist(spw=spw, mode=mode, width=width)
         sorted_idx = list(imhelper.sortedvisindx)
@@ -192,7 +196,9 @@ class OldImagerBasedTools(object):
         sorted_scan = [scansel(i) for i in sorted_idx]
         intentsel = SelectionHandler(intent)
         sorted_intent = [intentsel(i) for i in sorted_idx]
-        return sorted_vislist, sorted_field, sorted_spw, sorted_antenna, sorted_scan, sorted_intent
+        timerangesel = SelectionHandler(timerange)
+        sorted_timerange = [intentsel(i) for i in sorted_idx]
+        return sorted_vislist, sorted_field, sorted_spw, sorted_antenna, sorted_scan, sorted_intent, sorted_timerange
 
 def _configure_spectral_axis(mode, nchan, start, width, restfreq):
     # fix default
@@ -304,7 +310,7 @@ def _get_imsize(width, height, dx, dy):
                  (nx+1, ny+1))
     return [int(nx+1), int(ny+1)]
 
-def _get_pointing_extent(phasecenter, vislist, field, spw, antenna, scan, intent,
+def _get_pointing_extent(phasecenter, vislist, field, spw, antenna, scan, intent, timerange,
                          pointingcolumntouse, ephemsrcname):
     ### MS selection is ignored. This is not quite right.
     casalog.post("Calculating map extent from pointings.")
@@ -338,7 +344,7 @@ def _get_pointing_extent(phasecenter, vislist, field, spw, antenna, scan, intent
                 break
 
     t = OldImagerBasedTools()
-    mapextent = t.get_map_extent(vislist, field, spw, antenna, scan, intent,
+    mapextent = t.get_map_extent(vislist, field, spw, antenna, scan, intent, timerange,
                                  ref=base_mref, movingsource=ephemsrcname,
                                  pointingcolumntouse=pointingcolumntouse)
     #mapextent = self.imager.mapextent(ref=base_mref, movingsource=ephemsrcname,
@@ -365,7 +371,7 @@ def _get_pointing_extent(phasecenter, vislist, field, spw, antenna, scan, intent
     return ret_dict
 
 def _handle_image_params(imsize, cell, phasecenter,
-                         vislist, field, spw, antenna, scan, intent,
+                         vislist, field, spw, antenna, scan, intent, timerange,
                          restfreq, pointingcolumntouse, ephemsrcname):
     # round-up imsize
     _imsize = sdutil._to_list(imsize, int) or sdutil._to_list(imsize, numpy.integer)
@@ -408,7 +414,7 @@ def _handle_image_params(imsize, cell, phasecenter,
     _phasecenter = phasecenter
     if _phasecenter == '' or len(_imsize) == 0 or _imsize[0] < 1:
         # return a dictionary with keys 'center', 'width', 'height'
-        map_param = _get_pointing_extent(_phasecenter, vislist, field, spw, antenna, scan, intent,
+        map_param = _get_pointing_extent(_phasecenter, vislist, field, spw, antenna, scan, intent, timerange,
                                          pointingcolumntouse, ephemsrcname)
         # imsize
         (cellx,celly) = sdutil.get_cellx_celly(_cell, unit='arcmin')
@@ -558,7 +564,7 @@ def _get_restfreq_if_empty(vislist, spw, field, restfreq):
     return rf
 
 def set_beam_size(vis, imagename,
-                  field, spw, baseline, scan, intent,
+                  field, spw, baseline, scan, intent, timerange,
                   ephemsrcname, pointingcolumntouse, antenna_name, antenna_diameter,
                   restfreq, gridfunction, convsupport, truncate, gwidth, jwidth):
     """
@@ -574,7 +580,7 @@ def set_beam_size(vis, imagename,
         csys.done()
 
     old_tool = OldImagerBasedTools()
-    sampling_params = old_tool.get_pointing_sampling_params(vis, field, spw, baseline, scan, intent,
+    sampling_params = old_tool.get_pointing_sampling_params(vis, field, spw, baseline, scan, intent, timerange,
                                                         outref=outref,
                                                         movingsource=ephemsrcname,
                                                         pointingcolumntouse=pointingcolumntouse,
@@ -763,8 +769,8 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, t
         # handle infiles parameter
         # ---- sort input data using cleanhelper function to get results consistent with older sdimaging task
         old_way = OldImagerBasedTools()
-        _sorted = old_way.sort_vis(infiles, _spw, mode, imwidth, field, antenna, scan, intent)
-        sorted_vis, sorted_field, sorted_spw, sorted_antenna, sorted_scan, sorted_intent = _sorted
+        _sorted = old_way.sort_vis(infiles, _spw, mode, imwidth, field, antenna, scan, intent, timerange)
+        sorted_vis, sorted_field, sorted_spw, sorted_antenna, sorted_scan, sorted_intent, sorted_timerange = _sorted
 
         # handle image geometric parameters
         _ephemsrcname = ''
@@ -773,7 +779,7 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, t
             _ephemsrcname = phasecenter
         _imsize, _cell, _phasecenter = _handle_image_params(imsize, cell, phasecenter, sorted_vis,
                                                             sorted_field, sorted_spw, sorted_antenna,
-                                                            sorted_scan, sorted_intent,
+                                                            sorted_scan, sorted_intent, sorted_timerange,
                                                             _restfreq, pointingcolumn, _ephemsrcname)
 
         # calculate pblimit from minweight
@@ -879,6 +885,7 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, t
     rep_antenna = _get_param(0, antenna)
     rep_scan = _get_param(0, scan)
     rep_intent = _get_param(0, intent)
+    rep_timerange = _get_param(0, timerange)
     if len(rep_antenna) > 0:
         baseline = '{0}&&&'.format(rep_antenna)
     else:
@@ -891,7 +898,7 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, t
         antenna_name = tb.getcell('NAME', antenna_index)
         antenna_diameter = tb.getcell('DISH_DIAMETER', antenna_index)
     set_beam_size(rep_ms, imagename,
-                  rep_field, rep_spw, baseline, rep_scan, rep_intent,
+                  rep_field, rep_spw, baseline, rep_scan, rep_intent, rep_timerange,
                   _ephemsrcname, pointingcolumn, antenna_name, antenna_diameter,
                   _restfreq, gridfunction, convsupport, truncate, gwidth, jwidth)
 
