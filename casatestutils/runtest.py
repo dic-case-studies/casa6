@@ -310,11 +310,13 @@ def unpack_tarball(pkg, outputdir):
     return installpath
 
 def get_casatestutils_exec_path(pkg_dir):
+    # Since runtest is no longer part of casatestutils, this may be removed.
     for currentpath, folders, files in os.walk(pkg_dir):
         for file in files:
             #print(">>>" + os.path.join(currentpath, file))
             if currentpath.endswith('casatestutils') and file == 'runtest.py':
                 return(os.path.join(currentpath, file))
+    return "/dev/null/"
 
 def unpack_pkg(pkg, work_dir, outputdir):
     if not os.path.exists(outputdir):
