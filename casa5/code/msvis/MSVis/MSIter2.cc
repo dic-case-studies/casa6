@@ -175,6 +175,7 @@ MSIter2::MSIter2(const Block<MeasurementSet>& mss,
   lastMS_p=-1;
   storeSorted_p=storeSorted;
   interval_p=timeInterval;
+  prevFirstTimeStamp_p = -1.0;
   this->construct2(sortColumns,addDefaultSortColumns);
 
 }
@@ -226,15 +227,16 @@ void MSIter2::construct2(const Block<Int>& sortColumns,
     cols=sortColumns;
   }
 
-  Bool timeSeen=False, arraySeen=False, ddSeen=False, fieldSeen=False, scanSeen=False;
+  timeInSort_p=False, arrayInSort_p=False, ddInSort_p=False, fieldInSort_p=False;
+  bool scanSeen;
   Int nCol=0;
   for (uInt i=0; i<cols.nelements(); i++) {
     if (cols[i]>0 && 
 	cols[i]<MS::NUMBER_PREDEFINED_COLUMNS) {
-      if (cols[i]==MS::ARRAY_ID && !arraySeen) { arraySeen=True; nCol++; }
-      if (cols[i]==MS::FIELD_ID && !fieldSeen) { fieldSeen=True; nCol++; }
-      if (cols[i]==MS::DATA_DESC_ID && !ddSeen) { ddSeen=True; nCol++; }
-      if (cols[i]==MS::TIME && !timeSeen) { timeSeen=True; nCol++; }
+      if (cols[i]==MS::ARRAY_ID && !arrayInSort_p) { arrayInSort_p=True; nCol++; }
+      if (cols[i]==MS::FIELD_ID && !fieldInSort_p) { fieldInSort_p=True; nCol++; }
+      if (cols[i]==MS::DATA_DESC_ID && !ddInSort_p) { ddInSort_p=True; nCol++; }
+      if (cols[i]==MS::TIME && !timeInSort_p) { timeInSort_p=True; nCol++; }
       if (cols[i]==MS::SCAN_NUMBER && !scanSeen) { scanSeen=True; }
     } else {
       throw(AipsError("MSIter() - invalid sort column"));
@@ -245,22 +247,22 @@ void MSIter2::construct2(const Block<Int>& sortColumns,
   Int iCol=0;
   if (addDefaultSortColumns) {
     columns.resize(cols.nelements()+4-nCol);
-    if (!arraySeen) {
+    if (!arrayInSort_p) {
       // add array if it's not there
       columns[iCol++]=MS::columnName(MS::ARRAY_ID);
     }
-    if (!fieldSeen) {
+    if (!fieldInSort_p) {
       // add field if it's not there
       columns[iCol++]=MS::columnName(MS::FIELD_ID);
     }
-    if (!ddSeen) {
+    if (!ddInSort_p) {
       // add dd if it's not there
       columns[iCol++]=MS::columnName(MS::DATA_DESC_ID);
     }
-    if (!timeSeen) {
+    if (!timeInSort_p) {
       // add time if it's not there
       columns[iCol++]=MS::columnName(MS::TIME);
-      timeSeen = True;
+      timeInSort_p = True;
     }
   } else {
     columns.resize(cols.nelements());
@@ -273,7 +275,7 @@ void MSIter2::construct2(const Block<Int>& sortColumns,
     interval_p=DBL_MAX; // semi infinite
   } else {
     // assume that we want to sort on time if interval is set
-    if (!timeSeen) {
+    if (!timeInSort_p) {
       columns.resize(columns.nelements()+1);
       columns[iCol++]=MS::columnName(MS::TIME);
     }
