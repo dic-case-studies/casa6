@@ -424,7 +424,7 @@ def translate_spw(data, ms):
 
 
 # file part
-class FileReader4JyPerK():
+class JyPerKReader4File():
     def __init__(self, filename):
         self.filename = filename
         
