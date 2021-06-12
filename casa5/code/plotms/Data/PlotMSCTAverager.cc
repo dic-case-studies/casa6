@@ -195,7 +195,7 @@ void PlotMSCTAverager::fillAvgCalTable(NewCalTable& caltab) {
 
 //----------------------------------------------------------------------------
 
-void PlotMSCTAverager::initialize(ROCTIter& cti) {
+void PlotMSCTAverager::initialize(ROCTIter& cti, std::vector<casacore::Slice>& chansel) {
   // Initialize the averager
   if (debug_) {
     cout << "  PMSCTA::initialize()" << endl;
@@ -280,9 +280,12 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
   }
 
   if (avgChan_p) {
+    avgChan_.resize(nAvgChan_p);
+    indgen(avgChan_);
     accumFreq_.resize(nAvgChan_p);
     accumFreq_.set(0.0);
   } else {
+    avgChan_ = cti.chan();
     avgFreq_ = cti.freq();
   }
 
@@ -324,7 +327,7 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
 
 //----------------------------------------------------------------------------
 
-void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
+void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti, std::vector<casacore::Slice>& chansel)
 {
 // Accumulate a CTIter chunk
 // Input:
@@ -338,7 +341,7 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
   }
 
   if (!initialized_p) {
-    initialize(cti);
+    initialize(cti, chansel);
   }
 
   // Only accumulate chunks with the same number of channels
@@ -487,7 +490,7 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti)
 
 //----------------------------------------------------------------------------
 
-void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti) {
+void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti, std::vector<casacore::Slice>& chansel) {
   // Accumulate a CTIter chunk with per-antenna averaging
 
   if (debug_) {
@@ -495,7 +498,7 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti) {
   }
 
   if (!initialized_p) {
-    initialize(cti);
+    initialize(cti, chansel);
   }
 
   // Only accumulate chunks with the same number of channels

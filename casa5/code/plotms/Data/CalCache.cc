@@ -122,11 +122,6 @@ void CalCache::loadIt(vector<PMS::Axis>& loadAxes,
     throw AipsError("Averaging not supported for cal table type " + calType_);
   }
 
-  // No averaging with channel selection
-  if (averaging().anyAveraging() && selection_.spw().contains(":")) {
-    throw AipsError("Averaging not supported with channel selection for calibration tables");
-  }
-
   // Warn that transformations will be ignored
   if (transformations().anyTransform()) {
     logWarn("CalCache::loadIt",
@@ -447,8 +442,14 @@ void CalCache::loadCalChunks(ROCTIter& ci,
   goodChunk_.set(False);
   double progress;
 
-  // Reset iterator
+  std::unordered_map<int, std::vector<casacore::Slice>> spw_channels = getSelectedChannelsMap();
+  bool have_chansel(!spw_channels.empty());
+
+  std::vector<casacore::Slice> default_chansel;
+  default_chansel.push_back(Slice()); // default, all channels
+
   ci.reset();
+
   while (!ci.pastEnd()) {
     // If a thread is given, check if the user canceled.
     if (thread != nullptr && thread->wasCanceled()) {
@@ -470,31 +471,25 @@ void CalCache::loadCalChunks(ROCTIter& ci,
     String pol = selection_.corr();
     String paramAxis = toVisCalAxis(PMS::AMP);
     size_t nPol;
-    if (polnRatio_) {  // pick one!
+    if (polnRatio_) { // pick one!
       nPol = getParSlice(paramAxis, "R").length();
     } else {
       nPol = getParSlice(paramAxis, pol).length();
     }
 
-    // Apply channel selection to get nChan
-    size_t nChan(pshape[1]);
-    casacore::Matrix<casacore::Int> selectedChans = selection_.getSelectedChannels();
-    std::vector<casacore::Slice> chansel;
-    if (selectedChans.empty()) {
-      chansel.push_back(Slice());
-    } else {
+    size_t nChan(pshape[1]); // size of channel axis
+
+    std::vector<casacore::Slice> chansel = default_chansel;
+    if (have_chansel && spw_channels.count(ci.thisSpw())) {
+      // Set channel selection and nChan for this spw
+      chansel = spw_channels[ci.thisSpw()];
+
       size_t nChanSelectedThisSpw(0);
-      for (size_t i = 0; i < selectedChans.nrow(); ++i) {
-        auto row = selectedChans.row(i);
-        if (row(0) == ci.thisSpw()) {
-          casacore::Slice chanSlice(row(1), row(2), row(3), false);
-          chansel.push_back(chanSlice);
-          nChanSelectedThisSpw += chanSlice.length();
-        }
+      for (auto& chan_slice : chansel) {
+        nChanSelectedThisSpw += chan_slice.length();
       }
-      if (nChanSelectedThisSpw) {
-          nChan = nChanSelectedThisSpw;
-      }
+
+      nChan = nChanSelectedThisSpw;
     }
 
     // Cache the data shapes
@@ -555,10 +550,6 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
     thread->setAllowedOperations(false,false,true);
   }
 
-  // TBD: channel selection, for now select all
-  std::vector<casacore::Slice> chansel;
-  chansel.push_back(Slice());
-
   // Access to header info and subtables when loading axes
   String partype = parsAreComplex_ ? "Complex" : "Float";
   CTDesc caltabdesc(partype, msname_, calType_, basis_);
@@ -568,14 +559,27 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
   goodChunk_.resize(nChunk_);
   goodChunk_.set(false);
 
-  String polsel(selection_.corr()); // for slicing axis data
-  Int lastscan(0), thisscan(0);     // print atm stats once per scan
-  Int lastspw(-1), thisspw(0);      // print atm warning once per spw
+  // Channel selection for slicing chan axis
+  std::vector<casacore::Slice> default_chansel; // all channels
+  default_chansel.push_back(Slice());
+  std::unordered_map<int, std::vector<casacore::Slice>> spw_channels = getSelectedChannelsMap();
+  bool have_chansel(!spw_channels.empty());
+
+  // Averaging modes needed for when to apply channel selection
+  bool avgchan(pmsAveraging.channel());
+  bool avgspw(pmsAveraging.spw());
+
+  // Polarization selection for slicing pol axis
+  String polsel(selection_.corr());
+
+  Int lastscan(0), thisscan(0); // print atm stats once per scan
+  Int lastspw(-1), thisspw(0);  // print atm warning once per spw
 
   double progress;
   ci.reset();
+
   for (Int chunk = 0; chunk < nChunk_; ++chunk) {
-    // Update progress with each chunk
+    // Update progress with each averaged chunk
     if ((thread != nullptr)  &&
         ((nChunk_ <= (int)THREAD_SEGMENT) || (chunk % THREAD_SEGMENT == 0))) {
       thread->setStatus("Loading chunk " + String::toString(chunk) + " / " +
@@ -590,10 +594,28 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
       pmscta.setBaselineBased();
     }
 
+    std::vector<casacore::Slice> chansel = default_chansel; // all channels
+
+    if (!avgspw && have_chansel && spw_channels.count(ci.thisSpw())) {
+      // Set channel selection per chunk; all iterations have same spw.
+      chansel = spw_channels[ci.thisSpw()];
+    }
+
     // Accumulate iterations into chunk
     Int iter(0);
     while (iter < nIterPerAve(chunk)) {
-      pmscta.accumulate(ci);
+      if (avgspw && have_chansel && spw_channels.count(ci.thisSpw())) {
+        // Set channel selection per spw per iteration.
+        chansel = spw_channels[ci.thisSpw()];
+      }
+
+      if (avgchan) {
+        // Apply channel selection before averaging
+        pmscta.accumulate(ci, chansel);
+      } else {
+        // Apply channel selection after averaging
+        pmscta.accumulate(ci, default_chansel);
+      }
 
       // Advance to next iteration unless finalize
       if ((iter + 1) < nIterPerAve(chunk)) {
@@ -616,8 +638,18 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
 
       // Cache data shape
       IPosition avgShape(avgTableCti.flag().shape());
+
+      size_t nChan(avgShape(1));
+      if (!avgchan && have_chansel) {
+        // length of selected channels (not applied yet)
+        nChan = 0;
+        for (auto& chan_slice : chansel) {
+          nChan += chan_slice.length();
+        }
+      }
+
       chshapes_(0, chunk) = avgShape(0);
-      chshapes_(1, chunk) = avgShape(1);
+      chshapes_(1, chunk) = nChan;
       chshapes_(2, chunk) = avgShape(2);
       chshapes_(3, chunk) = nAnt_;
       goodChunk_(chunk) = true;
@@ -634,16 +666,27 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
 
         switch (axis) {
           case PMS::CHANNEL: {
-            Int nchan(pmscta.nchan());
-            Vector<Int> chans(nchan);
-            indgen(chans);
-            *chan_[chunk] = chans;
+            Vector<Int> chans = pmscta.chan();
+
+            if (avgchan) {
+              *chan_[chunk] = chans;
+            } else {
+              // Apply channel selection post-averaging
+              casacore::Vector<casacore::Int> selectedChans = getSelectedChannels(chans, chansel);
+              *chan_[chunk] = selectedChans;
+            }
             break;
           }
           case PMS::FREQUENCY: {
-            Vector<Double> freqs = pmscta.avgfreq();
-            freqs /= 1.0e9; // GHz
-            (*freq_[chunk]) = freqs;
+            Vector<Double> freqs = pmscta.freq();
+
+            if (avgchan) {
+              *freq_[chunk] = freqs / 1.0e9; // GHz
+            } else {
+              // Apply channel selection post-averaging
+              casacore::Vector<casacore::Double> selectedFreqs = getSelectedFrequencies(freqs, chansel);
+              *freq_[chunk] = selectedFreqs / 1.0e9; // GHz
+            }
             break;
           }
           case PMS::ATM:
@@ -652,7 +695,15 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
             // Use original caltable spectral window subtable for these axes
             Int spw = avgTableCti.thisSpw();
             Int scan = avgTableCti.thisScan();
-            Vector<Double> freqs = pmscta.avgfreq();
+            Vector<Double> freqs = pmscta.freq();
+
+            if (!avgchan && have_chansel) {
+              // Apply channel selection
+              casacore::Vector<casacore::Double> selectedFreqs = getSelectedFrequencies(freqs, chansel);
+              freqs.resize();
+              freqs = selectedFreqs;
+            }
+            
             casacore::Vector<casacore::Double> curve(1, 0.0);
 
             if (axis == PMS::ATM) {
@@ -711,6 +762,53 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
   } // chunk loop
 }
 
+std::unordered_map<int, std::vector<casacore::Slice>> CalCache::getSelectedChannelsMap() {
+  // Map selected channel slices to each spw.  Map key is spw ID.
+  std::unordered_map<int, std::vector<casacore::Slice>> spw_channels;
+
+  casacore::Matrix<casacore::Int> selectedChans = selection_.getSelectedChannels();
+
+  if (selectedChans.empty()) {
+     return spw_channels; // return empty map
+  } else {
+    for (size_t i = 0; i < selectedChans.nrow(); ++i) {
+      auto row = selectedChans.row(i);
+      casacore::Slice chanSlice(row(1), row(2), row(3), false);
+      spw_channels[row(0)].push_back(chanSlice);
+    }
+  }
+
+  return spw_channels;
+}
+
+casacore::Vector<casacore::Int> CalCache::getSelectedChannels(
+    casacore::Vector<casacore::Int>& channels,
+    std::vector<casacore::Slice>& chansel) {
+  // Apply channel selection Slices to values and return selected Vector
+  casacore::Vector<casacore::Int> selectedChans;
+
+  for (auto& chan_slicer : chansel) {
+    casacore::Vector<casacore::Int> chanSlice = channels(chan_slicer);
+    ConcatArrays<casacore::Int>(selectedChans, chanSlice);
+  }
+
+  return selectedChans;
+}
+
+casacore::Vector<casacore::Double> CalCache::getSelectedFrequencies(
+    casacore::Vector<casacore::Double>& frequencies,
+    std::vector<casacore::Slice>& chansel) {
+  // Apply channel selection Slices to values and return selected Vector
+  casacore::Vector<casacore::Double> selectedFreqs;
+
+  for (auto& chan_slicer : chansel) {
+    casacore::Vector<casacore::Double> freqSlice = frequencies(chan_slicer);
+    ConcatArrays<casacore::Double>(selectedFreqs, freqSlice);
+  }
+
+  return selectedFreqs;
+}
+
 void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
       casacore::String& pol, std::vector<casacore::Slice>& chansel) {
     // for NewCalTable
@@ -746,29 +844,15 @@ void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
             spw_(chunk) = cti.thisSpw();
             break;
         case PMS::CHANNEL: {
-            casacore::Vector<casacore::Int> channels;
-            cti.chan(channels);
-
-            // Apply channel slices
-            casacore::Vector<casacore::Int> selectedChans;
-            for (auto& chan_slice : chansel) {
-                casacore::Vector<casacore::Int> chanSlice = channels(chan_slice);
-                ConcatArrays<casacore::Int>(selectedChans, chanSlice);
-            }
+            casacore::Vector<casacore::Int> channels = cti.chan();
+            casacore::Vector<casacore::Int> selectedChans = getSelectedChannels(channels, chansel);
             *chan_[chunk] = selectedChans;
             break;
         }
         case PMS::FREQUENCY: {
             // TBD: Convert freq to desired frame
-            casacore::Vector<casacore::Double> freqs;
-            cti.freq(freqs);
-
-            // Apply channel slices
-            casacore::Vector<casacore::Double> selectedFreqs;
-            for (auto& chan_slice : chansel) {
-                casacore::Vector<casacore::Double> freqSlice = freqs(chan_slice);
-                ConcatArrays<casacore::Double>(selectedFreqs, freqSlice);
-            }
+            casacore::Vector<casacore::Double> freqs = cti.freq();
+            casacore::Vector<casacore::Double> selectedFreqs = getSelectedFrequencies(freqs, chansel);
             *freq_[chunk] = selectedFreqs / 1.0e9; // in GHz
             break;
         }

@@ -38,7 +38,7 @@
 namespace casa { //# NAMESPACE CASA - BEGIN
 
 // <summary>
-// A class to average (NewCalTable chunks for PlotMS
+// A class to average NewCalTable chunks for PlotMS
 // </summary>
 //
 // <use visibility=export>
@@ -90,8 +90,8 @@ public:
   };
 
   // Accumulate a chunk
-  inline void accumulate (ROCTIter& cti) {
-    averaging_p.antenna() ? antennaAccumulate(cti) : simpleAccumulate(cti);
+  inline void accumulate (ROCTIter& cti, std::vector<casacore::Slice>& chansel) {
+    averaging_p.antenna() ? antennaAccumulate(cti, chansel) : simpleAccumulate(cti, chansel);
   };
 
   // Finalize averaging by writing values to CTMainRecord vector
@@ -101,7 +101,8 @@ public:
   void fillAvgCalTable(NewCalTable& tab);
   // CTMainRecord does not include chan or freq
   inline casacore::Int nchan() { return avgChan_p ? nAvgChan_p : nChan_p; };
-  inline casacore::Vector<casacore::Double> avgfreq() { return avgFreq_; };
+  inline casacore::Vector<casacore::Int> chan() { return avgChan_; };
+  inline casacore::Vector<casacore::Double> freq() { return avgFreq_; };
 
 private:
   // Prohibit null constructor, copy constructor and assignment for now
@@ -110,11 +111,11 @@ private:
   PlotMSCTAverager (const PlotMSCTAverager&);
 
   // Initialize the next accumulation
-  void initialize(ROCTIter& cti);
+  void initialize(ROCTIter& cti, std::vector<casacore::Slice>& chansel);
 
   // Different accumulate versions
-  void simpleAccumulate(ROCTIter& cti);     // ordinary averaging
-  void antennaAccumulate (ROCTIter& cti);   // antenna-based averaging
+  void simpleAccumulate (ROCTIter& cti, std::vector<casacore::Slice>& chansel);  // ordinary averaging
+  void antennaAccumulate (ROCTIter& cti, std::vector<casacore::Slice>& chansel); // antenna-based averaging
 
   // Hash function to return a row index for a baseline-based cal table;
   // Returns 0 if baseline averaging, ant1 for antenna-based table

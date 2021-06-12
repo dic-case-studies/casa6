@@ -105,6 +105,15 @@ private:
   void loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
       casacore::String& pol, std::vector<casacore::Slice>& chansel);
 
+  // Channel selection
+  std::unordered_map<int, std::vector<casacore::Slice>> getSelectedChannelsMap();
+  casacore::Vector<casacore::Int> getSelectedChannels(
+    casacore::Vector<casacore::Int>& channels,
+    std::vector<casacore::Slice>& chansel);
+  casacore::Vector<casacore::Double> getSelectedFrequencies(
+    casacore::Vector<casacore::Double>& frequencies,
+    std::vector<casacore::Slice>& chansel);
+
   virtual void flagToDisk(const PlotMSFlagging& flagging,
     casacore::Vector<casacore::Int>& chunks,
     casacore::Vector<casacore::Int>& relids, casacore::Bool flag,
