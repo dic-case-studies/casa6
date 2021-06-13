@@ -228,7 +228,7 @@ void MSIter2::construct2(const Block<Int>& sortColumns,
   }
 
   timeInSort_p=False, arrayInSort_p=False, ddInSort_p=False, fieldInSort_p=False;
-  bool scanSeen;
+  bool scanSeen = false;
   Int nCol=0;
   for (uInt i=0; i<cols.nelements(); i++) {
     if (cols[i]>0 && 
