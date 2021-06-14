@@ -231,7 +231,7 @@ class test_onefield(testref_base):
           """ [onefield] Test_Onefield_hogbom : mfs with hogbom minor cycle """
           self.prepData('refim_twochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,parallel=self.parallel)#,phasecenter='J2000 19h59m57.5s +40d49m00.077s')
-          report=self.th.checkall(ret=ret, peakres=0.35, modflux=0.77, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[50,50,0,0])] , tfmask=[(self.img+'.image',['mask0'])])
+          report=self.th.checkall(ret=ret, peakres=0.35, modflux=0.77, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[50,50,0,0])] , tfmask=[(self.img+'.image',['mask0']), (self.img+'.pb',['mask0'])])
           self.checkfinal(pstr=report)
 
      def test_onefield_mem(self):
@@ -3608,7 +3608,7 @@ class test_pbcor(testref_base):
           ret1 = tclean(vis=self.msfile, imagename=self.img, field='0', imsize=512, cell='10.0arcsec', phasecenter="J2000 19:59:28.500 +40.44.01.50", 
                         niter=10, specmode='cube', vptable='evlavp.tab',pbcor=True, gridder='mosaic',pblimit=-0.2, parallel=self.parallel)
 
-          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.pb', self.img+'.image.pbcor'], imgval=[(self.img+'.pb',0.79,[256,256,0,0]),(self.img+'.image.pbcor',1.0,[256,256,0,0]), (self.img+'.pb',0.59,[256,256,0,2]),(self.img+'.image.pbcor',1.0,[256,256,0,2])] , tfmask=[(self.img+'.image',['T'])] )
+          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.pb', self.img+'.image.pbcor'], imgval=[(self.img+'.pb',0.79,[256,256,0,0]),(self.img+'.image.pbcor',1.0,[256,256,0,0]), (self.img+'.pb',0.59,[256,256,0,2]),(self.img+'.image.pbcor',1.0,[256,256,0,2])] , tfmask=[(self.img+'.image',['T']), (self.img+'.pb',['mask0']),(self.img+'.image.pbcor',['mask0']) ] )
           self.checkfinal(report)
 
      def test_pbcor_mfs_restart(self):
@@ -3632,7 +3632,7 @@ class test_pbcor(testref_base):
 
           ret2 = tclean(vis=self.msfile, imagename=self.img, field='0', imsize=512, cell='10.0arcsec', phasecenter="J2000 19:59:28.500 +40.44.01.50", 
                         niter=10, specmode='mfs', vptable='evlavp.tab', pbcor=True, calcpsf=False, calcres=False, pblimit=-0.2,parallel=self.parallel)
-          report2=self.th.checkall(imgexist=[self.img+'.image', self.img+'.pb'], imgval=[(self.img+'.pb',0.7,[256,256,0,0])] , imgmask=[(self.img+'.pb',False,[10,10,0,0]), (self.img+'.image',True,[10,10,0,0])], tfmask=[(self.img+'.image',['T'])]  )
+          report2=self.th.checkall(imgexist=[self.img+'.image', self.img+'.pb'], imgval=[(self.img+'.pb',0.7,[256,256,0,0])] , imgmask=[(self.img+'.pb',False,[10,10,0,0]), (self.img+'.image',True,[10,10,0,0])], tfmask=[(self.img+'.image',['T']), (self.img+'.pb',['mask0']),(self.img+'.image.pbcor',['mask0'])]  )
 
           self.checkfinal(report1+report2)
 

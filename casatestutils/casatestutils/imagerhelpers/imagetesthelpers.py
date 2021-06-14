@@ -901,7 +901,7 @@ class TestHelpers:
                     if type(ii) == tuple and len(ii) == 2:
                         _ia.open(ii[0])
                         mname = _ia.maskhandler('get')
-                        mreport = "[" + testname + "]  T/F mask name is : " + str(mname)
+                        mreport = "[" + testname + "]  T/F mask name for " + ii[0] +  " is : " + str(mname)
                         if mname==ii[1]:
                             mreport = mreport + " ("+TestHelpers().verdict(True) +" : should be " + str(ii[1]) + ") \n"
                         else:
