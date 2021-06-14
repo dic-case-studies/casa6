@@ -95,8 +95,13 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsOptimumScale(0),
   itsOptimumScaleSize(0.0),
   itsPeakResidual(1000.0), // temp. should this be changed to MAX?
+  itsPrevPeakResidual(0.0),
   itsOrigDirty( ),
-  itsFusedThreshold(0.0)
+  itsFusedThreshold(0.0),
+  itsNthCycle(0),
+  itsNumNoChange(0),
+  itsTotalNumNoChange(0),
+  itsUpdatedFusedThreshold(0.0)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -250,6 +255,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   Float tmpMaximumResidual = 0.0;
 
   os << "Starting iteration"<< LogIO::POST;
+  //cout << "takeonestep before: itsDirty(256,231) " << (*itsDirty)(256,231) << endl;
   vector<Float> tempScaleSizes;
   itsIteration = itsStartingIter; // 0
 
@@ -264,6 +270,15 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   support(0) = max(Int(itsInitScaleSizes[itsNInitScales-1] + 0.5), support(0));
   support(1) = max(Int(itsInitScaleSizes[itsNInitScales-1] + 0.5), support(1));
   IPosition inc(model.shape().nelements(), 1);
+
+  // get init peakres
+  // this is important so we have correct peakres for each channel in cube imaging
+  Float maxVal=0;
+  IPosition posmin((*itsDirty).shape().nelements(), 0);
+  Float minVal=0;
+  IPosition posmax((*itsDirty).shape().nelements(), 0);
+  minMaxMasked(minVal, maxVal, posmin, posmax, (*itsDirty), itsInitScaleMasks[0]);
+  itsPeakResidual = (fabs(maxVal) > fabs(minVal)) ? fabs(maxVal) : fabs(minVal);
 
   for (Int ii = itsStartingIter; ii < itsMaxNiter; ii++)
   {
@@ -294,22 +309,36 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     {
     	//if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 0.001) // M31 value - new Asp + gaussian
       //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < 2.8) // M31 value-new asp: 1k->5k
-      //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 8e-5 && abs(itsStrengthOptimum) < 1e-4) // G55 
+      //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 8e-5 && abs(itsStrengthOptimum) < 1e-4) // G55
       //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 7e-3 && abs(itsStrengthOptimum) < 1e-7) // Points
       //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 0.138) //GSL M100 channel 22
       //if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 0.15) // GSL M100 channel 22 & 23 & others
       //if (!itsSwitchedToHogbom && (abs(itsPeakResidual) < 2.5 || abs(itsStrengthOptimum) < 1e-3)) // GSL, CygA
-      
-      if(!itsSwitchedToHogbom && (abs(itsPeakResidual) < itsFusedThreshold 
-         || abs(itsStrengthOptimum) < (5e-4 * itsFusedThreshold))) // GSL, CygA. 
-      	// 5e-4 is a experimental number here assuming under that threshold itsStrengthOptimum is too small to take affect.  
+
+      /*if(!itsSwitchedToHogbom && (abs(itsPeakResidual) < itsFusedThreshold
+         || abs(itsStrengthOptimum) < (5e-4 * itsFusedThreshold)))*/ // GSL, CygA.
+      if(!itsSwitchedToHogbom && (abs(itsPeakResidual) < itsFusedThreshold
+         || ((abs(itsStrengthOptimum) < (5e-4 * itsFusedThreshold)) && (itsNumNoChange >= 2))))
+      	// 5e-4 is a experimental number here assuming under that threshold itsStrengthOptimum is too small to take affect.
       {
   	    os << "Switch to hogbom b/c peak residual or optimum strength is small enough: " << itsFusedThreshold << LogIO::POST;
   	    switchedToHogbom();
+
+        // genie this doesn't seem right b/c this cause freq major cycles in the final cleaning
+        /*os << "Converged at iteration "<< ii << " b/c hogbom is triggered" << LogIO::POST;
+        converged = 1;
+        break;*/
       }
-      /*if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.3e-3) // Points 
+      /*if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.3e-3) // Points
       {
         cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
+        switchedToHogbom();
+      }*/
+      /*if (itsNumNoChange >= 2)
+      {
+        cout << "Switched to hogbom at iteration "<< ii << " b/c peakres rarely changes" << endl;
+        os << "Switched to hogbom at iteration "<< ii << " b/c peakres rarely changes" << LogIO::POST;
+        itsNumNoChange = 0;
         switchedToHogbom();
       }*/
     }
@@ -330,7 +359,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
     if(ii == itsStartingIter)
     {
-      itsMaximumResidual = abs(itsStrengthOptimum);
+      itsMaximumResidual = abs(itsPeakResidual);
       tmpMaximumResidual = itsMaximumResidual;
       os << "Initial maximum residual is " << itsMaximumResidual;
       if( !itsMask.null() )
@@ -340,6 +369,44 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     }
 
     // Various ways of stopping:
+    //    0a. stop if below cycle threshold.- same as MS-Clean
+    //cout << "cycle threshold " << computeThreshold() << " at iteration "<< ii << " itsNthCyle " << itsNthCycle << " strengthOpt " << abs(itsStrengthOptimum) << endl;
+    cout << "cycle threshold " << threshold() << " at iteration "<< ii << " peakres " << abs(itsPeakResidual) << " itsFusedThreshold " << itsFusedThreshold << " itsUpdatedFusedThreshold " << itsUpdatedFusedThreshold << endl;
+    //if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < computeThreshold())
+    if (!itsSwitchedToHogbom && abs(itsPeakResidual) < threshold())
+    {
+      cout << "Reached stopping cycle threshold " << threshold() << " at iteration "<< ii << endl;
+      os << "Reached stopping threshold " << threshold() << " at iteration "<<
+            ii << LogIO::POST;
+      os << "peakres is " << abs(itsPeakResidual) << LogIO::POST;
+      converged = 1;
+      break;
+    }
+    // 0b. stop if peakres rarely changes for 3 consecutive iters
+    if (/*!itsSwitchedToHogbom &&*/ itsNumNoChange >= 2)
+    {
+      cout << "Reached convergence at iteration "<< ii << " b/c peakres rarely changes" << endl;
+      os << "Reached convergence at iteration "<< ii << " b/c peakres rarely changes" << LogIO::POST;
+      os << "peakres is " << abs(itsPeakResidual) << LogIO::POST;
+      converged = 1;
+
+      //
+      itsTotalNumNoChange += itsNumNoChange;
+      if (itsTotalNumNoChange >= /*2*/6) // genie more than 3 times of no significant changes over 3 iters
+      {                                  // this is still expt number. "6" works for single chan for 100 iters.
+                                         // "2" doesn't work so well on it but works for 1 chan with 300 iters.
+        //itsUpdatedFusedThreshold = itsPeakResidual; // genie trigger hogbom
+        //cout << "itsUpdatedFusedThreshold reset to " << itsUpdatedFusedThreshold << endl;
+        switchedToHogbom(); //
+        itsTotalNumNoChange = 0;
+      }
+      //
+
+      itsNumNoChange = 0;
+
+      break;
+    }
+
     //    1. stop if below threshold. 1e-6 is an experimental number
     if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < (1e-6 * itsFusedThreshold))
     {
@@ -379,7 +446,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     }
     //4. Diverging large scale
     //If actual value is 50% above the maximum residual. ..good chance it will not recover at this stage
-    if(((abs(itsStrengthOptimum)-abs(tmpMaximumResidual)) > (abs(tmpMaximumResidual)/2.0))
+    /*if(((abs(itsStrengthOptimum)-abs(tmpMaximumResidual)) > (abs(tmpMaximumResidual)/2.0))
        && !(itsStopAtLargeScaleNegative))
     {
       cout << "Diverging due to large scale?" << endl;
@@ -388,7 +455,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
        //clean is diverging most probably due to the large scale
       converged=-2;
       break;
-    }
+    }*/
     //5. Diverging for some other reason; may just need another CS-style reconciling
     if((abs(itsStrengthOptimum)-abs(tmpMaximumResidual)) > (abs(tmpMaximumResidual)/2.0))
     {
@@ -407,13 +474,13 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
          << totalFlux <<LogIO::POST;
     }
 
-    
-    //IPosition blc(itsPositionOptimum - support/2);
-    //IPosition trc(itsPositionOptimum + support/2 - 1);
+
+    IPosition blc(itsPositionOptimum - support/2);
+    IPosition trc(itsPositionOptimum + support/2 - 1);
     // try 2.5 sigma
-    Int sigma5 = (Int)(5 * itsOptimumScaleSize / 2); 
+    /*Int sigma5 = (Int)(5 * itsOptimumScaleSize / 2);
     IPosition blc(itsPositionOptimum - sigma5);
-    IPosition trc(itsPositionOptimum + sigma5 -1);
+    IPosition trc(itsPositionOptimum + sigma5 -1);*/
 
     LCBox::verify(blc, trc, inc, model.shape());
     IPosition blcPsf(blc);
@@ -424,9 +491,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     // Update the model image
     Matrix<Float> modelSub = model(blc, trc);
     Float scaleFactor;
-    scaleFactor = itsGain * itsStrengthOptimum;   
+    scaleFactor = itsGain * itsStrengthOptimum;
     Matrix<Float> scaleSub = (itsScale)(blcPsf,trcPsf);
-    modelSub += scaleFactor * scaleSub; 
+    modelSub += scaleFactor * scaleSub;
 
     // Now update the residual image
     // PSF * model
@@ -438,7 +505,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     Matrix<Float> psfSub = (itsPsfConvScale)(blcPsf, trcPsf);
     Matrix<Float> dirtySub=(*itsDirty)(blc,trc);
 
-    /* debug info
+    // debug info
     float maxvalue;
     IPosition peakpos;
     findMaxAbs(psfSub, maxvalue, peakpos);
@@ -451,8 +518,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     cout << "dirtySub pos " << peakpos << " maxval " << dirtySub(peakpos) << endl;
     findMaxAbs((*itsDirty), maxvalue, peakpos);
     cout << "itsDirty pos " << peakpos << " maxval " << (*itsDirty)(peakpos) << endl;
-    cout << "itsPositionOptimum " << itsPositionOptimum << endl;    
-    cout << " maxPsfSub " << max(fabs(psfSub)) << " maxPsfConvScale " << max(fabs(itsPsfConvScale)) << " itsGain " << itsGain << endl;*/
+    cout << "itsPositionOptimum " << itsPositionOptimum << endl;
+    cout << " maxPsfSub " << max(fabs(psfSub)) << " maxPsfConvScale " << max(fabs(itsPsfConvScale)) << " itsGain " << itsGain << endl; //
+    cout << "itsStrengthOptimum " << itsStrengthOptimum << endl;
     os << "itsStrengthOptimum " << itsStrengthOptimum << LogIO::POST;
 
     // subtract the peak that we found from the dirty image
@@ -513,7 +581,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         fft.fft0(itsScaleXfr, itsScale);
         Matrix<Float> scaleSubNew = (itsScale)(blcPsf1,trcPsf1);
         const float scaleFactorNew = itsGain * itsGoodAspAmplitude[scale];
-        
+
         // Now do the addition of the active-set scales to the model image...
         modelSub1 += scaleFactorNew * scaleSubNew;
         // Now subtract the active-set scales from the residual image
@@ -531,17 +599,28 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 	    {
 	    	cout << "Switched to hogbom b/c aspen is unchanged" << endl;
 	    	switchedToHogbom();
-	    }* / 
+	    }* /
     }*/
 
-    Float maxVal=0;
+    // update peakres
+    itsPrevPeakResidual = itsPeakResidual;
+
+    /*Float maxVal=0;
     IPosition posmin((*itsDirty).shape().nelements(), 0);
     Float minVal=0;
-    IPosition posmax((*itsDirty).shape().nelements(), 0);
+    IPosition posmax((*itsDirty).shape().nelements(), 0);*/
+    maxVal=0;
+    posmin = 0;
+    minVal=0;
+    posmax = 0;
     minMaxMasked(minVal, maxVal, posmin, posmax, (*itsDirty), itsInitScaleMasks[0]);
     itsPeakResidual = (fabs(maxVal) > fabs(minVal)) ? fabs(maxVal) : fabs(minVal);
     os << "current peakres " << itsPeakResidual << LogIO::POST;
-    //cout << "after: itsDirty optPos " << (*itsDirty)(itsPositionOptimum) << endl;
+    if (!itsSwitchedToHogbom &&
+        (fabs(itsPeakResidual - itsPrevPeakResidual) < 1e-4))
+      itsNumNoChange += 1;
+    cout << "after: itsDirty optPos " << (*itsDirty)(itsPositionOptimum) << endl;
+    //cout << "takeonestep: itsDirty(256,231) " << (*itsDirty)(256,231) << endl;
 
     // If we switch to hogbom (i.e. only have 0 scale size),
     // we still need to do the following Aspen update to get the new optimumStrength
@@ -553,7 +632,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         os << "switched back to Asp." << LogIO::POST;
       }
       else
-        itsNumHogbomIter -= 1; 
+        itsNumHogbomIter -= 1;
     }
 
     tempScaleSizes.clear();
@@ -562,6 +641,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     defineAspScales(tempScaleSizes);
   }
   // End of iteration
+
+  itsNthCycle += 1;
 
   // memory used
   //itsUsedMemoryMB = double(HostInfo::memoryUsed()/1024);
@@ -624,7 +705,7 @@ float AspMatrixCleaner::getPsfGaussianWidth(ImageInterface<Float>& psf)
       StokesImageUtil::FitGaussianPSF(psf, beam);
   }
   catch(AipsError &x)
-  {  
+  {
     os << "Error in fitting a Gaussian to the PSF : " << x.getMesg() << LogIO::POST;
     throw( AipsError("Error in fitting a Gaussian to the PSF" + x.getMesg()) );
   }
@@ -729,11 +810,11 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
       {
         const int px = i;
         const int py = j;
-        // iscale(i,j) = gbeam(px, py); // this is equivalent to the following with the above gbeam definition 
+        // iscale(i,j) = gbeam(px, py); // this is equivalent to the following with the above gbeam definition
         // This is for 1D, but represents Sanjay's and gives good init scale
         // Note that "amp" is not used in the expression
         iscale(i,j) = (1.0/(sqrt(2*M_PI)*scaleSize))*exp(-(pow(i-center[0],2) + pow(j-center[1],2))*0.5/pow(scaleSize,2));
-        
+
         // This is for 2D, gives unit area but bad init scale (always picks 0)
         // iscale(i,j) = (1.0/(2*M_PI*pow(scaleSize,2)))*exp(-(pow(i-center[0],2) + pow(j-center[1],2))*0.5/pow(scaleSize,2));
       }
@@ -745,7 +826,7 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
 
 void AspMatrixCleaner::setInitScaleXfrs(const Float width)
 {
-  if(itsInitScales.nelements() > 0) 
+  if(itsInitScales.nelements() > 0)
     destroyAspScales();
 
   if (itsSwitchedToHogbom)
@@ -902,7 +983,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 
   const int nx = itsDirty->shape()[0];
   const int ny = itsDirty->shape()[1];
- 
+
   IPosition blcDirty(itsDirty->shape().nelements(), 0);
   IPosition trcDirty(itsDirty->shape() - 1);
 
@@ -955,7 +1036,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 
   Vector<Float> maxima(itsNInitScales);
   Block<IPosition> posMaximum(itsNInitScales);
-  
+
   /*int nth = itsNInitScales;
   #ifdef _OPENMP
     nth = min(nth, omp_get_max_threads());
@@ -964,7 +1045,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
   //#pragma omp parallel default(shared) private(scale) num_threads(nth)
   //{
   //  #pragma omp for // genie pragma seems to sometimes return wrong value to maxima on tesla
-  
+
     /* debug info
     Float maxVal=0;
     IPosition posmin((*itsDirty).shape().nelements(), 0);
@@ -976,7 +1057,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 
     for (int scale = 0; scale < itsNInitScales; ++scale)
     {
-      // Find absolute maximum for the dirty image   
+      // Find absolute maximum for the dirty image
       maxima(scale) = 0;
       posMaximum[scale] = IPosition(itsDirty->shape().nelements(), 0);
 
@@ -1006,7 +1087,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
   	      //normalization = 2 * M_PI / pow(itsInitScaleSizes[scale], 1); // this looks good on M31 but bad on G55
           normalization = sqrt(2 * M_PI *itsInitScaleSizes[scale]); //GSL. Need to recover and re-norm later
   	      maxima(scale) /= normalization;
-        } //sanjay's code doesn't normalize peak here. 
+        } //sanjay's code doesn't normalize peak here.
          // Norm Method 2 may work fine with GSL with derivatives, but Norm Method 1 is still the preferred approach.
       }
     }
@@ -1026,7 +1107,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
   if (optimumScale > 0)
   {
     //const float normalization = 2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2)); // sanjay
-    const float normalization = sqrt(2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2))); // this is good. 
+    const float normalization = sqrt(2 * M_PI / (pow(1.0/itsPsfWidth, 2) + pow(1.0/itsInitScaleSizes[optimumScale], 2))); // this is good.
 
     // norm method 2 recovers the optimal strength and then normalize it to get the init guess
     if (itsNormMethod == 2)
@@ -1034,7 +1115,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 
     strengthOptimum /= normalization;
     // cout << "normalization " << normalization << " strengthOptimum " << strengthOptimum << endl;
-  } 
+  }
 
   AlwaysAssert(optimumScale < itsNInitScales, AipsError);
 }
@@ -1125,7 +1206,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 	  ParamAlglibObj optParam(*itsDirty, *itsXfr, activeSetCenter, fft);
     ParamAlglibObj *ptrParam;
     ptrParam = &optParam;
-	 
+
 	  real_1d_array s = "[1,1]";
 	  double epsg = 1e-3;
 	  double epsf = 1e-3;
@@ -1134,7 +1215,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 	  minlbfgsstate state;
 	  minlbfgscreate(1, x, state);
 	  minlbfgssetcond(state, epsg, epsf, epsx, maxits);
-	  minlbfgssetscale(state, s);  
+	  minlbfgssetscale(state, s);
 	  minlbfgsreport rep;
 	  alglib::minlbfgsoptimize(state, objfunc_alglib, NULL, (void *) ptrParam);
 	  minlbfgsresults(state, x, rep);
@@ -1170,7 +1251,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //cout << "After opt AspCenter[" << i << "] = " << itsAspCenter[i] << endl;
     cout << "AspScale[ " << i << " ] = " << itsAspScaleSizes[i] << " center " << itsAspCenter[i] << endl;
   }*/
- 
+
   return itsGoodAspActiveSet; // return optimized scale
 }
 
@@ -1261,7 +1342,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     const Float lamda = 318; //M31 new Asp - gold
 
     const Float threshold = lamda * resArea;
-    
+
     vector<Float> tempx;
     vector<IPosition> activeSetCenter;
 
@@ -1280,7 +1361,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     sort(goodvp.begin(), goodvp.end(), [](const int &l, const int &r) {return l > r;});
 
     for (unsigned int i = 0; i < goodvp.size(); i++)
-    { 
+    {
       tempx.push_back(itsAspAmplitude[goodvp[i]]);
       tempx.push_back(itsAspScaleSizes[goodvp[i]]);
       activeSetCenter.push_back(itsAspCenter[goodvp[i]]);
@@ -1357,8 +1438,8 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
       itsGoodAspActiveSet.push_back(scale); // active-set
 
       // No longer needed. permanent list that doesn't get clear
-      //itsAspAmplitude.push_back(amp); 
-      //itsAspScaleSizes.push_back(scale); 
+      //itsAspAmplitude.push_back(amp);
+      //itsAspScaleSizes.push_back(scale);
       //itsAspCenter.push_back(activeSetCenter[i/2]);
     //}
 
@@ -1389,7 +1470,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     //cout << "After opt AspCenter[" << i << "] = " << itsAspCenter[i] << endl;
     cout << "AspScale[ " << i << " ] = " << itsAspScaleSizes[i] << " center " << itsAspCenter[i] << endl;
   }* /
- 
+
   return itsGoodAspActiveSet; // return optimized scale
 }*/
 
@@ -1415,7 +1496,7 @@ void AspMatrixCleaner::defineAspScales(vector<Float>& scaleSizes)
   }
   // end Asp 2016
 
-  itsScalesValid = true; 
+  itsScalesValid = true;
 }
 
 void AspMatrixCleaner::switchedToHogbom()
@@ -1433,6 +1514,16 @@ void AspMatrixCleaner::switchedToHogbom()
 void AspMatrixCleaner::setOrigDirty(const Matrix<Float>& dirty){
   itsOrigDirty=new Matrix<Float>(dirty.shape());
   itsOrigDirty->assign(dirty);
+}
+
+Float AspMatrixCleaner::computeThreshold() const
+{
+  //const Float factor = exp( (Float)( itsIteration - itsStartingIter )/ itsNDouble )
+  //  / 2.7182818;
+
+  //return max(itsFracThreshold.get("%").getValue() * itsMaximumResidual /100.0,
+  //       itsThreshold.get("Jy").getValue()) / exp(itsNthCycle + 1);
+  return threshold() / exp(itsNthCycle);
 }
 
 

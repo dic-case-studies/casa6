@@ -90,12 +90,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsImages->mask()->get( itsMatMask, true );
 
     // Initialize the AspMatrixCleaner.
-    // If it's single channel, this only needs to be computed once. 
+    // If it's single channel, this only needs to be computed once.
     // Otherwise, it needs to be called repeatedly at each minor cycle start to
     // get psf for each channel
     if (itsMCsetup)
-    { 
-      Matrix<Float> tempMat(itsMatPsf);
+    {
+      Matrix<Float> tempMat(itsMatPsf); // genie this seems wrong
+      /*Matrix<Float> tempMat;
+      tempMat.reference(itsMatPsf);*/
       itsCleaner.setPsf(tempMat);
       // Initial scales are unchanged and only need to be
       // computed when psf width is updated
@@ -110,17 +112,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       itsCleaner.ignoreCenterBox( true ); // Clean full image
       // If it's single channel, we do not do the expensive set up repeatedly
       if (itsIsSingle)
-        itsMCsetup = false; 
+        itsMCsetup = false;
       // Not used. Kept for unit test
       //Matrix<Float> tempMat1(itsMatResidual);
       //itsCleaner.setOrigDirty( tempMat1 );
 
       if (itsFusedThreshold < 0)
       {
-        os << LogIO::WARN << "Acceptable fusedthreshld values are >= 0. Changing fusedthreshold from " << itsFusedThreshold << " to 0." << LogIO::POST; 
+        os << LogIO::WARN << "Acceptable fusedthreshld values are >= 0. Changing fusedthreshold from " << itsFusedThreshold << " to 0." << LogIO::POST;
         itsFusedThreshold = 0.0;
-      } 
-      
+      }
+
       itsCleaner.setFusedThreshold(itsFusedThreshold);
     }
 
@@ -128,13 +130,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsCleaner.setInitScaleMasks(itsMatMask);
     itsCleaner.setaspcontrol(0, 0, 0, Quantity(0.0, "%"));/// Needs to come before the rest
 
-    Matrix<Float> tempMat1(itsMatResidual);
+    //Matrix<Float> tempMat1(itsMatResidual); genie this seems wrong
+    Matrix<Float> tempMat1;
+    tempMat1.reference(itsMatResidual);
     itsCleaner.setDirty( tempMat1 );
+    cout << "initDeconvolver called, dirty[256,231] " << tempMat1(256,231) << endl;
+
     // InitScaleXfrs and InitScaleMasks should already be set
     itsScaleSizes.clear();
-    itsScaleSizes = itsCleaner.getActiveSetAspen();   
+    itsScaleSizes = itsCleaner.getActiveSetAspen();
     itsScaleSizes.push_back(0.0); // put 0 scale
-    itsCleaner.defineAspScales(itsScaleSizes); 
+    itsCleaner.defineAspScales(itsScaleSizes);
   }
 
 
@@ -171,6 +177,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if( retval==-2 ) {os << LogIO::WARN << "AspClean minor cycle stopped at large scale negative or diverging" << LogIO::POST;}
     if( retval==-3 ) {os << LogIO::WARN << "AspClean minor cycle stopped because it is diverging" << LogIO::POST; }
 
+    // update residual - this is critical
+    itsMatResidual = itsCleaner.getterResidual();
+
     peakresidual = itsCleaner.getterPeakResidual();
     //cout << "SDAlg: peakres " << peakresidual << endl;
     modelflux = sum( itsMatModel );
@@ -178,6 +187,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   void SDAlgorithmAAspClean::finalizeDeconvolver()
   {
+    Matrix<Float> tempMat;
+    tempMat.reference(itsMatResidual);
+    cout << "finalizeDeconvolver called, dirty[256,231] " << tempMat(256,231) << endl;
+
     (itsImages->residual())->put( itsMatResidual );
     (itsImages->model())->put( itsMatModel );
   }
