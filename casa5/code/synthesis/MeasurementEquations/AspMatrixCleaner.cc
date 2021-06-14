@@ -324,6 +324,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   	    os << "Switch to hogbom b/c peak residual or optimum strength is small enough: " << itsFusedThreshold << LogIO::POST;
   	    switchedToHogbom();
 
+        if (itsNumNoChange >= 2)
+          itsNumNoChange = 0;
+
         // genie this doesn't seem right b/c this cause freq major cycles in the final cleaning
         /*os << "Converged at iteration "<< ii << " b/c hogbom is triggered" << LogIO::POST;
         converged = 1;
@@ -334,13 +337,13 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
         cout << "Switch to hogbom b/c optimum strength is small enough: " << itsStrenThres << endl;
         switchedToHogbom();
       }*/
-      /*if (itsNumNoChange >= 2)
+      if (!itsSwitchedToHogbom && itsNumNoChange >= 2)
       {
         cout << "Switched to hogbom at iteration "<< ii << " b/c peakres rarely changes" << endl;
         os << "Switched to hogbom at iteration "<< ii << " b/c peakres rarely changes" << LogIO::POST;
         itsNumNoChange = 0;
         switchedToHogbom();
-      }*/
+      }
     }
 
     if (!itsSwitchedToHogbom)
@@ -383,7 +386,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       break;
     }
     // 0b. stop if peakres rarely changes for 3 consecutive iters
-    if (/*!itsSwitchedToHogbom &&*/ itsNumNoChange >= 2)
+    /*if (/*!itsSwitchedToHogbom &&* / itsNumNoChange >= 2)
     {
       cout << "Reached convergence at iteration "<< ii << " b/c peakres rarely changes" << endl;
       os << "Reached convergence at iteration "<< ii << " b/c peakres rarely changes" << LogIO::POST;
@@ -392,7 +395,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
       //
       itsTotalNumNoChange += itsNumNoChange;
-      if (itsTotalNumNoChange >= /*2*/6) // genie more than 3 times of no significant changes over 3 iters
+      if (itsTotalNumNoChange >= /*2* /6) // genie more than 3 times of no significant changes over 3 iters
       {                                  // this is still expt number. "6" works for single chan for 100 iters.
                                          // "2" doesn't work so well on it but works for 1 chan with 300 iters.
         //itsUpdatedFusedThreshold = itsPeakResidual; // genie trigger hogbom
@@ -405,7 +408,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       itsNumNoChange = 0;
 
       break;
-    }
+    }*/
 
     //    1. stop if below threshold. 1e-6 is an experimental number
     if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < (1e-6 * itsFusedThreshold))
@@ -630,6 +633,11 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       {
         itsSwitchedToHogbom = false;
         os << "switched back to Asp." << LogIO::POST;
+
+        cout << "Reached convergence at iteration "<< ii << " b/c hogbom finished" << endl;
+        os << "Reached convergence at iteration "<< ii << " b/c hogbom finished" << LogIO::POST;
+        converged = 1;
+        break;
       }
       else
         itsNumHogbomIter -= 1;
