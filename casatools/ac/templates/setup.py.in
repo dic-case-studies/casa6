@@ -1311,11 +1311,11 @@ class casa_build_ext(build_ext):
         if do_wheel_closure:
             module_path = os.path.join('build', distutils_dir_name('lib'), module_name)
 
-            if isexe("scripts/mod-closure") and not os.path.isfile(".created.closure"):
+            if isexe("scripts/mod-closure") and not os.path.isfile(os.path.join("build",".created.closure")):
                 print("generating module closure...")
                 if Proc([ "scripts/mod-closure", module_path ]) != 0:
                     sys.exit("\tclosure generation failed...")
-                open(".created.closure",'a').close( )
+                open(os.path.join("build",".created.closure"),'a').close( )
                 if isexe("scripts/find-glibc-private"):
                     if Proc(["scripts/find-glibc-private", "--delete", module_path]) != 0:
                         sys.exit("\tGLIBC_PRIVATE cleanup failed...")
@@ -2116,7 +2116,7 @@ class create_makefile(Command):
         pass
 
     def __build_developer_grpc(self):
-        if not os.path.exists('.built.grpc'):
+        if not os.path.exists(os.path.join("build",'.built.grpc')):
             # hopefully this will replace dbus
             build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
                         os.path.join('build', distutils_dir_name('grpc')),
@@ -2124,7 +2124,8 @@ class create_makefile(Command):
             build_protobuf( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
                             os.path.join('build', distutils_dir_name('protobuf')),
                             os.path.join('build', distutils_dir_name('grpc-install')) )
-            open(".built.grpc",'a').close( )
+            mkpath('build')
+            open(os.path.join('build',".built.grpc"),'a').close( )
 
     def __generate_casa_makefile(self):
         my_targets = [
@@ -2378,7 +2379,7 @@ class create_makefile_ia(Command):
         pass
 
     def __build_developer_grpc(self):
-        if not os.path.exists('.built.grpc'):
+        if not os.path.exists(os.path.join('build','.built.grpc')):
             # hopefully this will replace dbus
             build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
                         os.path.join('build', distutils_dir_name('grpc')),
@@ -2386,7 +2387,8 @@ class create_makefile_ia(Command):
             build_protobuf( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
                             os.path.join('build', distutils_dir_name('protobuf')),
                             os.path.join('build', distutils_dir_name('grpc-install')) )
-            open(".built.grpc",'a').close( )
+            mkpath('build')
+            open(os.path.join('build',".built.grpc"),'a').close( )
 
     def __generate_casa_ia_makefile(self):
         """
@@ -2506,16 +2508,17 @@ if __name__ == '__main__':
 
     generate_casacore_version_header()
 
-    if not os.path.exists('.built.grpc'):
+    if not os.path.exists(os.path.join('build','.built.grpc')):
         build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
                     os.path.join('build', distutils_dir_name('grpc')),
                     os.path.join('build', distutils_dir_name('grpc-install')) )
         build_protobuf( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
                         os.path.join('build', distutils_dir_name('protobuf')),
                         os.path.join('build', distutils_dir_name('grpc-install')) )
-        open(".built.grpc",'a').close( )
+        mkpath('build')
+        open(os.path.join('build',".built.grpc"),'a').close( )
     else:
-        print(' * Note: not building grpc because I found .built.grpc')
+        print(' * Note: not building grpc because I found build/.built.grpc')
 
     # grpc_incdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
     grpc_incdir = get_grpc_incdir()
