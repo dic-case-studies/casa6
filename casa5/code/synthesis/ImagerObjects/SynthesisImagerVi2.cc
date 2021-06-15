@@ -1830,19 +1830,14 @@ void SynthesisImagerVi2::appendToMapperList(String imagename,
         }
         if(!dopsf && normpars_p.isDefined("pblimit") && (normpars_p.asFloat("pblimit") > 0.0) ){
           try{
-            if(normpars_p.isDefined("pblimit") && (normpars_p.asFloat("pblimit") > 0.0)){
-              SIImageStore::copyMask(itsMappers.imageStore(0)->pb(), itsMappers.imageStore(0)->residual());
-            }
-            else{
-              SIImageStore::removeMask(itsMappers.imageStore(0)->residual());
-            }
+	    SIImageStore::copyMask(itsMappers.imageStore(0)->pb(), itsMappers.imageStore(0)->residual());
           }
           catch(AipsError &x) {
             if(!String(x.getMesg()).contains("T/F"))
               throw(AipsError(x.getMesg()));
 	    else{
 	      logger << "Error : " << x.getMesg() << LogIO::WARN << LogIO::POST;
-	      cout << "x.getMesg() " << endl;
+	      //cout << "x.getMesg() " << endl;
 	    }
             ///ignore copy mask error and proceed as this happens with interactive
           }
