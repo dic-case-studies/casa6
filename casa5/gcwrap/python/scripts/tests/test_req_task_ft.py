@@ -1,0 +1,243 @@
+##########################################################################
+# test_req_task_ft.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casa.nrao.edu/casadocs/casa-5.4.0/global-task-list/task_ft/about
+#
+# Test_logreturn checks to make sure a logfile is generated and populated
+# Test_dictreturn checks that the result is a python dict object containing keys specified in the documentation
+# Test_takescal checks that a caltable is accepted and non-cal tables are rejected
+# Test_axis checks that different axis vaules will provide different information
+# Test_axisvals checks that the values for axis provided in the documentatin are accepted as valid values
+# Test_datacolumn checks that different datacolumn values provide different information
+#
+##########################################################################
+
+CASA6 = False
+try:
+    import casatools
+    from casatasks import ft
+    from casatools import table, ctsys, componentlist
+    tb = table()
+    cl = componentlist()
+    CASA6 = True
+except ImportError:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+    
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+import sys
+import os
+import unittest
+import shutil
+import numpy as np
+
+# Gaincaltest and gaussian model with noise
+# Need model w/o standard gridder
+# Need new model for model/complist preference?
+
+if CASA6:
+    datapath = casatools.ctsys.resolve('unittest/ft/uid___X02_X3d737_X1_01_small.ms')
+    modelpath = casatools.ctsys.resolve('unittest/ft/uid___X02_X3d737_X1_01_small.model')
+    #multitermpath = 'PLACEHOLDER'
+
+else:
+    datapath = os.environ.get('CASAPATH').split()[0] + 'uid___X02_X3d737_X1_01_small.ms'
+    modelpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ft/uid___X02_X3d737_X1_01_small.model'
+    #multitermpath = 'PLACEHOLDER'
+
+datacopy = 'ft_test_copy.ms'
+modelcopy = 'ft_test_model_copy.model'
+#multitermcopy = 'ft_test_multi_term.model'
+nonStandardGridCopy = 'ft_test_nonstandard_gridder.model'
+
+ftcomponentlist = 'ft_test_comp_list.cl'
+
+def getColList(table):
+    tb.open(table)
+    columns = tb.colnames()
+    tb.close()
+
+    return columns
+
+class ft_test(unittest.TestCase):
+    
+    def setUp(self):
+        if not CASA6:
+            default(calstat)
+    
+        if not os.path.exists(datacopy):
+            shutil.copytree(datapath, datacopy)
+        if not os.path.exists(modelcopy):
+            shutil.copytree(modelpath, modelcopy)
+        #if not os.path.exists(multitermcopy):
+            #shutil.copytree(multitermpath, multitermcopy)
+    
+    def tearDown(self):
+        shutil.rmtree(datacopy)
+        shutil.rmtree(modelcopy)
+        #shutil.rmtree(multitermcopy)
+        
+        if os.path.exists(ftcomponentlist):
+            shutil.rmtree(ftcomponentlist)
+    
+    def test_takesModel(self):
+        ''' Test that a MODEL_DATA column is added to the MS when a *.model is provided '''
+        ft(vis=datacopy, model=modelcopy, usescratch=True)
+        
+        # Find the MODEL_DATA column
+        columns = getColList(datacopy)
+        # Make sure MODEL_DATA is in the MS ONLY IF USESCRATCH=TRUE
+        self.assertTrue('MODEL_DATA' in columns, msg='No MODEL_DATA added to the MS')
+
+    def test_useScratch(self):
+        ''' Test that when usescratch=True the model visibilites are stored in the MODEL_DATA column '''
+        # first test that no MODEL_DATA column is created when usescratch = False
+        ft(datacopy, model=modelcopy, usescratch=False)
+        
+        # get the columns list
+        columns = getColList(datacopy)
+        # Make sure there is no MODEL_DATA
+        self.assertFalse('MODEL_DATA' in columns)
+        
+        ft(vis=datacopy, model=modelcopy, usescratch=True)
+        
+        # Find the MODEL_DATA column
+        columns = getColList(datacopy)
+        # Check that the MODEL_DATA column exists
+        self.assertTrue('MODEL_DATA' in columns)
+
+    def test_takesComponentList(self):
+        ''' Test that a MODEL_DATA column is added to the MS when a component list is provided '''
+        # Create the complist to use in the test
+        cl.addcomponent(shape='point', flux=1, fluxunit='Jy', spectrumtype='spectral index',
+                        index=-0.8, freq='1,23GHz', dir='J2000 12h33m45.3s -23d01m11.2s')
+        cl.rename(ftcomponentlist)
+        cl.close()
+        # Run the ft command
+        ft(vis=datacopy, complist=ftcomponentlist, usescratch=True)
+        
+        # Find the MODEL_DATA column
+        columns = getColList(datacopy)
+        # Check that the MODEL_DATA column exists
+        self.assertTrue('MODEL_DATA' in columns)
+
+    def test_multiTermImage(self):
+        ''' Test that multi-term Images are properly handled '''
+        # Change to multiterm
+        ft(vis=datacopy, model=modelcopy, usescratch=True)
+        
+        # Find the MODEL_DATA column
+        columns = getColList(datacopy)
+        # Make sure MODEL_DATA is in the MS ONLY IF USESCRATCH=TRUE
+        self.assertTrue('MODEL_DATA' in columns, msg='No MODEL_DATA added to the MS')
+    
+    def test_addModel(self):
+        ''' Test that with incremental=True the new model will be added instead of replacing the old one '''
+        
+        pass
+
+    def test_componentListModelPriority(self):
+        ''' Test that when a model and comp list are provided only the model is used '''
+        # Create the complist to use in the test
+        cl.addcomponent(shape='point', flux=1, fluxunit='Jy', spectrumtype='spectral index',
+                        index=-0.8, freq='1,23GHz', dir='J2000 12h33m45.3s -23d01m11.2s')
+        cl.rename(ftcomponentlist)
+        cl.close()
+        # First run ft with only the model
+        ft(vis=datacopy, model=modelcopy, usescratch=True)
+        
+        # Get the MODEL_DATA col
+        tb.open(datacopy)
+        model_only = tb.getcol('MODEL_DATA')
+        print(np.mean(model_only))
+        tb.close()
+        
+        # start with a fresh copy of the data
+        shutil.rmtree(datacopy)
+        shutil.copytree(datapath, datacopy)
+        
+        # Now run ft with both
+        ft(vis=datacopy, model=modelcopy, complist=ftcomponentlist, usescratch=True)
+        
+        tb.open(datacopy)
+        model_complist = tb.getcol('MODEL_DATA')
+        print(np.mean(model_complist))
+        tb.close()
+        
+        # The result should be the same MODEL_DATA col for both
+        # self.assertTrue(np.all(np.isclose(model_only, model_complist)))
+        self.fail()
+
+    def test_modelReplace(self):
+        ''' When incremental = False the existing model should be replaced in MODEL_DATA '''
+        # Create the complist to use in the test
+        cl.addcomponent(shape='point', flux=1, fluxunit='Jy', spectrumtype='spectral index',
+                        index=-0.8, freq='1,23GHz', dir='J2000 12h33m45.3s -23d01m11.2s')
+        cl.rename(ftcomponentlist)
+        cl.close()
+        
+        # Run ft with the complist
+        ft(vis=datacopy, complist=ftcomponentlist, usescratch=True)
+        
+        # Get the mean of the MODEL_DATA
+        tb.open(datacopy)
+        originalMean = np.mean(tb.getcol('MODEL_DATA'))
+        tb.close()
+        
+        # Run ft with a new model
+        ft(vis=datacopy, model=modelcopy, usescratch=True)
+        
+        tb.open(datacopy)
+        finalMean = np.mean(tb.getcol('MODEL_DATA'))
+        tb.close()
+        
+        self.assertFalse(np.isclose(finalMean, originalMean))
+
+    def test_spwSelection(self):
+        ''' Test spw selection parameter '''
+        ft(vis=datacopy, model=modelcopy, usescratch=True, spw='0')
+        
+        # get the mean value of MODEL_DATA
+        tb.open(datacopy)
+        finalMean = np.mean(tb.getcol('MODEL_DATA'))
+        tb.close()
+        
+        self.assertTrue(np.isclose(finalMean, (0.0001953125+0j)))
+
+    def test_fieldSelection(self):
+        ''' Test the field selection parameter '''
+        ft(vis=datacopy, model=modelcopy, usescratch=True, field='0')
+        
+        # get the mean value of MODEL_DATA
+        tb.open(datacopy)
+        finalMean = np.mean(tb.getcol('MODEL_DATA'))
+        tb.close()
+    
+        self.assertTrue(np.isclose(finalMean, (0.11119791666666667+0j)))
+
+    # Test for nterms and reffreq, requires additional models
+
+def suite():
+    return[ft_test]
+
+if __name__ == '__main__':
+    unittest.main()
+
