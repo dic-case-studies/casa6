@@ -640,16 +640,6 @@ def run(testnames):
 ########################################################################################################################
 #######################################            Run Bamboo Option            ########################################
 ########################################################################################################################
-def execute_test(cmd, test, cwd):
-    if not os.path.exists(cwd):
-        os.makedirs(cwd)
-    starttime = datetime.datetime.now()
-    output = r.runshell(cmd, test.timeout,cwd)
-    endtime = datetime.datetime.now()
-    runtime = endtime - starttime
-
-    return output, runtime
-    xunit.append_result(test.name, str(runtime), len(output), output)
 
 def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None, test_paths = [], test_config_path=None, ncores=2, verbosity=False, pmode=None):
 
@@ -792,7 +782,6 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     for test in tests_to_run:
         r = ShellRunner()
         xunit = Xunit()
-        casaopts = " --nogui --nologger --log2term"
 
         #pmodes: pmodes = ['serial','parallel','both']
         # Skip MPI on Darwin for now
@@ -807,7 +796,12 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
                 cwd = work_dir + "/" + test.name + '_mpi'
 
             print("Running cmd " + str(cmd) + "in " + cwd)
-            output, runtime = execute_test(cmd, test, cwd)
+            if not os.path.exists(cwd):
+                os.makedirs(cwd)
+            starttime = datetime.datetime.now()
+            output = r.runshell(cmd, test.timeout,cwd)
+            endtime = datetime.datetime.now()
+            runtime = endtime - starttime
             xunit.append_result(test.name, str(runtime), len(output), output)
             print("")
 
@@ -822,7 +816,12 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
                 cwd = work_dir + "/" + test.name
 
                 print("Running cmd " + str(cmd) + "in " + cwd)
-                output, runtime = execute_test(cmd, test, cwd)
+                if not os.path.exists(cwd):
+                    os.makedirs(cwd)
+                starttime = datetime.datetime.now()
+                output = r.runshell(cmd, test.timeout,cwd)
+                endtime = datetime.datetime.now()
+                runtime = endtime - starttime
                 xunit.append_result(test.name, str(runtime), len(output), output)
                 print("")
 
@@ -836,7 +835,12 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
             cwd = work_dir + "/" + test.name
 
             print("Running cmd " + str(cmd) + "in " + cwd)
-            output, runtime = execute_test(cmd, test, cwd)
+            if not os.path.exists(cwd):
+                os.makedirs(cwd)
+            starttime = datetime.datetime.now()
+            output = r.runshell(cmd, test.timeout,cwd)
+            endtime = datetime.datetime.now()
+            runtime = endtime - starttime
             xunit.append_result(test.name, str(runtime), len(output), output)
             print("")
 
@@ -851,7 +855,12 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
             cwd = work_dir + "/" + test.name
 
             print("Running cmd " + str(cmd) + "in " + cwd)
-            output, runtime = execute_test(cmd, test, cwd)
+            if not os.path.exists(cwd):
+                os.makedirs(cwd)
+            starttime = datetime.datetime.now()
+            output = r.runshell(cmd, test.timeout,cwd)
+            endtime = datetime.datetime.now()
+            runtime = endtime - starttime
             xunit.append_result(test.name, str(runtime), len(output), output)
             print("")
 
