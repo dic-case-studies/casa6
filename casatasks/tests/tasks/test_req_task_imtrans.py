@@ -47,14 +47,11 @@ except ImportError:
     # not a local tool
     _tb = tb
     is_CASA6 = False
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        data_root = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'
-    else:
-        data_root = os.environ.get('CASAPATH').split()[0] + '/casa-data-req'
+    data_root = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
     def ctsys_resolve(apath):
         return os.path.join(data_root, apath)
 
-datapath = 'image'
+datapath = 'unittest/imtrans/'
 
 good_image = "reorder_in.fits"
 cas_2364im = "CAS-2364.im"
@@ -69,19 +66,11 @@ class imtrans_test(unittest.TestCase):
     
     def tearDown(self):
         self.assertTrue(len(_tb.showcache()) == 0)
-        # make sure directory is clean as per verification test requirement
-        cwd = os.getcwd()
-        for filename in os.listdir(cwd):
-            file_path = os.path.join(cwd, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+        # do not clean the whole directory content. Only the input files and data created by the tests
+        if os.path.exists(good_image):
+            os.remove(good_image)
+        shutil.rmtree(cas_2364im, ignore_errors=True)
+        os.system('rm -rf imageinfo_test*.im blah2* straight_copy* transpose_* zz*.im')
 
     def test_exceptions(self):
         """imtrans: Test various exception cases"""

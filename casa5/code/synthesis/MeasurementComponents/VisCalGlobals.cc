@@ -1,4 +1,4 @@
-//# VisCalGlobals.h: Implementation of VisCalGlobals
+//# VisCalGlobals.cc: Implementation of VisCalGlobals
 //# Copyright (C) 1996,1997,2000,2001,2002,2003
 //# Associated Universities, Inc. Washington DC, USA.
 //#
@@ -159,6 +159,9 @@ SolvableVisCal* createSolvableVisCal(const String& type, VisSet& vs) {
   else if (uptype=="J" || uptype=="J JONES") 
     return new JJones(vs);
 
+  else if (uptype=="JF" || uptype=="JF JONES")
+    return new JfJones(vs);
+
   else if (uptype == "EP" || uptype == "EP JONES")
     return new EPJones(vs);
 
@@ -220,6 +223,9 @@ SolvableVisCal* createSolvableVisCal(const String& type, VisSet& vs) {
 
   else if (uptype.contains("GAINCURVE"))  // Not yet solvable (even though an SVJ)
     return new EGainCurve(vs);
+  
+  else if (uptype.contains("POWERCURVE"))  // Not yet solvable (even though an SVJ)
+    return new EPowerCurve(vs);
   
   else if (uptype.contains("EVLAGAIN"))
     throw(AipsError("Please regenerate EVLA Sw Pow table using gencal."));
@@ -307,6 +313,9 @@ SolvableVisCal* createSolvableVisCal(const String& type, String msname, Int MSnA
   else if (uptype=="J" || uptype=="J JONES") 
     return new JJones(msname,MSnAnt,MSnSpw);
 
+  else if (uptype=="JF" || uptype=="JF JONES")
+    return new JfJones(msname,MSnAnt,MSnSpw);
+
   else if (uptype == "EP" || uptype == "EP JONES")
     throw(AipsError(uptype+" not yet supported via EPJones(msname,MSnAnt,MSnSpw)"));
   //    return new EPJones(msname,MSnAnt,MSnSpw);
@@ -370,6 +379,9 @@ SolvableVisCal* createSolvableVisCal(const String& type, String msname, Int MSnA
 
   else if (uptype.contains("GAINCURVE"))  // Not yet solvable (even though an SVJ)
     return new EGainCurve(msname,MSnAnt,MSnSpw);
+  
+  else if (uptype.contains("POWERCURVE"))  // Not yet solvable (even though an SVJ)
+    return new EPowerCurve(msname,MSnAnt,MSnSpw);
   
   else if (uptype.contains("EVLAGAIN"))
     throw(AipsError("Please regenerate EVLA Sw Pow table using gencal."));
@@ -457,6 +469,9 @@ SolvableVisCal* createSolvableVisCal(const String& type, const MSMetaInfoForCal&
   else if (uptype=="J" || uptype=="J JONES") 
     return new JJones(msmc);
 
+  else if (uptype=="JF" || uptype=="JF JONES")
+    return new JfJones(msmc);
+
   else if (uptype == "EP" || uptype == "EP JONES")
     throw(AipsError(uptype+" not yet supported via EPJones(msmc)"));
   //    return new EPJones(msmc);
@@ -532,6 +547,9 @@ SolvableVisCal* createSolvableVisCal(const String& type, const MSMetaInfoForCal&
   else if (uptype.contains("GAINCURVE"))  // Not yet solvable (even though an SVJ)
     return new EGainCurve(msmc);
   
+  else if (uptype.contains("POWERCURVE"))  // Not yet solvable (even though an SVJ)
+    return new EPowerCurve(msmc);
+  
   else if (uptype.contains("EVLAGAIN"))
     throw(AipsError("Please regenerate EVLA Sw Pow table using gencal."));
 
@@ -606,7 +624,6 @@ Slice calParSliceByType(String caltype, String what, String pol)
   caltype.upcase();
   what.upcase();
   pol.upcase();
-
   Int s(0),n(0),i(1);
 
   if (caltype=="B TSYS") {
@@ -691,7 +708,20 @@ Slice calParSliceByType(String caltype, String what, String pol)
     }
   }
   else if (caltype[0]=='F') {
-    if (what=="TEC") {
+    if (caltype.contains("FRINGE")) {
+      i = 4;
+      if (what=="PHASE") {
+        s = 0;
+      } else if (what=="DELAY") {
+        s = 1;
+      } else if (what=="RATE") {
+        s = 2;
+      } else if (what=="DISP") {
+        s = 3;
+      } else { 
+        throw(AipsError("Unsupported value type: "+what));
+      }
+    } else if (what=="TEC") {
       if (pol=="")
         return Slice(0,1,1); // trivial
       else
@@ -717,6 +747,15 @@ Slice calParSliceByType(String caltype, String what, String pol)
         return Slice(0,8,1);
     }
   }
+  else if (caltype=="EPOWERCURVE") {
+    if (what=="AMP" ||
+        what=="PHASE" ||
+        what=="REAL" ||
+        what=="IMAG") {
+      if (pol=="")
+        return Slice(0,16,1);
+    }
+  }
   else
     throw(AipsError("Unsupported cal type: "+caltype));
 
@@ -732,8 +771,9 @@ Slice calParSliceByType(String caltype, String what, String pol)
   else if (pol=="" || pol=="RL" || pol=="XY") {
     n=2;  // both pols
   }
-  else
+  else {
     throw(AipsError("Unsupported pol: "+pol));
+  }
 
   return Slice(s,n,i);
 

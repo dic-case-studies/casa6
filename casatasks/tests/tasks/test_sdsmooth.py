@@ -45,9 +45,9 @@ class sdsmooth_test_base(unittest.TestCase):
     """
     # Data path of input
     if is_CASA6:
-        datapath=ctsys.resolve('regression/unittest/tsdsmooth')
+        datapath=ctsys.resolve('unittest/sdsmooth/')
     else:
-        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/tsdsmooth')
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/sdsmooth/')
 
     # Input
     infile_data = 'tsdsmooth_test.ms'

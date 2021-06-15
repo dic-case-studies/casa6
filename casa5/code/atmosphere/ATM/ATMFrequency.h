@@ -48,10 +48,20 @@ ATM_NAMESPACE_BEGIN
 class Frequency
 {
 public:
+  enum Units {
+    UnitHertz,
+    UnitKiloHertz,
+    UnitMegaHertz,
+    UnitGigaHertz,
+    UnitTeraHertz,
+    NumFrequencyUnits
+  };
+
   /** Default constructor: Frequency value set to 0 Hz */
   Frequency();
   /** A full constructor: Frequency value + units. Valid units are THz [THZ] [thz], GHz [GHZ] [ghz], MHz [MHZ] [mhz], Hz [HZ] [hz] */
   Frequency(double frequency, const std::string &units);
+  Frequency(double frequency, Units units);
   /** A full constructor: Frequency value in default units (International System: Hz) */
   Frequency(double frequency);
   /** Copy constructor */
@@ -65,6 +75,7 @@ public:
   /** Accessor to the frequency value in specified units. Implemented units are THz [THZ] [thz], GHz [GHZ] [ghz], MHz [MHZ] [mhz], Hz [HZ] [hz].
    *  If none of these implemented units is given, the SI value will be returned. */
   inline double get(const std::string &units) const { return sget( valueIS_, units); }
+  inline double get(Units units) const {return sget( valueIS_, units); }
 
   /** Operator "equal to a Frequency" */
   inline Frequency& operator=(const Frequency &rhs) { if(&rhs != this) valueIS_ = rhs.valueIS_; return *this; }
@@ -107,6 +118,8 @@ public:
 private:
   static double sget(double value, const std::string &units);
   static double sput(double value, const std::string &units);
+  static double sget(double value, Units units);
+  static double sput(double value, Units units);
 
 private:
   double valueIS_;

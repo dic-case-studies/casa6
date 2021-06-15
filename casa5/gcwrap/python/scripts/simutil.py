@@ -2,7 +2,6 @@
 # to be available outside of the simdata task
 # geodesy from NGS: http://www.ngs.noaa.gov/TOOLS/program_descriptions.html
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import pylab as pl
@@ -36,7 +35,6 @@ else:
     # all I really need is casalog, but how to get it:?
     from taskinit import *
     from tclean import tclean
-    from clean import clean
 
     # qa doesn't hold state.
     #qatool = casac.homefinder.find_home_by_name('quantaHome')
@@ -94,14 +92,14 @@ class compositenumber:
                 for i5 in range(n5):
                     composite=( 2.**i2 * 3.**i3 * 5.**i5 )
                     itsnumbers[n] = composite
-                    #print i2,i3,i5,composite
+                    #casalog.post... i2,i3,i5,composite
                     n=n+1
         itsnumbers.sort()
         maxi=0
         while maxi<(n2*n3*n5) and itsnumbers[maxi]<=maxval: maxi=maxi+1
         self.itsnumbers=pl.int64(itsnumbers[0:maxi])
     def list(self):
-        print(self.itsnumbers)
+        casalog.post(self.itsnumbers)
     def nextlarger(self,x):
         if x>max(self.itsnumbers): self.generate(2*x)
         xi=0
@@ -116,10 +114,13 @@ class compositenumber:
 class simutil:
     """
     simutil contains methods to facilitate simulation. 
-    To use these, create a simutil instance e.g.
-     CASA> from simutil import simutil
-     CASA> u=simutil()
+    To use these, create a simutil instance e.g., in CASA 6:
+     CASA> from casatasks.private import simutil
+     CASA> u=simutil.simutil()
      CASA> x,y,z,d,padnames,antnames,telescope,posobs = u.readantenna("myconfig.cfg")
+     (in CASA5: )
+     CASA> from simutil import simutil
+     CASA> u=simutil.simutil()
     """
     def __init__(self, direction="",
                  centerfreq=qa.quantity("245GHz"),
@@ -243,9 +244,9 @@ class simutil:
                 s=foo[0]+"\x1b[35mWARNING\x1b[0m"+foo[1]
 
             if origin:
-                print(clr+"["+origin+"] "+bw+s)
+                casalog.post(clr+"["+origin+"] "+bw+s)
             else:
-                print(s)
+                casalog.post(s)
 
 
         if priority=="ERROR":
@@ -796,7 +797,8 @@ class simutil:
             x = x['value']
             y = y['value']
             if epoch != epoch0:                     # Paranoia
-                print("[simutil] WARN: precession not handled by average_direction()")
+                casalog.post("[simutil] WARN: precession not handled by average_direction()",
+                             'WARN')
             x = self.wrapang(x, avgx, 360.0)
             avgx += (x - avgx) / i
             avgy += (y - avgy) / i
@@ -845,7 +847,8 @@ class simutil:
             x = x['value']
             y = y['value']
             if epoch != epoch0:                     # Paranoia
-                print("[simutil] WARN: precession not handled by average_direction()")
+                casalog.post("[simutil] WARN: precession not handled by average_direction()",
+                             'WARN')
             x = self.wrapang(x, avgx, 360.0)
             xx.append(x)
             yy.append(y)
@@ -1315,7 +1318,7 @@ class simutil:
             cellsize=qa.quantity(6.e3/250./qa.convert(model_start,"GHz")["value"],"arcsec")  # need better cell determination - 250m?!
             cellsize=[cellsize,cellsize]
             # very light clean - its an empty image!
-            self.imclean(tmpname+".ms",tmpname,
+            self.imtclean(tmpname+".ms",tmpname,
                        "csclean",cellsize,[128,128],
                        "J2000 00:00:00.00 "+qa.angle(dec)[0],
                        False,100,"0.01mJy","natural",[],True,"I")
@@ -1342,7 +1345,7 @@ class simutil:
             z=pl.where(flag[0][0]==False)[0]
             nunflagged=len(z)
 #            noiseperbase=1./(gain[0][0][0.5*nint*nant].real)**2
-            noiseperbase=1./(gain[0][0][z[nunflagged/2]].real)**2
+            noiseperbase=1./(gain[0][0][z[nunflagged//2]].real)**2
         else:
             noiseperbase=0.
 
@@ -1638,13 +1641,13 @@ class simutil:
                             aid.append('A%02d'%nant)
                         nant+=1
             except IOError:
-                self.msg("Could not read file: '%s'" %(antab), 
+                self.msg("Could not read file: '{}'".format(antab),
                          origin='readantenna', priority='error')
             except ValueError:
-                self.msg("Could not read file: '%s'" %(antab), 
+                self.msg("Could not read file: '{}'".format(antab),
                          origin='readantenna', priority='error')
 
-        if not params.has_key("coordsys"):
+        if "coordsys" not in params:
             self.msg("Must specify XYZ, UTM or LOC coordinate system"\
                      " in antenna file header",
                      origin="readantenna",priority="error")
@@ -1652,7 +1655,7 @@ class simutil:
         else:
             self.coordsys=params["coordsys"]
 
-        if params.has_key("observatory"):
+        if "observatory" in params:
             self.telescopename=params["observatory"]
         else:
             self.telescopename="SIMULATED"
@@ -2283,7 +2286,7 @@ class simutil:
         x0 = pl.sqrt((x-dx)**2 + (y-dy)**2)
         lat=pl.arctan2(y0,x0)
         lon=pl.arctan2(y-dy,x-dx)
-        #print x-dx,y-dy,z-dz,x0,y0
+        #casalog.post... x-dx,y-dy,z-dz,x0,y0
                 
         return lon,lat
 
@@ -2426,7 +2429,7 @@ class simutil:
             rg=r2
         if max(d)>0.01*rg:
             pl.plot(lat,lon,',')            
-            #print max(d),ra
+            #casalog.post(max(d),ra)
             for i in range(n):
                 pl.gca().add_patch(pl.Circle((lat[i],lon[i]),radius=0.5*d[i],fc="#dddd66"))
                 if n<10:
@@ -2997,201 +3000,7 @@ class simutil:
         Creates a template '[imagename].clean.last' file in addition to 
         outputs of task 'clean'
         """
-
-        # determine channelization from (first) ms:
-        if is_array_type(mstoimage):
-            ms0=mstoimage[0]
-            if len(mstoimage)==1:
-                mstoimage=mstoimage[0]
-        else:
-            ms0=mstoimage
-        
-        if os.path.exists(ms0):
-            tb.open(ms0+"/SPECTRAL_WINDOW")
-            if tb.nrows() > 1:
-                self.msg("determining output cube parameters from FIRST of several SPW in MS "+ms0)
-            freq=tb.getvarcol("CHAN_FREQ")['r1']
-            nchan=freq.size
-            tb.done()
-        elif dryrun:
-            nchan=1 # May be wrong
-
-        if nchan==1:
-            chanmode="mfs"
-        else:
-            chanmode="channel"
-        
-        psfmode="clark"
-        ftmachine="ft"
-        imagermode="clark" # set default to prevent UnboundLocalError
-
-        if cleanmode=="csclean":
-            imagermode='csclean'
-        #if cleanmode=="clark":
-        #    imagermode=""
-        if cleanmode=="mosaic":
-            imagermode="mosaic"
-            ftmachine="mosaic" 
-
-        # in 3.4 clean doesn't accept just any imsize
-        optsize=[0,0]
-        optsize[0]=_su.getOptimumSize(imsize[0])
-        nksize=len(imsize)
-        if nksize==1: # imsize can be a single element or array
-            optsize[1]=optsize[0]
-        else:
-            optsize[1]=_su.getOptimumSize(imsize[1])
-        if((optsize[0] != imsize[0]) or (nksize!=1 and optsize[1] != imsize[1])):
-            self.msg(str(imsize)+' is not an acceptable imagesize, will use '+str(optsize)+" instead",priority="warn")
-            imsize=optsize
-                
-        if not interactive:
-            interactive=False
-        # print clean inputs no matter what, so user can use them.
-        # and write a clean.last file
-        cleanlast=open(imagename+".clean.last",'w')
-        cleanlast.write('taskname            = "clean"\n')
-
-        #self.msg("clean inputs:")        
-        if self.verbose: self.msg(" ")
-        if type(mstoimage)==type([]):
-            cleanstr="clean(vis="+str(mstoimage)+",imagename='"+imagename+"'"
-            cleanlast.write('vis                 = '+str(mstoimage)+'\n')
-        else:
-            cleanstr="clean(vis='"+str(mstoimage)+"',imagename='"+imagename+"'"
-            cleanlast.write('vis                 = "'+str(mstoimage)+'"\n')
-        cleanlast.write('imagename           = "'+imagename+'"\n')
-        cleanlast.write('outlierfile         = ""\n')
-        cleanlast.write('field               = "'+sourcefieldlist+'"\n')
-        cleanlast.write('spw                 = ""\n')
-        cleanlast.write('selectdata          = False\n')
-        cleanlast.write('timerange           = ""\n')
-        cleanlast.write('uvrange             = ""\n')
-        cleanlast.write('antenna             = ""\n')
-        cleanlast.write('scan                = ""\n')
-        if nchan>1:
-            cleanstr=cleanstr+",mode='"+chanmode+"',nchan="+str(nchan)
-            cleanlast.write('mode                = "'+chanmode+'"\n')
-            cleanlast.write('nchan               = '+str(nchan)+'\n')
-        else:
-            cleanlast.write('mode                = "mfs"\n')
-            cleanlast.write('nchan               = -1\n')
-        cleanlast.write('gridmode                = ""\n')
-        cleanlast.write('wprojplanes             = 1\n')
-        cleanlast.write('facets                  = 1\n')
-        cleanlast.write('cfcache                 = "cfcache.dir"\n')
-        cleanlast.write('painc                   = 360.0\n')
-        cleanlast.write('epjtable                = ""\n')
-        #cleanstr=cleanstr+",interpolation='nearest'"  # default change 20100518
-        cleanlast.write('interpolation           = "linear"\n')
-        cleanstr=cleanstr+",niter="+str(niter)
-        cleanlast.write('niter                   = '+str(niter)+'\n')
-        cleanlast.write('gain                    = 0.1\n')
-        cleanstr=cleanstr+",threshold='"+str(threshold)+"'"
-        cleanlast.write('threshold               = "'+str(threshold)+'"\n')
-        cleanstr=cleanstr+",psfmode='"+psfmode+"'"
-        cleanlast.write('psfmode                 = "'+psfmode+'"\n')
-        if imagermode != "":
-            cleanstr=cleanstr+",imagermode='"+imagermode+"'"
-        cleanlast.write('imagermode              = "'+imagermode+'"\n')
-        cleanstr=cleanstr+",ftmachine='"+ftmachine+"'"
-        cleanlast.write('ftmachine               = "'+ftmachine+'"\n')
-        cleanlast.write('mosweight               = False\n')
-        cleanlast.write('scaletype               = "SAULT"\n')
-        cleanlast.write('multiscale              = []\n')
-        cleanlast.write('negcomponent            = -1\n')
-        cleanlast.write('smallscalebias          = 0.0\n')
-        cleanlast.write('interactive             = '+str(interactive)+'\n')
-        if interactive:
-            cleanstr=cleanstr+",interactive=True"
-        if type(mask)==type(" "):
-            cleanlast.write('mask                    = "'+mask+'"\n')
-            cleanstr=cleanstr+",mask='"+mask+"'"
-        else:
-            cleanlast.write('mask                    = '+str(mask)+'\n')
-            cleanstr=cleanstr+",mask="+str(mask)
-        cleanlast.write('start                   = 0\n')
-        cleanlast.write('width                   = 1\n')
-        cleanlast.write('outframe                = ""\n')
-        cleanlast.write('veltype                 = "radio"\n')
-        cellstr="['"+str(cell[0]['value'])+str(cell[0]['unit'])+"','"+str(cell[1]['value'])+str(cell[1]['unit'])+"']"
-        cleanstr=cleanstr+",imsize="+str(imsize)+",cell="+cellstr+",phasecenter='"+str(imcenter)+"'"
-        cleanlast.write('imsize                  = '+str(imsize)+'\n');
-        cleanlast.write('cell                    = '+cellstr+'\n');
-        cleanlast.write('phasecenter             = "'+str(imcenter)+'"\n');
-        cleanlast.write('restfreq                = ""\n');
-        if stokes != "I":
-            cleanstr=cleanstr+",stokes='"+stokes+"'"
-        cleanlast.write('stokes                  = "'+stokes+'"\n');
-        cleanlast.write('weighting               = "'+weighting+'"\n');
-        cleanstr=cleanstr+",weighting='"+weighting+"'"
-        if weighting == "briggs":
-            cleanstr=cleanstr+",robust=0.5"
-            cleanlast.write('robust                  = 0.5\n');
-            robust=0.5
-        else:
-            cleanlast.write('robust                  = 0.0\n');
-            robust=0.
-            
-        taper=False
-        if len(outertaper) >0:            
-            taper=True
-            if type(outertaper) == type([]):
-                if len(outertaper[0])==0:
-                    taper=False
-        if taper:
-            uvtaper=True
-            cleanlast.write('uvtaper                 = True\n');
-            cleanlast.write('outertaper              = "'+str(outertaper)+'"\n');
-            cleanstr=cleanstr+",uvtaper=True,outertaper="+str(outertaper)+",innertaper=[]"
-        else:
-            uvtaper=False            
-            cleanlast.write('uvtaper                 = False\n');
-            cleanlast.write('outertaper              = []\n');
-            cleanstr=cleanstr+",uvtaper=False"
-        cleanlast.write('innertaper              = []\n');
-        if os.path.exists(modelimage):
-            cleanstr=cleanstr+",modelimage='"+str(modelimage)+"'"
-            cleanlast.write('modelimage              = "'+str(modelimage)+'"\n');
-        else:
-            cleanlast.write('modelimage              = ""\n');
-        cleanlast.write("restoringbeam           = ['']\n");
-        cleanstr=cleanstr+",pbcor="+str(pbcor)
-        cleanlast.write("pbcor                   = "+str(pbcor)+"\n");
-        cleanlast.write("minpb                   = 0.2\n");
-        cleanlast.write("calready                = True\n");
-        cleanlast.write('noise                   = ""\n');
-        cleanlast.write('npixels                 = 0\n');
-        cleanlast.write('npercycle               = 100\n');
-        cleanlast.write('cyclefactor             = 1.5\n');
-        cleanlast.write('cyclespeedup            = -1\n');
-        cleanlast.write('nterms                  = 1\n');
-        cleanlast.write('reffreq                 = ""\n');
-        cleanlast.write('chaniter                = False\n');
-        cleanstr=cleanstr+")"        
-        if self.verbose:
-            self.msg(cleanstr,priority="warn",origin="simutil")
-        else:
-            self.msg(cleanstr,priority="info",origin="simutil")
-        cleanlast.write("#"+cleanstr+"\n")
-        cleanlast.close()
-        
-        if not dryrun:
-            casalog.filter("ERROR")
-            clean(vis=mstoimage, imagename=imagename, mode=chanmode, 
-              niter=niter, threshold=threshold, selectdata=False, nchan=nchan,
-              psfmode=psfmode, imagermode=imagermode, ftmachine=ftmachine, 
-              imsize=imsize, cell=[str(cell[0]['value'])+str(cell[0]['unit']),str(cell[1]['value'])+str(cell[1]['unit'])], phasecenter=imcenter,
-              stokes=stokes, weighting=weighting, robust=robust,
-              interactive=interactive,
-              uvtaper=uvtaper,outertaper=outertaper, pbcor=True, mask=mask,
-              modelimage=modelimage)
-            casalog.filter()
-
-            del freq,nchan # something is holding onto the ms in table cache
-
-
-
+        raise RuntimeError("clean task is no longer available, switch to imtclean in simutil module")
 
 
     ##################################################################

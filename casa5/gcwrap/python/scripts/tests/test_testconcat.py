@@ -65,7 +65,7 @@ class test_testconcat(unittest.TestCase):
     def setUp(self):
         res = None
 
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/concat/input/'
+        datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/concat/'
         cpath = os.path.abspath(os.curdir)
         filespresent = sorted(glob.glob("*.ms"))
         os.chdir(datapath)

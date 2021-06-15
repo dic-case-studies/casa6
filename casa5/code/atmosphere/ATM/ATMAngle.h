@@ -44,12 +44,19 @@ ATM_NAMESPACE_BEGIN
 class Angle
 {
  public:
+  enum Units {
+    UnitRadian,
+    UnitDegree,
+    NumAngleUnits
+  };
+
   /** Default constructor */
   Angle();
   /** A full constructor: Angle value in default units (SI: radians) */
   Angle(double angle);
   /** A full constructor: Angle value + units. Implemented units are: deg [DEG], rad [RAD] [Rad]*/
   Angle(double angle, const string &units);
+  Angle(double angle, Units units);
 
   /** Destructor */
   virtual ~Angle();
@@ -59,6 +66,7 @@ class Angle
   /** Accessor to the angle value in specified units. Implemented units are: deg [DEG], rad [RAD] [Rad].
    *  If none of these implemented units is given, the SI value will be returned. */
   double get(const string &units) const;
+  double get(Units units) const;
 
   /** Operator "equal to a Angle" */
   Angle& operator=(const Angle &rhs) { if(&rhs != this) valueIS_ = rhs.valueIS_; return *this; }

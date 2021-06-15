@@ -38,8 +38,8 @@ class cleanhelper_test(unittest.TestCase):
     restfreq=''
     field=''
     phasecenter="J2000 17:45:40.0 -29.00.28"
-    refpath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/cleanhelper/reference/'
-    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/cleanhelper/'
+    refpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/cleanhelper/cleanhelper_reference/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/cleanhelper/'
     outlierfile=datapath+outlierfilename 
     newoutlierfile=datapath+newoutlierfilename 
     newoutlierfile2=datapath+newoutlierfile2name 

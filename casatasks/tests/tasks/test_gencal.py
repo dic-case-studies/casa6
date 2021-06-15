@@ -3,25 +3,40 @@ from __future__ import print_function
 import os
 import sys
 import shutil
-import numpy
+import numpy as np
 import numpy.ma as ma
 import unittest
 
 from casatasks.private.casa_transition import is_CASA6
+from casatestutils import testhelper as th
+
 if is_CASA6:
-    ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
-    from casatools import ctsys
-    from casatasks import gencal
-    
-    datapath=ctsys.resolve('regression/unittest/gencal')
+    from casatools import ctsys, table
+    from casatasks import gencal, rmtables
+    from casatasks.private import tec_maps    
+
+    _tb= table()
+
+    datapath=ctsys.resolve('/unittest/gencal/')
 else:
-    import testhelper as th
-    from tasks import gencal
+    from __main__ import default
+    from tasks import gencal, rmtables
     from taskinit import *
+    from recipes import tec_maps
     
-    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/gencal/'
+    _tb=tbtool()
+    
+    datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/gencal/'
+
+# input data
+evndata = 'n08c1.ms'
+vlbadata = 'ba123a.ms'
+vlbacal = os.path.join(datapath,'ba123a.gc')
+evncal = os.path.join(datapath,'n08c1.tsys')
+
+caltab = 'cal.A'
+evncopy = 'evn_copy.ms'
+vlbacopy = 'vlba_copy.ms'
 
 '''
 Unit tests for gencal 
@@ -56,9 +71,9 @@ class gencal_antpostest(unittest.TestCase):
 #    if testmms:
 #        msfile = 'tdem0003gencal.mms'
     caltable = 'anpos.cal'
-    reffile1 = os.path.join(datapath,'anpos.manual.cal')
-    reffile2 = os.path.join(datapath,'anpos.auto.cal')
-    reffile3 = os.path.join(datapath,'anpos.autoCAS13057.cal')
+    reffile1 = os.path.join(datapath+'evla_reference/','anpos.manual.cal')
+    reffile2 = os.path.join(datapath+'evla_reference/','anpos.auto.cal')
+    reffile3 = os.path.join(datapath+'evla_reference/','anpos.autoCAS13057.cal')
     res = False
 
     def setUp(self):
@@ -157,6 +172,8 @@ class gencal_antpostest(unittest.TestCase):
           print("Cannot access %s , skip this test" % evlabslncorrURL)
           self.res=True
 
+
+
 class test_gencal_antpos_alma(unittest.TestCase):
     """
     Tests the automatic generation of antenna position corrections for ALMA
@@ -190,8 +207,7 @@ class test_gencal_antpos_alma(unittest.TestCase):
         if (os.path.exists(self.ALMA_MS)):
             shutil.rmtree(self.ALMA_MS)
 
-        flagdata_datapath = os.path.join(datapath, '../flagdata/')
-        shutil.copytree(os.path.join(flagdata_datapath, self.ALMA_MS),
+        shutil.copytree(os.path.join(datapath, self.ALMA_MS),
                         self.ALMA_MS, symlinks=True)
 
     def tearDown(self):
@@ -367,10 +383,146 @@ class test_gencal_antpos_alma(unittest.TestCase):
                                       self.IGNORE_COLS))
         self.remove_caltable(out_caltable)
 
+class gencal_test_tec_vla(unittest.TestCase):
+
+    # Input and output names
+    msfile = 'tdem0003gencal.ms'
+    igsfile= 'igsg1160.10i'
+    tecfile= msfile+'.IGS_TEC.im'
+    rmstecfile= msfile+'.IGS_RMS_TEC.im'
+    caltable= msfile+'_tec.cal'
+
+    # NEAL: Please check that these setUp and tearDown functions are ok
+
+    def setUp(self):
+        self.tearDown()
+        shutil.copytree(os.path.join(datapath,self.msfile), self.msfile, symlinks=True)
+
+    def tearDown(self):
+        if os.path.exists(self.msfile):
+            shutil.rmtree(self.msfile)
+
+        if os.path.exists(self.igsfile):
+                os.remove(self.igsfile)
+
+        shutil.rmtree(self.tecfile,ignore_errors=True)
+        shutil.rmtree(self.rmstecfile,ignore_errors=True)
+        shutil.rmtree(self.caltable,ignore_errors=True)
+
+    def test_tec_maps(self):
+        """
+        gencal: very basic test of tec_maps and gencal(caltype='tecim')
+        """
+
+        try:
+            tec_maps.create0(self.msfile)
+            gencal(vis=self.msfile, caltable=self.caltable, caltype='tecim',infile=self.msfile+'.IGS_TEC.im')
+
+            self.assertTrue(os.path.exists(self.caltable))
+
+            _tb.open(self.caltable)
+            nrows=_tb.nrows()
+            dtecu=abs(13.752-np.mean(_tb.getcol('FPARAM'))/1e16)
+            _tb.close()
+            
+            #print(str(nrows)+' '+str(dtecu))
+
+            self.assertTrue(nrows==1577)
+            self.assertTrue(dtecu<1e-3)
+            
+            
+        except:
+            # should catch case of internet access failure?
+            raise
+
+class gencal_gaincurve_test(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        shutil.copytree(os.path.join(datapath,evndata), evncopy)
+        shutil.copytree(os.path.join(datapath,vlbadata), vlbacopy)
+
+    def setUp(self):
+        if not is_CASA6:
+            default(gencal)
+
+    def tearDown(self):
+        rmtables(caltab)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(evncopy)
+        shutil.rmtree(vlbacopy)
+
+    def test_gainCurve(self):
+        ''' Test calibration table produced when gencal is run on an MS with a GAIN_CURVE table '''
+
+        gencal(vis=vlbacopy, caltable=caltab, caltype='gc')
+
+        self.assertTrue(os.path.exists(caltab))
+        self.assertTrue(th.compTables(caltab, vlbacal, ['WEIGHT']))
+
+    def test_noGainCurve(self):
+        ''' Test that when gencal is run on an MS with no GAIN_CURVE table it creates no calibration table '''
+
+        try:
+            gencal(vis=evncopy, caltable=caltab, caltype='gc')
+        except:
+            pass
+
+        self.assertFalse(os.path.exists(caltab))
+
+class gencal_tsys_test(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        shutil.copytree(os.path.join(datapath,evndata), evncopy)
+        shutil.copytree(os.path.join(datapath,vlbadata), vlbacopy)
+
+    def setUp(self):
+        if not is_CASA6:
+            default(gencal)
+
+    def tearDown(self):
+        rmtables(caltab)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(evncopy)
+        shutil.rmtree(vlbacopy)
+
+    def test_tsys(self):
+        ''' Test calibration table produced when gencal is run on an MS with a SYSCAL table'''
+
+        gencal(vis=evncopy, caltable=caltab, caltype='tsys', uniform=False)
+
+        self.assertTrue(os.path.exists(caltab))
+        self.assertTrue(th.compTables(caltab, evncal, ['WEIGHT']))
+
+    def test_tsys_nan(self):
+        ''' Test calibration table produced when gencal is run on an MS with a SYSCAL table that contains NaNs'''
+
+        # Change negative values in SYSCAL to NaNs.
+        # This should result in the same calibration table entries
+        # being flagged.
+        _tb.open(evncopy + '/SYSCAL', nomodify=False)
+        tsys = _tb.getcol('TSYS')
+        tsys = np.where(tsys < 0, float('nan'), tsys)
+        _tb.putcol('TSYS', tsys)
+        _tb.close()
+
+        gencal(vis=evncopy, caltable=caltab, caltype='tsys', uniform=False)
+
+        self.assertTrue(os.path.exists(caltab))
+        self.assertTrue(th.compTables(caltab, evncal, ['FPARAM', 'WEIGHT']))
+
 
 def suite():
     return [gencal_antpostest,
-            test_gencal_antpos_alma]
+            test_gencal_antpos_alma,
+            gencal_test_tec_vla,
+            gencal_gaincurve_test,
+            gencal_tsys_test]
 
 if is_CASA6:
     if __name__ == '__main__':

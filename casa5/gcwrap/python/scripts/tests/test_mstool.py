@@ -39,8 +39,8 @@ from math import ceil
 
 from taskinit import mstool, cbtool
 
-datadir = os.environ.get('CASAPATH').split()[0]+'/data/regression/'
-datafile = os.path.join(datadir, "unittest/listobs/ngc5921_ut.ms")
+datadir = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/mstool/'
+datafile = os.path.join(datadir, "ngc5921_ut.ms")
 print 'ms tool tests will use data from '+ datafile
 
 class mstool_test_base(unittest.TestCase):
@@ -59,12 +59,12 @@ class mstool_test_base(unittest.TestCase):
         self.ms.open(self.testms, nomodify)
 
     def setUpMs2(self):
-        ms2 = os.path.join(datadir, 'unittest/clean/ngc7538_ut.ms')
+        ms2 = os.path.join(datadir, 'ngc7538_ut.ms')
         if not os.path.exists(self.testms2):
             shutil.copytree(ms2, self.testms2, symlinks=True)
     
     def setUpFits(self):
-        fitsfile = os.path.join(datadir, 'ngc5921/ngc5921.fits')
+        fitsfile = os.path.join(datadir, 'ngc5921.fits')
         if not os.path.exists(self.testfits):
             shutil.copyfile(fitsfile, self.testfits)
 
@@ -535,6 +535,40 @@ class mstool_test_select(mstool_test_base):
         self.assertEqual(rec['field'], [2])
         print
 
+
+# ------------------------------------------------------------------------------
+
+class mstool_test_getdata(mstool_test_base):
+
+    def setUp(self):
+        self.setUpTest()
+
+    def tearDown(self):
+        self.tearDownTest()
+
+    def test_getweights(self): 
+        """test ms.getdata, weight"""
+        self.assertEqual(len(self.ms.getdata(['weight'])['weight'][0]), self.ms.nrow())
+        print
+
+    def test_getsigma(self): 
+        """test ms.getdata, sigma"""
+        self.assertEqual(len(self.ms.getdata(['sigma'])['sigma'][0]), self.ms.nrow())
+        print
+
+    def test_getweights_channavg(self): 
+        """test ms.getdata, weight, channavg"""
+        # Average all channels together
+        self.ms.selectchannel(1, 0, 63, 1)
+        self.assertEqual(len(self.ms.getdata(['weight'])['weight'][0]), self.ms.nrow())
+        print
+
+    def test_getsigma_channavg(self): 
+        """test ms.getdata, sigma channavg"""
+        # Average all channels together
+        self.ms.selectchannel(1, 0, 63, 1)
+        self.assertEqual(len(self.ms.getdata(['sigma'])['sigma'][0]), self.ms.nrow())
+        print
 
 # ------------------------------------------------------------------------------
 
@@ -1173,6 +1207,7 @@ def suite():
             mstool_test_concat,
             mstool_test_summary,
             mstool_test_select,
+            mstool_test_getdata,
             mstool_test_transform,
             mstool_test_dataIO,
             mstool_test_iter,

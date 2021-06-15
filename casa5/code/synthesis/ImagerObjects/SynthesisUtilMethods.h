@@ -133,10 +133,34 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     static casacore::Int getOptimumSize(const casacore::Int npix);
 
+    static casacore::Bool fitPsfBeam(const casacore::String& imagename="", const casacore::Int nterms=1, const casacore::Float psfcutoff=0.35);
+
     static void getResource(casacore::String label="", casacore::String fname="");
     
     // return comprehensible direction string from given MDirection object
     static casacore::String asComprehensibleDirectionString(casacore::MDirection const &direction);
+
+    // Advise the chanselection needed for the frequency range or
+    // give the frequency range for a give spwselection
+    // You need to specify the field_id for which this calculation is 
+    // being done. 
+    // getFreqRange=true then the freqrange in the frame and spwselection  you choose is 
+    // returned in freqStart and freqEnd.
+    casacore::Bool adviseChanSel(casacore::Double& freqStart,
+				 casacore::Double& freqEnd, 
+				 const casacore::Double& freqStep,
+				 const casacore::MFrequency::Types& freqframe,
+				 casacore::Vector<casacore::Int>& spw,
+				 casacore::Vector<casacore::Int>& start,
+				 casacore::Vector<casacore::Int>& nchan,
+				 const casacore::String& msname="",
+				 const casacore::String& ephemtab="",
+				 const casacore::Int fieldid=0,
+				 const casacore::Bool getFreqRange=false, 
+				 const casacore::String spwselection="");
+
+
+
     static casacore::Record fillWeightRecord(const casacore::String& type="natural", 
 	      const casacore::String& rmode="norm",
 	      const casacore::Quantity& noise=casacore::Quantity(0.0, "Jy"), 
@@ -148,7 +172,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	      const casacore::String& filtertype=casacore::String("Gaussian"),
 	      const casacore::Quantity& filterbmaj=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
-	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg")  );
+	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg"), const casacore::Double& fracBW=0.0);
     static void getFromWeightRecord( casacore::String& type,casacore::String& rmode,
                                 casacore::Quantity& noise,casacore::Double& robust,
                                 casacore::Quantity& fieldofview, casacore::Int& npixels,
@@ -156,8 +180,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                  casacore::String& filtertype,
                                  casacore::Quantity& filterbmaj,
                                  casacore::Quantity& filterbmin,
-                                 casacore::Quantity& filterbpa, const casacore::Record& inrec);
+                                 casacore::Quantity& filterbpa, casacore::Double& fracBW, const casacore::Record& inrec);
     
+
   protected:
     static casacore::String mergeSpwSel(const casacore::Vector<casacore::Int>& fspw, const casacore::Vector<casacore::Int>& fstart, const casacore::Vector<casacore::Int>& fnchan, const casacore::Matrix<casacore::Int>& spwsel);
 
@@ -170,7 +195,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     static casacore::String g_startTimestamp;
     static const casacore::String g_enableOptMemProfile;
 
-    static casacore::Int parseProcStatusLine(const std::string &str);
+    static casacore::Int parseProcStatusLine(const std::string &str);    
+    
   };
 
 class SynthesisParams
@@ -266,7 +292,7 @@ public:
 		 const casacore::MFrequency::Types& dataFrame, const casacore::Quantity& qrestfreq, 
 		 const casacore::Double& freqmin, const casacore::Double& freqmax,
 		 const casacore::MDirection& phaseCenter );
-  
+  casacore::Double getCubeImageStartFreq();
   casacore::String findSpecMode(const casacore::String& mode) const;
   casacore::String MDopToVelString(casacore::Record &rec);
   casacore::Record getcsys() const;

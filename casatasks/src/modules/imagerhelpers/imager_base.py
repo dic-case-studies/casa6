@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import math
 import shutil
@@ -68,7 +67,7 @@ class PySynthesisImager:
         self.ncycle = 0
 #        isvalid = self.checkParameters()
 #        if isvalid==False:
-#            print('Invalid parameters')
+#            casalog.post('Invalid parameters')
 
 #############################################
 #    def checkParameters(self):
@@ -83,7 +82,7 @@ class PySynthesisImager:
         # NoOps (in SynthesisImager.cc) if the gridder is not one
         # which uses CFCache.
         if (exists):
-            print("CFCache already exists")
+            casalog.post("CFCache already exists")
         else:
             self.dryGridding();
             self.fillCFCache();
@@ -95,7 +94,7 @@ class PySynthesisImager:
         ## Initialize the tool for the current node
         self.SItool = synthesisimager()
  
-        ##print('impars ', self.allimpars['0']['specmode'], 'frame', self.allimpars['0']['outframe'])
+        ## casalog.post('impars ', self.allimpars['0']['specmode'], 'frame', self.allimpars['0']['outframe'])
         ## Send in selection parameters for all MSs in the list.
         for mss in sorted( (self.allselpars).keys() ):
 #            if(self.allimpars['0']['specmode']=='cubedata'):
@@ -117,7 +116,7 @@ class PySynthesisImager:
             exists = (os.path.exists(cfCacheName) and os.path.isdir(cfCacheName));
 
         for fld in range(0,self.NF):
-            #print("self.allimpars=",self.allimpars,"\n")
+            # casalog.post("self.allimpars=",self.allimpars,"\n")
             self.SItool.defineimage( self.allimpars[str(fld)] , self.allgridpars[str(fld)] )
 
         ###for cases when synthesisnormalizer is setup in c++ send the normalizer info
@@ -155,7 +154,7 @@ class PySynthesisImager:
 
 #############################################
     def estimatememory(self):
-        #print "MEMORY usage ", self.SItool.estimatememory(), type(self.SItool.estimatememory())
+        # casalog.post("MEMORY usage ", self.SItool.estimatememory(), type(self.SItool.estimatememory()))
         #griddermem=0
         if(self.SItool != None):
             griddermem= self.SItool.estimatememory()
@@ -166,8 +165,8 @@ class PySynthesisImager:
                 ims=[ims, ims]
             if(len(ims) ==1):
                 ims.append(ims[0])
-            #print 'shape', self.allimpars[str(immod)]['imsize'], len(ims) 
-            #print "DECON mem usage ", self.SDtools[immod].estimatememory(ims)
+            # casalog.post('shape', self.allimpars[str(immod)]['imsize'], len(ims) )
+            # casalog.post("DECON mem usage ", self.SDtools[immod].estimatememory(ims))
             if(len(self.SDtools) > immod):
                 if(self.SDtools != None):
                     deconmem+=self.SDtools[immod].estimatememory(ims)
@@ -212,7 +211,7 @@ class PySynthesisImager:
               self.IBtool.done()
 
     def deleteCluster(self):
-#         print('no cluster to delete')
+        # casalog.post('no cluster to delete')
         return
 
     def deleteWorkDir(self):
@@ -255,10 +254,10 @@ class PySynthesisImager:
 #         self.runInteractiveGUI2()
 
          # Check with the iteration controller about convergence.
-         #print("check convergence")
+         # casalog.post("check convergence")
          stopflag = self.IBtool.cleanComplete()
-         #print('STOPFLAG {}'.format(stopflag))
-         #print('Converged : ', stopflag)
+         # casalog.post('STOPFLAG {}'.format(stopflag))
+         # casalog.post('Converged : ', stopflag)
          if( stopflag>0 ):
              #stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles']
              stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles', 'peak residual increased by more than 3 times from the previous major cycle','peak residual increased by more than 3 times from the minimum reached','zero mask', 'any combination of n-sigma and other valid exit criterion']
@@ -313,7 +312,7 @@ class PySynthesisImager:
         forcestop = True
         if self.iterpars['interactive'] == True:
             self.stopMinor = self.IBtool.pauseforinteraction()
-            #print("Actioncodes in python : " , self.stopMinor)
+            # casalog.post("Actioncodes in python : " , self.stopMinor)
 
             for akey in self.stopMinor:
                 if self.stopMinor[akey] < 0:
@@ -336,7 +335,7 @@ class PySynthesisImager:
                     #    wstr = "Saving virtual model"
                     #casalog.post("Model visibilities may not have been saved in the MS even though you have asked for it. Please check the logger for the phrases 'Run (Last) Major Cycle'  and  '" + wstr +"'. If these do not appear, then please save the model via a separate tclean run with niter=0,calcres=F,calcpsf=F. It will pick up the existing model from disk and save/predict it.   Reason for this : For performance reasons model visibilities are saved only in the last major cycle. If the X button on the interactive GUI is used to terminate a run before this automatically detected 'last' major cycle, the model isn't written. However, a subsequent tclean run as described above will predict and save the model. ","WARN")
 
-        #print('Mask changed during interaction  : ', maskchanged)
+        # casalog.post('Mask changed during interaction  : ', maskchanged)
         return ( maskchanged or forcestop )
 
 #############################################
@@ -486,9 +485,9 @@ class PySynthesisImager:
         #if self.allimpars['0']['specmode'] != 'mfs' and self.allimpars['0']['specmode'] != 'cubedata':
         #    self.SItool.tuneselectdata()
         
- #       print("get set density from python")
- #       self.SItool.getweightdensity()
- #       self.SItool.setweightdensity()
+        # casalog.post("get set density from python")
+        # self.SItool.getweightdensity()
+        # self.SItool.setweightdensity()
 
         
 #############################################
@@ -498,7 +497,10 @@ class PySynthesisImager:
 #############################################
 ## Overloaded for parallel runs
     def runMajorCycleCore(self, lastcycle):
-        self.SItool.executemajorcycle(controls={'lastcycle':lastcycle})
+        controldict={'lastcycle':lastcycle}
+        if(('0' in self.alldecpars) and ('usemask' in self.alldecpars['0'])):
+            controldict['usemask']=self.alldecpars['0']['usemask']
+        self.SItool.executemajorcycle(controls=controldict)
 #############################################
 ## Overloaded for parallel runs
     def predictModelCore(self):
@@ -520,7 +522,7 @@ class PySynthesisImager:
 
         # Get iteration control parameters
         iterbotrec = self.IBtool.getminorcyclecontrols()
-        ##print("Minor Cycle controls : ", iterbotrec)
+        ## casalog.post("Minor Cycle controls : ", iterbotrec)
 
         self.IBtool.resetminorcycleinfo() 
 
@@ -544,7 +546,7 @@ class PySynthesisImager:
 
                 exrec = self.SDtools[immod].executeminorcycle( iterbotrecord = iterbotrec )
 
-                ##print('.... iterdone for ', immod, ' : ' , exrec['iterdone'])
+                # casalog.post('.... iterdone for ', immod, ' : ' , exrec['iterdone'])
                 retval= retval or exrec['iterdone'] > 0
                 self.IBtool.mergeexecrecord( exrec )
                 if alwaysSaveIntermediateImages or ('SAVE_ALL_AUTOMASKS' in os.environ and os.environ['SAVE_ALL_AUTOMASKS']=="true"):
@@ -579,7 +581,7 @@ class PySynthesisImager:
     def plotReport( self, summ={} ,fignum=1 ):
 
         if not ( 'summaryminor' in summ and 'summarymajor' in summ and 'threshold' in summ and summ['summaryminor'].shape[0]==6 ):
-            print('Cannot make summary plot. Please check contents of the output dictionary from tclean.')
+            casalog.post('Cannot make summary plot. Please check contents of the output dictionary from tclean.')
             return summ
 
         import pylab as pl

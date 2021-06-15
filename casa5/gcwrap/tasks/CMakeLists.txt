@@ -7,7 +7,6 @@ bandpass.xml
 blcal.xml
 browsetable.xml
 calstat.xml
-clean.xml
 clearcal.xml
 clearstat.xml
 concat.xml
@@ -86,6 +85,7 @@ impv.xml
 rerefant.xml
 rmfit.xml
 rmtables.xml
+sdatmcor.xml
 sdbaseline.xml
 sdcal.xml
 sdfit.xml

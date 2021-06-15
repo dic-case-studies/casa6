@@ -15,7 +15,7 @@
 #  test_modelvis                # saving models (column/otf), using starting models, predict-only (setjy)
 #  test_ephemeris                # ephemeris tests for gridder standard and mosaic, mode mfs and cubesource
 #
-# To run from within casapy :  
+# To run from within casa 5:  
 #
 #  runUnitTest.main(['test_tclean'])                                              # Run all tests
 #  runUnitTest.main(['test_tclean[test_onefield]'])                               # Run tests from test_onefield
@@ -24,14 +24,14 @@
 #
 # To see the full list of tests :   grep "\"\"\" \[" test_tclean.py
 #
-#  These tests need data stored in data/regression/unittest/clean/refimager
+#  These tests need data stored in casatestdata/unittest/tclean
+#  The datasets are symliked to the above directory. If using cp to copy them locally,
+#  Use cp -RH
 #
 #  For a developer build, to get the datasets locally 
 #
-#  --- Get the basic data repo :  svn co https://svn.cv.nrao.edu/svn/casa-data/distro data
-#  --- Make directories : mkdir -p data/regression/unittest/clean; cd data/regression/unittest/clean
-#  --- Get test datasets :  svn co https://svn.cv.nrao.edu/svn/casa-data/trunk/regression/unittest/clean/refimager
-#
+#  --- Get the test data repo :  svn co https://svn.cv.nrao.edu/svn/casatestdata casatestdata
+#  --- Add a link to casatestdata inside $CASAPATH
 # ########################################################################
 # SKIPPED TESTS 
 # More tests were added to skip (as of 2019,04,26)
@@ -99,7 +99,7 @@ import operator
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
      from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
-     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor
+     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata
      from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
      from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
      from casatasks import impbcor
@@ -112,7 +112,7 @@ if is_CASA6:
      _qa = quanta( )
      _me = measures( )
      
-     refdatapath = ctsys.resolve('regression/unittest/clean/refimager/')
+     refdatapath = ctsys.resolve('unittest/tclean/')
      #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
      #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
 else:
@@ -130,14 +130,13 @@ else:
      _qa = qa
      _me = me
 
-     refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/clean/refimager/'
+     refdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/tclean/'
      #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
      #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
-     
+ 
 ## List to be run
 def suite():
-     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging]
-#     return [test_onefield, test_iterbot, test_multifield,test_stokes,test_cube, test_widefield,test_mask, test_modelvis,test_startmodel,test_widefield_failing]
+     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures]
  
 ## Base Test class with Utility functions
 class testref_base(unittest.TestCase):
@@ -202,7 +201,8 @@ class testref_base(unittest.TestCase):
           #pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  casa -c `echo $CASAPATH | awk '{print $1}'`/gcwrap/python/scripts/regressions/admin/runUnitTest.py test_refimager["+ inspect.stack()[1][3] +"]"
           pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_tclean["+ inspect.stack()[1][3] +"]'])"
           casalog.post(pstr,'INFO')
-          if( pstr.count("(Fail") > 0 ):
+
+          if( pstr.count("(Fail") > 0 or pstr.count("( Fail") > 0):
                self.fail("\n"+pstr)
 
 ##############################################
@@ -313,6 +313,30 @@ class test_onefield(testref_base):
           self.assertTrue(self.th.check_beam_compare(self.img+'3.image', self.img+'4.image'))
      
           self.checkfinal(pstr = report+report2+report3+report4+report5+report6+report7)
+          
+     def test_onefield_pcwdT_and_pcwdF(self):
+     
+          self.prepData('refim_twochan.ms')
+          
+          ret = tclean(self.msfile , imagename=self.img+'1', imsize=20, cell='8.0arcsec', niter=0, nchan=1, spw='0:1', interactive=0, gridder='standard',perchanweightdensity=True,specmode='cube',weighting='briggs',robust=0.5)
+	
+          ret = tclean(self.msfile , imagename=self.img+'2', imsize=20, cell='8.0arcsec', niter=0, nchan=1, spw='0:1', interactive=0, gridder='standard',perchanweightdensity=False,specmode='cube',weighting='briggs',robust=0.5)
+          
+          _ia.open(self.img+'1.psf')
+          pcwdT_img = _ia.getchunk()
+          _ia.close()
+        
+          _ia.open(self.img+'2.psf')
+          pcwdF_img = _ia.getchunk()
+          _ia.close()
+      
+          abs_dif = np.sum(np.abs(pcwdF_img-pcwdT_img))
+          _, report1 = self.th.check_val_less_than(abs_dif, 3, valname='abs_dif',testname ="test_onefield_pcwdT_and_pcwdF")
+
+          self.checkfinal(report1)   
+     
+          
+        
 
      def test_onefield_twoMS(self):
           """ [onefield] Test_Onefield_twoMS : One field, two input MSs, also
@@ -657,6 +681,38 @@ class test_onefield(testref_base):
           checkimage += "["+testname+"] The image in ARC projection : (" + self.th.verdict(retARC['projection']=='ARC') + ")\n"
           
           self.checkfinal(pstr=checkimage+report)
+          
+     def test_onefield_psf_fit(self):
+          """ [onefield] test_onefield_psf_fit : test psf fitting algorithm for different pixels per beam """
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['28.8arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_3ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          _, report1 = self.th.check_val(beam_3ppb[0], 55.77472686767578, valname='Beam Major Axis', exact=False)
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['14.4arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_5ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          _, report2 = self.th.check_val(beam_5ppb[0], 51.443878173828125, valname='Beam Major Axis', exact=False)
+
+          self.prepData('refim_point.ms')
+
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell=['3.6arcsec'],niter=0,calcres=False,parallel=self.parallel)
+          _ia.open(self.img+'.psf')
+          hdr = _ia.summary(list=False)
+          _ia.close()
+          beam_20ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
+          _, report3 = self.th.check_val(beam_20ppb[0], 51.55984878540039, valname='Beam Major Axis', exact=False)
+
+          self.checkfinal(report1+report2+report3)
 
 ##############################################
 ##############################################
@@ -801,7 +857,7 @@ class test_iterbot(testref_base):
           report=self.th.checkall(ret=ret,iterdone=10,nmajordone=3,imgexist=[self.img+'.psf', self.img+'.image'])
 
      def test_iterbot_mfs_deconvolvers(self):
-          """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? No ! """
+          """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? Now they do. """
           # clark and hogbom reach niter first, but multiscale gets to cyclethreshold first. Check peakres and iterdone.
           self.prepData('refim_twochan.ms')
           ret1 = tclean(vis=self.msfile,imagename=self.img+'1',imsize=100,cell='8.0arcsec',niter=10,threshold='0.1Jy', interactive=0,deconvolver='clark',parallel=self.parallel)
@@ -813,6 +869,24 @@ class test_iterbot(testref_base):
           ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=100,cell='8.0arcsec',niter=10,threshold='0.1Jy', interactive=0,deconvolver='multiscale',parallel=self.parallel,smallscalebias=0.6)
           report3=self.th.checkall(ret=ret3, peakres=0.3922, modflux=0.7327, iterdone=10, nmajordone=2,imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image'])
      
+
+          self.checkfinal(report1+report2+report3)
+
+     def test_iterbot_cube_deconvolvers(self):
+          """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? Let's see ! """
+          # clark, hogbom and multiscale reach niter. Check peakres and iterdone
+          self.prepData('refim_eptwochan.ms')
+          ret1 = tclean(vis=self.msfile,imagename=self.img+'1',imsize=200,cell='10.0arcsec',niter=100,threshold='0.1Jy', interactive=0,deconvolver='clark',specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report1=self.th.checkall(ret=ret1, iterdone=114, nmajordone=2,imgexist=[self.img+'1.psf', self.img+'1.residual', self.img+'1.image'],
+                                   imgval=[(self.img+'1.image',0.935,[100,100,0,0]), (self.img+'1.image',0.282,[100,100,0,2])  ])
+
+          ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=200,cell='10.0arcsec',niter=100,threshold='0.1Jy', interactive=0,deconvolver='hogbom',specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report2=self.th.checkall(ret=ret2, iterdone=116, nmajordone=2,imgexist=[self.img+'2.psf', self.img+'2.residual', self.img+'2.image'],
+                                   imgval=[(self.img+'2.image',0.939,[100,100,0,0]), (self.img+'2.image',0.282,[100,100,0,2])  ])
+
+          ret3 = tclean(vis=self.msfile,imagename=self.img+'3',imsize=200,cell='10.0arcsec',niter=100,threshold='0.1Jy', interactive=0,deconvolver='multiscale',specmode='cube',interpolation='nearest',parallel=self.parallel,smallscalebias=0.6,scales=[0,6,10,20,40])
+          report3=self.th.checkall(ret=ret3, iterdone=100, nmajordone=3,imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image'], 
+                                   imgval=[(self.img+'3.image',0.888,[100,100,0,0]), (self.img+'3.image',0.1601,[100,100,0,2])  ])
 
           self.checkfinal(report1+report2+report3)
 
@@ -1200,6 +1274,12 @@ class test_stokes(testref_base):
           self.prepData('refim_point_linRL.ms')
           tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',deconvolver='mtmfs',nterms=2,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image.tt0'],imgexistnot=[self.img+'.image.alpha'], imgval=[(self.img+'.image.tt0',1.0,[50,50,0,0]),(self.img+'.image.tt0',2.0,[50,50,1,0]), (self.img+'.image.tt0',3.0,[50,50,2,0]),(self.img+'.image.tt0',4.0,[50,50,3,0]) ])
+          _ia.open(self.img+'.image.tt0')
+          if _ia.brightnessunit() == "Jy/beam":
+               report = report + "(Pass : Units are Jy/beam in the restored image)\n"
+          else:
+               report = report + "(Fail : Units are not Jy/beam in the restored image)\n"
+          _ia.close()
           self.checkfinal(report)
 
 
@@ -2055,22 +2135,22 @@ class test_cube(testref_base):
 
      # Now works for parallel  with CAS-9396 
      #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily for 5.5")
-     def test_cube_chanchunks(self):
-          """ [cube] Test channel chunking for large cubes """
-          self.prepData('refim_point.ms')
-#          ret = tclean(vis=self.msfile,imagename=self.img,specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom', savemodel='modelcolumn')
-#          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
-#          report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.5002,[50,50,0,0]) , (self.img+'.image',0.769,[50,50,0,19]) ])
-
-          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',chanchunks=7,parallel=self.parallel)
-          self.assertTrue(os.path.exists(self.img+'cc.psf') and os.path.exists(self.img+'cc.image') )
-          report=self.th.checkall(imgexist=[self.img+'cc.image'],imgval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
-          self.checkfinal(report)
+#     def test_cube_chanchunks(self):
+#          """ [cube] Test channel chunking for large cubes """
+#          self.prepData('refim_point.ms')
+##          ret = tclean(vis=self.msfile,imagename=self.img,specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom', savemodel='modelcolumn')
+##          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
+##          report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.5002,[50,50,0,0]) , (self.img+'.image',0.769,[50,50,0,19]) ])
+#
+#          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',parallel=self.parallel)
+#          self.assertTrue(os.path.exists(self.img+'cc.psf') and os.path.exists(self.img+'cc.image') )
+#          report=self.th.checkall(imgexist=[self.img+'cc.image'],imgval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
+#          self.checkfinal(report)
 
      def test_cube_chanchunks_auto(self):
           """ [cube] Test channel chunking for large cubes : automatic calc of nchanchunks """
           self.prepData('refim_point.ms')
-          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',chanchunks=-1,parallel=self.parallel)
+          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',parallel=self.parallel)
           self.assertTrue(os.path.exists(self.img+'cc.psf') and os.path.exists(self.img+'cc.image') )
           report=self.th.checkall(imgexist=[self.img+'cc.image'],imgval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
           self.checkfinal(report)
@@ -2081,8 +2161,7 @@ class test_cube(testref_base):
      def test_cube_chanchunks_savemodel(self):
           """ [cube] Test channel chunking for large cubes and save model """
           self.prepData('refim_point.ms')
-          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',
-                       chanchunks=2,savemodel='modelcolumn',parallel=self.parallel)
+          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom', savemodel='modelcolumn',parallel=self.parallel)
           self.assertTrue(os.path.exists(self.img+'cc.psf') and os.path.exists(self.img+'cc.image') )
           report=self.th.checkall(imgexist=[self.img+'cc.image'],imgval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
           self.assertTrue( self.th.check_modelchan(self.msfile,5) > 0.0 and self.th.check_modelchan(self.msfile,18) > 0.0 )
@@ -2105,6 +2184,95 @@ class test_cube(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img+'cc', specmode='cubedata', imsize=200,cell='8.0arcsec',niter=10,deconvolver='mtmfs',nterms=1,interactive=0,parallel=self.parallel,scales=[0,20,40,100])		
           report=self.th.checkall(ret=ret, imgexist=[self.img+'cc.psf.tt0', self.img+'cc.residual.tt0', self.img+'cc.image.tt0', self.img+'cc.model.tt0'],imgval=[(self.img+'cc.image.tt0',1.0,[100,100,0,0]),(self.img+'cc.image.tt0',0.492,[100,100,0,1]),(self.img+'cc.image.tt0',0.281,[100,100,0,2])])		
           self.checkfinal(report) 
+
+     def test_cube_twoMS_startfreq(self):
+          """ [cube] Test cube with list of two MSs with start in frequency specified (test CAS-12877 fix) """
+          # The two tclean runs should produce identical cubes with the same image spectral coordinates
+          ms1 = 'refim_point_first11chans.ms'
+          ms2 = 'refim_point_last10chans.ms'
+          self.prepData(ms1)
+          self.prepData(ms2)
+          # start f is at chan4 (1.2GHz in TOPO) 
+          ret = tclean(vis=[ms1, ms2],field='0',imsize=100,cell='8.0arcsec',niter=10,\
+                       specmode='cube',nchan=10,restfreq=['1.25GHz'],\
+                       deconvolver='hogbom',\
+                       spw=['0','0'], start='1.199989GHz', imagename=self.img,veltype='radio',outframe='LSRK',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
+          report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.199989e9)
+
+          ret2 = tclean(vis=[ms2, ms1],field='0',imsize=100,cell='8.0arcsec',niter=10,\
+                       specmode='cube',nchan=10,restfreq=['1.25GHz'],\
+                       deconvolver='hogbom',\
+                       spw=['0','0'], start='1.199989GHz', imagename=self.img+'_reverse',veltype='radio',outframe='LSRK',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'_reverse.psf') and os.path.exists(self.img+'_reverse.image') )
+          report2 = self.th.check_spec_frame(self.img+'_reverse.image', 'LSRK', 1.199989e9)
+          self.checkfinal(report+report2)
+
+     def test_cube_twoMS_startvel(self):
+          """ [cube] Test cube with list of two MSs with start in velocity specified (test CAS-12877 fix) """
+          # The two tclean runs should produce identical cubes with the same image spectral coordinates
+          ms1 = 'refim_point_first11chans.ms'
+          ms2 = 'refim_point_last10chans.ms'
+          self.prepData(ms1)
+          self.prepData(ms2)
+          ret = tclean(vis=[ms1, ms2],field='0',imsize=100,cell='8.0arcsec',niter=10,\
+                       specmode='cube',nchan=10,restfreq=['1.25GHz'],\
+                       deconvolver='hogbom',\
+                       spw=['0','0'], start='11994.3km/s', width='-11991.7km/s',imagename=self.img,veltype='radio',outframe='LSRK',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image'))
+          report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.199989e9)
+
+          ret2 = tclean(vis=[ms2, ms1],field='0',imsize=100,cell='8.0arcsec',niter=10,\
+                       specmode='cube',nchan=10,restfreq=['1.25GHz'],\
+                       deconvolver='hogbom',\
+                       spw=['0','0'], start='11994.3km/s',width='-11991.7km/s',  imagename=self.img+'_reverse',veltype='radio',outframe='LSRK',parallel=self.parallel)
+          self.assertTrue(os.path.exists(self.img+'_reverse.psf') and os.path.exists(self.img+'_reverse.image'))
+          report2 = self.th.check_spec_frame(self.img+'_reverse.image', 'LSRK', 1.199989e9)
+          self.checkfinal(report+report2)
+
+     def test_cube_flagged_mosaic_hogbom(self):
+          """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
+          # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in hogbom.
+          self.prepData('refim_twochan.ms')
+          flagdata(self.msfile, spw='*:0')
+          ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
+                       deconvolver='hogbom', gridder='mosaic')
+          report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01324, [10,10,0,1])], \
+                                  imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
+          self.checkfinal(pstr=report)
+
+     def test_cube_flagged_mosaic_clark(self):
+          """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
+          # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in clark.
+          self.prepData('refim_twochan.ms')
+          flagdata(self.msfile, spw='*:0')
+          ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
+                       deconvolver='clark', gridder='mosaic')
+          report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01252, [10,10,0,1])], \
+                                  imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
+          self.checkfinal(pstr=report)
+
+     def test_cube_flagged_mosaic_multiscale(self):
+          """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
+          self.prepData('refim_twochan.ms')
+          flagdata(self.msfile, spw='*:0')
+          ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
+                       deconvolver='multiscale', gridder='mosaic')
+          report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01086, [10,10,0,1])], \
+                                  imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
+          self.checkfinal(pstr=report)
+
+     @unittest.skip('Skip test.')
+     def test_cube_flagged_mosaic_mtmfs(self):
+          """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
+          # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in mtmfs.
+          self.prepData('refim_twochan.ms')
+          flagdata(self.msfile, spw='*:0')
+          ret = tclean(self.msfile, imagename=self.img, imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
+                       deconvolver='mtmfs', nterms=1, gridder='mosaic')
+          report=self.th.checkall(imgexist=[self.img+'.model.tt0'], imgval=[(self.img+'.model.tt0', 0.00530, [10,10,0,1])], \
+                                  imgvalexact=[(self.img+'.model.tt0', 0, [1,1,0,0]), (self.img+'.model.tt0', 0, [10,10,0,0])])#, epsilon=0.2)
+          self.checkfinal(pstr=report)
 
 ##############################################
 ##############################################
@@ -2609,19 +2777,73 @@ class test_mask(testref_base):
 ##############################################
 ##############################################
 
-##Task level tests : awproject and mosaics
-class test_widefield(testref_base):
-     
-     def test_widefield_wproj_mfs(self):
-          """ [widefield] Test_Widefield_wproj : W-Projection """ 
-          ### Need better test dataset for this.....
-          self.prepData("refim_twopoints_twochan.ms")
-          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',phasecenter="J2000 19:59:00.2 +40.50.15.50",niter=30,
-                       gridder='widefield',wprojplanes=4,deconvolver='hogbom',parallel=self.parallel)
-          report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.psf',1.0,[100,100,0,0]),(self.img+'.image',5.56,[127,143,0,0]) ] )
+class test_wproject(testref_base):
+
+     def test_wterm_wproject(self):
+          """ [wproject] Test_Widefield_wproj : W-Projection """ 
+          self.prepData("refim_point_wterm_vlad.ms")
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/WProjection/refim_point_wterm_vlad.ms'
+
+          ## Without w-term corrections, the source peak will be 0.768
+          #tclean(vis=msname, imagename=self.img+'wno', imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='standard', pblimit=-0.1)
+
+          tclean(vis=msname, imagename=self.img+'.wyes',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='wproject', wprojplanes=16, pblimit=-0.1,parallel=self.parallel)
+
+          report=self.th.checkall(imgexist=[self.img+'.wyes.image'],imgval=[(self.img+'.wyes.psf',1.0,[1024,1024,0,0]),(self.img+'.wyes.image',1.0,[1158,1384,0,0]) ] )
+          self.checkfinal(report)
+
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Facetted imaging tests parallel are skipped temporarily until a fix is found. ")
+     def test_wterm_facets(self):
+          """ [wproject] Test_Widefield_wproj : Facets """ 
+          self.prepData("refim_point_wterm_vlad.ms")
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/WProjection/refim_point_wterm_vlad.ms'
+
+          tclean(vis=msname, imagename=self.img+'.facet',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='widefield', wprojplanes=1,facets=4, pblimit=-0.1,parallel=self.parallel)
+          
+          ## Current value with facets=4 is 0.988. 
+          report=self.th.checkall(imgexist=[self.img+'.facet.image'],imgval=[(self.img+'.facet.psf',1.0,[1024,1024,0,0]),(self.img+'.facet.image',1.0,[1158,1384,0,0]) ] )
           self.checkfinal(report)
 
 
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Facetted imaging tests in parallel are skipped temporarily until a fix is found. ")
+     def test_wterm_wproject_facets(self):
+          """ [wproject] Test_Widefield_wproj : Facets with wprojection per facet""" 
+          self.prepData("refim_point_wterm_vlad.ms")
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/WProjection/refim_point_wterm_vlad.ms'
+
+          tclean(vis=msname, imagename=self.img+'.wp.facet',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='widefield', wprojplanes=4,facets=4, pblimit=-0.1,parallel=self.parallel)
+          
+          ## Current value with facets=4 is 0.988. 
+          report=self.th.checkall(imgexist=[self.img+'.wp.facet.image'],imgval=[(self.img+'.wp.facet.psf',1.0,[1024,1024,0,0]),(self.img+'.wp.facet.image',1.0,[1158,1384,0,0]) ] )
+          self.checkfinal(report)
+
+  
+     @unittest.skip('Skip test for wterm imaging with awproject until the numerical error has been addressed in CAS-13191')
+     def test_wterm_awproject(self):
+          """ [wproject] Test_Widefield_wproj : W-Projection using the AWProject gridder """ 
+          self.prepData("refim_point_wterm_vlad.ms")
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/WProjection/refim_point_wterm_vlad.ms'
+
+          ### Peak value with gridder='awproject' comes out as 0.85479 instead of the 1.0 (0.998) that is made by gridder='wproject'. 
+          tclean(vis=msname, imagename=self.img+'.awp',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='awproject', wprojplanes=16, pblimit=-0.1, psterm=True, aterm=False, wbawp=False,cfcache=self.img+'_use_awp.cf',parallel=self.parallel)
+
+          report=self.th.checkall(imgexist=[self.img+'.awp.image'],imgval=[(self.img+'.awp.psf',1.0,[1024,1024,0,0]),(self.img+'.awp.image',1.0,[1158,1384,0,0]) ] )
+          self.checkfinal(report)
+
+          
+  
+
+
+
+##############################################
+##############################################
+
+##Task level tests : awproject and mosaics
+class test_widefield(testref_base):
      def test_widefield_aproj_mfs(self):
           """ [widefield] Test_Widefield_aproj : MFS with narrowband AWProjection (wbawp=F, 1spw)  stokes I """
           # casalog.post("EMPTY TEST")
@@ -2632,7 +2854,7 @@ class test_widefield(testref_base):
                        niter=30,gridder='awproject',cfcache='',wbawp=False,conjbeams=True,psterm=False,computepastep=360.0,
                        rotatepastep=360.0,deconvolver='hogbom',savemodel='modelcolumn',parallel=self.parallel)
          ## ret = tclean(vis=self.msfile,spw='2',field='*',imagename=self.img,imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",niter=30,gridder='awproject',wbawp=False,conjbeams=True,psterm=False,computepastep=360.0,rotatepastep=360.0,deconvolver='hogbom')
-          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.96,[256,256,0,0]),(self.img+'.weight',0.493,[256,256,0,0]) ] )
+          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.96,[256,256,0,0]),(self.img+'.pb',0.96,[256,256,0,0]),(self.img+'.weight',0.496,[256,256,0,0]) ] )
           #
           # Changed to the following for 5.5.0 release of AWP.  Will revisit and replace the test MS later.
           #
@@ -2657,7 +2879,6 @@ class test_widefield(testref_base):
           self.checkfinal(report)
 
      ## Test normtype too somewhere..
-
 
      def test_widefield_wbaproj_mfs(self):
           """ [widefield] Test_Widefield_wbaproj_mfs : MFS with wideband AWProjection (wbawp=T, allspw) and nt=1 stokes I  """
@@ -3198,7 +3419,6 @@ class test_startmodel(testref_base):
                               report=report +self.th.checkall(imgexist=['savemod.par.impbcor.tt0'], imgval=[  ('savemod.par.impbcor.tt0',1.1,[50,50,0,0]) ])
 
           self.checkfinal(report)
-
 
 
      def test_csys_startmodel_restart_cube(self):
@@ -3913,10 +4133,44 @@ class test_mosaic_mtmfs(testref_base):
           self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
           
 
+     def test_mtmfs_mosaic_mwFalse_briggs_twofield(self):  ## Added in CAS-13438 to catch failing case (pb os zero). 
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=5,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel,mosweight=False,weighting='briggs')
+          report1=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.9794,[512,596,0,0]),(self.img+'.pb.tt0', 0.9817,[512,596,0,0]),(self.img+'.alpha', -0.797,[512,596,0,0])])
+          
 ###########################################################
 ###########################################################
 ###########################################################
 class test_mosaic_cube(testref_base):
+     
+     @unittest.skip('Skip test.') #Skip until CAS-13420 is resolved
+     def test_mosaic_briggsbwtaper(self):
+          self.prepData('refim_alma_mosaic.ms')
+          
+          tclean(vis=self.msfile,imagename=self.img+'1',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggsbwtaper',robust=0.5 ,perchanweightdensity=True,parallel=self.parallel)
+          report1=self.th.checkall(imgval=[(self.img+'1.image', 1,[175,140,0,0])])
+          
+          _ia.open(self.img+'1.image')
+          nchan = _ia.shape()[3]
+          briggsbwtaper_beamarea = np.zeros(nchan)
+          for k in range(nchan):
+            briggsbwtaper_beamarea[k]= _ia.beamarea(k,0)['arcsec2']
+          _ia.close()
+          
+          _, report2 = self.th.check_val(briggsbwtaper_beamarea[0], 0.31155618 , valname='beam_area_chan_0', exact=False)
+          _, report3 = self.th.check_val(briggsbwtaper_beamarea[1], 0.30887386 , valname='beam_area_chan_1', exact=False)
+          _, report4 = self.th.check_val(briggsbwtaper_beamarea[2], 0.30639076 , valname='beam_area_chan_2', exact=False)
+ 
+          tclean(vis=self.msfile,imagename=self.img+'2',imsize=[350,280],cell=[0.06,0.06 ],specmode='cube',niter=0,gridder='mosaic',phasecenter='J2000 12:01:52.430856 -18.51.49.94369',weighting='briggs',robust=0.5 ,perchanweightdensity=True,parallel=self.parallel)
+          report5=self.th.checkall(imgval=[(self.img+'2.image', 1,[175,140,0,0])])
+          
+          self.assertTrue(self.th.check_beam_compare(self.img+'1.image', self.img+'2.image'))
+          
+          self.checkfinal(pstr = report1+report2+report3+report4+report5)
+
+
      def test_cube_standard_onefield(self):
           """ [mosaic_cube] Test_cube_standard_onefield : One field, standard gridder  """
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -4385,7 +4639,7 @@ class test_ephemeris(testref_base):
           " [ephemeris] test_onefield_mfs_eph : single field (standard gridder), mfs mode "
 
           self.prepData('venus_ephem_test.ms')
-          ret = tclean(vis=self.msfile, field='0', imagename=self.img, imsize=[288, 288], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='standard', niter=0, interactive=0, parallel=False)
+          ret = tclean(vis=self.msfile, field='0', imagename=self.img, imsize=[288, 288], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='standard', niter=0, interactive=0, parallel=self.parallel)
 
           # Retrieve original image and test image statistics
           _ia.open(refdatapath+'venus_sf_ephem_test.residual')
@@ -4475,7 +4729,7 @@ class test_ephemeris(testref_base):
           " [ephemeris] test_multifield_mfs_eph : multifield (mosaic gridder), mfs mode "
 
           self.prepData('venus_ephem_test.ms')
-          ret = tclean(vis=self.msfile, imagename=self.img, imsize=[480, 420], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='mosaic', niter=0, interactive=0, parallel=False)
+          ret = tclean(vis=self.msfile, imagename=self.img, imsize=[480, 420], cell=['0.14arcsec'], phasecenter='TRACKFIELD', specmode='mfs', gridder='mosaic', niter=0, interactive=0, parallel=self.parallel)
 
           # Retrieve original image and test image statistics
           _ia.open(refdatapath+'venus_mos_ephem_test.residual')
@@ -4559,6 +4813,86 @@ class test_ephemeris(testref_base):
 
           report = report1 + report2 + report3
           self.checkfinal(pstr=report)
+
+
+class test_errors_failures(testref_base):
+
+     def test_wrong_spw_select_data(self):
+          """
+          test_wrong_spw: should produce exception in selectData.
+
+          Should throw something like
+           RuntimeError: Error in selectData() : Spw Expression: No match found for 33,
+          """
+          self.prepData('refim_twochan.ms')
+
+          with self.assertRaises(RuntimeError):
+               ret = tclean(vis=self.msfile, imagename=self.img+'wrong_spw', imsize=98,
+                            cell='8.0arcsec', niter=2, specmode='cube', deconvolver='hogbom',
+                            nchan=10, restfreq=['1.25GHz'],
+                            field='0', phasecenter="J2000 19:59:28.500 +40.44.01.50",
+                            spw='33:5~19', start=0, width=1,
+                            veltype='radio', outframe='TOPO',
+                            parallel=self.parallel)
+
+     def test_wrong_field_select_data(self):
+          """
+          test_wrong_field: should produce exception in selectData.
+
+          Exception like:
+            RuntimeError: Error in selectData() : Field Expression: Partial or no match for Field ID list [33]
+          """
+          self.prepData('refim_twochan.ms')
+
+          with self.assertRaises(RuntimeError):
+               ret = tclean(vis=self.msfile, imagename=self.img+'wrong', imsize=98,
+                            cell='8.0arcsec', niter=2, specmode='cube', deconvolver='hogbom',
+                            nchan=10, restfreq=['1.25GHz'],
+                            field='33', phasecenter="J2000 19:59:28.500 +40.44.01.50",
+                            spw='0', start=0, width=1,
+                            veltype='radio', outframe='TOPO',
+                            parallel=self.parallel)
+
+     def test_bad_freqframe_define_image(self):
+          """
+          test_bad_freqframe: produce exception in initializeImagers/defineImage
+
+          File ".../__casac__/synthesisimager.py", line 180, in defineimage
+            return _synthesisimager.synthesisimager_defineimage(self, *args, **kwargs)
+          RuntimeError: Invalid Image Parameter set : Invalid Frequency Frame fail_!
+          """
+          self.prepData('refim_twochan.ms')
+
+          with self.assertRaises(RuntimeError):
+               ret = tclean(vis=self.msfile, imagename=self.img+'wrong', imsize=98,
+                            cell='8.0arcsec', niter=2, specmode='cube', deconvolver='hogbom',
+                            nchan=10, restfreq=['1.25GHz'],
+                            field='0', phasecenter="J2000 02:59:28.500 -40.44.01.50",
+                            spw='0', start=22, width=1,
+                            veltype='radio', outframe='fail_!',
+                            parallel=self.parallel)
+
+     def test_error_gridding(self):
+          """ test_error_gridding: produces exception in gridding
+
+          One way to make gridding fail is to give imsize=3,4, etc. This fails like:
+           RuntimeError: Error in making PSF : One or more  of the cube section failed in de/gridding. Return values for the sections: [0]
+          With a preceding SEVERE error messages:
+
+          SEVERE  task_tclean::FTMachine::initMaps  number of pixels 6 on x axis is smaller that the gridding support 6 Please use a larger value
+          SEVERE  task_tclean::CubeMajorCycleAlgorithm::task (file .../code/synthesis/ImagerObjects/CubeMajorCycleAlgorithm.cc, line 136) Exception: Error in making PSF :
+          SEVERE  task_tclean::FTMachine::initMapsnumber of pixels 6 on x axis is smaller that the gridding support 6 Please use a larger value
+          """
+          self.prepData('refim_twochan.ms')
+
+          with self.assertRaises(RuntimeError):
+               ret = tclean(vis=self.msfile, imagename=self.img+'wrong', imsize=4,
+                            cell='8.0arcsec', niter=2, specmode='cube', deconvolver='hogbom',
+                            nchan=10, restfreq=['1.25GHz'],
+                            field='0', phasecenter="J2000 19:59:28.500 +40.44.01.50",
+                            spw='0', start=22, width=1,
+                            veltype='radio', outframe='LSRK',
+                            parallel=self.parallel)
 
 
 if is_CASA6:
