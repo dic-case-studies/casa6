@@ -9,7 +9,7 @@ import ssl
 import string
 import urllib
 
-import numpy
+import numpy as np
 
 from casatools import msmetadata
 
@@ -78,7 +78,7 @@ class ALMAJyPerKDatabaseAccessBase(object):
 
         spws = ms.get_spectral_windows(science_windows_only=True)
         bands = [spw.band for spw in spws]
-        return numpy.unique(bands)
+        return np.unique(bands)
 
     def _generate_query(self, url, params):
         try:
@@ -363,7 +363,7 @@ def get_mean_frequency(spw):
 
 def get_mean_temperature(vis):
     with casa_tools.TableReader(os.path.join(vis, 'WEATHER')) as tb:
-        valid_temperatures = numpy.ma.masked_array(
+        valid_temperatures = np.ma.masked_array(
             tb.getcol('TEMPERATURE'),
             tb.getcol('TEMPERATURE_FLAG')
         )
@@ -387,17 +387,17 @@ def get_mean_elevation(context, vis, antenna_id):
 
 def translate_spw(data, ms):
     vis = ms.name
-    science_windows = numpy.asarray(ms.get_spectral_windows(science_windows_only=True))
+    science_windows = np.asarray(ms.get_spectral_windows(science_windows_only=True))
     with casa_tools.TableReader(os.path.join(vis, 'ASDM_SPECTRALWINDOW')) as tb:
         idcol = tb.getcol('spectralWindowId')
         namecol = tb.getcol('name')
 
     translated = []
-    science_window_names = numpy.asarray([x.name for x in science_windows])
+    science_window_names = np.asarray([x.name for x in science_windows])
     casalog.post('Translate ASDM Spws to MS Spws:')
     for d in data:
         asdm_spw_id = d['Spwid']
-        asdm_spw_names = namecol[numpy.where(idcol == 'SpectralWindow_{}'.format(asdm_spw_id))]
+        asdm_spw_names = namecol[np.where(idcol == 'SpectralWindow_{}'.format(asdm_spw_id))]
         assert len(asdm_spw_names) == 1
         asdm_spw_name = asdm_spw_names[0]
         if asdm_spw_name.endswith('CH_AVG'):
@@ -409,9 +409,9 @@ def translate_spw(data, ms):
         else:
             chan_avg_name = asdm_spw_name
             full_res_name = asdm_spw_name
-        i = numpy.where(science_window_names == full_res_name)
+        i = np.where(science_window_names == full_res_name)
         if len(i[0]) == 0:
-            i = numpy.where(science_window_names == chan_avg_name)
+            i = np.where(science_window_names == chan_avg_name)
         if len(i[0]) > 0:
             spws = science_windows[i]
             assert len(spws) == 1
