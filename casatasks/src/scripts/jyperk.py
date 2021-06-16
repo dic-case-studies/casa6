@@ -43,7 +43,7 @@ class ALMAJyPerKDatabaseAccessBase(object):
             s += '/'
         return s
 
-    def __init__(self, context=None):
+    def __init__(self):
         """
         ALMAJyPerKDatabaseAccessBase is a base class for accessing Jy/K
         DB to retrieve conversion factor for ALMA TP data.
@@ -69,19 +69,7 @@ class ALMAJyPerKDatabaseAccessBase(object):
                                  a dictionary containing a list of query
                                  parameters. Required parameters depend on
                                  the API.
-
-        Keyword Arguments:
-            context {Context} -- Pipeline Context object (default: {None})
         """
-        self.context = context
-
-    def _get_observing_band(self, ms):
-        if self.context is None:
-            return 'Unknown'
-
-        spws = ms.get_spectral_windows(science_windows_only=True)
-        bands = [spw.band for spw in spws]
-        return np.unique(bands)
 
     def _generate_query(self, url, params):
         try:
