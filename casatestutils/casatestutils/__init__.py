@@ -18,7 +18,7 @@ import numbers
 import operator
 import subprocess
 import numpy
-import six
+
 
 _casa5 = False
 _casa6 = False

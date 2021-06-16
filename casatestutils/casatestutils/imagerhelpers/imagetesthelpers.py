@@ -15,7 +15,6 @@ import numbers
 import operator
 import subprocess
 import numpy
-import six
 
 casa5 = False
 casa6 = False
@@ -940,8 +939,6 @@ class TestHelpers:
 
     def check_final(self, pstr=""):
 
-        if not isinstance(pstr, six.string_types):
-            return False
         casalog.post(pstr, 'INFO')
         if pstr.count("Fail") > 0:
             return False
