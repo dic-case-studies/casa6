@@ -2700,8 +2700,12 @@ void FringeJones::applyRefAnt() {
       flB.set(True);
       ctiter.setflag(flB);
       if (ichoice == nchoices){
-        logSink()
-          << "refant list exausted, flagging all solutions"
+          logSink() << LogIO::WARN
+          << "From time: "
+          << MVTime(ctiter.thisTime()/C::day).string(MVTime::YMD,7)
+          << "in Spw: "
+          << citer.thisSpw()
+          << " refant list exausted, flagging all solutions"
           << LogIO::POST; 
       }
     }
