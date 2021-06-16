@@ -209,9 +209,10 @@ class ALMAJyPerKDatabaseAccessBase(object):
         return factors
 
     def filter_jyperk(self, vis, factors):
-        ms = self.context.observing_run.get_ms(vis)
-        science_windows = [x.id for x in ms.get_spectral_windows(science_windows_only=True)]
-        filtered = [i for i in factors if (len(i) == 5) and (i[0] == ms.basename) and (int(i[2]) in science_windows)]
+        ms = mstool()
+        selected = ms.msseltoindex(vis=vis, spw=spw)
+        science_windows = selected['spw']
+        filtered = [i for i in factors if (len(i) == 5) and (i[0] == os.path.basename(vis.rstrip('/')) and (int(i[2]) in science_windows)]
         return filtered
 
 
