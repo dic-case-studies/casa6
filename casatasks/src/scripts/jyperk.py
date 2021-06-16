@@ -218,41 +218,36 @@ class ALMAJyPerKDatabaseAccessBase(object):
 
 class JyPerKAbstractEndPoint(ALMAJyPerKDatabaseAccessBase):
     def get_params(self, vis):
-        ms = self.context.observing_run.get_ms(vis)
+        selected = ms.msseltoindex(vis=vis, spw=spw)
+        science_windows = selected['spw']
 
-        # parameter dictionary
-        params = {}
+        msmd = msmetadata()
+        msmd.open(vis) 
+        timerange = msmd.timerangeforobs(0)
+        antnenanames = msmd.antennanames()
+        basebands = dict((i, msmd.baseband(i)) for i in science_spws)
+        mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_spws)
+        spwnames = msmd.namesforspws(science_windows)
+        msmd.close()
+        bands = dict((i, int(n.split('#')[0].split('_')[-1])) for i, n in zip(science_windows, spwnames))
+        params['date'] = msd_to_datestring(timerange['begin'])
 
-        # date
-        params['date'] = mjd_to_datestring(ms.start_time)
+        tb = table()
+        tb.open(os.path.join(vis, 'SPECTRAL_WINDOW'))
+        spw_names = [tb.getcell('NAME', i) for i in science_windows]
 
-        # temperature
-        params['temperature'] = get_mean_temperature(vis)
+        mean_freqs = [tb.getcell('CHAN_FREQ', i).mean() for i in science_windows]
 
-        # other
-        params.update(self._aux_params())
+        for antenna_id, antenna_name in enumerate(antennanames):
+            params['antenna'] = antenna_name
 
-        # loop over antennas and spws
-        for ant in ms.antennas:
-            # antenna name
-            params['antenna'] = ant.name
+            params['elevation'] = get_mean_elevation(vis, ant.id)
 
-            # elevation
-            params['elevation'] = get_mean_elevation(self.context, vis, ant.id)
-
-            for spw in ms.get_spectral_windows(science_windows_only=True):
-                # observing band is taken from the string spw.band
-                # whose format should be "ALMA Band X"
-                params['band'] = int(spw.band.split()[-1])
-
-                # baseband
-                params['baseband'] = int(spw.baseband)
-
-                # mean frequency
-                params['frequency'] = get_mean_frequency(spw)
-
-                # subparam is dictionary holding vis and spw id
-                subparam = {'vis': vis, 'spwid': spw.id}
+            for spw in science_windows:
+                params['band'] = bands[spw]
+                params['baseband'] = basebands[spw]
+                params['frequency'] = mean_freqs[spw]
+                subparam = {'vis': vis, 'spwid': spw}
                 yield QueryStruct(param=params, subparam=subparam)
 
     def access(self, queries):
