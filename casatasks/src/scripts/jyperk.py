@@ -109,7 +109,7 @@ class ALMAJyPerKDatabaseAccessBase(object):
             casalog.post(msg)
             raise e
 
-    def validate(self, vis):
+    def validate_is_alma_data(self, vis):
         msmd = msmetadata()
         msmd.open(vis)
         try:
@@ -132,7 +132,7 @@ class ALMAJyPerKDatabaseAccessBase(object):
             [list] -- List of Jy/K conversion factors with meta data
         """
         # sanity check
-        self.validate(vis)
+        self.validate_is_alma_data(vis)
 
         # get Jy/K value from DB
         jyperk = self.get(vis)
