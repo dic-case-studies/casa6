@@ -200,7 +200,12 @@ class ALMAJyPerKDatabaseAccessBase(object):
         ms = mstool()
         selected = ms.msseltoindex(vis=vis, spw=spw)
         science_windows = selected['spw']
-        filtered = [i for i in factors if (len(i) == 5) and (i[0] == os.path.basename(vis.rstrip('/')) and (int(i[2]) in science_windows)]
+        filtered = [
+            i for i in factors if (len(i) == 5) 
+            and (
+                i[0] == os.path.basename(vis.rstrip('/')) and (int(i[2]) in science_windows)
+            )
+        ]
         return filtered
 
 
