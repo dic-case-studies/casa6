@@ -403,6 +403,8 @@ def get_mean_elevation(vis, antenna_id):
     msmd.close()
     elevations = np.asarray(elevations)
 
+    return elevations.mean()
+
 
 def translate_spw(data, ms):
     vis = ms.name
