@@ -11,6 +11,8 @@ import urllib
 
 import numpy
 
+from casatools import msmetadata
+
 # get is_CASA6 and is_python3
 if is_CASA6:
     from casatasks import casalog
@@ -108,14 +110,13 @@ class ALMAJyPerKDatabaseAccessBase(object):
             raise e
 
     def validate(self, vis):
-        basename = os.path.basename(vis.rstrip('/'))
+        msmd = msmetadata()
+        msmd.open(vis)
         try:
-            ms = self.context.observing_run.get_ms(vis)
+            array_name = msmd.observatorynames()[0]
         except KeyError:
-            casalog.post('{} is not registered to context'.format(basename))
-            raise
-
-        array_name = ms.antenna_array.name
+            LOG.error('{} is not registered to observatorynames'.format(vis))
+        msmd.close()
         if array_name != 'ALMA':
             raise RuntimeError('{} is not ALMA data'.format(basename))
 
