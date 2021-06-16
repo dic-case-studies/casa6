@@ -11,7 +11,10 @@ import urllib
 
 import numpy as np
 
-from casatools import msmetadata
+from casatools import ms as mstool
+from casatools import msmetadata 
+from casatools import quanta 
+from casatools import table 
 
 # get is_CASA6 and is_python3
 if is_CASA6:
@@ -371,18 +374,34 @@ def get_mean_temperature(vis):
     return valid_temperatures.mean()
 
 
-def get_mean_elevation(context, vis, antenna_id):
-    dt_name = context.observing_run.ms_datatable_name
-    basename = os.path.basename(vis.rstrip('/'))
-    with casa_tools.TableReader(os.path.join(dt_name, basename, 'RO')) as tb:
-        try:
-            t = tb.query('ANTENNA=={}&&SRCTYPE==0'.format(antenna_id))
-            assert t.nrows() > 0
-            elevations = t.getcol('EL')
-        finally:
-            t.close()
+def get_mean_elevation(vis, antenna_id):
+    ms = mstool()
+    ms.open(vis)
+    ms.msselect({'spw': spw, 'scanintent': 'OBSERVE_TARGET#ON_SOURCE'})
+    selected = ms.msselectedindices()
+    ms.close()
+    stateid = selected['stateid']
+    ddid = selected['spwdd'][0]
 
-    return elevations.mean()
+    tb = table()
+    tb.open(vis)
+    query = f'ANTENNA1=={antenna_id}&&ANTENNA2=={antenna_id}&&DATA_DESC_ID=={ddid}&&STATE_ID IN {list(stateid)}' 
+    tsel = tb.query(query)
+    rows = tsel.rownumbers()
+    tsel.close()
+    tb.close()
+
+    qa = quanta() 
+    msmd = msmetadata()
+    msmd.open(vis) 
+    elevations = [] 
+    for row in rows: 
+        p = msmd.pointingdirection(row, initialrow=row) 
+        assert p['antenna1']['pointingdirection']['refer'].startswith('AZEL') 
+        el_deg = qa.convert(p['antenna1']['pointingdirection']['m1'], 'deg') 
+        elevations.append(el_deg['value']) 
+    msmd.close()
+    elevations = np.asarray(elevations)
 
 
 def translate_spw(data, ms):
