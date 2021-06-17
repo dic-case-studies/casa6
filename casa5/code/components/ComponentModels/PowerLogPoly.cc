@@ -62,7 +62,9 @@ PowerLogPoly::~PowerLogPoly() {}
 PowerLogPoly& PowerLogPoly::operator=(const PowerLogPoly& other) {
   if (this != &other) {
     SpectralModel::operator=(other);
+    _coeffs.resize(other._coeffs.size());
     _coeffs = other._coeffs.copy();
+    _errors.resize(other._errors.size());
     _errors = other._errors.copy();
   }
   return *this;
@@ -95,51 +97,55 @@ Double PowerLogPoly::_getIntensityRatio(Double x) const {
       exponent += _coeffs[i] * logx * logx;
     }
     else {
-      exponent += _coeffs[i] * pow(log(x), i);
+      exponent += _coeffs[i] * pow(logx, i);
     }
   }
   return pow(x, exponent);
 }
 
 Double PowerLogPoly::sample(const MFrequency& centerFreq) const {
-  const auto x = centerFreq.getValue()/_getNu0(centerFreq.getRef());
-  return _getIntensityRatio(x);
+    const auto x = centerFreq.getValue()/_getNu0(centerFreq.getRef());
+    return _getIntensityRatio(x);
 }
 
 void PowerLogPoly::sampleStokes(
-  const MFrequency& centerFreq, Vector<Double>& iquv
+    const MFrequency& centerFreq, Vector<Double>& iquv
 ) const {
-  ThrowIf(iquv.size() != 4, "Four stokes parameters in iquv are expected");
-  iquv[0] *= sample(centerFreq);
-  // TODO add full stokes support.
+    ThrowIf(iquv.size() != 4, "Four stokes parameters in iquv are expected");
+    iquv[0] *= sample(centerFreq);
+    // TODO add full stokes support.
 }
 
 void PowerLogPoly::sample(
-  Vector<Double>& scale,  const Vector<MFrequency::MVType>& frequencies, 
-  const MFrequency::Ref& refFrame
+    Vector<Double>& scale,  const Vector<MFrequency::MVType>& frequencies, 
+    const MFrequency::Ref& refFrame
 ) const {
-  const auto nSamples = frequencies.size();
-  if (scale.size() != nSamples) {
-    scale.resize(nSamples);
-  }
-  const auto nu0 = _getNu0(refFrame);
-  for (uInt i=0; i<nSamples; ++i) {
-    scale[i] = _getIntensityRatio(frequencies[i].getValue()/nu0);
-  }
+    const auto nSamples = frequencies.size();
+    ThrowIf(
+        scale.size() != nSamples, 
+        "A Vector of length " + String::toString(nSamples) + " is required"
+    );
+    const auto nu0 = _getNu0(refFrame);
+    for (uInt i=0; i<nSamples; ++i) {
+        scale[i] = _getIntensityRatio(frequencies[i].getValue()/nu0);
+    }
 }
 
-void PowerLogPoly::sampleStokes(Vector<Vector<Double> >& iquv, 
+void PowerLogPoly::sampleStokes(
+    Matrix<Double>& iquv, 
 	const Vector<MFrequency::MVType>& frequencies, 
-	const MFrequency::Ref& refFrame) const {
-  const uInt nSamples = frequencies.size();
-  if (iquv.size() != nSamples) {
-    iquv.resize(nSamples);
-  }
-  const auto nu0 = _getNu0(refFrame);
-  for (uInt i = 0; i < nSamples; ++i) {
-    iquv[i][0] *= _getIntensityRatio(frequencies[i].getValue()/nu0);
-  }
-  // TODO full polarization implementation to come
+	const MFrequency::Ref& refFrame
+) const {
+    const uInt nSamples = frequencies.size();
+    ThrowIf(
+        iquv.size() != 4*nSamples, 
+        "A Vector of length " + String::toString(4*nSamples) + " is required"
+    );
+    const auto nu0 = _getNu0(refFrame);
+    for (uInt i=0; i<nSamples; ++i) {
+        iquv[4*i] *= _getIntensityRatio(frequencies[i].getValue()/nu0);
+    }
+    // TODO full polarization implementation to come
 }
   
 SpectralModel* PowerLogPoly::clone() const {
@@ -153,8 +159,12 @@ uInt PowerLogPoly::nParameters() const {
 }
 
 void PowerLogPoly::setParameters(const Vector<Double>& newSpectralParms) {
-  _coeffs.resize(0);
-  _coeffs = newSpectralParms.copy();
+    _coeffs.resize(0);
+    _coeffs = newSpectralParms.copy();
+    const auto s = _coeffs.size();
+    if (_errors.size() != s) {
+        _errors.resize(s, True);
+    }
 }
 
 Vector<Double> PowerLogPoly::parameters() const {
@@ -162,8 +172,13 @@ Vector<Double> PowerLogPoly::parameters() const {
 }
 
 void PowerLogPoly::setErrors(const Vector<Double>& newSpectralErrs) {
-  ThrowIf(anyLT(newSpectralErrs, 0.0), "The errors must be non-negative.");
-  _errors = newSpectralErrs.copy();
+    ThrowIf(anyLT(newSpectralErrs, 0.0), "The errors must be non-negative.");
+    _errors.resize(newSpectralErrs.size());
+    _errors = newSpectralErrs.copy();
+    const auto s = _errors.size();
+    if (_coeffs.size() != s) {
+        _coeffs.resize(s, True);
+    }
 }
 
 Vector<Double> PowerLogPoly::errors() const {

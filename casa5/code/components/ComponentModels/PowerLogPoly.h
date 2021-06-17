@@ -66,7 +66,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 // Inensity that varies as power logarithmic polynomial function of frequency is
 // defined by
 // <srcblock>
-// I_nu = I_nu0 * (x)*exp(c0 + c1*ln(x) + c2*(ln(x)^2) + c3*(ln(x))^3 + ... 
+// I_nu = I_nu0 * x^(c0 + c1*ln(x) + c2*(ln(x)^2) + c3*(ln(x))^3 + ... 
 //        + cn(ln(x))^n)
 // </srcblock>
 // Where:
@@ -97,7 +97,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 // object is represented at the UI level. The format of the record that is generated
 // and accepted by these functions is:
 // <srcblock>
-// c := [type = 'plp',
+// c := [type = 'Power Logarithmic Polynomial',
 //       frequency = [type = 'frequency',
 //                    refer = 'lsr',
 //                    m0 = [value = 1, unit = 'GHz']
@@ -107,9 +107,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 // </srcblock>
 // The frequency field contains a record representation of a frequency measure
 // and its format is defined in the Measures module. Its refer field defines
-// the reference frame for the direction and the m0 field defines the value of
+// the reference frame and the m0 field defines the value of
 // the reference frequency. The parsing of the type field is case
-// insensitive. The index field contains the spectral index.
+// insensitive. The coeffs field contain the coeffecients as described previously.
 // </synopsis>
 
 //
@@ -164,20 +164,22 @@ public:
     casacore::Vector<casacore::Double>& iquv
   ) const;
 
-  // Same as the previous function except that many frequencies can be sampled
-  // at once. The reference frame must be the same for all the specified
-  // frequencies. 
-  virtual void sample(
-    casacore::Vector<casacore::Double>& scale, 
-    const casacore::Vector<casacore::MFrequency::MVType>& frequencies, 
-    const casacore::MFrequency::Ref& refFrame
-  ) const;
+    // Same as the previous function except that many frequencies can be sampled
+    // at once. The reference frame must be the same for all the specified
+    // frequencies. The scale Vector must be of length frequencies.size()
+    virtual void sample(
+        casacore::Vector<casacore::Double>& scale, 
+        const casacore::Vector<casacore::MFrequency::MVType>& frequencies, 
+        const casacore::MFrequency::Ref& refFrame
+    ) const;
 
-  virtual void sampleStokes(
-    casacore::Vector<casacore::Vector<casacore::Double> >& scale,
+    // The scale Matrix must be of shape (frequencies.size(), 4), and all the
+    // Only the zeroth elements of the rows will be modified.
+    virtual void sampleStokes(
+        casacore::Matrix<casacore::Double>& scale,
 		const casacore::Vector<casacore::MFrequency::MVType>& frequencies, 
 		const casacore::MFrequency::Ref& refFrame
-  ) const;
+    ) const;
 
   // Return a pointer to a copy of this object upcast to a SpectralModel
   // object. The caller is responsible for deleting the
@@ -187,8 +189,12 @@ public:
   // return the number of parameters. 
   // <group>
   virtual casacore::uInt nParameters() const;
+  // note that setParameters will adjust the size of _errors Vector for consistency
+  // if necessary and will use copyValues=True
   virtual void setParameters(const casacore::Vector<casacore::Double>& newSpectralParms);
   virtual casacore::Vector<casacore::Double> parameters() const;
+  // note that setErros will adjust the size of _coeffs Vector for consistency 
+  // if necessary and will use copyValues=True
   virtual void setErrors(const casacore::Vector<casacore::Double>& newSpectralErrs);
   virtual casacore::Vector<casacore::Double> errors() const;
   // </group>

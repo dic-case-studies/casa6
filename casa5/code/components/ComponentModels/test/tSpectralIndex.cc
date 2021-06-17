@@ -43,9 +43,11 @@
 #include <casa/iostream.h>
 
 #include <casa/namespace.h>
+
+using namespace casa;
 int main() {
   try {
-    SpectralModel* siPtr = 0;;
+    SpectralModel* siPtr = nullptr;
     const MFrequency f1(Quantity(1.0, "GHz"), MFrequency::LSRK);
     const MFrequency f2(Quantity(2.0, "GHz"), MFrequency::LSRK);
     const MFrequency f4(Quantity(4.0, "GHz"), MFrequency::LSRK);
