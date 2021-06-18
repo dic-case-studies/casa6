@@ -25,6 +25,9 @@ QueryStruct = collections.namedtuple('QueryStruct', ['param', 'subparam'])
 ResponseStruct = collections.namedtuple('ResponseStruct', ['response', 'subparam'])
 
 
+class ASDMParamsGenerator():
+
+
 class JyPerKDatabaseClient():
     BASE_URL = 'https://asa.alma.cl/science/jy-kelvins'
 
@@ -119,7 +122,7 @@ class ALMAJyPerKDatabaseAccessBase(object):
                                  the API.
         """
 
-    def _generate_query(self, url, params):
+    def _generate_query(self, params):
         for p in params:
             client = JyPerKDatabaseClient(self.ENDPOINT_TYPE)
             retval = client.get(p)
@@ -174,10 +177,6 @@ class ALMAJyPerKDatabaseAccessBase(object):
         Arguments:
             vis {str} -- Name of MS
 
-        Raises:
-            urllib2.HTTPError
-            urllib2.URLError
-
         Returns:
             [dict] -- Response from the DB as a dictionary. It should contain
                       the following keys:
@@ -185,12 +184,9 @@ class ALMAJyPerKDatabaseAccessBase(object):
                           'total' -- number of data
                           'data'  -- data
         """
-        # set URL
-        url = self.url
-
         params = self.get_params(vis)
 
-        queries = self._generate_query(url, params)
+        queries = self._generate_query(params)
 
         retval = self.access(queries)
         # retval should be a dict that consists of
