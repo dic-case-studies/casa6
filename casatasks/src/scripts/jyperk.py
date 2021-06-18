@@ -11,17 +11,12 @@ import urllib
 
 import numpy as np
 
+from casatasks import casalog
 from casatools import ms as mstool
 from casatools import msmetadata 
 from casatools import measures
 from casatools import quanta 
 from casatools import table 
-
-# get is_CASA6 and is_python3
-if is_CASA6:
-    from casatasks import casalog
-else:
-    from taskinit import casalog
 
 
 ### web api part
