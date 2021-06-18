@@ -13,6 +13,7 @@ import numpy as np
 
 from casatools import ms as mstool
 from casatools import msmetadata 
+from casatools import measures
 from casatools import quanta 
 from casatools import table 
 
@@ -335,9 +336,8 @@ def vis_to_uid(vis):
 
 
 def mjd_to_datestring(epoch):
-    # casa_tools
-    me = casa_tools.measures
-    qa = casa_tools.quanta
+    me = measures()
+    qa = quanta()
 
     if epoch['refer'] != 'UTC':
         try:
@@ -345,10 +345,7 @@ def mjd_to_datestring(epoch):
         finally:
             me.done()
 
-    t = qa.splitdate(epoch['m0'])
-    dd = datetime.datetime(t['year'], t['month'], t['monthday'], t['hour'], t['min'], t['sec'], t['usec'])
-    #datestring = dd.strftime('%Y-%m-%dT%H:%M:%S.%f')
-    datestring = dd.strftime('%Y-%m-%dT%H:%M:%S')
+    datestring = qa.time(epoch['m0'], form='fits')
     return datestring
 
 
