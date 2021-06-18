@@ -40,6 +40,9 @@
 #include <casa/iostream.h>
 
 #include <casa/namespace.h>
+
+using namespace casa;
+
 void printShape(const ComponentShape& theShape) {
   cout << "This is a " << ComponentType::name(theShape.type())
        << " shape " << endl 

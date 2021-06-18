@@ -53,6 +53,9 @@
 #include <casa/iostream.h>
 
 #include <casa/namespace.h>
+
+using namespace casa;
+
 void pixelWorldConversion ();
 
 Bool pixelReflection (const TwoSidedShape& shp, const DirectionCoordinate& dCoord, 

@@ -44,6 +44,9 @@
 #include <casa/iostream.h>
 
 #include <casa/namespace.h>
+
+using namespace casa;
+
 int main() {
   try {
     SpectralModel* siPtr = 0;
@@ -75,12 +78,13 @@ int main() {
     siModel.sample(scale, fs, frame);
     cout << "Scale " << scale << endl;
 
-    Vector<Vector<Double> > vals(5);
+    Matrix<Double> vals(5, 4);
     
     siModel.setRefFrequency(MFrequency(Quantity(1.0, "GHz"), MFrequency::LSRK));
-   
-    siModel.sampleStokes(f2, vals(0));
-    cout << "value at f2 " << vals(0) << endl;
+  
+    Vector<Double> rowZero = vals.row(0).copy();
+    siModel.sampleStokes(f2, rowZero);
+    cout << "value at f2 " << rowZero << endl;
     Vector<MVFrequency> freqs(5);
     for (Int K=0; K< 5; ++K){
       Double ff=1.0+ Double(K)*0.1;

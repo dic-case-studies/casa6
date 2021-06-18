@@ -23,6 +23,7 @@
 //#                        Charlottesville, VA 22903-2475 USA
 //#
 
+#include <casacore/casa/BasicMath/Math.h>
 #include <components/ComponentModels/GaussianDeconvolver.h>
 
 #include <scimath/Mathematics/GaussianBeam.h>
