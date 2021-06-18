@@ -57,7 +57,6 @@ class ASDMParamsGenerator():
         else:
             raise RuntimeError('MS name is not appropriate for DB query: {}'.format(basename))
 
-
 class InterpolationParamsGenerator():
     """
     Usage:
@@ -66,6 +65,8 @@ class InterpolationParamsGenerator():
     """
     @classmethod
     def get_params(cls, vis, spw=''):
+        params = {}
+        
         if spw == '':
             spw = '*'
 
@@ -76,12 +77,18 @@ class InterpolationParamsGenerator():
         msmd = msmetadata()
         msmd.open(vis) 
         timerange = msmd.timerangeforobs(0)
-        antnenanames = msmd.antennanames()
+        antenna_names = msmd.antennanames()
         basebands = dict((i, msmd.baseband(i)) for i in science_windows)
         mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_windows)
         spwnames = msmd.namesforspws(science_windows)
         msmd.close()
-        bands = dict((i, int(n.split('#')[0].split('_')[-1])) for i, n in zip(science_windows, spwnames))
+        
+        bands = {}
+        for i, n in zip(science_windows, spwnames):
+            if '#' in n and '_' in n:
+                bands[i] = int(n.split('#')[0].split('_')[-1])
+                
+        # bands = dict((i, int(n.split('#')[0].split('_')[-1])) for i, n in zip(science_windows, spwnames))
         params['date'] = cls._mjd_to_datestring(timerange['begin'])
 
         tb = table()
@@ -90,10 +97,9 @@ class InterpolationParamsGenerator():
 
         mean_freqs = [tb.getcell('CHAN_FREQ', i).mean() for i in science_windows]
 
-        for antenna_id, antenna_name in enumerate(antennanames):
+        for antenna_id, antenna_name in enumerate(antenna_names):
             params['antenna'] = antenna_name
-
-            params['elevation'] = cls.get_mean_elevation(vis, ant.id)
+            params['elevation'] = cls._get_mean_elevation(vis, antenna_id, spw)
 
             for spw in science_windows:
                 params['band'] = bands[spw]
@@ -117,7 +123,7 @@ class InterpolationParamsGenerator():
         return datestring
 
     @staticmethod
-    def _get_mean_elevation(vis, antenna_id):
+    def _get_mean_elevation(vis, antenna_id, spw):
         ms = mstool()
         ms.open(vis)
         ms.msselect({'spw': spw, 'scanintent': 'OBSERVE_TARGET#ON_SOURCE'})
