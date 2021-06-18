@@ -53,6 +53,101 @@ class ASDMParamsGenerator():
             raise RuntimeError('MS name is not appropriate for DB query: {}'.format(basename))
 
 
+class InterpolationParamsGenerator():
+    """
+    Usage:
+        vis = './uid___A002_X85c183_X36f.ms'
+        params = InterpolationParamsGenerator.get_params(vis)
+    """
+    @classmethod
+    def get_params(cls, vis, spw=''):
+        if spw == '':
+            spw = '*'
+
+        selected = mstool.msseltoindex(vis=vis, spw=spw)
+        science_windows = selected['spw']
+
+        msmd = msmetadata()
+        msmd.open(vis) 
+        timerange = msmd.timerangeforobs(0)
+        antnenanames = msmd.antennanames()
+        basebands = dict((i, msmd.baseband(i)) for i in science_windows)
+        mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_windows)
+        spwnames = msmd.namesforspws(science_windows)
+        msmd.close()
+        bands = dict((i, int(n.split('#')[0].split('_')[-1])) for i, n in zip(science_windows, spwnames))
+        params['date'] = cls._mjd_to_datestring(timerange['begin'])
+
+        tb = table()
+        tb.open(os.path.join(vis, 'SPECTRAL_WINDOW'))
+        spw_names = [tb.getcell('NAME', i) for i in science_windows]
+
+        mean_freqs = [tb.getcell('CHAN_FREQ', i).mean() for i in science_windows]
+
+        for antenna_id, antenna_name in enumerate(antennanames):
+            params['antenna'] = antenna_name
+
+            params['elevation'] = cls.get_mean_elevation(vis, ant.id)
+
+            for spw in science_windows:
+                params['band'] = bands[spw]
+                params['baseband'] = basebands[spw]
+                params['frequency'] = mean_freqs[spw]
+                subparam = {'vis': vis, 'spwid': spw}
+                yield QueryStruct(param=params, subparam=subparam)
+
+    @staticmethod
+    def _mjd_to_datestring(epoch):
+        me = measures()
+        qa = quanta()
+
+        if epoch['refer'] != 'UTC':
+            try:
+                epoch = me.measure(epoch, 'UTC')
+            finally:
+                me.done()
+
+        datestring = qa.time(epoch['m0'], form='fits')
+        return datestring
+
+    @staticmethod
+    def _get_mean_elevation(vis, antenna_id):
+        ms = mstool()
+        ms.open(vis)
+        ms.msselect({'spw': spw, 'scanintent': 'OBSERVE_TARGET#ON_SOURCE'})
+        selected = ms.msselectedindices()
+        ms.close()
+        stateid = selected['stateid']
+        ddid = selected['spwdd'][0]
+
+        tb = table()
+        tb.open(vis)
+        query = f'ANTENNA1=={antenna_id}&&ANTENNA2=={antenna_id}&&DATA_DESC_ID=={ddid}&&STATE_ID IN {list(stateid)}' 
+        tsel = tb.query(query)
+        rows = tsel.rownumbers()
+        tsel.close()
+        tb.close()
+
+        qa = quanta() 
+        msmd = msmetadata()
+        msmd.open(vis) 
+        elevations = [] 
+        for row in rows: 
+            p = msmd.pointingdirection(row, initialrow=row) 
+            assert p['antenna1']['pointingdirection']['refer'].startswith('AZEL') 
+            el_deg = qa.convert(p['antenna1']['pointingdirection']['m1'], 'deg') 
+            elevations.append(el_deg['value']) 
+        msmd.close()
+        elevations = np.asarray(elevations)
+
+        return elevations.mean()
+
+
+
+class ModelFitParamsGenerator(InterpolationParamsGenerator):
+    pass
+
+
 class JyPerKDatabaseClient():
     BASE_URL = 'https://asa.alma.cl/science/jy-kelvins'
 
@@ -256,41 +351,7 @@ class ALMAJyPerKDatabaseAccessBase(object):
 
 
 class JyPerKAbstractEndPoint(ALMAJyPerKDatabaseAccessBase):
-    def get_params(self, vis, spw=''):
-        if spw == '':
-            spw = '*'
 
-        selected = mstool.msseltoindex(vis=vis, spw=spw)
-        science_windows = selected['spw']
-
-        msmd = msmetadata()
-        msmd.open(vis) 
-        timerange = msmd.timerangeforobs(0)
-        antnenanames = msmd.antennanames()
-        basebands = dict((i, msmd.baseband(i)) for i in science_windows)
-        mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_windows)
-        spwnames = msmd.namesforspws(science_windows)
-        msmd.close()
-        bands = dict((i, int(n.split('#')[0].split('_')[-1])) for i, n in zip(science_windows, spwnames))
-        params['date'] = mjd_to_datestring(timerange['begin'])
-
-        tb = table()
-        tb.open(os.path.join(vis, 'SPECTRAL_WINDOW'))
-        spw_names = [tb.getcell('NAME', i) for i in science_windows]
-
-        mean_freqs = [tb.getcell('CHAN_FREQ', i).mean() for i in science_windows]
-
-        for antenna_id, antenna_name in enumerate(antennanames):
-            params['antenna'] = antenna_name
-
-            params['elevation'] = get_mean_elevation(vis, ant.id)
-
-            for spw in science_windows:
-                params['band'] = bands[spw]
-                params['baseband'] = basebands[spw]
-                params['frequency'] = mean_freqs[spw]
-                subparam = {'vis': vis, 'spwid': spw}
-                yield QueryStruct(param=params, subparam=subparam)
 
     def access(self, queries):
         data = []
@@ -353,66 +414,6 @@ class JyPerKInterpolationEndPoint(JyPerKAbstractEndPoint):
 
     def _extract_factor(self, response):
         return response['data']['factor']['mean']
-
-
-def mjd_to_datestring(epoch):
-    me = measures()
-    qa = quanta()
-
-    if epoch['refer'] != 'UTC':
-        try:
-            epoch = me.measure(epoch, 'UTC')
-        finally:
-            me.done()
-
-    datestring = qa.time(epoch['m0'], form='fits')
-    return datestring
-
-
-def get_mean_frequency(spw):
-    return float(spw.mean_frequency.convert_to(measures.FrequencyUnits.HERTZ).value)
-
-
-def get_mean_temperature(vis):
-    with casa_tools.TableReader(os.path.join(vis, 'WEATHER')) as tb:
-        valid_temperatures = np.ma.masked_array(
-            tb.getcol('TEMPERATURE'),
-            tb.getcol('TEMPERATURE_FLAG')
-        )
-
-    return valid_temperatures.mean()
-
-
-def get_mean_elevation(vis, antenna_id):
-    ms = mstool()
-    ms.open(vis)
-    ms.msselect({'spw': spw, 'scanintent': 'OBSERVE_TARGET#ON_SOURCE'})
-    selected = ms.msselectedindices()
-    ms.close()
-    stateid = selected['stateid']
-    ddid = selected['spwdd'][0]
-
-    tb = table()
-    tb.open(vis)
-    query = f'ANTENNA1=={antenna_id}&&ANTENNA2=={antenna_id}&&DATA_DESC_ID=={ddid}&&STATE_ID IN {list(stateid)}' 
-    tsel = tb.query(query)
-    rows = tsel.rownumbers()
-    tsel.close()
-    tb.close()
-
-    qa = quanta() 
-    msmd = msmetadata()
-    msmd.open(vis) 
-    elevations = [] 
-    for row in rows: 
-        p = msmd.pointingdirection(row, initialrow=row) 
-        assert p['antenna1']['pointingdirection']['refer'].startswith('AZEL') 
-        el_deg = qa.convert(p['antenna1']['pointingdirection']['m1'], 'deg') 
-        elevations.append(el_deg['value']) 
-    msmd.close()
-    elevations = np.asarray(elevations)
-
-    return elevations.mean()
 
 
 def translate_spw(data, ms):
