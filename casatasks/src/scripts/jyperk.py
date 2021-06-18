@@ -210,8 +210,8 @@ class ALMAJyPerKDatabaseAccessBase(object):
 
 
 class JyPerKAbstractEndPoint(ALMAJyPerKDatabaseAccessBase):
-    def get_params(self, vis):
-        selected = ms.msseltoindex(vis=vis, spw=spw)
+    def get_params(self, vis, spw, antenna):
+        selected = mstool.msseltoindex(vis=vis, spw=spw)
         science_windows = selected['spw']
 
         msmd = msmetadata()
