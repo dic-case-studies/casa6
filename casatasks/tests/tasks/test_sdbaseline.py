@@ -640,9 +640,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
             shutil.rmtree(self.infile+ '_blparam.btable')
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
+        remove_files_dirs(self.infile)
+        remove_files_dirs(self.outroot)
 
     def test000(self):
         """Basic Test 000: default values for all parameters"""
@@ -928,9 +927,8 @@ class sdbaseline_maskTest(sdbaseline_unittest_base):
 
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
+        remove_files_dirs(self.infile)
+        remove_files_dirs(self.outroot)
 
     def test100(self):
         """Mask Test 100: with masked ranges at the edges of spectrum. blfunc must be cspline."""
@@ -1086,10 +1084,8 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             shutil.rmtree(self.infile+ '_blparam.btable')
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-            pass
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
 
     def test000(self):
         """Sinusoid Test 000: addwn as integer"""
@@ -1912,9 +1908,8 @@ class sdbaseline_multi_IF_test(sdbaseline_unittest_base):
 
 
     def tearDown(self):
-        if os.path.exists(self.infile):
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
 
     @unittest.skip("Not currently part of the the test suite")
     def test200(self):
@@ -2007,9 +2002,8 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
 
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
 
     def _checkBltableVar(self, outms, bltable, blparam, option):
         npol = 2
@@ -2324,9 +2318,8 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
         default(sdbaseline)
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
 
     def _checkResult(self, outfile, option):
         npol = 2
@@ -2461,7 +2454,8 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
 
 
     def tearDown(self):
-        self._remove([self.infile, self.outfile])
+        remove_files_dirs(os.path.splitext(self.infile)[0])
+        remove_single_file_dir(self.outfile)
 
     def _refetch_files(self, files, from_dir=None):
         if type(files)==str: files = [files]
@@ -2787,12 +2781,29 @@ Basic unit tests for task sdbaseline. No interactive testing.
 
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
-        if os.path.exists(self.outfile):
-            shutil.rmtree(self.outfile)
-        #print 'test'
+        remove_single_file_dir(self.infile)
+        remove_single_file_dir(self.outroot)
+        remove_single_file_dir(self.outfile)
+        remove_single_file_dir(self.bloutput)
+        remove_single_file_dir(self.blparam)
+        remove_single_file_dir(self.bloutput_poly_txt)
+        remove_single_file_dir(self.bloutput_poly_csv)
+        remove_single_file_dir(self.bloutput_cspline_txt)
+        remove_single_file_dir(self.bloutput_cspline_csv)
+        remove_single_file_dir(self.bloutput_variable_txt)
+        remove_single_file_dir(self.bloutput_variable_csv)
+        remove_single_file_dir(self.blfunc)
+        remove_single_file_dir(self.bloutput_sinusoid_txt)
+        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn0_txt)
+        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn02_txt)
+        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn1_txt)
+        remove_single_file_dir(self.bloutput_sinusoid_csv)
+        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn0_csv)
+        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn02_csv)
+        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn1_csv)
+        remove_single_file_dir(self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt)
+        remove_single_file_dir('test.csv')
+        remove_single_file_dir('test.table')
         
 
     def run_test(self, **kwargs):
@@ -4556,11 +4567,8 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
         default(sdbaseline)
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-           shutil.rmtree(self.infile)
-        for outname in glob.glob(self.outroot+'*'):
-           if os.path.isdir(outname): shutil.rmtree(outname)
-           else: os.remove(outname)
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
 
     def flag(self, infile, edge=None, rowidx=None):
         rowflag = True if edge is None else False
@@ -4690,10 +4698,7 @@ class sdbaseline_selection(unittest.TestCase):
  
     def _clearup(self):
         for name in self.templist:
-            if os.path.isdir(name):
-                shutil.rmtree(name)
-            elif os.path.exists(name):
-                os.remove(name)
+            remove_single_file_dir(name)
 
     def setUp(self):
         self._clearup()
@@ -4916,7 +4921,7 @@ class sdbaseline_updateweightTest(sdbaseline_unittest_base):
         default(sdbaseline)
 
     def tearDown(self):
-        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.infile)
         remove_files_dirs(self.outroot)
 
     def test000(self):
@@ -5053,7 +5058,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         default(sdbaseline)
 
     def tearDown(self):
-        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.infile)
         remove_files_dirs(self.outroot)
 
     def test000(self):
