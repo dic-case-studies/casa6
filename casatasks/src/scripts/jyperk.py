@@ -26,6 +26,31 @@ ResponseStruct = collections.namedtuple('ResponseStruct', ['response', 'subparam
 
 
 class ASDMParamsGenerator():
+    @classmethod
+    def get_params(cls, vis):
+        # subparam is vis
+        yield QueryStruct(param={'uid': cls._vis_to_uid(vis)}, subparam=vis)
+
+    @staticmethod
+    def _vis_to_uid(vis):
+        """
+        Convert MS name like uid___A002_Xabcd_X012 into uid://A002/Xabcd/X012
+
+        Arguments:
+            vis {str} -- Name of MS
+
+        Raises:
+            RuntimeError:
+
+        Returns:
+            str -- Corresponding ASDM uid
+        """
+        basename = os.path.basename(vis.rstrip('/'))
+        pattern = '^uid___A[0-9][0-9][0-9]_X[0-9a-f]+_X[0-9a-f]+\.ms$'
+        if re.match(pattern, basename):
+            return basename.replace('___', '://').replace('_', '/').replace('.ms', '')
+        else:
+            raise RuntimeError('MS name is not appropriate for DB query: {}'.format(basename))
 
 
 class JyPerKDatabaseClient():
@@ -301,10 +326,6 @@ class JyPerKAbstractEndPoint(ALMAJyPerKDatabaseAccessBase):
 class JyPerKAsdmEndPoint(ALMAJyPerKDatabaseAccessBase):
     ENDPOINT_TYPE = 'asdm'
 
-    def get_params(self, vis):
-        # subparam is vis
-        yield QueryStruct(param={'uid': vis_to_uid(vis)}, subparam=vis)
-
     def access(self, queries):
         responses = list(queries)
 
@@ -332,27 +353,6 @@ class JyPerKInterpolationEndPoint(JyPerKAbstractEndPoint):
 
     def _extract_factor(self, response):
         return response['data']['factor']['mean']
-
-
-def vis_to_uid(vis):
-    """
-    Convert MS name like uid___A002_Xabcd_X012 into uid://A002/Xabcd/X012
-
-    Arguments:
-        vis {str} -- Name of MS
-
-    Raises:
-        RuntimeError:
-
-    Returns:
-        str -- Corresponding ASDM uid
-    """
-    basename = os.path.basename(vis.rstrip('/'))
-    pattern = '^uid___A[0-9][0-9][0-9]_X[0-9a-f]+_X[0-9a-f]+\.ms$'
-    if re.match(pattern, basename):
-        return basename.replace('___', '://').replace('_', '/').replace('.ms', '')
-    else:
-        raise RuntimeError('MS name is not appropriate for DB query: {}'.format(basename))
 
 
 def mjd_to_datestring(epoch):
