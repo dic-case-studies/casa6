@@ -37,9 +37,8 @@
 #include <casa/OS/Memory.h>
 #include <casa/Quanta/MVTime.h>
 #include <casa/System/Aipsrc.h>
-#include <casa/Utilities/Sort.h>
+#include <casa/Utilities/GenSort.h>
 #include <casa/Arrays/ArrayMath.h>
-#include <graphics/GenericPlotter/Plotter.h>
 #include <synthesis/CalTables/CTColumns.h>
 #include <synthesis/MeasurementComponents/VisCalGlobals.h>
 #include <synthesis/MeasurementComponents/BPoly.h>
@@ -442,11 +441,8 @@ void CalCache::loadCalChunks(ROCTIter& ci,
   goodChunk_.set(False);
   double progress;
 
-  std::unordered_map<int, std::vector<casacore::Slice>> spw_channels = getSelectedChannelsMap();
-  bool have_chansel(!spw_channels.empty());
-
-  std::vector<casacore::Slice> default_chansel;
-  default_chansel.push_back(Slice()); // default, all channels
+  std::unordered_map<int, std::vector<casacore::Slice>> spw_chansel = getSelectedChannelsMap();
+  bool have_chansel(!spw_chansel.empty());
 
   ci.reset();
 
@@ -479,17 +475,15 @@ void CalCache::loadCalChunks(ROCTIter& ci,
 
     size_t nChan(pshape[1]); // size of channel axis
 
-    std::vector<casacore::Slice> chansel = default_chansel;
-    if (have_chansel && spw_channels.count(ci.thisSpw())) {
+    std::vector<casacore::Slice> chansel;
+    if (have_chansel && spw_chansel.count(ci.thisSpw())) {
       // Set channel selection and nChan for this spw
-      chansel = spw_channels[ci.thisSpw()];
+      chansel = spw_chansel[ci.thisSpw()];
 
-      size_t nChanSelectedThisSpw(0);
+      nChan = 0;
       for (auto& chan_slice : chansel) {
-        nChanSelectedThisSpw += chan_slice.length();
+        nChan += chan_slice.length();
       }
-
-      nChan = nChanSelectedThisSpw;
     }
 
     // Cache the data shapes
@@ -562,8 +556,8 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
   // Channel selection for slicing chan axis
   std::vector<casacore::Slice> default_chansel; // all channels
   default_chansel.push_back(Slice());
-  std::unordered_map<int, std::vector<casacore::Slice>> spw_channels = getSelectedChannelsMap();
-  bool have_chansel(!spw_channels.empty());
+  std::unordered_map<int, std::vector<casacore::Slice>> spw_chansel = getSelectedChannelsMap();
+  bool have_chansel(!spw_chansel.empty());
 
   // Averaging modes needed for when to apply channel selection
   bool avgchan(pmsAveraging.channel());
@@ -596,17 +590,17 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
 
     std::vector<casacore::Slice> chansel = default_chansel; // all channels
 
-    if (!avgspw && have_chansel && spw_channels.count(ci.thisSpw())) {
+    if (!avgspw && have_chansel && spw_chansel.count(ci.thisSpw())) {
       // Set channel selection per chunk; all iterations have same spw.
-      chansel = spw_channels[ci.thisSpw()];
+      chansel = spw_chansel[ci.thisSpw()];
     }
 
     // Accumulate iterations into chunk
     Int iter(0);
     while (iter < nIterPerAve(chunk)) {
-      if (avgspw && have_chansel && spw_channels.count(ci.thisSpw())) {
+      if (avgspw && have_chansel && spw_chansel.count(ci.thisSpw())) {
         // Set channel selection per spw per iteration.
-        chansel = spw_channels[ci.thisSpw()];
+        chansel = spw_chansel[ci.thisSpw()];
       }
 
       if (avgchan) {
@@ -764,54 +758,75 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
 
 std::unordered_map<int, std::vector<casacore::Slice>> CalCache::getSelectedChannelsMap() {
   // Map selected channel slices to each spw.  Map key is spw ID.
-  std::unordered_map<int, std::vector<casacore::Slice>> spw_channels;
+  std::unordered_map<int, std::vector<casacore::Slice>> spw_chansel;
 
   casacore::Matrix<casacore::Int> selectedChans = selection_.getSelectedChannels();
 
   if (selectedChans.empty()) {
-     return spw_channels; // return empty map
+     return spw_chansel; // return empty map
   } else {
     for (size_t i = 0; i < selectedChans.nrow(); ++i) {
       auto row = selectedChans.row(i);
       casacore::Slice chanSlice(row(1), row(2), row(3), false);
-      spw_channels[row(0)].push_back(chanSlice);
+      spw_chansel[row(0)].push_back(chanSlice);
     }
   }
 
-  return spw_channels;
+  return spw_chansel;
 }
 
 casacore::Vector<casacore::Int> CalCache::getSelectedChannels(
     casacore::Vector<casacore::Int>& channels,
-    std::vector<casacore::Slice>& chansel) {
-  // Apply channel selection Slices to values and return selected Vector
-  casacore::Vector<casacore::Int> selectedChans;
+    std::vector<casacore::Slice>& channel_selection) {
+  // Apply channel selection Slices to channels and return selected Vector
+  casacore::Vector<casacore::Int> selectedChannels;
 
-  for (auto& chan_slicer : chansel) {
-    casacore::Vector<casacore::Int> chanSlice = channels(chan_slicer);
-    ConcatArrays<casacore::Int>(selectedChans, chanSlice);
+  if (channel_selection.empty()) {
+    selectedChannels = channels;
+  } else {
+    for (auto& channel_slice : channel_selection) {
+      casacore::Vector<casacore::Int> channelSlice = channels(channel_slice);
+
+      size_t nchan(selectedChannels.size()), nchanslice(channelSlice.size());
+      selectedChannels.resize(nchan + nchanslice, true);
+
+      for (auto i = 0; i < nchanslice; ++i) {
+        selectedChannels(nchan + i) = channelSlice(i);
+      }
+    }
   }
 
-  return selectedChans;
+  return selectedChannels;
 }
 
 casacore::Vector<casacore::Double> CalCache::getSelectedFrequencies(
     casacore::Vector<casacore::Double>& frequencies,
-    std::vector<casacore::Slice>& chansel) {
-  // Apply channel selection Slices to values and return selected Vector
-  casacore::Vector<casacore::Double> selectedFreqs;
+    std::vector<casacore::Slice>& channel_selection) {
+  // Apply selected channels to frequencies and return selected Vector
+  casacore::Vector<casacore::Double> selectedFrequencies;
 
-  for (auto& chan_slicer : chansel) {
-    casacore::Vector<casacore::Double> freqSlice = frequencies(chan_slicer);
-    ConcatArrays<casacore::Double>(selectedFreqs, freqSlice);
+  if (channel_selection.empty()) {
+    selectedFrequencies = frequencies;
+  } else {
+    for (auto& channel_slicer : channel_selection) {
+      casacore::Vector<casacore::Double> frequencySlice = frequencies(channel_slicer);
+
+      size_t nfreq(selectedFrequencies.size()), nfreqslice(frequencySlice.size());
+      selectedFrequencies.resize(nfreq + nfreqslice, true);
+
+      for (auto i = 0; i < nfreqslice; ++i) {
+        selectedFrequencies(nfreq + i) = frequencySlice(i);
+      }
+    }
   }
 
-  return selectedFreqs;
+  return selectedFrequencies;
 }
 
 void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
       casacore::String& pol, std::vector<casacore::Slice>& chansel) {
-    // for NewCalTable
+    // Load axis for NewCalTable
+
     // Get polarization selection slice
     Slice parSlice1 = Slice();
     Slice parSlice2 = Slice();
@@ -845,8 +860,8 @@ void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
             break;
         case PMS::CHANNEL: {
             casacore::Vector<casacore::Int> channels = cti.chan();
-            casacore::Vector<casacore::Int> selectedChans = getSelectedChannels(channels, chansel);
-            *chan_[chunk] = selectedChans;
+            casacore::Vector<casacore::Int> selectedChannels = getSelectedChannels(channels, chansel);
+            *chan_[chunk] = selectedChannels;
             break;
         }
         case PMS::FREQUENCY: {

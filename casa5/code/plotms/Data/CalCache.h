@@ -109,10 +109,10 @@ private:
   std::unordered_map<int, std::vector<casacore::Slice>> getSelectedChannelsMap();
   casacore::Vector<casacore::Int> getSelectedChannels(
     casacore::Vector<casacore::Int>& channels,
-    std::vector<casacore::Slice>& chansel);
+    std::vector<casacore::Slice>& channel_selection);
   casacore::Vector<casacore::Double> getSelectedFrequencies(
     casacore::Vector<casacore::Double>& frequencies,
-    std::vector<casacore::Slice>& chansel);
+    std::vector<casacore::Slice>& channel_selection);
 
   virtual void flagToDisk(const PlotMSFlagging& flagging,
     casacore::Vector<casacore::Int>& chunks,
