@@ -69,7 +69,8 @@ class InterpolationParamsGenerator():
         if spw == '':
             spw = '*'
 
-        selected = mstool.msseltoindex(vis=vis, spw=spw)
+        ms = mstool()
+        selected = ms.msseltoindex(vis, spw=spw)
         science_windows = selected['spw']
 
         msmd = msmetadata()
