@@ -25,19 +25,71 @@ QueryStruct = collections.namedtuple('QueryStruct', ['param', 'subparam'])
 ResponseStruct = collections.namedtuple('ResponseStruct', ['response', 'subparam'])
 
 
-class ALMAJyPerKDatabaseAccessBase(object):
+class JyPerKDatabaseClient():
     BASE_URL = 'https://asa.alma.cl/science/jy-kelvins'
+
+    def __init__(self, endpoint_type, id=0):
+        assert endpoint_type in ['asdm', 'model-fit', 'interpolation'], \
+            'Please set endpoint_type: asdm, model-fit, interpolation'
+        self.web_api_url = self._generate_web_api_url(endpoint_type)
+        self.id = 0
+
+    def get(self, param):
+        request_url = self._generate_query(param)
+        retval = self._retrieve(request_url)
+        self._check_retval(retval)
+        return retval
+
+    def _generate_web_api_url(self, endpoint_type):
+        web_api_url = '/'.join([self.BASE_URL, endpoint_type])
+        if not web_api_url.endswith('/'):
+            web_api_url += '/'
+        return web_api_url
+
+    def _generate_query(self, param):
+        # encode params
+        encoded = urllib.parse.urlencode(param)
+        query = '?'.join([self.web_api_url, encoded])
+        casalog.post('Accessing Jy/K DB: query is "{}"'.format(query))
+        return query
+
+    def _retrieve(self, url, timeout=180):
+        try:
+            response = urllib.request.urlopen(url, timeout=timeout)
+            return self._convert_to_json(response)
+        except urllib.error.HTTPError as e:
+            msg = 'Failed to load URL: {0}\n'.format(url) \
+                + 'Error Message: HTTPError(code={0}, Reason="{1}")\n'.format(e.code, e.reason)
+            casalog.post(msg)
+            return {'success': False}
+        except urllib.error.URLError as e:
+            msg = 'Failed to load URL: {0}\n'.format(url) \
+                + 'Error Message: URLError(Reason="{0}")\n'.format(e.reason)
+            casalog.post(msg)
+            return {'success': False}
+
+    def _convert_to_json(self, response):
+        try:
+            return json.load(response)
+        except ValueError as e:
+            msg = 'Failed to get a Jy/K factor from DB: The response is not JSON format'
+            casalog.post(msg)
+            return {'success': False}
+
+    def _check_retval(self, retval):
+        if not retval['success']:
+            msg = 'Failed to get a Jy/K factor from DB: {}'.format(retval['error'])
+            casalog.post(msg)
+            return {'success': False}
+
+
+class ALMAJyPerKDatabaseAccessBase(object):
     ENDPOINT_TYPE = None
 
     @property
     def url(self):
         assert self.ENDPOINT_TYPE is not None, \
             '{} cannot be instantiated. Please use subclasses.'.format(self.__class__.__name__)
-
-        s = '/'.join([self.BASE_URL, self.ENDPOINT_TYPE])
-        if not s.endswith('/'):
-            s += '/'
-        return s
 
     def __init__(self):
         """
@@ -68,33 +120,10 @@ class ALMAJyPerKDatabaseAccessBase(object):
         """
 
     def _generate_query(self, url, params):
-        try:
-            for p in params:
-                # encode params
-                encoded = urllib.parse.urlencode(p.param)
-
-                # try opening url
-                query = '?'.join([url, encoded])
-                casalog.post('Accessing Jy/K DB: query is "{}"'.format(query))
-                ssl_context = ssl.create_default_context(cafile=certifi.where())
-                # set timeout to 3min (=180sec)
-                response = urllib.request.urlopen(query, context=ssl_context, timeout=180)
-                retval = json.load(response)
-                if not retval['success']:
-                    msg = 'Failed to get a Jy/K factor from DB: {}'.format(retval['error'])
-                    casalog.post(msg)
-                    raise RuntimeError(msg)
-                yield ResponseStruct(response=retval, subparam=p.subparam)
-        except urllib.error.HTTPError as e:
-            msg = 'Failed to load URL: {0}\n'.format(url) \
-                + 'Error Message: HTTPError(code={0}, Reason="{1}")\n'.format(e.code, e.reason)
-            casalog.post(msg)
-            raise e
-        except urllib.error.URLError as e:
-            msg = 'Failed to load URL: {0}\n'.format(url) \
-                + 'Error Message: URLError(Reason="{0}")\n'.format(e.reason)
-            casalog.post(msg)
-            raise e
+        for p in params:
+            client = JyPerKDatabaseClient(self.ENDPOINT_TYPE)
+            retval = client.get(p)
+            yield ResponseStruct(response=retval, subparam=p.subparam)
 
     def validate_is_alma_data(self, vis):
         msmd = msmetadata()
