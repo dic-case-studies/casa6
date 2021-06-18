@@ -210,7 +210,10 @@ class ALMAJyPerKDatabaseAccessBase(object):
 
 
 class JyPerKAbstractEndPoint(ALMAJyPerKDatabaseAccessBase):
-    def get_params(self, vis, spw, antenna):
+    def get_params(self, vis, spw=''):
+        if spw == '':
+            spw = '*'
+
         selected = mstool.msseltoindex(vis=vis, spw=spw)
         science_windows = selected['spw']
 
@@ -218,12 +221,12 @@ class JyPerKAbstractEndPoint(ALMAJyPerKDatabaseAccessBase):
         msmd.open(vis) 
         timerange = msmd.timerangeforobs(0)
         antnenanames = msmd.antennanames()
-        basebands = dict((i, msmd.baseband(i)) for i in science_spws)
-        mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_spws)
+        basebands = dict((i, msmd.baseband(i)) for i in science_windows)
+        mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_windows)
         spwnames = msmd.namesforspws(science_windows)
         msmd.close()
         bands = dict((i, int(n.split('#')[0].split('_')[-1])) for i, n in zip(science_windows, spwnames))
-        params['date'] = msd_to_datestring(timerange['begin'])
+        params['date'] = mjd_to_datestring(timerange['begin'])
 
         tb = table()
         tb.open(os.path.join(vis, 'SPECTRAL_WINDOW'))
