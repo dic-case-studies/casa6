@@ -26,6 +26,11 @@ ResponseStruct = collections.namedtuple('ResponseStruct', ['response', 'subparam
 
 
 class ASDMParamsGenerator():
+    """
+    Usage:
+        vis = './uid___A002_X85c183_X36f.ms'
+        params = ASDMParamsGenerator.get_params(vis)
+    """
     @classmethod
     def get_params(cls, vis):
         # subparam is vis
