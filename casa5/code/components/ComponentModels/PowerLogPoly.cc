@@ -132,18 +132,17 @@ void PowerLogPoly::sample(
 }
 
 void PowerLogPoly::sampleStokes(
-    Matrix<Double>& iquv, 
-	const Vector<MFrequency::MVType>& frequencies, 
+    Matrix<Double>& iquv, const Vector<MFrequency::MVType>& frequencies, 
 	const MFrequency::Ref& refFrame
 ) const {
-    const uInt nSamples = frequencies.size();
     ThrowIf(
-        iquv.size() != 4*nSamples, 
-        "A Vector of length " + String::toString(4*nSamples) + " is required"
+        iquv.shape() != IPosition(2, frequencies.size(), 4),
+        "Incorrect Matrix shape"
     );
+    const auto nSamples = frequencies.size();
     const auto nu0 = _getNu0(refFrame);
     for (uInt i=0; i<nSamples; ++i) {
-        iquv[4*i] *= _getIntensityRatio(frequencies[i].getValue()/nu0);
+        iquv(i, 0) *= _getIntensityRatio(frequencies[i].getValue()/nu0);
     }
     // TODO full polarization implementation to come
 }
