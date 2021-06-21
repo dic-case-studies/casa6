@@ -27,13 +27,29 @@ ResponseStruct = collections.namedtuple('ResponseStruct', ['response', 'subparam
 
 class ASDMParamsGenerator():
     """
+    Generate required parameters for Jy/K Web API.
+    This class has a public class method to generate the parameters.
+
     Usage:
-        vis = './uid___A002_X85c183_X36f.ms'
+        vis = "./uid___A002_X85c183_X36f.ms"
         params = ASDMParamsGenerator.get_params(vis)
     """
+
     @classmethod
     def get_params(cls, vis):
-        # subparam is vis
+    """
+    Generate required parameters for Jy/K Web API.
+
+    Arguments:
+        vis {str} -- File path of MS
+
+    Returns:
+        Generator Object -- yield QueryStruct() object. A sample like below. 
+            QueryStruct(
+                param={'uid': 'uid://A002/X85c183/X36f'}, 
+                subparam='./uid___A002_X85c183_X36f.ms'
+            )
+    """  
         yield QueryStruct(param={'uid': cls._vis_to_uid(vis)}, subparam=vis)
 
     @staticmethod
@@ -42,7 +58,7 @@ class ASDMParamsGenerator():
         Convert MS name like uid___A002_Xabcd_X012 into uid://A002/Xabcd/X012
 
         Arguments:
-            vis {str} -- Name of MS
+            vis {str} -- File path of MS
 
         Raises:
             RuntimeError:
