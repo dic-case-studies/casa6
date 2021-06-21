@@ -1,4 +1,3 @@
-import certifi
 import collections
 import csv
 import datetime
