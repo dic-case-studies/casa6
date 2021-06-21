@@ -56,17 +56,24 @@ import numpy as np
 if CASA6:
     datapath = casatools.ctsys.resolve('unittest/ft/uid___X02_X3d737_X1_01_small.ms')
     modelpath = casatools.ctsys.resolve('unittest/ft/uid___X02_X3d737_X1_01_small.model')
-    #multitermpath = 'PLACEHOLDER'
+    simdata = casatools.ctsys.resolve('unittest/ft/ft_test_simulated.ms')
+    simcomplist = casatools.ctsys.resolve('unittest/ft/ft_test_simulated_complist.cl')
+    simmodel = casatools.ctsys.resolve('unittest/ft/ft_test_simulated_image.im')
+
 
 else:
     datapath = os.environ.get('CASAPATH').split()[0] + 'uid___X02_X3d737_X1_01_small.ms'
     modelpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ft/uid___X02_X3d737_X1_01_small.model'
-    #multitermpath = 'PLACEHOLDER'
+    simdata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ft/ft_test_simulated.ms'
+    simcomplist = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ft/ft_test_simulated_complist.cl'
+    simmodel = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ft/ft_test_simulated_image.im'
+
 
 datacopy = 'ft_test_copy.ms'
 modelcopy = 'ft_test_model_copy.model'
-#multitermcopy = 'ft_test_multi_term.model'
 nonStandardGridCopy = 'ft_test_nonstandard_gridder.model'
+simdatacopy = 'ft_test_simdata.ms'
+simcomplistcopy = 'ft_test_simcomplist.cl'
 
 ftcomponentlist = 'ft_test_comp_list.cl'
 
@@ -87,12 +94,18 @@ class ft_test(unittest.TestCase):
             shutil.copytree(datapath, datacopy)
         if not os.path.exists(modelcopy):
             shutil.copytree(modelpath, modelcopy)
+        if not os.path.exists(simdatacopy):
+            shutil.copytree(simdata, simdatacopy)
+        if not os.path.exists(simcomplistcopy):
+            shutil.copytree(simcomplist, simcomplistcopy)
         #if not os.path.exists(multitermcopy):
             #shutil.copytree(multitermpath, multitermcopy)
     
     def tearDown(self):
         shutil.rmtree(datacopy)
         shutil.rmtree(modelcopy)
+        shutil.rmtree(simdatacopy)
+        shutil.rmtree(simcomplistcopy)
         #shutil.rmtree(multitermcopy)
         
         if os.path.exists(ftcomponentlist):
@@ -106,6 +119,22 @@ class ft_test(unittest.TestCase):
         columns = getColList(datacopy)
         # Make sure MODEL_DATA is in the MS ONLY IF USESCRATCH=TRUE
         self.assertTrue('MODEL_DATA' in columns, msg='No MODEL_DATA added to the MS')
+    
+    def test_noScratchCol(self):
+        ''' Test that if usescratch is false then a SOURCE_MODEL column is generated in the SOURCE table '''
+        # Create the complist to use in the test
+        cl.addcomponent(shape='point', flux=1, fluxunit='Jy', spectrumtype='spectral index',
+        index=-0.8, freq='1,23GHz', dir='J2000 12h33m45.3s -23d01m11.2s')
+        cl.rename(ftcomponentlist)
+        cl.close()
+    
+        ft(vis=datacopy, complist=ftcomponentlist, usescratch=False)
+    
+        columns = getColList(datacopy + '/SOURCE')
+        
+        # SOURcE_MODEL col should be generated
+        self.assertTrue('SOURCE_MODEL' in columns)
+    
 
     def test_useScratch(self):
         ''' Test that when usescratch=True the model visibilites are stored in the MODEL_DATA column '''
@@ -156,35 +185,21 @@ class ft_test(unittest.TestCase):
 
     def test_componentListModelPriority(self):
         ''' Test that when a model and comp list are provided only the model is used '''
-        # Create the complist to use in the test
-        cl.addcomponent(shape='point', flux=1, fluxunit='Jy', spectrumtype='spectral index',
-                        index=-0.8, freq='1,23GHz', dir='J2000 12h33m45.3s -23d01m11.2s')
-        cl.rename(ftcomponentlist)
-        cl.close()
-        # First run ft with only the model
-        ft(vis=datacopy, model=modelcopy, usescratch=True)
+        # Test first with just the model
+        ft(vis=simdatacopy, model=simmodel, usescratch=True)
         
-        # Get the MODEL_DATA col
-        tb.open(datacopy)
-        model_only = tb.getcol('MODEL_DATA')
-        print(np.mean(model_only))
+        tb.open(simdatacopy)
+        justmodel = np.mean(tb.getcol('MODEL_DATA'))
         tb.close()
         
-        # start with a fresh copy of the data
-        shutil.rmtree(datacopy)
-        shutil.copytree(datapath, datacopy)
+        # Now give both model and complist
+        ft(vis=simdatacopy, model=simmodel, complist=simcomplistcopy, usescratch=True)
         
-        # Now run ft with both
-        ft(vis=datacopy, model=modelcopy, complist=ftcomponentlist, usescratch=True)
-        
-        tb.open(datacopy)
-        model_complist = tb.getcol('MODEL_DATA')
-        print(np.mean(model_complist))
+        tb.open(simdatacopy)
+        bothmodelcomp = np.mean(tb.getcol('MODEL_DATA'))
         tb.close()
         
-        # The result should be the same MODEL_DATA col for both
-        # self.assertTrue(np.all(np.isclose(model_only, model_complist)))
-        self.fail()
+        self.assertTrue(np.isclose(bothmodelcomp, justmodel))
 
     def test_modelReplace(self):
         ''' When incremental = False the existing model should be replaced in MODEL_DATA '''
