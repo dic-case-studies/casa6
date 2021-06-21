@@ -98,15 +98,12 @@ class ft_test(unittest.TestCase):
             shutil.copytree(simdata, simdatacopy)
         if not os.path.exists(simcomplistcopy):
             shutil.copytree(simcomplist, simcomplistcopy)
-        #if not os.path.exists(multitermcopy):
-            #shutil.copytree(multitermpath, multitermcopy)
     
     def tearDown(self):
         shutil.rmtree(datacopy)
         shutil.rmtree(modelcopy)
         shutil.rmtree(simdatacopy)
         shutil.rmtree(simcomplistcopy)
-        #shutil.rmtree(multitermcopy)
         
         if os.path.exists(ftcomponentlist):
             shutil.rmtree(ftcomponentlist)
@@ -167,21 +164,22 @@ class ft_test(unittest.TestCase):
         columns = getColList(datacopy)
         # Check that the MODEL_DATA column exists
         self.assertTrue('MODEL_DATA' in columns)
-
-    def test_multiTermImage(self):
-        ''' Test that multi-term Images are properly handled '''
-        # Change to multiterm
-        ft(vis=datacopy, model=modelcopy, usescratch=True)
-        
-        # Find the MODEL_DATA column
-        columns = getColList(datacopy)
-        # Make sure MODEL_DATA is in the MS ONLY IF USESCRATCH=TRUE
-        self.assertTrue('MODEL_DATA' in columns, msg='No MODEL_DATA added to the MS')
     
     def test_addModel(self):
         ''' Test that with incremental=True the new model will be added instead of replacing the old one '''
-        
-        pass
+        ft(vis=simdatacopy, model=simmodel, usescratch=True)
+    
+        tb.open(simdatacopy)
+        originalMean = np.mean(tb.getcol('MODEL_DATA'))
+        tb.close()
+    
+        ft(vis=simdatacopy, model=simmodel, usescratch=True, incremental=True)
+    
+        tb.open(simdatacopy)
+        incrementalMean = np.mean(tb.getcol('MODEL_DATA'))
+        tb.close()
+    
+        self.assertFalse(np.isclose(originalMean, incrementalMean))
 
     def test_componentListModelPriority(self):
         ''' Test that when a model and comp list are provided only the model is used '''
