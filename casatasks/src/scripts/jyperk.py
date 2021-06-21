@@ -188,7 +188,8 @@ class JyPerKDatabaseClient():
 
     def get(self, param):
         request_url = self._generate_query(param)
-        retval = self._retrieve(request_url)
+        body = self._retrieve(request_url)
+        retval = self._convert_to_json(body)
         self._check_retval(retval)
         return retval
 
@@ -207,8 +208,9 @@ class JyPerKDatabaseClient():
 
     def _retrieve(self, url, timeout=180):
         try:
-            response = urlopen(url, timeout=timeout)
-            return self._convert_to_json(response)
+            with urlopen(url) as resp:
+                body = resp.read()
+                return body.decode('utf-8')
         except HTTPError as e:
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: HTTPError(code={0}, Reason="{1}")\n'.format(e.code, e.reason)
@@ -222,7 +224,7 @@ class JyPerKDatabaseClient():
 
     def _convert_to_json(self, response):
         try:
-            return json.load(response)
+            return json.loads(response)
         except ValueError as e:
             msg = 'Failed to get a Jy/K factor from DB: The response is not JSON format'
             casalog.post(msg)
