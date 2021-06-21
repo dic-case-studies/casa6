@@ -7,7 +7,9 @@ import os
 import re
 import ssl
 import string
-import urllib
+from urllib.parse import urlencode
+from urllib.request import urlopen
+from urllib.error import HTTPError, URLError
 
 import numpy as np
 
@@ -199,21 +201,21 @@ class JyPerKDatabaseClient():
 
     def _generate_query(self, param):
         # encode params
-        encoded = urllib.parse.urlencode(param)
+        encoded = urlencode(param)
         query = '?'.join([self.web_api_url, encoded])
         casalog.post('Accessing Jy/K DB: query is "{}"'.format(query))
         return query
 
     def _retrieve(self, url, timeout=180):
         try:
-            response = urllib.request.urlopen(url, timeout=timeout)
+            response = urlopen(url, timeout=timeout)
             return self._convert_to_json(response)
-        except urllib.error.HTTPError as e:
+        except HTTPError as e:
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: HTTPError(code={0}, Reason="{1}")\n'.format(e.code, e.reason)
             casalog.post(msg)
             return {'success': False}
-        except urllib.error.URLError as e:
+        except URLError as e:
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: URLError(Reason="{0}")\n'.format(e.reason)
             casalog.post(msg)
