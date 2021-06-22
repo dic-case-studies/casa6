@@ -40,6 +40,7 @@
 #include <componentlist_cmpt.h>
 #include <components/ComponentModels/ComponentList.h>
 #include <components/ComponentModels/ComponentShape.h>
+#include <components/ComponentModels/ConstantSpectrum.h>
 #include <components/ComponentModels/SpectralModel.h>
 #include <components/ComponentModels/SpectralIndex.h>
 #include <components/ComponentModels/TabularSpectrum.h>
@@ -1473,20 +1474,7 @@ bool componentlist::setspectrum(
         type.upcase();
         ComponentType::SpectralShape sType = ComponentType::UNKNOWN_SPECTRAL_SHAPE;
         if (type.startsWith("T")) {
-	        sType = ComponentType::TABULAR_SPECTRUM;
-        }
-        else if (type.startsWith("S")) {
-	        sType = ComponentType::SPECTRAL_INDEX;
-        }
-        else if (type.startsWith("P")) {
-            sType = ComponentType::PLP;
-        }
-        else {
-            ThrowCc("Unkinown spectral type " + eltype);
-        }
-        unique_ptr<SpectralModel> spectrumPtr;
-        if(sType == ComponentType::TABULAR_SPECTRUM) {
-	        ThrowIf(
+            ThrowIf(
                 tabfreqs.size() < 2, 
                 "There need to be at least 2 points in a tabular spectrum"
             );
@@ -1510,10 +1498,25 @@ bool componentlist::setspectrum(
                 new TabularSpectrum(refreq, freqs, fluxval, MFrequency::Ref(freqFrameType))
             );
         }
-        else if (sType == ComponentType::SPECTRAL_INDEX) {
+        else if (type.startsWith("S")) {
             MFrequency refFreq = itsList->component(which).spectrum().refFrequency();
             spectrumPtr.reset(new SpectralIndex(refFreq, index));
+        }
+        else if (type.startsWith("P")) {
+        }
+        else if (type.startsWith("C")) {
+            spectrumPtr.reset(new ConstantSpectrum());
+        }
+        else {
+            ThrowCc("Unkinown spectral type " + eltype);
+        }
+        unique_ptr<SpectralModel> spectrumPtr;
+        if(sType == ComponentType::TABULAR_SPECTRUM) {
+        }
+        else if (sType == ComponentType::SPECTRAL_INDEX) {
 	    }
+        else if (sType == ComponentType::CONSTANT_SPECTRUM) {
+        }
         Vector<Int> intVec(1, which);
         itsList->setSpectrumParms(intVec, *spectrumPtr);
         return true;
