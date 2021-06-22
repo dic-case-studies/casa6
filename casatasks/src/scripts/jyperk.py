@@ -81,36 +81,24 @@ class InterpolationParamsGenerator():
         params = InterpolationParamsGenerator.get_params(vis)
     """
     @classmethod
-    def get_params(cls, vis, spw=''):
-        params = {}
-        
+    def get_params(cls, vis, spw='*'):
         if spw == '':
-            spw = '*'
+            spw='*'
 
-        ms = mstool()
-        selected = ms.msseltoindex(vis, spw=spw)
-        science_windows = selected['spw']
-
-        msmd = msmetadata()
-        msmd.open(vis) 
-        timerange = msmd.timerangeforobs(0)
-        antenna_names = msmd.antennanames()
-        basebands = dict((i, msmd.baseband(i)) for i in science_windows)
-        mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_windows)
-        spwnames = msmd.namesforspws(science_windows)
-        msmd.close()
+        if spw == '*':
+            spw = cls._get_available_spw(vis, spw)
         
-        bands = {}
-        for i, n in zip(science_windows, spwnames):
-            if '#' in n and '_' in n:
-                bands[i] = int(n.split('#')[0].split('_')[-1])
-                
-        # bands = dict((i, int(n.split('#')[0].split('_')[-1])) for i, n in zip(science_windows, spwnames))
+        params = {}
+
+        science_windows = cls._get_science_windows(vis, spw=spw)
+        timerange, antenna_names, basebands, mean_freqs, spwnames = cls._extract_msmetadata(science_windows, vis)
+        bands = cls._generate_bands(science_windows, spwnames)
+
         params['date'] = cls._mjd_to_datestring(timerange['begin'])
 
         tb = table()
         tb.open(os.path.join(vis, 'SPECTRAL_WINDOW'))
-        spw_names = [tb.getcell('NAME', i) for i in science_windows]
+        # spw_names = [tb.getcell('NAME', i) for i in science_windows]
 
         mean_freqs = dict((i, tb.getcell('CHAN_FREQ', i).mean()) for i in science_windows)
 
@@ -124,6 +112,51 @@ class InterpolationParamsGenerator():
                 params['frequency'] = mean_freqs[sw_id]
                 subparam = {'vis': vis, 'spwid': sw_id}
                 yield QueryStruct(param=params, subparam=subparam)
+
+    @staticmethod
+    def _get_science_windows(vis, spw=''):
+        if spw == '':
+            spw='*'
+        ms = mstool()
+        selected = ms.msseltoindex(vis, spw=spw)
+        science_windows = selected['spw']
+        return science_windows
+
+    @staticmethod
+    def _extract_msmetadata(science_windows, vis):
+        msmd = msmetadata()
+        msmd.open(vis)
+
+        timerange = msmd.timerangeforobs(0)
+        antenna_names = msmd.antennanames()
+        basebands = dict((i, msmd.baseband(i)) for i in science_windows)
+        mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_windows)
+        spwnames = msmd.namesforspws(science_windows)
+
+        msmd.close()
+
+        return timerange, antenna_names, basebands, mean_freqs, spwnames
+
+    @staticmethod
+    def _generate_bands(science_windows, spwnames):    
+        bands = {}
+        for i, n in zip(science_windows, spwnames):
+            if '#' in n and '_' in n:
+                bands[i] = int(n.split('#')[0].split('_')[-1])
+        return bands
+                
+    @staticmethod
+    def _get_available_spw(vis, spw='*'):
+        science_windows = InterpolationParamsGenerator._get_science_windows(vis, spw=spw)
+
+        msmd = msmetadata()
+        msmd.open(vis) 
+        
+        spwnames = msmd.namesforspws(science_windows)
+        msmd.close()
+        
+        spw = ','.join(map(str, [i for i, name in enumerate(spwnames) if not name.startswith('WVR')]))
+        return spw
 
     @staticmethod
     def _mjd_to_datestring(epoch):
