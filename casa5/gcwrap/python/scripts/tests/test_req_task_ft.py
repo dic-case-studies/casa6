@@ -59,6 +59,8 @@ if CASA6:
     simdata = casatools.ctsys.resolve('unittest/ft/ft_test_simulated.ms')
     simcomplist = casatools.ctsys.resolve('unittest/ft/ft_test_simulated_complist.cl')
     simmodel = casatools.ctsys.resolve('unittest/ft/ft_test_simulated_image.im')
+    multiterm0 = casatools.ctsys.resolve('unittest/ft/ft_test_multiterm.model.tt0')
+    multiterm1 = casatools.ctsys.resolve('unittest/ft/ft_test_multiterm.model.tt1')
 
 
 else:
@@ -198,6 +200,15 @@ class ft_test(unittest.TestCase):
         tb.close()
         
         self.assertTrue(np.isclose(bothmodelcomp, justmodel))
+    
+    def test_multiTerm(self):
+        ''' Test that the ft task accepts multi-term data '''
+        # run with multi-term models
+        ft(vis=simdatacopy, model=[multiterm0, multiterm1], usescratch=True)
+        # get list of columns in the ms
+        columns = getColList(simdatacopy)
+        # Check that the MODEL_DATA column has been generated
+        self.assertTrue('MODEL_DATA' in columns)
 
     def test_modelReplace(self):
         ''' When incremental = False the existing model should be replaced in MODEL_DATA '''
