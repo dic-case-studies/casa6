@@ -112,17 +112,17 @@ class InterpolationParamsGenerator():
         tb.open(os.path.join(vis, 'SPECTRAL_WINDOW'))
         spw_names = [tb.getcell('NAME', i) for i in science_windows]
 
-        mean_freqs = [tb.getcell('CHAN_FREQ', i).mean() for i in science_windows]
+        mean_freqs = dict((i, tb.getcell('CHAN_FREQ', i).mean()) for i in science_windows)
 
         for antenna_id, antenna_name in enumerate(antenna_names):
             params['antenna'] = antenna_name
             params['elevation'] = cls._get_mean_elevation(vis, antenna_id, spw)
-
-            for spw in science_windows:
-                params['band'] = bands[spw]
-                params['baseband'] = basebands[spw]
-                params['frequency'] = mean_freqs[spw]
-                subparam = {'vis': vis, 'spwid': spw}
+ 
+            for sw_id in science_windows:
+                params['band'] = bands[sw_id]
+                params['baseband'] = basebands[sw_id]
+                params['frequency'] = mean_freqs[sw_id]
+                subparam = {'vis': vis, 'spwid': sw_id}
                 yield QueryStruct(param=params, subparam=subparam)
 
     @staticmethod
@@ -211,12 +211,12 @@ class JyPerKDatabaseClient():
             with urlopen(url) as resp:
                 body = resp.read()
                 return body.decode('utf-8')
-        except HTTPError as e:
+        except HTTPError as e: # 4xx, 5xx
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: HTTPError(code={0}, Reason="{1}")\n'.format(e.code, e.reason)
             casalog.post(msg)
-            return {'success': False}
-        except URLError as e:
+            return {'success': False, 'error': 'HTTPError'}
+        except URLError as e: # not connect
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: URLError(Reason="{0}")\n'.format(e.reason)
             casalog.post(msg)
