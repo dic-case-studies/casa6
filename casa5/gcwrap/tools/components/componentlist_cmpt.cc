@@ -1472,7 +1472,7 @@ bool componentlist::setspectrum(
         }
         String type(eltype);
         type.upcase();
-        ComponentType::SpectralShape sType = ComponentType::UNKNOWN_SPECTRAL_SHAPE;
+        unique_ptr<SpectralModel> spectrumPtr;
         if (type.startsWith("T")) {
             ThrowIf(
                 tabfreqs.size() < 2, 
@@ -1509,13 +1509,6 @@ bool componentlist::setspectrum(
         }
         else {
             ThrowCc("Unkinown spectral type " + eltype);
-        }
-        unique_ptr<SpectralModel> spectrumPtr;
-        if(sType == ComponentType::TABULAR_SPECTRUM) {
-        }
-        else if (sType == ComponentType::SPECTRAL_INDEX) {
-	    }
-        else if (sType == ComponentType::CONSTANT_SPECTRUM) {
         }
         Vector<Int> intVec(1, which);
         itsList->setSpectrumParms(intVec, *spectrumPtr);
