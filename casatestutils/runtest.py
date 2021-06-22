@@ -559,7 +559,7 @@ def run(testnames):
                             print("Running Command: pytest {}".format(cmd))
                             pytest.main(cmd)
                             os.chdir(myworkdir)
-                        
+
                     ##################################################
                     ########## Real Path ##########
                     ##################################################
@@ -637,6 +637,10 @@ def run(testnames):
                             os.chdir(myworkdir)
             os.chdir(cwd)
 
+        if not HAVE_PYTEST:
+            print("Missing Pytest")
+
+
 ########################################################################################################################
 #######################################            Run Bamboo Option            ########################################
 ########################################################################################################################
@@ -684,7 +688,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     test_config_elems = test_config['testlist']
 
     #print(test_config_elems)
-    print("TPS: ", test_paths)
+    print("Test Paths: ", test_paths)
 
     # Match the test names provided in the JSON file to the actual test locations.
     tests_to_run = []
@@ -997,11 +1001,13 @@ if __name__ == "__main__":
         test_paths = [x.strip() for x in args.test_paths.split(',')]
 
     for arg in unknownArgs:
+        
         if arg.startswith(("-", "--")):
             raise ValueError('unrecognized argument: %s'%(arg))
             sys.exit()
-        #
+        
         else:
+
             if arg.startswith("test") and not RUN_ALL:
                 testnames.append(arg)
             # local Path file
@@ -1036,7 +1042,32 @@ if __name__ == "__main__":
 
         else:
             #If no tests are given, no subet tag or --all option
+            #print("Testnames: {}".format(testnames))
+            if args.test_paths is not None:
+                tests = []
+                test_paths = [x.strip() for x in args.test_paths.split(',')]
+                if len(testnames) == 0:
+                    for test_path in test_paths:
+                        for root, dirs, files in os.walk(test_path):
+                            for file in files:
+                                if file.endswith(".py") and file.startswith("test_"):
+                                     tests.append(os.path.join(root, file))
+                else:
+                    for test_path in test_paths:
+                        #print(test_path)
+                        for test in testnames:
+                            if not test.endswith(".py"): 
+                                test = test + ".py"
+                            #print(test)
+                            for root, dirs, files in os.walk(test_path):
+                                for file in files:
+                                    if file == test:
+                                        tests.append(os.path.join(root, file))
+                testnames = tests
+
             print("Testnames: {}".format(testnames))
+            #print("Test: {}".format(tests))
+            #sys.exit()
             if testnames == [] or len(testnames) == 0:
                 print("List of tests is empty")
                 parser.print_help(sys.stderr)
@@ -1046,4 +1077,5 @@ if __name__ == "__main__":
             run(testnames)
     except:
         traceback.print_exc()
+
 
