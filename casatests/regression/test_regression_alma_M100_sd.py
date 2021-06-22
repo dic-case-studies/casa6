@@ -153,7 +153,7 @@ steptime = []
 #        casalog.post( '  '+str(thesteps[i])+'   '+str(steptime[i])+'  '+str(steptime[i]/totaltime*100.) +' ['+step_title[thesteps[i]]+']', 'WARN')
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('regression/alma-sd/M100/')
+    datapath = casatools.ctsys.resolve('regression/alma_M100_sd/')
 else:
     pass
 
