@@ -41,6 +41,7 @@
 #include <components/ComponentModels/ComponentList.h>
 #include <components/ComponentModels/ComponentShape.h>
 #include <components/ComponentModels/SpectralModel.h>
+#include <components/ComponentModels/SpectralIndex.h>
 #include <components/ComponentModels/TabularSpectrum.h>
 #include <casa/Exceptions/Error.h>
 #include <casa/BasicSL/STLIO.h>
@@ -1456,88 +1457,72 @@ std::string componentlist::spectrumtype(const long which)
   return rstat;
 }
 
-bool componentlist::setspectrum(const long which, const std::string& eltype,
-                                const double index, const std::vector<double>& tabfreqs, const std::vector<double>& tabflux, const std::string& freqframe)
-{
-  itsLog->origin(LogOrigin("componentlist", "setspectrum"));
-
-
-  bool rstat(false);
-  try {
-    if(itsList && itsBin){
-      String type(eltype);
-      type.upcase();
-      if(type.contains("TABU"))
-	 type="Tabular Spectrum";	 
-      if(type.contains("SPECTRAL"))
-	 type="Spectral Index";
-       ComponentType::SpectralShape reqSpectrum = ComponentType::spectralShape(type);
-       SpectralModel* spectrumPtr = ComponentType::construct(reqSpectrum);
-       if (spectrumPtr == 0) {
-         *itsLog << LogIO::SEVERE
-                << "Could not translate the spectral type to a known value." << endl
-                << "Known types are:" << endl;
-         for(uInt i = 0; i < ComponentType::NUMBER_SPECTRAL_SHAPES - 1; ++i){
-           reqSpectrum = static_cast<ComponentType::SpectralShape>(i);
-           *itsLog << "\t" << ComponentType::name(reqSpectrum) + String("\n");
-         } 
-         *itsLog << "Spectrum not changed." << LogIO::POST;
-         return false;
-       }
-       if(reqSpectrum==ComponentType::TABULAR_SPECTRUM){
-	 if(tabfreqs.size() <2)
-	   throw(AipsError("There need to be at least 2 points in a tabular spectrum to interpolate in between"));
-	 if(tabfreqs.size() != tabflux.size())
-	   throw(AipsError("lengths of tabular frequencies and values have to be the same"));
-	 Vector<MVFrequency> freqs(tabfreqs.size());
-	 Vector<Flux<Double> > fluxval(tabfreqs.size());
-	 for (Int i=0; i < Int(tabfreqs.size()) ; ++i){
-	   freqs[i]=casacore::Quantity(tabfreqs[i], "Hz");
-	   fluxval[i]=Flux<Double>(tabflux[i]);
-	 }
-	 MFrequency::Types freqFrameType;
-	 if(!MFrequency::getType(freqFrameType, freqframe))
-	   throw(AipsError(String(freqframe) + String(" is not a frequency frame that is understood")));
-	 MFrequency refreq(freqs[0], freqFrameType);
-	 delete spectrumPtr;
-	 spectrumPtr=new TabularSpectrum(refreq, freqs, fluxval, MFrequency::Ref(freqFrameType));
-	 
-
-       }
-       else{
-	 String errorMessage;
-	 Record rec;
-	 rec.define("frequency", "current");
-	 *itsLog << LogIO::DEBUG1 << "index: " << index << LogIO::POST;
-	 // Vector<Double> indexVec(index);
-	 // if(indexVec.nelements() > 0)
-	 //   rec.define("index", indexVec[0]);
-	 // else
-	 rec.define("index", index);
-	 if (!spectrumPtr->fromRecord(errorMessage, rec)) {
-	   *itsLog << LogIO::SEVERE
-		   << "Could not parse the spectrum parameters. The error was:" << endl
-		   << "\t" << errorMessage << endl
-		   << "Spectrum not changed."
-		   << LogIO::POST;
-	   return false;
-	 }
-       }
-       Vector<Int> intVec(1, which);
-       itsList->setSpectrumParms(intVec, *spectrumPtr);
-       delete spectrumPtr;
-
-       rstat = true;
-    } else {
-      *itsLog << LogIO::WARN
-              << "componentlist is not opened, please open first" << LogIO::POST;
+bool componentlist::setspectrum(
+    long which, const std::string& eltype, double index,
+    const std::vector<double>& tabfreqs,
+    const std::vector<double>& tabflux, const std::string& freqframe
+) {
+    itsLog->origin(LogOrigin("componentlist", __func__));
+    try {
+        if(! (itsList && itsBin)) {
+            *itsLog << LogIO::WARN
+                << "componentlist is not opened, please open first" << LogIO::POST;
+            return false;
+        }
+        String type(eltype);
+        type.upcase();
+        ComponentType::SpectralShape sType = ComponentType::UNKNOWN_SPECTRAL_SHAPE;
+        if (type.startsWith("T")) {
+	        sType = ComponentType::TABULAR_SPECTRUM;
+        }
+        else if (type.startsWith("S")) {
+	        sType = ComponentType::SPECTRAL_INDEX;
+        }
+        else if (type.startsWith("P")) {
+            sType = ComponentType::PLP;
+        }
+        else {
+            ThrowCc("Unkinown spectral type " + eltype);
+        }
+        unique_ptr<SpectralModel> spectrumPtr;
+        if(sType == ComponentType::TABULAR_SPECTRUM) {
+	        ThrowIf(
+                tabfreqs.size() < 2, 
+                "There need to be at least 2 points in a tabular spectrum"
+            );
+	        ThrowIf(
+                tabfreqs.size() != tabflux.size(),
+	            "lengths of tabular frequencies and values have to be the same"
+            );
+	        Vector<MVFrequency> freqs(tabfreqs.size());
+	        Vector<Flux<Double>> fluxval(tabfreqs.size());
+	        for (uInt i=0; i<uInt(tabfreqs.size()); ++i) {
+	            freqs[i] = casacore::Quantity(tabfreqs[i], "Hz");
+	            fluxval[i] = Flux<Double>(tabflux[i]);
+	        }
+	        MFrequency::Types freqFrameType;
+	        ThrowIf(
+                ! MFrequency::getType(freqFrameType, freqframe),
+	            freqframe + " is an unsupported frequency frame"
+            );
+	        MFrequency refreq(freqs[0], freqFrameType);
+	        spectrumPtr.reset(
+                new TabularSpectrum(refreq, freqs, fluxval, MFrequency::Ref(freqFrameType))
+            );
+        }
+        else if (sType == ComponentType::SPECTRAL_INDEX) {
+            MFrequency refFreq = itsList->component(which).spectrum().refFrequency();
+            spectrumPtr.reset(new SpectralIndex(refFreq, index));
+	    }
+        Vector<Int> intVec(1, which);
+        itsList->setSpectrumParms(intVec, *spectrumPtr);
+        return true;
     }
-  }
-  catch (AipsError x){
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
-    RETHROW(x)
-  }
-  return rstat;
+    catch (const AipsError& x) {
+        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+        RETHROW(x)
+    }
+    return false;
 }
 
 bool componentlist::setstokesspectrum(const long which, const std::string& eltype,
