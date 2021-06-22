@@ -64,7 +64,7 @@ int main () {
 
 		RegionTextList list(
 			goodFile, csys,
-			IPosition(csys.nPixelAxes(), 2000, 2000, 4, 2000)
+			IPosition{2000, 2000, 4, 2000}
 		);
 		cout << std::setprecision(9) << list << endl;
 		AlwaysAssert(list.nLines() == 33, AipsError);
@@ -107,7 +107,7 @@ int main () {
 			csys = image->coordinates();
 			RegionTextList list2(
 				circleFile, csys,
-				IPosition(csys.nPixelAxes(), 2000, 2000, 2000)
+				IPosition{2000, 2000}
 			);
 			Vector<AsciiAnnotationFileLine>  lines2 = list2.getLines();
 			for (uInt i=0; i < lines2.size(); ++i) {
@@ -146,7 +146,7 @@ int main () {
 			csys = image->coordinates();
 			RegionTextList list3(
 				circleFile, csys,
-				IPosition(csys.nPixelAxes(), 10, 10, 2000)
+				IPosition{10, 10}
 			);
 			AlwaysAssert(list3.nLines() == 3, AipsError);
 			AlwaysAssert(
@@ -165,7 +165,7 @@ int main () {
 			Bool requireRegion = false;
 			RegionTextList list4(
 				circleFile, csys,
-				IPosition(csys.nPixelAxes(), 10, 10, 2000),
+				IPosition{10, 10},
 				"", "", "", RegionTextParser::CURRENT_VERSION, true, requireRegion
 			);
 			AlwaysAssert(list4.nLines() == 5, AipsError);
