@@ -38,19 +38,19 @@ class ASDMParamsGenerator():
 
     @classmethod
     def get_params(cls, vis):
-    """
-    Generate required parameters for Jy/K Web API.
+        """
+        Generate required parameters for Jy/K Web API.
 
-    Arguments:
-        vis {str} -- File path of MS
+        Arguments:
+            vis {str} -- File path of MS
 
-    Returns:
-        Generator Object -- yield QueryStruct() object. A sample like below. 
-            QueryStruct(
-                param={'uid': 'uid://A002/X85c183/X36f'}, 
-                subparam='./uid___A002_X85c183_X36f.ms'
-            )
-    """  
+        Returns:
+            Generator Object -- yield QueryStruct() object. A sample like below. 
+                QueryStruct(
+                    param={'uid': 'uid://A002/X85c183/X36f'}, 
+                    subparam='./uid___A002_X85c183_X36f.ms'
+                )
+        """
         yield QueryStruct(param={'uid': cls._vis_to_uid(vis)}, subparam=vis)
 
     @staticmethod
