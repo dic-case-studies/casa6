@@ -450,114 +450,79 @@ bool componentlist::simulate(const long howmany, const bool /*log*/)
   return rstat;
 }
 
-bool componentlist::addcomponent(const ::casac::variant& flux,
-                                 const std::string& fluxunit,
-                                 const std::string& polarization,
-                                 const ::casac::variant& dir, 
-                                 const std::string& shape,
-                                 const ::casac::variant& majoraxis,
-                                 const ::casac::variant& minoraxis,
-                                 const ::casac::variant& positionangle,
-                                 const ::casac::variant& freq, 
-                                 const std::string& spectrumtype,
-                                 const double index,
-                                 const std::vector<double>& /*optionalparms*/,
-                                 const std::string& label)
-{
-  itsLog->origin(LogOrigin("componentlist", "addcomponent"));
-
-  bool rstat(false);
-  try{
-    if(itsList && itsBin){
-      simulate(1);
-      int which = itsList->nelements()-1;
-      /*	  std::vector<complex> newflux(4, complex(0.0, 0.0));
-                  if(flux.size() ==0){
-            
-                  if(upcase(polarization).compare(std::string("STOKES"))){
-                  newflux.resize(1);
-                  }
-                  newflux[0]=complex(1.0, 0.0);
-                  }
-                  else if(flux.size() == 4){
-                  newflux=flux; 
-                  } 
-                  else{
-                  throw(AipsError("flux has to have 1 or 4 elements"));
-                  }
-      */
-      setlabel(which, label, true);
-      /*
-        std::vector<complex> error(4);
-        std::vector<std::complex<double> > stanerr(4, std::complex<double>(0.0, 0.0));
-        for(unsigned int i=0; i<3; i++)
-        error[i] = complex(real(stanerr[i]), imag(stanerr[i]));
-      */
-
-      ::casac::variant error;
-      setflux(which, flux, fluxunit, polarization, error, true);
-      casacore::MDirection theDir;
-      ::casac::variant *tmpdir=0;
-      //Default case
-      if(String(dir.toString())==String("[]")){
-        tmpdir=new ::casac::variant(std::string("J2000 00h00m00.0 90d00m00"));
-      }
-      else{
-        tmpdir=new ::casac::variant(dir);
-      }
-
-      if(!casaMDirection(*tmpdir, theDir)){
-        *itsLog << LogIO::SEVERE 
-                << "Could not interpret direction parameter" 
-                << LogIO::POST;      
-      }
-      if(tmpdir != 0)
-        delete tmpdir;
-      MVDirection newDir=theDir.getValue();
-      const Vector<Int> intVec =
-        checkIndices(which, "addcomponent",
-                     "Direction not changed on any components");
-      itsList->setRefDirection(intVec, newDir);
-      setrefdirframe(which, theDir.getRefString(), true);
-      ::casac::variant majoraxiserror; 
-      ::casac::variant minoraxiserror; 
-      ::casac::variant positionangleerror;
-      setshape(which, shape, majoraxis, minoraxis, positionangle,
-               majoraxiserror,minoraxiserror, positionangleerror);
-      setspectrum(which, spectrumtype, index);
-      MFrequency theFreq;
-      ::casac::variant *tmpfreq=0;
-      if(String(freq.toString())== String("[]")){
-        tmpfreq=new ::casac::variant(std::string("LSRK 1.420GHz"));
-      }
-      else{
-        tmpfreq=new ::casac::variant(freq);
-      }
-
-      if(!casaMFrequency(*tmpfreq, theFreq)){
-	    
-        *itsLog << LogIO::SEVERE 
-                << "Could not interpret frequency parameter" 
-                << LogIO::POST;      
-      }
-      setfreq(which, theFreq.get("GHz").getValue(), "GHz", true);
-      setfreqframe(which, theFreq.getRefString(), true);
-      rstat=true;
-    } else {
-      *itsLog << LogIO::WARN
-              << "componentlist is not opened, please open first" << LogIO::POST;
+bool componentlist::addcomponent(
+    const ::casac::variant& flux, const std::string& fluxunit,
+    const std::string& polarization, const ::casac::variant& dir, 
+    const std::string& shape, const ::casac::variant& majoraxis,
+    const ::casac::variant& minoraxis, const ::casac::variant& positionangle,
+    const ::casac::variant& freq, const std::string& spectrumtype,
+    const double index, const std::vector<double>& /*optionalparms*/,
+    const std::string& label
+) {
+    itsLog->origin(LogOrigin("componentlist", __FUNCTION__));
+    try{
+        if (! (itsList && itsBin)) {
+            *itsLog << LogIO::WARN
+                << "componentlist is not opened, please open first" << LogIO::POST;
+            return false;
+        }
+        simulate(1);
+        int which = itsList->size() - 1;
+        setlabel(which, label, true);
+        ::casac::variant error;
+        setflux(which, flux, fluxunit, polarization, error, true);
+        casacore::MDirection theDir;
+        unique_ptr<::casac::variant> tmpdir(
+            dir.toString() == "[]"
+            ? new ::casac::variant(std::string("J2000 00h00m00.0 90d00m00"))
+            : new ::casac::variant(dir)
+        );
+        ThrowIf(
+            ! casaMDirection(*tmpdir, theDir),
+            "Could not interpret direction parameter" 
+        );
+        MVDirection newDir = theDir.getValue();
+        const Vector<Int> intVec = (
+            checkIndices(
+                which, __FUNCTION__,
+                "Direction not changed on any components"
+            )
+        );
+        itsList->setRefDirection(intVec, newDir);
+        setrefdirframe(which, theDir.getRefString(), true);
+        ::casac::variant majoraxiserror; 
+        ::casac::variant minoraxiserror; 
+        ::casac::variant positionangleerror;
+        setshape(
+            which, shape, majoraxis, minoraxis, positionangle,
+            majoraxiserror,minoraxiserror, positionangleerror
+        );
+        setspectrum(which, spectrumtype, index);
+        MFrequency theFreq;
+        unique_ptr<::casac::variant> tmpfreq(
+            freq.toString() == "[]"
+            ? new ::casac::variant(std::string("LSRK 1.420GHz"))
+            : new ::casac::variant(freq)
+        );
+        ThrowIf(
+            ! casaMFrequency(*tmpfreq, theFreq),
+            "Could not interpret frequency parameter" 
+        );
+        setfreq(which, theFreq.get("GHz").getValue(), "GHz", true);
+        setfreqframe(which, theFreq.getRefString(), true);
+        return true;
     }
-  } catch (AipsError x){
-    //exception is thrown so the last component is bad ...lets remove it
-    Vector<Int> remov(1,0);
-    if (itsList->nelements() >0){
-      remov[0]=(itsList->nelements())-1;
-      itsList->remove(remov);
+    catch (const AipsError& x){
+        //exception is thrown so the last component is bad ...lets remove it
+        Vector<Int> remov(1,0);
+        if (itsList->nelements() > 0){
+            remov[0] = itsList->size() - 1;
+            itsList->remove(remov);
+        }
+        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+        RETHROW(x)
     }
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
-    RETHROW(x)
-  }
-  return rstat;
+    return false;
 }
 
 bool componentlist::close(const bool log)
