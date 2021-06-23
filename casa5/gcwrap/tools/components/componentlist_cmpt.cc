@@ -42,6 +42,7 @@
 #include <components/ComponentModels/ComponentShape.h>
 #include <components/ComponentModels/ConstantSpectrum.h>
 #include <components/ComponentModels/SpectralModel.h>
+#include <components/ComponentModels/PowerLogPoly.h>
 #include <components/ComponentModels/SpectralIndex.h>
 #include <components/ComponentModels/TabularSpectrum.h>
 #include <casa/Exceptions/Error.h>
@@ -1459,11 +1460,11 @@ std::string componentlist::spectrumtype(const long which)
 }
 
 bool componentlist::setspectrum(
-    long which, const std::string& eltype, double index,
+    long which, const std::string& eltype, const variant& index,
     const std::vector<double>& tabfreqs,
     const std::vector<double>& tabflux, const std::string& freqframe
 ) {
-    itsLog->origin(LogOrigin("componentlist", __func__));
+    itsLog->origin(LogOrigin("componentlist", __FUNCTION__));
     try {
         if(! (itsList && itsBin)) {
             *itsLog << LogIO::WARN
@@ -1499,13 +1500,33 @@ bool componentlist::setspectrum(
             );
         }
         else if (type.startsWith("S")) {
+            auto indexType = index.type();
+            double indexParam = 0;
+            if (indexType == variant::DOUBLE) {
+                indexParam = index.toDouble();
+            }
+            else if (indexType == variant::DOUBLEVEC) {
+                indexParam = index.toDoubleVec()[0];
+            }
+            else {
+                ThrowCc("Unrecognized type for index, must be double or doubleArray")
+            }
             MFrequency refFreq = itsList->component(which).spectrum().refFrequency();
-            spectrumPtr.reset(new SpectralIndex(refFreq, index));
+            spectrumPtr.reset(new SpectralIndex(refFreq, indexParam));
         }
         else if (type.startsWith("P")) {
+            auto indexType = index.type();
+            ThrowIf(
+                indexType != variant::DOUBLEVEC,
+                "for a spectrum='plp', index must be a list of numbers"
+            );
+            MFrequency refFreq = itsList->component(which).spectrum().refFrequency();
+            spectrumPtr.reset(new PowerLogPoly(refFreq, index.toDoubleVec()));
         }
         else if (type.startsWith("C")) {
             spectrumPtr.reset(new ConstantSpectrum());
+            MFrequency refFreq = itsList->component(which).spectrum().refFrequency();
+            spectrumPtr->setRefFrequency(refFreq);
         }
         else {
             ThrowCc("Unkinown spectral type " + eltype);
@@ -1526,7 +1547,7 @@ bool componentlist::setstokesspectrum(const long which, const std::string& eltyp
 				      const std::vector<double>& tabu,  const std::vector<double>& tabv, const ::casac::variant& reffreq,  
 				      const std::string& freqframe)
 {
-  itsLog->origin(LogOrigin("componentlist", "setspectrum"));
+  itsLog->origin(LogOrigin("componentlist", __FUNCTION__));
 
 
   bool rstat(false);

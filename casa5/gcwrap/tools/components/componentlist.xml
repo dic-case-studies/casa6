@@ -2413,15 +2413,44 @@ An integer between 0 and one less than the list length, inclusively</description
     to the user specified spectrum.
 
     The type argument defines what the sort of new spectrum to use. This
-    can be either 'constant'or 'spectral index'. The parsing of this
-    string is case insensitive.
+    can be one of 'constant', 'tabular', 'plp', or 'spectral index'. Minimal
+    match, case insensitive.
 
     If the spectrum type is 'constant' then the remaining arguments in
     this function are ignored. There are no other parameters needed to
-    specify a constant spectrum.
+    specify a constant spectrum. The reference frequency is set to be
+    the same value as the component being replaced. Although this is
+    unimportant for a constant spectrum, it may be important if
+    the spectral model of the component in question is changed again
+    later. See rules to how the reference frequencies of various spectral
+    models are set in the description below.
 
-    But if the spectrum is 'spectral index', the 'index' argument is
-    needed to fully specify the spectrum by using the index argument.  
+    If the spectrum is 'spectral index', the 'index' argument is
+    needed to fully specify the spectrum by using the index argument. The
+    index parameter may be in the form of a single numerical value, or
+    an array containing a numerical value. In the case of the array containing
+    multiple values, the zeroth value is used as the value of index, while
+    subsequent values are tacitly ignored. The functional form of this model
+    is 
+
+    R = x^(alpha)
+
+    where R = I_nu/I_nu0 is the ratio of the intensities at observed frequency nu
+    and the reference frequency nu_0, x = nu/nu_0, and alpha is the specified
+    spectral index. The reference frequency is tacitly set to that of the component
+    being replaced. and can be changed by a subsequent call to setfreq().
+ 
+    If spectrum = 'plp', then the spectral model is set to a power log polynomial.
+    The functional form of this model is
+
+    R = x^(c_0 + c_1*(ln(x)) + c_2*(ln(x))^2 + c_3*(ln(x))^3 + ... + c_n*(ln(x))^n)
+
+    where R = I_nu/I_nu0 is the ratio of the intensities at observed frequency nu
+    and the reference frequency nu_0, x = nu/nu_0, ln is the natural logarithm, and
+    c_0 ... c_n are the coefficients specified by index. In this case, index should
+    be an array of numerical values, and the array length is unconstrained. The
+    reference frequency is tacitly set to that of the component being replaced, and
+    can be changed by a subsequent call to setfreq().
 
     If the spectrum is 'tabular', then 'index' is ignored but the
     three parameters 'tabularfreqs', 'tabularflux' and 'tabularframe'
@@ -2430,9 +2459,10 @@ An integer between 0 and one less than the list length, inclusively</description
     interpolate the spectral value in between.  The flux of the source
     is interpolated from these values. Extrapolation outside the range
     given in 'tabularfreqs' is not done.
-
     'tabularfreqs' should be float values in 'Hz'
     'tabularflux' should be float values in 'Jy'
+    The reference frequency is chosen to be the zeroth element of tabularfreqs.
+    
 
 <!-- The line below is a lie ...as the code does not allow for a vector..
      may be a wish 
@@ -2466,7 +2496,7 @@ An integer between 0 and one less than the list length, inclusively</description
      </param>
      
      <!-- <param type="doubleArray" name="index"> -->
-     <param type="double" name="index">
+     <param type="any" name="index" limittypes="double, doubleArray">
      <description>The spectral index.</description>
      <!-- A 4-element vector or real numbers -->
      <!-- <value type="vector"><value>1.0</value></value> -->
@@ -2487,7 +2517,7 @@ An integer between 0 and one less than the list length, inclusively</description
        </value>
      </param>
      <param type="string" name="tabularframe">
-       <description> The frame for which the frequencies given are in</description>
+       <description> For tabular models, the frame of the provided frequencies.</description>
        <value>LSRK</value>
      </param>
   </input>
