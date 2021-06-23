@@ -1175,7 +1175,7 @@ class Test_standard(test_tclean_base):
         ''' Standard (single field) MFS imaging - central field of NGC5363 (field 2), spw 16 & 22 '''
 
         test_name = self._testMethodName 
-        file_name = 'standard_mfs.iter'
+        file_name = self.remove_prefix(test_name, 'test_')+'.iter'
         img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'E2E6.1.00020.S_tclean.ms')
         self.getExpdicts(test_name)
@@ -1335,9 +1335,10 @@ class Test_standard(test_tclean_base):
         ''' Single field mtmfs imaging - central field of NGC5363 (field 2), spw 16 & 22 '''
 
         test_name = self._testMethodName
-        file_name = 'standard_mtmfs.iter'
+        file_name = self.remove_prefix(test_name, 'test_')+'.iter'
         img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'E2E6.1.00020.S_tclean.ms')
+	self.getExpdicts(test_name)
 
         print("\nSTARTING: iter0 routine")
 
@@ -1490,7 +1491,7 @@ class Test_standard(test_tclean_base):
         exp_model1_stats = self.exp_dicts['exp_model1_stats']
 
         report11 = th.check_dict_vals(exp_model1_stats, model1_stats_dict, \
-            '.model.tt0', epsilon=self.epsilon)
+            '.model.tt1', epsilon=self.epsilon)
 
         # .sumwt.tt1 report
         sumwt1_stats_dict = self.image_stats(img+'.sumwt.tt1')
@@ -2383,7 +2384,7 @@ class Test_standard(test_tclean_base):
         exp_model1_stats = self.exp_dicts['exp_model1_stats']
 
         report11 = th.check_dict_vals(exp_model1_stats, model1_stats_dict, \
-            '.model.tt0', epsilon=self.epsilon)
+            '.model.tt1', epsilon=self.epsilon)
 
         # .sumwt.tt1 report
         sumwt1_stats_dict = self.image_stats(img+'.sumwt.tt1')
@@ -3770,7 +3771,7 @@ class Test_mosaic(test_tclean_base):
         wt_stats_dict = self.image_stats(img+'.weight.tt0', masks=[ \
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
-        exp_wt_stats = self.exp_wt_dicts['exp_wt_stats']
+        exp_wt_stats = self.exp_dicts['exp_wt_stats']
 
         report9 = th.check_dict_vals(exp_wt_stats, wt_stats_dict, \
             '.weight.tt0', epsilon=self.epsilon)
@@ -3804,10 +3805,10 @@ class Test_mosaic(test_tclean_base):
         model1_stats_dict = self.image_stats(img+'.model.tt1', fit_region = \
             'ellipse[[209.02969058deg, 5.25475068deg], [16.7096arcsec, 10.9678arcsec], 90.00000000deg]', masks=mask_stats_dict['mask'])
 
-        exp_model1_stats = exp_dicts['exp_model1_stats']
+        exp_model1_stats = self.exp_dicts['exp_model1_stats']
 
         report12 = th.check_dict_vals(exp_model1_stats, model1_stats_dict, \
-            '.model.tt0', epsilon=self.epsilon)
+            '.model.tt1', epsilon=self.epsilon)
 
         # .sumwt.tt1 report test_mosaic_mtmfs)
         sumwt1_stats_dict = self.image_stats(img+'.sumwt.tt1')
@@ -4002,7 +4003,7 @@ class Test_mosaic(test_tclean_base):
         # .sumwt report (test_mosaic_cube_eph)
         sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
-        exp_sumwt_stats = self.exp_dists['exp_sumwt_stats']
+        exp_sumwt_stats = self.exp_dicts['exp_sumwt_stats']
 
         report8 = th.check_dict_vals(exp_sumwt_stats, sumwt_stats_dict, \
             '.sumwt', epsilon=self.epsilon)
@@ -4152,7 +4153,7 @@ class Test_mosaic(test_tclean_base):
 
         report2 = th.check_dict_vals(exp_im_stats, im_stats_dict, '.image', epsilon=self.epsilon)
 
-        # .mask report (test_mosaic_cube_eph_briggsbwtaper)
+        # .mask report (test_mosaic_cube_eph_pcwdT)
         mask_stats_dict = self.image_stats(img+'.mask')
 
         # test_mosaic_cube_eph_pcwdT.exp_mask_stats
@@ -4170,7 +4171,7 @@ class Test_mosaic(test_tclean_base):
 
         report4 = th.check_dict_vals(exp_pb_stats, pb_stats_dict, '.pb', epsilon=self.epsilon)
 
-        # .psf report (test_mosaic_cube_eph)
+        # .psf report (test_mosaic_cube_eph_pcwdT)
         psf_stats_dict = self.image_stats(img+'.psf', fit_region = \
             'ellipse[[239.36977532deg, -16.96391179deg], [1.0415arcsec, 0.9313arcsec], 90.00000000deg]')
 
@@ -4179,7 +4180,7 @@ class Test_mosaic(test_tclean_base):
 
         report5 = th.check_dict_vals(exp_psf_stats, psf_stats_dict, '.psf', epsilon=self.epsilon)
 
-        # .residual report (test_mosaic_cube_eph_briggsbwtaper)
+        # .residual report (test_mosaic_cube_eph_pcwdT)
         resid_stats_dict = self.image_stats(img+'.residual', fit_region = \
             'ellipse[[239.36796846deg, -16.96307757deg], [5.3756arcsec, 3.3987arcsec], 0.00000000deg]')
 
@@ -4199,7 +4200,7 @@ class Test_mosaic(test_tclean_base):
         report7 = th.check_dict_vals(exp_model_stats, model_stats_dict, 
             '.model', epsilon=self.epsilon)
 
-        # .sumwt report (test_mosaic_cube_eph_briggsbwtaper)
+        # .sumwt report (test_mosaic_cube_eph_pcwdT)
         sumwt_stats_dict = self.image_stats(img+'.sumwt')
 
         # test_mosaic_cube_eph_pcwdT.exp_sumwt_stats
@@ -4415,7 +4416,7 @@ class Test_mosaic(test_tclean_base):
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
         # test_mosaic_cube_eph_briggsbwtaper.exp_wt_stats
-        exp_wt_stats = self.exp_wt_stats['exp_wt_stats']
+        exp_wt_stats = self.exp_dicts['exp_wt_stats']
 
 
         report9 = th.check_dict_vals(exp_wt_stats, wt_stats_dict, '.weight', epsilon=self.epsilon)
@@ -4806,7 +4807,7 @@ class Test_mosaic(test_tclean_base):
         wt_stats_dict = self.image_stats(img+'.weight.tt0', masks=[ \
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
-        exp_wt_stats = self.exp_dicts['exp_st_stats']
+        exp_wt_stats = self.exp_dicts['exp_wt_stats']
 
         report9 = th.check_dict_vals(exp_wt_stats, wt_stats_dict, \
             '.weight.tt0', epsilon=self.epsilon)
@@ -4843,7 +4844,7 @@ class Test_mosaic(test_tclean_base):
         exp_model1_stats = self.exp_dicts['exp_model1_stats']
 
         report12 = th.check_dict_vals(exp_model1_stats, model1_stats_dict, \
-            '.model.tt0', epsilon=self.epsilon)
+            '.model.tt1', epsilon=self.epsilon)
 
         # .sumwt.tt1 report (test_mosaic_mtmfs_eph)
         sumwt1_stats_dict = self.image_stats(img+'.sumwt.tt1')
