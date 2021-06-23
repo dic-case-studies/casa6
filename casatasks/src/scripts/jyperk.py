@@ -173,18 +173,31 @@ class InterpolationParamsGenerator():
         return datestring
 
     @staticmethod
-    def _get_mean_elevation(vis, antenna_id, spw):
+    def _get_mean_elevation(vis, antenna_id):
         ms = mstool()
         ms.open(vis)
-        ms.msselect({'spw': spw, 'scanintent': 'OBSERVE_TARGET#ON_SOURCE'})
+        ms.msselect({'scanintent': 'OBSERVE_TARGET#ON_SOURCE'})
         selected = ms.msselectedindices()
         ms.close()
+        
         stateid = selected['stateid']
-        ddid = selected['spwdd'][0]
+        
+        msmd = msmetadata()
+        msmd.open(vis) 
+
+        science_spw = list(np.intersect1d(
+            msmd.almaspws(tdm=True, fdm=True),
+            msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
+        ))
+
+        science_dd = [msmd.datadescids(spw=i)[0] for i in science_spw]
+
+        msmd.close()
+        
+        query = f'DATA_DESC_ID=={science_dd[0]}&&STATE_ID IN {list(stateid)}'
 
         tb = table()
         tb.open(vis)
-        query = f'ANTENNA1=={antenna_id}&&ANTENNA2=={antenna_id}&&DATA_DESC_ID=={ddid}&&STATE_ID IN {list(stateid)}' 
         tsel = tb.query(query)
         rows = tsel.rownumbers()
         tsel.close()
@@ -200,10 +213,9 @@ class InterpolationParamsGenerator():
             el_deg = qa.convert(p['antenna1']['pointingdirection']['m1'], 'deg') 
             elevations.append(el_deg['value']) 
         msmd.close()
+        
         elevations = np.asarray(elevations)
-
         return elevations.mean()
-
 
 
 class ModelFitParamsGenerator(InterpolationParamsGenerator):
