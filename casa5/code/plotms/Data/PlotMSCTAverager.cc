@@ -37,11 +37,13 @@ PlotMSCTAverager::PlotMSCTAverager(
   : averaging_p(averaging),
     nAnt_p(nAnt),
     nPoln_p(nPoln),
-    nChan_p(0),
     nBlnMax_p(0),
-    avgChan_p(false),
-    nChanPerBin_p(1),
+    nChan_p(0),
     nAvgChan_p(0),
+    nSelChan_p(0),
+    avgChan_p(false),
+    selChan_p(false),
+    nChanPerBin_p(1),
     isComplex_p(True),
     isAntennaBased_p(True),
     blnOK_p(),
@@ -220,26 +222,38 @@ void PlotMSCTAverager::initialize(ROCTIter& cti, std::vector<casacore::Slice>& c
     nBlnMax_p = nAnt_p * (nAnt_p + 1)/2;
   }
 
-  // Set number of channels
+  // Store channel averaging parameters
   nChan_p = cti.nchan();
-  // Set num chan and num chan per bin if averaging channels
   if (averaging_p.channel()) {
     avgChan_p = true;
     nChanPerBin_p = averaging_p.channelValue();
 
     if (nChanPerBin_p <= 1) {
-        avgChan_p = false; // averaging 0 or 1 chan is no averaging
+      avgChan_p = false; // averaging 0 or 1 chan is no averaging
     }
 
-    if (avgChan_p) {
-      if (nChanPerBin_p > nChan_p) {
-        nChanPerBin_p = nChan_p; // average all channels
-      }
-
-      nAvgChan_p = nChan_p / nChanPerBin_p;
+    if (nChanPerBin_p > nChan_p) {
+      nChanPerBin_p = nChan_p; // average all channels
     }
   }
 
+  // Adjust number of channels if selecting and/or averaging
+  if (!chansel.empty()) {
+    // Channel selection with or without averaging
+    nAvgChan_p = 0;
+
+    for (auto& slice : chansel) {
+      auto slice_length = slice.length();
+      nSelChan_p += slice_length;
+
+      if (avgChan_p) {
+        nAvgChan_p += slice_length / nChanPerBin_p;
+      }
+    }
+  } else if (avgChan_p) {
+    // Channel averaging without selection
+    nAvgChan_p = nChan_p / nChanPerBin_p;
+  }
 
   if (debug_) {
     cout << "Shapes = " 
@@ -271,9 +285,9 @@ void PlotMSCTAverager::initialize(ROCTIter& cti, std::vector<casacore::Slice>& c
       Int ibln = 0;
       for (Int iant1 = 0; iant1 < nAnt_p; ++iant1) {
         for (Int iant2 = iant1; iant2 < nAnt_p; ++iant2) {
-	      avgAntenna1_(ibln) = iant1;
-	      avgAntenna2_(ibln) = iant2;
-	      ++ibln;
+          avgAntenna1_(ibln) = iant1;
+          avgAntenna2_(ibln) = iant2;
+          ++ibln;
         }
       }
     } 
@@ -283,6 +297,11 @@ void PlotMSCTAverager::initialize(ROCTIter& cti, std::vector<casacore::Slice>& c
     avgChan_.resize(nAvgChan_p);
     indgen(avgChan_);
     accumFreq_.resize(nAvgChan_p);
+    accumFreq_.set(0.0);
+  } else if (selChan_p) {
+    avgChan_.resize(nSelChan_p);
+    indgen(avgChan_);
+    accumFreq_.resize(nSelChan_p);
     accumFreq_.set(0.0);
   } else {
     avgChan_ = cti.chan();
@@ -301,7 +320,7 @@ void PlotMSCTAverager::initialize(ROCTIter& cti, std::vector<casacore::Slice>& c
   avgTime_.set(0.0);
 
   // Resize accumulated data (PARAM column) and flags
-  Int numchan(nchan()); // depends on channel averaging
+  Int numchan(nchan()); // depends on channel selection and averaging
   avgFlag_.resize(nPoln_p, numchan, nBlnMax_p, false);
   avgFlag_.set(true); // All cells assumed flagged to start with
  
@@ -313,6 +332,7 @@ void PlotMSCTAverager::initialize(ROCTIter& cti, std::vector<casacore::Slice>& c
     accumFParam_.resize(nPoln_p, numchan, nBlnMax_p, false);
     accumFParam_.set(0.0);
   }
+
   accumParamErr_.resize(nPoln_p, numchan, nBlnMax_p, false);
   accumParamErr_.set(0.0);
   accumSnr_.resize(nPoln_p, numchan, nBlnMax_p, false);
@@ -349,9 +369,15 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti, std::vector<casacore::Sl
     throw(AipsError("PlotMSCTAverager: data shape does not conform"));
   }
 
+  // For chan loop:
+  if (chansel.empty()) {
+    chansel.push_back(casacore::Slice()); // all channels
+  }
+
   Cube<Complex> iterCParam;
   Cube<Float> iterFParam, iterParamErr, iterSnr, iterWt;
   Cube<Bool> iterFlag;
+  Vector<Int> iterChan;
   Vector<Double> iterFreq;
 
   if (isComplex_p) {
@@ -365,20 +391,20 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti, std::vector<casacore::Sl
   iterParamErr.reference(cti.paramErr());
   iterSnr.reference(cti.snr());
   iterFlag.reference(cti.flag());
+  iterChan.reference(cti.chan());
   iterFreq.reference(cti.freq());
 
   try {
     iterWt.reference(cti.wt());
   } catch (const AipsError& err) {
-    casacore::IPosition datashape =
-      (isComplex_p ? iterCParam.shape() : iterFParam.shape());
+    casacore::IPosition datashape = (isComplex_p ? iterCParam.shape() : iterFParam.shape());
     iterWt.resize(datashape);
     iterWt.set(1.0);
   }
 
-  Int accumCount(0);
+  Int accumCount(0), nbln(cti.nrow());
 
-  for (Int ibln = 0; ibln < cti.nrow(); ++ibln) {
+  for (Int ibln = 0; ibln < nbln; ++ibln) {
     // Calculate output row from antenna1 numbers
     Int ant1 = cti.antenna1()(ibln);
     Int ant2 = cti.antenna2()(ibln);
@@ -389,81 +415,91 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti, std::vector<casacore::Sl
 
     for (Int ipol = 0; ipol < nPoln_p; ++ipol) {
       Int outchan(-1);
-      for (Int ichan = 0; ichan < cti.nchan(); ++ichan) {
-        // Assume we won't accumulate anything in this cell
-        //   (output is unflagged, input is flagged)
-        Bool accumulate(false);
 
-        // Set outchan
-        if (avgChan_p) {
-          if ((ichan == 0) || ((ichan % nChanPerBin_p) == 0)) {
-            // next outchan
-            ++outchan;
+      for (auto& slice : chansel) {
+        casacore::Vector<casacore::Int> chanSlice = iterChan(slice);
+        Int nchanSliced = chanSlice.size();
+        Int nAvgBinsPerSlice = nchanSliced / nChanPerBin_p;
 
-            // Ignore remaining channels, incomplete bin
-            if (outchan == nAvgChan_p) {
-              break;
-            }
-          }
-        } else {
-          outchan = ichan; // use same channel when not averaging
-        }
+        for (Int ichan = 0; ichan < nchanSliced; ++ichan) {
+          // Assume we won't accumulate anything in this cell
+          //   (output is unflagged, input is flagged)
+          Bool accumulate(false);
 
-        IPosition inPos(3, ipol, ichan, ibln);
-        IPosition outPos(3, ipol, outchan, obln);
+          // Use selected channel number; same as ichan if no selection
+          Int channum = chanSlice(ichan);
 
-        if (!iterFlag(inPos)) { // input UNflagged
-          accumulate = true;
-
-          if (avgFlag_(outPos)) {  // output flagged
-            // This cell now NEWLY unflagged in output
-            avgFlag_(outPos) = false;
-
-            // ...so zero the accumulators
-            if (isComplex_p) {
-              accumCParam_(outPos) = 0.0;
-            } else {
-              accumFParam_(outPos) = 0.0;
-            }
-            accumParamErr_(outPos) = 0.0;
-            accumSnr_(outPos) = 0.0;
-            accumWt_(outPos) = 0.0;
-            if (avgChan_p) {
-              accumFreq_(outchan) = 0.0;
-            }
-          }
-        } else { // input flagged
-          // Only accumulate if output is also flagged
-          //   (yields average of flagged data if no unflagged data ever found)
-          if (avgFlag_(outPos)) {
-            accumulate = true;
-          }
-        }
-
-        // Accumulate this (pol, chan) if appropriate
-        if (accumulate) {
-          accumCount++;
-
-          Float wt = iterWt(inPos);
-          if (wt < FLT_MIN) {
-            wt = FLT_MIN;
-          }
-          accumWt_(outPos) += wt;
-
-          if (isComplex_p) {
-            accumCParam_(outPos) += wt * iterCParam(inPos);
-          } else {
-            accumFParam_(outPos) += wt * iterFParam(inPos);
-          }
-          accumParamErr_(outPos) += wt * iterParamErr(inPos);
-          accumSnr_(outPos) += wt * iterSnr(inPos);
-
+          // Set outchan
           if (avgChan_p) {
-            accumFreq_(outchan) += iterFreq(ichan);
+            if ((ichan == 0) || ((ichan % nChanPerBin_p) == 0)) {
+              // next outchan
+              ++outchan;
+
+              // Ignore remaining channels in slice, incomplete bin
+              if (outchan == nAvgBinsPerSlice) {
+                break;
+              }
+            }
+          } else {
+            outchan = channum; // use same channel when not averaging
           }
-        }
-      } // pol 
-    } // chan
+
+          IPosition inPos(3, ipol, channum, ibln);
+          IPosition outPos(3, ipol, outchan, obln);
+
+          if (!iterFlag(inPos)) { // input UNflagged
+            accumulate = true;
+
+            if (avgFlag_(outPos)) {  // output flagged
+              // This cell now NEWLY unflagged in output
+              avgFlag_(outPos) = false;
+
+              // ...so zero the accumulators
+              if (isComplex_p) {
+                accumCParam_(outPos) = 0.0;
+              } else {
+                accumFParam_(outPos) = 0.0;
+              }
+              accumParamErr_(outPos) = 0.0;
+              accumSnr_(outPos) = 0.0;
+              accumWt_(outPos) = 0.0;
+              if (avgChan_p) {
+                accumFreq_(outchan) = 0.0;
+              }
+            }
+          } else { // input flagged
+            // Only accumulate if output is also flagged
+            //   (yields average of flagged data if no unflagged data ever found)
+            if (avgFlag_(outPos)) {
+              accumulate = true;
+            }
+          }
+
+          // Accumulate this (pol, chan) if appropriate
+          if (accumulate) {
+            accumCount++;
+
+            Float wt = iterWt(inPos);
+            if (wt < FLT_MIN) {
+              wt = FLT_MIN;
+            }
+            accumWt_(outPos) += wt;
+
+            if (isComplex_p) {
+              accumCParam_(outPos) += wt * iterCParam(inPos);
+            } else {
+              accumFParam_(outPos) += wt * iterFParam(inPos);
+            }
+            accumParamErr_(outPos) += wt * iterParamErr(inPos);
+            accumSnr_(outPos) += wt * iterSnr(inPos);
+
+            if (avgChan_p) {
+              accumFreq_(outchan) += iterFreq(channum);
+            }
+          }
+        } // ichan
+      } // channel slice
+    } // pol
   } // ibln
 
   if (accumCount > 0) {
@@ -506,10 +542,16 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti, std::vector<casacore::S
     throw(AipsError("PlotMSCTAverager: data shape does not conform"));
   }
 
+  // For chan loop:
+  if (chansel.empty()) {
+    chansel.push_back(casacore::Slice()); // all channels
+  }
+
   // Param cubes for this iteration
   Cube<Complex> iterCParam;
   Cube<Float> iterFParam, iterParamErr, iterSnr, iterWt;
   Cube<Bool> iterFlag;
+  Vector<Int> iterChan;
   Vector<Double> iterFreq;
 
   if (isComplex_p) {
@@ -523,19 +565,20 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti, std::vector<casacore::S
   iterParamErr.reference(cti.paramErr());
   iterSnr.reference(cti.snr());
   iterFlag.reference(cti.flag());
+  iterChan.reference(cti.chan());
   iterFreq.reference(cti.freq());
 
   try {
     iterWt.reference(cti.wt());
   } catch (const AipsError& err) {
-    casacore::IPosition datashape =
-      (isComplex_p ? iterCParam.shape() : iterFParam.shape());
+    casacore::IPosition datashape = (isComplex_p ? iterCParam.shape() : iterFParam.shape());
     iterWt.resize(datashape);
     iterWt.set(1.0);
   }
 
-  Int accumCount(0);
-  for (Int ibln = 0; ibln < cti.nrow(); ++ibln) {
+  Int accumCount(0), nbln(cti.nrow());
+
+  for (Int ibln = 0; ibln < nbln; ++ibln) {
     // The antennas in the baseline
     Vector<Int> oblnij(2);
     oblnij(0) = cti.antenna1()(ibln);
@@ -549,102 +592,112 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti, std::vector<casacore::S
       
     for (Int ipol = 0; ipol < nPoln_p; ++ipol) {
       Int outchan(-1);
-      for (Int ichan = 0; ichan < cti.nchan(); ichan++) {
-        // Assume we won't accumulate anything in this cell
-        //   (output is unflagged, input is flagged)
-        Bool accum_i(false), accum_j(false);
 
-        // Set outchan
-        if (avgChan_p) {
-          if ((ichan == 0) || ((ichan % nChanPerBin_p) == 0)) {
-            // next outchan
-            ++outchan;
+      for (auto& slice : chansel) {
+        casacore::Vector<casacore::Int> chanSlice = iterChan(slice);
+        Int nchanSliced = chanSlice.size();
+        Int nAvgBinsPerSlice = nchanSliced / nChanPerBin_p;
 
-            // Ignore remaining channels, incomplete bin
-            if (outchan == nAvgChan_p) {
-              break;
-            }
-          }
-        } else {
-          outchan = ichan; // use same channel when not averaging
-        }
+        for (Int ichan = 0; ichan < nchanSliced; ++ichan) {
+          // Assume we won't accumulate anything in this cell
+          //   (output is unflagged, input is flagged)
+          Bool accum_i(false), accum_j(false);
 
-        // Consider accumulation according to state of flags
-        IPosition inPos(3, ipol, ichan, ibln);
-        if (!iterFlag(inPos)) { // input UNflagged
-          // we will accumulate both ants
-          accum_i = accum_j = true;
+          // Use selected channel number; same as ichan if no selection
+          Int channum(iterChan(ichan));
 
-          // Zero accumulators if output cell currently flagged
-          for (Int ij = 0; ij < 2; ++ij) {
-            Int ia = oblnij(ij);
-            IPosition iaPos(3, ipol, outchan, ia);
-            if (avgFlag_(iaPos)) { // output flagged
-              // This cell now NEWLY unflagged in output
-              avgFlag_(iaPos) = false;
-              // ...so zero the accumulators
-              if (isComplex_p) {
-                accumCParam_(iaPos) = 0.0;
-              } else {
-                accumFParam_(iaPos) = 0.0;
-              }
-              accumParamErr_(iaPos) = 0.0;
-              accumSnr_(iaPos) = 0.0;
-              accumWt_(iaPos) = 0.0;
-
-              if (avgChan_p) {
-                accumFreq_(iaPos) = 0.0;
-              }
-            }
-          }
-        } else { // input cell is flagged
-          // Only accumulate if output is also flagged:
-          //  (yields average of flagged data if no unflagged data ever found)
-          if (avgFlag_(ipol, ichan, obln_i)) {
-            accum_i = true;
-          }
-          if (avgFlag_(ipol, ichan, obln_j)) {
-            accum_j = true;
-          }
-        }
-
-        Float wt = iterWt(inPos);
-        if (wt < FLT_MIN) {
-          wt = FLT_MIN;
-        }
-
-        // Accumulate data, if appropriate
-        if (accum_i) {
-          IPosition ipos(3, ipol, outchan, obln_i);
-          if (isComplex_p) {
-            accumCParam_(ipos) += wt * iterCParam(inPos);
-          } else {
-            accumFParam_(ipos) += wt * iterFParam(inPos);
-          }
-          accumParamErr_(ipos) += wt * iterParamErr(inPos);
-          accumSnr_(ipos) += wt * iterSnr(inPos);
-          accumWt_(ipos) += wt;
-        }
-
-        if (accum_j) { 
-          IPosition jpos(3, ipol, outchan, obln_j);
-          if (isComplex_p) {
-            accumCParam_(jpos) += wt * iterCParam(inPos);
-          } else {
-            accumFParam_(jpos) += wt * iterFParam(inPos);
-          }
-          accumParamErr_(jpos) += wt * iterParamErr(inPos);
-          accumSnr_(jpos) += wt * iterSnr(inPos);
-          accumWt_(jpos) += wt;
-        }
-
-        if (accum_i || accum_j) {
-          accumCount++;
+          // Set outchan
           if (avgChan_p) {
-            accumFreq_(outchan) += iterFreq(ichan);
+            if ((ichan == 0) || ((ichan % nChanPerBin_p) == 0)) {
+              // next outchan
+              ++outchan;
+
+              // Ignore remaining channels, incomplete bin
+              if (outchan == nAvgBinsPerSlice) {
+                break;
+              }
+            }
+          } else {
+            outchan = channum; // use same channel when not averaging
           }
-        }
-      } // chan 
+
+          // Consider accumulation according to state of flags
+          IPosition inPos(3, ipol, channum, ibln);
+          if (!iterFlag(inPos)) { // input UNflagged
+            // we will accumulate both ants
+            accum_i = accum_j = true;
+
+            // Zero accumulators if output cell currently flagged
+            for (Int ij = 0; ij < 2; ++ij) {
+              Int ia = oblnij(ij);
+              IPosition iaPos(3, ipol, outchan, ia);
+              if (avgFlag_(iaPos)) { // output flagged
+                // This cell now NEWLY unflagged in output
+                avgFlag_(iaPos) = false;
+                // ...so zero the accumulators
+                if (isComplex_p) {
+                  accumCParam_(iaPos) = 0.0;
+                } else {
+                  accumFParam_(iaPos) = 0.0;
+                }
+                accumParamErr_(iaPos) = 0.0;
+                accumSnr_(iaPos) = 0.0;
+                accumWt_(iaPos) = 0.0;
+
+                if (avgChan_p) {
+                  accumFreq_(iaPos) = 0.0;
+                }
+              }
+            }
+          } else { // input cell is flagged
+            // Only accumulate if output is also flagged:
+            //  (yields average of flagged data if no unflagged data ever found)
+            if (avgFlag_(ipol, channum, obln_i)) {
+              accum_i = true;
+            }
+            if (avgFlag_(ipol, channum, obln_j)) {
+              accum_j = true;
+            }
+          }
+
+          Float wt = iterWt(inPos);
+          if (wt < FLT_MIN) {
+            wt = FLT_MIN;
+          }
+
+          // Accumulate data, if appropriate
+          if (accum_i) {
+            IPosition ipos(3, ipol, outchan, obln_i);
+            if (isComplex_p) {
+              accumCParam_(ipos) += wt * iterCParam(inPos);
+            } else {
+              accumFParam_(ipos) += wt * iterFParam(inPos);
+            }
+            accumParamErr_(ipos) += wt * iterParamErr(inPos);
+            accumSnr_(ipos) += wt * iterSnr(inPos);
+            accumWt_(ipos) += wt;
+          }
+
+          if (accum_j) { 
+            IPosition jpos(3, ipol, outchan, obln_j);
+            if (isComplex_p) {
+              accumCParam_(jpos) += wt * iterCParam(inPos);
+            } else {
+              accumFParam_(jpos) += wt * iterFParam(inPos);
+            }
+            accumParamErr_(jpos) += wt * iterParamErr(inPos);
+            accumSnr_(jpos) += wt * iterSnr(inPos);
+            accumWt_(jpos) += wt;
+          }
+
+          if (accum_i || accum_j) {
+            accumCount++;
+            if (avgChan_p) {
+              accumFreq_(outchan) += iterFreq(channum);
+            }
+          }
+        } // chan
+      } // chan slice
     } // pol
   } // bln
 
@@ -670,6 +723,16 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti, std::vector<casacore::S
 }
 
 //----------------------------------------------------------------------------
+
+casacore::Int PlotMSCTAverager::nchan() {
+  if (avgChan_p) { // with or without selection
+    return nAvgChan_p;
+  } else if (selChan_p) { // without averaging
+    return nSelChan_p;
+  } else { // no averaging or selection
+    return nChan_p;
+  }
+}
 
 Int PlotMSCTAverager::baseline_index(const Int& ant1, const Int& ant2)
 {

@@ -554,8 +554,6 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
   goodChunk_.set(false);
 
   // Channel selection for slicing chan axis
-  std::vector<casacore::Slice> default_chansel; // all channels
-  default_chansel.push_back(Slice());
   std::unordered_map<int, std::vector<casacore::Slice>> spw_chansel = getSelectedChannelsMap();
   bool have_chansel(!spw_chansel.empty());
 
@@ -588,18 +586,12 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
       pmscta.setBaselineBased();
     }
 
-    std::vector<casacore::Slice> chansel = default_chansel; // all channels
-
-    if (!avgspw && have_chansel && spw_chansel.count(ci.thisSpw())) {
-      // Set channel selection per chunk; all iterations have same spw.
-      chansel = spw_chansel[ci.thisSpw()];
-    }
+    std::vector<casacore::Slice> chansel, default_chansel;
 
     // Accumulate iterations into chunk
     Int iter(0);
     while (iter < nIterPerAve(chunk)) {
-      if (avgspw && have_chansel && spw_chansel.count(ci.thisSpw())) {
-        // Set channel selection per spw per iteration.
+      if (spw_chansel.count(ci.thisSpw())) {
         chansel = spw_chansel[ci.thisSpw()];
       }
 
@@ -632,10 +624,11 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
 
       // Cache data shape
       IPosition avgShape(avgTableCti.flag().shape());
-
       size_t nChan(avgShape(1));
-      if (!avgchan && have_chansel) {
-        // length of selected channels (not applied yet)
+
+      if (have_chansel && !avgchan) {
+        // Apply selection after averaging.
+        // Number of channels is length of each slice.
         nChan = 0;
         for (auto& chan_slice : chansel) {
           nChan += chan_slice.length();
@@ -647,6 +640,9 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
       chshapes_(2, chunk) = avgShape(2);
       chshapes_(3, chunk) = nAnt_;
       goodChunk_(chunk) = true;
+
+      // Need Slice defined for loadCalAxis
+      default_chansel.push_back(casacore::Slice());
 
       // Load axes
       for (auto axis : loadAxes) {
@@ -691,7 +687,7 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
             Int scan = avgTableCti.thisScan();
             Vector<Double> freqs = pmscta.freq();
 
-            if (!avgchan && have_chansel) {
+            if (have_chansel && !avgchan && !avgspw) {
               // Apply channel selection
               casacore::Vector<casacore::Double> selectedFreqs = getSelectedFrequencies(freqs, chansel);
               freqs.resize();
@@ -719,8 +715,13 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
             
             break;
           }
-          default:
-            loadCalAxis(avgTableCti, chunk, axis, polsel, chansel);
+          default: {
+            if (avgchan) { // channel selection already done
+              loadCalAxis(avgTableCti, chunk, axis, polsel, default_chansel);
+            } else {
+              loadCalAxis(avgTableCti, chunk, axis, polsel, chansel);
+            }
+          }
         }
 
         if ((axis == PMS::ATM) || (axis == PMS::TSKY)) {

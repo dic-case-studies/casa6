@@ -100,7 +100,7 @@ public:
   // Return the result in NewCalTable filled with CTMainRecord vector
   void fillAvgCalTable(NewCalTable& tab);
   // CTMainRecord does not include chan or freq
-  inline casacore::Int nchan() { return avgChan_p ? nAvgChan_p : nChan_p; };
+  casacore::Int nchan();
   inline casacore::Vector<casacore::Int> chan() { return avgChan_; };
   inline casacore::Vector<casacore::Double> freq() { return avgFreq_; };
 
@@ -127,12 +127,15 @@ private:
   // Input averaging options
   PlotMSAveraging averaging_p;
 
-  // Number of antennas, polarizations, channels, and baselines
-  casacore::Int nAnt_p, nPoln_p, nChan_p, nBlnMax_p;
+  // Number of antennas, polarizations, and baselines
+  casacore::Int nAnt_p, nPoln_p, nBlnMax_p;
 
-  // For channel averaging
-  casacore::Bool avgChan_p;
-  casacore::Int nChanPerBin_p, nAvgChan_p;
+  // Number of channels, selected channels, averaged channels
+  casacore::Int nChan_p, nAvgChan_p, nSelChan_p;
+
+  // For channel averaging and selection
+  casacore::Bool avgChan_p, selChan_p;
+  casacore::Int nChanPerBin_p;
 
   // Data is Complex or Float
   casacore::Bool isComplex_p;
