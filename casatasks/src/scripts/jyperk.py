@@ -104,7 +104,7 @@ class InterpolationParamsGenerator():
 
         for antenna_id, antenna_name in enumerate(antenna_names):
             params['antenna'] = antenna_name
-            params['elevation'] = cls._get_mean_elevation(vis, antenna_id, spw)
+            params['elevation'] = MeanElevation.get(vis, antenna_id)
  
             for sw_id in science_windows:
                 params['band'] = bands[sw_id]
@@ -172,16 +172,32 @@ class InterpolationParamsGenerator():
         datestring = qa.time(epoch['m0'], form='fits')
         return datestring
 
+
+class ModelFitParamsGenerator(InterpolationParamsGenerator):
+    pass
+
+
+class MeanElevation(InterpolationParamsGenerator):
+    @classmethod
+    def get(cls, vis, antenna_id):
+        stateid = cls._get_stateid(vis)
+        science_dd = cls._get_science_dd(vis)
+        rows = cls._query_rows(science_dd, stateid)
+
+        return cls._calc_elevation_mean(rows)
+
     @staticmethod
-    def _get_mean_elevation(vis, antenna_id):
+    def _get_stateid(vis):
         ms = mstool()
         ms.open(vis)
         ms.msselect({'scanintent': 'OBSERVE_TARGET#ON_SOURCE'})
         selected = ms.msselectedindices()
         ms.close()
-        
         stateid = selected['stateid']
-        
+        return stateid
+
+    @staticmethod
+    def _get_science_dd(vis):
         msmd = msmetadata()
         msmd.open(vis) 
 
@@ -193,7 +209,10 @@ class InterpolationParamsGenerator():
         science_dd = [msmd.datadescids(spw=i)[0] for i in science_spw]
 
         msmd.close()
+        return science_dd
         
+    @staticmethod
+    def _query_rows(science_dd, stateid):
         query = f'DATA_DESC_ID=={science_dd[0]}&&STATE_ID IN {list(stateid)}'
 
         tb = table()
@@ -202,11 +221,16 @@ class InterpolationParamsGenerator():
         rows = tsel.rownumbers()
         tsel.close()
         tb.close()
+        return rows
 
-        qa = quanta() 
+    @staticmethod
+    def _calc_elevation_mean(rows):
+        elevations = []
+        
+        qa = quanta()
+
         msmd = msmetadata()
         msmd.open(vis) 
-        elevations = [] 
         for row in rows: 
             p = msmd.pointingdirection(row, initialrow=row) 
             assert p['antenna1']['pointingdirection']['refer'].startswith('AZEL') 
@@ -216,10 +240,6 @@ class InterpolationParamsGenerator():
         
         elevations = np.asarray(elevations)
         return elevations.mean()
-
-
-class ModelFitParamsGenerator(InterpolationParamsGenerator):
-    pass
 
 
 class JyPerKDatabaseClient():
