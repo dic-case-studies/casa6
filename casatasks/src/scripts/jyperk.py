@@ -189,6 +189,7 @@ class InterpolationParamsGenerator():
     def _get_mean_freqs(vis, science_windows):
         with tbmanager(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
             mean_freqs = dict((i, tb.getcell('CHAN_FREQ', i).mean()) for i in science_windows)
+        return mean_freqs
 
 
 class ModelFitParamsGenerator(InterpolationParamsGenerator):
