@@ -170,7 +170,7 @@ class InterpolationParamsGenerator():
                 me.done()
 
         datestring = qa.time(epoch['m0'], form='fits')
-        return datestring
+        return datestring[0]
 
 
 class ModelFitParamsGenerator(InterpolationParamsGenerator):
