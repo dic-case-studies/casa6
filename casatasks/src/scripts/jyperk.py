@@ -74,6 +74,7 @@ class ASDMParamsGenerator():
         else:
             raise RuntimeError('MS name is not appropriate for DB query: {}'.format(basename))
 
+
 class InterpolationParamsGenerator():
     """
     Usage:
@@ -97,11 +98,7 @@ class InterpolationParamsGenerator():
         params['date'] = cls._mjd_to_datestring(timerange['begin'])
         params['temperature'] = cls._get_mean_temperature(vis)
 
-        tb = table()
-        tb.open(os.path.join(vis, 'SPECTRAL_WINDOW'))
-        # spw_names = [tb.getcell('NAME', i) for i in science_windows]
-
-        mean_freqs = dict((i, tb.getcell('CHAN_FREQ', i).mean()) for i in science_windows)
+        mean_freqs = cls._get_mean_freqs(vis, science_windows)
 
         for antenna_id, antenna_name in enumerate(antenna_names):
             params['antenna'] = antenna_name
@@ -187,6 +184,11 @@ class InterpolationParamsGenerator():
         
         return valid_temperatures.mean()
     
+    @staticmethod
+    def _get_mean_freqs(vis, science_windows):
+        with tbmanager(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
+            mean_freqs = dict((i, tb.getcell('CHAN_FREQ', i).mean()) for i in science_windows)
+
 
 class ModelFitParamsGenerator(InterpolationParamsGenerator):
     pass
