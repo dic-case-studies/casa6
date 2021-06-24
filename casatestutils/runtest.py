@@ -13,9 +13,7 @@ import json
 import datetime
 import platform
 
-from testrunner.shell_runner import ShellRunner
-from testrunner import xvfb_helper
-from testrunner.xunit import Xunit
+
 default_timeout = 1800
 sys.path.insert(0,'')
 
@@ -1029,6 +1027,9 @@ if __name__ == "__main__":
 
     try:
         if args.bamboo:
+            from testrunner.shell_runner import ShellRunner
+            from testrunner import xvfb_helper
+            from testrunner.xunit import Xunit
             if args.pkg:
                 print("Package: " + args.pkg)
             print("Test configuration file: " + str(args.test_config))
