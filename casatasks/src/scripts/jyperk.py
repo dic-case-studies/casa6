@@ -182,7 +182,7 @@ class MeanElevation(InterpolationParamsGenerator):
     def get(cls, vis, antenna_id):
         stateid = cls._get_stateid(vis)
         science_dd = cls._get_science_dd(vis)
-        rows = cls._query_rows(science_dd, stateid, antenna_id)
+        rows = cls._query_rows(vis, science_dd, stateid, antenna_id)
 
         return cls._calc_elevation_mean(rows)
 
@@ -212,7 +212,7 @@ class MeanElevation(InterpolationParamsGenerator):
         return science_dd
         
     @staticmethod
-    def _query_rows(science_dd, stateid, antenna_id):
+    def _query_rows(vis, science_dd, stateid, antenna_id):
         query = f'ANTENNA1=={antenna_id}&&ANTENNA2=={antenna_id}&&DATA_DESC_ID=={science_dd[0]}&&STATE_ID IN {list(stateid)}'
 
         tb = table()
