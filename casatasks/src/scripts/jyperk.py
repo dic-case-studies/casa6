@@ -95,6 +95,7 @@ class InterpolationParamsGenerator():
         bands = cls._generate_bands(science_windows, spwnames)
 
         params['date'] = cls._mjd_to_datestring(timerange['begin'])
+        params['temperature'] = cls._get_mean_temperature(vis)
 
         tb = table()
         tb.open(os.path.join(vis, 'SPECTRAL_WINDOW'))
@@ -172,6 +173,20 @@ class InterpolationParamsGenerator():
         datestring = qa.time(epoch['m0'], form='fits')
         return datestring[0]
 
+    @staticmethod
+    def _get_mean_temperature(vis):
+        weather_vis = '/'.join([vis, "WEATHER"])
+
+        tb = table()
+        tb.open(weather_vis)
+
+        valid_temperatures = np.ma.masked_array(
+            tb.getcol("TEMPERATURE"),
+            tb.getcol("TEMPERATURE_FLAG")
+        )
+        
+        return valid_temperatures.mean()
+    
 
 class ModelFitParamsGenerator(InterpolationParamsGenerator):
     pass
