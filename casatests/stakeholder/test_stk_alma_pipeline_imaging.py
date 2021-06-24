@@ -176,13 +176,6 @@ class test_tclean_base(unittest.TestCase):
             shutil.rmtree(self.maskname)
         shutil.copytree(refdatapath+self.maskname, self.maskname, symlinks=True)
 
-    def checkfinal(self, pstr=""):
-        pstr += "["+inspect.stack()[1][3]+"] : To re-run this test : " \
-                "runUnitTest.main(['test_tclean["+ inspect.stack()[1][3] \
-                +"]'])"
-        casalog.post(pstr,'INFO')
-        if(pstr.count("(Fail") > 0 ):
-             self.fail("\n"+pstr)
 
     def check_dict_vals_beam(self, exp_dict, act_dict, suffix, epsilon=0.01):
         """ Compares expected dictionary with actual dictionary. Useful for comparing the restoring beam.
