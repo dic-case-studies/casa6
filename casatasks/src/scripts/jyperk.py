@@ -18,6 +18,7 @@ from casatools import msmetadata
 from casatools import measures
 from casatools import quanta 
 from casatools import table 
+from casatasks.private.sdutil import tbmanager
 
 
 ### web api part
