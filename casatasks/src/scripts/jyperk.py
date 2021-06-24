@@ -173,16 +173,11 @@ class InterpolationParamsGenerator():
 
     @staticmethod
     def _get_mean_temperature(vis):
-        weather_vis = '/'.join([vis, "WEATHER"])
-
-        tb = table()
-        tb.open(weather_vis)
-
-        valid_temperatures = np.ma.masked_array(
-            tb.getcol("TEMPERATURE"),
-            tb.getcol("TEMPERATURE_FLAG")
-        )
-        
+        with tbmanager(os.path.join(vis, 'WEATHER')) as tb:
+            valid_temperatures = np.ma.masked_array(
+                tb.getcol("TEMPERATURE"),
+                tb.getcol("TEMPERATURE_FLAG")
+            )       
         return valid_temperatures.mean()
     
     @staticmethod
@@ -234,12 +229,10 @@ class MeanElevation(InterpolationParamsGenerator):
     def _query_rows(vis, science_dd, stateid, antenna_id):
         query = f'ANTENNA1=={antenna_id}&&ANTENNA2=={antenna_id}&&DATA_DESC_ID=={science_dd[0]}&&STATE_ID IN {list(stateid)}'
 
-        tb = table()
-        tb.open(vis)
-        tsel = tb.query(query)
-        rows = tsel.rownumbers()
-        tsel.close()
-        tb.close()
+        with tbmanager(vis) as tb:
+            tsel = tb.query(query)
+            rows = tsel.rownumbers()
+
         return rows
 
     @staticmethod
