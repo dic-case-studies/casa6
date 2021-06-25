@@ -289,7 +289,7 @@ class JyPerKDatabaseClient():
                 data {dict} -- 	Data field which varies for each endpoint.
 
                 Please check the following source for details.
-                https://confluence.alma.cl/pages/viewpage.action?pageId=35258466#DatabaseJy/KDocumentation-interpolation
+                https://confluence.alma.cl/pages/viewpage.action?pageId=35258466
         """
         try:
             ssl_context = ssl.create_default_context(cafile=certifi.where())
