@@ -236,9 +236,17 @@ class MeanElevation(InterpolationParamsGenerator):
 
 
 class JyPerKDatabaseClient():
+    """
+    Get values from Jy/K Web API (https://asa.alma.cl/science/jy-kelvins).
+    
+    Arguments:
+        endpoint_type {str} -- Endpoint of Jy/K Web API.
+            The value to be entered must be one of asdm, model-fit or interpolation.
+        timeout {int} --- Maximum waiting time when accessing the web API.
+    """
     BASE_URL = 'https://asa.alma.cl/science/jy-kelvins'
 
-    def __init__(self, endpoint_type, id=0, timeout=180):
+    def __init__(self, endpoint_type, timeout=180):
         assert endpoint_type in ['asdm', 'model-fit', 'interpolation'], \
             'Please set endpoint_type: asdm, model-fit, interpolation'
         self.web_api_url = self._generate_web_api_url(endpoint_type)
@@ -266,6 +274,22 @@ class JyPerKDatabaseClient():
         return query
 
     def _retrieve(self, url):
+        """
+        Arguments:
+            url {str} -- url to retrieve in the Jy/K Web API.
+
+        Returns:
+            dict -- If the request is successfull, dictionary contain below information.
+                success {bool} -- Boolean stating whether the request succeeded or not.
+                timestamp {str} -- Timestamp of when the request was received by the Jy/K Service.
+                elapsed {bool} -- Boolean stating whether the request succeeded or not.
+                error {dict} -- Error field which has a message describing the problem.
+                query {dict} -- Dictionary with all the parameters passed to the request.
+                data {dict} -- 	Data field which varies for each endpoint.
+
+                Please check the following source for details.
+                https://confluence.alma.cl/pages/viewpage.action?pageId=35258466#DatabaseJy/KDocumentation-interpolation
+        """
         try:
             with urlopen(url, timeout=self.timeout) as resp:
                 body = resp.read()
@@ -290,6 +314,9 @@ class JyPerKDatabaseClient():
             return {'success': False}
 
     def _check_retval(self, retval):
+        """
+        This method only checks if the api was able to complete the process successfully or not.
+        """
         if not retval['success']:
             msg = 'Failed to get a Jy/K factor from DB: {}'.format(retval['error'])
             casalog.post(msg)
