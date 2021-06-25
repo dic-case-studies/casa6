@@ -50,6 +50,93 @@ static inline void trim(std::string &s) {
     rtrim(s);
 }
 
+// Executes the given program, with the given arguments and the given environment.
+// The stdout from the program is collected and returned in output, up to outputlen characters.
+// @param envp To get around the MPI issue from CAS-13252, this should probably come from getenv_sansmpi().
+static void execve_getstdout(char *pathname, char *argv[], char *envp[], char *output, ssize_t outputlen)
+{
+    // We use execve here instead of popen to get around issues related to using MPI.
+    // MPI crashes when starting a process that calls MPI_Init in a process spawned using popen or exec.
+    // We can trick MPI into behaving itself by removing all the MPI environmental variables for
+    // the child precess (thus getenv_sansmpi and execve).
+
+    int filedes[2];
+    if (pipe(filedes) == -1) {
+        std::cerr << "pipe error" << std::endl;
+        exit(1);
+    }
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        std::cerr << "fork error" << std::endl;
+        exit(1);
+    } else if (pid == 0) { // child
+        // close stdout and connect it to the input of the pipe
+        while ((dup2(filedes[1], STDOUT_FILENO) == -1) && (errno == EINTR)) {}
+        close(filedes[1]);
+        close(filedes[0]);
+        // exec on the child process
+        execve(pathname, argv, envp);
+        exit(1);
+    } else { // parent
+        // don't care about the input end of the pipe
+        close(filedes[1]);
+
+        const ssize_t tmplen = 128;
+        char tmp[tmplen];
+        ssize_t total = 0;
+        while (1) {
+            ssize_t count = read(filedes[0], tmp, tmplen);
+            if (count == -1) {
+                if (errno == EINTR) {
+                    continue;
+                } else {
+                    std::cerr << "read error" << std::endl;
+                    exit(1);
+                }
+            } else if (count == 0) {
+                break;
+            } else {
+                ssize_t remaining = outputlen - total;
+                ssize_t cpysize = (count < remaining) ? count : remaining;
+                memcpy(output+total, tmp, cpysize);
+                total += cpysize;
+                output[total] = '\0';
+            }
+        }
+
+        close(filedes[0]);
+    }
+}
+
+// Get all environment parameters (as from the "environ" posix variable),
+// but don't include any environment parameters that match "*MPI*".
+// @return A malloc'ed set of environment parameters. Should call free after use.
+static char **getenv_sansmpi()
+{
+    int nvars = 0, nvars_sansmpi = 0;
+    for (nvars = 0; environ[nvars] != NULL; nvars++) {
+        // printf("%s\n", environ[nvars]);
+        std::string envvar = environ[nvars];
+        if (envvar.find("MPI") == std::string::npos) {
+            nvars_sansmpi++;
+        }
+    }
+
+    char **ret = (char**)malloc(sizeof(char*) * (nvars_sansmpi+1));
+    int retidx = 0;
+    for (int i = 0; environ[i] != NULL; i++) {
+        std::string envvar = environ[i];
+        if (envvar.find("MPI") == std::string::npos) {
+            ret[retidx] = environ[i];
+            retidx++;
+        }
+    }
+    ret[nvars_sansmpi] = NULL;
+
+    return ret;
+}
+
 namespace casa { //# NAMESPACE CASA - BEGIN
 
     grpcInteractiveCleanManager &grpcInteractiveClean::getManager( ) {
@@ -1298,8 +1385,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                     std::this_thread::get_id() << ")" << std::endl;
                 fflush(stderr);
             }
-            execvp( arguments[0], (char* const*) arguments );
+            char **envp = getenv_sansmpi(); // bugfix: run the viewer without MPI CAS-13252
+            execvpe( arguments[0], (char* const*) arguments, envp );
             perror( "grpcInteractiveCleanGui::launch(...) child process exec failed" );
+            free(envp); // not strictly necessary, since the process has failed by this point...
             exit(1);
 	    }
 
@@ -1384,7 +1473,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     }
 
     std::string grpcInteractiveCleanGui::get_python_path( ) {
-        return casatools::get_state( ).pythonPath( );
+        std::string ret = casatools::get_state( ).pythonPath( );
+        return ret;
     }
 
     std::string grpcInteractiveCleanGui::get_distro_data_path( ) {
@@ -1403,19 +1493,19 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     }
 
     std::string grpcInteractiveCleanGui::get_viewer_path( ) {
+        // Get the path to the casaviewer Qt application, to be called in spawn_viewer()
         std::string python_path = get_python_path( );
         if ( python_path.size( ) == 0 ) return std::string( );
 
         //*** python3 -m casaviewer --app-path
-        char python_cmd[python_path.size( ) + 30];
-        sprintf( python_cmd, "%s -m casaviewer --app-path", python_path.c_str( ) );
-        std::array<char, 512> buffer;
+        char buffer[1024];
         std::string result;
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(python_cmd, "r"), pclose);
-        if ( ! pipe ) return std::string( );        //*** failed to start python
-        while ( fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr ) {
-            result += buffer.data();
-        }
+        char **envp = getenv_sansmpi(); // bugfix: run the viewer without MPI CAS-13252
+        char *python_args[] = { (char*)python_path.c_str(), (char*)"-m", (char*)"casaviewer", (char*)"--app-path", NULL };
+        execve_getstdout((char*)python_path.c_str(), python_args, envp, buffer, 1024);
+        result = buffer;
+        free(envp);
+
         trim(result);
         if ( result.size( ) == 0 ) return std::string( );
         return result;
