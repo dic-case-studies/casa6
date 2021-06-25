@@ -92,7 +92,7 @@ class InterpolationParamsGenerator():
         
         params = {}
 
-        science_windows = cls._get_science_windows(vis, spw=spw)
+        science_windows = cls._get_science_windows(vis, spw)
         timerange, antenna_names, basebands, mean_freqs, spwnames = cls._extract_msmetadata(science_windows, vis)
         bands = cls._generate_bands(science_windows, spwnames)
 
@@ -113,9 +113,7 @@ class InterpolationParamsGenerator():
                 yield QueryStruct(param=params, subparam=subparam)
 
     @staticmethod
-    def _get_science_windows(vis, spw=''):
-        if spw == '':
-            spw='*'
+    def _get_science_windows(vis, spw):
         ms = mstool()
         selected = ms.msseltoindex(vis, spw=spw)
         science_windows = selected['spw']
@@ -141,7 +139,7 @@ class InterpolationParamsGenerator():
         return bands
                 
     @staticmethod
-    def _get_available_spw(vis, spw='*'):
+    def _get_available_spw(vis, spw):
         science_windows = InterpolationParamsGenerator._get_science_windows(vis, spw=spw)
         with toolmanager(vis, msmetadata) as msmd:  
             spwnames = msmd.namesforspws(science_windows)
