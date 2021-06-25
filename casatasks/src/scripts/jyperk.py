@@ -114,7 +114,7 @@ class InterpolationParamsGenerator():
                 yield QueryStruct(param=params, subparam=subparam)
 
     @staticmethod
-    def _get_science_windows(vis, spw):
+    def _get_science_windows(vis, spw): ###
         ms = mstool()
         selected = ms.msseltoindex(vis, spw=spw)
         science_windows = selected['spw']
@@ -192,12 +192,11 @@ class MeanElevation(InterpolationParamsGenerator):
         return cls._calc_elevation_mean(rows)
 
     @staticmethod
-    def _get_stateid(vis):
-        ms = mstool()
-        ms.open(vis)
-        ms.msselect({'scanintent': 'OBSERVE_TARGET#ON_SOURCE'})
-        selected = ms.msselectedindices()
-        ms.close()
+    def _get_stateid(vis): ###
+        with toolmanager(vis, mstool) as ms:
+            ms.msselect({'scanintent': 'OBSERVE_TARGET#ON_SOURCE'})
+            selected = ms.msselectedindices()
+
         stateid = selected['stateid']
         return stateid
 
