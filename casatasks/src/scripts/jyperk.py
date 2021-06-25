@@ -1,3 +1,4 @@
+import certifi
 import collections
 import csv
 import datetime
@@ -291,7 +292,8 @@ class JyPerKDatabaseClient():
                 https://confluence.alma.cl/pages/viewpage.action?pageId=35258466#DatabaseJy/KDocumentation-interpolation
         """
         try:
-            with urlopen(url, timeout=self.timeout) as resp:
+            ssl_context = ssl.create_default_context(cafile=certifi.where())
+            with urlopen(url, context=ssl_context, timeout=self.timeout) as resp:
                 body = resp.read()
                 return {'success': True, 'connection': True, 'code': 200, 'body': body.decode('utf-8')}
         except HTTPError as e: # 4xx, 5xx
