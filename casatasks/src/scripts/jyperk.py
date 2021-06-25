@@ -309,10 +309,11 @@ class JyPerKDatabaseClient():
     def _convert_to_json(self, response):
         try:
             return json.loads(response)
-        except ValueError as e:
-            msg = 'Failed to get a Jy/K factor from DB: The response is not JSON format'
+
+        except json.JSONDecodeError as e:
+            msg = 'Failed to get a Jy/K factor from DB: JSON Syntax error. {}'.format(e)
             casalog.post(msg)
-            return {'success': False}
+            raise RuntimeError(msg)
 
     def _check_retval(self, retval):
         """
