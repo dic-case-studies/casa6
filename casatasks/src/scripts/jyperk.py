@@ -240,11 +240,12 @@ class MeanElevation(InterpolationParamsGenerator):
 class JyPerKDatabaseClient():
     BASE_URL = 'https://asa.alma.cl/science/jy-kelvins'
 
-    def __init__(self, endpoint_type, id=0):
+    def __init__(self, endpoint_type, id=0, timeout=180):
         assert endpoint_type in ['asdm', 'model-fit', 'interpolation'], \
             'Please set endpoint_type: asdm, model-fit, interpolation'
         self.web_api_url = self._generate_web_api_url(endpoint_type)
         self.id = 0
+        self.timeout = timeout
 
     def get(self, param):
         request_url = self._generate_query(param)
@@ -266,9 +267,9 @@ class JyPerKDatabaseClient():
         casalog.post('Accessing Jy/K DB: query is "{}"'.format(query))
         return query
 
-    def _retrieve(self, url, timeout=180):
+    def _retrieve(self, url):
         try:
-            with urlopen(url) as resp:
+            with urlopen(url, timeout=self.timeout) as resp:
                 body = resp.read()
                 return body.decode('utf-8')
         except HTTPError as e: # 4xx, 5xx
