@@ -18,7 +18,7 @@ from casatools import msmetadata
 from casatools import measures
 from casatools import quanta 
 from casatools import table 
-from casatasks.private.sdutil import tbmanager, toolmanager
+from casatasks.private.sdutil import table_selector, tbmanager, toolmanager
 
 
 ### web api part
@@ -216,10 +216,8 @@ class MeanElevation(InterpolationParamsGenerator):
     @staticmethod
     def _query_rows(vis, science_dd, stateid, antenna_id):
         query = f'ANTENNA1=={antenna_id}&&ANTENNA2=={antenna_id}&&DATA_DESC_ID=={science_dd[0]}&&STATE_ID IN {list(stateid)}'
-
-        with tbmanager(vis) as tb:
-            tsel = tb.query(query)
-            rows = tsel.rownumbers()
+        with table_selector(vis, query) as tb:
+            rows = tb.rownumbers()
 
         return rows
 
