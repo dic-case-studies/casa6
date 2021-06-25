@@ -18,7 +18,7 @@ from casatools import msmetadata
 from casatools import measures
 from casatools import quanta 
 from casatools import table 
-from casatasks.private.sdutil import tbmanager
+from casatasks.private.sdutil import tbmanager, toolmanager
 
 
 ### web api part
@@ -123,16 +123,12 @@ class InterpolationParamsGenerator():
 
     @staticmethod
     def _extract_msmetadata(science_windows, vis):
-        msmd = msmetadata()
-        msmd.open(vis)
-
-        timerange = msmd.timerangeforobs(0)
-        antenna_names = msmd.antennanames()
-        basebands = dict((i, msmd.baseband(i)) for i in science_windows)
-        mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_windows)
-        spwnames = msmd.namesforspws(science_windows)
-
-        msmd.close()
+        with toolmanager(vis, msmetadata) as msmd:  
+            timerange = msmd.timerangeforobs(0)
+            antenna_names = msmd.antennanames()
+            basebands = dict((i, msmd.baseband(i)) for i in science_windows)
+            mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_windows)
+            spwnames = msmd.namesforspws(science_windows)
 
         return timerange, antenna_names, basebands, mean_freqs, spwnames
 
@@ -147,13 +143,9 @@ class InterpolationParamsGenerator():
     @staticmethod
     def _get_available_spw(vis, spw='*'):
         science_windows = InterpolationParamsGenerator._get_science_windows(vis, spw=spw)
+        with toolmanager(vis, msmetadata) as msmd:  
+            spwnames = msmd.namesforspws(science_windows)
 
-        msmd = msmetadata()
-        msmd.open(vis) 
-        
-        spwnames = msmd.namesforspws(science_windows)
-        msmd.close()
-        
         spw = ','.join(map(str, [i for i, name in enumerate(spwnames) if not name.startswith('WVR')]))
         return spw
 
@@ -212,17 +204,13 @@ class MeanElevation(InterpolationParamsGenerator):
 
     @staticmethod
     def _get_science_dd(vis):
-        msmd = msmetadata()
-        msmd.open(vis) 
+        with toolmanager(vis, msmetadata) as msmd:  
+            science_spw = list(np.intersect1d(
+                msmd.almaspws(tdm=True, fdm=True),
+                msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
+            ))
+            science_dd = [msmd.datadescids(spw=i)[0] for i in science_spw]
 
-        science_spw = list(np.intersect1d(
-            msmd.almaspws(tdm=True, fdm=True),
-            msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
-        ))
-
-        science_dd = [msmd.datadescids(spw=i)[0] for i in science_spw]
-
-        msmd.close()
         return science_dd
         
     @staticmethod
@@ -237,19 +225,16 @@ class MeanElevation(InterpolationParamsGenerator):
 
     @staticmethod
     def _calc_elevation_mean(rows):
-        elevations = []
-        
+        elevations = []       
         qa = quanta()
 
-        msmd = msmetadata()
-        msmd.open(vis) 
-        for row in rows: 
-            p = msmd.pointingdirection(row, initialrow=row) 
-            assert p['antenna1']['pointingdirection']['refer'].startswith('AZEL') 
-            el_deg = qa.convert(p['antenna1']['pointingdirection']['m1'], 'deg') 
-            elevations.append(el_deg['value']) 
-        msmd.close()
-        
+        with toolmanager(vis, msmetadata) as msmd:  
+            for row in rows: 
+                p = msmd.pointingdirection(row, initialrow=row) 
+                assert p['antenna1']['pointingdirection']['refer'].startswith('AZEL') 
+                el_deg = qa.convert(p['antenna1']['pointingdirection']['m1'], 'deg') 
+                elevations.append(el_deg['value']) 
+
         elevations = np.asarray(elevations)
         return elevations.mean()
 
@@ -357,13 +342,12 @@ class ALMAJyPerKDatabaseAccessBase(object):
             yield ResponseStruct(response=retval, subparam=p.subparam)
 
     def validate_is_alma_data(self, vis):
-        msmd = msmetadata()
-        msmd.open(vis)
-        try:
-            array_name = msmd.observatorynames()[0]
-        except KeyError:
-            LOG.error('{} is not registered to observatorynames'.format(vis))
-        msmd.close()
+        with toolmanager(vis, msmetadata) as msmd:
+            try:
+                array_name = msmd.observatorynames()[0]
+            except KeyError:
+                LOG.error('{} is not registered to observatorynames'.format(vis))
+
         if array_name != 'ALMA':
             raise RuntimeError('{} is not ALMA data'.format(basename))
 
