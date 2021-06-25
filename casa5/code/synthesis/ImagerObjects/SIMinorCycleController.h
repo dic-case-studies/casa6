@@ -107,7 +107,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     /* Flag to note that the model has been updated */
     void setUpdatedModelFlag(casacore::Bool updatedmodel);
 
-   void addSummaryMinor(casacore::uInt deconvolverid, casacore::uInt subimageid, casacore::Float model, casacore::Float peakresidual);
+   void addSummaryMinor(casacore::uInt deconvolverid, casacore::uInt subimageid, casacore::Float startmodel, casacore::Float startpeakresidual,casacore::Float model, casacore::Float peakresidual);
    //this is to reduce the size of the summaryminor matrix in the output record.
    // It can get  big with information for the same channel repeated many times
    // this reduces the info to max of peak residuals and sum of iterations etc for the same channel

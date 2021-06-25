@@ -51,8 +51,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                 itsMinResidual(0),itsMinResidualNoMask(0),
                                 itsPeakResidualNoMask(0), itsNsigma(0),
                                 itsMadRMS(0), itsMaskSum(0),
-                                itsSummaryMinor(IPosition(2,6,0)),
-				itsNSummaryFields(6),
+                                itsSummaryMinor(IPosition(2,8,0)),
+				itsNSummaryFields(8),
 				itsDeconvolverID(0) 
   {}
 
@@ -324,7 +324,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsCycleIterDone = 0;
   }
 
-  void SIMinorCycleController::addSummaryMinor(uInt deconvolverid, uInt subimageid, Float model, Float peakresidual)
+  void SIMinorCycleController::addSummaryMinor(uInt deconvolverid, uInt subimageid, Float startmodel, Float startpeakresidual,Float model, Float peakresidual)
   {
     LogIO os( LogOrigin("SIMinorCycleController", __FUNCTION__ ,WHERE) );
 
@@ -346,6 +346,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      itsSummaryMinor( IPosition(2, 4, shp[1] ) ) = deconvolverid;
      // chunk id (channel/stokes)
      itsSummaryMinor( IPosition(2, 5, shp[1] ) ) = subimageid;
+     // starting peak residual
+     itsSummaryMinor( IPosition(2, 6, shp[1] ) ) = (Double) startpeakresidual;
+     // starting model flux
+     itsSummaryMinor( IPosition(2, 7, shp[1] ) ) = (Double) startmodel;
 
   }// end of addSummaryMinor
 
@@ -353,6 +357,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if(!rec.isDefined("summaryminor"))
       return;
     Matrix<Double> inSummary=rec.asArrayDouble("summaryminor");
+
+    cout << "Skipping compression" << endl;
+    return;
+
     if(inSummary.nelements()==0)return;
     Vector<Double> chanid;
     chanid=inSummary.row(5);

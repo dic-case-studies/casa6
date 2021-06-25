@@ -63,7 +63,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 #endif
 	}
 
-    grpcInteractiveCleanState::grpcInteractiveCleanState( ) : SummaryMinor(casacore::IPosition(2,6,0)),
+    grpcInteractiveCleanState::grpcInteractiveCleanState( ) : SummaryMinor(casacore::IPosition(2,7,0)),
                                                               SummaryMajor(casacore::IPosition(1,0)) {
 		LogIO os( LogOrigin("grpcInteractiveCleanState",__FUNCTION__,WHERE) );
         reset( );
@@ -102,8 +102,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         MinPeakResidual = 1e+9;
         MaskSum = -1.0;
         MadRMS = 0.0;
-        NSummaryFields = 6;
-        SummaryMinor.reformOrResize(casacore::IPosition(2,6,0));
+        NSummaryFields = 7;
+        SummaryMinor.reformOrResize(casacore::IPosition(2,7,0));
         SummaryMajor.reformOrResize(casacore::IPosition(1,0));
         SummaryMinor = 0;
         SummaryMajor = 0;
@@ -720,7 +720,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 		for (unsigned int row = 0; row < nShp[1]; row++) {
 			// iterations done
-			state.SummaryMinor( IPosition(2,0,cShp[1]+row) ) = state.IterDone + summary(IPosition(2,0,row));
+		   state.SummaryMinor( IPosition(2,0,cShp[1]+row) ) = state.IterDone + summary(IPosition(2,0,row));
+		   //state.SummaryMinor( IPosition(2,0,cShp[1]+row) ) = summary(IPosition(2,0,row));
 			// peak residual
 			state.SummaryMinor( IPosition(2,1,cShp[1]+row) ) = summary(IPosition(2,1,row));
 			// model flux
@@ -731,6 +732,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			state.SummaryMinor( IPosition(2,4,cShp[1]+row) ) = summary(IPosition(2,4,row));
 			// chunk id (channel/stokes)
 			state.SummaryMinor( IPosition(2,5,cShp[1]+row) ) = summary(IPosition(2,5,row));
+			// startend
+			state.SummaryMinor( IPosition(2,6,cShp[1]+row) ) = summary(IPosition(2,6,row));
 		}
 	}
 

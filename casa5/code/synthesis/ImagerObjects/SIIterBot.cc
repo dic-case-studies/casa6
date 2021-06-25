@@ -102,8 +102,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 						itsMaxCycleIterDone(0),
 						itsMajorDone(0),
                                                 itsStopCode(0),
-						itsNSummaryFields(6),
-						itsSummaryMinor(IPosition(2,6,0)),
+						itsNSummaryFields(8),
+						itsSummaryMinor(IPosition(2,8,0)),
 						itsSummaryMajor(IPosition(1,0)),
 						callback(cb)
 	{
@@ -412,6 +412,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		IPosition cShp = itsSummaryMinor.shape();
 		IPosition nShp = summary.shape();
 
+		cout << "Summary shape : " << summary.shape() << endl;
+		cout << "ItsSummaryMinor shape : " << itsSummaryMinor.shape() << endl;
+
 		if( cShp.nelements() != 2 || cShp[0] != itsNSummaryFields ||
 			nShp.nelements() != 2 || nShp[0] != itsNSummaryFields ) 
 			throw(AipsError("Internal error in shape of global minor-cycle summary record"));
@@ -420,7 +423,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 		for (unsigned int row = 0; row < nShp[1]; row++) {
 			// iterations done
-			itsSummaryMinor( IPosition(2,0,cShp[1]+row) ) = itsIterDone + summary(IPosition(2,0,row));  
+		  		  itsSummaryMinor( IPosition(2,0,cShp[1]+row) ) = itsIterDone + summary(IPosition(2,0,row));  
+				  //itsSummaryMinor( IPosition(2,0,cShp[1]+row) ) = summary(IPosition(2,0,row));  
 			// peak residual
 			itsSummaryMinor( IPosition(2,1,cShp[1]+row) ) = summary(IPosition(2,1,row)); 
 			// model flux
@@ -431,6 +435,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			itsSummaryMinor( IPosition(2,4,cShp[1]+row) ) = summary(IPosition(2,4,row)); 
 			// chunk id (channel/stokes)
 			itsSummaryMinor( IPosition(2,5,cShp[1]+row) ) = summary(IPosition(2,5,row)); 
+			// peak residual
+			itsSummaryMinor( IPosition(2,6,cShp[1]+row) ) = summary(IPosition(2,6,row)); 
+			// model flux
+			itsSummaryMinor( IPosition(2,7,cShp[1]+row) ) = summary(IPosition(2,7,row));
 		}
 	}
   
