@@ -293,7 +293,7 @@ class JyPerKDatabaseClient():
         try:
             with urlopen(url, timeout=self.timeout) as resp:
                 body = resp.read()
-                return body.decode('utf-8')
+                return {'success': True, 'connection': True, 'code': 200, 'body': body.decode('utf-8')}
         except HTTPError as e: # 4xx, 5xx
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: HTTPError(code={0}, Reason="{1}")\n'.format(e.code, e.reason)
