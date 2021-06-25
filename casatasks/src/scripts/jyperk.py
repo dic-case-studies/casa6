@@ -320,7 +320,7 @@ class JyPerKDatabaseClient():
         if not retval['success']:
             msg = 'Failed to get a Jy/K factor from DB: {}'.format(retval['error'])
             casalog.post(msg)
-            return {'success': False}
+            raise RuntimeError(msg)
 
 
 class ALMAJyPerKDatabaseAccessBase(object):
