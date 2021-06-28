@@ -887,6 +887,34 @@ class cvel_test(unittest.TestCase):
         ret = verify_ms(outfile, 1, 3, 0, b)
         self.assertTrue(ret[0],ret[1])
 
+    def test39_veltype_uppercase(self):
+        '''Cvel 39: test effect of sign of width parameter: radio velocity mode, width positive'''
+        myvis = vis_b
+        os.system('ln -sf ' + myvis + ' myinput.ms')
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
+        c =  _qa.constants('c')['value']
+        _tb.close()
+        
+        restf = a[0] 
+        bv1 = c * (restf-a[5])/restf 
+        bv2 = c * (restf-a[4])/restf 
+        wv = abs(bv2-bv1)
+        b = numpy.array([a[3], a[4], a[5]])
+        rval = cvel(
+            vis = 'myinput.ms',
+            outputvis = outfile,
+            mode = 'velocity',
+            veltype = 'RADIO',
+            nchan = 3,
+            start = str(bv1)+'m/s',
+            width=str(wv)+'m/s',
+            restfreq=str(restf)+'Hz'
+            )
+        self.assertNotEqual(rval,False)
+        ret = verify_ms(outfile, 1, 3, 0, b)
+        self.assertTrue(ret[0],ret[1])
+
     def test40(self):
         '''Cvel 40: test effect of sign of width parameter: radio velocity mode, width negative'''
         myvis = vis_b
@@ -1087,6 +1115,27 @@ class cvel_test(unittest.TestCase):
         ret = verify_ms(outfile, 1, 3, 0, b)
         self.assertTrue(ret[0],ret[1])
 
+    def test48_interpolation_uppercase(self):
+        '''Cvel 48: test fftshift regridding: channel mode, width positive'''
+        myvis = vis_b
+        os.system('ln -sf ' + myvis + ' myinput.ms')
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
+        b = numpy.array([a[1], a[2], a[3]])
+        _tb.close()
+
+        rval = cvel(
+            vis = 'myinput.ms',
+            outputvis = outfile,
+            nchan = 3,
+            start = 1,
+            width = 1,
+            interpolation = 'FFTSHIFT'
+            )
+        self.assertNotEqual(rval,False)
+        ret = verify_ms(outfile, 1, 3, 0, b)
+        self.assertTrue(ret[0],ret[1])
+
     def test49(self):
         '''Cvel 49: vopt mode with fftshift, expected error ...'''
         myvis = vis_b
@@ -1239,6 +1288,18 @@ class cvel_test(unittest.TestCase):
         except Exception as exc:
             self.fail('Unexpected exception: {}'.format(exc))
 
+    def test53_outframe_lowercase(self):
+        '''Cvel 53: cvel of a field with ephemeris attached and outframe SOURCE'''
+        myvis = vis_g
+        os.system('ln -sf ' + myvis + ' myinput.ms')
+        try:
+            cvel(
+                vis = 'myinput.ms',
+                outputvis = outfile,
+                outframe = 'source'
+            )
+        except Exception as exc:
+            self.fail('Unexpected exception: {}'.format(exc))
 
 
 class cleanup(unittest.TestCase):
