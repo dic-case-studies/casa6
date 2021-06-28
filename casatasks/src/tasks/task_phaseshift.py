@@ -28,6 +28,9 @@ def phaseshift(
 
     if len(phasecenter) == 0:
         raise ValueError('phasecenter parameter must be specified')
+    dirstr = phasecenter.split(' ')
+    if not melocal.direction(dirstr[0], dirstr[1], dirstr[2]):
+        raise ValueError("Illegal phacecenter specification " + phasecenter)
     # Initiate the helper class
     pdh = ParallelDataHelper("phaseshift", locals())
 

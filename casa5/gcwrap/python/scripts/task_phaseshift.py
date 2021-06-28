@@ -79,6 +79,9 @@ def phaseshift(
 
             if len(phasecenter) == 0:
                 raise ValueError('parameter phasecenter must be specified') 
+            dirstr = phasecenter.split(' ')
+            if not melocal.direction(dirstr[0], dirstr[1], dirstr[2]):
+                raise ValueError("Illegal phacecenter specification " + phasecenter)
             # Gather all the parameters in a dictionary.        
             config = {}
         
@@ -115,7 +118,6 @@ def phaseshift(
             # Run the tool
             casalog.post('Shift phase center')
             mtlocal.run()        
-            
             mtlocal.done()
                     
         except Exception as instance:
