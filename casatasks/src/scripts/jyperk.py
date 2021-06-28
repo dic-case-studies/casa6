@@ -243,19 +243,21 @@ class JyPerKDatabaseClient():
         endpoint_type {str} -- Endpoint of Jy/K Web API.
             The value to be entered must be one of asdm, model-fit or interpolation.
         timeout {int} --- Maximum waiting time when accessing the web API.
+        retry {int} -- Number of times to retry when the web API access fails.
     """
     BASE_URL = 'https://asa.alma.cl/science/jy-kelvins'
 
-    def __init__(self, endpoint_type, timeout=180):
+    def __init__(self, endpoint_type, timeout=180, retry=3):
         assert endpoint_type in ['asdm', 'model-fit', 'interpolation'], \
             'Please set endpoint_type: asdm, model-fit, interpolation'
         self.web_api_url = self._generate_web_api_url(endpoint_type)
         self.id = 0
         self.timeout = timeout
+        self.retry = retry
 
     def get(self, param):
         request_url = self._generate_query(param)
-        body = self._retrieve(request_url)
+        body = self._try_to_get_resonse(request_url)
         retval = self._convert_to_json(body)
         self._check_retval(retval)
         return retval
@@ -294,17 +296,38 @@ class JyPerKDatabaseClient():
             ssl_context = ssl.create_default_context(cafile=certifi.where())
             with urlopen(url, context=ssl_context, timeout=self.timeout) as resp:
                 body = resp.read()
-                return {'success': True, 'connection': True, 'code': 200, 'body': body.decode('utf-8')}
+                return {'status': 'Success', 'code': 200, 'body': body}
         except HTTPError as e: # 4xx, 5xx
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: HTTPError(code={0}, Reason="{1}")\n'.format(e.code, e.reason)
             casalog.post(msg)
-            return {'success': False, 'error': 'HTTPError'}
+            return {'HTTPError': False, 'code': e.code, 'error_reason': e.reason}
         except URLError as e: # not connect
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: URLError(Reason="{0}")\n'.format(e.reason)
             casalog.post(msg)
-            return {'success': False}
+            return {'URLError': False, 'code': None, 'error_reason': e.reason}
+
+    def _try_to_get_resonse(self, url):
+        for i in range(self.retry):
+            response_with_tag = self._retrieve(url)
+            if response_with_tag['status'] == 'Success':
+                return response_with_tag['body']
+
+        if response_with_tag['status'] == HTTPError:
+            self._raise_http_error(url, response_with_tag)
+            
+    def _raise_http_error(self, url, response_with_tag):
+        msg = 'Failed to load URL: {0}\n'.format(url) \
+            + 'Error Message: HTTPError(code={0}, Reason="{1}")\n'.format(e.code, e.reason)
+        casalog.post(msg)
+        raise RuntimeError(msg)
+
+    def _raise_url_error(self, response_with_tag):
+        msg = 'Failed to load URL: {0}\n'.format(url) \
+            + 'Error Message: URLError(Reason="{0}")\n'.format(e.reason)
+        casalog.post(msg)
+        raise RuntimeError(msg)
 
     def _convert_to_json(self, response):
         try:
