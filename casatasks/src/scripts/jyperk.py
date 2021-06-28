@@ -114,7 +114,7 @@ class InterpolationParamsGenerator():
                 yield QueryStruct(param=params, subparam=subparam)
 
     @staticmethod
-    def _get_science_windows(vis, spw): ###
+    def _get_science_windows(vis, spw):
         ms = mstool()
         selected = ms.msseltoindex(vis, spw=spw)
         science_windows = selected['spw']
@@ -251,7 +251,6 @@ class JyPerKDatabaseClient():
         assert endpoint_type in ['asdm', 'model-fit', 'interpolation'], \
             'Please set endpoint_type: asdm, model-fit, interpolation'
         self.web_api_url = self._generate_web_api_url(endpoint_type)
-        self.id = 0
         self.timeout = timeout
         self.retry = retry
 
