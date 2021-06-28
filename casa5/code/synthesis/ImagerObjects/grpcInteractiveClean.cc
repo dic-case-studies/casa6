@@ -27,6 +27,11 @@
 
 #include <stdcasa/StdCasa/CasacSupport.h>
 
+#ifdef __APPLE__
+extern "C" char **environ;
+#include <unistd.h>
+#endif
+
 using namespace casacore;
 
 // https://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring
@@ -1347,25 +1352,25 @@ namespace casa { //# NAMESPACE CASA - BEGIN
         // it could be that this should be done in the future, but for now we
         // will adopt the simple...
 
-        int argc = 3;
-        if ( distro_data_path_arg.size( ) > 0 ) ++argc;
-        int logarg = argc;    // if a log file is specfied it comes last...
-        std::string log_path = casatools::get_state( ).logPath( );
-        if ( log_path.size( ) > 0 ) ++argc;
+        const int maxargc = 5;
+        char *arguments[maxargc];
+        for (int i = 0; i <= maxargc; i++) { arguments[i] = (char*)""; };
 
-	    char **arguments = (char**) malloc(sizeof(char*) * (argc + 1));
-        arguments[argc] = 0;
         arguments[0] = strdup(viewer_path.c_str( ));
         arguments[1] = (char*) malloc(sizeof(char) * (fifo.size( ) + 12));
         sprintf( arguments[1], "--server=%s", fifo.c_str( ) );
         arguments[2] = strdup("--oldregions");
+        int argc =3;
         if ( distro_data_path_arg.size( ) > 0 ) {
             distro_data_path_arg = std::string("--datapath=") + distro_data_path_arg;
-            arguments[3] = strdup(distro_data_path_arg.c_str( ));
+            arguments[argc] = strdup(distro_data_path_arg.c_str( ));
+            argc++;
         }
+        std::string log_path = casatools::get_state( ).logPath( );
         if ( log_path.size( ) > 0 ) {
-            arguments[logarg] = (char*) malloc(sizeof(char) * (log_path.size( ) + 17));
-            sprintf( arguments[logarg], "--casalogfile=%s", log_path.c_str( ) );
+            arguments[argc] = (char*) malloc(sizeof(char) * (log_path.size( ) + 17));
+            sprintf( arguments[argc], "--casalogfile=%s", log_path.c_str( ) );
+            argc++;
         }
 
         if ( debug ) {
@@ -1386,14 +1391,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                 fflush(stderr);
             }
             char **envp = getenv_sansmpi(); // bugfix: run the viewer without MPI CAS-13252
-            execvpe( arguments[0], (char* const*) arguments, envp );
+            execle( arguments[0], arguments[0], arguments[1], arguments[2], arguments[3], arguments[4], NULL, envp );
             perror( "grpcInteractiveCleanGui::launch(...) child process exec failed" );
-            free(envp); // not strictly necessary, since the process has failed by this point...
             exit(1);
 	    }
 
 	    for ( int i=0; i < argc; ++i ) free(arguments[i]);
-	    free(arguments);
 
         if ( pid == -1 ) {
             perror( "grpcInteractiveCleanGui::launch(...) child process fork failed" );
