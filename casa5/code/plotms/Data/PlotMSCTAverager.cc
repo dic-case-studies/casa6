@@ -240,15 +240,18 @@ void PlotMSCTAverager::initialize(ROCTIter& cti, std::vector<casacore::Slice>& c
   // Adjust number of channels if selecting and/or averaging
   if (!chansel.empty()) {
     // Channel selection with or without averaging
-    nAvgChan_p = 0;
-
     for (auto& slice : chansel) {
       auto slice_length = slice.length();
       nSelChan_p += slice_length;
+    }
 
-      if (avgChan_p) {
-        nAvgChan_p += slice_length / nChanPerBin_p;
+    nAvgChan_p = nSelChan_p;
+
+    if (avgChan_p) {
+      if (nChanPerBin_p > nSelChan_p) {
+        nChanPerBin_p = nSelChan_p; // average all channels
       }
+      nAvgChan_p = nSelChan_p / nChanPerBin_p;
     }
   } else if (avgChan_p) {
     // Channel averaging without selection
@@ -414,29 +417,30 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti, std::vector<casacore::Sl
     blnOK_p(obln) = true;
 
     for (Int ipol = 0; ipol < nPoln_p; ++ipol) {
-      Int outchan(-1);
+      Int outchan(-1), nChanInBin(-1);
 
       for (auto& slice : chansel) {
         casacore::Vector<casacore::Int> chanSlice = iterChan(slice);
         Int nchanSliced = chanSlice.size();
-        Int nAvgBinsPerSlice = nchanSliced / nChanPerBin_p;
 
         for (Int ichan = 0; ichan < nchanSliced; ++ichan) {
           // Assume we won't accumulate anything in this cell
           //   (output is unflagged, input is flagged)
           Bool accumulate(false);
+          ++nChanInBin;
 
           // Use selected channel number; same as ichan if no selection
           Int channum = chanSlice(ichan);
 
           // Set outchan
           if (avgChan_p) {
-            if ((ichan == 0) || ((ichan % nChanPerBin_p) == 0)) {
+            if ((nChanInBin == 0) || ((nChanInBin % nChanPerBin_p) == 0)) {
               // next outchan
               ++outchan;
+              nChanInBin = 0;
 
               // Ignore remaining channels in slice, incomplete bin
-              if (outchan == nAvgBinsPerSlice) {
+              if (outchan == nAvgChan_p) {
                 break;
               }
             }
@@ -591,29 +595,30 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti, std::vector<casacore::S
     blnOK_p(obln_j) = true;
       
     for (Int ipol = 0; ipol < nPoln_p; ++ipol) {
-      Int outchan(-1);
+      Int outchan(-1), nChanInBin(-1);
 
       for (auto& slice : chansel) {
         casacore::Vector<casacore::Int> chanSlice = iterChan(slice);
         Int nchanSliced = chanSlice.size();
-        Int nAvgBinsPerSlice = nchanSliced / nChanPerBin_p;
 
         for (Int ichan = 0; ichan < nchanSliced; ++ichan) {
           // Assume we won't accumulate anything in this cell
           //   (output is unflagged, input is flagged)
           Bool accum_i(false), accum_j(false);
+          ++nChanInBin;
 
           // Use selected channel number; same as ichan if no selection
-          Int channum(iterChan(ichan));
+          Int channum = chanSlice(ichan);
 
           // Set outchan
           if (avgChan_p) {
-            if ((ichan == 0) || ((ichan % nChanPerBin_p) == 0)) {
+            if ((nChanInBin == 0) || ((nChanInBin % nChanPerBin_p) == 0)) {
               // next outchan
               ++outchan;
+              nChanInBin = 0;
 
               // Ignore remaining channels, incomplete bin
-              if (outchan == nAvgBinsPerSlice) {
+              if (outchan == nAvgChan_p) {
                 break;
               }
             }

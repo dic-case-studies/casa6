@@ -563,6 +563,13 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
 
   // Polarization selection for slicing pol axis
   String polsel(selection_.corr());
+  String paramAxis = toVisCalAxis(PMS::AMP);
+  size_t nPol;
+  if (polnRatio_) { // pick one!
+    nPol = getParSlice(paramAxis, "R").length();
+  } else {
+    nPol = getParSlice(paramAxis, polsel).length();
+  }
 
   Int lastscan(0), thisscan(0); // print atm stats once per scan
   Int lastspw(-1), thisspw(0);  // print atm warning once per spw
@@ -635,14 +642,11 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
         }
       }
 
-      chshapes_(0, chunk) = avgShape(0);
+      chshapes_(0, chunk) = nPol;
       chshapes_(1, chunk) = nChan;
       chshapes_(2, chunk) = avgShape(2);
       chshapes_(3, chunk) = nAnt_;
       goodChunk_(chunk) = true;
-
-      // Need Slice defined for loadCalAxis
-      default_chansel.push_back(casacore::Slice());
 
       // Load axes
       for (auto axis : loadAxes) {
@@ -685,13 +689,13 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
             // Use original caltable spectral window subtable for these axes
             Int spw = avgTableCti.thisSpw();
             Int scan = avgTableCti.thisScan();
-            Vector<Double> freqs = pmscta.freq();
+            Vector<Double> freqs = pmscta.freq() / 1.0e9;
 
-            if (have_chansel && !avgchan && !avgspw) {
+            if (have_chansel && !avgchan) {
               // Apply channel selection
               casacore::Vector<casacore::Double> selectedFreqs = getSelectedFrequencies(freqs, chansel);
               freqs.resize();
-              freqs = selectedFreqs;
+              freqs = selectedFreqs; // GHz
             }
             
             casacore::Vector<casacore::Double> curve(1, 0.0);
@@ -839,6 +843,10 @@ void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
         } else {
             parSlice1 = getParSlice(calAxis, pol);
         }
+    }
+
+    if (chansel.empty()) {
+      chansel.push_back(Slice());
     }
 
     switch(axis) {
