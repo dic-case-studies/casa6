@@ -217,7 +217,7 @@ class Bands():
         return available_spw[nearest_i]
 
 
-class MeanElevation(InterpolationParamsGenerator):
+class MeanElevation():
     @classmethod
     def get(cls, vis, antenna_id):
         stateid = cls._get_stateid(vis)
