@@ -95,12 +95,12 @@ class InterpolationParamsGenerator():
 
         science_windows = cls._get_science_windows(vis, spw)
         timerange, antenna_names, basebands, mean_freqs, spwnames = cls._extract_msmetadata(science_windows, vis)
-        bands = cls._generate_bands(science_windows, spwnames)
+
+        mean_freqs = cls._get_mean_freqs(vis, science_windows)
+        bands = Bands.get(science_windows, spwnames, mean_freqs)
 
         params['date'] = cls._mjd_to_datestring(timerange['begin'])
         params['temperature'] = cls._get_mean_temperature(vis)
-
-        mean_freqs = cls._get_mean_freqs(vis, science_windows)
 
         for antenna_id, antenna_name in enumerate(antenna_names):
             params['antenna'] = antenna_name
@@ -130,15 +130,7 @@ class InterpolationParamsGenerator():
             spwnames = msmd.namesforspws(science_windows)
 
         return timerange, antenna_names, basebands, mean_freqs, spwnames
-
-    @staticmethod
-    def _generate_bands(science_windows, spwnames):    
-        bands = {}
-        for i, n in zip(science_windows, spwnames):
-            if '#' in n and '_' in n:
-                bands[i] = int(n.split('#')[0].split('_')[-1])
-        return bands
-                
+   
     @staticmethod
     def _get_available_spw(vis, spw):
         science_windows = InterpolationParamsGenerator._get_science_windows(vis, spw=spw)
@@ -177,9 +169,52 @@ class InterpolationParamsGenerator():
             mean_freqs = dict((i, tb.getcell('CHAN_FREQ', i).mean()) for i in science_windows)
         return mean_freqs
 
-
 class ModelFitParamsGenerator(InterpolationParamsGenerator):
     pass
+
+
+class Bands():
+    @classmethod
+    def get(cls, science_windows, spwnames, mean_freqs):
+        bands = cls._extract_bands_from_avalilable_devide_mean(science_windows, spwnames)
+        available_mean_freqs, unavailable_mean_freqs = cls._devide_mean_freqs_by_availability(science_windows, spwnames, mean_freqs)
+        bands.update(cls._extract_bands_from_unavalilable_devide_mean(available_mean_freqs, unavailable_mean_freqs, bands))
+        return bands
+
+    @staticmethod
+    def _extract_bands_from_avalilable_devide_mean(science_windows, spwnames):
+        bands = {}
+        for i, spwname in zip(science_windows, spwnames):
+            if 'ALMA_RB_' in spwname:
+                bands[i] = int(re.findall(r'^.*?ALMA_RB_(\d+)#.*', spwname)[0])
+        return bands
+
+    @staticmethod
+    def _devide_mean_freqs_by_availability(science_windows, spwnames, mean_freqs):
+        available_mean_freqs = {}
+        unavailable_mean_freqs = {}
+        for i, spwname in zip(science_windows, spwnames):
+            if 'ALMA_RB_' in spwname:
+                available_mean_freqs[i] = mean_freqs[i]
+            else:
+                unavailable_mean_freqs[i] = mean_freqs[i]
+                
+        return available_mean_freqs, unavailable_mean_freqs
+
+    @staticmethod
+    def _extract_bands_from_unavalilable_devide_mean(available_mean_freqs, unavailable_mean_freqs, bands):
+        unavailable_bands = {}
+        for spw, mean_freq in unavailable_mean_freqs.items():
+            nearest_spw = Bands._calc_nearest_spw(available_mean_freqs, mean_freq)
+            unavailable_bands[spw] = bands[nearest_spw]
+        return unavailable_bands
+
+    @staticmethod
+    def _calc_nearest_spw(available_mean_freqs, mean_freq):
+        available_mean_freqs_list = list(available_mean_freqs.values())
+        available_spw = list(available_mean_freqs.keys())
+        nearest_i = np.argmin(np.abs(np.array(available_mean_freqs_list) - mean_freq))
+        return available_spw[nearest_i]
 
 
 class MeanElevation(InterpolationParamsGenerator):
