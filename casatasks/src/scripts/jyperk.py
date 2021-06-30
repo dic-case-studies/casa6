@@ -101,6 +101,7 @@ class InterpolationParamsGenerator():
 
         params['date'] = cls._mjd_to_datestring(timerange['begin'])
         params['temperature'] = cls._get_mean_temperature(vis)
+        params['delta_days'] = 1000
 
         for antenna_id, antenna_name in enumerate(antenna_names):
             params['antenna'] = antenna_name
