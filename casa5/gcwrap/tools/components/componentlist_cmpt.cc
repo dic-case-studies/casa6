@@ -456,7 +456,7 @@ bool componentlist::addcomponent(
     const std::string& shape, const ::casac::variant& majoraxis,
     const ::casac::variant& minoraxis, const ::casac::variant& positionangle,
     const ::casac::variant& freq, const std::string& spectrumtype,
-    const double index, const std::vector<double>& /*optionalparms*/,
+    const ::casac::variant& index, const std::vector<double>& /*optionalparms*/,
     const std::string& label
 ) {
     itsLog->origin(LogOrigin("componentlist", __FUNCTION__));
@@ -1481,8 +1481,9 @@ bool componentlist::setspectrum(
         }
         else if (type.startsWith("P")) {
             auto indexType = index.type();
+            cout << "*** indexType " << indexType << endl;
             ThrowIf(
-                indexType != variant::DOUBLEVEC,
+                indexType != variant::DOUBLEVEC && indexType != variant::INTVEC,
                 "for a spectrum='plp', index must be a list of numbers"
             );
             MFrequency refFreq = itsList->component(which).spectrum().refFrequency();

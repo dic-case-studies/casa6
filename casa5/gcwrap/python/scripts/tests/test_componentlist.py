@@ -1,5 +1,5 @@
 ##########################################################################
-# imfit_test.py
+# test_componentlist.py
 #
 # Copyright (C) 2008, 2009
 # Associated Universities, Inc. Washington DC, USA.
@@ -113,6 +113,16 @@ class componentlist_test(unittest.TestCase):
         got = mycl.getfluxerror(0)
         self.assertTrue((got == ferror).all())
         
+    def test_plp(self):
+        """Test adding/updating plp spectral component"""
+        mycl = cltool()
+        mycl.addcomponent(
+            [1,0,0,0],'Jy','Stokes',['J2000', '10:30:00.00', '-20.00.00.0'],
+            'gaussian','4arcsec','2arcsec','30deg', spectrumtype='plp',
+            index=[1, 2, 3]
+        )
+                
+
 def suite():
     return [componentlist_test]
 

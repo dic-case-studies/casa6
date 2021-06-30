@@ -978,13 +978,13 @@ have chosen to represent these as actual sizes.
     
      <param type="string" name="spectrumtype">
      <description>The spectrum type,
-     a string that is either 'constant' or 'spectral index'</description>
+     a string that is one of 'constant', 'spectral index', or 'plp'</description>
      <value>spectral index</value>
      <value>constant</value>
      </param>
     
-     <param type="double" name="index">
-     <description>The spectral index</description>
+     <param type="any" name="index" limittypes="double, doubleArray">
+     <description>The spectral index or coeffecients for plp.</description>
      <value>1.0</value>
      </param>
     
@@ -2486,18 +2486,19 @@ An integer between 0 and one less than the list length, inclusively</description
     
      <param type="string" name="type">
      <description>The new spectrum type.
-     A string that is either 'constant or 'spectral index' or 'tabular'</description>
+     A string that is one of 'constant', 'spectral index' 'tabular', or 'plp' (caseless, minimum match)</description>
      <value>spectral index</value>
      <allowed kind="enum">
        <value>spectral index</value>
        <value>constant</value>
        <value>tabular</value>
+       <value>plp</value>
      </allowed>
      </param>
      
      <!-- <param type="doubleArray" name="index"> -->
      <param type="any" name="index" limittypes="double, doubleArray">
-     <description>The spectral index.</description>
+     <description>The spectral index or coefficients for plp.</description>
      <!-- A 4-element vector or real numbers -->
      <!-- <value type="vector"><value>1.0</value></value> -->
      <value>0.0</value>
