@@ -122,7 +122,7 @@ else:
      from parallel.parallel_task_helper import ParallelTaskHelper
      from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
      #from imagerhelpers.testhelper_imager import TestHelpers
-     from casatestutils.imagerhelpers import TestHelpers
+
      _ia = iatool( )
      _vp = vptool( )
      _cb = cbtool( )
@@ -134,6 +134,8 @@ else:
      #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
      #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
  
+from casatestutils.imagerhelpers import TestHelpers
+
 ## List to be run
 def suite():
      return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures]
@@ -156,6 +158,7 @@ class testref_base(unittest.TestCase):
               self.nnode = len(self.PH.getNodeList())
 
           self.th = TestHelpers()
+          self.check_final = self.th.check_final
 
      def tearDown(self):
           """ don't delete it all """
@@ -197,14 +200,6 @@ class testref_base(unittest.TestCase):
               os.system('rm -rf ' + self.maskname)
           shutil.copytree(os.path.join(refdatapath,self.maskname), self.maskname)
 
-     def checkfinal(self,pstr=""):
-          #pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  casa -c `echo $CASAPATH | awk '{print $1}'`/gcwrap/python/scripts/regressions/admin/runUnitTest.py test_refimager["+ inspect.stack()[1][3] +"]"
-          pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_tclean["+ inspect.stack()[1][3] +"]'])"
-          casalog.post(pstr,'INFO')
-
-          if( pstr.count("(Fail") > 0 or pstr.count("( Fail") > 0):
-               self.fail("\n"+pstr)
-               
 ##############################################
 ##############################################
 
@@ -216,7 +211,7 @@ class test_onefield(testref_base):
           self.prepData('refim_twochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',interactive=0,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'], imgval=[(self.img+'.psf', 1.0, [50,50,0,0])])
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
      def test_onefield_clark(self):
           """ [onefield] Test_Onefield_clark : mfs with clark minor cycle """
@@ -225,28 +220,28 @@ class test_onefield(testref_base):
           #off center#ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',niter=1000,interactive=0,phasecenter='J2000 19h59m57.5s +40d49m00.077s') # default is clark
           #compare with clean#clean(vis=self.msfile,imagename=self.img+'.old',imsize=200,cell='8.0arcsec',niter=1000,psfmode='clark',phasecenter='J2000 19h59m57.5s +40d49m00.077s') # default is clark
           report=self.th.checkall(ret=ret, peakres=0.392, modflux=0.732, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[50,50,0,0])])
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
      def test_onefield_hogbom(self):
           """ [onefield] Test_Onefield_hogbom : mfs with hogbom minor cycle """
           self.prepData('refim_twochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,parallel=self.parallel)#,phasecenter='J2000 19h59m57.5s +40d49m00.077s')
           report=self.th.checkall(ret=ret, peakres=0.35, modflux=0.77, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[50,50,0,0])])
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
      def test_onefield_mem(self):
           """ [onefield] Test_Onefield_mem : mfs with mem minor cycle """
           self.prepData('refim_eptwochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',niter=10,deconvolver='mem',interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=12.7, modflux=6.98, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[100,100,0,0])])
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
      def test_onefield_multiscale(self):
           """ [onefield] Test_Onefield_multiscale : mfs with multiscale minor cycle """
           self.prepData('refim_eptwochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',niter=10,deconvolver='multiscale',scales=[0,20,40,100],interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.823, modflux=3.816, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[100,100,0,0])])
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
      def test_onefield_mtmfs(self):
           """ [onefield] Test_Onefield_mtmfs : mt-mfs with minor cycle iterations """
@@ -254,7 +249,7 @@ class test_onefield(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='mtmfs',interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.392, modflux=0.732, iterdone=10, imgexist=[self.img+'.psf.tt0', self.img+'.residual.tt0', self.img+'.image.tt0', self.img+'.model.tt0',self.img+'.model.tt1',self.img+'.alpha'], imgval=[(self.img+'.psf.tt0',1.0,[50,50,0,0]),(self.img+'.psf.tt1',1.039e-05,[50,50,0,0])])
           ## iterdone=11 only because of the return (iterdone_p+1) in MultiTermMatrixCleaner::mtclean() !
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
      def test_onefield_autonames(self):
           """ [onefield] Test_Onefield_autonames : Test auto increment of image names """
@@ -263,7 +258,7 @@ class test_onefield(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',restart=False,parallel=self.parallel)
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',restart=False,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.psf',self.img+'_2.psf',self.img+'_3.psf'] )
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
      # weighting test
      def test_onefield_weighting(self):
@@ -274,7 +269,7 @@ class test_onefield(testref_base):
           # uniform
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,weighting='uniform', interactive=0,parallel=self.parallel) 
           report=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image', self.img+'.model'], imgval=[(self.img+'.psf',1.0,[50,50,0,0])])
-#          self.checkfinal(pstr=report)
+#          self.assertTrue(self.check_final(pstr=report))
 
           # briggs r=-2
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=10,weighting='briggs', robust=-2, interactive=0,parallel=self.parallel)     
@@ -312,9 +307,8 @@ class test_onefield(testref_base):
           print("Test beamarea of tst4.image (briggs 2) is greater than beamarea of tst3.image (briggs 0.5))")
           self.assertTrue(self.th.check_beam_compare(self.img+'3.image', self.img+'4.image'))
      
-          self.checkfinal(pstr = report+report2+report3+report4+report5+report6+report7)
-
-
+          self.assertTrue(self.check_final(pstr = report+report2+report3+report4+report5+report6+report7))
+          
      def test_onefield_pcwdT_and_pcwdF(self):
      
           self.prepData('refim_twochan.ms')
@@ -334,10 +328,10 @@ class test_onefield(testref_base):
           abs_dif = np.sum(np.abs(pcwdF_img-pcwdT_img))
           _, report1 = self.th.check_val_less_than(abs_dif, 3, valname='abs_dif',testname ="test_onefield_pcwdT_and_pcwdF")
 
-          self.checkfinal(report1) 
-
-
-
+          self.assertTrue(self.check_final(report1))   
+     
+          
+        
 
      def test_onefield_twoMS(self):
           """ [onefield] Test_Onefield_twoMS : One field, two input MSs, also
@@ -359,7 +353,7 @@ class test_onefield(testref_base):
           report=self.th.checkall(imgexist=[self.img+'.psf',self.img+'.residual'])
           self.delData(ms1)
           self.delData(ms2)
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. onefield with two MSs, briggs weighing. Enable this when CAS011978 is fixed")
      def test_onefield_twoMS_Briggs(self):
@@ -380,7 +374,7 @@ class test_onefield(testref_base):
           report=self.th.checkall(ret=ret, peakres=0.365259, modflux=0.798692, imgexist=[self.img+'.psf',self.img+'.residual'])
           self.delData(ms1)
           self.delData(ms2)
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
 
      def test_onefield_twoMS_diffcolumns(self):
@@ -398,7 +392,7 @@ class test_onefield(testref_base):
           report=self.th.checkall(imgexist=[self.img+'.psf',self.img+'.residual'])
           self.delData(ms1)
           self.delData(ms2)
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Erratic in parallel")
      def test_onefield_briggsabs(self):
@@ -441,7 +435,7 @@ class test_onefield(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,interactive=0,calcpsf=False,calcres=False,deconvolver='clark',parallel=self.parallel)
           report3=self.th.checkall(ret=ret, peakres=0.161, modflux=0.991, imgexist=[self.img+'.psf',self.img+'.residual', self.img+'.image'],nmajordone=1)
 
-          self.checkfinal(pstr=report+report1+report2+report3)
+          self.assertTrue(self.check_final(pstr=report+report1+report2+report3))
 
 
      def test_onefield_restart_mtmfs(self):
@@ -472,7 +466,7 @@ class test_onefield(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,interactive=0,calcpsf=False,calcres=True,deconvolver='mtmfs',parallel=self.parallel)
           report4=self.th.checkall(ret=ret, peakres=0.0477, modflux=1.077, imgexist=[self.img+'.psf.tt1',self.img+'.residual.tt1', self.img+'.image.tt1', self.img+'.alpha'],nmajordone=2,imgval=[(self.img+'.alpha',-1.0,[50,50,0,0])])
 
-          self.checkfinal(pstr=report+report1+report2+report3+report4)
+          self.assertTrue(self.check_final(pstr=report+report1+report2+report3+report4))
 
      def test_onefield_all_outputs_mfs(self):
           """ [onefield] : test_onefield_all_outputs_mfs : Make all output images even when not needed """
@@ -486,7 +480,7 @@ class test_onefield(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=0,interactive=0,deconvolver='hogbom',restoration=True,parallel=self.parallel)
           report2=self.th.checkall(imgexist=[self.img+'2.psf', self.img+'2.residual',self.img+'2.image',self.img+'2.model'],nmajordone=1)
  
-          self.checkfinal(pstr = report2)
+          self.assertTrue(self.check_final(pstr = report2))
 
      def test_onefield_all_outputs_mtmfs(self):
           """ [onefield] : test_onefield_all_outputs_mtmfs : Make all output images even when not needed """
@@ -500,7 +494,7 @@ class test_onefield(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=0,interactive=0,deconvolver='mtmfs',restoration=True,parallel=self.parallel)
           report2=self.th.checkall(imgexist=[self.img+'2.psf.tt0', self.img+'2.psf.tt1',self.img+'2.image.tt0',self.img+'2.model.tt0', self.img+'2.alpha'],nmajordone=1)
  
-          self.checkfinal(pstr=report2)
+          self.assertTrue(self.check_final(pstr=report2))
 
      def test_onefield_restore_mtmfs_niter0(self):
           """ [onefield] : test_onefield_restore_mtmfs_niter0 : Niter=0 run followed by restoration without a model"""
@@ -521,7 +515,7 @@ class test_onefield(testref_base):
           report3=self.th.checkall(imgexist=[self.img+'2.image.tt0', self.img+'2.alpha'],nmajordone=1,
                              imgval=[(self.img+'.alpha',-1.0,[50,50,0,0])] )
 
-          self.checkfinal(pstr=report1+report2+report3)
+          self.assertTrue(self.check_final(pstr=report1+report2+report3))
 
      def test_onefield_rectangular_pixels(self):
           """ [onefield] : test_onefield_rectangular_pixels : Test restoration with rectangular pixels (cas-7171)"""
@@ -529,7 +523,7 @@ class test_onefield(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell=['10.0arcsec','30.0arcsec'],niter=10,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      def test_onefield_mtmfs_2spws_2MSs(self):
@@ -559,7 +553,7 @@ class test_onefield(testref_base):
                                             (self.img+'.sumwt.tt1', 0.006198,[0,0,0,0]) ], 
                                      reffreq= [(self.img+'.image.tt0',1489984775.68)] )
           
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_onefield_mtmfs_nterms1(self):
           """ [onefield] Test_Onefield_mtmfs_nterms1 : mt-mfs with nterms=1 (CAS-11364, CAS-11367) """
@@ -567,14 +561,14 @@ class test_onefield(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='mtmfs',nterms=1,interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.369, modflux=0.689, iterdone=10, imgexist=[self.img+'.psf.tt0', self.img+'.residual.tt0', self.img+'.image.tt0', self.img+'.model.tt0'], imgval=[(self.img+'.psf.tt0',1.0,[50,50,0,0]),(self.img+'.image.tt0',1.05,[50,50,0,0])])
           ## iterdone=11 only because of the return (iterdone_p+1) in MultiTermMatrixCleaner::mtclean() !
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
           
      def test_onefield_mtmfs_smallscalebias(self):
           """ [onefield] Test_Onefield_mtmfs : mt-mfs with minor cycle iterations and smallscalebias = 0.9 """
           self.prepData('refim_eptwochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',niter=10,deconvolver='mtmfs',nterms=1,interactive=0,parallel=self.parallel,smallscalebias=0.9,scales=[0,20,40,100])
           report=self.th.checkall(ret=ret, peakres=0.73153, modflux=2.9194, iterdone=10, imgexist=[self.img+'.psf.tt0', self.img+'.residual.tt0', self.img+'.image.tt0', self.img+'.model.tt0'],imgval=[(self.img+'.image.tt0',0.526,[100,100,0,0])])
-          self.checkfinal(pstr=report)   
+          self.assertTrue(self.check_final(pstr=report))   
 
      def test_onefield_gridders(self):
           """ [onefield] Test_Onefield_gridders : Check all single field gridder equivalent names are accepted """
@@ -583,7 +577,7 @@ class test_onefield(testref_base):
           report=self.th.checkall(imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'], imgval=[(self.img+'.psf', 1.0, [50,50,0,0])])
           ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',gridder='gridft', interactive=0,parallel=self.parallel)
           report2=self.th.checkall(imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'], imgval=[(self.img+'.psf', 1.0, [50,50,0,0])])
-          self.checkfinal(pstr=report+report2)
+          self.assertTrue(self.check_final(pstr=report+report2))
 
 
      def test_onefield_cube_restoringbeam(self):
@@ -617,7 +611,7 @@ class test_onefield(testref_base):
           ## Note : In this test, setting niter=2000 will get all the runs to produce the same correct values.
           
           ## Pass or Fail (and why) ?
-          self.checkfinal(estr+report)
+          self.assertTrue(self.check_final(estr+report))
 
 
      def test_onefield_mtmfs_restoringbeam(self):
@@ -656,7 +650,7 @@ class test_onefield(testref_base):
           ## Note : In this test, setting niter=100 will get all the runs to produce the same, correct alpha=-1.0
 
           ## Pass or Fail (and why) ?
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_onefield_projections(self):
           """ [onefield] Test_Onefield_projections : test selected projections  """
@@ -681,7 +675,7 @@ class test_onefield(testref_base):
           checkimage += "["+testname+"] The image in TAN projection : (" + self.th.verdict(retTAN['projection']=='TAN') + ")\n"
           checkimage += "["+testname+"] The image in ARC projection : (" + self.th.verdict(retARC['projection']=='ARC') + ")\n"
           
-          self.checkfinal(pstr=checkimage+report)
+          self.assertTrue(self.check_final(pstr=checkimage+report))
           
      def test_onefield_psf_fit(self):
           """ [onefield] test_onefield_psf_fit : test psf fitting algorithm for different pixels per beam """
@@ -713,7 +707,7 @@ class test_onefield(testref_base):
           beam_20ppb = [hdr['restoringbeam']['major']['value'], hdr['restoringbeam']['minor']['value'], hdr['restoringbeam']['positionangle']['value']]
           _, report3 = self.th.check_val(beam_20ppb[0], 51.55984878540039, valname='Beam Major Axis', exact=False)
 
-          self.checkfinal(report1+report2+report3)
+          self.assertTrue(self.check_final(report1+report2+report3))
 
 ##############################################
 ##############################################
@@ -727,7 +721,7 @@ class test_iterbot(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='clark',niter=0,interactive=0,restoration=False,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_mfs_2(self):
           """ [iterbot] Test_Iterbot_Mfs_2 : Iterations with low gain """
@@ -735,7 +729,7 @@ class test_iterbot(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='clark',niter=10,gain=0.1,interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.392, modflux=0.732, iterdone=10,nmajordone=2,imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_mfs_3(self):
           """ [iterbot] Test_Iterbot_Mfs_3 : Cycleniter test """
@@ -743,7 +737,7 @@ class test_iterbot(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='clark',niter=10,cycleniter=3,interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.392, modflux=0.732, iterdone=10, nmajordone=5,imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_mfs_4(self):
           """ [iterbot] Test_Iterbot_Mfs_4 : Iterations with high gain """
@@ -751,7 +745,7 @@ class test_iterbot(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='clark',niter=10, gain=0.5,interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.024, modflux=1.274, iterdone=10, nmajordone=3,imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_mfs_5(self):
           """ [iterbot] Test_Iterbot_Mfs_5 : Threshold test """
@@ -759,7 +753,7 @@ class test_iterbot(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='clark',niter=10,threshold='0.1Jy',gain=0.5,interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.0924, modflux=1.129, iterdone=5, nmajordone=3,imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_mfs_6(self):
           """ [iterbot] Test_Iterbot_Mfs_6 : Cycleniter and threshold """
@@ -767,7 +761,7 @@ class test_iterbot(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='clark',niter=10, cycleniter=3, threshold='0.1Jy',gain=0.5,interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.0924, modflux=1.129, iterdone=5, nmajordone=3,imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_mfs_7(self):
           """ [iterbot] Test_Iterbot_Mfs_7 : Threshold + cyclefactor to trigger major cycles earlier """
@@ -775,7 +769,7 @@ class test_iterbot(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='clark',niter=10,threshold='0.01Jy', gain=0.5,cyclefactor=10.0,interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.024, modflux=1.274, iterdone=10, nmajordone=9,imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_mfs_8(self):
           """ [iterbot] Test_Iterbot_Mfs_8 : minpsffraction to trigger major cycles earlier. """
@@ -783,7 +777,7 @@ class test_iterbot(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='clark',niter=20,threshold='0.01Jy', minpsffraction = 0.5,interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.16127, modflux=0.9919, iterdone=20, nmajordone=4,imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_mfs_9(self):
           """ [iterbot] Test_Iterbot_Mfs_9 : maxpsffraction """
@@ -791,7 +785,7 @@ class test_iterbot(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',deconvolver='clark',niter=20,threshold='0.01Jy', minpsffraction=0.8,maxpsffraction=0.5,interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.16127, modflux=0.9919, iterdone=20, nmajordone=4,imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_cube_1(self):
           """ [iterbot] Test_Iterbot_cube_1 : iteration counting across channels (>niter) """
@@ -805,7 +799,7 @@ class test_iterbot(testref_base):
           report=self.th.checkall(ret=ret, iterdone=90,nmajordone=2,imgexist=[self.img+'.psf', self.img+'.residual'])
           ## Only chans 6 and 7 reach cycleniter, others reach threshold in fewer than 10 iters per chan.
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily for 5.5")
      # test_imager_helper issue - now fixed and working
@@ -822,7 +816,7 @@ class test_iterbot(testref_base):
             ret=retpar 
           report=self.th.checkall(ret=ret, peakres=1.73, modflux=0.407,iterdone=12,nmajordone=2,imgexist=[self.img+'.psf', self.img+'.residual'])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      def test_iterbot_cube_3(self): # test for returned summary/plot for no iteration case 
@@ -836,7 +830,7 @@ class test_iterbot(testref_base):
             ret=retpar 
           report=self.th.checkall(ret=ret,iterdone=0,nmajordone=1,imgexist=[self.img+'.psf', self.img+'.residual'])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_cube_4(self): 
           """ [iterbot] Test_Iterbot_cube_4 : Large niter, and low threshold - catch if diverges (verification of CAS-8584 fix) """
@@ -871,7 +865,7 @@ class test_iterbot(testref_base):
           report3=self.th.checkall(ret=ret3, peakres=0.3922, modflux=0.7327, iterdone=10, nmajordone=2,imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image'])
      
 
-          self.checkfinal(report1+report2+report3)
+          self.assertTrue(self.check_final(report1+report2+report3))
 
      def test_iterbot_cube_deconvolvers(self):
           """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? Let's see ! """
@@ -889,7 +883,7 @@ class test_iterbot(testref_base):
           report3=self.th.checkall(ret=ret3, iterdone=100, nmajordone=3,imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image'], 
                                    imgval=[(self.img+'3.image',0.888,[100,100,0,0]), (self.img+'3.image',0.1601,[100,100,0,2])  ])
 
-          self.checkfinal(report1+report2+report3)
+          self.assertTrue(self.check_final(report1+report2+report3))
 
           
      def test_iterbot_cube_tol(self): 
@@ -939,7 +933,7 @@ class test_multifield(testref_base):
                                (self.img+'1.image',5.590,[40,40,0,0]),
                                (self.img+'.residual',0.04,[30,18,0,0])])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_multifield_both_mtmfs(self):
           """ [multifield] Test_Multifield_both_mtmfs : Two fields, both mt-mfs """
@@ -954,7 +948,7 @@ class test_multifield(testref_base):
                                (self.img+'1.image.tt0',5.577,[40,40,0,0]),
                                (self.img+'.alpha',-0.90,[50,50,0,0]),
                                (self.img+'1.alpha',-1.0,[40,40,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      def test_multifield_both_cube(self):
@@ -984,7 +978,7 @@ class test_multifield(testref_base):
                                (self.img+'.image',0.758,[50,50,0,1]),
                                (self.img+'1.image',3.715,[40,40,0,1]),
                                (self.img+'2.image',3.675,[51,40,0,1]) ])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Diffirent nchans of cubes in multi-field imaging is  not supported in parallel mode")
      def test_multifield_both_cube_diffshape(self):
@@ -1005,7 +999,7 @@ class test_multifield(testref_base):
                                (self.img+'1.image',7.44,[40,40,0,0]),
                                (self.img+'.image',0.762,[50,50,0,1]),
                                (self.img+'1.image',3.70,[40,40,0,1]) ])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Mixing cube and mfs in multi-field imaging  is not supported in parallel mode")
      def test_multifield_cube_mfs(self):
@@ -1028,7 +1022,7 @@ class test_multifield(testref_base):
                         imgval=[(self.img+'.image',1.4,[50,50,0,0]),
                                (self.img+'1.image',5.6,[40,40,0,0]),
                                (self.img+'.image',0.75,[50,50,0,1])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_multifield_mfs_mtmfs(self):
           """ [multifield] Test_Multifield_mfs_mtmfs : Two fields, one mt-mfs and one mfs (i.e. different deconvolvers)"""
@@ -1042,7 +1036,7 @@ class test_multifield(testref_base):
                         imgval=[(self.img+'.image',1.094,[50,50,0,0]),
                                (self.img+'1.image.tt0',5.57,[40,40,0,0]), 
                                (self.img+'1.alpha', -1.0, [40,40,0,0])  ])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Mixing cube and mtmfs in multi-field imaging is not supported in parallel mode")
      def test_multifield_cube_mtmfs(self):
@@ -1063,7 +1057,7 @@ class test_multifield(testref_base):
                                (self.img+'1.image.tt0',5.575,[40,40,0,0]),
                                (self.img+'.image',0.762,[50,50,0,1]) , 
                                (self.img+'1.alpha', -1.0, [40,40,0,0])  ])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      def test_multifield_diff_gridders(self):
@@ -1080,7 +1074,7 @@ class test_multifield(testref_base):
                         imgexist=[self.img+'.image', self.img+'1.image'],
                         imgval=[(self.img+'.image',1.075,[50,50,0,0]),
                                (self.img+'1.image',5.58,[40,40,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      def test_multifield_autonames(self):
@@ -1093,7 +1087,7 @@ class test_multifield(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',outlierfile=self.img+'.out.txt',restart=False,parallel=self.parallel)
 
           report=self.th.checkall(imgexist=[self.img+'.psf',self.img+'1.psf',self.img+'_2.psf',self.img+'1_2.psf',self.img+'_3.psf',self.img+'_4.psf',self.img+'1_4.psf'], imgexistnot=[self.img+'1_3.psf'] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
 ### TODO :  Either put a check so that if any fields overlap, an error is thrown. Or, do sensible model choosing for some modes but detect and complain for other modes where it's harder to pick which model image to use.
@@ -1109,7 +1103,7 @@ class test_multifield(testref_base):
                         imgexist=[self.img+'.image', self.img+'1.image'],
                         imgval=[(self.img+'.image',5.575,[48,51,0,0]),
                                (self.img+'1.image',5.574,[130,136,0,0])]) ## both images have correct flux (not twice or zero !)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      def test_multifield_overlap_mtmfs(self):
@@ -1125,7 +1119,7 @@ class test_multifield(testref_base):
                                 (self.img+'1.image.tt0',5.53,[130,136,0,0]),
                                (self.img+'.alpha',-0.965,[48,51,0,0]),
                                (self.img+'1.alpha',-0.965,[130,136,0,0])]) 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Facetted mfs imaging test in parallel is skipped temporarily until a fix is found. ")
@@ -1134,7 +1128,7 @@ class test_multifield(testref_base):
           self.prepData("refim_twopoints_twochan.ms")
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',phasecenter="J2000 19:59:00.2 +40.50.15.50",facets=2,deconvolver='hogbom',niter=30,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf'],imgval=[(self.img+'.psf',1.0,[100,100,0,0]),(self.img+'.image',5.56,[127,143,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Facetted mtmfs imaging test in parallel is skipped temporarily until a fix is found. ")
      def test_multifield_facets_mtmfs(self):
@@ -1142,7 +1136,7 @@ class test_multifield(testref_base):
           self.prepData("refim_twopoints_twochan.ms")
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',phasecenter="J2000 19:59:00.2 +40.50.15.50",facets=2,deconvolver='mtmfs',niter=30,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image.tt0', self.img+'.psf.tt0', self.img+'.alpha'],imgval=[(self.img+'.psf.tt0',1.0,[100,100,0,0]),(self.img+'.image.tt0',5.56,[127,143,0,0]),(self.img+'.alpha',-1.0,[127,143,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
 #     def test_multifield_cube_chunks(self):
@@ -1158,7 +1152,7 @@ class test_multifield(testref_base):
 #                               (self.img+'1.image',7.452,[40,40,0,0]),
 #                               (self.img+'.image',0.762,[50,50,0,1]),
 #                               (self.img+'1.image',3.702,[40,40,0,1]) ])
-#          self.checkfinal(report)
+#          self.assertTrue(self.check_final(report))
 ##############################################
 ##############################################
 
@@ -1170,105 +1164,105 @@ class test_stokes(testref_base):
           self.prepData('refim_point_linRL.ms')
           tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='I',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.0,[50,50,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_mfs_IV(self):
           """ [stokes] Test_Stokes_mfs_IV : mfs with stokes IV"""
           self.prepData('refim_point_linRL.ms')
           tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IV',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.0,[50,50,0,0]),(self.img+'.image',4.0,[50,50,1,0])  ])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_mfs_QU(self):
           """ [stokes] Test_Stokes_mfs_QU : mfs with stokes QU"""
           self.prepData('refim_point_linRL.ms')
           tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='QU',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',2.0,[50,50,0,0]),(self.img+'.image',3.0,[50,50,1,0])  ])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_mfs_Q(self):
           """ [stokes] Test_Stokes_mfs_Q : mfs with stokes Q"""
           self.prepData('refim_point_linRL.ms')
           tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='Q',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',2.0,[50,50,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_mfs_U(self):
           """ [stokes] Test_Stokes_mfs_U : mfs with stokes U"""
           self.prepData('refim_point_linRL.ms')
           tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='U',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',3.0,[50,50,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_mfs_V(self):
           """ [stokes] Test_Stokes_mfs_V : mfs with stokes V"""
           self.prepData('refim_point_linRL.ms')
           tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='V',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',4.0,[50,50,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_cube_I(self):
           """ [stokes] Test_Stokes_cube_I : cube with stokes I"""
           self.prepData('refim_point_linRL.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='I',interactive=0,specmode='cube',interpolation='nearest',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.0,[50,50,0,0]),(self.img+'.image',1.0,[50,50,0,1]),(self.img+'.image',1.0,[50,50,0,2]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_cube_IV(self):
           """ [stokes] Test_Stokes_stokes_IV : cube with stokes V"""
           self.prepData('refim_point_linRL.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IV',interactive=0,specmode='cube',interpolation='nearest',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.0,[50,50,0,0]),(self.img+'.image',1.0,[50,50,0,1]),(self.img+'.image',1.0,[50,50,0,2]),  (self.img+'.image',4.0,[50,50,1,0]),(self.img+'.image',4.0,[50,50,1,1]),(self.img+'.image',4.0,[50,50,1,2])] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_cube_QU(self):
           """ [stokes] Test_Stokes_stokes_QU : cube with stokes QU"""
           self.prepData('refim_point_linRL.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='QU',interactive=0,specmode='cube',interpolation='nearest',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',2.0,[50,50,0,0]),(self.img+'.image',2.0,[50,50,0,1]),(self.img+'.image',2.0,[50,50,0,2]),  (self.img+'.image',3.0,[50,50,1,0]),(self.img+'.image',3.0,[50,50,1,1]),(self.img+'.image',3.0,[50,50,1,2])] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_cube_Q(self):
           """ [stokes] Test_Stokes_cube_Q : cube with stokes Q"""
           self.prepData('refim_point_linRL.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='Q',interactive=0,specmode='cube',interpolation='nearest',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',2.0,[50,50,0,0]),(self.img+'.image',2.0,[50,50,0,1]) ,(self.img+'.image',2.0,[50,50,0,2]) ])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_cube_U(self):
           """ [stokes] Test_Stokes_cube_U : cube with stokes U"""
           self.prepData('refim_point_linRL.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='U',interactive=0,specmode='cube',interpolation='nearest',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',3.0,[50,50,0,0]),(self.img+'.image',3.0,[50,50,0,1]) ,(self.img+'.image',3.0,[50,50,0,2]) ])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_cube_V(self):
           """ [stokes] Test_Stokes_cube_V : cube with stokes V"""
           self.prepData('refim_point_linRL.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='V',interactive=0,specmode='cube',interpolation='nearest',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',4.0,[50,50,0,0]),(self.img+'.image',4.0,[50,50,0,1]) ,(self.img+'.image',4.0,[50,50,0,2]) ])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_cube_IQUV_fromRL(self):
           """ [stokes] Test_Stokes_cube_IQUV_fromRL : cube with stokes IQUV"""
           self.prepData('refim_point_linRL.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='cube',interpolation='nearest',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.0,[50,50,0,1]),(self.img+'.image',2.0,[50,50,1,1]), (self.img+'.image',3.0,[50,50,2,1]),(self.img+'.image',4.0,[50,50,3,1]) ])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_cube_IQUV_fromXY(self):
           """ [stokes] Test_Stokes_cube_IQUV_fromXY : cube with stokes IQUV"""
           self.prepData('refim_point_linXY.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='cube',interpolation='nearest',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.0,[50,50,0,1]),(self.img+'.image',2.0,[50,50,1,1]), (self.img+'.image',3.0,[50,50,2,1]),(self.img+'.image',4.0,[50,50,3,1]) ])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_mtmfs_Q(self):
           """ [stokes] Test_Stokes_mtmfs_Q : mtmfs with stokes Q"""
           self.prepData('refim_point_linRL.ms')
           tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='Q',deconvolver='mtmfs',nterms=2,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image.tt0'], imgexistnot=[self.img+'.image.alpha'], imgval=[(self.img+'.image.tt0',2.0,[50,50,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_stokes_mtmfs_IQUV(self):
           """ [stokes] Test_Stokes_mtmfs_IQUV : mtmfs with stokes IQUV"""
@@ -1281,7 +1275,7 @@ class test_stokes(testref_base):
           else:
                report = report + "(Fail : Units are not Jy/beam in the restored image)\n"
           _ia.close()
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
 #     def test_stokes_cube_I_flags(self):
@@ -1436,7 +1430,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.50002,
           [50,50,0,0])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',999988750)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_1(self):
           """ [cube] Test_Cube_1  """
@@ -1451,7 +1445,7 @@ class test_cube(testref_base):
           [50,50,0,0])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO', 9.9999999e8)
 
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_2(self):
           """ [cube] Test_Cube_2  """
@@ -1465,7 +1459,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.4643,
           [50,50,0,0])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.02498846e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_3(self):
           """ [cube] Test_Cube_3  """
@@ -1480,7 +1474,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.2000,
           [50,50,0,0])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.249985937e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_4(self):
           """ [cube] Test_Cube_4  """
@@ -1509,7 +1503,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.4643,
           [50,50,0,0])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.025e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_6(self):
           """ [cube] Test_Cube_6  """ 
@@ -1524,7 +1518,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.36365354,
           [50,50,0,0])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.1e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_7(self):
           """ [cube] Test_Cube_7  """
@@ -1553,7 +1547,7 @@ class test_cube(testref_base):
           [50,50,0,0]),(self.img+self.testList[testid]['imagename']+'.image',1.2000,
           [50,50,0,3])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.1e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_8(self):
           """ [cube] Test_Cube_8  """
@@ -1568,7 +1562,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.42858946,
           [50,50,0,9])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.5e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_9(self):
           """ [cube] Test_Cube_9  """
@@ -1583,7 +1577,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.46184647,
           [50,50,0,9])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.925e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_10(self):
           """ [cube] Test_Cube_10  """
@@ -1598,7 +1592,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.46184647,
           [50,50,0,0])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.025e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_11(self):
           """ [cube] Test_Cube_11  """
@@ -1613,7 +1607,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.50001776,
           [50,50,0,4])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.2e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_12(self):
           """ [cube] Test_Cube_12  """
@@ -1628,7 +1622,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.50001931,
           [50,50,0,4])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','BARY',1.200058783e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_13(self):
           """ [cube] Test_Cube_13  """
@@ -1662,7 +1656,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.25000215,
           [50,50,0,0])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.2e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_15(self):
           """ [cube] Test_Cube_15  """
@@ -1677,7 +1671,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image', 1.25001216,
           [50,50,0,0])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.199989e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_16(self):
           """ [cube] Test_Cube_16  """
@@ -1692,7 +1686,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.50001776,
           [50,50,0,4])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.2000e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_17(self):
           """ [cube] Test_Cube_17  """
@@ -1707,7 +1701,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.50001931,
           [50,50,0,4])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','BARY',1.200058783e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_18(self):
           """ [cube] Test_Cube_18  """
@@ -1723,7 +1717,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.50001764,
           [50,50,0,9])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.45e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_19(self):
           """ [cube] Test_Cube_19  """
@@ -1738,7 +1732,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.50001764,
           [50,50,0,9])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.45e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_20(self):
           """ [cube] Test_Cube_20  """
@@ -1753,7 +1747,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.5000546,
           [50,50,0,4])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.199989152e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      # looks like it passes now....
      #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Data sel with channel gaps is not supported in parallel mode")
@@ -1772,7 +1766,7 @@ class test_cube(testref_base):
                  (self.img+self.testList[testid]['imagename']+'.image',0.0, [50,50,0,6]),
                  (self.img+self.testList[testid]['imagename']+'.image',0.0, [50,50,0,7])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',1.199986500e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_22(self):
           """ [cube] Test_Cube_22  """
@@ -1788,7 +1782,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.5000546,
           [50,50,0,0])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','LSRK',0.999988750387e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_23(self):
           """ [cube] Test_Cube_23  """
@@ -1802,7 +1796,7 @@ class test_cube(testref_base):
           imgval=[(self.img+self.testList[testid]['imagename']+'.image',1.2500156,
           [50,50,0,0])])
           report2 = self.th.check_spec_frame(self.img+self.testList[testid]['imagename']+'.image','TOPO',1.20e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      # following tests for cube image spectral channel order for the data with decreasing channel frequecies
      def test_cube_descendF1(self):
@@ -1817,7 +1811,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image','LSRK',1.949978e9, -0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_descendF2(self):
           # first image channel = data channel 5, image channel frequecy descreases with increasing channel number
@@ -1830,7 +1824,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image','LSRK',1.699981e9,-0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_descendF3(self):
           # cube image should be identical with test_cube_descendF2
@@ -1844,7 +1838,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image','LSRK',1.699981e9,-0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_descendF4(self):
           # start in channel no., width=-1  
@@ -1858,7 +1852,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image','LSRK', 1.499983125e9,0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_descendF5(self):
           # start in frequency, default width
@@ -1872,7 +1866,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image','LSRK',1.499983125e9,0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_descendF6(self):
           # start in frequency, positive width
@@ -1886,7 +1880,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image','LSRK',1.499983125e9,0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_descendF7(self):
           # start in frequency, negative width
@@ -1900,7 +1894,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image','LSRK',1.699981e9,-0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_descendF8(self):
           # start='',  a positive frequency width
@@ -1914,7 +1908,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 0.999989e9, 0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_descendF9(self):
           # start='',  a netative frequency width
@@ -1928,7 +1922,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.44998369263e9, -0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_descendF10(self):
           # start in velocity , width=''
@@ -1942,7 +1936,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.699980875e9, -0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_descendF11(self):
           # start in velocity , a positive vel width
@@ -1956,7 +1950,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.699980875e9, -0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_descendF12(self):
           # start in velocity , a negative vel width
@@ -1970,7 +1964,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.49998312558e9, 0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_descendF13(self):
           # width  in a positive velocity, default start
@@ -1984,7 +1978,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 1.449983688e9, -0.0499994375194e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      def test_cube_descendF14(self):
@@ -1999,7 +1993,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
 
           report = self.th.check_spec_frame(self.img+'.image', 'LSRK', 0.999988750387e9, 0.049999438e9)
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      # now rans OK with CAS-9386
      #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Cubedata mode test in parallel is skipped temporarily until a fix is found. ")
@@ -2011,7 +2005,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',86.254,[128,128,0,18])])
           ## line is smoother
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_cube_D2(self):
           """ [cube] Test_Cube_D2 : specmode cube - WITH doppler corrections """
@@ -2021,7 +2015,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',92.1789,[128,128,0,20])])
           ## line is tighter
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
      def test_cube_perchanweight_briggs(self):
           """[cube] test_cube_perchanweight_briggs: """
           self.prepData('refim_point_withline.ms')
@@ -2098,7 +2092,7 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'1.psf') and os.path.exists(self.img+'1.image') )
           report2=self.th.checkall(imgexist=[self.img+'1.image'],imgval=[(self.img+'1.image',0.8906,[54,50,0,0]), (self.img+'1.image',0.51977,[54,50,0,19]) , (self.img+'1.residual',0.033942,[54,50,0,19]) ])
           # OLD - first channel has been restored by a 'common' beam picked from channel 2
-          self.checkfinal(report1+report2)
+          self.assertTrue(self.check_final(report1+report2))
 
 #  def test_cube_explicit_restoringbeam(self):
 #          """ [cube] Test explicit restoring beams : Test peak flux and off source value for smoothed residuals"""
@@ -2132,7 +2126,7 @@ class test_cube(testref_base):
                                             (self.img+'.image',0.567246,[54,50,0,15])  ])
           
           ## Pass or Fail (and why) ?
-          self.checkfinal(estr+report2)
+          self.assertTrue(self.check_final(estr+report2))
 
      # Now works for parallel  with CAS-9396 
      #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily for 5.5")
@@ -2146,7 +2140,7 @@ class test_cube(testref_base):
 #          ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',parallel=self.parallel)
 #          self.assertTrue(os.path.exists(self.img+'cc.psf') and os.path.exists(self.img+'cc.image') )
 #          report=self.th.checkall(imgexist=[self.img+'cc.image'],imgval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
-#          self.checkfinal(report)
+#          self.assertTrue(self.check_final(report))
 
      def test_cube_chanchunks_auto(self):
           """ [cube] Test channel chunking for large cubes : automatic calc of nchanchunks """
@@ -2154,7 +2148,7 @@ class test_cube(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img+'cc',specmode='cube',imsize=100,cell='10.0arcsec',niter=10,deconvolver='hogbom',parallel=self.parallel)
           self.assertTrue(os.path.exists(self.img+'cc.psf') and os.path.exists(self.img+'cc.image') )
           report=self.th.checkall(imgexist=[self.img+'cc.image'],imgval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      # Now passes for parallel
@@ -2166,25 +2160,25 @@ class test_cube(testref_base):
           self.assertTrue(os.path.exists(self.img+'cc.psf') and os.path.exists(self.img+'cc.image') )
           report=self.th.checkall(imgexist=[self.img+'cc.image'],imgval=[(self.img+'cc.image',1.5002,[50,50,0,0]) , (self.img+'cc.image',0.769,[50,50,0,19]) ])
           self.assertTrue( self.th.check_modelchan(self.msfile,5) > 0.0 and self.th.check_modelchan(self.msfile,18) > 0.0 )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
           
 #     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      @unittest.skip('Skip. This test deprecated. no longer need mtmfs for cube use msclean')
      def test_cube_mtmfs_nterms1(self):		
-          """ [cube] Test mtmfs with cube and nterms = 1 """		
-          self.prepData('refim_eptwochan.ms')		
-          ret = tclean(vis=self.msfile,imagename=self.img+'cc', specmode='cube', imsize=200,cell='8.0arcsec',niter=10,deconvolver='mtmfs',nterms=1,interactive=0,parallel=self.parallel,scales=[0,20,40,100])		
+          """ [cube] Test mtmfs with cube and nterms = 1 """
+          self.prepData('refim_eptwochan.ms')
+          ret = tclean(vis=self.msfile,imagename=self.img+'cc', specmode='cube', imsize=200,cell='8.0arcsec',niter=10,deconvolver='mtmfs',nterms=1,interactive=0,parallel=self.parallel,scales=[0,20,40,100])
           report=self.th.checkall(ret=ret, imgexist=[self.img+'cc.psf.tt0', self.img+'cc.residual.tt0', self.img+'cc.image.tt0', self.img+'cc.model.tt0'],imgval=[(self.img+'cc.image.tt0',1.0,[100,100,0,0]),(self.img+'cc.image.tt0',0.492,[100,100,0,1]),(self.img+'cc.image.tt0',0.281,[100,100,0,2])])		
-          self.checkfinal(report)		
+          self.assertTrue(self.check_final(report))
           
      #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      @unittest.skip('Skip. This test deprecated. no longer need mtmfs for cube use msclean')
-     def test_cubedata_mtmfs_nterms1(self):		
-          """ [cube] Test mtmfs with cube data and nterms = 1 """		
-          self.prepData('refim_eptwochan.ms')		
-          ret = tclean(vis=self.msfile,imagename=self.img+'cc', specmode='cubedata', imsize=200,cell='8.0arcsec',niter=10,deconvolver='mtmfs',nterms=1,interactive=0,parallel=self.parallel,scales=[0,20,40,100])		
+     def test_cubedata_mtmfs_nterms1(self):
+          """ [cube] Test mtmfs with cube data and nterms = 1 """
+          self.prepData('refim_eptwochan.ms')
+          ret = tclean(vis=self.msfile,imagename=self.img+'cc', specmode='cubedata', imsize=200,cell='8.0arcsec',niter=10,deconvolver='mtmfs',nterms=1,interactive=0,parallel=self.parallel,scales=[0,20,40,100])
           report=self.th.checkall(ret=ret, imgexist=[self.img+'cc.psf.tt0', self.img+'cc.residual.tt0', self.img+'cc.image.tt0', self.img+'cc.model.tt0'],imgval=[(self.img+'cc.image.tt0',1.0,[100,100,0,0]),(self.img+'cc.image.tt0',0.492,[100,100,0,1]),(self.img+'cc.image.tt0',0.281,[100,100,0,2])])		
-          self.checkfinal(report) 
+          self.assertTrue(self.check_final(report)) 
 
      def test_cube_twoMS_startfreq(self):
           """ [cube] Test cube with list of two MSs with start in frequency specified (test CAS-12877 fix) """
@@ -2207,7 +2201,7 @@ class test_cube(testref_base):
                        spw=['0','0'], start='1.199989GHz', imagename=self.img+'_reverse',veltype='radio',outframe='LSRK',parallel=self.parallel)
           self.assertTrue(os.path.exists(self.img+'_reverse.psf') and os.path.exists(self.img+'_reverse.image') )
           report2 = self.th.check_spec_frame(self.img+'_reverse.image', 'LSRK', 1.199989e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_twoMS_startvel(self):
           """ [cube] Test cube with list of two MSs with start in velocity specified (test CAS-12877 fix) """
@@ -2229,7 +2223,7 @@ class test_cube(testref_base):
                        spw=['0','0'], start='11994.3km/s',width='-11991.7km/s',  imagename=self.img+'_reverse',veltype='radio',outframe='LSRK',parallel=self.parallel)
           self.assertTrue(os.path.exists(self.img+'_reverse.psf') and os.path.exists(self.img+'_reverse.image'))
           report2 = self.th.check_spec_frame(self.img+'_reverse.image', 'LSRK', 1.199989e9)
-          self.checkfinal(report+report2)
+          self.assertTrue(self.check_final(report+report2))
 
      def test_cube_flagged_mosaic_hogbom(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
@@ -2240,7 +2234,7 @@ class test_cube(testref_base):
                        deconvolver='hogbom', gridder='mosaic')
           report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01324, [10,10,0,1])], \
                                   imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
      def test_cube_flagged_mosaic_clark(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
@@ -2251,7 +2245,7 @@ class test_cube(testref_base):
                        deconvolver='clark', gridder='mosaic')
           report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01252, [10,10,0,1])], \
                                   imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
      def test_cube_flagged_mosaic_multiscale(self):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
@@ -2261,7 +2255,7 @@ class test_cube(testref_base):
                        deconvolver='multiscale', gridder='mosaic')
           report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01086, [10,10,0,1])], \
                                   imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
      @unittest.skip('Skip test.')
      def test_cube_flagged_mosaic_mtmfs(self):
@@ -2273,7 +2267,7 @@ class test_cube(testref_base):
                        deconvolver='mtmfs', nterms=1, gridder='mosaic')
           report=self.th.checkall(imgexist=[self.img+'.model.tt0'], imgval=[(self.img+'.model.tt0', 0.00530, [10,10,0,1])], \
                                   imgvalexact=[(self.img+'.model.tt0', 0, [1,1,0,0]), (self.img+'.model.tt0', 0, [10,10,0,0])])#, epsilon=0.2)
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
 ##############################################
 ##############################################
@@ -2290,7 +2284,7 @@ class test_mask(testref_base):
                         mask=self.img+'.mask.txt',parallel=self.parallel)
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,usemask='user',mask=mstr,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'1.mask', self.img+'2.mask'], imgval=[(self.img+'1.mask',0.0,[50,50,0,0]),(self.img+'1.mask',1.0,[50,80,0,0]),(self.img+'2.mask',0.0,[50,50,0,0]),(self.img+'2.mask',1.0,[50,80,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_2(self):
           """ [mask] test_mask_2 :  Input mask as file and string : cube (few channels) """
@@ -2302,7 +2296,7 @@ class test_mask(testref_base):
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',specmode='cube',
                         interactive=0,usemask='user',mask=mstr,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'1.mask', self.img+'2.mask'], imgval=[(self.img+'1.mask',0.0,[50,50,0,1]),(self.img+'1.mask',1.0,[50,50,0,2]),(self.img+'1.mask',1.0,[50,50,0,10]),(self.img+'1.mask',0.0,[50,50,0,11]),(self.img+'2.mask',0.0,[50,50,0,1]),(self.img+'2.mask',1.0,[50,50,0,2]),(self.img+'2.mask',1.0,[50,50,0,10]),(self.img+'2.mask',0.0,[50,50,0,11])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_3(self):
           """ [mask] test_mask_3 : Input mask as image-to-be-regridded (ra/dec) : mfs """
@@ -2314,7 +2308,7 @@ class test_mask(testref_base):
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,
                         usemask='user',mask=self.img+'1.mask',phasecenter='J2000 19h59m57.5s +40d49m00.077s',parallel=self.parallel) # shift phasecenter
           report=self.th.checkall(imgexist=[self.img+'1.mask', self.img+'2.mask'], imgval=[(self.img+'1.mask',1.0,[50,50,0,0]),(self.img+'2.mask',1.0,[91,13,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_4(self):
           """ [mask] test_mask_4 :  Input mask as image-to-be-regridded(ra/dec/specframe) : cube """
@@ -2326,7 +2320,7 @@ class test_mask(testref_base):
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',specmode='cube',
                         start='1.3GHz',interactive=0,usemask='user',mask=self.img+'1.mask',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'1.mask', self.img+'2.mask'], imgval=[(self.img+'1.mask',0.0,[50,50,0,1]),(self.img+'1.mask',1.0,[50,50,0,2]),(self.img+'1.mask',1.0,[50,50,0,10]),(self.img+'1.mask',0.0,[50,50,0,11]),(self.img+'2.mask',1.0,[50,50,0,0]),(self.img+'2.mask',1.0,[50,50,0,4]),(self.img+'2.mask',0.0,[50,50,0,10])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily for 5.5")
      # parallel mode issue was fixed in imageanalysis 2019.05.23
@@ -2341,7 +2335,7 @@ class test_mask(testref_base):
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=1,deconvolver='hogbom',specmode='cube',
                         start=5,nchan=10,interactive=0,usemask='user',mask=self.img+'1.mask',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'1.mask', self.img+'2.mask'], imgval=[(self.img+'1.mask',1.0,[50,50,0,1]),(self.img+'1.mask',1.0,[50,50,0,2]),(self.img+'1.mask',1.0,[50,50,0,9]),(self.img+'2.mask',1.0,[50,50,0,0]),(self.img+'2.mask',1.0,[50,50,0,4]),(self.img+'2.mask',0.0,[50,50,0,5])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 # the option, auto-thresh removed
 #     def test_mask_autobox(self):
@@ -2352,7 +2346,7 @@ class test_mask(testref_base):
 #          # temporarily change value test to make it pass until extra masking in final minor cycle is resolved....
 #          #report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,80,0,0])])
 #          report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
-#          self.checkfinal(report)
+#          self.assertTrue(self.check_final(report))
 
 # the option, auto-thresh removed
 #     def test_mask_autobox_redraw(self):
@@ -2367,7 +2361,7 @@ class test_mask(testref_base):
 #          #report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[60,85,0,0]),(self.img+'2.mask',1.0,[60,30,0,0])])
 #          #change in behavior due to automask code modification on July 1st,2016
 #          report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[60,85,0,0]),(self.img+'2.mask',0.0,[60,30,0,0])])
-#          self.checkfinal(report)
+#          self.assertTrue(self.check_final(report))
 
 # the option, auto-thresh removed
 #     def test_mask_autobox_nmask(self):
@@ -2377,7 +2371,7 @@ class test_mask(testref_base):
 #          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',
 #                       interactive=0,usemask='auto-thresh',nmask=3)
 #          report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
-#          self.checkfinal(report)
+#          self.assertTrue(self.check_final(report)
            
 # the option, auto-thresh2 removed
 #     def test_mask_autobox2_nmask(self):
@@ -2387,7 +2381,7 @@ class test_mask(testref_base):
 #          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',
 #                       interactive=0,usemask='auto-thresh2',nmask=3)
 #          report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
-#          self.checkfinal(report)
+#          self.assertTrue(self.check_final(report))
 
 # the option, auto-thresh removed
 #     def test_mask_autobox_pbmask(self):
@@ -2398,7 +2392,7 @@ class test_mask(testref_base):
 #          ret = tclean(vis=self.msfile,imagename=self.img,imsize=500,cell='8.0arcsec',niter=10,deconvolver='hogbom',
 #                       interactive=0,usemask='auto-thresh', pbmask=0.2)
 #          report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[250,250,0,0]),(self.img+'.mask',0.0,[250,285,0,0]),(self.img+'.mask',0.0,[360,360])])
-#          self.checkfinal(report)
+#          self.assertTrue(self.check_final(report))
 
 #     @unittest.skip('Skip. This test deprecated. removed autoadjust param.')
 #     def test_mask_autobox_autoadjust(self):
@@ -2407,7 +2401,7 @@ class test_mask(testref_base):
 #          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',
 #                       interactive=0,usemask='auto-thresh',autoadjust=True)
 #          report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
-#          self.checkfinal(report)
+#          self.assertTrue(self.check_final(report)
      @unittest.skip('Skip test.')
      def test_mask_pbmask(self):
           """ [mask] test_mask_pbmask :  pb mask """
@@ -2437,7 +2431,7 @@ class test_mask(testref_base):
           #report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,80,0,0])])
           # temporarily change the value test for unmasked region to make it pass (replace with the above when the extra masking issue is resolved...)
 #          report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
-#          self.checkfinal(report)
+#          self.assertTrue(self.check_final(report))
 
      # AUTOMASK TESTS
      def test_mask_autobox_multithresh(self):
@@ -2445,28 +2439,28 @@ class test_mask(testref_base):
           self.prepData('refim_twochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,usemask='auto-multithresh',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_autobox_multithresh_newnoise(self):
           """ [mask] test_mask__autobox_multithresh :  multi-threshold Autobox invoking the new noise calc."""
           self.prepData('refim_twochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,usemask='auto-multithresh', fastnoise=False)
           report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_autobox_multithresh_with_nsigma(self):
           """ [mask] test_mask__autobox_multithresh :  multi-threshold Autobox invoking the new noise calc."""
           self.prepData('refim_twochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,usemask='auto-multithresh', nsigma=3.0)
           report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_autobox_multithresh_with_nsigma_newnoise(self):
           """ [mask] test_mask__autobox_multithresh :  multi-threshold Autobox invoking the new noise calc."""
           self.prepData('refim_twochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,usemask='auto-multithresh', nsigma=3.0, fastnoise=False)
           report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_autobox_multithresh_with_prune(self):
           """ [mask] test_mask__autobox_multithresh_with_prune :  multi-threshold Autobox (minbeamfrac=0.3)"""
@@ -2475,7 +2469,7 @@ class test_mask(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=1000,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,usemask='auto-multithresh',
           minbeamfrac=0.3,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[500,500,0,0]),(self.img+'.mask',0.0,[500,510,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_autobox_multithresh_with_stopmask(self):
           """ [mask] test_mask__autobox_multithresh_with_stopmask :  multi-threshold Autobox (minbeamfrac=0.3) with stop mask on """
@@ -2485,7 +2479,7 @@ class test_mask(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=100,deconvolver='hogbom',interactive=0,
            usemask='auto-multithresh', minbeamfrac=0.3, minpercentchange=0.2,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[63,50,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_autobox_multithresh_with_absorption(self):
           """ [mask] test_mask__autobox_multithresh_on_absorption :  multi-threshold Autobox (minbeamfrac=0.3) on the data with both emission and absorption  """
@@ -2494,14 +2488,14 @@ class test_mask(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=100,deconvolver='hogbom',interactive=0,
                        usemask='auto-multithresh', negativethreshold=5.0,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[60,40,0,0]),(self.img+'.mask',0.0,[65,50,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_autobox_multithresh_mfs_IQUV(self):
           """ [mask] test_mask__autobox_multithresh_mtmfs_IQUV :  multi-threshold Autobox (minbeamfrac=0.3) with cube full polarizaiton (IQUV) imaging """
           self.prepData('refim_point_linRL.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='mfs',interpolation='nearest',usemask="auto-multithresh", verbose=True, parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[40,60,0,0]),(self.img+'.mask',0.0,[65,50,0,0]), (self.img+'.mask', 1.0,[40,60,3,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
       
      def test_mask_autobox_multithresh_cube_IQUV(self):
           """ [mask] test_mask__autobox_multithresh_cube_IQUV :  multi-threshold Autobox (minbeamfrac=0.05) with cube full polarizaiton (IQUV) imaging """
@@ -2531,7 +2525,7 @@ class test_mask(testref_base):
 
           report=self.th.checkall(ret=ret, imgexist=[self.img+'2.mask'], imgval=[(self.img+'2.model',0.0,[50,50,0,0]),(self.img+'2.mask',0.0,[50,50,0,0])], stopcode=7)
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 # the option, auto-thresh removed
 #     def test_mask_zeroauto(self):
@@ -2542,7 +2536,7 @@ class test_mask(testref_base):
 #
 #          report=self.th.checkall(ret=ret, imgexist=[self.img+'.mask'], imgval=[(self.img+'.model',0.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,50,0,0])], stopcode=7)
 #
-#          self.checkfinal(report)
+#          self.assertTrue(self.check_final(report))
 
      def test_mask_expand_contstokesImask_to_cube(self):
           """ [mask] test_mask_expand_contstokesImask_to_cube : Test for
@@ -2555,7 +2549,7 @@ class test_mask(testref_base):
           report=self.th.checkall(ret=ret, imgexist=[self.img+'.mask'],
           imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[50,50,0,1]),(self.img+'.mask',1.0,[50,50,0,2]), (self.img+'.mask',0.0,[65,65,0,1])])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_expand_contstokesImask_nodegen_to_cube(self):
           """ [mask] test_mask_expand_contstokesImask_nodegen_to_cube : Test for
@@ -2583,7 +2577,7 @@ class test_mask(testref_base):
           report=self.th.checkall(ret=ret, imgexist=[self.img+'.mask'],
           imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[50,50,1,0]),(self.img+'.mask',1.0,[50,50,2,0]),(self.img+'.mask',1.0,[50,50,3,0]), (self.img+'.mask',0.0,[65,65,2,0])])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_expand_contstokesImask_nodegen_to_IQUV(self):
           """ [mask] test_mask_expand_contstokesImask_nodegen_to_IQUV : Test for expanding
@@ -2599,7 +2593,7 @@ class test_mask(testref_base):
           report=self.th.checkall(ret=ret, imgexist=[self.img+'.mask'],
           imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[50,50,1,0]),(self.img+'.mask',1.0,[50,50,2,0]),(self.img+'.mask',1.0,[50,50,3,0]), (self.img+'.mask',0.0,[65,65,2,0])])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      def test_mask_expand_contstokesImask_to_cube_IQUV(self):
@@ -2625,7 +2619,7 @@ class test_mask(testref_base):
                  (self.img+'.mask',0.0,[65,65,2,1]),
                  ])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      def test_mask_expand_contstokesImask_nodegen_to_cube_IQUV(self):
@@ -2653,7 +2647,7 @@ class test_mask(testref_base):
                  (self.img+'.mask',0.0,[65,65,2,1]),
                  ])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_expand_contstokesIQUVmask_to_cube_IQUV(self):
           """ [mask] test_mask_expand_contstokesIQUVmask_to_cube_IQUV : Test for expanding
@@ -2681,7 +2675,7 @@ class test_mask(testref_base):
                  (self.img+'.mask',0.0,[34,70,0,1]),
                  ])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      def test_mask_expand_contstokesIQUVmask_nodegen_to_cube_IQUV(self):
@@ -2712,7 +2706,7 @@ class test_mask(testref_base):
                  (self.img+'.mask',0.0,[34,70,0,1]),
                  ])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_expand_cubestokesImask_to_cube_IQUV(self):
           """ [mask] test_mask_expand_contstokesIQUVmask_to_cube_IQUV : Test for expanding
@@ -2742,7 +2736,7 @@ class test_mask(testref_base):
                  (self.img+'.mask',0.0,[43,70,0,1]),
                  ])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mask_expand_cubestokesImask_nodegen_to_cube_IQUV(self):
           """ [mask] test_mask_expand_contstokesIQUVmask_nodegen_to_cube_IQUV : Test for expanding
@@ -2773,7 +2767,7 @@ class test_mask(testref_base):
                  (self.img+'.mask',0.0,[43,70,0,1]),
                  ])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 ##############################################
 ##############################################
@@ -2792,7 +2786,7 @@ class test_wproject(testref_base):
           tclean(vis=msname, imagename=self.img+'.wyes',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='wproject', wprojplanes=16, pblimit=-0.1,parallel=self.parallel)
 
           report=self.th.checkall(imgexist=[self.img+'.wyes.image'],imgval=[(self.img+'.wyes.psf',1.0,[1024,1024,0,0]),(self.img+'.wyes.image',1.0,[1158,1384,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Facetted imaging tests parallel are skipped temporarily until a fix is found. ")
      def test_wterm_facets(self):
@@ -2805,7 +2799,7 @@ class test_wproject(testref_base):
           
           ## Current value with facets=4 is 0.988. 
           report=self.th.checkall(imgexist=[self.img+'.facet.image'],imgval=[(self.img+'.facet.psf',1.0,[1024,1024,0,0]),(self.img+'.facet.image',1.0,[1158,1384,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Facetted imaging tests in parallel are skipped temporarily until a fix is found. ")
@@ -2819,7 +2813,7 @@ class test_wproject(testref_base):
           
           ## Current value with facets=4 is 0.988. 
           report=self.th.checkall(imgexist=[self.img+'.wp.facet.image'],imgval=[(self.img+'.wp.facet.psf',1.0,[1024,1024,0,0]),(self.img+'.wp.facet.image',1.0,[1158,1384,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
   
      @unittest.skip('Skip test for wterm imaging with awproject until the numerical error has been addressed in CAS-13191')
@@ -2833,7 +2827,7 @@ class test_wproject(testref_base):
           tclean(vis=msname, imagename=self.img+'.awp',  imsize=2048, cell='10.0arcsec',niter=0, weighting='uniform', gridder='awproject', wprojplanes=16, pblimit=-0.1, psterm=True, aterm=False, wbawp=False,cfcache=self.img+'_use_awp.cf',parallel=self.parallel)
 
           report=self.th.checkall(imgexist=[self.img+'.awp.image'],imgval=[(self.img+'.awp.psf',1.0,[1024,1024,0,0]),(self.img+'.awp.image',1.0,[1158,1384,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
           
   
@@ -2845,7 +2839,6 @@ class test_wproject(testref_base):
 
 ##Task level tests : awproject and mosaics
 class test_widefield(testref_base):
-     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_widefield_aproj_mfs(self):
           """ [widefield] Test_Widefield_aproj : MFS with narrowband AWProjection (wbawp=F, 1spw)  stokes I """
           # casalog.post("EMPTY TEST")
@@ -2856,13 +2849,13 @@ class test_widefield(testref_base):
                        niter=30,gridder='awproject',cfcache='',wbawp=False,conjbeams=True,psterm=False,computepastep=360.0,
                        rotatepastep=360.0,deconvolver='hogbom',savemodel='modelcolumn',parallel=self.parallel)
          ## ret = tclean(vis=self.msfile,spw='2',field='*',imagename=self.img,imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",niter=30,gridder='awproject',wbawp=False,conjbeams=True,psterm=False,computepastep=360.0,rotatepastep=360.0,deconvolver='hogbom')
-          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.96,[256,256,0,0]),(self.img+'.weight',0.493,[256,256,0,0]) ] )
+          report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.96,[256,256,0,0]),(self.img+'.pb',0.96,[256,256,0,0]),(self.img+'.weight',0.496,[256,256,0,0]) ] )
           #
           # Changed to the following for 5.5.0 release of AWP.  Will revisit and replace the test MS later.
           #
           #report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.705,[256,256,0,0]),(self.img+'.weight',0.493,[256,256,0,0]) ] )
           ## weight is pbsq which is 0.7^2 = 0.49 (approx).
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
           #do stokes V too.....
 ##     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
@@ -2878,11 +2871,10 @@ class test_widefield(testref_base):
                        conjbeams=False,psterm=False,computepastep=360.0,rotatepastep=360.0,deconvolver='hogbom',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.11,[256,256,0,0]),(self.img+'.weight',0.34,[256,256,0,0]) ] )
           self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      ## Test normtype too somewhere..
 
-     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_widefield_wbaproj_mfs(self):
           """ [widefield] Test_Widefield_wbaproj_mfs : MFS with wideband AWProjection (wbawp=T, allspw) and nt=1 stokes I  """
 
@@ -2898,7 +2890,7 @@ class test_widefield(testref_base):
           # Changed to the following for 5.5.0 release of AWP.  Will revisit and replace the test MS later.
           #
           #report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.698,[256,256,0,0]),(self.img+'.weight',0.493,[256,256,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
           #do stokes V too..
@@ -2918,7 +2910,7 @@ class test_widefield(testref_base):
           # Changed to the following for 5.5.0 release of AWP.  Will revisit and replace the test MS later.
           #
           #report=self.th.checkall(imgexist=[self.img+'.image.tt0', self.img+'.psf.tt0', self.img+'.weight.tt0'],imgval=[(self.img+'.image.tt0',0.705,[256,256,0,0]),(self.img+'.weight.tt0',0.48,[256,256,0,0]),(self.img+'.alpha',0.04,[256,256,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
           ## alpha should represent that of the mosaic PB (twice).. -0.1 doesn't look right. Sigh.... well.. it should converge to zero.
           ## alpha keeps increasing in magnitude with niter.... not right.
           ## restricting this check to niter=0 only. Alpha should represent that of the PB.
@@ -2939,7 +2931,7 @@ class test_widefield(testref_base):
           #
           #report=self.th.checkall(imgexist=[self.img+'.image.tt0', self.img+'.psf.tt0', self.img+'.weight.tt0'],imgval=[(self.img+'.image.tt0',0.696,[256,256,0,0]),(self.img+'.weight.tt0',0.486,[256,256,0,0]),(self.img+'.alpha',0.0,[256,256,0,0]) ] )
           ## alpha should be ZERO as the pb spectrum has been taken out.
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
 #     def test_widefield_wbaproj_subsets(self):
@@ -2966,7 +2958,7 @@ class test_widefield(testref_base):
                        niter=30,gridder='mosaicft',deconvolver='hogbom',pblimit=0.3,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.961231,[256,256,0,0]),(self.img+'.weight',0.50576,[256,256,0,0]) ] )
           #ret = clean(vis=self.msfile,spw='1',field='*',imagename=self.img+'.old',imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",niter=30,imagermode='mosaic',psfmode='hogbom')
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
           #do stokes V too..
 
@@ -2978,7 +2970,7 @@ class test_widefield(testref_base):
                        niter=30,gridder='mosaicft',deconvolver='hogbom',pblimit=0.3,weighting='briggs', parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.962813, [256,256,0,0]),(self.img+'.weight',0.50520, [256,256,0,0]) ] )
           #ret = clean(vis=self.msfile,spw='1',field='*',imagename=self.img+'.old',imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",niter=30,imagermode='mosaic',psfmode='hogbom')
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_widefield_mosaicft_mtmfs(self):
           """ [widefield] Test_Widefield_mosaicft_mtmfs : MT-MFS with mosaicft  stokes I, alpha """
@@ -2987,7 +2979,7 @@ class test_widefield(testref_base):
                        niter=60,gridder='mosaicft',deconvolver='mtmfs', conjbeams=False,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image.tt0', self.img+'.psf.tt0', self.img+'.weight.tt0'],imgval=[(self.img+'.image.tt0',0.9413,[256,256,0,0]),(self.img+'.weight.tt0',0.50546,[256,256,0,0]),(self.img+'.alpha', 0.07367,[256,256,0,0]) ] )
           ## alpha should represent that of the mosaic PB (twice)... and should then converge to zero
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
           
      def test_widefield_mosaicft_mtmfs_conj(self):
           """ [widefield] Test_Widefield_mosaicft_mtmfs : MT-MFS with mosaicft  stokes I, alpha """
@@ -2996,7 +2988,7 @@ class test_widefield(testref_base):
                        niter=60,gridder='mosaicft',deconvolver='mtmfs', conjbeams=True,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image.tt0', self.img+'.psf.tt0', self.img+'.weight.tt0'],imgval=[(self.img+'.image.tt0',0.9638,[256,256,0,0]),(self.img+'.weight.tt0',0.49804,[256,256,0,0]),(self.img+'.alpha',-0.03692,[256,256,0,0]) ] )
           ## alpha should represent that of the mosaic PB (twice)... and should then converge to zero
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
      
      def test_widefield_mosaicft_mtmfs_pbsquare(self):
           """ [widefield] Test_Widefield_mosaicft_mtmfs : MT-MFS with mosaicft  stokes I, alpha """
@@ -3005,7 +2997,7 @@ class test_widefield(testref_base):
                        niter=60,gridder='mosaic',deconvolver='mtmfs', conjbeams=False, normtype='pbsquare',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image.tt0', self.img+'.psf.tt0', self.img+'.weight.tt0'],imgval=[(self.img+'.image.tt0',0.9194,[256,256,0,0]),(self.img+'.weight.tt0',0.5059,[256,256,0,0]),(self.img+'.alpha',0.021195,[256,256,0,0]) ] )
           ## alpha should represent that of the mosaic PB (twice)... and should then converge to zero
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_widefield_mosaicft_cube(self):
           """ [widefield] Test_Widefield_mosaicft_cube : MFS with mosaicft  stokes I """
@@ -3015,7 +3007,7 @@ class test_widefield(testref_base):
           ret = tclean(vis=self.msfile,spw='*',field='0',imagename=self.img,imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",
                        specmode='cube',niter=10,gridder='mosaicft',deconvolver='hogbom',gain=0.1,stokes='I',parallel=self.parallel) #,vptable='evlavp.tab')
           report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.7987,[256,256,0,0]),(self.img+'.weight',0.6528,[256,256,0,0]) ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
           #do stokes V too..
      def test_mosaicft_newpsfphasecenter(self):
@@ -3028,7 +3020,7 @@ class test_widefield(testref_base):
           # need to add check of the actual coordinates of the peak of psf. That would match with psfphasecenter value...
           report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'],imgval=[(self.img+'.image',0.96,[256,256,0,0]), (self.img+'.psf',1.0,[256,256,0,0])])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_mosaicft_newpsfphasecenter_cube(self):
           """
@@ -3037,7 +3029,7 @@ class test_widefield(testref_base):
           self.prepData("refim_mawproject.ms")
           ret=tclean(vis="refim_mawproject.ms",field="*",spw="*",datacolumn="corrected",imagename=self.img,imsize=512,cell="10.0arcsec",phasecenter="J2000 19:59:28.500 +40.44.01.50",stokes="I",specmode="cube",gridder="mosaic",psfphasecenter="J2000 19:59:28.520 +40.44.01.51",vptable="",pblimit=0.3,normtype="flatnoise",deconvolver="hogbom",restoration=True,weighting="natural", niter=30,gain=0.1, usemask="user",mask="",restart=True,savemodel="none",calcres=True,calcpsf=True, parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.psf', self.img+'.weight'], imgval=[(self.img+'.image',0.99,[256,256,0,0]), (self.img+'.psf',1.0,[256,256,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      
@@ -3147,7 +3139,7 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
           self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
           reportcv=self.th.check_chanvals(self.msfile, [(10,">",0.0),(3,"==",1.0)])
-          self.checkfinal(reportcv)
+          self.assertTrue(self.check_final(reportcv))
           
           delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
           ret = tclean(vis=self.msfile,spw='0',imagename=self.img+'2',imsize=100,cell='8.0arcsec',startmodel=self.img+'.model',specmode='cube',
@@ -3155,7 +3147,7 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
           self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
           reportcv=self.th.check_chanvals(self.msfile,[(10,">",0.0),(3,"==",self.th.check_modelchan(self.msfile,1))])
-          self.checkfinal(reportcv)
+          self.assertTrue(self.check_final(reportcv))
 
 
      #Passes after CAS-9386
@@ -3203,7 +3195,7 @@ class test_modelvis(testref_base):
           self.assertTrue(self.th.exists(self.img+'.model') )
 #          self.assertTrue( self.th.check_modelchan(self.msfile,10) > 0.0 and self.th.check_modelchan(self.msfile,3) == 1.0 )
           reportcv=self.th.check_chanvals(self.msfile,[(10,">",0.0),(3,"==",1.0)])
-          self.checkfinal(reportcv)
+          self.assertTrue(self.check_final(reportcv))
 
 
           ## add model expansion parameter
@@ -3212,7 +3204,7 @@ class test_modelvis(testref_base):
                        savemodel='modelcolumn',parallel=self.parallel)
 #          self.assertTrue( self.th.check_modelchan(self.msfile,10) > 0.0 and self.th.check_modelchan(self.msfile,3) > 0.0 )
           reportcv=self.th.check_chanvals(self.msfile,[(10,">",0.0),(3,">",0.0)])
-          self.checkfinal(reportcv)
+          self.assertTrue(self.check_final(reportcv))
                     
 
           delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
@@ -3251,7 +3243,7 @@ class test_startmodel(testref_base):
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=200,cell='8.0arcsec',niter=0,deconvolver='hogbom',interactive=0,
                         startmodel=self.img+'1.model',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'1.residual', self.img+'2.residual'], imgval=[(self.img+'1.residual',1.7963,[25,25,0,0]),(self.img+'2.residual',1.910,[168,190,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_startmodel_regrid_cube(self):
           """ [modelpredict] Test_startmodel_regrid_cube : Regrid input model onto new image grid : cube (ra/dec/specframe)"""
@@ -3261,7 +3253,7 @@ class test_startmodel(testref_base):
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=0,deconvolver='hogbom',interactive=0,
                         startmodel=self.img+'1.model',specmode='cube',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'1.residual', self.img+'2.residual'], imgval=[(self.img+'1.residual',0.362,[25,25,0,5]),(self.img+'2.residual',0.362,[50,50,0,6])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
 
@@ -3278,7 +3270,7 @@ class test_startmodel(testref_base):
           report=self.th.checkall(imgexist=[self.img+'1.residual'], imgval=[(self.img+'1.residual',0.35304,[50,50,0,0])])
           ret2 = tclean(vis=self.msfile,imagename=self.img+'1',imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'1.residual'], imgval=[(self.img+'1.residual',0.1259,[50,50,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_startmodel_mfs_restart(self):
           """ [startmodel] test_startmodel_mfs_restart : Restart a run using 'startmodel' and changed imagename"""
@@ -3287,7 +3279,7 @@ class test_startmodel(testref_base):
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,
                         startmodel=self.img+'1.model',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'1.residual', self.img+'2.residual'], imgval=[(self.img+'1.residual',0.35304,[50,50,0,0]),(self.img+'2.residual',0.1259,[50,50,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_startmodel_mfs_changeshape_1(self):
           """ [startmodel] test_startmodel_mfs_changeshape_1 : Restart a run but change shape only (cas-6937)"""
@@ -3306,7 +3298,7 @@ class test_startmodel(testref_base):
           ## Check that there is no change in output value.... 
           ## i.e. the second run should have failed.     
           report=self.th.checkall(imgval=[(self.img+'1.residual',0.35304,[50,50,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_startmodel_mfs_changeshape_2(self):
           """ [startmodel] test_startmodel_mfs_changeshape_2 : Restart a run using 'startmodel' and change shape and imagename"""
@@ -3315,7 +3307,7 @@ class test_startmodel(testref_base):
           ret2 = tclean(vis=self.msfile,imagename=self.img+'2',imsize=120,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,
                         startmodel=self.img+'1.model',parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'1.residual', self.img+'2.residual'], imgval=[(self.img+'1.residual',0.35304,[50,50,0,0]),(self.img+'2.residual',0.1259,[60,60,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_startmodel_mtmfs_restart(self):
           """ [startmodel] test_startmodel_mtmfs_restart : Restart a multi-term run using 'startmodel' and changed imagename"""
@@ -3341,7 +3333,7 @@ class test_startmodel(testref_base):
                              (self.img+'3.residual.tt1',-0.04358,[50,50,0,0]),
                              (self.img+'4.residual.tt1',-0.01519,[50,50,0,0])     ] )
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      ## Run this test only in parallel mode as it tests combinations of serial and parallel runs. 
      @unittest.skipIf(not ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
@@ -3421,10 +3413,9 @@ class test_startmodel(testref_base):
                               impbcor(imagename='savemod.par'+'.image.tt0', pbimage='savemod.par'+'.pb.tt0', outfile='savemod.par'+'.impbcor.tt0',overwrite=True)
                               report=report +self.th.checkall(imgexist=['savemod.par.impbcor.tt0'], imgval=[  ('savemod.par.impbcor.tt0',1.1,[50,50,0,0]) ])
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
-     @unittest.skip('Skip test.') #Skip CAS-13421
      def test_csys_startmodel_restart_cube(self):
           """ [startmodel] test_csys_startmodel_restart_cube : Check that csys differences w.r.to latpoles for parallel vs serial runs are appropriately squashed. 
 
@@ -3496,7 +3487,7 @@ class test_startmodel(testref_base):
                     report=report +self.th.checkall(imgexist=['savemod.par.impbcor'], imgval=[  ('savemod.par.impbcor',1.5,[50,50,0,0]) ])
 
 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 
      # Now passes for n=3, 4, with CAS-9386 but table lock issue in model write for n=2
@@ -3524,7 +3515,7 @@ class test_startmodel(testref_base):
                                 (self.img+'.model',7.474,[154,172,0,0]),
                                 (self.img+'.3.model',1.497,[100,100,0,0]), 
                                 (self.img+'.3.model',0.024,[154,172,0,0])   ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
           
      #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily")
      def test_startmodel_with_mask_mtmfs(self):
@@ -3557,7 +3548,7 @@ class test_startmodel(testref_base):
                                 (self.img+'.model.tt1',-5.602,[154,172,0,0]),
                                 (self.img+'.3.model.tt1',-1.124,[100,100,0,0]), 
                                 (self.img+'.3.model.tt1',-0.021,[154,172,0,0])   ] )
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
           
  ##############################################
 class test_pbcor(testref_base):
@@ -3573,7 +3564,7 @@ class test_pbcor(testref_base):
           ret1 = tclean(vis=self.msfile, imagename=self.img, field='0', imsize=512, cell='10.0arcsec', phasecenter="J2000 19:59:28.500 +40.44.01.50", 
                         niter=10, specmode='mfs', vptable='evlavp.tab', pbcor=True,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.pb', self.img+'.image.pbcor'], imgval=[(self.img+'.pb',0.7,[256,256,0,0]),(self.img+'.image.pbcor',1.0,[256,256,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_pbcor_mtmfs(self):
           """ [pbcor] Test pbcor with mtmfs"""
@@ -3583,7 +3574,7 @@ class test_pbcor(testref_base):
           report=self.th.checkall(imgexist=[self.img+'.image.tt0', self.img+'.pb.tt0'], imgexistnot=[self.img+'.image.tt0.pbcor', self.img+'.alpha.pbcor'], imgval=[(self.img+'.pb.tt0',0.7,[256,256,0,0])])  
           #report=self.th.checkall(imgexist=[self.img+'.image.tt0', self.img+'.pb.tt0', self.img+'.image.tt0.pbcor', self.img+'.alpha.pbcor'], imgval=[(self.img+'.pb.tt0',0.7,[256,256,0,0]),(self.img+'.image.tt0.pbcor',1.0,[256,256,0,0]),(self.img+'.alpha',-0.7,[256,256,0,0]), (self.img+'.alpha.pbcor',-0.7,[256,256,0,0]) ])  
           # uncorrected alpha, for now. 
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_pbcor_cube_basic(self):
           """ [pbcor] Test pbcor with cube"""
@@ -3591,7 +3582,7 @@ class test_pbcor(testref_base):
           ret1 = tclean(vis=self.msfile, imagename=self.img, field='0', imsize=512, cell='10.0arcsec', phasecenter="J2000 19:59:28.500 +40.44.01.50", 
                         niter=10, specmode='cube', vptable='evlavp.tab', pbcor=True,parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.pb', self.img+'.image.pbcor'], imgval=[(self.img+'.pb',0.79,[256,256,0,0]),(self.img+'.image.pbcor',1.0,[256,256,0,0]), (self.img+'.pb',0.59,[256,256,0,2]),(self.img+'.image.pbcor',1.0,[256,256,0,2])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_pbcor_cube_twosteps(self):
           """ [pbcor] Test pbcor with cube with imaging and pbcor separately"""
@@ -3602,7 +3593,7 @@ class test_pbcor(testref_base):
           ret2 = tclean(vis=self.msfile, imagename=self.img, field='0', imsize=512, cell='10.0arcsec', phasecenter="J2000 19:59:28.500 +40.44.01.50", 
                         niter=0,calcres=False,calcpsf=False, specmode='cube', vptable='evlavp.tab', pbcor=True,parallel=self.parallel)
           report2=self.th.checkall(imgexist=[self.img+'.image', self.img+'.pb', self.img+'.image.pbcor'], imgval=[(self.img+'.pb',0.79,[256,256,0,0]),(self.img+'.image.pbcor',1.0,[256,256,0,0]), (self.img+'.pb',0.59,[256,256,0,2]),(self.img+'.image.pbcor',1.0,[256,256,0,2])])
-          self.checkfinal(report1+report2)
+          self.assertTrue(self.check_final(report1+report2))
 
      def test_pbcor_cube_mosaicft(self):
           """ [pbcor] Test pbcor with cube with mosaicft"""
@@ -3611,7 +3602,7 @@ class test_pbcor(testref_base):
                         niter=10, specmode='cube', vptable='evlavp.tab',pbcor=True, gridder='mosaic',parallel=self.parallel)
 
           report=self.th.checkall(imgexist=[self.img+'.image', self.img+'.pb', self.img+'.image.pbcor'], imgval=[(self.img+'.pb',0.79,[256,256,0,0]),(self.img+'.image.pbcor',1.0,[256,256,0,0]), (self.img+'.pb',0.59,[256,256,0,2]),(self.img+'.image.pbcor',1.0,[256,256,0,2])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
      def test_pbcor_mfs_restart(self):
           """ [pbcor] Test pbcor with mfs and a restart"""
@@ -3623,7 +3614,7 @@ class test_pbcor(testref_base):
           ret2 = tclean(vis=self.msfile, imagename=self.img, field='0', imsize=512, cell='10.0arcsec', phasecenter="J2000 19:59:28.500 +40.44.01.50", 
                         niter=10, specmode='mfs', vptable='evlavp.tab', pbcor=True,parallel=self.parallel)
           report2=self.th.checkall(imgexist=[self.img+'.image', self.img+'.pb', self.img+'.image.pbcor'], imgval=[(self.img+'.pb',0.7,[256,256,0,0]),(self.img+'.image.pbcor',1.0,[256,256,0,0])])
-          self.checkfinal(report1+report2)
+          self.assertTrue(self.check_final(report1+report2))
 
      def test_pbcor_turn_off_pbmask(self):
           """ [pbcor] Test pbcor with mfs where the internal T/F mask is turned off"""
@@ -3636,7 +3627,7 @@ class test_pbcor(testref_base):
                         niter=10, specmode='mfs', vptable='evlavp.tab', pbcor=True, calcpsf=False, calcres=False, pblimit=-0.2,parallel=self.parallel)
           report2=self.th.checkall(imgexist=[self.img+'.image', self.img+'.pb'], imgval=[(self.img+'.pb',0.7,[256,256,0,0])] , imgmask=[(self.img+'.pb',False,[10,10,0,0]), (self.img+'.image',True,[10,10,0,0])]  )
 
-          self.checkfinal(report1+report2)
+          self.assertTrue(self.check_final(report1+report2))
 
 
 #####################################################
@@ -3765,7 +3756,7 @@ class test_hetarray_imaging(testref_base):
           os.environ['ATerm_CONVSIZE'] = '2048'
 
 
-          self.checkfinal(report1+report2+report3+report4+report5)
+          self.assertTrue(self.check_final(report1+report2+report3+report4+report5))
 
      ###########################
 
@@ -3840,7 +3831,7 @@ class test_hetarray_imaging(testref_base):
           os.environ['ATerm_OVERSAMPLING'] = '20'
           os.environ['ATerm_CONVSIZE'] = '2048'
 
-          self.checkfinal(report1+report2)
+          self.assertTrue(self.check_final(report1+report2))
 
      ###########################
 
@@ -3861,7 +3852,7 @@ class test_mosaic_mtmfs(testref_base):
           widebandpbcor(vis=self.msfile, imagename=self.img,nterms=2,reffreq='1.5GHz',pbmin=0.1, field=field, spwlist=[0,1,2], chanlist=[0,0,0], weightlist=[1.0,1.0,1.0])
           report2=self.th.checkall(imgval=[(self.img+'.pbcor.image.tt0',1.02163529396,[512,596,0,0]),(self.img+'.pbcor.image.alpha', -0.481181353331 ,[512,596,0,0]),(self.img+'.pbcor.workdirectory/' + self.img + '.pb.alpha',-1.52691471577,[512,596,0,0])])
           
-          self.checkfinal(report1+report2)
+          self.assertTrue(self.check_final(report1+report2))
      
      ###########################
      #warning
@@ -3880,7 +3871,7 @@ class test_mosaic_mtmfs(testref_base):
           widebandpbcor(vis=self.msfile, imagename=self.img,nterms=2,reffreq='1.5GHz',pbmin=0.1, field=field, spwlist=[0,1,2], chanlist=[0,0,0], weightlist=[1.0,1.0,1.0])
           report4=self.th.checkall(imgval=[(self.img+'.pbcor.image.tt0',0.7115,[512,596,0,0]),(self.img+'.pbcor.image.alpha',-1.2540572,[512,596,0,0]),(self.img+'.pbcor.workdirectory/' + self.img + '.pb.alpha',0.027015,[512,596,0,0])])
           
-          self.checkfinal(report1 + report2 + report3 + report4 + '\n Warning: values must be theoretically validated')
+          self.assertTrue(self.check_final(report1 + report2 + report3 + report4 + '\n Warning: values must be theoretically validated'))
           
 #############################
      #
@@ -3893,7 +3884,7 @@ class test_mosaic_mtmfs(testref_base):
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report2=self.th.checkall(imgval=[(self.img+'.image.tt0',0.450807213783 ,[512,596,0,0]),(self.img+'.pb.tt0',0.514419734478,[512,596,0,0]),(self.img+'.alpha',-1.6693893671,[512,596,0,0])])
-          self.checkfinal(report1+report2)
+          self.assertTrue(self.check_final(report1+report2))
 
      def test_mtmfs_mosaic_cbFalse_twofield(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -3904,7 +3895,7 @@ class test_mosaic_mtmfs(testref_base):
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report2=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.982747793198,[512,596,0,0]),(self.img+'.pb.tt0', 0.982510685921,[512,596,0,0]),(self.img+'.alpha', -0.69006639719,[512,596,0,0])])
-          self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
+          self.assertTrue(self.check_final(report1 + report2 + '\n Warning: values must be theoretically validated'))
       
      def test_mtmfs_mosaic_cbTrue_onefield(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -3915,7 +3906,7 @@ class test_mosaic_mtmfs(testref_base):
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report2=self.th.checkall(imgval=[(self.img+'.image.tt0',0.494806170464,[512,596,0,0]),(self.img+'.pb.tt0', 0.492951124907,[512,596,0,0]),(self.img+'.alpha',-0.548104763031,[512,596,0,0])])
-          self.checkfinal(report1 + report2)
+          self.assertTrue(self.check_final(report1 + report2))
      
      def test_mtmfs_mosaic_cbTrue_twofield(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -3926,7 +3917,7 @@ class test_mosaic_mtmfs(testref_base):
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report2=self.th.checkall(imgval=[(self.img+'.image.tt0',0.989150226116,[512,596,0,0]),(self.img+'.pb.tt0',0.987243115902,[512,596,0,0]),(self.img+'.alpha',-0.771613717079,[512,596,0,0])])
-          self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
+          self.assertTrue(self.check_final(report1 + report2 + '\n Warning: values must be theoretically validated'))
           
           ###################    
      def test_mtmfs_mosaic_cbTrue_onefield_use_standard_psf(self):
@@ -3952,7 +3943,7 @@ class test_mosaic_mtmfs(testref_base):
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field,cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,calcres=False, calcpsf=False,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
 
           report=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.492902100086 ,[512,596,0,0]),(self.img+'.pb.tt0',   0.492951124907 ,[512,596,0,0]),(self.img+'.alpha',    -0.591838240623,[512,596,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
              
      def test_mtmfs_mosaic_cbTrue_twofield_use_standard_psf(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -3976,7 +3967,7 @@ class test_mosaic_mtmfs(testref_base):
           ## Restart tclean with calcres=False and calcpsf=False
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field,cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,calcres=False, calcpsf=False,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
           report=self.th.checkall(imgval=[(self.img+'.image.tt0',  0.982702195644,[512,596,0,0]),(self.img+'.pb.tt0', 0.987243115902,[512,596,0,0]),(self.img+'.alpha',  -0.55044066906,[512,596,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
 
 #############################        
 
@@ -3991,7 +3982,7 @@ class test_mosaic_mtmfs(testref_base):
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field, cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report2=self.th.checkall(imgval=[(self.img+'.image.tt0',0.451119929552,[512,596,0,0]),(self.img+'.pb.tt0',0.507527530193,[512,596,0,0]),(self.img+'.alpha',-1.65221953392,[512,596,0,0])])
-          self.checkfinal(report1 + report2)
+          self.assertTrue(self.check_final(report1 + report2))
 
 
      def test_mtmfs_awproject_cbFalse_twofield(self):
@@ -4006,7 +3997,7 @@ class test_mosaic_mtmfs(testref_base):
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject', field=field,  cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report2=self.th.checkall(imgval=[(self.img+'.image.tt0',0.975049376488,[512,596,0,0]),(self.img+'.pb.tt0',0.979141950607,[512,596,0,0]),(self.img+'.alpha',-0.80353230238,[512,596,0,0])])
-          self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
+          self.assertTrue(self.check_final(report1 + report2 + '\n Warning: values must be theoretically validated'))
           
      def test_mtmfs_awproject_cbTrue_onefield(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -4019,7 +4010,7 @@ class test_mosaic_mtmfs(testref_base):
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,  cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report2=self.th.checkall(imgval=[(self.img+'.image.tt0',0.482177525759,[512,596,0,0]),(self.img+'.pb.tt0', 0.479197442532,[512,596,0,0]),(self.img+'.alpha',  -0.568624258041,[512,596,0,0])])
-          self.checkfinal(report1 + report2)
+          self.assertTrue(self.check_final(report1 + report2))
              
      def test_mtmfs_awproject_cbTrue_twofield(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -4032,7 +4023,7 @@ class test_mosaic_mtmfs(testref_base):
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,  cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report2=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.97661459446 ,[512,596,0,0]),(self.img+'.pb.tt0',0.979797422886,[512,596,0,0]),(self.img+'.alpha', -0.538577854633 ,[512,596,0,0])])
-          self.checkfinal(report1+report2)
+          self.assertTrue(self.check_final(report1+report2))
 ###################    
      def test_mtmfs_awproject_cbTrue_onefield_use_standard_psf(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -4057,7 +4048,7 @@ class test_mosaic_mtmfs(testref_base):
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,calcres=False, calcpsf=False,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
 
           report=self.th.checkall(imgval=[(self.img+'.image.tt0',0.477585822344,[512,596,0,0]),(self.img+'.pb.tt0',  0.479197412729 ,[512,596,0,0]),(self.img+'.alpha',   -0.569523513317,[512,596,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
              
      def test_mtmfs_awproject_cbTrue_twofield_use_standard_psf(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -4081,7 +4072,7 @@ class test_mosaic_mtmfs(testref_base):
           ## Restart tclean with calcres=False and calcpsf=False
           tclean(vis=self.msfile, imagename=self.img,niter=0,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field,cfcache=self.cfcache, conjbeams=True, wbawp=True, psterm=False,pblimit=0.1,calcres=False, calcpsf=False,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',parallel=self.parallel)
           report=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.974559485912,[512,596,0,0]),(self.img+'.pb.tt0', 0.979797422886,[512,596,0,0]),(self.img+'.alpha',  -0.542647540569,[512,596,0,0])])
-          self.checkfinal(report)
+          self.assertTrue(self.check_final(report))
           
           
      def test_mtmfs_mosaic_cbFalse_onefield_upTrue(self):
@@ -4093,7 +4084,7 @@ class test_mosaic_mtmfs(testref_base):
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, usepointing=True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report2=self.th.checkall(imgval=[(self.img+'.image.tt0',0.450807213783 ,[512,596,0,0]),(self.img+'.pb.tt0',0.514419734478,[512,596,0,0]),(self.img+'.alpha',-1.6693893671,[512,596,0,0])])
-          self.checkfinal(report1+report2)
+          self.assertTrue(self.check_final(report1+report2))
 
      def test_mtmfs_mosaic_cbFalse_twofield_upTrue(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -4104,7 +4095,7 @@ class test_mosaic_mtmfs(testref_base):
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, usepointing=True, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report2=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.982747793198,[512,596,0,0]),(self.img+'.pb.tt0', 0.982510685921,[512,596,0,0]),(self.img+'.alpha', -0.69006639719,[512,596,0,0])])
-          self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
+          self.assertTrue(self.check_final(report1 + report2 + '\n Warning: values must be theoretically validated'))
           
           
           
@@ -4119,7 +4110,7 @@ class test_mosaic_mtmfs(testref_base):
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject',field=field, usepointing=True, cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report2=self.th.checkall(imgval=[(self.img+'.image.tt0',0.451119929552,[512,596,0,0]),(self.img+'.pb.tt0',0.507527530193,[512,596,0,0]),(self.img+'.alpha',-1.65221953392,[512,596,0,0])])
-          self.checkfinal(report1 + report2)
+          self.assertTrue(self.check_final(report1 + report2))
 
 
      def test_mtmfs_awproject_cbFalse_twofield_upTrue(self):
@@ -4134,14 +4125,22 @@ class test_mosaic_mtmfs(testref_base):
           
           tclean(vis=self.msfile, imagename=self.img,niter=10,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='awproject', field=field,  usepointing=True, cfcache=self.cfcache, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel)
           report2=self.th.checkall(imgval=[(self.img+'.image.tt0',0.975049376488,[512,596,0,0]),(self.img+'.pb.tt0',0.979141950607,[512,596,0,0]),(self.img+'.alpha',-0.80353230238,[512,596,0,0])])
-          self.checkfinal(report1 + report2 + '\n Warning: values must be theoretically validated')
+          self.assertTrue(self.check_final(report1 + report2 + '\n Warning: values must be theoretically validated'))
           
 
+     def test_mtmfs_mosaic_mwFalse_briggs_twofield(self):  ## Added in CAS-13438 to catch failing case (pb os zero). 
+          self.prepData('refim_oneshiftpoint.mosaic.ms')
+          phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
+          field='0,1'
+          tclean(vis=self.msfile, imagename=self.img,niter=5,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel,mosweight=False,weighting='briggs')
+          report1=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.9794,[512,596,0,0]),(self.img+'.pb.tt0', 0.9817,[512,596,0,0]),(self.img+'.alpha', -0.797,[512,596,0,0])])
+          
 ###########################################################
 ###########################################################
 ###########################################################
 class test_mosaic_cube(testref_base):
-     @unittest.skip('Skip test.')
+     
+     @unittest.skip('Skip test.') #Skip until CAS-13420 is resolved
      def test_mosaic_briggsbwtaper(self):
           self.prepData('refim_alma_mosaic.ms')
           
@@ -4164,7 +4163,7 @@ class test_mosaic_cube(testref_base):
           
           self.assertTrue(self.th.check_beam_compare(self.img+'1.image', self.img+'2.image'))
           
-          self.checkfinal(pstr = report1+report2+report3+report4+report5)
+          self.assertTrue(self.check_final(pstr = report1+report2+report3+report4+report5))
 
 
      def test_cube_standard_onefield(self):
@@ -4191,7 +4190,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index, -0.505622766021, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
      
      def test_cube_standard_twofield(self):
           """ [mosaic_cube] Test_cube_standard_twofield : two field, cube imaging with standard gridder  """
@@ -4218,7 +4217,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index, -1.24979542771, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
      
 ###########################################################
      def test_cube_mosaic_cbFalse_mwFalse_onefield(self):
@@ -4244,7 +4243,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index,  -0.48920856272, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
           
      def test_cube_mosaic_cbFalse_mwFalse_twofield(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -4270,7 +4269,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index, -0.500876470767, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
            
      def test_cube_mosaic_cbFalse_mwTrue_onefield(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -4295,7 +4294,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index,  -0.48920856272, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
 
      def test_cube_mosaic_cbFalse_mwTrue_twofield(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -4320,7 +4319,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index, -0.50087647076, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
 #####################################################  
      #@unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_cube_awproject_cbFalse_mwFalse_onefield(self):
@@ -4348,7 +4347,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index,  -0.618663982179, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
           
      #@unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_cube_awproject_cbFalse_mwFalse_twofield(self):
@@ -4376,7 +4375,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index, -0.569002802902, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
           
      #@unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_cube_awproject_cbFalse_mwTrue_onefield(self):
@@ -4404,7 +4403,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index,  -0.61866398217, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
           
      #@unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_cube_awproject_cbFalse_mwTrue_twofield(self):
@@ -4432,7 +4431,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index, -0.569002802902, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4) 
+          self.assertTrue(self.check_final(report1+report2+report3+report4)) 
           
 #####################################################  
 ##################################################### 
@@ -4460,7 +4459,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index,  -0.48920856272, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
           
      def test_cube_mosaic_cbFalse_mwFalse_twofield_upTrue(self):
           self.prepData('refim_oneshiftpoint.mosaic.ms')
@@ -4486,7 +4485,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index, -0.500876470767, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
 
      #@unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_cube_awproject_cbFalse_mwFalse_onefield_upTrue(self):
@@ -4514,7 +4513,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index,  -0.618663982179, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
           
      #@unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      def test_cube_awproject_cbFalse_mwFalse_twofield_upTrue(self):
@@ -4542,7 +4541,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           _, report4 = self.th.check_val(spectral_index, -0.569002802902, valname='Spectral flux', exact=False)
-          self.checkfinal(report1+report2+report3+report4)
+          self.assertTrue(self.check_final(report1+report2+report3+report4))
 
 ######
 # wprojecton tests 
@@ -4570,7 +4569,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           report4 = self.th.check_val(spectral_index,  -0.511338498497, valname='Spectral flux', exact=False)
-          self.checkfinal(str(report1)+str(report2)+str(report3)+str(report4))
+          self.assertTrue(self.check_final(str(report1)+str(report2)+str(report3)+str(report4)))
 
      def test_cube_wproj_onefield_autowprojplanes(self):
           """ [test_mosaic_cube] test_cube_wproj_onefield_autowprojplanes : One field, widefield cube imaging, gridder='wproject', automaticalluy calculate wprojplanes  """
@@ -4597,7 +4596,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           report4 = self.th.check_val(spectral_index,  -0.511338498497, valname='Spectral flux', exact=False)
-          self.checkfinal(str(report1)+str(report2)+str(report3)+str(report4))
+          self.assertTrue(self.check_final(str(report1)+str(report2)+str(report3)+str(report4)))
           
      def test_cube_wproj_twofield(self):
           """ [test_mosaic_cube] test_cube_wproj_twofield : Two fields, widefield cube imaging with wprojection """
@@ -4624,7 +4623,7 @@ class test_mosaic_cube(testref_base):
           v2 = 1.8 #In GHz
           spectral_index = np.log(source_flux_v0/source_flux_v2)/np.log(v0/v2)
           report4 = self.th.check_val(spectral_index, -1.24130281995, valname='Spectral flux', exact=False)
-          self.checkfinal(str(report1)+str(report2)+str(report3)+str(report4))
+          self.assertTrue(self.check_final(str(report1)+str(report2)+str(report3)+str(report4)))
 
 ###########################################################
 ###########################################################
@@ -4673,7 +4672,7 @@ class test_ephemeris(testref_base):
           _, report3 = self.th.check_val(result, True, valname='Position shift lass than 10% of angular resolution', exact=True)
 
           report = report1 + report2 + report3
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
 
      def test_onefield_cube_eph(self):
@@ -4718,7 +4717,7 @@ class test_ephemeris(testref_base):
           _, report3 = self.th.check_val(result, True, valname='Position shift lass than 10% of angular resolution', exact=True)
 
           report = report1 + report2 + report3
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
 
      def test_multifield_mfs_eph(self):
@@ -4763,7 +4762,7 @@ class test_ephemeris(testref_base):
           _, report3 = self.th.check_val(result, True, valname='Position shift lass than 10% of angular resolution', exact=True)
 
           report = report1 + report2 + report3
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
 
      def test_multifield_cube_eph(self):
@@ -4808,7 +4807,7 @@ class test_ephemeris(testref_base):
           _, report3 = self.th.check_val(result, True, valname='Position shift lass than 10% of angular resolution', exact=True)
 
           report = report1 + report2 + report3
-          self.checkfinal(pstr=report)
+          self.assertTrue(self.check_final(pstr=report))
 
 
 class test_errors_failures(testref_base):
