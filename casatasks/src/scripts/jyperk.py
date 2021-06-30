@@ -97,7 +97,7 @@ class InterpolationParamsGenerator():
         timerange, antenna_names, basebands, mean_freqs, spwnames = cls._extract_msmetadata(science_windows, vis)
 
         mean_freqs = cls._get_mean_freqs(vis, science_windows)
-        bands = Bands.get(science_windows, spwnames, mean_freqs)
+        bands = Bands.get(science_windows, spwnames, mean_freqs, vis)
 
         params['date'] = cls._mjd_to_datestring(timerange['begin'])
         params['temperature'] = cls._get_mean_temperature(vis)
@@ -175,39 +175,60 @@ class ModelFitParamsGenerator(InterpolationParamsGenerator):
 
 class Bands():
     @classmethod
-    def get(cls, science_windows, spwnames, mean_freqs):
-        bands = cls._extract_bands_from_avalilable_devide_mean(science_windows, spwnames)
-        available_mean_freqs, unavailable_mean_freqs = cls._devide_mean_freqs_by_availability(science_windows, spwnames, mean_freqs)
-        bands.update(cls._extract_bands_from_unavalilable_devide_mean(available_mean_freqs, unavailable_mean_freqs, bands))
+    def get(cls, science_windows, spwnames, mean_freqs, vis):
+        """ Return all bands corresponding to the 'science_window' given in the input.
+        First the method scan 'spwnames', if the band can be detect, the method will
+        adopt this value. In other case, the method compare the freq with the 'mean_freqs'
+        at which the band was detect, the method detect the band from the frequencies 
+        that are closest to the result.
+        """
+        bands = cls._extract_bands_from_spwnames(science_windows, spwnames)
+        mean_freqs_with_undetected_band = cls._filter_mean_freqs_with_undetected_band(
+                                            science_windows, spwnames, mean_freqs)
+        if len(mean_freqs_with_undetected_band) > 0:
+            bands.update(
+                cls._detect_bands_from_mean_freqs(mean_freqs_with_undetected_band, vis)
+            )
         return bands
 
     @staticmethod
-    def _extract_bands_from_avalilable_devide_mean(science_windows, spwnames):
+    def _extract_bands_from_spwnames(science_windows, spwnames):
+        """ Extract bands that contain band information in the spwname.
+        The spwnames is like 'X835577456#ALMA_RB_06#BB_2#SW-01#CH_AVG'.
+        """
         bands = {}
-        for i, spwname in zip(science_windows, spwnames):
+        for sw, spwname in zip(science_windows, spwnames):
             if 'ALMA_RB_' in spwname:
-                bands[i] = int(re.findall(r'^.*?ALMA_RB_(\d+)#.*', spwname)[0])
+                bands[sw] = int(re.findall(r'^.*?ALMA_RB_(\d+)#.*', spwname)[0])
         return bands
 
     @staticmethod
-    def _devide_mean_freqs_by_availability(science_windows, spwnames, mean_freqs):
-        available_mean_freqs = {}
-        unavailable_mean_freqs = {}
-        for i, spwname in zip(science_windows, spwnames):
-            if 'ALMA_RB_' in spwname:
-                available_mean_freqs[i] = mean_freqs[i]
-            else:
-                unavailable_mean_freqs[i] = mean_freqs[i]
-                
-        return available_mean_freqs, unavailable_mean_freqs
+    def _filter_mean_freqs_with_undetected_band(science_windows, spwnames, mean_freqs):
+        """ Filter mean freqs without 'ALMA_RB_'.
+        """
+        filtered_mean_freqs = {}
+        for sw, spwname in zip(science_windows, spwnames):
+            if not 'ALMA_RB_' in spwname:
+                filtered_mean_freqs[sw] = mean_freqs[sw]
+        return filtered_mean_freqs
 
     @staticmethod
-    def _extract_bands_from_unavalilable_devide_mean(available_mean_freqs, unavailable_mean_freqs, bands):
-        unavailable_bands = {}
-        for spw, mean_freq in unavailable_mean_freqs.items():
-            nearest_spw = Bands._calc_nearest_spw(available_mean_freqs, mean_freq)
-            unavailable_bands[spw] = bands[nearest_spw]
-        return unavailable_bands
+    def _detect_bands_from_mean_freqs(target_mean_freqs, vis):
+        """ Extract bands using the mean freqs.
+        
+        Params:
+            target_mean_freqs {dict}: The mean freqs which does not been detected the bands.
+            vis {char}: The file path of vis.
+        """
+        known_bands = Bands._get_known_bands(vis)
+        science_windows = list(known_bands.keys())
+        mean_freqs = Bands._extract_mean_freqs(science_windows, vis)
+
+        extracted_bands = {}
+        for spw, target_mean_freq in target_mean_freqs.items():
+            nearest_spw = Bands._calc_nearest_spw(mean_freqs, target_mean_freq)
+            extracted_bands[spw] = known_bands[nearest_spw]
+        return extracted_bands
 
     @staticmethod
     def _calc_nearest_spw(available_mean_freqs, mean_freq):
@@ -215,6 +236,34 @@ class Bands():
         available_spw = list(available_mean_freqs.keys())
         nearest_i = np.argmin(np.abs(np.array(available_mean_freqs_list) - mean_freq))
         return available_spw[nearest_i]
+
+
+    @staticmethod
+    def _get_spwnames(vis, science_windows):
+        with toolmanager(vis, msmetadata) as msmd:
+            spwnames = msmd.namesforspws(science_windows)
+        return spwnames
+
+    @staticmethod
+    def _get_known_bands(vis):
+        science_windows = Bands._get_all_science_windows(vis)
+        with toolmanager(vis, msmetadata) as msmd:
+            spwnames = msmd.namesforspws(science_windows)    
+        bands = Bands._extract_bands_from_spwnames(science_windows, spwnames)
+        return bands
+    
+    @staticmethod
+    def _get_all_science_windows(vis):
+        ms = mstool()
+        selected = ms.msseltoindex(vis, spw='*')
+        science_windows = selected['spw']
+        return science_windows
+
+    @staticmethod
+    def _extract_mean_freqs(science_windows, vis):
+        with toolmanager(vis, msmetadata) as msmd:  
+            mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_windows)
+        return mean_freqs
 
 
 class MeanElevation():
