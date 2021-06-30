@@ -168,6 +168,7 @@ test_req_task_uvmodelfit        nschweig@nrao.edu
 test_req_task_imreframe         nschweig@nrao.edu
 test_req_task_accor             nschweig@nrao.edu
 test_req_task_applycal          nschweig@nrao.edu
+test_req_task_blcal             nschweig@nrao.edu
 test_req_task_fixplanets        nschweig@nrao.edu
 test_req_task_fluxscale         nschweig@nrao.edu
 test_req_task_listsdm           nschweig@nrao.edu
@@ -179,6 +180,7 @@ test_req_task_polcal            gmoellen@nrao.edu
 test_req_task_sdintimaging      ttsutsum@nrao.edu
 test_req_task_statwt            dmehring@nrao.edu
 test_req_task_conjugatevis.py   nschweig@nrao.edu
+test_req_task_ft                nschweig@nrao.edu
 test_stk_alma_pipeline_imaging.py  scastro@eso.org
 
 # Casaguide List
