@@ -4,6 +4,7 @@ import os
 import numpy
 import numpy.random as random
 import shutil
+import sdutil
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -71,9 +72,8 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
     casalog.origin('sdgaincal')
     
     # Calibrater tool
-    mycb = calibrater()
+    with sdutil.cbmanager() as mycb:
 
-    try:
         # outfile must be specified
         if (outfile == '') or not isinstance(outfile, str):
             raise ValueError("outfile is empty.")
@@ -142,5 +142,3 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
         ## reporting calibration solution
         #reportsolvestats(mycb.activityrec());
     
-    finally:
-        mycb.close()
