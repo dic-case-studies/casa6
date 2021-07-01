@@ -83,12 +83,12 @@ public:
 
   void switchedToHogbom();
   void setOrigDirty(const casacore::Matrix<casacore::Float>& dirty);
-  void setFusedThreshold(const casacore::Float fusedThreshold = 0.0) { itsFusedThreshold = fusedThreshold; } 
+  void setFusedThreshold(const casacore::Float fusedThreshold = 0.0) { itsFusedThreshold = fusedThreshold; }
 
   // setter/getter
   float getterPsfWidth() { return itsPsfWidth; }
   bool getterSwitchedHogbom() { return itsSwitchedToHogbom; }
-  // casacore::Matrix<casacore::Float>  getterResidual() { return (*itsDirty); }
+  casacore::Matrix<casacore::Float>  getterResidual() { return (*itsDirty); }
   float getterPeakResidual() { return itsPeakResidual; }
 
 
@@ -159,11 +159,13 @@ private:
   casacore::Float itsOptimumScaleSize;
   double itsUsedMemoryMB;
   float itsPeakResidual;
+  float itsPrevPeakResidual;
   casacore::CountedPtr<casacore::Matrix<casacore::Float> > itsOrigDirty;
 
   const casacore::Int itsDefaultNorm = 1;
   casacore::Int itsNormMethod;
   casacore::Float itsFusedThreshold;
+  unsigned int itsNumNoChange; // number of times peakres rarely changes
 };
 
 } //# NAMESPACE CASA - END
