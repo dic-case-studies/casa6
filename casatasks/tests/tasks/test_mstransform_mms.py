@@ -19,7 +19,7 @@ try:
     from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
     CASA6 = True
 
-    # CASA6 doesn't need default, and casatasks doesn't have default
+    # CASA6 doesn't need default(), and casatasks doesn't have default()
     def default(atask):
         pass
 
@@ -253,7 +253,7 @@ class test_mms_transformations(test_base):
 
     def tearDown(self):
         os.system('rm -rf '+ self.vis)
-        # os.system('rm -rf '+ self.outputms)
+        os.system('rm -rf '+ self.outputms)
         os.system('rm -rf inpmms*.*ms combcvel*ms testmms*ms list.obs')
 
     def test_combspw1_3(self):
@@ -495,9 +495,9 @@ class test_mms_freqavg(test_base):
         self.assertTrue(os.path.exists(self.outputms))
 
         # Output should be:
-        # spw=0 1 channel
-        # spw=1 32 channels
-        # spw=3 13 channels
+        # spw 10=>0 1 channel
+        # spw 12=>1 32 channels
+        # spw 20=>2 12 channels
         ret = th.verifyMS(self.outputms, 3, 1, 0, ignoreflags=True)
         self.assertTrue(ret[0],ret[1])
         ret = th.verifyMS(self.outputms, 3, 32, 1, ignoreflags=True)
@@ -505,29 +505,24 @@ class test_mms_freqavg(test_base):
         ret = th.verifyMS(self.outputms, 3, 12, 2, ignoreflags=True)
         self.assertTrue(ret[0],ret[1])
 
-    @unittest.skipIf(CASA6, "Skip because of current known issue with spw/chanbin sorting"
-                     "in CASA6/Python3")
     def test_freqavg9(self):
         '''mstransform: Average using different bins and a channel selection, output MMS'''
         self.outputms = "favg9.ms"
-        # if CASA6:
-        #     mstransform(vis=self.vis, outputvis=self.outputms, spw='10:1~10,2,12', chanaverage=True,
-        #                 chanbin=[5,32,128], createmms=True, separationaxis='spw',numsubms='auto')
-        # else:
-        mstransform(vis=self.vis, outputvis=self.outputms, spw='2,12,10:1~10', chanaverage=True,
-                    chanbin=[32,128,5], createmms=True, separationaxis='spw',numsubms='auto')
+        mstransform(vis=self.vis, outputvis=self.outputms, createmms=True,
+                    spw='2,12,10:1~10', chanaverage=True, chanbin=[32,128,5],
+                    separationaxis='spw', numsubms='auto')
 
         self.assertTrue(os.path.exists(self.outputms))
 
         # Output should be:
-        # spw=0 4 channels
-        # spw=1 1 channel
-        # spw=2 2 channels
+        # spw  2=>0 4 channels
+        # spw 10=>1 2 channels
+        # spw 12->2 1 channel
         ret = th.verifyMS(self.outputms, 3, 4, 0, ignoreflags=True)
         self.assertTrue(ret[0],ret[1])
-        ret = th.verifyMS(self.outputms, 3, 1, 1, ignoreflags=True)
+        ret = th.verifyMS(self.outputms, 3, 2, 1, ignoreflags=True)
         self.assertTrue(ret[0],ret[1])
-        ret = th.verifyMS(self.outputms, 3, 2, 2, ignoreflags=True)
+        ret = th.verifyMS(self.outputms, 3, 1, 2, ignoreflags=True)
         self.assertTrue(ret[0],ret[1])
 
         # Verify that some sub-tables are properly re-indexed.

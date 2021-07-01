@@ -333,6 +333,36 @@ class exportasdm_test(unittest.TestCase):
         omsname = "test"+str(12)+self.out
         os.system('rm -rf '+omsname+'; mv  asdmasdm '+omsname)
 
+    def test12_datacolumn_uppercase(self):
+        '''Test 12: v3, ALMA MS from uid___A002_X72bc38_X000 scan 2, only XX and YY'''
+        myvis = self.vis_i
+        os.system('rm -rf asdmasdm asdm-reimp.ms')
+
+        self.rval = exportasdm(vis=myvis, asdm='asdmasdm', apcorrected=False, verbose=True, datacolumn='DATA')
+        self.rval = self.rval and importasdm(asdm='asdmasdm', vis='asdm-reimp.ms', verbose=True)
+
+        self.rval = self.rval  and th.compmsmainnumcol(myvis, 'asdm-reimp.ms', 1E-5)
+        self.rval = self.rval and th.compmsmainboolcol(myvis, 'asdm-reimp.ms')
+
+        self.assertNotEqual(self.rval,False)
+        omsname = "test"+str(12)+self.out
+        os.system('rm -rf '+omsname+'; mv  asdmasdm '+omsname)
+
+    def test12_datacolumn_lowercase(self):
+        '''Test 12: v3, ALMA MS from uid___A002_X72bc38_X000 scan 2, only XX and YY'''
+        myvis = self.vis_i
+        os.system('rm -rf asdmasdm asdm-reimp.ms')
+
+        self.rval = exportasdm(vis=myvis, asdm='asdmasdm', apcorrected=False, verbose=True, datacolumn='data')
+        self.rval = self.rval and importasdm(asdm='asdmasdm', vis='asdm-reimp.ms', verbose=True)
+
+        self.rval = self.rval  and th.compmsmainnumcol(myvis, 'asdm-reimp.ms', 1E-5)
+        self.rval = self.rval and th.compmsmainboolcol(myvis, 'asdm-reimp.ms')
+
+        self.assertNotEqual(self.rval,False)
+        omsname = "test"+str(12)+self.out
+        os.system('rm -rf '+omsname+'; mv  asdmasdm '+omsname)
+
 class exportasdm_test2(unittest.TestCase):
 
     vis_b = 'test.ms'

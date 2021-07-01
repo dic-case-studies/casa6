@@ -705,6 +705,41 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
                      }
 
         self._compareStats(theresult, reference)
+
+    def test001_uppercase_params(self):
+        """Basic Test 001: simple successful case: blfunc = 'poly', maskmode = 'list' and masklist=[] (no mask)"""
+        tid = '001'
+        infile = self.infile
+        outfile = self.outroot+tid+'.ms'
+        datacolumn = 'FLOAT_DATA'
+        maskmode = 'LIST'
+        blfunc = 'POLY'
+        spw = '3'
+        pol = 'LL'
+        overwrite = True
+        result = sdbaseline(infile=infile, datacolumn=datacolumn,
+                             maskmode=maskmode, blfunc=blfunc, 
+                             spw=spw, pol=pol, outfile=outfile,
+                             overwrite=overwrite)
+        # sdbaseline returns None if it runs successfully
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        # uncomment the next line once blparam file can be output
+        #self._compareBLparam(outfile+"_blparam.txt",self.blrefroot+tid)
+        results = self._getStats(outfile)
+        print(self._getStats(outfile))
+        theresult = None
+        for i in range(len(results)):
+            theresult = results[i]
+
+        reference = {'rms': 0.16677055621054496,
+                     'min': -2.5817961692810059,
+                     'max': 1.3842859268188477,
+                     'median': -0.00086212158203125,
+                     'stddev': 0.16677055621054496,
+                     }
+
+        self._compareStats(theresult, reference)
     
     def test002(self):
         """Basic Test 002: simple successful case: blfunc = 'chebyshev', maskmode = 'list' and masklist=[] (no mask)"""
@@ -1020,6 +1055,10 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
     test023 --- sinusoid-related parameters with default values
     test024 --- addwn has too large value but rejwn removes it
     
+    test021_uppercase_params --- specify fftthresh by 'SIGMA' + checking residual rms
+    test022_uppercase_params --- specify fftthresh by 'TOP' + checking residual rms
+    test025_uppercase_params --- specify fftmethod by 'FFT'    
+
     test100 --- no effective wave number set (addwn empty list, applyfft=False)
     test101 --- no effective wave number set (addwn empty list, applyfft=True)
     test102 --- no effective wave number set (addwn empty tuple, applyfft=False)
@@ -1355,6 +1394,22 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         stat = self._getStats(filename=outfile, pol='0')
         self.assertTrue(stat[0]['rms'] < torr)
 
+    def test021_uppercase_params(self):
+        """Sinusoid Test 021: specify fftthresh by 'SIGMA' + checking residual rms"""
+        tid = '021'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'FLOAT_DATA'
+        addwn = '0'
+        fftthresh = '3.0SIGMA'
+        torr = 1.0e-6
+        result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
+                             blfunc='sinusoid',addwn=addwn,applyfft=True,fftthresh=fftthresh)
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
     def test022(self):
         """Sinusoid Test 022: specify fftthresh by 'top' + checking residual rms"""
         tid = '022'
@@ -1363,6 +1418,22 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         datacolumn = 'float_data'
         addwn = '0'
         fftthresh = 'top4'
+        torr = 1.0e-6
+        result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
+                             blfunc='sinusoid',addwn=addwn,applyfft=True,fftthresh=fftthresh)
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
+    def test022_uppercase_params(self):
+        """Sinusoid Test 022: specify fftthresh by 'TOP' + checking residual rms"""
+        tid = '022'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'FLOAT_DATA'
+        addwn = '0'
+        fftthresh = 'TOP4'
         torr = 1.0e-6
         result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                              blfunc='sinusoid',addwn=addwn,applyfft=True,fftthresh=fftthresh)
@@ -1395,8 +1466,24 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
                              blfunc='sinusoid',applyfft=applyfft,addwn=addwn,rejwn=rejwn)
         self.assertEqual(result,None,
                          msg="The task returned '"+str(result)+"' instead of None")
-        
-        
+
+    def test025_uppercase_params(self):
+        """Sinusoid Test 025: specify fftmethod by 'FFT' + checking residual rms"""
+        tid = '025'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'FLOAT_DATA'
+        addwn = '0'
+        fftmethod = 'FFT'
+        fftthresh = '3.0SIGMA'
+        torr = 1.0e-6
+        result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
+                             blfunc='sinusoid',addwn=addwn,applyfft=True,fftmethod=fftmethod,fftthresh=fftthresh)
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
     def test100(self):
         """Sinusoid Test 100: no effective wave number set (addwn empty list, applyfft=False)"""
         tid = '100'
@@ -2024,7 +2111,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 self.assertEqual(not is_skipped, tb.getcell('APPLY', irow)[ipol][0]);
                 if is_skipped: continue
             
-                self.assertEqual(self.ftype[blparam['btype'][i]], tb.getcell('FUNC_TYPE', irow)[ipol][0]);
+                self.assertEqual(self.ftype[blparam['btype'][i].lower()], tb.getcell('FUNC_TYPE', irow)[ipol][0]);
                 fparam_key = 'order' if (blparam['btype'][i] != 'cspline') else 'npiec'
                 self.assertEqual(blparam[fparam_key][i], tb.getcell('FUNC_PARAM', irow)[ipol][0])
             
@@ -2055,7 +2142,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         tb.open(bltable)
         for irow in range(tb.nrows()):
             for ipol in range(len(tb.getcell('RMS', irow))):
-                self.assertEqual(tb.getcell('FUNC_TYPE', irow)[ipol], self.ftype[blfunc])
+                self.assertEqual(tb.getcell('FUNC_TYPE', irow)[ipol], self.ftype[blfunc.lower()])
                 self.assertEqual(tb.getcell('FUNC_PARAM', irow)[ipol], order)
                 ref = self._getStats(filename=outms, spw=str(irow), pol=str(ipol), mask=mask[irow])
                 # tolerance value in the next line is temporarily set a bit large 
@@ -2145,6 +2232,40 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
             self._checkValue(rms_s0p0_ms[i], msresult[0]['stddev'], 1.0e-6)
 
             fparam = npiece if blfunc[i] == 'cspline' else order
+            self._checkBltable(outfile, bloutput, blfunc[i], fparam, mask)
+
+    def test301_uppercase_params(self):
+        """test301: poly/chebyshev/cspline baselining, output bltable"""
+        self.tid='301'
+        infile = self.infile
+        datacolumn='FLOAT_DATA'
+        spw='0:1000~3500;5000~7500,1:500~7500,2:500~2500;3500~7500'
+        mask=[ [[1000,3500],[5000,7500]],
+               [[500,7500]],
+               [[500,2500],[3500,7500]]
+               ]
+        blmode='FIT'
+        blformat='TABLE'
+        dosubtract=True
+        blfunc=['POLY','CHEBYSHEV','CSPLINE']
+        order=5
+        npiece=4
+        rms_s0p0_ms = [0.150905484071, 0.150905484071, 0.149185846787]
+
+        for i in range(len(blfunc)):
+            print('testing blfunc='+blfunc[i]+'...')
+            outfile = self.outroot+self.tid+blfunc[i]+'.ms'
+            bloutput= self.outroot+self.tid+blfunc[i]+'.bltable'
+            result = sdbaseline(infile=infile,datacolumn=datacolumn,
+                                 blmode=blmode,blformat=blformat,bloutput=bloutput,
+                                 spw=spw,blfunc=blfunc[i],order=order,npiece=npiece,
+                                 dosubtract=dosubtract,outfile=outfile)
+            self.assertEqual(result,None,
+                             msg="The task returned '"+str(result)+"' instead of None")
+            msresult = self._getStats(filename=outfile, spw='0', pol='0', mask=mask[0])
+            self._checkValue(rms_s0p0_ms[i], msresult[0]['stddev'], 1.0e-6)
+
+            fparam = npiece if blfunc[i] == 'CSPLINE' else order
             self._checkBltable(outfile, bloutput, blfunc[i], fparam, mask)
 
     def test302(self):
@@ -2359,6 +2480,17 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
         outfile = self.outroot+self.tid+'.ms'
         result = sdbaseline(infile=self.infile,datacolumn='float_data',
                              blmode=self.blmode,bltable=self.bltable,
+                             outfile=outfile)
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        self._checkResult(outfile, '')
+
+    def test400_uppercase_params(self):
+        """test400: apply baseline table with blmode='APPLY'. all bltable entries applied to all MS data."""
+        self.tid = '400'
+        outfile = self.outroot+self.tid+'.ms'
+        result = sdbaseline(infile=self.infile,datacolumn='float_data',
+                             blmode=self.blmode.upper(),bltable=self.bltable,
                              outfile=outfile)
         self.assertEqual(result,None,
                          msg="The task returned '"+str(result)+"' instead of None")
