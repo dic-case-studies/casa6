@@ -249,7 +249,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   Int stopPointModeCounter = 0;
   Float tmpMaximumResidual = 0.0;
 
-  os << "Starting iteration"<< LogIO::POST;
+  os <<LogIO::NORMAL3<< "Starting iteration"<< LogIO::POST;
   vector<Float> tempScaleSizes;
   itsIteration = itsStartingIter; // 0
 
@@ -271,7 +271,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     itsIteration++;
 
     // make single optimized scale image
-    os << "Making optimized scale " << itsOptimumScaleSize << LogIO::POST;
+    os << LogIO::NORMAL3<<"Making optimized scale " << itsOptimumScaleSize << LogIO::POST;
 
     if (itsSwitchedToHogbom)
     {
@@ -304,7 +304,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
          || abs(itsStrengthOptimum) < (5e-4 * itsFusedThreshold))) // GSL, CygA. 
       	// 5e-4 is a experimental number here assuming under that threshold itsStrengthOptimum is too small to take affect.  
       {
-  	    os << "Switch to hogbom b/c peak residual or optimum strength is small enough: " << itsFusedThreshold << LogIO::POST;
+  	    os <<LogIO::NORMAL3 << "Switch to hogbom b/c peak residual or optimum strength is small enough: " << itsFusedThreshold << LogIO::POST;
   	    switchedToHogbom();
       }
       /*if (!itsSwitchedToHogbom && abs(itsPeakResidual) < 1.3e-3) // Points 
@@ -332,11 +332,11 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     {
       itsMaximumResidual = abs(itsStrengthOptimum);
       tmpMaximumResidual = itsMaximumResidual;
-      os << "Initial maximum residual is " << itsMaximumResidual;
+      os <<LogIO::NORMAL3 << "Initial maximum residual is " << itsMaximumResidual;
       if( !itsMask.null() )
-        os << " within the mask ";
+        os <<LogIO::NORMAL3 << " within the mask ";
 
-      os << LogIO::POST;
+      os <<LogIO::NORMAL3 << LogIO::POST;
     }
 
     // Various ways of stopping:
@@ -344,9 +344,9 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < (1e-6 * itsFusedThreshold))
     {
     	//cout << "Reached stopping threshold " << 1e-6 * itsFusedThreshold << " at iteration "<< ii << endl;
-      os << "Reached stopping threshold " << 1e-6 * itsFusedThreshold << " at iteration "<<
+      os <<LogIO::NORMAL3 << "Reached stopping threshold " << 1e-6 * itsFusedThreshold << " at iteration "<<
             ii << LogIO::POST;
-      os << "Optimum flux is " << abs(itsStrengthOptimum) << LogIO::POST;
+      os <<LogIO::NORMAL3 << "Optimum flux is " << abs(itsStrengthOptimum) << LogIO::POST;
       converged = 1;
       break;
     }
@@ -355,7 +355,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     	  itsOptimumScale == (itsNInitScales - 1) &&
         itsStrengthOptimum < 0.0)
     {
-      os << "Reached negative on largest scale" << LogIO::POST;
+      os <<LogIO::NORMAL3 << "Reached negative on largest scale" << LogIO::POST;
       converged = -2;
       break;
     }
@@ -369,7 +369,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
 
       if (stopPointModeCounter >= itsStopPointMode)
       {
-        os << "Cleaned " << stopPointModeCounter <<
+        os <<LogIO::NORMAL3 << "Cleaned " << stopPointModeCounter <<
           " consecutive components from the smallest scale, stopping prematurely"
            << LogIO::POST;
         itsDidStopPointMode = true;
@@ -383,8 +383,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
        && !(itsStopAtLargeScaleNegative))
     {
       cout << "Diverging due to large scale?" << endl;
-      os << "Diverging due to large scale?" << LogIO::POST;
-      os << "itsStrengthOptimum " << itsStrengthOptimum << " tmp " << tmpMaximumResidual << LogIO::POST;
+      os <<LogIO::NORMAL3 << "Diverging due to large scale?" << LogIO::POST;
+      os <<LogIO::NORMAL3 << "itsStrengthOptimum " << itsStrengthOptimum << " tmp " << tmpMaximumResidual << LogIO::POST;
        //clean is diverging most probably due to the large scale
       converged=-2;
       break;
@@ -392,18 +392,18 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     //5. Diverging for some other reason; may just need another CS-style reconciling
     if((abs(itsStrengthOptimum)-abs(tmpMaximumResidual)) > (abs(tmpMaximumResidual)/2.0))
     {
-      os << "Diverging due to unknown reason" << LogIO::POST;
+      os <<LogIO::NORMAL3 << "Diverging due to unknown reason" << LogIO::POST;
       converged=-3;
       break;
     }
 
     if (itsIteration == itsStartingIter + 1)
-      os << "iteration    MaximumResidual   CleanedFlux" << LogIO::POST;
+      os <<LogIO::NORMAL3 << "iteration    MaximumResidual   CleanedFlux" << LogIO::POST;
     if ((itsIteration % (itsMaxNiter/10 > 0 ? itsMaxNiter/10 : 1)) == 0)
     {
       //Good place to re-up the fiducial maximum residual
       //tmpMaximumResidual=abs(itsStrengthOptimum);
-      os << itsIteration <<"      "<<itsStrengthOptimum<<"      "
+      os <<LogIO::NORMAL3 << itsIteration <<"      "<<itsStrengthOptimum<<"      "
          << totalFlux <<LogIO::POST;
     }
 
@@ -453,7 +453,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     cout << "itsDirty pos " << peakpos << " maxval " << (*itsDirty)(peakpos) << endl;
     cout << "itsPositionOptimum " << itsPositionOptimum << endl;    
     cout << " maxPsfSub " << max(fabs(psfSub)) << " maxPsfConvScale " << max(fabs(itsPsfConvScale)) << " itsGain " << itsGain << endl;*/
-    os << "itsStrengthOptimum " << itsStrengthOptimum << LogIO::POST;
+    os <<LogIO::NORMAL3 << "itsStrengthOptimum " << itsStrengthOptimum << LogIO::POST;
 
     // subtract the peak that we found from the dirty image
     dirtySub -= scaleFactor * psfSub;
@@ -540,7 +540,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     IPosition posmax((*itsDirty).shape().nelements(), 0);
     minMaxMasked(minVal, maxVal, posmin, posmax, (*itsDirty), itsInitScaleMasks[0]);
     itsPeakResidual = (fabs(maxVal) > fabs(minVal)) ? fabs(maxVal) : fabs(minVal);
-    os << "current peakres " << itsPeakResidual << LogIO::POST;
+    os <<LogIO::NORMAL3 << "current peakres " << itsPeakResidual << LogIO::POST;
     //cout << "after: itsDirty optPos " << (*itsDirty)(itsPositionOptimum) << endl;
 
     // If we switch to hogbom (i.e. only have 0 scale size),
@@ -550,7 +550,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       if (itsNumHogbomIter == 0)
       {
         itsSwitchedToHogbom = false;
-        os << "switched back to Asp." << LogIO::POST;
+        os <<LogIO::NORMAL3 << "switched back to Asp." << LogIO::POST;
       }
       else
         itsNumHogbomIter -= 1; 

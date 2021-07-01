@@ -145,8 +145,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 					  Float &modelflux,
 					  Int &iterdone)
   {
-    // remove os warnings 2021/06/05
-    //LogIO os( LogOrigin("SDAlgorithmAAspClean","takeOneStep", WHERE) );
+    LogIO os( LogOrigin("SDAlgorithmAAspClean","takeOneStep", WHERE) );
 
     Quantity thresh(cycleThreshold, "Jy");
     itsCleaner.setaspcontrol(cycleNiter, loopgain, thresh, Quantity(0.0, "%"));
@@ -168,9 +167,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Int retval = itsCleaner.aspclean( tempModel );
     iterdone = itsCleaner.numberIterations();
 
-    //if( retval==-1 ) {os << LogIO::WARN << "AspClean minor cycle stopped on cleaning consecutive smallest scale" << LogIO::POST; }
-    //if( retval==-2 ) {os << LogIO::WARN << "AspClean minor cycle stopped at large scale negative or diverging" << LogIO::POST;}
-    //if( retval==-3 ) {os << LogIO::WARN << "AspClean minor cycle stopped because it is diverging" << LogIO::POST; }
+    if( retval==-1 ) {os << LogIO::WARN << "AspClean minor cycle stopped on cleaning consecutive smallest scale" << LogIO::POST; }
+    if( retval==-2 ) {os << LogIO::WARN << "AspClean minor cycle stopped at large scale negative or diverging" << LogIO::POST;}
+    if( retval==-3 ) {os << LogIO::WARN << "AspClean minor cycle stopped because it is diverging" << LogIO::POST; }
 
     peakresidual = itsCleaner.getterPeakResidual();
     //cout << "SDAlg: peakres " << peakresidual << endl;
