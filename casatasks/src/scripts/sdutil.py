@@ -37,7 +37,7 @@ def toolmanager(vis, ctor, *args, **kwargs):
             # assume the argument is string and use it to get the appropriate tool constructor
             # the original argument name here was 'tooltype'
             tool = gentools([ctor])[0]
-    if vis:
+    if vis and "open" in dir(tool):
         tool.open(vis, *args, **kwargs)
     try:
         yield tool
