@@ -37,12 +37,15 @@ def toolmanager(vis, ctor, *args, **kwargs):
             # assume the argument is string and use it to get the appropriate tool constructor
             # the original argument name here was 'tooltype'
             tool = gentools([ctor])[0]
-
-    tool.open(vis, *args, **kwargs)
+    if vis:
+        tool.open(vis, *args, **kwargs)
     try:
         yield tool
     finally:
-        tool.close()
+        if "close" in dir(tool):
+            tool.close()
+        elif "done" in dir(tool):
+            tool.done()
 
 
 def tbmanager(vis, *args, **kwargs):
@@ -51,6 +54,10 @@ def tbmanager(vis, *args, **kwargs):
 
 def cbmanager(vis, *args, **kwargs):
     return toolmanager(vis, calibrater, *args, **kwargs)
+
+
+def measuresmanager(*args, **kwargs):
+    return toolmanager(None, measures, *args, **kwargs)
 
 
 def is_ms(filename):
