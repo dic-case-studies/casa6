@@ -439,20 +439,13 @@ class JyPerKDatabaseClient():
             raise RuntimeError(msg)
 
 
-
-class ALMAJyPerKDatabaseAccessBase(object):
-    def getJyPerK(self, vis):
+class ASDMRspTranslator():
+    def convert(self, response):
         """
-        getJyPerK returns list of Jy/K conversion factors with their
-        meta data (MS name, antenna name, spwid, and pol string).
-
         Arguments:
-            vis {str} -- Name of MS
-
         Returns:
             [list] -- List of Jy/K conversion factors with meta data
         """
-
         # convert to pipeline-friendly format
         formatted = self.format_jyperk(vis, jyperk)
         #casalog.post('formatted = {}'.format(formatted))
@@ -495,9 +488,20 @@ class ALMAJyPerKDatabaseAccessBase(object):
         ]
         return filtered
 
+    def format(self, queries):
+        responses = list(queries)
 
-class JyPerKAbstractEndPoint(ALMAJyPerKDatabaseAccessBase):
-    def access(self, queries):
+        # there should be only one query
+        assert len(responses) == 1
+
+        response = responses[0].response
+        response['total'] = response['data']['length']
+        response['data'] = response['data']['factors']
+        return response
+
+
+class InterpolationRspTranslator(ASDMRspTranslator):
+    def format(self, queries):
         data = []
         for result in queries:
             # response from DB
@@ -521,34 +525,13 @@ class JyPerKAbstractEndPoint(ALMAJyPerKDatabaseAccessBase):
 
         return {'query': '', 'data': data, 'total': len(data)}
 
-
-class JyPerKAsdmEndPoint(ALMAJyPerKDatabaseAccessBase):
-    ENDPOINT_TYPE = 'asdm'
-
-    def access(self, queries):
-        responses = list(queries)
-
-        # there should be only one query
-        assert len(responses) == 1
-
-        response = responses[0].response
-        response['total'] = response['data']['length']
-        response['data'] = response['data']['factors']
-        return response
-
-
-class JyPerKModelFitEndPoint(JyPerKAbstractEndPoint):
-    ENDPOINT_TYPE = 'model-fit'
-
-    def _extract_factor(self, response):
-        return response['data']['factor']
-
-
-class JyPerKInterpolationEndPoint(JyPerKAbstractEndPoint):
-    ENDPOINT_TYPE = 'interpolation'
-
     def _extract_factor(self, response):
         return response['data']['factor']['mean']
+
+
+class ModelFitRspTranslator(InterpolationRspTranslator):
+    def _extract_factor(self, response):
+        return response['data']['factor']
 
 
 # file part
