@@ -4,16 +4,17 @@ import os
 import numpy
 import numpy.random as random
 import shutil
-import sdutil
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import calibrater
     from casatasks import casalog, applycal
+    from . import sdutil
 else:
     from taskinit import casalog
     from taskinit import cbtool as calibrater
     from applycal import applycal
+    from . import sdutil
 
 DEFAULT_VALUE = {'interp': 'linear',
                  'spwmap': [-1]}
@@ -73,7 +74,6 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
     
     # Calibrater tool
     with sdutil.cbmanager() as mycb:
-
         # outfile must be specified
         if (outfile == '') or not isinstance(outfile, str):
             raise ValueError("outfile is empty.")
@@ -141,4 +141,4 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
 
         ## reporting calibration solution
         #reportsolvestats(mycb.activityrec());
-    
+

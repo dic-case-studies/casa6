@@ -9,7 +9,7 @@ import contextlib
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import table, calibrater, imager
+    from casatools import table, calibrater, imager, measures, mstransformer
     from casatools import ms as mstool
     from casatools.platform import bytes2str
     from casatasks import casalog
@@ -59,6 +59,10 @@ def cbmanager(vis, *args, **kwargs):
 def measuresmanager(*args, **kwargs):
     return toolmanager(None, measures, *args, **kwargs)
 
+
+def mstransformermanager(*args, **kwargs):
+    return toolmanager(None, mstransformer, *args, **kwargs)
+    
 
 def is_ms(filename):
     if (os.path.isdir(filename) and os.path.exists(filename+'/table.info') and os.path.exists(filename+'/table.dat')):

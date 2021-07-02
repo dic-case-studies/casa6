@@ -13,7 +13,7 @@ if is_CASA6:
     from .mstools import write_history
     from .parallel.parallel_data_helper import ParallelDataHelper
     from .update_spw import update_spwchan
-    from .private import sdutil
+    from . import sdutil
 else:
     from taskinit import casalog
     from taskinit import mttool
@@ -23,6 +23,7 @@ else:
     from mstools import write_history
     from parallel.parallel_data_helper import ParallelDataHelper
     from update_spw import update_spwchan
+    from . import sdutil
 
 """
 The following code is based on the mstransform code, with
