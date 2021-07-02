@@ -101,7 +101,7 @@ class InterpolationParamsGenerator():
 
         params['date'] = cls._mjd_to_datestring(timerange['begin'])
         params['temperature'] = cls._get_mean_temperature(vis)
-        params['delta_days'] = 1000
+        params.update(cls._get_aux_params())
 
         for antenna_id, antenna_name in enumerate(antenna_names):
             params['antenna'] = antenna_name
@@ -170,8 +170,15 @@ class InterpolationParamsGenerator():
             mean_freqs = dict((i, tb.getcell('CHAN_FREQ', i).mean()) for i in science_windows)
         return mean_freqs
 
+    @staticmethod
+    def _get_aux_params(self):
+        return {'delta_days': 1000}
+
+
 class ModelFitParamsGenerator(InterpolationParamsGenerator):
-    pass
+    @staticmethod
+    def _get_aux_params(self):
+        return {}
 
 
 class Bands():
@@ -633,9 +640,6 @@ class JyPerKModelFitEndPoint(JyPerKAbstractEndPoint):
 
 class JyPerKInterpolationEndPoint(JyPerKAbstractEndPoint):
     ENDPOINT_TYPE = 'interpolation'
-
-    def _aux_params(self):
-        return {'delta_days': 1000}
 
     def _extract_factor(self, response):
         return response['data']['factor']['mean']
