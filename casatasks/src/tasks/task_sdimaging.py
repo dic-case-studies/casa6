@@ -203,7 +203,8 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
     def format_ac_baseline(self, in_antenna):
         """ format auto-correlation baseline string from antenna idx list """
         # exact match string
-        if  is_string_type(in_antenna):
+        if is_string_type(in_antenna):
+            # return sdutil.convert_antenna_spec_autocorr(in_antenna)
             if (len(in_antenna) != 0) and (in_antenna.find('&') == -1) \
                    and (in_antenna.find(';')==-1):
                 in_antenna =+ '&&&'

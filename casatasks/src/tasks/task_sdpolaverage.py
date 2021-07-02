@@ -11,6 +11,7 @@ if is_CASA6:
     from . import flaghelper as fh
     from .update_spw import update_spwchan
     from .callibrary import callibrary
+    from . import sdutil
 else:
     from taskinit import casalog
     from taskinit import mttool
@@ -22,6 +23,7 @@ else:
     import flaghelper as fh
     from update_spw import update_spwchan
     from callibrary import callibrary
+    from . import sdutil
 
 qa = quanta()
 
@@ -51,7 +53,7 @@ def sdpolaverage(
     # just putting default values
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper
-    createmms = False
+    do_createmms = False
     separationaxis = "auto"
     numsubms = "auto"
     tileshape = [0]
@@ -63,8 +65,8 @@ def sdpolaverage(
     realmodelcol = False
     keepflags = True
     usewtspectrum = False
-    combinespws = False
-    chanaverage = False
+    do_combinespws = False
+    parse_chanaverage = False
     chanbin = 1
     hanning = False
     regridms = False
@@ -92,20 +94,26 @@ def sdpolaverage(
     denoising_lib = True
     nthreads = 1
     niter = 1
-    disableparallel = False
     ddistart = -1
     taql = ""
-    monolithic_processing = False
     reindex = True
 
+    do_check_tileshape = True
+
+    # debug parameter
+    _disableparallel = False
+    _monolithic_processing = False
+
     casalog.origin('sdpolaverage')
+
+    taqlstr = _make_taclstr(keepflags)
 
     # Initialize the helper class
     pdh = ParallelDataHelper('sdpolaverage', locals())
 
     # When dealing with MMS, process in parallel or sequential
-    # disableparallel is a hidden parameter. Only for debugging purposes!
-    if disableparallel:
+    # _disableparallel is a hidden parameter. Only for debugging purposes!
+    if _disableparallel:
         pdh.bypassParallelProcessing(1)
     else:
         pdh.bypassParallelProcessing(0)
@@ -114,54 +122,14 @@ def sdpolaverage(
     pdh.setupIO()
 
     # Process the input Multi-MS
-    if ParallelDataHelper.isMMSAndNotServer(infile) == True and monolithic_processing == False:
-        '''
-        retval{'status': True,  'axis':''}         --> can run in parallel
-        retval{'status': False, 'axis':'value'}    --> treat MMS as monolithic MS, set new axis for output MMS
-        retval{'status': False, 'axis':''}         --> treat MMS as monolithic MS, create an output MS
-        '''
-
-        retval = pdh.validateInputParams()
-        # Cannot create an output MMS.
-        if retval['status'] == False and retval['axis'] == '':
-            casalog.post('Cannot process MMS with the requested transformations', 'WARN')
-            casalog.post('Use task listpartition to see the contents of the MMS')
-            casalog.post('Will create an output MS', 'WARN')
-            createmms = False
-
-        # MMS is processed as monolithic MS.
-        elif retval['status'] == False and retval['axis'] != '':
-            createmms = True
-            pdh.override__args('createmms', True)
-            pdh.override__args('monolithic_processing', True)
-            separationaxis = retval['axis']
-            pdh.override__args('separationaxis', retval['axis'])
-            casalog.post("Will process the input MMS as a monolithic MS", 'WARN')
-            casalog.post("Will create an output MMS with separation axis \'%s\'" % retval['axis'], 'WARN')
-
-        # MMS is processed in parallel
-        else:
-            createmms = False
-            pdh.override__args('createmms', False)
-            pdh.setupCluster('sdpolaverage')
-            pdh.go()
+    if ParallelDataHelper.isMMSAndNotServer(infile) is True and _monolithic_processing is False:
+        do_createmms, separationaxis, do_return = _process_input_multi_ms(pdh, separationaxis)
+        if do_return:
             return
-
-    # Create an output Multi-MS
-    if createmms == True:
-
-        # Check the heuristics of separationaxis and the requested transformations
-        pval = pdh.validateOutputParams()
-        if pval == 0:
-            raise RuntimeError(
-                'Cannot create MMS using separationaxis=%s with some of the requested transformations.'
-                    % separationaxis
-            )
-
-        pdh.setupCluster('sdpolaverage')
-        pdh.go()
-        monolithic_processing = False
-        return
+        # Create an output Multi-MS
+        if do_createmms:
+            _create_output_multi_ms(pdh, separationaxis)
+            return
 
     # Create a local copy of the MSTransform tool
     mtlocal = mttool()
@@ -170,22 +138,22 @@ def sdpolaverage(
         # Gather all the parameters in a dictionary.
         config = {}
 
-        if keepflags:
-            taqlstr = ''
-        else:
-            taqlstr = "NOT (FLAG_ROW OR ALL(FLAG))"
-
-        # MMS taql selection
-        if taql != '' and taql is not None:
-            if not keepflags:
-                taqlstr = taqlstr + " AND " + taql
-            else:
-                taqlstr = taql
-
-        config = pdh.setupParameters(inputms=infile, outputms=outfile, field=field,
-                    spw=spw, array=array, scan=scan, antenna=antenna, correlation=correlation,
-                    uvrange=uvrange,timerange=timerange, intent=intent, observation=str(observation),
-                    feed=feed, taql=taqlstr)
+        # set config param.
+        config = pdh.setupParameters(
+            inputms=infile,
+            outputms=outfile,
+            field=field,
+            spw=spw,
+            array=array,
+            scan=scan,
+            antenna=antenna,
+            correlation=correlation,
+            uvrange=uvrange,
+            timerange=timerange,
+            intent=intent,
+            observation=str(observation),
+            feed=feed,
+            taql=taqlstr)
 
         # ddistart will be used in the tool when re-indexing the spw table
         config['ddistart'] = ddistart
@@ -201,34 +169,28 @@ def sdpolaverage(
 
         config['usewtspectrum'] = usewtspectrum
 
-        # Add the tile shape parameter
-        if tileshape.__len__() == 1:
-            # The only allowed values are 0 or 1
-            if tileshape[0] != 0 and tileshape[0] != 1:
-                raise ValueError('When tileshape has one element, it should be either 0 or 1.')
-
-        elif tileshape.__len__() != 3:
-            # The 3 elements are: correlations, channels, rows
-            raise ValueError('Parameter tileshape must have 1 or 3 elements.')
+        if do_check_tileshape:
+            _check_tileshape(tileshape)
 
         config['tileshape'] = tileshape
 
-        if combinespws:
+        if do_combinespws:
             casalog.post('Combine spws %s into new output spw'%spw)
             config['combinespws'] = True
 
-        # Only parse chanaverage if chanbin is valid
-        if chanaverage and isinstance(chanbin, int) and chanbin <= 1:
-            raise ValueError('Parameter chanbin must be > 1 to do channel averaging')
+        if parse_chanaverage:
+            # Only parse chanaverage if chanbin is valid
+            if isinstance(chanbin, int) and chanbin <= 1:
+                raise ValueError('Parameter chanbin must be > 1 to do channel averaging')
 
-        # Validate the case of int or list chanbin
-        if chanaverage and pdh.validateChanBin():
-            casalog.post('Parse channel averaging parameters')
-            config['chanaverage'] = True
+            # Validate the case of int or list chanbin
+            if pdh.validateChanBin():
+                casalog.post('Parse channel averaging parameters')
+                config['chanaverage'] = True
 
-            # convert numpy types, until CAS-6493 is not fixed
-            chanbin = fh.evaluateNumpyType(chanbin)
-            config['chanbin'] = chanbin
+                # convert numpy types, until CAS-6493 is not fixed
+                chanbin = fh.evaluateNumpyType(chanbin)
+                config['chanbin'] = chanbin
 
         if hanning:
             casalog.post('Apply Hanning smoothing')
@@ -313,7 +275,7 @@ def sdpolaverage(
     # Update the FLAG_CMD sub-table to reflect any spw/channels selection
     # If the spw selection is by name or FLAG_CMD contains spw with names, skip the updating
 
-    if ((spw != '') and (spw != '*')) or chanaverage == True:
+    if ((spw != '') and (spw != '*')) or parse_chanaverage == True:
         _update_flag_cmd(infile, outfile, chanbin, spw)
 
 
@@ -326,6 +288,75 @@ def sdpolaverage(
     except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                      'WARN')
+
+
+def _check_tileshape(tileshape):
+    # Add the tile shape parameter
+    if tileshape.__len__() == 1:
+        # The only allowed values are 0 or 1
+        if tileshape[0] != 0 and tileshape[0] != 1:
+            raise ValueError('When tileshape has one element, it should be either 0 or 1.')
+
+    elif tileshape.__len__() != 3:
+        # The 3 elements are: correlations, channels, rows
+        raise ValueError('Parameter tileshape must have 1 or 3 elements.')
+
+
+def _create_output_multi_ms(pdh, separationaxis):
+    # Check the heuristics of separationaxis and the requested transformations
+    pval = pdh.validateOutputParams()
+    if pval == 0:
+        raise RuntimeError(
+            'Cannot create MMS using separationaxis=%s with some of the requested transformations.'
+            % separationaxis
+        )
+    pdh.setupCluster('sdpolaverage')
+    pdh.go()
+    _monolithic_processing = False
+
+
+def _process_input_multi_ms(pdh, separationaxis):
+    '''
+        retval{'status': True,  'axis':''}         --> can run in parallel
+        retval{'status': False, 'axis':'value'}    --> treat MMS as monolithic MS, set new axis for output MMS
+        retval{'status': False, 'axis':''}         --> treat MMS as monolithic MS, create an output MS
+        '''
+    retval = pdh.validateInputParams()
+
+    # Cannot create an output MMS.
+    if retval['status'] == False and retval['axis'] == '':
+        casalog.post('Cannot process MMS with the requested transformations', 'WARN')
+        casalog.post('Use task listpartition to see the contents of the MMS')
+        casalog.post('Will create an output MS', 'WARN')
+        createmms = False
+        return createmms, separationaxis, False
+
+    # MMS is processed as monolithic MS.
+    elif retval['status'] == False and retval['axis'] != '':
+        createmms = True
+        pdh.override__args('createmms', True)
+        pdh.override__args('monolithic_processing', True)
+        separationaxis = retval['axis']
+        pdh.override__args('separationaxis', retval['axis'])
+        casalog.post("Will process the input MMS as a monolithic MS", 'WARN')
+        casalog.post("Will create an output MMS with separation axis \'%s\'" % retval['axis'], 'WARN')
+        return createmms, separationaxis, False
+
+    # MMS is processed in parallel
+    else:
+        createmms = False
+        pdh.override__args('createmms', False)
+        pdh.setupCluster('sdpolaverage')
+        pdh.go()
+        return createmms, separationaxis, True
+
+
+def _make_taclstr(keepflags):
+    if keepflags:
+        taqlstr = ''
+    else:
+        taqlstr = "NOT (FLAG_ROW OR ALL(FLAG))"
+    return taqlstr
 
 
 def _update_flag_cmd(infile, outfile, chanbin, spw):

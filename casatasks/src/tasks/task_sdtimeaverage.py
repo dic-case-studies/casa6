@@ -188,10 +188,17 @@ def do_mst(
 
     ddistart = -1
     reindex = True
+    _disableparallel = False
 
     # Initialize the helper class
     pdh = ParallelDataHelper('sdtimeaverage', locals())
-    pdh.bypassParallelProcessing(0)
+
+    # When dealing with MMS, process in parallel or sequential
+    # _disableparallel is a hidden parameter. Only for debugging purposes!
+    if _disableparallel:
+        pdh.bypassParallelProcessing(1)
+    else:
+        pdh.bypassParallelProcessing(0)
 
     # Validate input and output parameters
     pdh.setupIO()
