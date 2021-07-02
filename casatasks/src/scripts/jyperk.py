@@ -439,58 +439,8 @@ class JyPerKDatabaseClient():
             raise RuntimeError(msg)
 
 
+
 class ALMAJyPerKDatabaseAccessBase(object):
-    ENDPOINT_TYPE = None
-
-    @property
-    def url(self):
-        assert self.ENDPOINT_TYPE is not None, \
-            '{} cannot be instantiated. Please use subclasses.'.format(self.__class__.__name__)
-
-    def __init__(self):
-        """
-        ALMAJyPerKDatabaseAccessBase is a base class for accessing Jy/K
-        DB to retrieve conversion factor for ALMA TP data.
-        ALMAJyPerKDatabaseAccessBase is kind of a template class that
-        only provides a standard workflow to get a list of conversion
-        factors. Each access class must inherit this class and
-        implement/override some methods according to the target API.
-        Subclasses must implement properties and methods listed below:
-
-            ENDPOINT_TYPE (property): Must be a string representing the API
-            access (method): Receive a list of queries as a generator,
-                             access the DB through the generator, and
-                             return the formatted response. Return value
-                             should be a dictionary with 'query', 'data',
-                             and 'total' fields. The 'query' field holds
-                             the query whil the 'data' field stores the
-                             response. The 'total' fields is the number of
-                             response. Each item of the 'data' field should
-                             consist of single conversion factor ('Factor')
-                             with the meta-data, 'MS', 'Antenna', 'Spwid',
-                             'Polarization'.
-            get_params (method): Receive a name of the MS and generate
-                                 a dictionary containing a list of query
-                                 parameters. Required parameters depend on
-                                 the API.
-        """
-
-    def _generate_query(self, params):
-        for p in params:
-            client = JyPerKDatabaseClient(self.ENDPOINT_TYPE)
-            retval = client.get(p)
-            yield ResponseStruct(response=retval, subparam=p.subparam)
-
-    def validate_is_alma_data(self, vis):
-        with toolmanager(vis, msmetadata) as msmd:
-            try:
-                array_name = msmd.observatorynames()[0]
-            except KeyError:
-                LOG.error('{} is not registered to observatorynames'.format(vis))
-
-        if array_name != 'ALMA':
-            raise RuntimeError('{} is not ALMA data'.format(basename))
-
     def getJyPerK(self, vis):
         """
         getJyPerK returns list of Jy/K conversion factors with their
@@ -502,11 +452,6 @@ class ALMAJyPerKDatabaseAccessBase(object):
         Returns:
             [list] -- List of Jy/K conversion factors with meta data
         """
-        # sanity check
-        self.validate_is_alma_data(vis)
-
-        # get Jy/K value from DB
-        jyperk = self.get(vis)
 
         # convert to pipeline-friendly format
         formatted = self.format_jyperk(vis, jyperk)
@@ -515,37 +460,6 @@ class ALMAJyPerKDatabaseAccessBase(object):
         #casalog.post('filtered = {}'.format(filtered))
 
         return filtered
-
-    def get_params(self, vis):
-        raise NotImplementedError
-
-    def access(self, queries):
-        raise NotImplementedError
-
-    def get(self, vis):
-        """
-        Access Jy/K DB and return its response.
-
-        Arguments:
-            vis {str} -- Name of MS
-
-        Returns:
-            [dict] -- Response from the DB as a dictionary. It should contain
-                      the following keys:
-                          'query' -- query data
-                          'total' -- number of data
-                          'data'  -- data
-        """
-        params = self.get_params(vis)
-
-        queries = self._generate_query(params)
-
-        retval = self.access(queries)
-        # retval should be a dict that consists of
-        # 'query': query data
-        # 'total': number of data
-        # 'data': response data
-        return retval
 
     def format_jyperk(self, vis, jyperk):
         """
@@ -583,8 +497,6 @@ class ALMAJyPerKDatabaseAccessBase(object):
 
 
 class JyPerKAbstractEndPoint(ALMAJyPerKDatabaseAccessBase):
-
-
     def access(self, queries):
         data = []
         for result in queries:
@@ -608,12 +520,6 @@ class JyPerKAbstractEndPoint(ALMAJyPerKDatabaseAccessBase):
                          'Polarization': polarization, 'factor': factor})
 
         return {'query': '', 'data': data, 'total': len(data)}
-
-    def _aux_params(self):
-        return {}
-
-    def _extract_factor(self, response):
-        raise NotImplementedError
 
 
 class JyPerKAsdmEndPoint(ALMAJyPerKDatabaseAccessBase):
@@ -643,45 +549,6 @@ class JyPerKInterpolationEndPoint(JyPerKAbstractEndPoint):
 
     def _extract_factor(self, response):
         return response['data']['factor']['mean']
-
-
-def translate_spw(data, ms):
-    vis = ms.name
-    science_windows = np.asarray(ms.get_spectral_windows(science_windows_only=True))
-    with casa_tools.TableReader(os.path.join(vis, 'ASDM_SPECTRALWINDOW')) as tb:
-        idcol = tb.getcol('spectralWindowId')
-        namecol = tb.getcol('name')
-
-    translated = []
-    science_window_names = np.asarray([x.name for x in science_windows])
-    casalog.post('Translate ASDM Spws to MS Spws:')
-    for d in data:
-        asdm_spw_id = d['Spwid']
-        asdm_spw_names = namecol[np.where(idcol == 'SpectralWindow_{}'.format(asdm_spw_id))]
-        assert len(asdm_spw_names) == 1
-        asdm_spw_name = asdm_spw_names[0]
-        if asdm_spw_name.endswith('CH_AVG'):
-            chan_avg_name = asdm_spw_name
-            full_res_name = asdm_spw_name.replace('CH_AVG', 'FULL_RES')
-        elif asdm_spw_name.endswith('FULL_RES'):
-            chan_avg_name = asdm_spw_name.replace('FULL_RES', 'CH_AVG')
-            full_res_name = asdm_spw_name
-        else:
-            chan_avg_name = asdm_spw_name
-            full_res_name = asdm_spw_name
-        i = np.where(science_window_names == full_res_name)
-        if len(i[0]) == 0:
-            i = np.where(science_window_names == chan_avg_name)
-        if len(i[0]) > 0:
-            spws = science_windows[i]
-            assert len(spws) == 1
-            spw = spws[0]
-            t = d.copy()
-            t['Spwid'] = '{}'.format(spw.id)
-            translated.append(t)
-            casalog.post('   * ASDM Spw {} (name {})'.format(asdm_spw_id, asdm_spw_name))
-            casalog.post('    -> MS Spw {} (name {})'.format(spw.id, spw.name))
-    return translated
 
 
 # file part
