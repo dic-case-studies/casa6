@@ -25,7 +25,7 @@
 #include <spectrallines/Splatalogue/Searcher.h>
 #include <spectrallines/Splatalogue/SQLiteSearch/SearcherSQLite.h>
 #include <casatools/Config/State.h>
-
+#include <casa/Logging/LogIO.h>
 #include <iostream>
 using namespace std;
 
@@ -58,6 +58,21 @@ String SearcherFactory::getLocation( bool local ){
 			int index = defaultDatabasePath.find(tableName, 0);
 			int tableNameSize = tableName.length();
 			defaultDatabasePath.replace(index, tableNameSize, "splatalogue.db");
+		}
+	}
+	static bool logged = false;
+	if ( logged == false ) {
+		logged = true;
+		LogIO os (LogOrigin ("SearcherFactory", "getLocation"));
+		if ( defaultDatabasePath.size( ) == 0 ) {
+			os << LogIO::WARN <<
+			  "could not find splatalog offline database" <<
+			  LogIO::POST;
+		} else {
+			os <<
+			  "found splatalog offline database: " <<
+			  defaultDatabasePath <<
+			  LogIO::POST;
 		}
 	}
 	return defaultDatabasePath;
