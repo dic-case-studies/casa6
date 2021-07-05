@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 import os
+from types import CodeType
+
 import numpy
 import traceback
 import functools
@@ -9,10 +11,13 @@ import contextlib
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import table, calibrater, imager, measures, mstransformer
+    from casatools import table, calibrater, imager, measures, mstransformer, quanta
     from casatools import ms as mstool
     from casatools.platform import bytes2str
     from casatasks import casalog
+    from .parallel.parallel_data_helper import ParallelDataHelper
+    from .update_spw import update_spwchan
+    from .mstools import write_history
 else:
     from taskinit import casalog, gentools
     # make CASA5 tools constructors look like CASA6 tools
@@ -20,7 +25,10 @@ else:
     from taskinit import cbtool as calibrater
     from taskinit import imtool as imager
     from taskinit import mstool
-
+    from parallel.parallel_data_helper import ParallelDataHelper
+    from taskinit import qatool as quanta
+    from update_spw import update_spwchan
+    from mstools import write_history
 
 @contextlib.contextmanager
 def toolmanager(vis, ctor, *args, **kwargs):
@@ -596,3 +604,315 @@ def _to_list(param, ptype=int, convert=False):
     elif convert:
         return [ptype(p) for p in param]
     return None
+
+
+def do_mst(
+        infile,
+        datacolumn,
+        field,
+        spw,
+        timerange,
+        scan,
+        antenna,
+        timebin,
+        timespan,
+        outfile,
+        intent,
+        caller: CodeType,
+        ext_config ):
+    """
+      call mstransform by the provided procedure.
+        Followings are parameters of mstransform, but not used by sdtimeaverage,
+        just only putting default values.
+    """
+    vis = infile             # needed for ParallelDataHelper
+    outputvis = outfile      # needed for ParallelDataHelper
+    separationaxis = "auto"
+    tileshape = [0]
+
+#    intent = ''
+    correlation = ''
+    array = ''
+    uvrange = ''
+    observation = ''
+    feed = ''
+
+    realmodelcol = False
+    usewtspectrum = False
+    chanbin = 1
+    mode = 'channel'
+    start = 0
+    width = 1
+
+    maxuvwdistance = 0.0
+
+    ddistart = -1
+    reindex = True
+    _disableparallel = False
+    _monolithic_processing = False
+
+    taqlstr = ''
+    if ext_config.get('keepflags'):
+        taqlstr = "NOT (FLAG_ROW OR ALL(FLAG))"
+
+    # Initialize the helper class
+    pdh = ParallelDataHelper(caller.co_name, locals())
+
+    # When dealing with MMS, process in parallel or sequential
+    # _disableparallel is a hidden parameter. Only for debugging purposes!
+    if _disableparallel:
+        pdh.bypassParallelProcessing(1)
+    else:
+        pdh.bypassParallelProcessing(0)
+
+    # Validate input and output parameters
+    pdh.setupIO()
+
+    # Process the input Multi-MS
+    if ParallelDataHelper.isMMSAndNotServer(infile) is True and _monolithic_processing is False:
+        do_createmms, separationaxis, do_return = _process_input_multi_ms(pdh, separationaxis)
+        if do_return:
+            return
+        # Create an output Multi-MS
+        if do_createmms:
+            _create_output_multi_ms(pdh, separationaxis)
+            return
+
+    # Create a local copy of the MSTransform tool
+    with mstransformermanager() as mtlocal:
+        # Gather all the parameters in a dictionary.
+        config = {}
+
+        # set config param.
+        config = pdh.setupParameters(
+            inputms=infile,
+            outputms=outfile,
+            field=field,
+            spw=spw,
+            array=array,
+            scan=scan,
+            antenna=antenna,
+            correlation=correlation,
+            uvrange=uvrange,
+            timerange=timerange,
+            intent=intent,
+            observation=str(observation),
+            feed=feed,
+            taql=taqlstr)
+
+        # ddistart will be used in the tool when re-indexing the spw table
+        config['ddistart'] = ddistart
+
+        # re-index parameter is used by the pipeline to not re-index any
+        # sub-table and the associated IDs
+        config['reindex'] = reindex
+
+        config['datacolumn'] = datacolumn
+        dc = datacolumn.upper()
+        # Make real a virtual MODEL column in the output MS
+        if 'MODEL' in dc or dc == 'ALL':
+            config['realmodelcol'] = realmodelcol
+
+        config['usewtspectrum'] = usewtspectrum
+
+        if ext_config.get('do_check_tileshape'):
+            _check_tileshape(tileshape)
+
+        config['tileshape'] = tileshape
+
+        # set config for Averaging
+        if ext_config.get('do_timeaverage'):
+            casalog.post('Parse time averaging parameters')
+            config['timeaverage'] = True
+            config['timebin'] = timebin
+            config['timespan'] = timespan
+            config['maxuvwdistance'] = maxuvwdistance
+
+        if ext_config.get('polaverage'):
+            polaverage_ = ext_config.get('polaverage').strip()
+            if polaverage_ != '':
+                config['polaverage'] = True
+                config['polaveragemode'] = polaverage_
+
+        # Configure the tool and all the parameters
+        casalog.post('%s' % config, 'DEBUG')
+        mtlocal.config(config)
+
+        # Open the MS, select the data and configure the output
+        mtlocal.open()
+
+        # Run the tool
+        casalog.post('Apply the transformations')
+        mtlocal.run()
+
+    """
+      CAS-12721:
+      Note: Following section were written concerning with CAS-7751 or others.
+            Program logic is copied and used without change.
+    """
+    # Update the FLAG_CMD sub-table to reflect any spw/channels selection
+    # If the spw selection is by name or FLAG_CMD contains spw with names,
+    # skip the updating
+
+    if (spw != '' and spw != '*') or ext_config.get('parse_chanaverage'):
+        _update_flag_cmd(infile, outfile, chanbin, spw)
+
+
+def _update_flag_cmd(infile, outfile, chanbin, spw):
+    with tbmanager(outfile + '/FLAG_CMD', nomodify=False) as mytb:
+        mslocal = mstool()
+        nflgcmds = mytb.nrows()
+
+        if nflgcmds > 0:
+            update_flag_cmd = False
+
+            # If spw selection is by name in FLAG_CMD, do not update, CAS-7751
+            mycmd = mytb.getcell('COMMAND', 0)
+            cmdlist = mycmd.split()
+            for cmd in cmdlist:
+                # Match only spw indices, not names
+                if cmd.__contains__('spw'):
+                    cmd = cmd.strip('spw=')
+                    spwstr = re.search('^[^a-zA-Z]+$', cmd)
+                    if spwstr is not None and spwstr.string.__len__() > 0:
+                        update_flag_cmd = True
+                        break
+
+            if update_flag_cmd:
+                mademod = False
+                cmds = mytb.getcol('COMMAND')
+                widths = {}
+                if hasattr(chanbin, 'has_key'):
+                    widths = chanbin
+                else:
+                    if hasattr(chanbin, '__iter__') and len(chanbin) > 1:
+                        for i in range(len(chanbin)):
+                            widths[i] = chanbin[i]
+                    elif chanbin != 1:
+                        numspw = len(mslocal.msseltoindex(vis=infile,
+                                                          spw='*')['spw'])
+                        if hasattr(chanbin, '__iter__'):
+                            w = chanbin[0]
+                        else:
+                            w = chanbin
+                        for i in range(numspw):
+                            widths[i] = w
+                for rownum in range(nflgcmds):
+                    # Matches a bare number or a string quoted any way.
+                    spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
+                    if spwmatch:
+                        sch1 = spwmatch.groups()[0]
+                        sch1 = re.sub(r"[\'\"]", '', sch1)  # Dequote
+                        # Provide a default in case the split selection excludes
+                        # cmds[rownum].  update_spwchan() will throw an exception
+                        # in that case.
+                        cmd = ''
+                        try:
+                            sch2 = update_spwchan(
+                                infile, spw, sch1, truncate=True, widths=widths)
+                            if sch2:
+                                repl = ''
+                                if sch2 != '*':
+                                    repl = "spw='" + sch2 + "'"
+                                cmd = cmds[rownum].replace(
+                                    spwmatch.group(), repl)
+                        # except: # cmd[rownum] no longer applies.
+                        except Exception as e:
+                            casalog.post(
+                                'Error %s updating row %d of FLAG_CMD' %
+                                (e, rownum), 'WARN')
+                            casalog.post('sch1 = ' + sch1, 'DEBUG1')
+                            casalog.post('cmd = ' + cmd, 'DEBUG1')
+                        if cmd != cmds[rownum]:
+                            mademod = True
+                            cmds[rownum] = cmd
+                if mademod:
+                    casalog.post('Updating FLAG_CMD', 'INFO')
+                    mytb.putcol('COMMAND', cmds)
+
+            else:
+                casalog.post(
+                    'FLAG_CMD table contains spw selection by name. Will not update it!', 'DEBUG')
+
+
+def add_history(
+        caller,
+        casalog,
+        outfile):
+    mslocal = mstool()
+    # Write history to output MS, not the input ms.
+    try:
+        param_names = caller.co_varnames[:caller.co_argcount]
+        local_vals = locals()
+        param_vals = [local_vals.get(p, None) for p in param_names]
+        write_history(mslocal, outfile, 'sdtimeaverage', param_names,
+                      param_vals, casalog)
+    except Exception as instance:
+        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
+                     'WARN')
+        return False
+
+    mslocal = None
+
+    return True
+
+
+def _check_tileshape(tileshape):
+    # Add the tile shape parameter
+    if tileshape.__len__() == 1:
+        # The only allowed values are 0 or 1
+        if tileshape[0] != 0 and tileshape[0] != 1:
+            raise ValueError('When tileshape has one element, it should be either 0 or 1.')
+
+    elif tileshape.__len__() != 3:
+        # The 3 elements are: correlations, channels, rows
+        raise ValueError('Parameter tileshape must have 1 or 3 elements.')
+
+
+def _process_input_multi_ms(pdh, separationaxis):
+    '''
+        retval{'status': True,  'axis':''}         --> can run in parallel
+        retval{'status': False, 'axis':'value'}    --> treat MMS as monolithic MS, set new axis for output MMS
+        retval{'status': False, 'axis':''}         --> treat MMS as monolithic MS, create an output MS
+        '''
+    retval = pdh.validateInputParams()
+
+    # Cannot create an output MMS.
+    if retval['status'] == False and retval['axis'] == '':
+        casalog.post('Cannot process MMS with the requested transformations', 'WARN')
+        casalog.post('Use task listpartition to see the contents of the MMS')
+        casalog.post('Will create an output MS', 'WARN')
+        createmms = False
+        return createmms, separationaxis, False
+
+    # MMS is processed as monolithic MS.
+    elif retval['status'] == False and retval['axis'] != '':
+        createmms = True
+        pdh.override__args('createmms', True)
+        pdh.override__args('monolithic_processing', True)
+        separationaxis = retval['axis']
+        pdh.override__args('separationaxis', retval['axis'])
+        casalog.post("Will process the input MMS as a monolithic MS", 'WARN')
+        casalog.post("Will create an output MMS with separation axis \'%s\'" % retval['axis'], 'WARN')
+        return createmms, separationaxis, False
+
+    # MMS is processed in parallel
+    else:
+        createmms = False
+        pdh.override__args('createmms', False)
+        pdh.setupCluster('sdpolaverage')
+        pdh.go()
+        return createmms, separationaxis, True
+
+
+def _create_output_multi_ms(pdh, separationaxis):
+    # Check the heuristics of separationaxis and the requested transformations
+    pval = pdh.validateOutputParams()
+    if pval == 0:
+        raise RuntimeError(
+            'Cannot create MMS using separationaxis=%s with some of the requested transformations.'
+            % separationaxis
+        )
+    pdh.setupCluster('sdpolaverage')
+    pdh.go()
+    _monolithic_processing = False

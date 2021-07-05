@@ -1,4 +1,6 @@
 import re
+import inspect
+from types import CodeType
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -53,59 +55,93 @@ def sdpolaverage(
     # just putting default values
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper
-    do_createmms = False
-    separationaxis = "auto"
-    numsubms = "auto"
-    tileshape = [0]
-    correlation = ""
-    array = ""
-    uvrange = ""
-    observation = ""
-    feed = ""
-    realmodelcol = False
-    keepflags = True
-    usewtspectrum = False
-    do_combinespws = False
-    parse_chanaverage = False
-    chanbin = 1
-    hanning = False
-    regridms = False
-    mode = "channel"
-    nchan = -1
-    start = 0
-    width = 1
-    nspw = 1
-    interpolation = "linear"
-    phasecenter = ""
-    restfreq = ""
-    outframe = ""
-    veltype = "radio"
-    preaverage = False
-    timeaverage = False
+    # do_createmms = False
+    # separationaxis = "auto"
+    # numsubms = "auto"
+    # tileshape = [0]
+    # correlation = ""
+    # array = ""
+    # uvrange = ""
+    # observation = ""
+    # feed = ""
+    # realmodelcol = False
+    # keepflags = True
+    # usewtspectrum = False
+    # do_combinespws = False
+    # parse_chanaverage = False
+    # chanbin = 1
+    # hanning = False
+    # regridms = False
+    # mode = "channel"
+    # nchan = -1
+    # start = 0
+    # width = 1
+    # nspw = 1
+    # interpolation = "linear"
+    # phasecenter = ""
+    # restfreq = ""
+    # outframe = ""
+    # veltype = "radio"
+    # preaverage = False
+    do_timeaverage = False
     timebin = "0s"
     timespan = ""
-    maxuvwdistance = 0.0
-    docallib = False
-    callib = ""
-    douvcontsub = False
-    fitspw = ""
-    fitorder = 0
-    want_cont = False
-    denoising_lib = True
-    nthreads = 1
-    niter = 1
-    ddistart = -1
-    taql = ""
-    reindex = True
+    # maxuvwdistance = 0.0
+    # docallib = False
+    # callib = ""
+    # douvcontsub = False
+    # fitspw = ""
+    # fitorder = 0
+    # want_cont = False
+    # denoising_lib = True
+    # nthreads = 1
+    # niter = 1
+    # ddistart = -1
+    # taql = ""
+    # reindex = True
 
-    do_check_tileshape = True
+    #do_check_tileshape = True
 
     # debug parameter
     _disableparallel = False
     _monolithic_processing = False
 
+    # Only parse timeaverage parameters when timebin > 0s
+    if do_timeaverage:
+        tb = qa.convert(qa.quantity(timebin), 's')['value']
+        if not tb > 0:
+            raise ValueError("Parameter timebin must be > '0s' to do time averaging")
+
     casalog.origin('sdpolaverage')
 
+    # extra parameter for do_mst
+    ext_config={}
+    ext_config["do_timeaverage"] = False
+    ext_config["keepflags"] = True
+    ext_config["do_check_tileshape"] = True
+    ext_config["polaverage"] = polaverage
+    ext_config["parse_chanaverage"] = False
+
+    sdpolaverage: CodeType = inspect.currentframe().f_code
+
+    sdutil.do_mst(
+        infile,
+        datacolumn,
+        field,
+        spw,
+        timerange,
+        scan,
+        antenna,
+        timebin,
+        timespan,
+        outfile,
+        intent,
+        sdpolaverage,
+        ext_config)
+
+    sdutil.add_history(sdpolaverage, casalog, outfile)
+
+"""
     taqlstr = _make_taclstr(keepflags)
 
     # Initialize the helper class
@@ -174,60 +210,60 @@ def sdpolaverage(
 
         config['tileshape'] = tileshape
 
-        if do_combinespws:
-            casalog.post('Combine spws %s into new output spw'%spw)
-            config['combinespws'] = True
+        # if do_combinespws:
+        #     casalog.post('Combine spws %s into new output spw'%spw)
+        #     config['combinespws'] = True
 
-        if parse_chanaverage:
-            # Only parse chanaverage if chanbin is valid
-            if isinstance(chanbin, int) and chanbin <= 1:
-                raise ValueError('Parameter chanbin must be > 1 to do channel averaging')
+        # if parse_chanaverage:
+        #     # Only parse chanaverage if chanbin is valid
+        #     if isinstance(chanbin, int) and chanbin <= 1:
+        #         raise ValueError('Parameter chanbin must be > 1 to do channel averaging')
+        # 
+        #     # Validate the case of int or list chanbin
+        #     if pdh.validateChanBin():
+        #         casalog.post('Parse channel averaging parameters')
+        #         config['chanaverage'] = True
+        # 
+        #         # convert numpy types, until CAS-6493 is not fixed
+        #         chanbin = fh.evaluateNumpyType(chanbin)
+        #         config['chanbin'] = chanbin
 
-            # Validate the case of int or list chanbin
-            if pdh.validateChanBin():
-                casalog.post('Parse channel averaging parameters')
-                config['chanaverage'] = True
+        # if hanning:
+        #     casalog.post('Apply Hanning smoothing')
+        #     config['hanning'] = True
 
-                # convert numpy types, until CAS-6493 is not fixed
-                chanbin = fh.evaluateNumpyType(chanbin)
-                config['chanbin'] = chanbin
-
-        if hanning:
-            casalog.post('Apply Hanning smoothing')
-            config['hanning'] = True
-
-        if regridms:
-            casalog.post('Parse regridding parameters')
-            config['regridms'] = True
-            # Reset the defaults depending on the mode
-            # Only add non-empty string parameters to config dictionary
-            start, width = pdh.defaultRegridParams()
-            config['mode'] = mode
-            config['nchan'] = nchan
-            if start != '':
-                config['start'] = start
-            if width != '':
-                config['width'] = width
-            if nspw > 1:
-                casalog.post('Separate MS into %s spws'%nspw)
-            config['nspw'] = nspw
-            config['interpolation'] = interpolation
-            if restfreq != '':
-                config['restfreq'] = restfreq
-            if outframe != '':
-                config['outframe'] = outframe
-            if phasecenter != '':
-                config['phasecenter'] = phasecenter
-            config['veltype'] = veltype
-            config['preaverage'] = preaverage
+        # if regridms:
+        #     casalog.post('Parse regridding parameters')
+        #     config['regridms'] = True
+        #     # Reset the defaults depending on the mode
+        #     # Only add non-empty string parameters to config dictionary
+        #     start, width = pdh.defaultRegridParams()
+        #     config['mode'] = mode
+        #     config['nchan'] = nchan
+        #     if start != '':
+        #         config['start'] = start
+        #     if width != '':
+        #         config['width'] = width
+        #     if nspw > 1:
+        #         casalog.post('Separate MS into %s spws'%nspw)
+        #     config['nspw'] = nspw
+        #     config['interpolation'] = interpolation
+        #     if restfreq != '':
+        #         config['restfreq'] = restfreq
+        #     if outframe != '':
+        #         config['outframe'] = outframe
+        #     if phasecenter != '':
+        #         config['phasecenter'] = phasecenter
+        #     config['veltype'] = veltype
+        #     config['preaverage'] = preaverage
 
         # Only parse timeaverage parameters when timebin > 0s
-        if timeaverage:
+        if do_timeaverage:
             tb = qa.convert(qa.quantity(timebin), 's')['value']
             if not tb > 0:
                 raise ValueError("Parameter timebin must be > '0s' to do time averaging")
 
-        if timeaverage:
+        if do_timeaverage:
             casalog.post('Parse time averaging parameters')
             config['timeaverage'] = True
             config['timebin'] = timebin
@@ -239,24 +275,24 @@ def sdpolaverage(
             config['polaverage'] = True
             config['polaveragemode'] = polaverage_
 
-        if docallib:
-            casalog.post('Parse docallib parameters')
-            mycallib = callibrary()
-            mycallib.read(callib)
-            config['calibration'] = True
-            config['callib'] = mycallib.cld
+        # if docallib:
+        #     casalog.post('Parse docallib parameters')
+        #     mycallib = callibrary()
+        #     mycallib.read(callib)
+        #     config['calibration'] = True
+        #     config['callib'] = mycallib.cld
 
-        if douvcontsub:
-            casalog.post('Parse uvcontsub parameters')
-            config['uvcontsub'] = True
-            uvcontsub_config = {}
-            uvcontsub_config['fitspw'] = fitspw
-            uvcontsub_config['fitorder'] = fitorder
-            uvcontsub_config['want_cont'] = want_cont
-            uvcontsub_config['denoising_lib'] = denoising_lib
-            uvcontsub_config['nthreads'] = nthreads
-            uvcontsub_config['niter'] = niter
-            config['uvcontsublib'] = dict(uvcontsub_config)
+        # if douvcontsub:
+        #     casalog.post('Parse uvcontsub parameters')
+        #     config['uvcontsub'] = True
+        #     uvcontsub_config = {}
+        #     uvcontsub_config['fitspw'] = fitspw
+        #     uvcontsub_config['fitorder'] = fitorder
+        #     uvcontsub_config['want_cont'] = want_cont
+        #     uvcontsub_config['denoising_lib'] = denoising_lib
+        #     uvcontsub_config['nthreads'] = nthreads
+        #     uvcontsub_config['niter'] = niter
+        #     config['uvcontsublib'] = dict(uvcontsub_config)
 
         # Configure the tool and all the parameters
         casalog.post('%s' % config, 'DEBUG')
@@ -434,3 +470,4 @@ def _update_flag_cmd(infile, outfile, chanbin, spw):
             else:
                 casalog.post(
                     'FLAG_CMD table contains spw selection by name. Will not update it!', 'DEBUG')
+"""
