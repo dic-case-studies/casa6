@@ -341,21 +341,10 @@ class RequestsManager():
 
     def get(self, params):
         responses = [self.client.get(param.param) for param in params]
-        responses = self._filter_success_is_true(responses)
-        
-        return self._convert_format(responses)
+        return self._filter_success_is_true(responses)
 
     def _filter_success_is_true(self, responses):
         return [response for response in responses if response['success']]
-        
-    def _convert_format(self, responses):
-        new_new_responses = []
-        for response in responses:
-            new_response = {}
-            new_response['total'] = response['data']['length']
-            new_response['data'] = response['data']['factors']
-            new_new_responses.append(new_response)
-        return new_new_responses
         
 
 class JyPerKDatabaseClient():
@@ -474,22 +463,27 @@ class JyPerKDatabaseClient():
 
 
 class ASDMRspTranslator():
-    def convert(self, response):
-        """
+    @classmethod
+    def convert(cls, response):
+        """ Convert from the response to list with factor.
+
         Arguments:
         Returns:
-            [list] -- List of Jy/K conversion factors with meta data
+            list -- List of Jy/K conversion factors with meta data.
         """
-        # convert to pipeline-friendly format
-        formatted = self.format_jyperk(vis, jyperk)
-        #casalog.post('formatted = {}'.format(formatted))
-        filtered = self.filter_jyperk(vis, formatted)
-        #casalog.post('filtered = {}'.format(filtered))
+        factors = cls._extract_factors(response)
+        formatted = cls._format_factors(factors)
+        spw = cls._extract_spw(factors)
+        return cls._filter_jyperk(vis, formatted, spw)
 
-        return filtered
+    @staticmethod
+    def _extract_factors(response):
+        return response['data']['factors']
 
-    def format_jyperk(self, vis, jyperk):
-        """ Format given dictionary to the formatted list as below.
+    @staticmethod
+    def _format_factors(factors): #_format_jyperk
+        """
+        Format given dictionary to the formatted list as below.
 
             [['MS_name', 'antenna_name', 'spwid', 'pol string', 'factor'],
              ['MS_name', 'antenna_name', 'spwid', 'pol string', 'factor'],
@@ -497,19 +491,24 @@ class ASDMRspTranslator():
              ['MS_name', 'antenna_name', 'spwid', 'pol string', 'factor']]
 
         Arguments:
-            vis {str} -- Name of MS
-            jyperk {dict} -- Dictionary containing Jy/K factors with meta data
+            factors {dict} -- Dictionary containing Jy/K factors with meta data
 
         Returns:
-            list -- Formatted list of Jy/K factors
+            list -- Formatted list of Jy/K factors.
         """
-        template = string.Template('$vis $Antenna $Spwid I $factor')
-        data = jyperk['data']
-        basename = os.path.basename(vis.rstrip('/'))
-        factors = [list(map(str, template.safe_substitute(vis=basename, **d).split())) for d in data]
+        template = string.Template('$MS $Antenna $Spwid I $factor')
+
+        basename = os.path.basename(vis.rstrip('/'))          
+        factors = [list(map(str, template.safe_substitute(vis=basename, **factor).split())) for factor in factors]
         return factors
 
-    def filter_jyperk(self, vis, factors):
+    @staticmethod
+    def _extract_spw(factors):
+        spw = ','.join(map(str, sorted(list(set([factor['Spwid'] for factor in factors])))))
+        return spw
+
+    @staticmethod
+    def _filter_jyperk(vis, factors, spw):
         ms = mstool()
         selected = ms.msseltoindex(vis=vis, spw=spw)
         science_windows = selected['spw']
@@ -521,7 +520,8 @@ class ASDMRspTranslator():
         ]
         return filtered
 
-    def format(self, queries):
+    @staticmethod
+    def _format(queries):
         responses = list(queries)
 
         # there should be only one query
