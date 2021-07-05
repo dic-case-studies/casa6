@@ -432,11 +432,13 @@ class JyPerKDatabaseClient():
     def _check_retval(self, retval):
         """
         This method only checks if the api was able to complete the process successfully or not.
+        It is expected that 'success' will be False as a response, so the mothod does not raise
+        RuntimeError. If the 'success' is False, the *Transelator classes will reject the factor
+        value.
         """
         if not retval['success']:
             msg = 'Failed to get a Jy/K factor from DB: {}'.format(retval['error'])
             casalog.post(msg)
-            raise RuntimeError(msg)
 
 
 class ASDMRspTranslator():
