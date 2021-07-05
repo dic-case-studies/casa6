@@ -4005,7 +4005,7 @@ class Test_mosaic(test_tclean_base):
         wt_stats_dict = self.image_stats(img+'.weight', masks=[ \
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
 
-        exp_wt_stats = self.exp_stats['exp_wt_stats']
+        exp_wt_stats = self.exp_dicts['exp_wt_stats']
 
         report9 = th.check_dict_vals(exp_wt_stats, wt_stats_dict, '.weight', epsilon=self.epsilon)
 

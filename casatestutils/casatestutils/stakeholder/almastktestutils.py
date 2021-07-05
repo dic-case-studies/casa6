@@ -12,7 +12,7 @@ import sys
 
 
 def extract_expdict(testlist=None, testsrcpath=None):
-    """ Read test_alma_stk_pipeline_imaging.py and extract
+    """ Read old test_alma_stk_pipeline_imaging.py and extract
     exp dictionaries of the specific test and save to a json file
     """
     if testlist is None:
@@ -337,13 +337,24 @@ def read_testcase_expdicts(jsonfilename, testcasename, version):
 
 
 def update_expdict_jsonfile(newexpdictlist, jsonfilename):
-    """convert current metrics parameter values stored in json per test to the expdict json"""
+    """Convert current metrics parameter values stored in json per test to the exp_dict json.
+       The output will be an updated json file named jsonfilename+"_update"
+
+       newexpdictlist: a list of name of json files, which are produced by running
+       save_to_dict() inside each stakeholder testcase or can be produced. The list can
+       consist of only the testcases that need to be updated and the exp_dicts for other
+       testcases not in the list won't be modified and copy to the new json as is.
+
+       jsonfilename: current json file conta:w!ins all the fiducial metrics values
+
+    """
+    import copy
     tmplFidDict = read_expdict_jsonfile(jsonfilename)
     newjsonfile = jsonfilename.split(".json")[0] + "_update.json"
     with open(newjsonfile, 'w') as outf:
-        outDict = {}
+        outDict = copy.deepcopy(tmplFidDict)
         isbeaminfo = False
-        for inmetricsfile in newexpdictlist:
+        for inmetricsfile in newexpdictlist: # read current values for each testscase
             with open(inmetricsfile, 'r') as curf:
                 curDict = json.load(curf)
                 testname = list(curDict.keys())[0]
@@ -395,3 +406,24 @@ def update_expdict_jsonfile(newexpdictlist, jsonfilename):
                 else:
                     raise Exception("{} does not contain a test name in the top key." +
                                     "Please modify the input file".format(tmplFidDict))
+
+
+def compare_expdictjson(newjson, oldjson):
+    """
+    compare the two exp dicts - used to check updating of exp_dicts json file
+    is done properly...
+    """
+    with open(oldjson, 'r') as fold, open(newjson, 'r') as fnew:
+        newdict = json.laod(fnew)
+        olddict = json.load(fold)
+
+        if newdict == olddict:
+            return "The two json files are indentical"
+        else:
+            for newkey0 in newdict:
+                if newkey0 in olddict:
+
+
+                else:
+                    msg='Found new toplevel key: {}'.format(newkey0)
+                
