@@ -171,7 +171,7 @@ class InterpolationParamsGenerator():
         return mean_freqs
 
     @staticmethod
-    def _get_aux_params(self):
+    def _get_aux_params():
         return {'delta_days': 1000}
 
 
