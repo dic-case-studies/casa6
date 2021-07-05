@@ -327,6 +327,39 @@ class MeanElevation():
         return elevations.mean()
 
 
+class RequestsManager():
+    """Manage the Jy/K Database access by the param.
+    
+    Usage:
+        vis = "./uid___A002_Xb32033_X9067.ms"
+        client = JyPerKDatabaseClient('asdm')
+        params = ASDMParamsGenerator.get_params(vis)
+        manager = RequestsManager(client)
+        manager.get(params)
+    """
+
+    def __init__(self, client):
+        self.client = client
+
+    def get(self, params):
+        responses = [self.client.get(param.param) for param in params]
+        responses = self._filter_success_is_true(responses)
+        
+        return self._convert_format(responses)
+
+    def _filter_success_is_true(self, responses):
+        return [response for response in responses if response['success']]
+        
+    def _convert_format(self, responses):
+        new_new_responses = []
+        for response in responses:
+            new_response = {}
+            new_response['total'] = response['data']['length']
+            new_response['data'] = response['data']['factors']
+            new_new_responses.append(new_response)
+        return new_new_responses
+        
+
 class JyPerKDatabaseClient():
     """
     Get values from Jy/K Web API (https://asa.alma.cl/science/jy-kelvins).
