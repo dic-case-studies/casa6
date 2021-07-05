@@ -482,9 +482,9 @@ class ASDMRspTranslator():
 
     @staticmethod
     def _format_factors(factors): #_format_jyperk
-        """
-        Format given dictionary to the formatted list as below.
+        """ Format given dictionary to the formatted list.
 
+        Sample formated list:
             [['MS_name', 'antenna_name', 'spwid', 'pol string', 'factor'],
              ['MS_name', 'antenna_name', 'spwid', 'pol string', 'factor'],
              ...
