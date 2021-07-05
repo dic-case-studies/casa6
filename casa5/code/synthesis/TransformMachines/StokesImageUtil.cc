@@ -876,21 +876,42 @@ try{
   gauss2d.mask(1) = false;
   gauss2d.mask(2) = false;
   
-  NonLinearFitLM<Double> fitter;
-  // Set maximum number of iterations to 1000
-  fitter.setMaxIter(1000);
-  
-  // Set converge criteria.  Default is 0.001
-  fitter.setCriteria(0.0001);
-  
-  // Set the function and initial values
-  fitter.setFunction(gauss2d);
-  
-  // The current parameter values are used as the initial guess.
-  solution = fitter.fit(x, y, sigma);
+  // CAS-13515: Fitting sometimes fails with "NonLinearFitLM: error in loop solution". This occurs in casacore/scimath/Fitting/NonLinearFitLM.tcc LSQFit::invertRect() due to a matrix that can not be inverted.
+  // This problem is solved by retrying fit with a different position angle.
+  Bool loopSolutionFound=false;
+  Int retryCounter = 0;
+  Double posAng = 1.0;
+  while(!loopSolutionFound && retryCounter < 10){
+      gauss2d[5] = posAng;
+      NonLinearFitLM<Double> fitter;
+      // Set maximum number of iterations to 1000
+      fitter.setMaxIter(1000);
+      
+      // Set converge criteria.  Default is 0.001
+      fitter.setCriteria(0.0001);
+      
+      // Set the function and initial values
+      fitter.setFunction(gauss2d);
+      
+      try{
+          // The current parameter values are used as the initial guess.
+          solution = fitter.fit(x, y, sigma);
+          loopSolutionFound = true;
+      }catch(AipsError x_error){
+          loopSolutionFound = false;
+          retryCounter++;
+          posAng = 1.0 + retryCounter*0.314;
+          os << LogIO::WARN << "Fit failed, another atempt will be made with position angle  " << posAng  << " rad." << LogIO::POST;
+      }
+      converg=fitter.converged();
+  }
+     
+  if(!loopSolutionFound)
+  {
+    throw(AipsError(String("Error in StokesImageUtil::FitGaussianPSF: error in loop solution.")));
+  }
 
-  converg=fitter.converged();
-  if (!fitter.converged()) {
+  if (!converg) {
     beam(0)=2.5*abs(deltas(0))/C::arcsec;
     beam(1)=2.5*abs(deltas(0))/C::arcsec;
     beam(2)=0.0;
