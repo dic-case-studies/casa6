@@ -29,9 +29,7 @@ ResponseStruct = collections.namedtuple('ResponseStruct', ['response', 'subparam
 
 
 class ASDMParamsGenerator():
-    """
-    Generate required parameters for Jy/K Web API.
-    This class has a public class method to generate the parameters.
+    """ Generate required parameters for Jy/K Web API.
 
     Usage:
         vis = "./uid___A002_X85c183_X36f.ms"
@@ -40,8 +38,7 @@ class ASDMParamsGenerator():
 
     @classmethod
     def get_params(cls, vis):
-        """
-        Generate required parameters for Jy/K Web API.
+        """ Generate required parameters for Jy/K Web API.
 
         Arguments:
             vis {str} -- File path of MS
@@ -57,8 +54,7 @@ class ASDMParamsGenerator():
 
     @staticmethod
     def _vis_to_uid(vis):
-        """
-        Convert MS name like uid___A002_Xabcd_X012 into uid://A002/Xabcd/X012
+        """ Convert MS name like 'uid___A002_Xabcd_X012 into uid://A002/Xabcd/X012'.
 
         Arguments:
             vis {str} -- File path of MS
@@ -185,6 +181,7 @@ class Bands():
     @classmethod
     def get(cls, science_windows, spwnames, mean_freqs, vis):
         """ Return all bands corresponding to the 'science_window' given in the input.
+
         First the method scan 'spwnames', if the band can be detect, the method will
         adopt this value. In other case, the method compare the freq with the 'mean_freqs'
         at which the band was detect, the method detect the band from the frequencies 
@@ -202,6 +199,7 @@ class Bands():
     @staticmethod
     def _extract_bands_from_spwnames(science_windows, spwnames):
         """ Extract bands that contain band information in the spwname.
+
         The spwnames is like 'X835577456#ALMA_RB_06#BB_2#SW-01#CH_AVG'.
         """
         bands = {}
@@ -225,7 +223,7 @@ class Bands():
         """ Extract bands using the mean freqs.
         
         Params:
-            target_mean_freqs {dict}: The mean freqs which does not been detected the bands.
+            target_mean_freqs {dict} -- The mean freqs which does not been detected the bands.
             vis {char}: The file path of vis.
         """
         known_bands = Bands._get_known_bands(vis)
@@ -328,7 +326,7 @@ class MeanElevation():
 
 
 class RequestsManager():
-    """Manage the Jy/K Database access by the param.
+    """ Manage the Jy/K Database access by the param.
     
     Usage:
         vis = "./uid___A002_Xb32033_X9067.ms"
@@ -361,8 +359,7 @@ class RequestsManager():
         
 
 class JyPerKDatabaseClient():
-    """
-    Get values from Jy/K Web API (https://asa.alma.cl/science/jy-kelvins).
+    """ Get values from Jy/K Web API (https://asa.alma.cl/science/jy-kelvins).
     
     Arguments:
         endpoint_type {str} -- Endpoint of Jy/K Web API.
@@ -400,7 +397,8 @@ class JyPerKDatabaseClient():
         return query
 
     def _retrieve(self, url):
-        """
+        """ Access to Jy/K DB and return response.
+
         Arguments:
             url {str} -- url to retrieve in the Jy/K Web API.
 
@@ -463,7 +461,8 @@ class JyPerKDatabaseClient():
             raise RuntimeError(msg)
 
     def _check_retval(self, retval):
-        """
+        """ Check if 'success of retval is True.
+
         This method only checks if the api was able to complete the process successfully or not.
         It is expected that 'success' will be False as a response, so the mothod does not raise
         RuntimeError. If the 'success' is False, the *Transelator classes will reject the factor
@@ -490,8 +489,7 @@ class ASDMRspTranslator():
         return filtered
 
     def format_jyperk(self, vis, jyperk):
-        """
-        Format given dictionary to the formatted list as below.
+        """ Format given dictionary to the formatted list as below.
 
             [['MS_name', 'antenna_name', 'spwid', 'pol string', 'factor'],
              ['MS_name', 'antenna_name', 'spwid', 'pol string', 'factor'],
@@ -503,7 +501,7 @@ class ASDMRspTranslator():
             jyperk {dict} -- Dictionary containing Jy/K factors with meta data
 
         Returns:
-            [list] -- Formatted list of Jy/K factors
+            list -- Formatted list of Jy/K factors
         """
         template = string.Template('$vis $Antenna $Spwid I $factor')
         data = jyperk['data']
@@ -575,9 +573,10 @@ class JyPerKReader4File():
         self.filename = filename
         
     def get(self):
-        """
-        Reads jyperk factors from a file and returns a string list
-        of [['MS','ant','spwid','polid','factor'], ...]
+        """ Reads jyperk factors from a file and returns a string list.
+
+        Returns:
+            list -- [['MS','ant','spwid','polid','factor'], ...]
         """
         with open(self.filename, 'r') as f:
             return list(self._extract_jyperk_from_csv(f))
