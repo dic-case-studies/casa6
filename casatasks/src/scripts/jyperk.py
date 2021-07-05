@@ -177,7 +177,7 @@ class InterpolationParamsGenerator():
 
 class ModelFitParamsGenerator(InterpolationParamsGenerator):
     @staticmethod
-    def _get_aux_params(self):
+    def _get_aux_params():
         return {}
 
 
