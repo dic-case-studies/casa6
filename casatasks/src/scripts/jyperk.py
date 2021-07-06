@@ -583,10 +583,10 @@ class InterpolationRspTranslator():
         return return_data
 
 
-
 class ModelFitRspTranslator(InterpolationRspTranslator):
-    def _extract_factor(self, response):
-        return response['data']['factor']
+    @staticmethod
+    def _extract_factor(response):
+        return response['response']['data']['factor']
 
 
 # file part
