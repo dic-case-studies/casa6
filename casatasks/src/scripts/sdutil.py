@@ -11,7 +11,7 @@ import contextlib
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import table, calibrater, imager, measures, mstransformer, quanta
+    from casatools import table, calibrater, imager, measures, mstransformer, msmetadata, quanta
     from casatools import ms as mstool
     from casatools.platform import bytes2str
     from casatasks import casalog
@@ -33,7 +33,7 @@ else:
     import flaghelper as fh
 
 @contextlib.contextmanager
-def toolmanager(vis, ctor, *args, **kwargs):
+def tool_manager(vis, ctor, *args, **kwargs):
     if is_CASA6:
         # this is the only syntax allowed in CASA6, code in CASA6 should be converted to
         # call this method with a tool constructor directly
@@ -58,21 +58,25 @@ def toolmanager(vis, ctor, *args, **kwargs):
             tool.done()
 
 
-def tbmanager(vis, *args, **kwargs):
-    return toolmanager(vis, table, *args, **kwargs)
+def table_manager(vis, *args, **kwargs):
+    return tool_manager(vis, table, *args, **kwargs)
 
 
-def cbmanager(vis, *args, **kwargs):
-    return toolmanager(vis, calibrater, *args, **kwargs)
+def calibrator_manager(vis, *args, **kwargs):
+    return tool_manager(vis, calibrater, *args, **kwargs)
 
 
-def measuresmanager(*args, **kwargs):
-    return toolmanager(None, measures, *args, **kwargs)
+def measures_manager(*args, **kwargs):
+    return tool_manager(None, measures, *args, **kwargs)
 
 
-def mstransformermanager(*args, **kwargs):
-    return toolmanager(None, mstransformer, *args, **kwargs)
-    
+def mstransformer_manager(*args, **kwargs):
+    return tool_manager(None, mstransformer, *args, **kwargs)
+
+
+def mstool_manager(vis, *args, **kwargs):
+    return tool_manager(vis, mstool, *args, **kwargs)
+
 
 def is_ms(filename):
     if (os.path.isdir(filename) and os.path.exists(filename+'/table.info') and os.path.exists(filename+'/table.dat')):
@@ -92,7 +96,7 @@ def is_ms(filename):
 
 @contextlib.contextmanager
 def table_selector(table, taql, *args, **kwargs):
-    with tbmanager(table, *args, **kwargs) as tb:
+    with table_manager(table, *args, **kwargs) as tb:
         tsel = tb.query(taql)
         try:
             yield tsel
@@ -455,7 +459,7 @@ def get_spwids(selection, infile=None):
     if len(spw_list) == 0:
         if infile is None:
             raise Exception("infile is needed when selection['spw'] is empty.")
-        with tbmanager(os.path.join(infile, 'DATA_DESCRIPTION')) as tb:
+        with table_manager(os.path.join(infile, 'DATA_DESCRIPTION')) as tb:
             spw_list = tb.getcol('SPECTRAL_WINDOW_ID')
 
     l = []
@@ -692,7 +696,7 @@ def do_mst(
             return
 
     # Create a local copy of the MSTransform tool
-    with mstransformermanager() as mtlocal:
+    with mstransformer_manager() as mtlocal:
         # Gather all the parameters in a dictionary.
         config = {}
 
@@ -780,6 +784,32 @@ def do_mst(
     if (spw != '' and spw != '*') or ext_config.get('parse_chanaverage'):
         _update_flag_cmd(infile, outfile, chanbin, spw)
 
+    # END
+
+
+def add_history(
+        caller,
+        casalog,
+        outfile):
+    mslocal = mstool()
+    """
+    Write history to output MS, not the input ms.
+    """
+    try:
+        param_names = caller.co_varnames[:caller.co_argcount]
+        local_vals = locals()
+        param_vals = [local_vals.get(p, None) for p in param_names]
+        write_history(mslocal, outfile, 'sdtimeaverage', param_names,
+                      param_vals, casalog)
+    except Exception as instance:
+        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
+                     'WARN')
+        return False
+
+    mslocal = None
+
+    return True
+
 
 def _if_parse_regridding_parameters(config, ext_config, mode, pdh):
     if ext_config.get('regridms'):
@@ -853,7 +883,7 @@ def _if_parse_chanaverage(chanbin, config, pdh):
 
 
 def _update_flag_cmd(infile, outfile, chanbin, spw):
-    with tbmanager(outfile + '/FLAG_CMD', nomodify=False) as mytb:
+    with table_manager(outfile + '/FLAG_CMD', nomodify=False) as mytb:
         mslocal = mstool()
         nflgcmds = mytb.nrows()
 
@@ -927,28 +957,6 @@ def _update_flag_cmd(infile, outfile, chanbin, spw):
             else:
                 casalog.post(
                     'FLAG_CMD table contains spw selection by name. Will not update it!', 'DEBUG')
-
-
-def add_history(
-        caller,
-        casalog,
-        outfile):
-    mslocal = mstool()
-    # Write history to output MS, not the input ms.
-    try:
-        param_names = caller.co_varnames[:caller.co_argcount]
-        local_vals = locals()
-        param_vals = [local_vals.get(p, None) for p in param_names]
-        write_history(mslocal, outfile, 'sdtimeaverage', param_names,
-                      param_vals, casalog)
-    except Exception as instance:
-        casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
-                     'WARN')
-        return False
-
-    mslocal = None
-
-    return True
 
 
 def _check_tileshape(tileshape):

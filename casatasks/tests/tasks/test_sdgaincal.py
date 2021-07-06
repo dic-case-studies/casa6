@@ -579,7 +579,7 @@ class sdgaincal_single_polarization_test(sdgaincal_test_base):
                         datacolumn='float_data')
 
         self.assertTrue(os.path.exists(self.infile_YY))
-        with sdutil.tbmanager(self.infile_YY) as tb:
+        with sdutil.table_manager(self.infile_YY) as tb:
             try:
                 for irow in range(tb.nrows()):
                     flag = tb.getcell('FLAG', irow)

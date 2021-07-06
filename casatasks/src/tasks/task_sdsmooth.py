@@ -20,13 +20,13 @@ else:
     import sdutil
     ms,sdms,tb = gentools(['ms','sdms','tb'])
 
+
+@sdutil.sdtask_decorator
 def sdsmooth(infile=None, datacolumn=None, antenna=None, 
               field=None, spw=None, timerange=None, scan=None, 
               pol=None, intent=None, reindex=None,
               kernel=None, kwidth=None,
               outfile=None, overwrite=None):
-
-    casalog.origin('sdsmooth')
 
     try:
         if len(outfile) == 0:

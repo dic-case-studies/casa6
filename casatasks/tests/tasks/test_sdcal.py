@@ -657,14 +657,14 @@ class sdcal_test_ps(sdcal_test_base):
                     myms = ms()
                     myargs = kwargs.copy()
                     if 'baseline' not in myargs:
-                        with sdutil.tbmanager(self.infile) as tb:
+                        with sdutil.table_manager(self.infile) as tb:
                             antenna1 = numpy.unique(tb.getcol('ANTENNA1'))
                             myargs['baseline'] = '%s&&&'%(','.join(map(str,antenna1)))
                     a = myms.msseltoindex(self.infile, **myargs)
                     antenna1_selection = a['antenna1']
                     spw_selection = a['spw']
                     expected_nrow = 3 * len(spw_selection) * len(antenna1_selection)
-                with sdutil.tbmanager(self.outfile) as tb:
+                with sdutil.table_manager(self.outfile) as tb:
                     self.assertEqual(tb.nrows(), expected_nrow, msg='Number of rows mismatch (expected %s actual %s)'%(expected_nrow, tb.nrows()))
 
                 # verifying resulting sky spectra
@@ -918,17 +918,17 @@ class sdcal_test_otfraster(sdcal_test_base):
     @staticmethod
     def calculate_expected_value(table, numedge=1):
         expected_value = {}
-        with sdutil.tbmanager(table) as tb:
+        with sdutil.table_manager(table) as tb:
             antenna_list = numpy.unique(tb.getcol('ANTENNA1'))
             ddid_list = numpy.unique(tb.getcol('DATA_DESC_ID'))
-        with sdutil.tbmanager(os.path.join(table,'DATA_DESCRIPTION')) as tb:
+        with sdutil.table_manager(os.path.join(table, 'DATA_DESCRIPTION')) as tb:
             dd_spw_map = tb.getcol('SPECTRAL_WINDOW_ID')
         for antenna in antenna_list:
             expected_value[antenna] = {}
             for ddid in ddid_list:
                 spw = dd_spw_map[ddid]
                 taql = 'ANTENNA1 == %s && ANTENNA2 == %s && DATA_DESC_ID == %s'%(antenna,antenna,ddid)
-                with sdutil.tbmanager(table) as tb:
+                with sdutil.table_manager(table) as tb:
                     try:
                         tsel = tb.query(taql, sortlist='TIME')
                         time_list = tsel.getcol('TIME')
@@ -1005,14 +1005,14 @@ class sdcal_test_otfraster(sdcal_test_base):
                     myms = ms()
                     myargs = kwargs.copy()
                     if 'baseline' not in myargs:
-                        with sdutil.tbmanager(self.infile) as tb:
+                        with sdutil.table_manager(self.infile) as tb:
                             antenna1 = numpy.unique(tb.getcol('ANTENNA1'))
                             myargs['baseline'] = '%s&&&'%(','.join(map(str,antenna1)))
                     a = myms.msseltoindex(self.infile, **myargs)
                     antenna1_selection = a['antenna1']
                     spw_selection = a['spw']
                     expected_nrow = 6 * len(spw_selection) * len(antenna1_selection)
-                with sdutil.tbmanager(self.outfile) as tb:
+                with sdutil.table_manager(self.outfile) as tb:
                     self.assertEqual(tb.nrows(), expected_nrow, msg='Number of rows mismatch (expected %s actual %s)'%(expected_nrow, tb.nrows()))
 
                 # verifying resulting sky spectra
@@ -1497,7 +1497,7 @@ class sdcal_test_otf_ephem(unittest.TestCase):
                 shutil.rmtree(f)
 
     def check_ephem(self, vis):
-        with sdutil.tbmanager(os.path.join(vis, 'SOURCE')) as tb:
+        with sdutil.table_manager(os.path.join(vis, 'SOURCE')) as tb:
             names = tb.getcol('NAME')
         self.assertEqual(len(names), 1)
         me = measures()
@@ -1506,20 +1506,20 @@ class sdcal_test_otf_ephem(unittest.TestCase):
         self.assertIn(names[0].upper(), ephemeris_codes)
 
     def check_fresh_ms(self, vis):
-        with sdutil.tbmanager(vis) as tb:
+        with sdutil.table_manager(vis) as tb:
             colnames = tb.colnames()
 
         self.assertNotIn('CORRECTED_DATA', colnames)
 
     def check_caltable(self, caltable):
-        with sdutil.tbmanager(caltable) as tb:
+        with sdutil.table_manager(caltable) as tb:
             data = tb.getcol('FPARAM')
 
         self.assertEqual(data.shape, (2, 1, 10))
         self.assertTrue(numpy.all(data == 1.0))
 
     def check_corrected(self, vis):
-        with sdutil.tbmanager(vis) as tb:
+        with sdutil.table_manager(vis) as tb:
             data = tb.getcol('CORRECTED_DATA')
             nrow = tb.nrows()
 
@@ -1818,14 +1818,14 @@ class sdcal_test_apply(sdcal_test_base):
                 myms = ms()
                 myargs = kwargs.copy()
                 if 'baseline' not in myargs:
-                    with sdutil.tbmanager(self.infile) as tb:
+                    with sdutil.table_manager(self.infile) as tb:
                         antenna1 = numpy.unique(tb.getcol('ANTENNA1'))
                         myargs['baseline'] = '%s&&&'%(','.join(map(str,antenna1)))
                 a = myms.msseltoindex(self.infile, **myargs)
                 antennalist = a['antenna1']
-                with sdutil.tbmanager(self.applytable) as tb:
+                with sdutil.table_manager(self.applytable) as tb:
                     spwlist = numpy.unique(tb.getcol('SPECTRAL_WINDOW_ID'))
-                with sdutil.tbmanager(os.path.join(self.infile, 'DATA_DESCRIPTION')) as tb:
+                with sdutil.table_manager(os.path.join(self.infile, 'DATA_DESCRIPTION')) as tb:
                     spwidcol = tb.getcol('SPECTRAL_WINDOW_ID').tolist()
                     spwddlist = map(spwidcol.index, spwlist)
                 if len(a['spw']) > 0:
@@ -1857,7 +1857,7 @@ class sdcal_test_apply(sdcal_test_base):
                 # sanity check
                 self.assertIsNone(self.result, msg='The task must complete without error')
                 # verify if CORRECTED_DATA exists
-                with sdutil.tbmanager(self.infile) as tb:
+                with sdutil.table_manager(self.infile) as tb:
                     self.assertTrue('CORRECTED_DATA' in tb.colnames(), msg='CORRECTED_DATA column must be created after task execution!')
 
                 # parse interp
@@ -2068,7 +2068,7 @@ class sdcal_test_apply(sdcal_test_base):
         import functools
         @functools.wraps(func)
         def wrapper(self):
-            with sdutil.tbmanager(self.infile, nomodify=False) as tb:
+            with sdutil.table_manager(self.infile, nomodify=False) as tb:
                 self.assertTrue('WEIGHT_SPECTRUM' in tb.colnames(), msg='Internal Error')
                 nrow = tb.nrows()
                 for irow in range(nrow):
@@ -2093,7 +2093,7 @@ class sdcal_test_apply(sdcal_test_base):
         import functools
         @functools.wraps(func)
         def wrapper(self):
-            with sdutil.tbmanager(os.path.join(self.infile,'SYSCAL'), nomodify=False) as tb:
+            with sdutil.table_manager(os.path.join(self.infile, 'SYSCAL'), nomodify=False) as tb:
                 tsel = tb.query('SPECTRAL_WINDOW_ID IN [1,3]', sortlist='ANTENNA_ID,SPECTRAL_WINDOW_ID,TIME')
                 try:
                     nrow = tsel.nrows()
@@ -2197,7 +2197,7 @@ class sdcal_test_single_polarization(sdcal_test_base):
             - FPARAM (pol 1) is all 0 and is all flagged
         """
         # get reference data from infile
-        with sdutil.tbmanager(self.infile, nomodify=False) as tb:
+        with sdutil.table_manager(self.infile, nomodify=False) as tb:
             tsel = tb.query('STATE_ID == 1', sortlist='TIME')
             try:
                 reftime = tsel.getcol('TIME')
@@ -2207,7 +2207,7 @@ class sdcal_test_single_polarization(sdcal_test_base):
                 tsel.close()
 
         # verify caltable
-        with sdutil.tbmanager(self.outfile, nomodify=False) as tb:
+        with sdutil.table_manager(self.outfile, nomodify=False) as tb:
             caltime = tb.getcol('TIME')
             fparam = tb.getcol('FPARAM')
             calflag = tb.getcol('FLAG')
@@ -2250,7 +2250,7 @@ class sdcal_test_single_polarization(sdcal_test_base):
             - For ON_SOURCE spectra (STATE_ID 2), CORRECTED_DATA is a calculated result of
               (ON - OFF) / OFF with interpolated OFF in time
         """
-        with sdutil.tbmanager(self.infile, nomodify=False) as tb:
+        with sdutil.table_manager(self.infile, nomodify=False) as tb:
             # calibration spectra (STATE_ID 0)
             tsel = tb.query('STATE_ID == 0')
             try:

@@ -33,7 +33,7 @@ else:
     from taskinit import *
 
     from sdfit import sdfit
-    from sdutil import tbmanager
+    from sdutil import table_manager
 
     try:
         from . import selection_syntax
@@ -359,10 +359,10 @@ class sdfit_unittest_base(unittest.TestCase):
         if select_pol: pol_sel = self._getListSelection(pol)
         if not colname: colname='FLOAT_DATA'
         self._checkfile(filename)
-        with tbmanager(filename) as tb:
+        with table_manager(filename) as tb:
             data = tb.getcol(colname)
             ddid = tb.getcol('DATA_DESC_ID')
-        with tbmanager(filename+'/DATA_DESCRIPTION') as tb:
+        with table_manager(filename + '/DATA_DESCRIPTION') as tb:
             spwid = tb.getcol('SPECTRAL_WINDOW_ID').tolist()
         if not select_spw: spw_sel = spwid
         # get the selected DD IDs from selected SPW IDs.
@@ -646,7 +646,7 @@ class sdfit_basicTest(sdfit_unittest_base):
             result = sdfit(infile=infile, datacolumn=datacolumn)
 
             npol = 2
-            with tbmanager(infile) as tb:
+            with table_manager(infile) as tb:
                 nrow = tb.nrows()
 
             for key in result.keys():

@@ -11,6 +11,7 @@ if is_CASA6:
     from casatools.platform import bytes2str
     from casatasks import casalog
     from .mstools import write_history
+    from . import sdutil
 
     mysdms = singledishms( )
     mycb = calibrater( )
@@ -18,13 +19,14 @@ if is_CASA6:
 else:
     from taskinit import *
     from mstools import write_history
+    import sdutil
 
     mysdms, mycb, myms = gentools(['sdms', 'cb', 'ms'])
 
+@sdutil.sdtask_decorator
 def importnro(infile=None, outputvis=None, overwrite=None, parallel=None):
     """
     """
-    casalog.origin('importnro')
     status = True
 
     try:

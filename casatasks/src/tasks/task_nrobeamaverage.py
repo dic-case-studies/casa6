@@ -46,6 +46,7 @@ def open_table(path, nomodify=True):
     finally:
         tb.close()'''
 
+@sdutil.sdtask_decorator
 def nrobeamaverage(
              infile,
              datacolumn,
@@ -57,7 +58,6 @@ def nrobeamaverage(
              timebin,
              outfile):
 
-    casalog.origin('nrobeamaverage')
     try:
         #set temporary data name
         tmpfile = 'tmp-nrobeamaverage-' + os.path.basename(infile.rstrip('/')) + '-' + "{0:%Y%m%d%H%M%S.%f}".format(datetime.datetime.now()) + '.ms'
@@ -91,7 +91,7 @@ def nrobeamaverage(
 
         #open tmpfile and rewrite antenna column of the ON spectra using beam
         idx_on = None
-        with sdutil.tbmanager(os.path.join(tmpfile, 'STATE')) as tb:
+        with sdutil.table_manager(os.path.join(tmpfile, 'STATE')) as tb:
             ocol = tb.getcol('OBS_MODE')
             for i in range(len(ocol)):
                 if ocol[i] == 'OBSERVE_TARGET#ON_SOURCE':
@@ -99,11 +99,11 @@ def nrobeamaverage(
                     break
         if idx_on is None: raise Exception('ON_SOURCE data not found.')
 
-        with sdutil.tbmanager(os.path.join(tmpfile, 'ANTENNA')) as tb:
+        with sdutil.table_manager(os.path.join(tmpfile, 'ANTENNA')) as tb:
             num_beams = len(tb.getcol('NAME'))
             _beam, min_beamid = get_beamid(beam, num_beams)
 
-        with sdutil.tbmanager(tmpfile, nomodify=False) as tb:
+        with sdutil.table_manager(tmpfile, nomodify=False) as tb:
             acol = tb.getcol('ANTENNA1')
             scol = tb.getcol('STATE_ID')
             for i in range(len(acol)):

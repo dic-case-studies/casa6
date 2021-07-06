@@ -59,15 +59,6 @@ def open_ms(vis):
     finally:
         ms.close()
 
-@contextlib.contextmanager
-def open_table(vis):
-    tb = table()
-    tb.open(vis)
-    try:
-        yield tb
-    finally:
-        tb.close()
-
 class SelectionHandler(object):
     def __init__(self, sel):
         self.sel = sel
@@ -276,7 +267,7 @@ def _calc_PB(vis, antenna_id, restfreq):
               "Please set restreq or cell manually to generate an image."
         raise RuntimeError(msg)
     # Antenna diameter
-    with open_table(os.path.join(vis, 'ANTENNA')) as tb:
+    with sdutil.table_manager(os.path.join(vis, 'ANTENNA')) as tb:
         antdiam_ave = tb.getcell('DISH_DIAMETER', antenna_id)
     #antdiam_ave = self._get_average_antenna_diameter(antenna)
     # Calculate PB
@@ -324,7 +315,7 @@ def _get_pointing_extent(phasecenter, vislist, field, spw, antenna, scan, intent
         base_mref = 'J2000'
     elif isinstance(phasecenter, int) or phasecenter.isdigit():
         # may be field id
-        with open_table(os.path.join(vis, 'FIELD')) as tb:
+        with sdutil.table_manager(os.path.join(vis, 'FIELD')) as tb:
             base_mref = tb.getcolkeyword('PHASE_DIR', 'MEASINFO')['Ref']
     else:
         # may be phasecenter is explicitly specified
@@ -512,13 +503,13 @@ def _get_restfreq_if_empty(vislist, spw, field, restfreq):
             fieldid = None
     sourceid = None
     if fieldid is not None:
-        with open_table(os.path.join(vis, 'FIELD')) as tb:
+        with sdutil.table_manager(os.path.join(vis, 'FIELD')) as tb:
             sourceid = tb.getcell('SOURCE_ID', fieldid)
         if sourceid < 0:
             sourceid = None
     if rf is None:
         # if restfrequency is defined in SOURCE table, return it
-        with open_table(os.path.join(vis, 'SOURCE')) as tb:
+        with sdutil.table_manager(os.path.join(vis, 'SOURCE')) as tb:
             if 'REST_FREQUENCY' in tb.colnames():
                 tsel = None
                 taql = ''
@@ -549,7 +540,7 @@ def _get_restfreq_if_empty(vislist, spw, field, restfreq):
         if spwid is None:
             spwid = 0
         # otherwise, return mean frequency of given spectral window
-        with open_table(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
+        with sdutil.table_manager(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
             cf = tb.getcell('CHAN_FREQ', spwid)
             rf = cf.mean()
 
@@ -691,7 +682,7 @@ def get_ms_column_unit(tb, colname):
 
 def get_brightness_unit_from_ms(msname):
     image_unit = ''
-    with open_table(msname) as tb:
+    with sdutil.table_manager(msname) as tb:
         image_unit = get_ms_column_unit(tb, 'DATA')
         if image_unit == '': image_unit = get_ms_column_unit(tb, 'FLOAT_DATA')
     if image_unit.upper() == 'K':
@@ -702,7 +693,7 @@ def get_brightness_unit_from_ms(msname):
     return image_unit
 
 
-
+@sdutil.sdtask_decorator
 def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, mode, nchan, start, width, veltype,
                specmode, outframe,
                gridfunction, convsupport, truncate, gwidth, jwidth, imsize, cell, phasecenter, projection,
@@ -886,7 +877,7 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, m
         ms.msselect({'baseline': baseline})
         ndx = ms.msselectedindices()
         antenna_index = ndx['antenna1'][0]
-    with open_table(os.path.join(rep_ms, 'ANTENNA')) as tb:
+    with sdutil.table_manager(os.path.join(rep_ms, 'ANTENNA')) as tb:
         antenna_name = tb.getcell('NAME', antenna_index)
         antenna_diameter = tb.getcell('DISH_DIAMETER', antenna_index)
     set_beam_size(rep_ms, imagename,

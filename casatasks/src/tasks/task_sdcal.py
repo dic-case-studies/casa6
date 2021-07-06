@@ -28,6 +28,7 @@ else:
     # Calibrator tool
     (cb,myms) = gentools(['cb','ms'])
 
+@sdutil.sdtask_decorator
 def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
            width=0.5, elongated=False, applytable='',interp='', spwmap={},
            outfile='', overwrite=False, field='', spw='', scan='',intent=''): 
@@ -175,7 +176,7 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
 
 def inspect_caltype(table):
     caltype = 'UNKNOWN'
-    with sdutil.tbmanager(table) as tb:
+    with sdutil.table_manager(table) as tb:
         if 'VisCal' in tb.keywordnames():
             caltype = tb.getkeyword('VisCal')
     return caltype

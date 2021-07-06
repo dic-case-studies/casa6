@@ -103,7 +103,7 @@ class sdsmooth_test_base(unittest.TestCase):
         import functools
         @functools.wraps(func)
         def wrapper(self):
-            with sdutil.tbmanager(self.infile) as tb:
+            with sdutil.table_manager(self.infile) as tb:
                 for irow in range(tb.nrows()):
                     self.assertTrue(tb.iscelldefined('WEIGHT_SPECTRUM', irow))
 
@@ -136,7 +136,7 @@ class sdsmooth_test_base(unittest.TestCase):
         dd_selection = None
         if len(spw) == 0:
             expected_nrow = 2
-            with sdutil.tbmanager(self.infile) as tb:
+            with sdutil.table_manager(self.infile) as tb:
                 data_in = tb.getvarcol(datacol_name)
                 flag_in = tb.getvarcol('FLAG')
                 if weight_mode is True:
@@ -147,7 +147,7 @@ class sdsmooth_test_base(unittest.TestCase):
             spw_selection = a['spw']
             dd_selection = a['dd']
             expected_nrow = len(spw_selection)
-            with sdutil.tbmanager(self.infile) as tb:
+            with sdutil.table_manager(self.infile) as tb:
                 try:
                     tsel = tb.query('DATA_DESC_ID IN %s'%(dd_selection.tolist()))
                     data_in = tsel.getvarcol(datacol_name)
@@ -157,7 +157,7 @@ class sdsmooth_test_base(unittest.TestCase):
                 finally:
                     tsel.close()
 
-        with sdutil.tbmanager(self.outfile) as tb:
+        with sdutil.table_manager(self.outfile) as tb:
             nrow = tb.nrows()
             data_out = tb.getvarcol(datacol_name)
             flag_out = tb.getvarcol('FLAG')
@@ -452,7 +452,7 @@ class sdsmooth_test_boxcar(sdsmooth_test_base):
             result = sdsmooth(infile=self.infile, outfile=self.outfile,
                                datacolumn=self.datacolumn, overwrite=True,
                                kernel='boxcar', kwidth = kwidth)
-            with sdutil.tbmanager(self.outfile) as tb:
+            with sdutil.table_manager(self.outfile) as tb:
                 for irow in range(tb.nrows()):
                     spec = tb.getcell(self.datacolumn.upper(), irow)
                     for ipol in range(len(spec)):

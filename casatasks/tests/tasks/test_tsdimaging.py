@@ -16,7 +16,7 @@ if is_CASA6:
     from casatasks import casalog
     from casatasks import flagdata
     from casatasks import tsdimaging as sdimaging
-    from casatasks.private.sdutil import tbmanager, toolmanager, table_selector
+    from casatasks.private.sdutil import tool_manager, table_manager, table_selector
 
     ### for selection_syntax import
     #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -56,7 +56,7 @@ else:
         from tests.testutils import TableCacheValidator
 
     from tsdimaging import tsdimaging as sdimaging
-    from sdutil import tbmanager, toolmanager, table_selector
+    from sdutil import table_manager, tool_manager, table_selector
 
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
@@ -2191,7 +2191,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
         remove_table(self.outfile)
         default(sdimaging)
-        with tbmanager(self.rawfile) as tb:
+        with table_manager(self.rawfile) as tb:
             self.nchan = len(tb.getcell('DATA', 0)[0])
 
         # fix timestamp issue
@@ -2209,7 +2209,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         # but they are intended to be allocated to different pointing
         # directions. to enable it, timestamps are artificially shifted
         # by a value significantly larger than integration time.
-        with tbmanager(self.rawfile, nomodify=False) as tb:
+        with table_manager(self.rawfile, nomodify=False) as tb:
             nrow = tb.nrows()
             ddid = numpy.unique(tb.getcol('DATA_DESC_ID'))
             nchunk = len(ddid)
@@ -2224,7 +2224,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
                 tshift[ifrom:ito] = torig[ifrom:ito] + ichunk * max_interval
             tb.putcol('TIME', tshift)
 
-        with tbmanager(os.path.join(self.rawfile, 'POINTING'), nomodify=False) as tb:
+        with table_manager(os.path.join(self.rawfile, 'POINTING'), nomodify=False) as tb:
             tb.putcol('TIME', tshift)
 
     def testFlag01(self):
@@ -2297,7 +2297,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
     def _get_refmask(self, file, chanmerge=False):
         res = []
-        with tbmanager(file) as tb:
+        with table_manager(file) as tb:
             for i in [0, self.imsize[0] // 2]:
                 for j in [0, self.imsize[1] // 3, self.imsize[1] * 2 // 3]:
                     k_range = [0] if chanmerge else [0, 5, 9]
@@ -2307,7 +2307,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
     def _get_refweight(self, file, chanmerge=False):
         res = []
-        with tbmanager(file) as tb:
+        with table_manager(file) as tb:
             for i in [0, self.imsize[0] // 2]:
                 for j in [0, self.imsize[1] // 3, self.imsize[1] * 2 // 3]:
                     k_range = [0] if chanmerge else [0, 5, 9]
@@ -2317,7 +2317,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
     def _get_refvalues(self, file, chanmerge=False):
         res = []
-        with tbmanager(file) as tb:
+        with table_manager(file) as tb:
             for i in [self.imsize[0] // 2, 0]:
                 for j in [0, self.imsize[1] // 3, self.imsize[1] * 2 // 3]:
                     irow = self.imsize[0]*j+i
@@ -2341,7 +2341,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     def _checkvalue(self, file, is_maskfile, x_range, y_range, f_range, ref_value, chanmerge=False):
         tol=1e-5
         colname = 'PagedArray' if is_maskfile else 'map'
-        with tbmanager(file) as tb:
+        with table_manager(file) as tb:
             val = tb.getcell(colname, 0)
 
         boolean_types = (bool, numpy.bool, numpy.bool_)
@@ -2989,7 +2989,7 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
 
-        with tbmanager(outfile) as tb:
+        with table_manager(outfile) as tb:
             imdata = tb.getcell('map', 0)
             imsize = self.param_base['imsize']
             for y in range(imsize):
@@ -3165,7 +3165,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
 
     def check_spline_works(self, outfile, multiple_ms=False):
         weightfile = outfile + '.weight'
-        with tbmanager(weightfile) as tb:
+        with table_manager(weightfile) as tb:
             mapdata = tb.getcell('map', 0)
         # for pixels with strong weight value(>14), collect their distance from the image
         # center and then compute the mean and sigma of their distribution.
@@ -3221,9 +3221,9 @@ class sdimaging_test_interp(sdimaging_unittest_base):
         img1 = image1 + suffix
         img2 = image2 + suffix
 
-        with tbmanager(img1) as tb:
+        with table_manager(img1) as tb:
             mapdata1 = tb.getcell('map', 0)
-        with tbmanager(img2) as tb:
+        with table_manager(img2) as tb:
             mapdata2 = tb.getcell('map', 0)
 
         self.assertTrue(numpy.allclose(mapdata1, mapdata2, rtol=1.0e-5, atol=1.0e-5),
@@ -3303,7 +3303,7 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
         self.run_test()
 
         weightfile = self.outfile + '.weight'
-        with tbmanager(weightfile) as tb:
+        with table_manager(weightfile) as tb:
             mapdata = tb.getcell('map', 0)
         # for pixels with strong weight value(>14), collect their distance from the image
         # center and then compute the mean and sigma of their distribution.
@@ -3920,7 +3920,7 @@ def str_to_deg(s):
     return qa.quantity(s)['value']
 
 def calc_statistics(imagename):
-    with toolmanager(imagename, image) as ia:
+    with tool_manager(imagename, image) as ia:
         s = ia.statistics()
     return s
 

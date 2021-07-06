@@ -27,6 +27,7 @@ else:
 qa = quanta()
 
 
+@sdutil.sdtask_decorator
 def sdtimeaverage(
         infile,
         datacolumn,
@@ -133,7 +134,7 @@ def use_alternative_column(infile, datacolumn):
 
 def check_column(msname):
     """ Check the specified column if it exists. """
-    with sdutil.tbmanager(msname) as tb:
+    with sdutil.table_manager(msname) as tb:
         columnNames = tb.colnames()
         exist_float_data = 'FLOAT_DATA' in columnNames
         exist_data = 'DATA' in columnNames

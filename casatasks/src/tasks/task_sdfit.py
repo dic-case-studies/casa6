@@ -27,8 +27,6 @@ def sdfit(infile=None, datacolumn=None, antenna=None, field=None, spw=None,
            fitfunc=None, fitmode=None, nfit=None, thresh=None, avg_limit=None,
            minwidth=None, edge=None, outfile=None, overwrite=None):
 
-    casalog.origin('sdfit')
-
     try:
         if os.path.exists(outfile):
             if overwrite:

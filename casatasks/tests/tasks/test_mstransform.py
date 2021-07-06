@@ -28,7 +28,7 @@ else:
     from tasks import mstransform, cvel, cvel2, listpartition, listobs, setjy, flagdata, split, applycal, importasdm, flagcmd
     from taskinit import mstool, tbtool, msmdtool, aftool
     from __main__ import default
-    from sdutil import tbmanager, toolmanager, table_selector
+#    from sdutil import tbmanager, tool_manager, table_selector
 
     # Define the root for the data files
     datapath = os.environ.get('CASAPATH').split()[0] + \

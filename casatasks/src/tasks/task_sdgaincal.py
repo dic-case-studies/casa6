@@ -66,14 +66,13 @@ def parse_spwmap(spwmap, index):
         return spwmap
     assert False
 
+@sdutil.sdtask_decorator
 def sdgaincal(infile=None, calmode=None, radius=None, smooth=None, 
               antenna=None, field=None, spw=None, scan=None, intent=None, 
               applytable=None, interp=None, spwmap=None, outfile='', overwrite=False): 
-    
-    casalog.origin('sdgaincal')
-    
+
     # Calibrater tool
-    with sdutil.cbmanager() as mycb:
+    with sdutil.calibrator_manager() as mycb:
         # outfile must be specified
         if (outfile == '') or not isinstance(outfile, str):
             raise ValueError("outfile is empty.")

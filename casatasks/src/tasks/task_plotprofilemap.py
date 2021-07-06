@@ -7,22 +7,24 @@ if is_CASA6:
     from casatasks import casalog
     from casatools import quanta
     from casatools import image
+    from . import sdutil
+
 else:
     from taskinit import casalog
     from taskinit import qatool as quanta
     from taskinit import iatool as image
-
+    import sdutil
 
 qa = quanta()
 
 
+@sdutil.sdtask_decorator
 def plotprofilemap(imagename=None, figfile=None, overwrite=None, transparent=None,
                    pol=None, spectralaxis=None, restfreq=None, plotrange=None, title=None,
                    linecolor=None, linestyle=None, linewidth=None,
                    separatepanel=None, plotmasked=None, maskedcolor=None,
                    showaxislabel=None, showtick=None, showticklabel=None,
                    figsize=None, numpanels=None):
-    casalog.origin('plotprofilemap')
 
     if len(figfile) > 0 and os.path.exists(figfile) and overwrite == False:
         raise RuntimeError('overwrite is False and output file exists: \'%s\''%(figfile))
