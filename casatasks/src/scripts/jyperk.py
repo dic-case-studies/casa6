@@ -531,18 +531,6 @@ class ASDMRspTranslator():
         ]
         return filtered
 
-    @staticmethod
-    def _format(queries):
-        responses = list(queries)
-
-        # there should be only one query
-        assert len(responses) == 1
-
-        response = responses[0].response
-        response['total'] = response['data']['length']
-        response['data'] = response['data']['factors']
-        return response
-
 
 class InterpolationRspTranslator(ASDMRspTranslator):
     def format(self, queries):
