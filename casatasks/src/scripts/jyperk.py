@@ -7,6 +7,7 @@ import os
 import re
 import ssl
 import string
+from time import sleep
 from urllib.parse import urlencode
 from urllib.request import urlopen
 from urllib.error import HTTPError, URLError
@@ -349,25 +350,34 @@ class RequestsManager():
 
 class JyPerKDatabaseClient():
     """ Get values from Jy/K Web API (https://asa.alma.cl/science/jy-kelvins).
-    
-    Arguments:
-        endpoint_type {str} -- Endpoint of Jy/K Web API.
-            The value to be entered must be one of asdm, model-fit or interpolation.
-        timeout {int} --- Maximum waiting time when accessing the web API.
-        retry {int} -- Number of times to retry when the web API access fails.
     """
+
     BASE_URL = 'https://asa.alma.cl/science/jy-kelvins'
 
-    def __init__(self, endpoint_type, timeout=180, retry=3):
+    def __init__(self, endpoint_type, timeout=180, retry=3, retry_wait_time=5):
+        """ Set the parameters to be used when accessing the Web API.
+        
+        Arguments:
+            endpoint_type {str} -- Endpoint of Jy/K Web API.
+                The value to be entered must be one of asdm, model-fit or interpolation.
+            timeout {int} --- Maximum waiting time when accessing the web API. Secound.
+            retry {int} -- Number of times to retry when the web API access fails.
+            retry_wait_time {int} -- The waiting time when the web request fails. Secound.
+        """
         assert endpoint_type in ['asdm', 'model-fit', 'interpolation'], \
             'Please set endpoint_type: asdm, model-fit, interpolation'
         self.web_api_url = self._generate_web_api_url(endpoint_type)
         self.timeout = timeout
-        self.retry = retry
+        self.retry_wait_time = retry_wait_time
 
     def get(self, param):
-        request_url = self._generate_query(param)
-        body = self._try_to_get_resonse(request_url)
+        """ Get the Web API response.
+
+        Arguments:
+            param {dict} -- The parameters used in the Web API.
+        """
+        request_url = self._generate_url(param)
+        body = self._try_to_get_response(request_url)
         retval = self._convert_to_json(body)
         self._check_retval(retval)
         return retval
@@ -378,7 +388,7 @@ class JyPerKDatabaseClient():
             web_api_url += '/'
         return web_api_url
 
-    def _generate_query(self, param):
+    def _generate_url(self, param):
         # encode params
         encoded = urlencode(param)
         query = '?'.join([self.web_api_url, encoded])
@@ -419,11 +429,12 @@ class JyPerKDatabaseClient():
             casalog.post(msg)
             return {'URLError': False, 'code': None, 'error_reason': e.reason}
 
-    def _try_to_get_resonse(self, url):
+    def _try_to_get_response(self, url):
         for i in range(self.retry):
             response_with_tag = self._retrieve(url)
             if response_with_tag['status'] == 'Success':
                 return response_with_tag['body']
+            sleep(self.retry_wait_time)
 
         if response_with_tag['status'] == HTTPError:
             self._raise_http_error(url, response_with_tag)
