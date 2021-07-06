@@ -22,6 +22,7 @@ if is_CASA6:
     from casatasks.private.imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
     #from casatasks import imregrid
+    from .cleanhelper import write_tclean_history, get_func_params
     from .sdint_helper import *
     from casatools import table
     from casatools import synthesisimager,synthesisutils
@@ -33,6 +34,7 @@ else:
     from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from imagerhelpers.input_parameters import ImagerParameters
+    from cleanhelper import write_tclean_history, get_func_params
     from sdint_helper import *
     table=casac.table
     synthesisimager=casac.synthesisimager
@@ -812,6 +814,15 @@ def sdintimaging(
 
         #clean up tmp files
         deleteTmpFiles()
+
+    # Write history at the end, when hopefully all temp files are gone from disk,
+    # so they won't be picked up. They need time to disappear on NFS or slow hw.
+    # Copied from tclean.
+    try:
+        params = get_func_params(sdintimaging, locals())
+        write_tclean_history(imagename, 'sdintimaging', params, casalog)
+    except Exception as exc:
+        casalog.post("Error updating history (logtable): {} ".format(exc),'WARN')
        
     return retrec
 

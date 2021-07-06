@@ -51,6 +51,9 @@ if is_CASA6:
     def decon_param_names():
         from casatasks.deconvolve import _deconvolve_t
         return _deconvolve_t.__code__.co_varnames[:_deconvolve_t.__code__.co_argcount]
+    def sdint_param_names():
+        from casatasks.sdintimaging import _sdintimaging_t
+        return _sdintimaging_t.__code__.co_varnames[:_sdintimaging_t.__code__.co_argcount]
 
     casa6 = True
 
@@ -82,6 +85,9 @@ else:
     def decon_param_names():
         from tasks import deconvolve
         return deconvolve.parameters.keys()
+    def sdint_param_names():
+        from tasks import sdintimaging
+        return sdintimaging.parameters.keys()
 
     casa5 = True
 
@@ -744,14 +750,16 @@ class TestHelpers:
         # build up a list of parameter names (to be evaluated as necessary)
         task_param_names = {
             "tclean": tclean_param_names,
-            "deconvolve": decon_param_names
+            "deconvolve": decon_param_names,
+            "sdintimaging": sdint_param_names
         }
 
         pstr = ''
         ncallsdict = {}
-        ncallsdict['tclean']     = sum(line.startswith('taskname=tclean') for line in history)
-        ncallsdict['deconvolve'] = sum(line == 'taskname=deconvolve' for line in history)
-        ncalls                   = ncallsdict['tclean'] + ncallsdict['deconvolve']
+        ncallsdict['tclean']       = sum(line.startswith('taskname=tclean') for line in history)
+        ncallsdict['deconvolve']   = sum(line == 'taskname=deconvolve' for line in history)
+        ncallsdict['sdintimaging'] = sum(line == 'taskname=sdintimaging' for line in history)
+        ncalls                     = ncallsdict['tclean'] + ncallsdict['deconvolve'] + ncallsdict['sdintimaging']
         nversions = sum(line.startswith('version:') for line in history)
         if ncalls < 1:
             pstr += ('No calls to cleaning tasks were found in history. ({})\n'.
@@ -767,7 +775,7 @@ class TestHelpers:
 
         # check parameter names for cleaning tasks
         histories = TestHelpers().split_histories_by_task(history)
-        for tname in ['tclean', 'deconvolve']:
+        for tname in ['tclean', 'deconvolve', 'sdintimaging']:
             ntcalls = ncallsdict[tname]
             if ntcalls == 0:
                 continue
