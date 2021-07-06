@@ -98,7 +98,8 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsPrevPeakResidual(0.0),
   itsOrigDirty( ),
   itsFusedThreshold(0.0),
-  itsNumNoChange(0)
+  itsNumNoChange(0),
+  itsBinSizeForSumFlux(4)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -147,7 +148,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   os << LogIO::NORMAL1 << "Asp clean algorithm" << LogIO::POST;
 
 
-  Int scale;
+  //Int scale;
 
   AlwaysAssert(itsScalesValid, AipsError);
   //no need to use all cores if possible
@@ -276,13 +277,20 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
   minMaxMasked(minVal, maxVal, posmin, posmax, (*itsDirty), itsInitScaleMasks[0]);
   itsPeakResidual = (fabs(maxVal) > fabs(minVal)) ? fabs(maxVal) : fabs(minVal);
 
+  vector<Float> vecItsStrengthOptimum;
+  vector<Float> vecItsOptimumScaleSize;
+  vecItsStrengthOptimum.clear();
+  vecItsOptimumScaleSize.clear();
+
   for (Int ii = itsStartingIter; ii < itsMaxNiter; ii++)
   {
     //cout << "cur iter " << itsIteration << " max iter is "<< itsMaxNiter << endl;
     itsIteration++;
 
     // make single optimized scale image
-    os << LogIO::NORMAL3<<"Making optimized scale " << itsOptimumScaleSize << LogIO::POST;
+    // os << LogIO::NORMAL3<<"Making optimized scale " << itsOptimumScaleSize << LogIO::POST;
+
+    //cout << "ItsMaxNiter: " << itsMaxNiter << endl;
 
     if (itsSwitchedToHogbom)
     {
@@ -292,12 +300,16 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     	itsScale = itsScale0;
     	itsScaleXfr.resize();
       itsScaleXfr = itsScaleXfr0;
+      vecItsStrengthOptimum.push_back(itsStrengthOptimum);
+      vecItsOptimumScaleSize.push_back(0);
     }
     else
     {
       makeScaleImage(itsScale, itsOptimumScaleSize, itsStrengthOptimum, itsPositionOptimum);
       itsScaleXfr.resize();
       fft.fft0(itsScaleXfr, itsScale);
+      vecItsStrengthOptimum.push_back(itsStrengthOptimum);
+      vecItsOptimumScaleSize.push_back(itsOptimumScaleSize);
     }
 
     // trigger hogbom when
@@ -327,7 +339,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       }
       if (!itsSwitchedToHogbom && itsNumNoChange >= 2)
       {
-        os << "Switched to hogbom at iteration "<< ii << " b/c peakres rarely changes" << LogIO::POST;
+        os << LogIO::NORMAL3 << "Switched to hogbom at iteration "<< ii << " b/c peakres rarely changes" << LogIO::POST;
         itsNumNoChange = 0;
         switchedToHogbom();
       }
@@ -382,6 +394,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     if ((itsNscales > 1) && itsStopAtLargeScaleNegative &&
     	  itsOptimumScale == (itsNInitScales - 1) &&
         itsStrengthOptimum < 0.0)
+
     {
       os <<LogIO::NORMAL3 << "Reached negative on largest scale" << LogIO::POST;
       converged = -2;
@@ -481,7 +494,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     cout << "itsDirty pos " << peakpos << " maxval " << (*itsDirty)(peakpos) << endl;
     cout << "itsPositionOptimum " << itsPositionOptimum << endl;
     cout << " maxPsfSub " << max(fabs(psfSub)) << " maxPsfConvScale " << max(fabs(itsPsfConvScale)) << " itsGain " << itsGain << endl;*/
-    os <<LogIO::NORMAL3 << "itsStrengthOptimum " << itsStrengthOptimum << LogIO::POST;
+   // os <<LogIO::NORMAL3 << "itsStrengthOptimum " << itsStrengthOptimum << LogIO::POST;
 
     // subtract the peak that we found from the dirty image
     dirtySub -= scaleFactor * psfSub;
@@ -599,6 +612,20 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     defineAspScales(tempScaleSizes);
   }
   // End of iteration
+   
+   vector<Float> sumFluxByBins(itsBinSizeForSumFlux,0.0);
+   vector<Float> rangeFluxByBins(itsBinSizeForSumFlux+1,0.0);
+
+   getFluxByBins(vecItsOptimumScaleSize,vecItsStrengthOptimum,itsBinSizeForSumFlux,sumFluxByBins,rangeFluxByBins);
+
+
+  
+  os << " The number of bins for collecting the sum of Flux: " << itsBinSizeForSumFlux << endl;
+
+  for (Int ii = 0; ii < itsBinSizeForSumFlux ; ii++)
+  {
+    os << " Bin " << ii << "(" << rangeFluxByBins[ii] * itsGain << " , " << rangeFluxByBins[ii+1] * itsGain << "). Sum of Flux : " << sumFluxByBins[ii] * itsGain << LogIO :: POST;  
+  }
 
   // memory used
   //itsUsedMemoryMB = double(HostInfo::memoryUsed()/1024);
@@ -718,8 +745,8 @@ void AspMatrixCleaner::makeInitScaleImage(Matrix<Float>& iscale, const Float& sc
     {
       for (int i = 0; i < nx; i++)
       {
-        const int px = i - refi;
-        const int py = j - refj;
+        //const int px = i - refi;
+        //const int py = j - refj;
         //iscale(i,j) = gbeam(px, py); // gbeam with the above def is equivalent to the following
         iscale(i,j) = (1.0/(sqrt(2*M_PI)*scaleSize))*exp(-(pow(i-refi,2) + pow(j-refj,2))*0.5/pow(scaleSize,2)); //this is for 1D, but represents Sanjay's and gives good init scale
         //iscale(i,j) = (1.0/(2*M_PI*pow(scaleSize,2)))*exp(-(pow(i-refi,2) + pow(j-refj,2))*0.5/pow(scaleSize,2)); // this is for 2D, gives unit area but bad init scale (always picks 0)
@@ -764,8 +791,8 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
     {
       for (int i = 0; i < nx; i++)
       {
-        const int px = i;
-        const int py = j;
+        //const int px = i;
+        //const int py = j;
         // iscale(i,j) = gbeam(px, py); // this is equivalent to the following with the above gbeam definition
         // This is for 1D, but represents Sanjay's and gives good init scale
         // Note that "amp" is not used in the expression
@@ -1123,7 +1150,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
   itsGoodAspCenter.resize(0);
 
   maxDirtyConvInitScales(strengthOptimum, optimumScale, positionOptimum);
-  os << "Peak among the smoothed residual image is " << strengthOptimum  << " and initial scale: " << optimumScale << LogIO::POST;
+  // os << "Peak among the smoothed residual image is " << strengthOptimum  << " and initial scale: " << optimumScale << LogIO::POST;
   // cout << " its itsDirty is " << (*itsDirty)(positionOptimum);
   // cout << " at location " << positionOptimum[0] << " " << positionOptimum[1] << " " << positionOptimum[2];
 
@@ -1191,7 +1218,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     itsGoodAspCenter = activeSetCenter;
 
     // debug
-    os << "optimized strengthOptimum " << itsStrengthOptimum << " scale size " << itsOptimumScaleSize << LogIO::POST;
+    // os << "optimized strengthOptimum " << itsStrengthOptimum << " scale size " << itsOptimumScaleSize << LogIO::POST;
     //cout << "optimized strengthOptimum " << itsStrengthOptimum << " scale size " << itsOptimumScaleSize << endl;
 
   } // finish bfgs optimization
@@ -1406,7 +1433,7 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
     itsGoodAspCenter = activeSetCenter;
 
     // debug
-    os << "optimized strengthOptimum " << itsStrengthOptimum << " scale size " << itsOptimumScaleSize << LogIO::POST;
+    //os << "optimized strengthOptimum " << itsStrengthOptimum << " scale size " << itsOptimumScaleSize << LogIO::POST;
 
     // free GSL stuff
     gsl_multimin_fdfminimizer_free(s); //fdf
@@ -1464,13 +1491,39 @@ void AspMatrixCleaner::switchedToHogbom()
   itsNumIterNoGoodAspen.resize(0);
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); // zhang's formula
   itsNumHogbomIter = ceil(50 + 2 * (exp(0.05*itsNthHogbom) - 1)); // genie's formula
-  os << "Run hogbom for " << itsNumHogbomIter << " iterations." << LogIO::POST;
+  os << LogIO::NORMAL3 << "Run hogbom for " << itsNumHogbomIter << " iterations." << LogIO::POST;
 }
 
 void AspMatrixCleaner::setOrigDirty(const Matrix<Float>& dirty){
   itsOrigDirty=new Matrix<Float>(dirty.shape());
   itsOrigDirty->assign(dirty);
 }
+
+
+void AspMatrixCleaner::getFluxByBins(const vector<Float>& scaleSizes,const vector<Float>& optimum, Int binSize, vector<Float>&  sumFluxByBins,vector<Float>& rangeFluxByBins) {
+  
+  double maxScaleSize = *std::max_element(scaleSizes.begin(),scaleSizes.end());
+  double minScaleSize = *std::min_element(scaleSizes.begin(),scaleSizes.end());
+  double deltaScale = (maxScaleSize-minScaleSize) / binSize;
+ 
+
+  for(Int j=0; j < binSize+1; j++)
+  {
+    rangeFluxByBins[j] = minScaleSize+j*deltaScale;
+    if ( j == binSize)
+      rangeFluxByBins[j] = maxScaleSize;
+  }
+
+  for(Int i=0; i < Int(scaleSizes.size()); i++)
+    for(Int j=0; j < binSize+1; j++)
+  {
+    if ( scaleSizes[i] < rangeFluxByBins[j+1]  && (scaleSizes[i] >= rangeFluxByBins[j] ))
+        sumFluxByBins[j] += optimum[i];
+  }
+
+
+}
+
 
 
 } //# NAMESPACE CASA - END

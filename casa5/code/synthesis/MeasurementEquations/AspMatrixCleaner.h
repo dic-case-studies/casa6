@@ -83,13 +83,16 @@ public:
 
   void switchedToHogbom();
   void setOrigDirty(const casacore::Matrix<casacore::Float>& dirty);
-  void setFusedThreshold(const casacore::Float fusedThreshold = 0.0) { itsFusedThreshold = fusedThreshold; }
+  void setFusedThreshold(const casacore::Float fusedThreshold = 0.0) { itsFusedThreshold = fusedThreshold; itsUpdatedFusedThreshold = fusedThreshold; }
 
   // setter/getter
   float getterPsfWidth() { return itsPsfWidth; }
   bool getterSwitchedHogbom() { return itsSwitchedToHogbom; }
   casacore::Matrix<casacore::Float>  getterResidual() { return (*itsDirty); }
   float getterPeakResidual() { return itsPeakResidual; }
+
+  void setBinSizeForSumFlux(const casacore::Int binSize = 4) { itsBinSizeForSumFlux = binSize ; } ;
+  void getFluxByBins(const std::vector<casacore::Float>& scaleSizes,const std::vector<casacore::Float>& optimum, casacore::Int binSize, std::vector<casacore::Float>&  sumFluxByBins, std::vector<casacore::Float>&  rangeFluxByBins);
 
 
 //protected:
@@ -126,6 +129,7 @@ private:
   casacore::Bool destroyInitScales();
   using MatrixCleaner::destroyMasks;
   casacore::Bool destroyInitMasks();
+  casacore::Float computeThreshold() const;
 
   using MatrixCleaner::itsIgnoreCenterBox;
   using MatrixCleaner::itsStopAtLargeScaleNegative;
@@ -165,7 +169,12 @@ private:
   const casacore::Int itsDefaultNorm = 1;
   casacore::Int itsNormMethod;
   casacore::Float itsFusedThreshold;
+  casacore::Float itsUpdatedFusedThreshold;
+  casacore::Int itsNthCycle;
+  casacore::Int itsBinSizeForSumFlux ;   // number of bins for histogram of the sum of Flux 
   unsigned int itsNumNoChange; // number of times peakres rarely changes
+  unsigned int itsTotalNumNoChange; // total number of times peakres rarely changes
+  unsigned int respeated;
 };
 
 } //# NAMESPACE CASA - END
