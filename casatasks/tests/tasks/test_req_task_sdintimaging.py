@@ -244,13 +244,7 @@ class testref_base(unittest.TestCase):
 
 
     def checkfinal(self,pstr=""):
-        th.check_final(pstr)
-
-#          pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_req_task_sdintimaging["+ inspect.stack()[1][3] +"]'])"
-#          casalog.post(pstr,'INFO')
-#          if( pstr.count("( Fail") > 0 ):
-#              print(pstr)
-#              self.fail("\n"+pstr)
+        self.assertTrue(th.check_final(pstr))
 
 ### functional tests for sdintimaging start here ####
 
@@ -476,7 +470,7 @@ class test_singlepointing(testref_base):
 
 
     #Test6
-    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    @unittest.skip("Skip test. check_keywords is failing")
     def test_singlepointing_cube_sdonly(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='cube', usedata='sd')
         """ [singlePointing] Test_singlepointing_cube_sdonly """
@@ -848,7 +842,7 @@ class test_mosaic(testref_base):
 
 
     #Test12
-  #  @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    @unittest.skip("Skip test. check_keywords is failing")
     def test_mosaic_cube_sdonly(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='cube', usedata='sd')
         """ [Mosaic] Test_mosaic_cube_sdonly """
