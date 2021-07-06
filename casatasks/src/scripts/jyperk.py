@@ -360,9 +360,9 @@ class JyPerKDatabaseClient():
         Arguments:
             endpoint_type {str} -- Endpoint of Jy/K Web API.
                 The value to be entered must be one of asdm, model-fit or interpolation.
-            timeout {int} --- Maximum waiting time when accessing the web API. Secound.
+            timeout {int} --- Maximum waiting time when accessing the web API. Second.
             retry {int} -- Number of times to retry when the web API access fails.
-            retry_wait_time {int} -- The waiting time when the web request fails. Secound.
+            retry_wait_time {int} -- The waiting time when the web request fails. Second.
         """
         assert endpoint_type in ['asdm', 'model-fit', 'interpolation'], \
             'Please set endpoint_type: asdm, model-fit, interpolation'
