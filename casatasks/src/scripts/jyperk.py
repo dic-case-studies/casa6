@@ -536,32 +536,52 @@ class ASDMRspTranslator():
 
 
 class InterpolationRspTranslator(ASDMRspTranslator):
-    def format(self, queries):
-        data = []
-        for result in queries:
-            # response from DB
-            response = result.response
+    @classmethod
+    def convert(cls, data_set, vis):
+        """ Convert from the response to list with factor.
 
-            # subparam is dictionary holding vis and spw id
-            subparam = result.subparam
-            assert isinstance(subparam, dict)
-            assert ('vis' in subparam) and ('spwid' in subparam)
-            spwid = subparam['spwid']
+        Arguments:
+        Returns:
+            list -- List of Jy/K conversion factors with meta data.
+        """
+        cal_dict = cls._dataset_to_cal_dict(data_set, cls._extract_factor)
+        formatted = Translator.format_cal_table_format(cal_dict)
+
+        spw = cls._extract_spw(data_set)
+        return Translator.filter_jyperk(vis, formatted, spw)
+
+    @staticmethod
+    def _extract_factor(data):
+        return data['response']['data']['factor']['mean']
+
+    @staticmethod
+    def _extract_spw(data_set):
+        spw = ','.join(map(str, sorted(list(set([data['aux']['spwid'] for data in data_set])))))
+        return spw
+
+    @staticmethod
+    def _dataset_to_cal_dict(dataset, _extract_factor):
+        return_data = []
+        
+        for data in dataset:
+            # aux is dictionary holding vis and spw id
+            aux = data['aux']
+            assert isinstance(aux, dict)
+            assert ('vis' in aux) and ('spwid' in aux)
+            spwid = aux['spwid']
             assert isinstance(spwid, int)
-            vis = subparam['vis']
+            vis = aux['vis']
             assert isinstance(vis, str)
             basename = os.path.basename(vis.rstrip('/'))
 
-            factor = self._extract_factor(response)
+            factor = _extract_factor(data)
             polarization = 'I'
-            antenna = response['query']['antenna']
-            data.append({'MS': basename, 'Antenna': antenna, 'Spwid': spwid,
+            antenna = data['response']['query']['antenna']
+
+            return_data.append({'MS': basename, 'Antenna': antenna, 'Spwid': spwid,
                          'Polarization': polarization, 'factor': factor})
+        return return_data
 
-        return {'query': '', 'data': data, 'total': len(data)}
-
-    def _extract_factor(self, response):
-        return response['data']['factor']['mean']
 
 
 class ModelFitRspTranslator(InterpolationRspTranslator):
