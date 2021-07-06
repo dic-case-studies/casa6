@@ -473,26 +473,9 @@ class JyPerKDatabaseClient():
             casalog.post(msg)
 
 
-class ASDMRspTranslator():
-    @classmethod
-    def convert(cls, data):
-        """ Convert from the response to list with factor.
-
-        Arguments:
-        Returns:
-            list -- List of Jy/K conversion factors with meta data.
-        """
-        factors = cls._extract_factors(data)
-        formatted = cls._format_factors(factors)
-        spw = cls._extract_spw(factors)
-        return cls._filter_jyperk(vis, formatted, spw)
-
+class Translator():
     @staticmethod
-    def _extract_factors(data):
-        return data['response']['data']['factors']
-
-    @staticmethod
-    def _format_factors(factors): #_format_jyperk
+    def format_cal_table_format(factors): #_format_jyperk
         """ Format given dictionary to the formatted list.
 
         Sample formated list:
@@ -514,12 +497,7 @@ class ASDMRspTranslator():
         return factors
 
     @staticmethod
-    def _extract_spw(factors):
-        spw = ','.join(map(str, sorted(list(set([factor['Spwid'] for factor in factors])))))
-        return spw
-
-    @staticmethod
-    def _filter_jyperk(vis, factors, spw):
+    def filter_jyperk(vis, factors, spw):
         ms = mstool()
         selected = ms.msseltoindex(vis=vis, spw=spw)
         science_windows = selected['spw']
@@ -530,6 +508,31 @@ class ASDMRspTranslator():
             )
         ]
         return filtered
+
+
+class ASDMRspTranslator():
+    @classmethod
+    def convert(cls, data):
+        """ Convert from the response to list with factor.
+
+        Arguments:
+        Returns:
+            list -- List of Jy/K conversion factors with meta data.
+        """
+        factors = cls._extract_factors(data)
+        formatted = Translator.format_cal_table_format(factors)
+
+        spw = cls._extract_spw(factors)
+        return Translator.filter_jyperk(vis, formatted, spw)
+
+    @staticmethod
+    def _extract_factors(data):
+        return data['response']['data']['factors']
+
+    @staticmethod
+    def _extract_spw(factors):
+        spw = ','.join(map(str, sorted(list(set([factor['Spwid'] for factor in factors])))))
+        return spw
 
 
 class InterpolationRspTranslator(ASDMRspTranslator):
