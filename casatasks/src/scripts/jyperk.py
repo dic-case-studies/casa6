@@ -535,7 +535,7 @@ class ASDMRspTranslator():
         return spw
 
 
-class InterpolationRspTranslator(ASDMRspTranslator):
+class InterpolationRspTranslator():
     @classmethod
     def convert(cls, data_set, vis):
         """ Convert from the response to list with factor.
