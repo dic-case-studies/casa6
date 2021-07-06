@@ -91,6 +91,9 @@ public:
   casacore::Matrix<casacore::Float>  getterResidual() { return (*itsDirty); }
   float getterPeakResidual() { return itsPeakResidual; }
 
+  void setBinSizeForSumFlux(const casacore::Int binSize = 4) { itsBinSizeForSumFlux = binSize ; } ;
+  void getFluxByBins(const std::vector<casacore::Float>& scaleSizes,const std::vector<casacore::Float>& optimum, casacore::Int binSize, std::vector<casacore::Float>&  sumFluxByBins, std::vector<casacore::Float>&  rangeFluxByBins);
+
 
 //protected:
 private:
@@ -168,8 +171,10 @@ private:
   casacore::Float itsFusedThreshold;
   casacore::Float itsUpdatedFusedThreshold;
   casacore::Int itsNthCycle;
+  casacore::Int itsBinSizeForSumFlux ;   // number of bins for histogram of the sum of Flux 
   unsigned int itsNumNoChange; // number of times peakres rarely changes
   unsigned int itsTotalNumNoChange; // total number of times peakres rarely changes
+  unsigned int respeated;
 };
 
 } //# NAMESPACE CASA - END
