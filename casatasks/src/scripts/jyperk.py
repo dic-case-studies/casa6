@@ -341,11 +341,11 @@ class RequestsManager():
         self.client = client
 
     def get(self, params):
-        responses = [self.client.get(param.param) for param in params]
-        return self._filter_success_is_true(responses)
+        dataset = [{'response': self.client.get(param.param), 'aux': param.subparam} for param in params]
+        return self._filter_success_is_true(dataset)
 
-    def _filter_success_is_true(self, responses):
-        return [response for response in responses if response['success']]
+    def _filter_success_is_true(self, dataset):
+        return [data for data in dataset if data['response']['success']]
         
 
 class JyPerKDatabaseClient():
@@ -475,21 +475,21 @@ class JyPerKDatabaseClient():
 
 class ASDMRspTranslator():
     @classmethod
-    def convert(cls, response):
+    def convert(cls, data):
         """ Convert from the response to list with factor.
 
         Arguments:
         Returns:
             list -- List of Jy/K conversion factors with meta data.
         """
-        factors = cls._extract_factors(response)
+        factors = cls._extract_factors(data)
         formatted = cls._format_factors(factors)
         spw = cls._extract_spw(factors)
         return cls._filter_jyperk(vis, formatted, spw)
 
     @staticmethod
-    def _extract_factors(response):
-        return response['data']['factors']
+    def _extract_factors(data):
+        return data['response']['data']['factors']
 
     @staticmethod
     def _format_factors(factors): #_format_jyperk
