@@ -14,7 +14,7 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, table, ms
     from casatasks import sdfit, flagdata
-    from casatasks.private.sdutil import tbmanager
+    from casatasks.private.sdutil import table_manager
 
     ### for selection_syntax import
     #sys.path.append(os.path.abspath(os.path.dirname(__file__)))

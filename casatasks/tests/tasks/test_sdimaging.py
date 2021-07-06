@@ -14,7 +14,7 @@ if is_CASA6:
     from casatools import ctsys, image, regionmanager, measures, msmetadata, table, quanta
     from casatools import ms as mstool
     from casatasks import sdimaging, flagdata
-    from casatasks.private.sdutil import tbmanager, tool_manager, table_selector
+    from casatasks.private.sdutil import table_manager, tool_manager, table_selector
 
     ### for selection_syntax import
     #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -3465,7 +3465,7 @@ def get_mapextent(infile, scan=None):
     try:
         s.save(outfile)
         if scan is None:
-            with tbmanager(outfile) as tb:
+            with table_manager(outfile) as tb:
                 dir = tb.getcol('DIRECTION')
         else:
             with table_selector(outfile, taql='SCANNO==16') as tb:

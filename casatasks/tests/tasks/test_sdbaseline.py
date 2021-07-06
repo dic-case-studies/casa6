@@ -12,7 +12,7 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, table
     from casatasks import sdbaseline
-    from casatasks.private.sdutil import tbmanager
+    from casatasks.private.sdutil import table_manager
 
     ### for selection_syntax import
     from casatestutils import selection_syntax

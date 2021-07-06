@@ -17,7 +17,7 @@ if is_CASA6:
     def default(atask):
         pass
 
-    from casatasks.private.sdutil import tbmanager
+    from casatasks.private.sdutil import table_manager
     from casatools import ctsys
     datapath=ctsys.resolve('unittest/nrobeamaverage/')
 

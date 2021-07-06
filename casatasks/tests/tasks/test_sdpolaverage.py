@@ -9,7 +9,7 @@ import sys
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import sdpolaverage
-    from casatasks.private.sdutil import tbmanager
+    from casatasks.private.sdutil import table_manager
     from casatools import ctsys
     datapath = ctsys.resolve('unittest/sdpolaverage/')
 

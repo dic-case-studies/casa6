@@ -394,7 +394,7 @@ def _make_taclstr(keepflags):
 
 
 def _update_flag_cmd(infile, outfile, chanbin, spw):
-    with sdutil.tbmanager(outfile + '/FLAG_CMD', nomodify=False) as mytb:
+    with sdutil.table_manager(outfile + '/FLAG_CMD', nomodify=False) as mytb:
         mslocal = mstool()
         nflgcmds = mytb.nrows()
 

@@ -3872,7 +3872,7 @@ def get_mapextent(infile, scan=None):
     try:
         s.save(outfile)
         if scan is None:
-            with tbmanager(outfile) as tb:
+            with table_manager(outfile) as tb:
                 dir = tb.getcol('DIRECTION')
         else:
             with table_selector(outfile, taql='SCANNO==16') as tb:

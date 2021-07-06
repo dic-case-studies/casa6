@@ -386,7 +386,7 @@ class sdsmooth_test_weight(sdsmooth_test_base):
         super(sdsmooth_test_weight, self).setUp()
 
         # initialize WEIGHT_SPECTRUM
-        with sdutil.cbmanager(self.infile) as cb:
+        with sdutil.calibrator_manager(self.infile) as cb:
             cb.initweights()
 
     @weight_case

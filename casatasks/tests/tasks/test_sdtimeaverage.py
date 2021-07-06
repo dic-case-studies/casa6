@@ -19,7 +19,7 @@ if is_CASA6:
     #    os.path.dirname(
     #        os.path.abspath(
     #            os.path.dirname(__file__))))
-    from casatasks.private.sdutil import tbmanager
+    from casatasks.private.sdutil import table_manager
     from casatools import ctsys
     datapath = ctsys.resolve('unittest/sdtimeaverage/')
 
