@@ -46,11 +46,13 @@ def create_4d_image(infile, outfile):
 
 @sdutil.sdtask_decorator
 def sdfixscan(infiles, mode, numpoly, beamsize, smoothsize, direction, maskwidth, tmax, tmin, outfile, overwrite):
-    with sdutil.sdtask_manager(sdfixscan_worker, locals()) as worker:
+#    with sdutil.sdtask_manager(sdfixscan_worker, locals()) as worker:
+    with sdfixscan_worker(**locals()) as worker:
         worker.initialize()
         worker.execute()
         worker.finalize()
-    
+
+
 class sdfixscan_worker(sdutil.sdtask_interface):
     def __init__(self, **kwargs):
         super(sdfixscan_worker,self).__init__(**kwargs)
@@ -602,4 +604,3 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         # CAS-5410 Use private tools inside task scripts
         if len(existing_files) > 0:
             _removetable(existing_files)
-    

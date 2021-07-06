@@ -30,7 +30,8 @@ def sdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent,
               gridfunction, convsupport, truncate, gwidth, jwidth,
               imsize, cell, phasecenter, projection, ephemsrcname,
               pointingcolumn, restfreq, stokes, minweight, brightnessunit, clipminmax):
-    with sdutil.sdtask_manager(sdimaging_worker, locals()) as worker:
+#    with sdutil.sdtask_manager(sdimaging_worker, locals()) as worker:
+    with sdimaging_worker(**locals()) as worker:
         worker.initialize()
         worker.execute()
         worker.finalize()
@@ -56,6 +57,13 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         self.imager_param = {}
         self.sorted_idx = []
         self.image_unit = ""
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__del__()
+        if exc_type:
+            return False
+        else:
+            return True
 
     def parameter_check(self):
         # outfile check

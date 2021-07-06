@@ -18,6 +18,7 @@ if is_CASA6:
     from .parallel.parallel_data_helper import ParallelDataHelper
     from .update_spw import update_spwchan
     from .mstools import write_history
+    from . import flaghelper as fh
 else:
     from taskinit import casalog, gentools
     # make CASA5 tools constructors look like CASA6 tools
@@ -29,6 +30,7 @@ else:
     from taskinit import qatool as quanta
     from update_spw import update_spwchan
     from mstools import write_history
+    import flaghelper as fh
 
 @contextlib.contextmanager
 def toolmanager(vis, ctor, *args, **kwargs):
@@ -198,6 +200,17 @@ class sdtask_interface(object):
 
     def __del__(self):
         pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # explicitly call destructure to make sure it is called here
+        self.__del__()
+        if exc_type:
+            return False
+        else:
+            return True
 
     @abc.abstractmethod
     def initialize(self):
@@ -728,11 +741,21 @@ def do_mst(
             config['timespan'] = timespan
             config['maxuvwdistance'] = maxuvwdistance
 
-        if ext_config.get('polaverage'):
-            polaverage_ = ext_config.get('polaverage').strip()
-            if polaverage_ != '':
-                config['polaverage'] = True
-                config['polaveragemode'] = polaverage_
+        # porting from sdpolaverage
+        _if_polaverage(config, ext_config)
+
+        # porting from sdpolaverage, but not used
+        _if_do_combinespws(config, ext_config, spw)
+
+        # porting from sdpolaverage, but not used
+        if ext_config.get('parse_chanaverage'):
+            chanbin = _if_parse_chanaverage(chanbin, config, pdh)
+
+        # porting from sdpolaverage, but not used
+        _if_do_hanning(config, ext_config)
+
+        # porting from sdpolaverage, but not used
+        _if_parse_regridding_parameters(config, ext_config, mode, pdh)
 
         # Configure the tool and all the parameters
         casalog.post('%s' % config, 'DEBUG')
@@ -756,6 +779,77 @@ def do_mst(
 
     if (spw != '' and spw != '*') or ext_config.get('parse_chanaverage'):
         _update_flag_cmd(infile, outfile, chanbin, spw)
+
+
+def _if_parse_regridding_parameters(config, ext_config, mode, pdh):
+    if ext_config.get('regridms'):
+        nchan = -1
+        nspw = 1
+        interpolation = "linear"
+        restfreq = ""
+        outframe = ""
+        phasecenter = ""
+        veltype = "radio"
+        preaverage = False
+        casalog.post('Parse regridding parameters')
+        config['regridms'] = True
+        # Reset the defaults depending on the mode
+        # Only add non-empty string parameters to config dictionary
+        start, width = pdh.defaultRegridParams()
+        config['mode'] = mode
+        config['nchan'] = nchan
+        if start != '':
+            config['start'] = start
+        if width != '':
+            config['width'] = width
+        if nspw > 1:
+            casalog.post('Separate MS into %s spws' % nspw)
+        config['nspw'] = nspw
+        config['interpolation'] = interpolation
+        if restfreq != '':
+            config['restfreq'] = restfreq
+        if outframe != '':
+            config['outframe'] = outframe
+        if phasecenter != '':
+            config['phasecenter'] = phasecenter
+        config['veltype'] = veltype
+        config['preaverage'] = preaverage
+
+
+def _if_do_hanning(config, ext_config):
+    if ext_config.get('hanning'):
+        casalog.post('Apply Hanning smoothing')
+        config['hanning'] = True
+
+
+def _if_do_combinespws(config, ext_config, spw):
+    if ext_config.get('do_combinespws'):
+        casalog.post('Combine spws %s into new output spw' % spw)
+        config['combinespws'] = True
+
+
+def _if_polaverage(config, ext_config):
+    if ext_config.get('polaverage'):
+        polaverage_ = ext_config.get('polaverage').strip()
+        if polaverage_ != '':
+            config['polaverage'] = True
+            config['polaveragemode'] = polaverage_
+
+
+def _if_parse_chanaverage(chanbin, config, pdh):
+    # Only parse chanaverage if chanbin is valid
+    if isinstance(chanbin, int) and chanbin <= 1:
+        raise ValueError('Parameter chanbin must be > 1 to do channel averaging')
+
+    # Validate the case of int or list chanbin
+    if pdh.validateChanBin():
+        casalog.post('Parse channel averaging parameters')
+        config['chanaverage'] = True
+
+        # convert numpy types, until CAS-6493 is not fixed
+        chanbin = fh.evaluateNumpyType(chanbin)
+        config['chanbin'] = chanbin
+    return chanbin
 
 
 def _update_flag_cmd(infile, outfile, chanbin, spw):
