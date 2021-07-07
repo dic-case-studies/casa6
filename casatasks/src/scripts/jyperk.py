@@ -588,8 +588,8 @@ class InterpolationRspTranslator():
 
 class ModelFitRspTranslator(InterpolationRspTranslator):
     @staticmethod
-    def _extract_factor(response):
-        return response['response']['data']['factor']
+    def _extract_factor(data):
+        return data['response']['data']['factor']
 
 
 # file part
