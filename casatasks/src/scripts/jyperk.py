@@ -108,7 +108,7 @@ class InterpolationParamsGenerator():
                 params['band'] = bands[sw_id]
                 params['baseband'] = basebands[sw_id]
                 params['frequency'] = mean_freqs[sw_id]
-                subparam = {'vis': vis, 'spwid': sw_id}
+                subparam = {'vis': vis, 'spwid': int(sw_id)}
                 yield QueryStruct(param=params, subparam=subparam)
 
     @staticmethod
