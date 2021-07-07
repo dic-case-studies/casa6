@@ -519,6 +519,9 @@ class ASDMRspTranslator():
         Returns:
             list -- List of Jy/K conversion factors with meta data.
         """
+        assert len(data) == 1
+        data = data[0]
+
         factors = cls._extract_factors(data)
         formatted = Translator.format_cal_table_format(factors)
 
