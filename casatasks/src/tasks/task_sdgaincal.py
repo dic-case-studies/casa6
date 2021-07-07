@@ -69,25 +69,22 @@ def parse_spwmap(spwmap, index):
 @sdutil.sdtask_decorator
 def sdgaincal(infile=None, calmode=None, radius=None, smooth=None, 
               antenna=None, field=None, spw=None, scan=None, intent=None, 
-              applytable=None, interp=None, spwmap=None, outfile='', overwrite=False): 
+              applytable=None, interp=None, spwmap=None, outfile='', overwrite=False):
+
+    # outfile must be specified
+    if (outfile == '') or not isinstance(outfile, str):
+        raise ValueError("outfile is empty.")
+
+    # overwrite check
+    if os.path.exists(outfile) and not overwrite:
+        raise RuntimeError(outfile + ' exists.')
+
+    if infile is None or not isinstance(infile, str) or not os.path.exists(infile):
+        raise RuntimeError('infile not found - please verify the name')
 
     # Calibrater tool
-    with sdutil.calibrator_manager() as mycb:
-        # outfile must be specified
-        if (outfile == '') or not isinstance(outfile, str):
-            raise ValueError("outfile is empty.")
-        
-        # overwrite check
-        if os.path.exists(outfile) and not overwrite:
-            raise RuntimeError(outfile + ' exists.')
-        
-        # open MS
-        if isinstance(infile, str) and os.path.exists(infile):
-            #mycb.setvi(old=True)
-            mycb.open(filename=infile, compress=False, addcorr=False, addmodel=False)
-        else:
-            raise RuntimeError('infile not found - please verify the name')
-        
+    with sdutil.calibrator_manager(infile) as mycb:
+
         # select data
         if isinstance(antenna, str) and len(antenna) > 0:
             baseline = '{ant}&&&'.format(ant=antenna)
