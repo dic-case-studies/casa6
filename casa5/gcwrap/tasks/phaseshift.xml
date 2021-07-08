@@ -54,7 +54,7 @@ Multi-MS.
             </param>
     
             <!-- SELECTION parameters -->    
-            <param type="any" name="field">
+            <param type="string" name="field">
                 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
                 <description>Select field using field id(s) or field name(s)
                      Default: '' (all fields)
@@ -72,11 +72,10 @@ Multi-MS.
                         field = '3,4C*'; field id 3, all names
                         starting with 4C
                 </description>
-                <any type="variant" limittypes="string stringArray int intArray"/>
                 <value type="string"/>
             </param>
 
-            <param type="any" name="spw">
+            <param type="string" name="spw">
                 <shortdescription>Select spectral window/channels</shortdescription>
                 <description>Select spectral window/channels
                      Default: ''=all spectral windows and channels
@@ -95,21 +94,19 @@ Multi-MS.
                      NOTE: mstransform does not support multiple
                      channel ranges per spectral window (';').
                 </description>
-                <any type="variant" limittypes="string stringArray int intArray"/>
                 <value type="string"/>
             </param>
     
-            <param type="any" name="scan" >
+            <param type="string" name="scan" >
                 <shortdescription>Scan number range</shortdescription>
                 <description>Scan number range
                      Subparameter of selectdata=True
                      Default: '' = all
                 </description>
-                <any type="variant" limittypes="string stringArray int intArray"/>
                 <value type="string"/>
             </param>
 
-            <param type="any" name="intent" >
+            <param type="string" name="intent" >
                 <shortdescription>Select observing intent</shortdescription>
                 <description>Select observing intent
                      Default: '' (no selection by intent)
@@ -117,20 +114,18 @@ Multi-MS.
                         Example: intent='*BANDPASS*'  (selects data
                         labelled with BANDPASS intent)
                 </description>
-                <any type="variant" limittypes="string stringArray int intArray"/>
                 <value type="string"/>
             </param>
     
-            <param type="any" name="array">
+            <param type="string" name="array">
                 <shortdescription>Select (sub)array(s) by array ID number.</shortdescription>
                 <description>(Sub)array number range
                      Default: '' (all)
                 </description>
-                <any type="variant" limittypes="string stringArray int intArray"/>
                 <value type="string"/>
             </param>
     
-            <param type="any" name="observation">
+            <param type="string" name="observation">
                 <shortdescription>Select by observation ID(s)</shortdescription>
                 <description>Select by observation ID(s)
                      Subparameter of selectdata=True
@@ -138,7 +133,6 @@ Multi-MS.
 
                          Example: observation='0~2,4'
                 </description>
-                <any type="variant" limittypes="string stringArray int intArray"/>
                 <value type="string"/>
             </param>
 
