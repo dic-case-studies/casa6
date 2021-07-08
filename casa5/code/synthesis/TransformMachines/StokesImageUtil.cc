@@ -869,7 +869,6 @@ try{
   //gauss2d[3] = 2.5*abs(resampledDeltas(0)); //The width (FWHM) of the Gaussian on one axis.
   gauss2d[3] = 2.5*abs(deltas(0));
   gauss2d[4] = 0.5; //A modified axial ratio.
-  gauss2d[5] = 1.0; //The position angle.
   
   // Fix height and center
   gauss2d.mask(0) = false;
@@ -880,9 +879,11 @@ try{
   // This problem is solved by retrying fit with a different position angle.
   Bool loopSolutionFound=false;
   Int retryCounter = 0;
-  Double posAng = 1.0;
-  while(!loopSolutionFound && retryCounter < 10){
-      gauss2d[5] = posAng;
+  Double posAng = 1.0; //Initial position angle.
+  Int nRetries = 10;
+  while(!loopSolutionFound && retryCounter < nRetries){
+      //Create casacore fitter and fit Gaussian to subset of PSF interpolated values.
+      gauss2d[5] = posAng; //The position angle.
       NonLinearFitLM<Double> fitter;
       // Set maximum number of iterations to 1000
       fitter.setMaxIter(1000);
@@ -900,7 +901,7 @@ try{
       }catch(AipsError x_error){
           loopSolutionFound = false;
           retryCounter++;
-          posAng = 1.0 + retryCounter*0.314;
+          posAng = 1.0 + retryCounter*M_PI/nRetries;
           os << LogIO::WARN << "Fit failed, another atempt will be made with position angle  " << posAng  << " rad." << LogIO::POST;
       }
       converg=fitter.converged();
