@@ -816,7 +816,7 @@ class test_iterbot(testref_base):
             ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'peakres', 'modflux'])
           else:
             ret=retpar 
-          report=self.th.checkall(ret=ret, peakres=1.73, modflux=0.407,iterdone=12,nmajordone=2,imgexist=[self.img+'.psf', self.img+'.residual'])
+          report=self.th.checkall(ret=ret, peakres=0.7692, modflux=0.0,iterdone=12,nmajordone=2,imgexist=[self.img+'.psf', self.img+'.residual']) ## modflux=0 because this tests that the edge channels got no deconvolution 
 
           self.assertTrue(self.check_final(report))
 
