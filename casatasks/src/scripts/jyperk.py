@@ -368,6 +368,7 @@ class JyPerKDatabaseClient():
             'Please set endpoint_type: asdm, model-fit, interpolation'
         self.web_api_url = self._generate_web_api_url(endpoint_type)
         self.timeout = timeout
+        self.retry = retry
         self.retry_wait_time = retry_wait_time
 
     def get(self, param):
