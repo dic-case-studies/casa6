@@ -33,21 +33,21 @@ def gen_factor(vis, caltype='asdm', spw='*', antenna='', selection=''):
         client = JyPerKDatabaseClient(caltype)
         manager = RequestsManager(client)
         resps = manager.get(params)
-        return ASDMRspTranslator.convert(resps)
+        return ASDMRspTranslator.convert(resps, spw=spw)
 
     elif caltype == 'interpolation':
         params = InterpolationParamsGenerator.get_params(vis, spw=spw)
         client = JyPerKDatabaseClient(caltype)
         manager = RequestsManager(client)
         resps = manager.get(params, vis)
-        return InterpolationRspTranslator.convert(resps)
+        return InterpolationRspTranslator.convert(resps, spw=spw)
     
     elif caltype == 'model-fit':
         params = ModelFitParamsGenerator.get_params(vis, spw=spw)
         client = JyPerKDatabaseClient(caltype)
         manager = RequestsManager(client)
         resps = manager.get(params, vis)
-        return ModelFitRspTranslator.convert(resps)
+        return ModelFitRspTranslator.convert(resps, spw=spw)
 
 
 ### web api part
@@ -540,7 +540,7 @@ class Translator():
 
 class ASDMRspTranslator():
     @classmethod
-    def convert(cls, data):
+    def convert(cls, data, spw='*'):
         """ Convert from the response to list with factor.
 
         Arguments:
@@ -553,22 +553,16 @@ class ASDMRspTranslator():
         factors = cls._extract_factors(data)
         formatted = Translator.format_cal_table_format(factors)
 
-        spw = cls._extract_spw(factors)
         return Translator.filter_jyperk(vis, formatted, spw)
 
     @staticmethod
     def _extract_factors(data):
         return data['response']['data']['factors']
 
-    @staticmethod
-    def _extract_spw(factors):
-        spw = ','.join(map(str, sorted(list(set([factor['Spwid'] for factor in factors])))))
-        return spw
-
 
 class InterpolationRspTranslator():
     @classmethod
-    def convert(cls, data_set, vis):
+    def convert(cls, data_set, vis, spw='*'):
         """ Convert from the response to list with factor.
 
         Arguments:
@@ -578,17 +572,11 @@ class InterpolationRspTranslator():
         cal_dict = cls._dataset_to_cal_dict(data_set, cls._extract_factor)
         formatted = Translator.format_cal_table_format(cal_dict)
 
-        spw = cls._extract_spw(data_set)
         return Translator.filter_jyperk(vis, formatted, spw)
 
     @staticmethod
     def _extract_factor(data):
         return data['response']['data']['factor']['mean']
-
-    @staticmethod
-    def _extract_spw(data_set):
-        spw = ','.join(map(str, sorted(list(set([data['aux']['spwid'] for data in data_set])))))
-        return spw
 
     @staticmethod
     def _dataset_to_cal_dict(dataset, _extract_factor):
