@@ -2705,7 +2705,7 @@ void FringeJones::applyRefAnt() {
           << MVTime(ctiter.thisTime()/C::day).string(MVTime::YMD,7)
           << "in Spw: "
           << ctiter.thisSpw()
-          << " refant list exausted, flagging all solutions"
+          << " refant list exhausted, flagging all solutions"
           << LogIO::POST; 
       }
     }
