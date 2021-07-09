@@ -116,10 +116,11 @@
         </param>
         <param type="string" name="useversion">
 	      <description>
-            Selects the version of MS2asdm to be used ('v3')
+            DEPRECATED, will be eliminated in a future release. Selects the version of MS2asdm to be used (no longer relevant)
           </description>
-	      <value>v3</value>
+	      <value>deprecated</value>
 	      <allowed kind="enum">
+                <value>deprecated</value>
 	        <value>v3</value>
 	        <value/>
 	      </allowed>
@@ -280,7 +281,7 @@
         </param>
 
         <param type="bool" name="showversion">
-	      <description>Report the version of asdm2MS being used</description>
+	      <description>DEPRECATED, will be eliminated in a future reelase. Report the version of asdm2MS being used</description>
 	      <value>false</value>
         </param>
 
@@ -304,9 +305,10 @@
         </constraints>
 
         <param type="string" name="useversion" >
-	      <description>Version of asdm2MS to be used (\'v3\' (default, should work for all data))</description>
-	      <value>v3</value>
+	      <description>DEPRECATED, will be eliminated in a future release. Version of asdm2MS to be used (no longer relevant)</description>
+	      <value>deprecated</value>
 	      <allowed kind="enum">
+                <value>deprecated</value>
 	        <value>v3</value>
 	        <value/>
 	      </allowed>
