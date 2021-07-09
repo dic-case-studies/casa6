@@ -33,7 +33,7 @@ else:
     from taskinit import *
 
     from sdfit import sdfit
-    from sdutil import table_manager
+    from sdutil import tbmanager as table_manager
 
     try:
         from . import selection_syntax

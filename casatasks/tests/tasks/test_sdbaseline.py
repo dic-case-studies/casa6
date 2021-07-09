@@ -29,7 +29,7 @@ else:
     from tasks import *
     from taskinit import *
     from sdbaseline import sdbaseline
-    from sdutil import table_manager
+    from sdutil import tbmanager as table_manager
     # the global tb tool is used here as is
 
     try:

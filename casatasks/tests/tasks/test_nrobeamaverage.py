@@ -27,7 +27,7 @@ else:
     from taskinit import tbtool as table
 
     from __main__ import default
-    from sdutil import table_manager
+    from sdutil import tbmanager as table_manager
 
     # Define the root for the data files
     datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/nrobeamaverage/"

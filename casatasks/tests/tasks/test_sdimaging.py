@@ -48,7 +48,7 @@ else:
 
     from sdimaging import sdimaging
     from flagdata import flagdata
-    from sdutil import table_manager, tool_manager, table_selector
+    from sdutil import tbmanager as table_manager, toolmanager as tool_manager, table_selector
 
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
