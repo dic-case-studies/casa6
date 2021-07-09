@@ -39,14 +39,14 @@ def gen_factor(vis, caltype='asdm', spw='*', antenna='', selection=''):
         params = InterpolationParamsGenerator.get_params(vis, spw=spw)
         client = JyPerKDatabaseClient(caltype)
         manager = RequestsManager(client)
-        resps = manager.get(params)
+        resps = manager.get(params, vis)
         return InterpolationRspTranslator.convert(resps)
     
     elif caltype == 'model-fit':
         params = ModelFitParamsGenerator.get_params(vis, spw=spw)
         client = JyPerKDatabaseClient(caltype)
         manager = RequestsManager(client)
-        resps = manager.get(params)
+        resps = manager.get(params, vis)
         return ModelFitRspTranslator.convert(resps)
 
 
