@@ -23,6 +23,33 @@ from casatools import table
 from casatasks.private.sdutil import table_selector, tbmanager, toolmanager
 
 
+def gen_factor(vis, caltype='asdm', spw='*', antenna='', selection=''):
+    """ Generate factor.
+
+    This function will be used task_gencal.
+    """
+    if caltype == 'asdm':
+        params = ASDMParamsGenerator.get_params(vis)
+        client = JyPerKDatabaseClient(caltype)
+        manager = RequestsManager(client)
+        resps = manager.get(params)
+        return ASDMRspTranslator.convert(resps)
+
+    elif caltype == 'interpolation':
+        params = InterpolationParamsGenerator.get_params(vis, spw=spw)
+        client = JyPerKDatabaseClient(caltype)
+        manager = RequestsManager(client)
+        resps = manager.get(params)
+        return InterpolationRspTranslator.convert(resps)
+    
+    elif caltype == 'model-fit':
+        params = ModelFitParamsGenerator.get_params(vis, spw=spw)
+        client = JyPerKDatabaseClient(caltype)
+        manager = RequestsManager(client)
+        resps = manager.get(params)
+        return ModelFitRspTranslator.convert(resps)
+
+
 ### web api part
 
 QueryStruct = collections.namedtuple('QueryStruct', ['param', 'subparam'])
