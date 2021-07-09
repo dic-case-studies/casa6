@@ -595,7 +595,7 @@ class TestHelpers:
         logging.info(pstr)
         return pstr
 
-    def check_keywords(self, imlist, testname="check_keywords"):
+    def check_keywords(self, imlist, testname="check_keywords", check_misc=True):
         """
         Keyword related checks (presence/absence of records and entries in these records,
         in the keywords of the image table).
@@ -607,7 +607,7 @@ class TestHelpers:
         pstr = ''
         for imname in imlist:
             if os.path.exists(imname):
-                issues = TestHelpers().check_im_keywords(imname, check_misc=True, check_extended=True)
+                issues = TestHelpers().check_im_keywords(imname, check_misc=check_misc)
                 if issues:
                     pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
         if not pstr:
@@ -882,13 +882,13 @@ class TestHelpers:
         logging.info(pstr)
         return pstr
 
-    def check_imexist(self, imgexist):
+    def check_imexist(self, imgexist, check_keywords_misc=True):
         pstr = ''
         if imgexist != None:
             if type(imgexist) == list:
                 pstr += TestHelpers().check_ims(imgexist, True)
                 print("pstr after checkims = {}".format(pstr))
-                pstr += TestHelpers().check_keywords(imgexist)
+                pstr += TestHelpers().check_keywords(imgexist, check_misc=check_keywords_misc)
                 print("pstr after check_keywords = {}".format(pstr))
                 pstr += TestHelpers().check_history(imgexist)
                 print("pstr after check_history = {}".format(pstr))
@@ -954,7 +954,7 @@ class TestHelpers:
                         pstr += TestHelpers().check_ref_freq(ii[0], ii[1], epsilon=epsilon)
         return pstr
 
-    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05):
+    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05, check_keywords_misc=True):
         """
             ret=None,
             peakres=None, # a float
@@ -989,7 +989,7 @@ class TestHelpers:
                 logging.info(ret)
                 raise
         logging.info("Epsilon: {}".format(epsilon))
-        pstr += TestHelpers().check_imexist(imgexist)
+        pstr += TestHelpers().check_imexist(imgexist, check_keywords_misc=check_keywords_misc)
         pstr += TestHelpers().check_imexistnot(imgexistnot)
         pstr += TestHelpers().check_imval(imgval, epsilon=epsilon)
         pstr += TestHelpers().check_imvalexact(imgvalexact, epsilon=epsilon)
