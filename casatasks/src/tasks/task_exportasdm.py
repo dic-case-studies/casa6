@@ -192,7 +192,7 @@ def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=Non
                 if showversion:
                         casalog.post('Deprecated: showversion is deprecated and will be removed in a future release. showversion has been ignored for all CASA 6 releases.', 'WARN')
                 if useversion is not 'deprecated':
-                        casalog.post('Deprecated: useversion is deprecated and will be removed in a future release. The value is no longer relevant and is ignored.', 'WARN')
+                        casalog.post('Deprecated: useversion is deprecated and will be removed in a future release. The value is no longer relevant.', 'WARN')
                 rval = _sdm.fromms(tsortvis, datacolumn, archiveid, rangeid, ssdur_secs, sbdur_secs, apcorrected, verbose)
                 # this line is independent of CASA version, but is here so that the CASA5 version can do additional error reporting after cleaning up this temporary MS
                 os.system('rm -rf '+tsortvis)

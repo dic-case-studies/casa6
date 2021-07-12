@@ -122,6 +122,7 @@ exec block) in the output ASDM
 <description>Deprecated. This parameter will be removed in a future release. This is no longer relevant.
              Selects the version of MS2asdm to be used
                      Default: 'deprecated'
+                     Options: deprecated, v3
 </description>
       <value>deprecated</value>
       <allowed kind="enum">

@@ -3,9 +3,9 @@
   <tool name="sdm" module="sdm">
 
     <code>
-	  <include>tools/sdm/sdm_forward.h</include>
+      <include>tools/sdm/sdm_forward.h</include>
       <private>
-	    <include>tools/sdm/sdm_private.h</include>
+         <include>tools/sdm/sdm_private.h</include>
       </private>
     </code>
     <shortdescription>Manipulate or examine SDM datasets</shortdescription>
@@ -19,8 +19,8 @@
 
       <input>
         <param type="path" name="path">
-	      <description>Path to the SDM</description>
-	      <value/>
+            <description>Path to the SDM</description>
+            <value/>
         </param>
       </input>
 
@@ -69,61 +69,61 @@
 
       <input>
         <param type="path" mustexist="true" name="mspath">
-	      <description>Path to the MS to import</description>
+            <description>Path to the MS to import</description>
           <value/>
         </param>
         <param type="string" name="datacolumn">
-	      <description>
+          <description>
             specifies which of the MS data columns (DATA, CORRECTED_DATA, or MODEL_DATA)
             should be used as the visibilities in the ASDM
           </description>
           <value>DATA</value>
         </param>
         <param type="string" name="archiveid">
-	      <description>
+          <description>
             the X0 in uid://X0/X1/X&lt;running&gt;
           </description>
           <value>S0</value>
         </param>
         <param type="string" name="rangeid">
-	      <description>
+          <description>
             the X1 in uid://X0/X1/X&lt;running&gt;
           </description>
           <value>X1</value>
         </param>
         <param type="double" name="subscanduration">
-	      <description>
+          <description>
             maximum duration of a subscan in the output ASDM
           </description>
           <value>24.0*3600.0</value>
         </param>
         <param type="double" name="sbduration">
-	      <description>
+          <description>
             maximum duration of a scheduling block in the output ASDM
           </description>
           <value>2700.0</value>
         </param>
         <param type="bool" name="apcorrected">
-	      <description>
+          <description>
             If true, the data in column datacolumn should be regarded
             as having atmospheric phase correction
           </description>
           <value>false</value>
         </param>
         <param type="bool" name="verbose">
-	      <description>produce log output</description>
+          <description>produce log output</description>
           <value>true</value>
         </param>
         <param type="string" name="useversion">
-	      <description>
+          <description>
             DEPRECATED, will be eliminated in a future release. Selects the version of MS2asdm to be used (no longer relevant)
           </description>
-	      <value>deprecated</value>
-	      <allowed kind="enum">
+              <value>deprecated</value>
+              <allowed kind="enum">
                 <value>deprecated</value>
-	        <value>v3</value>
-	        <value/>
-	      </allowed>
+                <value>v3</value>
+                <value/>
+              </allowed>
         </param>
       </input>
 
@@ -165,58 +165,58 @@
         </param>
     
         <param type="string" name="corr_mode" >
-	      <description>specifies the correlation mode to be considered on input. A quoted string containing a sequence of ao, co, ac,or all separated by whitespaces is expected</description>
-	      <value>all</value>
+              <description>specifies the correlation mode to be considered on input. A quoted string containing a sequence of ao, co, ac,or all separated by whitespaces is expected</description>
+              <value>all</value>
         </param>
 
         <param type="string" name="srt" >
-	      <description>specifies the spectral resolution type to be considered on input. A quoted string containing a sequence of fr, ca, bw, or all separated by whitespaces is expected</description>
-	      <value>all</value>
+              <description>specifies the spectral resolution type to be considered on input. A quoted string containing a sequence of fr, ca, bw, or all separated by whitespaces is expected</description>
+              <value>all</value>
         </param>
 
         <param type="string" name="time_sampling" >
-	      <description>specifies the time sampling (INTEGRATION and/or SUBINTEGRATION)  to be considered on input. A quoted string containing a sequence of i, si, or all separated by whitespaces is expected</description>
-	      <value>all</value>
+              <description>specifies the time sampling (INTEGRATION and/or SUBINTEGRATION)  to be considered on input. A quoted string containing a sequence of i, si, or all separated by whitespaces is expected</description>
+              <value>all</value>
         </param>
 
         <param type="string" name="ocorr_mode" >
-	      <description>output data for correlation mode AUTO_ONLY (ao) or CROSS_ONLY (co) or CROSS_AND_AUTO (ca)</description>
-	      <value>ca</value>
-	      <allowed kind="enum">
-	        <value>co</value>
-	        <value>ao</value>
-	        <value>ca</value>
-	      </allowed>
+              <description>output data for correlation mode AUTO_ONLY (ao) or CROSS_ONLY (co) or CROSS_AND_AUTO (ca)</description>
+              <value>ca</value>
+              <allowed kind="enum">
+                <value>co</value>
+                <value>ao</value>
+                <value>ca</value>
+              </allowed>
         </param>
 
         <param type="bool" name="compression">
-	      <description>Flag for turning on data compression</description>
-	      <value>false</value>
+              <description>Flag for turning on data compression</description>
+              <value>false</value>
         </param>
 
         <param type="bool" name="lazy">
-	      <description>Make the MS DATA column read the ASDM Binary data directly (faster import, smaller MS)</description>
-	      <value>false</value>
+              <description>Make the MS DATA column read the ASDM Binary data directly (faster import, smaller MS)</description>
+              <value>false</value>
         </param>
 
         <param type="string" name="asis">
-	      <description>Creates verbatim copies of the ASDMtables in the ouput measurement set.  Value given must be a string of table names separated by spaces; A * wildcard is allowed.</description>
-	      <value/>
+              <description>Creates verbatim copies of the ASDMtables in the ouput measurement set.  Value given must be a string of table names separated by spaces; A * wildcard is allowed.</description>
+              <value/>
         </param>
 
         <param type="string" name="wvr_corrected_data">
-	      <description>Specifies which values are considerd in the SDM binary data to fill the DATA column in the MAIN table of the MS. Expected values for this option are: no, for uncorrected data (default), yes, for the corrected data, and both, for for corrected and uncorrected data. Note if both is selected two measurement sets are created, one with uncorrected data and the other with corrected data.  </description>
-	      <value>no</value>
-	      <allowed kind="enum">
-	        <value>no</value>
-	        <value>yes</value>
-	        <value>both</value>
-	      </allowed>
+              <description>Specifies which values are considerd in the SDM binary data to fill the DATA column in the MAIN table of the MS. Expected values for this option are: no, for uncorrected data (default), yes, for the corrected data, and both, for for corrected and uncorrected data. Note if both is selected two measurement sets are created, one with uncorrected data and the other with corrected data.  </description>
+              <value>no</value>
+              <allowed kind="enum">
+                <value>no</value>
+                <value>yes</value>
+                <value>both</value>
+              </allowed>
         </param>
 
         <param type="string" name="scans">
-	      <description>processes only the specified scans. This value is a semicolon separated list of scan specifications. A scan specification consists in an exec bock index followed by the : character;  followed by a comma separated list of scan indexes or scan index ranges. A scan index is relative to the exec block it belongs to. Scan indexes are 1-based while exec blocks are 0-based. &quot;0:1&quot; or &quot;2:2~6&quot; or &quot;0:1,1:2~6,8;2:,3:24~30&quot; &quot;1,2&quot; are valid values for the option. &quot;3:&quot; alone will be interpreted as, all the scans of the exec block#3.  An scan index or a scan index range not preceded by an exec block index will be interpreted as, all the scans with such indexes in all the exec blocks.  By default all the scans are considered. </description>
-	      <value/>
+              <description>processes only the specified scans. This value is a semicolon separated list of scan specifications. A scan specification consists in an exec bock index followed by the : character;  followed by a comma separated list of scan indexes or scan index ranges. A scan index is relative to the exec block it belongs to. Scan indexes are 1-based while exec blocks are 0-based. &quot;0:1&quot; or &quot;2:2~6&quot; or &quot;0:1,1:2~6,8;2:,3:24~30&quot; &quot;1,2&quot; are valid values for the option. &quot;3:&quot; alone will be interpreted as, all the scans of the exec block#3.  An scan index or a scan index range not preceded by an exec block index will be interpreted as, all the scans with such indexes in all the exec blocks.  By default all the scans are considered. </description>
+              <value/>
         </param>
 
         <param type="bool" name="ignore_time">
@@ -271,18 +271,18 @@
         </param>
 
         <param type="bool" name="verbose">
-	      <description>Output lots of information while the filler is working</description>
-	      <value>false</value>
+              <description>Output lots of information while the filler is working</description>
+              <value>false</value>
         </param>
 
         <param type="bool" name="overwrite">
-	      <description>Over write an existing MS(s)</description>
-	      <value>false</value>
+              <description>Over write an existing MS(s)</description>
+              <value>false</value>
         </param>
 
         <param type="bool" name="showversion">
-	      <description>DEPRECATED, will be eliminated in a future reelase. Report the version of asdm2MS being used</description>
-	      <value>false</value>
+              <description>DEPRECATED, will be eliminated in a future reelase. Report the version of asdm2MS being used</description>
+              <value>false</value>
         </param>
 
         <constraints>
@@ -305,18 +305,18 @@
         </constraints>
 
         <param type="string" name="useversion" >
-	      <description>DEPRECATED, will be eliminated in a future release. Version of asdm2MS to be used (no longer relevant)</description>
-	      <value>deprecated</value>
-	      <allowed kind="enum">
+              <description>DEPRECATED, will be eliminated in a future release. Version of asdm2MS to be used (no longer relevant)</description>
+              <value>deprecated</value>
+              <allowed kind="enum">
                 <value>deprecated</value>
-	        <value>v3</value>
-	        <value/>
-	      </allowed>
+                <value>v3</value>
+                <value/>
+              </allowed>
         </param>
 
         <param type="bool" name="bdfflags">
-	      <description>Set the MS FLAG column according to the ASDM _binary_ flags</description>
-	      <value>false</value>
+              <description>Set the MS FLAG column according to the ASDM _binary_ flags</description>
+              <value>false</value>
         </param>
 
         <param type="bool" name="with_pointing_correction">
