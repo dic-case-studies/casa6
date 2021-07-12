@@ -23,10 +23,19 @@ from casatools import table
 from casatasks.private.sdutil import table_selector, tbmanager, toolmanager
 
 
-def gen_factor(infile, endpoint, spw='*', antenna='', selection='', timeout=180, retry=3, retry_wait_time=5):
-    """ Generate factor.
+def gen_factor_via_web_api(vis, endpoint='asdm', spw='*', antenna='', selection='',
+                                            timeout=180, retry=3, retry_wait_time=5):
+    """ Generate factor via Jy/K Web API.
 
     This function will be used task_gencal.
+
+    Arguments:
+        vis {str}: The file path of vis.
+        endpoint {str} -- Specifies which Web API to access. Options are 'asdm' 
+            (default), 'model-fit', 'interpolation'.
+        timeout {int} --- Maximum waiting time when accessing the web API. Second.
+        retry {int} -- Number of times to retry when the web API access fails.
+        retry_wait_time {int} -- The waiting time when the web request fails. Second.
     """
     if caltype == 'asdm':
         params = ASDMParamsGenerator.get_params(vis)
@@ -51,6 +60,17 @@ def gen_factor(infile, endpoint, spw='*', antenna='', selection='', timeout=180,
         manager = RequestsManager(client)
         resps = manager.get(params, vis)
         return ModelFitRspTranslator.convert(resps, spw=spw)
+
+
+def gen_factor_via_file(infile, spw='*', antenna='', selection=''):
+    """ Generate factor via the local file.
+
+    This function will be used task_gencal.
+
+    Arguments:
+        infile {str} -- The file path of CSV.
+    """
+    pass
 
 
 ### web api part
