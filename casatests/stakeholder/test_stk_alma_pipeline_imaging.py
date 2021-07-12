@@ -52,9 +52,21 @@ Test list - 22 total
 14.  Mosaic ephemeris mtmfs - 2018.1.00879.S
 
 Each test stores reference values in dictionaries for the metrics
-to be tested:
-The following variable names are used:
-the standard default sets are,
+to be tested and these dictionaries are stored in a single nested dictionary
+in a json file located in casatestdata. 
+The path of json file is stored in the variable, 
+       self.expdict_jsonfile  
+in test_tclean_bayyse.setUp(). 
+
+* NOTE for updating the tests and fiducial value json file *
+When the json file is updated and its 'casa_version'
+could also be updated then self.refversion in the setUp() needs to be updated to
+match with the 'casa_version' as defined in the json file otherwise 
+almastkteestutils.read_testcase_expdicts() print an error message.
+
+The fudicuial metric values for a specific image are stored
+with the following keys. 
+For the standard default sets are,
 exp_im_stats, exp_mask_stats, exp_pb_stats, exp_psf_stats,
 exp_model_stats, exp_resid_stats, exp_sumwt_stats
 exp_wt_stats (for mosaic)
@@ -138,7 +150,7 @@ class test_tclean_base(unittest.TestCase):
         if ParallelTaskHelper.isMPIEnabled():
             self.parallel = True
         self.expdict_jsonfile = data_path+'test_stk_alma_pipeline_imaging_exp_dicts.json'
-        self.refversion='6.2.0.124'
+        self.refversion='6.3.0.22'
 
     def tearDown(self):
         #print("TEST_DICT=",test_dict)
