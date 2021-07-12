@@ -999,6 +999,17 @@ have chosen to represent these as actual sizes.
      </param>
   </input>
   <returns type="bool"/>
+  <example>
+      cl.open('my.cl')
+      cl.addcomponent(
+        shape='point', flux=[1.0, 0.0, 0.0, 0.0], dir='J2000 19h00m00 -20d00m00',
+        spectrumtype='plp', index=[1, 2, 3]
+      )
+
+      In this example, a point source with a power log polynomial
+      spectrum having the specified indices is added.
+  </example>
+
 </method>
 
  
@@ -2236,6 +2247,22 @@ An integer between 0 and one less than the list length, inclusively</description
     field.  This contains a vector with four numbers, these are the
     spectral indicies for the I,Q,U,V components of the flux.
 
+    The dictionary associated with a power log polynomial spectrum has the following structure:
+
+    {
+      'coeffs': array([ 1.,  2.,  3.]),
+      'frequency': {
+        'type': 'frequency', 
+        'm0': {'value': 1.4200000000000002, 'unit': 'GHz'}, 
+        'refer': 'LSRK'
+      },
+      'type': 'Power Logarithmic Polynomial',
+      'error': array([ 0.,  0.,  0.])
+    }
+
+    The 'error' value is currently not used.
+
+
   </description>
   <input>
     
@@ -2545,6 +2572,14 @@ An integer between 0 and one less than the list length, inclusively</description
       frequencies (1GHz, 1.1GHz and 1.4GHz) to 1.0Jy, 0.9Jy, 0.75Jy
       respectively.  Any frequency in between the range 1 to 1.4 GHz
       the flux will be estimated by interpolation.
+
+      cl.open('my.cl')
+      cl.addcomponent(shape='point', flux=[1.0, 0.0, 0.0, 0.0], dir='J2000 19h00m00 -20d00m00')
+      cl.setspectrum(which=0, type='plp', index=[1, 2, 3])
+      
+      In this example, the initial component's spectrum is modified to a power log polynomial
+      with the specified indices.
+
   </example>
 </method>
 

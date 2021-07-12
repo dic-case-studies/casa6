@@ -229,7 +229,7 @@ componentlist::remove(const std::vector<long>& which, const bool /*log*/)
   try{
     std::vector<int> intwhich(which.begin( ),which.end( ));
     if(itsList && itsBin){
-      const Vector<int> intVec = checkIndices(intwhich, "remove",
+      const Vector<int> intVec = _checkIndices(intwhich, "remove",
                                               "No components removed");
       for(uInt c = 0; c < intVec.nelements(); c++)
         itsBin->add(itsList->component(intVec(c)));
@@ -367,7 +367,7 @@ bool componentlist::isphysical(const std::vector<long>& which)
   try{
     std::vector<int> intwhich(which.begin( ),which.end( ));
     if(itsList && itsBin){
-      const Vector<Int> intVec = checkIndices(intwhich, "is_physical",
+      const Vector<Int> intVec = _checkIndices(intwhich, "is_physical",
                                               "Not checking any components");
       rstat = itsList->isPhysical(intVec);
     }
@@ -483,7 +483,7 @@ bool componentlist::addcomponent(
         );
         MVDirection newDir = theDir.getValue();
         const Vector<Int> intVec = (
-            checkIndices(
+            _checkIndices(
                 which, __FUNCTION__,
                 "Direction not changed on any components"
             )
@@ -602,7 +602,7 @@ bool componentlist::select(const std::vector<long>& which)
   try{
     if(itsList && itsBin){
       std::vector<int> intwhich(which.begin( ),which.end( ));
-      const Vector<Int> intVec = checkIndices(intwhich, "select",
+      const Vector<Int> intVec = _checkIndices(intwhich, "select",
                                               "No components selected");
       itsList->select(intVec);
       rstat=true;
@@ -627,7 +627,7 @@ bool componentlist::deselect(const std::vector<long>& which)
   try{
     if(itsList && itsBin){
       std::vector<int> intwhich(which.begin( ),which.end( ));
-      const Vector<Int> intVec = checkIndices(intwhich, "deselect",
+      const Vector<Int> intVec = _checkIndices(intwhich, "deselect",
                                               "No components deselected");
       itsList->deselect(intVec);
        rstat=true;
@@ -813,7 +813,7 @@ bool componentlist::setflux(
 			"componentlist is not opened, please open first"
 		);
 		Flux<Double> newFlux;
-		const ComponentType::Polarisation pol = (ComponentType::Polarisation)(checkFluxPol(polarization));
+		const ComponentType::Polarisation pol = (ComponentType::Polarisation)(_checkFluxPol(polarization));
 		newFlux.setPol(pol);
 
 		const Unit fluxUnit(unit);
@@ -885,7 +885,7 @@ bool componentlist::setflux(
 				<< endl << "Flux not changed on any components"
 				<< LogIO::EXCEPTION;
 		}
-		const Vector<Int> intVec = checkIndices(which, "setflux",
+		const Vector<Int> intVec = _checkIndices(which, "setflux",
 				"Flux not changed on any components");
 		itsList->setFlux(intVec, newFlux);
 		rstat = true;
@@ -913,7 +913,7 @@ bool componentlist::convertfluxunit(const long which, const std::string& unit)
                 << LogIO::POST;
         return false;
       }
-      const Vector<Int> intVec = checkIndices(which, "convertfluxunit", 
+      const Vector<Int> intVec = _checkIndices(which, "convertfluxunit", 
                                               "Flux not changed on any components");
       itsList->convertFluxUnit(intVec, fluxUnit);
       rstat = true;
@@ -935,10 +935,10 @@ bool componentlist::convertfluxpol(const long which, const std::string& polariza
   bool rstat(false);
   try{
     if(itsList && itsBin){
-      const Vector<Int> intVec = checkIndices(which, "convertfluxunit",
+      const Vector<Int> intVec = _checkIndices(which, "convertfluxunit",
                                               "Flux not changed on any components");
       itsList->convertFluxPol(intVec,
-                       (ComponentType::Polarisation)checkFluxPol(polarization));
+                       (ComponentType::Polarisation)_checkFluxPol(polarization));
       rstat=true;
     }
     else{
@@ -1067,7 +1067,7 @@ bool componentlist::setrefdir(const long which, const ::casac::variant& ra,
  
          const MVDirection newDir(myra, mydec);
 
-         const Vector<Int> intVec(checkIndices(which, "setrefdir",
+         const Vector<Int> intVec(_checkIndices(which, "setrefdir",
                                         "Direction not changed on any components"));
          itsList->setRefDirection(intVec, newDir);
          rstat = true;
@@ -1910,15 +1910,15 @@ bool componentlist::iscomponentlist(const ::casac::variant& /*tool*/)
   return rstat;
 }
 
-vector<int> componentlist::checkIndices(int which, const String& function,
+vector<int> componentlist::_checkIndices(int which, const String& function,
                                          const String& message) const
 {
   std::vector<int> whichVec(1, which);
-  return checkIndices(whichVec, function, message);
+  return _checkIndices(whichVec, function, message);
 }
 //
 //
-vector<int> componentlist::checkIndices(const vector<int>& which,
+vector<int> componentlist::_checkIndices(const vector<int>& which,
                                         const String& function,
                                         const String& message) const
 {
@@ -1944,9 +1944,9 @@ vector<int> componentlist::checkIndices(const vector<int>& which,
   return vector<int>(intVec.begin(),intVec.end());
 }
 
-int componentlist::checkFluxPol(const String& polString)
+int componentlist::_checkFluxPol(const String& polString)
 {
-  itsLog->origin(LogOrigin("componentlist", "checkFluxPol"));
+  itsLog->origin(LogOrigin("componentlist", __FUNCTION__));
 
   const ComponentType::Polarisation pol(ComponentType::polarisation(polString));
   if(pol == ComponentType::UNKNOWN_POLARISATION){
