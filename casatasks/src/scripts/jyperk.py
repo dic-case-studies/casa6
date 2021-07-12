@@ -275,7 +275,7 @@ class Bands():
         
         Params:
             target_mean_freqs {dict} -- The mean freqs which does not been detected the bands.
-            vis {char}: The file path of vis.
+            vis {str}: The file path of vis.
         """
         known_bands = Bands._get_known_bands(vis)
         science_windows = list(known_bands.keys())
