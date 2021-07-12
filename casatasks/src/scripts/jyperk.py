@@ -574,6 +574,9 @@ class ASDMRspTranslator():
         data = data[0]
 
         factors = cls._extract_factors(data)
+        for factor in factors:
+            factor['factor'] = 1/np.sqrt(factor['factor'])
+
         formatted = Translator.format_cal_table_format(factors)
 
         return Translator.filter_jyperk(vis, formatted, spw)
@@ -616,7 +619,7 @@ class InterpolationRspTranslator():
             assert isinstance(vis, str)
             basename = os.path.basename(vis.rstrip('/'))
 
-            factor = _extract_factor(data)
+            factor = 1/np.sqrt(_extract_factor(data))
             polarization = 'I'
             antenna = data['response']['query']['antenna']
 
