@@ -23,7 +23,7 @@ from casatools import table
 from casatasks.private.sdutil import table_selector, tbmanager, toolmanager
 
 
-def gen_factor(vis, caltype='asdm', spw='*', antenna='', selection='', timeout=180, retry=3, retry_wait_time=5):
+def gen_factor(infile, endpoint, spw='*', antenna='', selection='', timeout=180, retry=3, retry_wait_time=5):
     """ Generate factor.
 
     This function will be used task_gencal.
