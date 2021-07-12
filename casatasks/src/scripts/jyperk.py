@@ -68,7 +68,7 @@ def gen_factor_via_file(infile, spw='*', antenna='', selection=''):
     This function will be used task_gencal.
 
     Arguments:
-        infile {str} -- The file path of CSV.
+        infile {str} -- The file path of CSV which the factors are stored.
     """
     pass
 
