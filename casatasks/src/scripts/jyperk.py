@@ -23,28 +23,31 @@ from casatools import table
 from casatasks.private.sdutil import table_selector, tbmanager, toolmanager
 
 
-def gen_factor(vis, caltype='asdm', spw='*', antenna='', selection=''):
+def gen_factor(vis, caltype='asdm', spw='*', antenna='', selection='', timeout=180, retry=3, retry_wait_time=5):
     """ Generate factor.
 
     This function will be used task_gencal.
     """
     if caltype == 'asdm':
         params = ASDMParamsGenerator.get_params(vis)
-        client = JyPerKDatabaseClient(caltype)
+        client = JyPerKDatabaseClient(caltype, 
+            timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
         manager = RequestsManager(client)
         resps = manager.get(params)
         return ASDMRspTranslator.convert(resps, spw=spw)
 
     elif caltype == 'interpolation':
         params = InterpolationParamsGenerator.get_params(vis, spw=spw)
-        client = JyPerKDatabaseClient(caltype)
+        client = JyPerKDatabaseClient(caltype, 
+            timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
         manager = RequestsManager(client)
         resps = manager.get(params, vis)
         return InterpolationRspTranslator.convert(resps, spw=spw)
     
     elif caltype == 'model-fit':
         params = ModelFitParamsGenerator.get_params(vis, spw=spw)
-        client = JyPerKDatabaseClient(caltype)
+        client = JyPerKDatabaseClient(caltype, 
+            timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
         manager = RequestsManager(client)
         resps = manager.get(params, vis)
         return ModelFitRspTranslator.convert(resps, spw=spw)
