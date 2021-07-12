@@ -39,7 +39,7 @@ Test list - 22 total
 5.   SF ephemeris MFS - 2018.1.00879.S
 6.   SF ephemeris mtmfs - 2018.1.00879.S
 7.   SF Calibrator - E2E6.1.00034.S
-8.   SF ephemeris Calibrator - 2018.1.00879.S  
+8.   SF ephemeris Calibrator - 2018.1.00879.S
 9a.  Mosaic cube with pcwdF, briggs- E2E6.1.00034.S
 9b.  Mosaic cube with pcwdT+brigs- E2E6.1.00034.S
 9c.  Mosaic cube with pcwdT+briggsbwtaper- E2E6.1.00034.S
@@ -51,14 +51,14 @@ Test list - 22 total
 13.  Mosaic ephemeris MFS - 2018.1.00879.S
 14.  Mosaic ephemeris mtmfs - 2018.1.00879.S
 
-Each test stores reference values in dictionaries for the metrics 
+Each test stores reference values in dictionaries for the metrics
 to be tested:
 The following variable names are used:
 the standard default sets are,
-exp_im_stats, exp_mask_stats, exp_pb_stats, exp_psf_stats, 
+exp_im_stats, exp_mask_stats, exp_pb_stats, exp_psf_stats,
 exp_model_stats, exp_resid_stats, exp_sumwt_stats
 exp_wt_stats (for mosaic)
-Addtionally, for cube imaging (if self.parallel=True), 
+Addtionally, for cube imaging (if self.parallel=True),
 exp_bmin_dict, exp_bmaj_dict, exp_pa_dict
 And for mtmfs
 exp_im1_stats, exp_model1_stats, exp_resid1_stats, exp_sumwt1_stats
@@ -119,7 +119,7 @@ except ImportError:
 # location of data
 data_path = ctsys_resolve('stakeholder/alma/')
 
-# save the dictionaries of the metrics to files (per tests) 
+# save the dictionaries of the metrics to files (per tests)
 # mostly useful for the maintenace (updating the expected metric i
 # parameters based
 # on the current metrics)
@@ -152,16 +152,16 @@ class test_tclean_base(unittest.TestCase):
         ''' read the json file containung exp_dicts (fiducial metric values)
         for a specific test '''
         self.exp_dicts=almastktestutils.read_testcase_expdicts(self.expdict_jsonfile, testname, self.refversion)
-         
+
     # Separate functions here, for special-case tests that need their own MS.
     def prepData(self, msname=[""]):
         if msname != [""]:
-             self.msfile=msname
+            self.msfile=msname
 
     def delData(self, msname=[""]):
         del_files = [self.img_subdir]
         if msname != [""]:
-             self.msfile=msname
+            self.msfile=msname
         if (os.path.exists(self.msfile)):
             del_files.append(self.msfile)
         img_files = glob.glob(self.img+'*')
@@ -226,7 +226,7 @@ class test_tclean_base(unittest.TestCase):
 
     def cube_beam_stats(self, image):
         """ function to return per-channel beam statistics
-            will be deprecated and combined into image_stats 
+            will be deprecated and combined into image_stats
             once CASA beam issue is fixed
         """
         self._myia.open(image)
@@ -470,8 +470,8 @@ class test_tclean_base(unittest.TestCase):
         if showonlyfail:
             filter='Fail'
         else:
-            filter='Pass' 
-        
+            filter='Pass'
+
         if report!='':
             testItems = report.split('\n')
             retitems=[]
@@ -485,31 +485,31 @@ class test_tclean_base(unittest.TestCase):
             ret += '\n' + msg
         return ret
 
-     
+
     def save_dict_to_file(self, topkey, indict, outfilename, appendversion=True, outformat='JSON'):
         """ function that will save input Python dictionaries to a JSON file (default)
-            or pickle file. topkey is will be added as a top key for output (nested) dictionary 
-            and indict is stored under the key.  
+            or pickle file. topkey is will be added as a top key for output (nested) dictionary
+            and indict is stored under the key.
             Create a separate file with outfilename if appendversion=True casa version (based on
             casatasks version) will be appended to the output file name.
         """
-        try: 
+        try:
             import casatasks as __casatasks
             casaversion = __casatasks.version_string()
             del __casatasks
         except:
             casaversion = ''
-            
+
         if casaversion !='':
             casaversion = '_' + casaversion
         if type(indict) != dict:
-            print("indict is not a dict. Saved file may not be in correct format") 
+            print("indict is not a dict. Saved file may not be in correct format")
         nestedDict={}
-        nestedDict[topkey]=indict 
+        nestedDict[topkey]=indict
         print("Saving %s dictionaries", len(indict))
         if outformat == 'pickle':
-            # writing to pickle: note if writing this way (without protocol=2) 
-            # in casa6 and read in casa5 it will fail 
+            # writing to pickle: note if writing this way (without protocol=2)
+            # in casa6 and read in casa5 it will fail
             with open(outfilename+casaversion+'.pickle', 'wb') as outf:
                 pickle.dump(nestedDict, outf)
         elif outformat== 'JSON':
@@ -519,7 +519,7 @@ class test_tclean_base(unittest.TestCase):
             print("no saving with format:", outformat)
 
     def modify_dict(self, output=None, testname=None, parallel=None):
-        ''' Modified test_dict costructed by casatestutils add_to_dict to include only 
+        ''' Modified test_dict costructed by casatestutils add_to_dict to include only
             the task commands executed and also add self.parallel value to the dictionary.
             The cube imaging cases usually have if-else conditional based on parallel mode is on or not
             to trigger different set of tclean commands.
@@ -529,7 +529,7 @@ class test_tclean_base(unittest.TestCase):
             are the ones acutually executed and should remove 4th (self.parallel=False) case.
         '''
         if testname in output:
-            if 'taskcall' in output[testname] and len(output[testname]['taskcall'])==3: 
+            if 'taskcall' in output[testname] and len(output[testname]['taskcall'])==3:
                 if parallel:
                     # 0,1,2th in the list are used pop last one
                     output[testname]['taskcall'].pop()
@@ -540,7 +540,7 @@ class test_tclean_base(unittest.TestCase):
 
     def remove_prefix(self,string, prefix):
         ''' Remove a specified prefix string from string '''
-        return string[string.startswith(prefix) and len(prefix):]  
+        return string[string.startswith(prefix) and len(prefix):]
 
 ##############################################
 # TESTS
@@ -555,7 +555,7 @@ class Test_standard(test_tclean_base):
     def test_standard_cube(self):
         ''' Standard (single field) cube imaging - central field of SMIDGE_NWCloud (field 3), spw 22 '''
 
-        test_name = self._testMethodName 
+        test_name = self._testMethodName
         file_name = self.remove_prefix(test_name, 'test_')+'.iter'
         img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'E2E6.1.00034.S_tclean.ms')
@@ -736,7 +736,7 @@ class Test_standard(test_tclean_base):
             savedict['model_stats_dict']=model_stats_dict
             savedict['resid_stats_dict']=resid_stats_dict
             savedict['sumwt_stats_dict']=sumwt_stats_dict
-            
+
             savedict['bmin_dict']=bmin_dict
             savedict['bmaj_dict']=bmaj_dict
             savedict['pa_dict']=pa_dict
@@ -753,7 +753,7 @@ class Test_standard(test_tclean_base):
     # @unittest.skip("")
     def test_standard_cube_pcwdT(self):
         ''' Standard (single field) cube imaging with pcwdT and briggs - central field of SMIDGE_NWCloud (field 3), spw 22 '''
-        
+
         test_name = self._testMethodName
         file_name = self.remove_prefix(test_name, 'test_')+'.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -807,7 +807,7 @@ class Test_standard(test_tclean_base):
             calcres=False, calcpsf=False, savemodel='none', \
             parallel=self.parallel, verbose=True)
 
-        # retrieve per-channel beam statistics 
+        # retrieve per-channel beam statistics
         bmin_dict, bmaj_dict, pa_dict = \
             self.cube_beam_stats(image=img+'.psf')
 
@@ -940,8 +940,8 @@ class Test_standard(test_tclean_base):
             savedict['model_stats_dict']=model_stats_dict
             savedict['resid_stats_dict']=resid_stats_dict
             savedict['sumwt_stats_dict']=sumwt_stats_dict
-            
-            #if self.parallel: 
+
+            #if self.parallel:
             # for serial get it from *.psf
             savedict['bmin_dict']=bmin_dict
             savedict['bmaj_dict']=bmaj_dict
@@ -960,7 +960,7 @@ class Test_standard(test_tclean_base):
     # @unittest.skip("")
     def test_standard_cube_briggsbwtaper(self):
         ''' Standard (single field) cube imaging with briggsbwtaper - central field of SMIDGE_NWCloud (field 3), spw 22 '''
-        
+
         test_name = self._testMethodName
         file_name = self.remove_prefix(test_name,'test_')+'.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -1014,7 +1014,7 @@ class Test_standard(test_tclean_base):
             calcres=False, calcpsf=False, savemodel='none', \
             parallel=self.parallel, verbose=True)
 
-        # retrieve per-channel beam statistics 
+        # retrieve per-channel beam statistics
         bmin_dict, bmaj_dict, pa_dict = \
             self.cube_beam_stats(image=img+'.psf')
 
@@ -1146,8 +1146,8 @@ class Test_standard(test_tclean_base):
             savedict['model_stats_dict']=model_stats_dict
             savedict['resid_stats_dict']=resid_stats_dict
             savedict['sumwt_stats_dict']=sumwt_stats_dict
-            
-            #if self.parallel: 
+
+            #if self.parallel:
             # for serial get it from *.psf
             savedict['bmin_dict']=bmin_dict
             savedict['bmaj_dict']=bmaj_dict
@@ -1167,7 +1167,7 @@ class Test_standard(test_tclean_base):
     def test_standard_mfs(self):
         ''' Standard (single field) MFS imaging - central field of NGC5363 (field 2), spw 16 & 22 '''
 
-        test_name = self._testMethodName 
+        test_name = self._testMethodName
         file_name = self.remove_prefix(test_name, 'test_')+'.iter'
         img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'E2E6.1.00020.S_tclean.ms')
@@ -1331,7 +1331,7 @@ class Test_standard(test_tclean_base):
         file_name = self.remove_prefix(test_name, 'test_')+'.iter'
         img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'E2E6.1.00020.S_tclean.ms')
-	self.getExpdicts(test_name)
+        self.getExpdicts(test_name)
 
         print("\nSTARTING: iter0 routine")
 
@@ -1463,7 +1463,7 @@ class Test_standard(test_tclean_base):
 
         # test_standard_mtmfs_exp_im1_stats
         exp_im1_stats = self.exp_dicts['exp_im1_stats']
- 
+
         report9 = th.check_dict_vals(exp_im1_stats, im1_stats_dict, '.image.tt1', epsilon=self.epsilon)
 
         # .residual.tt1 report
@@ -1494,7 +1494,7 @@ class Test_standard(test_tclean_base):
 
         report12 = th.check_dict_vals(exp_sumwt1_stats, sumwt1_stats_dict, \
             '.sumwt.tt1', epsilon=self.epsilon)
-        
+
         # report combination
         report = report0 + report1 + report2 + report3 + report4 + report5 + \
             report6 + report7 + report8 + report9 + report10 + report11 + report12
@@ -1524,11 +1524,11 @@ class Test_standard(test_tclean_base):
     def test_standard_cube_eph(self):
         ''' Single field multi-EB ephemeris cube imaging - field 21PGiacobini-Zinner, spw 20 '''
 
-       
+
         test_name = self._testMethodName
         file_name = 'standard_cube_eph.iter'
         img = os.getcwd()+'/'+file_name+'1'
-        self.prepData([data_path+'2017.1.00750.T_tclean_exe1.ms', 
+        self.prepData([data_path+'2017.1.00750.T_tclean_exe1.ms',
             data_path+'2017.1.00750.T_tclean_exe2.ms'])
         self.getExpdicts(test_name)
 
@@ -1704,7 +1704,7 @@ class Test_standard(test_tclean_base):
         test_name = self._testMethodName
         file_name = self.remove_prefix(test_name, 'test_')+'.iter'
         img = os.getcwd()+'/'+file_name+'1'
-        self.prepData([data_path+'2017.1.00750.T_tclean_exe1.ms', 
+        self.prepData([data_path+'2017.1.00750.T_tclean_exe1.ms',
             data_path+'2017.1.00750.T_tclean_exe2.ms'])
         self.getExpdicts(test_name)
 
@@ -1786,7 +1786,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[93.24066271deg, 22.57227012deg], [22.4071arcsec, 21.7699arcsec], 90.00000000deg]')
 
         # test_standard_cube_eph_pcwdT.exp_pb_stats
-        exp_pb_stats = self.exp_dicts['exp_pb_stats'] 
+        exp_pb_stats = self.exp_dicts['exp_pb_stats']
 
         report4 = th.check_dict_vals(exp_pb_stats, pb_stats_dict, '.pb', epsilon=self.epsilon)
 
@@ -1866,7 +1866,7 @@ class Test_standard(test_tclean_base):
             savedict['model_stats_dict']=model_stats_dict
             savedict['resid_stats_dict']=resid_stats_dict
             savedict['sumwt_stats_dict']=sumwt_stats_dict
-            
+
             self.save_dict_to_file(test_name, savedict, test_name+'_cur_stats')
 
         self.assertTrue(th.check_final(pstr = report), \
@@ -1882,7 +1882,7 @@ class Test_standard(test_tclean_base):
         test_name = self._testMethodName
         file_name = self.remove_prefix(test_name, 'test_')+'.iter'
         img = os.getcwd()+'/'+file_name+'1'
-        self.prepData([data_path+'2017.1.00750.T_tclean_exe1.ms', 
+        self.prepData([data_path+'2017.1.00750.T_tclean_exe1.ms',
             data_path+'2017.1.00750.T_tclean_exe2.ms'])
         self.getExpdicts(test_name)
 
@@ -2044,7 +2044,7 @@ class Test_standard(test_tclean_base):
             savedict['model_stats_dict']=model_stats_dict
             savedict['resid_stats_dict']=resid_stats_dict
             savedict['sumwt_stats_dict']=sumwt_stats_dict
-            
+
             self.save_dict_to_file(test_name, savedict, test_name+'_cur_stats')
 
         self.assertTrue(th.check_final(pstr = report), \
@@ -2216,7 +2216,7 @@ class Test_standard(test_tclean_base):
             savedict['model_stats_dict']=model_stats_dict
             savedict['resid_stats_dict']=resid_stats_dict
             savedict['sumwt_stats_dict']=sumwt_stats_dict
-            
+
             self.save_dict_to_file(test_name, savedict, test_name+'_cur_stats')
 
         self.assertTrue(th.check_final(pstr = report), \
@@ -2341,7 +2341,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]', masks=mask_stats_dict['mask'])
 
         exp_model_stats = self.exp_dicts['exp_model_stats']
- 
+
         report7 = th.check_dict_vals(exp_model_stats, model_stats_dict, \
             '.model', epsilon=self.epsilon)
 
@@ -2358,7 +2358,7 @@ class Test_standard(test_tclean_base):
             'ellipse[[239.37089658deg, -16.96414518deg], [12.9657arcsec, 12.4377arcsec], 0.00000000deg]')
 
         exp_im1_stats = self.exp_dicts['exp_im1_stats']
- 
+
         report9 = th.check_dict_vals(exp_im1_stats, im1_stats_dict, '.image.tt1', epsilon=self.epsilon)
 
         # .residual.tt1 report
@@ -2441,7 +2441,7 @@ class Test_standard(test_tclean_base):
     def test_standard_cal(self):
         ''' Calibrator image - field J2258-2758, spw 22 '''
 
-        test_name = self._testMethodName 
+        test_name = self._testMethodName
         file_name = self.remove_prefix(test_name, 'test_')+'.iter'
         img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'E2E6.1.00034.S_tclean.ms')
@@ -2537,7 +2537,7 @@ class Test_standard(test_tclean_base):
             'ellipse [[344.52480945deg, -27.97253944deg], [12.1076arcsec, 6.2463arcsec], 90.00000000deg]')
 
         exp_resid_stats = self.exp_dicts['exp_resid_stats']
- 
+
         report6 = th.check_dict_vals(exp_resid_stats, resid_stats_dict, \
             '.residual', epsilon=self.epsilon)
 
@@ -2608,7 +2608,7 @@ class Test_standard(test_tclean_base):
     def test_standard_cal_eph(self):
         ''' Standard (single field) ephemeris calibrator imaging - central field of Venus (field 2), spw 25 & 45 '''
 
-        test_name = self._testMethodName 
+        test_name = self._testMethodName
         file_name = self.remove_prefix(test_name, 'test_')+'.iter'
         img = os.getcwd()+'/'+file_name+'1'
         self.prepData(data_path+'2018.1.00879.S_tclean.ms')
@@ -2898,7 +2898,7 @@ class Test_mosaic(test_tclean_base):
             'ellipse [[11.48661818deg, -73.26292371deg], [8.2211arcsec, 7.4698arcsec], 90.00000000deg]')
 
         exp_resid_stats = self.exp_dicts['exp_resid_stats']
- 
+
         report6 = th.check_dict_vals(exp_resid_stats, resid_stats_dict, \
             '.residual', epsilon=self.epsilon)
 
@@ -2922,7 +2922,7 @@ class Test_mosaic(test_tclean_base):
         # .weight report
         wt_stats_dict = self.image_stats(img+'.weight', masks=[ \
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
-        
+
         #test_mosaic_cube
         exp_wt_stats = self.exp_dicts['exp_wt_stats']
 
@@ -3080,7 +3080,7 @@ class Test_mosaic(test_tclean_base):
 
         # test_mosaic_cube_pcwdT.exp_mask_stats
         exp_mask_stats = self.exp_dicts['exp_mask_stats']
- 
+
         report3 = th.check_dict_vals(exp_mask_stats, mask_stats_dict, '.mask', epsilon=self.epsilon)
 
         # .pb report (test_mosaic_cube_pcwdT)
@@ -3133,7 +3133,7 @@ class Test_mosaic(test_tclean_base):
         # .weight report
         wt_stats_dict = self.image_stats(img+'.weight', masks=[ \
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
-        
+
         #test_mosaic_cube_pcwdT.exp_wt_stats
         exp_wt_stats = self.exp_dicts['exp_wt_stats']
 
@@ -3196,7 +3196,7 @@ class Test_mosaic(test_tclean_base):
             savedict['resid_stats_dict']=resid_stats_dict
             savedict['sumwt_stats_dict']=sumwt_stats_dict
             savedict['wt_stats_dict']=wt_stats_dict
-            
+
             #if self.parallel:
             savedict['bmin_dict']=bmin_dict
             savedict['bmaj_dict']=bmaj_dict
@@ -3356,7 +3356,7 @@ class Test_mosaic(test_tclean_base):
         # .weight report
         wt_stats_dict = self.image_stats(img+'.weight', masks=[ \
             pb_stats_dict['pb_mask_0.2'], pb_stats_dict['pb_mask_0.5']])
-        
+
         #test_mosaic_cube_briggsbwtaper.exp_wt_stats
         exp_wt_stats = self.exp_dicts['exp_wt_stats']
 
@@ -3418,7 +3418,7 @@ class Test_mosaic(test_tclean_base):
             savedict['resid_stats_dict']=resid_stats_dict
             savedict['sumwt_stats_dict']=sumwt_stats_dict
             savedict['wt_stats_dict']=wt_stats_dict
-            
+
             #if self.parallel:
             savedict['bmin_dict']=bmin_dict
             savedict['bmaj_dict']=bmaj_dict
@@ -3531,7 +3531,7 @@ class Test_mosaic(test_tclean_base):
             'ellipse[[209.03003701deg, 5.25471148deg], [110.7528arcsec, 107.4584arcsec], 90.00000000deg]')
 
         exp_pb_stats = self.exp_dicts['exp_pb_stats']
- 
+
         report4 = th.check_dict_vals(exp_pb_stats, pb_stats_dict, '.pb', epsilon=self.epsilon)
 
         # .psf report (test_mosaic_mfs)
@@ -3868,7 +3868,7 @@ class Test_mosaic(test_tclean_base):
     # @unittest.skip("")
     def test_mosaic_cube_eph(self):
         ''' Mosaic ephemeris cube imaging with pcwdF - field Venus, spw 45 '''
-        
+
         test_name = self._testMethodName
         file_name = self.remove_prefix(test_name,'test_')+'.iter'
         img = os.getcwd()+'/'+file_name+'1'
@@ -3924,7 +3924,7 @@ class Test_mosaic(test_tclean_base):
             parallel=self.parallel, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
-  
+
         # test_mosaic_cube_eph
         # .image report
         im_stats_dict = self.image_stats(img+'.image', fit_region = \
@@ -3990,7 +3990,7 @@ class Test_mosaic(test_tclean_base):
 
         exp_model_stats = self.exp_dicts['exp_model_stats']
 
-        report7 = th.check_dict_vals(exp_model_stats, model_stats_dict, 
+        report7 = th.check_dict_vals(exp_model_stats, model_stats_dict,
             '.model', epsilon=self.epsilon)
 
         # .sumwt report (test_mosaic_cube_eph)
@@ -4053,7 +4053,7 @@ class Test_mosaic(test_tclean_base):
             savedict['wt_stats_dict']=wt_stats_dict
 
             self.save_dict_to_file(test_name,savedict, test_name+'_cur_stats')
-                              
+
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
@@ -4118,7 +4118,7 @@ class Test_mosaic(test_tclean_base):
             parallel=self.parallel, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
-  
+
         # test_mosaic_cube_eph_pcwdT
         # .image report
         im_stats_dict = self.image_stats(img+'.image', fit_region = \
@@ -4178,7 +4178,7 @@ class Test_mosaic(test_tclean_base):
             'ellipse[[239.36796846deg, -16.96307757deg], [5.3756arcsec, 3.3987arcsec], 0.00000000deg]')
 
         # test_mosaic_cube_eph_pcwdT.exp_resid_stats
-        exp_resid_stats = self.exp_dicts['exp_resid_stats'] 
+        exp_resid_stats = self.exp_dicts['exp_resid_stats']
 
         report6 = th.check_dict_vals(exp_resid_stats, resid_stats_dict, \
             '.residual', epsilon=self.epsilon)
@@ -4190,7 +4190,7 @@ class Test_mosaic(test_tclean_base):
         # test_mosaic_cube_eph_pcwdT.exp_model_stats
         exp_model_stats = self.exp_dicts['exp_model_stats']
 
-        report7 = th.check_dict_vals(exp_model_stats, model_stats_dict, 
+        report7 = th.check_dict_vals(exp_model_stats, model_stats_dict,
             '.model', epsilon=self.epsilon)
 
         # .sumwt report (test_mosaic_cube_eph_pcwdT)
@@ -4253,7 +4253,7 @@ class Test_mosaic(test_tclean_base):
             savedict['resid_stats_dict']=resid_stats_dict
             savedict['sumwt_stats_dict']=sumwt_stats_dict
             savedict['wt_stats_dict']=wt_stats_dict
-            
+
             self.save_dict_to_file(test_name,savedict, test_name+'_cur_stats')
 
         self.assertTrue(th.check_final(pstr = report), \
@@ -4319,7 +4319,7 @@ class Test_mosaic(test_tclean_base):
             parallel=self.parallel, verbose=True)
 
         report0 = th.checkall(imgexist = self.image_list(img, 'mosaic'))
-  
+
         # test_mosaic_cube_eph_briggsbwtaper
         # .image report
         im_stats_dict = self.image_stats(img+'.image', fit_region = \
@@ -4360,7 +4360,7 @@ class Test_mosaic(test_tclean_base):
             'ellipse [[239.37091637deg, -16.96407526deg], [28.1142arcsec, 27.0960arcsec], 90.00000000deg]')
 
         # test_mosaic_cube_eph_briggsbwtaper.exp_pb_stats
-        exp_pb_stats = self.exp_dicts['exp_pb_stats'] 
+        exp_pb_stats = self.exp_dicts['exp_pb_stats']
 
 
         report4 = th.check_dict_vals(exp_pb_stats, pb_stats_dict, '.pb', epsilon=self.epsilon)
@@ -4391,7 +4391,7 @@ class Test_mosaic(test_tclean_base):
         # test_mosaic_cube_eph_briggsbwtaper.exp_model_stats
         exp_model_stats = self.exp_dicts['exp_model_stats']
 
-        report7 = th.check_dict_vals(exp_model_stats, model_stats_dict, 
+        report7 = th.check_dict_vals(exp_model_stats, model_stats_dict,
             '.model', epsilon=self.epsilon)
 
         # .sumwt report (test_mosaic_cube_eph_briggsbwtaper)
@@ -4456,7 +4456,7 @@ class Test_mosaic(test_tclean_base):
             savedict['resid_stats_dict']=resid_stats_dict
             savedict['sumwt_stats_dict']=sumwt_stats_dict
             savedict['wt_stats_dict']=wt_stats_dict
-            
+
             self.save_dict_to_file(test_name,savedict, test_name+'_cur_stats')
 
         self.assertTrue(th.check_final(pstr = report), \
@@ -4900,7 +4900,7 @@ class Test_mosaic(test_tclean_base):
 
 
 def suite():
-     return [Test_standard, Test_mosaic]
+    return [Test_standard, Test_mosaic]
 
 # Main #
 if __name__ == '__main__':
