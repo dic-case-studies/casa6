@@ -124,6 +124,7 @@ pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
 xml_jar_file = 'xml-casa-assembly-1.65.jar'
 real_gnu = None
 gxx_version_number = 0
+gfortran_flag_additions = [ ]
 
 if pyversion < 3:
     str_encode = str
@@ -384,6 +385,9 @@ def load_properties(filepath, sep='=', comment_char='#'):
                 elements = nums[1].split('.')
                 if len(elements) == 3:
                     gxx_version_number = int(elements[0])
+                    if gxx_version_number >= 10:
+                        print('adding gfortran flags for modern gfortran versions')
+                        gfortran_flag_additions.append('-fallow-argument-mismatch')
 
         if sys.platform == 'darwin':
             print('using real GNU compiler on OSX...')
@@ -990,7 +994,7 @@ def get_fortran_compiler_flags(ext):
         if relwithdebinfo_build():
             cc_args.insert(0, "-g")
     if (ext == ".f"):
-        cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
+        cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"] + gfortran_flag_additions
         if relwithdebinfo_build():
             cc_args.insert(0, "-g")
    
@@ -1120,7 +1124,7 @@ def customize_compiler(self):
                 if (ext == ".f90"):
                     cc_args = ["-O3", "-fPIC", "-c", "-ffree-form", "-ffree-line-length-none"]
                 if (ext == ".f"):
-                    cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"]
+                    cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"] + %s
                 if real_gnu and len(props['build.flags.compile.openmp']) > 0:
                     ### we'll assume our fortran compiler is gfortran and set the openmp
                     ### flags for gfortran if our main C++ compiler is really GNU and the
@@ -1132,9 +1136,9 @@ def customize_compiler(self):
                 elif arch == "64bit":
                     cc_args.append("-m64")
                 else:
-                    print("\nPlatform has architecture '%s' which is unknown to "
-                          "the setup script. Proceed with caution\n" % arch)
-                """
+                    print("\nPlatform has architecture '%%s' which is unknown to "
+                          "the setup script. Proceed with caution\n" %% arch)
+                """ % gfortran_flag_additions
                 cc_args = get_fortran_compiler_flags(ext)
             try:
                 self.spawn(compiler_so + cc_args + [src, '-o', obj] + postargs)
