@@ -126,7 +126,7 @@ def fringefit(vis=None,caltable=None,
         if parang: mycb.setapply(type='P')
 
         # Set up for solving; only support one gaintype
-        mycb.setsolve(type="FRINGE",t=solint,refant=refant,preavg=0.01,
+        mycb.setsolve(type="FRINGE",t=solint,refant=refant,
                       minsnr=minsnr,combine=combine,
                       zerorates=zerorates,
                       globalsolve=globalsolve,
