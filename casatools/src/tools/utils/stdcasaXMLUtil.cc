@@ -397,6 +397,13 @@ bool stdcasaXMLUtil::readXML(record &itsRecord,  const Wrapper4InputSource &xmlS
                                 // element any, attributes: record, variant
                                 if(XMLString::equals(allowed, childNode->getNodeName())){
                                     DOMNamedNodeMap *theAttributes = childNode->getAttributes();
+                                    DOMNode *ignoreNode = theAttributes->getNamedItem(ignorecase);
+                                    if(ignoreNode){
+                                        const XMLCh *myType = ignoreNode->getNodeValue();
+                                        char *aType = XMLString::transcode(myType);
+                                        itsRecord[ttName].asRecord()["parameters"].asRecord()[parmName].asRecord().insert("ignorecase", aType);
+                                        XMLString::release(&aType);
+                                    }
                                     DOMNode *kindNode = theAttributes->getNamedItem(kind);
                                     if(kindNode){
                                         const XMLCh *kindType = kindNode->getNodeValue();

@@ -91,7 +91,7 @@
     <value>False</value>
     </param>
 
-    <param type="string" name="separationaxis" ignorecase="true" subparam="true"><shortdescription>Axis to do parallelization across(scan,spw,auto,baseline).</shortdescription><description>Axis to do parallelization across(scan,spw,auto,baseline).</description>
+    <param subparam="true" name="separationaxis" type="string"><shortdescription>Axis to do parallelization across(scan,spw,auto,baseline).</shortdescription><description>Axis to do parallelization across(scan,spw,auto,baseline).</description>
 
     <value>auto</value>
     <allowed kind="enum" ignorecase="true">
@@ -180,7 +180,9 @@
         <value type="string"/>
     </param>
 
-    <param type="string" name="datacolumn" ignorecase="True"><shortdescription>Which data column(s) to process.</shortdescription><description>Which data column(s) to process.</description>
+    <param type="string" name="datacolumn" >
+    <shortdescription>Which data column(s) to process.</shortdescription>
+    <description>Which data column(s) to process.</description>
         
         <value>corrected</value>
         <allowed kind="enum" ignorecase="True">
@@ -275,7 +277,9 @@
             <value type="int">1</value>
         </param>
 
-        <param type="string" name="interpolation" subparam="true" ignorecase="True"><shortdescription>Spectral interpolation method.</shortdescription><description>Spectral interpolation method.</description>
+        <param type="string" name="interpolation" subparam="true">
+        <shortdescription>Spectral interpolation method.</shortdescription>
+        <description>Spectral interpolation method.</description>
             
             <value>linear</value>
             <allowed kind="enum">
@@ -298,7 +302,9 @@
             <value/>
         </param>
     
-        <param type="string" name="outframe" subparam="true" ignorecase="True"><shortdescription>Output reference frame (''=keep input frame).</shortdescription><description>Output reference frame (''=keep input frame).</description>
+        <param type="string" name="outframe" subparam="true">
+        <shortdescription>Output reference frame (''=keep input frame).</shortdescription>
+        <description>Output reference frame (''=keep input frame).</description>
             
             <value/>
             <allowed kind="enum" ignorecase="True">
@@ -315,10 +321,12 @@
             </allowed>
         </param>
 
-        <param type="string" name="veltype" subparam="true" ignorecase="True"><shortdescription>Velocity definition.</shortdescription><description>Velocity definition.</description>
+        <param type="string" name="veltype" subparam="true">
+        <shortdescription>Velocity definition.</shortdescription>
+        <description>Velocity definition.</description>
             
             <value>radio</value>
-            <allowed kind="enum">
+            <allowed kind="enum" ignorecase="True">
                <value>optical</value>
                <value>radio</value>
             </allowed>

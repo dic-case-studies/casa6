@@ -262,7 +262,7 @@ Multi-MS.
         <value type="string"/>
     </param>
 
-    <param ignorecase="True" name="datacolumn" type="string">
+    <param type="string" name="datacolumn">
 <shortdescription>Data column(s) to process.</shortdescription>
 <description>Which data column(s) to process.</description>
                      Default: '' = all
@@ -404,7 +404,7 @@ Multi-MS.
             <value type="int">1</value>
         </param>
 
-        <param ignorecase="True" subparam="true" name="interpolation" type="string">
+        <param type="string" name="interpolation" subparam="true">
 <shortdescription>Spectral interpolation method</shortdescription>
 <description>Spectral interpolation method
                      Subparameter of
@@ -454,7 +454,7 @@ coordinate transformation.
             <value/>
         </param>
         
-        <param ignorecase="True" name="outframe" type="string">
+        <param type="string" name="outframe">
 <shortdescription>Output reference frame.</shortdescription>
 <description>Output reference frame (not case-sensitive).
                      Default: '' (keep original reference frame)
@@ -482,13 +482,13 @@ coordinate transformation.
                 </allowed>
         </param>
 
-        <param ignorecase="True" name="veltype" type="string">
+        <param type="string" name="veltype">
 <shortdescription>Velocity definition.</shortdescription>
 <description>Definition of velocity (in mode)
                      Default = 'radio'
 </description>
             <value>radio</value>
-            <allowed kind="enum">
+            <allowed kind="enum" ignorecase="True">
                <value>optical</value>
                <value>radio</value>
             </allowed>
