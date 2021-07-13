@@ -25,7 +25,7 @@ def gencal(vis=None, caltable=None, caltype=None, infile=None,
 
     """ Externally specify calibration solutions af various types
     """
-   
+
     # Python script
     try:
 
