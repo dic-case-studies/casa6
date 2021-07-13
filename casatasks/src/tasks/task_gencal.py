@@ -1,19 +1,23 @@
 from __future__ import absolute_import
-import sys
+
 import os
+import sys
 import warnings
 
 from casatasks.private.casa_transition import is_CASA6
+
 if is_CASA6:
-    from casatools import calibrater
     from casatasks import casalog
+    from casatools import calibrater
     from . import correct_ant_posns as getantposns 
 
     _cb = calibrater( )
 else:
-    from taskinit import *
     import correct_ant_posns as getantposns 
+    from taskinit import *
+
     (_cb,) = gentools(['cb'])
+
 
 def gencal(vis=None,caltable=None,caltype=None,infile=None,
         spw=None,antenna=None,pol=None,
