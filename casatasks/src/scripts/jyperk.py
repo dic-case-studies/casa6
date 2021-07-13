@@ -639,8 +639,8 @@ class ModelFitRspTranslator(InterpolationRspTranslator):
 
 # file part
 class JyPerKReader4File():
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self, infile):
+        self.infile = infile
         
     def get(self):
         """ Reads jyperk factors from a file and returns a string list.
@@ -648,7 +648,7 @@ class JyPerKReader4File():
         Returns:
             list -- [['MS','ant','spwid','polid','factor'], ...]
         """
-        with open(self.filename, 'r') as f:
+        with open(self.infile, 'r') as f:
             return list(self._extract_jyperk_from_csv(f))
 
     def _extract_jyperk_from_csv(self, stream):
