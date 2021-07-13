@@ -843,13 +843,17 @@ class test_iterbot(testref_base):
             ret=retpar 
 
 
-          report=self.th.checkall(ret=ret,iterdone=1749,nmajordone=8,imgexist=[self.img+'.psf', self.img+'.residual'])
+          report=self.th.checkall(ret=ret,iterdone=1760,nmajordone=13,imgexist=[self.img+'.psf', self.img+'.residual'])
+
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_divergence(self): 
           """ [iterbot] Test_Iterbot_divergence : Use negative loop gain to make it diverge (verification of CAS-9244 fix) """
           self.prepData('refim_point.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec', niter=50,cycleniter=5, gain=-0.2,interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret,iterdone=10,nmajordone=3,imgexist=[self.img+'.psf', self.img+'.image'])
+
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_mfs_deconvolvers(self):
           """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? Now they do. """
@@ -893,11 +897,13 @@ class test_iterbot(testref_base):
            
           ret={}
           if self.parallel:
-            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone'])
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone' 'stopcode'])
           else:
             ret=retpar 
 
-          report=self.th.checkall(ret=ret,iterdone=158,nmajordone=4,imgexist=[self.img+'.psf', self.img+'.residual'])
+          report=self.th.checkall(ret=ret,iterdone=151,nmajordone=4,stopcode=2,imgexist=[self.img+'.psf', self.img+'.residual'])
+
+          self.assertTrue(self.check_final(report))
 
 
      def test_iterbot_cube_nsigma(self): 
@@ -911,6 +917,8 @@ class test_iterbot(testref_base):
             ret=retpar 
 
           report=self.th.checkall(ret=ret,iterdone=407,nmajordone=11,stopcode=8,imgexist=[self.img+'.psf', self.img+'.residual'])
+
+          self.assertTrue(self.check_final(report))
 
 
 ##############################################
@@ -2503,6 +2511,8 @@ class test_mask(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='cube',interpolation='nearest',usemask="auto-multithresh", minbeamfrac=0.05,  verbose=True, parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[35,75,0,0]),(self.img+'.mask',0.0,[32,80,1,1]), (self.img+'.mask',1.0,[35,60,1,1]), (self.img+'.mask',1.0,[60,30,3,0])])
 
+          self.assertTrue(self.check_final(report))
+
 #     def test_mask_outregion(self):
 #          """ [mask] test_mask_outregion : Input mask has region that goes outside the image """
 #          self.prepData('refim_twochan.ms')
@@ -2562,7 +2572,9 @@ class test_mask(testref_base):
           niter=10,interactive=0,interpolation='nearest', usemask='user',
           mask=self.maskname+"_dropdeg")
           report=self.th.checkall(ret=ret, imgexist=[self.img+'.mask'],
-          imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[50,50,0,1]),(self.img+'.mask',1.0,[50,50,0,2]), (self.img+'.mask',0.0,[65,65,0,1])])
+                                  imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[50,50,0,1]),(self.img+'.mask',1.0,[50,50,0,2]), (self.img+'.mask',0.0,[65,65,0,1])])
+
+          self.assertTrue(self.check_final(report))
 
         
      def test_mask_expand_contstokesImask_to_IQUV(self):
@@ -4133,7 +4145,9 @@ class test_mosaic_mtmfs(testref_base):
           phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
           field='0,1'
           tclean(vis=self.msfile, imagename=self.img,niter=5,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel,mosweight=False,weighting='briggs')
-          report1=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.9794,[512,596,0,0]),(self.img+'.pb.tt0', 0.9817,[512,596,0,0]),(self.img+'.alpha', -0.797,[512,596,0,0])])
+          report=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.9794,[512,596,0,0]),(self.img+'.pb.tt0', 0.9817,[512,596,0,0]),(self.img+'.alpha', -0.797,[512,596,0,0])])
+
+          self.assertTrue(self.check_final(report))
           
 ###########################################################
 ###########################################################

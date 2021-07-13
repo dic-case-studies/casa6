@@ -894,15 +894,14 @@ class test_iterbot(testref_base):
           """ [iterbot] Test_Iterbot_cube_tol :threshold test to allow a tolerance (1/100)  (verification of CAS-11278 fix) """
           self.prepData('refim_point_withline.ms')
           retpar = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1000000,threshold='0.50001Jy',gain=0.1,cycleniter=5,interactive=0,parallel=self.parallel)
-          self.assertEqual(retpar['stopcode'], 2) # should have stopped cleaning when it met the tollerance limit
            
           ret={}
           if self.parallel:
-            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone'])
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone' 'stopcode'])
           else:
             ret=retpar 
 
-          report=self.th.checkall(ret=ret,iterdone=151,nmajordone=4,imgexist=[self.img+'.psf', self.img+'.residual'])
+          report=self.th.checkall(ret=ret,iterdone=151,nmajordone=4,stopcode=2,imgexist=[self.img+'.psf', self.img+'.residual'])
 
           self.assertTrue(self.check_final(report))
 
