@@ -51,7 +51,7 @@ def gencal(vis=None,caltable=None,caltype=None,infile=None,
                     (len(antenna_offsets[1])>0) ) :
                 antenna = antenna_offsets[1]
                 parameter = antenna_offsets[2]
-             else:
+            else:
                 #raise Exception, 'No offsets found. No caltable created.'
                 warnings.simplefilter('error',UserWarning)
                 warnings.warn('No offsets found. No caltable created.')
