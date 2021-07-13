@@ -1,22 +1,24 @@
-from __future__ import absolute_import
-import numpy
+import datetime
 import os
-import time, datetime
-from numpy import ma, array, logical_not, logical_and
+import time
 
+import numpy
 from casatasks.private.casa_transition import is_CASA6
+from numpy import array, logical_and, logical_not, ma
+
 if is_CASA6:
-    from casatools import table, singledishms
-    from casatools import ms as mstool
     from casatasks import casalog
+    from casatools import ms as mstool
+    from casatools import singledishms, table
+
     from . import sdutil
 
-    ms = mstool( )
-    sdms = singledishms( )
-    tb = table( )
+    ms = mstool()
+    sdms = singledishms()
+    tb = table()
 else:
-    from taskinit import gentools, casalog
     import sdutil
+    from taskinit import casalog, gentools
     ms, sdms, tb = gentools(['ms','sdms','tb'])
 
 @sdutil.sdtask_decorator

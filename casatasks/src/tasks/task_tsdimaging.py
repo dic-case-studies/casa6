@@ -1,40 +1,36 @@
 # sd task for imaging
-from __future__ import absolute_import
-from __future__ import print_function
 
+import contextlib
 import os
 import re
-import numpy
 import shutil
-import contextlib
-import functools
 
+import numpy
 from casatasks.private.casa_transition import is_CASA6
+
 if is_CASA6:
     from casatasks import casalog
+    from casatools import image, imager
     from casatools import ms as mstool
-    from casatools import quanta, imager, image, table
-    from . import sdutil
-    from . import sdbeamutil
-    from .cleanhelper import cleanhelper
+    from casatools import quanta
 
+    from . import sdbeamutil, sdutil
+    from .cleanhelper import cleanhelper
     ## (1) Import the python application layer
     from .imagerhelpers.imager_base import PySynthesisImager
     from .imagerhelpers.input_parameters import ImagerParameters
 else:
-    from taskinit import casalog
-    from taskinit import qatool as quanta
-    from taskinit import imtool as imager
-    from taskinit import iatool as image
-    from taskinit import mstool
-    from taskinit import tbtool as table
-    import sdutil
     import sdbeamutil
+    import sdutil
     from cleanhelper import cleanhelper
-
     ## (1) Import the python application layer
     from imagerhelpers.imager_base import PySynthesisImager
     from imagerhelpers.input_parameters import ImagerParameters
+    from taskinit import casalog
+    from taskinit import iatool as image
+    from taskinit import imtool as imager
+    from taskinit import mstool
+    from taskinit import qatool as quanta
 
 image_suffix = '.image'
 residual_suffix = '.residual'

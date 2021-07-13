@@ -1,36 +1,37 @@
-from __future__ import absolute_import
+import abc
+import contextlib
+import functools
 import os
+import re
+import traceback
 from types import CodeType
 
 import numpy
-import traceback
-import functools
-import re
-import abc
-import contextlib
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import table, calibrater, imager, measures, mstransformer, msmetadata, quanta
-    from casatools import ms as mstool
-    from casatools.platform import bytes2str
     from casatasks import casalog
+    from casatools import calibrater, imager, measures
+    from casatools import ms as mstool
+    from casatools import mstransformer, table
+    from casatools.platform import bytes2str
+
+    from . import flaghelper as fh
+    from .mstools import write_history
     from .parallel.parallel_data_helper import ParallelDataHelper
     from .update_spw import update_spwchan
-    from .mstools import write_history
-    from . import flaghelper as fh
 else:
-    from taskinit import casalog, gentools
-    # make CASA5 tools constructors look like CASA6 tools
-    from taskinit import tbtool as table
+    import flaghelper as fh
+    from mstools import write_history
+    from parallel.parallel_data_helper import ParallelDataHelper
+    from taskinit import casalog
     from taskinit import cbtool as calibrater
+    from taskinit import gentools
     from taskinit import imtool as imager
     from taskinit import mstool
-    from parallel.parallel_data_helper import ParallelDataHelper
-    from taskinit import qatool as quanta
+    # make CASA5 tools constructors look like CASA6 tools
+    from taskinit import tbtool as table
     from update_spw import update_spwchan
-    from mstools import write_history
-    import flaghelper as fh
 
 @contextlib.contextmanager
 def tool_manager(vis, ctor, *args, **kwargs):
@@ -62,7 +63,7 @@ def table_manager(vis, *args, **kwargs):
     return tool_manager(vis, table, *args, **kwargs)
 
 
-def calibrator_manager(vis, *args, **kwargs):
+def calibrater_manager(vis, *args, **kwargs):
     return tool_manager(vis, calibrater, *args, **kwargs)
 
 
@@ -209,7 +210,7 @@ class sdtask_interface(object):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        # explicitly call destructure to make sure it is called here
+        # explicitly call destructor to make sure it is called here
         self.__del__()
         if exc_type:
             return False
@@ -746,7 +747,7 @@ def do_mst(
             config['maxuvwdistance'] = maxuvwdistance
 
         # porting from sdpolaverage
-        _if_polaverage(config, ext_config)
+        _if_do_polaverage(config, ext_config)
 
         # porting from sdpolaverage, but not used
         _if_do_combinespws(config, ext_config, spw)
@@ -791,10 +792,10 @@ def add_history(
         caller,
         casalog,
         outfile):
-    mslocal = mstool()
     """
     Write history to output MS, not the input ms.
     """
+    mslocal = mstool()
     try:
         param_names = caller.co_varnames[:caller.co_argcount]
         local_vals = locals()
@@ -858,7 +859,7 @@ def _if_do_combinespws(config, ext_config, spw):
         config['combinespws'] = True
 
 
-def _if_polaverage(config, ext_config):
+def _if_do_polaverage(config, ext_config):
     if ext_config.get('polaverage'):
         polaverage_ = ext_config.get('polaverage').strip()
         if polaverage_ != '':
@@ -980,7 +981,7 @@ def _process_input_multi_ms(pdh, separationaxis):
     retval = pdh.validateInputParams()
 
     # Cannot create an output MMS.
-    if retval['status'] == False and retval['axis'] == '':
+    if retval['status'] is False and retval['axis'] == '':
         casalog.post('Cannot process MMS with the requested transformations', 'WARN')
         casalog.post('Use task listpartition to see the contents of the MMS')
         casalog.post('Will create an output MS', 'WARN')
@@ -988,7 +989,7 @@ def _process_input_multi_ms(pdh, separationaxis):
         return createmms, separationaxis, False
 
     # MMS is processed as monolithic MS.
-    elif retval['status'] == False and retval['axis'] != '':
+    elif retval['status'] is False and retval['axis'] != '':
         createmms = True
         pdh.override__args('createmms', True)
         pdh.override__args('monolithic_processing', True)

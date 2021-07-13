@@ -1,15 +1,15 @@
-from __future__ import absolute_import
-import sys
 import os
-import numpy
-import numpy.random as random
 import shutil
 
+import numpy
+import numpy.random as random
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
+
 if is_CASA6:
-    from casatools import calibrater, table, ms
-    from casatasks import casalog, applycal
+    from casatasks import casalog
+    from casatools import calibrater, ms, table
+
     from . import sdutil
     from .mstools import write_history
 
@@ -20,10 +20,10 @@ if is_CASA6:
     # MS tool
     myms = ms()
 else:
-    from taskinit import *
+    import sdutil
     from applycal import applycal
     from mstools import write_history
-    import sdutil
+    from taskinit import *
 
     # Calibrator tool
     (cb,myms) = gentools(['cb','ms'])

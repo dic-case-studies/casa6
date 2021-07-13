@@ -1,20 +1,14 @@
-from __future__ import absolute_import
-import sys
 import os
-import numpy
-import numpy.random as random
-import shutil
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import calibrater
-    from casatasks import casalog, applycal
+    from casatasks import casalog
     from . import sdutil
+    from .sdutil import calibrater_manager
 else:
     from taskinit import casalog
-    from taskinit import cbtool as calibrater
-    from applycal import applycal
     from . import sdutil
+    from sdutil import cbmanager as calibrater_manager
 
 DEFAULT_VALUE = {'interp': 'linear',
                  'spwmap': [-1]}
@@ -25,7 +19,7 @@ def parse_interp_item(interp):
         return DEFAULT_VALUE['interp']
     else:
         return interp
-    
+
 def parse_interp(interp, index):
     assert index >= 0
     if isinstance(interp, str):
@@ -40,7 +34,7 @@ def parse_interp(interp, index):
             # interp is a list of strings
             return parse_interp_item(interp[index])
     assert False
-    
+
 def parse_spwmap_item(spwmap):
     assert hasattr(spwmap, '__iter__')
     if len(spwmap) == 0:
@@ -83,7 +77,7 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
         raise RuntimeError('infile not found - please verify the name')
 
     # Calibrater tool
-    with sdutil.calibrator_manager(infile) as mycb:
+    with calibrater_manager(infile) as mycb:
 
         # select data
         if isinstance(antenna, str) and len(antenna) > 0:
@@ -135,6 +129,4 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
         # solve
         mycb.solve()
 
-        ## reporting calibration solution
-        #reportsolvestats(mycb.activityrec());
 

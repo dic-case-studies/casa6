@@ -1,29 +1,26 @@
-from __future__ import absolute_import
-
-import shutil
-
-import numpy
 import os
-import contextlib
+import shutil
 from collections import Counter
 
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
+
 if is_CASA6:
-    from casatools import singledishms, table, msmetadata
-    from casatools import ms as mstool
     from casatasks import casalog
-    from .mstools import write_history
+    from casatools import ms as mstool
+    from casatools import msmetadata, singledishms, table
+
     from . import sdutil
+    from .mstools import write_history
 
     ms = mstool()
     sdms = singledishms()
     tb = table()
     msmd = msmetadata()
 else:
-    from taskinit import gentools, casalog
-    from mstools import write_history
     import sdutil
+    from mstools import write_history
+    from taskinit import casalog, gentools
     ms, sdms, tb, msmd = gentools(['ms', 'sdms', 'tb', 'msmd'])
 
 @sdutil.sdtask_decorator

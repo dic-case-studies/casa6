@@ -5,17 +5,13 @@ import os
 import shutil
 
 import numpy as np
-
 from casatasks.private.casa_transition import is_CASA6
+
 if is_CASA6:
     from casatasks import casalog
-    from casatasks.private import sdutil
-    from casatasks.private import simutil
+    from casatasks.private import sdutil, simutil
     from casatools import ms as mstool
-    from casatools import msmetadata
-    from casatools import quanta
-    from casatools import singledishms
-    from casatools import table
+    from casatools import msmetadata, quanta, singledishms
 
     ut = simutil.simutil()
     qa = quanta()
@@ -32,11 +28,9 @@ if is_CASA6:
 else:
     import sdutil
     from simutil import simutil
-    from taskinit import casalog
-    from taskinit import gentools
+    from taskinit import casalog, gentools
     from taskinit import msmdtool as msmetadata
-    from taskinit import mstool
-    from taskinit import qa
+    from taskinit import mstool, qa
     from taskinit import tbtool as table
 
     ut = simutil()
@@ -49,16 +43,6 @@ else:
 
         def next(self):
             return next(self._iter)
-
-
-# @contextlib.contextmanager
-# def open_table(path, nomodify=True):
-#     tb = table()
-#     tb.open(path, nomodify=nomodify)
-#     try:
-#         yield tb
-#     finally:
-#         tb.close()
 
 
 @contextlib.contextmanager

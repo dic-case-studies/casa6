@@ -1,25 +1,25 @@
-from __future__ import absolute_import
 import datetime
 import os
-import re
 import shutil
 
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
-if is_CASA6:
-    from casatools import singledishms, calibrater, ms
-    from casatools.platform import bytes2str
-    from casatasks import casalog
-    from .mstools import write_history
-    from . import sdutil
 
-    mysdms = singledishms( )
-    mycb = calibrater( )
-    myms = ms( )
+if is_CASA6:
+    from casatasks import casalog
+    from casatools import calibrater, ms, singledishms
+    from casatools.platform import bytes2str
+
+    from . import sdutil
+    from .mstools import write_history
+
+    mysdms = singledishms()
+    mycb = calibrater()
+    myms = ms()
 else:
-    from taskinit import *
-    from mstools import write_history
     import sdutil
+    from mstools import write_history
+    from taskinit import *
 
     mysdms, mycb, myms = gentools(['sdms', 'cb', 'ms'])
 

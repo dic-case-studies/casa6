@@ -1,24 +1,18 @@
 from casatasks.private.casa_transition import is_CASA6
+
 if is_CASA6:
-    from casatasks import casalog
-    from casatools import sidebandseparator, quanta
+    from casatools import quanta, sidebandseparator
+
     from . import sdutil
 else:
-    from taskinit import casalog
-    from taskinit import qatool as quanta
-    from casac import casac
     import sdutil
+    from casac import casac
+    from taskinit import qatool as quanta
 
     def sidebandseparator():
         return casac.sidebandseparator()
 
 
-# def sdsidebandsplit(infiles, outfile, overwrite, field, spw, antenna, scan, intent,
-#                     imageshift, getbothside, lo1, loframe, reftime, refdir, threshold,
-#                     mode, nchan, start, width, veltype, outframe,
-#                     gridfunction, convsupport,truncate, gwidth, jwidth,
-#                     imsize, cell, phasecenter, ephemsrcname, pointingcolumn,
-#                     restfreq, stokes, minweight, clipminmax):
 @sdutil.sdtask_decorator
 def sdsidebandsplit(imagename, outfile, overwrite, signalshift, imageshift,
                     getbothside, refchan, refval, useother, threshold):
