@@ -23,6 +23,7 @@ from casatools import table
 from casatasks.private.sdutil import table_selector, tbmanager, toolmanager
 
 
+### web api part
 def gen_factor_via_web_api(vis, endpoint='asdm', spw='*', antenna='', selection='',
                                             timeout=180, retry=3, retry_wait_time=5):
     """ Generate factor via Jy/K Web API.
@@ -61,19 +62,6 @@ def gen_factor_via_web_api(vis, endpoint='asdm', spw='*', antenna='', selection=
         resps = manager.get(params, vis)
         return ModelFitRspTranslator.convert(resps, spw=spw)
 
-
-def gen_factor_via_file(infile, spw='*', antenna='', selection=''):
-    """ Generate factor via the local file.
-
-    This function will be used task_gencal.
-
-    Arguments:
-        infile {str} -- The file path of CSV which the factors are stored.
-    """
-    pass
-
-
-### web api part
 
 QueryStruct = collections.namedtuple('QueryStruct', ['param', 'subparam'])
 ResponseStruct = collections.namedtuple('ResponseStruct', ['response', 'subparam'])
@@ -639,7 +627,17 @@ class ModelFitRspTranslator(InterpolationRspTranslator):
 
 # file part
 class JyPerKReader4File():
+    """ Read factor via the local file.
+
+    This function will be used task_gencal.
+    """
+
     def __init__(self, infile):
+        """ Set a parameter.
+
+        Arguments:
+            infile {str} -- The file path of CSV which the factors are stored.
+        """
         self.infile = infile
         
     def get(self):
