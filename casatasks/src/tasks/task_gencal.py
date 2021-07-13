@@ -10,6 +10,7 @@ if is_CASA6:
     from casatasks import casalog
     from casatools import calibrater
     from . import correct_ant_posns as getantposns
+    from .jyperk import gen_factor_via_web_api, JyPerKReader4File
 
     _cb = calibrater()
 else:
@@ -21,12 +22,16 @@ else:
 
 def gencal(vis=None, caltable=None, caltype=None, infile=None,
            spw=None, antenna=None, pol=None,
-           parameter=None, uniform=None):
+           parameter=None, uniform=None,
+           timeout=180, retry=3, retry_wait_time=5):
 
     """Externally specify calibration solutions af various types.
 
     Arguments:
         vis {str} -- The file path of vis.
+        timeout {int} --- Maximum waiting time when accessing the web API. Second.
+        retry {int} -- Number of times to retry when the web API access fails.
+        retry_wait_time {int} -- The waiting time when the web request fails. Second.
     """
 
     # Python script
@@ -58,6 +63,14 @@ def gencal(vis=None, caltable=None, caltype=None, infile=None,
                 # raise Exception, 'No offsets found. No caltable created.'
                 warnings.simplefilter('error', UserWarning)
                 warnings.warn('No offsets found. No caltable created.')
+
+        if caltype in ['asdm', 'interpolation', 'model-fit'] and not infile is None:
+            f = JyPerKReader4File(infile)
+            caltable = f.get()
+        if caltype in ['asdm', 'interpolation', 'model-fit'] and infile is None:
+            caltable = gen_factor_via_web_api(vis, endpoint=caltype, 
+                                              timeout=timeout, retry=retry, 
+                                              retry_wait_time=retry_wait_time)
 
         _cb.specifycal(caltable=caltable, time="", spw=spw, antenna=antenna, pol=pol,
                        caltype=caltype, parameter=parameter, infile=infile,
