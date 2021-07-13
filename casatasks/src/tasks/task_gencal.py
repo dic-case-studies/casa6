@@ -31,7 +31,7 @@ def gencal(vis=None, caltable=None, caltype=None, infile=None,
 
         if ((type(vis) == str) & (os.path.exists(vis))):
             # don't need scr col for this
-            _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False) 
+            _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)
         else:
             raise ValueError('Visibility data set not found - please verify the name')
 
@@ -61,7 +61,7 @@ def gencal(vis=None, caltable=None, caltype=None, infile=None,
                        uniform=uniform)
 
         # _cb.close()
-   
+
     except UserWarning as instance:
         casalog.post('*** UserWarning *** %s' % instance, 'WARN')
 
