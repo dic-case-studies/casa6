@@ -23,7 +23,10 @@ def gencal(vis=None, caltable=None, caltype=None, infile=None,
            spw=None, antenna=None, pol=None,
            parameter=None, uniform=None):
 
-    """ Externally specify calibration solutions af various types
+    """Externally specify calibration solutions af various types.
+
+    Arguments:
+        vis {str} -- The file path of vis.
     """
 
     # Python script
