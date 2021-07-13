@@ -399,10 +399,13 @@ class RequestsManager():
         
 
 class JyPerKDatabaseClient():
-    """ Get values from Jy/K Web API (https://asa.alma.cl/science/jy-kelvins).
+    """ Get values from Jy/K Web API.
+
+    The Jy/K Web API address is 'https://asa.alma.cl/science/jy-kelvins'. The address
+    can be changed with the environment variable 'JYPERKDB_URL'.
     """
 
-    BASE_URL = 'https://asa.alma.cl/science/jy-kelvins'
+    BASE_URL = os.getenv('JYPERKDB_URL', 'https://asa.alma.cl/science/jy-kelvins')
 
     def __init__(self, endpoint_type, timeout=180, retry=3, retry_wait_time=5):
         """ Set the parameters to be used when accessing the Web API.
