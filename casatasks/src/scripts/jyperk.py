@@ -1,4 +1,3 @@
-import certifi
 import collections
 import csv
 import datetime
@@ -8,19 +7,18 @@ import re
 import ssl
 import string
 from time import sleep
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
-from urllib.error import HTTPError, URLError
 
+import certifi
 import numpy as np
 
 from casatasks import casalog
-from casatools import ms as mstool
-from casatools import msmetadata 
-from casatools import measures
-from casatools import quanta 
-from casatools import table 
 from casatasks.private.sdutil import table_selector, tbmanager, toolmanager
+from casatools import measures
+from casatools import ms as mstool
+from casatools import msmetadata, quanta, table
 
 
 ### web api part
