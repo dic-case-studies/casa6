@@ -34,20 +34,20 @@ def gencal(vis=None, caltable=None, caltype=None, infile=None,
         retry_wait_time {int} -- The waiting time when the web request fails. Second.
     """
 
+    # check arguments
+    if (caltable == ''):
+        raise ValueError('A caltable name must be specified')
+
+    if caltype == 'tecim' and not (type(infile) == str and os.path.exists(infile)):
+        raise ValueError('An existing tec map must be specified in infile')
+
     # Python script
     try:
-
         if ((type(vis) == str) & (os.path.exists(vis))):
             # don't need scr col for this
             _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)
         else:
             raise ValueError('Visibility data set not found - please verify the name')
-
-        if (caltable == ''):
-            raise ValueError('A caltable name must be specified')
-
-        if caltype == 'tecim' and not (type(infile) == str and os.path.exists(infile)):
-            raise ValueError('An existing tec map must be specified in infile')
 
         # call a Python function to retreive ant position offsets automatically (currently EVLA only)
         if (caltype == 'antpos' and antenna == ''):
@@ -67,6 +67,7 @@ def gencal(vis=None, caltable=None, caltype=None, infile=None,
         if caltype in ['asdm', 'interpolation', 'model-fit'] and not infile is None:
             f = JyPerKReader4File(infile)
             caltable = f.get()
+
         if caltype in ['asdm', 'interpolation', 'model-fit'] and infile is None:
             caltable = gen_factor_via_web_api(vis, endpoint=caltype, 
                                               timeout=timeout, retry=retry, 
