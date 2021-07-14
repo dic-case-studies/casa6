@@ -7,6 +7,7 @@ from casatasks.private.casa_transition import *
 if is_CASA6:
     from casatasks import casalog
     from casatools import agentflagger, calibrater, ms, singledishms
+    from . import sdutil
 
     from .mstools import write_history
 
@@ -17,15 +18,16 @@ else:
     from casac import casac
     from mstools import write_history
     from taskinit import *
+    import sdutil
 
     agentflagger = casac.agentflagger
 
     mysdms, mycb, myms = gentools(['sdms', 'cb', 'ms'])
 
+@sdutil.sdtask_decorator
 def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, parallel=None):
     """
     """
-    casalog.origin('importasap')
 
     try:
         if infile is None or outputvis is None:
