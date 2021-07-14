@@ -832,21 +832,6 @@ class test_iterbot(testref_base):
 
           self.assertTrue(self.check_final(report))
 
-     def test_iterbot_cube_4(self): 
-          """ [iterbot] Test_Iterbot_cube_4 : Large niter, and low threshold - catch if diverges (verification of CAS-8584 fix) """
-          self.prepData('refim_point_withline.ms')
-          retpar = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1000000,threshold='0.0000001Jy',gain=0.5,interactive=0,parallel=self.parallel)
-          ret={}
-          if self.parallel:
-            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone'])
-          else:
-            ret=retpar 
-
-
-          report=self.th.checkall(ret=ret,iterdone=1760,nmajordone=13,imgexist=[self.img+'.psf', self.img+'.residual'])
-
-          self.assertTrue(self.check_final(report))
-
      def test_iterbot_divergence(self): 
           """ [iterbot] Test_Iterbot_divergence : Use negative loop gain to make it diverge (verification of CAS-9244 fix) """
           self.prepData('refim_point.ms')
