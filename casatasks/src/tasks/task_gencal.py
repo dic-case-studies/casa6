@@ -20,7 +20,7 @@ else:
     (_cb,) = gentools(['cb'])
 
 
-def gencal(vis=None, caltable=None, caltype=None, infile=None,
+def gencal(vis=None, caltable=None, caltype=None, endpoint='asdm', infile=None,
            spw=None, antenna=None, pol=None,
            parameter=None, uniform=None,
            timeout=180, retry=3, retry_wait_time=5):
@@ -29,6 +29,11 @@ def gencal(vis=None, caltable=None, caltype=None, infile=None,
 
     Arguments:
         vis {str} -- The file path of vis.
+        caltable
+        caltype {str} -- The calibration type. Can configure 'tecim, 'antpos, and 'jyperk.
+        endpoint (str) -- The endpoint of Jy/K DB Web API. Configuring caltype='jyperk',
+            the argument is enabled. Can configure 'asdm', 'interpolation', and 'model-fit'.
+        infile (str) -- The file path of the caltable.
         timeout {int} --- Maximum waiting time when accessing the web API. Second.
         retry {int} -- Number of times to retry when the web API access fails.
         retry_wait_time {int} -- The waiting time when the web request fails. Second.
@@ -40,6 +45,9 @@ def gencal(vis=None, caltable=None, caltype=None, infile=None,
 
     if caltype == 'tecim' and not (type(infile) == str and os.path.exists(infile)):
         raise ValueError('An existing tec map must be specified in infile')
+
+    if caltype == 'jyperk' and not endpoint in ['asdm', 'interpolation', 'model-fit']:
+        raise ValueError('When the caltype is jyperk, endpoint must be one of asdm, interpolation or model-fit')
 
     # Python script
     try:
@@ -63,15 +71,16 @@ def gencal(vis=None, caltable=None, caltype=None, infile=None,
                 # raise Exception, 'No offsets found. No caltable created.'
                 warnings.simplefilter('error', UserWarning)
                 warnings.warn('No offsets found. No caltable created.')
+        
+        if caltype == 'jyperk':
+            if not infile is None:
+                f = JyPerKReader4File(infile)
+                caltable = f.get()
 
-        if caltype in ['asdm', 'interpolation', 'model-fit'] and not infile is None:
-            f = JyPerKReader4File(infile)
-            caltable = f.get()
-
-        if caltype in ['asdm', 'interpolation', 'model-fit'] and infile is None:
-            caltable = gen_factor_via_web_api(vis, endpoint=caltype, 
-                                              timeout=timeout, retry=retry, 
-                                              retry_wait_time=retry_wait_time)
+            if infile is None:
+                caltable = gen_factor_via_web_api(vis, endpoint=endpoint, 
+                                                timeout=timeout, retry=retry, 
+                                                retry_wait_time=retry_wait_time)
 
         _cb.specifycal(caltable=caltable, time="", spw=spw, antenna=antenna, pol=pol,
                        caltype=caltype, parameter=parameter, infile=infile,
