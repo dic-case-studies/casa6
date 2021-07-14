@@ -36,25 +36,25 @@ def gen_factor_via_web_api(vis, endpoint='asdm', spw='*', antenna='', selection=
         retry {int} -- Number of times to retry when the web API access fails.
         retry_wait_time {int} -- The waiting time when the web request fails. Second.
     """
-    if caltype == 'asdm':
+    if endpoint == 'asdm':
         params = ASDMParamsGenerator.get_params(vis)
-        client = JyPerKDatabaseClient(caltype, 
+        client = JyPerKDatabaseClient(endpoint, 
             timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
         manager = RequestsManager(client)
         resps = manager.get(params)
         return ASDMRspTranslator.convert(resps, spw=spw)
 
-    elif caltype == 'interpolation':
+    elif endpoint == 'interpolation':
         params = InterpolationParamsGenerator.get_params(vis, spw=spw)
-        client = JyPerKDatabaseClient(caltype, 
+        client = JyPerKDatabaseClient(endpoint, 
             timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
         manager = RequestsManager(client)
         resps = manager.get(params, vis)
         return InterpolationRspTranslator.convert(resps, spw=spw)
-    
-    elif caltype == 'model-fit':
+
+    elif endpoint == 'model-fit':
         params = ModelFitParamsGenerator.get_params(vis, spw=spw)
-        client = JyPerKDatabaseClient(caltype, 
+        client = JyPerKDatabaseClient(endpoint, 
             timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
         manager = RequestsManager(client)
         resps = manager.get(params, vis)
