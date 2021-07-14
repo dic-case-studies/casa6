@@ -485,12 +485,6 @@ class JyPerKDatabaseClient():
         if response_with_tag['status'] != 'Success':
             RuntimeError(response_with_tag['err_msg'])
 
-    def _raise_url_error(self, response_with_tag):
-        msg = 'Failed to load URL: {0}\n'.format(url) \
-            + 'Error Message: URLError(Reason="{0}")\n'.format(e.reason)
-        casalog.post(msg)
-        raise RuntimeError(msg)
-
     def _convert_to_json(self, response):
         try:
             return json.loads(response)
