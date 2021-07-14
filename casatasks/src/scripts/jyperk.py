@@ -36,6 +36,9 @@ def gen_factor_via_web_api(vis, endpoint='asdm', spw='*',
         retry {int} -- Number of times to retry when the web API access fails.
         retry_wait_time {int} -- The waiting time when the web request fails. Second.
     """
+    assert endpoint in ['asdm', 'model-fit', 'interpolation'], \
+        'The JyPerKDatabaseClient class requires one of endpoint: asdm, model-fit or interpolation'
+
     if endpoint == 'asdm':
         return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw,
                                    params_generator=ASDMParamsGenerator,
