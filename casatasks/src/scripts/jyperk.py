@@ -456,17 +456,17 @@ class JyPerKDatabaseClient():
             ssl_context = ssl.create_default_context(cafile=certifi.where())
             with urlopen(url, context=ssl_context, timeout=self.timeout) as resp:
                 body = resp.read()
-                return {'status': 'Success', 'code': 200, 'body': body}
+                return {'status': 'Success', 'err_msg': None, 'body': body}
         except HTTPError as e: # 4xx, 5xx
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: HTTPError(code={0}, Reason="{1}")\n'.format(e.code, e.reason)
             casalog.post(msg)
-            return {'status': 'HTTPError', 'code': e.code, 'error_reason': e.reason}
+            return {'status': 'HTTPError', 'err_msg': msg}
         except URLError as e: # not connect
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: URLError(Reason="{0}")\n'.format(e.reason)
             casalog.post(msg)
-            return {'status': 'URLError', 'code': None, 'error_reason': e.reason}
+            return {'status': 'URLError', 'err_msg': msg}
 
     def _try_to_get_response(self, url):
         for i in range(self.retry):
@@ -475,14 +475,8 @@ class JyPerKDatabaseClient():
                 return response_with_tag['body']
             sleep(self.retry_wait_time)
 
-        if response_with_tag['status'] == HTTPError:
-            self._raise_http_error(url, response_with_tag)
-            
-    def _raise_http_error(self, url, response_with_tag):
-        msg = 'Failed to load URL: {0}\n'.format(url) \
-            + 'Error Message: HTTPError(code={0}, Reason="{1}")\n'.format(e.code, e.reason)
-        casalog.post(msg)
-        raise RuntimeError(msg)
+        if response_with_tag['status'] != 'Success':
+            RuntimeError(response_with_tag['err_msg'])
 
     def _raise_url_error(self, response_with_tag):
         msg = 'Failed to load URL: {0}\n'.format(url) \
