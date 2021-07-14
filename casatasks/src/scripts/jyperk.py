@@ -461,12 +461,12 @@ class JyPerKDatabaseClient():
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: HTTPError(code={0}, Reason="{1}")\n'.format(e.code, e.reason)
             casalog.post(msg)
-            return {'HTTPError': False, 'code': e.code, 'error_reason': e.reason}
+            return {'status': 'HTTPError', 'code': e.code, 'error_reason': e.reason}
         except URLError as e: # not connect
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: URLError(Reason="{0}")\n'.format(e.reason)
             casalog.post(msg)
-            return {'URLError': False, 'code': None, 'error_reason': e.reason}
+            return {'status': 'URLError', 'code': None, 'error_reason': e.reason}
 
     def _try_to_get_response(self, url):
         for i in range(self.retry):
