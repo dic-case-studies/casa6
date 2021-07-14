@@ -22,7 +22,7 @@ from casatools import msmetadata, quanta, table
 
 
 ### web api part
-def gen_factor_via_web_api(vis, endpoint='asdm', spw='*'
+def gen_factor_via_web_api(vis, endpoint='asdm', spw='*',
                            timeout=180, retry=3, retry_wait_time=5):
     """ Generate factor via Jy/K Web API.
 
@@ -37,35 +37,35 @@ def gen_factor_via_web_api(vis, endpoint='asdm', spw='*'
         retry_wait_time {int} -- The waiting time when the web request fails. Second.
     """
     if endpoint == 'asdm':
-        return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw, 
-                                   params_generator=ASDMParamsGenerator, 
-                                   response_translator=ASDMRspTranslator
+        return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw,
+                                   params_generator=ASDMParamsGenerator,
+                                   response_translator=ASDMRspTranslator,
                                    timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
 
     elif endpoint == 'interpolation':
-        return __factor_creator_via_jy_per_k_db(endpoint=endpoint', vis=vis, spw=spw, 
-                                   params_generator=InterpolationParamsGenerator, 
-                                   response_translator=InterpolationRspTranslator
+        return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw,
+                                   params_generator=InterpolationParamsGenerator,
+                                   response_translator=InterpolationRspTranslator,
                                    timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
 
     elif endpoint == 'model-fit':
-        return __factor_creator_via_jy_per_k_db(endpoint='endpoint, vis=vis, spw=spw, 
-                                   params_generator=ModelFitParamsGenerator, 
-                                   response_translator=ModelFitRspTranslator
+        return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw,
+                                   params_generator=ModelFitParamsGenerator,
+                                   response_translator=ModelFitRspTranslator,
                                    timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
 
 
-def __factor_creator_via_jy_per_k_db(endpoint='asdm', vis=None, spw='*', 
-                               params_generator=ASDMParamsGenerator, 
-                               response_translator=ASDMRspTranslator,
+def __factor_creator_via_jy_per_k_db(endpoint='', vis=None, spw='*', 
+                               params_generator=None, 
+                               response_translator=None,
                                timeout=180, retry=3, retry_wait_time=5):
                                
         params = params_generator.get_params(vis, spw=spw)
         client = JyPerKDatabaseClient(endpoint, 
             timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
         manager = RequestsManager(client)
-        resps = manager.get(params, vis)
-        return response_translator.convert(resps, spw=spw)
+        resps = manager.get(params)
+        return response_translator.convert(resps, vis, spw=spw)
 
 
 QueryStruct = collections.namedtuple('QueryStruct', ['param', 'subparam'])
@@ -81,11 +81,14 @@ class ASDMParamsGenerator():
     """
 
     @classmethod
-    def get_params(cls, vis):
+    def get_params(cls, vis, spw=None):
         """ Generate required parameters for Jy/K Web API.
 
         Arguments:
             vis {str} -- File path of MS
+            spw (None)  -- This parameter is not used. It is provided to align the
+                calling method with other classes (InterpolationParamsGenerator and
+                ModelFitParamsGenerator).
 
         Returns:
             Generator Object -- yield QueryStruct() object. A sample like below. 
@@ -546,10 +549,14 @@ class Translator():
 
 class ASDMRspTranslator():
     @classmethod
-    def convert(cls, data, spw='*'):
+    def convert(cls, data, vis, spw='*'):
         """ Convert from the response to list with factor.
 
         Arguments:
+            spw (None)  -- This parameter is not used. It is provided to align the
+                    calling method with other classes (InterpolationRspTranslator and
+                    ModelFitRspTranslator).
+
         Returns:
             list -- List of Jy/K conversion factors with meta data.
         """
