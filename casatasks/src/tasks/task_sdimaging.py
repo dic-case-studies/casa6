@@ -375,8 +375,8 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         # Calculate Pointing center and extent (if necessary)
         # return a dictionary with keys 'center', 'width', 'height'
         #imsize = self.imsize
-        imsize = sdutil._to_list(self.imsize, int) or \
-            sdutil._to_list(self.imsize, numpy.integer)
+        imsize = sdutil.to_list(self.imsize, int) or \
+            sdutil.to_list(self.imsize, numpy.integer)
         if imsize is None:
             imsize = self.imsize if hasattr(self.imsize, '__iter__') else [ self.imsize ]
             imsize = [ int(numpy.ceil(v)) for v in imsize ]

@@ -355,7 +355,7 @@ def _handle_image_params(imsize, cell, phasecenter,
                          vislist, field, spw, antenna, scan, intent,
                          restfreq, pointingcolumntouse, ephemsrcname):
     # round-up imsize
-    _imsize = sdutil._to_list(imsize, int) or sdutil._to_list(imsize, numpy.integer)
+    _imsize = sdutil.to_list(imsize, int) or sdutil.to_list(imsize, numpy.integer)
     if _imsize is None:
         _imsize = imsize if hasattr(imsize, '__iter__') else [ imsize ]
         _imsize = [ int(numpy.ceil(v)) for v in _imsize ]

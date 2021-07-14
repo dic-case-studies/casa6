@@ -133,7 +133,7 @@ def sdtask_decorator(func):
             # execute task
             retval = func(*args, **kwargs)
         except Exception as e:
-            traceback_info = format_trace(traceback.format_exc())
+            traceback_info = __format_trace(traceback.format_exc())
             casalog.post(traceback_info, 'SEVERE')
             casalog.post(str(e), 'ERROR')
             raise
@@ -141,7 +141,7 @@ def sdtask_decorator(func):
     return wrapper
 
 
-def format_trace(s):
+def __format_trace(s):
     wexists = True
     regex = '.*sdutil\.py.*in wrapper.*'
     retval = s
@@ -414,9 +414,9 @@ def get_antenna_selection_include_autocorr(msname, antenna):
 
 
 def get_nx_ny(n):
-    nl = _to_list(n, int)
+    nl = to_list(n, int)
     if not nl:  # check for numpy int types
-        nl = _to_list(n, numpy.integer)
+        nl = to_list(n, numpy.integer)
     if len(nl) == 1:
         nx = ny = nl[0]
     else:
@@ -471,66 +471,66 @@ def get_spwids(selection, infile=None):
 
 def parse_wavenumber_param(wn):
     if isinstance(wn, list):
-        _check_positive_or_zero(wn)
+        __check_positive_or_zero(wn)
         wn.sort()
-        return ','.join(_get_strlist(wn))
+        return ','.join(__get_strlist(wn))
     elif isinstance(wn, tuple):
-        _check_positive_or_zero(wn)
+        __check_positive_or_zero(wn)
         wn_list = list(wn)
         wn_list.sort()
-        return ','.join(_get_strlist(wn_list))
+        return ','.join(__get_strlist(wn_list))
     elif isinstance(wn, int):
-        _check_positive_or_zero(wn)
+        __check_positive_or_zero(wn)
         return str(wn)
     elif isinstance(wn, str):
         if ',' in wn:                            # cases 'a,b,c,...'
             val0 = wn.split(',')
-            _check_positive_or_zero(val0)
+            __check_positive_or_zero(val0)
             val = []
             for v in val0: val.append(int(v))
             val.sort()
             res = list(set(val))  # uniq
         elif '-' in wn:                          # case 'a-b' : return [a,a+1,...,b-1,b]
             val = wn.split('-')
-            _check_positive_or_zero(val)
+            __check_positive_or_zero(val)
             val = [int(val[0]), int(val[1])]
             val.sort()
             res = [i for i in range(val[0], val[1]+1)]
         elif '~' in wn:                          # case 'a~b' : return [a,a+1,...,b-1,b]
             val = wn.split('~')
-            _check_positive_or_zero(val)
+            __check_positive_or_zero(val)
             val = [int(val[0]), int(val[1])]
             val.sort()
             res = [i for i in range(val[0], val[1]+1)]
         elif wn[:2] == '<=' or wn[:2] == '=<':   # cases '<=a','=<a' : return [0,1,...,a-1,a]
             val = wn[2:]
-            _check_positive_or_zero(val)
+            __check_positive_or_zero(val)
             res = [i for i in range(int(val)+1)]
         elif wn[-2:] == '>=' or wn[-2:] == '=>': # cases 'a>=','a=>' : return [0,1,...,a-1,a]
             val = wn[:-2]
-            _check_positive_or_zero(val)
+            __check_positive_or_zero(val)
             res = [i for i in range(int(val)+1)]
         elif wn[0] == '<':                       # case '<a' :         return [0,1,...,a-2,a-1]
             val = wn[1:]
-            _check_positive_or_zero(val, False)
+            __check_positive_or_zero(val, False)
             res = [i for i in range(int(val))]
         elif wn[-1] == '>':                      # case 'a>' :         return [0,1,...,a-2,a-1]
             val = wn[:-1]
-            _check_positive_or_zero(val, False)
+            __check_positive_or_zero(val, False)
             res = [i for i in range(int(val))]
         elif wn[:2] == '>=' or wn[:2] == '=>':   # cases '>=a','=>a' : return [a,-999], which is
                                                  #                     then interpreted in C++
                                                  #                     side as [a,a+1,...,a_nyq]
                                                  #                     (CAS-3759)
             val = wn[2:]
-            _check_positive_or_zero(val)
+            __check_positive_or_zero(val)
             res = [int(val), -999]
         elif wn[-2:] == '<=' or wn[-2:] == '=<': # cases 'a<=','a=<' : return [a,-999], which is
                                                  #                     then interpreted in C++
                                                  #                     side as [a,a+1,...,a_nyq]
                                                  #                     (CAS-3759)
             val = wn[:-2]
-            _check_positive_or_zero(val)
+            __check_positive_or_zero(val)
             res = [int(val), -999]
         elif wn[0] == '>':                       # case '>a' :         return [a+1,-999], which is
                                                  #                     then interpreted in C++
@@ -538,7 +538,7 @@ def parse_wavenumber_param(wn):
                                                  #                     (CAS-3759)
             val0 = wn[1:]
             val = int(val0)+1
-            _check_positive_or_zero(val)
+            __check_positive_or_zero(val)
             res = [val, -999]
         elif wn[-1] == '<':                      # case 'a<' :         return [a+1,-999], which is
                                                  #                     then interpreted in C++
@@ -546,49 +546,49 @@ def parse_wavenumber_param(wn):
                                                  #                     (CAS-3759)
             val0 = wn[:-1]
             val = int(val0)+1
-            _check_positive_or_zero(val)
+            __check_positive_or_zero(val)
             res = [val, -999]
         else:
-            _check_positive_or_zero(wn)
+            __check_positive_or_zero(wn)
             res = [int(wn)]
 
         # return res
-        return ','.join(_get_strlist(res))
+        return ','.join(__get_strlist(res))
     else:
         msg = 'wrong value given for addwn/rejwn'
         raise RuntimeError(msg)
 
 
-def _check_positive_or_zero(param, allowzero=True):
+def __check_positive_or_zero(param, allowzero=True):
     msg = 'wrong value given for addwn/rejwn'
     try:
         if isinstance(param, list) or isinstance(param, tuple):
             for i in range(len(param)):
-                _do_check_positive_or_zero(int(param[i]), allowzero)
+                __do_check_positive_or_zero(int(param[i]), allowzero)
         elif isinstance(param, int):
-            _do_check_positive_or_zero(param, allowzero)
+            __do_check_positive_or_zero(param, allowzero)
         elif isinstance(param, str):
-            _do_check_positive_or_zero(int(param), allowzero)
+            __do_check_positive_or_zero(int(param), allowzero)
         else:
             raise RuntimeError(msg)
     except:
         raise RuntimeError(msg)
 
 
-def _get_strlist(param):
+def __get_strlist(param):
     res = []
     for i in range(len(param)):
         res.append(str(param[i]))
     return res
 
 
-def _do_check_positive_or_zero(param, allowzero):
+def __do_check_positive_or_zero(param, allowzero):
     msg = 'wrong value given for addwn/rejwn'
     if (param < 0) or ((param == 0) and not allowzero):
         raise RuntimeError(msg)
 
 
-def _is_sequence_or_number(param, ptype=int):
+def __is_sequence_or_number(param, ptype=int):
     """
     Returns true if input is an array type or a number with a give data type.
     Arguments
@@ -604,7 +604,7 @@ def _is_sequence_or_number(param, ptype=int):
         return isinstance(param, ptype)
 
 
-def _to_list(param, ptype=int, convert=False):
+def to_list(param, ptype=int, convert=False):
     """
     Convert a number, an array type or a string to a list.
     The function returns None if input values are not ptype and convert=False.
@@ -617,7 +617,7 @@ def _to_list(param, ptype=int, convert=False):
             return [ptype(param)]
         else:
             return [param]
-    if _is_sequence_or_number(param, ptype):
+    if __is_sequence_or_number(param, ptype):
         return list(param)
     elif convert:
         return [ptype(p) for p in param]
@@ -688,12 +688,12 @@ def do_mst(
 
     # Process the input Multi-MS
     if ParallelDataHelper.isMMSAndNotServer(infile) is True and _monolithic_processing is False:
-        do_createmms, separationaxis, do_return = _process_input_multi_ms(pdh, separationaxis)
+        do_createmms, separationaxis, do_return = __process_input_multi_ms(pdh, separationaxis)
         if do_return:
             return
         # Create an output Multi-MS
         if do_createmms:
-            _create_output_multi_ms(pdh, separationaxis)
+            __create_output_multi_ms(pdh, separationaxis)
             return
 
     # Create a local copy of the MSTransform tool
@@ -734,7 +734,7 @@ def do_mst(
         config['usewtspectrum'] = usewtspectrum
 
         if ext_config.get('do_check_tileshape'):
-            _check_tileshape(tileshape)
+            __check_tileshape(tileshape)
 
         config['tileshape'] = tileshape
 
@@ -747,20 +747,20 @@ def do_mst(
             config['maxuvwdistance'] = maxuvwdistance
 
         # porting from sdpolaverage
-        _if_do_polaverage(config, ext_config)
+        __if_do_polaverage(config, ext_config)
 
         # porting from sdpolaverage, but not used
-        _if_do_combinespws(config, ext_config, spw)
+        __if_do_combinespws(config, ext_config, spw)
 
         # porting from sdpolaverage, but not used
         if ext_config.get('parse_chanaverage'):
-            chanbin = _if_parse_chanaverage(chanbin, config, pdh)
+            chanbin = __if_parse_chanaverage(chanbin, config, pdh)
 
         # porting from sdpolaverage, but not used
-        _if_do_hanning(config, ext_config)
+        __if_do_hanning(config, ext_config)
 
         # porting from sdpolaverage, but not used
-        _if_parse_regridding_parameters(config, ext_config, mode, pdh)
+        __if_parse_regridding_parameters(config, ext_config, mode, pdh)
 
         # Configure the tool and all the parameters
         casalog.post('%s' % config, 'DEBUG')
@@ -783,7 +783,7 @@ def do_mst(
     # skip the updating
 
     if (spw != '' and spw != '*') or ext_config.get('parse_chanaverage'):
-        _update_flag_cmd(infile, outfile, chanbin, spw)
+        __update_flag_cmd(infile, outfile, chanbin, spw)
 
     # END
 
@@ -812,7 +812,7 @@ def add_history(
     return True
 
 
-def _if_parse_regridding_parameters(config, ext_config, mode, pdh):
+def __if_parse_regridding_parameters(config, ext_config, mode, pdh):
     if ext_config.get('regridms'):
         nchan = -1
         nspw = 1
@@ -847,19 +847,19 @@ def _if_parse_regridding_parameters(config, ext_config, mode, pdh):
         config['preaverage'] = preaverage
 
 
-def _if_do_hanning(config, ext_config):
+def __if_do_hanning(config, ext_config):
     if ext_config.get('hanning'):
         casalog.post('Apply Hanning smoothing')
         config['hanning'] = True
 
 
-def _if_do_combinespws(config, ext_config, spw):
+def __if_do_combinespws(config, ext_config, spw):
     if ext_config.get('do_combinespws'):
         casalog.post('Combine spws %s into new output spw' % spw)
         config['combinespws'] = True
 
 
-def _if_do_polaverage(config, ext_config):
+def __if_do_polaverage(config, ext_config):
     if ext_config.get('polaverage'):
         polaverage_ = ext_config.get('polaverage').strip()
         if polaverage_ != '':
@@ -867,7 +867,7 @@ def _if_do_polaverage(config, ext_config):
             config['polaveragemode'] = polaverage_
 
 
-def _if_parse_chanaverage(chanbin, config, pdh):
+def __if_parse_chanaverage(chanbin, config, pdh):
     # Only parse chanaverage if chanbin is valid
     if isinstance(chanbin, int) and chanbin <= 1:
         raise ValueError('Parameter chanbin must be > 1 to do channel averaging')
@@ -883,7 +883,7 @@ def _if_parse_chanaverage(chanbin, config, pdh):
     return chanbin
 
 
-def _update_flag_cmd(infile, outfile, chanbin, spw):
+def __update_flag_cmd(infile, outfile, chanbin, spw):
     with table_manager(outfile + '/FLAG_CMD', nomodify=False) as mytb:
         mslocal = mstool()
         nflgcmds = mytb.nrows()
@@ -960,7 +960,7 @@ def _update_flag_cmd(infile, outfile, chanbin, spw):
                     'FLAG_CMD table contains spw selection by name. Will not update it!', 'DEBUG')
 
 
-def _check_tileshape(tileshape):
+def __check_tileshape(tileshape):
     # Add the tile shape parameter
     if tileshape.__len__() == 1:
         # The only allowed values are 0 or 1
@@ -972,7 +972,7 @@ def _check_tileshape(tileshape):
         raise ValueError('Parameter tileshape must have 1 or 3 elements.')
 
 
-def _process_input_multi_ms(pdh, separationaxis):
+def __process_input_multi_ms(pdh, separationaxis):
     '''
         retval{'status': True,  'axis':''}         --> can run in parallel
         retval{'status': False, 'axis':'value'}    --> treat MMS as monolithic MS, set new axis for output MMS
@@ -1008,7 +1008,7 @@ def _process_input_multi_ms(pdh, separationaxis):
         return createmms, separationaxis, True
 
 
-def _create_output_multi_ms(pdh, separationaxis):
+def __create_output_multi_ms(pdh, separationaxis):
     # Check the heuristics of separationaxis and the requested transformations
     pval = pdh.validateOutputParams()
     if pval == 0:
