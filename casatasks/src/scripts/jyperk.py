@@ -280,7 +280,6 @@ class Bands():
         nearest_i = np.argmin(np.abs(np.array(available_mean_freqs_list) - mean_freq))
         return available_spw[nearest_i]
 
-
     @staticmethod
     def _get_spwnames(vis, science_windows):
         with toolmanager(vis, msmetadata) as msmd:
