@@ -464,44 +464,6 @@ class imdev_test(unittest.TestCase):
             "incorrect grid pixel value"
         )
         myia.done()
-
-    # Merged test cases from test_imdev
-
-    def test001(self):
-        """Every pixel is a grid point"""
-        outname = "out0.im"
-        imdev(
-            input0, outname, grid=[1, 1], xlength="4pix", ylength="4pix",
-            stattype="npts", interp="cub", anchor=[0, 0], statalg="cl"
-        )
-        self._myia.open(ref0)
-        expec = self._myia.getchunk()
-        self._myia.open(outname)
-        got = self._myia.getchunk()
-        self._myia.done()
-        self._compare(got, expec, "imstatimage test 1")
-
-    def test_circle(self):
-        """test circles work correctly CAS-10296"""
-        myia = self._myia
-        imagename = "mycirc.im"
-        myia.fromshape(imagename, [100, 100])
-        bb = myia.getchunk()
-        bb[:] = 1
-        myia.putchunk(bb)
-        myia.done()
-        outfile = "mycirc_out.im"
-        imdev(
-            imagename=imagename, outfile=outfile, xlength="40pix",
-            ylength="", stattype="sum", grid=[20, 20]
-        )
-        myia.open(outfile)
-        self.assertTrue(
-            numpy.isclose(myia.getchunk()[50, 50], 1257.0, 1e-7),
-            "incorrect grid pixel value"
-        )
-        myia.done()
-        
         
         
 def suite():
