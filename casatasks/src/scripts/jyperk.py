@@ -402,19 +402,19 @@ class JyPerKDatabaseClient():
 
     BASE_URL = os.getenv('JYPERKDB_URL', 'https://asa.alma.cl/science/jy-kelvins')
 
-    def __init__(self, endpoint_type, timeout=180, retry=3, retry_wait_time=5):
+    def __init__(self, endpoint, timeout=180, retry=3, retry_wait_time=5):
         """ Set the parameters to be used when accessing the Web API.
         
         Arguments:
-            endpoint_type {str} -- Endpoint of Jy/K Web API.
+            endpoint {str} -- Endpoint of Jy/K Web API.
                 The value to be entered must be one of asdm, model-fit or interpolation.
             timeout {int} --- Maximum waiting time when accessing the web API. Second.
             retry {int} -- Number of times to retry when the web API access fails.
             retry_wait_time {int} -- The waiting time when the web request fails. Second.
         """
-        assert endpoint_type in ['asdm', 'model-fit', 'interpolation'], \
-            'Please set endpoint_type: asdm, model-fit, interpolation'
-        self.web_api_url = self._generate_web_api_url(endpoint_type)
+        assert endpoint in ['asdm', 'model-fit', 'interpolation'], \
+            'The JyPerKDatabaseClient class requires one of endpoint: asdm, model-fit or interpolation'
+        self.web_api_url = self._generate_web_api_url(endpoint)
         self.timeout = timeout
         self.retry = retry
         self.retry_wait_time = retry_wait_time
