@@ -327,17 +327,17 @@ class sdtask_template_imaging(sdtask_interface):
             self.infiles = [self.infiles]
 
 
-def get_abspath(filename):
-    return os.path.abspath(expand_path(filename))
+def __get_abspath(filename):
+    return os.path.abspath(__expand_path(filename))
 
 
-def expand_path(filename):
+def __expand_path(filename):
     return os.path.expanduser(os.path.expandvars(filename))
 
 
 def assert_outfile_canoverwrite_or_nonexistent(outfile=None, outform=None, overwrite=None):
     if not overwrite and (outform.upper() != "ASCII"):
-        filename = get_abspath(outfile)
+        filename = __get_abspath(outfile)
         if os.path.exists(filename):
             mesg = "Output file '%s' exists." % (outfile)
             raise Exception(mesg)
