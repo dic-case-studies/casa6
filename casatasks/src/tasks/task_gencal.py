@@ -75,10 +75,10 @@ def gencal(vis=None, caltable=None, caltype=None, endpoint='asdm', infile=None,
         if caltype == 'jyperk':
             if not infile is None:
                 f = JyPerKReader4File(infile)
-                caltable = f.get()
+                factors = f.get()
 
-            if infile is None:
-                caltable = gen_factor_via_web_api(vis, endpoint=endpoint, 
+            elif infile is None:
+                factors = gen_factor_via_web_api(vis, endpoint=endpoint, 
                                                 timeout=timeout, retry=retry, 
                                                 retry_wait_time=retry_wait_time)
 
