@@ -41,28 +41,26 @@ def gen_factor_via_web_api(vis, endpoint='asdm', spw='*',
 
     if endpoint == 'asdm':
         return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw,
-                                   params_generator=ASDMParamsGenerator,
-                                   response_translator=ASDMRspTranslator,
+                                   factory = __jyperk_factory[endpoint],
                                    timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
 
     elif endpoint == 'interpolation':
         return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw,
-                                   params_generator=InterpolationParamsGenerator,
-                                   response_translator=InterpolationRspTranslator,
+                                   factory = __jyperk_factory[endpoint],
                                    timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
 
     elif endpoint == 'model-fit':
         return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw,
-                                   params_generator=ModelFitParamsGenerator,
-                                   response_translator=ModelFitRspTranslator,
+                                   factory = __jyperk_factory[endpoint],
                                    timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
 
 
 def __factor_creator_via_jy_per_k_db(endpoint='', vis=None, spw='*', 
-                               params_generator=None, 
-                               response_translator=None,
+                               factory = None,
                                timeout=180, retry=3, retry_wait_time=5):
-                               
+        params_generator = factory[0]
+        response_translator = factory[1]
+        
         params = params_generator.get_params(vis, spw=spw)
         client = JyPerKDatabaseClient(endpoint, 
             timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
@@ -70,6 +68,11 @@ def __factor_creator_via_jy_per_k_db(endpoint='', vis=None, spw='*',
         resps = manager.get(params)
         return response_translator.convert(resps, vis, spw=spw)
 
+__jyperk_factory = {
+    'asdm': (ASDMParamsGenerator, ASDMRspTranslator),
+    'interpolation': (InterpolationParamsGenerator, InterpolationRspTranslator),
+    'model-fit': (ModelFitParamsGenerator, ModelFitRspTranslator),
+}
 
 QueryStruct = collections.namedtuple('QueryStruct', ['param', 'subparam'])
 ResponseStruct = collections.namedtuple('ResponseStruct', ['response', 'subparam'])
