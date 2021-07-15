@@ -49,6 +49,12 @@ def gencal(vis=None, caltable=None, caltype=None, endpoint='asdm', infile=None,
     if caltype == 'jyperk' and not endpoint in ['asdm', 'interpolation', 'model-fit']:
         raise ValueError('When the caltype is jyperk, endpoint must be one of asdm, interpolation or model-fit')
 
+    if not type(vis) == str:
+        raise ValueError('Visibility data set not found - vis should be str')
+
+    if not os.path.exists(vis):
+        raise ValueError('Visibility data set not found - please verify the name')
+
     if caltype == 'tecim':
         __gencal_for_tecim()
     elif caltype == 'antpos':
@@ -60,11 +66,7 @@ def gencal(vis=None, caltable=None, caltype=None, endpoint='asdm', infile=None,
 def __gencal_for_tecim(vis, caltable=None, spw=None, antenna=None, pol=None,
                         parameter=None, infile=None, uniform=None):
     try:
-        if ((type(vis) == str) & (os.path.exists(vis))):
-            # don't need scr col for this
-            _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)
-        else:
-            raise ValueError('Visibility data set not found - please verify the name')
+        _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)
 
         _cb.specifycal(caltable=caltable, time="", spw=spw, antenna=antenna, pol=pol,
                        caltype='tecim', parameter=parameter, infile=infile,
@@ -79,11 +81,7 @@ def __gencal_for_tecim(vis, caltable=None, spw=None, antenna=None, pol=None,
 def __gencal_for_antpos(vis, caltable=None, spw=None, antenna=None, pol=None,
                         parameter=None, infile=None, uniform=None):
     try:
-        if ((type(vis) == str) & (os.path.exists(vis))):
-            # don't need scr col for this
-            _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)
-        else:
-            raise ValueError('Visibility data set not found - please verify the name')
+        _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)
 
         # call a Python function to retreive ant position offsets automatically (currently EVLA only)
         if antenna == '':
@@ -112,10 +110,7 @@ def __gencal_for_antpos(vis, caltable=None, spw=None, antenna=None, pol=None,
 
 def __gencal_for_jyperk():
     try:
-        if ((type(vis) == str) & (os.path.exists(vis))):
-            _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)
-        else:
-            raise ValueError('Visibility data set not found - please verify the name')
+        _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)
 
         if caltype == 'jyperk':
             if not infile is None:
