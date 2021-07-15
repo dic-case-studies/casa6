@@ -68,12 +68,6 @@ def __factor_creator_via_jy_per_k_db(endpoint='', vis=None, spw='*',
         resps = manager.get(params)
         return response_translator.convert(resps, vis, spw=spw)
 
-__jyperk_factory = {
-    'asdm': (ASDMParamsGenerator, ASDMRspTranslator),
-    'interpolation': (InterpolationParamsGenerator, InterpolationRspTranslator),
-    'model-fit': (ModelFitParamsGenerator, ModelFitRspTranslator),
-}
-
 QueryStruct = collections.namedtuple('QueryStruct', ['param', 'subparam'])
 ResponseStruct = collections.namedtuple('ResponseStruct', ['response', 'subparam'])
 
@@ -625,6 +619,13 @@ class ModelFitRspTranslator(InterpolationRspTranslator):
     @staticmethod
     def _extract_factor(data):
         return data['response']['data']['factor']
+
+
+__jyperk_factory = {
+    'asdm': (ASDMParamsGenerator, ASDMRspTranslator),
+    'interpolation': (InterpolationParamsGenerator, InterpolationRspTranslator),
+    'model-fit': (ModelFitParamsGenerator, ModelFitRspTranslator),
+}
 
 
 # file part
