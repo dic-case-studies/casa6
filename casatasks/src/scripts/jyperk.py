@@ -39,20 +39,9 @@ def gen_factor_via_web_api(vis, endpoint='asdm', spw='*',
     assert endpoint in ['asdm', 'model-fit', 'interpolation'], \
         'The JyPerKDatabaseClient class requires one of endpoint: asdm, model-fit or interpolation'
 
-    if endpoint == 'asdm':
-        return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw,
-                                   factory = __jyperk_factory[endpoint],
-                                   timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
-
-    elif endpoint == 'interpolation':
-        return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw,
-                                   factory = __jyperk_factory[endpoint],
-                                   timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
-
-    elif endpoint == 'model-fit':
-        return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw,
-                                   factory = __jyperk_factory[endpoint],
-                                   timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
+    return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw,
+                                            factory = __jyperk_factory[endpoint],
+                                            timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
 
 
 def __factor_creator_via_jy_per_k_db(endpoint='', vis=None, spw='*', 
