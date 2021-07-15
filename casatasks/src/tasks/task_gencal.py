@@ -4,6 +4,8 @@ import os
 import sys
 import warnings
 
+import numpy as np
+
 from casatasks.private.casa_transition import is_CASA6
 
 if is_CASA6:
@@ -64,9 +66,11 @@ def gencal(vis=None, caltable=None, caltype=None, endpoint='asdm', infile=None,
             antenna, parameter = __complete_antpos(vis)
 
         if caltype == 'jyperk':
-            for selection, param in __gen_specifycal_input(factors):
-                _cb.specifycal(caltable='amp', time='', spw=selection.spw, 
-                               antenna=selection.antenna, pol=selection.pol, 
+            for selection, param in __gen_specifycal_input(vis=vis, endpoint=endpoint, infile=infile,
+                                                           timeout=timeout, retry=retry,
+                                                           retry_wait_time=retry_wait_time):
+                _cb.specifycal(caltable='amp', time='', spw=selection['spw'],
+                               antenna=selection['antenna'], pol=selection['pol'],
                                parameter=param, infile='', uniform=uniform)
         else:
             _cb.specifycal(caltable=caltable, time="", spw=spw, antenna=antenna, pol=pol,
@@ -94,12 +98,27 @@ def __complete_antpos(vis):
         warnings.simplefilter('error', UserWarning)
         warnings.warn('No offsets found. No caltable created.')
 
-def __gen_specifycal_input(vis=None, infile=None, timeout=180, retry=3, retry_wait_time=5):
+def __gen_specifycal_input(vis=None, endpoint='asdm', infile=None,
+                           timeout=180, retry=3, retry_wait_time=5):
     if not infile is None:
         f = JyPerKReader4File(infile)
         factors = f.get()
 
     elif infile is None:
         factors = gen_factor_via_web_api(vis, endpoint=endpoint, 
-                                        timeout=timeout, retry=retry, 
-                                        retry_wait_time=retry_wait_time)
+                                         timeout=timeout, retry=retry, 
+                                         retry_wait_time=retry_wait_time)
+
+    selections = []
+    parameters = []
+    
+    for factor in factors:
+        selection = {}
+        selection['antenna'] = factor[1]
+        selection['spw'] = factor[2]
+        selection['pol'] = factor[3]
+        selections.append(selection)
+        
+        parameters.append(1/np.sqrt(float(factor[4])))
+        
+    return zip(selections, parameters)
