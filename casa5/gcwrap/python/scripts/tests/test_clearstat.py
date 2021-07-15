@@ -31,7 +31,7 @@ Unit tests of task clearstat. It tests the following parameters:
 # CASA5 and CASA6 approach this differently
 
 # this is the relative path where most of the test data is found
-datapath = 'regression/exportasdm/input'
+datapath = 'unittest/clearstat/'
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -52,7 +52,7 @@ else:
         result = apath
         if not testmms or ignore_testmms:
             # find it in the standard place
-            dataRoot = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+            dataRoot = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata')
             result = os.path.join(dataRoot,apath)
         # otherwise apath should already be the full path
         return result
@@ -75,7 +75,7 @@ class clearstat_test(unittest.TestCase):
             
         shutil.copytree(ctsys_resolve(os.path.join(datapath,self.msfile)), self.msfile)
         # always get this from the standard place, ignoring any testmms value
-        shutil.copytree(ctsys_resolve(os.path.join('regression/ngc4826redux/reference',self.img),True), self.img)
+        shutil.copytree(ctsys_resolve(os.path.join(datapath,self.img),True), self.img)
     
     def tearDown(self):
         os.system('rm -rf ' + self.msfile)

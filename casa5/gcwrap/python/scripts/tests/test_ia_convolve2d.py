@@ -55,7 +55,7 @@ except ImportError:
     _rg = rgtool()
     image = iatool
     _qa = qatool()
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
     is_CASA6 = False
@@ -95,7 +95,7 @@ def run_convolve2d(
 class ia_convolve2d_test(unittest.TestCase):
    
     def setUp(self):
-        self.datapath = 'regression/imsmooth'
+        self.datapath = 'unittest/imsmooth/'
     
     def tearDown(self):
         self.assertTrue(len(_tb.showcache()) == 0, 'table cache is not empty')

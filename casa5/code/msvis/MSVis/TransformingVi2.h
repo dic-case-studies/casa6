@@ -173,8 +173,19 @@ public:
     virtual casacore::Bool isNewSpectralWindow () const override;
 
     // Return the number of rows in the current iteration
-
     virtual casacore::rownr_t nRows () const override;
+
+    // Return the number of distinct array/cube shapes in the current iteration
+    virtual casacore::rownr_t nShapes () const override;
+
+    // Return the number of rows for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::rownr_t>& nRowsPerShape () const override;
+
+    // Return the number of channels for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::Int>& nChannelsPerShape () const override;
+
+    // Return the number of correlations for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::Int>& nCorrelationsPerShape () const override;
 
     // Return the row ids as from the original root table. This is useful
     // to find correspondance between a given row in this iteration to the
@@ -236,6 +247,10 @@ public:
 
     virtual void flag (casacore::Cube<casacore::Bool> & flags) const override;
 
+    // Return flag for each polarization, channel and row
+
+    virtual void flag (casacore::Vector<casacore::Cube<casacore::Bool>> & flags) const override;
+
     // Return flag for each channel & row
 
     virtual void flag (casacore::Matrix<casacore::Bool> & flags) const override;
@@ -288,12 +303,13 @@ public:
     // Return sigma
 
     virtual void sigma (casacore::Matrix<casacore::Float> & sigmat) const override;
+    virtual void sigma (casacore::Vector<casacore::Matrix<casacore::Float>> & sigmat) const override;
 
-    // Return current SpectralWindow
-
-    virtual casacore::Int spectralWindow () const override;
-
+    // Return all the spectral windows ids for each row of the current buffer
     virtual void spectralWindows (casacore::Vector<casacore::Int> & spws) const override;
+
+    // Return all the polarizations Ids for each row of the current buffer
+    virtual void polarizationIds (casacore::Vector<casacore::Int> & polIds) const override;
 
     // Return MJD midpoint of interval.
 
@@ -314,12 +330,16 @@ public:
     // Return the visibilities as found in the casacore::MS, casacore::Cube (npol,nchan,nrow).
 
     virtual void visibilityCorrected (casacore::Cube<casacore::Complex> & vis) const override;
+    virtual void visibilityCorrected (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
     virtual void visibilityModel (casacore::Cube<casacore::Complex> & vis) const override;
+    virtual void visibilityModel (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
     virtual void visibilityObserved (casacore::Cube<casacore::Complex> & vis) const override;
+    virtual void visibilityObserved (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
 
     // Return FLOAT_DATA as a casacore::Cube (npol, nchan, nrow) if found in the MS.
 
     virtual void floatData (casacore::Cube<casacore::Float> & fcube) const override;
+    virtual void floatData (casacore::Vector<casacore::Cube<casacore::Float>> & fcube) const override;
 
     // Return the visibility 4-vector of polarizations for each channel.
     // If the casacore::MS doesn't contain all polarizations, it is assumed it
@@ -336,6 +356,7 @@ public:
     // Return weight
 
     virtual void weight (casacore::Matrix<casacore::Float> & wtmat) const override;
+    virtual void weight (casacore::Vector<casacore::Matrix<casacore::Float>> & wtmat) const override;
 
     // Determine whether WEIGHT_SPECTRUM exists.
 
@@ -345,7 +366,9 @@ public:
     // Return weightspectrum (a weight for each channel)
 
     virtual void weightSpectrum (casacore::Cube<casacore::Float> & wtsp) const override;
+    virtual void weightSpectrum (casacore::Vector<casacore::Cube<casacore::Float>> & wtsp) const override;
     virtual void sigmaSpectrum (casacore::Cube<casacore::Float> & sigsp) const override;
+    virtual void sigmaSpectrum (casacore::Vector<casacore::Cube<casacore::Float>> & sigsp) const override;
 
     // Return the number of sub-intervals in the current chunk
 
@@ -629,7 +652,9 @@ protected:
     void configureNewSubchunk (casacore::Int msId, const casacore::String & msName, casacore::Bool isNewMs,
                                casacore::Bool isNewArrayId, casacore::Bool isNewFieldId,
                                casacore::Bool isNewSpectralWindow, const Subchunk & subchunk,
-                               casacore::rownr_t nRows, casacore::Int nChannels, casacore::Int nCorrelations,
+                               const casacore::Vector<casacore::rownr_t>& nRowsPerShape,
+                               const casacore::Vector<casacore::Int>& nChannelsPerShape, 
+                               const casacore::Vector<casacore::Int>& nCorrelationsPerShape,
                                const casacore::Vector<casacore::Int> & correlations,
                                const casacore::Vector<casacore::Stokes::StokesTypes> & correlationsDefined,
                                const casacore::Vector<casacore::Stokes::StokesTypes> & correlationsSelected,

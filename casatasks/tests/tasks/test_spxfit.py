@@ -77,7 +77,7 @@ from casatasks import spxfit
 
 nanvalue = 4.53345345
 
-datapath=ctsys.resolve('regression/unittest/spxfit')
+datapath=ctsys.resolve('unittest/spxfit/')
 
 myia = image()
 _fn = functional()

@@ -38,43 +38,23 @@ import os
 import unittest
 import shutil
 import numpy
-from filecmp import dircmp
 import numbers
 
 ### DATA ###
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('image/orion_tfeather.im')
-    datapath2 = casatools.ctsys.resolve('image/ngc5921.clean.image')
-    stokespath = casatools.ctsys.resolve('image/image_input_processor.im/')
-    interppath = casatools.ctsys.resolve('image/f2h_quantile.im')
-    #old test data
-    oldPath = casatools.ctsys.resolve('image/')
-    input0 = oldPath + "100x100x2.im"
-    ref0 = oldPath + "ref0.im"
+    dataroot = casatools.ctsys.resolve('unittest/imdev/')
 
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/orion_tfeather.im'
-        datapath2 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image'
-        stokespath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/image_input_processor.im/'
-        interppath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/f2h_quantile.im/'
-        # test_imdev data path
-        oldPath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/'
-        input0 = oldPath + "100x100x2.im"
-        ref0 = oldPath + "ref0.im"
-
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/orion_tfeather.im'
-        datapath2 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image'
-        stokespath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/image_input_processor.im/'
-        interppath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/f2h_quantile.im/'
-        # test_imdev data path
-        oldPath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/'
-        input0 = oldPath + "100x100x2.im"
-        ref0 = oldPath + "ref0.im"
+    dataroot = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imdev/'
+ 
+datapath = os.path.join(dataroot, 'orion_tfeather.im')
+datapath2 = os.path.join(dataroot, 'ngc5921.clean.image')
+stokespath = os.path.join(dataroot, 'image_input_processor.im')
+interppath = os.path.join(dataroot, 'f2h_quantile.im')
+input0 = dataroot + "100x100x2.im"
+ref0 = dataroot + "imdev_reference/ref0.im"
         
 
 def imArray(image):
@@ -239,15 +219,18 @@ class imdev_test(unittest.TestCase):
 
         imdev(imagename=datapath2, outfile=output)
         imdev(imagename=datapath2, outfile=output2, mask='"testcopy.im">0.1')
-
-        origRes = imArray(output)
-        finRes = imArray(output2)
-
-        dcmp = dircmp(output, output2)
+        
+        ia.open(output)
+        origMask = ia.maskhandler('get')
+        ia.close()
+        
+        ia.open(output2)
+        finMask = ia.maskhandler('get')
+        ia.close()
+        
+        self.assertFalse(numpy.array_equal(origMask, finMask))
 
         self.assertTrue(os.path.exists(output2))
-
-        self.assertTrue(len(dcmp.diff_files) > 0)
         
         
     def test_overwrite(self):
@@ -330,7 +313,6 @@ class imdev_test(unittest.TestCase):
 
 
 
-        # dcmp = dircmp(output, output2)
         print(imArray(output).shape)
         print(imArray(output2).shape)
         print("is equal: ", numpy.array_equal(imArray(output), imArray(output2)))
@@ -351,9 +333,10 @@ class imdev_test(unittest.TestCase):
         imdev(imagename=datapath, outfile=output)
         imdev(imagename=datapath, outfile=output2, stattype='median')
         
-        dcmp = dircmp(output, output2)
-        
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        res1 = imArray(output)
+        res2 = imArray(output2)
+    
+        self.assertFalse(numpy.array_equal(res1, res2))
         
         
     def test_statalg(self):
@@ -361,10 +344,11 @@ class imdev_test(unittest.TestCase):
 
         imdev(imagename=datapath, outfile=output, xlength=10)
         imdev(imagename=datapath, outfile=output2, xlength=10, statalg='chauvenet')
+    
+        res1 = imArray(output)
+        res2 = imArray(output2)
         
-        dcmp = dircmp(output, output2)
-        
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        self.assertFalse(numpy.array_equal(res1, res2))
     
     
     def test_zscore(self):
@@ -372,10 +356,11 @@ class imdev_test(unittest.TestCase):
 
         imdev(imagename=datapath, outfile=output, xlength=10, statalg='chauvenet')
         imdev(imagename=datapath, outfile=output2, xlength=10, statalg='chauvenet', zscore=2)
+    
+        res1 = imArray(output)
+        res2 = imArray(output2)
         
-        dcmp = dircmp(output, output2)
-        
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        self.assertFalse(numpy.array_equal(res1, res2))
         
         
     def test_maxiter(self):
@@ -383,10 +368,12 @@ class imdev_test(unittest.TestCase):
 
         imdev(imagename=datapath, outfile=output, xlength=10, statalg='chavenet')
         imdev(imagename=datapath, outfile=output2, xlength=10, statalg='chauvenet', maxiter=2)
+    
+        res1 = imArray(output)
+        res2 = imArray(output2)
         
-        dcmp = dircmp(output, output2)
-        
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        self.assertFalse(numpy.array_equal(res1, res2))
+    
 
     # test cases from test_imdev
 

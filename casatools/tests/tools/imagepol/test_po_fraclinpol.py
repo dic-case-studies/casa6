@@ -77,10 +77,10 @@ except ImportError:
     from tasks import *
     from taskinit import *
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
-datapath = ctsys_resolve('regression/unittest/po_tool/')
+datapath = ctsys_resolve('unittest/imagepol/')
 eq_beams = datapath + "pol_eq_beams.fits"
 neq_beams = datapath + "pol_neq_beams.fits"
 

@@ -79,7 +79,7 @@ if is_CASA6:
     from casatools import ctsys, image, table, quanta, regionmanager
     from casatasks import imcollapse
     ctsys_resolve = ctsys.resolve
-    datapath = ctsys.resolve('regression/unittest/imcollapse')
+    datapath = ctsys.resolve('unittest/imcollapse/')
 else:
     import casac
     from tasks import *
@@ -88,8 +88,8 @@ else:
     table = tbtool
     quanta = qatool
     regionmanager = rgtool
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
-    datapath = dataRoot + '/regression/unittest/imcollapse/'
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
+    datapath = dataRoot + 'unittest/imcollapse/'
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 

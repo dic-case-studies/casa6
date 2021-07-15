@@ -80,12 +80,12 @@ except ImportError:
     from tasks import *
     from taskinit import *
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 _tb = table( )
 
-datapath = ctsys_resolve('regression/unittest/imageanalysis/ImageAnalysis/')
+datapath = ctsys_resolve('unittest/ia_pv/')
 
 def run_ia_pv(
     imagename, outfile, start, end, width,

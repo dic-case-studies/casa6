@@ -53,6 +53,21 @@ MassDensity::MassDensity(double massdensity, const std::string &units)
     valueIS_ = massdensity;
   }
 }
+
+MassDensity::MassDensity(double massdensity, MassDensity::Units units)
+{
+  if(units == MassDensity::UnitGramPerCubicCentiMeter) {
+    valueIS_ = 1.0E+3 * massdensity;
+  } else if(units == MassDensity::UnitGramPerCubicMeter) {
+    valueIS_ = 1.0E-3 * massdensity;
+  } else if(units == MassDensity::UnitKiloGramPerCubicMeter) {
+    valueIS_ = massdensity;
+  } else {
+    // Exception: unknown number density unit. S.I. unit (kg m**-3) used by default.
+    valueIS_ = massdensity;
+  }
+}
+
 MassDensity::~MassDensity() { };
 
 
@@ -66,6 +81,20 @@ double MassDensity::get(const std::string &units) const
     return 1.0E+3 * valueIS_;
   } else if(units == "kgm**-3" || units == "kg m**-3" || units == "KGM**-3" ||
       units == "KG M**-3" || units == "kg/m^3") {
+    return valueIS_;
+  } else {
+    // Exception: unknown number density unit. S.I. unit (kg m**-3) used by default.
+    return valueIS_;
+  }
+}
+
+double MassDensity::get(MassDensity::Units units) const
+{
+  if(units == MassDensity::UnitGramPerCubicCentiMeter) {
+    return 1.0E-3 * valueIS_;
+  } else if(units == MassDensity::UnitGramPerCubicMeter) {
+    return 1.0E+3 * valueIS_;
+  } else if(units == MassDensity::UnitKiloGramPerCubicMeter) {
     return valueIS_;
   } else {
     // Exception: unknown number density unit. S.I. unit (kg m**-3) used by default.

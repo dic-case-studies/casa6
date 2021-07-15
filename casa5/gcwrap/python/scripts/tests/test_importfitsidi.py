@@ -22,6 +22,7 @@ from __future__ import print_function
 import os
 import sys
 import shutil
+import numpy
 import unittest
 
 from casatasks.private.casa_transition import is_CASA6
@@ -32,7 +33,7 @@ if is_CASA6:
     _ms = ms( )
     _tb = table( )
 
-    datapath = ctsys.resolve('regression/fitsidi_import/input/')
+    datapath = ctsys.resolve('unittest/importfitsidi/')
 else:
     from __main__ import default
     from tasks import *
@@ -42,7 +43,7 @@ else:
     _ms = ms
     _tb = tb
 
-    datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/fitsidi_import/input'
+    datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/importfitsidi/'
 
 myname = 'importfitsidi-unit-test'
 
@@ -50,7 +51,8 @@ myname = 'importfitsidi-unit-test'
 my_dataset_names = ['n09q2_1_1-shortened.IDI1',
                     'n09q2_1_1-shortened-part1.IDI1',
                     'n09q2_1_1-shortened-part2.IDI1',
-                    'emerlin_multiuv.IDI1']
+                    'emerlin_multiuv.IDI1',
+                    '1331_3030_C-Band_5GHz__64.000_128.fits']
 
 # name of the resulting MS
 msname = my_dataset_names[0]+'.ms'
@@ -824,7 +826,116 @@ class test_importfitsidi(unittest.TestCase):
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table OBSERVATION failed'
                 
         self.assertTrue(retValue['success'])
-                
+    
+
+    def test5(self):
+        '''fitsidi-import: Test e-MERLIN polarization swapping'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
+
+        # FITS-IDI files from the e-MERLIN correlator have some
+        # baselines in non-canonical order.  Make sure that
+        # importfitsidi correctly swaps the cross-polarisation
+        # products when it swaps the antennas.
+        #
+        self.res = importfitsidi(my_dataset_names[4], msname)
+        print(myname, ": Success! Now checking output ...")
+
+        # The Mk2-De baseline will be swapped.  These are the expected
+        # phases for that baseline.
+        expected = numpy.array([[ 3.13964248,  2.86829948,  2.58296013,  2.3439014 ,  2.10988331,
+                                  1.97421145,  1.7791388 ,  1.5775888 ,  1.40460491,  1.22053266,
+                                  1.01471496,  0.82222307,  0.59186804,  0.38555288,  0.16937262,
+                                  -0.05033521, -0.25431359, -0.47900817, -0.69958377, -0.87468606,
+                                  -1.09604585, -1.34909344, -1.62127054, -1.87543309, -2.12334824,
+                                  -2.34573412, -2.53386259, -2.72510219, -2.89187169, -3.06771994,
+                                  3.0699141 ,  2.88419271],
+                                [-1.84054375, -0.83255982, -1.02057993, -1.24484885, -1.32794607,
+                                  -0.82715571, -0.79155159, -1.19584942, -0.73648691, -0.59470183,
+                                  -0.83499312, -0.48545197, -0.57062495, -0.34914687,  0.01485419,
+                                  -0.17965424,  0.01576512,  0.64190328,  0.36306599,  0.6468659 ,
+                                  1.15446103,  1.02624571,  0.89803523,  1.0682807 ,  0.83425844,
+                                  0.8939116 ,  0.96772492,  1.20877922,  1.51828313,  1.73502862,
+                                  1.48054171,  2.27795124],
+                                [-1.72998369, -2.10472918, -2.28158116, -2.53716612, -2.63328958,
+                                  -2.69052339, -2.89023638, -3.02556944,  3.04760623,  2.90053821,
+                                  2.76279259,  2.49925351,  2.26630735,  1.77548301,  1.423805  ,
+                                  1.0532515 ,  0.66610861,  0.37606233,  0.14707069,  0.03789629,
+                                  -0.18920378, -0.37956986, -0.56126845, -0.69712436, -0.82414556,
+                                  -1.03143954, -1.22291136, -1.41123331, -1.65069032, -1.79867935,
+                                  -1.80994236, -2.02587509],
+                                [ 0.1903225 ,  0.28886324,  0.27794465,  0.29231161,  0.298327  ,
+                                  0.34109077,  0.45782065,  0.60621154,  0.77383608,  0.90957648,
+                                  1.06189084,  1.24068403,  1.39028943,  1.51727164,  1.60704148,
+                                  1.63228989,  1.67657077,  1.71906674,  1.80779397,  1.9613409 ,
+                                  2.11035109,  2.254354  ,  2.42930079,  2.55850363,  2.67686605,
+                                  2.78933764,  2.83647609,  2.92243385, -3.14000082, -2.84540629,
+                                  -2.57244778, -2.36642051]])
+
+        try:
+            _ms.open(msname)
+            _ms.select({'antenna1': [0], 'antenna2': [2]})
+            _ms.selectchannel(nchan=32, start=0, width=16, inc=16)
+            rec = _ms.getdata(['phase'], average=True)
+            _ms.close()
+        except:
+            print(myname, ": Error  Cannot open MS")
+            retValue['success']=False
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS'
+        else:
+            results = numpy.isclose(rec['phase'], expected, rtol=8e-7, atol=1e-8).all()
+            if not results:
+                retValue['success']=False
+                retValue['error_msgs']=retValue['error_msgs']+'Crosspol check for Mk2-De baseline failed'
+
+        # The De-Pi baseline will not be swapped.  These are the expected
+        # phases for that baseline.
+        expected = numpy.array([[ 2.18404031,  2.52688265,  2.88025069, -3.06777024, -2.7234993 ,
+                                  -2.4769671 , -2.12538004, -1.74727786, -1.40869737, -1.12853301,
+                                  -0.83723795, -0.57250589, -0.23436357,  0.10187802,  0.42698029,
+                                  0.77069479,  1.06355178,  1.38657355,  1.72898543,  2.03018403,
+                                  2.38947916,  2.717098  ,  3.01598072, -2.97815442, -2.67935085,
+                                  -2.41194654, -2.12304139, -1.84744442, -1.55729675, -1.25337708,
+                                  -1.00634491, -0.74762005],
+                                [ 2.4460454 ,  3.00888586, -3.08539438, -3.0410893 , -2.99218869,
+                                  -2.94937682, -2.57229424, -2.26054573, -1.91930437, -1.58734751,
+                                  -1.2868315 , -0.96962148, -0.59307194, -0.25247654,  0.13383511,
+                                  0.34873137,  0.54140246,  0.77145398,  1.05496573,  1.18506956,
+                                  1.47813749,  1.70011413,  1.94997513,  2.24114943,  2.3705833 ,
+                                  2.51808047,  2.82756138,  3.0124886 , -2.97727132, -2.61935139,
+                                  -2.24914908, -1.8698504 ],
+                                [ 1.28013647,  1.47956204,  1.30087411,  1.58066428,  1.52697527,
+                                  1.57440555,  1.64748108,  1.613729  ,  1.63689208,  1.7030493 ,
+                                  1.54547369,  1.63134134,  1.5600487 ,  1.57901645,  1.56169891,
+                                  1.65976775,  1.65306389,  1.659922  ,  1.46294129,  1.4702158 ,
+                                  1.38168573,  1.39496899,  1.37612033,  1.25856972,  1.31672955,
+                                  1.34671378,  1.25240135,  1.17149973,  1.25372207,  0.98874217,
+                                  0.85313851,  0.67320693],
+                                [-0.2974771 , -0.27914691, -0.29463151, -0.35890678, -0.41856381,
+                                  -0.50046909, -0.56969333, -0.62361556, -0.73453844, -0.78436178,
+                                  -0.84025633, -0.90566015, -0.98629397, -1.05542088, -1.12567806,
+                                  -1.16428077, -1.23636246, -1.32543719, -1.40451121, -1.51268327,
+                                  -1.60201359, -1.69172263, -1.74908674, -1.83386433, -1.8914839 ,
+                                  -1.954831  , -2.02388644, -2.12116575, -2.21479368, -2.31664228,
+                                  -2.38661528, -2.48180223]])
+
+        try:
+            _ms.open(msname)
+            _ms.select({'antenna1': [2], 'antenna2': [3]})
+            _ms.selectchannel(nchan=32, start=0, width=16, inc=16)
+            rec = _ms.getdata(['phase'], average=True)
+            _ms.close()
+        except:
+            print(myname, ": Error  Cannot open MS")
+            retValue['success']=False
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS'
+        else:
+            results = numpy.isclose(rec['phase'], expected, rtol=8e-7, atol=1e-8).all()
+            if not results:
+                retValue['success']=False
+                retValue['error_msgs']=retValue['error_msgs']+'Crosspol check for De-Pi baseline failed'
+
+        self.assertTrue(retValue['success'])
+
     
 def suite():
     return [test_importfitsidi]
