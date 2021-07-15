@@ -114,16 +114,10 @@ def __gen_specifycal_input(vis=None, endpoint='asdm', infile=None,
                                          timeout=timeout, retry=retry, 
                                          retry_wait_time=retry_wait_time)
 
-    selections = []
-    parameters = []
-    
     for factor in factors:
         selection = {}
         selection['antenna'] = factor[1]
         selection['spw'] = factor[2]
         selection['pol'] = factor[3]
-        selections.append(selection)
         
-        parameters.append(1/np.sqrt(float(factor[4])))
-        
-    return zip(selections, parameters)
+        yield selection, 1/np.sqrt(float(factor[4]))
