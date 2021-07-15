@@ -2274,6 +2274,13 @@ VisibilityIteratorImpl2::next()
 
         configureNewSubchunk();
     }
+    else
+    {
+        // Leave the columns referencing a valid table. This ensures that some
+        // TVIs can still get some valid metadata when they are not at the end
+        // of iteration (even if the underlying VI2 is already at the end).
+        attachColumns(msIter_p->table());
+    }
 }
 
 Subchunk
@@ -2493,7 +2500,7 @@ VisibilityIteratorImpl2::configureNewSubchunk()
         // The remaining case is that scope of frequency selections is chunk.
         // In this case the channelSelector is constant for a chunk 
         // and has already been computed in configureNewChunk. 
-        // The number of rows still needds to be updated 
+        // The number of rows still needs to be updated 
         // to account for the the number of rows in this subchunk
         else
         {
