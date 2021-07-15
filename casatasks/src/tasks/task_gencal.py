@@ -78,7 +78,7 @@ def gencal(vis=None, caltable=None, caltype=None, endpoint='asdm', infile=None,
                                antenna=selection['antenna'], pol=selection['pol'],
                                parameter=param, infile='', uniform=uniform)
         else:
-            _cb.specifycal(caltable=caltable, time="", spw=spw, antenna=antenna, pol=pol,
+            _cb.specifycal(caltable=caltable, time='', spw=spw, antenna=antenna, pol=pol,
                            caltype='antpos', parameter=parameter, infile=infile,
                            uniform=uniform)
 
