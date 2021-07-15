@@ -50,7 +50,7 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
         # import
         status = mysdms.importasap(infile, outputvis, parallel)
 
-        if status is True:
+        if status:
             # flagversions file must be deleted 
             flagversions = outputvis.rstrip('/') + '.flagversions'
             if os.path.exists(flagversions):
@@ -61,7 +61,7 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
             mycb.initweights(wtmode='nyq')
 
             # create flagbackup file if user requests it
-            if flagbackup is True:
+            if flagbackup:
                 aflocal = agentflagger()
                 aflocal.open(outputvis)
                 aflocal.saveflagversion('Original',

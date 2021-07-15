@@ -1045,7 +1045,7 @@ class sdcal_test_otfraster(sdcal_test_base):
                                         _expected = expected.data[ipol,ichan]
                                         _fparam = fparam[ipol,ichan]
                                         self.assertEqual(_mask, _flag, msg=message_template('FLAG',_mask,_flag))
-                                        if _mask is True:
+                                        if _mask:
                                             self.assertEqual(0.0, _fparam, msg=message_template('FPARAM',0.0,_fparam))
                                         elif abs(_expected) < eps:
                                             self.assertLess(abs(_fparam), eps, msg=message_template('FPARAM',_expected,_fparam))

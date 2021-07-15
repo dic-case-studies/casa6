@@ -687,7 +687,7 @@ def do_mst(
     pdh.setupIO()
 
     # Process the input Multi-MS
-    if ParallelDataHelper.isMMSAndNotServer(infile) is True and _monolithic_processing is False:
+    if ParallelDataHelper.isMMSAndNotServer(infile) and not _monolithic_processing:
         do_createmms, separationaxis, do_return = __process_input_multi_ms(pdh, separationaxis)
         if do_return:
             return
@@ -981,7 +981,7 @@ def __process_input_multi_ms(pdh, separationaxis):
     retval = pdh.validateInputParams()
 
     # Cannot create an output MMS.
-    if retval['status'] is False and retval['axis'] == '':
+    if not retval['status'] and retval['axis'] == '':
         casalog.post('Cannot process MMS with the requested transformations', 'WARN')
         casalog.post('Use task listpartition to see the contents of the MMS')
         casalog.post('Will create an output MS', 'WARN')
@@ -989,7 +989,7 @@ def __process_input_multi_ms(pdh, separationaxis):
         return createmms, separationaxis, False
 
     # MMS is processed as monolithic MS.
-    elif retval['status'] is False and retval['axis'] != '':
+    elif not retval['status'] and retval['axis'] != '':
         createmms = True
         pdh.override__args('createmms', True)
         pdh.override__args('monolithic_processing', True)

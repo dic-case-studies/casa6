@@ -2654,7 +2654,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     def run_test(self, restfreq_ref, beam_ref, cell_ref, stats, **kwargs):
         self.param.update(**kwargs)
         status = sdimaging(**self.param)
-        if status is False:
+        if not status:
             return status
         stats.pop('sumsq')
         outfile = self.outfile + image_suffix
@@ -3054,7 +3054,7 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
         lorentz_factor = restfreqtool.get_lorentz_factor(metadataset)
         fmin_ok = restfreqtool.is_frequency_close(msrange.min, imrange.min, lorentz_factor, rtol=rtol)
         fmax_ok = restfreqtool.is_frequency_close(msrange.max, imrange.max, lorentz_factor, rtol=rtol)
-        print('Result = {}'.format((fmin_ok is True) and (fmax_ok is True)))
+        print('Result = {}'.format(fmin_ok and fmax_ok))
         self.assertTrue(fmin_ok)
         self.assertTrue(fmax_ok)
 

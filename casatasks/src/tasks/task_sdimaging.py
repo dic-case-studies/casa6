@@ -748,7 +748,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
 
         mapextent = self.imager.mapextent(ref=base_mref, movingsource=self.ephemsrcname,
                                           pointingcolumntouse=colname)
-        if mapextent['status'] is True:
+        if mapextent['status']:
             qheight = my_qa.quantity(mapextent['extent'][1], 'rad')
             qwidth = my_qa.quantity(mapextent['extent'][0], 'rad')
             qcent0 = my_qa.quantity(mapextent['center'][0], 'rad')

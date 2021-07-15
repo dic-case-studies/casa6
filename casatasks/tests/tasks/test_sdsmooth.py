@@ -139,7 +139,7 @@ class sdsmooth_test_base(unittest.TestCase):
             with table_manager(self.infile) as tb:
                 data_in = tb.getvarcol(datacol_name)
                 flag_in = tb.getvarcol('FLAG')
-                if weight_mode is True:
+                if weight_mode:
                     weight_in = tb.getvarcol('WEIGHT_SPECTRUM')
         else:
             myms = ms()
@@ -152,7 +152,7 @@ class sdsmooth_test_base(unittest.TestCase):
                     tsel = tb.query('DATA_DESC_ID IN %s'%(dd_selection.tolist()))
                     data_in = tsel.getvarcol(datacol_name)
                     flag_in = tsel.getvarcol('FLAG')
-                    if weight_mode is True:
+                    if weight_mode:
                         weight_in = tsel.getvarcol('WEIGHT_SPECTRUM')
                 finally:
                     tsel.close()
@@ -161,7 +161,7 @@ class sdsmooth_test_base(unittest.TestCase):
             nrow = tb.nrows()
             data_out = tb.getvarcol(datacol_name)
             flag_out = tb.getvarcol('FLAG')
-            if weight_mode is True:
+            if weight_mode:
                 weight_out = tb.getvarcol('WEIGHT_SPECTRUM')
 
         # verify nrow
@@ -194,7 +194,7 @@ class sdsmooth_test_base(unittest.TestCase):
             #print 'result', row_out[0,:,0].tolist()
 
             # weight check if this is weight test
-            if weight_mode is True:
+            if weight_mode:
                 #print 'Weight propagation test'
                 wgt_in = weight_in[key]
                 wgt_out = weight_out[key]
