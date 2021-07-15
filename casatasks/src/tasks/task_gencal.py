@@ -49,7 +49,35 @@ def gencal(vis=None, caltable=None, caltype=None, endpoint='asdm', infile=None,
     if caltype == 'jyperk' and not endpoint in ['asdm', 'interpolation', 'model-fit']:
         raise ValueError('When the caltype is jyperk, endpoint must be one of asdm, interpolation or model-fit')
 
-    # Python script
+    if caltype == 'tecim':
+        __gencal_for_tecim()
+    elif caltype == 'antpos':
+        __gencal_for_antpos()
+    elif caltype == 'jyperk':
+        __gencal_for_jyperk()
+
+
+def __gencal_for_tecim(vis, caltable=None, spw=None, antenna=None, pol=None,
+                        parameter=None, infile=None, uniform=None):
+    try:
+        if ((type(vis) == str) & (os.path.exists(vis))):
+            # don't need scr col for this
+            _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)
+        else:
+            raise ValueError('Visibility data set not found - please verify the name')
+
+        _cb.specifycal(caltable=caltable, time="", spw=spw, antenna=antenna, pol=pol,
+                       caltype='tecim', parameter=parameter, infile=infile,
+                       uniform=uniform)
+
+    except UserWarning as instance:
+        casalog.post('*** UserWarning *** %s' % instance, 'WARN')
+
+    finally:
+        _cb.close()
+
+def __gencal_for_antpos(vis, caltable=None, spw=None, antenna=None, pol=None,
+                        parameter=None, infile=None, uniform=None):
     try:
         if ((type(vis) == str) & (os.path.exists(vis))):
             # don't need scr col for this
@@ -58,7 +86,7 @@ def gencal(vis=None, caltable=None, caltype=None, endpoint='asdm', infile=None,
             raise ValueError('Visibility data set not found - please verify the name')
 
         # call a Python function to retreive ant position offsets automatically (currently EVLA only)
-        if (caltype == 'antpos' and antenna == ''):
+        if antenna == '':
             casalog.post(" Determine antenna position offsets from the baseline correction database")
             # correct_ant_posns returns a list , [return_code, antennas, offsets]
             antenna_offsets = getantposns.correct_ant_posns(vis, False)
@@ -71,7 +99,24 @@ def gencal(vis=None, caltable=None, caltype=None, endpoint='asdm', infile=None,
                 # raise Exception, 'No offsets found. No caltable created.'
                 warnings.simplefilter('error', UserWarning)
                 warnings.warn('No offsets found. No caltable created.')
-        
+
+        _cb.specifycal(caltable=caltable, time="", spw=spw, antenna=antenna, pol=pol,
+                       caltype='antpos', parameter=parameter, infile=infile,
+                       uniform=uniform)
+
+    except UserWarning as instance:
+        casalog.post('*** UserWarning *** %s' % instance, 'WARN')
+
+    finally:
+        _cb.close()
+
+def __gencal_for_jyperk():
+    try:
+        if ((type(vis) == str) & (os.path.exists(vis))):
+            _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)
+        else:
+            raise ValueError('Visibility data set not found - please verify the name')
+
         if caltype == 'jyperk':
             if not infile is None:
                 f = JyPerKReader4File(infile)
@@ -85,8 +130,6 @@ def gencal(vis=None, caltable=None, caltype=None, endpoint='asdm', infile=None,
         _cb.specifycal(caltable=caltable, time="", spw=spw, antenna=antenna, pol=pol,
                        caltype=caltype, parameter=parameter, infile=infile,
                        uniform=uniform)
-
-        # _cb.close()
 
     except UserWarning as instance:
         casalog.post('*** UserWarning *** %s' % instance, 'WARN')
