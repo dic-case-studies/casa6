@@ -2624,7 +2624,7 @@ class Test_standard(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, -0.16455988585948944],
-            'min_val_pos': [True, [34, 36, 0, 949]],
+            'min_val_pos': [True, [34, 36, 0, 951]],
             'im_rms': [False, 0.08653503618208624],
             'im_sum': [False, 2857.8199424562085],
             'npts_real': [True, 6400000],
@@ -2711,7 +2711,7 @@ class Test_standard(test_tclean_base):
             'max_val': [False, 1011.9310302734375],
             'max_val_pos': [True, [0, 0, 0, 70]],
             'min_val': [False, 1011.7631225585938],
-            'min_val_pos': [True, [0, 0, 0, 475]],
+            'min_val_pos': [True, [0, 0, 0, 432]],
             'im_rms': [False, 1011.8442614231698],
             'npts_real': [True, 1000]}
 
@@ -2924,7 +2924,7 @@ class Test_standard(test_tclean_base):
             'max_val': [False, 1.0],
             'max_val_pos': [True, [40, 40, 0, 0]],
             'min_val': [False, -0.16458643972873688],
-            'min_val_pos': [True, [34, 36, 0, 949]],
+            'min_val_pos': [True, [34, 36, 0, 951]],
             'im_rms': [False, 0.086535984124565],
             'im_sum': [False, 2855.491490987678],
             'npts_real': [True, 6400000],
@@ -3011,7 +3011,7 @@ class Test_standard(test_tclean_base):
             'max_val': [False, 1012.2438354492188],
             'max_val_pos': [True, [0, 0, 0, 70]],
             'min_val': [False, 1012.075927734375],
-            'min_val_pos': [True, [0, 0, 0, 475]],
+            'min_val_pos': [True, [0, 0, 0, 412]],
             'im_rms': [False, 1012.1570928591075],
             'npts_real': [True, 1000]}
 
