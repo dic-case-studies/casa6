@@ -22,8 +22,8 @@ else:
     (_cb,) = gentools(['cb'])
 
 
-def gencal(vis=None, caltable=None, caltype=None, infile=None, endpoint='asdm',
-           timeout=180, retry=3, retry_wait_time=5,
+def gencal(vis=None, caltable=None, caltype=None, infile='None',
+           endpoint='asdm', timeout=180, retry=3, retry_wait_time=5,
            spw=None, antenna=None, pol=None,
            parameter=None, uniform=None):
     """Externally specify calibration solutions of various types.
@@ -32,17 +32,22 @@ def gencal(vis=None, caltable=None, caltype=None, infile=None, endpoint='asdm',
         vis {str} -- The file path stored the visibility data.
         caltable {str} -- A file name which store the caltable.
         caltype {str} -- The calibration type.
-        endpoint (str) -- The endpoint of Jy/K DB Web API. Configuring caltype='jyperk',
-            the argument is enabled. Can configure 'asdm', 'interpolation', and 'model-fit'.
-        infile (str) -- The file path of the caltable.
-        spw {str} --
+        infile (str) -- Specifies the name of the file to read.
+        subparameter of caltype='jyperk:
+            endpoint (str) -- The endpoint of the Jy/K DB Web API to access.
+                options are 'asdm' (default), 'model-fit', 'interpolation'.
+            timeout {int} --- Maximum waiting time [sec] for the Web API access,
+                defaults to 180 sec.
+            retry {int} -- Number of retry when the Web API access fails,
+                defaults to 3 times.
+            retry_wait_time {int} -- Waiting time [sec] until next query 
+                when the Web API access fails, defaults to 5 sec.
+        spw {str} -- The spectral windows.
         antenna {str} --
         pol {str} --
         parameter {} --
         uniform {} --
-        timeout {int} --- Maximum waiting time when accessing the web API. Second.
-        retry {int} -- Number of times to retry when the web API access fails.
-        retry_wait_time {int} -- The waiting time when the web request fails. Second.
+
     """
 
     # check arguments

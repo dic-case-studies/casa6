@@ -22,19 +22,24 @@ from casatools import msmetadata, quanta, table
 
 
 ### web api part
-def gen_factor_via_web_api(vis, endpoint='asdm', spw='*',
+def gen_factor_via_web_api(vis, spw='*',
+                           endpoint='asdm',
                            timeout=180, retry=3, retry_wait_time=5):
     """ Generate factor via Jy/K Web API.
 
     This function will be used task_gencal.
 
     Arguments:
-        vis {str}: The file path of vis.
-        endpoint {str} -- Specifies which Web API to access. Options are 'asdm' 
-            (default), 'model-fit', 'interpolation'.
-        timeout {int} --- Maximum waiting time when accessing the web API. Second.
-        retry {int} -- Number of times to retry when the web API access fails.
-        retry_wait_time {int} -- The waiting time when the web request fails. Second.
+        vis {str}: The file path of the visibility data.
+        spw {str}: Spectral windows.
+        endpoint (str) -- The endpoint of Jy/K DB Web API to access. Options are 
+            'asdm' (default), 'model-fit', 'interpolation'.
+        timeout {int} --- Maximum waiting time [sec] for the Web API access, defaults
+            to 180 sec.
+        retry {int} -- Number of retry when the Web API access fails, defaults to 3
+            times.
+        retry_wait_time {int} -- Waiting time [sec] until next query when the Web API
+            access fails, defaults to 5 sec.
     """
     assert endpoint in ['asdm', 'model-fit', 'interpolation'], \
         'The JyPerKDatabaseClient class requires one of endpoint: asdm, model-fit or interpolation'
@@ -73,7 +78,7 @@ class ASDMParamsGenerator():
         """ Generate required parameters for Jy/K Web API.
 
         Arguments:
-            vis {str} -- File path of MS
+            vis {str} -- The file path of the visibility data.
             spw (None)  -- This parameter is not used. It is provided to align the
                 calling method with other classes (InterpolationParamsGenerator and
                 ModelFitParamsGenerator).
@@ -92,7 +97,7 @@ class ASDMParamsGenerator():
         """ Convert MS name like 'uid___A002_Xabcd_X012 into uid://A002/Xabcd/X012'.
 
         Arguments:
-            vis {str} -- File path of MS.
+            vis {str} -- The file path of the visibility data.
 
         Returns:
             str -- Corresponding ASDM uid.
@@ -256,7 +261,7 @@ class Bands():
         
         Params:
             target_mean_freqs {dict} -- The mean freqs which does not been detected the bands.
-            vis {str}: The file path of vis.
+            vis {str}: The file path of the visibility data.
         """
         known_bands = Bands._get_known_bands(vis)
         science_windows = list(known_bands.keys())
@@ -391,11 +396,14 @@ class JyPerKDatabaseClient():
         """ Set the parameters to be used when accessing the Web API.
         
         Arguments:
-            endpoint {str} -- Endpoint of Jy/K Web API.
-                The value to be entered must be one of asdm, model-fit or interpolation.
-            timeout {int} --- Maximum waiting time when accessing the web API. Second.
-            retry {int} -- Number of times to retry when the web API access fails.
-            retry_wait_time {int} -- The waiting time when the web request fails. Second.
+            endpoint (str) -- The endpoint of Jy/K DB Web API to access. Options are 
+                'asdm' (default), 'model-fit', 'interpolation'.
+            timeout {int} --- Maximum waiting time [sec] for the Web API access, defaults
+                to 180 sec.
+            retry {int} -- Number of retry when the Web API access fails, defaults to 3
+                times.
+            retry_wait_time {int} -- Waiting time [sec] until next query when the Web API
+                access fails, defaults to 5 sec.
         """
         assert endpoint in ['asdm', 'model-fit', 'interpolation'], \
             'The JyPerKDatabaseClient class requires one of endpoint: asdm, model-fit or interpolation'
@@ -483,7 +491,7 @@ class JyPerKDatabaseClient():
             raise RuntimeError(msg)
 
     def _check_retval(self, retval):
-        """ Check if 'success of retval is True.
+        """ Check if 'success' of retval dict is True.
 
         This method only checks if the api was able to complete the process successfully or not.
         It is expected that 'success' will be False as a response, so the mothod does not raise
@@ -538,7 +546,7 @@ class ASDMRspTranslator():
         """ Convert from the response to list with factor.
 
         Arguments:
-            spw (None)  -- This parameter is not used. It is provided to align the
+            spw {None}  -- This parameter is not used. It is provided to align the
                     calling method with other classes (InterpolationRspTranslator and
                     ModelFitRspTranslator).
 
@@ -564,6 +572,9 @@ class InterpolationRspTranslator():
         """ Convert from the response to list with factor.
 
         Arguments:
+            data_set {dict} -- The result of the Web API.
+            vis {str} -- The file path of the visibility data.
+            spw {str} -- Spectral windows.
         Returns:
             list -- List of Jy/K conversion factors with meta data.
         """
