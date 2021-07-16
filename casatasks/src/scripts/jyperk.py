@@ -43,10 +43,9 @@ def gen_factor_via_web_api(vis, endpoint='asdm', spw='*',
                                             factory = __jyperk_factory[endpoint],
                                             timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
 
-
 def __factor_creator_via_jy_per_k_db(endpoint='', vis=None, spw='*', 
-                               factory = None,
-                               timeout=180, retry=3, retry_wait_time=5):
+                                     factory = None,
+                                     timeout=180, retry=3, retry_wait_time=5):
         params_generator = factory[0]
         response_translator = factory[1]
         
