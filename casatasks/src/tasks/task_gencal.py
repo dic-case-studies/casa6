@@ -61,7 +61,6 @@ def gencal(vis=None, caltable=None, caltype=None, infile=None, endpoint='asdm',
     if not os.path.exists(vis):
         raise ValueError('Visibility data set not found - please verify the name')
 
-
     try:
         _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)
 
