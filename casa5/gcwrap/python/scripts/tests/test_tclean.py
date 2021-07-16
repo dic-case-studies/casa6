@@ -210,12 +210,16 @@ class testref_base(unittest.TestCase):
 
 ##Task level tests : one field, 2chan.
 class test_onefield(testref_base):
-     
+
      def test_onefield_defaults(self):
           """ [onefield] Test_Onefield_defaults : Defaults """
           self.prepData('refim_twochan.ms')
-          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',interactive=0,parallel=self.parallel)
-          report=self.th.checkall(imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'], imgval=[(self.img+'.psf', 1.0, [50,50,0,0])])
+          # use a more tricky imagename to exercise some special characters (see CAS-13464)
+          tricky_imagename = self.img + '_J2253+1608_ra_7h54m8_dec_-16:24:25.1'
+          ret = tclean(vis=self.msfile, imagename=tricky_imagename, imsize=100, cell='8.0arcsec',
+                       interactive=0, parallel=self.parallel)
+          exist_list = [tricky_imagename + ext for ext in ['.psf', '.residual', '.image', '.model', '.pb', '.sumwt']]
+          report=self.th.checkall(imgexist=exist_list, imgval=[(tricky_imagename+'.psf', 1.0, [50,50,0,0])])
           self.checkfinal(pstr=report)
 
      def test_onefield_clark(self):
