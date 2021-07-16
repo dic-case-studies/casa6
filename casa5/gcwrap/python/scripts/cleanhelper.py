@@ -3587,7 +3587,7 @@ def write_tclean_history(imagename, tname, params, clog):
             :returns: list of image names after filtering out undesired ones
             """
             accept = []
-            regex = re.compile('^' + imagename + '[0-9]*_?[0-9]*\..+')
+            regex = re.compile('^' + re.escape(imagename) + '[0-9]*_?[0-9]*\..+')
             for img in img_exts:
                 if img.endswith(('.cf', '.cfcache', '.workdirectory', '.work.temp', '.txt')):
                     continue
