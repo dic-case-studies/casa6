@@ -22,11 +22,10 @@ else:
     (_cb,) = gentools(['cb'])
 
 
-def gencal(vis=None, caltable=None, caltype=None, endpoint='asdm', infile=None,
+def gencal(vis=None, caltable=None, caltype=None, infile=None, endpoint='asdm',
+           timeout=180, retry=3, retry_wait_time=5,
            spw=None, antenna=None, pol=None,
-           parameter=None, uniform=None,
-           timeout=180, retry=3, retry_wait_time=5):
-
+           parameter=None, uniform=None):
     """Externally specify calibration solutions of various types.
 
     Arguments:
