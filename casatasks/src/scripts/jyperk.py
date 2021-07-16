@@ -92,13 +92,10 @@ class ASDMParamsGenerator():
         """ Convert MS name like 'uid___A002_Xabcd_X012 into uid://A002/Xabcd/X012'.
 
         Arguments:
-            vis {str} -- File path of MS
-
-        Raises:
-            RuntimeError:
+            vis {str} -- File path of MS.
 
         Returns:
-            str -- Corresponding ASDM uid
+            str -- Corresponding ASDM uid.
         """
         basename = os.path.basename(vis.rstrip('/'))
         pattern = '^uid___A[0-9][0-9][0-9]_X[0-9a-f]+_X[0-9a-f]+\.ms$'
@@ -510,7 +507,7 @@ class Translator():
              ['MS_name', 'antenna_name', 'spwid', 'pol string', 'factor']]
 
         Arguments:
-            factors {dict} -- Dictionary containing Jy/K factors with meta data
+            factors {dict} -- Dictionary containing Jy/K factors with meta data.
 
         Returns:
             list -- Formatted list of Jy/K factors.
