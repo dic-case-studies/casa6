@@ -350,12 +350,12 @@ class MeanElevation():
         elevations = []       
         qa = quanta()
 
-        with toolmanager(vis, msmetadata) as msmd:  
-            for row in rows: 
-                p = msmd.pointingdirection(row, initialrow=row) 
-                assert p['antenna1']['pointingdirection']['refer'].startswith('AZEL') 
-                el_deg = qa.convert(p['antenna1']['pointingdirection']['m1'], 'deg') 
-                elevations.append(el_deg['value']) 
+        with toolmanager(vis, msmetadata) as msmd:
+            for row in rows:
+                dirs = msmd.pointingdirection(row, initialrow=row)
+                assert dirs['antenna1']['pointingdirection']['refer'].startswith('AZEL')
+                el_deg = qa.convert(dirs['antenna1']['pointingdirection']['m1'], 'deg')
+                elevations.append(el_deg['value'])
 
         elevations = np.asarray(elevations)
         return elevations.mean()
