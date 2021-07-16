@@ -902,7 +902,7 @@ try{
           loopSolutionFound = false;
           retryCounter++;
           posAng = 1.0 + retryCounter*M_PI/nRetries;
-          os << LogIO::WARN << "Fit failed, another atempt will be made with position angle  " << posAng  << " rad." << LogIO::POST;
+          os << LogIO::NORMAL3 << "Fit failed, another atempt will be made with position angle  " << posAng  << " rad." << LogIO::POST;
       }
       converg=fitter.converged();
   }
