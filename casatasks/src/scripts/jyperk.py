@@ -474,7 +474,7 @@ class JyPerKDatabaseClient():
             sleep(self.retry_wait_time)
 
         if response_with_tag['status'] != 'Success':
-            RuntimeError(response_with_tag['err_msg'])
+            raise RuntimeError(response_with_tag['err_msg'])
 
     def _convert_to_json(self, response):
         try:
