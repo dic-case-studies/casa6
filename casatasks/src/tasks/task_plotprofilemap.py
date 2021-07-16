@@ -27,7 +27,7 @@ def plotprofilemap(imagename=None, figfile=None, overwrite=None, transparent=Non
                    showaxislabel=None, showtick=None, showticklabel=None,
                    figsize=None, numpanels=None):
 
-    if len(figfile) > 0 and os.path.exists(figfile) and overwrite is False:
+    if len(figfile) > 0 and os.path.exists(figfile) and overwrite:
         raise RuntimeError('overwrite is False and output file exists: \'%s\''%(figfile))
 
     image = SpectralImage(imagename)
