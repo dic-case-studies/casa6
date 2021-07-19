@@ -30,6 +30,7 @@ Current antenna-based gencal options (caltype) are:
 * 'eff' = Antenna efficiency (sqrt(K/Jy)) (VLA only)
 * 'gceff' = Gain curve and efficiency (VLA only)
 * 'tecim' = Time-dep TEC image specified in infile
+* 'jyperk'= Jy/K factor via Jy/K Web API
    </description>
    <input>
       <param type="string" name="vis" mustexist="true">
@@ -61,12 +62,12 @@ Current antenna-based gencal options (caltype) are:
       </param>
 
       <param type="string" name="caltype">
-<shortdescription>The calibration type: (amp, ph, sbd, mbd, antpos, antposvla, tsys, evlagain, opac, gc, gceff, eff, tecim)</shortdescription>
+<shortdescription>The calibration type: (amp, ph, sbd, mbd, antpos, antposvla, tsys, evlagain, opac, gc, gceff, eff, tecim, jyperk)</shortdescription>
 <description>The calibration parameter type being specified
                      Default: none
                      Options: 'amp', 'ph', 'sbd', 'mbd', 'antpos',
                      'antposvla', 'tsys', 'evlagain', 'opac', 'gc',
-                     'gceff', 'eff', 'tecim'
+                     'gceff', 'eff', 'tecim', 'jyperk'
 
                      * 'amp' = gain (G) amplitude (1 real parameter
                        per pol, antenna, spw)
@@ -94,6 +95,7 @@ Current antenna-based gencal options (caltype) are:
                      * 'gceff' = Gain curve and efficiency
                        (auto-lookup)
                      * 'eff' = Antenna efficiency (auto-lookup)
+                     * 'jyperk' = Jy/K factor via Jy/K Web API
 
                         Example: caltype='ph'
 </description>
@@ -115,6 +117,7 @@ Current antenna-based gencal options (caltype) are:
                             <value>gceff</value>
                             <value>eff</value>
                             <value>tecim</value>
+                            <value>jyperk</value>
                         </allowed>
       </param>
 
