@@ -29,7 +29,7 @@ Current antenna-based gencal options (caltype) are:
 * 'eff' = Antenna efficiency (sqrt(K/Jy)) (VLA only)
 * 'gceff' = Gain curve and efficiency (VLA only)
 * 'tecim' = Time-dep TEC image specified in infile
-* 'jyperk'= Jy/K factor via Jy/K Web API
+* 'jyperk'= Jy/K factor via Jy/K DB Web API
 </description>
 <input>
    <param type="string" name="vis" mustexist="true">
@@ -94,7 +94,7 @@ Current antenna-based gencal options (caltype) are:
                      * 'gceff' = Gain curve and efficiency
                         (auto-lookup)
                      * 'eff' = Antenna efficiency (auto-lookup)
-                     * 'jyperk' = Jy/K factor via Jy/K Web API
+                     * 'jyperk' = Jy/K factor via Jy/K DB Web API
 
                         Example: caltype='ph'
       </description>
@@ -124,7 +124,7 @@ Current antenna-based gencal options (caltype) are:
    <param type="string" name="infile" subparam="true">
       <shortdescription>Input ancilliary file</shortdescription>
       <description>Input ancilliary file
-               Subparameter of caltype='gc|gceff|tecim'
+               Subparameter of caltype='gc|gceff|tecim|jyperk'
                Default: none
       </description>
       <value></value>
@@ -211,6 +211,45 @@ Current antenna-based gencal options (caltype) are:
       <value>True</value>
    </param>
 
+   <param type="string" name="endpoint" subparam="true">
+      <shortdescription>Endpoint of Jy/K DB Web API</shortdescription>
+      <description>Specifies which Jy/K DB Web API to access. Options are 'asdm' (default), 'model-fit', 'interpolation'.
+
+                     Subparameter of caltype='jyperk'
+                     Default: 'asdm'
+      </description>
+      <value></value>
+   </param>
+
+   <param type="string" name="timeout" subparam="true">
+      <shortdescription>Maximum waiting time for web API access</shortdescription>
+      <description>Specifies maximum waiting time [sec] for web API access, defaults to 180 sec.
+
+                     Subparameter of caltype='jyperk'
+                     Default: 180
+      </description>
+      <value></value>
+   </param>
+
+   <param type="string" name="retry" subparam="true">
+      <shortdescription>Number of retry when web API access fails</shortdescription>
+      <description>Specifies number of retry when web API access fails, defaults to 3 times.
+
+                     Subparameter of caltype='jyperk'
+                     Default: 3
+      </description>
+      <value></value>
+   </param>
+
+      <param type="string" name="retry_wait_time" subparam="true">
+      <shortdescription>waiting time until next query when Web API access fails</shortdescription>
+      <description>Specifies waiting time [sec] until next query when Web API access fails, defaults to 5 sec.
+
+                     Subparameter of caltype='jyperk'
+                     Default: 5
+      </description>
+      <value></value>
+   </param>
 
    <constraints>
       <when param="caltype">
@@ -232,6 +271,23 @@ Current antenna-based gencal options (caltype) are:
          <equals value="tsys">
             <default param="uniform">
                <value type="bool">True</value>
+            </default>
+         </equals>
+         <equals value="jyperk">
+            <default param="endpoint">
+               <value type="string"></value>
+            </default>
+            <default param="timeout">
+               <value type="string"></value>
+            </default>
+            <default param="retry">
+               <value type="string"></value>
+            </default>
+            <default param="retry_wait_time">
+               <value type="string"></value>
+            </default>
+            <default param="infile">
+               <value type="string"></value>
             </default>
          </equals>
       </when>
