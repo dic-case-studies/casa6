@@ -37,6 +37,14 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                outfile=None, overwrite=None):
 
     try:
+        # CAS-12985 requests the following params be given case insensitively,
+        # so they need to be converted to lowercase here (2021/1/28 WK)
+        blfunc = blfunc.lower()
+        blmode = blmode.lower()
+        fftmethod = fftmethod.lower()
+        if isinstance(fftthresh, str):
+            fftthresh = fftthresh.lower()
+
         if not os.path.exists(infile):
             raise Exception("infile='" + str(infile) + "' does not exist.")
         if (outfile == '') or not isinstance(outfile, str):
@@ -286,8 +294,9 @@ def normalise_bloutput(infile, blformat, bloutput, overwrite):
 
 def get_normalised_name(infile, blformat, bloutput, name, ext, overwrite):
     fname = ''
-    if (name in blformat):
-        fname = bloutput[blformat.index(name)]
+    blformat_lower = [s.lower() for s in blformat]
+    if (name in blformat_lower):
+        fname = bloutput[blformat_lower.index(name)]
         if (fname == ''):
             fname = infile + '_blparam.' + ext
     if os.path.exists(fname):
