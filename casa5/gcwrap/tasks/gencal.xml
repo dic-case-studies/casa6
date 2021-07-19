@@ -124,12 +124,52 @@ Current antenna-based gencal options (caltype) are:
    <param type="string" name="infile" subparam="true">
       <shortdescription>Input ancilliary file</shortdescription>
       <description>Input ancilliary file
-               Subparameter of caltype='gc|gceff|tecim|jyperk'
-               Default: none
+
+                     Subparameter of caltype='gc|gceff|tecim|jyperk'
+                     Default: none
       </description>
       <value></value>
    </param>
 
+   <param type="string" name="endpoint" subparam="true">
+      <shortdescription>Endpoint of Jy/K DB Web API</shortdescription>
+      <description>Specifies which Jy/K DB Web API to access. Options are 'asdm' (default), 'model-fit', 'interpolation'.
+
+                     Subparameter of caltype='jyperk'
+                     Default: 'asdm'
+      </description>
+      <value>asdm</value>
+   </param>
+
+   <param type="string" name="timeout" subparam="true">
+      <shortdescription>Maximum waiting time for web API access</shortdescription>
+      <description>Specifies maximum waiting time [sec] for web API access, defaults to 180 sec.
+
+                     Subparameter of caltype='jyperk'
+                     Default: 180
+      </description>
+      <value>180</value>
+   </param>
+
+   <param type="string" name="retry" subparam="true">
+      <shortdescription>Number of retry when web API access fails</shortdescription>
+      <description>Specifies number of retry when web API access fails, defaults to 3 times.
+
+                     Subparameter of caltype='jyperk'
+                     Default: 3
+      </description>
+      <value>3</value>
+   </param>
+
+      <param type="string" name="retry_wait_time" subparam="true">
+      <shortdescription>waiting time until next query when Web API access fails</shortdescription>
+      <description>Specifies waiting time [sec] until next query when Web API access fails, defaults to 5 sec.
+
+                     Subparameter of caltype='jyperk'
+                     Default: 5
+      </description>
+      <value>5</value>
+   </param>
 
    <param type="string" name="spw">
       <shortdescription>Select spectral window/channels</shortdescription>
@@ -211,46 +251,6 @@ Current antenna-based gencal options (caltype) are:
       <value>True</value>
    </param>
 
-   <param type="string" name="endpoint" subparam="true">
-      <shortdescription>Endpoint of Jy/K DB Web API</shortdescription>
-      <description>Specifies which Jy/K DB Web API to access. Options are 'asdm' (default), 'model-fit', 'interpolation'.
-
-                     Subparameter of caltype='jyperk'
-                     Default: 'asdm'
-      </description>
-      <value></value>
-   </param>
-
-   <param type="string" name="timeout" subparam="true">
-      <shortdescription>Maximum waiting time for web API access</shortdescription>
-      <description>Specifies maximum waiting time [sec] for web API access, defaults to 180 sec.
-
-                     Subparameter of caltype='jyperk'
-                     Default: 180
-      </description>
-      <value></value>
-   </param>
-
-   <param type="string" name="retry" subparam="true">
-      <shortdescription>Number of retry when web API access fails</shortdescription>
-      <description>Specifies number of retry when web API access fails, defaults to 3 times.
-
-                     Subparameter of caltype='jyperk'
-                     Default: 3
-      </description>
-      <value></value>
-   </param>
-
-      <param type="string" name="retry_wait_time" subparam="true">
-      <shortdescription>waiting time until next query when Web API access fails</shortdescription>
-      <description>Specifies waiting time [sec] until next query when Web API access fails, defaults to 5 sec.
-
-                     Subparameter of caltype='jyperk'
-                     Default: 5
-      </description>
-      <value></value>
-   </param>
-
    <constraints>
       <when param="caltype">
          <equals value="tecim">
@@ -275,16 +275,16 @@ Current antenna-based gencal options (caltype) are:
          </equals>
          <equals value="jyperk">
             <default param="endpoint">
-               <value type="string"></value>
+               <value type="string">asdm</value>
             </default>
             <default param="timeout">
-               <value type="string"></value>
+               <value type="int">180</value>
             </default>
             <default param="retry">
-               <value type="string"></value>
+               <value type="int">3</value>
             </default>
             <default param="retry_wait_time">
-               <value type="string"></value>
+               <value type="int">5</value>
             </default>
             <default param="infile">
                <value type="string"></value>
