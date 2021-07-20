@@ -526,7 +526,7 @@ def run(testnames):
                         if verbose:
                             cmd = ["--verbose"] + ["--tb=short"] + cmd
                         elif not verbose:
-                            cmd = ["-ra"] + ["--tb=line"] + cmd
+                            cmd = ["-ra"] + ["--tb=short"] + cmd
 
                         if DRY_RUN:
                             cmd = ["--collect-only"] + cmd
@@ -602,7 +602,7 @@ def run(testnames):
                         if verbose:
                             cmd = ["--verbose"] + ["--tb=short"] + cmd
                         elif not verbose:
-                            cmd = ["-ra"] + ["--tb=line"] + cmd
+                            cmd = ["-ra"] + ["--tb=short"] + cmd
 
 
                         if DRY_RUN:
