@@ -274,6 +274,9 @@ Current antenna-based gencal options (caltype) are:
             </default>
          </equals>
          <equals value="jyperk">
+            <default param="infile">
+               <value type="string"></value>
+            </default>
             <default param="endpoint">
                <value type="string">asdm</value>
             </default>
@@ -285,9 +288,6 @@ Current antenna-based gencal options (caltype) are:
             </default>
             <default param="retry_wait_time">
                <value type="int">5</value>
-            </default>
-            <default param="infile">
-               <value type="string"></value>
             </default>
          </equals>
       </when>
