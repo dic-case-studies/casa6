@@ -466,7 +466,7 @@ class sdsmooth_test_boxcar(sdsmooth_test_base):
             result = sdsmooth(infile=self.infile, outfile=self.outfile,
                                datacolumn=datacolumn, overwrite=True,
                                kernel='boxcar', kwidth = kwidth)
-            with sdutil.tbmanager(self.outfile) as tb:
+            with table_manager(self.outfile) as tb:
                 for irow in range(tb.nrows()):
                     spec = tb.getcell(datacolumn.upper(), irow)
                     for ipol in range(len(spec)):
