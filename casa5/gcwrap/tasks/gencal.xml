@@ -132,6 +132,19 @@ Current antenna-based gencal options (caltype) are:
                      that gives the Jy/K conversion factor.
 
                         Example: infile='jyperk.csv'
+                        The infile format must be in an CSV format with five fields:
+                        MS name, antenna name, spectral window id, polarization
+                        string, and Jy/K conversion factor. Example for the file is
+                        as follows:
+
+                        MS,Antenna,Spwid,Polarization,Factor
+                        uid___A002_X316307_X6f.ms,CM03,5,XX,10.0
+                        uid___A002_X316307_X6f.ms,CM03,5,YY,12.0
+                        uid___A002_X316307_X6f.ms,PM04,5,XX,2.0
+                        uid___A002_X316307_X6f.ms,PM04,5,YY,5.0
+
+                        The first line in the above example is a header which may or
+                        may not exist. 
       </description>
       <value></value>
    </param>
