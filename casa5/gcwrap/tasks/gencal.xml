@@ -18,7 +18,7 @@ Current antenna-based gencal options (caltype) are:
 * 'sbd'= single-band delay (phase-frequency slope for each spw)
 * 'mbd'= multi-band delay (phase-frequency slope over all spw)
 * 'antpos' = ITRF antenna position corrections
-* 'antposvla' = VLA-centric antenna position corrections 
+* 'antposvla' = VLA-centric antenna position corrections
 * 'tsys' = Tsys from the SYSCAL table (ALMA)
 * 'swpow' = EVLA switched-power gains (experimental)
 * 'evlagain' (='swpow') (this syntax will deprecate)
