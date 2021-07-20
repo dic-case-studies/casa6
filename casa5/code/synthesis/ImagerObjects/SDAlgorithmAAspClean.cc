@@ -95,9 +95,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     // get psf for each channel
     if (itsMCsetup)
     {
-      Matrix<Float> tempMat(itsMatPsf); // genie this seems wrong
-      /*Matrix<Float> tempMat;
-      tempMat.reference(itsMatPsf);*/
+      Matrix<Float> tempMat(itsMatPsf);
       itsCleaner.setPsf(tempMat);
       // Initial scales are unchanged and only need to be
       // computed when psf width is updated
@@ -130,12 +128,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsCleaner.setInitScaleMasks(itsMatMask);
     itsCleaner.setaspcontrol(0, 0, 0, Quantity(0.0, "%"));/// Needs to come before the rest
 
-    //Matrix<Float> tempMat1(itsMatResidual); genie this seems wrong
     Matrix<Float> tempMat1;
     tempMat1.reference(itsMatResidual);
     itsCleaner.setDirty( tempMat1 );
-    cout << "initDeconvolver called, dirty[256,231] " << tempMat1(256,231) << endl;
-
     // InitScaleXfrs and InitScaleMasks should already be set
     itsScaleSizes.clear();
     itsScaleSizes = itsCleaner.getActiveSetAspen();
@@ -187,10 +182,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
   void SDAlgorithmAAspClean::finalizeDeconvolver()
   {
-    Matrix<Float> tempMat;
-    tempMat.reference(itsMatResidual);
-    cout << "finalizeDeconvolver called, dirty[256,231] " << tempMat(256,231) << endl;
-
     (itsImages->residual())->put( itsMatResidual );
     (itsImages->model())->put( itsMatModel );
   }

@@ -71,7 +71,7 @@ public:
   // calculate the convolutions of the psf with the initial scales
   void setInitScalePsfs();
 
-  casacore::Bool setInitScaleMasks(const casacore::Array<casacore::Float> arrmask, const casacore::Float& maskThreshold = 0.9);
+  casacore::Bool setInitScaleMasks(const casacore::Array<casacore::Float> arrmask, const casacore::Float& maskThreshold = 0.99);
 
   void maxDirtyConvInitScales(float& strengthOptimum, int& optimumScale, casacore::IPosition& positionOptimum);
 
@@ -83,7 +83,7 @@ public:
 
   void switchedToHogbom();
   void setOrigDirty(const casacore::Matrix<casacore::Float>& dirty);
-  void setFusedThreshold(const casacore::Float fusedThreshold = 0.0) { itsFusedThreshold = fusedThreshold; itsUpdatedFusedThreshold = fusedThreshold; }
+  void setFusedThreshold(const casacore::Float fusedThreshold = 0.0) { itsFusedThreshold = fusedThreshold; }
 
   // setter/getter
   float getterPsfWidth() { return itsPsfWidth; }
@@ -169,12 +169,8 @@ private:
   const casacore::Int itsDefaultNorm = 1;
   casacore::Int itsNormMethod;
   casacore::Float itsFusedThreshold;
-  casacore::Float itsUpdatedFusedThreshold;
-  casacore::Int itsNthCycle;
-  casacore::Int itsBinSizeForSumFlux ;   // number of bins for histogram of the sum of Flux 
+  casacore::Int itsBinSizeForSumFlux ;   // number of bins for histogram of the sum of Flux
   unsigned int itsNumNoChange; // number of times peakres rarely changes
-  unsigned int itsTotalNumNoChange; // total number of times peakres rarely changes
-  unsigned int respeated;
 };
 
 } //# NAMESPACE CASA - END

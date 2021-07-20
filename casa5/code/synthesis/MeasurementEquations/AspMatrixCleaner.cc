@@ -206,7 +206,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       }
     }
 
-    if (!itsIgnoreCenterBox)
+    if (!itsIgnoreCenterBox) // this is false
     {
       if((xend - xbeg)>nx/2)
       {
@@ -288,9 +288,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     itsIteration++;
 
     // make single optimized scale image
-    // os << LogIO::NORMAL3<<"Making optimized scale " << itsOptimumScaleSize << LogIO::POST;
-
-    //cout << "ItsMaxNiter: " << itsMaxNiter << endl;
+    // os << LogIO::NORMAL3 << "Making optimized scale " << itsOptimumScaleSize << " at location " << itsPositionOptimum << LogIO::POST;
 
     if (itsSwitchedToHogbom)
     {
@@ -434,6 +432,8 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     if((abs(itsStrengthOptimum)-abs(tmpMaximumResidual)) > (abs(tmpMaximumResidual)/2.0))
     {
       os <<LogIO::NORMAL3 << "Diverging due to unknown reason" << LogIO::POST;
+      os <<LogIO::NORMAL3 << "tmpMaximumResidual " << abs(tmpMaximumResidual) << " itsStrengthOptimum " << abs(itsStrengthOptimum) << LogIO::POST;
+
       converged=-3;
       break;
     }
@@ -444,7 +444,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     {
       //Good place to re-up the fiducial maximum residual
       //tmpMaximumResidual=abs(itsStrengthOptimum);
-      os <<LogIO::NORMAL3 << itsIteration <<"      "<<itsStrengthOptimum<<"      "
+      os <<LogIO::NORMAL3 << itsIteration <<"      "<< abs(itsPeakResidual) <<"      "
          << totalFlux <<LogIO::POST;
     }
 
@@ -459,7 +459,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     LCBox::verify(blc, trc, inc, model.shape());
     IPosition blcPsf(blc);
     IPosition trcPsf(trc);
-    //blcDirty = blc;
+    //blcDirty = blc;  // update blcDirty/trcDirty is bad for Asp
     //trcDirty = trc;
 
     // Update the model image
@@ -612,19 +612,19 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     defineAspScales(tempScaleSizes);
   }
   // End of iteration
-   
+
    vector<Float> sumFluxByBins(itsBinSizeForSumFlux,0.0);
    vector<Float> rangeFluxByBins(itsBinSizeForSumFlux+1,0.0);
 
    getFluxByBins(vecItsOptimumScaleSize,vecItsStrengthOptimum,itsBinSizeForSumFlux,sumFluxByBins,rangeFluxByBins);
 
 
-  
+
   os << " The number of bins for collecting the sum of Flux: " << itsBinSizeForSumFlux << endl;
 
   for (Int ii = 0; ii < itsBinSizeForSumFlux ; ii++)
   {
-    os << " Bin " << ii << "(" << rangeFluxByBins[ii] * itsGain << " , " << rangeFluxByBins[ii+1] * itsGain << "). Sum of Flux : " << sumFluxByBins[ii] * itsGain << LogIO :: POST;  
+    os << " Bin " << ii << "(" << rangeFluxByBins[ii] * itsGain << " , " << rangeFluxByBins[ii+1] * itsGain << "). Sum of Flux : " << sumFluxByBins[ii] * itsGain << LogIO :: POST;
   }
 
   // memory used
@@ -962,7 +962,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 {
   LogIO os(LogOrigin("AspMatrixCleaner", "maxDirtyConvInitScales()", WHERE));
 
-  /* It seems we don't need the following to define a region. Using minMaxMasked should be sufficient.
+  // /* We still need the following to define a region. Using minMaxMasked itself is NOT sufficient and results in components outside of mask.
 
   const int nx = itsDirty->shape()[0];
   const int ny = itsDirty->shape()[1];
@@ -1015,7 +1015,8 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     trcDirty(1)=yend;
   }
   else
-    os << LogIO::NORMAL << "Finding initial scales using the entire image" << LogIO::POST;*/
+    os << LogIO::NORMAL << "Finding initial scales using the entire image" << LogIO::POST;  //*/
+
 
   Vector<Float> maxima(itsNInitScales);
   Block<IPosition> posMaximum(itsNInitScales);
@@ -1038,9 +1039,19 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     cout << "orig itsDirty : min " << minVal << " max " << maxVal << endl;
     cout << "posmin " << posmin << " posmax " << posmax << endl; */
 
+    IPosition gip;
+    gip = IPosition(2, nx, ny);
+    Block<casacore::Matrix<Float>> vecWork_p;
+    vecWork_p.resize(itsNInitScales);
+
     for (int scale = 0; scale < itsNInitScales; ++scale)
     {
-      // Find absolute maximum for the dirty image
+      // Find absolute maximum of each smoothed residual
+      vecWork_p[scale].resize(gip);
+      Matrix<Float> work = (vecWork_p[scale])(blcDirty,trcDirty);
+      work = 0.0;
+      work = work + (itsDirtyConvInitScales[scale])(blcDirty,trcDirty);
+
       maxima(scale) = 0;
       posMaximum[scale] = IPosition(itsDirty->shape().nelements(), 0);
 
@@ -1053,13 +1064,14 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
       cout << "DirtyConvInitScale " << scale << ": min " << minVal << " max " << maxVal << endl;
       cout << "posmin " << posmin << " posmax " << posmax << endl; */
 
+      // Note, must find peak from the (blcDirty, trcDirty) subregion to ensure components are within mask
       if (!itsMask.null())
       {
-        findMaxAbsMask(itsDirtyConvInitScales[scale], itsInitScaleMasks[scale],
+        findMaxAbsMask(vecWork_p[scale], itsInitScaleMasks[scale],
           maxima(scale), posMaximum[scale]);
       }
       else
-        findMaxAbs(itsDirtyConvInitScales[scale], maxima(scale), posMaximum[scale]);
+        findMaxAbs(vecWork_p[scale], maxima(scale), posMaximum[scale]);
 
       if (itsNormMethod == 2)
       {
@@ -1205,11 +1217,20 @@ vector<Float> AspMatrixCleaner::getActiveSetAspen()
 	  //double *x1 = x.getcontent();
 	  //cout << "x1[0] " << x1[0] << " x1[1] " << x1[1] << endl;
 
-	  // end alglib bfgsoptimization
+	  // end alglib bfgs optimization
 
     double amp = x[0]; // i
     double scale = x[1]; // i+1
-    scale = (scale = fabs(scale)) < 0.4 ? 0 : scale;
+
+    if (fabs(scale) < 0.4)
+    {
+      scale = 0;
+      amp = (*itsDirty)(itsPositionOptimum); // This is to avoid divergence due to amp being too large.
+                                             // amp=strengthOptimum gives similar results
+    }
+    else
+      scale = fabs(scale);
+
     itsGoodAspAmplitude.push_back(amp); // active-set amplitude
     itsGoodAspActiveSet.push_back(scale); // active-set
 
@@ -1501,11 +1522,11 @@ void AspMatrixCleaner::setOrigDirty(const Matrix<Float>& dirty){
 
 
 void AspMatrixCleaner::getFluxByBins(const vector<Float>& scaleSizes,const vector<Float>& optimum, Int binSize, vector<Float>&  sumFluxByBins,vector<Float>& rangeFluxByBins) {
-  
+
   double maxScaleSize = *std::max_element(scaleSizes.begin(),scaleSizes.end());
   double minScaleSize = *std::min_element(scaleSizes.begin(),scaleSizes.end());
   double deltaScale = (maxScaleSize-minScaleSize) / binSize;
- 
+
 
   for(Int j=0; j < binSize+1; j++)
   {
