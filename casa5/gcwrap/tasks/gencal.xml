@@ -127,6 +127,11 @@ Current antenna-based gencal options (caltype) are:
 
                      Subparameter of caltype='gc|gceff|tecim|jyperk'
                      Default: none
+
+                     If caltype is 'jyperk', it is interpreted as a file
+                     that gives the Jy/K conversion factor.
+
+                        Example: infile = 'jyperk.csv'
       </description>
       <value></value>
    </param>
