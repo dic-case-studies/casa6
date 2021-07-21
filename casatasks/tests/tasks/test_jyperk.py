@@ -3,7 +3,7 @@ import shutil
 import unittest
 from unitetst import mock, MagicMock, patch
 
-from tasks import jyperk
+from casatasks.private import jyperk
 
 
 class TestJyPerKReader4File(unittest.TestCase):
