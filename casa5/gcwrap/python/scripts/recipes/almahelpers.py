@@ -8,6 +8,8 @@
 #  v1.2 (gmoellen; 2013Apr09) Added fixsyscaltimes and calantsub methods
 #                             to handle Tsys irregularities
 #  v1.3 (dpetry; 2017Sept11) Added genImageName
+#  v1.4 (gmoellen; 2021Jul08) fixsyscaltimes now returns True if a fix
+#                             was applied, otherwise returns False
 #
 # This script defines several functions useful for ALMA data processing.
 #
@@ -216,6 +218,9 @@ def fixsyscaltimes(vis,newinterval=2.0):
 
     spws=mypl.unique(mytb.getcol("SPECTRAL_WINDOW_ID"))
 
+    # Nominally, no fix applied
+    fixapplied=False
+
     for ispw in spws:
         st=mytb.query('SPECTRAL_WINDOW_ID=='+str(ispw),name='byspw')
         times=st.getcol('TIME')
@@ -234,6 +239,9 @@ def fixsyscaltimes(vis,newinterval=2.0):
             print msg
 
         else:
+            # If we reach here, then a fix is being applied, and we'll return True
+            fixapplied=True
+
             msg+=' which is too many, so fixing it:'
             print msg 
 
@@ -256,6 +264,14 @@ def fixsyscaltimes(vis,newinterval=2.0):
                     print msg
         st.close()
     mytb.close()
+
+    if fixapplied:
+        print('Some SYSCAL time corrections have been applied.')
+    else:
+        print('All SYSCAL times seem correct; no changes required.')
+
+    # Return if a fix has been applied
+    return fixapplied
 
 
 def calantsub(incaltable,outcaltable='',
