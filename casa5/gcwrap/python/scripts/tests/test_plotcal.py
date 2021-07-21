@@ -10,7 +10,7 @@ import sha
 import time
 
 # Paths for data
-datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/"
+datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata//unittest/plotcal/"
 
 # Read the data sets from another directory
 if os.environ.has_key('TEST_DATADIR'):  
@@ -24,14 +24,14 @@ print 'plotcal tests will use data from '+datapath
 
 class plotcal_test_base(unittest.TestCase):
 
-    Btabledir = '/bandpass/'
+#    Btabledir = '/bandpass/'
     Btable  = 'ngc5921.ref1a.bcal'
     Bms  = 'ngc5921.ms'
-    Gtabledir = '/gaincal/'
+#    Gtabledir = '/gaincal/'
     Gtable  = "ngc5921.ref1a.gcal"
-    Ttabledir = "/wvrgcal/input/"
+#    Ttabledir = "/wvrgcal/input/"
     Ttable  = "wvrgcalctest.W"
-    TSYStabledir = "/flagdata/"
+#    TSYStabledir = "/flagdata/"
     TSYStable  = "X7ef.tsys"
     fig = "/tmp/testplotcal.png"
 
@@ -42,27 +42,27 @@ class plotcal_test_base(unittest.TestCase):
     def setUpBtable(self):
         if (os.path.exists(self.Btable)):
             shutil.rmtree(self.Btable)
-        shutil.copytree(datapath+self.Btabledir+self.Btable, self.Btable)
+        shutil.copytree(datapath+self.Btable, self.Btable)
 
     def setUpGtable(self):
         if (os.path.exists(self.Gtable)):
             shutil.rmtree(self.Gtable)
-        shutil.copytree(datapath+self.Gtabledir+self.Gtable, self.Gtable)
+        shutil.copytree(datapath+self.Gtable, self.Gtable)
 
     def setUpTtable(self):
         if (os.path.exists(self.Ttable)):
             shutil.rmtree(self.Ttable)
-        shutil.copytree(datapath+self.Ttabledir+self.Ttable, self.Ttable)
+        shutil.copytree(datapath+self.Ttable, self.Ttable)
 
     def setUpTSYStable(self):
         if (os.path.exists(self.TSYStable)):
             shutil.rmtree(self.TSYStable)
-        shutil.copytree(datapath+self.TSYStabledir+self.TSYStable, self.TSYStable)
+        shutil.copytree(datapath+self.TSYStable, self.TSYStable)
 
     def setUpBms(self):
         if (os.path.exists(self.Bms)):
             shutil.rmtree(self.Bms)
-        shutil.copytree(datapath+self.Btabledir+self.Bms, self.Bms)
+        shutil.copytree(datapath+self.Bms, self.Bms)
 
     def tearDown(self):
         self.removePlotfile()

@@ -46,7 +46,6 @@
 #
 ###########################################################################
 from __future__ import absolute_import
-from __future__ import print_function
 
 CASA6 = False
 import string
@@ -56,6 +55,9 @@ import unittest
 import hashlib
 import subprocess
 import shutil
+import copy
+import numpy as np
+from casatestutils.compare import compare_dictionaries
 
 from casatasks.private.casa_transition import *
 
@@ -72,46 +74,15 @@ except ImportError:
     from taskinit import *
 
 # If the test is being run in CASA6 use the new method to get the CASA path
-if CASA6:
-    ### for listing import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    import listing as lt
 
-else:
-    import listing as lt
+from casatestutils import listing as lt
 
     # Generate the test data
 
 if CASA6:
-    mesSet = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms')
-    # Data for old test
-    msfile1Orig = casatools.ctsys.resolve('visibilities/vla/ngc5921_ut.ms')
-    msfile2Orig = casatools.ctsys.resolve('visibilities/alma/uid___X02_X3d737_X1_01_small.ms')
-    nep = casatools.ctsys.resolve('visibilities/alma/nep2-shrunk.ms')
-    # datapath for ref files
-    datapath = casatools.ctsys.resolve('text/')
+    datapath = casatools.ctsys.resolve('unittest/listobs/')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[
-                          0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'):
-        mesSet = os.environ.get('CASAPATH').split()[
-                     0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
-        # Data for old test
-        msfile1Orig = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921_ut.ms'
-        msfile2Orig = os.environ.get('CASAPATH').split()[
-                          0] + '/data/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
-        nep = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'
-        # datapath for ref files
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/'
-    else:
-        mesSet = os.environ.get('CASAPATH').split()[
-                     0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
-        # Data for old test
-        msfile1Orig = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921_ut.ms'
-        msfile2Orig = os.environ.get('CASAPATH').split()[
-                          0] + '/casa-data-req/visibilities/alma/uid___X02_X3d737_X1_01_small.ms'
-        nep = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/nep2-shrunk.ms'
-        # datapath for ref files
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listobs/'
 
 # This is for tests that check what the parameter validator does when parameters are
 # given wrong types - these don't exercise the task but the parameter validator!
@@ -122,6 +93,17 @@ else:
 
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     validator_exc_type = RuntimeError
+
+# Input data
+mesSet = os.path.join(datapath,'uid___X02_X3d737_X1_01_small.ms')
+# Data for old test
+msfile1Orig = os.path.join(datapath,'ngc5921_ut.ms')
+msfile2Orig = os.path.join(datapath,'uid___X02_X3d737_X1_01_small.ms')
+nep = os.path.join(datapath,'nep2-shrunk.ms')
+msfile1 = 'ngc5921_ut.ms'
+msfile2 = 'uid___X02_X3d737_X1_01_small.ms'
+msfile3 = os.path.join(datapath, 'CAS-6733.ms')
+
 
 outvis = 'genmms.mms'
 if not os.path.exists(outvis):
@@ -139,12 +121,9 @@ if not os.path.exists(outvis):
 timeavg_mms = outvis
 
 logpath = casalog.logfile()
-# Old test input and output names
-msfile1 = 'ngc5921_ut.ms'
-msfile2 = 'uid___X02_X3d737_X1_01_small.ms'
 # nep = 'nep2-shrunk.ms'
 # Old reffiles
-reffile = os.path.join(datapath, 'reflistobs')
+reffile = os.path.join(datapath, 'listobs_reference/reflistobs')
 
 
 def _sha1it(filename):
@@ -160,6 +139,67 @@ def _sha1it(filename):
 
 class listobs_test_base(unittest.TestCase):
 
+    ref_return = {}
+    ref_return_base =\
+            {'BeginTime': 55248.126073333326,
+             'EndTime': 55248.130800000006,
+             'IntegrationTime': 408.38400173187256,
+             'field_0': {'code': 'none',
+                         'direction': {'m0': {'unit': 'rad', 'value': 1.4433872913993107},
+                                       'm1': {'unit': 'rad', 'value': 0.2361430477948328},
+                                       'refer': 'J2000',
+                                       'type': 'direction'},
+                         'name': 'J0530+135'},
+             'field_1': {'code': 'none',
+                         'direction': {'m0': {'unit': 'rad', 'value': 0.0},
+                                       'm1': {'unit': 'rad', 'value': 0.0},
+                                       'refer': 'J2000',
+                                       'type': 'direction'},
+                         'name': 'Mars'},
+             'field_2': {'code': 'none',
+                         'direction': {'m0': {'unit': 'rad', 'value': 1.6056810952191334},
+                                       'm1': {'unit': 'rad', 'value': -0.14975884913199947},
+                                       'refer': 'J2000',
+                                       'type': 'direction'},
+                         'name': 'J0607-085'},
+             'nfields': 3,
+             'numrecords': 1080,
+             'scan_1': {'0': {'BeginTime': 55248.126073333326,
+                              'EndTime': 55248.12846666667,
+                              'FieldId': 0,
+                              'FieldName': 'J0530+135',
+                              'IntegrationTime': 3.0240000000000187,
+                              'SpwIds': np.array([0, 1], dtype=np.int32),
+                              'StateId': 0,
+                              'nRow': 600,
+                              'scanId': 1}},
+             'scan_2': {'0': {'BeginTime': 55248.12877055556,
+                              'EndTime': 55248.13014111111,
+                              'FieldId': 1,
+                              'FieldName': 'Mars',
+                              'IntegrationTime': 3.023999999999993,
+                              'SpwIds': np.array([0, 1], dtype=np.int32),
+                              'StateId': 5,
+                              'nRow': 360,
+                              'scanId': 2}},
+             'scan_3': {'0': {'BeginTime': 55248.130450000004,
+                              'EndTime': 55248.130800000006,
+                              'FieldId': 2,
+                              'FieldName': 'J0607-085',
+                              'IntegrationTime': 3.024000000000007,
+                              'SpwIds': np.array([0, 1], dtype=np.int32),
+                              'StateId': 8,
+                              'nRow': 120,
+                              'scanId': 3}},
+             'timeref': 'UTC'}
+    ref_return['uid___X02_X3d737_X1_01_small.ms'] = ref_return_base
+    # Numerical differences in MMS
+    ref_return['genmms.mms'] = copy.deepcopy(ref_return_base)
+    ref_return['genmms.mms']['scan_1']['0']['IntegrationTime'] = 3.0240000000000475
+    ref_return['genmms.mms']['scan_2']['0']['IntegrationTime'] = 3.023999999999984
+    ref_return['gentimeavgms.ms'] = ref_return_base
+    ref_return['gentimeavgmms.mms'] = ref_return['genmms.mms']
+
     def setUp(self):
         if not CASA6:
             default(listobs)
@@ -170,13 +210,26 @@ class listobs_test_base(unittest.TestCase):
         os.system('rm -rf testlog.log')
         casalog.setlogfile(str(logpath))
 
-    def filefunc(self, dataset, filename):
-        listobs(vis=dataset, listfile=filename)
-        self.assertTrue(os.path.isfile('listobs.txt'))
+    def check_return_dict(self, result, dataset):
+        """
+        Ensure the dictionary returned from listobs is as expected.
+        @param result: result dictionary from a listob execution
+        @param dataset: dataset/vis name
+        """
 
-    def logreadfunc(self, dataset):
+        filename = os.path.basename(dataset)
+        # See CAS-13170. Ref values come from RHEL. There are differences ~10-16 on Mac
+        self.assertTrue(compare_dictionaries(result, self.ref_return[filename], rtol=1e-13,
+                                             atol=1e-13))
+
+    def check_file_plus_dict(self, dataset, filename):
+        res = listobs(vis=dataset, listfile=filename)
+        self.assertTrue(os.path.isfile('listobs.txt'))
+        self.check_return_dict(res, dataset)
+
+    def check_logread_plus_dict(self, dataset):
         casalog.setlogfile('testlog.log')
-        listobs(vis=dataset)
+        res = listobs(vis=dataset)
         casalog.setlogfile(logpath)
 
         if sys.version_info[0] == 3:
@@ -195,10 +248,13 @@ class listobs_test_base(unittest.TestCase):
                     except:
                         self.fail()
 
-    def logfilecontain(self, dataset):
+        self.check_return_dict(res, dataset)
+
+    def check_logfilecontain_plus_dict(self, dataset):
         casalog.setlogfile('testlog.log')
-        listobs(vis=dataset)
+        res = listobs(vis=dataset)
         self.assertTrue('listobs' in open('testlog.log').read(), msg='logfile not populated by listobs command on a MS')
+        self.check_return_dict(res, dataset)
 
     def novis(self, dataset):
         self.res = listobs(vis=dataset, listfile='listobs.txt')
@@ -612,54 +668,54 @@ class test_listobs(listobs_test_base):
     # Test the list file
     def test_fileMS(self):
         '''Listobs test: Check to see if list file is generated from a MS'''
-        self.filefunc(mesSet, 'listobs.txt')
+        self.check_file_plus_dict(mesSet, 'listobs.txt')
 
     def test_fileMMS(self):
         '''Listobs test: Check to see if list file is generated from a MMS'''
-        self.filefunc(multiMesSet, 'listobs.txt')
+        self.check_file_plus_dict(multiMesSet, 'listobs.txt')
 
     def test_fileTimeAvgMS(self):
         '''Listobs test: Check to see if list file is generated from a time-averaged MS'''
-        self.filefunc(timeavg_ms, 'listobs.txt')
+        self.check_file_plus_dict(timeavg_ms, 'listobs.txt')
 
     def test_fileTimeAvgMMS(self):
         '''Listobs test: Check to see if list file is generated from a time-averaged MMS'''
-        self.filefunc(timeavg_mms, 'listobs.txt')
+        self.check_file_plus_dict(timeavg_mms, 'listobs.txt')
 
     # Test the log file encoding
     def test_logreadMS(self):
         '''Listobs test: Check that the log file from a MS is human readable'''
-        self.logreadfunc(mesSet)
+        self.check_logread_plus_dict(mesSet)
 
     def test_logreadMMS(self):
         '''Listobs test: Check that the log file from a MMS is human readable'''
-        self.logreadfunc(multiMesSet)
+        self.check_logread_plus_dict(multiMesSet)
 
     def test_logreadTimeAvgMS(self):
         '''Listobs test: Check that the log file from a time-averaged MS is human readable'''
-        self.logreadfunc(timeavg_ms)
+        self.check_logread_plus_dict(timeavg_ms)
 
     def test_logreadTimeAvgMMS(self):
         '''Listobs test: Check that the log file from a time-averaged MMS is human readable'''
-        self.logreadfunc(timeavg_mms)
+        self.check_logread_plus_dict(timeavg_mms)
 
     # Test log file written to
 
     def test_logfileMS(self):
         '''Listobs test: Check to see if the logger generates a logfile entries'''
-        self.logfilecontain(mesSet)
+        self.check_logfilecontain_plus_dict(mesSet)
 
     def test_logfileMMS(self):
         '''Listobs test: Check to see if the logger generates a logfile entries'''
-        self.logfilecontain(multiMesSet)
+        self.check_logfilecontain_plus_dict(multiMesSet)
 
     def test_logfileTimeAvgMS(self):
         '''Listobs test: Check to see if the logger generates a logfile entries'''
-        self.logfilecontain(timeavg_ms)
+        self.check_logfilecontain_plus_dict(timeavg_ms)
 
     def test_logfileTimeAvgMMS(self):
         '''Listobs test: Check to see if the logger generates a logfile entries'''
-        self.logfilecontain(timeavg_mms)
+        self.check_logfilecontain_plus_dict(timeavg_mms)
 
     # Test one row displayed per scan
 
@@ -929,14 +985,7 @@ class test_listobs(listobs_test_base):
 
     def test_CAS_6733(self):
         """Verify listobs runs to completion on data set in CAS-6733. This was an infinite loop bugfix"""
-        if CASA6:
-            vis = casatools.ctsys.resolve('visibilities/evla/CAS-6733.ms')
-
-        elif os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-            vis = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/CAS-6733.ms'
-        else:
-            vis = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/CAS-6733.ms'
-
+        vis = msfile3
         try:
             listobs(vis=vis)
         except Exception:

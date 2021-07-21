@@ -156,11 +156,17 @@ ia.close()
 #              'sigma': 0.19848,
 #              'sum': 1676.6}
 #2016/07/08 after fixing minweight bug in sdimaging
-diffstats = {'max': 0.91084,
-             'min': -0.90267,
-             'rms': 0.19583,
-             'sigma': 0.19572,
-             'sum': 1640.8}
+#diffstats = {'max': 0.91084,
+#             'min': -0.90267,
+#             'rms': 0.19583,
+#             'sigma': 0.19572,
+#             'sum': 1640.8}
+# 2021/03/10: CAS-13086 
+diffstats = {'max': 0.88841,
+             'min': -0.8805,
+             'rms': 0.191,
+             'sigma': 0.19088,
+             'sum': 1702.3}
 # relative tolerances to reference values
 reftol   = {'sum':  1e-2,
             'max':  1e-2,

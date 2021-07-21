@@ -46,6 +46,11 @@ Frequency::Frequency(double frequency, const std::string &units)
   valueIS_ = sput(frequency, units);
 }
 
+Frequency::Frequency(double frequency, Frequency::Units units)
+{
+  valueIS_ = sput(frequency, units);
+}
+
 Frequency::Frequency(const Frequency &frequency) :
   valueIS_(frequency.valueIS_)
 {
@@ -82,6 +87,39 @@ double Frequency::sput(double freq, const std::string &units)
   } else if(units == "kHz" || units == "KHZ" || units == "khz") {
     return 1.0E3 * freq;
   } else if(units == "Hz" || units == "HZ" || units == "hz") {
+    return freq;
+  } else {
+    return freq;
+  }
+}
+
+double Frequency::sget(double value, Frequency::Units units)
+{
+  if(units == Frequency::UnitTeraHertz) {
+    return 1.0E-12 * value;
+  } else if(units == Frequency::UnitGigaHertz) {
+    return 1.0E-9 * value;
+  } else if(units == Frequency::UnitMegaHertz) {
+    return 1.0E-6 * value;
+  } else if(units == Frequency::UnitKiloHertz) {
+    return 1.0E-3 * value;
+  } else if(units == Frequency::UnitHertz) {
+    return value;
+  } else {
+    return value;
+  }
+}
+double Frequency::sput(double freq, Frequency::Units units)
+{
+  if(units == Frequency::UnitTeraHertz) {
+    return 1.0E12 * freq;
+  } else if(units == Frequency::UnitGigaHertz) {
+    return 1.0E9 * freq;
+  } else if(units == Frequency::UnitMegaHertz) {
+    return 1.0E6 * freq;
+  } else if(units == Frequency::UnitKiloHertz) {
+    return 1.0E3 * freq;
+  } else if(units == Frequency::UnitHertz) {
     return freq;
   } else {
     return freq;

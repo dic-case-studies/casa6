@@ -91,9 +91,9 @@ class importnro_test(unittest.TestCase):
         self.res=None
         if (not os.path.exists(self.infile)):
             if is_CASA6:
-                datapath = ctsys.resolve(os.path.join('regression/unittest/importnro',self.infile))
+                datapath = ctsys.resolve(os.path.join('unittest/importnro',self.infile))
             else:
-                datapath=os.path.join(os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/importnro'),self.infile)
+                datapath=os.path.join(os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/importnro'),self.infile)
             shutil.copy(datapath, self.infile)
 
         if not is_CASA6:

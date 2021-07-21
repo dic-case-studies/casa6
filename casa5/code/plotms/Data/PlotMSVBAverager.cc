@@ -411,6 +411,7 @@ void PlotMSVBAverager::simpAccumulate (vi::VisBuffer2& vb)
   Cube<Complex> accumVisCubeModel;
   Cube<Complex> accumVisCubeCorrected;
   Cube<Float> accumVisCubeFloat;
+  Cube<Bool> accumFlagCube;
   if (doVC_p) {
 	accumVisCube.reference(vb.visCube());
 	if (inCoh_p) convertToAP(accumVisCube);
@@ -426,6 +427,7 @@ void PlotMSVBAverager::simpAccumulate (vi::VisBuffer2& vb)
   if (doFC_p) {
 	accumVisCubeFloat.reference(vb.visCubeFloat());
   }
+  accumFlagCube.reference(vb.flagCube());
 
   for (rownr_t ibln=0; ibln<vb.nRows(); ++ibln) {
     // Calculate row from antenna numbers with the hash function.
@@ -451,7 +453,7 @@ void PlotMSVBAverager::simpAccumulate (vi::VisBuffer2& vb)
 	Bool acc(false);
 
     IPosition flagPos(3, cor, chn, ibln);
-	if (!vb.flagCube()(flagPos)) { // input UNflagged
+	if (!accumFlagCube(flagPos)) { // input UNflagged
 	  // we will accumulate
 	  acc=true;
 	  if (avgFlagCube_(cor,chn,obln)) {  // output flagged
@@ -569,6 +571,7 @@ void PlotMSVBAverager::antAccumulate (vi::VisBuffer2& vb)
   Cube<Complex> accumVisCubeModel;
   Cube<Complex> accumVisCubeCorrected;
   Cube<Float> accumVisCubeFloat;
+  Cube<Bool> accumFlagCube;
   if (doVC_p) {
 	accumVisCube.reference(vb.visCube());
 	if (inCoh_p) convertToAP(accumVisCube);
@@ -584,6 +587,7 @@ void PlotMSVBAverager::antAccumulate (vi::VisBuffer2& vb)
   if (doFC_p) {
 	accumVisCubeFloat.reference(vb.visCubeFloat());
   }
+  accumFlagCube.reference(vb.flagCube());
 
   for (rownr_t ibln=0; ibln<vb.nRows(); ++ibln) {
 
@@ -609,7 +613,7 @@ void PlotMSVBAverager::antAccumulate (vi::VisBuffer2& vb)
 
 	// Consider accumulation according to state of flags
     IPosition flagPos(3, cor, chn, ibln);
-	if (!vb.flagCube()(flagPos)) { // input UNflagged
+	if (!accumFlagCube(flagPos)) { // input UNflagged
 	  // we will accumulate both ants
 	  acc_i = acc_j = true;
 

@@ -143,37 +143,37 @@ class variant {
 
 //      Const
 //      ---------------------------------------------------
-	bool getBool( ) const throw(error);
-	long getInt( ) const  throw(error);
-	unsigned long getuInt( ) const  throw(error);
-	double getDouble( ) const throw(error);
-	const std::complex<double> &getComplex( ) const throw(error);
-	const std::string &getString( ) const throw(error);
-	const std::vector<long> &getIntVec( ) const throw(error);
-	const std::vector<unsigned long> &getuIntVec( ) const throw(error);
-	const std::vector<bool> &getBoolVec( ) const throw(error);
-	const std::vector<double> &getDoubleVec( ) const throw(error);
-	const std::vector<std::complex<double> > &getComplexVec( ) const throw(error);
-	const std::vector<std::string> &getStringVec( ) const throw(error);
-	const record &getRecord( ) const throw(error);
+	bool getBool( ) const;
+	long getInt( ) const;
+	unsigned long getuInt( ) const;
+	double getDouble( ) const;
+	const std::complex<double> &getComplex( ) const;
+	const std::string &getString( ) const;
+	const std::vector<long> &getIntVec( ) const;
+	const std::vector<unsigned long> &getuIntVec( ) const;
+	const std::vector<bool> &getBoolVec( ) const;
+	const std::vector<double> &getDoubleVec( ) const;
+	const std::vector<std::complex<double> > &getComplexVec( ) const;
+	const std::vector<std::string> &getStringVec( ) const;
+	const record &getRecord( ) const;
         const std::vector<ssize_t> &shape() const;
         const std::vector<ssize_t> &arrayshape() const {return shape();}
 
 //	Modify
 //      ---------------------------------------------------
-	bool &getBoolMod( ) throw(error);
-	long &getIntMod( ) throw(error);
-	unsigned long &getuIntMod( ) throw(error);
-	double &getDoubleMod( ) throw(error);
-	std::complex<double> &getComplexMod( ) throw(error);
-	std::string &getStringMod( ) throw(error);
-	std::vector<long> &getIntVecMod( ) throw(error);
-	std::vector<unsigned long> &getuIntVecMod( ) throw(error);
-	std::vector<bool> &getBoolVecMod( ) throw(error);
-	std::vector<double> &getDoubleVecMod( ) throw(error);
-	std::vector<std::complex<double> > &getComplexVecMod( ) throw(error);
-	std::vector<std::string> &getStringVecMod( ) throw(error);
-	record &getRecordMod( ) throw(error);
+	bool &getBoolMod( );
+	long &getIntMod( );
+	unsigned long &getuIntMod( );
+	double &getDoubleMod( );
+	std::complex<double> &getComplexMod( );
+	std::string &getStringMod( );
+	std::vector<long> &getIntVecMod( );
+	std::vector<unsigned long> &getuIntVecMod( );
+	std::vector<bool> &getBoolVecMod( );
+	std::vector<double> &getDoubleVecMod( );
+	std::vector<std::complex<double> > &getComplexVecMod( );
+	std::vector<std::string> &getStringVecMod( );
+	record &getRecordMod( );
         std::vector<ssize_t> &shape();
         std::vector<ssize_t> &arrayshape() {return shape();}
 

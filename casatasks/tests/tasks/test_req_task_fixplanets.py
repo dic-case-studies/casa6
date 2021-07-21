@@ -41,26 +41,19 @@ import numpy as np
 ### DATA ###
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/vla/gaincaltest2.ms/')
-    refpath = casatools.ctsys.resolve('visibilities/alma/nep2-shrunk.ms/')
-    ephem = casatools.ctsys.resolve('caltables/Titan_55197-59214dUTC_J2000.tab/')
-    fakefile = casatools.ctsys.resolve('text/fake.txt/')
+    datapath = casatools.ctsys.resolve('unittest/fixplanets/')
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/gaincaltest2.ms/'
-        refpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms/'
-        ephem = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/Titan_55197-59214dUTC_J2000.tab/'
-        fakefile = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/text/fake.txt/'
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/gaincaltest2.ms/'
-        refpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/nep2-shrunk.ms/'
-        ephem = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/Titan_55197-59214dUTC_J2000.tab/'
-        fakefile = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/text/fake.txt/'
-    
-dataSOURCE = datapath + 'SOURCE'
-dataFIELD = datapath + 'FIELD'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/fixplanets/'
+
+# Input data
+msfile = 'gaincaltest2.ms'
+reffile = 'nep2-shrunk.ms'
+ephem = 'Titan_55197-59214dUTC_J2000.tab'
+fakefile = 'fake.txt'
+
+dataSOURCE = datapath + msfile + '/SOURCE'
+dataFIELD = datapath + msfile + '/FIELD'
     
 copypath = 'copypath.ms'
     
@@ -96,30 +89,38 @@ class fixplanets_test(unittest.TestCase):
     def setUp(self):
         if not CASA6:
             default(fixplanets)
-            
-        shutil.copytree(datapath, copypath)
-        shutil.copytree(datapath, copypath2)
-        shutil.copytree(refpath, refcopy1)
-        shutil.copytree(refpath, refcopy2)
+        if not os.path.exists(copypath):           
+            shutil.copytree(os.path.join(datapath, msfile), copypath)
+        if not os.path.exists(copypath2):           
+            shutil.copytree(os.path.join(datapath, msfile), copypath2)
+        if not os.path.exists(refcopy1):           
+            shutil.copytree(os.path.join(datapath,reffile), refcopy1)
+        if not os.path.exists(refcopy2):           
+            shutil.copytree(os.path.join(datapath,reffile), refcopy2)
+        if not os.path.exists(ephem):           
+            shutil.copytree(os.path.join(datapath,ephem), ephem)
+        if not os.path.exists(fakefile):           
+            shutil.copyfile(os.path.join(datapath,fakefile), fakefile)
             
     def tearDown(self):
         if os.path.exists(copypath):
             shutil.rmtree(copypath)
-            
+             
         if os.path.exists(copypath2):
             shutil.rmtree(copypath2)
-            
+             
         if os.path.exists(refcopy1):
             shutil.rmtree(refcopy1)
-            
+             
         if os.path.exists(refcopy2):
             shutil.rmtree(refcopy2)
     
     @classmethod
-    def tearDownClass(cls):
-        
+    def tearDownClass(cls):        
         if os.path.exists('fixplanetstemp2-copypath.ms'):
             shutil.rmtree('fixplanetstemp2-copypath.ms')
+        shutil.rmtree(ephem, ignore_errors=True)
+        os.system('rm -rf ' + fakefile)
     
     def test_direction(self):
         '''

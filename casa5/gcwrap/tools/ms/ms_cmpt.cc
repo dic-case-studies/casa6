@@ -3912,14 +3912,8 @@ ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const lon
                 if (!do_flag)
                     if (out.isDefined("flag")) out.removeField("flag");
                 // remove or redefine weight field
-                if (!do_weight) {
+                if (!do_weight)
                     if (out.isDefined("weight")) out.removeField("weight");
-                } else {
-                    Array<Float> weights = out.asArrayFloat("weight");
-                    out.removeField("weight");
-                    getWeightSum(weights);  // redefines weights array
-                    out.define("weight", weights); 
-                }
             }
             if (do_flag_sum) {
                 Array<Bool> flagarray = out.asArrayBool("flag_sum");
@@ -4105,38 +4099,6 @@ void ms::getAveragedValues(Vector<String> fieldnames, Record& rec) {
             default:
                 break;
         }
-    }
-}
-
-void ms::getWeightSum(Array<Float>& weight) {
-    // sum of weights when averaging
-    IPosition arrayshape = weight.shape();
-    uInt nCorr(arrayshape(0)), nIfr(0), nRow(0);
-    if (arrayshape.size()==2) {  // Matrix: no ifraxis
-        nRow = arrayshape(1);
-        Vector<Float> sumwt(nCorr);
-        sumwt = 0.0;
-        for (uInt i=0; i<nRow; i++) {
-            for (uInt j=0; j<nCorr; j++) {
-                sumwt(j) += weight(IPosition(2,j,i));
-            }
-        }
-        weight.resize(sumwt.shape());
-        weight.reference(sumwt);
-    } else { // Cube: ifraxis
-        nIfr = arrayshape(1);
-        nRow = arrayshape(2);
-        Matrix<Float> sumwt(IPosition(2, nCorr, nIfr));
-        sumwt = 0.0;
-        for (uInt i=0; i<nIfr; i++) {
-            for (uInt j=0; j<nCorr; j++) {
-                for (uInt k=0; k<nRow; k++) {
-                    sumwt(j,i) += weight(IPosition(3,j,i,k));
-                }
-            }
-        }
-        weight.resize(sumwt.shape());
-        weight.reference(sumwt);
     }
 }
 

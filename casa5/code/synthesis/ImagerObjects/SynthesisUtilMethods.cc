@@ -69,6 +69,9 @@
 #include <sys/time.h>
 #include<sys/resource.h>
 
+#include <synthesis/ImagerObjects/SIImageStore.h>
+#include <synthesis/ImagerObjects/SIImageStoreMultiTerm.h>
+
 using namespace std;
 
 using namespace casacore;
@@ -109,7 +112,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       }
     return M;
   }
-  // Get the next largest even composite of 2,3,5,7.
+  // Get the next largest even composite of 2,3,5.
   // This is to ensure a 'good' image size for FFTW.
   // Translated from gcwrap/scripts/cleanhelper.py : getOptimumSize
   Int SynthesisUtilMethods::getOptimumSize(const Int npix)
@@ -122,17 +125,17 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     Int val, newlarge;
     for( uInt k=0; k< fac.nelements(); k++ )
       {
-	if( fac[k]>7 )
+	if( fac[k]>5 )
 	  {
 	    val = fac[k];
-	    while( max( primeFactors(val) ) > 7 ){ val+=1;}
+	    while( max( primeFactors(val) ) > 5 ){ val+=1;}
 	    fac[k] = val;
 	  }
       }
     newlarge=product(fac);
     for( Int k=n; k<newlarge; k+=2 )
       {
-	if( max( primeFactors(k) ) < 8 ) {return k;}
+	if( max( primeFactors(k) ) < 6 ) {return k;}
       }
     return newlarge;
   }
@@ -181,13 +184,46 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return factors;
   }
 
+
+  Bool SynthesisUtilMethods::fitPsfBeam(const String& imagename, const Int nterms, const Float psfcutoff)
+  {
+    LogIO os(LogOrigin("SynthesisUtilMethods", "fitPsfBeam"));
+
+    if (psfcutoff >=1.0 || psfcutoff<=0.0)
+      {
+	os << "psfcutoff must be >0 and <1" << LogIO::WARN;
+	return false;
+      }
+
+    std::shared_ptr<SIImageStore> imstore;
+    if( nterms>1 )
+      { imstore = std::shared_ptr<SIImageStore>(new SIImageStoreMultiTerm( imagename, nterms, true, true ));   }
+    else
+      { imstore = std::shared_ptr<SIImageStore>(new SIImageStore( imagename, true, true ));   }
+  
+
+    os << "Fitting PSF beam for Imagestore : " << imstore->getName() << LogIO::POST;
+
+    imstore->makeImageBeamSet(psfcutoff, true);
+
+    imstore->printBeamSet();
+
+    imstore->releaseLocks();
+    
+    return true;
+  }
+
+
+
+
+
   /***make a record of synthesisimager::weight parameters***/
   Record SynthesisUtilMethods::fillWeightRecord(const String& type, const String& rmode,
 			       const Quantity& noise, const Double robust,
 			       const Quantity& fieldofview,
 				 const Int npixels, const Bool multiField, const Bool useCubeBriggs,
 			       const String& filtertype, const Quantity& filterbmaj,
-                                                const Quantity& filterbmin, const Quantity& filterbpa){
+                                                const Quantity& filterbmin, const Quantity& filterbpa, const Double& fracBW){
 
     Record outRec;
     outRec.define("type", type);
@@ -208,7 +244,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     outRec.defineRecord("filterbmin", quantRec);
     QuantumHolder(filterbpa).toRecord(quantRec);
     outRec.defineRecord("filterbpa", quantRec);
-
+    outRec.define("fracBW", fracBW);
 
     return outRec;
   }
@@ -217,7 +253,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			       Quantity& fieldofview,
 				Int& npixels, Bool& multiField, Bool& useCubeBriggs,
 			       String& filtertype, Quantity& filterbmaj,
-                                                 Quantity& filterbmin, Quantity& filterbpa, const Record& inRec){
+                                                 Quantity& filterbmin, Quantity& filterbpa, Double& fracBW, const Record& inRec){
     QuantumHolder qh;
     String err;
     if(!inRec.isDefined("type"))
@@ -244,6 +280,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     if(!qh.fromRecord(err, inRec.asRecord("filterbpa")))
       throw(AipsError("Error in reading filterbpa param"));
     filterbpa=qh.asQuantity();
+    inRec.get("fracBW", fracBW);
 
 
 
@@ -294,6 +331,110 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
     return String("casa.synthesis.imager.memprofile." + String::toString(pid) +
 		  "." + g_hostname + "." + g_startTimestamp + ".txt");
+  }
+
+    Bool SynthesisUtilMethods::adviseChanSel(Double& freqStart, Double& freqEnd, 
+		       const Double& freqStep,  const MFrequency::Types& freqframe,
+		       Vector<Int>& spw, Vector<Int>& start,
+					     Vector<Int>& nchan, const String& ms, const String& ephemtab, const Int field_id, const Bool getFreqRange, const String spwselection){
+
+  LogIO os(LogOrigin("SynthesisUtilMethods", "adviseChanSel"));
+  if(ms==String("")){
+    throw(AipsError("Need a valid MS"));
+  }
+  spw.resize();
+  start.resize();
+  nchan.resize();
+  try {
+    if(!getFreqRange){
+      Vector<Int> bnchan;
+      Vector<Int>  bstart;
+      Vector<Int>  bspw;
+      Double fS, fE;
+      fS=freqStart;
+      fE=freqEnd;
+      if(freqEnd < freqStart){
+	fS=freqEnd;
+	fE=freqStart;
+      }
+    
+      
+      {
+	
+	MeasurementSet elms(String(ms), TableLock(TableLock::AutoNoReadLocking), Table::Old);
+	if(ephemtab != "" && freqframe == MFrequency::REST ){
+	   MSUtil::getSpwInSourceFreqRange(bspw, bstart, bnchan, elms, fS, fE, fabs(freqStep), ephemtab, field_id);
+	}
+	else
+	  MSUtil::getSpwInFreqRange(bspw, bstart, bnchan, elms, fS, fE, fabs(freqStep), freqframe, field_id);
+	elms.relinquishAutoLocks(true);
+
+      }
+      spw=Vector<Int> (bspw);
+      start=Vector<Int> (bstart);
+      nchan=Vector<Int> (bnchan);
+    }
+    else{
+    
+      {
+	MeasurementSet elms(ms, TableLock(TableLock::AutoNoReadLocking), Table::Old);
+	MSSelection thisSelection;
+	String spsel=spwselection;
+	if(spsel=="")spsel="*";
+	thisSelection.setSpwExpr(spsel);
+	TableExprNode exprNode=thisSelection.toTableExprNode(&elms);
+	Matrix<Int> chanlist=thisSelection.getChanList();
+	if(chanlist.ncolumn() <3){
+	  freqStart=-1.0;
+	  freqEnd=-1.0;
+	  return false;
+	}
+	Vector<Int> elspw=chanlist.column(0);
+	Vector<Int> elstart=chanlist.column(1);
+	Vector<Int> elnchan=Vector<Int> (chanlist.column(2)-elstart)+1;
+	if(ephemtab != "" ){
+	  const MSColumns mscol(ms);
+	  MEpoch ep=mscol.timeMeas()(0);
+	  Quantity sysvel;
+	  String ephemTable("");
+	  MDirection::Types mtype=MDirection::APP;
+	  MDirection mdir(mtype);
+	  if(Table::isReadable(ephemtab)){
+	    ephemTable=ephemtab;
+	  }
+	  else if(ephemtab=="TRACKFIELD"){
+	   ephemTable=(mscol.field()).ephemPath(field_id); 
+	  }
+	  else if(MDirection::getType(mtype, ephemtab)){
+	    mdir=MDirection(mtype);
+	  }
+	  
+	  MSUtil::getFreqRangeAndRefFreqShift(freqStart, freqEnd, sysvel, ep, elspw, elstart, elnchan, elms, ephemTable , mdir, True);
+
+	}
+	else
+	  MSUtil::getFreqRangeInSpw(freqStart, freqEnd, elspw, elstart, elnchan, elms, freqframe, field_id);
+      }
+
+    }
+
+
+
+        
+  } catch (AipsError x) {
+    os << LogIO::SEVERE << "Caught exception: " << x.getMesg()
+       << LogIO::POST;
+    return false;
+  } 
+  catch (...){
+    os << LogIO::SEVERE << "Unknown  exception handled" 
+       << LogIO::POST;
+    return false;
+    
+  }
+  
+  return true;
+  
   }
 
   void SynthesisUtilMethods::getResource(String label, String fname)
@@ -2147,7 +2288,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     vi2.origin();
     /// This version uses the new vi2/vb2
     // get the first ms for multiple MSes
-    MeasurementSet msobj=vi2.ms();
+    //MeasurementSet msobj=vi2.ms();
     Int fld=vb->fieldId()(0);
 
 	//handling first ms only
@@ -2157,6 +2298,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	Double gfreqmin=1e14;
 	Vector<Int> spwids0;
 	Int j=0;
+        Int minfmsid=0;
+	//for cube mode ,for a list of MSs, check ms to send to buildCoordSysCore contains start freq/vel
+	Double imStartFreq=getCubeImageStartFreq();
+        std::vector<Int> sourceMsWithStartFreq;
+
+	
 	for (auto forMS0=chansel.begin(); forMS0 !=chansel.end(); ++forMS0, ++j){
     //auto forMS0=chansel.find(0);
 	  map<Int, Vector<Int> > spwsels=forMS0->second;
@@ -2230,13 +2377,46 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 				       nChannels,*mss[j], freqFrameValid? freqFrame:MFrequency::REST , True);
 	    //cerr << "after " << freqmin << "   " << freqmax << endl;
 	  }
+
+	  
+          
+          
 	  if(freqmin < gfreqmin) gfreqmin=freqmin;
 	  if(freqmax > gfreqmax) gfreqmax=freqmax;
 	  if(datafstart < gdatafstart) gdatafstart=datafstart;
 	  if(datafend > gdatafend) gdatafend=datafend;
-	}
-    //cerr << "freqmin " <<freqmin << " max " <<freqmax << endl;
-    
+          // pick ms to use for setting spectral coord for output images 
+          // when startfreq is specified find first ms that it fall within the freq range
+          // of the ms (with channel selection applied).
+          // startfreq is converted to the data frame freq based on Measure ref (for the direction, epech, location)
+          // of that ms.
+	  if(imStartFreq > 0.0 && imStartFreq >= freqmin && imStartFreq <= freqmax){
+            if(mode != "cubesource"){
+              minfmsid=j;
+              spwids0=spwids;
+              vi2.originChunks();
+              vi2.origin();
+              while(vb->msId() != j && vi2.moreChunks() ){
+                vi2.nextChunk();
+                vi2.origin();
+              }
+              fld=vb->fieldId()(0);
+             
+            }
+            else{
+              sourceMsWithStartFreq.push_back(j);
+            }
+	  }
+           
+        }
+        if(sourceMsWithStartFreq.size() > 1){
+          auto result = std::find(std::begin(sourceMsWithStartFreq), std::end(sourceMsWithStartFreq), 0);
+          if(result == std::end(sourceMsWithStartFreq)){
+            throw(AipsError("Reorder the input list of MSs so that MS "+String::toString( sourceMsWithStartFreq[0])+ "is first to match startfreq you provided"));
+          }
+        }
+    MeasurementSet msobj = *mss[minfmsid];
+   // return buildCoordinateSystemCore( msobj, spwids0, fld, gfreqmin, gfreqmax, gdatafstart, gdatafend );
     return buildCoordinateSystemCore( msobj, spwids0, fld, gfreqmin, gfreqmax, gdatafstart, gdatafend );
   }
   
@@ -2498,6 +2678,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       MDoppler mdop(sysvelvalue, MDoppler::RELATIVISTIC);
       dataChanFreq=mdop.shiftFrequency(dataChanFreq);
       dataChanWidth=mdop.shiftFrequency(dataChanWidth);
+      if (std::isnan(dataChanFreq[0]) || std::isnan(dataChanFreq[dataChanFreq.nelements()-1])) {
+	throw(AipsError("The Doppler shift correction of the data channel frequencies resulted in 'NaN' using the radial velocity = "+
+              String::toString(sysvelvalue)+". Typically this indicates a problem in the ephemeris data being used.")); 
+      }
     }
     
     if (!getImFreq(chanFreq, chanFreqStep, refPix, specmode, obsEpoch, 
@@ -3140,6 +3324,35 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     return true;
 
   }//getImFreq
+  /////////////////////////
+  Double SynthesisParamsImage::getCubeImageStartFreq(){
+    Double inStartFreq=-1.0;
+    String checkspecmode("");
+    if(mode.contains("cube")) {
+      checkspecmode = findSpecMode(mode);
+    } 
+    if(checkspecmode!="") {
+      MFrequency::Types mfreqframe = frame!="" ? MFrequency::typeFromString(frame):MFrequency::LSRK;
+      if(checkspecmode=="channel") {
+	inStartFreq=-1.0;  
+      }
+      else {
+	if(checkspecmode=="frequency") {
+	  inStartFreq = freqStart.get("Hz").getValue();  
+	}
+	else if(checkspecmode=="velocity") {
+	  MDoppler::Types DopType;
+	  MDoppler::getType(DopType, veltype);
+	  MDoppler mdop(velStart,DopType);
+	  Quantity qrestfreq = restFreq.nelements() >0 ? restFreq[0]: Quantity(0.0, "Hz");
+	  inStartFreq = MFrequency::fromDoppler(mdop, qrestfreq.getValue(Unit("Hz")), mfreqframe).getValue(); 
+	}
+      }
+    }
+
+    return inStartFreq;
+
+  }
 
   String SynthesisParamsImage::findSpecMode(const String& mode) const
   {
@@ -3307,10 +3520,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	mType="default";
 	if(gridder=="ft" || gridder=="gridft" || gridder=="standard" )
 	  { ftmachine="gridft"; }
-	if( gridder=="widefield" && (wprojplanes>1 || wprojplanes==-1))
+	if( (gridder=="widefield" || gridder=="wproject" || gridder=="wprojectft" ) && (wprojplanes>1 || wprojplanes==-1))
 	  { ftmachine="wprojectft";}
-	if( gridder=="wproject" || gridder=="wprojectft")
-	  {ftmachine="wprojectft"; }
 
 	if(gridder=="ftmosaic" || gridder=="mosaicft" || gridder=="mosaic" )
 	  { ftmachine="mosaicft"; }
@@ -3873,8 +4084,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             if(inrec.dataType("nsigma")==TpFloat || inrec.dataType("nsigma")==TpDouble ) {
                err+= readVal(inrec, String("nsigma"), nsigma );
               }
+	    else if(inrec.dataType("nsigma")==TpInt)
+	      {
+		int tnsigma;
+		err+= readVal(inrec, String("nsigma"), tnsigma );
+		nsigma = float(tnsigma);
+	      }
             else {
-               err+= "nsigma be a float or double";
+               err+= "nsigma must be an int, float or double";
             }
           }
         if( inrec.isDefined("restoringbeam") )     
