@@ -176,9 +176,9 @@ Here, ```test_constructor``` is one test within the ```coordsys_test``` *TestCas
 
 #### Notes
 
-If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.61.jar*, e.g.
+If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.65.jar*, e.g.
 ```
--bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.61.jar
+-bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.65.jar
 -bash-4.2$ scripts/gcw-pick
 ```
 before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_format)) file is automatically fetched from a download site by *gcw-pick*. However, it is not fetched if it already exists. Deleting the current copy will result in a new copy being fetched which *may* be newer.
@@ -264,6 +264,9 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
     * **`<value><value>0.0</value></value>`** --- vector with one element initialized as specified, more internal *`<value>`* elements can be used to increase the default size of the vector
 
    It is not possible to automatically adjust these because with the old XML translation `<value/>` will sometimes result in a one element vector and other times a zero element vector.
+
+6. __Array Value Types__ --- There are now two Array types `<type>Array` and `<type>Vec`, e.g. `doubleArray` and `doubleVec`. Vec implies a one dimensional value, e.g. Python list, a one dimensonal numpy array, whereas Array implies potentially an N dimensional numpy array.
+
 
 ## XML
 

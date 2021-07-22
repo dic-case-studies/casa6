@@ -938,6 +938,50 @@ class TestHelpers:
                         pstr += TestHelpers().check_ref_freq(ii[0], ii[1], epsilon=epsilon)
         return pstr
 
+    def get_log_length(self):
+        return os.path.getsize(casalog.logfile())
+
+    def check_logs(self, start, expected, testname="check_logs"):
+        """ Test that there are log lines that match the expected regex strings (one line per expected string). """
+        # Example usage:
+        # logstart = test_helper.get_log_length()
+        # tclean(...)
+        # report = test_helper.check_logs(logstart, expected=[ r"-+ Run Minor Cycle Iterations  -+" ])
+        import re
+
+        # read all lines from the logfile that are relevant to this test
+        lines = []
+        with open(casalog.logfile(), 'r') as f:
+            f.seek(start)
+            lines = f.readlines()
+        # casalog.post("Searching through " + str(len(lines)) + " log lines", "SEVERE") # debugging
+
+        # find expected matches
+        unmet = []
+        for i in range(len(expected)):
+            expectation = re.compile(expected[i])
+            # casalog.post("expected["+str(i)+"]: "+expected[i], "SEVERE") # debugging
+            found = -1
+            for j in range(len(lines)):
+                if (expectation.search(lines[j]) != None):
+                    found = j
+                    break
+                else:
+                    pass
+                    # casalog.post("  X: " + lines[j].rstrip(), "SEVERE") # debugging
+            if (found == -1):
+                unmet.append(expected[i])
+                # casalog.post("  expectation not met", "SEVERE") # debugging
+            else:
+                del lines[found]
+                # casalog.post("  expectation met by line: " + lines[found].rstrip(), "SEVERE") # debugging
+
+        # check that all expectations were met
+        if (len(unmet) == 0):
+            return "[ {} ]: found {} matching log lines (Pass)\n".format(testname, len(expected))
+        else:
+            return "[ {} ]: found {} out of {} matching log lines (Fail, unmet expectations: {})\n".format(testname, len(expected)-len(unmet), len(expected), ", ".join(unmet))
+
     def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05):
         """
             ret=None,
@@ -985,10 +1029,9 @@ class TestHelpers:
 
     def check_final(self, pstr=""):
 
-        if not isinstance(pstr, six.string_types):
-            return False
+        import re
         casalog.post(pstr, 'INFO')
-        if pstr.count("Fail") > 0:
+        if len(re.findall(r"\(.?Fail",pstr)) > 0:
             return False
         return True
         
