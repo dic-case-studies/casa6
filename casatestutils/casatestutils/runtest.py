@@ -13,12 +13,6 @@ sys.path.insert(0,'')
 
 ####################            Constants
 
-# Python Version
-PYVER = str(sys.version_info[0]) + "." + str(sys.version_info[1])
-
-# CASA Directory
-CASA_DIR = os.environ["CASAPATH"].split()[0]
-
 # mem mode variables
 HAVE_MEMTEST=True
 MEM = 0
