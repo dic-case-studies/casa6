@@ -33,6 +33,8 @@
 #include <scimath/Mathematics/FFTServer.h>
 #include <synthesis/MeasurementEquations/MatrixCleaner.h>
 #include <deque>
+#include <coordinates/Coordinates/CoordinateSystem.h>
+#include <coordinates/Coordinates/SpectralCoordinate.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 
@@ -61,11 +63,13 @@ public:
 
   // helper functions for ASP
   float getPsfGaussianWidth(casacore::ImageInterface<casacore::Float>& psf);
+  void getLargestScaleSize(casacore::ImageInterface<casacore::Float>& psf);
 
   // Make an image of the specified scale by Gaussian
   void makeInitScaleImage(casacore::Matrix<casacore::Float>& iscale, const casacore::Float& scaleSize);
   void makeScaleImage(casacore::Matrix<casacore::Float>& iscale, const casacore::Float& scaleSize, const casacore::Float& amp, const casacore::IPosition& center);
 
+  void setInitScales();
   void setInitScaleXfrs(const casacore::Float width);
 
   // calculate the convolutions of the psf with the initial scales
@@ -171,6 +175,7 @@ private:
   casacore::Float itsFusedThreshold;
   casacore::Int itsBinSizeForSumFlux ;   // number of bins for histogram of the sum of Flux
   unsigned int itsNumNoChange; // number of times peakres rarely changes
+  float itsLargestInitScale; // estimated largest initial scale
 };
 
 } //# NAMESPACE CASA - END

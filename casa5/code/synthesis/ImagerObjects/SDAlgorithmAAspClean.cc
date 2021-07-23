@@ -100,6 +100,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       // Initial scales are unchanged and only need to be
       // computed when psf width is updated
       const Float width = itsCleaner.getPsfGaussianWidth(*(itsImages->psf()));
+      itsCleaner.getLargestScaleSize(*(itsImages->psf()));
+
       if (itsPrevPsfWidth != width)
       {
         itsPrevPsfWidth = width;

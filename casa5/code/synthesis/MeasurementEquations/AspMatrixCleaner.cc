@@ -382,7 +382,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     if (!itsSwitchedToHogbom && abs(itsStrengthOptimum) < (1e-6 * itsFusedThreshold))
     {
     	//cout << "Reached stopping threshold " << 1e-6 * itsFusedThreshold << " at iteration "<< ii << endl;
-      os <<LogIO::NORMAL3 << "Reached stopping threshold " << 1e-6 * itsFusedThreshold << " at iteration "<<
+      os << LogIO::NORMAL3 << "Reached stopping threshold " << 1e-6 * itsFusedThreshold << " at iteration "<<
             ii << LogIO::POST;
       os <<LogIO::NORMAL3 << "Optimum flux is " << abs(itsStrengthOptimum) << LogIO::POST;
       converged = 1;
@@ -584,6 +584,7 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
     minMaxMasked(minVal, maxVal, posmin, posmax, (*itsDirty), itsInitScaleMasks[0]);
     itsPeakResidual = (fabs(maxVal) > fabs(minVal)) ? fabs(maxVal) : fabs(minVal);
     os <<LogIO::NORMAL3 << "current peakres " << itsPeakResidual << LogIO::POST;
+
     if (!itsSwitchedToHogbom &&
         (fabs(itsPeakResidual - itsPrevPeakResidual) < 1e-4)) //peakres rarely changes
       itsNumNoChange += 1;
@@ -597,7 +598,6 @@ Int AspMatrixCleaner::aspclean(Matrix<Float>& model,
       {
         itsSwitchedToHogbom = false;
         os <<LogIO::NORMAL3 << "switched back to Asp." << LogIO::POST;
-
         os << "Reached convergence at iteration "<< ii << " b/c hogbom finished" << LogIO::POST;
         converged = 1;
         break;
@@ -807,6 +807,80 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
 }
 
 
+void AspMatrixCleaner::getLargestScaleSize(ImageInterface<Float>& psf)
+{
+  LogIO os( LogOrigin("AspMatrixCleaner","getPsfGaussianWidth",WHERE) );
+
+  CoordinateSystem cs = psf.coordinates();
+  String dirunit = cs.worldAxisUnits()(0);
+  Vector<String> unitas = cs.worldAxisUnits();
+  unitas(0) = "arcsec";
+  unitas(1) = "arcsec";
+  cs.setWorldAxisUnits(unitas);
+
+  //cout << "ncoord " << cs.nCoordinates() << endl;
+  //cout << "coord type " << cs.type(0) << endl;
+
+  itsLargestInitScale = 5.0 * itsPsfWidth; // default in pixels
+  const float baseline = 100.0; // default shortest baseline = 100m (for both ALMA and VLA)
+  const Int nx = psfShape_p(0);
+  const Int ny = psfShape_p(1);
+
+  for (uInt i = 0; i < cs.nCoordinates(); i++)
+  {
+    if (cs.type(i) == Coordinate::SPECTRAL)
+    {
+      SpectralCoordinate speccoord(cs.spectralCoordinate(i));
+      //Double startfreq = 0.0, startpixel = -0.5;
+      Double endfreq = 0.0, endpixel = 0.5;
+      //speccoord.toWorld(startfreq, startpixel);
+      speccoord.toWorld(endfreq, endpixel);
+      //Double midfreq = (endfreq + startfreq) / 2.0;
+      //cout << "coord i " << i << " MFS end frequency range : " << endfreq/1.0e+9 << " GHz" << endl;
+
+      float nu = float(endfreq); // 1e9;
+      // largest scale = ( (c/nu)/baseline )  converted from radians to degrees to arcsec
+      itsLargestInitScale = float(ceil(((3e+8/nu)/baseline) * 180.0/3.14 * 60.0 * 60.0 / abs(cs.increment()(0))));
+
+      // ensure the largest scale is smaller than imsize/4/sqrt(2pi) = imsize/10 (could try imsize/4 later)
+      if(itsLargestInitScale > min(nx/10, ny/10))
+      {
+         os << LogIO::WARN << "Scale size of " << itsLargestInitScale << " pixels is too big for an image size of " << nx << " x " << ny << " pixels. This scale size will be reset.  " << LogIO::POST;
+         itsLargestInitScale = float(ceil(min(nx/10, ny/10))); // based on the idea of MultiTermMatrixCleaner::verifyScaleSizes()
+      }
+
+      //cout << "largest scale " << itsLargestInitScale << endl;
+
+      return;
+    }
+  }
+
+}
+
+
+void AspMatrixCleaner::setInitScales()
+{
+  LogIO os(LogOrigin("AspMatrixCleaner", "setInitScales()", WHERE));
+
+  // Validate scales
+  os << "Creating " << itsNInitScales << " initial scales" << LogIO::POST;
+  itsInitScaleSizes[0] = 0.0f;
+  itsInitScaleSizes[1] = itsPsfWidth;
+  os << "scale 1 = 0.0 pixels" << LogIO::POST;
+  os << "scale 2 = " << itsInitScaleSizes[1] << " pixels" << LogIO::POST;
+
+  // based on the normalized power-law distribution of ratio(i) = pow(10.0, (Float(i)-2.0)/2.0) for i >= 1
+  vector<Float> ratio = {0.09, 0.31, 1.0};
+
+  for (Int scale = 2; scale < itsNInitScales; scale++)
+  {
+    itsInitScaleSizes[scale] =
+      ceil(itsPsfWidth + ((itsLargestInitScale - itsPsfWidth) * ratio[scale- 2]));
+    os << "scale " << scale+1 << " = " << itsInitScaleSizes[scale]
+       << " pixels" << LogIO::POST;
+  }
+}
+
 void AspMatrixCleaner::setInitScaleXfrs(const Float width)
 {
   if(itsInitScales.nelements() > 0)
@@ -820,10 +894,12 @@ void AspMatrixCleaner::setInitScaleXfrs(const Float width)
   }
   else
   {
-  	// try 0, width, 2width, 4width and 8width
   	itsNInitScales = 5;
   	itsInitScaleSizes.resize(itsNInitScales, false);
-  	itsInitScaleSizes = {0.0f, width, 2.0f*width, 4.0f*width, 8.0f*width};
+    // set initial scale sizes from power-law distribution with min scale=PsfWidth and max scale = c/nu/baseline
+    setInitScales();
+    // old approach that may cause Asp to pick unreasonable large scale: try 0, width, 2width, 4width and 8width
+  	//itsInitScaleSizes = {0.0f, width, 2.0f*width, 4.0f*width, 8.0f*width};
   }
 
   itsInitScales.resize(itsNInitScales, false);
@@ -1512,6 +1588,7 @@ void AspMatrixCleaner::switchedToHogbom()
   itsNumIterNoGoodAspen.resize(0);
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); // zhang's formula
   itsNumHogbomIter = ceil(50 + 2 * (exp(0.05*itsNthHogbom) - 1)); // genie's formula
+
   os << LogIO::NORMAL3 << "Run hogbom for " << itsNumHogbomIter << " iterations." << LogIO::POST;
 }
 
