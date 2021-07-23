@@ -524,9 +524,10 @@ def run(testnames):
                                 
                         # https://docs.pytest.org/en/stable/usage.html
                         if verbose:
-                            cmd = ["--verbose"] + ["--tb=short"] + cmd
+                            cmd = ["--verbose"] + ["--tb=long"] + cmd
                         elif not verbose:
-                            cmd = ["-ra"] + ["--tb=long"] + cmd
+                            cmd = ["-ra"] + ["--tb=short"] + cmd
+                            #cmd = ["-ra"] + ["--tb=long"] + cmd
 
                         if DRY_RUN:
                             cmd = ["--collect-only"] + cmd
@@ -602,7 +603,8 @@ def run(testnames):
                         if verbose:
                             cmd = ["--verbose"] + ["--tb=short"] + cmd
                         elif not verbose:
-                            cmd = ["-ra"] + ["--tb=long"] + cmd
+                            cmd = ["-ra"] + ["--tb=short"] + cmd
+                            #cmd = ["-ra"] + ["--tb=long"] + cmd
 
 
                         if DRY_RUN:
