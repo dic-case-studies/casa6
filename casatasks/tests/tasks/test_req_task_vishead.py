@@ -108,7 +108,10 @@ class tester:
     def end(self, condition, error_msg):
         status = "OK"
         if not is_true(condition):
-            print(error_msg, file=sys.stderr)
+            if is_python3:
+                print(error_msg, file=sys.stderr)
+            else:
+                print >> sys.stderr, error_msg
             self.fail += 1
             status = "FAIL"
             if stop_on_first_error:
