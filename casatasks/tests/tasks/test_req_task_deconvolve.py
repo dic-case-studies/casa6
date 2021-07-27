@@ -192,7 +192,7 @@
 #testname: test_cube_23
 #
 #34. Cube, 'chanchunks' Auto: Should produce the same results as the test by the same name for tclean.
-#specmode:'cube',imsize:100,cell:'10.0arcsec',deconvolver:'hogbom',chanchunks:-1, niter=10, deconvolver='hogbom'
+#specmode:'cube',imsize:100,cell:'10.0arcsec',deconvolver:'hogbom',niter=10, deconvolver='hogbom'
 #testname: test_cube_chanchunks_auto
 #
 #
@@ -1578,7 +1578,7 @@ class test_cube(testref_base):
         ######################################################################################
         # Test channel chunking for large cubes : automatic calc of nchanchunks . Should produce the same results as tclean.
         ######################################################################################
-        self.prepData('refim_point.ms', tclean_args={'specmode':'cube','imsize':100,'cell':'10.0arcsec','deconvolver':'hogbom','chanchunks':-1})
+        self.prepData('refim_point.ms', tclean_args={'specmode':'cube','imsize':100,'cell':'10.0arcsec','deconvolver':'hogbom'})
         deconvolve(imagename=self.img, niter=10, deconvolver='hogbom')
         self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.image') )
         report=th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.5002,[50,50,0,0]) , (self.img+'.image',0.769,[50,50,0,19]) ])

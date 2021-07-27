@@ -191,7 +191,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   }
 
   // Used from SynthesisNormalizer::makeImageStore()
-  SIImageStore::SIImageStore(const String &imagename, const Bool ignorefacets, const Bool ignoresumwt)
+  SIImageStore::SIImageStore(const String &imagename, const Bool ignorefacets, const Bool noRequireSumwt)
   {
     LogIO os( LogOrigin("SIImageStore","Open existing Images",WHERE) );
       
@@ -286,7 +286,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	  }
 	else
 	  {
-	    if(!ignoresumwt)
+	    if(!noRequireSumwt) // .sumwt image required? -> probably not for just the minor cycle (aka task deconvolve)
 	      {throw( AipsError( "SumWt information does not exist. Please create either a PSF or Residual" ) );}
 	    else
 	      {

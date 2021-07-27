@@ -60,7 +60,7 @@ class SIImageStore
 
   SIImageStore(const casacore::String &imagename,
                const casacore::Bool ignorefacets=casacore::False,
-	       const casacore::Bool ignoresumwt=casacore::False);
+	       const casacore::Bool noRequireSumwt=casacore::False);
 
   SIImageStore(const casacore::String &imagename,
 	       const casacore::CoordinateSystem &imcoordsys,

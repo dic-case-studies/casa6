@@ -66,7 +66,9 @@ class PyDeconvolver:
     def initializeDeconvolvers(self):
         for immod in range(0,self.NF):
             self.SDtools.append(synthesisdeconvolver())
-            self.SDtools[immod].setupdeconvolution(decpars=self.alldecpars[str(immod)])
+            decpars = self.alldecpars[str(immod)]
+            decpars['noRequireSumwt'] = True
+            self.SDtools[immod].setupdeconvolution(decpars=decpars)
 
 #############################################
     def initializeIterationControl(self):

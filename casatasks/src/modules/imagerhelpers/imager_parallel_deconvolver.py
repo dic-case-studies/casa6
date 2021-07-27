@@ -53,7 +53,9 @@ class PyParallelDeconvolver(PySynthesisImager):
          #for immod in range(0,self.NF):
          for immod in self.listOfNodes:
               self.PH.runcmd("toolsd = casac.synthesisdeconvolver()", immod )
-              joblist.append( self.PH.runcmd("toolsd.setupdeconvolution(decpars="+ str(self.alldecpars[str(immod)]) +")", immod ) )
+              decpars = self.alldecpars[str(immod)]
+              decpars['noRequireSumwt'] = True
+              joblist.append( self.PH.runcmd("toolsd.setupdeconvolution(decpars="+ str(decpars) +")", immod ) )
          self.PH.checkJobs( joblist )
 
 #############################################
