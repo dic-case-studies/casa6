@@ -91,6 +91,9 @@ input_file = 'n4826_16apr98.ms'  # 128 channels
 stars = "*************"
 stop_on_first_error = False
 
+def writeStdErr(message):
+    sys.stderr.write(message)
+
 # Keeps track of number of passes, failures
 # Private class
 class tester:
@@ -108,10 +111,8 @@ class tester:
     def end(self, condition, error_msg):
         status = "OK"
         if not is_true(condition):
-            if is_python3:
-                print(error_msg, file=sys.stderr)
-            else:
-                print >> sys.stderr, error_msg
+            writeStdErr(error_msg)
+        
             self.fail += 1
             status = "FAIL"
             if stop_on_first_error:
