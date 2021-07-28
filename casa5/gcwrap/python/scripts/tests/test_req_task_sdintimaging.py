@@ -174,9 +174,9 @@ class testref_base(unittest.TestCase):
 
     def tearDown(self):
         # Default: delete all (input and output data)
-        #self.delData()
+        self.delData()
         # leave for input and output (e.g. for debugging)
-        self.delData(delinput=False, deloutput=False)
+        # self.delData(delinput=False, deloutput=False)
 
     @classmethod
     def tearDownClass(cls):
@@ -231,6 +231,7 @@ class testref_base(unittest.TestCase):
         if delinput:
             if hasattr(self,'msfile') and self.msfile!='':
                 os.system('rm -rf ' + self.msfile)
+                os.system('rm -rf ' + self.msfile + '.flagversions')
             if hasattr(self,'refmsfile') and self.refmsfile!='':
                 os.system('rm -rf ' + self.refmsfile)
             if hasattr(self,'sdimage') and self.sdimage!='':
