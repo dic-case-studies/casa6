@@ -141,11 +141,13 @@ def remove_table(filename):
             os.remove(filename)
 
 
-###
-# Base class for sdimaging unit test
-###
-
 class FileManager:
+    """Helper class for copying datasets from casatestdata repository directory.
+    
+    Motivation: avoid copying multiple times a dataset shared by multiple tests
+    Caveat: tsdimaging requires write access to MS MAIN table
+    Assumption: all tests are run in the same working directory.
+    """
 
     def __init__(self,repo_dir):
         if not os.path.isdir(repo_dir):
@@ -260,6 +262,8 @@ class FileManager:
             os.chmod(path,new_mode)
         
     def smart_copy(self,file_basename):
+        """Copy a dataset from casatestdata only when strictly required"""
+        
         self.assert_workdir_did_not_changed()
         self.assert_is_valid(file_basename)
         log_origin = 'smart_copy'
@@ -312,7 +316,17 @@ class sdimaging_standard_paramset(object):
     nchan=40
     start=400
     width=10
+
+###
+# Base class for sdimaging unit test
+###
+
 class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
+    #FIXME: only code of common interest to all tests of all derived
+    # test classe should be here. The rest should be moved outside,
+    # for easier readbility and maintenance.
+    # sdimaging_standard_paramset is no longer of common interest.
+    # We can use it, but not derive from it.
     """
     Base class for sdimaging unit test
 
@@ -1456,7 +1470,7 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         self.run_test(self.task_param, outshape, dirax)
 
 ###
-# Helper classes for tests of class sdimaging_test_selection
+# Helper classes for test_timerange* tests of class sdimaging_test_selection
 ###
 
 class TimeSelectionPattern:
@@ -1466,9 +1480,11 @@ class TimeSelectionPattern:
     VALUE_INTERVAL = 3
     VALUE_LT = 4
     VALUE_RANGE = 5
+
+
 class TestTimeRangeHelper:
-    """Helper class for test_timerange* tests of class sdimaging_test_selection
-    """
+    """Provides parameters and compute expected results for test_timerange* tests"""
+    
     _default_params = {
         'infiles': ['selection_time.ms'],
         'outfile': 'selection_time.ms.sdimaging',
