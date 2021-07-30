@@ -82,6 +82,7 @@ if is_CASA6:
         from casampi.MPICommandClient import MPICommandClient
         has_mpi = True
     except:
+        from casatasks import casalog
         casalog.post('casampi is not available. Running in serial', 'WARN')
 
 
