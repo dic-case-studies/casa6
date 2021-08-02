@@ -261,40 +261,35 @@ for test in sort(tests):
                        + extra_libs + gtest_libs ) )
 
    if options.verbose or options.compile:
-      if options.compile:
-         if options.timecheck and up_to_date( src, exe ):
-            print( "already up to date %s" % src )
-         else:
-            print("compiling %s" % src)
-            print("    %s" % ' '.join(cxx))
-      else:
-         if options.timecheck and up_to_date( src, exe ):
-            print( "already up to date %s" % src )
-         else:
-            print("compiling %s" % src, end='')
-
-      sys.stdout.flush( )
+      if options.timecheck and up_to_date( src, exe ):
+         print( "already up to date %s" % src )
 
    if options.timecheck and up_to_date( src, exe ):
+      if options.compile or options.verbose:
+         print( "already up to date %s" % src )
       tests_to_run.append(exe)
       continue
+
+   if options.compile:
+      print (' '.join(cxx))
+   else:
+      print("compiling %s" % src, end='')
+   sys.stdout.flush( )
 
    proc = Popen( cxx, stdout=PIPE, stderr=STDOUT )
    out,err = pipe_decode(proc.communicate( ))
    if proc.returncode != 0:
-      if options.verbose and not options.compile:
-         print(" [failure]")
+      print(" [failure]")
       print(out)
       sys.exit('compilation of %s failed' % basename(src))
    else:
       tests_to_run.append(exe)
+      print(" [success]")
       if options.verbose or options.compile:
          if options.compile:
              if len(out.strip( )) > 0:
                  print(out.strip( ))
              print("compilation of %s successful" % basename(src))
-         else:
-             print(" [success]")
 
 ###
 ### running tests
