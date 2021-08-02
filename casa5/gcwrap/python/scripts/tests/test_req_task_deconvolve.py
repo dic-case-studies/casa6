@@ -2882,7 +2882,7 @@ class test_niterparms(testref_base):
 
     # Test 99
     def test_niterparms_gain_1(self):
-        """ [restoration] test_niterparms_gain_1 """
+        """ [niterparms] test_niterparms_gain_1 """
         ######################################################################################
         # Deconvolve should execute 10 iterations for gain=0.2, just like the first major-minor cycle of tclean.
         ######################################################################################
@@ -2891,7 +2891,7 @@ class test_niterparms(testref_base):
 
     # Test 100
     def test_niterparms_gain_2(self):
-        """ [restoration] test_niterparms_gain_2 """
+        """ [niterparms] test_niterparms_gain_2 """
         ######################################################################################
         # Deconvolve should execute 7 iterations for gain=0.3, just like the first major-minor cycle of tclean.
         ######################################################################################
@@ -2900,7 +2900,7 @@ class test_niterparms(testref_base):
 
     # Test 101
     def test_niterparms_threshold_1(self):
-        """ [restoration] test_niterparms_threshold_1 """
+        """ [niterparms] test_niterparms_threshold_1 """
         ######################################################################################
         # Deconvolve should execute 16 iterations for threshold=0.22, just like the first major-minor cycle of tclean.
         ######################################################################################
@@ -2909,7 +2909,7 @@ class test_niterparms(testref_base):
 
     # Test 102
     def test_niterparms_threshold_2(self):
-        """ [restoration] test_niterparms_threshold_2 """
+        """ [niterparms] test_niterparms_threshold_2 """
         ######################################################################################
         # Deconvolve should execute 19 iterations for threshold=0.18, just like the first major-minor cycle of tclean.
         ######################################################################################
@@ -2918,7 +2918,7 @@ class test_niterparms(testref_base):
 
     # Test 103
     def test_niterparms_nsigma_1(self):
-        """ [restoration] test_niterparms_nsigma_1 """
+        """ [niterparms] test_niterparms_nsigma_1 """
         ######################################################################################
         # Deconvolve should execute 72 iterations for nsigma=0.9, just like the first major-minor cycle of tclean.
         ######################################################################################
@@ -2927,7 +2927,7 @@ class test_niterparms(testref_base):
 
     # Test 104
     def test_niterparms_nsigma_2(self):
-        """ [restoration] test_niterparms_nsigma_2 """
+        """ [niterparms] test_niterparms_nsigma_2 """
         ######################################################################################
         # Deconvolve should execute 60 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
         ######################################################################################
@@ -2936,7 +2936,7 @@ class test_niterparms(testref_base):
 
     # Test 105
     def test_niterparms_cyclefactor_1(self):
-        """ [restoration] test_niterparms_cyclefactor_1 """
+        """ [niterparms] test_niterparms_cyclefactor_1 """
         ######################################################################################
         # Deconvolve should execute 40 iterations for cyclefactor=0.1, just like the first major-minor cycle of tclean.
         ######################################################################################
@@ -2945,7 +2945,7 @@ class test_niterparms(testref_base):
 
     # Test 106
     def test_niterparms_cyclefactor_2(self):
-        """ [restoration] test_niterparms_cyclefactor_2 """
+        """ [niterparms] test_niterparms_cyclefactor_2 """
         ######################################################################################
         # Deconvolve should execute 13 iterations for cyclefactor=2.0, just like the first major-minor cycle of tclean.
         ######################################################################################
@@ -2954,7 +2954,7 @@ class test_niterparms(testref_base):
 
     # Test 107
     def test_niterparms_minpsffraction_1(self):
-        """ [restoration] test_niterparms_minpsffraction_1 """
+        """ [niterparms] test_niterparms_minpsffraction_1 """
         ######################################################################################
         # Deconvolve should execute 7 iterations for minpsffraction=0.5, just like the first major-minor cycle of tclean.
         ######################################################################################
@@ -2963,7 +2963,7 @@ class test_niterparms(testref_base):
 
     # Test 108
     def test_niterparms_minpsffraction_2(self):
-        """ [restoration] test_niterparms_minpsffraction_2 """
+        """ [niterparms] test_niterparms_minpsffraction_2 """
         ######################################################################################
         # Deconvolve should execute 16 iterations for minpsffraction=0.2, just like the first major-minor cycle of tclean.
         ######################################################################################
@@ -2972,7 +2972,7 @@ class test_niterparms(testref_base):
 
     # Test 109
     def test_niterparms_maxpsffraction_1(self):
-        """ [restoration] test_niterparms_maxpsffraction_1 """
+        """ [niterparms] test_niterparms_maxpsffraction_1 """
         ######################################################################################
         # Deconvolve should execute 78 iterations for maxpsffraction=0.01, just like the first major-minor cycle of tclean.
         ######################################################################################
@@ -2981,7 +2981,7 @@ class test_niterparms(testref_base):
 
     # Test 110
     def test_niterparms_maxpsffraction_2(self):
-        """ [restoration] test_niterparms_maxpsffraction_2 """
+        """ [niterparms] test_niterparms_maxpsffraction_2 """
         ######################################################################################
         # Deconvolve should execute 40 iterations for maxpsffraction=0.05, just like the first major-minor cycle of tclean.
         ######################################################################################
