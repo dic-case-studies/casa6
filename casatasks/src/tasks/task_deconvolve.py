@@ -58,10 +58,11 @@ def check_requiredmask_exists(usemask, mask):
     if not os.path.exists(mask): # mask is a filename string <- only option left
         raise RuntimeError("Internal Error: 'mask' parameter specified as a filename '"+mask+"', but no such file exists")
 
-def check_requiredimgs_exist(imagename, deconvolver, nterms):
+def check_requiredimgs_exist(imagename, inp):
     # get the list of images to check for
     reqims = []
-    if deconvolver == 'mtmfs':
+    if inp['deconvolver'] == 'mtmfs':
+        nterms = inp['nterms']
         end = nterms*2-1
         for ttn in range(0, nterms*2-1):
             reqims.append(imagename + ".psf" + ".tt" + str(ttn))
@@ -78,6 +79,12 @@ def check_requiredimgs_exist(imagename, deconvolver, nterms):
     if len(extims) != len(reqims):
         diffims = list(filter(lambda im: im not in extims, reqims))
         raise RuntimeError("Internal Error: missing one or more of the required images: " + str(diffims))
+
+    # check for .pb image in certain special cases
+    casalog.post("Checking for "+imagename+".pb", "SEVERE", "task_deconvolve");
+    if (imagename+".pb" not in extims):
+        if (inp['nsigma'] > 0):
+            raise RuntimeError("One or more of the given parameters (nsigma>0) require a .pb image to be available.")
 
 def check_starmodel_model_collisions(startmodel, imagename, deconvolver):
     # check for startmodel(s)
@@ -191,7 +198,7 @@ def deconvolve(
         # Make sure that we have all the necessary images and that the startmodel is valid.
         # Note: cpp code should check that .residual and .psf exist, but current tests indicate that it doesn't do that.
         check_requiredmask_exists(usemask, mask)
-        check_requiredimgs_exist(imagename, deconvolver, nterms)
+        check_requiredimgs_exist(imagename, inp)
         check_starmodel_model_collisions(startmodel, imagename, deconvolver)
         
         # make a list of parameters with defaults from tclean

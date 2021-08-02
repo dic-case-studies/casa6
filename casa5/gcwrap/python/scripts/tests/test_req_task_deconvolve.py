@@ -546,6 +546,117 @@
 #'maxpsffraction':0.05
 #testname: test_niterparms_maxpsffraction_2
 #
+#
+#
+#Minimum images tests: verify that the minimal set of images (.residual and .psf) can be used with each of the other parameters
+#111. Test non-default value for deconvolver_clark with only the .residual and .psf present
+#deconvolver:"clark"
+#testname: test_minimages_deconvolver_clark
+#
+#112. Test non-default value for deconvolver_multiscale with only the .residual and .psf present
+#deconvolver:"multiscale", scales:[5,10,50]
+#testname: test_minimages_deconvolver_multiscale
+#
+#113. Test non-default value for deconvolver_mtmfs with only the .residual.ttn and .psf.ttn present
+#'imsize':100, 'cell':'10.0arcsec', 'deconvolver':'mtmfs', 'nterms':2})
+#testname: test_minimages_deconvolver_mtmfs
+#
+#114. Test non-default value for smallscalebias with only the .residual and .psf present
+#deconvolver:"clark", smallscalebias:1.0
+#testname: test_minimages_smallscalebias
+#
+#115. Test non-default value for restoration with only the .residual and .psf present
+#restoration:False
+#testname: test_minimages_restoration
+#
+#116. Test non-default value for restoringbeam with only the .residual and .psf present
+#restoringbeam:'5.0arcsec'
+#testname: test_minimages_restoringbeam
+#
+#117. Test non-default value for niter with only the .residual and .psf present
+#niter:10
+#testname: test_minimages_niter
+#
+#118. Test non-default value for gain with only the .residual and .psf present
+#gain:0.5
+#testname: test_minimages_gain
+#
+#119. Test non-default value for threshold with only the .residual and .psf present
+#threshold:"1Jy"
+#testname: test_minimages_threshold
+#
+#120. Test non-default value for nsigma with only the .residual and .psf present
+#nsigma:1.5
+#testname: test_minimages_nsigma
+#
+#121. Test non-default value for cyclefactor with only the .residual and .psf present
+#cyclefactor:5.0
+#testname: test_minimages_cyclefactor
+#
+#122. Test non-default value for minpsffraction with only the .residual and .psf present
+#minpsffraction:0.5
+#testname: test_minimages_minpsffraction
+#
+#123. Test non-default value for maxpsffraction with only the .residual and .psf present
+#maxpsffraction:0.5
+#testname: test_minimages_maxpsffraction
+#
+#124. Test non-default value for interactive with only the .residual and .psf present
+#interactive:0
+#testname: test_minimages_interactive
+#
+#125. Test non-default value for fastnoise with only the .residual and .psf present
+#fastnoise:False
+#testname: test_minimages_fastnoise
+#
+#126. Test non-default value for usemask with only the .residual and .psf present
+#usemask:"pb"
+#testname: test_minimages_usemask
+#
+#127. Test non-default value for mask with only the .residual and .psf present
+#mask:'circle[[40pix,40pix],10pix]'
+#testname: test_minimages_mask
+#
+#128. Test non-default value for sidelobethreshold with only the .residual and .psf present
+#usemask:"auto-multithresh", sidelobethreshold:10.0
+#testname: test_minimages_sidelobethreshold
+#
+#129. Test non-default value for noisethreshold with only the .residual and .psf present
+#usemask:"auto-multithresh", noisethreshold:10.0
+#testname: test_minimages_noisethreshold
+#
+#130. Test non-default value for lownoisethreshold with only the .residual and .psf present
+#usemask:"auto-multithresh", lownoisethreshold:10.0
+#testname: test_minimages_lownoisethreshold
+#
+#131. Test non-default value for negativethreshold with only the .residual and .psf present
+#usemask:"auto-multithresh", negativethreshold:0.5
+#testname: test_minimages_negativethreshold
+#
+#132. Test non-default value for smoothfactor with only the .residual and .psf present
+#usemask:"auto-multithresh", smoothfactor:0.5
+#testname: test_minimages_smoothfactor
+#
+#133. Test non-default value for minbeamfrac with only the .residual and .psf present
+#usemask:"auto-multithresh", minbeamfrac:0.5
+#testname: test_minimages_minbeamfrac
+#
+#134. Test non-default value for cutthreshold with only the .residual and .psf present
+#usemask:"auto-multithresh", cutthreshold:0.5
+#testname: test_minimages_cutthreshold
+#
+#135. Test non-default value for growiterations with only the .residual and .psf present
+#usemask:"auto-multithresh", growiterations:1
+#testname: test_minimages_growiterations
+#
+#136. Test non-default value for dogrowprune with only the .residual and .psf present
+#usemask:"auto-multithresh", dogrowprune:False
+#testname: test_minimages_dogrowprune
+#
+#137. Test non-default value for verbose with only the .residual and .psf present
+#verbose:True
+#testname: test_minimages_verbose
+#
 ##########################################################################
 
 from __future__ import absolute_import
@@ -2988,6 +3099,300 @@ class test_niterparms(testref_base):
         ######################################################################################
         report = self.helper_deconvolve_check_iterdone('maxpsffraction', param_val=0.05, expected_iter=40)
         self.checkfinal(report)
+
+##############################################
+##############################################
+
+##Task level tests : verify that the minimal set of images (.residual and .psf) can be used with each of the other parameters
+class test_minimages(testref_base):
+    inptbls = [".residual", ".psf"]
+
+    @classmethod
+    def setUpClass(cls):
+        super(test_minimages, cls).setUpClass()
+        msfile='refim_point.ms'
+        cls.staticDelData(msfile)
+        cls.staticPrepData(msfile, tclean_args={'imsize':100, 'cell':['10.0arcsec','10.0arcsec']})
+        cls.staticCopyToCache(msfile, imagename=cls.img, cachedir='imgval_cache')
+
+    def misetup(self):
+        # we can use a cache here because tclean was run only run once, during setUpClass
+        self.delData()
+        type(self).staticCopyFromCache()
+
+    # Test 111
+    def test_minimages_deconvolver_clark(self):
+        """ [minimages] test_minimages_deconvolver_clark """
+        ######################################################################################
+        # Test non-default value for deconvolver_clark with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, deconvolver="clark")#='hogbom',
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 112
+    def test_minimages_deconvolver_multiscale(self):
+        """ [minimages] test_minimages_deconvolver_multiscale """
+        ######################################################################################
+        # Test non-default value for deconvolver_multiscale with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, deconvolver="multiscale", scales=[5,10,50])#='hogbom',
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 113
+    def test_minimages_deconvolver_mtmfs(self):
+        """ [minimages] test_minimages_deconvolver_mtmfs """
+        ######################################################################################
+        # Test non-default value for deconvolver_mtmfs with only the .residual.ttn and .psf.ttn present
+        ######################################################################################
+        # can't use misetup because mtmfs requires different input images
+        self.prepData('refim_point.ms', tclean_args={'imsize':100, 'cell':'10.0arcsec', 'deconvolver':'mtmfs', 'nterms':2})
+        os.system('rm -rf tst.alpha* tst.image* tst.mask* tst.model* tst.pb* tst.sumwt*')
+        deconvolve(imagename=self.img, niter=10, deconvolver="mtmfs", nterms=2)#='hogbom',
+        report=th.checkall(imgexist=[self.img+'.image.tt0'], imgval=[(self.img+'.image.tt0',0.482,[50,49,0,0])] )
+
+    # Test 114
+    def test_minimages_smallscalebias(self):
+        """ [minimages] test_minimages_smallscalebias """
+        ######################################################################################
+        # Test non-default value for smallscalebias with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, deconvolver="clark", smallscalebias=1.0)#=0.0
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 115
+    def test_minimages_restoration(self):
+        """ [minimages] test_minimages_restoration """
+        ######################################################################################
+        # Test non-default value for restoration with only the .residual and .psf present
+        ######################################################################################
+        # just make sure we don't throw an exception or crash
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, restoration=False)#=True,
+
+    # Test 116
+    def test_minimages_restoringbeam(self):
+        """ [minimages] test_minimages_restoringbeam """
+        ######################################################################################
+        # Test non-default value for restoringbeam with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, restoringbeam='5.0arcsec')#=[],
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 117
+    def test_minimages_niter(self):
+        """ [minimages] test_minimages_niter """
+        ######################################################################################
+        # Test non-default value for niter with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10)#=0, 
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 118
+    def test_minimages_gain(self):
+        """ [minimages] test_minimages_gain """
+        ######################################################################################
+        # Test non-default value for gain with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, gain=0.5)#=0.1,
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 119
+    def test_minimages_threshold(self):
+        """ [minimages] test_minimages_threshold """
+        ######################################################################################
+        # Test non-default value for threshold with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, threshold="1Jy")#=0.0, 
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 120
+    def test_minimages_nsigma(self):
+        """ [minimages] test_minimages_nsigma """
+        ######################################################################################
+        # Test non-default value for nsigma with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        strcheck = "One or more of the given parameters .* require a \\.pb image to be available\\."
+        with self.assertRaisesRegex(RuntimeError, strcheck):
+            deconvolve(imagename=self.img, niter=10, nsigma=1.5)#=0.0
+
+    # Test 121
+    def test_minimages_cyclefactor(self):
+        """ [minimages] test_minimages_cyclefactor """
+        ######################################################################################
+        # Test non-default value for cyclefactor with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, cyclefactor=5.0)#=1.0,
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 122
+    def test_minimages_minpsffraction(self):
+        """ [minimages] test_minimages_minpsffraction """
+        ######################################################################################
+        # Test non-default value for minpsffraction with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, minpsffraction=0.5)#=0.1,
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 123
+    def test_minimages_maxpsffraction(self):
+        """ [minimages] test_minimages_maxpsffraction """
+        ######################################################################################
+        # Test non-default value for maxpsffraction with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, maxpsffraction=0.5)#=0.8,
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 124
+    def test_minimages_interactive(self):
+        """ [minimages] test_minimages_interactive """
+        ######################################################################################
+        # Test non-default value for interactive with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, interactive=0)#=False,
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 125
+    def test_minimages_fastnoise(self):
+        """ [minimages] test_minimages_fastnoise """
+        ######################################################################################
+        # Test non-default value for fastnoise with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, fastnoise=False)#=True,
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 126
+    def test_minimages_usemask(self):
+        """ [minimages] test_minimages_usemask """
+        ######################################################################################
+        # Test non-default value for usemask with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        strcheck = "Need .*(pb|PB).* image"
+        with self.assertRaisesRegex(RuntimeError, strcheck):
+            deconvolve(imagename=self.img, niter=10, usemask="pb", pbmask=0.2)#='user',
+
+    # Test 127
+    def test_minimages_mask(self):
+        """ [minimages] test_minimages_mask """
+        ######################################################################################
+        # Test non-default value for mask with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, mask='circle[[40pix,40pix],10pix]')#='',
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 128
+    def test_minimages_sidelobethreshold(self):
+        """ [minimages] test_minimages_sidelobethreshold """
+        ######################################################################################
+        # Test non-default value for sidelobethreshold with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", sidelobethreshold=10.0)#=5.0,
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 129
+    def test_minimages_noisethreshold(self):
+        """ [minimages] test_minimages_noisethreshold """
+        ######################################################################################
+        # Test non-default value for noisethreshold with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", noisethreshold=10.0)#=3.0,
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 130
+    def test_minimages_lownoisethreshold(self):
+        """ [minimages] test_minimages_lownoisethreshold """
+        ######################################################################################
+        # Test non-default value for lownoisethreshold with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", lownoisethreshold=10.0)#=3.0,
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 131
+    def test_minimages_negativethreshold(self):
+        """ [minimages] test_minimages_negativethreshold """
+        ######################################################################################
+        # Test non-default value for negativethreshold with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", negativethreshold=0.5)#=0.0,
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 132
+    def test_minimages_smoothfactor(self):
+        """ [minimages] test_minimages_smoothfactor """
+        ######################################################################################
+        # Test non-default value for smoothfactor with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", smoothfactor=0.5)#=1.0,
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 133
+    def test_minimages_minbeamfrac(self):
+        """ [minimages] test_minimages_minbeamfrac """
+        ######################################################################################
+        # Test non-default value for minbeamfrac with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", minbeamfrac=0.5)#=0.3, 
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 134
+    def test_minimages_cutthreshold(self):
+        """ [minimages] test_minimages_cutthreshold """
+        ######################################################################################
+        # Test non-default value for cutthreshold with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", cutthreshold=0.5)#=0.01,
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 135
+    def test_minimages_growiterations(self):
+        """ [minimages] test_minimages_growiterations """
+        ######################################################################################
+        # Test non-default value for growiterations with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", growiterations=1)#=100
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 136
+    def test_minimages_dogrowprune(self):
+        """ [minimages] test_minimages_dogrowprune """
+        ######################################################################################
+        # Test non-default value for dogrowprune with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", dogrowprune=False)#=True
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
+
+    # Test 137
+    def test_minimages_verbose(self):
+        """ [minimages] test_minimages_verbose """
+        ######################################################################################
+        # Test non-default value for verbose with only the .residual and .psf present
+        ######################################################################################
+        self.misetup()
+        deconvolve(imagename=self.img, niter=10, verbose=True)#=False
+        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
 if __name__ == '__main__':
     unittest.main()
