@@ -34,7 +34,9 @@
 #include <imageanalysis/Annotations/AnnCircle.h>
 #include <imageanalysis/Annotations/AnnEllipse.h>
 
-#include <casa/namespace.h>
+using namespace std;
+using namespace casa;
+using namespace casacore;
 
 int main() {
 	try {

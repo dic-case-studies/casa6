@@ -6,9 +6,11 @@
 #include <tables/DataMan/TiledShapeStMan.h>
 
 #include <casa/aips.h>
-#include <casa/namespace.h>
 #include <cassert>
 
+using namespace std;
+using namespace casa;
+using namespace casacore;
 
 MeasurementSet create_ms()
 {
@@ -65,12 +67,12 @@ MeasurementSet create_ms()
 
     // MAIN - antenna
     {
-        casa::MSMainColumns(ms).antenna1().put(0, 0);
-        casa::MSMainColumns(ms).antenna1().put(1, 0);
-        casa::MSMainColumns(ms).antenna1().put(2, 1);
-        casa::MSMainColumns(ms).antenna2().put(0, 1);
-        casa::MSMainColumns(ms).antenna2().put(1, 2);
-        casa::MSMainColumns(ms).antenna2().put(2, 2);
+        MSMainColumns(ms).antenna1().put(0, 0);
+        MSMainColumns(ms).antenna1().put(1, 0);
+        MSMainColumns(ms).antenna1().put(2, 1);
+        MSMainColumns(ms).antenna2().put(0, 1);
+        MSMainColumns(ms).antenna2().put(1, 2);
+        MSMainColumns(ms).antenna2().put(2, 2);
     }
 
 

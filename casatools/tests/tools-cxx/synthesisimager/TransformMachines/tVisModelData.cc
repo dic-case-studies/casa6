@@ -38,9 +38,10 @@
 #include <msvis/MSVis/VisibilityIterator.h>
 #include <msvis/MSVis/VisBuffer.h>
 #include <casa/OS/Timer.h>
-#include <casa/namespace.h>
 
-
+using namespace std;
+using namespace casa;
+using namespace casacore;
 
 int
 main(int argc, char **argv){

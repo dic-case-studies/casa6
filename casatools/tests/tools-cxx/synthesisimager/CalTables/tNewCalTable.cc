@@ -37,7 +37,11 @@
 #include <casa/Exceptions/Error.h>
 #include <casa/iostream.h>
 #include <casa/BasicMath/Math.h>
-#include <casa/namespace.h>
+
+using namespace std;
+using namespace casa;
+using namespace casacore;
+
 // <summary>
 // Test program for NewCalTable class.
 // </summary>

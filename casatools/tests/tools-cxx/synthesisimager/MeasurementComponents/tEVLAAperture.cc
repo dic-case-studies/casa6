@@ -52,18 +52,20 @@
 #include <components/ComponentModels/SpectralIndex.h>
 #include <components/ComponentModels/SkyComponent.h>
 
-#include <synthesis/MeasurementComponents/SkyJones.h>
-#include <synthesis/MeasurementComponents/PBMath.h>
+#include <synthesis/TransformMachines/SkyJones.h>
+#include <synthesis/TransformMachines/PBMath.h>
 #include <casa/BasicSL/String.h>
 
 #include <msvis/MSVis/VisSet.h>
 #include <msvis/MSVis/VisBuffer.h>
 #include <msvis/MSVis/VisibilityIterator.h>
 
-#include <synthesis/MeasurementComponents/EVLAAperture.h>
+#include <synthesis/TransformMachines/EVLAAperture.h>
 
+using namespace std;
+using namespace casa;
+using namespace casacore;
 
-#include <casa/namespace.h>
 int main()
 {
   try {

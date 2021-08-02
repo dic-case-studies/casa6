@@ -56,12 +56,14 @@
 #include <ms/MSOper/MSSummary.h>
 #include <msvis/MSVis/VisSet.h>
 #include <msvis/MSVis/VisBuffer.h>
-#include <synthesis/MeasurementComponents/VPSkyJones.h>
-#include <synthesis/MeasurementComponents/PBMath.h>
+#include <synthesis/TransformMachines/VPSkyJones.h>
+#include <synthesis/TransformMachines/PBMath.h>
 #include <casa/BasicSL/String.h>
 
+using namespace std;
+using namespace casa;
+using namespace casacore;
 
-#include <casa/namespace.h>
 int main()
 {
   try {

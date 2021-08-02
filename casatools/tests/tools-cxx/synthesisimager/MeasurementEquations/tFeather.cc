@@ -35,7 +35,10 @@
 #include <lattices/Lattices/TempLattice.h>
 #include <synthesis/MeasurementEquations/Feather.h> 
  
-#include <casa/namespace.h>
+using namespace std;
+using namespace casa;
+using namespace casacore;
+
 int main(int argc, char **argv)
 {
   cout << "Tests Feather function" << endl;

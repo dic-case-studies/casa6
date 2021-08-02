@@ -62,8 +62,9 @@
 
 #include <synthesis/TransformMachines/ALMAAperture.h>
 
+using namespace std;
+using namespace casa;
 
-#include <casa/namespace.h>
 int main()
 {
   try {

@@ -43,6 +43,10 @@
 #include <casa/OS/Directory.h>
 #include <casa/Utilities/Regex.h>
 
+using namespace std;
+using namespace casa;
+using namespace casacore;
+
 int
 main(int argc, char **argv){
 

@@ -26,7 +26,7 @@
 //# $Id: $
 
 #include <imageanalysis/IO/FitterEstimatesFileParser.h>
-
+#include <components/SpectralComponents/SpectralList.h>
 #include <casa/Utilities/Assert.h>
 #include <casa/OS/File.h>
 #include <components/ComponentModels/GaussianShape.h>
@@ -36,7 +36,7 @@
 #include <imageanalysis/ImageAnalysis/ImageProfileFitter.h>
 #include <imageanalysis/Annotations/AnnEllipse.h>
 
-#include <casa/namespace.h>
+using namespace casa;
 
 void test1(){
 	String pixelBox("100,100,115,115");

@@ -21,7 +21,7 @@
 //# $Id: $
 
 
-#include <mstransform/TVI/test/tPhaseShiftingTVI.h>
+#include "tPhaseShiftingTVI.h"
 #include <msvis/MSVis/PassThroughTVI.h>
 
 using namespace std;

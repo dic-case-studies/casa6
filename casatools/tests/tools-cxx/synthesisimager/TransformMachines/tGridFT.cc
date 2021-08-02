@@ -49,11 +49,13 @@
 #include <casa/namespace.h>
 #include <casa/OS/Directory.h>
 #include <casa/Utilities/Regex.h>
-#include <synthesis/TransformMachines2/test/MakeMS.h>
-using namespace casacore;
+#include "MakeMS.h"
+
+using namespace std;
 using namespace casa;
 using namespace casacore;
 using namespace casa::test;
+
 Int main(/*int argc, char **argv*/){
 
   MDirection thedir(Quantity(20.0, "deg"), Quantity(20.0, "deg"));

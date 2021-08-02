@@ -83,6 +83,7 @@ import sys
 import re
 import os
 import io
+import json
 
 from os import listdir
 from os.path import isfile, join, islink
@@ -94,6 +95,7 @@ import tarfile
 import ssl
 
 lib_ext = "dylib" if sys.platform == 'darwin' else 'so'
+build_config_file = "build.json"
 
 parser=argparse.ArgumentParser()
 
@@ -2315,6 +2317,7 @@ class create_makefile(Command):
             # make rules for tool libraries
             all_tool_names = g_tools.keys()
             tool_lib_name = os.sep.join([casac_dir, "_{libname}." + soabi + "." + lib_ext])
+
             sh_lib_flag = "{libname}." + soabi
             mk.write("\n\n# rules for tool libraries\n")
             for tn in (all_tool_names):
@@ -2334,6 +2337,9 @@ class create_makefile(Command):
                     else:
                         tool_lib_create += " " + tool_shared_lib.format(libname=mydl)
                         needed_libs.append(sh_lib_flag.format(libname=mydl[3:]))
+                        # add library mapping for building tool tests
+                        g_build_state['lib-path'][mydl] = tool_shared_lib.format(libname=mydl)
+
                 needed_objs = [o.replace('.cc', '.o') for o in needed_objs]
                 # The *_wrap.cc files are generated when running make, they won't exist
                 # after the first time setup.py genmake is run, so the _wrap.o dependency
@@ -2384,6 +2390,22 @@ class create_makefile(Command):
         # testing
         do_testing()
         write_dependency_tracking()
+
+        # extra state for building unit tests
+        g_build_state['lib-path']['libcasatools'] = libcasatools
+        g_build_state['grpc'] = { 'include': [ os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "include") ],
+                                  'cflags': [ '-DUSE_GRPC' ],
+                                  'lflags': [ ],
+                                  'libs': [ '-lgrpc++', '-lgrpc', '-lgpr', '-lprotobuf' ] }
+        g_build_state['python'] = { 'libs': [ '-lpython3.6m' ],
+                                    'cflags': [ ],
+                                    'lflags': [ ],
+                                    'include': [ ] }
+
+        # dump build state for building unit tests
+        with open( build_config_file, 'w' ) as f:
+            json.dump( g_build_state, f )
+
         print(
             "Successfully generated makefile! Now, run 'make [-j<n>]' "
             "(eg 'make -j8' or just 'make') to complete your build"
@@ -2464,6 +2486,7 @@ def get_grpc_incdir():
 g_tools_using_shared_libs = None
 g_tool_shared_libs = None
 g_tools = None
+g_build_state = { 'lib-path': {} }
 
 def generate_casacore_version_header():
     with open("casacore/CMakeLists.txt") as f:
@@ -2531,6 +2554,17 @@ if __name__ == '__main__':
     (NEEDED,LIBS,TOOLS) = generate_binding(TOOL_XML,tool_dir=os.path.join('build', distutils_dir_name('lib'), module_name))
     # stuff in globals for genmake
     (g_tools_using_shared_libs, g_tool_shared_libs, g_tools) = (NEEDED, LIBS, TOOLS)
+    # stuff needed for building c++ unit tests
+    if 'casacore/' not in module_cflags:
+        sys.exit( "internal error 'casacore/' not found in module_cflags" )
+    if '/code/' not in module_cflags:
+        sys.exit( "internal error '/code/' not found in module_cflags" )
+
+    g_build_state['tool'] =  { 'names': TOOLS,
+                               'depend': NEEDED,
+                               'libs': LIBS }
+    g_build_state['flags'] = { 'core': module_cflags['casacore/'],
+                               'code': module_cflags['/code/'] }
 
     CORE_SRC = source_files("casacore",file_suffix_filter=".cc")
     MIR_SRC =  source_files("casacore/mirlib",file_suffix_filter=".c")

@@ -25,8 +25,6 @@
 //#
 //# $Id: tImageConvolver.cc 20329 2008-06-06 07:59:22Z gervandiepen $
 //
-#include <imageanalysis/ImageAnalysis/ImageConvolver.h>
-
 #include <casa/aips.h>
 #include <casa/Arrays/Vector.h>
 #include <casa/OS/EnvVar.h>
@@ -40,9 +38,10 @@
 #include <images/Images/PagedImage.h>
 #include <casa/iostream.h>
 
-
-#include <casa/namespace.h>
-
+using namespace std;
+using namespace casacore;
+// this header assumes these namespaces are available
+#include <imageanalysis/ImageAnalysis/ImageConvolver.h>
 using namespace casa;
 
 int main (int argc, const char* argv[])

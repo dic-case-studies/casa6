@@ -30,7 +30,9 @@
 #include <casa/Containers/Block.h>
 #include <synthesis/MeasurementEquations/CCList.h>
 
-#include <casa/namespace.h>
+using namespace casa;
+using namespace casacore;
+
 int main()
 {
   {

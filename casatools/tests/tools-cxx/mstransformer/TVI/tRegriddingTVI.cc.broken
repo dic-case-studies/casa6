@@ -21,7 +21,7 @@
 //# $Id: $
 
 
-#include <mstransform/TVI/test/tRegriddingTVI.h>
+#include "tRegriddingTVI.h"
 
 using namespace std;
 using namespace casa;

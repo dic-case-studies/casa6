@@ -35,7 +35,10 @@
 #include <casa/iostream.h>
 #include <casa/BasicMath/Math.h>
 #include <casa/BasicSL/Constants.h>
-#include <casa/namespace.h>
+
+using namespace std;
+using namespace casa;
+using namespace casacore;
 
 // <summary>
 // Test program for VisVector, Jones, Mueller iterating algebra classes

@@ -43,38 +43,38 @@
 #include <mstransform/MSTransform/MSTransformDataHandler.h>
 #include <mstransform/MSTransform/MSUVBin.h>
 #include <tables/Tables/TableIter.h>
-#include <casa/namespace.h>
+#include <msvis/MSVis/MSIter2.h>
 
 using namespace std;
 
-Vector<Double> increment_p(2);
-Vector<Int> center_p(2);
-Vector<Int> npix_p(2);
-Vector<Int> chanMap_p;
-Vector<Int> polMap_p;
+casacore::Vector<casacore::Double> increment_p(2);
+casacore::Vector<casacore::Int> center_p(2);
+casacore::Vector<casacore::Int> npix_p(2);
+casacore::Vector<casacore::Int> chanMap_p;
+casacore::Vector<casacore::Int> polMap_p;
 
-Int makeUVW(const DirectionCoordinate& thedir, Matrix<Double>& uvw, const Int nx, const Int ny, const Double reffreq){
-	Vector<Int> shp(2);
+casacore::Int makeUVW(const casacore::DirectionCoordinate& thedir, casacore::Matrix<casacore::Double>& uvw, const casacore::Int nx, const casacore::Int ny, const casacore::Double reffreq){
+	casacore::Vector<casacore::Int> shp(2);
 	shp(0)=nx; shp(1)=ny;
-	Coordinate *ftcoord=thedir.makeFourierCoordinate(Vector<Bool>(2, true), shp);
+	casacore::Coordinate *ftcoord=thedir.makeFourierCoordinate(casacore::Vector<casacore::Bool>(2, true), shp);
 	increment_p=ftcoord->increment();
-	increment_p *= C::c/reffreq;
+	increment_p *= casacore::C::c/reffreq;
 	center_p(0)=nx/2;
 	center_p(1)=ny/2;
 	npix_p(0)=nx;
 	npix_p(1)=ny;
 	uvw.resize(3, nx*ny);
 	uvw.set(0.0);
-	Vector<Double> px(2);
-	Vector<Double> wld(2);
-	Int counter=0;
-    for (Int k=0; k < ny;++k ){
-    	px(1)=Double(k);
-    	for(Int j=0; j < nx; ++j){
-    		px(0)=Double(j);
+	casacore::Vector<casacore::Double> px(2);
+	casacore::Vector<casacore::Double> wld(2);
+	casacore::Int counter=0;
+    for (casacore::Int k=0; k < ny;++k ){
+    	px(1)=casacore::Double(k);
+    	for(casacore::Int j=0; j < nx; ++j){
+    		px(0)=casacore::Double(j);
     		if(ftcoord->toWorld(wld, px)){
-    			uvw(0, k*nx+j)=wld(0)*C::c/reffreq;
-    			uvw(1, k*nx+j)=wld(1)*C::c/reffreq;
+    			uvw(0, k*nx+j)=wld(0)*casacore::C::c/reffreq;
+    			uvw(1, k*nx+j)=wld(1)*casacore::C::c/reffreq;
     			++counter;
     		}
     	}
@@ -82,36 +82,36 @@ Int makeUVW(const DirectionCoordinate& thedir, Matrix<Double>& uvw, const Int nx
 	return counter;
 }
 
-void locateuvw(Matrix<Int>& locuv, const Matrix<Double>& uvw){
+void locateuvw(casacore::Matrix<casacore::Int>& locuv, const casacore::Matrix<casacore::Double>& uvw){
 	locuv.resize(2, uvw.shape()(1));
-	for (Int k=0; k <uvw.shape()(1); ++k){
-		for(Int j=0; j < 2; ++j)
-			locuv(j,k)=Int(center_p(j)+uvw(j,k)/increment_p(j));
+	for (casacore::Int k=0; k <uvw.shape()(1); ++k){
+		for(casacore::Int j=0; j < 2; ++j)
+			locuv(j,k)=casacore::Int(center_p(j)+uvw(j,k)/increment_p(j));
 	}
 
 
 }
 
-void gridData(const vi::VisBuffer2& vb, Cube<Complex>& grid,
-		Matrix<Float>& wght, Cube<Float>& wghtSpec,
-		Cube<Bool>& flag, Vector<Bool>& rowFlag, Matrix<Double>& uvw){
+void gridData(const casa::vi::VisBuffer2& vb, casacore::Cube<casacore::Complex>& grid,
+		casacore::Matrix<casacore::Float>& wght, casacore::Cube<casacore::Float>& wghtSpec,
+		casacore::Cube<casacore::Bool>& flag, casacore::Vector<casacore::Bool>& rowFlag, casacore::Matrix<casacore::Double>& uvw){
 //all pixel that are touched the flag and flag Row shall be unset and the w be assigned
 	//later we'll deal with multiple w for the same uv
 	//we need polmap and chanmap;
-    Matrix<Int>	locuv;
+    casacore::Matrix<casacore::Int>	locuv;
     //Dang i thought the new vb will return Data or FloatData if correctedData was
     //not there
-    Bool hasCorrected=!(MSMainColumns(vb.getVi()->ms()).correctedData().isNull());
+    casacore::Bool hasCorrected=!(casacore::MSMainColumns(vb.getVi()->ms()).correctedData().isNull());
 	locateuvw(locuv, vb.uvw());
-	for (Int k=0; k < vb.nRows(); ++k){
-		Int newrow=locuv(1,k)*npix_p(0)+locuv(0,k);
+	for (casacore::Int k=0; k < vb.nRows(); ++k){
+		casacore::Int newrow=locuv(1,k)*npix_p(0)+locuv(0,k);
 		if(rowFlag(newrow) && !(vb.flagRow()(k))){
 			rowFlag(newrow)=false;
 			uvw(2,newrow)=vb.uvw()(2,k);
 
 		}
-		for(Int chan=0; chan < vb.nChannels(); ++chan ){
-			for(Int pol=0; pol < vb.nCorrelations(); ++pol){
+		for(casacore::Int chan=0; chan < vb.nChannels(); ++chan ){
+			for(casacore::Int pol=0; pol < vb.nCorrelations(); ++pol){
 				if(!vb.flagCube()(pol,chan, k)){
 					grid(polMap_p(pol),chanMap_p(chan), newrow)
 								+= hasCorrected ? vb.visCubeCorrected()(pol,chan,k):
@@ -122,7 +122,7 @@ void gridData(const vi::VisBuffer2& vb, Cube<Complex>& grid,
 			}
 		}
 		//sum wgtspec along channels for weight
-		for (Int pol=0; pol < wght.shape()(0); ++pol){
+		for (casacore::Int pol=0; pol < wght.shape()(0); ++pol){
 			wght(pol,newrow)=sum(wghtSpec.xyPlane(k).row(pol));
 		}
 	}
@@ -137,17 +137,17 @@ int main(int argc, char **argv) {
 	    exit(1);
 	}
 	//////////////
-	String msname(argv[1]);
-	MeasurementSet myms(msname, Table::Old);
+	casacore::String msname(argv[1]);
+	casacore::MeasurementSet myms(msname, casacore::Table::Old);
 
-	cerr << "spec type" << MSSpWindowColumns(myms.spectralWindow()).measFreqRef().getColumn() << endl;
+	cerr << "spec type" << casacore::MSSpWindowColumns(myms.spectralWindow()).measFreqRef().getColumn() << endl;
 	//////////////
-	MDirection  phasecenter(Quantity(230.5,"deg"), Quantity(5.0667, "deg"), MDirection::J2000);
+	casacore::MDirection  phasecenter(casacore::Quantity(230.5,"deg"), casacore::Quantity(5.0667, "deg"), casacore::MDirection::J2000);
 	//MSUVBin binner(phasecenter, 256,
 	//		256, 63, 2, Quantity(15,"arcsec"), Quantity(15,"arcsec"), Quantity(1412.665,"MHz"), Quantity(24.414,"kHz"));
-	MSUVBin binner(phasecenter, 512,
-				512, 63, 2, Quantity(15.,"arcsec"), Quantity(15.,"arcsec"), Quantity(1412.665,"MHz"), Quantity(24.414,"kHz"));
-	binner.selectData(String(argv[1]), "0","0");
+	casa::MSUVBin binner(phasecenter, 512,
+				512, 63, 2, casacore::Quantity(15.,"arcsec"), casacore::Quantity(15.,"arcsec"), casacore::Quantity(1412.665,"MHz"), casacore::Quantity(24.414,"kHz"));
+	binner.selectData(casacore::String(argv[1]), "0","0");
 	binner.setOutputMS("OutMS.ms");
 	binner.fillOutputMS();
 //	MeasurementSet myms(argv[1],Table::Old);

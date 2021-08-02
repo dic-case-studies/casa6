@@ -41,7 +41,10 @@
 #include <casa/iostream.h>
 #include <casa/iomanip.h>
 
-#include <casa/namespace.h>
+using namespace std;
+using namespace casa;
+using namespace casacore;
+
 void plotLattice(Lattice<Float>* latp, const String& title);
 
 int main()

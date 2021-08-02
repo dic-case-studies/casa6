@@ -23,7 +23,7 @@
 #ifndef UVContSubTest_H_
 #define UVContSubTest_H_
 
-#include <msvis/MSVis/test/TestUtilsTVI.h>
+#include "TestUtilsTVI.h"
 #include <mstransform/TVI/UVContSubTVI.h>
 #include <mstransform/MSTransform/MSTransformIteratorFactory.h>
 #include <msvis/MSVis/SubMS.h>

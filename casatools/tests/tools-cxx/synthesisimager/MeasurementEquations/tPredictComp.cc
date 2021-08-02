@@ -37,8 +37,11 @@
 #include <components/ComponentModels/Flux.h>
 #include <synthesis/MeasurementEquations/Imager.h>
 #include <synthesis/MeasurementEquations/ImagerMultiMS.h>
-#include <synthesis/TransformMachines2/test/MakeMS.h>
-#include <casa/namespace.h>
+#include "MakeMS.h"
+
+using namespace std;
+using namespace casa;
+using namespace casacore;
 
 int main()
 {

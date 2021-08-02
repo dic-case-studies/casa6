@@ -40,7 +40,10 @@
 #include <casa/BasicSL/String.h>
 #include <casa/iostream.h>
 
-#include <casa/namespace.h>
+using namespace std;
+using namespace casa;
+using namespace casacore;
+
 int main() {
   try {
     String fluxScaleName;

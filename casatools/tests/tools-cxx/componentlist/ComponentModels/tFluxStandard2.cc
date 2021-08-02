@@ -46,7 +46,10 @@
 #include <tables/Tables/Table.h>
 #include <casatools/Config/State.h>
 
-#include <casa/namespace.h>
+using namespace std;
+using namespace casa;
+using namespace casacore;
+
 int main(int argc, char* argv[])
 {
   // Parse argument(s), if any.
@@ -195,7 +198,7 @@ int main(int argc, char* argv[])
 
     String horpath;
     Bool foundStd = false;
-    cont string coeffpath = "ephemerides/JPL-Horizons";
+    const string coeffpath = "ephemerides/JPL-Horizons";
     string resolvepath = casatools::get_state( ).resolve(coeffpath);
     if ( resolvepath != coeffpath ) {
         horpath = resolvepath;

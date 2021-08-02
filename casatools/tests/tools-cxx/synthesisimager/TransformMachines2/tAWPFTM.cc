@@ -47,7 +47,7 @@
 #include <casa/namespace.h>
 #include <casa/OS/Directory.h>
 #include <casa/Utilities/Regex.h>
-#include <synthesis/TransformMachines2/test/MakeMS.h>
+#include "MakeMS.h"
 #include <synthesis/TransformMachines/FTMachine.h>
 #include <synthesis/TransformMachines2/FTMachine.h>
 #include <synthesis/TransformMachines2/AWProjectWBFTNew.h>

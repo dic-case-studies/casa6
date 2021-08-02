@@ -33,7 +33,9 @@
 #include <casa/OS/File.h>
 #include <casa/OS/EnvVar.h>
 
-#include <casa/namespace.h>
+using namespace std;
+using namespace casa;
+using namespace casacore;
 
 void writeTestString(const String& test) {
     cout << "\n" << "*** " << test << " ***" << endl;

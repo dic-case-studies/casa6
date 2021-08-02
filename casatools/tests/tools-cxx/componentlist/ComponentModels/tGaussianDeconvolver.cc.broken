@@ -27,8 +27,9 @@
 
 #include <scimath/Mathematics/GaussianBeam.h>
 
-using namespace casacore;
+using namespace std;
 using namespace casa;
+using namespace casacore;
 
 int main() {
 	typedef GaussianBeam Angular2DGaussian;

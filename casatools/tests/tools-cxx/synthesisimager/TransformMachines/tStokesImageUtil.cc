@@ -30,7 +30,9 @@
 
 #include <synthesis/TransformMachines/StokesImageUtil.h>
 
-#include <casa/namespace.h>
+using namespace std;
+using namespace casa;
+using namespace casacore;
 
 int main() {
 	try {

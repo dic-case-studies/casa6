@@ -22,16 +22,15 @@
 
 
 #include <limits>
-#include <mstransform/TVI/test/tChannelAverageTVI.h>
+#include "tChannelAverageTVI.h"
 #include <msvis/MSVis/SimpleSimVi2.h>
 #include <msvis/MSVis/PassThroughTVI.h>
-#include <msvis/MSVis/test/MsFactory.h>
+#include "MsFactory.h"
 
 using namespace std;
 using namespace casa;
 using namespace casacore;
 using namespace casa::vi;
-
 
 //////////////////////////////////////////////////////////////////////////
 // ChannelAverageTVITest class

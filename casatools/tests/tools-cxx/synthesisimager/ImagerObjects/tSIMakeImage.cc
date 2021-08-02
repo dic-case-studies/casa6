@@ -28,7 +28,7 @@
  *      Author: kgolap
  */
 #include <synthesis/ImagerObjects/CubeMakeImageAlgorithm.h>
-#include <synthesis/TransformMachines2/test/MakeMS.h>
+#include "MakeMS.h"
 #include <synthesis/ImagerObjects/SynthesisImagerVi2.h>
 #include <synthesis/ImagerObjects/SynthesisUtilMethods.h>
 

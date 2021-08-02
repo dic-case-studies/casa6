@@ -52,12 +52,12 @@
 #include <casa/namespace.h>
 #include <casa/OS/Directory.h>
 #include <casa/Utilities/Regex.h>
-#include <synthesis/TransformMachines2/test/MakeMS.h>
-using namespace casacore;
+#include "MakeMS.h"
+
+using namespace std;
 using namespace casa;
 using namespace casacore;
 using namespace casa::refim;
-using namespace casacore;
 using namespace casa::test;
 
 FTMachine* makeFTM(String ftmachine, MPosition loc, MDirection dir){

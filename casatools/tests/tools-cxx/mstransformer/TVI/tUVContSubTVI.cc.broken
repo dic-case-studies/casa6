@@ -21,7 +21,7 @@
 //# $Id: $
 
 
-#include <mstransform/TVI/test/tUVContSubTVI.h>
+#include "tUVContSubTVI.h"
 
 using namespace std;
 using namespace casa;

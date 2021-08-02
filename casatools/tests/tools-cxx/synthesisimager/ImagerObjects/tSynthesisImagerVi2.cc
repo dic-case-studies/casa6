@@ -51,7 +51,7 @@
 #include <images/Images/TempImage.h>
 #include <coordinates/Coordinates/CoordinateUtil.h>
 #include <ms/MSSel/MSSourceIndex.h>
-#include <synthesis/TransformMachines2/test/MakeMS.h>
+#include "MakeMS.h"
 
 int main(int argc, char **argv)
 {

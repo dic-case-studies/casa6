@@ -28,6 +28,7 @@
 #include <casa/Arrays/Array.h>
 #include <casa/Arrays/Vector.h>
 #include <casa/Arrays/ArrayMath.h>
+#include <casacore/casa/Containers/OrderedMap.h>
 #include <synthesis/MeasurementComponents/PClarkCleanImageSkyModel.h>
 #include <casa/OS/File.h>
 #include <lattices/Lattices/LatticeStepper.h>
@@ -53,7 +54,9 @@
 #endif
 #include <errno.h>
 
-#include <casa/namespace.h>
+using namespace casa;
+using namespace casacore;
+
 extern casa::Applicator casa::applicator;
 
 void master(Int argc, Char *argv[]);

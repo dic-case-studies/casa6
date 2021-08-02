@@ -23,7 +23,7 @@
 #ifndef RegriddingTVITest_H_
 #define RegriddingTVITest_H_
 
-#include <msvis/MSVis/test/TestUtilsTVI.h>
+#include "TestUtilsTVI.h"
 #include <mstransform/TVI/RegriddingTVI.h>
 #include <mstransform/MSTransform/MSTransformIteratorFactory.h>
 

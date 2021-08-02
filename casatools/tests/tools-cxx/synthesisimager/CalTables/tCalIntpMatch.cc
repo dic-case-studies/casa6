@@ -36,7 +36,9 @@
 #include <synthesis/CalTables/CalMainBuffer.h>
 #include <msvis/MSVis/VisBuffer.h>
 
-#include <casa/namespace.h>
+using namespace std;
+using namespace casa;
+using namespace casacore;
 // <summary>
 // Test program for class CalIntpMatch.
 // </summary>

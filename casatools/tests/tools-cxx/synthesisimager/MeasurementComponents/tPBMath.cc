@@ -51,12 +51,14 @@
 #include <components/ComponentModels/SpectralIndex.h>
 #include <components/ComponentModels/SkyComponent.h>
 
-#include <synthesis/MeasurementComponents/SkyJones.h>
-#include <synthesis/MeasurementComponents/PBMath.h>
+#include <synthesis/TransformMachines/SkyJones.h>
+#include <synthesis/TransformMachines/PBMath.h>
 #include <casa/BasicSL/String.h>
 
+using namespace std;
+using namespace casa;
+using namespace casacore;
 
-#include <casa/namespace.h>
 int main()
 {
   try {

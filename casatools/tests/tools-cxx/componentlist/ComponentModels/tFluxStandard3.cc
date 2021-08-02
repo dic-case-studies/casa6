@@ -47,7 +47,10 @@
 #include <casatools/Config/State.h>
 #include <casa/iostream.h>
 
-#include <casa/namespace.h>
+using namespace std;
+using namespace casa;
+using namespace casacore;
+
 int main(int argc, char* argv[])
 {
   // Parse argument(s), if any.
@@ -137,7 +140,7 @@ int main() {
 
     String horpath;
     Bool foundStd = false;
-    cont string coeffpath = "nrao/VLA/standards/PerleyButler2013Coeffs";
+    const string coeffpath = "nrao/VLA/standards/PerleyButler2013Coeffs";
     string resolvepath = casatools::get_state( ).resolve(coeffpath);
     if ( resolvepath != coeffpath ) {
         horpath = resolvepath;

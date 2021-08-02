@@ -33,8 +33,8 @@
 #include <coordinates/Coordinates.h>
 #include <casa/Arrays/Matrix.h>
 
-#include <synthesis/MeasurementComponents/VPSkyJones.h>
-#include <synthesis/MeasurementComponents/PBMath.h>
+#include <synthesis/TransformMachines/VPSkyJones.h>
+#include <synthesis/TransformMachines/PBMath.h>
 #include <tables/Tables.h>
 #include <tables/Tables/TableDesc.h>
 #include <tables/Tables/SetupNewTab.h>
@@ -72,7 +72,10 @@
 
 #include <casa/BasicSL/String.h>
 
-#include <casa/namespace.h>
+using namespace std;
+using namespace casa;
+using namespace casacore;
+
 void buildTable(Table&);
 
 main()

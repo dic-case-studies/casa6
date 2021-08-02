@@ -30,12 +30,12 @@
 #include <images/Images/ImageConcat.h>
 #include <images/Images/PagedImage.h>
 #include <images/Images/TempImage.h>
-#include <imageanalysis/IO/CasaImageOpener.h>
+#include <images/Images/ImageOpener.h>
 #include <casa/OS/Directory.h>
-#include <casa/namespace.h>
+
 using namespace std;
 using namespace casacore;
-using namespace casa;
+
 Bool copyImages(const String& dirname, Vector<String>& images){
   
   {
@@ -62,7 +62,7 @@ Bool copyImages(const String& dirname, Vector<String>& images){
 
 Bool testImage(const String& image){
   LatticeBase * latt=nullptr;
-  latt=CasaImageOpener::openImage(image);
+  latt=ImageOpener::openImage(image);
   AlwaysAssertExit(latt);
   DataType dtype = TpOther;
   dtype=latt->dataType();
@@ -134,11 +134,11 @@ int main() {
       images[1]="tImageConcat_tmp2.img";
       images[2]="virtualConcat1.image";
       copyImages("virtualConcat2.image", images);
-      AlwaysAssertExit(CasaImageOpener::imageType("virtualConcat1.image")==ImageOpener::IMAGECONCAT);
+      AlwaysAssertExit(ImageOpener::imageType("virtualConcat1.image")==ImageOpener::IMAGECONCAT);
       testImage("virtualConcat1.image");
-      AlwaysAssertExit(CasaImageOpener::imageType("virtualConcat2.image")==ImageOpener::IMAGECONCAT);
+      AlwaysAssertExit(ImageOpener::imageType("virtualConcat2.image")==ImageOpener::IMAGECONCAT);
       testImage("virtualConcat2.image");
-      AlwaysAssertExit(CasaImageOpener::imageType("tImageConcat_tmp3.img")==ImageOpener::AIPSPP);
+      AlwaysAssertExit(ImageOpener::imageType("tImageConcat_tmp3.img")==ImageOpener::AIPSPP);
       testImage("tImageConcat_tmp3.img");
        
       // 

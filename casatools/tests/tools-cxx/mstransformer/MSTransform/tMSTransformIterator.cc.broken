@@ -20,7 +20,7 @@
 //#  MA 02111-1307  USA
 //# $Id: $
 
-#include <mstransform/MSTransform/test/tMSTransformIterator.h>
+#include "tMSTransformIterator.h"
 
 using namespace std;
 using namespace casacore;

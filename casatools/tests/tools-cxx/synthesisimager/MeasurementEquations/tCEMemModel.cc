@@ -42,9 +42,10 @@
 #include <lattices/Lattices/LatticeIterator.h>
 #include <lattices/LatticeMath/LatticeConvolver.h>
 #include <lattices/Lattices/TempLattice.h>
- 
- 
-#include <casa/namespace.h>
+
+using namespace casa;
+using namespace casacore; 
+
 int main()
 {
 

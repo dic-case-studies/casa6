@@ -41,7 +41,10 @@
 #include <casa/BasicMath/Random.h>
 #include <coordinates/Coordinates/CoordinateUtil.h>
 
-#include <casa/namespace.h>
+using namespace std;
+using namespace casa;
+using namespace casacore;
+
 int main()
 {
   Bool Failed = false;

@@ -23,7 +23,7 @@
 #ifndef PhaseShiftingTVITest_H_
 #define PhaseShiftingTVITest_H_
 
-#include <msvis/MSVis/test/TestUtilsTVI.h>
+#include "TestUtilsTVI.h"
 #include <mstransform/TVI/PhaseShiftingTVI.h>
 #include <mstransform/MSTransform/MSTransformIteratorFactory.h>
 

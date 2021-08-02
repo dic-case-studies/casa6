@@ -21,7 +21,7 @@
 //# $Id: $
 
 
-#include <mstransform/TVI/test/tHanningSmoothTVI.h>
+#include "tHanningSmoothTVI.h"
 #include <msvis/MSVis/PassThroughTVI.h>
 
 using namespace std;

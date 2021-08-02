@@ -25,8 +25,6 @@
 //#
 //# $Id: tSepImConvolver.cc 20329 2008-06-06 07:59:22Z gervandiepen $
 //
-#include <imageanalysis/ImageAnalysis/SepImageConvolver.h>
-
 #include <casa/aips.h>
 #include <scimath/Functionals/Gaussian1D.h>
 #include <casa/Arrays/Vector.h>
@@ -44,10 +42,9 @@
 #include <images/Images/PagedImage.h>
 #include <casa/iostream.h>
 
-
-
-#include <casa/namespace.h>
-
+using namespace std;
+using namespace casacore;
+#include <imageanalysis/ImageAnalysis/SepImageConvolver.h>
 using namespace casa;
 
 int main (int argc, const char* argv[])

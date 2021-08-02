@@ -55,7 +55,10 @@
 
 #include <casa/iostream.h>
 
-#include <casa/namespace.h>
+using namespace std;
+using namespace casa;
+using namespace casacore;
+
 Bool pixelReflection (const SkyCompRep& sky, const CoordinateSystem& cSys,
                       const GaussianBeam& beam, const Unit& unit,
                       Double tol=1.0e-5);
