@@ -613,6 +613,7 @@ class testref_base(unittest.TestCase):
         self.parallel = False     # whether to run tclean in parallel
         if ParallelTaskHelper.isMPIEnabled():
             self.parallel = True
+            PyParallelImagerHelper() # causes all MPI processes to chdir to the this processes' current working directory
 
     def tearDown(self):
         # Default: delete all (input and output data)
