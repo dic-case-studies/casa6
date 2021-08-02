@@ -139,7 +139,7 @@ class ImagerParameters():
                  dogrowprune=True,
                  minpercentchange=0.0,
                  verbose=False,
-                 fastnoise=False,
+                 fastnoise=True,
 
 #                 usescratch=True,
 #                 readonly=True,

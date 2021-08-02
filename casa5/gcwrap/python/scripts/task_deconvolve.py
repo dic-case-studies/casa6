@@ -146,7 +146,7 @@ def deconvolve(
     minpsffraction,#=0.1,
     maxpsffraction,#=0.8,
     interactive,#=False,
-    fastnoise,#=False,
+    fastnoise,#=True,
 
     ##### (new) Mask parameters
     usemask,#='user',
