@@ -1,0 +1,316 @@
+#!/usr/bin/env python3
+import os
+import re
+import sys
+import json
+import sysconfig
+from pathlib import Path
+from optparse import OptionParser
+from subprocess import Popen, PIPE, STDOUT
+from itertools import takewhile
+from os.path import realpath, dirname, join, splitext, exists, relpath, basename, getctime
+
+pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
+root = realpath(dirname(dirname(__file__)))
+test_path = "tests/tools-cxx"
+properties_path = join(root,'build.properties')
+state_path =  join(root,'build.json')
+extensions = ('.cc')
+existing_tests = { }
+tests_to_run = [ ]
+props = None                 ### build properties (filled below)
+state = None                 ### build state (filled below)
+
+if pyversion < 3:
+    str_encode = str
+    str_decode = str
+    def pipe_decode(output):
+        return output
+else:
+    def str_encode(s):
+        return bytes(s,sys.getdefaultencoding())
+    def str_decode(bs):
+        return bs.decode(sys.getdefaultencoding(),"strict")
+    def pipe_decode(output):
+        if isinstance(output,bytes) or isinstance(output,bytearray):
+            return str_decode(output)
+        elif isinstance(output,tuple):
+            return (None if output[0] is None else str_decode(output[0]),None if output[1] is None else str_decode(output[1]))
+        else:
+            return ("","")
+
+###
+### process command line arguments
+###
+argp = OptionParser()
+argp.add_option( "-A", "--all", dest="all",
+                 action="store_true", help="run all available tests",
+                 default=False )
+argp.add_option( "-T", "--time", dest="timecheck",
+                 action="store_false", help="do NOT check timestamps, compile all",
+                 default=True )
+argp.add_option( "-L", "--list-tests", dest="list_tests",
+                 action="store_true", help="display available tests",
+                 default=False )
+argp.add_option( "-D", "--debug", dest="debug", action="store_true",
+                 help="build with debugging information", default=False )
+argp.add_option( "-R", "--debug-opt", dest="relwithdebinfo", action="store_true",
+                 help="build with debugging information and optimization turned on", default=False )
+argp.add_option( "-V", "--verbose", dest="verbose", action="store_true",
+                 help="display verbose output", default=False )
+argp.add_option( "-C", "--compile", dest="compile", action="store_true",
+                 help="display compiling information", default=False )
+
+(options, tests) = argp.parse_args()
+
+###
+### sort function that allows sorting and the using the sorted list directly
+###
+def sort(l):
+   result = l
+   result.sort( )
+   return result
+
+###
+### check if destination (exe) is newer than the source (src) file
+def up_to_date( src, exe ):
+    return exists(exe) and getctime(src) < getctime(exe)
+
+###
+### see Roberto's comment in:
+### https://stackoverflow.com/questions/3595363/properties-file-in-python-similar-to-java-properties
+###
+def load_properties(filepath, sep='=', comment_char='#'):
+    """
+    Read the file passed as parameter as a properties file.
+    """
+    props = {}
+    with open(filepath, "rt") as f:
+        for line in f:
+            l = line.strip()
+            if l and not l.startswith(comment_char):
+                key_value = l.split(sep)
+                key = key_value[0].strip()
+                value = sep.join(key_value[1:]).strip().strip('"')
+                props[key] = value.split(' ') if key.startswith('build.flags') else value
+
+    global real_gnu
+    global gxx_version_number
+    real_gnu = False
+    proc = Popen([ props['build.compiler.cxx'], "-v" ], stdout=PIPE, stderr=PIPE)
+    out,err = pipe_decode(proc.communicate( ))
+    gcc_versions = [s for s in (out + err).split('\n') if s.startswith("gcc version ")]
+    if len(gcc_versions) > 0 :
+        ###
+        ### get gcc version number because turning warnings into errors
+        ### causes problems for grpc with gcc 8...
+        match_ver = re.compile('\d+\.\d+\.\d+')
+        for v in gcc_versions:
+            nums = match_ver.findall(v)
+            if len(nums) > 0:
+                elements = nums[1].split('.')
+                if len(elements) == 3:
+                    gxx_version_number = int(elements[0])
+
+        if sys.platform == 'darwin':
+            print('using real GNU compiler on OSX...')
+        real_gnu = True
+
+    return props
+
+
+## https://stackoverflow.com/questions/14320220/testing-python-c-libraries-get-build-path
+def distutils_dir_name(dname):
+    """Returns the name of a distutils build directory"""
+    f = "{dirname}.{platform}-{version[0]}.{version[1]}"
+    return f.format(dirname=dname,platform=sysconfig.get_platform(),version=sys.version_info)
+
+def get_ccache():
+    return [ props['build.compiler.ccache'] ] if 'build.compiler.ccache' in props and len(props['build.compiler.ccache']) > 0 else [ ]
+def get_cflags():
+    cflags = map(
+        lambda pair: pair[1],
+        filter(lambda pair: pair[0].startswith('build.flags.compile') and "boost" not in pair[0],props.items())
+    )
+    cflags = [item for sublist in cflags for item in sublist]         ### python has not yet hit upon a flatten function...
+    if 'build.python.numpy_dir' in props and len(props['build.python.numpy_dir']) > 0:
+        cflags.insert(0,'-I' + props['build.python.numpy_dir'])       ### OS could have different version of python in
+                                                                      ###     /usr/include (e.g. rhel6)
+    return cflags
+
+def get_optimization_flags():
+    if options.debug:
+        return ['-g']
+    elif options.relwithdebinfo:
+        return ['-g', '-O2']
+    else:
+        return ['-O2']
+
+def get_new_cxx_compiler_flags():
+    return get_optimization_flags() + ['-std=c++11']
+
+def get_new_cxx_compiler_includes():
+    return list( map( lambda x: x % root, [
+       '-I%s/binding/include', '-I%s/binding/generated/include', '-I%s/libcasatools/generated/include',
+       '-I%s/src/code', '-I%s/src', '-I%s/casacore', '-I%s/include',
+       '-I%s/sakura-source/src' ] ) )
+
+def get_new_c_compiler_flags():
+    return get_optimization_flags()
+
+def get_libraries( src_path ):
+   def liblink( path ):
+      name = basename(path)
+      if not name.startswith('lib'):
+         sys.exit("ERROR: library name does not begin with 'lib': %s" % name)
+      name = list(takewhile( lambda s: s != 'so', name[3:].split('.')))
+      return '-l' + '.'.join(name)
+   dirs = relpath(src_path,root).split(os.sep)
+   libflags = set( )
+   libs = set( )
+   tool = list(filter( lambda s: s in state['tool']['names'], dirs ))
+   libcasatools = state['lib-path']['libcasatools']
+   libflags.add("-Wl,-rpath,%s" % join(root,dirname(libcasatools)))
+   libflags.add("-L%s" % join(root,dirname(libcasatools)))
+
+   libs.add(join(root,libcasatools))
+   if len(tool) > 0:
+      for l in state['tool']['names'][tool[0]]:
+         if l in state['lib-path']:
+            lp = join(root,state['lib-path'][l])
+            if not exists(lp):
+               sys.exit("ERROR: library does not exist '%s'" % lp)
+            libflags.add("-L%s" % dirname(lp))
+            libs.add(liblink(lp))
+   return list(libflags) + list(libs) + [liblink(libcasatools)]
+
+if options.verbose:
+   print("  root directory: %s" % root)
+   print("received options: %s; tests: %s" % (options,tests))
+
+if not exists(properties_path):
+   sys.exit("ERROR: build properties file not found (expected '%s'); run 'setup.py'" % properties_path)
+if not exists(state_path):
+   sys.exit("ERROR: build state file not found (expected '%s'); run 'setup.py'" % state_path)
+if len(tests) == 0 and not options.list_tests and not options.all:
+   print("no tests specified, nothing to do")
+   sys.exit(0)
+
+###
+### find existing_tests
+###
+for r, dirs, files in os.walk(join(root,test_path)):
+   for file in files:
+      if file.endswith(extensions):
+         test = splitext(file)[0]
+         if test in existing_tests:
+            sys.exit("ERROR: two '%s' tests found\n\t%s\n\t%s" % (test,existing_tests[test],join(r,file)))
+         existing_tests[test] = join(r,file)
+
+if options.list_tests:
+   for test in sort([kv[0] for kv in existing_tests.items()]):
+      if options.verbose:
+         print("%s\t- %s" % (test, existing_tests[test]))
+      else:
+         print(test)
+   sys.exit(0)
+
+###
+### if --all is specified test names on the command line removes them from the list of tests
+###
+if options.all:
+    tests = list(set(existing_tests).difference(tests))
+
+for test in tests:
+   if test not in existing_tests:
+      sys.exit("ERROR: '%s' test not found" % test)
+
+###
+### load build properties
+###
+props = load_properties(properties_path)
+###
+### load build state
+###
+with open(state_path) as f:
+   state = json.load(f)
+
+###
+### compiling
+###
+for test in sort(tests):
+   src = existing_tests[test]
+   build_dir = join(root,'build',distutils_dir_name('test'),os.sep.join(splitext(relpath(src,root))[0].split(os.sep)[1:]))
+
+   if not exists(build_dir):
+       if options.verbose:
+           print("creating %s" % build_dir)
+       Path(build_dir).mkdir(parents=True,exist_ok=True)
+
+   libs = get_libraries(src)
+   exe = os.path.join(build_dir,splitext(basename(src))[0])
+   extra_cflags = state['grpc']['cflags'] + state['python']['cflags']
+   extra_includes = [ '-I' + join(root,s) for s in state['grpc']['include'] + state['python']['include'] ]
+   extra_libs = state['grpc']['libs'] + state['python']['libs']
+   extra_lflags = state['grpc']['lflags'] + state['python']['lflags']
+   gtest_libs = [ '-lgtest', '-lgtest_main' ] if 'gtest' in src else [ ]
+   cxx = list( filter( lambda s: len(s) > 0, get_ccache( ) + [props['build.compiler.cxx']] + get_new_cxx_compiler_flags( )
+                       + state['flags']['code'] + get_new_cxx_compiler_includes( ) + get_cflags( )
+                       + extra_cflags + extra_includes
+                       + [ '-I' + dirname(src) ] + [ src, '-o', exe ] + extra_lflags + libs
+                       + extra_libs + gtest_libs ) )
+
+   if options.verbose or options.compile:
+      if options.compile:
+         if options.timecheck and up_to_date( src, exe ):
+            print( "already up to date %s" % src )
+         else:
+            print("compiling %s" % src)
+            print("    %s" % ' '.join(cxx))
+      else:
+         if options.timecheck and up_to_date( src, exe ):
+            print( "already up to date %s" % src )
+         else:
+            print("compiling %s" % src, end='')
+
+      sys.stdout.flush( )
+
+   if options.timecheck and up_to_date( src, exe ):
+      tests_to_run.append(exe)
+      continue
+
+   proc = Popen( cxx, stdout=PIPE, stderr=STDOUT )
+   out,err = pipe_decode(proc.communicate( ))
+   if proc.returncode != 0:
+      if options.verbose and not options.compile:
+         print(" [failure]")
+      print(out)
+      sys.exit('compilation of %s failed' % basename(src))
+   else:
+      tests_to_run.append(exe)
+      if options.verbose or options.compile:
+         if options.compile:
+             if len(out.strip( )) > 0:
+                 print(out.strip( ))
+             print("compilation of %s successful" % basename(src))
+         else:
+             print(" [success]")
+
+###
+### running tests
+###
+cwd = os.getcwd( )
+for test in tests_to_run:
+    print( 'test %s' % basename(test), end='' )
+    sys.stdout.flush( )
+    os.chdir(dirname(test))
+    proc = Popen( [ './' + basename(test) ], stdout=PIPE, stderr=STDOUT )
+    out,err = pipe_decode( proc.communicate( ) )
+    if proc.returncode != 0:
+        print(" [failure]")
+    else:
+        print(" [success]")
+    if len(out.strip( )) > 0 and ( options.verbose or proc.returncode != 0 ):
+        for l in out.strip( ).split('\n'):
+            print( "    %s" % l )
+os.chdir(cwd)
