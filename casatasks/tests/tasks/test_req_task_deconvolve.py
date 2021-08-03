@@ -3219,7 +3219,7 @@ class test_minimages(testref_base):
         # Test non-default value for nsigma with only the .residual and .psf present
         ######################################################################################
         self.misetup()
-        strcheck = "One or more of the given parameters .* require a \\.pb image to be available\\."
+        strcheck = "require.*\\.pb.*image"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, nsigma=1.5)#=0.0
 

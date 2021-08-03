@@ -73,7 +73,8 @@ def check_requiredimgs_exist(imagename, inp):
         reqims.append(imagename + ".psf")
 
     # find images that exist on disk
-    extims = list(filter(lambda im: os.path.exists(im), reqims))
+    allfiles = os.listdir(os.path.dirname(os.path.abspath(imagename)))
+    extims = list(filter(lambda im: os.path.exists(im), reqims)) # TODO replace with allfiles
 
     # verify required images are available
     if len(extims) != len(reqims):
@@ -82,10 +83,9 @@ def check_requiredimgs_exist(imagename, inp):
 
     # check for .pb image in the case that nsigma > 0
     # see comments on CAS-13144 about casa crashing as to why this check is here
-    casalog.post("Checking for "+imagename+".pb", "SEVERE", "task_deconvolve");
-    if (imagename+".pb" not in extims):
+    if (imagename+".pb" not in allfiles):
         if (inp['nsigma'] > 0):
-            raise RuntimeError("The parameter nsigma>0 ("+inp['nsigma']+") requires a .pb image to be available.")
+            raise RuntimeError("The parameter nsigma>0 ("+str(inp['nsigma'])+") requires a .pb image to be available.")
 
 def check_starmodel_model_collisions(startmodel, imagename, deconvolver):
     # check for startmodel(s)
