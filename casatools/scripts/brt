@@ -294,6 +294,7 @@ for test in sort(tests):
 ###
 ### running tests
 ###
+exit_message = 0
 cwd = os.getcwd( )
 for test in tests_to_run:
     print( 'test %s' % basename(test), end='' )
@@ -302,6 +303,7 @@ for test in tests_to_run:
     proc = Popen( [ './' + basename(test) ], stdout=PIPE, stderr=STDOUT )
     out,err = pipe_decode( proc.communicate( ) )
     if proc.returncode != 0:
+        exit_message = "some tests failed"
         print(" [failure]")
     else:
         print(" [success]")
@@ -309,3 +311,4 @@ for test in tests_to_run:
         for l in out.strip( ).split('\n'):
             print( "    %s" % l )
 os.chdir(cwd)
+sys.exit(exit_message)
