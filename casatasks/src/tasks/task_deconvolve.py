@@ -80,11 +80,12 @@ def check_requiredimgs_exist(imagename, inp):
         diffims = list(filter(lambda im: im not in extims, reqims))
         raise RuntimeError("Internal Error: missing one or more of the required images: " + str(diffims))
 
-    # check for .pb image in certain special cases
+    # check for .pb image in the case that nsigma > 0
+    # see comments on CAS-13144 about casa crashing as to why this check is here
     casalog.post("Checking for "+imagename+".pb", "SEVERE", "task_deconvolve");
     if (imagename+".pb" not in extims):
         if (inp['nsigma'] > 0):
-            raise RuntimeError("One or more of the given parameters (nsigma>0) require a .pb image to be available.")
+            raise RuntimeError("The parameter nsigma>0 ("+inp['nsigma']+") requires a .pb image to be available.")
 
 def check_starmodel_model_collisions(startmodel, imagename, deconvolver):
     # check for startmodel(s)
