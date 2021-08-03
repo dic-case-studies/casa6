@@ -601,7 +601,7 @@ def run(testnames):
                             traceback.print_exc()
 
                         if verbose:
-                            cmd = ["--verbose"] + ["--tb=short"] + cmd
+                            cmd = ["--verbose"] + ["--tb=long"] + cmd
                         elif not verbose:
                             cmd = ["-ra"] + ["--tb=short"] + cmd
                             #cmd = ["-ra"] + ["--tb=long"] + cmd
