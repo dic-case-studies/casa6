@@ -197,7 +197,7 @@ class OldImagerBasedTools(object):
         intentsel = SelectionHandler(intent)
         sorted_intent = [intentsel(i) for i in sorted_idx]
         timerangesel = SelectionHandler(timerange)
-        sorted_timerange = [intentsel(i) for i in sorted_idx]
+        sorted_timerange = [timerangesel(i) for i in sorted_idx]
         return sorted_vislist, sorted_field, sorted_spw, sorted_antenna, sorted_scan, sorted_intent, sorted_timerange
 
 def _configure_spectral_axis(mode, nchan, start, width, restfreq):
