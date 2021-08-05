@@ -18,7 +18,7 @@ phases, and a new phase_direction entry in the FIELD sub-table.
             <param type="string" name="vis" mustexist="true">
                 <shortdescription>Name of input visibility file</shortdescription>
                 <description>Name of input visibility file
-                     Default: none
+                     Default: none, must be specified
 
                         Example: vis='ngc5921.ms'
                 </description>
@@ -28,7 +28,7 @@ phases, and a new phase_direction entry in the FIELD sub-table.
             <param type="string" name="outputvis">
                 <shortdescription>Name of output visibility file</shortdescription>
                 <description>Name of output visibility file
-                     Default: '' (same as vis)
+                     Default: None, must be specified
 
                         Example: outputvis='ngc5921_out.ms'
                 </description>
