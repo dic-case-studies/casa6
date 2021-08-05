@@ -17,7 +17,7 @@ if is_CASA6:
     from casatasks import flagdata
     from casatasks import tsdimaging as sdimaging
     from casatasks import split as split_ms
-    from casatasks.private.sdutil import tbmanager, toolmanager, table_selector
+    from casatasks.private.sdutil import tbmanager, toolmanager, table_selector, is_ms
 
     ### for selection_syntax import
     #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -230,12 +230,11 @@ class FileManager:
             for root, dirs, files in os.walk(path):
                 targets = [root]
                 targets.extend([os.path.join(root,f) for f in files])
-                # This is messy. We need an is_ms() function. 
                 for target in targets:
                     root_base = os.path.basename(root)
                     target_base = os.path.basename(target)
                     # Imager creates scratch columns in MAIN table (?)
-                    if os.path.realpath(root) == os.path.realpath(path): continue
+                    if is_ms(root): continue
                     # Imager writes to HISTORY table
                     if root_base == 'HISTORY': continue
                     # Allow write access to lock files
