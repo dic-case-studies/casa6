@@ -90,9 +90,6 @@ Multi-MS.
                         through 6 in each.
                         spw = '*:3~64'  channels 3 through 64 for all sp id's
                         spw = ' :3~64' will NOT work.
-
-                     NOTE: mstransform does not support multiple
-                     channel ranges per spectral window (';').
                 </description>
                 <value type="string"/>
             </param>
@@ -100,7 +97,6 @@ Multi-MS.
             <param type="string" name="scan" >
                 <shortdescription>Scan number range</shortdescription>
                 <description>Scan number range
-                     Subparameter of selectdata=True
                      Default: '' = all
                 </description>
                 <value type="string"/>
