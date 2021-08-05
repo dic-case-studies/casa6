@@ -3112,6 +3112,13 @@ void MSTransformManager::separateSpwSubtable()
                         snbCol.put(rowIndex, snbCol(0));
                     }
 
+                    if (spwTable.tableDesc().isColumn("SDM_CORR_BIT") &&
+                        spwTable.tableDesc().columnDescSet().isDefined("SDM_CORR_BIT"))
+                    {
+                        ScalarColumn<String> corrBitCol(spwTable, "SDM_CORR_BIT");
+                        corrBitCol.put(rowIndex, corrBitCol(0));
+                    }
+
 				}
 
 				if ( (spw_i < nspws_p-1) or (tailOfChansforLastSpw_p == 0) )
