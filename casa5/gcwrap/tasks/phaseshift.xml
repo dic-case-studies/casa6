@@ -124,7 +124,6 @@ Multi-MS.
             <param type="string" name="observation">
                 <shortdescription>Select by observation ID(s)</shortdescription>
                 <description>Select by observation ID(s)
-                     Subparameter of selectdata=True
                      Default: '' = all
 
                          Example: observation='0~2,4'
