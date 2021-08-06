@@ -77,6 +77,11 @@ if devbranchversion !="":
     casatestutils_version = '%d.%d.%d.%da%s.dev%s%s' % (casatestutils_major,casatestutils_minor,casatestutils_patch,casatestutils_feature,devbranchversion,devbranchrevision,dirty)
 print(casatestutils_version)
 
+# Copy runtest to casatestutils during setup.py so we can call 'casatestutils.runtest'
+import shutil, os
+runtest_path = os.path.join(os.getcwd(),"casatestutils","runtest.py")
+shutil.copyfile("runtest.py", runtest_path)
+
 setuptools.setup(
     name="casatestutils", # Replace with your own username
     version=casatestutils_version,
@@ -97,4 +102,8 @@ setuptools.setup(
     python_requires='>=3.6',
     install_requires=[ ] #'scipy','numpy', 'six' 
 )
+
+# Delete Copy of File to avoid accidental commit to this location
+if os.path.exists(runtest_path):
+    os.remove(runtest_path)
 
