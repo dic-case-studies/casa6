@@ -69,6 +69,7 @@ using namespace CalibrationDeviceMod;
 using namespace SubscanIntentMod;
 #include <alma/Enumerations/CCorrelatorName.h>
 #include <alma/Enumerations/CStokesParameter.h>
+#include <alma/Enumerations/CCorrelationBit.h>
 
 #include <alma/apps/asdm2MS/Name2Table.h>
 #include <alma/apps/asdm2MS/ASDMVerbatimFiller.h>
@@ -2184,6 +2185,10 @@ void fillSpectralWindow(ASDM* ds_p, map<unsigned int, double>& effectiveBwPerSpw
 	// numBin has been inferred for EVLA data, adjust resolution 
 	resolution1D = chanWidth1D;
       }
+      std::string corrBit = "UNKNOWN";
+      if (r->isCorrelationBitExists()) {
+          corrBit = CCorrelationBit::name(r->getCorrelationBit());
+      }
 
       for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
 	   iter != msFillers.end(); ++iter) {
@@ -2205,7 +2210,8 @@ void fillSpectralWindow(ASDM* ds_p, map<unsigned int, double>& effectiveBwPerSpw
 					assocSpectralWindowId_,
 					assocNature_,
 					windowFunction,
-					numBin);
+					numBin,
+                                        corrBit );
       }      
     }
     if (nSpectralWindow) {
