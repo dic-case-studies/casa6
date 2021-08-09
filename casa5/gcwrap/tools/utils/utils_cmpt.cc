@@ -433,12 +433,18 @@ double utils::tryit(const ::casac::record &input) {
 // CASA 6
 bool utils::initialize( const std::string &pypath, 
                         const std::string &distro_data,
-                        const std::vector<std::string> &default_path ) {
+                        const std::vector<std::string> &default_path,
+                        bool nogui,
+                        bool agg,
+                        bool pipeline) {
 #else
 // CASA 5
 bool utils::initialize(const std::vector<std::string> &default_path) {
     std::string pypath;
     std::string distro_data;
+    bool nogui=false;
+    bool agg=false;
+    bool pipeline=false;
 #endif
     static bool initialized = false;
     if ( initialized ) return false;
@@ -447,6 +453,9 @@ bool utils::initialize(const std::vector<std::string> &default_path) {
     casatools::get_state( ).setDataPath(default_data_path);
     casatools::get_state( ).setDistroDataPath(distro_data);
     casatools::get_state( ).setPythonPath(python_path);
+    casatools::get_state( ).setNoGui(nogui);
+    casatools::get_state( ).setAgg(agg);
+    casatools::get_state( ).setPipeline(pipeline);
     // configure quanta/measures customizations...
     UnitMap::putUser( "pix", UnitVal(1.0), "pixel units" );
 
@@ -597,5 +606,20 @@ utils::toolversion_string( ) {
     return "";
 #endif
 }
+
+#ifdef CASATOOLS
+// ------------------------------------------------------------
+// -------------------- Other configuration params ------------
+
+bool utils::getnogui( ) {
+    return casatools::get_state( ).noGui( );
+}
+bool utils::getagg( ) {
+    return casatools::get_state( ).agg( );
+}
+bool utils::getpipeline( ) {
+    return casatools::get_state( ).pipeline( );
+}
+#endif
 
 } // casac namespace

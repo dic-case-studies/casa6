@@ -230,6 +230,7 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_uvmodelfit.py
   test_req_task_vishead.py
   test_req_task_visstat.py
+  test_req_task_phaseshift.py
   test_req_task_imdev.py
   test_req_task_rerefant.py
   test_req_task_polcal.py
@@ -256,7 +257,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_uvfits.py
   test_viewer.py
   test_virtualconcat.py
-  test_vishead.py
   test_vpmanager.py
   test_wvrgcal.py
   test_imview.py
