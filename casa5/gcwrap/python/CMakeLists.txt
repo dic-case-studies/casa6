@@ -123,6 +123,7 @@ scripts/task_ft.py
 scripts/task_gaincal.py
 scripts/task_gencal.py
 scripts/task_hanningsmooth.py
+scripts/task_phaseshift.py
 scripts/task_help.py
 scripts/task_imcollapse.py
 scripts/task_imcontsub.py
