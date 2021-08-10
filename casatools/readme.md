@@ -1,4 +1,4 @@
- 
+
 ## CASAtools
  
 If you are looking for the place to check out [CASA](http://casa.nrao.edu/) with [Git](https://en.wikipedia.org/wiki/Git), this is not the right place. The repository to check out [CASA](http://casa.nrao.edu/) can be found [here](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa/browse). At some point in the future, this may form the underlying kernel for a future version of [CASA](http://casa.nrao.edu/), but at this point, this package is still in gestation.
@@ -264,6 +264,9 @@ While the goal was to simply reconstitute the [CASA tools](https://open-bitbucke
     * **`<value><value>0.0</value></value>`** --- vector with one element initialized as specified, more internal *`<value>`* elements can be used to increase the default size of the vector
 
    It is not possible to automatically adjust these because with the old XML translation `<value/>` will sometimes result in a one element vector and other times a zero element vector.
+
+6. __Array Value Types__ --- There are now two Array types `<type>Array` and `<type>Vec`, e.g. `doubleArray` and `doubleVec`. Vec implies a one dimensional value, e.g. Python list, a one dimensonal numpy array, whereas Array implies potentially an N dimensional numpy array.
+
 
 ## XML
 
