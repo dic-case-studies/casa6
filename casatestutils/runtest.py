@@ -62,6 +62,9 @@ except ImportError:
 IS_CASA6 = False
 CASA6 = False
 HAVE_CASA6 = False
+verbose = False
+DRY_RUN = False
+RUN_ALL = False
 
 # JIRA BRANCH TO CHECKOUT
 JIRA_BRANCH = None
@@ -880,6 +883,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
 ########################################            Main-Start-Up            ###########################################
 ########################################################################################################################
 
+
 if __name__ == "__main__":
 
     print("HAVE_MEMTEST: {}".format(HAVE_MEMTEST))
@@ -890,7 +894,7 @@ if __name__ == "__main__":
     print("HAVE_CASA6: {}".format(HAVE_CASA6))
     print("")
 
-    verbose = False
+    
 
     # List of tests to run
     testnames = []
@@ -966,12 +970,10 @@ if __name__ == "__main__":
         sys.exit()
 
     ## Dry Run
-    DRY_RUN = False
     if args.dry_run:
         DRY_RUN = True
 
     ## RUN ALL
-    RUN_ALL = False
     if args.all:
         RUN_ALL = True
         testnames = ["all"]
