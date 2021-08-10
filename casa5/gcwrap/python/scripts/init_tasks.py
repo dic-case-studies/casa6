@@ -7,9 +7,44 @@ from casa_stack_manip import stack_frame_find
 
 from parameter_check import *
 
-##allow globals for taskby default
+## allow globals for taskby default
 casaglobals=True
 
+
+###################
+def checkgeodetic():
+    import os
+    rval = True
+    casadatadir = os.getenv("CASAPATH").split()[0]+'/data'
+    if not os.path.isdir(casadatadir):
+        casalog.post('Data repository directory does not exist. Expected at '+casadatadir, 'WARN')
+        rval = False
+    else:
+        if not os.path.isdir(casadatadir+'/geodetic'):
+            casalog.post('Data repository sub-directory \"geodetic\" does not exist. Expected at '+casadatadir+'/geodetic', 'WARN')
+            rval = False
+        else:
+            casalog.post('\n', 'INFO')
+            casalog.post('Checking measures tables in data repository sub-directory '+casadatadir+'/geodetic', 'INFO')
+            mytb = tbtool()
+            mytables=['IERSeop2000', 'IERSeop97', 'IERSpredict', 'TAI_UTC']
+            for mytable in mytables:
+                if not os.path.isdir(casadatadir+'/geodetic/'+mytable):
+                    casalog.post('Measures table '+mytable+' does not exist. Expected at '+casadatadir+'/geodetic/'+mytable, 'WARN')
+                    rval = False
+                else:
+                    mytb.open(casadatadir+'/geodetic/'+mytable)
+                    vsdate = mytb.getkeyword('VS_DATE')
+                    mjd = mytb.getcol('MJD')
+                    if len(mjd)>0:
+                        mydate = qa.time({'value': mjd[-1], 'unit': 'd'}, form='ymd')[0]
+                        casalog.post('  '+mytable+' (version date, last date in table (UTC)): '+vsdate+', '+mydate, 'INFO')
+                    else:
+                        casalog.post(mytable+' contains no entries.', 'WARN')
+                        rval = False
+                    mytb.close()
+    return rval
+ 
 ####################
 def go(taskname=None):
     """ Execute taskname: """
@@ -641,3 +676,5 @@ def default(taskname=None):
 #     paramgui.setGlobals({})
 
 ####################
+
+checkgeodetic()
