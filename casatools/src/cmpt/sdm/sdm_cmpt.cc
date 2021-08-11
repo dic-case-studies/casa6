@@ -34,6 +34,7 @@
 #include <alma/Enumerations/CDirectionReferenceCode.h>
 #include <alma/Enumerations/CAntennaMake.h>
 #include <alma/Enumerations/CAtmPhaseCorrection.h>
+#include <alma/Enumerations/CCorrelationBit.h>
 #include <alma/Enumerations/CCorrelationMode.h>
 #include <alma/Enumerations/CCorrelatorName.h>
 #include <alma/Enumerations/CStokesParameter.h>
@@ -3825,6 +3826,10 @@ namespace casac {
                     // numBin has been inferred for EVLA data, adjust resolution 
                     resolution1D = chanWidth1D;
                 }
+		std::string corrBit = "UNKNOWN";
+		if (r->isCorrelationBitExists()) {
+		  corrBit = CCorrelationBit::name(r->getCorrelationBit());
+		}
 
                 for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                      iter != msFillers.end(); ++iter) {
@@ -3846,7 +3851,8 @@ namespace casac {
                                                      assocSpectralWindowId_,
                                                      assocNature_,
                                                      windowFunction,
-                                                     numBin );
+                                                     numBin,
+						     corrBit );
                 }      
             }
             if (nSpectralWindow) {

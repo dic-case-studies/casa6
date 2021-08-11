@@ -496,6 +496,24 @@ def generate_pyinit(moduledir,tools):
                    else:
                        return [ ]
 
+               def __find_user_nogui( ):
+                 result = False
+                 if (hasattr(__user,'nogui') and isinstance(__user.nogui,bool)):
+                    result = __user.nogui
+                 return result
+
+               def __find_user_agg( ):
+                 result = False
+                 if (hasattr(__user,'agg') and isinstance(__user.agg,bool)):
+                    result = __user.agg
+                 return result
+
+               def __find_user_pipeline( ):
+                 result = False
+                 if (hasattr(__user,'pipeline') and isinstance(__user.pipeline,bool)):
+                    result = __user.pipeline
+                 return result
+
                sakura( ).initialize_sakura( )    ## sakura requires explicit initialization
 
                ctsys = __utils( )
@@ -531,7 +549,8 @@ def generate_pyinit(moduledir,tools):
                    except: pass
 
                ctsys.initialize( __sys.executable, "" if _distro_dpath is None else _distro_dpath,
-                                 __find_user_data_path( ) + _dpath )
+                                 __find_user_data_path( ) + _dpath,
+                                 __find_user_nogui( ), __find_user_agg( ), __find_user_pipeline( ) )
 
                if __sys.argv[0] != '-m':
                    __resolved_iers = ctsys.resolve('geodetic/IERSeop2000')
