@@ -255,6 +255,24 @@ returns true if initalization was performed; returns false if initialization was
   </param>
 </input>
 
+<input>
+  <param type="bool" name="nogui">
+    <description>are guis disabled at startup</description>
+  </param>
+</input>
+
+<input>
+  <param type="bool" name="agg">
+    <description>was the graphical backend disabled at startup</description>
+  </param>
+</input>
+
+<input>
+  <param type="bool" name="pipeline">
+    <description>was the pipeline included at startup</description>
+  </param>
+</input>
+
 <returns type="bool"/>
 </method>
 
@@ -346,6 +364,40 @@ elements of the data path.
 </input>
 
 <returns type="string"/>
+</method>
+
+<!-- ******************************************************************************** -->
+
+<!-- ******************** functions to get startup config values ******************** -->
+
+<method type="function" name="getnogui">
+  <shortdescription>gets the nogui config value</shortdescription>
+
+  <description>
+    Returns the value of the nogui parameter used at startup. Defaults to False.
+  </description>
+
+  <returns type="bool"/>
+</method>
+
+<method type="function" name="getagg">
+  <shortdescription>gets the agg config value</shortdescription>
+
+  <description>
+    Returns the value of the agg parameter used at startup. Defaults to False.
+  </description>
+
+  <returns type="bool"/>
+</method>
+
+<method type="function" name="getpipeline">
+  <shortdescription>gets the pipeline config value</shortdescription>
+
+  <description>
+    Returns the value of the pipeline parameter used at startup. Defaults to False.
+  </description>
+
+  <returns type="bool"/>
 </method>
 
 <!-- ******************************************************************************** -->
