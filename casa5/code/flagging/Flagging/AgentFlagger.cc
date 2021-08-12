@@ -572,6 +572,12 @@ std::string buildListAgentNames(const std::vector<Record> &agents) {
  * 'whitelisted' agents are: + display + extend + antint.
  * See CAS-12294 for discussions.
  *
+ * Additionally, check that timeavg and channelavg are never set for
+ * any of the non-autof-lagging methods. This is in principle never
+ * possible via the task interface but the list mode parser is weaks
+ * and accepts such misconfigurations.
+
+ *
  * @param mode flagging mode, using flagdata naming convention
  * @param agent_rec record with the agent configuration
  * @param anyNotAvg non-empty name if any avg-disallowed agent is in the list
@@ -580,25 +586,34 @@ std::string buildListAgentNames(const std::vector<Record> &agents) {
  */
 void AgentFlagger::checkAveragingConfig(const std::string &mode, const Record &agent_rec,
                                         const std::string &anyNotAvg) {
+    Bool tavg = false;
+    int exists = agent_rec.fieldNumber ("timeavg");
+    if (exists >= 0) {
+        agent_rec.get("timeavg", tavg);
+    }
+
+    Bool cavg = false;
+    exists = agent_rec.fieldNumber ("channelavg");
+    if (exists >= 0) {
+        agent_rec.get("channelavg", cavg);
+    }
+
     if ("clip" == mode or "rflag" == mode or "tfcrop" == mode) {
-        Bool tavg = false;
-        int exists = agent_rec.fieldNumber ("timeavg");
-        if (exists >= 0) {
-            agent_rec.get("timeavg", tavg);
-        }
-
-        Bool cavg = false;
-        exists = agent_rec.fieldNumber ("channelavg");
-        if (exists >= 0) {
-            agent_rec.get("channelavg", cavg);
-        }
-
         if ((tavg or cavg) and not anyNotAvg.empty()) {
             ostringstream msg;
             msg << "Cannot use " << mode << " mode with timeavg=True or channelavg=True "
                 "and additional modes other than extend, display, and antint. timeavg="
                 << tavg << ", channelavg=" << cavg <<  ", and the following mode has been "
                 "set up: " << anyNotAvg + ". Refusing to accept this configuration.";
+            throw AipsError(msg);
+        }
+    } else {
+        if ((tavg or cavg)) {
+            ostringstream msg;
+            msg << "Cannot use timeavg or channelavg in mode " << mode << ". timeavg="
+                << tavg << ", channelavg=" << cavg <<  ". These averaging "
+                "options are only allowed for auto-flagging methods. Refusing this "
+                "configuration.";
             throw AipsError(msg);
         }
     }
