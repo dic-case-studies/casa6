@@ -4315,10 +4315,101 @@ class test_virtual_col(test_base):
         self.assertEqual(res_virtual, res, 'Flagging using virtual MODEL column differs from normal MODEL column')
 
 
+class test_forbid_avg_in_non_autoflagging_list(test_base):
+    """
+    CAS-12294: forbid the use of timeavg or chanavg in methods other than the
+    auto-flagging methods (clip, tfcrop, rflag) when given inside the list of
+    commands in list mode.
+    """
+
+    def setUp(self):
+        self.setUp_data4tfcrop()
+
+    def _run_method_with_avg(self, method, more_params=''):
+        inplist = ["mode='{}' timeavg=True timebin='1s' {}".format(method, more_params)]
+
+        # Sshould raise exception when trying to use chanavg in non-autoflagging mode
+        with self.assertRaises(RuntimeError):
+            res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+
+        inplist = ["mode='{}' channelavg=True chanbin=4 {}".format(method, more_params)]
+
+        # Should again raise exception when trying to use timeavg in non-autoflagging mode
+        with self.assertRaises(RuntimeError):
+            res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+
+        # Nothing should have been flagged
+        res = flagdata(vis=self.vis, mode='summary')
+        self.assertEqual(res['total'], 4399104)
+        self.assertEqual(res['flagged'], 0)
+
+    def test_forbid_avg_list_manual(self):
+        '''flagdata: timeavg=True should not be accepted in manual mode inside list'''
+
+        inplist = ["mode='manual' spw='7' timeavg=True timebin='2s'"]
+
+        # Sshould raise exception when trying to use chanavg in non-autoflagging mode
+        with self.assertRaises(RuntimeError):
+            res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+
+        inplist = ["mode='manual' spw='9' channelavg=True chanbin=4"]
+
+        # Should again raise exception when trying to use timeavg in non-autoflagging mode
+        with self.assertRaises(RuntimeError):
+            res = flagdata(vis=self.vis, mode='list', inpfile=inplist)
+
+        # Nothing should have been flagged or unflagged
+        res = flagdata(vis=self.vis, mode='summary', spw='7,9')
+        self.assertEqual(res['total'], 549888)
+        self.assertEqual(res['flagged'], 0)
+        # This is what it would flag if clip+timeavg+manual was accepted:
+        # self.assertEqual(res['spw']['7']['flagged'], 274944)
+        # self.assertEqual(res['spw']['9']['flagged'], 0)
+        # self.assertEqual(res['flagged'], 274944)
+
+    def test_forbid_avg_list_quack(self):
+        '''flagdata: timeavg=True and channelavg=True should not be accepted in quack
+        mode inside list'''
+
+        self._run_method_with_avg('quack')
+
+    def test_forbid_avg_list_shadow(self):
+        '''flagdata: timeavg=True and channelavg=True should not be accepted in shadow
+        mode inside list'''
+
+        self._run_method_with_avg('shadow')
+
+    def test_forbid_avg_list_elevation(self):
+        '''flagdata: timeavg=True and channelavg=True should not be accepted in elevation
+        mode inside list'''
+
+        self._run_method_with_avg('elevation')
+
+    def test_forbid_avg_list_antint(self):
+        '''flagdata: timeavg=True and channelavg=True should not be accepted in antint
+        mode inside list'''
+
+        self._run_method_with_avg('antint', ' antint_ref_antenna=ea01')
+
+    def test_forbid_avg_list_unflag(self):
+        '''flagdata: timeavg=True and channelavg=True should not be accepted in unflag
+        mode inside list'''
+
+        self._run_method_with_avg('unflag')
+
+    def test_forbid_avg_list_summary(self):
+        '''flagdata: timeavg=True and channelavg=True should not be accepted in summary
+        mode inside list'''
+
+        self._run_method_with_avg('summary')
+
+
 class test_list_modes_forbidden_with_avg(test_base):
     """
-    CAS-12294: forbid the use of timeavg or chanavg with methods other than the auto-flagging
-    methods (clip, tfcrop, rflag).
+    CAS-12294: forbid the use of timeavg or chanavg in auto-flagging methods when they
+    are used in list mode together with other methods that are not auto-flagging methods
+    (clip, tfcrop, rflag).
+
     For now we still allow lists with auto-methods (any or all) + timeavg + chanavg +
     + extendflags + antint.
     """
@@ -4543,6 +4634,7 @@ def suite():
             test_preaveraging,
             test_preaveraging_rflag_residual,
             test_virtual_col,
+            test_forbid_avg_in_non_autoflagging_list,
             test_list_modes_forbidden_with_avg,
             test_auto_methods_display,
             cleanup]
