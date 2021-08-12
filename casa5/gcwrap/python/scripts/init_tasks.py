@@ -13,6 +13,9 @@ casaglobals=True
 
 ###################
 def checkgeodetic():
+    """
+    Verify the contents of the most important Measures tables
+    """
     import os
     rval = True
     casadatadir = os.getenv("CASAPATH").split()[0]+'/data'
