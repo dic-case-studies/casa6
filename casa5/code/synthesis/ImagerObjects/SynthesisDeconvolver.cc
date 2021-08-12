@@ -150,7 +150,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       if (decpars.specmode == String("mfs"))
         isSingle = true;
 
-	    itsDeconvolver.reset(new SDAlgorithmAAspClean(decpars.fusedThreshold, isSingle));
+	    itsDeconvolver.reset(new SDAlgorithmAAspClean(decpars.fusedThreshold, isSingle, decpars.largestscale));
 	  }
 	else
 	  {

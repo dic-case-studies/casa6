@@ -99,7 +99,8 @@ AspMatrixCleaner::AspMatrixCleaner():
   itsOrigDirty( ),
   itsFusedThreshold(0.0),
   itsNumNoChange(0),
-  itsBinSizeForSumFlux(4)
+  itsBinSizeForSumFlux(4),
+  itsUserLargestScale(-1.0)
 {
   itsInitScales.resize(0);
   itsInitScaleXfrs.resize(0);
@@ -809,7 +810,29 @@ void AspMatrixCleaner::makeScaleImage(Matrix<Float>& iscale, const Float& scaleS
 
 void AspMatrixCleaner::getLargestScaleSize(ImageInterface<Float>& psf)
 {
-  LogIO os( LogOrigin("AspMatrixCleaner","getPsfGaussianWidth",WHERE) );
+  LogIO os( LogOrigin("AspMatrixCleaner","getLargestScaleSize",WHERE) );
+
+  //cout << "user's largest scale " << itsUserLargestScale << endl;
+
+  itsLargestInitScale = 5.0 * itsPsfWidth; // default in pixels
+  const Int nx = psfShape_p(0);
+  const Int ny = psfShape_p(1);
+
+  if (itsUserLargestScale > 0)
+  {
+    itsLargestInitScale = itsUserLargestScale;
+
+    // ensure the largest scale is smaller than imsize/4/sqrt(2pi) = imsize/10 (could try imsize/4 later)
+    if(itsLargestInitScale > min(nx/10, ny/10))
+    {
+       os << LogIO::WARN << "Scale size of " << itsLargestInitScale << " pixels is too big for an image size of " << nx << " x " << ny << " pixels. This scale size will be reset.  " << LogIO::POST;
+       itsLargestInitScale = float(ceil(min(nx/10, ny/10))); // based on the idea of MultiTermMatrixCleaner::verifyScaleSizes()
+    }
+
+    //cout << "largest scale " << itsLargestInitScale << endl;
+
+    return;
+  }
 
   CoordinateSystem cs = psf.coordinates();
   String dirunit = cs.worldAxisUnits()(0);
@@ -821,10 +844,8 @@ void AspMatrixCleaner::getLargestScaleSize(ImageInterface<Float>& psf)
   //cout << "ncoord " << cs.nCoordinates() << endl;
   //cout << "coord type " << cs.type(0) << endl;
 
-  itsLargestInitScale = 5.0 * itsPsfWidth; // default in pixels
+
   const float baseline = 100.0; // default shortest baseline = 100m (for both ALMA and VLA)
-  const Int nx = psfShape_p(0);
-  const Int ny = psfShape_p(1);
 
   for (uInt i = 0; i < cs.nCoordinates(); i++)
   {
@@ -841,6 +862,9 @@ void AspMatrixCleaner::getLargestScaleSize(ImageInterface<Float>& psf)
       float nu = float(endfreq); // 1e9;
       // largest scale = ( (c/nu)/baseline )  converted from radians to degrees to arcsec
       itsLargestInitScale = float(ceil(((3e+8/nu)/baseline) * 180.0/3.14 * 60.0 * 60.0 / abs(cs.increment()(0))));
+
+      // make a conservative largest allowed scale, 5 is a trial number
+      itsLargestInitScale = float(ceil(itsLargestInitScale / 5.0));
 
       // ensure the largest scale is smaller than imsize/4/sqrt(2pi) = imsize/10 (could try imsize/4 later)
       if(itsLargestInitScale > min(nx/10, ny/10))
@@ -863,21 +887,49 @@ void AspMatrixCleaner::setInitScales()
   LogIO os(LogOrigin("AspMatrixCleaner", "setInitScales()", WHERE));
 
   // Validate scales
-  os << "Creating " << itsNInitScales << " initial scales" << LogIO::POST;
+  //os << "Creating " << itsNInitScales << " initial scales" << LogIO::POST;
   itsInitScaleSizes[0] = 0.0f;
   itsInitScaleSizes[1] = itsPsfWidth;
-  os << "scale 1 = 0.0 pixels" << LogIO::POST;
-  os << "scale 2 = " << itsInitScaleSizes[1] << " pixels" << LogIO::POST;
+  //os << "scale 1 = 0.0 pixels" << LogIO::POST;
+  //os << "scale 2 = " << itsInitScaleSizes[1] << " pixels" << LogIO::POST;
 
   // based on the normalized power-law distribution of ratio(i) = pow(10.0, (Float(i)-2.0)/2.0) for i >= 1
-  vector<Float> ratio = {0.09, 0.31, 1.0};
-
-  for (Int scale = 2; scale < itsNInitScales; scale++)
+  // 1. there is enough difference to make 5 scales
+  if ((itsLargestInitScale - itsPsfWidth) >= 4.0)
   {
-    itsInitScaleSizes[scale] =
-      ceil(itsPsfWidth + ((itsLargestInitScale - itsPsfWidth) * ratio[scale- 2]));
-    os << "scale " << scale+1 << " = " << itsInitScaleSizes[scale]
-       << " pixels" << LogIO::POST;
+    vector<Float> ratio = {0.09, 0.31, 1.0};
+
+    for (Int scale = 2; scale < itsNInitScales; scale++)
+    {
+      itsInitScaleSizes[scale] =
+        ceil(itsPsfWidth + ((itsLargestInitScale - itsPsfWidth) * ratio[scale- 2]));
+      //os << "scale " << scale+1 << " = " << itsInitScaleSizes[scale]
+         //<< " pixels" << LogIO::POST;
+    }
+  }
+  // 2. there is NOT enough difference to make 5 scales, so just make 4 scales
+  else if ((itsLargestInitScale - itsPsfWidth) >= 2.0)
+  {
+    vector<Float> ratio = {0.31, 1.0};
+    itsNInitScales = 4;
+    itsInitScaleSizes.resize(itsNInitScales);
+
+    for (Int scale = 2; scale < itsNInitScales; scale++)
+    {
+      itsInitScaleSizes[scale] =
+        ceil(itsPsfWidth + ((itsLargestInitScale - itsPsfWidth) * ratio[scale- 2]));
+      //os << "scale " << scale+1 << " = " << itsInitScaleSizes[scale]
+         //<< " pixels" << LogIO::POST;
+    }
+  }
+  // 3. there is NOT enough difference to make 4 scales, so just make 3 scales
+  else
+  {
+    itsNInitScales = 3;
+    itsInitScaleSizes.resize(itsNInitScales);
+
+    itsInitScaleSizes[2] = itsLargestInitScale;
+    //os << "scale 2" << " = " << itsInitScaleSizes[2] << " pixels" << LogIO::POST;
   }
 }
 
@@ -897,6 +949,7 @@ void AspMatrixCleaner::setInitScaleXfrs(const Float width)
   	itsNInitScales = 5;
   	itsInitScaleSizes.resize(itsNInitScales, false);
     // set initial scale sizes from power-law distribution with min scale=PsfWidth and max scale = c/nu/baseline
+    // this step can reset itsNInitScales if the largest scale allowed is small
     setInitScales();
     // old approach that may cause Asp to pick unreasonable large scale: try 0, width, 2width, 4width and 8width
   	//itsInitScaleSizes = {0.0f, width, 2.0f*width, 4.0f*width, 8.0f*width};
@@ -1048,10 +1101,10 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
 
   if(!itsMask.null())
   {
-    os << "Finding initial scales for Asp using given mask" << LogIO::POST;
+    os << LogIO::NORMAL3 << "Finding initial scales for Asp using given mask" << LogIO::POST;
     if (itsMaskThreshold < 0)
     {
-        os << LogIO::NORMAL
+        os << LogIO::NORMAL3
            << "Mask thresholding is not used, values are interpreted as weights"
            <<LogIO::POST;
     }
@@ -1061,7 +1114,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
       if(noClean_p)
         return;
 
-      os << LogIO::NORMAL
+      os << LogIO::NORMAL3
          << "Finding initial scales with mask values above " << itsMaskThreshold
          << LogIO::POST;
     }
@@ -1091,7 +1144,7 @@ void AspMatrixCleaner::maxDirtyConvInitScales(float& strengthOptimum, int& optim
     trcDirty(1)=yend;
   }
   else
-    os << LogIO::NORMAL << "Finding initial scales using the entire image" << LogIO::POST;  //*/
+    os << LogIO::NORMAL3 << "Finding initial scales using the entire image" << LogIO::POST;  //*/
 
 
   Vector<Float> maxima(itsNInitScales);

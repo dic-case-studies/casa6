@@ -3966,6 +3966,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           else 
             err += "specmode must be a string";
         }
+        //largest scale size for the Asp-Clean to overwrite the default
+        if (inrec.isDefined("largestscale"))
+        {
+          if (inrec.dataType("largestscale") == TpInt)
+            err += readVal(inrec, String("largestscale"), largestscale);
+          else 
+            err += "largestscale must be an integer";
+        }
         //params for the new automasking algorithm
         if( inrec.isDefined("sidelobethreshold"))
           {
@@ -4243,6 +4251,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     autoAdjust=False;
     fusedThreshold = 0.0;
     specmode="mfs";
+    largestscale = -1;
   }
 
   Record SynthesisParamsDeconv::toRecord() const
@@ -4259,6 +4268,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     decpar.define("usemask",maskType);
     decpar.define("fusedthreshold", fusedThreshold);
     decpar.define("specmode", specmode);
+    decpar.define("largestscale", largestscale);
     if( maskList.nelements()==1 && maskList[0]=="") 
       {
         decpar.define("mask",maskString);

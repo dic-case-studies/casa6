@@ -61,7 +61,7 @@
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
-  SDAlgorithmAAspClean::SDAlgorithmAAspClean(Float fusedThreshold, bool isSingle, Int stoppointmode):
+  SDAlgorithmAAspClean::SDAlgorithmAAspClean(Float fusedThreshold, bool isSingle, Int largestScale, Int stoppointmode):
     SDAlgorithmBase(),
     itsMatPsf(), itsMatResidual(), itsMatModel(),
     itsCleaner(),
@@ -69,7 +69,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsMCsetup(true),
     itsFusedThreshold(fusedThreshold),
     itsPrevPsfWidth(0),
-    itsIsSingle(isSingle)
+    itsIsSingle(isSingle),
+    itsUserLargestScale(largestScale)
   {
     itsAlgorithmName = String("asp");
   }
@@ -100,6 +101,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       // Initial scales are unchanged and only need to be
       // computed when psf width is updated
       const Float width = itsCleaner.getPsfGaussianWidth(*(itsImages->psf()));
+      //if user does not provide the largest scale, we calculate it internally.
+      itsCleaner.setUserLargestScale(itsUserLargestScale);
       itsCleaner.getLargestScaleSize(*(itsImages->psf()));
 
       if (itsPrevPsfWidth != width)

@@ -455,6 +455,7 @@ public:
   bool autoAdjust;
   casacore::Float fusedThreshold;
   casacore::String specmode;
+  casacore::Int largestscale;
 
  
   casacore::Bool interactive;

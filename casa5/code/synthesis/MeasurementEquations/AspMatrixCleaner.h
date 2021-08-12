@@ -88,6 +88,7 @@ public:
   void switchedToHogbom();
   void setOrigDirty(const casacore::Matrix<casacore::Float>& dirty);
   void setFusedThreshold(const casacore::Float fusedThreshold = 0.0) { itsFusedThreshold = fusedThreshold; }
+  void setUserLargestScale(const casacore::Int largestScale = -1) { itsUserLargestScale = float(largestScale); }
 
   // setter/getter
   float getterPsfWidth() { return itsPsfWidth; }
@@ -176,6 +177,7 @@ private:
   casacore::Int itsBinSizeForSumFlux ;   // number of bins for histogram of the sum of Flux
   unsigned int itsNumNoChange; // number of times peakres rarely changes
   float itsLargestInitScale; // estimated largest initial scale
+  float itsUserLargestScale; // user-specified largest initial scale
 };
 
 } //# NAMESPACE CASA - END

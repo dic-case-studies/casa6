@@ -1395,6 +1395,20 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">0.0</value>
     </param>
 
+    <param subparam="true" name="largestscale" type="int">
+     <shortdescription>Largest scale allowed for the Asp Clean deconvolver</shortdescription>
+     <description> Largest scale (in pixels) allowed for the Asp Clean deconvolver.
+
+                     largestscale = 100
+
+                     Default is to use a conservative calculation performed internally based on 
+                     the shortest baseline. 
+
+
+      </description>
+      <value type="int">-1</value>
+    </param>
+
 
     <param name="restoration" type="bool">
      <shortdescription>Do restoration steps (or not)</shortdescription>
@@ -2620,6 +2634,7 @@ to use the correct direction in which the antenna is pointing with respect to th
        </equals>
        <equals value="asp" type="string">
          <default param="fusedthreshold"><value>0.0</value></default>
+         <default param="largestscale"><value>-1.0</value></default>
        </equals>
      </when>
 
