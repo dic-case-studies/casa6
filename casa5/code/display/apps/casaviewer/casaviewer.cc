@@ -67,7 +67,7 @@
 #include <casadbus/utilities/Diagnostic.h>
 #endif
 #include <display/DisplayErrors.h>
-#include <casacore/casa/System/AppState.h>
+#include <casatools/Config/State.h>
 #include <algorithm>
 
 #if defined(__APPLE__)
@@ -227,7 +227,7 @@ bool ViewerApp::notify( QObject *receiver, QEvent *e ) {
 }
 
 
-class ViewerDataState: public casacore::AppState {
+class ViewerDataState: public casatools::State {
 public:
 
     ViewerDataState(const std::list<std::string> &path ) : data_path(path) { }
@@ -310,17 +310,21 @@ int main( int argc, const char *argv[] ) {
 			// initialize CASAviewer app data...
 			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 			// generate path to data...
-			std::string datapath;
-			if ( command_line_data_path ) 
-				datapath = command_line_data_path;
-			else {
-				datapath = exepath;
-				datapath.erase( datapath.end( ) -  16, datapath.end( ) );
-				datapath += "Resources/casa-data";
-			}
-			// initialize casacore...
+			//
 			std::list<std::string> datadirs;
+			if ( command_line_data_path )
+				datadirs.push_back(command_line_data_path);
+
+			std::string datapath;
+			datapath = exepath;
+			datapath.erase( datapath.end( ) -  16, datapath.end( ) );
+			datapath += "Resources/data";
 			datadirs.push_back(datapath);
+
+			char *home = getenv("HOME");
+			datadirs.push_back( std::string(home) + "/.casa/data" );
+
+			// initialize casacore...
 			casacore::AppStateSource::initialize(new ViewerDataState(datadirs));
 			// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 			// initialize CASAviewer app data...
@@ -355,20 +359,23 @@ int main( int argc, const char *argv[] ) {
 		// initialize CASAviewer app data...
 		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 		// generate path to data...
+		std::list<std::string> datadirs;
 		bool packed_app = ends_with(exepath, "/AppRun");
 		std::string datapath;
 		if ( command_line_data_path ) 
-			datapath = command_line_data_path;
-		else {
-			datapath = exepath;
-			//     packed_app -> .../AppRun
-			// not packed_app -> .../usr/bin/CASAviewer
-			datapath.erase( datapath.end( ) -  (packed_app ? 6 : 18), datapath.end( ) );
-			datapath += "data";
-		}
-		// initialize casacore...
-		std::list<std::string> datadirs;
+			datadirs.push_back(command_line_data_path);
+
+		datapath = exepath;
+		//     packed_app -> .../AppRun
+		// not packed_app -> .../usr/bin/CASAviewer
+		datapath.erase( datapath.end( ) -  (packed_app ? 6 : 18), datapath.end( ) );
+		datapath += "data";
 		datadirs.push_back(datapath);
+
+		char *home = getenv("HOME");
+		datadirs.push_back( std::string(home) + "/.casa/data" );
+
+		// initialize casacore...
 		casacore::AppStateSource::initialize(new ViewerDataState(datadirs));
 		// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 		// initialize CASAviewer app data...
