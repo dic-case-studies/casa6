@@ -923,6 +923,8 @@ class test_multifield(testref_base):
      def test_multifield_both_mfs(self):
           """ [multifield] Test_Multifield_both_mfs : Two fields, both mfs """
           self.prepData("refim_twopoints_twochan.ms")
+          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled():
+               logstart = self.th.get_log_length()
           self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nnchan=1\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:40.895 +40.55.58.543\nusemask=user\nmask=circle[[40pix,40pix],10pix]')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",outlierfile=self.img+'.out.txt',niter=10,deconvolver='hogbom',interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, 
@@ -932,6 +934,9 @@ class test_multifield(testref_base):
                         imgval=[(self.img+'.image',1.075,[50,50,0,0]),
                                (self.img+'1.image',5.590,[40,40,0,0]),
                                (self.img+'.residual',0.04,[30,18,0,0])])
+
+          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
+               report += self.th.check_logs(logstart, expected=[r"::deconvolve[\t ]+\[tst\] iters=", r"::deconvolve[\t ]+\[tst1\] iters="])
 
           self.assertTrue(self.check_final(report))
 
@@ -954,6 +959,8 @@ class test_multifield(testref_base):
      def test_multifield_both_cube(self):
           """ [multifield] Test_Multifield_both_cube : Two fields, both cube"""
           self.prepData("refim_twopoints_twochan.ms")
+          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled():
+               logstart = self.th.get_log_length()
           #self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:40.895 +40.55.58.543\n')
           self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:40.895 +40.55.58.543\nimagename='+self.img+'2\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:48.895 +40.55.58.543\n')
           retpar = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",outlierfile=self.img+'.out.txt',niter=10,deconvolver='hogbom',interactive=0,specmode='cube',nchan=2,interpolation='nearest',parallel=self.parallel)
@@ -978,6 +985,14 @@ class test_multifield(testref_base):
                                (self.img+'.image',0.758,[50,50,0,1]),
                                (self.img+'1.image',3.715,[40,40,0,1]),
                                (self.img+'2.image',3.675,[51,40,0,1]) ])
+
+          prefix = r"::deconvolve::MPIServer-[0-9]+" if self.parallel else "::deconvolve"
+          # the channel output is a questionmark, because the iterators could give each MPI process a single channel (which is also why we can't count on there being a ":C1")
+          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
+               report += self.th.check_logs(logstart, expected=[r"Processing channels in range \[[0-9]+, [0-9]+\]",
+                                                                prefix+r"[\t ]+\[tst(:C0)?\] iters=",# prefix+r"[\t ]+\[tst(:C1)?\] iters=",
+                                                                prefix+r"[\t ]+\[tst1(:C0)?\] iters=",# prefix+r"[\t ]+\[tst1(:C1)?\] iters=",
+                                                                prefix+r"[\t ]+\[tst2(:C0)?\] iters="])# prefix+r"[\t ]+\[tst2(:C1)?\] iters="])
           self.assertTrue(self.check_final(report))
 
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Diffirent nchans of cubes in multi-field imaging is  not supported in parallel mode")
@@ -2229,11 +2244,19 @@ class test_cube(testref_base):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
           # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in hogbom.
           self.prepData('refim_twochan.ms')
+          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled():
+               logstart = self.th.get_log_length()
           flagdata(self.msfile, spw='*:0')
           ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
                        deconvolver='hogbom', gridder='mosaic')
           report=self.th.checkall(imgexist=[self.img+'.model'], imgval=[(self.img+'.model', 0.01324, [10,10,0,1])], \
                                   imgvalexact=[(self.img+'.model', 0, [1,1,0,0]), (self.img+'.model', 0, [10,10,0,0])])#, epsilon=0.2)
+
+          prefix = r"::deconvolve::MPIServer-[0-9]+" if self.parallel else "::deconvolve"
+          # the channel output is a questionmark, because the iterators could give each MPI process a single channel (which is also why we can't count on there being a ":C1")
+          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
+               report += self.th.check_logs(logstart, expected=[r"Processing channels in range \[[0-9]+, [0-9]+\]", prefix+r"[\t ]+\[tst(:C0)?\] iters="])#, prefix+r"[\t ]+\[tst(:C1)?\] iters="])
+
           self.assertTrue(self.check_final(pstr=report))
 
      def test_cube_flagged_mosaic_clark(self):
