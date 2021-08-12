@@ -1491,16 +1491,13 @@ class TestTimeRangeHelper:
         'infiles': ['selection_time.ms'],
         'outfile': 'selection_time.ms.sdimaging',
         'overwrite': True,
-        'spw': '3', 
-        'antenna': 'PM03', 
-        'field': '0', 
         'nchan': 1,
-        'cell': ['3.0arcsec','3.0arcsec'], 
-        'imsize': [128,128],
+        'cell': ['9.0arcsec','9.0arcsec'], 
+        'imsize': [250,250],
         'gridfunction': 'SF', 
         'convsupport': 6, 
         'stokes': 'I', 
-        'phasecenter': 'sun'
+        'phasecenter': 'ICRS 17:43:50 -023.15.00'
     } 
     
     @classmethod
@@ -1511,19 +1508,19 @@ class TestTimeRangeHelper:
             timerange = ''
             suffix = '.default'
         elif time_pattern == pattern.VALUE_EXACT:
-            timerange = '20:15:02'
+            timerange = '20:15:00'
             suffix = '.exact'
         elif time_pattern == pattern.VALUE_GT:
-            timerange = '>20:15:01'
+            timerange = '>20:15:00'
             suffix = '.gt'
         elif time_pattern == pattern.VALUE_LT:
-            timerange = '<20:15:04'
+            timerange = '<20:15:00.50'
             suffix = '.lt'
         elif time_pattern == pattern.VALUE_RANGE:
-            timerange = '20:15:02~20:15:03'
+            timerange = '20:15:00.20~20:15:01.50'
             suffix = '.range'
         elif time_pattern == pattern.VALUE_INTERVAL:
-            timerange = '20:15:01+00:00:03'
+            timerange = '20:14:59.50+00:00:01.00'
             suffix = '.interval'
         else:
             raise ValueError(f"Illegal time pattern: {time_pattern}")
@@ -2338,49 +2335,49 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
 
-    @unittest.skip("Test data not yet pushed to casatestdata repository")
+    #@unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_default(self):
         """test_timerange_value_default: Test default value for timerange"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_DEFAULT)
         self._test_timerange(params)
 
-    @unittest.skip("Test data not yet pushed to casatestdata repository")
+    #@unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_exact(self):
         """test_timerange_value_exact: Test timerange selection by syntax 'T0'"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_EXACT)
         self._test_timerange(params)
 
-    @unittest.skip("Test data not yet pushed to casatestdata repository")
+    #@unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_gt(self):
         """test_timerange_value_gt: Test timerange selection by syntax '>T0'"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_GT)
         self._test_timerange(params)
 
-    @unittest.skip("Test data not yet pushed to casatestdata repository")
+    #@unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_interval(self):
         """test_timerange_value_interval: Test timerange selection by syntax 'T0+dT'"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_INTERVAL)
         self._test_timerange(params)
 
-    @unittest.skip("Test data not yet pushed to casatestdata repository")
+    #@unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_lt(self):
         """test_timerange_value_lt: Test timerange selection by syntax '<T0'"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_LT)
         self._test_timerange(params)
 
-    @unittest.skip("Test data not yet pushed to casatestdata repository")
+    #@unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_range(self):
         """test_timerange_value_default: Test default value for timerange"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_RANGE)
         self._test_timerange(params)
     
-    def _test_timerange(self,task_params,debug=False):
+    def _test_timerange(self,task_params,debug=True):
         # Compute results
         self._fetch_and_run(task_params)
         # Compute reference results
