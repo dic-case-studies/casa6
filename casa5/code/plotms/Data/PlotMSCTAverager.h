@@ -99,11 +99,14 @@ public:
 
   // Return the result in NewCalTable filled with CTMainRecord vector
   void fillAvgCalTable(NewCalTable& tab);
+
   // CTMainRecord does not include chan or freq
   casacore::Int nchan();
   inline casacore::Vector<casacore::Int> chan() { return avgChan_; };
   inline casacore::Vector<casacore::Double> freq() { return avgFreq_; };
 
+  // For channel averaging: for each output channel, row is vector of which channels were averaged together
+  inline casacore::Array<casacore::Int> chansPerBin() { return chansPerBin_; }; // [nchan, nbin]
 private:
   // Prohibit null constructor, copy constructor and assignment for now
   PlotMSCTAverager();
@@ -183,6 +186,10 @@ private:
   casacore::Cube<casacore::Float> accumWt_;
   casacore::Cube<casacore::Bool> avgFlag_;
   casacore::Vector<casacore::Double> accumFreq_; // if channel averaging
+
+  // For channel averaging: nrow is number of averaged channels,
+  // each row is vector of channels averaged into each averaged channel
+  casacore::Array<casacore::Int> chansPerBin_;
 
   // Averaged results
   std::vector<CTMainRecord> main_rows_;

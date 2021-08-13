@@ -664,11 +664,15 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
 
             if (avgchan) {
               *chan_[chunk] = chans;
+
+              casacore::Array<casacore::Int> chansPerBin = pmscta.chansPerBin();
+			  *chansPerBin_[chunk] = chansPerBin;
             } else {
               // Apply channel selection post-averaging
               casacore::Vector<casacore::Int> selectedChans = getSelectedChannels(chans, chansel);
               *chan_[chunk] = selectedChans;
             }
+
             break;
           }
           case PMS::FREQUENCY: {
