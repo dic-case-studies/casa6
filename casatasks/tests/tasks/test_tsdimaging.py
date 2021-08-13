@@ -2388,6 +2388,8 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         for suffix in [image_suffix,weight_suffix]:
             img_file = task_params['outfile'] + suffix
             ref_img_file = ref_params['outfile'] + suffix
+            self.assertTrue(os.path.exists(img_file))
+            self.assertTrue(os.path.exists(ref_img_file))
             try:
                 with toolmanager(img_file, image) as ia:
                     img_data = ia.getchunk()
