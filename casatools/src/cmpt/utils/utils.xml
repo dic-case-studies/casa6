@@ -424,6 +424,26 @@ returns record containing the information about the services that have been regi
 <returns type="record"/>
 </method>
 
+<method type="function" name="remove_service">
+<shortdescription>remove a service using its URI</shortdescription>
+
+<description>
+Remove a service from the registry using the URI for the
+service. The URI should be a string that looks something
+like "0.0.0.0:34101". This function returns true if the
+removal was successful. Otherwise, it returns false.
+</description>
+
+<input>
+  <param type="string" name="uri">
+	<description>uri (Address) of the service to remove.</description>
+	<value/>
+  </param>
+</input>
+
+<returns type="bool"/>
+</method>
+
 <method type="function" name="shutdown">
 <shortdescription>shutdown signal from python</shortdescription>
 
