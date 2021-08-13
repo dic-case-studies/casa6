@@ -2389,12 +2389,15 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
             img_file = task_params['outfile'] + suffix
             ref_img_file = ref_params['outfile'] + suffix
             try:
-                with tbmanager(img_file) as tb:
-                    img_data = tb.getcol('map')
-                with tbmanager(ref_img_file) as tb:
-                    ref_img_data = tb.getcol('map')
+                with toolmanager(img_file, image) as ia:
+                    img_data = ia.getchunk()
+                    img_mask = ia.getchunk(getmask=True)
+                with toolmanager(ref_img_file) as ref_ia:
+                    ref_img_data = ref_ia.getchunk()
+                    ref_img_mask = ref_ia.getchunk(getmask=True)
                 self.assertEqual(img_data.shape, ref_img_data.shape)
                 self.assertTrue(numpy.allclose(img_data,ref_img_data,rtol=0.0))
+                self.assertTrue(numpy.array_equal(img_mask,ref_img_mask))
             finally:
                 if not debug:
                     remove_table(img_file)
