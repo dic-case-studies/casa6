@@ -200,7 +200,7 @@ class FileManager:
         self.assert_is_valid(file_basename)
         self.unlock_owner_write_protection(file_basename)
         self._log(f'Deleting: {file_basename}',origin='_delete')
-        if os.path.isdir(file_basename):
+        if os.path.isdir(file_basename) and not os.path.islink(file_basename):
             shutil.rmtree(file_basename)
         else:
             os.remove(file_basename)
@@ -2392,7 +2392,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
                 with toolmanager(img_file, image) as ia:
                     img_data = ia.getchunk()
                     img_mask = ia.getchunk(getmask=True)
-                with toolmanager(ref_img_file) as ref_ia:
+                with toolmanager(ref_img_file, image) as ref_ia:
                     ref_img_data = ref_ia.getchunk()
                     ref_img_mask = ref_ia.getchunk(getmask=True)
                 self.assertEqual(img_data.shape, ref_img_data.shape)
