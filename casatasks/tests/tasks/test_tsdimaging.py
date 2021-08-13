@@ -18,6 +18,7 @@ if is_CASA6:
     from casatasks import tsdimaging as sdimaging
     from casatasks import split as split_ms
     from casatasks.private.sdutil import tbmanager, toolmanager, table_selector, is_ms
+    from enum import Enum
 
     ### for selection_syntax import
     #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -1475,14 +1476,14 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
 # Helper classes for test_timerange* tests of class sdimaging_test_selection
 ###
 
-class TimeSelectionPattern:
-    VALUE_DEFAULT = 0
-    VALUE_EXACT = 1
-    VALUE_GT = 2
-    VALUE_INTERVAL = 3
-    VALUE_LT = 4
-    VALUE_RANGE = 5
-
+class TimeSelectionPattern(Enum):
+    VALUE_DEFAULT = 'default'
+    VALUE_EXACT = 'exact'
+    VALUE_GT = 'gt'
+    VALUE_INTERVAL = 'delta'
+    VALUE_LT = 'lt'
+    VALUE_RANGE = 'range'
+    
 
 class TestTimeRangeHelper:
     """Provides parameters and compute expected results for test_timerange* tests"""
@@ -1504,28 +1505,22 @@ class TestTimeRangeHelper:
     def params(cls,time_pattern):
         params = copy.deepcopy(cls._default_params)
         pattern = TimeSelectionPattern
-        if time_pattern == pattern.VALUE_DEFAULT:
+        if time_pattern is pattern.VALUE_DEFAULT:
             timerange = ''
-            suffix = '.default'
-        elif time_pattern == pattern.VALUE_EXACT:
+        elif time_pattern is pattern.VALUE_EXACT:
             timerange = '20:15:00'
-            suffix = '.exact'
-        elif time_pattern == pattern.VALUE_GT:
+        elif time_pattern is pattern.VALUE_GT:
             timerange = '>20:15:00'
-            suffix = '.gt'
-        elif time_pattern == pattern.VALUE_LT:
+        elif time_pattern is pattern.VALUE_LT:
             timerange = '<20:15:00.50'
-            suffix = '.lt'
-        elif time_pattern == pattern.VALUE_RANGE:
+        elif time_pattern is pattern.VALUE_RANGE:
             timerange = '20:15:00.20~20:15:01.50'
-            suffix = '.range'
-        elif time_pattern == pattern.VALUE_INTERVAL:
+        elif time_pattern is pattern.VALUE_INTERVAL:
             timerange = '20:14:59.50+00:00:01.00'
-            suffix = '.interval'
         else:
             raise ValueError(f"Illegal time pattern: {time_pattern}")
         params['timerange'] = timerange
-        params['outfile'] += suffix
+        params['outfile'] += '.' + time_pattern.value
         return copy.deepcopy(params)
     
     @staticmethod
