@@ -2335,49 +2335,49 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
 
-    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_default(self):
         """test_timerange_value_default: Test default value for timerange"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_DEFAULT)
         self._test_timerange(params)
 
-    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_exact(self):
         """test_timerange_value_exact: Test timerange selection by syntax 'T0'"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_EXACT)
         self._test_timerange(params)
 
-    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_gt(self):
         """test_timerange_value_gt: Test timerange selection by syntax '>T0'"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_GT)
         self._test_timerange(params)
 
-    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_interval(self):
         """test_timerange_value_interval: Test timerange selection by syntax 'T0+dT'"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_INTERVAL)
         self._test_timerange(params)
 
-    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_lt(self):
         """test_timerange_value_lt: Test timerange selection by syntax '<T0'"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_LT)
         self._test_timerange(params)
 
-    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_range(self):
         """test_timerange_value_default: Test default value for timerange"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_RANGE)
         self._test_timerange(params)
     
-    def _test_timerange(self,task_params,debug=True):
+    def _test_timerange(self,task_params,debug=False):
         # Compute results
         self._fetch_and_run(task_params)
         # Compute reference results
