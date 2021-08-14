@@ -101,8 +101,8 @@ values. See description below for details of gridfunction available.
     </param>
     
     <param name="timerange" type="string">
-            <shortdescription>select data by range of time. (\'\'=all)</shortdescription>
-            
+            <shortdescription>select data by range of time, e.g. 20:15:00~20:16:00 (\'\'=all)</shortdescription>
+            <description>select data by range of time, e.g. 20:15:00~20:16:00 (\'\'=all)</description>
             <value/>
     </param>
     
