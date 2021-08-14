@@ -679,5 +679,3 @@ def default(taskname=None):
 #     paramgui.setGlobals({})
 
 ####################
-
-checkgeodetic()
