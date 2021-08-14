@@ -818,22 +818,6 @@ void AspMatrixCleaner::getLargestScaleSize(ImageInterface<Float>& psf)
   const Int nx = psfShape_p(0);
   const Int ny = psfShape_p(1);
 
-  if (itsUserLargestScale > 0)
-  {
-    itsLargestInitScale = itsUserLargestScale;
-
-    // ensure the largest scale is smaller than imsize/4/sqrt(2pi) = imsize/10 (could try imsize/4 later)
-    if(itsLargestInitScale > min(nx/10, ny/10))
-    {
-       os << LogIO::WARN << "Scale size of " << itsLargestInitScale << " pixels is too big for an image size of " << nx << " x " << ny << " pixels. This scale size will be reset.  " << LogIO::POST;
-       itsLargestInitScale = float(ceil(min(nx/10, ny/10))); // based on the idea of MultiTermMatrixCleaner::verifyScaleSizes()
-    }
-
-    //cout << "largest scale " << itsLargestInitScale << endl;
-
-    return;
-  }
-
   CoordinateSystem cs = psf.coordinates();
   String dirunit = cs.worldAxisUnits()(0);
   Vector<String> unitas = cs.worldAxisUnits();
@@ -862,6 +846,24 @@ void AspMatrixCleaner::getLargestScaleSize(ImageInterface<Float>& psf)
       float nu = float(endfreq); // 1e9;
       // largest scale = ( (c/nu)/baseline )  converted from radians to degrees to arcsec
       itsLargestInitScale = float(ceil(((3e+8/nu)/baseline) * 180.0/3.14 * 60.0 * 60.0 / abs(cs.increment()(0))));
+
+      // if user provides largest scale, use it instead.
+      if (itsUserLargestScale > 0)
+      {
+        if (itsUserLargestScale > itsLargestInitScale)
+          itsStopAtLargeScaleNegative = true;
+
+        itsLargestInitScale = itsUserLargestScale;
+
+        // ensure the largest scale is smaller than imsize/4/sqrt(2pi) = imsize/10 (could try imsize/4 later)
+        if(itsLargestInitScale > min(nx/10, ny/10))
+        {
+           os << LogIO::WARN << "Scale size of " << itsLargestInitScale << " pixels is too big for an image size of " << nx << " x " << ny << " pixels. This scale size will be reset.  " << LogIO::POST;
+           itsLargestInitScale = float(ceil(min(nx/10, ny/10))); // based on the idea of MultiTermMatrixCleaner::verifyScaleSizes()
+        }
+
+        return;
+      }
 
       // make a conservative largest allowed scale, 5 is a trial number
       itsLargestInitScale = float(ceil(itsLargestInitScale / 5.0));
