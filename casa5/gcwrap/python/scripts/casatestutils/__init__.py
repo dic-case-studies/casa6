@@ -1,7 +1,5 @@
-from .weblog import Weblog
-from .check import Check
-from .compare import *
-from .testhelper import *
+#from .compare import *
+#from .testhelper import *
 #from .extractcasascript import main
 #from .testhelpers import TestHelpers
 #import imagehelpers.imagetesthelpers
@@ -20,42 +18,62 @@ import numbers
 import operator
 import subprocess
 import numpy
-import six
+
 
 _casa5 = False
 _casa6 = False
+_importmpi = False
 __bypass_parallel_processing = 0
 
+# https://stackoverflow.com/questions/52580105/exception-similar-to-modulenotfounderror-in-python-2-7
 try:
-    # CASA 6
-    logging.debug("Importing CASAtools")
-    import casatools
-    logging.debug("Importing CASAtasks")
-    import casatasks
-    from casatasks import casalog
+    ModuleNotFoundError
+except NameError:
+    ModuleNotFoundError = ImportError
 
-    _casa6 = True
-
-except ImportError:
-    # CASA 5
-    logging.debug("Import casa6 errors. Trying casa5...")
-    from __main__ import default
-    from taskinit import tbtool, mstool, iatool
-    from taskinit import *
-    from casa_stack_manip import stack_find, find_casa
+def import_casamods():
     try:
-        from mpi4casa.MPIEnvironment import MPIEnvironment
-        if not MPIEnvironment.is_mpi_enabled:
-            __bypass_parallel_processing = 1
-    except ImportError:
-        print("MPIEnvironment not Enabled")
+        # CASA 6
+        logging.debug("Importing CASAtools")
+        import casatools
+        logging.debug("Importing CASAtasks")
+        #try:
+        #    import casatasks
+        #    from casatasks import casalog
+        #except (ImportError, ModuleNotFoundError):
+        #    pass
 
-    casa = find_casa()
-    if casa.has_key('state') and casa['state'].has_key('init_version') and casa['state']['init_version'] > 0:
-        casaglobals=True
-        casac = stack_find("casac")
-        casalog = stack_find("casalog")
-    _casa5 = True
+        try:
+            from casampi.MPIEnvironment import MPIEnvironment
+            _importmpi = True
+            if not MPIEnvironment.is_mpi_enabled:
+                __bypass_parallel_processing = 1
+        except ImportError:
+            print("MPIEnvironment not Enabled")
+
+        _casa6 = True
+
+    except (ImportError, ModuleNotFoundError):
+        # CASA 5
+        logging.debug("Import casa6 errors. Trying casa5...")
+        from __main__ import default
+        from taskinit import tbtool, mstool, iatool
+        from casa_stack_manip import stack_find, find_casa
+
+        try:
+            from mpi4casa.MPIEnvironment import MPIEnvironment
+            _importmpi = True
+            if not MPIEnvironment.is_mpi_enabled:
+                __bypass_parallel_processing = 1
+        except ImportError:
+            print("MPIEnvironment not Enabled")
+
+        casa = find_casa()
+        if casa.has_key('state') and casa['state'].has_key('init_version') and casa['state']['init_version'] > 0:
+            casaglobals=True
+            casac = stack_find("casac")
+            #casalog = stack_find("casalog")
+        _casa5 = True
 
 _casa6tools = set([
     "agentflagger", "atcafiller", "atmosphere", "calanalysis", "calibrater", "coercetype", "componentlist", "config", "constants", "coordsys", "ctuser", "functional", "image",
@@ -66,13 +84,13 @@ _casa6tools = set([
 
 _casa6tasks = set([
     "accor", "accum", "applycal", "asdmsummary", "bandpass", "blcal", "calstat", "clearcal", "clearstat", "concat", "conjugatevis", "cvel", "cvel2",
-    "delmod", "exportasdm", "exportfits", "exportuvfits", "feather", "fixplanets", "fixvis", "flagcmd", "flagdata", "flagmanager", "fluxscale", "ft", "gaincal",
+    "delmod" ,"exportasdm", "exportfits", "exportuvfits", "feather", "fixplanets", "fixvis", "flagcmd", "flagdata", "flagmanager", "fluxscale", "ft", "gaincal",
     "gencal", "hanningsmooth", "imcollapse", "imcontsub", "imdev", "imfit", "imhead", "imhistory", "immath", "immoments", "impbcor", "importasap", "importasdm",
     "importatca", "importfits", "importfitsidi", "importgmrt", "importmiriad", "importnro", "importuvfits", "importvla", "impv", "imrebin", "imreframe",
     "imregrid", "imsmooth", "imstat", "imsubimage", "imtrans", "imval", "initweights", "listcal", "listfits", "listhistory", "listobs", "listpartition",
     "listsdm", "listvis", "makemask", "mstransform", "partition", "polcal", 'polfromgain', "predictcomp", "rerefant", "rmfit", "rmtables", "sdbaseline", "sdcal",
     "sdfit", "sdfixscan", "sdgaincal", "sdimaging", "sdsmooth", "setjy", "simalma", "simanalyze", "simobserve", "slsearch", "smoothcal", "specfit",
-    "specflux", "specsmooth", "splattotable", "split", "spxfit", "statwt", "tclean", "uvcontsub", "uvmodelfit", "uvsub", "virtualconcat", "vishead", "visstat", "widebandpbcor"])
+    "specflux", "specsmooth", "splattotable", "split", "spxfit", "statwt", "tclean", "uvcontsub", "uvmodelfit", "uvsub", "virtualconcat", "vishead", "visstat", "widebandpbcor","deconvolve"])
 
 _miscellaneous_tasks = set(['wvrgcal','plotms'])
 
@@ -81,18 +99,15 @@ _miscellaneous_tasks = set(['wvrgcal','plotms'])
 ##################################       General Functions       ###########################
 ############################################################################################
 
-__bypass_parallel_processing = 0
+
 def getNumberOfServers( __bypass_parallel_processing ):
     """
     Return the number of engines (iPython cluster) or the number of servers (MPI cluster)
     """
-    if _casa5:
-        if (__bypass_parallel_processing == 0):
-            return len(MPIEnvironment.mpi_server_rank_list()) + 1
-        else:
-            return None
-    # TODO Wait For MPI in casa6
-    if _casa6:
+    import_casamods()
+    if (__bypass_parallel_processing == 0) and (_importmpi):
+        return len(MPIEnvironment.mpi_server_rank_list()) 
+    else:
         return None
 
 def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
@@ -114,10 +129,15 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
     #print(testcase)
     test_split = testcase.split('.')
     test_case = test_split[-1]
-    taskname = test_split[1].split('_')[0]
+    #taskname = test_split[1].split('_')[0]
     #print(taskname)
     if (sys.version_info > (3, 3)):
-        rerun = "python {} {}.{}".format(filename, test_split[1], test_split[2])
+        try:
+            casapath = os.environ.get('CASAPATH').split()[0] + '/bin/'
+        except:
+            casapath = ''
+        rerun = "{}python3 {} {}.{}".format(casapath,filename, test_split[1], test_split[2])
+       
     else:
         filename = "{}.py".format(filename.split('.')[0])
         casapath = os.environ.get('CASAPATH').split()[0]
@@ -127,6 +147,7 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
     values = {key:kwargs[key] for key in kwargs}
     with open(filename, 'r') as file:
         for line in file:
+            #print(line)
             line = line.strip()
             if line.startswith('def test_'):
                 if line.split()[1][:-7].endswith(test_case):
@@ -134,11 +155,20 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
                 else:
                     current_case = None
                     #_casa6tasks, _miscellaneous_tasks
-            for i in _casa6tasks.union(_miscellaneous_tasks):
+            for task in _casa6tasks.union(_miscellaneous_tasks):
                 if current_case == test_case:
-                    if "{}(".format(i) in line:
-                        print(line)
+                    if "{}(".format(task) in line:
+                        #print(line)
+                        taskname = line.split("(")[0]
+                        ## Optional: Can print first index of casa function call but does not print the string name if it's an assigned object
+                        ## Attempt to Get Dataset from casa task call
+                        if dataset== "TestData":
+                            import re
+                            dataset = re.search('(?<=\().+?(?=\,)',line).group()
+                            if len(dataset) == 0 or dataset is None:
+                                dataset = "TestData"
                         params = line.split(',')[1::]
+                        #print(params)
                         while ')' not in list(line):
                             line = next(file)
                             new_line = [x.strip() for x in line.split(',')]
@@ -146,8 +176,9 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
                                 params.append(i)
                             params = list(filter(lambda a: a != '', params))
                         call = "{}({},{}".format(taskname, dataset, ','.join(params))
-                        print(call)
+                        #print(call)
                         func_calls.append(call)
+                        #print(func_calls)
     values['runtime'] = -1.0
     #This is a temp error value
     values['status'] = status
@@ -165,7 +196,14 @@ def add_to_dict(self, output=None, dataset="TestData", status=False, **kwargs):
     output[test_case]['rerun'] = rerun
     output[test_case]['description'] = unittest.TestCase.shortDescription(self)
     output[test_case]['images'] = [ ]
-    output[test_case]['Number of Processors Used : Max Number of processors'] = "{} : {}".format("Serial" if getNumberOfServers(__bypass_parallel_processing) == None else str(getNumberOfServers(__bypass_parallel_processing)) , str(multiprocessing.cpu_count()))
+    if getNumberOfServers(__bypass_parallel_processing) == None:
+        output[test_case]['Serial Mode'] = "MPI Environment Not Enabled"
+    else: 
+        output[test_case]['MPI Mode'] = "{}".format(str(str(getNumberOfServers(__bypass_parallel_processing)) + " MPI Servers + 1 Client"))
+
+    output[test_case]['Number of processors available in the system'] = "{}".format(str(multiprocessing.cpu_count()))
+
+
     #print("Test Case: {}".format(test_case))
     #print("{} : {}".format(test_case,output[test_case]))
 
@@ -193,7 +231,8 @@ def generate_weblog(task,dictionary,show_passed = True):
     Example:
         generate_weblog("taskname", dictionary, show_passed)
     """
-
+    import_casamods()
+    from .weblog import Weblog
     Weblog(task, dictionary).generate_weblog(show_passed = show_passed)
 
 ############################################################################################
@@ -234,6 +273,7 @@ def skipIfMissingModule(required_module, strict=False):
 #import casatestutils
 #@casatestutils.time_execution
 def time_execution(out_dict):
+    import_casamods()
     def time_decorator(function):
         '''
         Decorator: time execution of test
@@ -256,13 +296,13 @@ def time_execution(out_dict):
                 failed = True
                 t1 = time.time()
                 out_dict[function.__name__]['runtime'] = t1-t0
-                casalog.post("Total time running {}: {} seconds".format(function.__name__, str(t1-t0)))
+                #casalog.post("Total time running {}: {} seconds".format(function.__name__, str(t1-t0)))
                 out_dict[function.__name__]['status'] = False
                 out_dict[function.__name__]['Failure Message'] = e
                 raise
             t1 = time.time()
             #print ("Total time running %s: %s seconds" % (function.__name__, str(t1-t0)))
-            casalog.post("Total time running {}: {} seconds".format(function.__name__, str(t1-t0)))
+            #casalog.post("Total time running {}: {} seconds".format(function.__name__, str(t1-t0)))
             #print('======================================================')
             #print(function.__name__)
             out_dict[function.__name__]['runtime'] = t1-t0

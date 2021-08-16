@@ -327,7 +327,7 @@ public:
 
     ~MsFactory ();
 
-    std::pair<casacore::MeasurementSet *, casacore::Int> createMs ();
+    std::pair<casacore::MeasurementSet *, casacore::rownr_t> createMs ();
 
     void addAntennas (casacore::Int nAntennas);
 
@@ -347,7 +347,8 @@ public:
                             casacore::Int nChannels,
                             casacore::Double frequency,
                             casacore::Double frequencyDelta,
-                            const casacore::String & stokes);
+                            const casacore::String & stokes,
+                            casacore::Double endingTime = -1);
     void addSpectralWindows (int nSpectralWindows);
 
     void setDataGenerator (casacore::MSMainEnums::PredefinedColumns, GeneratorBase * generator);
@@ -519,11 +520,12 @@ private:
     casacore::Bool includeAutocorrelations_p;
     casacore::MeasurementSet * ms_p;
     casacore::Int nAntennas_p;
-    casacore::Int nRows_p;
+    casacore::rownr_t nRows_p;
     std::unique_ptr<casacore::NewMSSimulator> simulator_p;
     casacore::Double timeEnd_p;
     casacore::Double timeInterval_p;
     casacore::Double timeStart_p;
+    std::map<casacore::Int, casacore::Double> endingTimePerSpw_p;
 };
 
 } // end namespace test

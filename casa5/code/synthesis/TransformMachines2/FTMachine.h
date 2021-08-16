@@ -382,6 +382,9 @@ public:
   void getImagingWeight(casacore::Matrix<casacore::Float>& imwght, const vi::VisBuffer2& vb);
   ///utility function that returns a rough estimate of memory needed.
   virtual casacore::Long estimateRAM(const casacore::CountedPtr<SIImageStore>& imstore);
+  ///call this to clear temporary file
+  // for e.g imaging weight column associated with this ftmachine
+  virtual casacore::Vector<casacore::String> cleanupTempFiles(const casacore::String& message);
 protected:
 
   friend class VisModelData;
@@ -545,8 +548,11 @@ protected:
   casacore::MRadialVelocity::Convert obsvelconv_p;
   casacore::MeasTable::Types mtype_p;
   FFT2D ft_p;
+  casacore::Vector<casacore::String> tempFileNames_p;
 
  private:
+  virtual casacore::Bool isSD() const {return false;}
+
   //Some temporary wasteful function for swapping axes because we don't 
   //Interpolation along the second axis...will need to implement 
   //interpolation on y axis of a cube. 

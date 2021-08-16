@@ -87,7 +87,7 @@ birdie = "birdie.im"
 
 nanvalue = 4.53345345
 
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/specfit/'
+datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/specfit/'
 
 def run_fitprofile (
     imagename, box, region, chans, stokes,
@@ -229,13 +229,15 @@ class specfit_test(unittest.TestCase):
                         ngauss, poly, multifit, model, residual
                     )
                 else:
-                    self.assertFalse(
+                    try:
                         run_specfit(
                             imagename, box, region, chans,
                             stokes, axis, mask, ngauss, poly,
                             multifit, model, residual
                         )
-                    )
+                    except RuntimeError:
+                        pass
+
         # Exception if no image name given",
         testit(
             "", "", "", "", "", 2, "", False, 1, -1, "", ""

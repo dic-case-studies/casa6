@@ -28,12 +28,14 @@ else:
     _ms = ms
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
+datapath = ctsys_resolve('unittest/cvel/')
 myname = 'test_cvel'
 vis_a = 'ngc4826.ms'
-vis_b = 'test.ms'
+#vis_b = 'test.ms'
+vis_b = 'ARP299F_sma_2scans_24spws_negative_chanwidth.ms'
 vis_c = 'jupiter6cm.demo-thinned.ms'
 vis_d = 'g19_d2usb_targets_line-shortened-thinned.ms'
 vis_e = 'evla-highres-sample-thinned.ms'
@@ -85,23 +87,23 @@ class cvel_test(unittest.TestCase):
         
         if(forcereload or not os.path.exists(vis_a)):
             shutil.rmtree(vis_a, ignore_errors=True)
-            importuvfits(fitsfile=ctsys_resolve('regression/ngc4826/fitsfiles/ngc4826.ll.fits5'), # 10 MB
+            importuvfits(fitsfile=os.path.join(datapath,'ngc4826.ll.fits5'), # 10 MB
                          vis=vis_a)
         if(forcereload or not os.path.exists(vis_b)):
             shutil.rmtree(vis_b, ignore_errors=True)
-            os.system('cp -R '+ctsys_resolve('regression/fits-import-export/input/test.ms')+' .') # 27 MB
+            os.system('cp -RL '+ os.path.join(datapath,'ARP299F_sma_2scans_24spws_negative_chanwidth.ms')+' .') # 27 MB
         if(forcereload or not os.path.exists(vis_c)):
             shutil.rmtree(vis_c, ignore_errors=True)
-            os.system('cp -R '+ctsys_resolve('regression/cvel/input/jupiter6cm.demo-thinned.ms')+' .') # 124 MB
+            os.system('cp -RL '+ os.path.join(datapath,'jupiter6cm.demo-thinned.ms')+' .') # 124 MB
         if(forcereload or not os.path.exists(vis_d)):
             shutil.rmtree(vis_d, ignore_errors=True)
-            os.system('cp -R '+ctsys_resolve('regression/cvel/input/g19_d2usb_targets_line-shortened-thinned.ms')+' .') # 48 MB
+            os.system('cp -RL '+ os.path.join(datapath,'g19_d2usb_targets_line-shortened-thinned.ms')+' .') # 48 MB
         if(forcereload or not os.path.exists(vis_e)):
             shutil.rmtree(vis_e, ignore_errors=True)
-            os.system('cp -R '+ctsys_resolve('regression/cvel/input/evla-highres-sample-thinned.ms')+' .') # 74 MB
+            os.system('cp -RL '+ os.path.join(datapath,'evla-highres-sample-thinned.ms')+' .') # 74 MB
         if(forcereload or not os.path.exists(vis_f)):
             shutil.rmtree(vis_f, ignore_errors=True)
-            os.system('cp -R '+ctsys_resolve('regression/unittest/cvel/test_cvel1.ms')+' .') # 39 MB
+            os.system('cp -RL '+ os.path.join(datapath,'test_cvel1.ms')+' .') # 39 MB
         if(forcereload or not os.path.exists(vis_g)):
             # construct an MS with attached Jupiter ephemeris from vis_c
             shutil.rmtree(vis_g, ignore_errors=True)
@@ -149,32 +151,24 @@ class cvel_test(unittest.TestCase):
     
     def test1(self):
         '''Cvel 1: Testing default - expected error'''
-        myvis = vis_b
-        os.system('ln -sf ' + myvis + ' myinput.ms')
-        passes = False
-        try:
-            rval = cvel()
-            # CASA5 returns False for this expected error
-            passes = not rval
-        except AssertionError:
-            passes = True
-            print("*** Expected error ***")
-        self.assertTrue(passes)
+        if is_CASA6:
+            with self.assertRaises(AssertionError):
+                cvel()
+        else:
+            with self.assertRaises(RuntimeError):
+                cvel()
 
     def test2(self):
         '''Cvel 2: Only input vis set - expected error'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        passes = False
-        try:
-            rval = cvel(vis = 'myinput.ms')
-            # CASA5 returns False for this expected error
-            passes = not rval
-        except AssertionError:
-            passes = True
-            print("*** Expected error ***")
-        self.assertTrue(passes)
-            
+        if is_CASA6:
+            with self.assertRaises(AssertionError):
+                cvel(vis = 'myinput.ms')
+        else:
+            with self.assertRaises(AssertionError):
+                cvel(vis = 'myinput.ms')
+                    
     def test3(self):
         '''Cvel 3: Input and output vis set'''
         myvis = vis_b
@@ -893,6 +887,34 @@ class cvel_test(unittest.TestCase):
         ret = verify_ms(outfile, 1, 3, 0, b)
         self.assertTrue(ret[0],ret[1])
 
+    def test39_veltype_uppercase(self):
+        '''Cvel 39: test effect of sign of width parameter: radio velocity mode, width positive'''
+        myvis = vis_b
+        os.system('ln -sf ' + myvis + ' myinput.ms')
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
+        c =  _qa.constants('c')['value']
+        _tb.close()
+        
+        restf = a[0] 
+        bv1 = c * (restf-a[5])/restf 
+        bv2 = c * (restf-a[4])/restf 
+        wv = abs(bv2-bv1)
+        b = numpy.array([a[3], a[4], a[5]])
+        rval = cvel(
+            vis = 'myinput.ms',
+            outputvis = outfile,
+            mode = 'velocity',
+            veltype = 'RADIO',
+            nchan = 3,
+            start = str(bv1)+'m/s',
+            width=str(wv)+'m/s',
+            restfreq=str(restf)+'Hz'
+            )
+        self.assertNotEqual(rval,False)
+        ret = verify_ms(outfile, 1, 3, 0, b)
+        self.assertTrue(ret[0],ret[1])
+
     def test40(self):
         '''Cvel 40: test effect of sign of width parameter: radio velocity mode, width negative'''
         myvis = vis_b
@@ -1093,6 +1115,27 @@ class cvel_test(unittest.TestCase):
         ret = verify_ms(outfile, 1, 3, 0, b)
         self.assertTrue(ret[0],ret[1])
 
+    def test48_interpolation_uppercase(self):
+        '''Cvel 48: test fftshift regridding: channel mode, width positive'''
+        myvis = vis_b
+        os.system('ln -sf ' + myvis + ' myinput.ms')
+        _tb.open('myinput.ms/SPECTRAL_WINDOW')
+        a = _tb.getcell('CHAN_FREQ')
+        b = numpy.array([a[1], a[2], a[3]])
+        _tb.close()
+
+        rval = cvel(
+            vis = 'myinput.ms',
+            outputvis = outfile,
+            nchan = 3,
+            start = 1,
+            width = 1,
+            interpolation = 'FFTSHIFT'
+            )
+        self.assertNotEqual(rval,False)
+        ret = verify_ms(outfile, 1, 3, 0, b)
+        self.assertTrue(ret[0],ret[1])
+
     def test49(self):
         '''Cvel 49: vopt mode with fftshift, expected error ...'''
         myvis = vis_b
@@ -1236,13 +1279,27 @@ class cvel_test(unittest.TestCase):
         '''Cvel 53: cvel of a field with ephemeris attached and outframe SOURCE'''
         myvis = vis_g
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        rval = cvel(
+        try:
+            cvel(
                 vis = 'myinput.ms',
                 outputvis = outfile,
                 outframe = 'SOURCE'
-                )
-        self.assertTrue(rval)
+            )
+        except Exception as exc:
+            self.fail('Unexpected exception: {}'.format(exc))
 
+    def test53_outframe_lowercase(self):
+        '''Cvel 53: cvel of a field with ephemeris attached and outframe SOURCE'''
+        myvis = vis_g
+        os.system('ln -sf ' + myvis + ' myinput.ms')
+        try:
+            cvel(
+                vis = 'myinput.ms',
+                outputvis = outfile,
+                outframe = 'source'
+            )
+        except Exception as exc:
+            self.fail('Unexpected exception: {}'.format(exc))
 
 
 class cleanup(unittest.TestCase):

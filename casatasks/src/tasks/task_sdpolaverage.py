@@ -3,15 +3,18 @@ import re
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import casalog
-    from casatools import quanta, ms, table, mstransformer
+    from casatools import ms as mstool
+    from casatools import mstransformer as mttool
+    from casatools import quanta, table
     from .mstools import write_history
     from .parallel.parallel_data_helper import ParallelDataHelper
     from . import flaghelper as fh
     from .update_spw import update_spwchan
     from .callibrary import callibrary
 else:
-    from taskinit import mttool as mstransformer
-    from taskinit import mstool as ms
+    from taskinit import casalog
+    from taskinit import mttool
+    from taskinit import mstool
     from taskinit import tbtool as table
     from taskinit import qatool as quanta
     from mstools import write_history
@@ -19,6 +22,8 @@ else:
     import flaghelper as fh
     from update_spw import update_spwchan
     from callibrary import callibrary
+
+qa = quanta()
 
 """
 The following code is based on the mstransform code, with
@@ -106,16 +111,12 @@ def sdpolaverage(
         pdh.bypassParallelProcessing(0)
 
     # Validate input and output parameters
-    try:
-        pdh.setupIO()
-    except Exception as instance:
-        casalog.post('%s' % instance, 'ERROR')
-        return False
+    pdh.setupIO()
 
     # Process the input Multi-MS
     if ParallelDataHelper.isMMSAndNotServer(infile) == True and monolithic_processing == False:
         '''
-        retval{'status': True,  'axis':''}         --> can run in parallel      
+        retval{'status': True,  'axis':''}         --> can run in parallel
         retval{'status': False, 'axis':'value'}    --> treat MMS as monolithic MS, set new axis for output MMS
         retval{'status': False, 'axis':''}         --> treat MMS as monolithic MS, create an output MS
         '''
@@ -141,15 +142,10 @@ def sdpolaverage(
         # MMS is processed in parallel
         else:
             createmms = False
-            try:
-                pdh.override__args('createmms', False)
-                pdh.setupCluster('sdpolaverage')
-                pdh.go()
-            except Exception as instance:
-                casalog.post('%s' % instance, 'ERROR')
-                return False
-
-            return True
+            pdh.override__args('createmms', False)
+            pdh.setupCluster('sdpolaverage')
+            pdh.go()
+            return
 
     # Create an output Multi-MS
     if createmms == True:
@@ -157,24 +153,19 @@ def sdpolaverage(
         # Check the heuristics of separationaxis and the requested transformations
         pval = pdh.validateOutputParams()
         if pval == 0:
-            raise Exception(
+            raise RuntimeError(
                 'Cannot create MMS using separationaxis=%s with some of the requested transformations.'
                     % separationaxis
             )
 
-        try:
-            pdh.setupCluster('sdpolaverage')
-            pdh.go()
-            monolithic_processing = False
-        except Exception as instance:
-            casalog.post('%s' % instance, 'ERROR')
-            return False
-
-        return True
+        pdh.setupCluster('sdpolaverage')
+        pdh.go()
+        monolithic_processing = False
+        return
 
     # Create a local copy of the MSTransform tool
-    mtlocal = mstransformer()
-    mslocal = ms()
+    mtlocal = mttool()
+    mslocal = mstool()
 
     try:
         # Gather all the parameters in a dictionary.
@@ -229,7 +220,7 @@ def sdpolaverage(
 
         # Only parse chanaverage if chanbin is valid
         if chanaverage and isinstance(chanbin, int) and chanbin <= 1:
-            raise Exception('Parameter chanbin must be > 1 to do channel averaging')
+            raise ValueError('Parameter chanbin must be > 1 to do channel averaging')
 
         # Validate the case of int or list chanbin
         if chanaverage and pdh.validateChanBin():
@@ -245,7 +236,7 @@ def sdpolaverage(
             config['hanning'] = True
 
         if regridms:
-            casalog.post('Parse regridding parameters')            
+            casalog.post('Parse regridding parameters')
             config['regridms'] = True
             # Reset the defaults depending on the mode
             # Only add non-empty string parameters to config dictionary
@@ -271,9 +262,9 @@ def sdpolaverage(
 
         # Only parse timeaverage parameters when timebin > 0s
         if timeaverage:
-            tb = quanta.convert(quanta.quantity(timebin), 's')['value']
+            tb = qa.convert(qa.quantity(timebin), 's')['value']
             if not tb > 0:
-                raise Exception("Parameter timebin must be > '0s' to do time averaging")
+                raise ValueError("Parameter timebin must be > '0s' to do time averaging")
 
         if timeaverage:
             casalog.post('Parse time averaging parameters')
@@ -317,12 +308,8 @@ def sdpolaverage(
         casalog.post('Apply the transformations')
         mtlocal.run()
 
+    finally:
         mtlocal.done()
-
-    except Exception as instance:
-        mtlocal.done()
-        casalog.post('%s' % instance, 'ERROR')
-        return False
 
     # Update the FLAG_CMD sub-table to reflect any spw/channels selection
     # If the spw selection is by name or FLAG_CMD contains spw with names, skip the updating
@@ -355,7 +342,6 @@ def sdpolaverage(
                     mademod = False
                     cmds = mytb.getcol('COMMAND')
                     widths = {}
-                    #print "width =", width
                     if hasattr(chanbin, 'has_key'):
                         widths = chanbin
                     else:
@@ -363,7 +349,6 @@ def sdpolaverage(
                             for i in range(len(chanbin)):
                                 widths[i] = chanbin[i]
                         elif chanbin != 1:
-                            #print 'using ms.msseltoindex + a scalar width'
                             numspw = len(mslocal.msseltoindex(
                                 vis=infile,
                                 spw='*')['spw'])
@@ -373,7 +358,6 @@ def sdpolaverage(
                                 w = chanbin
                             for i in range(numspw):
                                 widths[i] = w
-                    #print 'widths =', widths
                     for rownum in range(nflgcmds):
                         # Matches a bare number or a string quoted any way.
                         spwmatch = re.search(r'spw\s*=\s*(\S+)', cmds[rownum])
@@ -385,11 +369,8 @@ def sdpolaverage(
                             # in that case.
                             cmd = ''
                             try:
-                                #print 'sch1 =', sch1
                                 sch2 = update_spwchan(infile, spw, sch1, truncate=True,
                                                       widths=widths)
-                                #print 'sch2 =', sch2
-                                ##print 'spwmatch.group() =', spwmatch.group()
                                 if sch2:
                                     repl = ''
                                     if sch2 != '*':
@@ -415,14 +396,11 @@ def sdpolaverage(
 
             mytb.close()
 
-        except Exception as instance:
+        finally:
             if isopen:
                 mytb.close()
             mslocal = None
             mytb = None
-            casalog.post("*** Error \'%s\' updating FLAG_CMD" % (instance),
-                         'SEVERE')
-            return False
 
     mytb = None
 
@@ -435,8 +413,5 @@ def sdpolaverage(
     except Exception as instance:
         casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
                      'WARN')
-        return False
 
     mslocal = None
-
-    return True

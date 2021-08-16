@@ -35,6 +35,8 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    import casa_stack_manip
+
 import sys
 import os
 import subprocess
@@ -44,20 +46,24 @@ import shutil
 logpath = casalog.logfile()
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/alma/Itziar.ms')
-    fakepath = casatools.ctsys.resolve('visibilities/')
+    datapath = casatools.ctsys.resolve('unittest/listhistory/Itziar.ms')
+    fakepath = casatools.ctsys.resolve('unittest/listhistory/')
     #filepath = casatools.ctsys.resolve('testlog.log')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        dataroot = os.environ.get('CASAPATH').split()[0] + '/'
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/Itziar.ms'
-        fakepath = dataroot + 'data/casa-data-req/visibilities/'
-    else:
-        dataroot = os.environ.get('CASAPATH').split()[0] + '/'
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/alma/Itziar.ms'
-        fakepath = dataroot + 'casa-data-req/visibilities/'
+    dataroot = os.environ.get('CASAPATH').split()[0] + '/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listhistory/Itziar.ms'
+    fakepath = dataroot + '/casatestdata/unittest/listhistory/'
     #filepath = 'testlog.log'
-    
+
+# This is for tests that check what the parameter validator does when parameters are
+# given wrong types - these don't exercise the task but the parameter validator!
+if CASA6:
+    validator_exc_type = AssertionError
+else:
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+    validator_exc_type = RuntimeError
+
 class listhistory_test(unittest.TestCase):
     
     def setUp(self):
@@ -75,11 +81,16 @@ class listhistory_test(unittest.TestCase):
         '''test takesMS: Check that list history takes a valid MS and refuses incorrect inputs'''
         casalog.setlogfile('testlog.log')
         listhistory(datapath)
-        self.assertFalse('SEVERE' in open('testlog.log').read())
-        listhistory(fakepath)
-        self.assertTrue('SEVERE' in open('testlog.log').read())
-        if CASA6:
-            with self.assertRaises(AssertionError):
+        with open('testlog.log') as tlog:
+            self.assertFalse('SEVERE' in tlog.read())
+
+        with self.assertRaises(RuntimeError):
+            listhistory(fakepath)
+        with open('testlog.log') as tlog:
+            self.assertTrue('SEVERE' in tlog.read())
+
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type):
                 listhistory('fake')
         else:
             listhistory('fake')
@@ -90,7 +101,8 @@ class listhistory_test(unittest.TestCase):
         '''test logfile: Checks to see that a log file is written and populated'''
         casalog.setlogfile('testlog.log')
         listhistory(datapath)
-        self.assertTrue('History table entries' in open('testlog.log').read())
+        with open ('testlog.log') as tlf:
+            self.assertTrue('History table entries' in tlf.read())
         
     # Here is the start of the merged test cases
     # -----------------------------------------------
@@ -99,7 +111,8 @@ class listhistory_test(unittest.TestCase):
         '''Test 1: Empty input should return False'''
         # CASA5 tasks return False, casatasks throw exceptions
         myms = ''
-        if CASA6:
+        if CASA6 or\
+           casa_stack_manip.stack_frame_find().get('__rethrow_casa_exceptions', False):
             self.assertRaises(Exception,listhistory,myms)
         else:
             res = listhistory(myms)
@@ -118,21 +131,18 @@ class listhistory_test(unittest.TestCase):
         casalog.setlogfile(logfile)
         res = listhistory(datapath)
 
-        # Get the number of lines in file
-        # the number of expected lines differs
+        refnum = 13
+        # In CASA6, this +1 accounts for the following log line (which is not in CASA5):
+        # Task listhistory complete. Start time: 2020-10-19 11:33:40.195569 End time: ...
         if CASA6:
-            refnum=17
-            
-        else:
-            # for CASA5, get only the relevant lines in the logfile
-            newfile= "newlisth.log"
-            cmd="sed -n \"/Begin Task/,/End Task/p\" %s > %s " %(logfile,newfile)
-            print(cmd)
-            os.system(cmd)
-            logfile = newfile
+            refnum += 1
 
-            refnum = 13
-            
+        # Get only the relevant lines in the logfile, between 'Begin/End Task'
+        newfile= "newlisth.log"
+        cmd="sed -n \"/Begin Task/,/End Task/p\" %s > %s " %(logfile,newfile)
+        print(cmd)
+        os.system(cmd)
+        logfile = newfile
 
         if CASA6:
             cmd=['wc', '-l', logfile]

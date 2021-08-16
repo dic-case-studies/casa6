@@ -221,13 +221,13 @@ void FiltrationTVI<Filter>::nextChunk() {
 }
 
 template<class Filter>
-Int FiltrationTVI<Filter>::nRows() const {
+rownr_t FiltrationTVI<Filter>::nRows() const {
   return num_filtrates_p;
 }
 
 template<class Filter>
-void FiltrationTVI<Filter>::getRowIds(Vector<uInt> &rowids) const {
-  Vector<uInt> org;
+void FiltrationTVI<Filter>::getRowIds(Vector<rownr_t> &rowids) const {
+  Vector<rownr_t> org;
   getVii()->getRowIds(org);
   ::FiltrateVector(org, is_filtrate_p, rowids);
 }
@@ -463,12 +463,13 @@ void FiltrationTVI<Filter>::filter() {
   num_filtrates_p = filter_p->isFiltratePerRow(vb, is_filtrate_p);
 
   // Synchronize own VisBuffer
-  configureNewSubchunk();
+  if(vii->more())
+    configureNewSubchunk();
 }
 
 template<class Filter>
 void FiltrationTVI<Filter>::filterChunk() {
-  size_t const block_size = max(getVii()->nRowsInChunk(), 100);
+  size_t const block_size = max(getVii()->nRowsInChunk(), (size_t)100);
   if (is_valid_subchunk_p.nelements() < block_size) {
     is_valid_subchunk_p.resize(block_size);
   }

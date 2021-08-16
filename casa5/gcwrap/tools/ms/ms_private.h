@@ -1,4 +1,4 @@
-casacore::Bool detached();
+casacore::Bool detached(casacore::Bool verbose=true);
 casacore::Bool ready2write_();
 casacore::Bool doMSSelection(const ::casac::record& exprs, 
 	const bool onlyparse=false);
@@ -49,7 +49,6 @@ template <typename T> void addVectorToRec(casacore::Vector<T>& inputvec,
 // If averaging requested
 void getAveragedValues(casacore::Vector<casacore::String> fieldnames, 
         casacore::Record& rec);
-void getWeightSum(casacore::Array<casacore::Float>& weight);
 void getAvgSigma(casacore::Array<casacore::Float>& sigma);
 
 // for putdata2
@@ -77,6 +76,6 @@ casacore::String polnExpr_p;
 casacore::String chanselExpr_p;
 casacore::Vector<casacore::Int> wantedpol_p;
 casacore::Vector<casacore::Int> ifrnumbers_p;
-std::vector<int> chansel_p; // nchan, start, width, inc
+std::vector<long> chansel_p; // nchan, start, width, inc
 
 void addephemcol(const casacore::MeasurementSet& appendedMS);

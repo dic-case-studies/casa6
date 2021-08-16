@@ -139,7 +139,7 @@ public:
 
   // Hazard a guess at parameters
   virtual void guessPar(VisBuffer& vb);
-  virtual void guessPar(SDBList& sdbs);  //  VI2
+  virtual void guessPar(SDBList& sdbs,const casacore::Bool& corrDepFlags=false);  //  VI2
 
   // Set up corruptor
   virtual void createCorruptor(const VisIter& vi, const casacore::Record& simpar, const casacore::Int nSim);
@@ -256,7 +256,7 @@ public:
 
   // Hazard a guess at parameters
   virtual void guessPar(VisBuffer& vb);
-  virtual void guessPar(SDBList& sdbs);   // VI2
+  virtual void guessPar(SDBList& sdbs,const casacore::Bool& corrDepFlags=false);  //  VI2
 
   virtual void createCorruptor(const VisIter& vi, const casacore::Record& simpar, const casacore::Int nSim);
 
@@ -386,6 +386,43 @@ protected:
 
   // Initialize trivial dJs
   virtual void initTrivDJ();
+
+private:
+
+  // <nothing>
+  
+};
+
+
+// **********************************************************
+//  JfJones (freq-dep J)
+//
+
+class JfJones : public JJones {
+public:
+
+  // Constructor
+  JfJones(VisSet& vs);
+  JfJones(casacore::String msname,casacore::Int MSnAnt,casacore::Int MSnSpw);
+  JfJones(const MSMetaInfoForCal& msmc);
+  JfJones(const casacore::Int& nAnt);
+
+  virtual ~JfJones();
+
+  // Return the type enum
+  virtual Type type() { return VisCal::J; };
+
+  // Return type name as string
+  virtual casacore::String typeName()     { return "Jf Jones"; };
+  virtual casacore::String longTypeName() { return "Jf Jones (frequency-dependent generic polarized gain)"; };
+
+  // This is the freq-dep version of J
+  //   (this is the ONLY fundamental difference from J)
+  virtual casacore::Bool freqDepPar() { return true; };
+
+protected:
+
+  // <nothing>
 
 private:
 

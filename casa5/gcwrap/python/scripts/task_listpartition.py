@@ -1,20 +1,16 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import numpy as np
-import pprint
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import casalog
     from casatools import ms
-    from .parallel.parallel_task_helper import ParallelTaskHelper
     from . import partitionhelper as ph
     from . import flaghelper as fh
 else:
     from taskinit import *
     import partitionhelper as ph
-    from parallel.parallel_task_helper import ParallelTaskHelper
 
     ms = casac.ms
 
@@ -41,7 +37,6 @@ def listpartition(vis=None, createdict=None, listfile=None):
     casalog.origin('listpartition')
 
     mslocal = ms()
-    mslocal1 = ms()
     ffout = None
 
     try:
@@ -86,11 +81,8 @@ def listpartition(vis=None, createdict=None, listfile=None):
 
         # Get a consolidated dictionary with scan, spw, channel information
         # of the list of subMSs. It adds the nrows of all sub-scans of a scan.
-        try:
-            outdict = {}
-            outdict = ph.getScanSpwSummary(mslist) 
-        except Exception as instance:
-            casalog.post('%s'%instance,'ERROR')
+        outdict = {}
+        outdict = ph.getScanSpwSummary(mslist)
 
         # Now loop through the dictionary to print the information
         if outdict.keys() == []:
@@ -143,30 +135,20 @@ def listpartition(vis=None, createdict=None, listfile=None):
 
                 # Print to a file
                 if ffout is not None:
-                    print(text,file=ffout)
+                    ffout.write(text + '\n')
                 else:
                     # Print to the logger
                     casalog.post(text)
-                                
-                
-        if ffout is not None:
-            ffout.close( )
-            ffout = None
-                                        
-     
+
         # Return the scan dictionary
         if createdict:
             return outdict
-        
-        return {}
+        else:
+            return {}
             
-    except Exception as instance:
-#        mslocal.close()
+    finally:
         if ffout is not None:
             ffout.close( )
-        print('*** Error ***', instance)
-    
-
            
 def getWidth(adict, par):
     

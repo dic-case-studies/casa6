@@ -208,23 +208,23 @@ void RegionTextParser::_determineVersion(
 void RegionTextParser::_parse(const String& contents, const String& fileDesc, bool requireImageRegion) {
     _log->origin(LogOrigin("AsciiRegionFileParser", __func__));
     static const Regex startAnn("^ann[[:space:]]+");
-    static const Regex startDiff("^-[[:space:]]+");
+    static const Regex startDiff("^-[[:space:]]*");
     static const Regex startGlobal("^global[[:space:]]+");
     AnnotationBase::unitInit();
-    /*Vector<String>*/ auto lines = stringToVector(contents, '\n');
+    auto lines = stringToVector(contents, '\n');
     uInt lineCount = 0;
-    /*std::pair<Quantity, Quantity>*/ auto qFreqs = _overridingFreqRange
+    auto qFreqs = _overridingFreqRange
         ? std::pair<Quantity, Quantity>(
             Quantity(_overridingFreqRange->first.getValue().getValue(), "Hz"),
             Quantity(_overridingFreqRange->second.getValue().getValue(), "Hz")
         )
         : std::pair<Quantity, Quantity>(Quantity(0), Quantity(0));
-    for(/*Vector<String>::iterator*/ auto iter=lines.cbegin(); iter!=lines.cend(); ++iter) {
+    for(auto iter=lines.cbegin(); iter!=lines.cend(); ++iter) {
         ++lineCount;
         Bool annOnly = false;
         ostringstream preambleoss;
         preambleoss << fileDesc + " line# " << lineCount << ": ";
-        /*String*/ const auto preamble = preambleoss.str();
+        const auto preamble = preambleoss.str();
         Bool difference = false;
         iter->trim();
         if (
@@ -278,7 +278,7 @@ void RegionTextParser::_parse(const String& contents, const String& fileDesc, bo
         Vector<Quantity> qDirs;
         vector<Quantity> quantities;
         String textString;
-        /*AnnotationBase::Type */ const auto annType = _getAnnotationType(
+        const auto annType = _getAnnotationType(
             qDirs, quantities, textString, consumeMe, preamble
         );
         ParamSet currentParamSet = _getCurrentParamSet(
@@ -324,9 +324,9 @@ void RegionTextParser::_parse(const String& contents, const String& fileDesc, bo
                 qFreqs = std::pair<Quantity, Quantity>(Quantity(0), Quantity(0));
             }
         }
-        /*ParamSet*/ auto globalsLessLocal = _currentGlobals;
+        auto globalsLessLocal = _currentGlobals;
         for (
-            /*ParamSet::const_iterator*/ auto iter=newParams.cbegin();
+            auto iter=newParams.cbegin();
             iter != newParams.cend(); ++iter
         ) {
             AnnotationBase::Keyword key = iter->first;
@@ -385,7 +385,7 @@ AnnotationBase::Type RegionTextParser::_getAnnotationType(
     String tmp = consumeMe.through(Regex("[[:alpha:]]+"));
     consumeMe.del(0, (Int)tmp.length());
     consumeMe.trim();
-    AnnotationBase::Type annotationType = AnnotationBase::typeFromString(tmp);
+    auto annotationType = AnnotationBase::typeFromString(tmp);
     std::pair<Quantity, Quantity> myPair;
     switch(annotationType) {
     case AnnotationBase::RECT_BOX:
@@ -579,7 +579,7 @@ RegionTextParser::ParamSet RegionTextParser::getParamSet(
     // get key-value pairs on the line
     while (consumeMe.size() > 0) {
         ParamValue paramValue;
-        AnnotationBase::Keyword key = AnnotationBase::UNKNOWN_KEYWORD;
+        auto key = AnnotationBase::UNKNOWN_KEYWORD;
         consumeMe.trim();
         consumeMe.ltrim(',');
         consumeMe.trim();
@@ -717,7 +717,7 @@ RegionTextParser::ParamSet RegionTextParser::getParamSet(
                 key = AnnotationBase::LABELPOS;
             }
             else if (keyword == "labeloff") {
-                String v = paramValue.stringVal;
+                auto v = paramValue.stringVal;
                 static const String sInt("[-+]?[0-9]+");
                 static const Regex rInt(sInt);
                 if (
@@ -732,11 +732,11 @@ RegionTextParser::ParamSet RegionTextParser::getParamSet(
                 }
                 // the brackets have been stripped, add them back to make it easier
                 // to parse with a method already in existence
-                Vector<String> pair = _extractSinglePair("[" + v + "]");
+                auto pair = _extractSinglePair("[" + v + "]");
                 paramValue.intVec = vector<Int>();
 
                 for (
-                    Vector<String>::const_iterator iter=pair.begin();
+                    auto iter=pair.begin();
                     iter != pair.end(); ++iter
                 ) {
                     if (! iter->matches(rInt)) {
@@ -791,7 +791,7 @@ std::pair<Quantity, Quantity> RegionTextParser::_quantitiesFromFrequencyString(
 ) const {
     // the brackets have been stripped, add them back to make it easier
     // to parse with a method already in existence
-    String cString = "[" + freqString + "]";
+    auto cString = "[" + freqString + "]";
     ThrowIf(! cString.contains(startOnePair),
         preamble + "Incorrect spectral range specification ("
         + freqString + ")"
@@ -820,10 +820,10 @@ void RegionTextParser::_createAnnotation(
         stokes.resize(currentParamSet.at(AnnotationBase::CORR).stokes.size());
         stokes = currentParamSet.at(AnnotationBase::CORR).stokes;
     }
-    String dirRefFrame = currentParamSet.at(AnnotationBase::COORD).stringVal;
-    String freqRefFrame = currentParamSet.find(AnnotationBase::FRAME) == currentParamSet.end()
+    auto dirRefFrame = currentParamSet.at(AnnotationBase::COORD).stringVal;
+    auto freqRefFrame = currentParamSet.find(AnnotationBase::FRAME) == currentParamSet.end()
         ? "" : currentParamSet.at(AnnotationBase::FRAME).stringVal;
-    String doppler = currentParamSet.find(AnnotationBase::VELTYPE) == currentParamSet.end()
+    auto doppler = currentParamSet.find(AnnotationBase::VELTYPE) == currentParamSet.end()
         ? "" :    currentParamSet.at(AnnotationBase::VELTYPE).stringVal;
     Quantity restfreq;
     if (
@@ -1008,12 +1008,12 @@ Array<String> RegionTextParser::_extractTwoPairs(uInt& end, const String& string
     end = 0;
     Int firstBegin = string.find('[', 1);
     Int firstEnd = string.find(']', firstBegin);
-    String firstPair = string.substr(firstBegin, firstEnd - firstBegin + 1);
+    auto firstPair = string.substr(firstBegin, firstEnd - firstBegin + 1);
     Int secondBegin = string.find('[', firstEnd);
     Int secondEnd = string.find(']', secondBegin);
-    String secondPair = string.substr(secondBegin, secondEnd - secondBegin + 1);
-    Vector<String> first = _extractSinglePair(firstPair);
-    Vector<String> second = _extractSinglePair(secondPair);
+    auto secondPair = string.substr(secondBegin, secondEnd - secondBegin + 1);
+    auto first = _extractSinglePair(firstPair);
+    auto second = _extractSinglePair(secondPair);
 
     end = secondEnd;
     Array<String> ret(IPosition(2, 2, 2));
@@ -1030,12 +1030,12 @@ Vector<String> RegionTextParser::_extractSinglePair(const String& string) {
     quotes[1] = '"';
     Int firstBegin = string.find('[', 0) + 1;
     Int firstEnd = string.find(',', firstBegin);
-    String first = string.substr(firstBegin, firstEnd - firstBegin);
+    auto first = string.substr(firstBegin, firstEnd - firstBegin);
     first.trim();
     first.trim(quotes, 2);
     Int secondBegin = firstEnd + 1;
     Int secondEnd = string.find(']', secondBegin);
-    String second = string.substr(secondBegin, secondEnd - secondBegin);
+    auto second = string.substr(secondBegin, secondEnd - secondBegin);
     second.trim();
     second.trim(quotes, 2);
     Vector<String> ret(2);

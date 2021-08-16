@@ -438,6 +438,11 @@ void PlotMSApp::initialize(bool connectToDBus, bool userGui
         QObject::connect( shutdown_svc, SIGNAL(exit_now( )),
                           qplotobj, SLOT(grpc_exit_now( )) );
         // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+        // ping service is used by casatools etc. to check to see if gRPC
+        // server is still running...
+        auto ping_svc = state->ping_service.get( );
+        builder.RegisterService(ping_svc);
+        // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
         // all gui operations must happen in the "gui thread" because Qt is not
         // thread-safe... connect qt events from services to PlotMSPlotter so that
         // grpc events/commands can be executed in the Qt GUI thread...
@@ -454,8 +459,8 @@ void PlotMSApp::initialize(bool connectToDBus, bool userGui
 				snprintf(address_buf,sizeof(address_buf),address_template,selected_port);
 				state->uri = address_buf;
 				if ( debug ) {
-					std::cout << "plotms service available at " << state->uri << std::endl;
-					fflush(stdout);
+					std::cerr << "plotms service available at " << state->uri << std::endl;
+					fflush(stderr);
 				}
 
 				// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
@@ -482,8 +487,8 @@ void PlotMSApp::initialize(bool connectToDBus, bool userGui
 							grpc::ClientContext context;
 							casatools::rpc::ServiceId accepted_sid;
 							if ( debug ) {
-								std::cout << "registering services with registrar (at " << server_string << ")" << std::endl;
-								fflush(stdout);
+								std::cerr << "registering services with registrar (at " << server_string << ")" << std::endl;
+								fflush(stderr);
 							}
 							::grpc::Status status = proxy->add(&context,sid,&accepted_sid);
 							if ( ! status.ok( ) ) {
@@ -496,11 +501,11 @@ void PlotMSApp::initialize(bool connectToDBus, bool userGui
 								exit(1);
 							}
 							if ( debug ) {
-								std::cout << "accepted service id: ( " << accepted_sid.id( ) << ", " << accepted_sid.uri( ) << ", ";
+								std::cerr << "accepted service id: ( " << accepted_sid.id( ) << ", " << accepted_sid.uri( ) << ", ";
 								for ( auto i=accepted_sid.types( ).begin( ); i != accepted_sid.types( ).end( ); ++i )
-									std::cout << "'" << (*i) << "' ";
-								std::cout << ")" << std::endl;
-								fflush(stdout);
+									std::cerr << "'" << (*i) << "' ";
+								std::cerr << ")" << std::endl;
+								fflush(stderr);
 							}
 						};
 					} else {
@@ -525,8 +530,8 @@ void PlotMSApp::initialize(bool connectToDBus, bool userGui
 				} else {
 					grpc_.reset( );
 					if ( debug ) {
-						std::cout << "no registrar provided... skipped registering." << std::endl;
-						fflush(stdout);
+						std::cerr << "no registrar provided... skipped registering." << std::endl;
+						fflush(stderr);
 					}
 				}
 			} else grpc_.reset( );

@@ -72,7 +72,6 @@ class VisEquation;
 class SolveDataBuffer;
 class SDBList;
 
-
 class SolNorm {
 
 public:
@@ -253,7 +252,7 @@ public:
 
   // Hazard a guess at the parameters (solveCPar) given the data
   virtual void guessPar(VisBuffer& vb)=0;
-  virtual void guessPar(SDBList&) { throw(casacore::AipsError("SVC::guessPar(SDBList&) NYI!!")); };  // VI2
+  virtual void guessPar(SDBList&,const casacore::Bool&) { throw(casacore::AipsError("SVC::guessPar(SDBList&) NYI!!")); };  // VI2
 
   // Time-dep solution interval  (VI2)
   inline double solTimeInterval() const { return solTimeInterval_; };
@@ -569,6 +568,7 @@ protected:
   inline casacore::Bool& simOnTheFly() { 
     //    cout << "simOTF=" << onthefly_ << endl;
     return onthefly_; };
+    
 
 
 

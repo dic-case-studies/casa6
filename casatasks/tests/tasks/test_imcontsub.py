@@ -109,7 +109,7 @@ if is_CASA6:
 
     _ia = image( )
 
-    datapath = ctsys.resolve('regression/g192redux/reference')
+    datapath = ctsys.resolve('unittest/imcontsub/')
 else:
     import casac
     from tasks import *
@@ -117,10 +117,10 @@ else:
 
     _ia = iatool( )
     
-    datapath = os.environ.get('CASAPATH').split()[0]+'/data/regression/g192redux/reference/'
+    datapath = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/imcontsub/'
 
 # Input files
-list = ['g192_a2.image', 'g192_a2.image-2.rgn', 
+mylist = ['g192_a2.image', 'g192_a2.image-2.rgn', 
         'g192_a2.contfree', 'g192_a2.cont', 
         'g192_a2.contfree.order1', 'g192_a2.cont.order1', 
         'g192_a2.contfree.order2', 'g192_a2.cont.order2',
@@ -156,17 +156,17 @@ class imcontsub_test(unittest.TestCase):
         self.assertTrue(passes)
 
     def setUp(self):
-        if(os.path.exists(list[0])):
-            for file in list:
-                os.system('rm -rf ' +file)
+        if(os.path.exists(mylist[0])):
+            for f in mylist:
+                os.system('rm -rf ' +f)
         
-        for file in list:
-            os.system('cp -r '+os.path.join(datapath,file)+' '+file)
+        for f in mylist:
+            os.system('cp -RH '+os.path.join(datapath,f)+' '+f)
 
 
     def tearDown(self):
-        for file in list:
-            os.system('rm -rf ' +file)
+        for f in mylist:
+            os.system('rm -rf ' +f)
             os.system('rm -rf cont_*')
             os.system('rm -rf input_test*')
             os.system('rm -rf fit_test*')
@@ -202,8 +202,8 @@ class imcontsub_test(unittest.TestCase):
         myfile = open(filename, mode="w")
         myfile.write("x")
         myfile.close()
-        results = imcontsub( 'g192_a2.image', linefile=filename )
-        self.assertTrue(not results)
+        with self.assertRaises(ValueError):
+            imcontsub( 'g192_a2.image', linefile=filename )
             
     def test_bad_contfile(self):
         """ Test bad continuum file name fails"""
@@ -213,8 +213,8 @@ class imcontsub_test(unittest.TestCase):
         myfile = open(filename, mode="w")
         myfile.write("x")
         myfile.close()
-        results = imcontsub( 'g192_a2.image', contfile=filename )
-        self.assertTrue(not results)
+        with self.assertRaises(ValueError):
+            imcontsub( 'g192_a2.image', contfile=filename )
         
     def test_bad_fitorder(self):
         """Test bad fitorder fails"""
@@ -414,14 +414,14 @@ class imcontsub_test(unittest.TestCase):
                 oldlinefile = 'g192_a2.contfree'
                 
             try:
-                results = imcontsub('g192_a2.image', fitorder=order, contfile=contfile, linefile=linefile)
-            except Exception:
+                imcontsub('g192_a2.image', fitorder=order, contfile=contfile, linefile=linefile)
+            except Exception as exc:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']\
                     +"\nError: Unable to subtract continuum with a fit order="+str(order)\
-                    +"\n\t REULTS: "+str(results)
+                    +"\n\t Exception: "+str(exc)
             else:
-                if os.path.isdir(contfile) and os.path.isdir(linefile) and results:
+                if os.path.isdir(contfile) and os.path.isdir(linefile):
                     retValue = self.cmp_images(linefile, oldlinefile,
                                                "Order " + str(order) + " line image",
                                                retValue)
@@ -434,7 +434,7 @@ class imcontsub_test(unittest.TestCase):
                        +"\nError: output files were NOT created for fitorder="\
                        +str(order)+" test."
 
-        self.assertTrue(retValue['success'],retValue['error_msgs'])
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def cmp_images(self, newimg, oldimg, errmsg, retval, tol=1.0e-8):
         """
@@ -473,15 +473,15 @@ class imcontsub_test(unittest.TestCase):
         bx   = [400, 420, 490, 470]
     
         try:
-            results = imcontsub('g192_a2.image', fitorder=0, contfile=cfil,
-                                linefile=lfil, box=bx,
-                                chans='32~37')  # Purposely one-sided.  
-        except Exception:
+            imcontsub('g192_a2.image', fitorder=0, contfile=cfil,
+                      linefile=lfil, box=bx,
+                      chans='32~37')  # Purposely one-sided.  
+        except Exception as exc:
             retValue['success']=False
             retValue['error_msgs'] += "\nError: Unable to subtract continuum with box and chans "\
-                                      +"\n\t RESULTS: "+str(results)
+                                      +"\n\t Exception:: "+str(exc)
         else:
-            if os.path.isdir(cfil) and os.path.isdir(lfil) and results:
+            if os.path.isdir(cfil) and os.path.isdir(lfil):
                 retValue = self.cmp_images(lfil, oldlfil,
                                            "box and chans line image", retValue)
                 retValue = self.cmp_images(cfil, oldcfil,
@@ -491,7 +491,7 @@ class imcontsub_test(unittest.TestCase):
                 retValue['success']=False
                 retValue['error_msgs'] += "\nError: box and chans output files were NOT created."
 
-        self.assertTrue(retValue['success'],retValue['error_msgs'])
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
         
 def suite():
     return [imcontsub_test]

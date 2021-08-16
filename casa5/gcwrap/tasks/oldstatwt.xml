@@ -5,9 +5,9 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
 file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
-<task type="function" name="oldstatwt" category="manipulation">
+<task type="function" name="oldstatwt" category="manipulation" visibility="deprecated">
 
-  <shortdescription> Reweight visibilities according to their scatter (Experimental)</shortdescription>
+  <shortdescription> Reweight visibilities according to their scatter (Deprecated in CASA 5.8. Not present in CASA 6.2. Use statwt instead.)</shortdescription>
 
 
 <input>

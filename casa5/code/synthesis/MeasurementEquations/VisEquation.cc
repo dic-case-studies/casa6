@@ -557,7 +557,7 @@ void VisEquation::divideCorrByModel(vi::VisBuffer2& vb) {
 
   Complex cOne(1.0);
 
-  for (Int irow=0;irow<vb.nRows();++irow) {
+  for (rownr_t irow=0;irow<vb.nRows();++irow) {
     if (vb.flagRow()(irow)) {
       // Row flagged, make sure cube also flagged, weight/data zeroed
       c(Slice(),Slice(),Slice(irow,1,1))=0.0f;
@@ -635,7 +635,7 @@ void VisEquation::divideByStokesIModel(vi::VisBuffer2& vb) {
 
   //Complex cOne(1.0);
 
-  for (Int irow=0;irow<vb.nRows();++irow) {
+  for (rownr_t irow=0;irow<vb.nRows();++irow) {
     if (vb.flagRow()(irow)) {
       // Row flagged, make sure cube also flagged, weight/data zeroed
       c(Slice(),Slice(),Slice(irow,1,1))=0.0f;

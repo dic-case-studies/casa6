@@ -37,10 +37,19 @@ namespace casa {
 
     constexpr char grpcPlotMS::APP_SERVER_SWITCH[];
 
+    ::grpc::Status grpcPMSPing::now( ::grpc::ServerContext*, const ::google::protobuf::Empty*, ::google::protobuf::Empty* ) {
+        static const auto debug = getenv("GRPC_DEBUG");
+        if ( debug ) {
+            std::cerr << "received ping event..." << std::endl;
+            fflush(stderr);
+        }
+        return grpc::Status::OK;
+    }
+
     ::grpc::Status grpcPMSShutdown::now(::grpc::ServerContext*, const ::google::protobuf::Empty*, ::google::protobuf::Empty*) {
         if (getenv("GRPC_DEBUG")) {
-            std::cout << "received shutdown notification..." << std::endl;
-            fflush(stdout);
+            std::cerr << "received shutdown notification..." << std::endl;
+            fflush(stderr);
         }
         if ( itsPlotms_ ) {
             itsPlotms_ = NULL;
@@ -237,9 +246,9 @@ namespace casa {
                                              ::rpc::plotms::Pid *reply ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received getPlotMSPid( ) event... (thread " <<
+            std::cerr << "received getPlotMSPid( ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
         //
         // the DBus version of plotms does some dance with getting and *setting* the pid...
@@ -268,9 +277,9 @@ namespace casa {
                                            ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setShowGui( " << req->state( ) << " ) event... (thread " <<
+            std::cerr << "received setShowGui( " << req->state( ) << " ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         std::promise<bool> prom;
@@ -290,9 +299,9 @@ namespace casa {
 
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setGridSize( " << req->rows( ) << ", " << req->cols( ) << " ) event... (thread " <<
+            std::cerr << "received setGridSize( " << req->rows( ) << ", " << req->cols( ) << " ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
         auto rows = req->rows( );
         auto cols = req->cols( );
@@ -314,17 +323,17 @@ namespace casa {
                                           ::rpc::plotms::Toggle *reply ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received isDrawing( ) event... (thread " <<
+            std::cerr << "received isDrawing( ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
         //
         // the DBus version of plotms does some dance with getting and *setting* the pid...
         // I doubt that's necessary with grpc...
         bool isdrawing = itsPlotms_->isDrawing( );
         if (debug) {
-            std::cout << "\t\tresult: " << isdrawing << std::endl;
-            fflush(stdout);
+            std::cerr << "\t\tresult: " << isdrawing << std::endl;
+            fflush(stderr);
         }
         reply->set_state(isdrawing);
         return grpc::Status::OK;
@@ -336,9 +345,9 @@ namespace casa {
                                            ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received clearPlots( ) event... (thread " <<
+            std::cerr << "received clearPlots( ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
         std::promise<bool> prom;
         qtGO( [&]( ){
@@ -357,14 +366,14 @@ namespace casa {
         int index = req->index( );
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setPlotMSFilename( " << req->name( ) << ", " << index << " ) event... (thread " <<
+            std::cerr << "received setPlotMSFilename( " << req->name( ) << ", " << index << " ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setPlotMSFilename(" << index << "), number of plots is " << 
+            if (debug) std::cerr << "ERROR index out of range in setPlotMSFilename(" << index << "), number of plots is " << 
                                  itsPlotms_->getPlotManager().numPlots( ) << std::endl;
-            fflush(stdout);
+            fflush(stderr);
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -391,14 +400,14 @@ namespace casa {
 
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setPlotAxes( ... ) event... (thread " <<
+            std::cerr << "received setPlotAxes( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setPlotAxes(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setPlotAxes(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -475,14 +484,14 @@ namespace casa {
                                            ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setShowAtm( ... ) event... (thread " <<
+            std::cerr << "received setShowAtm( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setShowAtm(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setShowAtm(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -510,14 +519,14 @@ namespace casa {
                                     ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setShowTsky( ... ) event... (thread " <<
+            std::cerr << "received setShowTsky( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setShowTsky(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setShowTsky(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -545,14 +554,14 @@ namespace casa {
                                              ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setShowImage( ... ) event... (thread " <<
+            std::cerr << "received setShowImage( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setShowImage(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setShowImage(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -627,14 +636,14 @@ namespace casa {
                                                    ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setPlotMSSelection( ... ) event... (thread " <<
+            std::cerr << "received setPlotMSSelection( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setPlotMSSelection(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setPlotMSSelection(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -662,14 +671,14 @@ namespace casa {
                                                    ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setPlotMSAveraging( ... ) event... (thread " <<
+            std::cerr << "received setPlotMSAveraging( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setPlotMSAveraging(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setPlotMSAveraging(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -704,14 +713,14 @@ namespace casa {
                                                      ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setPlotMSTransformations( ... ) event... (thread " <<
+            std::cerr << "received setPlotMSTransformations( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setPlotMSTransformations(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setPlotMSTransformations(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -745,14 +754,14 @@ namespace casa {
                                                      ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setPlotMSCalibration( ... ) event... (thread " <<
+            std::cerr << "received setPlotMSCalibration( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setPlotMSCalibration(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setPlotMSCalibration(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -824,14 +833,14 @@ namespace casa {
                                                  ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setPlotMSIterate( ... ) event... (thread " <<
+            std::cerr << "received setPlotMSIterate( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setPlotMSIterate(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setPlotMSIterate(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -870,14 +879,14 @@ namespace casa {
                                              ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setColorAxis( ... ) event... (thread " <<
+            std::cerr << "received setColorAxis( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setColorAxis(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setColorAxis(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -904,14 +913,14 @@ namespace casa {
                               ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setSymbol( ... ) event... (thread " <<
+            std::cerr << "received setSymbol( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setSymbol(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setSymbol(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -938,14 +947,14 @@ namespace casa {
                                                  ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setFlaggedSymbol( ... ) event... (thread " <<
+            std::cerr << "received setFlaggedSymbol( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setFlaggedSymbol(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setFlaggedSymbol(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -972,14 +981,14 @@ namespace casa {
                                            ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setConnect( ... ) event... (thread " <<
+            std::cerr << "received setConnect( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setConnect(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setConnect(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -1017,14 +1026,14 @@ namespace casa {
                                          ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setLegend( ... ) event... (thread " <<
+            std::cerr << "received setLegend( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setLegend(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setLegend(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -1051,14 +1060,14 @@ namespace casa {
                                          ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setTitle( ... ) event... (thread " <<
+            std::cerr << "received setTitle( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setTitle(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setTitle(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -1089,14 +1098,14 @@ namespace casa {
                                                     ::google::protobuf::Empty* ) {                             \
         static const auto debug = getenv("GRPC_DEBUG");                                                        \
         if (debug) {                                                                                           \
-            std::cout << "received set" << #NAME << "Font( ... ) event... (thread " <<                         \
+            std::cerr << "received set" << #NAME << "Font( ... ) event... (thread " <<                         \
                 std::this_thread::get_id() << ")" << std::endl;                                                \
-            fflush(stdout);                                                                                    \
+            fflush(stderr);                                                                                    \
         }                                                                                                      \
                                                                                                                \
         int index = req->index( );                                                                             \
         if ( invalid_index(index) ) {                                                                          \
-            if (debug) std::cout << "ERROR index out of range in set" << #NAME << "Font(" << index << ")" << std::endl;\
+            if (debug) std::cerr << "ERROR index out of range in set" << #NAME << "Font(" << index << ")" << std::endl;\
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");                         \
         }                                                                                                      \
                                                                                                                \
@@ -1129,13 +1138,13 @@ namespace casa {
                                                       ::google::protobuf::Empty* ) {                           \
         static const auto debug = getenv("GRPC_DEBUG");                                                        \
         if (debug) {                                                                                           \
-            std::cout << "received set" << #TUP << "AxisLabel( ... ) event... (thread " <<                     \
+            std::cerr << "received set" << #TUP << "AxisLabel( ... ) event... (thread " <<                     \
                 std::this_thread::get_id() << ")" << std::endl;                                                \
-            fflush(stdout);                                                                                    \
+            fflush(stderr);                                                                                    \
         }                                                                                                      \
         int index = req->index( );                                                                             \
         if ( invalid_index(index) ) {                                                                          \
-            if (debug) std::cout << "ERROR index out of range in set" << #TUP << "AxisLabel(" << index << ")" << std::endl;\
+            if (debug) std::cerr << "ERROR index out of range in set" << #TUP << "AxisLabel(" << index << ")" << std::endl;\
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");                         \
         }                                                                                                      \
                                                                                                                \
@@ -1181,14 +1190,14 @@ namespace casa {
                                   ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setGridParams( ... ) event... (thread " <<
+            std::cerr << "received setGridParams( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setGridParams(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setGridParams(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 
@@ -1230,14 +1239,14 @@ namespace casa {
                                           ::google::protobuf::Empty* ) {                                       \
         static const auto debug = getenv("GRPC_DEBUG");                                                        \
         if (debug) {                                                                                           \
-            std::cout << "received set" << #TYPE << "Range( ... ) event... (thread " <<                        \
+            std::cerr << "received set" << #TYPE << "Range( ... ) event... (thread " <<                        \
                 std::this_thread::get_id() << ")" << std::endl;                                                \
-            fflush(stdout);                                                                                    \
+            fflush(stderr);                                                                                    \
         }                                                                                                      \
                                                                                                                \
         int index = req->index( );                                                                             \
         if ( invalid_index(index) ) {                                                                          \
-            if (debug) std::cout << "ERROR index out of range in set" << #TYPE << "Range(" << index << ")" << std::endl; \
+            if (debug) std::cerr << "ERROR index out of range in set" << #TYPE << "Range(" << index << ")" << std::endl; \
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");                         \
         }                                                                                                      \
                                                                                                                \
@@ -1245,13 +1254,10 @@ namespace casa {
         bool autorange = req->automatic();                                                                     \
         prange_t  minmax = prange_t(0.0, 0.0);   /* this signals auto-ranging */                               \
         /* Override default with specific numbers only if manual ranging requested, */                         \
-        /* and given max is greater than the min. */                                                           \
         if ( !autorange )   {                                                                                  \
             double min = req->min( );                                                                          \
             double max = req->max( );                                                                          \
-            if (max > min) {                                                                                   \
-                minmax = prange_t(min, max);                                                                   \
-            }                                                                                                  \
+            minmax = prange_t(min, max);                                                                   \
         }                                                                                                      \
         ppaxes(index)->set ## TYPE ## Range( !autorange , minmax );                                             \
                                                                                                                \
@@ -1275,14 +1281,14 @@ namespace casa {
                                                          ::google::protobuf::Empty* ) {
         static const auto debug = getenv("GRPC_DEBUG");
         if (debug) {
-            std::cout << "received setPlotMSPageHeaderItems( ... ) event... (thread " <<
+            std::cerr << "received setPlotMSPageHeaderItems( ... ) event... (thread " <<
                 std::this_thread::get_id() << ")" << std::endl;
-            fflush(stdout);
+            fflush(stderr);
         }
 
         int index = req->index( );
         if ( invalid_index(index) ) {
-            if (debug) std::cout << "ERROR index out of range in setPlotMSPageHeaderItems(" << index << ")" << std::endl;
+            if (debug) std::cerr << "ERROR index out of range in setPlotMSPageHeaderItems(" << index << ")" << std::endl;
             return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "index out of range");
         }
 

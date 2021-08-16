@@ -7,13 +7,15 @@ import unittest
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, table
-    from casatasks import smoothcal
+    from casatasks import accor,smoothcal
 
     _tb = table()
 else:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 
     _tb = tbtool()
 
@@ -27,6 +29,7 @@ Unit tests for task smoothcal. It tests the following parameters:
     smoothtime:    unsupported value; non-default values
 
     Other tests: check the values of column smoothed GAIN against reference.
+                 check calibration tables produces by accor are smoothable.
 '''
 class smoothcal_test(unittest.TestCase):
 
@@ -35,6 +38,8 @@ class smoothcal_test(unittest.TestCase):
     gcal = 'ngc1333_ut_nct.gcal'   # New format caltables
     ref = 'ngc1333_ut_nct.ref'
     res = None
+    vlbams = 'ba123a.ms'
+    accor = 'smoothcal_accor'
     out = 'smoothcal_test'
 
     def setUp(self):
@@ -42,13 +47,14 @@ class smoothcal_test(unittest.TestCase):
         if not is_CASA6:
             default(smoothcal)
         if is_CASA6:
-            datapath = ctsys.resolve('regression/unittest/smoothcal')
+            datapath = ctsys.resolve('unittest/smoothcal/')
         else:
-            datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/smoothcal')
+            datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/smoothcal/')
 
         shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
         shutil.copytree(os.path.join(datapath,self.gcal), self.gcal)
         shutil.copytree(os.path.join(datapath,self.ref), self.ref)
+        shutil.copytree(os.path.join(datapath,self.vlbams), self.vlbams)
     
     def tearDown(self):
         if (os.path.exists(self.msfile)):
@@ -57,6 +63,10 @@ class smoothcal_test(unittest.TestCase):
             os.system('rm -rf ' + self.gcal)
         if (os.path.exists(self.ref)):
             os.system('rm -rf ' + self.ref)
+        if (os.path.exists(self.vlbams)):
+            os.system('rm -rf ' + self.vlbams)
+        if (os.path.exists(self.accor)):
+            os.system('rm -rf ' + self.accor)
         if (os.path.exists(self.out)):
             os.system('rm -rf ' + self.out)
         
@@ -70,14 +80,14 @@ class smoothcal_test(unittest.TestCase):
     def test0(self):
         '''Test 0: Missing input table caught by parameter checking (exception thrown)
         '''
-        # CASA5 returns False
+        # CASA5 returns False (depending on __rethrow_casa_exceptions)
         try:
             OK = False
             self.res = smoothcal()
             if not is_CASA6:
                 OK = not self.res
         except:
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 OK = True
         self.assertTrue(OK)
 
@@ -85,14 +95,14 @@ class smoothcal_test(unittest.TestCase):
         """Test 1: Wrong input MS caught by parameter checking (exception thrown)
         """
         msfile = 'badmsfile'
-        # CASA5 returns False
+        # CASA5 returns False (depending on __rethrow_casa_exceptions)
         try:
             OK = False
             self.res = smoothcal(vis=msfile,tablein=self.gcal,caltable=self.out)
             if not is_CASA6:
                 OK = not self.res
         except:
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 OK = True
         self.assertTrue(OK)
 
@@ -107,7 +117,7 @@ class smoothcal_test(unittest.TestCase):
             if not is_CASA6:
                 OK = not self.res
         except:
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 OK = True
         self.assertTrue(OK)
 
@@ -126,7 +136,7 @@ class smoothcal_test(unittest.TestCase):
             if not is_CASA6:
                 OK = not self.res
         except:
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 OK = True
         self.assertTrue(OK)
 
@@ -145,7 +155,7 @@ class smoothcal_test(unittest.TestCase):
             if not is_CASA6:
                 OK = not self.res
         except:
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 OK = True
         self.assertTrue(OK)
 
@@ -165,7 +175,7 @@ class smoothcal_test(unittest.TestCase):
             if not is_CASA6:
                 OK = not self.res
         except:
-            if is_CASA6:
+            if is_CASA6 or casa_stack_rethrow:
                 OK = True
         self.assertTrue(OK)
 
@@ -193,6 +203,12 @@ class smoothcal_test(unittest.TestCase):
                 refdata = refcol[row][pol]
                 smdata = smcol[row][pol]
                 self.assertTrue(abs(refdata - smdata) < EPS)
+
+    def test11(self):
+        '''Test11: Smooth accor table'''
+        accor(vis=self.vlbams,caltable=self.accor,corrdepflags=True)
+        self.res=smoothcal(vis=self.vlbams,tablein=self.accor,caltable=self.out)
+        self.assertTrue(os.path.exists(self.out))
 
 def suite():
     return [smoothcal_test]

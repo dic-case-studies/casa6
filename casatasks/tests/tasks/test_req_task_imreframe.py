@@ -42,12 +42,9 @@ import filecmp
 ### DATA ###
 
 if CASA6:
-    imfile = casatools.ctsys.resolve('image/ngc5921.clean.image/')
+    imfile = casatools.ctsys.resolve('unittest/imreframe/ngc5921.clean.image/')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        imfile = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image/'
-    else:
-        imfile = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image/'
+    imfile = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imreframe/ngc5921.clean.image/'
     
 outfile = 'test.im'
 outfile2 = 'test2.im'
@@ -143,7 +140,29 @@ class imreframe_test(unittest.TestCase):
         casalog.setlogfile('testlog.log')
         
         for frame in outframeList:
-            imreframe(imagename=imcopy, outframe=frame.lower())
+            imreframe(imagename=imcopy, outframe=frame)
+            self.assertTrue(len(filecmp.dircmp(imcopy, imfile).diff_files) >= 0)
+            
+            imhead(imcopy, verbose=True)
+            self.assertTrue(frame in open('testlog.log').read())
+        os.remove('testlog.log')
+
+    def test_outframe_lowercase(self):
+        '''
+            test_outframe_lowercase
+            ----------------------
+            
+            Test that the new parameters are used and provide different images than the unmodified one
+            
+            Check the log file for the change in spectral reference
+        '''
+        
+        outframeList = ['lsrk', 'lsrd', 'bary', 'geo', 'topo', 'galacto', 'lgroup', 'cmb']
+        
+        casalog.setlogfile('testlog.log')
+        
+        for frame in outframeList:
+            imreframe(imagename=imcopy, outframe=frame)
             self.assertTrue(len(filecmp.dircmp(imcopy, imfile).diff_files) >= 0)
             
             imhead(imcopy, verbose=True)

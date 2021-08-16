@@ -20,6 +20,9 @@ else:
     from sdimaging import sdimaging
     from imregrid import imregrid
     from immath import immath
+    from concat import concat
+    from feather import feather
+    import sdbeamutil
     from casa_stack_manip import stack_frame_find
 
     # the global tb, ia, and im tools are used
@@ -79,11 +82,11 @@ def simanalyze(
         saveinputs('simanalyze',fileroot+"/"+project+".simanalyze.last")
         #               myparams=in_params)
     else:
-        casalog.post("saveinputs not available in casatasks, skipping saving simanalyze inputs", priority='WARN')
+        casalog.post("saveinputs not available in casatasks, skipping saving simanalyze inputs", priority='INFO')
 
     if (not image) and (not analyze):
         casalog.post("No operation to be done. Exiting from task.", "WARN")
-        return True
+        return
 
     grscreen = False
     grfile = False
@@ -121,8 +124,8 @@ def simanalyze(
             if user_imagename=="default" or len(user_imagename)<=0:
                 images= glob.glob(fileroot+"/*image")
                 if len(images)<1:
-                    msg("can't find any image in project directory",priority="error")
-                    return False
+                    emsg = "can't find any image in project directory"
+                    raise RuntimeError(emsg)
                 if len(images)>1:
                     msg("found multiple images in project directory",priority="warn")
                     msg("using  "+images[0],priority="warn")
@@ -138,7 +141,7 @@ def simanalyze(
                 if os.path.exists(fileroot+"/"+user_skymodel):
                     user_skymodel=fileroot+"/"+user_skymodel
                 elif len(user_skymodel)>0:
-                    raise Exception("Can't find your specified skymodel "+user_skymodel)
+                    raise RuntimeError("Can't find your specified skymodel "+user_skymodel)
             # try to strip a searchable identifier
             tmpstring=user_skymodel.split("/")[-1]
             skymodel_searchstring=tmpstring.replace(".image","")
@@ -224,7 +227,7 @@ def simanalyze(
 
 
             if not mstoimage  and len(tpmstoimage) == 0:
-                raise Exception("No MS found to image")
+                raise RuntimeError("No MS found to image")
 
             # now try to parse the mslist for an identifier string that 
             # we can use to find the right skymodel if there are several
@@ -382,7 +385,7 @@ def simanalyze(
                         minimsize = min(imsize)
                         psfsize = qa.mul(cell[0],3) # HACK
                     else:
-                        raise Exception(mstoimage+" not found.")
+                        raise RuntimeError(mstoimage+" not found.")
 
                 if imsize[0] < minimsize:
                     msg("The number of image pixel in x-axis, %d, is small to cover 8 x PSF. Setting x pixel number, %d." % (imsize[0], minimsize), priority='warn',origin='simanalyze')
@@ -427,7 +430,7 @@ def simanalyze(
                     aveant = 12.0
                     pb_asec = pbcoeff*0.29979/qa.convert(qa.quantity(model_specrefval),'GHz')['value']/aveant*3600.*180/pl.pi
                 else:
-                    raise Exception(tpmstoimage+" not found.")
+                    raise RuntimeError(tpmstoimage+" not found.")
 
                 # default PSF from PB of antenna
                 imbeam = {'major': qa.quantity(pb_asec,'arcsec'),
@@ -483,9 +486,19 @@ def simanalyze(
                         ia.open(temp_out)
                         imbeam = ia.restoringbeam()
                         ia.close()
-                        beam_area_ratio = qa.getvalue(qa.convert(imbeam['major'], "arcsec")) \
-                                          * qa.getvalue(qa.convert(imbeam['minor'], "arcsec")) \
-                                          / pb_asec**2
+                        try:
+                            beam_area_ratio = qa.getvalue(qa.convert(imbeam['major'], "arcsec")) \
+                                              * qa.getvalue(qa.convert(imbeam['minor'], "arcsec")) \
+                                              / pb_asec**2
+                        except KeyError:
+                            # this shouldn't hit when simutil.imtclean sets restoringbeam='common'
+                            msg("using center channel values to calculate beam area ratio",
+                                origin='simanalyze', priority='info')
+                            chan_index = int(imbeam['nChannels']/2)
+                            pol_index = 0
+                            beam_area_ratio = qa.getvalue(qa.convert(imbeam['major'], "arcsec")) \
+                                              * qa.getvalue(qa.convert(imbeam['minor'], "arcsec")) \
+                                              / pb_asec**2
                         msg("Scaling TP image intensity by %f." % (beam_area_ratio),origin='simanalyze')
                         temp_in = temp_out
                         temp_out = temp_out + ".scaled"
@@ -546,7 +559,17 @@ def simanalyze(
                     ia.close()
 
                 if sd_only:
-                    bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
+                    try:
+                        bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
+                    except KeyError:
+                        # this shouldn't hit when simutil.imtclean sets restoringbeam='common'
+                        msg("using center channel values to calculate beam area",
+                            origin='simanalyze', priority='info')
+                        chan_index = int(beam['nChannels']/2)
+                        pol_index = 0
+                        bmarea = (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'] * 
+                                  beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value'] * 
+                                  1.1331) #arcsec2
                     bmarea = bmarea/(cell[0]['value']*cell[1]['value']) # bm area in pix
                 else: del beam
                 #del beam
@@ -588,9 +611,14 @@ def simanalyze(
             # set cleanmode automatically (for interfm)
             if nfld == 1:
                 cleanmode = "csclean"
+                gridder = "standard"
             else:
                 cleanmode = "mosaic"
+                gridder = "mosaic"
 
+            # keep the same default minor cycle algorithm for imtclean
+            # as previously used in imclean
+            deconvolver = "clark"
 
 
 
@@ -607,11 +635,20 @@ def simanalyze(
             if not myutil.isdirection(imdirection,halt=False):
                 imdirection=model_refdir
         
-            myutil.imclean(mstoimage,imagename,
-                         cleanmode,cell,imsize,imdirection,
-                         interactive,niter,threshold,weighting,
-                         outertaper,pbcor,stokes, #sourcefieldlist=sourcefieldlist,
-                         modelimage=modelimage,mask=mask,dryrun=dryrun)
+            myutil.imtclean(mstoimage,imagename,
+                            gridder,deconvolver,
+                            cell,imsize,imdirection,
+                            interactive,niter,threshold,
+                            weighting,outertaper,pbcor,stokes,
+                            modelimage=modelimage,mask=mask,
+                            dryrun=dryrun)
+            ## Disabled as part of CAS-12502
+            #myutil.imclean(mstoimage,imagename,
+            #             cleanmode,cell,imsize,imdirection,
+            #             interactive,niter,threshold,weighting,
+            #             outertaper,pbcor,stokes, 
+            #             #sourcefieldlist=sourcefieldlist,
+            #             modelimage=modelimage,mask=mask,dryrun=dryrun)
 
 
             # create imagename.flat and imagename.residual.flat:
@@ -623,7 +660,7 @@ def simanalyze(
             # feather
             if featherimage:
                 if not os.path.exists(featherimage):
-                    raise Exception("Could not find featherimage "+featherimage)
+                    raise RuntimeError("Could not find featherimage "+featherimage)
             else:
                 featherimage=""
                 if tpimage:
@@ -667,7 +704,17 @@ def simanalyze(
                 ia.close()
                 # model has units of Jy/pix - calculate beam area from clean image
                 # (even if we are not plotting graphics)
-                bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
+                try:
+                    bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
+                except KeyError:
+                    # this shouldn't hit when simutil.imtclean sets restoringbeam='common'
+                    msg("using center channel values to calculate beam area",
+                        origin='simanalyze', priority='info')
+                    chan_index = int(beam['nChannels']/2)
+                    pol_index = 0
+                    bmarea = (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'] * 
+                              beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value'] * 
+                              1.1331) #arcsec2
                 bmarea = bmarea/(cell[0]['value']*cell[1]['value']) # bm area in pix
                 msg("synthesized beam area in output pixels = %f" % bmarea,origin='simanalyze')
 
@@ -737,15 +784,15 @@ def simanalyze(
                 if os.path.exists(fileroot+"/"+imagename+".image"):
                     imagename=fileroot+"/"+imagename
                 else:
-                    msg("Can't find a simulated image - expecting "+imagename,priority="error")
-                    return False
+                    emsg = "Can't find a simulated image - expecting "+imagename
+                    raise RuntimeError(emsg)
 
             # we should have skymodel.flat created above 
 
             if not image:
                 if not os.path.exists(imagename+".image"):
-                    msg("you must image before analyzing.",priority="error")
-                    return False
+                    emsg = "you must image before analyzing."
+                    raise RuntimeError(emsg)
 
                 # get beam from output clean image
                 if verbose: msg("getting beam from "+imagename+".image",origin="analysis")
@@ -757,7 +804,17 @@ def simanalyze(
                 cell= [ qa.convert(cell[0],'arcsec'),
                         qa.convert(cell[1],'arcsec') ]
                 # (even if we are not plotting graphics)
-                bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
+                try:
+                    bmarea = beam['major']['value']*beam['minor']['value']*1.1331 #arcsec2
+                except KeyError:
+                    # this shouldn't hit when simutil.imtclean sets restoringbeam='common'
+                    msg("using center channel values to calculate beam area",
+                        origin='simanalyze', priority='info')
+                    chan_index = int(beam['nChannels']/2)
+                    pol_index = 0
+                    bmarea = (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'] * 
+                              beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value'] * 
+                              1.1331) #arcsec2
                 bmarea = bmarea/(cell[0]['value']*cell[1]['value']) # bm area in pix
                 msg("synthesized beam area in output pixels = %f" % bmarea)
 
@@ -857,7 +914,7 @@ def simanalyze(
             if nfig > 6:
                 msg("only displaying first 6 selected panels in graphic output",priority="warn")
             if nfig <= 0:
-                return True
+                return
             if nfig < 4:
                 multi = [1,nfig,1]
             else:
@@ -928,14 +985,30 @@ def simanalyze(
                     flipped_array = beam_array.transpose()
                     ttrans_array = flipped_array.tolist()
                     ttrans_array.reverse()
-                    pl.imshow(ttrans_array,interpolation='bilinear',cmap=pl.cm.jet,extent=xextent+yextent,origin="bottom")
+                    pl.imshow(ttrans_array,interpolation='bilinear',cmap=pl.cm.jet,extent=xextent+yextent,origin="lower")
                     psfim.replace(project+"/","")
                     pl.title(psfim,fontsize="x-small")
-                    b = qa.convert(beam['major'],'arcsec')['value']
-                    pl.xlim([-3*b,3*b])
-                    pl.ylim([-3*b,3*b])
-                    ax = pl.gca()
-                    pl.text(0.05,0.95,"bmaj=%7.1e\nbmin=%7.1e" % (beam['major']['value'],beam['minor']['value']),transform = ax.transAxes,bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
+                    try:
+                        b = qa.convert(beam['major'],'arcsec')['value']
+                        pl.xlim([-3*b,3*b])
+                        pl.ylim([-3*b,3*b])
+                        ax = pl.gca()
+                        pl.text(0.05,0.95,"bmaj=%7.1e\nbmin=%7.1e" % (beam['major']['value'],
+                                                                      beam['minor']['value']),
+                                transform = ax.transAxes,bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
+                    except KeyError:
+                        # this shouldn't hit when simutil.imtclean sets restoringbeam='common'
+                        msg("using center channel beam values for plot configuration",
+                            origin='simanalyze', priority='info')
+                        chan_index = int(beam['nChannels']/2)
+                        pol_index = 0
+                        b = qa.convert(beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major'],'arcsec')['value']
+                        pl.xlim([-3*b,3*b])
+                        pl.ylim([-3*b,3*b])
+                        ax = pl.gca()
+                        pl.text(0.05, 0.95, "bmaj=%7.1e\nbmin=%7.1e" % (beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'],
+                                                                        beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value']),
+                                transform = ax.transAxes,bbox=dict(facecolor='white', alpha=0.7),size="x-small",verticalalignment="top")
                     ia.close()
                     myutil.nextfig()
 
@@ -983,7 +1056,20 @@ def simanalyze(
             #    str(sim_rms*bmarea)+" Jy/bm",origin="analysis")
             #msg('Simulation max: '+str(sim_max)+" Jy/pix = "+
             #    str(sim_max*bmarea)+" Jy/bm",origin="analysis")
-            msg('Beam bmaj: '+str(beam['major']['value'])+' bmin: '+str(beam['minor']['value'])+' bpa: '+str(beam['positionangle']['value']),origin="analysis")
+            try:
+                msg('Beam bmaj: '+str(beam['major']['value'])+
+                    ' bmin: '+str(beam['minor']['value'])+
+                    ' bpa: '+str(beam['positionangle']['value']),
+                    origin="analysis")
+            except KeyError: # per-plane beams...
+                pol_index = 0
+                for chan_index in range(0, beam['nChannels']):
+                    msg('polarization '+str(pol_index) + ' channel '+str(chan_index) + ' Beam'
+                        ' bmaj: '+str(beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['major']['value'])+
+                        ' bmin: '+str(beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['minor']['value'])+
+                        ' bpa: '+str(beam['beams']['*'+str(chan_index)]['*'+str(pol_index)]['positionangle']['value']),
+                        origin="analysis")
+
 
 
 
@@ -1012,24 +1098,8 @@ def simanalyze(
             myutil.closereport()
 
 
-    except TypeError as e:
+    finally:
         finalize_tools()
-        #msg("simanalyze -- TypeError: %s" % e,priority="error")
-        casalog.post("simanalyze -- TypeError: %s" % e, priority="ERROR")
-        raise
-        return
-    except ValueError as e:
-        finalize_tools()
-        #print "simanalyze -- OptionError: ", e
-        casalog.post("simanalyze -- OptionError: %s" % e, priority="ERROR")
-        raise
-        return
-    except Exception as instance:
-        finalize_tools()
-        #print '***Error***',instance
-        casalog.post("simanalyze -- Exception: %s" % instance, priority="ERROR")
-        raise
-        return
 
 
 def finalize_tools():

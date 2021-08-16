@@ -84,8 +84,11 @@ class VisibilityIteratorImpl2 : public ViImplementation2 {
 
 public:
 
-	typedef VisibilityIterator2::DataColumn DataColumn;
-	typedef std::tuple <casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int> > ChannelInfo;
+	using DataColumn = VisibilityIterator2::DataColumn;
+	using ChannelInfo = std::tuple<
+	    casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int>,
+	    casacore::Vector<casacore::Int>, casacore::Vector<casacore::Int>
+	>;
 
 	// Default constructor - useful only to assign another iterator later
 	////VisibilityIteratorImpl2 ();
@@ -119,12 +122,21 @@ public:
 //                                const casacore::Block<casacore::Int> & sortColumns,
 //                                casacore::Double timeInterval = 0);
 
-	VisibilityIteratorImpl2(
-		const casacore::Block<const casacore::MeasurementSet *> & mss,
-		const SortColumns & sortColumns,
-		casacore::Double timeInterval,
-		casacore::Bool isWritable,
-		casacore::Bool useMSIter2=false);
+    VisibilityIteratorImpl2(
+        const casacore::Block<const casacore::MeasurementSet *> & mss,
+        const SortColumns & sortColumns,
+        casacore::Double timeInterval,
+        casacore::Bool isWritable,
+        casacore::Bool useMSIter2=false);
+
+    // This constructor is similar to previous one but it allows to explicitely
+    // define the sorting criteria used for chunk iteration and for subchunk
+    // iteration. Also the criteria can be generic functions
+    VisibilityIteratorImpl2(
+        const casacore::Block<const casacore::MeasurementSet *> & mss,
+        const SortColumns & chunkSortColumns,
+        const SortColumns & subchunkSortColumns,
+        bool isWritable);
 
 	VisibilityIteratorImpl2(const VisibilityIteratorImpl2& vii);
 
@@ -141,6 +153,11 @@ public:
 	// Members
 
 	std::unique_ptr<VisibilityIteratorImpl2> clone() const;
+
+    // Set the scope of metadata, i.e., how long a given metadata is valid.
+    // For instance, if ddIDScope = SubchunkScope, the ddId will be unique
+    // within a subchunk.
+    void setMetadataScope();
 
 	// Report the the ViImplementation type
 	//  TBD:  indicate writable?
@@ -171,12 +188,13 @@ public:
 	virtual void
 	setInterval(casacore::Double timeInterval) override;
 
-	// Set the 'blocking' size for returning data.  With the default (0) only a
-	// single integration is returned at a time, this is what is currently
-	// required for the calibration software. With blocking set, up to nRows can
-	// be returned in one go. The chunk size determines the actual maximum.
-	virtual void
-	setRowBlocking(casacore::Int nRows = 0) override;
+    // Set the 'blocking' size for returning data. If set to 0 (the default),
+    // the chunk will be grouped in subchunks using the subchunk sorting functions
+    // (which default to group by unique timestamp.
+    // With blocking set, up to nRows can be returned in one go.
+    // The chunk size determines the actual maximum.
+    virtual void
+    setRowBlocking(casacore::rownr_t nRows = 0) override;
 
 	virtual casacore::Bool
 	existsColumn(VisBufferComponent2 id) const override;
@@ -331,9 +349,16 @@ public:
 	virtual casacore::String
 	sourceName() const override;
 
-	// Return flag for each polarization, channel and row
-	virtual void
-	flag(casacore::Cube<casacore::Bool> & flags) const override;
+    // Return flag for each polarization, channel and row
+    virtual void
+    flag(casacore::Cube<casacore::Bool> & flags) const override;
+
+    // Return flag for each polarization, channel and row
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
+    virtual void
+    flag(casacore::Vector<casacore::Cube<casacore::Bool>> & flags) const override;
 
 	// Return flag for each channel & row
 	virtual void
@@ -379,16 +404,24 @@ public:
 	virtual void
 	corrType(casacore::Vector<casacore::Int> & corrTypes) const override;
 
-	// Return sigma
-	virtual void
-	sigma(casacore::Matrix<casacore::Float> & sig) const override;
+    // Return sigma
+    virtual void
+    sigma(casacore::Matrix<casacore::Float> & sig) const override;
 
-	// Return current SpectralWindow
-	virtual casacore::Int
-	spectralWindow() const override;
+    // Return sigma
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
+    virtual void
+    sigma(casacore::Vector<casacore::Matrix<casacore::Float>> & sig) const override;
 
-	virtual void
-	spectralWindows(casacore::Vector<casacore::Int> & spws) const override;
+    // Return spw Ids for each row of the current iteration
+    virtual void
+    spectralWindows(casacore::Vector<casacore::Int> & spws) const override;
+
+    // Return polarization Ids for each row of the current iteration
+    virtual void
+    polarizationIds(casacore::Vector<casacore::Int> & polIds) const override;
 
 	// Return current Polarization Id
 	virtual casacore::Int
@@ -398,8 +431,9 @@ public:
 	virtual casacore::Int
 	dataDescriptionId() const override;
 
-	virtual void
-	dataDescriptionIds(casacore::Vector<casacore::Int> & ddis) const override;
+    // Return ddIds for each row of the current iteration
+    virtual void
+    dataDescriptionIds(casacore::Vector<casacore::Int> & ddis) const override;
 
 	// Return MJD midpoint of interval.
 	virtual void
@@ -417,24 +451,55 @@ public:
 	virtual void
 	exposure(casacore::Vector<casacore::Double> & expo) const override;
 
-	// Return the visibilities as found in the casacore::MS,
-	// casacore::Cube(npol,nchan,nrow).
-	virtual void
-	visibilityCorrected(casacore::Cube<casacore::Complex> & vis) const override;
+    // Return the visibilities as found in the casacore::MS,
+    // casacore::Cube(npol,nchan,nrow).
+    virtual void
+    visibilityCorrected(casacore::Cube<casacore::Complex> & vis) const override;
 
-	virtual void
-	visibilityModel(casacore::Cube<casacore::Complex> & vis) const override;
+    // Return the corrected visibilities
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
+    virtual void
+    visibilityCorrected (casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
 
-	virtual void
-	visibilityObserved(casacore::Cube<casacore::Complex> & vis) const override;
+    // Return the observed visibilities
+    virtual void
+    visibilityObserved(casacore::Cube<casacore::Complex> & vis) const override;
+
+    // Return the observed visibilities
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
+    virtual void
+    visibilityObserved(casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
+
+    // Return the model visibilities
+    virtual void
+    visibilityModel(casacore::Cube<casacore::Complex> & vis) const override;
+
+    // Return the model visibilities
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
+    virtual void
+    visibilityModel(casacore::Vector<casacore::Cube<casacore::Complex>> & vis) const override;
 
 	// This will return all selected spwids for each ms attached with this iterator
 	virtual casacore::Vector<casacore::Vector<casacore::Int> > getAllSelectedSpws() const;
 
-	// Return FLOAT_DATA as a casacore::Cube(npol, nchan, nrow) if found in the
-	// MS.
-	virtual void
-	floatData(casacore::Cube<casacore::Float> & fcube) const override;
+    // Return FLOAT_DATA as a casacore::Cube(npol, nchan, nrow) if found in the
+    // MS.
+    virtual void
+    floatData(casacore::Cube<casacore::Float> & fcube) const override;
+
+    // Return FLOAT_DATA as a casacore::Cube(npol, nchan, nrow) if found in the
+    // MS.
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
+    virtual void
+    floatData(casacore::Vector<casacore::Cube<casacore::Float>> & fcubes) const override;
 
 	// Return the visibility 4-vector of polarizations for each channel.  If the
 	// casacore::MS doesn't contain all polarizations, it is assumed it contains
@@ -452,9 +517,16 @@ public:
 	virtual void
 	uvw(casacore::Matrix<casacore::Double> & uvwmat) const override;
 
-	// Return weight
-	virtual void
-	weight(casacore::Matrix<casacore::Float> & wt) const override;
+    // Return weight
+    virtual void
+    weight(casacore::Matrix<casacore::Float> & wt) const override;
+
+    // Return weight
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
+    virtual void
+    weight(casacore::Vector<casacore::Matrix<casacore::Float>> & wt) const override;
 
 	// Determine whether WEIGHT_SPECTRUM exists.
 	casacore::Bool
@@ -464,14 +536,27 @@ public:
 	casacore::Bool
 	sigmaSpectrumExists() const override;
 
-	// Return weightspectrum(a weight for each channel)
-	virtual void
-	weightSpectrum(casacore::Cube<casacore::Float> & wtsp) const override;
+    // Return weightspectrum(a weight for each channel)
+    virtual void
+    weightSpectrum(casacore::Cube<casacore::Float> & wtsp) const override;
 
-	// Return sigmaspectrum(a sigma for each channel)
-	virtual void
-	sigmaSpectrum(casacore::Cube<casacore::Float> & sigsp) const override;
+    // Return weightspectrum(a weight for each channel)
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
+    virtual void
+    weightSpectrum(casacore::Vector<casacore::Cube<casacore::Float>> & wtsp) const override;
 
+    // Return sigmaspectrum(a sigma for each channel)
+    virtual void
+    sigmaSpectrum(casacore::Cube<casacore::Float> & sigsp) const override;
+
+    // Return sigmaspectrum(a sigma for each channel)
+    // Supports returning a vector of cubes.
+    // If VisBuffer contains rows with different number of channels
+    // each of the cubes will have a different shape
+    virtual void
+    sigmaSpectrum(casacore::Vector<casacore::Cube<casacore::Float>> & sigsp) const override;
 
 	virtual void
 	setWeightScaling(casacore::CountedPtr<WeightScaling> weightscaling) override;
@@ -499,20 +584,39 @@ public:
 	virtual casacore::Bool
 	newSpectralWindow() const;
 
-	// Return the number of rows in the current iteration
-	virtual casacore::Int
-	nRows() const override;
+    // Return the number of rows in the current iteration
+    virtual casacore::rownr_t
+    nRows() const override;
+
+    // Return the number of distinct array/cube shapes in the current iteration
+    virtual casacore::rownr_t
+    nShapes() const override;
+
+    // Return the number of rows for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::rownr_t>& 
+    nRowsPerShape () const override;
+
+    // Return the number of channels for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::Int>& 
+    nChannelsPerShape () const override;
+
+    // Return the number of correlations for each distinct array/cube shapes in the current iteration
+    virtual const casacore::Vector<casacore::Int>& 
+    nCorrelationsPerShape () const override;
 
 	// Return the row ids as from the original root table. This is useful
 	// to find correspondance between a given row in this iteration to the
 	// original ms row
 	virtual void
-	getRowIds(casacore::Vector<casacore::uInt> & rowids) const override;
+	getRowIds(casacore::Vector<casacore::rownr_t> & rowids) const override;
 
 	// Return the numbers of rows in the current chunk
-	virtual casacore::Int
+	virtual casacore::rownr_t
 	nRowsInChunk() const override;
 
+    // number of unique time stamps in chunk
+    virtual casacore::Int nTimes() const override;
+ 
 	// Return the number of sub-intervals in the current chunk
 
 	//virtual casacore::Int nSubInterval() const;
@@ -568,7 +672,7 @@ public:
 	nAntennas() const override;
 
 	//Return number of rows in all selected ms's
-	virtual casacore::Int
+	virtual casacore::rownr_t
 	nRowsViWillSweep() const override;
 
 	// Return number of spws, polids, ddids
@@ -762,13 +866,13 @@ protected:
 	virtual void
 	configureNewSubchunk();
 
-	const ChannelSelector *
+	std::shared_ptr<vi::ChannelSelector>
 	createDefaultChannelSelector(
 		casacore::Double time,
 		casacore::Int msId,
 		casacore::Int spectralWindowId);
 
-	virtual const vi::ChannelSelector *
+	virtual std::shared_ptr<vi::ChannelSelector>
 	determineChannelSelection(
 		casacore::Double time,
 		casacore::Int spectralWindowId = -1,
@@ -785,10 +889,10 @@ protected:
 		const vi::SpectralWindowChannels & spectralWindowChannels) const;
 
 	ChannelInfo
-	getChannelInformation(casacore::Bool now) const;
+	getChannelInformation() const;
 
 	ChannelInfo
-	getChannelInformationUsingFrequency(casacore::Bool now) const;
+	getChannelInformationUsingFrequency() const;
 
 	// Methods to get the data out of a table column according to whatever
 	// selection criteria (e.g., slicing) is in effect.
@@ -799,16 +903,26 @@ protected:
 		const casacore::ScalarColumn<T> & column,
 		casacore::Vector<T> & array) const;
 
-	template <typename T>
-	void
-	getColumnRowsMatrix(const casacore::ArrayColumn<T> & column,
-	                    casacore::Matrix<T> & array,
-	                    casacore::Bool correlationSlicing) const;
+    template <typename T>
+    void
+    getColumnRowsMatrix(const casacore::ArrayColumn<T> & column,
+                        casacore::Matrix<T> & array,
+                        casacore::Bool correlationSlicing) const;
 
-	template <typename T>
-	void
-	getColumnRows(const casacore::ArrayColumn<T> & column,
-	              casacore::Array<T> & array) const;
+    template <typename T>
+    void
+    getColumnRowsMatrix(const casacore::ArrayColumn<T> & column,
+                        casacore::Vector<casacore::Matrix<T>> & matrixVector) const;
+
+    template <typename T>
+    void
+    getColumnRows(const casacore::ArrayColumn<T> & column,
+                  casacore::Array<T> & array) const;
+
+    template <typename T>
+    void
+    getColumnRows(const casacore::ArrayColumn<T> & column,
+                  casacore::Vector<casacore::Cube<T>> & cubeVector) const;
 
 	casacore::Vector<casacore::Double>
 	getFrequencies(
@@ -872,7 +986,11 @@ protected:
 	virtual void
 	initialize(
 		const casacore::Block<const casacore::MeasurementSet *> & mss,
-		casacore::Bool useMSIter2=false);
+		casacore::Bool useMSIter2);
+
+    // Initialize using only the generic sorting criteria
+    void
+    initialize(const casacore::Block<const casacore::MeasurementSet *> &mss);
 
 	// Returns true if casacore::MS Iterator is currently pointing to a selected
 	// spectral window
@@ -883,7 +1001,7 @@ protected:
 	// Creates a channel selection for the current subchunk based on the channel
 	// or frequency selection made by the user.
 
-	vi::ChannelSelector *
+	std::shared_ptr<vi::ChannelSelector>
 	makeChannelSelectorC(
 		const FrequencySelection & selection,
 		casacore::Double time,
@@ -891,7 +1009,7 @@ protected:
 		casacore::Int spectralWindowId,
 		casacore::Int polarizationId) const;
 
-	vi::ChannelSelector *
+	std::shared_ptr<vi::ChannelSelector>
 	makeChannelSelectorF(
 		const FrequencySelection & selection,
 		casacore::Double time,
@@ -1095,7 +1213,7 @@ protected:
 		casacore::Double azelTime_p;
 		// Row numbers of underlying casacore::MS; used to map form chunk rows
 		// to casacore::MS rows.  See rowIds method.
-		casacore::Vector<casacore::uInt> chunkRowIds_p;
+		casacore::Vector<casacore::rownr_t> chunkRowIds_p;
 		casacore::Vector<casacore::Float> feedpa_p;
 		casacore::Double feedpaTime_p;
 		casacore::Double hourang_p;
@@ -1158,92 +1276,116 @@ protected:
 
 	typedef casacore::Block <casacore::MeasurementSet> MeasurementSets;
 
-	class RowBounds {
-	public:
+    class RowBounds
+    {
+    public:
 
-		RowBounds()
-			: chunkNRows_p(-1), subchunkBegin_p(-1), subchunkEnd_p(-1),
-			  subchunkNRows_p(-1), subchunkRows_p(0, 0), timeMax_p(-1),
-			  timeMin_p(-1)
-			{}
+        RowBounds() :
+            chunkNRows_p(-1), subchunkBegin_p(-1), subchunkEnd_p(-1),
+            subchunkNRows_p(-1), subchunkRows_p(0, 0), timeMax_p(-1), timeMin_p(-1)
+        {}
 
-		// last row in current chunk
-		casacore::Int chunkNRows_p;
-		// first row in current subchunk
-		casacore::Int subchunkBegin_p;
-		// last row in current subchunk
-		casacore::Int subchunkEnd_p;
-		// # rows in subchunk
-		casacore::Int subchunkNRows_p;
-		// subchunk's table row numbers
-		casacore::RefRows subchunkRows_p;
-		// times for each row in the chunk
-		casacore::Vector<casacore::Double> times_p;
-		// max timestamp in the chunk
-		casacore::Double timeMax_p;
-		// min timechunk in the chunk
-		casacore::Double timeMin_p;
+        // last row in current chunk
+        ssize_t chunkNRows_p;
+        // first row in current subchunk
+        ssize_t subchunkBegin_p;
+        // last row in current subchunk
+        ssize_t subchunkEnd_p;
+        // # rows in subchunk
+        ssize_t subchunkNRows_p;
+        // subchunk's table row numbers
+        casacore::RefRows subchunkRows_p;
+        // List of Row numbers for each subset of the subchunk with equal channel selector
+        std::vector<casacore::RefRows> subchunkEqChanSelRows_p;
+        // times for each row in the chunk
+        casacore::Vector<casacore::Double> times_p;
+        // max timestamp in the chunk
+        casacore::Double timeMax_p;
+        // min timechunk in the chunk
+        casacore::Double timeMin_p;
 
-	};
+    };
 
-	casacore::Bool autoTileCacheSizing_p;
-	std::map <VisBufferComponent2, BackWriter *> backWriters_p;
-	// general collection of cached values
-	mutable Cache cache_p;
-	// [use] current channel selector for this casacore::MS & Spw
-	const ChannelSelector * channelSelector_p;
-	// [own] cache of recently used channel selectors
-	ChannelSelectorCache * channelSelectorCache_p;
-	// The main columns for the current MS
-	ViColumns2 columns_p;
-	// true if a float data column was found
-	casacore::Bool floatDataFound_p;
-	// [own] Current frequency selection
-	FrequencySelections * frequencySelections_p;
-	// object to calculate imaging weight
-	VisImagingWeight imwgt_p;
-	// cached value of observatory type
-	mutable casacore::Int measurementFrame_p;
-	MeasurementSets measurementSets_p; // [use]
-	VisModelDataI * modelDataGenerator_p; // [own]
-	// true if more data in this chunk
-	casacore::Bool more_p;
-	// array index of current MS
-	casacore::Int msIndex_p;
-	// true if casacore::MS Iter is a start of first MS
-	casacore::Bool msIterAtOrigin_p;
-	// casacore::MS Iter that underlies the VI (sweeps in chunks)
-	casacore::CountedPtr<casacore::MSIter> msIter_p;
-	// Helper class holding casacore::MS derived values.
-	mutable casacore::MSDerivedValues msd_p;
-	casacore::Int nCorrelations_p;
-	// suggested # of rows in a subchunk
-	casacore::Int nRowBlocking_p;
-	// holds pending changes to VI properties
-	std::unique_ptr<PendingChanges> pendingChanges_p;
-	mutable std::unique_ptr<PointingDirectionCache>  pointingDirectionCache_p;
-	mutable std::unique_ptr<PointingSource>  pointingSource_p;
-	// default frequency reporting (not selecting) frame of reference
-	casacore::Int reportingFrame_p;
-	// Subchunk row management object (see above)
-	RowBounds rowBounds_p;
-	// sort columns specified when creating VI
-	SortColumns sortColumns_p;
-	// [own] Info about spectral windows
-	mutable SpectralWindowChannelsCache * spectralWindowChannelsCache_p;
-	// (chunkN #, subchunk #) pair
-	Subchunk subchunk_p;
-	// [own] Allows const access to casacore::MS's subtable columns
-	SubtableColumns * subtableColumns_p;
-	casacore::MeasRef<casacore::MEpoch> timeFrameOfReference_p;
-	std::shared_ptr<std::mutex> tileCacheModMtx_p;
-	std::shared_ptr<std::vector<bool> > tileCacheIsSet_p;
-	casacore::Double timeInterval_p;
-	VisBufferType vbType;
-	// [own] VisBuffer attached to this VI
-	VisBuffer2 * vb_p;
-	casacore::CountedPtr<WeightScaling> weightScaling_p;
-	casacore::Bool writable_p;
+
+    casacore::Bool autoTileCacheSizing_p;
+    std::map <VisBufferComponent2, BackWriter *> backWriters_p;
+    // general collection of cached values
+    mutable Cache cache_p;
+    // [use] current channel selectors for this chunk 
+    std::vector<std::shared_ptr<ChannelSelector>>  channelSelectors_p;
+    // Number of rows in the VisBuffer for which each of the channel selector applies
+    std::vector<size_t>  channelSelectorsNrows_p;
+    // [own] cache of recently used channel selectors
+    ChannelSelectorCache * channelSelectorCache_p;
+    // The main columns for the current MS
+    ViColumns2 columns_p;
+    // true if a float data column was found
+    casacore::Bool floatDataFound_p;
+    // [own] Current frequency selection
+    FrequencySelections * frequencySelections_p;
+    // object to calculate imaging weight
+    VisImagingWeight imwgt_p;
+    // cached value of observatory type
+    mutable casacore::Int measurementFrame_p;
+    MeasurementSets measurementSets_p; // [use]
+    VisModelDataI * modelDataGenerator_p; // [own]
+    // true if more data in this chunk
+    casacore::Bool more_p;
+    // array index of current MS
+    casacore::Int msIndex_p;
+    // true if casacore::MS Iter is a start of first MS
+    casacore::Bool msIterAtOrigin_p;
+    // casacore::MS Iter that underlies the VI (sweeps in chunks)
+    casacore::CountedPtr<casacore::MSIter> msIter_p;
+    // Helper class holding casacore::MS derived values.
+    mutable casacore::MSDerivedValues msd_p;
+    casacore::Int nCorrelations_p;
+    // suggested # of rows in a subchunk
+    casacore::Int nRowBlocking_p;
+    // holds pending changes to VI properties
+    std::unique_ptr<PendingChanges> pendingChanges_p;
+    mutable std::unique_ptr<PointingDirectionCache>  pointingDirectionCache_p;
+    mutable std::unique_ptr<PointingSource>  pointingSource_p;
+    // default frequency reporting (not selecting) frame of reference
+    casacore::Int reportingFrame_p;
+    // Subchunk row management object (see above)
+    RowBounds rowBounds_p;
+    // [own] Info about spectral windows
+    mutable SpectralWindowChannelsCache * spectralWindowChannelsCache_p;
+    // (chunkN #, subchunk #) pair
+    Subchunk subchunk_p;
+    // Number of rows for each distinct array/cube shapes in the current iteration
+    casacore::Vector<casacore::rownr_t> nRowsPerShape_p;
+    // Number of channels for each distinct array/cube shapes in the current iteration
+    casacore::Vector<casacore::Int> nChannPerShape_p;
+    // Number of correlations for each distinct array/cube shapes in the current iteration
+    casacore::Vector<casacore::Int> nCorrsPerShape_p;
+    // [own] Allows const access to casacore::MS's subtable columns
+    SubtableColumns * subtableColumns_p;
+    casacore::MeasRef<casacore::MEpoch> timeFrameOfReference_p;
+    std::shared_ptr<std::mutex> tileCacheModMtx_p;
+    std::shared_ptr<std::vector<bool> > tileCacheIsSet_p;
+    casacore::Double timeInterval_p;
+    VisBufferType vbType;
+    // [own] VisBuffer attached to this VI
+    VisBuffer2 * vb_p;
+    casacore::CountedPtr<WeightScaling> weightScaling_p;
+    casacore::Bool writable_p;
+    // Determine several metadata uniqueness. For each metadata
+    // the valus could be unique in each chunk or subchunk,
+    // or in the worst case for each row.
+    MetadataScope ddIdScope_p;
+    MetadataScope timeScope_p;
+    MetadataScope freqSelScope_p;
+    MetadataScope antenna1Scope_p;
+    MetadataScope antenna2Scope_p;
+
+    // Variables for the handling of the subchunk  loop
+    std::shared_ptr<casacore::MeasurementSet> msSubchunk_p;
+    std::shared_ptr<casacore::MSIter> msIterSubchunk_p;
+    // sort columns specified when creating VI
+    SortColumns sortColumns_p;
+    SortColumns subchunkSortColumns_p;
 };
 
 } // end namespace vi

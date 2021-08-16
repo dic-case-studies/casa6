@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import numpy as np
 
@@ -21,7 +20,8 @@ def gaincal(vis=None,caltable=None,
             solint=None,combine=None,preavg=None,
             refant=None,refantmode=None,minblperant=None,
             minsnr=None,solnorm=None,normtype=None,
-            gaintype=None,smodel=None,calmode=None,solmode=None,rmsthresh=None,append=None,
+            gaintype=None,smodel=None,calmode=None,solmode=None,rmsthresh=None,corrdepflags=None,
+            append=None,
             splinetime=None,npointaver=None,phasewrap=None,
             docallib=None,callib=None,
             gaintable=None,gainfield=None,interp=None,spwmap=None,
@@ -40,7 +40,7 @@ def gaincal(vis=None,caltable=None,
         if ((type(vis)==str) & (os.path.exists(vis))):
             mycb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
         else:
-            raise Exception('Visibility data set not found - please verify the name')
+            raise ValueError('Visibility data set not found - please verify the name')
 
         # Do data selection according to selectdata
         casalog.post("NB: gaincal automatically excludes auto-correlations.")
@@ -63,6 +63,11 @@ def gaincal(vis=None,caltable=None,
             mycb.selectvis(time='',spw=spw,scan='',field=field,intent=intent,
                            observation='', baseline='', uvrange='',
                            chanmode='none', msselect='ANTENNA1!=ANTENNA2')
+
+        # signal use of correlation-dependent flags, if requested
+        if corrdepflags:
+            mycb.setcorrdepflags(True)
+
 
         # set the model, if specified
         if (len(smodel)>0):
@@ -156,13 +161,8 @@ def gaincal(vis=None,caltable=None,
 
         reportsolvestats(mycb.activityrec());
 
+    finally:
         mycb.close()
-
-    except Exception as instance:
-        print('*** Error *** %s' % instance)
-        mycb.close()
-        casalog.post("Error in gaincal: %s" % str(instance), "SEVERE")
-        raise Exception("Error in gaincal: "+str(instance))
 
 def reportsolvestats(rec):
     if (list(rec.keys()).count('origin')==1 and

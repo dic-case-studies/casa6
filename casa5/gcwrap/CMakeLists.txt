@@ -45,32 +45,17 @@ configure_file( ${CMAKE_SOURCE_DIR}/python/scripts/init_telemetry.py.in ${CMAKE_
 
 set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/install )
 
+add_definitions(-DIMPLICIT_CTDS_32BIT)
 add_definitions ("-DUseCasacoreNamespace")
 add_definitions ("-DWITHOUT_BOOST")
 add_definitions(-DUSE_THREADS)                 # new casacore requirement:
                                                # https://github.com/casacore/casacore/commit/2184df898452e1de695a04eb2e785419f707434c
 
-execute_process( COMMAND svn info
-                   RESULT_VARIABLE SVNINFOSTATUS
-                   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+set( CASA_svngen ${CMAKE_SOURCE_DIR}/install/generate-gitinfo )
+execute_process( COMMAND %{CASA_svngen} "u=+%a %Y/%m/%d %H:%M:%S UTC"
+                 OUTPUT_VARIABLE BUILDTIME
+                 OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-message("SVNINFOSTATUS: ${SVNINFOSTATUS}")
-
-if(${SVNINFOSTATUS} STREQUAL "0")
-  message("Running svn scripts.")
-  set( CASA_svngen ${CMAKE_SOURCE_DIR}/install/generate-svninfo )
-  execute_process( COMMAND %{CASA_svngen} "u=+%a %Y/%m/%d %H:%M:%S UTC"
-                   OUTPUT_VARIABLE BUILDTIME
-                   OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
-else ()
-  message("Couldn't detect svn. Not running svn scripts.")
-  set( CASA_svngen ${CMAKE_SOURCE_DIR}/install/generate-gitinfo )
-  execute_process( COMMAND %{CASA_svngen} "u=+%a %Y/%m/%d %H:%M:%S UTC"
-                   OUTPUT_VARIABLE BUILDTIME
-                   OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
-endif ()
 
 
 include( config )
@@ -79,7 +64,7 @@ include( target )
 include( CASA )
 
 set( CASA_MAJOR_VERSION 5 )
-set( CASA_MINOR_VERSION 7 )
+set( CASA_MINOR_VERSION 9 )
 set( CASA_PATCH_VERSION 0 )
 set( CASA_API_VERSION "${CASA_MAJOR_VERSION}.${CASA_MINOR_VERSION}.${CASA_PATCH_VERSION}" )
 
@@ -930,10 +915,10 @@ casa_find( CASACODE
 	   DEPENDS CASACORE LAPACK CFITSIO WCSLIB FFTW3 DL LIBSAKURA
 	   NO_LINK )
 
-option(USE_MPI "Use MPI compiler" NO)
+option(USE_MPI "Use MPI compiler" YES)
 set( CASAMPI_LIBRARIES "" )
 if (USE_MPI)
-  find_package(MPI)
+  find_package(MPI REQUIRED)
   if( MPI_CXX_FOUND )
     set( CASAMPI_LIBRARIES ${MPI_CXX_LIBRARIES} )
   endif()

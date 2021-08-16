@@ -154,6 +154,7 @@ casa_add_library( plotms
   Data/PlotMSAtm.cc
   Data/PlotMSIndexer.cc
   Data/PlotMSVBAverager.cc
+  Data/PlotMSCTAverager.cc
   Gui/PlotMSAnnotator.cc
   Gui/PlotMSAveragingWidget.cc
   Gui/PlotMSAxisWidget.cc
@@ -221,6 +222,7 @@ INSTALL (FILES
 INSTALL (FILES
         Data/PlotMSIndexer.h
         Data/PlotMSVBAverager.h
+		Data/PlotMSCTAverager.h
         Data/PageHeaderCache.h
 	DESTINATION include/casacode/plotms/Data )
 

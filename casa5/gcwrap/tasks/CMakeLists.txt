@@ -1,6 +1,5 @@
 casa_add_tasks( tools  casa_tasks 
 accor.xml
-accum.xml
 apparentsens.xml
 applycal.xml
 asdmsummary.xml
@@ -8,8 +7,6 @@ bandpass.xml
 blcal.xml
 browsetable.xml
 calstat.xml
-caltabconvert.xml
-clean.xml
 clearcal.xml
 clearstat.xml
 concat.xml
@@ -33,7 +30,7 @@ ft.xml
 gaincal.xml
 gencal.xml
 hanningsmooth.xml
-#hanningsmooth2.xml
+phaseshift.xml
 imcollapse.xml
 imcontsub.xml
 imdev.xml
@@ -75,7 +72,6 @@ msview.xml
 mstransform.xml
 msuvbin.xml
 nrobeamaverage.xml
-oldsplit.xml
 plotants.xml
 plotbandpass.xml
 plotcal.xml
@@ -90,12 +86,14 @@ impv.xml
 rerefant.xml
 rmfit.xml
 rmtables.xml
+sdatmcor.xml
 sdbaseline.xml
 sdcal.xml
 sdfit.xml
 sdfixscan.xml
 sdgaincal.xml
 sdimaging.xml
+sdintimaging.xml
 tsdimaging.xml
 sdpolaverage.xml
 sdtimeaverage.xml
@@ -112,12 +110,10 @@ specflux.xml
 specsmooth.xml
 splattotable.xml
 split.xml
-#split2.xml
 spxfit.xml
 oldstatwt.xml
 statwt.xml
 tclean.xml
-tclean2.xml
 testconcat.xml
 uvcontsub.xml
 uvcontsub3.xml

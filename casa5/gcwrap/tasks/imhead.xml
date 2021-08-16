@@ -1,58 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
-
-
-<!-- Copyright (C) 2008                                                -->
-<!-- Associated Universities, Inc. Washington DC, USA.                 -->
-<!--                                                                   -->
-<!-- This library is free software; you can redistribute it and/or     -->
-<!-- modify it under the terms of the GNU Library General Public       -->
-<!-- License as published by the Free Software Foundation; either      -->
-<!-- version 2 of the License, or (at your option) any later version.  -->
-<!--                                                                   -->
-<!-- This library is distributed in the hope that it will be useful,   -->
-<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of    -->
-<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU -->
-<!-- Library General Public License for more details.                  -->
-<!--                                                                   -->
-<!-- You should have received a copy of the GNU Library General Public -->
-<!-- License along with this library; if not, write to the Free        -->
-<!-- Software Foundation,Inc.,675 Massachusetts Ave,Cambridge, MA 02139, USA.-->
-<!--                                                                   -->
-<!-- Correspondence concerning AIPS++ should be adressed as follows:   -->
-<!--        Internet email: aips2-request@nrao.edu.                    -->
-<!--        Postal address: AIPS++ Project Office                      -->
-<!--                        National Radio Astronomy Observatory       -->
-<!--                        520 Edgemont Road                          -->
-<!--                        Charlottesville, VA 22903-2475 USA         -->
-<!-- ***************************************************************** --> 
-<!-- ***************************************************************** --> 
-<!-- This is the param set the imhead task                             -->
-<!-- This is similar to the AIPS imhead, gethead, and puthead          -->
-<!-- This does the equivalent of                                       -->
-<!-- ia.open('anyfile.im');                                            -->
-<!-- ia.summary();                       # summary mode                -->
-<!-- tb.open('anyfile.im',nomodify=False)                              -->
-<!-- tb.getcolkeywords()                                               -->
-<!-- Extraction of all header            # list mode                   -->
-<!-- List history contents (ia.history)  # history mode                -->
-<!-- Add a new keyword or coordinate     # add mode                    -->
-<!-- tb.putcolkeywords(value=newValue)   # put mode                    -->
-<!-- Delete a new keyword or coordinate  # del mode                    -->
-<!-- print/return( value )               # get mode                    -->
-<!-- ***************************************************************** --> 
-<!-- ***************************************************************** --> 
-<!-- See task_imhead.py for detailed description of the                -->
-<!-- imhead task.                                                      -->
-<!-- ***************************************************************** --> 
-<!-- ***************************************************************** --> 
-
-<task type="function" name="imhead" category="analysis, information, manipulation">
+<task category="information, analysis, manipulation" name="imhead" type="function">
 <shortdescription>List, get and put image header parameters</shortdescription>
 <description>
 List, get and put image header parameters.
@@ -64,26 +12,26 @@ For measurement sets, the task vishead should be used.
 </description>
 
 <input>
-    <param type="string" name="imagename" mustexist="true" >
+    <param mustexist="true" name="imagename" type="string">
 <shortdescription>Name of the input spectral line image</shortdescription>
 <description>Input image cube.
                      Default: none
 
                         Example: imagename='ngc5921_task.image'
 </description>
-        <value></value>
+        <value/>
         <example>imagename='ngc5921_task.image'</example>
     </param>
 
-    <param type="string" name="mode" >
-<shortdescription></shortdescription>
+    <param name="mode" type="string">
+<shortdescription/>
 <description>Mode of operation.
                      Default: summary
-                     Options: "add", "del", "get", "history", "list",
-                     "put", or "summary".
+                     Options: &quot;add&quot;, &quot;del&quot;, &quot;get&quot;, &quot;history&quot;, &quot;list&quot;,
+                     &quot;put&quot;, or &quot;summary&quot;.
 
                      * add: Add a new metadata value to the image. The
-                       behavior of mode="add" depends on the
+                       behavior of mode=&quot;add&quot; depends on the
                        keyword. In general, the return value will be
                        True if the operation succeeds, or False if it
                        fails or is not supported. If unsuccessful or
@@ -128,7 +76,7 @@ For measurement sets, the task vishead should be used.
                      (https://casa.nrao.edu/casadocs/). 
 
                      The behavior of mode='add|del|get depends on the
-                     keyword. Modes "add", "del", and "put" will not
+                     keyword. Modes &quot;add&quot;, &quot;del&quot;, and &quot;put&quot; will not
                      work if the image is read-only (eg a FITS
                      image). 
 
@@ -152,36 +100,36 @@ For measurement sets, the task vishead should be used.
         </allowed>
         <value>summary</value>
     </param>
-    <param type="string" name="hdkey" subparam="yes">
-<shortdescription>The associated keyword for modes "add", "del", "get", or "put". Only "get" will work if the image is read-only (eg, a FITS image).</shortdescription>
+    <param subparam="true" name="hdkey" type="string">
+<shortdescription>The associated keyword for modes &quot;add&quot;, &quot;del&quot;, &quot;get&quot;, or &quot;put&quot;. Only &quot;get&quot; will work if the image is read-only (eg, a FITS image).</shortdescription>
 <description>Keyword to use with get, put, add, or del.
                      Subparameter of mode=get|put|add|del
 
-                     Only "get" will work if the image is read-only
+                     Only &quot;get&quot; will work if the image is read-only
                      (eg, a FITS image).
 
                         Example: hdkey='telescope'
 </description>
-        <value></value>
+        <value/>
         <example>hdkey='telescope'</example>
     </param>
 
-    <param type="any" name="hdvalue" subparam="yes">
+    <param subparam="true" name="hdvalue" type="any">
     <any type="variant"/>
 <shortdescription>Value of keyword for modes add or put.</shortdescription>
 <description>Keyword value used for modes 'put' and 'add'. 
                      Subparameter of mode='put|add' ('del')
 
-                     Also used for mode="del" when hdvalue="masks. 
+                     Also used for mode=&quot;del&quot; when hdvalue=&quot;masks. 
 
                         Example: hdvalue='VLA'
 </description>
-        <value type="string"></value>
+        <value type="string"/>
         <example>hdvalue='VLA'</example>
     </param>
     
-    <param type="bool"  name="verbose" subparam="yes">
-        <description>Give a full listing of beams or just a short summary? Only used when the image has multiple beams and mode="summary".</description>
+    <param subparam="true" name="verbose" type="bool"><shortdescription>Give a full listing of beams or just a short summary? Only used when the image has multiple beams and mode=&quot;summary&quot;.</shortdescription><description>Give a full listing of beams or just a short summary? Only used when the image has multiple beams and mode=&quot;summary&quot;.</description>
+        
         <value>False</value>
     </param>
 
@@ -194,26 +142,26 @@ For measurement sets, the task vishead should be used.
         <equals value="history"/>
 
         <equals value="put">
-        <default param="hdkey"><value type="string"></value></default>
-        <default param="hdvalue"><value type="string"></value></default>
+        <default param="hdkey"><value type="string"/></default>
+        <default param="hdvalue"><value type="string"/></default>
         </equals>
         <equals value="add">
-        <default param="hdkey"><value type="string"></value></default>
-        <default param="hdvalue"><value type="string"></value></default>
+        <default param="hdkey"><value type="string"/></default>
+        <default param="hdvalue"><value type="string"/></default>
         </equals>
 
         <equals value="get">
-        <default param="hdkey"><value type="string"></value></default>
+        <default param="hdkey"><value type="string"/></default>
         </equals>
 
         <equals value="del">
-        <default param="hdkey"><value type="string"></value></default>
+        <default param="hdkey"><value type="string"/></default>
         </equals>
     </when>
     </constraints>
 </input>
 
-<returns type="variant" />
+<returns type="variant"/>
 
 <example>
 FOR MORE INFORMATION, SEE THE TASK PAGES OF IMHEAD IN CASA DOCS:
@@ -223,4 +171,3 @@ https://casa.nrao.edu/casadocs/
 </task>
 
 </casaxml>
-

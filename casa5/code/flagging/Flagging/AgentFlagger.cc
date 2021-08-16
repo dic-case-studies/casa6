@@ -42,7 +42,9 @@
 
 #include <flagging/Flagging/FlagCalTableHandler.h>
 #include <flagging/Flagging/FlagMSHandler.h>
-#if ! defined(CASATOOLS)
+#if defined(CASATOOLS)
+#include <flagging/Flagging/grpcFlagAgentDisplay.h>
+#else
 #include <flagging/Flagging/FlagAgentDisplay.h>
 #endif
 
@@ -59,9 +61,7 @@ AgentFlagger::AgentFlagger ()
 {
 	fdh_p = NULL;
 	summaryAgent_p = NULL;
-#if ! defined(CASATOOLS)
 	displayAgent_p = NULL;
-#endif
 
 	done();
 }
@@ -126,11 +126,9 @@ AgentFlagger::done()
 		summaryAgent_p = NULL;
 	}
 
-#if ! defined(CASATOOLS)
 	if(displayAgent_p){
 		displayAgent_p = NULL;
 	}
-#endif
 
 	mode_p = "";
 	agents_config_list_p.clear();
@@ -713,11 +711,9 @@ AgentFlagger::initAgents()
 */
 
 		// Get the display agent.
-#if ! defined(CASATOOLS)
 		if (mode.compare("display") == 0){
 			displayAgent_p = (FlagAgentDisplay *) fa;
 		}
-#endif
 
 		// Add the agent to the FlagAgentList
 		agents_list_p.push_back(fa);
@@ -812,10 +808,8 @@ AgentFlagger::run(Bool writeflags, Bool sequential)
 	combinedReport = agents_list_p.gatherReports();
 
 	// Send reports to display agent
-#if ! defined(CASATOOLS)
 	if (displayAgent_p)
 		displayAgent_p->displayReports(combinedReport);
-#endif
 
 	agents_list_p.clear();
 
@@ -1257,11 +1251,16 @@ AgentFlagger::parseClipParameters(String field, String spw, String array, String
 
 	if (chanbin.type() == casac::variant::INT)
 	{
-		agent_record.define("chanbin", chanbin.toInt());
+		/*** need range check ***/
+		agent_record.define("chanbin", (int) chanbin.toInt());
 	}
 	else if (chanbin.type() == casac::variant::INTVEC)
 	{
-		agent_record.define("chanbin", Array<Int>(chanbin.toIntVec()));
+		/*** need range check ***/
+		auto cb = chanbin.toIntVec( );
+        std::vector<int> vec;
+        std::for_each( cb.begin( ), cb.end( ), [&](long x){vec.push_back((int)x);} );
+		agent_record.define("chanbin", Array<Int>(vec));
 	}
 
     agent_record.define("timeavg", timeavg);
@@ -1423,11 +1422,16 @@ AgentFlagger::parseTfcropParameters(String field, String spw, String array, Stri
 
 	if (chanbin.type() == casac::variant::INT)
 	{
-		agent_record.define("chanbin", chanbin.toInt());
+		/*** need range check ***/
+		agent_record.define("chanbin", (int) chanbin.toInt());
 	}
 	else if (chanbin.type() == casac::variant::INTVEC)
 	{
-		agent_record.define("chanbin", Array<Int>(chanbin.toIntVec()));
+		/*** need range check ***/
+		auto cb = chanbin.toIntVec( );
+        std::vector<int> vec;
+        std::for_each( cb.begin( ), cb.end( ), [&](long x){vec.push_back((int)x);} );
+		agent_record.define("chanbin", Array<Int>(vec));
 	}
 
 	agent_record.define("channelavg", channelavg);

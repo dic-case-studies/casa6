@@ -119,7 +119,7 @@ def recToList(rec):
 class rg_frombcs_test(unittest.TestCase):
     
     def setUp(self):
-        datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/rg.frombcs/'
+        datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/rgtool/'
         for im in [image, image_nospec, image_dironly]:
             shutil.copy(datapath + im, im)
     
@@ -564,6 +564,22 @@ class rg_frombcs_test(unittest.TestCase):
         expmask[4:7, 4:7] = True
         expmask[8:11, 8:11] = True
         self.assertTrue((gotmask == expmask).all())
+
+    def test_complement_is_last_line(self):
+        """Test CAS-12978 fix, difference line is last in file works"""
+        myia = iatool()
+        myia.fromshape("",[500, 500])
+        csys = myia.coordsys().torecord()
+        shape = myia.shape()
+        myia.done()
+        region = "ellipse [[0:0:0, 0.0.0], [10arcmin, 5arcmin], 45deg]\n- ellipse [[0:0:0, 0.0.0], [7arcmin, 2arcmin], 45deg]"
+        # not segfaulting verifies the test
+        reg1 = rg.frombcs(csys=csys, shape=shape, region=region)
+        # also check space between "-" and shape is no longer necessary        
+        region = "ellipse [[0:0:0, 0.0.0], [10arcmin, 5arcmin], 45deg]\n-ellipse [[0:0:0, 0.0.0], [7arcmin, 2arcmin], 45deg]"
+        reg2 = rg.frombcs(csys=csys, shape=shape, region=region)
+        # member by member comparison cannot be easily done because some values are numpy arrays
+        self.assertTrue(str(reg1) == str(reg2))
 
 def suite():
     return [rg_frombcs_test]

@@ -60,7 +60,7 @@ void regionmanager::setup() {
 }
 
 std::string
-regionmanager::absreltype(const int absrelvalue)
+regionmanager::absreltype(const long absrelvalue)
 {
 	setup();
     *_log << LogOrigin("regionmanager", __func__);
@@ -352,7 +352,7 @@ regionmanager::done()
 
 record*
 regionmanager::fromtextfile(
-	const string& filename, const vector<int>& shape,
+	const string& filename, const vector<long>& shape,
 	const record& csys
 ) {
     	setup();
@@ -364,7 +364,7 @@ regionmanager::fromtextfile(
     		"shape consistent with the supplied coordinate system"
     	);
     	PtrHolder<CoordinateSystem> ncsys;
-    	IPosition myShape(shape);
+    	IPosition myShape(vector<int>(shape.begin(),shape.end()));
     	PtrHolder<Record> csysRec(toRecord(csys));
 
     	if((csysRec->nfields()) > 0){
@@ -388,7 +388,7 @@ regionmanager::fromtextfile(
 
 record*
 regionmanager::fromtext(
-	const string& text, const vector<int>& shape,
+	const string& text, const vector<long>& shape,
 	const record& csys
 ) {
 
@@ -396,7 +396,7 @@ regionmanager::fromtext(
     *_log << LogOrigin("regionmanager", __func__);
     try {
     	CoordinateSystem coordsys;
-    	IPosition myShape(shape);
+    	IPosition myShape(vector<int>(shape.begin(),shape.end()));
     	PtrHolder<Record> csysRec(toRecord(csys));
         if((csysRec->nfields()) != 0){
     	    ThrowIf(
@@ -675,8 +675,8 @@ regionmanager::makeunion(const ::casac::variant& regions, const std::string& com
     }
 }
 
-vector<int> regionmanager::selectedchannels(
-	const string& specification, const vector<int>& shape
+vector<long> regionmanager::selectedchannels(
+	const string& specification, const vector<long>& shape
 ) {
 	*_log << LogOrigin("regionmanager", __func__);
 	setup();
@@ -690,9 +690,9 @@ vector<int> regionmanager::selectedchannels(
 		uInt nSelectedChannels;
         vector<uInt> ranges = _regMan->setSpectralRanges(
 			specification, nSelectedChannels,
-			IPosition(shape)
+			IPosition(vector<int>(shape.begin(),shape.end()))
 		);
-		vector<Int> chans(0);
+		vector<long> chans(0);
 		vector<uInt>::const_iterator end = ranges.end();
 		vector<uInt>::const_iterator iter = ranges.begin();
 
@@ -742,7 +742,7 @@ casacore::ImageRegion* regionmanager::dounion(const PtrHolder<casacore::Record>&
 }
 
 ::casac::record*
-regionmanager::wbox(const ::casac::variant& blc, const ::casac::variant& trc, const std::vector<int>& pixelaxes, const ::casac::record& csys, const std::string& absrel, const std::string& comment)
+regionmanager::wbox(const ::casac::variant& blc, const ::casac::variant& trc, const std::vector<long>& pixelaxes, const ::casac::record& csys, const std::string& absrel, const std::string& comment)
 {
 	setup();
     *_log << LogOrigin("regionmanager", __func__);
@@ -800,7 +800,7 @@ regionmanager::wbox(const ::casac::variant& blc, const ::casac::variant& trc, co
 
 ::casac::record*
 regionmanager::wpolygon(const ::casac::variant& x, const ::casac::variant& y, 
-			const std::vector<int>& pixelaxes, 
+			const std::vector<long>& pixelaxes, 
 			const ::casac::record& csys, 
 			const std::string& absrel, const std::string& comment)
 {
@@ -862,7 +862,7 @@ regionmanager::wpolygon(const ::casac::variant& x, const ::casac::variant& y,
 }
 
 record* regionmanager::frombcs(
-	const ::casac::record& csys, const vector<int>& shape,
+	const ::casac::record& csys, const vector<long>& shape,
 	const string& box, const string& chans,
 	const string& stokes, const string& stokescontrol,
 	const variant& region
@@ -918,10 +918,9 @@ record* regionmanager::frombcs(
     		);
     		_regMan->setcoordsys(*coordsys);
     	}
-
     	String diagnostics;
     	uInt nSelectedChannels;
-    	IPosition imShape(shape);
+    	IPosition imShape(vector<int>(shape.begin(),shape.end()));
     	String myStokes(stokes);
     	String myChans(chans);
     	String myBox(box);

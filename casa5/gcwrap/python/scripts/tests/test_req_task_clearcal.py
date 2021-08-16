@@ -39,6 +39,8 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    import casa_stack_manip
+
 import os
 import numpy as np
 import unittest
@@ -47,17 +49,26 @@ import shutil
 
 # DATA #
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/alma/nep2-shrunk.ms/')
-    workingdir = casatools.ctsys.resolve('nep2-shrunk.ms')
+    datapath = casatools.ctsys.resolve('unittest/clearcal/nep2-shrunk.ms')
+ #   workingdir = casatools.ctsys.resolve('nep2-shrunk.ms')
     filepath = casatools.ctsys.resolve('testlog.log')
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/listobs/nep2-shrunk.ms'
-    workingdir = 'nep2-shrunk.ms'
+#    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'):
+#        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'
+#    else:
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata//unittest/clearcal/nep2-shrunk.ms'
+#    workingdir = 'nep2-shrunk.ms'
     filepath = 'testlog.log'
-    
+
+# This is for test that check what the parameter validator does when parameters are
+# given wrong types - these don't exercise the task but the parameter validator!
+if CASA6:
+    validator_exc_type = AssertionError
+else:
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+    validator_exc_type = RuntimeError
+
 clearMS = 'nep2-shrunk.ms'
 
 logpath = casalog.logfile()
@@ -97,12 +108,12 @@ class clearcal_test(unittest.TestCase):
         # Need to check logs for all of these bc it will always return NoneType if it passes or fails
         self.assertFalse('SEVERE' in open('testlog.log').read())
         # In CASA 6 assertion Errors will be raised with improper inputs
-        if CASA6:
-            with self.assertRaises(AssertionError, msg='An int was accepted as an input'):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type, msg='An int was accepted as an input'):
                 clearcal(1)
-            with self.assertRaises(AssertionError, msg='A list was accepted as an input'):
+            with self.assertRaises(validator_exc_type, msg='A list was accepted as an input'):
                 clearcal([])
-            with self.assertRaises(AssertionError, msg='A non-existing ms was accepeted'):
+            with self.assertRaises(validator_exc_type, msg='A non-existing ms was accepeted'):
                 clearcal('foo.ms')
             with self.assertRaises(RuntimeError, msg='A fake ms was accepeted'):
                 clearcal('fake.ms')
@@ -171,8 +182,8 @@ class clearcal_test(unittest.TestCase):
         self.assertTrue(endColNew.real == endColOld.real, msg='values were corrected when they should not have been')
         tb.close()
         
-        if CASA6:
-            with self.assertRaises(AssertionError, msg='An int was accepted as input'):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type, msg='An int was accepted as input'):
                 clearcal(clearMS, field=2)
         else:
             casalog.setlogfile('testlog.log')
@@ -191,7 +202,8 @@ class clearcal_test(unittest.TestCase):
         tb.putcol('CORRECTED_DATA', newdata)
         # Check that spw select only corrects the selected spw
         colOld = tb.getcol('CORRECTED_DATA')[0,0,0]
-        clearcal(clearMS, spw='100')
+        with self.assertRaises(RuntimeError):
+            clearcal(clearMS, spw='100')
         colNew1 = tb.getcol('CORRECTED_DATA')[0,0,0]
         self.assertTrue(colNew1.real == colOld.real, msg='Data was corrected even when not selected')
         clearcal(clearMS, spw='0')
@@ -200,8 +212,8 @@ class clearcal_test(unittest.TestCase):
         # Close the table
         tb.close()
         # check invalid inputs
-        if CASA6:
-            with self.assertRaises(AssertionError, msg='An int was accepted as input'):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type, msg='An int was accepted as input'):
                 clearcal(clearMS, spw=2)
         else:
             casalog.setlogfile('testlog.log')
@@ -228,8 +240,8 @@ class clearcal_test(unittest.TestCase):
         # Close the table
         tb.close()
         # Check invalid inputs
-        if CASA6:
-            with self.assertRaises(AssertionError, msg='An int was accepted as input'):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type, msg='An int was accepted as input'):
                 clearcal(clearMS, intent=2)
         else:
             casalog.setlogfile('testlog.log')
@@ -248,8 +260,8 @@ class clearcal_test(unittest.TestCase):
         # Close the table
         tb.close()
         # Test invalid inputs
-        if CASA6:
-            with self.assertRaises(AssertionError, msg='An int was accepted as input'):
+        if CASA6 or casa_stack_rethrow:
+            with self.assertRaises(validator_exc_type, msg='An int was accepted as input'):
                 clearcal(clearMS, addmodel=2)
         else:
             casalog.setlogfile('testlog.log')

@@ -411,6 +411,7 @@ void PlotMSVBAverager::simpAccumulate (vi::VisBuffer2& vb)
   Cube<Complex> accumVisCubeModel;
   Cube<Complex> accumVisCubeCorrected;
   Cube<Float> accumVisCubeFloat;
+  Cube<Bool> accumFlagCube;
   if (doVC_p) {
 	accumVisCube.reference(vb.visCube());
 	if (inCoh_p) convertToAP(accumVisCube);
@@ -426,8 +427,9 @@ void PlotMSVBAverager::simpAccumulate (vi::VisBuffer2& vb)
   if (doFC_p) {
 	accumVisCubeFloat.reference(vb.visCubeFloat());
   }
+  accumFlagCube.reference(vb.flagCube());
 
-  for (Int ibln=0; ibln<vb.nRows(); ++ibln) {
+  for (rownr_t ibln=0; ibln<vb.nRows(); ++ibln) {
     // Calculate row from antenna numbers with the hash function.
     Int ant1 = vb.antenna1()(ibln);
     Int ant2 = vb.antenna2()(ibln);
@@ -451,7 +453,7 @@ void PlotMSVBAverager::simpAccumulate (vi::VisBuffer2& vb)
 	Bool acc(false);
 
     IPosition flagPos(3, cor, chn, ibln);
-	if (!vb.flagCube()(flagPos)) { // input UNflagged
+	if (!accumFlagCube(flagPos)) { // input UNflagged
 	  // we will accumulate
 	  acc=true;
 	  if (avgFlagCube_(cor,chn,obln)) {  // output flagged
@@ -516,8 +518,8 @@ void PlotMSVBAverager::simpAccumulate (vi::VisBuffer2& vb)
     Double thisTime(vb.time()(0) - timeRef_p);
     Double thisInterval(vb.timeInterval()(0));
 
-    minTime_p = min(minTime_p, (thisTime - thisInterval/2.0));
-    maxTime_p = max(maxTime_p, (thisTime + thisInterval/2.0));
+    minTime_p = std::min(minTime_p, (thisTime - thisInterval/2.0));
+    maxTime_p = std::max(maxTime_p, (thisTime + thisInterval/2.0));
 
     aveTime_p += (thisTime * vbWt);
     aveInterval_p += vb.timeInterval()(0);
@@ -569,6 +571,7 @@ void PlotMSVBAverager::antAccumulate (vi::VisBuffer2& vb)
   Cube<Complex> accumVisCubeModel;
   Cube<Complex> accumVisCubeCorrected;
   Cube<Float> accumVisCubeFloat;
+  Cube<Bool> accumFlagCube;
   if (doVC_p) {
 	accumVisCube.reference(vb.visCube());
 	if (inCoh_p) convertToAP(accumVisCube);
@@ -584,8 +587,9 @@ void PlotMSVBAverager::antAccumulate (vi::VisBuffer2& vb)
   if (doFC_p) {
 	accumVisCubeFloat.reference(vb.visCubeFloat());
   }
+  accumFlagCube.reference(vb.flagCube());
 
-  for (Int ibln=0; ibln<vb.nRows(); ++ibln) {
+  for (rownr_t ibln=0; ibln<vb.nRows(); ++ibln) {
 
     // The antennas in the baseline
     Vector<Int> oblnij(2);
@@ -609,7 +613,7 @@ void PlotMSVBAverager::antAccumulate (vi::VisBuffer2& vb)
 
 	// Consider accumulation according to state of flags
     IPosition flagPos(3, cor, chn, ibln);
-	if (!vb.flagCube()(flagPos)) { // input UNflagged
+	if (!accumFlagCube(flagPos)) { // input UNflagged
 	  // we will accumulate both ants
 	  acc_i = acc_j = true;
 
@@ -693,8 +697,8 @@ void PlotMSVBAverager::antAccumulate (vi::VisBuffer2& vb)
     Double thisTime(vb.time()(0) - timeRef_p);
     Double thisInterval(vb.timeInterval()(0));
 
-    minTime_p = min(minTime_p, (thisTime - thisInterval/2.0));
-    maxTime_p = max(maxTime_p, (thisTime + thisInterval/2.0));
+    minTime_p = std::min(minTime_p, (thisTime - thisInterval/2.0));
+    maxTime_p = std::max(maxTime_p, (thisTime + thisInterval/2.0));
 
     aveTime_p += (thisTime * vbWt);
     aveInterval_p += vb.timeInterval()(0);

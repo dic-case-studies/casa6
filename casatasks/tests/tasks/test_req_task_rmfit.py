@@ -29,16 +29,20 @@ try:
     CASA6 = True
     myia = casatools.image()
     tb = casatools.table()
-    # TODO: Check if the toolname is the same in casa5 and casa6
     mypo = casatools.imagepol()
     myia = casatools.image()
+    ctsys_resolve = casatools.ctsys.resolve
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
-    # not sure what the tool is in casa5 (need to check)
-    mypo = imagepol()
+    from casa_stack_manip import stack_frame_find
+    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+    mypo = potool()
     myia = iatool()
+    def ctsys_resolve(data):
+        return os.path.join(os.environ.get('CASAPATH').split()[0], 'casatestdata', data)
+
 import sys
 import os
 import numpy
@@ -47,23 +51,10 @@ import shutil
 from filecmp import dircmp
 import math
 
-
 ## DATA ## 
-
-if CASA6:
-    casaim = casatools.ctsys.resolve('image/ngc5921.clean.image/')
-    eq_beams = casatools.ctsys.resolve('fits/pol_eq_beams.fits')
-    neq_beams = casatools.ctsys.resolve('fits/pol_neq_beams.fits')
-else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        casaim = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image/'
-        eq_beams = os.environ.get('CASAPATH').split()[0] + 'data/casa-data-req/fits/pol_eq_beams.fits'
-        neq_beams = os.environ.get('CASAPATH').split()[0] + 'data/casa-data-req/fits/pol_eq_beams.fits'
-    else:
-        casaim = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image/'
-        eq_beams = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/fits/pol_eq_beams.fits'
-        neq_beams = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/fits/pol_eq_beams.fits'
-    
+casaim = ctsys_resolve('unittest/rmfit/ngc5921.clean.image')
+eq_beams = ctsys_resolve('unittest/rmfit/pol_eq_beams.fits')
+neq_beams = ctsys_resolve('unittest/rmfit/pol_neq_beams.fits')
 outfile = 'out.im'
 
 def table_comp(im1, im2):
@@ -90,32 +81,13 @@ class rmfit_test(unittest.TestCase):
         myia.done()
     
     def tearDown(self):
-        
         mypo.done()
-        
-        shutil.rmtree(outfile)
-        
-        if os.path.exists('rm.im'):
-            shutil.rmtree('rm.im')
-        
-        if os.path.exists('out2.im'):
-            shutil.rmtree('out2.im')
-            
-        if os.path.exists('rm2.im'):
-            shutil.rmtree('rm2.im')
-            
-        if os.path.exists('rm1.im'):
-            shutil.rmtree('rm1.im')
-            
-        if os.path.exists('rm_input.im'):
-            shutil.rmtree('rm_input.im')
-            
-        if os.path.exists('xx.im'):
-            shutil.rmtree('xx.im')
-            
-        if os.path.exists('yy.im'):
-            shutil.rmtree('yy.im')
-    
+        for f in (
+            outfile, 'rm.im', 'out2.im', 'rm2.im', 'rm1.im',
+            'rm_input.im', 'xx.im', 'yy.im'
+        ):
+            if os.path.exists(f):
+                shutil.rmtree(f)
     
     def test_makesImage(self):
         '''
@@ -136,7 +108,7 @@ class rmfit_test(unittest.TestCase):
             This test checks that if the image provided doesn't have Stokes Q, U, or V the task will fail to execute
         '''
         
-        if CASA6:
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 rmfit(imagename=casaim, rm='rm.im')
         else:
@@ -173,7 +145,10 @@ class rmfit_test(unittest.TestCase):
             Test that the sigma parameter gives the thermal noise in Stokes U and Q
         '''
         
-        self.assertTrue(rmfit(imagename=outfile, rm='rm.im', sigma=3))
+        try:
+            rmfit(imagename=outfile, rm='rm.im', sigma=3)
+        except Exception:
+            self.fail()
         rmfit(imagename=outfile, rm='rm2.im')
         
         self.assertFalse(table_comp('rm.im', 'rm2.im'))
@@ -185,8 +160,11 @@ class rmfit_test(unittest.TestCase):
             
             Test that the maxpaerr parameter changes the max allowed position angle
         '''
-        
-        self.assertTrue(rmfit(imagename=outfile, rm='rm.im', maxpaerr=1))
+
+        try:
+            rmfit(imagename=outfile, rm='rm.im', maxpaerr=1)
+        except Exception:
+            self.fail()
         rmfit(imagename=outfile, rm='rm2.im')
         
         self.assertFalse(table_comp('rm.im', 'rm2.im'))
@@ -199,7 +177,10 @@ class rmfit_test(unittest.TestCase):
             Test that rmfg is used to specify a foreground rmvalue which is subtracted
         '''
         
-        self.assertTrue(rmfit(imagename=outfile, rm='rm.im', rmfg=1))
+        try:
+            rmfit(imagename=outfile, rm='rm.im', rmfg=1)
+        except Exception:
+            self.fail()
         rmfit(imagename=outfile, rm='rm2.im')
         
         self.assertFalse(table_comp('rm.im', 'rm2.im'))
@@ -217,9 +198,12 @@ class rmfit_test(unittest.TestCase):
         myia.addnoise()
         myia.done()
         
-        self.assertTrue(rmfit(imagename=outfile, rm='rm.im'))
-        
-        if CASA6:
+        try:
+            rmfit(imagename=outfile, rm='rm.im')
+        except Exception:
+            self.fail()
+
+        if CASA6 or casa_stack_rethrow:
             with self.assertRaises(RuntimeError):
                 rmfit(imagename=outfile2, rm ='rm2.im')
         else:
@@ -237,9 +221,12 @@ class rmfit_test(unittest.TestCase):
         myia.fromshape(outfile2, [20,20,4,5])
         myia.addnoise()
         myia.done()
-    
-        self.assertTrue(rmfit(imagename=[outfile, outfile2], rm='rm.im'))
-        
+
+        try:
+            rmfit(imagename=[outfile, outfile2], rm='rm.im')
+        except Exception:
+            self.fail()
+ 
     def test_rmmax(self):
         '''
             test_rmmax
@@ -263,7 +250,7 @@ class rmfit_test(unittest.TestCase):
         tb.close()
         
         self.assertFalse(numpy.all(rmCol == rm2Col))
-
+        
     # Merged in test cases
     def test_rmfit_basics(self):
         """Sanity tests for task rmfit"""
@@ -273,12 +260,15 @@ class rmfit_test(unittest.TestCase):
         myia.addnoise()
         myia.done()
         myrm = "rm1.im"
-        self.assertTrue(rmfit(imagename=outfile, rm=myrm))
+        try:
+            rmfit(imagename=outfile, rm=myrm)
+        except Exception:
+            self.fail()
         myia.open(myrm)
         self.assertTrue((myia.shape() == [20, 20]).all())
         got1 = myia.statistics(list=True, verbose=True)['sumsq']
         myia.done()
-        
+     
         # test concatenation of images
         outfile = "yy.im"
         myia.fromshape(outfile, [20, 20, 4, 20])
@@ -291,7 +281,10 @@ class rmfit_test(unittest.TestCase):
         myia.done()
         images = ["xx.im", "yy.im"]
         myrm = "rm2.im"
-        self.assertTrue(rmfit(imagename=images, rm=myrm))
+        try:
+            rmfit(imagename=images, rm=myrm)
+        except Exception:
+            self.fail()
         myia.open(myrm)
         self.assertTrue((myia.shape() == [20, 20]).all())
         got2 = myia.statistics(list=True, verbose=True)['sumsq']
@@ -299,7 +292,7 @@ class rmfit_test(unittest.TestCase):
         self.assertTrue(abs(got1 - got2) > 0.1)
         tb.done()
         self.assertTrue(len(tb.showcache()) == 0)
-    
+
     def test_algorithm(self):
         """Test rotation measure computation algorithm"""
         #myia = iatool()
@@ -341,7 +334,7 @@ class rmfit_test(unittest.TestCase):
         myia.done(remove=True)
         tb.done()
         self.assertTrue(len(tb.showcache()) == 0)
-        
+
         
         
 def suite():

@@ -232,13 +232,46 @@ public:
 
     explicit SortColumns (const casacore::Block<casacore::Int> & columnIds = casacore::Block<casacore::Int> (), casacore::Bool addDefaultColumns = true);
 
+    explicit SortColumns (casacore::Bool usingDefaultSortingFunctions);
+
+    // Constructor from a list of (column Ids, comparison function)
+    // The column Ids are actually MSMainEnums enums.
+    explicit SortColumns (const std::vector<std::pair<casacore::MS::PredefinedColumns, casacore::CountedPtr<casacore::BaseCompare>>> sortingDefinition);
+
+    // Constructor from a list of (column names, comparison function)
+    // The column names could in principle be any column name which must
+    // of course exist in the MS.
+    explicit SortColumns (const std::vector<std::pair<casacore::String, casacore::CountedPtr<casacore::BaseCompare>>> sortingDefinition);
+
+    // Add a sorting column to the existing definitions.
+    // It will be added at the end, i. e., it will be "running" faster
+    // If sortingFunction = nullptr then a unique sorting function
+    // for the type of the column will be used (ObjCompare<T>)
+    void addSortingColumn(casacore::MS::PredefinedColumns colId,
+        casacore::CountedPtr<casacore::BaseCompare> sortingFunction = nullptr);
+
+    // Add a sorting column to the existing definitions.
+    // It will be added at the end, i. e., it will be "running" faster
+    // If sortingFunction = nullptr then a unique sorting function
+    // for the type of the column will be used (ObjCompare<T>)
+    void addSortingColumn(casacore::String colName,
+        casacore::CountedPtr<casacore::BaseCompare> sortingFunction = nullptr);
+
+    bool usingDefaultSortingFunctions () const;
+
     casacore::Bool shouldAddDefaultColumns () const;
+
     const casacore::Block<casacore::Int> & getColumnIds () const;
+
+    // Get the sorting definitions, including the comparison functions
+    const std::vector<std::pair<casacore::String, casacore::CountedPtr<casacore::BaseCompare>>> & sortingDefinition() const;
 
 private:
 
     casacore::Bool addDefaultColumns_p;
     casacore::Block<casacore::Int> columnIds_p;
+    std::vector<std::pair<casacore::String, casacore::CountedPtr<casacore::BaseCompare>>> sortingDefinition_p;
+    bool usingDefaultSortingFunctions_p;
 };
 
 class VisibilityIterator2;
@@ -528,7 +561,7 @@ public:
   void nextChunk();
   casacore::Bool moreChunks() const;
 
-  // Report Name of slowest column that changes at end of current iteration
+  // Report Name of slowest column that changes at end of current chunk iteration
   virtual casacore::String keyChange() const;
 
   // Returns the pair (chunk,subchunk) for the current position of the VI.  Only
@@ -564,7 +597,7 @@ public:
   // when the row visibility shape changes from one row to the next.
 
   casacore::Int getRowBlocking() const;
-  void setRowBlocking(casacore::Int nRows=0);
+  void setRowBlocking(casacore::rownr_t nRows=0);
 
   // In this context the interval determines what rows will be contained
   // in a chunk.  A chunk is all the rows in an casacore::MS that have the same values
@@ -677,7 +710,7 @@ public:
 
   // Return the numbers of rows in the current chunk
 
-  casacore::Int nRowsInChunk() const;
+  casacore::rownr_t nRowsInChunk() const;
 
   // Assign a VisImagingWeight object to this iterator.  This object is used
   // to generate imaging weights.
@@ -771,52 +804,52 @@ public:
   // Access to antenna subtable
   const casacore::MSAntennaColumns& antennaSubtablecols() const;
 
-  // Access to dataDescription subtable
+  // Access to MS dataDescription subtable
   const casacore::MSDataDescColumns& dataDescriptionSubtablecols() const;
 
-  // Access to feed subtable
+  // Access to MS feed subtable
   const casacore::MSFeedColumns& feedSubtablecols() const;
 
-  // Access to field subtable
+  // Access to MS field subtable
   const casacore::MSFieldColumns& fieldSubtablecols() const;
 
-  // Access to flagCmd subtable
+  // Access to MS flagCmd subtable
   const casacore::MSFlagCmdColumns& flagCmdSubtablecols() const;
 
-  // Access to history subtable
+  // Access to MS history subtable
   const casacore::MSHistoryColumns& historySubtablecols() const;
 
-  // Access to observation subtable
+  // Access to MS observation subtable
   const casacore::MSObservationColumns& observationSubtablecols() const;
 
-  // Access to pointing subtable
+  // Access to MS pointing subtable
   const casacore::MSPointingColumns& pointingSubtablecols() const;
 
-  // Access to polarization subtable
+  // Access to MS polarization subtable
   const casacore::MSPolarizationColumns& polarizationSubtablecols() const;
 
-  // Access to processor subtable
+  // Access to MS processor subtable
   const casacore::MSProcessorColumns& processorSubtablecols() const;
 
-  // Access to spectralWindow subtable
+  // Access to MS spectralWindow subtable
   const casacore::MSSpWindowColumns& spectralWindowSubtablecols() const;
 
-  // Access to state subtable
+  // Access to MS state subtable
   const casacore::MSStateColumns& stateSubtablecols() const;
 
-  // Access to doppler subtable
+  // Access to MS doppler subtable
   const casacore::MSDopplerColumns& dopplerSubtablecols() const;
 
-  // Access to freqOffset subtable
+  // Access to MS freqOffset subtable
   const casacore::MSFreqOffsetColumns& freqOffsetSubtablecols() const;
 
-  // Access to source subtable
+  // Access to MS source subtable
   const casacore::MSSourceColumns& sourceSubtablecols() const;
 
-  // Access to sysCal subtable
+  // Access to MS sysCal subtable
   const casacore::MSSysCalColumns& sysCalSubtablecols() const;
 
-  // Access to weather subtable
+  // Access to MS weather subtable
   const casacore::MSWeatherColumns& weatherSubtablecols() const;
 
 

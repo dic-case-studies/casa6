@@ -49,6 +49,7 @@
 #include <msvis/MSVis/AveragingVi2Factory.h>
 #include <msvis/MSVis/LayeredVi2Factory.h>
 #include <mstransform/TVI/UVContSubTVI.h>
+#include <mstransform/TVI/PhaseShiftingTVI.h>
 
 // THis is needed just because of vi::AveragingTvi2::weightToSigma
 #include <msvis/MSVis/AveragingTvi2.h>
@@ -394,9 +395,11 @@ protected:
 	void parseTimeAvgParams(casacore::Record &configuration);
 	void parseCalParams(casacore::Record &configuration);
 	void parseUVContSubParams(casacore::Record &configuration);
+	void parsePhaseShiftSubParams(casacore::Record &configuration);
 	void setSpwAvg(casacore::Record &configuration);
 	void parsePolAvgParams(casacore::Record &configuration);
 	void parsePointingsInterpolationParams(casacore::Record &configuration);
+	void parseAtmCorrectionParams(casacore::Record &configuration);
 
 	// From input MS
 	void initDataSelectionParams();
@@ -488,7 +491,7 @@ protected:
 	void colCheckInfo(const casacore::String& inputColName, const casacore::String& outputColName);
 	void checkSPWChannelsKnownLimitation();
 	void checkCorrelatorPreaveraging();
-	
+
 	// Iterator set-up
 	virtual void setIterationApproach();
 	void generateIterator();
@@ -1367,6 +1370,11 @@ protected:
 	casacore::Bool phaseShifting_p;
 	casacore::Double dx_p, dy_p;
 
+	// CAS-12706 To run phase shift via a TVI which has
+	// support for shifting across large offset/angles
+	casacore::Bool tviphaseshift_p;
+	casacore::Record tviphaseshiftConfig_p;
+
     // For scalar averaging, use "timebin" for iter interval but don't average
 	casacore::Bool scalarAverage_p;
 
@@ -1425,6 +1433,7 @@ protected:
 	// Output casacore::MS structure related members
 	casacore::Bool inputFlagCategoryAvailable_p;
 	casacore::Bool correctedToData_p;
+	casacore::Bool bothDataColumnsAreOutput_p;
 	casacore::Bool doingData_p;
 	casacore::Bool doingCorrected_p;
 	casacore::Bool doingModel_p;
@@ -1504,6 +1513,8 @@ protected:
 	// single dish specific
 	casacore::Bool smoothFourier_p;
 	map<casacore::Int, casacore::Convolver<casacore::Float> > convolverPool_;
+	casacore::Bool doAtmCor_p;
+	casacore::Record atmCorConfig_p;
 
 	// Logging
 	casacore::LogIO logger_p;

@@ -31,12 +31,9 @@
 #include <casa/aips.h>
 
 #include <display/DisplayShapes/DSPolyLine.h>
-#include <casa/Arrays/Matrix.h>
-
-namespace casacore{
-
-	template <class T> class Vector;
-}
+#include <casacore/casa/aips.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/casa/Arrays/Vector.h>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
 

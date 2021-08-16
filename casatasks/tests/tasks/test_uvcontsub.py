@@ -23,7 +23,7 @@ else:
 
     # uses the global tb tool
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
@@ -37,8 +37,8 @@ Features tested:
   4. It gets the right answer for a known line + 0th order continuum,
      even when fitorder = 4.
 '''
-uvcdatadir = 'uvcontsub' 
-datapath = 'regression/unittest'
+#uvcdatadir = 'uvcontsub' 
+datapath = 'unittest/uvcontsub/'
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -96,9 +96,10 @@ class UVContsubUnitTestBase(unittest.TestCase):
         if testmms:
             print("Testing on MMSs.")
         
-        self.inpms = uvcdatadir+'/'+inpms
-        if not os.path.exists(uvcdatadir):
-            os.system('mkdir '+ uvcdatadir)
+#        self.inpms = uvcdatadir+'/'+inpms
+        self.inpms = inpms
+#        if not os.path.exists(uvcdatadir):
+#            os.system('mkdir '+ uvcdatadir)
 
         if not os.path.exists(self.inpms):
             try:
@@ -156,9 +157,9 @@ class zeroth(UVContsubUnitTestBase):
         pnrows = {}
         try:
             print("\nRunning uvcontsub")
-            uvran = uvcontsub(self.inpms, fitspw='0:0~5;18~23',
-                               fitorder=0, want_cont=True
-                               )
+            uvcontsub(self.inpms, fitspw='0:0~5;18~23',
+                      fitorder=0, want_cont=True
+            )
         except Exception:
             print("Error running uvcontsub")
             raise
@@ -175,7 +176,6 @@ class zeroth(UVContsubUnitTestBase):
             shutil.rmtree(specms)
         #self.__class__.records[corrsel] = record
         #return uvran
-        self.assertEqual(uvran,True)
 
         print("Continuum estimate in line-free region")
         self.check_eq(record['cont'][:,3],   # RR, LL
@@ -212,9 +212,9 @@ class fourth(UVContsubUnitTestBase):
         record = {}
         try:
             print("\nRunning uvcontsub")
-            uvran = uvcontsub(self.inpms, fitspw='0:0~5;18~23',
-                               fitorder=infitorder, want_cont=True
-                               )
+            uvcontsub(self.inpms, fitspw='0:0~5;18~23',
+                      fitorder=infitorder, want_cont=True
+            )
         except Exception:
             print("Error running uvcontsub")
             raise
@@ -228,7 +228,6 @@ class fourth(UVContsubUnitTestBase):
             shutil.rmtree(specms)
         #self.__class__.records[corrsel] = record
         #return uvran
-        self.assertEqual(uvran,True)
 
         print("Continuum estimate")
         self.check_eq(record['cont'],   # [[RR], [LL]]
@@ -303,10 +302,10 @@ class combspw(UVContsubUnitTestBase):
             record[infitorder]={}
             try:
                 print("\nRunning uvcontsub")
-                uvran = uvcontsub(self.inpms, fitspw='1~10:5~122,15~22:5~122',
-                                   spw='6~14', combine='spw',
-                                   fitorder=infitorder, want_cont=False
-                                   )
+                uvcontsub(self.inpms, fitspw='1~10:5~122,15~22:5~122',
+                          spw='6~14', combine='spw',
+                          fitorder=infitorder, want_cont=False
+                )
             except Exception:
                 print("Error running uvcontsub")
                 raise
@@ -318,7 +317,6 @@ class combspw(UVContsubUnitTestBase):
             shutil.rmtree(specms)
             #self.__class__.records[corrsel] = record
             #return uvran
-            self.assertEqual(uvran,True)
 
         print("combspw fitorder=0 line estimate")
         self.check_eq(record[0]['contsub'], -6.2324+17.9865j, 0.001)
@@ -344,9 +342,9 @@ class excludechans(UVContsubUnitTestBase):
         try:
             print("\nRunning uvcontsub")
            
-            uvran = uvcontsub(self.inpms, fitspw='0:6~17', #'0:0~5;18~23'
-                               excludechans=True, fitorder=0, 
-                               want_cont=True)
+            uvcontsub(self.inpms, fitspw='0:6~17', #'0:0~5;18~23'
+                      excludechans=True, fitorder=0,
+                      want_cont=True)
         except Exception:
             print("Error running uvcontsub")
             raise
@@ -363,7 +361,6 @@ class excludechans(UVContsubUnitTestBase):
             shutil.rmtree(specms)
         #self.__class__.records[corrsel] = record
         #return uvran
-        self.assertEqual(uvran,True)
 
         print("Continuum estimate in line-free region")
         self.check_eq(record['cont'][:,3],   # RR, LL
@@ -398,8 +395,8 @@ class excludechans2(UVContsubUnitTestBase):
         infitspw = '1:0~5;10~15;123~127,3:0~5;11~15;123~127,2:0~5;10~15;123~127'
         try:
             print("\nRunning uvcontsub")
-            uvran = uvcontsub(self.inpms, fitspw=infitspw,
-                                   spw='1~3', want_cont=False, excludechans=True)
+            uvcontsub(self.inpms, fitspw=infitspw,
+                      spw='1~3', want_cont=False, excludechans=True)
         except Exception:
             print("Error running uvcontsub")
             raise
@@ -411,8 +408,6 @@ class excludechans2(UVContsubUnitTestBase):
         #tb.close()
         #shutil.rmtree(specms)
         #self.__class__.records[corrsel] = record
-        #return uvran
-        self.assertEqual(uvran,True)
 
         #print("combspw fitorder=0 line estimate")
         #self.check_eq(record[0]['contsub'], -6.2324+17.9865j, 0.001)
@@ -438,10 +433,10 @@ class freqrangeselection(UVContsubUnitTestBase):
         try:
             print("\nRunning uvcontsub")
 
-            uvran = uvcontsub(self.inpms, 
-                               fitspw='*:1412665073.7687755~1412787144.0812755Hz;1413104526.8937755~1413226597.2062755Hz',
-                               fitorder=0,
-                               want_cont=True)
+            uvcontsub(self.inpms,
+                      fitspw='*:1412665073.7687755~1412787144.0812755Hz;1413104526.8937755~1413226597.2062755Hz',
+                      fitorder=0,
+                      want_cont=True)
         except Exception:
             print("Error running uvcontsub")
             raise
@@ -457,8 +452,6 @@ class freqrangeselection(UVContsubUnitTestBase):
             tb.close()
             shutil.rmtree(specms)
         #self.__class__.records[corrsel] = record
-        #return uvran
-        self.assertEqual(uvran,True)
 
         print("Continuum estimate in line-free region")
         self.check_eq(record['cont'][:,3],   # RR, LL

@@ -74,6 +74,9 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
     correctedVisCube_p.initialize (this, vb, &VisBufferImpl2::fillCubeCorrected,
                                    VisBufferComponent2::VisibilityCubeCorrected,
                                    NcNfNr, false);
+    correctedVisCubes_p.initialize (this, vb, &VisBufferImpl2::fillCubesCorrected,
+                                    VisBufferComponent2::VisibilityCubesCorrected,
+                                    NsNcNfNr, false);
     corrType_p.initialize (this, vb, &VisBufferImpl2::fillCorrType,
                            VisBufferComponent2::CorrType, NoCheck, false);
     dataDescriptionIds_p.initialize (this, vb, &VisBufferImpl2::fillDataDescriptionIds,
@@ -99,14 +102,20 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
     // required column but not used in casa, make it a nocheck for shape validation
     flagCube_p.initialize (this, vb, &VisBufferImpl2::fillFlagCube,
                            VisBufferComponent2::FlagCube, NcNfNr, false);
+    flagCubes_p.initialize (this, vb, &VisBufferImpl2::fillFlagCubes,
+                           VisBufferComponent2::FlagCubes, NsNcNfNr, false);
     flagRow_p.initialize (this, vb, &VisBufferImpl2::fillFlagRow,
                           VisBufferComponent2::FlagRow, Nr, false);
     floatDataCube_p.initialize (this, vb, &VisBufferImpl2::fillFloatData,
                                 VisBufferComponent2::VisibilityCubeFloat, NcNfNr, false);
+    floatDataCubes_p.initialize (this, vb, &VisBufferImpl2::fillFloatCubes,
+                                 VisBufferComponent2::VisibilityCubesFloat, NsNcNfNr, false);
     imagingWeight_p.initialize (this, vb, &VisBufferImpl2::fillImagingWeight,
                                 VisBufferComponent2::ImagingWeight, NoCheck, false);
     modelVisCube_p.initialize (this, vb, &VisBufferImpl2::fillCubeModel,
                                VisBufferComponent2::VisibilityCubeModel, NcNfNr, false);
+    modelVisCubes_p.initialize (this, vb, &VisBufferImpl2::fillCubesModel,
+                               VisBufferComponent2::VisibilityCubesModel, NsNcNfNr, false);
     nAntennas_p.initialize (this, vb, &VisBufferImpl2::fillNAntennas,
                             VisBufferComponent2::NAntennas, false);
     nChannels_p.initialize (this, vb, &VisBufferImpl2::fillNChannel,
@@ -115,6 +124,14 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
                                 VisBufferComponent2::NCorrelations);
     nRows_p.initialize (this, vb, &VisBufferImpl2::fillNRow,
                         VisBufferComponent2::NRows, false);
+    nShapes_p.initialize (this, vb, &VisBufferImpl2::fillNShapes,
+                          VisBufferComponent2::NShapes, false);
+    nRowsPerShape_p.initialize (this, vb, &VisBufferImpl2::fillNRowPerShape,
+                                VisBufferComponent2::NRowsPerShape, Ns, false);
+    nChannelsPerShape_p.initialize (this, vb, &VisBufferImpl2::fillNChannelPerShape,
+                                    VisBufferComponent2::NChannelsPerShape, Ns, false);
+    nCorrelationsPerShape_p.initialize (this, vb, &VisBufferImpl2::fillNCorrPerShape,
+                                        VisBufferComponent2::NCorrelationsPerShape, Ns, false);
     observationId_p.initialize (this, vb, &VisBufferImpl2::fillObservationId,
                                 VisBufferComponent2::ObservationId, Nr, true);
     phaseCenter_p.initialize (this, vb, &VisBufferImpl2::fillPhaseCenter,
@@ -131,6 +148,8 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
                        VisBufferComponent2::Scan, Nr, true);
     sigma_p.initialize (this, vb, &VisBufferImpl2::fillSigma,
                         VisBufferComponent2::Sigma, NcNr, false);
+    sigmas_p.initialize (this, vb, &VisBufferImpl2::fillSigmas,
+                         VisBufferComponent2::Sigma, NsNcNr, false);
     spectralWindows_p.initialize (this, vb, &VisBufferImpl2::fillSpectralWindows,
                                   VisBufferComponent2::SpectralWindows, Nr, false);
     stateId_p.initialize (this, vb, &VisBufferImpl2::fillStateId,
@@ -145,14 +164,24 @@ VisBufferCache::initialize (VisBufferImpl2 * vb)
                       VisBufferComponent2::Uvw, I3Nr, false);
     visCube_p.initialize (this, vb, &VisBufferImpl2::fillCubeObserved,
                           VisBufferComponent2::VisibilityCubeObserved, NcNfNr, false);
+    visCubes_p.initialize (this, vb, &VisBufferImpl2::fillCubesObserved,
+                           VisBufferComponent2::VisibilityCubesObserved, NsNcNfNr, false);
     weight_p.initialize (this, vb, &VisBufferImpl2::fillWeight,
                          VisBufferComponent2::Weight, NcNr, false);
+    weights_p.initialize (this, vb, &VisBufferImpl2::fillWeights,
+                          VisBufferComponent2::Weights, NsNcNr, false);
     weightSpectrum_p.initialize (this, vb, &VisBufferImpl2::fillWeightSpectrum,
                                  VisBufferComponent2::WeightSpectrum,
                                  NcNfNr, false);
+    weightSpectra_p.initialize (this, vb, &VisBufferImpl2::fillWeightSpectra,
+                                 VisBufferComponent2::WeightSpectra,
+                                 NsNcNfNr, false);
     sigmaSpectrum_p.initialize (this, vb, &VisBufferImpl2::fillSigmaSpectrum,
                                 VisBufferComponent2::SigmaSpectrum,
                                 NcNfNr, false);
+    sigmaSpectra_p.initialize (this, vb, &VisBufferImpl2::fillSigmaSpectra,
+                                VisBufferComponent2::SigmaSpectra,
+                                NsNcNfNr, false);
 }
 
 void
@@ -304,6 +333,10 @@ VisBufferImpl2::appendRowsComplete ()
     }
 
     cache_p->nRows_p.setSpecial (state_p->appendSize_p);
+    //Assume that the append happens on the first shape only
+    Vector<rownr_t> nRowsPerShape = cache_p->nRowsPerShape_p.get();
+    nRowsPerShape[0] = state_p->appendSize_p;
+    cache_p->nRowsPerShape_p.setSpecial (nRowsPerShape);
 
     state_p->appendSize_p = 0; //
 }
@@ -540,86 +573,6 @@ VisBufferImpl2::copyRow (Int sourceRow, Int destinationRow)
 }
 
 void
-VisBufferImpl2::deleteRows (const Vector<Int> & rowsToDelete)
-{
-
-    // Deletes the specified rows.  This involves copying the undeleted
-    // rows down to fill in the holes left by the deletions.  The current
-    // approach preserves the order of the undeleted rows; however, this
-    // causes all rows after the first deletion to be copied.  If preserving
-    // the order is not important then any deletion could be filled by copying
-    // a row from the end of the VB into the holes.  For the moment the simpler
-    // approach is implemented.
-
-    if (rowsToDelete.empty()){
-        return;
-    }
-
-    Int deleteIndex = 0;
-    Int rowToDelete = rowsToDelete (0);
-    Int destinationRow = 0;
-
-    for (Int sourceRow = 0; sourceRow < nRows(); sourceRow ++){
-
-        if (sourceRow == rowToDelete){
-
-            // This row is being deleted so don't copy it down.
-            // Advance the deletion index and get the next row
-            // to be deleted.
-
-            deleteIndex ++;
-
-            if (deleteIndex < (int) rowsToDelete.nelements()){
-
-                Int oldRowToDelete = rowToDelete;
-
-                rowToDelete = rowsToDelete (deleteIndex);
-
-                Assert (oldRowToDelete < rowToDelete);
-                UnusedVariable (oldRowToDelete);
-            }
-        }
-        else if (destinationRow != sourceRow){
-
-            // Copy this row down to the next empty row.  Advance
-            // the destination row.
-
-            copyRow (sourceRow, destinationRow);
-
-            destinationRow ++;
-        }
-        else{
-            destinationRow ++;
-        }
-    }
-
-    Int newNRows = nRows() - rowsToDelete.nelements();
-
-    setShape (nCorrelations (), nChannels (), newNRows, false);
-
-    resizeRows (newNRows);
-}
-
-void
-VisBufferImpl2::resizeRows (Int newNRows)
-{
-
-    // Resize each member of the cache to use the new number of rows.
-    // The resizing will preserve the unaffected data values.
-
-    for (CacheRegistry::iterator i = cache_p->registry_p.begin();
-         i != cache_p->registry_p.end();
-         i++){
-
-        if (! (* i)->isPresent()){
-            continue;
-        }
-
-        (* i)->resizeRows (newNRows);
-    }
-}
-
-void
 VisBufferImpl2::dirtyComponentsAdd (const VisBufferComponents2 & additionalDirtyComponents)
 {
     // Loop through all of the cached VB components and mark them dirty if
@@ -819,6 +772,14 @@ VisBufferImpl2::getValidShape (Int i) const
     return state_p->validShapes_p (i);
 }
 
+Vector<IPosition>
+VisBufferImpl2::getValidVectorShapes (Int i) const
+{
+    ThrowIf (i < 0 || i >= (int) state_p->validVectorShapes_p.nelements(),
+             String::format ("Invalid shape requested: %d", i));
+
+    return state_p->validVectorShapes_p (i);
+}
 
 ViImplementation2 *
 VisBufferImpl2::getViiP () const
@@ -933,7 +894,7 @@ VisBufferImpl2::normalize()
 
     // Normalize each row.
 
-    for (Int row = 0; row < nRows (); row++) {
+    for (rownr_t row = 0; row < nRows (); row++) {
 
         if (rowFlagged (row)){
 
@@ -974,7 +935,7 @@ VisBufferImpl2::phaseCenterShift(const Vector<Double>& phase)
 
 	Complex cph;
 	Double ph, udx;
-	for (Int row_idx = 0; row_idx < nRows(); ++row_idx)
+	for (rownr_t row_idx = 0; row_idx < nRows(); ++row_idx)
 	{
 		udx = phase(row_idx) * -2.0 * C::pi / C::c; // in radian/Hz
 
@@ -1109,7 +1070,7 @@ VisBufferImpl2::resetWeightsUsingSigma ()
       Cube<Float> wtsp(nCorrelations(),nChannels(),nRows(),0.0);
       const Cube <Float> & sigmaSpec = this->sigmaSpectrum ();
 
-      for (Int irow=0;irow<nRows();++irow) {
+      for (rownr_t irow=0;irow<nRows();++irow) {
 	for (Int ichan=0;ichan<nChannels();++ichan) {
 	  for (Int icorr=0;icorr<nCorrelations();++icorr) {
 	    const Float &s=sigmaSpec(icorr,ichan,irow);
@@ -1126,7 +1087,7 @@ VisBufferImpl2::resetWeightsUsingSigma ()
       Cube<Float> wtsp(nCorrelations(),nChannels(),nRows(),0.0);
       const Matrix <Float> & sigma = this->sigma ();
 
-      for (Int irow=0;irow<nRows();++irow) {
+      for (rownr_t irow=0;irow<nRows();++irow) {
 	for (Int icorr=0;icorr<nCorrelations();++icorr) {
 	  const Float &s=sigma(icorr,irow);
 	  wtsp(Slice(icorr,1,1),Slice(),Slice(irow,1,1)) =
@@ -1142,7 +1103,7 @@ VisBufferImpl2::resetWeightsUsingSigma ()
     Matrix<Float> wtm(nCorrelations(),nRows(),0.0);
     const Matrix <Float> & sigma = this->sigma ();
     
-    for (Int irow=0;irow<nRows();++irow) {
+    for (rownr_t irow=0;irow<nRows();++irow) {
       for (Int icorr=0;icorr<nCorrelations();++icorr) {
 	const Float &s=sigma(icorr,irow);
 	wtm(icorr,irow) = (s>0.0 ? 1.0f/square(s) : 0.0);
@@ -1199,9 +1160,9 @@ VisBufferImpl2::configureNewSubchunk (Int msId,
                                       Bool isNewFieldId,
                                       Bool isNewSpectralWindow,
                                       const Subchunk & subchunk,
-                                      Int nRows,
-                                      Int nChannels,
-                                      Int nCorrelations,
+                                      const casacore::Vector<casacore::rownr_t>& nRowsPerShape, 
+                                      const casacore::Vector<casacore::Int>& nChannelsPerShape,
+                                      const casacore::Vector<casacore::Int>& nCorrelationsPerShape,
                                       const Vector<Int> & correlations,
                                       const Vector<Stokes::StokesTypes> & correlationsDefined,
                                       const Vector<Stokes::StokesTypes> & correlationsSelected,
@@ -1220,9 +1181,17 @@ VisBufferImpl2::configureNewSubchunk (Int msId,
     state_p->frequencies_p.flush();
     state_p->channelNumbers_p.flush();
 
-    cache_p->nRows_p.setSpecial (nRows);
-    cache_p->nChannels_p.setSpecial (nChannels);
-    cache_p->nCorrelations_p.setSpecial (nCorrelations);
+    // Initialize the API methods that do not support several shapes with the first shape
+    // Clients which use this "old" API should work as expected as long as there is one
+    // single shape in the VisBuffer.
+    cache_p->nRows_p.setSpecial (std::accumulate(nRowsPerShape.begin(), nRowsPerShape.end(), 0));
+    cache_p->nChannels_p.setSpecial (nChannelsPerShape[0]);
+    cache_p->nCorrelations_p.setSpecial (nCorrelationsPerShape[0]);
+
+    cache_p->nShapes_p.setSpecial (nRowsPerShape.size());
+    cache_p->nRowsPerShape_p.setSpecial (nRowsPerShape);
+    cache_p->nChannelsPerShape_p.setSpecial (nChannelsPerShape);
+    cache_p->nCorrelationsPerShape_p.setSpecial (nCorrelationsPerShape);
 
     setupValidShapes ();
 }
@@ -1234,7 +1203,7 @@ VisBufferImpl2::setRekeyable (Bool isRekeyable)
 }
 
 void
-VisBufferImpl2::setShape (Int nCorrelations, Int nChannels, Int nRows,
+VisBufferImpl2::setShape (Int nCorrelations, Int nChannels, rownr_t nRows,
                           Bool clearTheCache)
 {
     ThrowIf (hasShape() && ! isRekeyable(),
@@ -1247,6 +1216,18 @@ VisBufferImpl2::setShape (Int nCorrelations, Int nChannels, Int nRows,
     cache_p->nCorrelations_p.setSpecial(nCorrelations);
     cache_p->nChannels_p.setSpecial(nChannels);
     cache_p->nRows_p.setSpecial(nRows);
+
+    Vector<rownr_t> nRowsPerShape(1);
+    Vector<Int> nChannelsPerShape(1);
+    Vector<Int> nCorrelationsPerShape(1);
+    nRowsPerShape[0] = nRows;
+    nChannelsPerShape[0] = nChannels;
+    nCorrelationsPerShape[0] = nCorrelations;
+
+    cache_p->nShapes_p.setSpecial (1);
+    cache_p->nRowsPerShape_p.setSpecial (nRowsPerShape);
+    cache_p->nChannelsPerShape_p.setSpecial (nChannelsPerShape);
+    cache_p->nCorrelationsPerShape_p.setSpecial (nCorrelationsPerShape);
 
     setupValidShapes ();
 }
@@ -1261,6 +1242,15 @@ VisBufferImpl2::setupValidShapes ()
     state_p->validShapes_p [I3Nr] = IPosition (2, 3, nRows());
     //state_p->validShapes [NcNfNcatNr] = IPosition (4, nCorrelations(), nChannels(), nCategories(), nRows());
     //   flag_category is not used in CASA, so no need to implement checking.
+
+    state_p->validVectorShapes_p [Ns] = IPosition (1, nShapes());
+    state_p->validVectorShapes_p [NsNcNr].resize(nShapes());
+    state_p->validVectorShapes_p [NsNcNfNr].resize(nShapes());
+    for(size_t iShape = 0; iShape < nShapes(); iShape++)
+    {
+        state_p->validVectorShapes_p [NsNcNr][iShape] = IPosition (2, nCorrelationsPerShape()[iShape], nRowsPerShape()[iShape]);
+        state_p->validVectorShapes_p [NsNcNfNr][iShape] = IPosition (3, nCorrelationsPerShape()[iShape], nChannelsPerShape()[iShape], nRowsPerShape()[iShape]);
+    }
 }
 
 bool
@@ -1685,10 +1675,28 @@ VisBufferImpl2::setFlagCategory (const Array<Bool>& value)
     cache_p->flagCategory_p.set (value);
 }
 
+const casacore::Vector<casacore::Array<casacore::Bool>> &
+VisBufferImpl2::flagCategories () const
+{
+    return cache_p->flagCategories_p.get();
+}
+
+void
+VisBufferImpl2::setFlagCategories (const casacore::Vector<casacore::Array<casacore::Bool>>& value)
+{
+    cache_p->flagCategories_p.set (value);
+}
+
 const Cube<Bool> &
 VisBufferImpl2::flagCube () const
 {
     return cache_p->flagCube_p.get ();
+}
+
+const Vector<Cube<Bool>> &
+VisBufferImpl2::flagCubes () const
+{
+    return cache_p->flagCubes_p.get ();
 }
 
 Cube<Bool> &
@@ -1697,10 +1705,22 @@ VisBufferImpl2::flagCubeRef ()
     return cache_p->flagCube_p.getRef ();
 }
 
+Vector<Cube<Bool>> &
+VisBufferImpl2::flagCubesRef ()
+{
+    return cache_p->flagCubes_p.getRef ();
+}
+
 void
 VisBufferImpl2::setFlagCube (const Cube<Bool>& value)
 {
     cache_p->flagCube_p.set (value);
+}
+
+void
+VisBufferImpl2::setFlagCubes (const Vector<Cube<Bool>>& value)
+{
+    cache_p->flagCubes_p.set (value);
 }
 
 const Vector<Bool> &
@@ -1758,10 +1778,34 @@ VisBufferImpl2::nCorrelations () const
     return cache_p->nCorrelations_p.get();
 }
 
-Int
+rownr_t
 VisBufferImpl2::nRows () const
 {
     return cache_p->nRows_p.get ();
+}
+
+rownr_t
+VisBufferImpl2::nShapes () const
+{
+    return cache_p->nShapes_p.get ();
+}
+
+const Vector<rownr_t>&
+VisBufferImpl2::nRowsPerShape () const
+{
+    return cache_p->nRowsPerShape_p.get ();
+}
+
+const Vector<Int> &
+VisBufferImpl2::nChannelsPerShape () const
+{
+    return cache_p->nChannelsPerShape_p.get ();
+}
+
+const Vector<Int> &
+VisBufferImpl2::nCorrelationsPerShape () const
+{
+    return cache_p->nCorrelationsPerShape_p.get ();
 }
 
 const Vector<Int> &
@@ -1806,7 +1850,7 @@ VisBufferImpl2::setProcessorId (const Vector<Int> & value)
     cache_p->processorId_p.set (value);
 }
 
-const Vector<uInt> &
+const Vector<rownr_t> &
 VisBufferImpl2::rowIds () const
 {
     return cache_p->rowIds_p.get ();
@@ -1830,10 +1874,22 @@ VisBufferImpl2::sigma () const
     return cache_p->sigma_p.get ();
 }
 
-void
-VisBufferImpl2::setSigma (const Matrix<Float> & sigma)
+const Vector<Matrix<Float>> &
+VisBufferImpl2::sigmas () const
 {
-    cache_p->sigma_p.set (sigma);
+    return cache_p->sigmas_p.get ();
+}
+
+void
+VisBufferImpl2::setSigma (const Matrix<Float> & sigmas)
+{
+    cache_p->sigma_p.set (sigmas);
+}
+
+void
+VisBufferImpl2::setSigmas (const Vector<Matrix<Float>> & sigmas)
+{
+    cache_p->sigmas_p.set (sigmas);
 }
 
 //const Matrix<Float> &
@@ -1842,16 +1898,10 @@ VisBufferImpl2::setSigma (const Matrix<Float> & sigma)
 //    return cache_p->sigmaMat_p.get ();
 //}
 
-//Int
-//VisBufferImpl2::spectralWindow () const
-//{
-//    return cache_p->spectralWindow_p.get ();
-//}
-
 const Vector<Int> &
 VisBufferImpl2::spectralWindows () const
 {
-	return cache_p->spectralWindows_p.get ();
+    return cache_p->spectralWindows_p.get ();
 }
 
 void
@@ -1939,6 +1989,24 @@ VisBufferImpl2::setVisCubeCorrected (const Cube<Complex> & value)
     cache_p->correctedVisCube_p.set (value);
 }
 
+const Vector<Cube<Complex>> &
+VisBufferImpl2::visCubesCorrected () const
+{
+    return cache_p->correctedVisCubes_p.get ();
+}
+
+Vector<Cube<Complex>> &
+VisBufferImpl2::visCubesCorrectedRef ()
+{
+    return cache_p->correctedVisCubes_p.getRef ();
+}
+
+void
+VisBufferImpl2::setVisCubesCorrected (const Vector<Cube<Complex>> & value)
+{
+    cache_p->correctedVisCubes_p.set (value);
+}
+
 //const Matrix<CStokesVector> &
 //VisBufferImpl2::visCorrected () const
 //{
@@ -1961,6 +2029,18 @@ void
 VisBufferImpl2::setVisCubeFloat (const Cube<Float> & value)
 {
     cache_p->floatDataCube_p.set (value);
+}
+
+const Vector<Cube<Float>> &
+VisBufferImpl2::visCubesFloat () const
+{
+    return cache_p->floatDataCubes_p.get ();
+}
+
+void
+VisBufferImpl2::setVisCubesFloat (const Vector<Cube<Float>> & value)
+{
+    cache_p->floatDataCubes_p.set (value);
 }
 
 const Cube<Complex> &
@@ -1986,6 +2066,30 @@ VisBufferImpl2::setVisCubeModel (const Cube<Complex> & value)
 {
     cache_p->modelVisCube_p.set (value);
 }
+
+const Vector<Cube<Complex>> &
+VisBufferImpl2::visCubesModel () const
+{
+    return cache_p->modelVisCubes_p.get ();
+}
+
+Vector<Cube<Complex>> &
+VisBufferImpl2::visCubesModelRef ()
+{
+    return cache_p->modelVisCubes_p.getRef ();
+}
+
+void
+VisBufferImpl2::setVisCubesModel (const Vector<Cube<Complex>> & value)
+{
+    cache_p->modelVisCubes_p.set (value);
+}
+
+//void
+//VisBufferImpl2::setVisCubesModel (const Complex & value)
+//{
+//    cache_p->modelVisCubes_p.set (value);
+//}
 
 ms::MsRow *
 VisBufferImpl2::getRow (Int row) const
@@ -2094,6 +2198,30 @@ VisBufferImpl2::setVisCube (const Cube<Complex> & value)
     cache_p->visCube_p.set (value);
 }
 
+const Vector<Cube<Complex>> &
+VisBufferImpl2::visCubes () const
+{
+    return cache_p->visCubes_p.get ();
+}
+
+Vector<Cube<Complex>> &
+VisBufferImpl2::visCubesRef ()
+{
+    return cache_p->visCubes_p.getRef ();
+}
+
+//void
+//VisBufferImpl2::setVisCubes (const Complex & value)
+//{
+ //   cache_p->visCube_p.set (value);
+//}
+
+void
+VisBufferImpl2::setVisCubes (const Vector<Cube<Complex>> & value)
+{
+    cache_p->visCubes_p.set (value);
+}
+
 //const Matrix<CStokesVector> &
 //VisBufferImpl2::vis () const
 //{
@@ -2116,6 +2244,18 @@ void
 VisBufferImpl2::setWeight (const Matrix<Float>& value)
 {
     cache_p->weight_p.set (value);
+}
+
+const Vector<Matrix<Float>> &
+VisBufferImpl2::weights () const
+{
+    return cache_p->weights_p.get ();
+}
+
+void
+VisBufferImpl2::setWeights (const Vector<Matrix<Float>>& value)
+{
+    cache_p->weights_p.set (value);
 }
 
 //const Matrix<Float> &
@@ -2149,6 +2289,24 @@ VisBufferImpl2::setWeightSpectrum (const Cube<Float>& value)
     cache_p->weightSpectrum_p.set (value);
 }
 
+const Vector<Cube<Float>> &
+VisBufferImpl2::weightSpectra () const
+{
+    return cache_p->weightSpectra_p.get ();
+}
+
+Vector<Cube<Float>> &
+VisBufferImpl2::weightSpectraRef ()
+{
+    return cache_p->weightSpectra_p.getRef();
+}
+
+void
+VisBufferImpl2::setWeightSpectra (const Vector<Cube<Float>>& value)
+{
+    cache_p->weightSpectra_p.set (value);
+}
+
 const Cube<Float> &
 VisBufferImpl2::sigmaSpectrum () const
 {
@@ -2161,11 +2319,28 @@ VisBufferImpl2::sigmaSpectrumRef ()
     return cache_p->sigmaSpectrum_p.getRef();
 }
 
-
 void
 VisBufferImpl2::setSigmaSpectrum (const Cube<Float>& value)
 {
     cache_p->sigmaSpectrum_p.set (value);
+}
+
+const Vector<Cube<Float>> &
+VisBufferImpl2::sigmaSpectra () const
+{
+    return cache_p->sigmaSpectra_p.get ();
+}
+
+Vector<Cube<Float>> &
+VisBufferImpl2::sigmaSpectraRef ()
+{
+    return cache_p->sigmaSpectra_p.getRef();
+}
+
+void
+VisBufferImpl2::setSigmaSpectra (const Vector<Cube<Float>>& value)
+{
+    cache_p->sigmaSpectra_p.set (value);
 }
 
 
@@ -2219,6 +2394,14 @@ VisBufferImpl2::fillCubeCorrected (Cube <Complex> & value) const
 }
 
 void
+VisBufferImpl2::fillCubesCorrected (Vector<Cube<Complex>> & value) const
+{
+    CheckVisIter ();
+
+    getViiP()->visibilityCorrected (value);
+}
+
+void
 VisBufferImpl2::fillCubeModel (Cube <Complex> & value) const
 {
     CheckVisIter ();
@@ -2226,9 +2409,24 @@ VisBufferImpl2::fillCubeModel (Cube <Complex> & value) const
     getViiP()->visibilityModel(value);
 }
 
+void
+VisBufferImpl2::fillCubesModel (Vector<Cube <Complex>> & value) const
+{
+    CheckVisIter ();
+
+    getViiP()->visibilityModel(value);
+}
 
 void
 VisBufferImpl2::fillCubeObserved (Cube <Complex> & value) const
+{
+    CheckVisIter ();
+
+    getViiP()->visibilityObserved (value);
+}
+
+void
+VisBufferImpl2::fillCubesObserved (Vector<Cube <Complex>> & value) const
 {
     CheckVisIter ();
 
@@ -2262,7 +2460,7 @@ VisBufferImpl2::fillDirection1 (Vector<MDirection>& value) const
 
   fillDirectionAux (value, antenna1 (), feed1 (), feedPa1 ());
 
-  value.resize(antenna1 ().nelements()); // could also use nRow()
+  value.resize(nRows());
 }
 
 void
@@ -2275,7 +2473,7 @@ VisBufferImpl2::fillDirection2 (Vector<MDirection>& value) const
 
   fillDirectionAux (value, antenna2 (), feed2 (), feedPa2 ());
 
-  value.resize(antenna2 ().nelements()); // could also use nRow()
+  value.resize(nRows());
 }
 
 void
@@ -2284,7 +2482,7 @@ VisBufferImpl2::fillDirectionAux (Vector<MDirection>& value,
                                   const Vector<Int> &feed,
                                   const Vector<Float> & feedPa) const
 {
-    value.resize (antenna.nelements()); // could also use nRow()
+    value.resize (nRows());
 
 //    const MSPointingColumns & mspc = getViiP()->subtableColumns ().pointing();
 //    state_p->pointingTableLastRow_p = mspc.pointingIndex (antenna (0),
@@ -2373,7 +2571,7 @@ VisBufferImpl2::fillFeedPa1 (Vector <Float> & feedPa) const
   antenna1 ();
   time ();
 
-  feedPa.resize(antenna1().nelements()); // could also use nRow()
+  feedPa.resize(nRows());
 
   fillFeedPaAux (feedPa, antenna1 (), feed1 ());
 }
@@ -2390,7 +2588,7 @@ VisBufferImpl2::fillFeedPa2 (Vector <Float> & feedPa) const
   antenna2();
   time();
 
-  feedPa.resize(antenna2().nelements()); // could also use nRow()
+  feedPa.resize(nRows());
 
   fillFeedPaAux (feedPa, antenna2(), feed2 ());
 }
@@ -2455,6 +2653,14 @@ VisBufferImpl2::fillFlagCube (Cube<Bool>& value) const
 }
 
 void
+VisBufferImpl2::fillFlagCubes (Vector<Cube<Bool>>& value) const
+{
+  CheckVisIter ();
+
+  getViiP()->flag (value);
+}
+
+void
 VisBufferImpl2::fillFlagRow (Vector<Bool>& value) const
 {
   CheckVisIter ();
@@ -2464,6 +2670,14 @@ VisBufferImpl2::fillFlagRow (Vector<Bool>& value) const
 
 void
 VisBufferImpl2::fillFloatData (Cube<Float>& value) const
+{
+  CheckVisIter ();
+
+  getViiP()->floatData (value);
+}
+
+void
+VisBufferImpl2::fillFloatCubes (Vector<Cube<Float>>& value) const
 {
   CheckVisIter ();
 
@@ -2577,6 +2791,46 @@ VisBufferImpl2::fillNRow (Int&) const
 }
 
 void
+VisBufferImpl2::fillNShapes (Int&) const
+{
+  CheckVisIter ();
+
+  // This value enters the VB from a route that doesn't involve
+  // filling; however the framework requires that this method exist
+  // so it's implemented as a no-op.
+}
+
+void
+VisBufferImpl2::fillNRowPerShape (Vector<rownr_t> &) const
+{
+  CheckVisIter ();
+
+  // This value enters the VB from a route that doesn't involve
+  // filling; however the framework requires that this method exist
+  // so it's implemented as a no-op.
+}
+
+void
+VisBufferImpl2::fillNChannelPerShape (Vector<Int> &) const
+{
+  CheckVisIter ();
+
+  // This value enters the VB from a route that doesn't involve
+  // filling; however the framework requires that this method exist
+  // so it's implemented as a no-op.
+}
+
+void
+VisBufferImpl2::fillNCorrPerShape (Vector<Int> &) const
+{
+  CheckVisIter ();
+
+  // This value enters the VB from a route that doesn't involve
+  // filling; however the framework requires that this method exist
+  // so it's implemented as a no-op.
+}
+
+void
 VisBufferImpl2::fillObservationId (Vector<Int>& value) const
 {
   CheckVisIter();
@@ -2617,7 +2871,7 @@ VisBufferImpl2::fillProcessorId (Vector<Int>& value) const
 }
 
 void
-VisBufferImpl2::fillRowIds (Vector<uInt>& value) const
+VisBufferImpl2::fillRowIds (Vector<rownr_t>& value) const
 {
   CheckVisIter ();
 
@@ -2637,6 +2891,13 @@ void
 VisBufferImpl2::fillSigma (Matrix<Float>& value) const
 {
   CheckVisIter ();
+  getViiP()->sigma (value);
+}
+
+void
+VisBufferImpl2::fillSigmas (Vector<Matrix<Float>>& value) const
+{
+  CheckVisIter ();
 
   getViiP()->sigma (value);
 }
@@ -2647,14 +2908,6 @@ VisBufferImpl2::fillSigma (Matrix<Float>& value) const
 //  CheckVisIter ();
 //
 //  getViiP()->sigmaMat (value);
-//}
-
-//void
-//VisBufferImpl2::fillSpectralWindow (Int& value) const
-//{
-//  CheckVisIter ();
-//
-//  value = getViiP()->spectralWindow ();
 //}
 
 void
@@ -2739,6 +2992,13 @@ VisBufferImpl2::fillWeight (Matrix<Float>& value) const
   getViiP()->weight (value);
 }
 
+void
+VisBufferImpl2::fillWeights (Vector<Matrix<Float>>& value) const
+{
+  CheckVisIter ();
+
+  getViiP()->weight (value);
+}
 
 void
 VisBufferImpl2::fillWeightSpectrum (Cube<Float>& value) const
@@ -2768,7 +3028,7 @@ VisBufferImpl2::fillWeightSpectrum (Cube<Float>& value) const
 
         // jagonzal (TODO): Review this filling code (it should be row/channel/correlation)
         //                  Or even better direct array assignment
-        for (Int row = 0; row < nRows(); row ++){
+        for (rownr_t row = 0; row < nRows(); row ++){
 
             for (Int correlation = 0; correlation < nCorrelations (); correlation ++){
 
@@ -2786,6 +3046,50 @@ VisBufferImpl2::fillWeightSpectrum (Cube<Float>& value) const
 }
 
 void
+VisBufferImpl2::fillWeightSpectra (Vector<Cube<Float>>& value) const
+{
+    CheckVisIter ();
+
+    if (getViiP()->weightSpectrumExists()){
+
+        getViiP()->weightSpectrum (value);
+    }
+    else{
+        value.resize(this->nShapes());
+        
+        auto nRowsPerShape = this->nRowsPerShape();
+        auto nCorrelationsPerShape = this->nCorrelationsPerShape();
+        auto nChannelsPerShape = this->nChannelsPerShape();
+
+        // Weight spectrum doesn't exist so create on using the weight column.
+        auto theWeights = weights();
+
+        for (rownr_t ishape = 0; ishape < nShapes(); ishape ++){
+
+            auto nRows = nRowsPerShape[ishape];
+            auto nCorrelations = nCorrelationsPerShape[ishape];
+            auto nChannels = nChannelsPerShape[ishape];
+
+            value[ishape].resize (IPosition (3, nCorrelations, nChannels, nRows));
+
+            for (rownr_t row = 0; row < nRows; row ++){
+
+                for (Int correlation = 0; correlation < nCorrelations; correlation ++){
+
+                    float theWeight = theWeights[ishape] (correlation, row);
+
+                    for (Int channel = 0; channel < nChannels; channel ++){
+                    
+                        value[ishape] (correlation, channel, row) = theWeight;
+                    }
+            
+                }
+            }
+        }
+    }
+}
+
+void
 VisBufferImpl2::fillSigmaSpectrum (Cube<Float>& value) const
 {
     CheckVisIter ();
@@ -2796,9 +3100,9 @@ VisBufferImpl2::fillSigmaSpectrum (Cube<Float>& value) const
     }
     else{
 
-        int nRows = this->nRows();
-        int nCorrelations = this->nCorrelations ();
-        int nChannels = this->nChannels();
+        auto nRows = this->nRows();
+        auto nCorrelations = this->nCorrelations ();
+        auto nChannels = this->nChannels();
 
         // Sigma spectrum doesn't exist so create on using the sigma column.
 
@@ -2812,7 +3116,7 @@ VisBufferImpl2::fillSigmaSpectrum (Cube<Float>& value) const
         // jagonzal (TODO): Review this filling code (it should be row/channel/correlation)
         //                  Or even better direct array assignment
 
-        for (Int row = 0; row < nRows; row ++){
+        for (rownr_t row = 0; row < nRows; row ++){
 
             for (Int correlation = 0; correlation < nCorrelations; correlation ++){
 
@@ -2823,6 +3127,50 @@ VisBufferImpl2::fillSigmaSpectrum (Cube<Float>& value) const
                     value (correlation, channel, row) = theSigma;
                 }
 
+            }
+        }
+    }
+}
+
+void
+VisBufferImpl2::fillSigmaSpectra (Vector<Cube<Float>>& value) const
+{
+    CheckVisIter ();
+
+    if (getViiP()->sigmaSpectrumExists()){
+
+        getViiP()->sigmaSpectrum (value);
+    }
+    else{
+        value.resize(this->nShapes());
+        
+        auto nRowsPerShape = this->nRowsPerShape();
+        auto nCorrelationsPerShape = this->nCorrelationsPerShape();
+        auto nChannelsPerShape = this->nChannelsPerShape();
+
+        // Sigma spectrum doesn't exist so create on using the sigma column.
+        auto theSigmas = sigmas();
+
+        for (rownr_t ishape = 0; ishape < nShapes(); ishape ++){
+
+            auto nRows = nRowsPerShape[ishape];
+            auto nCorrelations = nCorrelationsPerShape[ishape];
+            auto nChannels = nChannelsPerShape[ishape];
+
+            value[ishape].resize (IPosition (3, nCorrelations, nChannels, nRows));
+
+            for (rownr_t row = 0; row < nRows; row ++){
+
+                for (Int correlation = 0; correlation < nCorrelations; correlation ++){
+
+                    float theSigma = theSigmas[ishape] (correlation, row);
+
+                    for (Int channel = 0; channel < nChannels; channel ++){
+                    
+                        value[ishape] (correlation, channel, row) = theSigma;
+                    }
+            
+                }
             }
         }
     }

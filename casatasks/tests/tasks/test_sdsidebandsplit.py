@@ -1,12 +1,10 @@
 import os
-import sys
 import shutil
 import copy
 from collections import namedtuple
 import numpy
 from scipy.optimize import curve_fit
 import unittest
-from matplotlib.transforms import offset_copy
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -14,7 +12,7 @@ if is_CASA6:
     from casatools import quanta
     from casatools import image
     from casatools import ctsys
-    datapath = ctsys.resolve('regression/unittest/sdsidebandsplit/')
+    datapath = ctsys.resolve('unittest/sdsidebandsplit/')
 
     # default isn't used in casatasks
     def default(atask):
@@ -29,7 +27,7 @@ else:
     from taskinit import iatool as image
     from casa_stack_manip import stack_frame_find
 
-    datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/unittest/sdsidebandsplit/'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdsidebandsplit/'
 
 
 # Gaussian fit
@@ -45,7 +43,7 @@ def gauss_fit(x, y):
     a = numpy.abs(y - o).max()
     c = x[numpy.where(numpy.abs(y - o) == a)[0]][0]
     w = numpy.abs(y - o).sum() / a
-    #print("initial guess: (%f, %f, %f, %f)" % (a,c,w,o))
+    # print("initial guess: (%f, %f, %f, %f)" % (a,c,w,o))
     return curve_fit(gauss_func, x, y, p0=(a, c, w, o))
 
 
@@ -54,7 +52,7 @@ def gauss_fit(x, y):
 # max, min: max and min value of the channel range
 # peak, center, width: gaussian fit parameters of the channel range
 SpectralInfo = namedtuple('SpectralInfo',
-                          ['start', 'end', 'max', 'min', 'peak', 'center', 'width', 'offset']) 
+                          ['start', 'end', 'max', 'min', 'peak', 'center', 'width', 'offset'])
 
 
 class sdsidebandsplitTestBase(unittest.TestCase):
@@ -140,10 +138,10 @@ class sdsidebandsplitTestBase(unittest.TestCase):
         self.assertTrue('signal' in reference,
                         'Internal Error: No valid reference value for signal sideband')
         # test signal band image
-        imagename = task_param['outfile']+'.signalband'
+        imagename = task_param['outfile'] + '.signalband'
         self.check_result(imagename, refcsys, refshape, reference['signal'])
         # test image band image
-        imagename = task_param['outfile']+'.imageband'
+        imagename = task_param['outfile'] + '.imageband'
         if task_param['getbothside']:
             self.assertTrue('image' in reference,
                             'Internal Error: No valid reference value for image sideband')
@@ -296,7 +294,10 @@ class failureTestCase(sdsidebandsplitTestBase):
         """test failure: len(imagename)==2 but includes an invalid imagename"""
         invalid_name = 'invalid.image'
         imagename = self.standard_param['imagename'][:-2] + [invalid_name]
-        ref_message = '.*cReqPathVec type.*'
+        if is_CASA6:
+            ref_message = '.*must be a path that exists.*'
+        else:
+            ref_message = 'Could not find %s' % invalid_name
         self.run_exception(ref_message, imagename=imagename)
 
     # T-006
@@ -337,7 +338,7 @@ class failureTestCase(sdsidebandsplitTestBase):
     # T-022, T-023, T-024
     def test_refval_invalid(self):
         """test failure: refval is invalid (empty, a negative freqency or not a frequency)"""
-        ref_message = ('_refval is not a dictionary',
+        ref_message = ('refval is not a dictionary',
                        'Frequency should be positive',
                        'From/to units not consistent.')
         for refval, message in zip(('', '-100GHz', '300K'), ref_message):
@@ -387,16 +388,16 @@ class standardTestCase(sdsidebandsplitTestBase):
         for seg in reference:
             sp = data[0, 0, 0, seg.start:seg.end]
             x = numpy.asarray(list(range(seg.start, seg.end)))
-            #print('Max: ref {0} val {1}'.format(seg.max, sp.max()))
-            #print('Min: ref {0} val {1}'.format(seg.min, sp.min()))
+            # print('Max: ref {0} val {1}'.format(seg.max, sp.max()))
+            # print('Min: ref {0} val {1}'.format(seg.min, sp.min()))
             self.assertAlmostEqual2(sp.max(), seg.max, 1e-3, 'Max comparison failed')
             self.assertAlmostEqual2(sp.min(), seg.min, 0.01, 'Min comparison failed')
             # compare gaussian fit
             fitp, _dummy = gauss_fit(x, sp)
-            #print('Peak: ref {0} val {1}'.format(seg.peak, fitp[0]))
-            #print('Peak Pos: ref {0} val {1}'.format(seg.center, fitp[1]))
-            #print('Width: ref {0} val {1}'.format(seg.width, fitp[2]))
-            #print('Offset: ref {0} val {1}'.format(seg.offset, fitp[3]))
+            # print('Peak: ref {0} val {1}'.format(seg.peak, fitp[0]))
+            # print('Peak Pos: ref {0} val {1}'.format(seg.center, fitp[1]))
+            # print('Width: ref {0} val {1}'.format(seg.width, fitp[2]))
+            # print('Offset: ref {0} val {1}'.format(seg.offset, fitp[3]))
             self.assertAlmostEqual2(fitp[0], seg.peak, 1e-3, 'Peak comparison failed')
             self.assertAlmostEqual2(fitp[1], seg.center, 1e-3, 'Peak position comparison failed')
             self.assertAlmostEqual2(numpy.abs(fitp[2]), numpy.abs(seg.width), 1e-3, 'Width comparison failed')

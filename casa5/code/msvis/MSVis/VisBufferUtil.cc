@@ -186,7 +186,7 @@ Bool VisBufferUtil::rotateUVW(const vi::VisBuffer2&vb, const MDirection& desired
     dphase.set(0.0);
     if(uvw.nelements() ==0)
       uvw=vb.uvw();
-    for (Int row=0; row< vb.nRows(); ++row){
+    for (rownr_t row=0; row< vb.nRows(); ++row){
       Vector<Double> eluvw(uvw.column(row));
       uvwMachine.convertUVW(dphase(row), eluvw);
     }
@@ -670,7 +670,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
        for (uInt a=0; a < nAnt; ++a){
 	 
 	 //Double wtime1=omp_get_wtime();
-	 Vector<Int> indices;
+	 Vector<ssize_t> indices;
 	 Vector<MDirection> theDirs(nTimes);
 	 pointingIndex(tcolptr, antcolptr, intcolptr, npointrow, a, nTimes, tuniqptr, indices);
 	 
@@ -790,7 +790,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 			 for (uInt a=0; a < nAnt; ++a){
 			   
 			   //Double wtime1=omp_get_wtime();
-			   Vector<Int> indices;
+			   Vector<ssize_t> indices;
 			   //Vector<MDirection> theDirs(nTimes);
 			   pointingIndex(tcolptr, antcolptr, intcolptr, npointrow, a, nTimes, tuniqptr, indices);
 			   
@@ -850,12 +850,11 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 
  }
  
-  void VisBufferUtil::pointingIndex(Double*& timecol, Int*& antcol, Double*& intervalcol, const Int nrow,  const Int ant, const Int ntimes, Double*& ptime, Vector<Int>& indices){
+  void VisBufferUtil::pointingIndex(Double*& timecol, Int*& antcol, Double*& intervalcol, const rownr_t nrow,  const Int ant, const Int ntimes, Double*& ptime, Vector<ssize_t>& indices){
    
     indices.resize(ntimes);
     
     indices.set(-1);
-    Int guessRow=0;
     
     for(Int pt=0; pt < ntimes; ++pt){
       //cerr << "  " << guessRow ;
@@ -869,10 +868,10 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 	}
       */
       Double nearval=1e99;
-      Int nearestIndx=-1;
-      Int start=0;
-      Int end=nrow;
-      for (Int i=start; i<end; i++) {
+      ssize_t nearestIndx=-1;
+      ssize_t start=0;
+      ssize_t end=nrow;
+      for (ssize_t i=start; i<end; i++) {
 	if(intervalcol[i]<=0.0 && ant==antcol[i]){
 	  if(abs(timecol[i]-ptime[pt]) < nearval){
 	    nearestIndx=i;
@@ -883,7 +882,7 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
       indices[pt]=nearestIndx;
 
       
-      for (Int i=start; i<end; i++) {
+      for (ssize_t i=start; i<end; i++) {
 	  if(ant == antcol[i]){
 	    Double halfInt=0.0;
 	    Bool done=False;
@@ -891,13 +890,13 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 	    //  if(abs(timecol[inx[i]]-ptime[pt]) < nearval){
 	    //	nearestIndx=inx[i];
 	    //  }
-	      Int counter=0;
-	      Int adder=1;
+	      ssize_t counter=0;
+	      ssize_t adder=1;
 	      done=False;
 		//	      while(!( (timecol[i+counter]!=timecol[i]))){
 	      while(!done){
 		counter=counter+adder;
-		if(nrow <= i+counter){
+		if((ssize_t)nrow <= i+counter){
 		  adder=-1; 
 		  counter=0;
 		}
@@ -934,14 +933,12 @@ void VisBufferUtil::convertFrequency(Vector<Double>& outFreq,
 		  
 		}
 		///////////////////
-		guessRow=i;
 	      break;
 	      }
 	    } else {
 	      // valid for all times (we should also handle interval<0 -> timestamps)
 	      cerr << "JUMPY " << i << " ant " << ant << " halfint " << halfInt << " done "<< done <<  endl;
 	      indices[pt]=i;
-	      guessRow=i;
 	      break;
 	    }
 

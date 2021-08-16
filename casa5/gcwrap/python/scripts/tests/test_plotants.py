@@ -29,7 +29,7 @@ class plotants_test(unittest.TestCase):
 
         # It is not necessary to copy it for all tests
         if (not os.path.exists(self.msfile)):
-            datapath = os.environ.get('CASAPATH').split()[0] + '/data/regression/ic2233/'
+            datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/plotants/'
             shutil.copytree(datapath+self.msfile, self.msfile)
 
     def tearDown(self):
@@ -43,14 +43,18 @@ class plotants_test(unittest.TestCase):
 
     def test1(self):
        '''Test 1: Default parameters'''
-       self.res = plotants()
-       self.assertFalse(self.res)
+#       self.res = plotants()
+#       self.assertFalse(self.res)
+       with self.assertRaises(RuntimeError):
+           plotants()
 
     def test2(self):
         '''Test 2: Bad input file'''
         msfile = 'badfile'
-        self.res = plotants(vis=msfile)
-        self.assertFalse(self.res)
+#         self.res = plotants(vis=msfile)
+#         self.assertFalse(self.res)
+        with self.assertRaises(RuntimeError):
+            plotants(vis=msfile)
 
     def test3(self):
         '''Test 3: Good input file and output exists'''

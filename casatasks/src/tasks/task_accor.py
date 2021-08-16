@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import numpy as np
 
@@ -18,7 +17,7 @@ def accor(vis=None,caltable=None,
           field=None,spw=None,intent=None,
           selectdata=None,timerange=None,antenna=None,scan=None,
           observation=None, msselect=None,
-          solint=None,combine=None,append=None,
+          solint=None,combine=None,corrdepflags=None,append=None,
           docallib=None,callib=None,
           gaintable=None,gainfield=None,interp=None,spwmap=None):
 
@@ -31,7 +30,7 @@ def accor(vis=None,caltable=None,
                 if ((type(vis)==str) & (os.path.exists(vis))):
                         mycb.open(filename=vis,compress=False,addcorr=False,addmodel=False)
                 else:
-                        raise Exception('Visibility data set not found - please verify the name')
+                        raise ValueError('Visibility data set not found - please verify the name')
 
                 # Do data selection according to selectdata
                 casalog.post("NB: accor automatically excludes crosso-correlations.")
@@ -54,6 +53,10 @@ def accor(vis=None,caltable=None,
                         mycb.selectvis(time='',spw=spw,scan='',field=field,intent=intent,
                                      observation='', baseline='', uvrange='',
                                      chanmode='none', msselect='ANTENNA1==ANTENNA2')
+
+                # signal use of correlation-dependent flags, if requested
+                if corrdepflags:
+                        mycb.setcorrdepflags(True)
 
                 # Arrange applies....
 
@@ -110,10 +113,6 @@ def accor(vis=None,caltable=None,
                 mycb.setsolve(type='ACCOR',t=solint,combine=combine,
                               table=caltable, append=append)
                 mycb.solve()
-                mycb.close()
 
-        except Exception as instance:
-                print('*** Error *** %s' % str(instance))
+        finally:
                 mycb.close( )
-                casalog.post("Error in accor: %s" % str(instance), "SEVERE")
-                raise Exception("Error in accor: %s" % str(instance))

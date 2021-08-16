@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 
 from casatasks.private.casa_transition import is_CASA6
@@ -25,11 +24,7 @@ def listhistory(vis=None):
     """
     #Python script
     try:
-        if ((type(vis)==str) & (os.path.exists(vis))):
-            _ms.open(vis)
-        else:
-            raise Exception('Visibility data set not found - please verify the name')
+        _ms.open(vis)
         _ms.listhistory()
+    finally:
         _ms.close()
-    except Exception as instance:
-        print('*** Error *** %s' % instance)

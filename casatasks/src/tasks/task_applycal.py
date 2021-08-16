@@ -1,6 +1,4 @@
-
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import time
 import numpy as np
@@ -72,12 +70,16 @@ def applycal(
 
     try:
         mycb = calibrater( )
+        makecorr = True
         if (type(vis) == str) & os.path.exists(vis):
-            # add CORRECTED_DATA column
-            mycb.open(filename=vis, compress=False, addcorr=True,
+            # if applymode is flagonly don't add CORRECTED_DATA column
+            # otherwise add CORRECTED_DATA column
+            if applymode in ['flagonly', 'flagonlystrict', 'trial']:
+                makecorr = False
+            mycb.open(filename=vis, compress=False, addcorr=makecorr,
                       addmodel=False)
         else:
-            raise Exception( 'Visibility data set not found - please verify the name' )
+            raise ValueError( 'Visibility data set not found - please verify the name' )
 
         # enforce default if unspecified
         if applymode == '':
@@ -191,9 +193,8 @@ def applycal(
         # report what the flags did
         reportflags(mycb.activityrec())
 
-        mycb.close()
 
-            # write history
+        # write history
         try:
             param_names = \
                           applycal.__code__.co_varnames[:applycal.__code__.co_argcount]
@@ -213,11 +214,8 @@ def applycal(
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY"
                          % instance, 'WARN')
-    except Exception as instance:
-        print('*** Error ***', instance)
+    finally:
         mycb.close()
-        casalog.post("Error in applycal: %s" % str(instance), "SEVERE")
-        raise Exception( "Error in applycal: "+str(instance) )
 
 def reportflags(rec):
     try:

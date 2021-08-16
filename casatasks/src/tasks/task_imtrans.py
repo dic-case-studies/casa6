@@ -82,9 +82,9 @@ def imtrans(imagename, outfile, order):
     outia = None
     try:
         if (not myia.open(imagename)):
-            raise Exception("Cannot create image analysis tool using " + imagename)
+            raise RuntimeError("Cannot create image analysis tool using " + imagename)
         if (len(outfile) == 0):
-            raise Exception("outfile parameter must be specified.")
+            raise ValueError("outfile parameter must be specified.")
         outia = myia.transpose(outfile=outfile, order=order)
         try:
             param_names = imtrans.__code__.co_varnames[:imtrans.__code__.co_argcount]
@@ -99,10 +99,7 @@ def imtrans(imagename, outfile, order):
             )
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-        return True
-    except Exception as instance:
-        casalog.post( str( '*** Error ***') + str(instance), 'SEVERE')
-        raise
+
     finally:
         if myia:
             myia.done()

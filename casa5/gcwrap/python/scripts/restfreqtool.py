@@ -11,6 +11,7 @@ try:
     from casatools import quanta
     from casatools import ms as mstool
     from casatools import image
+    from casatasks import casalog
 except Exception:
     from __casac__.msmetadata import msmetadata
     from __casac__.table import table
@@ -18,6 +19,7 @@ except Exception:
     from __casac__.quanta import quanta
     from __casac__.ms import ms as mstool
     from __casac__.image import image
+    from taskinit import casalog
 
 MetaDataSet = collections.namedtuple(
     'MetaDataSet',
@@ -47,7 +49,7 @@ DEBUG = False
 def debug_print(msg):
     if DEBUG:
         for m in msg.split('\n'):
-            print('DEBUG: {}'.format(m))
+            casalog.post('DEBUG: {}'.format(m))
 
 
 def inspect_ms(vis, fieldid, spwid, chanstart=0, nchan=-1):

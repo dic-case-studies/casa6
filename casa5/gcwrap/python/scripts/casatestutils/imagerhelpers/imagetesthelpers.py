@@ -19,7 +19,6 @@ import six
 
 casa5 = False
 casa6 = False
-__bypass_parallel_processing = 0
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -29,10 +28,27 @@ if is_CASA6:
     import casatools
     logging.debug("Importing CASAtasks")
     import casatasks
+    _cb = casatools.calibrater()
     _tb = casatools.table()
     _tbt = casatools.table()
     _ia  = casatools.image()
+    _cb = casatools.calibrater()
     from casatasks import casalog
+
+    casampi_imported = False
+    import importlib
+    _casampi_spec = importlib.util.find_spec('casampi')
+    if _casampi_spec:
+        # don't catch import error from casampi if it is found in the system modules
+        from casampi.MPIEnvironment import MPIEnvironment
+        casampi_imported = True
+    else:
+        casalog.post('casampi not available - not testing MPIEnvironment stuff', 'WARN')
+
+    def tclean_param_names():
+        from casatasks.tclean import _tclean_t
+        return _tclean_t.__code__.co_varnames[:_tclean_t.__code__.co_argcount]
+
     casa6 = True
 
 else:
@@ -40,29 +56,134 @@ else:
     # CASA 5
     logging.debug("Import casa6 errors. Trying CASA5...")
     from __main__ import default
-    from taskinit import tbtool, mstool, iatool
+    from taskinit import tbtool, mstool, iatool, cbtool
     from taskinit import *
     from casa_stack_manip import stack_find, find_casa
-    try:
-        from mpi4casa.MPIEnvironment import MPIEnvironment
-        if not MPIEnvironment.is_mpi_enabled:
-            __bypass_parallel_processing = 1
-    except ImportError:
-        print("MPIEnvironment not Enabled")
+    from mpi4casa.MPIEnvironment import MPIEnvironment
+    casampi_imported = True
+
     _tb = tbtool()
     _tbt = tbtool()
     _ia = iatool()
+    _cb = cbtool()
     casa = find_casa()
     if casa.has_key('state') and casa['state'].has_key('init_version') and casa['state']['init_version'] > 0:
         casaglobals=True
         casac = stack_find("casac")
         casalog = stack_find("casalog")
+
+    def tclean_param_names():
+        # alternatively could use from tasks import tclean; tclean.parameters
+        from task_tclean import tclean
+        return tclean.__code__.co_varnames[:tclean.__code__.co_argcount]
+
     casa5 = True
 
 ############################################################################################
 ##################################       imagerhelpers       ###############################
 ############################################################################################
 class TestHelpers:
+
+    # For comparison with keywords added by tclean in its output images
+    if casampi_imported:
+        num_mpi_procs = 1 + len(MPIEnvironment.mpi_server_rank_list())
+    else:
+        num_mpi_procs = 1
+
+    def delmodels(self,msname="",modcol='nochange'):
+       TestHelpers().delmodkeywords(msname) ## Get rid of extra OTF model keywords that sometimes persist...
+       if modcol=='delete':
+           TestHelpers().delmodelcol(msname) ## Delete model column
+       if modcol=='reset0':
+           TestHelpers().resetmodelcol(msname,0.0)  ## Set model column to zero
+       if modcol=='reset1':
+           TestHelpers().resetmodelcol(msname,1.0)  ## Set model column to one
+
+    def delmodkeywords(self,msname=""):
+        #delmod(msname)
+        _tb.open( msname+'/SOURCE', nomodify=False )
+        keys = _tb.getkeywords()
+        for key in keys:
+            _tb.removekeyword( key )
+        _tb.close()
+
+    def resetmodelcol(self,msname="",val=0.0):
+        _tb.open( msname, nomodify=False )
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        if not hasmodcol:
+            _cb.open(msname)
+            _cb.close()
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        if hasmodcol:
+            dat = _tb.getcol('MODEL_DATA')
+            dat.fill( complex(val,0.0) )
+            _tb.putcol('MODEL_DATA', dat)
+        _tb.close();
+
+
+
+    def delmodelcol(self,msname=""):
+        _tb.open( msname, nomodify=False )
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        if hasmodcol:
+            _tb.removecols('MODEL_DATA')
+        _tb.close()
+
+    def get_coordsys(self,imname):
+        try:
+            _ia.open(imname)
+            csys = _ia.coordsys()
+            csys_rec = csys.torecord()
+            csys.done()
+        finally:
+            _ia.close()
+
+        return csys_rec
+        
+    def check_spec_frame(self,imname,frame, crval=0.0, cdelt=0.0):
+        testname = "check_spec_frame"
+        pstr = ""
+        if os.path.exists(imname):
+           res = True
+           expcrval=""
+           expcdelt=""
+           thecval=""
+           thecdelt=""
+           coordsys = TestHelpers().get_coordsys(imname)
+           baseframe = coordsys['spectral2']['system']
+           basecrval = coordsys['spectral2']['wcs']['crval']
+           basecdelt = coordsys['spectral2']['wcs']['cdelt']
+           if baseframe != frame:
+                res = False
+           else:
+                res = True
+                if crval!=0.0:
+                     if abs(basecrval - crval)/abs(crval) > 1.0e-6:
+                          res = False
+                     thecrval = " with crval " + str(basecrval)
+                     expcrval = " with expected crval " + str(crval)
+                else:
+                     # skip the crval test
+                     thecrval = ""
+                     expcrval = ""
+                if cdelt!=0.0:
+                     if abs(basecdelt - cdelt)/abs(cdelt) > 1.0e-6:
+                          res = False
+                     thecdelt = " with cdelt " + str(basecdelt)
+                     expcdelt = " with expected cdelt " + str(cdelt)
+                else:
+                     # skip the crval test
+                     thecdelt = ""
+           thecorrectans = frame +  expcrval + expcdelt
+           pstr =  "[" + testname + "] " + imname + ": Spec frame is " +\
+           str(baseframe) + thecrval + thecdelt + " (" +\
+           TestHelpers().verdict(res) +" : should be " + thecorrectans +" )"
+           print(pstr)
+           pstr=pstr+"\n"
+           
+        #self.checkfinal(pstr)
+        return pstr
+
     def check_model(self, msname=""):
         """Check hasmodcol, modsum, hasvirmod"""
         logging.debug("Executing: check_model(msname={})".format(msname))
@@ -140,18 +261,30 @@ class TestHelpers:
         """ Image exists """
         return os.path.exists(imname)
 
+    def exists(self, imname):
+        # AW: This is a duplicate function, but it helps maintain uniformity to test_tclean.py
+        """ Exists """
+        return os.path.exists(imname)
+
     def get_peak_res(self, summ):
         """Get Peak Res"""
-        if summ.has_key('summaryminor'):
-            reslist = summ['summaryminor'][1,:]
-            peakres = reslist[ len(reslist)-1 ]
+        # AW:  This can be reduced down for readability but putting in a fix for CAS-13182
+        peakres = None
+        if is_CASA6:
+            if 'summaryminor' in summ:
+                reslist = summ['summaryminor'][1,:]
+                peakres = reslist[ len(reslist)-1 ]
+
         else:
-            peakres = None
+            if summ.has_key('summaryminor'):
+                reslist = summ['summaryminor'][1,:]
+                peakres = reslist[ len(reslist)-1 ]
+                
         return peakres
 
     def check_peak_res(self, summ,correctres, epsilon=0.05):
         """Check Peak Res"""
-        peakres = get_peak_res(summ)
+        peakres = TestHelpers().get_peak_res(summ)
         out = True
         if correctres == None and peakres != None:
             out = False
@@ -167,16 +300,21 @@ class TestHelpers:
 
     def get_mod_flux(self, summ):
         """Get Mod Flux"""
-        if summ.has_key('summaryminor'):
-            modlist = summ['summaryminor'][2,:]
-            modflux = modlist[ len(modlist)-1 ]
+        # AW: This can be reduced down for readability but putting in a fix for CAS-13182
+        modflux = None
+        if is_CASA6:
+            if 'summaryminor' in summ:
+                modlist = summ['summaryminor'][2,:]
+                modflux = modlist[ len(modlist)-1 ]
         else:
-            modflux = None
+            if summ.has_key('summaryminor'):
+                modlist = summ['summaryminor'][2,:]
+                modflux = modlist[ len(modlist)-1 ]
         return modflux
 
     def check_mod_flux(self, summ,correctmod, epsilon=0.05):
         """Check Mod Flux"""
-        modflux = get_mod_flux(summ)
+        modflux = TestHelpers().get_mod_flux(summ)
         out = True
         if correctmod == None and modflux != None:
             out = False
@@ -190,13 +328,82 @@ class TestHelpers:
                 return out,modflux
         return out,modflux
 
+    def check_chanvals(self,msname,vallist, epsilon = 0.05): # list of tuples of (channumber, relation, value) e.g. (10,">",1.0)
+        testname = "check_chanvals"
+        pstr = ""
+        for val in vallist:
+            if len(val)==3:
+                thisval = TestHelpers().check_modelchan(msname,val[0])
+                if val[1]==">":
+                    ok = thisval > val[2]
+                elif val[1]=="==":     
+                    ok = abs( (thisval - val[2])/val[2] ) < epsilon
+                elif val[1]=="<":     
+                    ok = thisval < val[2]
+                else:
+                    ok=False
+        pstr = pstr + "[" + testname + "] Chan "+ str(val[0]) + "  is " + str(thisval) + " ("+self.verdict(ok)+" : should be " + str(val[1]) + str(val[2]) + ")\n"
+
+        print(pstr)
+        return pstr
+
+    def check_modelchan(self,msname="",chan=0):
+        _tb.open( msname )
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        modsum=0.0
+        if hasmodcol:
+            dat = _tb.getcol('MODEL_DATA')[:,chan,:]
+            modsum=dat.mean()
+        _tb.close()
+        ##print(modsum)
+        return modsum
+
     def get_iter_done(self, summ):
         """Get Iterdone"""
-        if summ.has_key('iterdone'):
-            iters = summ['iterdone']
+        # AW:  This can be reduced down for readability but putting in a fix for CAS-13182
+        iters = None
+        if is_CASA6:
+            if 'iterdone' in summ:
+                iters = summ['iterdone']
         else:
-            iters = None
+            if summ.has_key('iterdone'):
+                iters = summ['iterdone']
         return iters
+
+    def delmodkeywords(self,msname=""):
+        """get rid of extra model keywords that sometimes persist"""
+
+        _tb.open( msname+'/SOURCE', nomodify=False )
+        keys = _tb.getkeywords()
+        for key in keys:
+            _tb.removekeyword( key )
+        _tb.close()
+
+    def resetmodelcol(self,msname="",val=0.0):
+        """ set model column to val"""
+        _tb.open( msname, nomodify=False )
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        if not hasmodcol:
+            _cb.open(msname)
+            _cb.close()
+        hasmodcol = (  (_tb.colnames()).count('MODEL_DATA')>0 )
+        if hasmodcol:
+            dat = _tb.getcol('MODEL_DATA')
+            dat.fill( complex(val,0.0) )
+            _tb.putcol('MODEL_DATA', dat)
+        _tb.close();
+
+    def delmodels(self,msname="",modcol='nochange'):
+        """Get rid of OTF model and model column"""
+         
+        self.delmodkeywords(msname) ## Get rid of extra OTF model keywords that sometimes persist...
+
+        if modcol=='delete':
+            self.delmodelcol(msname) ## Delete model column
+        if modcol=='reset0':
+            self.resetmodelcol(msname,0.0)  ## Set model column to zero
+        if modcol=='reset1':
+            self.resetmodelcol(msname,1.0)  ## Set model column to one
 
     def verdict(self, boolval):
         """Return the string 'Pass' if boolean is True, Else return string 'Fail'"""
@@ -274,6 +481,95 @@ class TestHelpers:
         logging.info(pstr)
         return out, pstr
 
+    def check_list_vals(self, list1, list2, test, epsilon=None):
+        """ compares 2 lists and returns if they are equivalent (within error) 
+        """
+        report = ''
+        if len(list1) == len(list2):
+            exact = (epsilon is None)
+            i = 0
+            while i < len(list1):
+                result, pstr = self.check_val(list1[i], list2[i], \
+                    valname=test+' index '+str(i), exact=exact, epsilon=epsilon)
+                if result == False:
+                    report += pstr
+                    #report = pstr
+                    #break
+                i += 1
+        else:
+            result = False
+
+        return result, report
+
+    def check_dict_vals(self, exp_dict, act_dict, suffix, epsilon=0.01):
+        """ Compares expected dictionary with actual dictionary.
+
+            Parameters
+            ----------
+            exp_dict: dictionary
+                Expected values, as key:value pairs.
+                Values must be lists, where
+                val[0] is "True" for an exact match, or a float for a non-exact
+                epsilon for check_val(). Default is input epsilon.
+                val[1] is either a value to check_val() against or a list to
+                check_list_vals() against.
+            act_dict: dictionary
+                Actual values to compare to exp_dict (and just the values).
+                Keys must match between exp_dict and act_dict.
+            suffix: string
+                For use with summary print statements.
+
+            Notes
+            -----
+            Each exp_dict key:value pair does not need to match in
+            exactness or listedness. One value could be exact, and
+            the next relative to epsilon. One value could be a list,
+            and the next an integer.
+
+            Notes
+            -----
+            Example exp_dict
+            {
+                'end': [True, 2203765e5],
+                'start': [False, 220257e5], # uses default epsilon value
+                'start_delta': [0.01, 2202527e5],
+            }
+        """
+        report = ''
+        passed = True
+        chans = 0
+        for key in exp_dict:
+
+            # convert the expected value in exp_dict[key] to its own dictionary
+            exp_val = exp_dict[key]
+            v = {
+                'val': exp_val[1],
+                'exact': False,
+                'epsilon': epsilon,
+            }
+            if type(exp_val[0]) == bool:
+                v['exact'] = exp_val[0]
+            else:
+                v['epsilon'] = exp_val[0]
+            if v['val'] == 0.0: # special case for "0"
+                v['exact'] = True
+            if v['exact'] == True:
+                v['epsilon'] = None
+
+            # evaluate the expected value against the actual value
+            if type(v['val']) == list:
+                result, pstr = self.check_list_vals(act_dict[key], 
+                    v['val'], test=suffix+' '+key, epsilon=v['epsilon'])
+                report += self.check_val(result, True, \
+                    valname=suffix+' '+key, exact=True)[1]
+                report += pstr
+            else:
+                report += self.check_val(act_dict[key], \
+                    v['val'], exact=v['exact'], epsilon=v['epsilon'],
+                    valname=suffix+' '+key)[1]
+
+        return report
+
     def check_ims(self, imlist, truth, testname="check_ims"):
         pstr = ''
         imex = []
@@ -303,7 +599,8 @@ class TestHelpers:
                 if issues:
                     pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
         if not pstr:
-            pstr += 'All expected keywords in imageinfo, miscinfo, and coords found.\n'
+            pstr += ('All expected keywords in imageinfo, miscinfo, and coords found. '
+                     '({})\n'.format(testname, TestHelpers().verdict(False)))
         return pstr
 
     def check_im_keywords(self, imname, check_misc=True, check_extended=True):
@@ -359,13 +656,16 @@ class TestHelpers:
         pstr += TestHelpers().check_expected_entries(mandatory_imageinfo, imageinfo, keys)
         if check_misc:
             if check_extended:
-                mandatory_miscinfo = ['INSTRUME', 'distance']
+                # basic miscinfo and 'TcleanProcessingInfo' as per CAS-12204
+                mandatory_miscinfo = ['INSTRUME', 'distance',
+                                      'mpiprocs', 'chnchnks', 'memreq', 'memavail']
                 pstr += TestHelpers().check_expected_entries(mandatory_miscinfo, miscinfo, keys)
             forbidden_miscinfo = ['OBJECT', 'TELESCOP']
             pstr += TestHelpers().check_forbidden_entries(forbidden_miscinfo, miscinfo, keys)
         mandatory_coords = ['telescope']
         pstr += TestHelpers().check_expected_entries(mandatory_coords, coords, keys)
         return pstr
+
     def check_expected_entries(self, entries, record, keys):
         pstr = ''
         for entry in entries:
@@ -375,6 +675,13 @@ class TestHelpers:
                 # TODO: many tests leave 'distance' empty. Assume that's acceptable...
                 if entry != 'distance' and not keys[record][entry]:
                     pstr += ('entry {0} is found in record {1} but it is empty ({2})\n'.format(entry, record, TestHelpers().verdict(False)))
+
+                # ensure mpiprocs is correct. Other keywords added in CAS-12204 have more
+                # variable values (memavail, memreq, etc.) and cannot be compared here.
+                if entry == 'mpiprocs':
+                    if keys[record][entry] != self.num_mpi_procs:
+                        pstr += ('mpiprocs is not as expected. It is {} but it should be {}, ({})'.
+                                 format(keys[record][entry], self.num_mpi_procs, TestHelpers().verdict(False)))
         return pstr
 
     def check_forbidden_entries(self, entries, record, keys):
@@ -382,6 +689,74 @@ class TestHelpers:
         for entry in entries:
             if entry in keys[record]:
                 pstr += ('entry {0} should not be in record {1} ({2})\n'.format(entry, record, TestHelpers().verdict(False)))
+        return pstr
+
+    def check_history(self, imlist, testname="check_history"):
+        """
+        Checks presence of the logtable and rows with history information (task name,
+        CASA version, all task parameters, etc.).
+
+        :param imlist: names of the images produced by a test execution.
+        :param testname: name to use in the checks report string
+        :returns: the usual (test_imager_helper) string with success/error messages.
+        """
+        pstr = ''
+        for imname in imlist:
+            if os.path.exists(imname):
+                issues = TestHelpers().check_im_history(imname)
+                if issues:
+                    pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
+        if not pstr:
+            pstr += ('[{}] All expected history entries found. ({})\n'.
+                     format(testname, TestHelpers().verdict(True)))
+        return pstr
+
+    def check_im_history(self, imname):
+        """
+        Check the history records in an image, ensuring the taskname, CASA version, and
+        full list of parameters is found (all the same number of times).
+
+        :param imname: image name (output image from tclean)
+        :returns: the usual (test_imager_helper) string with success/error messages.
+        Errors are marked with the tag '(Fail' as per self.verdict().
+        """
+        ia_open = False
+        try:
+            _ia.open(imname)
+            ia_open = True
+            history = _ia.history(list=False)
+        except RuntimeError as exc:
+            pstr = ('Cannot retrieve history subtable from image: {}. Error: {}'.
+                    format(imname, exc))
+            return pstr
+        finally:
+            if ia_open:
+                _ia.close()
+
+        pstr = ''
+        ncalls = sum(line.startswith('taskname=tclean') for line in history)
+        nversions = sum(line.startswith('version:') for line in history)
+        if ncalls < 1:
+            pstr += ('No calls to tclean were found in history. ({})\n'.
+                     format(TestHelpers().verdict(False)))
+        if nversions < 1:
+            pstr += ('No CASA version was found in history. ({})\n'.
+                     format(TestHelpers().verdict(False)))
+        # allow for impbcor history which puts one version line in some tests
+        if ncalls != nversions and not nversions == ncalls+1:
+            pstr += ('The number of taskname entries ({}) and CASA version entries ({}) do '
+                     'not match. ({})\n'.format(ncalls, nversions,
+                                                TestHelpers().verdict(False)))
+        for param in tclean_param_names():
+            nparval = sum('=' in line and line.split('=')[0].strip() == param for
+                          line in history)
+            if nparval < 1:
+                pstr += ('No entries for tclean parameter {} found in history. ({})'
+                         '.'.format(param, TestHelpers().verdict(False)))
+            if nparval != ncalls:
+                pstr += ("The number of history entries for parameter '{}' ({}) and task "
+                         "calls ({}) do not match ({}).".
+                         format(param, nparval, ncalls, TestHelpers().verdict(False)))
         return pstr
 
     def check_pix_val(self, imname, theval=0, thepos=[0, 0, 0, 0], exact=False, epsilon=0.05, testname="check_pix_val"):
@@ -415,7 +790,7 @@ class TestHelpers:
 
     def check_pixmask(self, imname, theval=True, thepos=[0, 0, 0, 0], testname="check_pixmask"):
         pstr = ''
-        readval = get_pixmask(imname, thepos)
+        readval = TestHelpers().get_pixmask(imname, thepos)
         res = True
         if readval == None:
             res = False
@@ -435,8 +810,9 @@ class TestHelpers:
         retres = True
         _ia.open(imname)
         csys = _ia.coordsys()
-        _ia.close()
+        _ia.done()
         reffreq = csys.referencevalue()['numeric'][3]
+        csys.done()
         if  abs(reffreq - theval)/theval > epsilon:
             retres = False
         else:
@@ -453,6 +829,8 @@ class TestHelpers:
                 print("pstr after checkims = {}".format(pstr))
                 pstr += TestHelpers().check_keywords(imgexist)
                 print("pstr after check_keywords = {}".format(pstr))
+                pstr += TestHelpers().check_history(imgexist)
+                print("pstr after check_history = {}".format(pstr))
         return pstr
 
     def check_imexistnot(self, imgexistnot):
@@ -506,16 +884,78 @@ class TestHelpers:
                 pstr += stopstr
         return pstr
 
-    def check_reffreq(self, reffreq):
+    def check_reffreq(self, reffreq, epsilon=0.05):
         pstr = ''
         if reffreq != None:
             if type(reffreq) == list:
                 for ii in reffreq:
                     if type(ii) == tuple and len(ii) == 2:
-                        pstr += TestHelpers().check_ref_freq(ii[0], ii[1])
+                        pstr += TestHelpers().check_ref_freq(ii[0], ii[1], epsilon=epsilon)
         return pstr
 
-    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05):
+    def get_log_length(self):
+        return os.path.getsize(casalog.logfile())
+
+    def check_logs(self, start, expected, testname="check_logs"):
+        """ Test that there are log lines that match the expected regex strings (one line per expected string). """
+        # Example usage:
+        # logstart = test_helper.get_log_length()
+        # tclean(...)
+        # report = test_helper.check_logs(logstart, expected=[ r"-+ Run Minor Cycle Iterations  -+" ])
+        import re
+
+        # read all lines from the logfile that are relevant to this test
+        lines = []
+        with open(casalog.logfile(), 'r') as f:
+            f.seek(start)
+            lines = f.readlines()
+        # casalog.post("Searching through " + str(len(lines)) + " log lines", "SEVERE") # debugging
+
+        # find expected matches
+        unmet = []
+        for i in range(len(expected)):
+            expectation = re.compile(expected[i])
+            # casalog.post("expected["+str(i)+"]: "+expected[i], "SEVERE") # debugging
+            found = -1
+            for j in range(len(lines)):
+                if (expectation.search(lines[j]) != None):
+                    found = j
+                    break
+                else:
+                    pass
+                    # casalog.post("  X: " + lines[j].rstrip(), "SEVERE") # debugging
+            if (found == -1):
+                unmet.append(expected[i])
+                # casalog.post("  expectation not met", "SEVERE") # debugging
+            else:
+                del lines[found]
+                # casalog.post("  expectation met by line: " + lines[found].rstrip(), "SEVERE") # debugging
+
+        # check that all expectations were met
+        if (len(unmet) == 0):
+            return "[ {} ]: found {} matching log lines (Pass)\n".format(testname, len(expected))
+        else:
+            return "[ {} ]: found {} out of {} matching log lines (Fail, unmet expectations: {})\n".format(testname, len(expected)-len(unmet), len(expected), ", ".join(unmet))
+
+    def check_tfmask(self, tfmask, testname="check_tfmask"):
+        pstr = ''
+        if tfmask != None:
+            if type(tfmask) == list:
+                for ii in tfmask:
+                    if type(ii) == tuple and len(ii) == 2:
+                        _ia.open(ii[0])
+                        mname = _ia.maskhandler('get')
+                        mreport = "[" + testname + "]  T/F mask name for " + ii[0] +  " is : " + str(mname)
+                        if mname==ii[1]:
+                            mreport = mreport + " ("+TestHelpers().verdict(True) +" : should be " + str(ii[1]) + ") \n"
+                        else:
+                            mreport = mreport + " ("+TestHelpers().verdict(False) +" : should be " + str(ii[1]) + ") \n"
+                        _ia.close()
+                        pstr += mreport
+            print(pstr)
+        return pstr
+
+    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05,tfmask=None):
         """
             ret=None,
             peakres=None, # a float
@@ -530,18 +970,23 @@ class TestHelpers:
             tabcache=True,
             stopcode=None,
             reffreq=None # list of tuples of (imagename, reffreq)
+            tfmask=None # list of tuples of (imagename, maskname). 
         """
         pstr = "[ checkall ] \n"
         if ret != None and type(ret) == dict:
             try:
                 if peakres != None:
-                    pstr += TestHelpers().check_val(val=get_peak_res(ret), correctval=peakres, valname="peak res")
+                    out, message = TestHelpers().check_val(val=TestHelpers().get_peak_res(ret), correctval=peakres, valname="peak res", epsilon=epsilon)
+                    pstr = pstr + message
                 if modflux != None:
-                    pstr += TestHelpers().check_val(val=get_mod_flux(ret), correctval=modflux, valname="mod flux")
+                    out, message = TestHelpers().check_val(val=TestHelpers().get_mod_flux(ret), correctval=modflux, valname="mod flux", epsilon=epsilon)
+                    pstr = pstr + message
                 if iterdone != None:
-                    pstr += TestHelpers().check_val(val=ret['iterdone'], correctval=iterdone, valname="iterdone", exact=True)
+                    out, message = TestHelpers().check_val(val=ret['iterdone'], correctval=iterdone, valname="iterdone", exact=True)
+                    pstr = pstr + message
                 if nmajordone != None:
-                    pstr += TestHelpers().check_val(val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True)
+                    out, message = TestHelpers().check_val(val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True)
+                    pstr = pstr + message
             except Exception as e:
                 logging.info(ret)
                 raise
@@ -553,15 +998,105 @@ class TestHelpers:
         pstr += TestHelpers().check_immask(imgmask)
         pstr += TestHelpers().check_tabcache(tabcache)
         pstr += TestHelpers().check_stopcode(stopcode, ret)
-        pstr += TestHelpers().check_reffreq(reffreq)
+        pstr += TestHelpers().check_reffreq(reffreq, epsilon=epsilon)
+        pstr += TestHelpers().check_tfmask(tfmask)
         return pstr
 
     def check_final(self, pstr=""):
 
-        if not isinstance(pstr, six.string_types):
-            return False
+        import re
         casalog.post(pstr, 'INFO')
-        if pstr.count("Fail") > 0:
+        if len(re.findall(r"\(.?Fail",pstr)) > 0:
             return False
         return True
+        
+    def write_file(self,filename,str_text):
+        """Save the string in a text file"""
+        inp = filename
+        cmd = str_text
+        # remove file first
+        if os.path.exists(inp):
+            os.remove(inp)
+        # save to a file
+        with open(inp, 'w') as f:
+            f.write(cmd)
+        f.close()
+        return
+
+    def mergeParaCubeResults(self,
+                     ret=None,
+                     parlist=[]
+                     #peakres=None, # a float
+                     #modflux=None, # a float
+                     #iterdone=None, # an int
+                     #nmajordone=None, # an int
+                     #imexist=None,  # list of image names
+                     #imexistnot=None, # list of image names
+                     #imval=None,  # list of tuples of (imagename,val,pos)
+                     #imvalexact=None, # list of tuples of (imagename,val,pos)
+                     #immask=None,  #list of tuples to check mask value
+                     #tabcache=True,
+                     #stopcode=None,
+                     #reffreq=None # list of tuples of (imagename, reffreq)
+                     ):
+        if ret!=None and isinstance(ret,dict):
+            if list(ret.keys())[0].count('node'):
+                mergedret={}
+                nodenames = list(ret.keys())
+                # must be parallel cube results
+                if parlist.count('iterdone'):
+                    retIterdone = 0
+                    for inode in nodenames:
+                        #print("ret[",inode,"]=",ret[inode])
+                        #print("inode.strip = ", int(inode.strip('node')))
+                        retIterdone+=ret[inode][int(inode.strip('node'))]['iterdone']
+                    mergedret['iterdone']=retIterdone
+                if parlist.count('nmajordone'):
+                    retNmajordone = 0
+                    for inode in nodenames:
+                        retNmajordone = max(ret[inode][int(inode.strip('node'))]['nmajordone'],retNmajordone)
+                    mergedret['nmajordone']=retNmajordone
+                if parlist.count('peakres'):
+                    #retPeakres = 0
+                    #for inode in nodenames:
+                        #tempreslist = ret[inode][int(inode.strip('node'))]['summaryminor'][1,:]
+                        #if len(tempreslist)>0:
+                        #    tempresval = tempreslist[len(tempreslist)-1]
+                        #else:
+                        #    tempresval=0.0
+                        #retPeakres = max(tempresval,retPeakres)
+                    #mergedret['summaryminor']=ret['node1'][1]['summaryminor']
+                    if 'summaryminor' not in mergedret:
+                        for inode in nodenames:
+                            nodeid = int(inode.strip('node'))
+                            if ret[inode][nodeid]['summaryminor'].size!=0:
+                                lastnode = inode
+                                lastid = nodeid
+                           
+                        mergedret['summaryminor']=ret[lastnode][lastid]['summaryminor']
+                if parlist.count('modflux'):
+                    #retModflux = 0
+                    #for inode in nodenames:
+                    #    tempmodlist = ret[inode][int(inode.strip('node'))]['summaryminor'][2,:]
+                    #    print "tempmodlist for ",inode,"=",tempmodlist
+                    #    if len(tempmodlist)>0:
+                    #         tempmodval=tempmodlist[len(tempmodlist)-1]
+                    #    else:
+                    #         tempmodval=0.0
+                    #    retModflux += tempmodval
+                    #mergedret['modflux']=retModflux
+                    if 'summaryminor' not in mergedret:
+                        for inode in nodenames:
+                            nodeid = int(inode.strip('node'))
+                            if ret[inode][nodeid]['summaryminor'].size!=0:
+                                lastnode = inode
+                                lastid = nodeid
+                           
+                        mergedret['summaryminor']=ret[lastnode][lastid]['summaryminor']
+                if parlist.count('stopcode'):
+                    mergedret['stopcode']=ret['node1'][1]['stopcode']
+            else:
+                mergedret=ret
+
+        return mergedret
 

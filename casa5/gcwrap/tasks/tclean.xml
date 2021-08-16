@@ -1,12 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-<task type="function" name="tclean" category="imaging">
+<task category="imaging" name="tclean" type="function">
 
   <shortdescription>Radio Interferometric Image Reconstruction</shortdescription>
 
@@ -22,31 +17,31 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
   <input>
 
-<!--============================================== -->
-<!--                            Data Selection Parameters                                            -->
-<!--============================================== -->
 
-    <param type="any" name="vis" kind="ms" mustexist="true">
+
+
+
+    <param mustexist="true" kind="ms" name="vis" type="any">
    <shortdescription>Name of input visibility file(s)</shortdescription>
 <description>Name(s) of input visibility file(s)
                default: none;
                example: vis='ngc5921.ms'
                         vis=['ngc5921a.ms','ngc5921b.ms']; multiple MSes
 </description>
-      <any type="variant" limittypes="string stringArray"/>
+      <any limittypes="string stringArray" type="variant"/>
       <type mustexist="true">path</type><type mustexist="true">pathVec</type>
-      <value type="string"></value>
+      <value type="string"/>
     </param>
 
 
-    <param type="bool" name="selectdata" visibility="hidden">
+    <param visibility="hidden" name="selectdata" type="bool">
      <shortdescription>Enable data selection parameters</shortdescription>
 <description>Enable data selection parameters.
 </description>
       <value type="bool">True</value>
     </param>
 
-    <param type="any" name="field" subparam="true">
+    <param subparam="true" name="field" type="any">
      <shortdescription>field(s) to select</shortdescription>
 <description> Select fields to image or mosaic.  Use field id(s) or name(s).
                   ['go listobs' to obtain the list id's or names]
@@ -64,11 +59,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                  field = '0~2'; field ids 0-2 for all input MSes
 
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <any limittypes="string stringArray" type="variant"/>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="spw" subparam="true">
+    <param subparam="true" name="spw" type="any">
      <shortdescription>spw(s)/channels to select</shortdescription>
 <description> Select spectral window/channels
                NOTE: channels de-selected here will contain all zeros if
@@ -90,11 +85,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                  spw='1~4;6:15~48' for channels 15 through 48 for spw ids 1,2,3,4 and 6
 
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <any limittypes="string stringArray" type="variant"/>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="timerange" subparam="true">
+    <param subparam="true" name="timerange" type="any">
      <shortdescription>Range of time to select from data</shortdescription>
 <description>Range of time to select from data
 
@@ -115,11 +110,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                                                  all input MSes
 
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <any limittypes="string stringArray" type="variant"/>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="uvrange" subparam="true">
+    <param subparam="true" name="uvrange" type="any">
      <shortdescription>Select data within uvrange</shortdescription>
 <description>Select data within uvrange (default unit is meters)
                    default: '' (all); example:
@@ -131,11 +126,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                    uvrange='0~1000klambda'; apply 0-1000 kilo-lambda for all
                                             input MSes
  </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <any limittypes="string stringArray" type="variant"/>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="antenna" subparam="true">
+    <param subparam="true" name="antenna" type="any">
      <shortdescription>Select data based on antenna/baseline</shortdescription>
 <description>Select data based on antenna/baseline
 
@@ -160,11 +155,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                    antenna='!DV14'; use all antennas except DV14
 
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <any limittypes="string stringArray" type="variant"/>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="scan" subparam="true">
+    <param subparam="true" name="scan" type="any">
      <shortdescription>Scan number range</shortdescription>
 <description>Scan number range
 
@@ -175,21 +170,21 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                    scan='0~100; scan ids 0-100 for all input MSes
 
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <any limittypes="string stringArray" type="variant"/>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="observation" subparam="true">
+    <param subparam="true" name="observation" type="any">
      <shortdescription>Observation ID range</shortdescription>
 <description>Observation ID range
                    default: '' (all)
                    example: observation='1~5'
 </description>
-      <any type="variant" limittypes="string int"/>
-      <value type="string"></value>
+      <any limittypes="string int" type="variant"/>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="intent" subparam="true">
+    <param subparam="true" name="intent" type="any">
      <shortdescription>Scan Intent(s)</shortdescription>
 <description>Scan Intent(s)
 
@@ -198,11 +193,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                    example: intent='TARGET_SOURCE1,TARGET_SOURCE2'
                    example: intent='TARGET_POINTING*'
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+      <any limittypes="string stringArray" type="variant"/>
+      <value type="string"/>
     </param>
 
-    <param type="string" name="datacolumn"> <!--  subparam="true">  -->
+    <param name="datacolumn" type="string"> 
      <shortdescription>Data column to image(data,corrected)</shortdescription>
 <description>Data column to image (data or observed, corrected)
                      default:'corrected'
@@ -213,11 +208,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
     </param>
 
 
-<!--============================================== -->
-<!--                            Image Definition Parameters                                         -->
-<!--============================================== -->
 
-    <param type="any" name="imagename" required="true">
+
+
+
+    <param required="true" name="imagename" type="any">
      <shortdescription>Pre-name of output images</shortdescription>
 <description>Pre-name of output images
 
@@ -244,7 +239,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                        plus the following extra output images.
                        try.alpha            - spectral index
                        try.alpha.error   - estimate of error on spectral index
-                       try.beta              - spectral curvature (if nterms \> 2)
+                       try.beta              - spectral curvature (if nterms \&gt; 2)
 
                        Tip : Include a directory name in 'imagename' for all
                                output images to be sent there instead of the
@@ -252,7 +247,7 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
 
                        Tip : Restarting an imaging run without changing 'imagename'
                                implies continuation from the existing model image on disk.
-                                - If 'startmodel' was initially specified it needs to be set to ""
+                                - If 'startmodel' was initially specified it needs to be set to &quot;&quot;
                                   for the restart run (or tclean will exit with an error message).
                                 - By default, the residual image and psf will be recomputed
                                   but if no changes were made to relevant parameters between
@@ -266,11 +261,11 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                                   be turned off via the 'restoration=T/F' parameter.
 
 </description>
-      <any type="variant" limittypes="int string stringArray"/>
-      <value type="string"></value>
+      <any limittypes="int string stringArray" type="variant"/>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="imsize" > <!-- subparam="true"> -->
+    <param name="imsize" type="any"> 
      <shortdescription>Number of pixels</shortdescription>
 <description>Number of pixels
          example :  imsize = [350,250]
@@ -278,22 +273,22 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
          To take proper advantage of internal optimized FFT routines, the
          number of pixels must be even and factorizable by 2,3,5,7 only.
 </description>
-      <any type="variant" limittypes="int intArray"/>
-      <value type="intArray">100</value>
+      <any limittypes="int intArray" type="variant"/>
+      <value type="intArray"><value>100</value></value>
     </param>
 
-    <param type="any" name="cell" > <!-- subparam="true"> -->
+    <param name="cell" type="any"> 
      <shortdescription>Cell size</shortdescription>
 <description>Cell size
                example: cell=['0.5arcsec,'0.5arcsec'] or
                cell=['1arcmin', '1arcmin']
                cell = '1arcsec' is equivalent to ['1arcsec','1arcsec']
 </description>
-      <any type="variant" limittypes="int double intArray doubleArray string stringArray"/>
-      <value type="stringArray">"1arcsec"</value>
+      <any limittypes="int double intArray doubleArray string stringArray" type="variant"/>
+      <value type="stringArray">&quot;1arcsec&quot;</value>
     </param>
 
-    <param type="any" name="phasecenter" > <!-- subparam="true"> -->
+    <param name="phasecenter" type="any"> 
      <shortdescription>Phase center of the image</shortdescription>
 <description>Phase center of the image (string or field id); if the phasecenter is the name known major solar system object ('MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO', 'SUN', 'MOON') or is an ephemerides table then that source is tracked and the background sources get smeared. There is a special case, when phasecenter='TRACKFIELD', which will use the ephemerides or polynomial phasecenter in the FIELD table of the MS's as the source center to track.
                example: phasecenter=6
@@ -305,12 +300,12 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
                         phasecenter='MOON'
                         phasecenter='TRACKFIELD'
 </description>
-      <any type="variant" limittypes="int string"/>
-      <value type="string"></value>
+      <any limittypes="int string" type="variant"/>
+      <value type="string"/>
     </param>
 
 
-    <param type="string" name="stokes" > <!-- subparam="true"> -->
+    <param name="stokes" type="string"> 
      <shortdescription>Stokes Planes to make</shortdescription>
 <description>Stokes Planes to make
                default='I'; example: stokes='IQUV';
@@ -350,46 +345,20 @@ file:///opt/casa/code/xmlcasa/xml/casa.xsd">
       </allowed>
     </param>
 
-    <param type="string" name="projection" > <!-- subparam="true"> -->
+    <param name="projection" type="string"> 
      <shortdescription>Coordinate projection </shortdescription>
 <description>Coordinate projection
                      Examples : SIN,   NCP
                      A list of supported (but untested) projections can be found here :
                      http://casa.nrao.edu/active/docs/doxygen/html/classcasa_1_1Projection.html#a3d5f9ec787e4eabdce57ab5edaf7c0cd
 
-<!-- AZP Zenithal/Azimuthal perspective.
-SZP  Slant zenithal perspective, new.
-TAN Gnomonic.
-SIN Orthographics/synthesis. (NCP is a hard-coded special case)
-STG  Stereographic.
-ARC zenith/azimuthal equidistant.
-ZPN zenithal/azimuthal polynomial.
-ZEA zenithal/azimuthal equal area.
-AIR Airy.
-CYP Cylindrical perspective.
-CAR Plate carree.
-MER Mercator.
-CEA Cylindrical equal area.
-COP Conic perspective.
-COD Conic equidistant.
-COE Conic equal area.
-COO Conic orthomorphic.
-BON Bonne.
-PCO Polyconic.
-SFL Sanson-Flamsteed (global sinusoidal). The old GLS projection is now SFL. The 'GLS' string will be converted to 'SFL'
-PAR Parabolic.
-AIT Hammer-Aitoff.
-MOL Mollweide.
-CSC COBE quadrilateralized spherical cube.
-QSC Quadrilateralized spherical cube.
-TSC  Tangential spherical cube.
-HPX HEALPix grid.  -->
+
 
 </description>
       <value type="string">SIN</value>
     </param>
 
-    <param type="any" name="startmodel" > <!-- subparam="true"> -->
+    <param name="startmodel" type="any"> 
      <shortdescription>Name of starting model image</shortdescription>
 <description>Name of starting model image
 
@@ -419,16 +388,16 @@ HPX HEALPix grid.  -->
                                    coordinate system before supplying it via startmodel ]
 
  </description>
-      <value type="string"></value>
+      <value type="string"/>
     </param>
 
-<!--============================================== -->
 
-<!--============================================== -->
-<!--                            Spectral Parameters                                                     -->
-<!--============================================== -->
 
-    <param type="any" name="specmode" required="true">
+
+
+
+
+    <param required="true" name="specmode" type="any">
      <shortdescription>Spectral definition mode (mfs,cube,cubedata, cubesource)</shortdescription>
 <description>Spectral definition mode (mfs,cube,cubedata, cubesource)
 
@@ -458,11 +427,7 @@ HPX HEALPix grid.  -->
                                                            data display options window.)
 
 
-                                               <!--(Note : If the input parameters are specified in a frame
-                                                           other than LSRK, the viewer can be used to relabel
-                                                           the spectral axis in that frame - via the spectral
-                                                           reference option under axis label properties in the
-                                                           data display options window.)-->
+                                               
 
                         mode='cubedata' : Spectral line imaging with one or more channels
                                                         There is no internal software Doppler tracking so
@@ -492,7 +457,7 @@ HPX HEALPix grid.  -->
      </allowed>
     </param>
 
-    <param type="any" name="reffreq" subparam="true">
+    <param subparam="true" name="reffreq" type="any">
      <shortdescription>Reference frequency</shortdescription>
 <description>Reference frequency of the output image coordinate system
 
@@ -504,10 +469,10 @@ HPX HEALPix grid.  -->
                        this specified reference frequency.
 
 </description>
-      <value type="string"></value>
+      <value type="string"/>
     </param>
 
-    <param type="int" name="nchan" subparam="true">
+    <param subparam="true" name="nchan" type="int">
      <shortdescription>Number of channels in the output image</shortdescription>
 <description>Number of channels in the output image
                        For default (=-1), the number of channels will be automatically determined
@@ -519,7 +484,7 @@ HPX HEALPix grid.  -->
       <value type="int">-1</value>
     </param>
 
-    <param type="any" name="start" subparam="true">
+    <param subparam="true" name="start" type="any">
      <shortdescription>First channel (e.g. start=3,start=\'1.1GHz\',start=\'15343km/s\')</shortdescription>
 <description>First channel (e.g. start=3,start=\'1.1GHz\',start=\'15343km/s\')
                        of output cube images specified by data channel number (integer),
@@ -539,10 +504,10 @@ HPX HEALPix grid.  -->
                        examples: start='5.0km/s'; 1st channel, 5.0km/s in outframe
                                  start='22.3GHz'; 1st channel, 22.3GHz in outframe
 </description>
-      <value type="string"></value>
+      <value type="string"/>
     </param>
 
-    <param type="any" name="width" subparam="true">
+    <param subparam="true" name="width" type="any">
      <shortdescription>Channel width (e.g. width=2,width=\'0.1MHz\',width=\'10km/s\')</shortdescription>
 <description>Channel width (e.g. width=2,width=\'0.1MHz\',width=\'10km/s\') of output cube images
                       specified by data channel number (integer), velocity (string with a unit), or
@@ -560,10 +525,10 @@ HPX HEALPix grid.  -->
                                           high to low channel numbers
 
 </description>
-      <value type="string"></value>
+      <value type="string"/>
     </param>
 
-    <param type="string" name="outframe" subparam="true">
+    <param subparam="true" name="outframe" type="string">
      <shortdescription>Spectral reference frame in which to interpret \'start\' and \'width\'</shortdescription>
 <description>Spectral reference frame in which to interpret \'start\' and \'width\'
                       Options: '','LSRK','LSRD','BARY','GEO','TOPO','GALACTO','LGROUP','CMB'
@@ -586,7 +551,7 @@ HPX HEALPix grid.  -->
       <value type="string">LSRK</value>
     </param>
 
-    <param type="string" name="veltype" subparam="true">
+    <param subparam="true" name="veltype" type="string">
      <shortdescription>Velocity type (radio, z, ratio, beta, gamma, optical)</shortdescription>
 <description>Velocity type (radio, z, ratio, beta, gamma, optical)
                       For start and/or width specified in velocity, specifies the velocity definition
@@ -611,7 +576,7 @@ HPX HEALPix grid.  -->
       <value type="string">radio</value>
     </param>
 
-    <param type="any" name="restfreq" subparam="true">
+    <param subparam="true" name="restfreq" type="any">
      <shortdescription>List of rest frequencies</shortdescription>
 <description>List of rest frequencies or a rest frequency in a string.
                       Specify rest frequency to use for output image.
@@ -623,24 +588,12 @@ HPX HEALPix grid.  -->
                                 restfreq='1.42GHz'
 
 </description>
-      <value type="stringArray"></value>
+      <value type="stringArray"/>
     </param>
 
-<!-- sub-param for 'cubesrc' disabled for now
-    <param type="any" name="sysvel" subparam="true">
-     <shortdescription>Systemic velocity (for mode=cubesrc)</shortdescription>
-<description>Systemic velocity (for mode=cubesrc) </description>
-      <value type="string"></value>
-    </param>
--->
-<!-- sub-param for 'cubesrc' disabled for now
-    <param type="string" name="sysvelframe" subparam="true">
-     <shortdescription>Spectral frame in which sysvel is specified (for mode=cubesrc only)</shortdescription>
-<description>Spectral frame in which sysvel is specified (for mode=cubesrc only)</description>
-      <value type="string"></value>
-    </param>
--->
-    <param type="string" name="interpolation" subparam="true">
+
+
+    <param subparam="true" name="interpolation" type="string">
      <shortdescription>Spectral interpolation (nearest,linear,cubic)</shortdescription>
 <description>Spectral interpolation (nearest,linear,cubic)
 
@@ -662,7 +615,7 @@ HPX HEALPix grid.  -->
               <value>cubic</value>
       </allowed>
     </param>
-<param type="bool" name="perchanweightdensity" subparam="true">
+<param subparam="true" name="perchanweightdensity" type="bool">
            <shortdescription>whether to calculate weight density per channel in Briggs style weighting or not</shortdescription>
            <description>
                          When calculating weight density for Briggs
@@ -672,8 +625,9 @@ HPX HEALPix grid.  -->
                          (the default, True)
                          or a common weight density for all of the selected
                          data. This parameter has no
-                         meaning for continuum (specmode='mfs')
-                         imaging but for cube imaging
+                         meaning for continuum (specmode='mfs') imaging
+                         or for natural and radial weighting schemes.
+                         For cube imaging
                          perchanweightdensity=True is a recommended
                          option that provides more uniform
                          sensitivity per channel for cubes, but with
@@ -717,11 +671,11 @@ HPX HEALPix grid.  -->
       <value type="bool">True</value>
     </param>
 
-<!--============================================== -->
-<!--                            Imaging/Gridding Parameters                                                      -->
-<!--============================================== -->
 
-    <param type="string" name="gridder">
+
+
+
+    <param name="gridder" type="string">
            <shortdescription>Gridding options (standard, wproject, widefield, mosaic, awproject)</shortdescription>
 <description>Gridding options (standard, wproject, widefield, mosaic, awproject)
 
@@ -733,7 +687,7 @@ HPX HEALPix grid.  -->
                        convolution functions. Gridding (degridding) runtime will rise in
                        proportion to the support size of these convolution functions (in uv-pixels).
 
-                       standard : Prolate Spheroid with 3x3 uv pixel support size
+                       standard : Prolate Spheroid with 7x7 uv pixel support size
 
                                         [ This mode can also be invoked using 'ft' or 'gridft' ]
 
@@ -761,7 +715,8 @@ HPX HEALPix grid.  -->
                                         nfacets=1, wprojplanes=1 : Same as standard,ft,gridft
 
                                         A combination of facetting and W-Projection is relevant only for
-                                        very large fields of view.
+                                        very large fields of view. (In our current version of tclean, this 
+					combination runs only with parallel=False. 
 
                        mosaic : A-Projection with azimuthally symmetric beams without
                                         sidelobes, beam rotation or squint correction.
@@ -823,7 +778,7 @@ HPX HEALPix grid.  -->
                        (2) For ALMA and gridder='mosaic', ray-traced (TICRA) beams
                             are also available via the vpmanager tool.
                             For example, call the following before the tclean run.
-                           vp.setpbimage(telescope="ALMA",
+                           vp.setpbimage(telescope=&quot;ALMA&quot;,
                            compleximage='/home/casa/data/trunk/alma/responses/ALMA_0_DV__0_0_360_0_45_90_348.5_373_373_GHz_ticra2007_VP.im',
                            antnames=['DV'+'%02d'%k for k in range(25)])
                            vp.saveastable('mypb.tab')
@@ -841,7 +796,7 @@ HPX HEALPix grid.  -->
                          deconvolution mask.
                             -- Run tclean with niter=0 to produce the .pb, construct a 1/0 image
                          with the desired threshold (using ia.open('newmask.im');
-                         ia.calc('iif("xxx.pb">0.3,1.0,0.0)');ia.close() for example),
+                         ia.calc('iif(&quot;xxx.pb&quot;&gt;0.3,1.0,0.0)');ia.close() for example),
                          and supply it via the 'mask' parameter in a subsequent run
                          (with calcres=F and calcpsf=F to restart directly from the minor cycle).
                             -- Run tclean with usemask='pb' for it to automatically construct
@@ -871,7 +826,7 @@ HPX HEALPix grid.  -->
       </allowed>
     </param>
 
-    <param type="int" name="facets" subparam="true">
+    <param subparam="true" name="facets" type="int">
      <shortdescription>Number of facets on a side</shortdescription>
 <description>Number of facets on a side
 
@@ -880,11 +835,14 @@ HPX HEALPix grid.  -->
                        (to minimize max W). Deconvolution is done on the joint
                        full size image, using a PSF from the first subregion/facet.
 
+		       In our current version of tclean, facets>1 may be used only
+		       with parallel=False. 
+
 </description>
       <value type="int">1</value>
     </param>
 
-<param type="any" name="psfphasecenter"  subparam="true"> 
+<param subparam="true" name="psfphasecenter" type="any"> 
      <shortdescription>optional direction to calculate psf for mosaic (default is image phasecenter)</shortdescription>
      <description>For mosaic use psf centered on this
                              optional direction. You may need to use
@@ -903,32 +861,11 @@ HPX HEALPix grid.  -->
                                 psfphasecenter='J2000 5.105rad -0.698rad'
                                 psfphasecenter='ICRS 13:05:27.2780 -049.28.04.458'
 </description>
-      <any type="variant" limittypes="int string"/>
-      <value type="string"></value>
+      <any limittypes="int string" type="variant"/>
+      <value type="string"/>
     </param>
 
-    <param type="int" name="chanchunks" subparam="true">
-     <shortdescription>Number of channel chunks</shortdescription>
-<description>Number of channel chunks to grid separately
-
-                       For large image cubes, the gridders can run into memory limits
-                       as they loop over all available image planes for each row of data
-                       accessed. To prevent this problem, we can grid subsets of channels
-                       in sequence so that at any given time only part of the image cube
-                       needs to be loaded into memory. This parameter controls the
-                       number of chunks to split the cube into.
-
-                       Example :  chanchunks = 4
-
-                       [ This feature is experimental and may have restrictions on how
-                          chanchunks is to be chosen. For now, please pick chanchunks so
-                          that nchan/chanchunks is an integer. ]
-
-</description>
-      <value type="int">1</value>
-    </param>
-
-    <param type="int" name="wprojplanes" subparam="true">
+    <param subparam="true" name="wprojplanes" type="int">
      <shortdescription>Number of distinct w-values for convolution functions</shortdescription>
 <description>Number of distinct w-values at which to compute and use different
                        gridding convolution functions for W-Projection
@@ -959,11 +896,11 @@ HPX HEALPix grid.  -->
       <value type="int">1</value>
     </param>
 
-    <param type="string" name="vptable" subparam="true">
+    <param subparam="true" name="vptable" type="string">
      <shortdescription>Name of Voltage Pattern table</shortdescription>
 <description> VP table saved via the vpmanager
 
-                       vptable="" : Choose default beams for different telescopes
+                       vptable=&quot;&quot; : Choose default beams for different telescopes
                                            ALMA : Airy disks
                                            EVLA : old VLA models.
 
@@ -988,15 +925,15 @@ HPX HEALPix grid.  -->
                                  available via the vpmanager. So, gridder='awproject' does not allow
                                  the user to set this parameter.
 </description>
-      <value type="string"></value>
+      <value type="string"/>
     </param>
-    <param type="bool" name="mosweight" subparam="true">
+    <param subparam="true" name="mosweight" type="bool">
            <shortdescription>Indepently weight each field in a mosaic</shortdescription>
 <description>When doing Brigg's style weighting (including uniform) to perform the weight density calculation for each field indepedently if True. If False the weight density is calculated from the average uv distribution of all the fields.
 </description>
       <value type="bool">True</value>
     </param>
-    <param type="bool" name="aterm" subparam="true">
+    <param subparam="true" name="aterm" type="bool">
            <shortdescription>Use aperture illumination functions during gridding</shortdescription>
 <description>Use aperture illumination functions during gridding
 
@@ -1008,7 +945,7 @@ HPX HEALPix grid.  -->
       <value type="bool">True</value>
     </param>
 
-    <param type="bool" name="psterm" subparam="true">
+    <param subparam="true" name="psterm" type="bool">
            <shortdescription>Use prolate spheroidal during gridding</shortdescription>
      <description>Include the Prolate Spheroidal (PS) funtion as the anti-aliasing 
                         operator in the gridding convolution functions used for gridding.
@@ -1025,13 +962,13 @@ HPX HEALPix grid.  -->
 
                         Operation       aterm   psterm  wprojplanes  Contents of the .pb image
                         ----------------------------------------------------------------------
-                        AW-Projection    True    True      >1                FT(PS) x PB
+                        AW-Projection    True    True      &gt;1                FT(PS) x PB
                                                  False                       PB
 
                         A-Projection     True    True       1                FT(PS) x PB
                                                  False                       PB
 
-                        W-Projection     False   True      >1                FT(PS)
+                        W-Projection     False   True      &gt;1                FT(PS)
 
                         Standard         False   True       1                FT(PS)
 
@@ -1039,7 +976,7 @@ HPX HEALPix grid.  -->
       <value type="bool">False</value>
     </param>
 
-    <param type="bool" name="wbawp" subparam="true">
+    <param subparam="true" name="wbawp" type="bool">
            <shortdescription>Use wideband A-terms</shortdescription>
 <description>Use frequency dependent A-terms
                        Scale aperture illumination functions appropriately with frequency
@@ -1048,7 +985,7 @@ HPX HEALPix grid.  -->
       <value type="bool">True</value>
     </param>
 
-    <param type="bool" name="conjbeams" subparam="true">
+    <param subparam="true" name="conjbeams" type="bool">
            <shortdescription>Use conjugate frequency for wideband A-terms</shortdescription>
 <description>Use conjugate frequency for wideband A-terms
 
@@ -1071,7 +1008,7 @@ HPX HEALPix grid.  -->
       <value type="bool">False</value>
     </param>
 
-    <param type="string" name="cfcache" subparam="true">
+    <param subparam="true" name="cfcache" type="string">
            <shortdescription>Convolution function cache directory name</shortdescription>
 <description>Convolution function cache directory name
 
@@ -1093,17 +1030,17 @@ HPX HEALPix grid.  -->
                        By default, cfcache = imagename + '.cf'
 
 </description>
-      <value type="string"></value>
+      <value type="string"/>
     </param>
 
-    <param type="bool" name="usepointing" subparam="true">
+    <param subparam="true" name="usepointing" type="bool">
      <shortdescription>The parameter makes the gridder utilize the pointing table phase directions while computing the residual image.</shortdescription>
 <description>The usepointing flag informs the gridder that it should utilize the pointing table
 to use the correct direction in which the antenna is pointing with respect to the pointing phasecenter. </description>
       <value type="bool">False</value>
     </param>
 
-    <param type="double" name="computepastep" subparam="true">
+    <param subparam="true" name="computepastep" type="double">
      <shortdescription>Parallactic angle interval after the AIFs are recomputed (deg)</shortdescription>
 <description>Parallactic angle interval after the AIFs are recomputed (deg)
 
@@ -1120,7 +1057,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">360.0</value>
     </param>
 
-    <param type="double" name="rotatepastep" subparam="true">
+    <param subparam="true" name="rotatepastep" type="double">
      <shortdescription>Parallactic angle interval after which the nearest AIF is rotated (deg) </shortdescription>
 <description>Parallactic angle interval after which the nearest AIF is rotated (deg) 
 
@@ -1139,7 +1076,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
     
     
-    <param type="any" name="pointingoffsetsigdev" subparam="true">
+    <param subparam="true" name="pointingoffsetsigdev" type="any">
      <shortdescription> Pointing offset threshold to determine heterogeneity of pointing corrections for the AWProject gridder</shortdescription>
 <description> 
                          Corrections for heterogenous and time-dependent pointing 
@@ -1151,6 +1088,19 @@ to use the correct direction in which the antenna is pointing with respect to th
                          the pointing offset must be computed separately.  The second 
                          number controls how much a pointing change across time can 
                          be ignored and after which an antenna rebinning is required.   
+
+
+                        Note : The default value of this parameter is [], due a programmatic constraint.
+                                   If run with this value, it will internally pick [600,600] and exercise the
+                                   option of using large tolerances (10arcmin) on both axes. Please choose
+                                   a setting explicitly for runs that need to use this parameter. 
+
+	                Note : This option is available only for gridder='awproject' and usepointing=True and
+                                   and has been validated primarily with VLASS on-the-fly mosaic data
+                                   where POINTING subtables have been modified after the data are recorded.
+
+
+		        Examples of parameter usage : 
 
                         [100.0,100.0] : Pointing offsets of 100 arcsec or less are considered 
                                                 small enough to be ignored.  Using large values for both
@@ -1183,20 +1133,16 @@ to use the correct direction in which the antenna is pointing with respect to th
                         but to retain the time dependent corrections required from one timestep
                         to the next. 
 
-                        Note : The default value of this parameter is [], due a programmatic constraint.
-                                   If run with this value, it will internally pick [600,600] and exercise the
-                                   option of using large tolerances (10arcmin) on both axes. Please choose
-                                   a setting explicitly for runs that need to use this parameter. 
 
 
 </description>
-      <any type="variant" limittypes="intArray doubleArray"/>
-      <value type="doubleArray"></value>
+      <any limittypes="intArray doubleArray" type="variant"/>
+      <value type="doubleArray"/>
     </param>   
     
     
 
-    <param type="double" name="pblimit" subparam="true">
+    <param subparam="true" name="pblimit" type="double">
      <shortdescription>PB gain level at which to cut off normalizations </shortdescription>
 <description>PB gain level at which to cut off normalizations
 
@@ -1211,7 +1157,9 @@ to use the correct direction in which the antenna is pointing with respect to th
 
                       Note : To prevent the internal T/F mask from appearing in anything other
                                  than the .pb and .image.pbcor images, 'pblimit' can be set to a
-                                 negative number. The absolute value will still be used as a valid 'pblimit'.
+                                 negative number. 
+                                 The absolute value will still be used as a valid 'pblimit' for normalization
+                                 purposes. So, for example, pick pblimit=-0.1 (and not pblimit=-1). 
                                  A tclean restart using existing output images on disk that already
                                  have this T/F mask in the .residual and .image but only pblimit set
                                  to a negative value, will remove this mask after the next major cycle.
@@ -1220,7 +1168,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">0.2</value>
     </param>
 
-    <param type="string" name="normtype" subparam="true">
+    <param subparam="true" name="normtype" type="string">
      <shortdescription>Normalization type (flatnoise, flatsky,pbsquare)</shortdescription>
 <description>Normalization type (flatnoise, flatsky, pbsquare)
 
@@ -1251,12 +1199,12 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
 
-<!--============================================== -->
-<!--                            Deconvolution Parameters                                            -->
-<!--============================================== -->
 
 
-    <param type="string" name="deconvolver">
+
+
+
+    <param name="deconvolver" type="string">
       <shortdescription>Minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes)</shortdescription>
 <description>Name of minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes)
 
@@ -1336,11 +1284,11 @@ to use the correct direction in which the antenna is pointing with respect to th
               <value>multiscale</value>
               <value>mtmfs</value>
               <value>mem</value>
-<!--        <value>aasp</value> -->
+
       </allowed>
     </param>
 
-    <param type="any" name="scales" subparam="true">
+    <param subparam="true" name="scales" type="any">
            <shortdescription>List of scale sizes (in pixels) for multi-scale algorithms</shortdescription>
      <description>List of scale sizes (in pixels) for multi-scale and mtmfs algorithms.
                                   --&gt;  scales=[0,6,20]
@@ -1351,7 +1299,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                   The smallest scale size is recommended to be 0 (point source),
                                   the second the size of the synthesized beam and the third 3-5
                                   times the synthesized beam, etc. For example, if the synthesized
-                                  beam is 10" FWHM and cell=2",try scales = [0,5,15].
+                                  beam is 10&quot; FWHM and cell=2&quot;,try scales = [0,5,15].
 
                                   For numerical stability, the largest scale must be
                                   smaller than the image (or mask) size and smaller than or
@@ -1360,11 +1308,11 @@ to use the correct direction in which the antenna is pointing with respect to th
                                   instrument is sensitive to is unconstrained by the data making
                                   it harder to recovery from errors during the minor cycle).
      </description>
-      <any type="variant" limittypes="intArray doubleArray"/>
-      <value type="intArray"></value>
+      <any limittypes="intArray doubleArray" type="variant"/>
+      <value type="intArray"/>
     </param>
 
-    <param type="int" name="nterms" subparam="true">
+    <param subparam="true" name="nterms" type="int">
      <shortdescription>Number of Taylor coefficients in the spectral model</shortdescription>
 <description>Number of Taylor coefficients in the spectral model
 
@@ -1413,7 +1361,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="int">2</value>
     </param>
 
-    <param type="double" name="smallscalebias" subparam="true">
+    <param subparam="true" name="smallscalebias" type="double">
      <shortdescription>Biases the scale selection when using multi-scale or mtmfs deconvolvers </shortdescription>
      <description>A numerical control to bias the scales when using multi-scale or mtmfs algorithms.
                       The peak from each scale's smoothed residual is
@@ -1430,7 +1378,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
 
-    <param type="bool" name="restoration">
+    <param name="restoration" type="bool">
      <shortdescription>Do restoration steps (or not)</shortdescription>
 <description> Restore the model image.
 
@@ -1449,7 +1397,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
 
-    <param type="any" name="restoringbeam" subparam="true">
+    <param subparam="true" name="restoringbeam" type="any">
            <shortdescription>Restoring beam shape to use. Default is the PSF main lobe</shortdescription>
 <description> Restoring beam shape/size to use.
 
@@ -1471,11 +1419,11 @@ to use the correct direction in which the antenna is pointing with respect to th
                                   residuals that have been convolved to the same target resolution.
 
 </description>
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="stringArray"></value>
+      <any limittypes="string stringArray" type="variant"/>
+      <value type="stringArray"/>
     </param>
 
-    <param type="bool" name="pbcor" subparam="true">
+    <param subparam="true" name="pbcor" type="bool">
      <shortdescription>Apply PB correction on the output restored image</shortdescription>
 <description> Apply PB correction on the output restored image
 
@@ -1502,18 +1450,12 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
 
-<!--
-    <param type="any" name="specthreshold" subparam="true">
-     <shortdescription>xxx</shortdescription>
-<description>Intensity threshold above which spectral index is computed</description>
-      <value type="string">'0.0Jy'</value>
-    </param>
--->
 
-<!--============================================== -->
-<!--                            Outlier Parameters  (files with any of the above)               -->
-<!--============================================== -->
-    <param type="string" name="outlierfile">
+
+
+
+
+    <param name="outlierfile" type="string">
      <shortdescription>Name of outlier-field image definitions</shortdescription>
 <description>Name of outlier-field image definitions
 
@@ -1565,17 +1507,17 @@ to use the correct direction in which the antenna is pointing with respect to th
                                     send us feedback. The above is an initial list.
 
 </description>
-      <value type="string"></value>
+      <value type="string"/>
     </param>
 
 
-<!--============================================== -->
-<!--                            Weighting Parameters                                            -->
-<!--============================================== -->
 
-    <param type="string" name="weighting">
-           <shortdescription>Weighting scheme (natural,uniform,briggs, briggsabs[experimental])</shortdescription>
-<description>Weighting scheme (natural,uniform,briggs,superuniform,radial, briggsabs)
+
+
+
+    <param name="weighting" type="string">
+           <shortdescription>Weighting scheme (natural,uniform,briggs, briggsabs[experimental], briggsbwtaper[experimental])</shortdescription>
+<description>Weighting scheme (natural,uniform,briggs,superuniform,radial, briggsabs, briggsbwtaper)
 
                        During gridding of the dirty or residual image, each visibility value is
                        multiplied by a weight before it is accumulated on the uv-grid.
@@ -1636,9 +1578,14 @@ to use the correct direction in which the antenna is pointing with respect to th
                                                                    closer to natural weighting.
 
                        weighting='radial' : Gridding weights are given by ' data_weight * uvdistance '
-
                                                       This method approximately minimizes rms sidelobes
                                                       for an east-west synthesis array.
+                                                      
+                       weighting='briggsbwtaper' : A modified version of Briggs weighting for cubes where an inverse uv taper,
+                                                         which is proportional to the fractional bandwidth of the entire cube,
+                                                         is applied per channel. The objective is to modify cube (perchanweightdensity = True)
+                                                         imaging weights to have a similar density to that of the continuum imaging weights.
+                                                         This is currently an experimental weighting scheme being developed for ALMA.
 
                For more details on weighting please see Chapter3
                of Dan Briggs' thesis (http://www.aoc.nrao.edu/dissertations/dbriggs)
@@ -1652,11 +1599,12 @@ to use the correct direction in which the antenna is pointing with respect to th
         <value>briggsabs</value>
         <value>radial</value>
         <value>superuniform</value>
+        <value>briggsbwtaper</value>
       </allowed>
 
     </param>
 
-    <param type="double" name="robust" subparam="true">
+    <param subparam="true" name="robust" type="double">
            <shortdescription>Robustness parameter</shortdescription>
 <description>Robustness parameter for Briggs weighting.
 
@@ -1672,13 +1620,13 @@ to use the correct direction in which the antenna is pointing with respect to th
       </allowed>
     </param>
 
-    <param type="any" name="noise"  subparam="true">
-      <description>noise parameter for briggs abs mode weighting</description>
+    <param subparam="true" name="noise" type="any"><shortdescription>noise parameter for briggs abs mode weighting</shortdescription><description>noise parameter for briggs abs mode weighting</description>
+      
       <any type="variant"/>
       <value type="string">1.0Jy</value>
     </param>
     
-    <param type="int" name="npixels" subparam="true">
+    <param subparam="true" name="npixels" type="int">
            <shortdescription>Number of pixels to determine uv-cell size </shortdescription>
 <description>Number of pixels to determine uv-cell size for super-uniform weighting
                       (0 defaults to -/+ 3 pixels)
@@ -1698,15 +1646,9 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="int">0</value>
     </param>
 
-<!--
-    <param type="bool" name="uvtaper">
-           <shortdescription>xxx</shortdescription>
-<description>Apply additional uv tapering of visibilities</description>
-      <value type="bool">False</value>
-    </param>
--->
 
-    <param type="stringArray" name="uvtaper" subparam="true">
+
+    <param subparam="true" name="uvtaper" type="stringArray">
      <shortdescription>uv-taper on outer baselines in uv-plane</shortdescription>
 <description>uv-taper on outer baselines in uv-plane
 
@@ -1731,25 +1673,19 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 </description>
       <value type="vector">
-        <value></value>
+        <value/>
       </value>
     </param>
 
-<!--
-    <param type="stringArray" name="innertaper" subparam="true">
-     <shortdescription>xxx</shortdescription>
-<description>uv-taper in center of uv-plane (not implemented)</description>
-      <value>1.0</value>
-    </param>
--->
 
 
-<!--============================================== -->
-<!--                            Iteration Control Parameters                                         -->
-<!--============================================== -->
 
 
-    <param type="int" name="niter">
+
+
+
+
+    <param name="niter" type="int">
      <shortdescription>Maximum number of iterations</shortdescription>
 <description>Maximum number of iterations
 
@@ -1800,7 +1736,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="int">0</value>
     </param>
 
-    <param type="double" name="gain" subparam="true">
+    <param subparam="true" name="gain" type="double">
      <shortdescription>Loop gain</shortdescription>
 <description>Loop gain
 
@@ -1815,15 +1751,13 @@ to use the correct direction in which the antenna is pointing with respect to th
                        multiscale clean with an appropriate set of scale sizes will tolerate
                        a higher loop gain than Clark clean (for example).
 
-                       <!-- Setting loop gain to negative triggers automatic loop gain
-                              control based on the Levenberg Macquart algorithm, using
-                              the absolute of the supplied value as the initial setting   -->
+                       
 
 </description>
       <value type="double">0.1</value>
     </param>
 
-    <param type="any" name="threshold" subparam="true">
+    <param subparam="true" name="threshold" type="any">
      <shortdescription>Stopping threshold </shortdescription>
 <description>Stopping threshold (number in units of Jy, or string)
 
@@ -1848,7 +1782,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                 cyclethreshold = peak_residual * psf_fraction
                                 cyclethreshold = max( cyclethreshold, 'threshold' )
 
-                                If nsigma is set (>0.0), the N-sigma threshold is calculated (see
+                                If nsigma is set (&gt;0.0), the N-sigma threshold is calculated (see
                                 the description under nsigma), then cyclethreshold is further modified as,
 
                                 cyclethreshold = max( cyclethreshold, nsgima_threshold )
@@ -1861,23 +1795,25 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">0.0</value>
     </param>
 
-    <param type="double" name="nsigma" subparam="true">
+    <param subparam="true" name="nsigma" type="double">
      <shortdescription>Multiplicative factor for rms-based threshold stopping</shortdescription>
 <description>Multiplicative factor for rms-based threshold stopping
 
                        N-sigma threshold is calculated as nsigma * rms value per image plane determined
-                       from a robust statistics. For nsigma > 0.0, in a minor cycle, a maximum of the two values,
+                       from a robust statistics. For nsigma &gt; 0.0, in a minor cycle, a maximum of the two values,
                        the N-sigma threshold and cyclethreshold, is used to trigger a major cycle
                        (see also the descreption under 'threshold').
                        Set nsigma=0.0 to preserve the previous tclean behavior without this feature.
                        The top level parameter, fastnoise is relevant for the rms noise calculation which is used 
                        to determine the threshold. 
 
+		       The parameter 'nsigma' may be an int, float, or a double.
+
 </description>
       <value type="double">0.0</value>
     </param>
 
-    <param type="int" name="cycleniter" subparam="true">
+    <param subparam="true" name="cycleniter" type="int">
      <shortdescription>Maximum number of minor-cycle iterations</shortdescription>
 <description>Maximum number of minor-cycle iterations (per plane) before triggering
                        a major cycle
@@ -1897,7 +1833,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="int">-1</value>
     </param>
 
-    <param type="double" name="cyclefactor" subparam="true">
+    <param subparam="true" name="cyclefactor" type="double">
      <shortdescription>Scaling on PSF sidelobe level to compute the minor-cycle stopping threshold.</shortdescription>
 <description>Scaling on PSF sidelobe level to compute the minor-cycle stopping threshold.
 
@@ -1914,7 +1850,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">1.0</value>
     </param>
 
-    <param type="double" name="minpsffraction" subparam="true">
+    <param subparam="true" name="minpsffraction" type="double">
      <shortdescription>PSF fraction that marks the max depth of cleaning in the minor cycle</shortdescription>
 <description>PSF fraction that marks the max depth of cleaning in the minor cycle
 
@@ -1928,7 +1864,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">0.05</value>
     </param>
 
-    <param type="double" name="maxpsffraction" subparam="true">
+    <param subparam="true" name="maxpsffraction" type="double">
      <shortdescription>PSF fraction that marks the minimum depth of cleaning in the minor cycle </shortdescription>
 <description>PSF fraction that marks the minimum depth of cleaning in the minor cycle
 
@@ -1944,20 +1880,13 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">0.8</value>
     </param>
 
-<!--    <param type="bool" name="interactive" subparam="true">
-     <shortdescription>xxx</shortdescription>
-<description>True to be able to modify masks and parameters at runtime</description>
-      <value type="bool">False</value>
-    </param> -->
-    <param type="any" name="interactive" subparam="true">
+
+    <param subparam="true" name="interactive" type="any">
      <shortdescription>Modify masks and parameters at runtime</shortdescription>
 <description>Modify masks and parameters at runtime
 
                        interactive=True will trigger an interactive GUI at every major cycle
                        boundary (after the major cycle and before the minor cycle).
-
-                       The interactive mode is currently not available for parallel cube imaging (please also
-                       refer to the Note under the documentation for 'parallel' below).
 
                        Options for runtime parameter modification are :
 
@@ -2005,16 +1934,16 @@ to use the correct direction in which the antenna is pointing with respect to th
                          return an imaging summary dictionary to python ]
 
 </description>
-      <any type="variant" limittypes="bool int"/>
+      <any limittypes="bool int" type="variant"/>
       <value type="bool">False</value>
     </param>
 
-<!--============================================== -->
-<!--                            Mask Parameters                                                    -->
-<!--============================================== -->
-    <!-- top level mask type selection -->
 
-    <param type="string" name="usemask">
+
+
+    
+
+    <param name="usemask" type="string">
            <shortdescription>Type of mask(s) for deconvolution:  user, pb, or auto-multithresh</shortdescription>
 
 <description>Type of mask(s) to be used for deconvolution
@@ -2024,7 +1953,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                        pb: primary beam mask
                          subparameter: pbmask
 
-                           Example: usemask="pb", pbmask=0.2
+                           Example: usemask=&quot;pb&quot;, pbmask=0.2
                                              Construct a mask at the 0.2 pb gain level.
                                              (Currently, this option will work only with
                                              gridders that produce .pb (i.e. mosaic and awproject)
@@ -2035,24 +1964,16 @@ to use the correct direction in which the antenna is pointing with respect to th
                                           minbeamfrac, cutthreshold, pbmask, growiterations, dogrowprune, minpercentchange, verbose
                           Additional top level parameter relevant to auto-multithresh: fastnoise
 
-                          if pbmask is >0.0, the region outside the specified pb gain level is excluded from
+                          if pbmask is &gt;0.0, the region outside the specified pb gain level is excluded from
                           image statistics in determination of the threshold.
 
-                      <!-- auto-thresh (deprecated, will be removed in CASA 5.4): automask by threshold for deconvolution (binned residual image is used for
-                                    to defining masks)
-                          subparameters : maskthreshold, maskresolution, pbmask, nmask
-                          maskresolution and nmask are used to 'prune' the automask regions.
-                          if nmask > 0, 'pruning' of the found automask regions will be applied.
-                       -->
-                       <!--
-                       auto-thresh2 (deprecated, will be removed in CASA 5.4) : automask  by threshold for deconvolution without binning
-                          subparameters : maskthreshold, maskresolution, pbmask, nmask
-                        -->
+                      
+                       
 
                        Note: By default the intermediate mask generated by automask at each deconvolution cycle
                              is over-written in the next cycle but one can save them by setting
-                             the environment variable, SAVE_ALL_AUTOMASKS="true".
-                             (e.g. in the CASA prompt, os.environ['SAVE_ALL_AUTOMASKS']="true" )
+                             the environment variable, SAVE_ALL_AUTOMASKS=&quot;true&quot;.
+                             (e.g. in the CASA prompt, os.environ['SAVE_ALL_AUTOMASKS']=&quot;true&quot; )
                              The saved CASA mask image name will be imagename.mask.autothresh#, where
                              # is the iteration cycle number.
 
@@ -2065,15 +1986,12 @@ to use the correct direction in which the antenna is pointing with respect to th
       </allowed>
     </param>
 
-    <!-- sub-parameters-->
-    <param type="any" name="mask" subparam="true">
+    
+    <param subparam="true" name="mask" type="any">
      <shortdescription>Mask (a list of image name(s) or region file(s) or region string(s) )</shortdescription>
 <description>Mask (a list of image name(s) or region file(s) or region string(s)
 
-    <!--<param type="string" name="mask" subparam="true">
-     <shortdescription>Mask string (image name or region file or region string)</shortdescription>
-<description>Mask string (image name or region file or region string)
--->
+    
                        The name of a CASA image or region file or region string that specifies
                        a 1/0 mask to be used for deconvolution. Only locations with value 1 will
                        be considered for the centers of flux components in the minor cycle.
@@ -2082,17 +2000,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                        Manual mask options/examples :
 
                        mask='xxx.mask'  : Use this CASA image named xxx.mask and containing
-                                                       ones and zeros as the mask. <!--If this image is a different
-                                                       spatial coordinates from what is being made it will be resampled to
-                                                       the target coordinate system before being used.
-                                                       When a continuum (single channel) mask is given for spectral
-                                                       cube imaging, it will be extended (copied) to all channels.
-                                                       Similarly, when a Stokes I mask is given, it will be extended
-                                                       to multi-Stokes imaging. Extension of a cube stokes I mask
-                                                       to other Stokes planes is possible only if the spectral
-                                                       coordinate and the number of the channels matches with the output
-                                                       image.
-                                                       -->
+                                                       ones and zeros as the mask. 
                                                        If the mask is only different in spatial coordinates from what is being made 
                                                        it will be resampled to the target coordinate system before being used.
                                                        The mask has to have the same shape in velocity and Stokes planes
@@ -2118,22 +2026,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                        mask=['xxx.mask','xxx.crtf', 'circle[[40pix,40pix],10pix]']  : a list of masks
 
 
-              <!--
-              There are also a few automasking options :
-
-                mask='auto' :  Run an autoboxing algorithm to produce a mask
-                                        for deconvolution
-
-                mask='auto-pb' : Construct a mask at the 0.2 pb gain level.
-                                            (Currently, this option will work only with
-                                             gridders that produce .pb (i.e. mosaic and awproject)
-                                             or if an externally produced .pb image exists on disk)
-
-                mask='auto-within-pb' : Run an autoboxing algorithm and limit the mask to within
-                                                       a pb gain level of 0.2. (This option will work only with
-                                                       gridders that produce .pb (i.e. mosaic and awproject)
-                                                       or if an externally produced .pb image exists on disk)
-               -->
+              
 
 
                        Note : Mask images for deconvolution must contain 1 or 0 in each pixel.
@@ -2148,15 +2041,13 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 </description>
 
-<!---
-      <value type="string"></value>
-    </param>-->
-      <any type="variant" limittypes="string stringArray"/>
-      <value type="string"></value>
+
+      <any limittypes="string stringArray" type="variant"/>
+      <value type="string"/>
     </param>
 
 
-    <param type="double" name="pbmask" subparam="true">
+    <param subparam="true" name="pbmask" type="double">
      <shortdescription>primary beam mask</shortdescription>
 <description>Sub-parameter for usemask='auto-multithresh': primary beam mask
 
@@ -2166,117 +2057,82 @@ to use the correct direction in which the antenna is pointing with respect to th
 </description>
       <value type="double">0.0</value>
     </param>
-    <!--- auto-thresh and auto-thresh sub param 
-    <param type="any" name="maskthreshold" subparam="true">
-     <shortdescription>threshold for automasking (string with unit, e.g. "1.0mJy", sigma,  or fraction of peak ,e.g. 0.1)</shortdescription>
-<description>Sub-parameter for "auto-thresh" and "auto-thresh2": threshold for automasking
-                       Threshold value in a string with a unit, sigma (e.g. 3.0)  or fraction of peak (e.g, 0.05)
-                       For a float value, if it is &gt;= 1.0, it is interpreted as sigma (i.e. sigma*rms for threshold). If it is &lt; 1.0, it is interpreted as
-                       the fraction of peak.
-
-                       Examples : threshold = '1.0mJy'
-                                  threshold = 0.05  (threshold used is 0.05 * peak)
-                                  threshold = 5.0 ( threshold used is 5.0 * rms )
-                                  threshold = '' (default, use 3.0 * rms )
-</description>
-      <value type="string"></value>
-    </param>
-     -->
-    <!-- auto-thresh and auto-thresh sub param 
-    <param type="any" name="maskresolution" subparam="true">
-     <shortdescription>resolution for automasking (string, e.g. "10arcsec", or a float value as multiplicative factor of the beam)</shortdescription>
-<description>Sub-parameter for "auto-thresh" and "auto-thresh2": resolution for automasking
-                       The residual image is binned (npix x npix), where npix is maskresolution converted in the number of pixels
-                       Examples : maskresolution='10arcsec'
-                                  maskresolution=2.0 (2 x bmaj)
-                                  maskresolution=''  (default, use a restoring beam major axis)
-</description>
-      <value type="string"></value>
-    </param>
-    -->
-    <!-- auto-thresh and auto-thresh sub param 
-    <param type="int" name="nmask" subparam="true">
-     <shortdescription>the maximum number of masks to be added by automasking</shortdescription>
-<description>Sub-parameter for "auto-thresh" and "auto-thresh2": Maximum number of mask regions to be added by automasking at the beginning each minor cycles run
-                       Examples : nmask=2
-                                  nmask=0  (default, set no limit on the number of mask regions to be added)
-</description>
-      <value type="int">0</value>
-    </param>
-    -->
-    <!-- Amanda's code -->
-    <param type="double" name="sidelobethreshold" subparam="true">
+    
+    
+    
+    
+    <param subparam="true" name="sidelobethreshold" type="double">
            <shortdescription>sidelobethreshold *  the max sidelobe level * peak residual</shortdescription>
            <value type="double">3.0</value>
-<description>Sub-parameter for "auto-multithresh":  mask threshold based on sidelobe levels:  sidelobethreshold * max_sidelobe_level * peak residual
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on sidelobe levels:  sidelobethreshold * max_sidelobe_level * peak residual
 
 </description>
     </param>
-    <param type="double" name="noisethreshold" subparam="true">
+    <param subparam="true" name="noisethreshold" type="double">
     <shortdescription>noisethreshold * rms in residual image + location(median) </shortdescription>
            <value type="double">5.0</value>
-<description>Sub-parameter for "auto-multithresh":  mask threshold based on the noise level: noisethreshold * rms + location (=median)
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on the noise level: noisethreshold * rms + location (=median)
 
               The rms is calculated from MAD with rms = 1.4826*MAD.
 </description>
     </param>
-    <param type="double" name="lownoisethreshold" subparam="true">
+    <param subparam="true" name="lownoisethreshold" type="double">
     <shortdescription>lownoisethreshold * rms in residual image + location(median) </shortdescription>
            <value type="double">1.5</value>
-<description>Sub-parameter for "auto-multithresh":  mask threshold to grow previously masked regions via binary dilation:   lownoisethreshold * rms in residual image + location (=median)
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold to grow previously masked regions via binary dilation:   lownoisethreshold * rms in residual image + location (=median)
 
               The rms is calculated from MAD with rms = 1.4826*MAD.
 </description>
     </param>
-    <param type="double" name="negativethreshold" subparam="true">
+    <param subparam="true" name="negativethreshold" type="double">
            <shortdescription>negativethreshold * rms in residual image + location(median) </shortdescription>
            <value type="double">0.0</value>
-<description>Sub-parameter for "auto-multithresh": mask threshold  for negative features: -1.0* negativethreshold * rms + location(=median)
+<description>Sub-parameter for &quot;auto-multithresh&quot;: mask threshold  for negative features: -1.0* negativethreshold * rms + location(=median)
 
               The rms is calculated from MAD with rms = 1.4826*MAD.
 </description>
     </param>
-    <param type="double" name="smoothfactor" subparam="true">
+    <param subparam="true" name="smoothfactor" type="double">
            <shortdescription>smoothing factor in a unit of the beam</shortdescription>
            <value type="double">1.0</value>
-<description>Sub-parameter for "auto-multithresh":  smoothing factor in a unit of the beam
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  smoothing factor in a unit of the beam
 </description>
     </param>
-    <param type="double" name="minbeamfrac" subparam="true">
+    <param subparam="true" name="minbeamfrac" type="double">
            <shortdescription>minimum beam fraction for pruning</shortdescription>
            <value type="double">0.3</value>
-<description>Sub-parameter for "auto-multithresh":  minimum beam fraction in size to prune masks smaller than mimbeamfrac * beam
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  minimum beam fraction in size to prune masks smaller than mimbeamfrac * beam
                        &lt;=0.0 : No pruning
 </description>
     </param>
-    <param type="double" name="cutthreshold" subparam="true">
+    <param subparam="true" name="cutthreshold" type="double">
            <shortdescription>threshold to cut the smoothed mask to create a final mask</shortdescription>
            <value type="double">0.01</value>
-<description>Sub-parameter for "auto-multithresh": threshold to cut the smoothed mask to create a final mask: cutthreshold * peak of the smoothed mask
+<description>Sub-parameter for &quot;auto-multithresh&quot;: threshold to cut the smoothed mask to create a final mask: cutthreshold * peak of the smoothed mask
 </description>
     </param>
-    <param type="int" name="growiterations" subparam="true">
+    <param subparam="true" name="growiterations" type="int">
            <shortdescription>number of binary dilation iterations for growing the mask</shortdescription>
            <value type="int">75</value>
-<description>Sub-parameter for "auto-multithresh": Maximum number of iterations to perform using binary dilation for growing the mask
+<description>Sub-parameter for &quot;auto-multithresh&quot;: Maximum number of iterations to perform using binary dilation for growing the mask
 </description>
     </param>
 
-    <param type="bool" name="dogrowprune" subparam="true">
+    <param subparam="true" name="dogrowprune" type="bool">
            <shortdescription>Do pruning on the grow mask</shortdescription>
            <value type="bool">True</value>
-<description>Experimental sub-parameter for "auto-multithresh": Do pruning on the grow mask
+<description>Experimental sub-parameter for &quot;auto-multithresh&quot;: Do pruning on the grow mask
 </description>
     </param>
 
-    <param type="double" name="minpercentchange" subparam="true">
+    <param subparam="true" name="minpercentchange" type="double">
            <shortdescription>minimum percentage change in mask size (per channel plane) to trigger updating of mask by automask </shortdescription>
            <value type="double">-1.0</value>
 <description>If the change in the mask size in a particular channel is less than minpercentchange, stop masking that channel in subsequent cycles. This check is only applied when noise based threshold is used and when the previous clean major cycle had a cyclethreshold value equal to the clean threshold. Values equal to -1.0 (or any value less than 0.0) will turn off this check (the default). Automask will still stop masking if the current channel mask is an empty mask and the noise threshold was used to determine the mask.
 </description>
     </param>
 
-    <param type="bool" name="verbose" subparam="true">
+    <param subparam="true" name="verbose" type="bool">
            <shortdescription>True: print more automasking information in the logger</shortdescription>
            <value type="bool">False</value>
 <description> If it is set to True, the summary of automasking at the end of each automasking process
@@ -2297,10 +2153,10 @@ to use the correct direction in which the antenna is pointing with respect to th
                         Note that for a large cube, extra logging may slow down the process.
 </description>
     </param>
-    <param type="bool" name="fastnoise">
+    <param name="fastnoise" type="bool">
            <shortdescription>True: use the faster (old) noise calculation. False: use the new improved noise calculations</shortdescription>
            <value type="bool">True</value>
-<description> Only relevant when automask (user='multi-autothresh') and/or n-sigma stopping threshold (nsigma>0.0) are/is used. If it is set to True,  a simpler but faster noise calucation is used. 
+<description> Only relevant when automask (user='multi-autothresh') and/or n-sigma stopping threshold (nsigma&gt;0.0) are/is used. If it is set to True,  a simpler but faster noise calucation is used. 
                         In this case, the threshold values are determined based on classic statistics (using all
                         unmasked pixels for the calculations).
                           
@@ -2317,11 +2173,11 @@ to use the correct direction in which the antenna is pointing with respect to th
                         In all cases above RMS noise is calculated from MAD. 
 </description>
     </param>
-<!--============================================== -->
-<!--                            Other Operational Parameters                                       -->
-<!--============================================== -->
 
-    <param type="bool" name="restart">
+
+
+
+    <param name="restart" type="bool">
      <shortdescription>True : Re-use existing images. False : Increment imagename</shortdescription>
 <description> Restart using existing images (and start from an existing model image)
                         or automatically increment the image name and make a new image set.
@@ -2377,7 +2233,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
 
-    <param type="string" name="savemodel">
+    <param name="savemodel" type="string">
      <shortdescription>Options to save model visibilities (none, virtual, modelcolumn)</shortdescription>
 <description>Options to save model visibilities (none, virtual, modelcolumn)
 
@@ -2402,6 +2258,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                        column on disk may be too much extra disk I/O, when the
                                        gridder is simple enough that on-the-fly recomputing of the
                                        model visibilities is quicker than disk I/O.
+                                       For e.g. that gridder='awproject' does not support virtual model. 
 
                           modelcolumn : In the last major cycle, save predicted model visibilities
                                       in the MODEL_DATA column of the MS. This mode is useful when
@@ -2420,6 +2277,9 @@ to use the correct direction in which the antenna is pointing with respect to th
                                       as well as a model_data column, but under normal operation,
                                       the last used mode will get triggered.  Use the delmod task to
                                       clear out existing models from an MS if confusion arises.
+                       Note 3:    when parallel=True, use savemodel='none'; Other options are not yet ready 
+                                  for use in parallel. If model visibilities need to be saved (virtual or modelcolumn):
+                                  please run tclean in serial mode with niter=0; after the parallel run
 
 </description>
       <value type="string">none</value>
@@ -2430,29 +2290,10 @@ to use the correct direction in which the antenna is pointing with respect to th
       </allowed>
     </param>
 
-<!--    <param type="string" name="makeimages">
-     <shortdescription>List of output images (auto,choose)</shortdescription>
-<description> List of output images.
-                       This option is mainly to force uniformity of outputs
-                       for scripting purposes while retaining the feature of
-                       making only the images actually needed for a given run.
-
-                       makeimages='auto' : Make only the images necessary for a run.
-                                                         For example, for a niter=0 run, there will be no
-                                                         .model or .image.   For a non A-Projection run,
-                                                         there will be no .pb image.
-
-                       makeimages='choose' : Pick from a list of options either for
-                                                             performance reasons (calcres, calcpsf)
-                                                             or to ensure consistent output products.
-
-</description>
-      <value type="string">auto</value>
-    </param>
--->
 
 
-    <param type="bool" name="calcres">
+
+    <param name="calcres" type="bool">
      <shortdescription>Calculate initial residual image</shortdescription>
 <description>Calculate initial residual image
 
@@ -2479,7 +2320,7 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
 
 
-    <param type="bool" name="calcpsf">
+    <param name="calcpsf" type="bool">
       <shortdescription>Calculate PSF</shortdescription>
       <description>Calculate PSF
 
@@ -2490,56 +2331,44 @@ to use the correct direction in which the antenna is pointing with respect to th
       </description>
       <value type="bool">True</value>
     </param>
-
-<!--
-    <param type="any" name="restoremodel" subparam="true">
-      <shortdescription>Restore the model image</shortdescription>
-      <description>Restore the model image
-
-                            Construct a restored image : imagename.image by convolving the model
-                            image with a clean beam and adding the residual image to the result.
-                            If a restoringbeam is specified, the residual image is also
-                            smoothed to that target resolution before adding it in.
-
-                           restoremodel='auto' : Run the restore step only if deconvolution
-                                                             iterations have been performed
-                           restoremodel=True : Always run the restore step. If a .model does
-                                                           not exist, make an empty one and create
-                                                           the restored image from the residuals
-                                                           ( with additional smoothing if needed ).
-                                                           With algorithm='mtmfs', this will construct
-                                                           Taylor coefficient maps from the residuals and
-                                                           compute .alpha and .alpha.error.
-
-      </description>
-      <value type="string">auto</value>
+    
+    
+    <param subparam="true" name="psfcutoff" type="double">
+        <shortdescription> All pixels in the main lobe of the PSF above psfcutoff are used to fit a Gaussian beam (the Clean beam).</shortdescription>
+        <description>
+            When the .psf image is created a 2 dimensional Gaussian is fit to the main lobe of the PSF.
+            Which pixels in the PSF are fitted is determined by psfcutoff.
+            The default value of psfcutoff is 0.35 and can varied from 0.01 to 0.99.
+            Fitting algorithm:
+                - A region of 41 x 41 pixels around the peak of the PSF is compared against the psfcutoff.
+                    Sidelobes are ignored by radially searching from the PSF peak.
+                - Calculate the bottom left corner (blc) and top right corner (trc) from the points. Expand blc and trc with a number of pixels (5).
+                - Create a new sub-matrix from blc and trc.
+                - Interpolate matrix to a target number of points (3001) using CUBIC spline.
+                - All the non-sidelobe points, in the interpolated matrix, that are above the psfcutoff are used to fit a Gaussian.
+                    A Levenberg-Marquardt algorithm is used.
+                - If the fitting fails the algorithm is repeated with the psfcutoff decreased (psfcutoff=psfcutoff/1.5).
+                    A message in the log will apear if the fitting fails along with the new value of psfcutoff.
+                    This will be done up to 50 times if fitting fails.
+            This Gaussian beam is defined by a major axis, minor axis, and position angle.
+            During the restoration process, this Gaussian beam is used as the Clean beam.
+            Varying psfcutoff might be useful for producing a better fit for highly non-Gaussian PSFs, however, the resulting fits should be carefully checked.
+            This parameter should rarely be changed.
+            
+            (This is not the support size for clark clean.)
+        </description>
+        <value type="double">0.35</value>
+<!--       <allowed kind="range">
+          <value range="min">0.01</value>
+          <value range="max">0.99</value>
+          </allowed>
+-->
     </param>
- -->
+    
+    
+  
 
-<!--    <param type="any" name="writepb" subparam="true">
-      <shortdescription>Make a primary beam image</shortdescription>
-      <description>Make a primary beam image
-
-                           Construct an imagename.pb image normalized to 1.0 at its peak.
-
-                           writepb='auto' : Construct a PB only for A-Projection gridders that
-                                                     produce .weight images
-                                                     [ .pb = sqrt(.weight) / max( sqrt(.weight) ) ]
-
-                           writepb=True : Always construct a .pb image. For gridders that do not
-                                                    produce .weight, construct .pb explicitly.
-                                                    Note : For now, this option will create an empty image.
-
-                                                    ( The makepb script can be used as described in the
-                                                       gridder section to make .pb images externally )
-      </description>
-      <value type="string">auto</value>
-    </param>
-
-    -->
-
-
-    <param type="bool" name="parallel">
+    <param name="parallel" type="bool">
       <shortdescription>Run major cycles in parallel</shortdescription>
       <description>Run major cycles in parallel (this feature is experimental)
 
@@ -2566,7 +2395,6 @@ to use the correct direction in which the antenna is pointing with respect to th
                                     - There is currently no communication between them to synchronize
                                        information such as peak residual and cyclethreshold. Therefore,
                                        different chunks may trigger major cycles at different levels.
-                                    - For cube imaging in parallel, there is currently no interactive masking.
                                    (Proper synchronization of iteration control is work in progress.)
 
 </description>
@@ -2575,188 +2403,154 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 
-<!--    <param type="string" name="clusterdef" subparam="true">
-           <shortdescription>xxx</shortdescription>
-<description>Name of a file that contains the cluster definition</description>
-      <value type="string"></value>
-    </param>
--->
-<!--
-    <param type="string" name="workdir" subparam="true">
-           <shortdescription>xxx</shortdescription>
-<description>Directory name for per-node products (default=imagename.workdir)</description>
-      <value type="string"></value>
-    </param>
--->
 
-<!--=============================================== -->
-<!--===============  Constraints                        ============== -->
+
+
+
+
 
    <constraints>
 
-<!--
-     <when param="vis">
-      <notequals type="string" value="">
-         <default param="field"><value>""</value></default>
-         <default param="spw"><value>""</value></default>
-         <default param="timerange"><value>""</value></default>
-         <default param="uvrange"><value>""</value></default>
-         <default param="antenna"><value>""</value></default>
-         <default param="scan"><value>""</value></default>
-         <default param="observation"><value>""</value></default>
-         <default param="intent"><value>""</value></default>
-         <default param="datacolumn"><value>"corrected"</value></default>
-       </notequals>
-      </when>
--->
+     <when param="calcpsf">
+           <equals value="True" type="bool">
+             <default param="psfcutoff"><value>0.35</value></default>
+           </equals>
+    </when>
+    
 
      <when param="selectdata">
-      <equals type="bool" value="True">
-         <default param="field"><value>""</value></default>
-         <default param="spw"><value>""</value></default>
-         <default param="timerange"><value>""</value></default>
-         <default param="uvrange"><value>""</value></default>
-         <default param="antenna"><value>""</value></default>
-         <default param="scan"><value>""</value></default>
-         <default param="observation"><value>""</value></default>
-         <default param="intent"><value>""</value></default>
-<!--         <default param="datacolumn"><value>"corrected"</value></default> -->
+      <equals value="True" type="bool">
+         <default param="field"><value>&quot;&quot;</value></default>
+         <default param="spw"><value>&quot;&quot;</value></default>
+         <default param="timerange"><value>&quot;&quot;</value></default>
+         <default param="uvrange"><value>&quot;&quot;</value></default>
+         <default param="antenna"><value>&quot;&quot;</value></default>
+         <default param="scan"><value>&quot;&quot;</value></default>
+         <default param="observation"><value>&quot;&quot;</value></default>
+         <default param="intent"><value>&quot;&quot;</value></default>
+
        </equals>
       </when>
 
-<!--
-     <when param="imagename">
-       <notequals type="string" value="">
-         <default param="imsize"><value>100</value></default>
-         <default param="cell"><value>"1arcsec"</value></default>
-         <default param="phasecenter"><value>""</value></default>
-         <default param="stokes"><value>"I"</value></default>
-         <default param="projection"><value>"SIN"</value></default>
-         <default param="startmodel"><value>""</value></default>
-       </notequals>
-      </when>
--->
+
      <when param="specmode">
-       <equals type="string" value="mfs">
-         <default param="reffreq"><value>""</value></default>
-<!--         <default param="nterms"><value>1</value></default> -->
+       <equals value="mfs" type="string">
+         <default param="reffreq"><value>&quot;&quot;</value></default>
+
        </equals>
-       <equals type="string" value="cube">
+       <equals value="cube" type="string">
          <default param="nchan"><value>-1</value></default>
-         <default param="start"><value>""</value></default>
-         <default param="width"><value>""</value></default>
-         <default param="outframe"><value>""</value></default>
-         <default param="veltype"><value>"radio"</value></default>
+         <default param="start"><value>&quot;&quot;</value></default>
+         <default param="width"><value>&quot;&quot;</value></default>
+         <default param="outframe"><value>&quot;&quot;</value></default>
+         <default param="veltype"><value>&quot;radio&quot;</value></default>
          <default param="restfreq"><value>[]</value></default>
-         <default param="interpolation"><value>"linear"</value></default>
-         <default param="chanchunks"><value>1</value></default>
+         <default param="interpolation"><value>&quot;linear&quot;</value></default>
          <default param="perchanweightdensity"><value>True</value></default>
        </equals>
-       <equals type="string" value="cubesource">
+       <equals value="cubesource" type="string">
          <default param="nchan"><value>-1</value></default>
-         <default param="start"><value>""</value></default>
-         <default param="width"><value>""</value></default>
-         <default param="outframe"><value>"REST"</value></default>
-         <default param="veltype"><value>"radio"</value></default>
+         <default param="start"><value>&quot;&quot;</value></default>
+         <default param="width"><value>&quot;&quot;</value></default>
+         <default param="outframe"><value>&quot;REST&quot;</value></default>
+         <default param="veltype"><value>&quot;radio&quot;</value></default>
          <default param="restfreq"><value>[]</value></default>
-         <default param="interpolation"><value>"linear"</value></default>
-         <default param="chanchunks"><value>1</value></default>
+         <default param="interpolation"><value>&quot;linear&quot;</value></default>
          <default param="perchanweightdensity"><value>True</value></default>
        </equals>
        
-       <equals type="string" value="cubedata">
+       <equals value="cubedata" type="string">
          <default param="nchan"><value>-1</value></default>
-         <default param="start"><value>""</value></default>
-         <default param="width"><value>""</value></default>
-         <default param="veltype"><value>"radio"</value></default>
+         <default param="start"><value>&quot;&quot;</value></default>
+         <default param="width"><value>&quot;&quot;</value></default>
+         <default param="veltype"><value>&quot;radio&quot;</value></default>
          <default param="restfreq"><value>[]</value></default>
-         <default param="interpolation"><value>"linear"</value></default>
-         <default param="chanchunks"><value>1</value></default>
+         <default param="interpolation"><value>&quot;linear&quot;</value></default>
          <default param="perchanweightdensity"><value>False</value></default>
        </equals>
      </when>
 
      <when param="gridder">
-       <equals type="string" value="standard">
-         <default param="vptable"><value>""</value></default>
+       <equals value="standard" type="string">
+         <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
-       <equals type="string" value="widefield">
+       <equals value="widefield" type="string">
          <default param="wprojplanes"><value>1</value></default>
          <default param="facets"><value>1</value></default>
-         <default param="vptable"><value>""</value></default>
+         <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
-       <equals type="string" value="wproject">
+       <equals value="wproject" type="string">
          <default param="wprojplanes"><value>1</value></default>
-         <default param="vptable"><value>""</value></default>
+         <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
-       <equals type="string" value="wprojectft">
+       <equals value="wprojectft" type="string">
          <default param="wprojplanes"><value>1</value></default>
-         <default param="vptable"><value>""</value></default>
+         <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
-       <equals type="string" value="mosaic">
-         <default param="normtype"><value>"flatnoise"</value></default>
-         <default param="vptable"><value>""</value></default>
+       <equals value="mosaic" type="string">
+         <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
+         <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="usepointing"><value>False</value></default> 
          <default param="mosweight"><value>True</value></default>
          <default param="pblimit"><value>0.2</value></default>
          <default param="conjbeams"><value>False</value></default>
-         <default param="psfphasecenter"><value>""</value></default>
+         <default param="psfphasecenter"><value>&quot;&quot;</value></default>
        </equals>
-       <equals type="string" value="mosaicft">
-         <default param="normtype"><value>"flatnoise"</value></default>
-         <default param="vptable"><value>""</value></default>
+       <equals value="mosaicft" type="string">
+         <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
+         <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="usepointing"><value>False</value></default>
          <default param="doweight"><value>True</value></default>
          <default param="pblimit"><value>0.2</value></default>
          <default param="conjbeams"><value>False</value></default>
-         <default param="psfphasecenter"><value>""</value></default>
+         <default param="psfphasecenter"><value>&quot;&quot;</value></default>
        </equals>
-       <equals type="string" value="ftmosaic">
-         <default param="normtype"><value>"flatnoise"</value></default>
-         <default param="vptable"><value>""</value></default>
+       <equals value="ftmosaic" type="string">
+         <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
+         <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="usepointing"><value>False</value></default>
          <default param="mosweight"><value>True</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
-       <equals type="string" value="imagemosaic">
+       <equals value="imagemosaic" type="string">
          <default param="wprojplanes"><value>1</value></default>
-         <default param="normtype"><value>"flatnoise"</value></default>
-         <default param="vptable"><value>""</value></default>
+         <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
+         <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="pblimit"><value>0.2</value></default>
        </equals>
-       <equals type="string" value="awproject">
+       <equals value="awproject" type="string">
 	 <default param="wprojplanes"><value>1</value></default>
-	 <default param="normtype"><value>"flatnoise"</value></default>
+	 <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
 	 <default param="psterm"><value>False</value></default>
 	 <default param="aterm"><value>True</value></default>
-	 <default param="cfcache"><value>""</value></default>
+	 <default param="cfcache"><value>&quot;&quot;</value></default>
 	 <default param="computepastep"><value>360.0</value></default>
 	 <default param="rotatepastep"><value>360.0</value></default>
-         <default param="pointingoffsetsigdev"><value type="doubleArray"></value></default>
+         <default param="pointingoffsetsigdev"><value type="doubleArray"/></default>
 	 <default param="wbawp"><value>True</value></default>
 	 <default param="mosweight"><value>False</value></default>
-	 <!--	 <default param="vptable"><value>""</value></default> -->
+	 
 	 <default param="pblimit"><value>0.2</value></default>
 	 <default param="conjbeams"><value>False</value></default>
 	 <default param="mosweight"><value>False</value></default>
 	 <default param="usepointing"><value>False</value></default>
        </equals>
-       <equals type="string" value="awprojectft">
+       <equals value="awprojectft" type="string">
 	 <default param="wprojplanes"><value>1</value></default>
-	 <default param="normtype"><value>"flatnoise"</value></default>
+	 <default param="normtype"><value>&quot;flatnoise&quot;</value></default>
 	 <default param="psterm"><value>False</value></default>
 	 <default param="aterm"><value>True</value></default>
-	 <default param="cfcache"><value>""</value></default>
+	 <default param="cfcache"><value>&quot;&quot;</value></default>
 	 <default param="computepastep"><value>360.0</value></default>
 	 <default param="rotatepastep"><value>360.0</value></default>
-         <default param="pointingoffsetsigdev"><value type="doubleArray"></value></default>
+         <default param="pointingoffsetsigdev"><value type="doubleArray"/></default>
 	 <default param="wbawp"><value>True</value></default>
 	 <default param="mosweight"><value>False</value></default>
-<!--	 <default param="vptable"><value>""</value></default> -->
+
 	 <default param="pblimit"><value>0.2</value></default>
 	 <default param="conjbeams"><value>False</value></default>
 	 <default param="usepointing"><value>False</value></default>
@@ -2764,62 +2558,57 @@ to use the correct direction in which the antenna is pointing with respect to th
      </when>
 
      <when param="weighting">
-       <equals type="string" value="natural">
+       <equals value="natural" type="string">
          <default param="uvtaper"><value>[]</value></default>
        </equals>
-       <equals type="string" value="uniform">
+       <equals value="uniform" type="string">
        </equals>
-       <equals type="string" value="briggs">
+       <equals value="briggs" type="string">
          <default param="robust"><value>0.5</value></default>
          <default param="npixels"><value>0</value></default>
          <default param="uvtaper"><value>[]</value></default>
        </equals>
-       <equals type="string" value="briggsabs">
+       <equals value="briggsabs" type="string">
          <default param="robust"><value>0.5</value></default>
-         <default param="noise"><value>"1.0Jy"</value></default>
+         <default param="noise"><value>&quot;1.0Jy&quot;</value></default>
          <default param="npixels"><value>0</value></default>
+         <default param="uvtaper"><value>[]</value></default>
+       </equals>
+       <equals value="briggsbwtaper" type="string">
+         <default param="robust"><value>0.5</value></default>
          <default param="uvtaper"><value>[]</value></default>
        </equals>
      </when>
 
-<!--
-     <when param="uvtaper">
-       <equals type="bool" value="False">
-       </equals>
-       <equals type="bool" value="True">
-         <default param="outertaper"><value>[]</value></default>
-         <default param="innertaper"><value>[]</value></default>
-       </equals>
-     </when>
--->
+
 
      <when param="deconvolver">
-       <equals type="string" value="hogbom">
+       <equals value="hogbom" type="string">
        </equals>
-       <equals type="string" value="clark">
+       <equals value="clark" type="string">
        </equals>
-       <equals type="string" value="multiscale">
-         <default param="scales"><value type="intArray"></value></default>
+       <equals value="multiscale" type="string">
+         <default param="scales"><value type="intArray"/></default>
          <default param="smallscalebias"><value>0.0</value></default>
        </equals>
-       <equals type="string" value="mtmfs">
-         <default param="scales"><value type="intArray"></value></default>
+       <equals value="mtmfs" type="string">
+         <default param="scales"><value type="intArray"/></default>
          <default param="nterms"><value>2</value></default>
 	 <default param="smallscalebias"><value>0.0</value></default>
        </equals>
-       <equals type="string" value="aasp">
+       <equals value="aasp" type="string">
        </equals>
      </when>
 
      <when param="restoration">
-       <equals type="bool" value="True">
-         <default param="restoringbeam"><value type="stringArray"></value></default>
+       <equals value="True" type="bool">
+         <default param="restoringbeam"><value type="stringArray"/></default>
          <default param="pbcor"><value>False</value></default>
        </equals>
      </when>
 
      <when param="niter">
-       <notequals type="int" value="0">
+       <notequals value="0" type="int">
          <default param="gain"><value>0.1</value></default>
          <default param="threshold"><value>0.0</value></default>
          <default param="nsigma"><value>0.0</value></default>
@@ -2828,56 +2617,29 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="minpsffraction"><value>0.05</value></default>
          <default param="maxpsffraction"><value>0.8</value></default>
          <default param="interactive"><value>False</value></default>
-<!--         <default param="mask"><value>""</value></default> -->
-<!--         <default param="savemodel"><value>"none"</value></default>
-         <default param="calcres"><value>True</value></default>
-         <default param="calcpsf"><value>True</value></default>  -->
+
+
        </notequals>
-<!--       <equals type="int" value="0">
-         <default param="calcpsf"><value>True</value></default>
-       </equals> -->
+
      </when>
 
-<!--
-     <when param="parallel">
-       <equals type="bool" value="False">
-       </equals>
-       <equals type="bool" value="True">
-         <default param="clusterdef"><value>""</value></default>
-         <default param="workdir"><value>""</value></default>
-       </equals>
-     </when>
--->
 
-<!-- mask params -->
+
+
    <when param="usemask">
-       <equals type="string" value="user">
-         <default param="mask"><value>""</value></default>
+       <equals value="user" type="string">
+         <default param="mask"><value>&quot;&quot;</value></default>
          <default param="pbmask"><value>0.0</value></default>
        </equals>
-       <equals type="string" value="pb">
+       <equals value="pb" type="string">
          <default param="pbmask"><value type="double">0.2</value></default>
        </equals>
-       <!-- auto masks -->
-       <!--
-       <equals type="string" value="auto-thresh">
-         <default param="pbmask"><value>0.0</value></default>
-         <default param="maskthreshold"><value>""</value></default>
-         <default param="maskresolution"><value>""</value></default>
-         <default param="nmask"><value>0</value></default>
-       </equals>
-       -->
-       <!-- auto mask by direct threshold -->
-       <!--
-       <equals type="string" value="auto-thresh2">
-         <default param="pbmask"><value>0.0</value></default>
-         <default param="maskthreshold"><value>""</value></default>
-         <default param="maskresolution"><value>""</value></default>
-         <default param="nmask"><value>0</value></default>
-       </equals>
-       -->
-       <!-- auto mask by multiple threshold (orignal algorithm by A.Kepley) -->
-       <equals type="string" value="auto-multithresh">
+       
+       
+       
+       
+       
+       <equals value="auto-multithresh" type="string">
          <default param="pbmask"><value>0.2</value></default>
          <default param="sidelobethreshold"><value>3.0</value></default>
          <default param="noisethreshold"><value>5.0</value></default>
@@ -2890,25 +2652,12 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="dogrowprune"><value type="bool">True</value></default>
          <default param="minpercentchange"><value>-1.0</value></default>
          <default param="verbose"><value type="bool">False</value></default>
-         <!--<default param="fastnoise"><value type="bool">False</value></default>-->
+         
        </equals>
-       <!--<noteqauls type="string" value="auto-multithresh">
-          <default param="fastnoise"><value type="bool">True</value></default>
-       </noteqauls>-->
+       
    </when>
 
-<!--
-     <when param="makeimages">
-       <equals type="string" value="auto"/>
-       <equals type="string" value="choose">
-         <default param="calcres"><value type="bool">True</value></default>
-         <default param="calcpsf"><value type="bool">True</value></default>
-         <default param="restoremodel"><value type="string">auto</value></default>
-         <default param="writepb"><value type="string">auto</value></default>
 
-       </equals>
-     </when>
--->
 
    </constraints>
 

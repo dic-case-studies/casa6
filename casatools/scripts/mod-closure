@@ -23,7 +23,7 @@ $File::Fetch::BLACKLIST = [qw|lwp httptiny httplite|];
 $exe = abs_path($0);
 $path = abs_path(dirname($exe));
 $java = '/usr/bin/java';
-$jarfile_name = "mod-closure-assembly-1.5.jar";
+$jarfile_name = "mod-closure-assembly-1.7.jar";
 @java_version = ( );
 open(JAVAVER, "$java -version 2>&1 |");
 foreach ( <JAVAVER> ) {
@@ -34,7 +34,7 @@ foreach ( <JAVAVER> ) {
 }
 close(JAVAVER);
 die "cannot run $java" unless scalar(@java_version) > 0;
-die "java version 1.8 or greater is required\n" unless $java_version[0] == 1 && $java_version[1] >= 8;
+die "java version 1.8 or greater is required\n" unless ($java_version[0] == 1 && $java_version[1] >= 8) or $java_version[0]>=10;
 
 ### install path
 $distro_jarfile = $jarfile = "$path/java/$jarfile_name";
@@ -48,5 +48,8 @@ if ( ! -e $jarfile ) {
 }
 die "configuration error, cannot find jar file ($jarfile_name)" unless -e $jarfile;
 
+if ( $^O ne "linux" ) {
+    unshift( @ARGV, 'exclude=/usr/lib' );
+}
 unshift( @ARGV, basename($java), '-jar', $jarfile );
 exec { $java } @ARGV;

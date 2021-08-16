@@ -16,7 +16,7 @@ if is_CASA6:
         pass
 
     # Path for data
-    datapath = ctsys.resolve('regression/unittest/flagdata')
+    datapath = ctsys.resolve('unittest/flagmanager/')
 else:
     from tasks import flagdata, flagmanager
     from taskinit import aftool as agentflagger
@@ -30,7 +30,7 @@ else:
     g['__rethrow_casa_exceptions'] = True
 
     # Path for data
-    datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/flagdata/"
+    datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/flagmanager/"
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -60,7 +60,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + os.path.join(datapath,self.vis) + ' '+ self.vis)
+            os.system('cp -RH ' + os.path.join(datapath,self.vis) + ' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         
@@ -73,7 +73,7 @@ class test_base(unittest.TestCase):
             print("The CalTable is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -r ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
+            os.system('cp -RH ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')        
         default(flagdata)
@@ -172,7 +172,7 @@ class test_flagmanager_ms(test_base):
                   
         try:
             flagmanager(vis = self.vis,mode = "save",versionname = "")     
-        except IOError as e:
+        except ValueError as e:
             print('Expected exception: %s'%e)
         
     def test_rename(self):

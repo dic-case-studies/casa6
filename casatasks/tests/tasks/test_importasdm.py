@@ -27,7 +27,6 @@
 #                                                                           #
 #############################################################################
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import sys
 import shutil
@@ -37,13 +36,9 @@ import unittest
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, ms, table, measures, calibrater, agentflagger
-    from casatasks import importasdm, flagdata, flagcmd, exportasdm
+    from casatasks import importasdm, flagdata, flagcmd, exportasdm, casalog
     from casatasks.private import flaghelper as fh
     from casatasks.private import convertephem as ce
-    ### for testhelper import
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-    import testhelper as th
-
     # make local copies of the tools
     tblocal = table( )
     mslocal = ms( )
@@ -57,7 +52,6 @@ else:
     from __main__ import default
     from tasks import importasdm, flagdata, exportasdm, flagcmd
     from taskinit import mstool, tbtool, cbtool, aftool, casalog
-    import testhelper as th
     import flaghelper as fh
     import recipes.ephemerides.convertephem as ce
 
@@ -71,11 +65,13 @@ else:
     mslocal = mstool()
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+        dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
+from casatestutils import testhelper as th
 myname = 'test_importasdm'
 
+rootpath = ctsys_resolve('unittest/importasdm/')
 # default ASDM dataset name
 myasdm_dataset_name = 'uid___X5f_X18951_X1'
 myms_dataset_name = 'M51.ms'
@@ -206,15 +202,15 @@ class test_base(unittest.TestCase):
         if(os.path.exists(myasdm_dataset_name)):
             shutil.rmtree(myasdm_dataset_name)
 
-        datapath=ctsys_resolve(os.path.join('regression/asdm-import/input',myasdm_dataset_name))
+        datapath=os.path.join(rootpath,myasdm_dataset_name)
         shutil.copytree(datapath, myasdm_dataset_name)
-        datapath=ctsys_resolve(os.path.join('regression/exportasdm/input',myms_dataset_name))
+        datapath=os.path.join(rootpath,myms_dataset_name)
         shutil.copytree(datapath, myms_dataset_name)
         default(importasdm)
 
     def setUp_xosro(self):
         self.asdm = 'X_osro_013.55979.93803716435'  #EVLA SDM
-        datapath=ctsys_resolve(os.path.join('regression/unittest/flagdata',self.asdm))
+        datapath=os.path.join(rootpath,self.asdm)
         if(not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+' '+self.asdm)
             
@@ -223,15 +219,16 @@ class test_base(unittest.TestCase):
 
     def setUp_polyuranus(self):
         self.asdm = 'polyuranus'  # EVLA SDM with ephemeris
-        datapath = ctsys_resolve(os.path.join('regression/unittest/importevla',self.asdm))
+        datapath = os.path.join(rootpath, self.asdm)
         if (not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+' '+self.asdm)
+
         default(importasdm)
         default(flagdata)
 
     def setUp_autocorr(self):
         self.asdm = 'AutocorrASDM'  # ALMA 
-        datapath=ctsys_resolve(os.path.join('regression/unittest/importasdm',self.asdm))
+        datapath=os.path.join(rootpath,self.asdm)
         if(not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+' '+self.asdm)
             
@@ -240,42 +237,42 @@ class test_base(unittest.TestCase):
     def setUp_acaex(self):
         res = None
         myasdmname = 'uid___A002_X72bc38_X000' # ACA example ASDM with mixed pol/channelisation
-        datapath=ctsys_resolve(os.path.join('regression/asdm-import/input',myasdmname))
+        datapath=os.path.join(rootpath, myasdmname)
         os.system('ln -sf '+datapath)
         default(importasdm)
 
     def setUp_12mex(self):
         res = None
         myasdmname = 'uid___A002_X71e4ae_X317_short' # 12m example ASDM with mixed pol/channelisation
-        datapath=ctsys_resolve(os.path.join('regression/asdm-import/input',myasdmname))
+        datapath=os.path.join(rootpath,myasdmname)
         os.system('ln -sf '+datapath)
         default(importasdm)
 
     def setUp_eph(self):
         res = None
         myasdmname = 'uid___A002_X997a62_X8c-short' # 12m example ASDM with ephemerides
-        datapath=ctsys_resolve(os.path.join('regression/asdm-import/input',myasdmname))
+        datapath=os.path.join(rootpath, myasdmname)
         os.system('ln -sf '+datapath)
         default(importasdm)
 
     def setUp_flags(self):
         res = None
         myasdmname = 'test_uid___A002_X997a62_X8c-short' # Flag.xml is modified
-        datapath=ctsys_resolve(os.path.join('regression/unittest/importasdm',myasdmname))
+        datapath=os.path.join(rootpath, myasdmname)
         os.system('ln -sf '+datapath)
         default(importasdm)
 
     def setUp_SD(self):
         res = None
         myasdmname = 'uid___A002_X6218fb_X264' # Single-dish ASDM
-        datapath=ctsys_resolve(os.path.join('regression/alma-sd/M100',myasdmname))
+        datapath=os.path.join(rootpath, myasdmname)
         os.system('ln -sf '+datapath)
         default(importasdm)
 
     def setUp_numbin(self):
         res = None
         # need full copies as this test involves renaming some xml files
-        datapath=ctsys_resolve('regression/asdm-import/input')
+        datapath = rootpath
         for this_asdm_name in ['alma_numbin_mixed','evla_numbin_2','evla_numbin_4']:
             if (os.path.exists(this_asdm_name)):
                 shutil.rmtree(this_asdm_name)
@@ -431,15 +428,17 @@ class asdm_import1(test_base):
         try:
             print("\n>>>> Test of exportasdm v3: input MS is %s" % myvis)
             print("(a simulated input MS with pointing table)")
-            rval = exportasdm(
-                vis = 'myinput.ms',
-                asdm = 'exportasdm-output.asdm',
-                archiveid="S002",
-                apcorrected=False,
-                useversion='v3'
+            try:
+                exportasdm(
+                    vis = 'myinput.ms',
+                    asdm = 'exportasdm-output.asdm',
+                    archiveid="S002",
+                    apcorrected=False,
+                    useversion='v3'
                 )
-            if not rval:
-                raise Exception
+            except Exception as exc:
+                self.fail('Unexpected exception: {}'.format(exc))
+
             os.system('rm -rf '+asdmname+'; mv exportasdm-output.asdm '+asdmname)
             verify_asdm(asdmname, True)
         except:
@@ -615,15 +614,17 @@ class asdm_import2(test_base):
         try:
             print("\n>>>> Test of exportasdm v3: input MS  is %s" % myvis)
             print("(a simulated input MS with pointing table)")
-            rval = exportasdm(
-                vis = 'myinput.ms',
-                asdm = 'exportasdm-output.asdm',
-                archiveid="S002",
-                apcorrected=False,
-                useversion='v3'
+            try:
+                exportasdm(
+                    vis = 'myinput.ms',
+                    asdm = 'exportasdm-output.asdm',
+                    archiveid="S002",
+                    apcorrected=False,
+                    useversion='v3'
                 )
-            if not rval:
-                raise Exception
+            except Exception as exc:
+                self.fail('Unexpected exception: {}'.format(exc))
+
             os.system('rm -rf '+asdmname+'; mv exportasdm-output.asdm '+asdmname)
             verify_asdm(asdmname, True)
         except:
@@ -1071,7 +1072,7 @@ class asdm_import3(test_base):
                 print('%s : assertion error while testing flags after filling: %s' % (myname, str(error)))
                 retValue['success'] = False
                 retValue['error_msgs']=retValue['error_msgs']+str(error)
-            except Excecption as instance:
+            except Exception as instance:
                 print("%s : post fill flagging and checking failed." % myname)
                 retValue['success'] = False
                 retValue['error_msgs']=retValue['error_msgs']+'Unexpected post-fill flagging result'
@@ -1595,7 +1596,9 @@ class asdm_import4(test_base):
         
         # Run again and verify that the online flags are not overwritten
         os.system('rm -rf x54.ms*')
-        importasdm(asdm=self.asdm, vis='x54.ms', scans='3', savecmds=True, outfile=outfile, overwrite=False)
+        with self.assertRaises(RuntimeError):
+            importasdm(asdm=self.asdm, vis='x54.ms', scans='3', savecmds=True,
+                       outfile=outfile, overwrite=False)
         print('Expected Error!')
         with open(outfile,'r') as ff:
             cmds = ff.readlines()
@@ -1773,7 +1776,6 @@ class asdm_import5(test_base):
 
                 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
-
 
 class asdm_import6(test_base):
 
@@ -2099,6 +2101,22 @@ class asdm_import7(test_base):
                     print("ERROR checking the value of the SDM_NUM_BIN column in the SPECTRAL_WINDOW table.")
 
                 try:
+                    # test that the SDM_CORR_BIT column exists and has the exepcted values
+                    corrBitOK = tblocal.open(themsname+'/SPECTRAL_WINDOW')
+                    if corrBitOK:
+                        corrBitCol = tblocal.getcol('SDM_CORR_BIT')
+                        tblocal.close()
+                        # test values here - all are expected to UNKNOWN (correlationBit is not present in this sdm)
+                        corrBitOK = numpy.all(corrBitCol == "UNKNOWN")
+
+                    retValue['success'] = corrBitOK and retValue['success']
+                    if not corrBitOK:
+                        print("SDM_CORR_BIT column in the SPECTRAL_WINDOW table is missing or has incorrect values")
+                except:
+                    retValue['success'] = False
+                    print("ERROR checking the value of the SDM_CORR_BIT column in the SPECTRAL_WINDOW table.")
+
+                try:
                     # test that the PROCESSOR table SUB_TYPE has the expected values
                     subTypeOK = tblocal.open(themsname+'/PROCESSOR')
                     if subTypeOK:
@@ -2248,7 +2266,6 @@ class asdm_import7(test_base):
                         retValue['success'] = False
                         print("ERROR for table %s" % subtname)
             
-                
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
     def test7_lazy3(self):
@@ -2413,7 +2430,7 @@ class asdm_import7(test_base):
             # difference here is < 0".00005 of the above, non-interpolated value
             self.assertAlmostEqual(mssum['field_0']['direction']['m1']['value'],-0.2154815442529733,15)
         except:
-            print("%s: Error ms summary has an unexpect source or direction value" % myname)
+            print("%s: Error ms summary has an unexpected source or direction value" % myname)
             retValue['success']=False
             retValue['error_msgs']=retValue['err_msg']+'Unexpected source or direction value in ms summary '+thismsname + '\n'
 
@@ -3091,17 +3108,18 @@ class asdm_import7(test_base):
 
 class asdm_import8(test_base):
     # these are more like unit tests, difficult to test without invoking all of importasdm
-    # currently this is just tests on SDM_NUM_BIN
+    # currently included tests on SDM_NUM_BIN, test on verbose argument
     
     def setUp(self):
         self.setUp_numbin()
+        self.setUp_SD()
 
     def tearDown(self):
         pass
-        for this_asdm_name in ['alma_numbin_mixed','evla_numbin_2','evla_numbin_4']:
+        for this_asdm_name in ['alma_numbin_mixed','evla_numbin_2','evla_numbin_4','uid___A002_X6218fb_X264']:
             os.system('rm -rf '+this_asdm_name+"*")
 
-    def doNumTest(self, testName, asdm_name, ms_name, spWin_name, execBlock_name, expWinFunCol, expNumBinCol, expResCol):
+    def doNumTest(self, testName, asdm_name, ms_name, spWin_name, execBlock_name, expWinFunCol, expNumBinCol, expResCol, expCorrBitVal):
         retValue = {'success': True, 'error_msgs': '' } 
         print("%s: testing SDM columns in %s writing to %s" % (testName, asdm_name, ms_name))
 
@@ -3206,8 +3224,30 @@ class asdm_import8(test_base):
                             retValue['error_msgs']=retValue['error_msgs']+'\n'
                         retValue['error_msgs']=retValue['error_msgs']+msg
                         print("%s:%s" % (testName,msg))
-                tblocal.close()
 
+                # finally, check that SDM_CORR_BIT exists and is filled.
+                # the expected value should be a string and all values being tested should
+                # equal that string.
+                try:
+                    corrBitCol = tblocal.getcol('SDM_CORR_BIT')
+                    if not numpy.all(corrBitCol==expCorrBitVal):
+                        retValue['success'] = False
+                        msg = "ERROR Unexpected SDM_CORR_BIT values when filling "+asdm_name
+                        # there may already be messages in error_msgs
+                        if len(retValue['error_msgs'])>0:
+                            retValue['error_msgs']=retValue['error_msgs']+'\n'
+                        retValue['error_msgs']=retValue['error_msgs']+msg
+                        print(testName,":",msg)
+                except:
+                    retValue['success'] = False
+                    msg = "ERROR getting/testing SDM_CORR_BIT column in "+spwName
+                    # there may already be messages in error_msgs
+                    if len(retValue['error_msgs'])>0:
+                        retValue['error_msgs']=retValue['error_msgs']+'\n'
+                    retValue['error_msgs']=retValue['error_msgs']+msg
+                    print(testName,":",msg)
+
+                tblocal.close()
             else:
                 msg = "ERROR opening",spwName
                 retValue['success'] = False
@@ -3238,13 +3278,15 @@ class asdm_import8(test_base):
         expNumBinCol[25] = 8
         for indx in [27,29,31,33]:
             expNumBinCol[indx] = 2
-        res = self.doNumTest(myname,asdm_name,ms_name,None,None,expWinFunCol,expNumBinCol,None)
+        # SDM_CORR_BIT is all 'UNKNOWN' for the alma ASDMs here
+        expCorrBitVal = 'UNKNOWN'
+        res = self.doNumTest(myname,asdm_name,ms_name,None,None,expWinFunCol,expNumBinCol,None,expCorrBitVal)
         retValue['success'] = res['success']
         retValue['error_msgs'] = res['error_msgs']
 
         # SpectralWindow.xml with appropriate numBin values, should yield same column values
         ms_name = asdm_name+".numbin.ms"
-        res = self.doNumTest(myname,asdm_name,ms_name,'SpectralWindow.xml.numBin',None,expWinFunCol,expNumBinCol,None)
+        res = self.doNumTest(myname,asdm_name,ms_name,'SpectralWindow.xml.numBin',None,expWinFunCol,expNumBinCol,None,expCorrBitVal)
         retValue['success'] = retValue['success'] and res['success']
         retValue['error_msgs'] = retValue['error_msgs'] + res['error_msgs']
 
@@ -3252,13 +3294,13 @@ class asdm_import8(test_base):
         expNumBinCol[5] = 4
         expNumBinCol[7] = 16
         ms_name = asdm_name+".faked.ms"
-        res = self.doNumTest(myname,asdm_name,ms_name,'SpectralWindow.xml.faked',None,expWinFunCol,expNumBinCol,None)
+        res = self.doNumTest(myname,asdm_name,ms_name,'SpectralWindow.xml.faked',None,expWinFunCol,expNumBinCol,None,expCorrBitVal)
         retValue['success'] = retValue['success'] and res['success']
         retValue['error_msgs'] = retValue['error_msgs'] + res['error_msgs']
 
         # SpectralWindow.xml with faked resolution and expectedBw values and added numBin values, same expected values as previous test
         ms_name = asdm_name+".faked.numBin.ms"
-        res = self.doNumTest(myname,asdm_name,ms_name,'SpectralWindow.xml.faked.numBin',None,expWinFunCol,expNumBinCol,None)
+        res = self.doNumTest(myname,asdm_name,ms_name,'SpectralWindow.xml.faked.numBin',None,expWinFunCol,expNumBinCol,None,expCorrBitVal)
         retValue['success'] = retValue['success'] and res['success']
         retValue['error_msgs'] = retValue['error_msgs'] + res['error_msgs']
 
@@ -3277,20 +3319,22 @@ class asdm_import8(test_base):
         # also should alter resolution to these expected values
         expResCol = numpy.empty(16)
         expResCol.fill(4000000.)
+        # SDM_CORR_BIT is all 'BITS_4x4' for the evla ASDMs here
+        expCorrBitVal = 'BITS_4x4'
         ms_name = sdm_name+".ms"
-        res = self.doNumTest(myname,sdm_name,ms_name,None,None,expWinFunCol,expNumBinCol,expResCol)
+        res = self.doNumTest(myname,sdm_name,ms_name,None,None,expWinFunCol,expNumBinCol,expResCol,expCorrBitVal)
         retValue['success'] = res['success']
         retValue['error_msgs'] = res['error_msgs']
 
         # SpectralWindow.xml with numBin field and appropriately modified resolution, same expected values
         ms_name = sdm_name+".numBin.ms"
-        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.numBin',None,expWinFunCol,expNumBinCol,expResCol)
+        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.numBin',None,expWinFunCol,expNumBinCol,expResCol,expCorrBitVal)
         retValue['success'] = res['success']
         retValue['error_msgs'] = res['error_msgs']
 
         # SpectralWindow.xml with mostly numBin and alterned resolution, but one row has the original values, same expected values
         ms_name = sdm_name+".mixed.ms"
-        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.mixed',None,expWinFunCol,expNumBinCol,expResCol)
+        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.mixed',None,expWinFunCol,expNumBinCol,expResCol,expCorrBitVal)
         retValue['success'] = res['success']
         retValue['error_msgs'] = res['error_msgs']
 
@@ -3298,7 +3342,7 @@ class asdm_import8(test_base):
         ms_name = sdm_name+".bad.ms"
         expNumBinCol[0] = 1
         expResCol[0] = 9000000.
-        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.bad',None,expWinFunCol,expNumBinCol,expResCol)
+        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.bad',None,expWinFunCol,expNumBinCol,expResCol,expCorrBitVal)
         retValue['success'] = res['success']
         retValue['error_msgs'] = res['error_msgs']
 
@@ -3313,13 +3357,13 @@ class asdm_import8(test_base):
         expResCol = numpy.empty(16)
         expResCol.fill(8000000.)
         ms_name = sdm_name+".ms"
-        res = self.doNumTest(myname,sdm_name,ms_name,None,None,expWinFunCol,expNumBinCol,expResCol)
+        res = self.doNumTest(myname,sdm_name,ms_name,None,None,expWinFunCol,expNumBinCol,expResCol,expCorrBitVal)
         retValue['success'] = res['success']
         retValue['error_msgs'] = res['error_msgs']
 
         # original SpectralWindow.xml with numBin field and altered resolution, same expected values
         ms_name = sdm_name+".numBin.ms"
-        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.numBin',None,expWinFunCol,expNumBinCol,expResCol)
+        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.numBin',None,expWinFunCol,expNumBinCol,expResCol,expCorrBitVal)
         retValue['success'] = res['success']
         retValue['error_msgs'] = res['error_msgs']
 
@@ -3327,7 +3371,7 @@ class asdm_import8(test_base):
         # expected numBin is the same, expected resolution is now the original values
         expResCol /= 4.0
         ms_name = sdm_name+".onlyNumBin.ms"
-        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.onlyNumBin',None,expWinFunCol,expNumBinCol,expResCol)
+        res = self.doNumTest(myname,sdm_name,ms_name,'SpectralWindow.xml.onlyNumBin',None,expWinFunCol,expNumBinCol,expResCol,expCorrBitVal)
         retValue['success'] = res['success']
         retValue['error_msgs'] = res['error_msgs']
 
@@ -3335,11 +3379,27 @@ class asdm_import8(test_base):
         # numBin is all 1 and expected resolution is the original resolution
         expNumBinCol.fill(1)
         ms_name = sdm_name+".unknownTel.ms"
-        res = self.doNumTest(myname,sdm_name,ms_name,None,'ExecBlock.xml.unknownTel',expWinFunCol,expNumBinCol,expResCol)
+        res = self.doNumTest(myname,sdm_name,ms_name,None,'ExecBlock.xml.unknownTel',expWinFunCol,expNumBinCol,expResCol,expCorrBitVal)
         retValue['success'] = res['success']
         retValue['error_msgs'] = res['error_msgs']
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
+
+    def test_verbose(self):
+        # check that the number of lines added to the log file by importasdm is more with verbose True than False
+        # any ASDM is fine
+
+        myasdmname = 'uid___A002_X6218fb_X264'
+        themsname = myasdmname+".ms"
+
+        # count log file lines at start
+        logLinesStart = countlines(casalog.logfile())
+        importasdm(myasdmname, vis=themsname, ocorr_mode="ao", bdfflags=True, applyflags=True, lazy=True, overwrite=True,verbose=False)
+        logLinesMiddle = countlines(casalog.logfile())
+        importasdm(myasdmname, vis=themsname, ocorr_mode="ao", bdfflags=True, applyflags=True, lazy=True, overwrite=True,verbose=True)
+        logLinesEnd = countlines(casalog.logfile())
+
+        self.assertTrue(((logLinesEnd-logLinesMiddle) > (logLinesMiddle-logLinesStart)), 'verbose test failed, did not produce more lines')
 
 def suite():
     return [asdm_import1, 

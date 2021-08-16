@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import time
 import copy
@@ -31,7 +30,7 @@ def flagmanager(
             if mode != 'rename':
                 aflocal.open(vis)
         else:
-            raise Exception('Visibility data set not found - please verify the name')
+            raise ValueError('Visibility data set not found - please verify the name')
         if mode == 'list':
             flist = []
             flist = aflocal.getflagversionlist()
@@ -55,12 +54,11 @@ def flagmanager(
                 fversionsdict[k] = singleversion
             
             fversionsdict['MS'] = MS
-            print('See logger for flag versions for this MS')
             return fversionsdict
             
         elif mode == 'save':
             if versionname == '':
-                raise IOError("Illegal empty versionname: ''")
+                raise ValueError("Illegal empty versionname: ''")
             
             newdir = vis+'.flagversions/flags.'+versionname
             if os.path.exists(newdir):
@@ -93,31 +91,31 @@ def flagmanager(
                                     comment=comment, merge=merge)
         elif mode == 'restore':
             if versionname == '':
-                raise Exception("Illegal versionname: ''")
+                raise ValueError("Illegal versionname: ''")
             
             casalog.post('Restore flagversions ' + versionname)
             aflocal.restoreflagversion(versionname=versionname,
                     merge=merge)
         elif mode == 'delete':
             if versionname == '':
-                raise Exception("Illegal versionname: ''")
+                raise ValueError("Illegal versionname: ''")
             
             aflocal.deleteflagversion(versionname=versionname)
         elif mode == 'rename':
             if versionname == '':
-                raise Exception("Illegal versionname: ''")
+                raise ValueError("Illegal versionname: ''")
 
             if oldname == '':
-                raise Exception("Illegal oldname: ''")
+                raise ValueError("Illegal oldname: ''")
 
             # The directory structure is unlikely to change
             olddir = vis + '.flagversions/flags.' + oldname
             newdir = vis + '.flagversions/flags.' + versionname
             if not os.path.isdir(olddir):
-                raise Exception('No such flagversions: ' + str(oldname))
+                raise ValueError('No such flagversions: ' + str(oldname))
             
             if os.path.exists(newdir):
-                raise Exception('Flagversions ' + str(versionname) + ' already exists!')
+                raise ValueError('Flagversions ' + str(versionname) + ' already exists!')
 
             casalog.post('Rename flagversions "%s" to "%s"' % (oldname,versionname))
 
@@ -140,9 +138,7 @@ def flagmanager(
             fd.close()
             
         else:
-            raise Exception('Unknown mode' + str(mode))
+            raise ValueError('Unknown mode' + str(mode))
         
+    finally:
         aflocal.done()
-    except Exception:
-        aflocal.done()
-        raise

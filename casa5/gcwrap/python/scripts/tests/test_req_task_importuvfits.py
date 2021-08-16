@@ -41,49 +41,61 @@ try:
     from casatasks import casalog, importuvfits, exportuvfits, rmtables
     ms = casatools.ms()
     tb = casatools.table()
+    qa = casatools.quanta()
     CASA6 = True
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+    import casa_stack_manip
+
 import gc
 import math
 import os
 import unittest
 import traceback
+import shutil
 import sys
 import numpy as np
 
 
 if CASA6:
-    vlapath = ctsys.resolve('uvfits/3C219D_CAL.UVFITS')
-    path = ctsys.resolve('visibilities/evla/refim_Cband.G37line.ms')
+    mergedDataRoot = ctsys.resolve('unittest/importuvfits')
+    vlapath = ctsys.resolve('unittest/importuvfits/3C219D_CAL.UVFITS')
+    path = ctsys.resolve('unittest/importuvfits/refim_Cband.G37line.ms')
 
     exportuvfits(vis=path, fitsfile='EVLAUV.UVFITS')
     evlapath = ctsys.resolve('EVLAUV.UVFITS')
-    carmapath = ctsys.resolve('uvfits/mirsplit.UVFITS')
+    carmapath = ctsys.resolve('unittest/importuvfits/mirsplit.UVFITS')
     
     #filepath = ctsys.resolve('EVLAUV.UVFITS')
     
     #testlogpath = ctsys.resolve('testlog.log')
 else:
     dataroot = os.environ.get('CASAPATH').split()[0] + '/'
-    #cwd = os.getcwd()
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/uvfits/3C219D_CAL.UVFITS'):
-        vlapath = dataroot + 'data/casa-data-req/uvfits/3C219D_CAL.UVFITS'
-        carmapath = dataroot + 'data/casa-data-req/uvfits/mirsplit.UVFITS'
-        exportuvfits(vis=dataroot + 'data/casa-data-req/visibilities/evla/refim_Cband.G37line.ms', fitsfile='EVLAUV.UVFITS')
-        
-    else:
-        vlapath = dataroot + 'casa-data-req/uvfits/3C219D_CAL.UVFITS'
-        carmapath = dataroot + 'casa-data-req/uvfits/mirsplit.UVFITS'
-        exportuvfits(vis=dataroot + 'casa-data-req/visibilities/evla/refim_Cband.G37line.ms', fitsfile='EVLAUV.UVFITS')
+    mergedDataRoot = dataroot + 'casatestdata/unittest/importuvfits'
+    vlapath = dataroot + 'casatestdata/unittest/importuvfits/3C219D_CAL.UVFITS'
+    carmapath = dataroot + 'casatestdata/unittest/importuvfits/mirsplit.UVFITS'
+    exportuvfits(vis=dataroot + 'casatestdata/unittest/importuvfits/refim_Cband.G37line.ms', fitsfile='EVLAUV.UVFITS', overwrite=True)
 
     evlapath = 'EVLAUV.UVFITS'
 
 logpath = casalog.logfile()
 
 class importuvfits_test(unittest.TestCase):
+    # 06/13/2010: This seemed to be the only MS in the regression repo
+    # that is a good test of padwithflag.
+    inpms = 'cvel/input/ANTEN_sort_hann_for_cvel_reg.ms'
+
+    origms = 'start.ms'  # Just a copy of inpms
+    fitsfile = 'hanningsmoothed.UVF'
+    msfromfits = 'end.ms'
+
+    records = {}
+    need_to_initialize = True  # Do once, at start.
+    do_teardown = False  # Do once, after initializing and filling records.
+
+    # Its value here should not really matter.
 
     def setUp(self):
         if not CASA6:
@@ -95,6 +107,18 @@ class importuvfits_test(unittest.TestCase):
         rmtables('test_set.ms')
         if os.path.exists('testlog.log'):
             os.remove('testlog.log')
+
+        if os.path.exists('kf.ms'):
+            shutil.rmtree('kf.ms')
+        if os.path.exists('xyz.uvfits'):
+            os.remove('xyz.uvfits')
+
+        if self.do_teardown:
+            self.qa.done( )
+            shutil.rmtree(self.origms)
+            shutil.rmtree(self.msfromfits)
+            os.remove(self.fitsfile)
+            self.do_teardown = False
 
     @classmethod
     def tearDownClass(cls):
@@ -220,8 +244,14 @@ class importuvfits_test(unittest.TestCase):
         '''test_invalidinput: Tests to see if the given fits file is valid, or if given an invalid filename'''
         # Try for existing non uvfits file types
         casalog.setlogfile('testlog.log')
-        if CASA6:
-            with self.assertRaises(AssertionError):
+        if CASA6 or\
+           casa_stack_manip.stack_frame_find().get('__rethrow_casa_exceptions', False):
+            if CASA6:
+                exc_type = AssertionError
+            else:
+                exc_type = RuntimeError
+
+            with self.assertRaises(exc_type):
                 importuvfits(fitsfile='fake.uvfits', vis='test_set.ms')
         else:
             importuvfits(fitsfile='fake.uvfits', vis='test_set.ms')
@@ -232,8 +262,30 @@ class importuvfits_test(unittest.TestCase):
         '''test_overwrite: Tests to make sure files aren't overwritten'''
         casalog.setlogfile('testlog.log')
         importuvfits(fitsfile=vlapath, vis='test_set.ms')
-        importuvfits(fitsfile=vlapath, vis='test_set.ms')
+        with self.assertRaises(RuntimeError):
+            importuvfits(fitsfile=vlapath, vis='test_set.ms')
         self.assertTrue('user does not want to remove it.' in open('testlog.log').read(), msg='No warning saying that the file will not overwrite was displayed')
+
+    # Merged test cases from test_importuvfits
+
+    def test_receptor_angle(self):
+        """CAS-7081: Test receptor angle is preserved"""
+        msname = os.path.join(mergedDataRoot, "uvfits_test.ms")
+        self.assertTrue(ms.open(msname), "Input dataset not found")
+        uvfits = "xyz.uvfits"
+        self.assertTrue(ms.tofits(uvfits), "Failed to write uvfits")
+        ms.done()
+        feed = "/FEED"
+        tb.open(msname + feed)
+        rec_ang = "RECEPTOR_ANGLE"
+        expec = tb.getcol(rec_ang)
+        tb.done()
+        importname = "kf.ms"
+        importuvfits(fitsfile=uvfits, vis=importname)
+        tb.open(importname + feed)
+        got = tb.getcol(rec_ang)
+        tb.done()
+        self.assertTrue(np.max(np.abs(got-expec)) < 1e-7, "Receptor angles not preserved")
 
 def suite():
     return[importuvfits_test]

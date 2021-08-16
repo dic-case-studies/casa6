@@ -366,7 +366,7 @@ void TJones::guessPar(VisBuffer& vb) {
 }
 
 
-void TJones::guessPar(SDBList& sdbs) {
+void TJones::guessPar(SDBList& sdbs,const Bool&) {
 
   if (prtlev()>4) cout << "   T::guessPar(sdbs)" << endl;
 
@@ -864,7 +864,7 @@ void GJones::guessPar(VisBuffer& vb) {
   */
 }
 
-void GJones::guessPar(SDBList& sdbs) {
+void GJones::guessPar(SDBList& sdbs, const Bool& corrDepFlags) {
 
   if (prtlev()>4) cout << "   G::guessPar(sdbs)" << endl;
 
@@ -911,9 +911,11 @@ void GJones::guessPar(SDBList& sdbs) {
     rowok(irow)= (!sdb.flagRow()(irow) &&
 		  a1!=a2);
 
-    // All relevant correlations must be good
-    for (Int icorr=0;icorr<nCorr;++icorr)
-      rowok(irow)=(rowok(irow) && !sdb.flagCube()(corridx[icorr],guesschan,irow));
+    if (!corrDepFlags) {
+      // All relevant correlations must be good
+      for (Int icorr=0;icorr<nCorr;++icorr)
+	rowok(irow)=(rowok(irow) && !sdb.flagCube()(corridx[icorr],guesschan,irow));
+    }
 
     if (rowok(irow)) {
       antok(a1)++;
@@ -1555,6 +1557,46 @@ void JJones::initTrivDJ() {
 
 }
 
+
+// **********************************************************
+//  JfJones Implementations
+//
+
+JfJones::JfJones(VisSet& vs) :
+  VisCal(vs),             // virtual base
+  VisMueller(vs),         // virtual base
+  JJones(vs)              // immediate parent
+{
+  if (prtlev()>2) cout << "Jf::Jf(vs)" << endl;
+}
+
+JfJones::JfJones(String msname,Int MSnAnt,Int MSnSpw) :
+  VisCal(msname,MSnAnt,MSnSpw),             // virtual base
+  VisMueller(msname,MSnAnt,MSnSpw),         // virtual base
+  JJones(msname,MSnAnt,MSnSpw)              // immediate parent
+{
+  if (prtlev()>2) cout << "Jf::Jf(msname,MSnAnt,MSnSpw)" << endl;
+}
+
+JfJones::JfJones(const MSMetaInfoForCal& msmc) :
+  VisCal(msmc),             // virtual base
+  VisMueller(msmc),         // virtual base
+  JJones(msmc)              // immediate parent
+{
+  if (prtlev()>2) cout << "Jf::Jf(msmc)" << endl;
+}
+
+JfJones::JfJones(const Int& nAnt) :
+  VisCal(nAnt), 
+  VisMueller(nAnt),
+  JJones(nAnt)
+{
+  if (prtlev()>2) cout << "Jf::Jf(nAnt)" << endl;
+}
+
+JfJones::~JfJones() {
+  if (prtlev()>2) cout << "Jf::~Jf()" << endl;
+}
 
 
 /*

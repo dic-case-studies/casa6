@@ -34,6 +34,7 @@
 #include <alma/Enumerations/CDirectionReferenceCode.h>
 #include <alma/Enumerations/CAntennaMake.h>
 #include <alma/Enumerations/CAtmPhaseCorrection.h>
+#include <alma/Enumerations/CCorrelationBit.h>
 #include <alma/Enumerations/CCorrelationMode.h>
 #include <alma/Enumerations/CCorrelatorName.h>
 #include <alma/Enumerations/CStokesParameter.h>
@@ -898,6 +899,7 @@ namespace casac {
                     bool flagbackup, bool verbose, bool overwrite, bool showversion, const std::string &useversion,
                     bool bdfflags, bool with_pointing_correction, bool convert_ephem2geo,
                     double polyephem_tabtimestep ) {
+        sdm::verbose = verbose;
         if ( gen_ms( vis, createmms, separationaxis, numsubms, corr_mode, srt, time_sampling, ocorr_mode, compression,
                      lazy, asis, wvr_corrected_data, scans, ignore_time, process_syspower, process_caldevice,
                      process_pointing, process_flags, tbuff, applyflags, savecmds, outfile, flagbackup, verbose,
@@ -3271,6 +3273,7 @@ namespace casac {
                       const std::string &rangeid, double subscanduration, double sbduration,
                       bool apcorrected, bool verbose, const std::string &/*useversion*/ ) {
         struct stat path_stat;
+        sdm::verbose = verbose;
         if ( stat( sdm_path.c_str( ), &path_stat ) != -1 ) {
             if ( S_ISREG(path_stat.st_mode) )
                 throw casacore::AipsError("SDM path exists and is a file");
@@ -3823,6 +3826,10 @@ namespace casac {
                     // numBin has been inferred for EVLA data, adjust resolution 
                     resolution1D = chanWidth1D;
                 }
+		std::string corrBit = "UNKNOWN";
+		if (r->isCorrelationBitExists()) {
+		  corrBit = CCorrelationBit::name(r->getCorrelationBit());
+		}
 
                 for (map<AtmPhaseCorrectionMod::AtmPhaseCorrection, ASDM2MSFiller*>::iterator iter = msFillers.begin();
                      iter != msFillers.end(); ++iter) {
@@ -3844,7 +3851,8 @@ namespace casac {
                                                      assocSpectralWindowId_,
                                                      assocNature_,
                                                      windowFunction,
-                                                     numBin );
+                                                     numBin,
+						     corrBit );
                 }      
             }
             if (nSpectralWindow) {

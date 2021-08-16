@@ -290,10 +290,11 @@ TEST_F(DJonesPOLarizedTest, DfllsJonesQUTest) {
   if (DJONES_TEST_VERBOSE)
     Dsol.state();
 
-  Dsol.guessPar(sdbs);
+  // call guessPar using generic signature, tests CAS-13179
+  //Dsol.guessPar(sdbs);
+  SolvableVisCal* svc_=&Dsol;
+  svc_->guessPar(sdbs,False);
 
-  Dsol.reportSolvedQU();
-  
   if (DJONES_TEST_VERBOSE)
     cout << "srcPolPar() = " << real(Dsol.srcPolPar()) << endl;
   ASSERT_NEAR(0.04,real(Dsol.srcPolPar()(0)),1e-3);
@@ -308,6 +309,7 @@ TEST_F(DJonesPOLarizedTest, DfllsJonesQUTest) {
   */
 
   // Now solve for the Ds
+  //  This calls LLS version since Dsol is DfllsJones
   Dsol.selfSolveOne(sdbs);
 
   // Apply refant (ad hoc)

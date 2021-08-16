@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from __future__ import print_function
 import os
 import re
 import pylab as pl
@@ -89,8 +88,8 @@ def simobserve(
             else:
                 #uvmode = True
                 #msg("Both antennalist and sdantlist are defined. sdantlist will be ignored",priority="warn")
-                msg("Both antennalist and sdantlist are defined. Define one of them.",priority="error")
-                return False
+                emsg = "Both antennalist and sdantlist are defined. Define one of them."
+                raise ValueError(emsg)
         else:
             uvmode = True
         #    uvmode = (sdant < 0) #when flexible default values come available
@@ -129,14 +128,12 @@ def simobserve(
         if not overwrite:
             if (predict and uvmode and os.path.exists(fileroot+"/"+
                                                       project+".ms")):
-                msg(fileroot+"/"+project+".ms exists but overwrite=F",
-                    priority="error")
-                return False
+                emsg = fileroot+"/"+project+".ms exists but overwrite=F"
+                raise RuntimeError(emsg)
             if (predict and (not uvmode) and os.path.exists(fileroot+"/"+
                                                             project+".sd.ms")):
-                msg(fileroot+"/"+project+".sd.ms exists but overwrite=F",
-                    priority="error")
-                return False
+                emsg = fileroot+"/"+project+".sd.ms exists but overwrite=F"
+                raise RuntimeError(emsg)
 
 
         # saveinputs is not available in casatasks
@@ -172,8 +169,8 @@ def simobserve(
 
         ### WORKAROUND for wrong flux in COMP TP simulations (CAS-5095)
         if (obsmode.startswith("s") and os.path.exists(complist)):
-            msg("Single dish simulation has a flux recovery issue when using a components list as an input.\nPlease generate compskymodel image first by obsmode='' and use the image as the skymodel input.\nSorry for the inconvenience.", priority="error")
-            return False
+            emsg = "Single dish simulation has a flux recovery issue when using a components list as an input.\nPlease generate compskymodel image first by obsmode='' and use the image as the skymodel input.\nSorry for the inconvenience."
+            raise RuntimeError(emsg)
         ### End of WORKAROUND
 
         grscreen = False
@@ -202,10 +199,9 @@ def simobserve(
                 if overwrite:
                     shutil.rmtree(newmodel)
                 else:
-                    msg(newmodel+" exists -- "+
-                        "please delete it, change skymodel, or set overwrite=T",
-                        priority="error")
-                    return False
+                    emsg = (newmodel+" exists -- "+
+                            "please delete it, change skymodel, or set overwrite=T")
+                    raise RuntimeError(emsg)
 
             # modifymodel just collects info if skymodel==newmodel
             innchan = -1
@@ -214,7 +210,8 @@ def simobserve(
                                           incenter,inwidth,innchan,
                                           flatimage=False)
             if not returnpars:
-                return False
+                raise RuntimeError('Failure in modifymodel. It returned: {}'.
+                                   format(returnpars))
 
             (model_refdir,model_cell,model_size,
              model_nchan,model_specrefval,model_specrefpix,model_width,
@@ -393,9 +390,8 @@ def simobserve(
                 antennalist = os.path.join(repodir,antennalist)
             # Now make sure the antennalist exists
             if not os.path.exists(antennalist):
-                util.msg("Couldn't find antennalist: %s" % antennalist,
-                         priority="error")
-                return False
+                emsg = "Couldn't find antennalist: %s" % antennalist
+                raise RuntimeError(emsg)
         elif predict or components_only:
             # antennalist is required when predicting or components only
             util.msg("Must specify antennalist", priority="error")
@@ -446,8 +442,8 @@ def simobserve(
                         msg("skymodel should be larger than 2.5*primary beam. Your skymodel: %.3f arcsec < %.3f arcsec: 2.5*primary beam" % (minsize, 2.5*pb),priority="error")
                     del minsize
         else:
-            msg("Can't find antennalist",priority="error")
-            return False
+            emsg = "Can't find antennalist"
+            raise RuntimeError(emsg)
 
 
         # now we have an estimate of the psf from the antenna configuration, 
@@ -496,8 +492,8 @@ def simobserve(
                     oldcs.done()
                     del oldcs, olddir
                     if needmodel:
-                        msg(newmodel+" exists and is inconsistent with required size="+str(modimsize)+" and direction. Please set overwrite=True",priority="error")
-                        return False
+                        emsg = newmodel+" exists and is inconsistent with required size="+str(modimsize)+" and direction. Please set overwrite=True"
+                        raise RuntimeError(emsg)
 
             if needmodel:
                 csmodel = ia.newimagefromshape(newmodel,[modimsize,modimsize,1,1])
@@ -538,9 +534,9 @@ def simobserve(
         # we can check for the user that the psf is likely to be sampled enough:
         cell_asec=qa.convert(model_cell[0],'arcsec')['value']
         if psfsize < cell_asec:
-            msg("Sky model cell of "+str(cell_asec)+" asec is very large compared to highest resolution "+str(psfsize)+" asec - this will lead to blank or erroneous output. (Did you set incell?)",priority="error")
+            emsg = "Sky model cell of "+str(cell_asec)+" asec is very large compared to highest resolution "+str(psfsize)+" asec - this will lead to blank or erroneous output. (Did you set incell?)"
             shutil.rmtree(modelflat)
-            return False
+            raise RuntimeError(emsg)
         if psfsize < 2*cell_asec:
             msg("Sky model cell of "+str(cell_asec)+" asec is large compared to highest resolution "+str(psfsize)+" asec. (Did you set incell?)",priority="warn")
 
@@ -567,13 +563,13 @@ def simobserve(
         # if the integration time is a real time quantity
         # test for weird units
         if not util.isquantity(integration):
-            msg("integration time "+integration+" does not appear to represent a time interval (use 's','min'; not 'sec','m')",priority="error")
-            return False
+            emsg = "integration time "+integration+" does not appear to represent a time interval (use 's','min'; not 'sec','m')"
+            raise RuntimeError(emsg)
 
         if qa.quantity(integration)['unit'] != '':
             if not qa.compare(integration,"1s"):
-                msg("integration time "+integration+" does not appear to represent a time interval ('s','min'; not 'sec','m')",priority="error")
-                return False
+                emsg = "integration time "+integration+" does not appear to represent a time interval ('s','min'; not 'sec','m')"
+                raise RuntimeError(emsg)
             intsec = qa.convert(qa.quantity(integration),"s")['value']
         else:
             if len(integration)>0:
@@ -602,8 +598,8 @@ def simobserve(
             if qq:
                 z = qq.groups()
                 if pb <= 0:
-                    util.msg("Can't calculate pointingspacing in terms of primary beam because antennalist is not specified",priority="error")
-                    return False
+                    emsg = "Can't calculate pointingspacing in terms of primary beam because antennalist is not specified"
+                    raise RuntimeError(emsg)
                 pointingspacing = "%farcsec" % (float(z[0])*pb)
                 # todo make more robust to nonconforming z[0] strings
 
@@ -632,9 +628,8 @@ def simobserve(
                 if os.path.exists(fileroot+"/"+ptgfile):
                     ptgfile = fileroot + "/" + ptgfile
                 else:
-                    util.msg("Can't find pointing file "+ptgfile,
-                             priority="error")
-                    return False
+                    emsg = "Can't find pointing file "+ptgfile
+                    raise RuntimeError(emsg)
 
             nfld, pointings, etime = util.read_pointings(ptgfile)
             if max(etime) <= 0:
@@ -713,8 +708,8 @@ def simobserve(
                 if overwrite:
                     os.remove(ptgfile)
                 else:
-                    util.msg("pointing file "+ptgfile+" already exists and user does not want to overwrite",priority="error")
-                    return False
+                    emsg = "pointing file "+ptgfile+" already exists and user does not want to overwrite"
+                    raise RuntimeError(emsg)
             util.write_pointings(ptgfile,pointings,etime.tolist())
 
         msg("center = "+imcenter,origin='simobserve')
@@ -725,8 +720,8 @@ def simobserve(
                 msg("   (printing only first 20 - see pointing file for full list)")
 
         if not overlap:
-            msg("No overlap between model and pointings",priority="error")
-            return False
+            emsg = "No overlap between model and pointings"
+            raise RuntimeError(emsg)
 
 
 
@@ -847,8 +842,8 @@ def simobserve(
             q = re.compile('(\d*/\d+/\d+)([/:\d]*)')
             qq = q.match(refdate)
             if not qq:
-                msg("Invalid reference date "+refdate,priority="error")
-                return False
+                emsg = "Invalid reference date "+refdate
+                raise RuntimeError(emsg)
             else:
                 z = qq.groups()
                 refdate=z[0]
@@ -887,13 +882,13 @@ def simobserve(
 
             # totaltime as an integer for # times through the mosaic:
             if not util.isquantity(totaltime,halt=False):
-                msg("totaltime "+totaltime+" does not appear to represent a time interval (use 's','min','h'; not 'sec','m','hr')",priority="error")
-                return False
+                emsg = "totaltime "+totaltime+" does not appear to represent a time interval (use 's','min','h'; not 'sec','m','hr')"
+                raise RuntimeError(emsg)
 
             if qa.quantity(totaltime)['value'] < 0.:
                 # casapy crashes for negative totaltime
-                msg("Negative totaltime is not allowed.",priority="error")
-                return False
+                emsg = "Negative totaltime is not allowed."
+                raise ValueError(emsg)
             if qa.quantity(totaltime)['unit'] == '':
                 # assume it means number of maps, or # repetitions.
                 totalsec = sum(etime)
@@ -903,14 +898,14 @@ def simobserve(
                 msg("Total observing time = "+str(totalsec)+"s.")
             else:
                 if not qa.compare(totaltime,"1s"):
-                    msg("totaltime "+totaltime+" does not appear to represent a time interval (use 's','min','h'; not 'sec','m','hr')",priority="error")
-                    return False
+                    emsg = "totaltime "+totaltime+" does not appear to represent a time interval (use 's','min','h'; not 'sec','m','hr')"
+                    raise ValueError(emsg)
                 totalsec = qa.convert(qa.quantity(totaltime),'s')['value']
 
             if os.path.exists(msfile) and not overwrite: #redundant check?
-                util.msg("measurement set "+msfile+
-                         " already exists and user does not wish to overwrite",priority="error")
-                return False
+                emsg = ("measurement set "+msfile+
+                       " already exists and user does not wish to overwrite")
+                raise RuntimeError(emsg)
             sm.open(msfile)
 
             diam = stnd;
@@ -978,7 +973,7 @@ def simobserve(
             if totalsec < totalscansec:
                 msg("Not all pointings in the mosaic will be observed - check mosaic setup and exposure time parameters!",priority="warn")
                 ###
-                #print "you need at least %16.12e sec but you have %16.12e sec (%f < %f = %s)" % (totalscansec, totalsec, totalsec, totalscansec, str(totalsec<totalscansec))
+                #casalog.post("you need at least %16.12e sec but you have %16.12e sec (%f < %f = %s)" % (totalscansec, totalsec, totalsec, totalscansec, str(totalsec<totalscansec)))
                 ###
 
             # sm.observemany
@@ -1241,7 +1236,7 @@ def simobserve(
                               interpolation='bilinear',
                               cmap=pl.cm.jet,
                               extent=xextent+yextent,
-                              origin="bottom")
+                              origin="lower")
                     pl.title(project+".quick.psf",fontsize="x-small")
                     b = qa.convert(beam[1],'arcsec')['value']
                     pl.xlim([-3*b,3*b])
@@ -1295,9 +1290,8 @@ def simobserve(
                 shutil.rmtree(noisymsroot+".ms")
             shutil.copytree(msfile,noisymsroot+".ms")
             if sm.name() != '':
-                msg("table persistence error on %s" % sm.name(),
-                    priority="error")
-                return False
+                emsg = "table persistence error on %s" % sm.name()
+                raise RuntimeError(emsg)
 
             # if not predicted this time, get telescopename from ms
             if not predict:
@@ -1391,9 +1385,8 @@ def simobserve(
                     shutil.rmtree(noisymsroot+".ms")
                 shutil.copytree(msfile,noisymsroot+".ms")
                 if sm.name() != '':
-                    msg("table persistence error on %s" % sm.name(),
-                        priority="error")
-                    return False
+                    emsg = "table persistence error on %s" % sm.name()
+                    raise RuntimeError(emsg)
 
                 sm.openfromms(noisymsroot+".ms")    # an existing MS
                 sm.setdata(fieldid=[]) # force to get all fields
@@ -1413,27 +1406,8 @@ def simobserve(
         if os.path.exists(fileroot+"/"+project+".noisy.sd.T.cal"):
             shutil.rmtree(fileroot+"/"+project+".noisy.sd.T.cal")
 
-    except TypeError as e:
+    finally:
         finalize_tools()
-        #msg("simobserve -- TypeError: %s" % e, priority="error")
-        casalog.post("simobserve -- TypeError: %s" % e, priority="ERROR")
-        raise
-        return False
-    except ValueError as e:
-        finalize_tools()
-        #print "task_simobserve -- OptionError: ", e
-        #msg("simobserve -- OptionError: %s" % e, priority="error")
-        casalog.post("simobserve -- OptionError: %s" % e, priority="ERROR")
-        raise
-        return False
-    except Exception as instance:
-        finalize_tools()
-        #print '***Error***',instance
-        #msg("simobserve -- Exception: %s" % instance, priority="error")
-        casalog.post("simobserve -- Exception: %s" % instance, priority="ERROR")
-        raise
-        return False
-    return True
 
 ##### Helper functions to plot primary beam
 def plotpb(pb,axes,lims=None,color='k'):
@@ -1458,7 +1432,7 @@ def plotpb(pb,axes,lims=None,color='k'):
         pblegend.set_alpha(0.7)
         axes.add_artist(pblegend)
     except:
-        print("Using old matplotlib substituting with circle")
+        casalog.post("Using old matplotlib substituting with circle")
         # work around for old matplotlib
         boxsize = pb*1.1
         if not lims: lims = axes.get_xlim(),axes.get_ylim()
