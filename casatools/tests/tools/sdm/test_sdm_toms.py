@@ -364,10 +364,11 @@ class asdm_import1(test_base):
             shutil.rmtree(thisdir,ignore_errors=True)
     
     def test1(self):
-        '''Asdm-import: Test good v1.2 input with filler v3 and inverse filler v3 '''
+        '''Asdm-import: Test good v1.2 input with filler and inverse filler '''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
         mysdm = sdm(myasdm_dataset_name)
+        ## useversion is deprecated, a message to that effect should be in the log (not checked here)
         self.res = mysdm.toms(useversion='v3')
         self.assertTrue(self.res)
         print( "%s: Success! Now checking output ..." % myname)
@@ -494,10 +495,10 @@ class asdm_import1(test_base):
         os.system('rm -rf exportasdm-output.asdm myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
         try:
-            print("\n>>>> Test of exportasdm v3: input MS is %s" % myvis)
+            print("\n>>>> Test of exportasdm: input MS is %s" % myvis)
             print("(a simulated input MS with pointing table)")
             tosdm = sdm('exportasdm-output.asdm')
-            rval = tosdm.fromms( 'myinput.ms', archiveid="S002", apcorrected=False, useversion='v3' )
+            rval = tosdm.fromms( 'myinput.ms', archiveid="S002", apcorrected=False)
             if not rval:
                 raise Exception
             os.system('rm -rf '+asdmname+'; mv exportasdm-output.asdm '+asdmname)
@@ -507,9 +508,9 @@ class asdm_import1(test_base):
             raise
 
         try:
-            print("Reimporting the created ASDM (v3)....")
+            print("Reimporting the created ASDM ....")
             fromsdm = sdm(asdmname)
-            fromsdm.toms(vis=reimp_msname, wvr_corrected_data='no', useversion='v3')
+            fromsdm.toms(vis=reimp_msname, wvr_corrected_data='no')
             print("Testing existence of reimported MS ....")
             if(not os.path.exists(reimp_msname)):
                 print("MS %s doesn't exist." % reimp_msname)
@@ -544,11 +545,11 @@ class asdm_import2(test_base):
             shutil.rmtree(thisdir,ignore_errors=True)
 
     def test_import2(self):
-        '''Asdm-import: Test good v1.2 input with filler v3 and inverse filler v3 '''
+        '''Asdm-import: Test good v1.2 input with filler and inverse filler'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
         mysdm = sdm(myasdm_dataset_name)
-        self.res = mysdm.toms(useversion='v3')
+        self.res = mysdm.toms()
         self.assertTrue(self.res)
         print("%s: Success! Now checking output ..." % myname)
         mscomponents = set(["table.dat",
@@ -674,10 +675,10 @@ class asdm_import2(test_base):
         os.system('rm -rf exportasdm-output.asdm myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
         try:
-            print("\n>>>> Test of exportasdm v3: input MS  is %s" % myvis)
+            print("\n>>>> Test of exportasdm: input MS  is %s" % myvis)
             print("(a simulated input MS with pointing table)")
             tosdm = sdm('exportasdm-output.asdm')
-            rval = tosdm.fromms( 'myinput.ms', archiveid="S002", apcorrected=False, useversion='v3' )
+            rval = tosdm.fromms( 'myinput.ms', archiveid="S002", apcorrected=False)
             if not rval:
                 raise Exception
             os.system('rm -rf '+asdmname+'; mv exportasdm-output.asdm '+asdmname)
@@ -687,9 +688,9 @@ class asdm_import2(test_base):
             raise
 
         try:
-            print("Reimporting the created ASDM (v3)....")
+            print("Reimporting the created ASDM ....")
             fromsdm = sdm(asdmname)
-            fromsdm.toms(vis=reimp_msname, wvr_corrected_data='no', useversion='v3')
+            fromsdm.toms(vis=reimp_msname, wvr_corrected_data='no')
             print("Testing existence of reimported MS ....")
             if(not os.path.exists(reimp_msname)):
                 print("MS %s doesn't exist." % reimp_msname)

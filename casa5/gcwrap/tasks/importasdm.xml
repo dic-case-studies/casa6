@@ -227,7 +227,7 @@ data to fill the DATA column in the MAIN table of the MS.
         </allowed>
     </param>
     <param type="string" name="scans">
-<shortdescription>Processes only the specified scans.  A scan specification consists in an exec bock index followed by the : character, followed by a comma separated list of scan indexes or scan index ranges. (e.g. 0:1;1:2~6,8;2:,3:24~30)</shortdescription>
+<shortdescription>Processes only the specified scans.  A scan specification consists of an exec block index followed by the : character, followed by a comma separated list of scan indexes or scan index ranges. (e.g. 0:1;1:2~6,8;2:,3:24~30)</shortdescription>
 <description>Processes only the scans specified in the option's value.
                      Default: none (all scans)
 
@@ -400,8 +400,9 @@ wvr_corrected_data='both'
     </param>
 
     <param type="bool" name="showversion">
-<shortdescription>Report the version of asdm2MS being used</shortdescription>
-<description>Report the version of asdm2MS being used
+<shortdescription>Deprecated: Report the version of asdm2MS being used</shortdescription>
+<description>Deprecated. This parameter will be removed in a future release, this is no longer relevant.
+             Report the version of asdm2MS being used
                      Default: False
                      Options: False|True
 </description>
@@ -430,12 +431,15 @@ wvr_corrected_data='both'
     </constraints>
 
     <param type="string" name="useversion" >
-<shortdescription>Version of asdm2MS to be used (v3 default, should work for all data)</shortdescription>
-<description>Version of asdm2MS to be used
-                     Default: 'v3' (should work for all data)
+<shortdescription>Deprecated: Version of asdm2MS to be used (should work for all data)</shortdescription>
+<description>Deprecated. This parameter will be removed in a future release. This is no longer relevant.
+             Version of asdm2MS to be used
+                     Default: 'deprecated' (should work for all data)
+                     Options: deprecated, v3
 </description>
-        <value>v3</value>
+        <value>deprecated</value>
         <allowed kind="enum">
+          <value>deprecated</value>
           <value>v3</value>
           <value></value>
         </allowed>
