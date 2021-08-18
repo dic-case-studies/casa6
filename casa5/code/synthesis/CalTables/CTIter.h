@@ -29,6 +29,8 @@
 #define CALIBRATION_CALTABITER_H
 
 #include <casa/aips.h>
+#include <measures/Measures/MEpoch.h>
+#include <ms/MSOper/MSDerivedValues.h>
 #include <tables/Tables/TableIter.h>
 #include <synthesis/CalTables/NewCalTable.h>
 #include <synthesis/CalTables/CTMainColumns.h>
@@ -81,7 +83,7 @@ public:
   virtual ~ROCTIter();
   
   // Iteration operators
-  inline void reset() { ti_->reset(); this->attach(); };
+  inline void reset() { ti_->reset(); this->attach(); updatePhaseCenter(); };
   inline casacore::Bool pastEnd() { return ti_->pastEnd(); };
   void next();
   void next0();
@@ -159,6 +161,10 @@ public:
   casacore::Vector<casacore::Double> freq() const;
   void freq(casacore::Vector<casacore::Double>& v) const;
 
+  casacore::MDirection azel0(casacore::Double time) const;
+  casacore::Double hourang(casacore::Double time) const;
+  casacore::Float parang0(casacore::Double time) const;
+
  protected:
 
   // Attach accessors
@@ -170,7 +176,8 @@ public:
   ROCTIter (const ROCTIter& other);
   ROCTIter& operator= (const ROCTIter& other);
 
-  // casacore::Data:
+  // Update phase center in MSDerivedValues
+  void updatePhaseCenter();
 
   // Remember the sort columns...
   casacore::Vector<casacore::String> sortCols_;
@@ -195,7 +202,10 @@ public:
   // Per-iteration columns
   ROCTMainColumns *iROCTMainCols_;
 
-
+  // For calculating az, el, hourang, parang
+  casacore::MSDerivedValues* msd_;
+  casacore::MEpoch epoch_;
+  casacore::Int lastfield_;
 };
 
 // Writable version (limited to certain 'columns')

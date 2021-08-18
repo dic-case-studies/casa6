@@ -23,9 +23,9 @@
 //#                        520 Edgemont Road
 //#                        Charlottesville, VA 22903-2475 USA
 //#
-//# $Id: NewCalTable.cc 15602 2011-07-14 00:03:34Z tak.tsutsumi $
 //----------------------------------------------------------------------------
 
+#include <msvis/MSVis/ViImplementation2.h>
 #include <synthesis/CalTables/CTIter.h>
 #include <tables/Tables/ScalarColumn.h>
 #include <casa/Arrays.h>
@@ -43,7 +43,8 @@ ROCTIter::ROCTIter(NewCalTable tab, const Block<String>& sortcol) :
   calCol_(tab),
   ti_(NULL),
   inct_(NULL),
-  iROCTMainCols_(NULL)
+  iROCTMainCols_(NULL),
+  lastfield_(-1)
 {
 
   ti_=new TableIterator(tab,sortcol);
@@ -55,7 +56,12 @@ ROCTIter::ROCTIter(NewCalTable tab, const Block<String>& sortcol) :
 
   // If SPW a sort column, then 
   singleSpw_=anyEQ(sortCols_,String("SPECTRAL_WINDOW_ID"));
-  
+
+  // Initialize MSDerivedValues and MEpoch
+  msd_ = new MSDerivedValues();
+  msd_->setAntennas(calCol_.antenna());
+  epoch_ = calCol_.timeMeas()(0);
+
   /*
   cout << "singleSpw_ = " << boolalpha << singleSpw_ << endl;
   cout << "inct_->nrow() = " << inct_->nrow() << endl;
@@ -75,6 +81,7 @@ ROCTIter::~ROCTIter()
   if (ti_!=NULL) delete ti_;
   if (iROCTMainCols_!=NULL) delete iROCTMainCols_;
   if (inct_!=NULL) delete inct_;
+  if (msd_!=NULL) delete msd_;
 };
 
 void ROCTIter::next() { 
@@ -84,7 +91,22 @@ void ROCTIter::next() {
   // attach accessors to new iteration
   this->attach();
 
-};
+  if (!pastEnd()) {
+    updatePhaseCenter();
+  }
+}
+
+void ROCTIter::updatePhaseCenter() {
+  // Set MSDerivedValues phase center when changed
+  Int field = thisField();
+
+  if (field != lastfield_) {
+    Double time = thisTime();
+    MDirection phaseCenter = calCol_.field().phaseDirMeas(field, time);
+    msd_->setFieldCenter(phaseCenter);
+    lastfield_ = field;
+  }
+}
 
 void ROCTIter::next0() { 
   // Advance the TableIterator
@@ -181,6 +203,20 @@ void ROCTIter::freq(Vector<Double>& v) const {
   else
     // more than one spw per iteration...
     throw(AipsError("Please sort by spw."));
+}
+
+casacore::MDirection ROCTIter::azel0(casacore::Double time) const {
+  casacore::MDirection azel;
+  vi::ViImplementation2::azel0Calculate(time, *msd_, azel, epoch_);
+  return azel;
+}
+
+casacore::Double ROCTIter::hourang(casacore::Double time) const {
+  return vi::ViImplementation2::hourangCalculate(time, *msd_, epoch_);
+}
+
+casacore::Float ROCTIter::parang0(casacore::Double time) const {
+  return vi::ViImplementation2::parang0Calculate(time, *msd_, epoch_);
 }
 
 void ROCTIter::attach() {

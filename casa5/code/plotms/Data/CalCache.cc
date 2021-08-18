@@ -1179,28 +1179,26 @@ void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
             *flag_[chunk] = selectedFlag;
             break;
         }
-        /*
         case PMS::WT: {
-            *wt_[chunk] = cti.weightMat();
+            *wt_[chunk] = cti.wt();
             break;
         }
         case PMS::AZ0:
         case PMS::EL0: {
-            Vector<Double> azel;
-            cti.azel0Vec(cti.time()(0),azel);
+            MDirection azelMDir = cti.azel0(cti.thisTime());
+            Vector<Double> azel = azelMDir.getAngle("deg").getValue();
             az0_(chunk) = azel(0);
             el0_(chunk) = azel(1);
             break;
         }
         case PMS::HA0: 
-            ha0_(chunk) = cti.hourang(cti.time()(0))*12/C::pi;  // in hours
+            ha0_(chunk) = cti.hourang(cti.thisTime()) * 12/C::pi;  // in hours
             break;
         case PMS::PA0: {
-          pa0_(chunk) = cti.parang0(cti.time()(0))*180.0/C::pi; // in degrees
-          if (pa0_(chunk)<0.0) pa0_(chunk)+=360.0;
+          pa0_(chunk) = cti.parang0(cti.thisTime()) * 180.0/C::pi; // in degrees
+          if (pa0_(chunk) < 0.0) pa0_(chunk) += 360.0;
           break;
         }
-        */
         case PMS::ANTENNA: {
             antenna_[chunk]->resize(nAnt_);
             indgen(*antenna_[chunk]);
