@@ -1270,7 +1270,7 @@ with the first two lines containing a format description.
 <method type="function" name="taql">
 	<shortdescription>Make a table from a TaQL command. </shortdescription>
 	<description>This method Expose TaQL to the user.
-		Details on TaQL maybe found at http://www.astron.nl/aips++/docs/notes/199</description>
+		Details on TaQL maybe found at https://casacore.github.io/casacore-notes/199.html</description>
 	<input>
 		<param type="string" name="taqlcommand">
 			<description>TaQL expression</description>
