@@ -1116,8 +1116,8 @@ calibrater::rerefant(const std::string& tablein,
   try {
 
     logSink_p.clearLocally();
-    LogIO os(LogOrigin("calibrater", "refant"),logSink_p);
-    os << "Beginning smooth--(MSSelection version)-------" << LogIO::POST;
+    LogIO os(LogOrigin("calibrater", "rerefant"),logSink_p);
+    os << "Beginning rerefant--(MSSelection version)-------" << LogIO::POST;
 
     String tabo(tableout);
 

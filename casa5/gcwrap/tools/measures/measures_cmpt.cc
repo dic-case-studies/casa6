@@ -1992,7 +1992,7 @@ measures::doframe(const ::casac::record& v)
 	in.isMEpoch() || in.isMRadialVelocity()) {
       ostringstream tmpos;
       tmpos << in.asMeasure();
-      *itsLog << LogIO::NORMAL << tmpos.str() << endl;
+      *itsLog << "doframe(record): " << LogIO::DEBUG1 << tmpos.str() << LogIO::POST;
       frame_p->set(in.asMeasure());
       return true;;
     };
