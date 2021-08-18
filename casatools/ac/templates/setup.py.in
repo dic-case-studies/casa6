@@ -1052,7 +1052,7 @@ def get_fortran_compiler_flags(ext):
     return cc_args
 
 sys_cflags=''
-def sys_cflags = update_sys_cflags():
+def update_sys_cflags():
     global sys_cflags
     sys_cflags = sep.join(
         list(
@@ -1123,7 +1123,7 @@ def customize_compiler(self):
         library_mangle = { }
                 
     # Mimic the makefile so that the same ccache results can be used:
-    filtered_sys_cflags = filter_optim_debug(sys_cflags = update_sys_cflags()).split() # yes, we join only to take advantage of filter_optim_debug
+    filtered_sys_cflags = filter_optim_debug(update_sys_cflags()).split() # yes, we join only to take advantage of filter_optim_debug
 
     def _link(target_desc, objects, output_filename, output_dir=None,
               libraries=None, library_dirs=None, runtime_library_dirs=None,
