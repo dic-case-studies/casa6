@@ -1467,10 +1467,10 @@ bool componentlist::setspectrum(
         else if (type.startsWith("S")) {
             auto indexType = index.type();
             double indexParam = 0;
-            if (indexType == variant::DOUBLE) {
+            if (indexType == variant::DOUBLE || indexType == variant::INT) {
                 indexParam = index.toDouble();
             }
-            else if (indexType == variant::DOUBLEVEC) {
+            else if (indexType == variant::DOUBLEVEC || indexType == variant::INTVEC) {
                 indexParam = index.toDoubleVec()[0];
             }
             else {

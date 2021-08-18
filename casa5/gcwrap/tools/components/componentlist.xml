@@ -983,7 +983,7 @@ have chosen to represent these as actual sizes.
      <value>constant</value>
      </param>
     
-     <param type="any" name="index" limittypes="double, doubleArray">
+     <param type="any" name="index" limittypes="int, intArray, double, doubleArray">
      <description>The spectral index or coeffecients for plp.</description>
      <value>1.0</value>
      </param>
