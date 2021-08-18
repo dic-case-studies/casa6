@@ -1282,7 +1282,7 @@ with the first two lines containing a format description.
 </shortdescription>
 </returns>
 <example>
-	For more information on TaQL see http://www.astron.nl/aips++/docs/notes/199
+	For more information on TaQL see https://casacore.github.io/casacore-notes/199.html
 </example>
 </method>
  
