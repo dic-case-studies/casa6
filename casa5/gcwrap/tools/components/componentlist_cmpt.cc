@@ -1481,7 +1481,6 @@ bool componentlist::setspectrum(
         }
         else if (type.startsWith("P")) {
             auto indexType = index.type();
-            cout << "*** indexType " << indexType << endl;
             ThrowIf(
                 indexType != variant::DOUBLEVEC && indexType != variant::INTVEC,
                 "for a spectrum='plp', index must be a list of numbers"
