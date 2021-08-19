@@ -88,7 +88,7 @@ class GeneralGencal():
                parameter=None, uniform=None):
         try:
             # don't need scr col for this
-            _cb.open(filename=vis,compress=False,addcorr=False,addmodel=False)  
+            _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)  
             _cb.specifycal(caltable=caltable, time='', spw=spw, antenna=antenna, pol=pol,
                             caltype=caltype, parameter=parameter, infile=infile,
                             uniform=uniform)
@@ -108,7 +108,7 @@ class AntoposGencal():
                parameter=None, uniform=None):
         try:
             # don't need scr col for this
-            _cb.open(filename=vis,compress=False,addcorr=False,addmodel=False)  
+            _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)  
 
             # call a Python function to retreive ant position offsets automatically (currently EVLA only)
             if antenna=='':
@@ -144,7 +144,7 @@ class JyperkGencal():
                parameter=None, uniform=None):
         try:
             # don't need scr col for this
-            _cb.open(filename=vis,compress=False,addcorr=False,addmodel=False)  
+            _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)  
 
             for selection, param in JyperkGencal.__gen_specifycal_input(vis=vis, spw=spw,
                                                         endpoint=endpoint, infile=infile,
