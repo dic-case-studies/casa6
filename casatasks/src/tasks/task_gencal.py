@@ -82,12 +82,43 @@ def gencal(vis=None, caltable=None, caltype=None, infile='None',
                 warnings.simplefilter('error',UserWarning)
                 warnings.warn('No offsets found. No caltable created.')
 
-        _cb.specifycal(caltable=caltable,time="",spw=spw,antenna=antenna,pol=pol,
-                        caltype=caltype,parameter=parameter,infile=infile,
-                        uniform=uniform)
+        if caltype == 'jyperk':
+            for selection, param in __gen_specifycal_input(vis=vis, spw=spw,
+                                                           endpoint=endpoint, infile=infile,
+                                                           timeout=timeout, retry=retry,
+                                                           retry_wait_time=retry_wait_time):
+                _cb.specifycal(caltable='amp', time='', spw=selection['spw'],
+                               antenna=selection['antenna'], pol=selection['pol'],
+                               parameter=param, infile='', uniform=uniform)
+        else:
+            _cb.specifycal(caltable=caltable, time='', spw=spw, antenna=antenna, pol=pol,
+                            caltype=caltype, parameter=parameter, infile=infile,
+                            uniform=uniform)
        
     except UserWarning as instance:
         casalog.post('*** UserWarning *** %s' % instance, 'WARN')
 
     finally:
         _cb.close()
+
+
+def __gen_specifycal_input(vis=None, spw='*',
+                           endpoint='asdm', infile=None,
+                           timeout=180, retry=3, retry_wait_time=5):
+    if not infile is None:
+        f = JyPerKReader4File(infile)
+        factors = f.get()
+
+    elif infile is None:
+        factors = gen_factor_via_web_api(vis, spw=spw,
+                                         endpoint=endpoint, 
+                                         timeout=timeout, retry=retry, 
+                                         retry_wait_time=retry_wait_time)
+
+    for factor in factors:
+        selection = {}
+        selection['antenna'] = factor[1]
+        selection['spw'] = factor[2]
+        selection['pol'] = factor[3]
+        
+        yield selection, 1/np.sqrt(float(factor[4]))
