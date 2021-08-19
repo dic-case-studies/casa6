@@ -67,17 +67,10 @@ def gencal(vis=None, caltable=None, caltype=None, infile='None',
     else:
         gencal_type = caltype
 
-    gencal = __gencal_factory[caltype]
+    gencal = __gencal_factory[gencal_type]
     gencal.gencal(vis=vis, caltable=caltable, caltype=caltype, infile=infile,
                   endpoint=endpoint, timeout=timeout, retry=retry, retry_wait_time=retry_wait_time,
                   spw=spw, antenna=antenna, pol=pol, parameter=parameter, uniform=uniform)
-
-
-__gencal_factory = {
-    'general': GeneralGencal,
-    'antpos': AntposGencal,
-    'jyperk': JyperkGencal,
-}
 
 
 class GeneralGencal():
@@ -100,7 +93,7 @@ class GeneralGencal():
             _cb.close()
 
 
-class AntoposGencal():
+class AntposGencal():
     @classmethod
     def gencal(cls, vis=None, caltable=None, caltype=None, infile='None',
                endpoint='asdm', timeout=180, retry=3, retry_wait_time=5,
@@ -150,7 +143,7 @@ class JyperkGencal():
                                                         endpoint=endpoint, infile=infile,
                                                         timeout=timeout, retry=retry,
                                                         retry_wait_time=retry_wait_time):
-                _cb.specifycal(caltable='amp', time='', spw=selection['spw'],
+                _cb.specifycal(caltable=caltable, time='', spw=selection['spw'],
                             antenna=selection['antenna'], pol=selection['pol'],
                             parameter=param, infile='', uniform=uniform)
        
@@ -181,3 +174,10 @@ class JyperkGencal():
             selection['pol'] = factor[3]
             
             yield selection, 1/np.sqrt(float(factor[4]))
+
+
+__gencal_factory = {
+    'general': GeneralGencal,
+    'antpos': AntposGencal,
+    'jyperk': JyperkGencal,
+}
