@@ -59,14 +59,13 @@ def gencal(vis=None, caltable=None, caltype=None, infile='None',
     if caltype == 'jyperk' and not endpoint in ['asdm', 'interpolation', 'model-fit']:
         raise ValueError('When the caltype is jyperk, endpoint must be one of asdm, interpolation or model-fit')
 
+    if not ((type(vis)==str) and (os.path.exists(vis))):
+        raise ValueError('Visibility data set not found - please verify the name')
+
     #Python script
     try:
-        if ((type(vis)==str) & (os.path.exists(vis))):
-            # don't need scr col for this
-            _cb.open(filename=vis,compress=False,addcorr=False,addmodel=False)  
-        else:
-            raise ValueError('Visibility data set not found - please verify the name')
-
+        # don't need scr col for this
+        _cb.open(filename=vis,compress=False,addcorr=False,addmodel=False)  
 
         # call a Python function to retreive ant position offsets automatically (currently EVLA only)
         if (caltype=='antpos' and antenna==''):
