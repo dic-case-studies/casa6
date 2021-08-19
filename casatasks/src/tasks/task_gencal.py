@@ -56,6 +56,8 @@ def gencal(vis=None, caltable=None, caltype=None, infile='None',
     if caltype=='tecim' and not (type(infile)==str and os.path.exists(infile)):
         raise ValueError('An existing tec map must be specified in infile')
 
+    if caltype == 'jyperk' and not endpoint in ['asdm', 'interpolation', 'model-fit']:
+        raise ValueError('When the caltype is jyperk, endpoint must be one of asdm, interpolation or model-fit')
 
     #Python script
     try:
