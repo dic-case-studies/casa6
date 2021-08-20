@@ -49,6 +49,9 @@ values. See description below for details of gridfunction available.
   </description>
 
   <input>
+
+<!-- Input Data and Output Data -->
+
     <param mustexist="true" name="infiles" type="stringArray"><shortdescription>a list of names of input SD Measurementsets (only MS is allowed for this task)</shortdescription><description>a list of names of input SD Measurementsets (only MS is allowed for this task)</description>
             
             <value/>
@@ -64,6 +67,8 @@ values. See description below for details of gridfunction available.
             <description>overwrite the output file if already exists [True, False]</description>
             <value>False</value>
     </param>
+    
+<!-- Input Data Selection -->
 
     <param name="field" type="any"><shortdescription>select data by field IDs and names, e.g. \'3C2*\' (\'\'=all)</shortdescription><description>select data by field IDs and names, e.g. \'3C2*\' (\'\'=all)</description>
             
@@ -94,6 +99,14 @@ values. See description below for details of gridfunction available.
             <any limittypes="string stringArray" type="variant"/>
             <value type="string">OBSERVE_TARGET#ON_SOURCE</value>
     </param>
+    
+    <param name="timerange" type="string">
+            <shortdescription>select data by range of time, e.g. 20:15:00~20:16:00 (\'\'=all)</shortdescription>
+            <description>select data by range of time, e.g. 20:15:00~20:16:00 (\'\'=all)</description>
+            <value/>
+    </param>
+    
+<!-- Frequency Coordinate of Output Image -->
 
     <param name="mode" type="string">
             <description>spectral gridding type</description>
@@ -174,6 +187,8 @@ values. See description below for details of gridfunction available.
                     <value/>
            </allowed>
     </param>
+
+<!-- Gridder Parameters -->
 
     <param name="gridfunction" type="string">
             <shortdescription>gridding function for imaging [\'BOX\', \'SF\', \'PB\', \'GAUSS\' or \'GJINC\'] (see description in help)</shortdescription>
