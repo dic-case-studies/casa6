@@ -2386,10 +2386,10 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
             self.assertTrue(os.path.exists(img_file))
             self.assertTrue(os.path.exists(ref_img_file))
             try:
-                with toolmanager(img_file, image) as ia:
+                with tool_manager(img_file, image) as ia:
                     img_data = ia.getchunk()
                     img_mask = ia.getchunk(getmask=True)
-                with toolmanager(ref_img_file, image) as ref_ia:
+                with tool_manager(ref_img_file, image) as ref_ia:
                     ref_img_data = ref_ia.getchunk()
                     ref_img_mask = ref_ia.getchunk(getmask=True)
                 self.assertEqual(img_data.shape, ref_img_data.shape)
