@@ -485,12 +485,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	                    int nc, int &ic, double *cache, int &ierr) {
 		int idents_len=80, opt_len=1, nlcprm_len = 1;
 
-		PGSBOX(blc, trc, idents, opt,
-		       &labctl, &labden, ci, gcode,
-		       &tiklen, &ng1, grid1, &ng2,
-		       grid2,  &doeq, nlfunc, &nlc, &nli,
-		       &nld,  nlcprm, nliprm, nldprm,
-		       &nc, &ic, cache, &ierr, idents_len, opt_len, nlcprm_len);
+  
+        PGSBOX(blc, trc, idents, opt,
+               &labctl, &labden, ci, gcode,
+               &tiklen, &ng1, grid1, &ng2,
+               grid2,  &doeq, nlfunc, &nlc, &nli,
+               &nld,  nlcprm, nliprm, nldprm,
+               &nc, &ic, cache, &ierr, idents_len, opt_len, nlcprm_len);
 	}
 
 
@@ -853,9 +854,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			}
 			String titleText = displayedTitleText();
 			strncpy(idents + 2*nl, /*titleText().chars()*/titleText.chars(), nl);
-			for (ididx = /*titleText().length()*/titleText.length(); ididx < nl; ididx++) {
+            //CAS-13411 Fix buffer overflow
+			for (ididx = /*titleText().length()*/titleText.length(); ididx < nl-1; ididx++) {
 				idents[2*nl + ididx] = 32;
 			}
+            //std::cout << "AA Idents"<<std::endl;
+            //std::cout << idents<<std::endl;
 			titleChanged = false;
 //
 			cpgsch(charSize());
@@ -960,6 +964,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			}
 
 // Do the real work
+            //std::cout << "Calling cpgspbox. Idents:" <<std::endl;
+            //std::cout << idents <<std::endl;
 			cpgsbox(blc, trc, idents, opt, labctl, labden, ci, gcode,
 			        tiklen, ng1, grid1, ng2, grid2, doeq, nlfunc,
 			        nlc, nli, nld, nlcprm, nliprm, nldprm,
@@ -1019,8 +1025,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 						zLabel += tStr;
 
 						// plot the z-axis label
-						cpgmtxt(cpgp_side, cpgp_disp, cpgp_coord, cpgp_fjust, zLabel.chars());
-
+						// CAS-13411: This keeps crashing on Big Sur
+                        // https://trac.macports.org/ticket/57726
+					    cpgmtxt(cpgp_side, cpgp_disp, cpgp_coord, cpgp_fjust, zLabel.chars());
+                    
 					}
 				}
 				cpgstbg(bgcol);

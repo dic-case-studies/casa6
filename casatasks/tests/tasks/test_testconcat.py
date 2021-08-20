@@ -12,30 +12,25 @@ import sys
 import shutil
 import glob
 import unittest
-from math import sqrt
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import ctsys, calibrater
+    from casatools import ctsys
     from casatools import table as tbtool
     from casatools import ms as mstool
     from casatasks import split, testconcat
 
-    cb = calibrater( )
     tb = tbtool( )
     ms = mstool( )
 
-    ctsys_resolve = ctsys.resolve
+    datapath = ctsys.resolve('unittest/testconcat/')
 else:
     from __main__ import default
     from tasks import *
     from taskinit import *
 
-    cb = cbtool( )
-
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
-        return os.path.join(dataPath,apath)
+    dataroot = os.environ.get('CASAPATH').split()[0]
+    datapath = os.path.join(dataroot,'casatestdata/unittest/testconcat/')
 
 myname = 'test_testconcat'
 
@@ -44,11 +39,10 @@ msname = 'testconcatenated.ms'
 
 def checktable(thename, theexpectation):
     global msname, myname
-    mytb = tbtool()
-    mytb.open(msname+"/"+thename)
+    tb.open(msname+"/"+thename)
     for mycell in theexpectation:
         print(myname, ": comparing ", mycell)
-        value = mytb.getcell(mycell[0], mycell[1])
+        value = tb.getcell(mycell[0], mycell[1])
         # see if value is array
         try:
             isarray = value.__len__
@@ -73,9 +67,9 @@ def checktable(thename, theexpectation):
             print(myname, ":  Error in MS subtable", thename, ":")
             print("     column ", mycell[0], " row ", mycell[1], " contains ", value)
             print("     expected value is ", mycell[2])
-            mytb.close()
+            tb.close()
             return False
-    mytb.close()
+    tb.close()
     print(myname, ": table ", thename, " as expected.")
     return True
 
@@ -88,7 +82,6 @@ class test_testconcat(unittest.TestCase):
     def setUp(self):
         res = None
 
-        datapath=ctsys_resolve('regression/unittest/concat/input')
         cpath = os.path.abspath(os.curdir)
         filespresent = sorted(glob.glob("*.ms"))
         os.chdir(datapath)
