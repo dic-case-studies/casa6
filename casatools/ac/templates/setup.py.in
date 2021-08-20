@@ -1203,23 +1203,20 @@ def customize_compiler(self):
                 raise CompileError(msg)
         else:
             cc_copy = list(cc_args)
-            tmp_sys_cflags = ''
+            tmp_sys_cflags = []
             if ext == ".c" :
                 print("c compile...")
                 new_compiler = new_compiler_cc
             else:
                 print("c++ compile...")
                 new_compiler = new_compiler_cxx
-                # Mimic the makefile so that the same ccache results can be used:
-                # DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
-                cc_copy += ['-MT', obj, '-MMD', '-MP', '-MF', depdir+'/'+re.sub('\.o$','.Td',obj)]
                 tmp_sys_cflags = filtered_sys_cflags
             ## get the cflags for the module being built; key is a subdir, value are flags
             m_cflags = map(lambda x: x[1] if x[0] in src else [], module_cflags.items())
             m_cflags = [item for sublist in m_cflags for item in sublist] ### python has not yet hit upon a flatten function...
             #self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] )))
             self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + tmp_sys_cflags + get_use_grpc()))
-            supercc(obj, src, ext, clean_args(cc_copy), clean_args(postargs), clean_args(pp_copy))
+            supercc(obj, src, ext, clean_args(cc_copy), clean_args(postargs), clean_args(pp_opts))
 
         # reset the default compiler_so (may not be necessary)
         self.compiler_so = default_compiler_so
