@@ -1,40 +1,36 @@
 # sd task for imaging
-from __future__ import absolute_import
-from __future__ import print_function
 
+import contextlib
 import os
 import re
-import numpy
 import shutil
-import contextlib
-import functools
 
+import numpy
 from casatasks.private.casa_transition import is_CASA6
+
 if is_CASA6:
     from casatasks import casalog
+    from casatools import image, imager
     from casatools import ms as mstool
-    from casatools import quanta, imager, image, table
-    from . import sdutil
-    from . import sdbeamutil
-    from .cleanhelper import cleanhelper
+    from casatools import quanta
 
+    from . import sdbeamutil, sdutil
+    from .cleanhelper import cleanhelper
     ## (1) Import the python application layer
     from .imagerhelpers.imager_base import PySynthesisImager
     from .imagerhelpers.input_parameters import ImagerParameters
 else:
-    from taskinit import casalog
-    from taskinit import qatool as quanta
-    from taskinit import imtool as imager
-    from taskinit import iatool as image
-    from taskinit import mstool
-    from taskinit import tbtool as table
-    import sdutil
     import sdbeamutil
+    import sdutil
     from cleanhelper import cleanhelper
-
     ## (1) Import the python application layer
     from imagerhelpers.imager_base import PySynthesisImager
     from imagerhelpers.input_parameters import ImagerParameters
+    from taskinit import casalog
+    from taskinit import iatool as image
+    from taskinit import imtool as imager
+    from taskinit import mstool
+    from taskinit import qatool as quanta
 
 image_suffix = '.image'
 residual_suffix = '.residual'
@@ -58,15 +54,6 @@ def open_ms(vis):
         yield ms
     finally:
         ms.close()
-
-@contextlib.contextmanager
-def open_table(vis):
-    tb = table()
-    tb.open(vis)
-    try:
-        yield tb
-    finally:
-        tb.close()
 
 class SelectionHandler(object):
     def __init__(self, sel):
@@ -282,7 +269,7 @@ def _calc_PB(vis, antenna_id, restfreq):
               "Please set restreq or cell manually to generate an image."
         raise RuntimeError(msg)
     # Antenna diameter
-    with open_table(os.path.join(vis, 'ANTENNA')) as tb:
+    with sdutil.table_manager(os.path.join(vis, 'ANTENNA')) as tb:
         antdiam_ave = tb.getcell('DISH_DIAMETER', antenna_id)
     #antdiam_ave = self._get_average_antenna_diameter(antenna)
     # Calculate PB
@@ -330,7 +317,7 @@ def _get_pointing_extent(phasecenter, vislist, field, spw, antenna, scan, intent
         base_mref = 'J2000'
     elif isinstance(phasecenter, int) or phasecenter.isdigit():
         # may be field id
-        with open_table(os.path.join(vis, 'FIELD')) as tb:
+        with sdutil.table_manager(os.path.join(vis, 'FIELD')) as tb:
             base_mref = tb.getcolkeyword('PHASE_DIR', 'MEASINFO')['Ref']
     else:
         # may be phasecenter is explicitly specified
@@ -349,7 +336,7 @@ def _get_pointing_extent(phasecenter, vislist, field, spw, antenna, scan, intent
                                  pointingcolumntouse=pointingcolumntouse)
     #mapextent = self.imager.mapextent(ref=base_mref, movingsource=ephemsrcname,
     #                                  pointingcolumntouse=colname)
-    if mapextent['status'] is True:
+    if mapextent['status']:
         qheight = my_qa.quantity(mapextent['extent'][1], 'rad')
         qwidth = my_qa.quantity(mapextent['extent'][0], 'rad')
         qcent0 = my_qa.quantity(mapextent['center'][0], 'rad')
@@ -374,7 +361,7 @@ def _handle_image_params(imsize, cell, phasecenter,
                          vislist, field, spw, antenna, scan, intent, timerange,
                          restfreq, pointingcolumntouse, ephemsrcname):
     # round-up imsize
-    _imsize = sdutil._to_list(imsize, int) or sdutil._to_list(imsize, numpy.integer)
+    _imsize = sdutil.to_list(imsize, int) or sdutil.to_list(imsize, numpy.integer)
     if _imsize is None:
         _imsize = imsize if hasattr(imsize, '__iter__') else [ imsize ]
         _imsize = [ int(numpy.ceil(v)) for v in _imsize ]
@@ -518,13 +505,13 @@ def _get_restfreq_if_empty(vislist, spw, field, restfreq):
             fieldid = None
     sourceid = None
     if fieldid is not None:
-        with open_table(os.path.join(vis, 'FIELD')) as tb:
+        with sdutil.table_manager(os.path.join(vis, 'FIELD')) as tb:
             sourceid = tb.getcell('SOURCE_ID', fieldid)
         if sourceid < 0:
             sourceid = None
     if rf is None:
         # if restfrequency is defined in SOURCE table, return it
-        with open_table(os.path.join(vis, 'SOURCE')) as tb:
+        with sdutil.table_manager(os.path.join(vis, 'SOURCE')) as tb:
             if 'REST_FREQUENCY' in tb.colnames():
                 tsel = None
                 taql = ''
@@ -555,7 +542,7 @@ def _get_restfreq_if_empty(vislist, spw, field, restfreq):
         if spwid is None:
             spwid = 0
         # otherwise, return mean frequency of given spectral window
-        with open_table(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
+        with sdutil.table_manager(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
             cf = tb.getcell('CHAN_FREQ', spwid)
             rf = cf.mean()
 
@@ -697,7 +684,7 @@ def get_ms_column_unit(tb, colname):
 
 def get_brightness_unit_from_ms(msname):
     image_unit = ''
-    with open_table(msname) as tb:
+    with sdutil.table_manager(msname) as tb:
         image_unit = get_ms_column_unit(tb, 'DATA')
         if image_unit == '': image_unit = get_ms_column_unit(tb, 'FLOAT_DATA')
     if image_unit.upper() == 'K':
@@ -708,7 +695,7 @@ def get_brightness_unit_from_ms(msname):
     return image_unit
 
 
-
+@sdutil.sdtask_decorator
 def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, timerange, mode, nchan, start, width, veltype,
                specmode, outframe,
                gridfunction, convsupport, truncate, gwidth, jwidth, imsize, cell, phasecenter, projection,
@@ -894,7 +881,7 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, t
         ms.msselect({'baseline': baseline})
         ndx = ms.msselectedindices()
         antenna_index = ndx['antenna1'][0]
-    with open_table(os.path.join(rep_ms, 'ANTENNA')) as tb:
+    with sdutil.table_manager(os.path.join(rep_ms, 'ANTENNA')) as tb:
         antenna_name = tb.getcell('NAME', antenna_index)
         antenna_diameter = tb.getcell('DISH_DIAMETER', antenna_index)
     set_beam_size(rep_ms, imagename,
