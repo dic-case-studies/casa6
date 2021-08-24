@@ -1202,7 +1202,6 @@ def customize_compiler(self):
             except DistutilsExecError as msg:
                 raise CompileError(msg)
         else:
-            cc_copy = list(cc_args)
             tmp_sys_cflags = []
             if ext == ".c" :
                 print("c compile...")
@@ -1216,7 +1215,7 @@ def customize_compiler(self):
             m_cflags = [item for sublist in m_cflags for item in sublist] ### python has not yet hit upon a flatten function...
             #self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] )))
             self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + tmp_sys_cflags + get_use_grpc()))
-            supercc(obj, src, ext, clean_args(cc_copy), clean_args(postargs), clean_args(pp_opts))
+            supercc(obj, src, ext, clean_args(cc_args), clean_args(postargs), clean_args(pp_opts))
 
         # reset the default compiler_so (may not be necessary)
         self.compiler_so = default_compiler_so
