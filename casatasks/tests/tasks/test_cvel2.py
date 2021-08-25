@@ -316,6 +316,35 @@ class cvel2_test(test_base):
         ret = (verify_ms(outfile, 2, 32, 0))
         self.assertTrue(ret[0],ret[1])
 
+    def test6_datacolumn_uppercase(self):
+        '''cvel2 6: I/O vis set, more complex input vis, one field selected, one spw selected, passall = True'''
+        if testmms:
+            return
+        self.setUp_vis_a()
+        myvis = vis_a
+        os.system('ln -sf ' + myvis + ' myinput.ms')
+        rval = cvel2(
+            vis = 'myinput.ms',
+            datacolumn='ALL',
+            outputvis = outfile,
+            field = '1',
+            spw = '0',
+            nchan = 32,
+            start = 10,
+            passall = True
+            )
+        self.assertNotEqual(rval,False)
+        
+        # Simulate the passall=True. This MS has fields 0~6
+        desel = outfile+'.deselected'
+        split(vis='myinput.ms',outputvis=desel,field='0,2,3,4,5,6',spw='0',datacolumn='all')
+        mslocal = mstool()
+        mslocal.open(outfile, nomodify=False)
+        mslocal.concatenate(msfile=desel)            
+        mslocal.close()
+        ret = (verify_ms(outfile, 2, 32, 0))
+        self.assertTrue(ret[0],ret[1])
+
     ## # Tests with more than one spectral window ###################
     
     def test7(self):
@@ -412,6 +441,28 @@ class cvel2_test(test_base):
             nchan = 1,
             start = 1,
             outframe = 'lsrk'
+            )
+        self.assertNotEqual(rval,False)
+        ret = verify_ms(outfile, 1, 1, 0)
+        self.assertTrue(ret[0],ret[1])
+
+    def test11_outframe_uppercase(self):
+        '''cvel2 11: I/O vis set, input vis with two spws, one field selected, 
+           2 spws selected, passall = False, regridding 4...'''
+        self.setUp_vis_c()
+        myvis = vis_c
+        os.system('ln -sf ' + myvis + ' myinput.ms')
+
+        rval = cvel2(
+            vis = 'myinput.ms',
+            outputvis = outfile,
+            field = '10',
+            spw = '0,1',
+            passall = False,
+            mode='channel',
+            nchan = 1,
+            start = 1,
+            outframe = 'LSRK'
             )
         self.assertNotEqual(rval,False)
         ret = verify_ms(outfile, 1, 1, 0)
@@ -717,7 +768,33 @@ class cvel2_test(test_base):
         self.assertNotEqual(rval,False)
         ret = verify_ms(outfile, 1, 40, 0)
         self.assertTrue(ret[0],ret[1])
-    
+ 
+    def test25_veltype_uppercase(self):
+        '''cvel2 25: SMA input MS, 24 spws to combine, optical velocity mode, 40 output channels'''
+        self.setUp_vis_d()
+        myvis = vis_d
+        os.system('ln -sf ' + myvis + ' myinput.ms')
+        lambda0 = 2.99792E8/220398.676E6
+        lambda1 = 2.99792E8/229586E6
+        lambda2 = 2.99792E8/(229586E6+1600E3)
+        vopt = (lambda1-lambda0)/lambda0 * 2.99792E8
+        vwidth = vopt - (lambda2-lambda0)/lambda0 * 2.99792E8
+        vopt = vopt-vwidth/2.
+        rval = cvel2(
+            vis = 'myinput.ms',
+            outputvis = outfile,
+            mode='velocity',
+            nchan = 40,
+            restfreq = '220398.676MHz',
+            start = str(vopt)+'m/s',
+            width = str(vwidth)+'m/s',
+            phasecenter = "J2000 18h25m56.09 -12d04m28.20",
+            veltype = 'OPTICAL'
+            )
+        self.assertNotEqual(rval,False)
+        ret = verify_ms(outfile, 1, 40, 0)
+        self.assertTrue(ret[0],ret[1])
+   
     def test26(self):
         '''cvel2 26: SMA input MS, 24 spws to combine, optical velocity mode, 40 output channels'''
         self.setUp_vis_d()

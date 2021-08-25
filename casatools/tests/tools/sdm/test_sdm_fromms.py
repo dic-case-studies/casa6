@@ -151,6 +151,8 @@ class exportasdm_test(unittest.TestCase):
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
         mysdm = sdm(self.out)
+        ## useversion is deprecated, leave it in this test to verify visually that the deprecated message is
+        ## in the logs when it's used and remove it from other tests.
         self.rval = mysdm.fromms('myinput.ms', archiveid="S1", verbose=True, apcorrected=False, useversion='v3')
 
         self.assertNotEqual(self.rval,False)
@@ -159,81 +161,81 @@ class exportasdm_test(unittest.TestCase):
         self.verify_asdm(omsname, False)
 
     def test3(self):
-        '''Test 3: simulated input MS, default output, v3'''
+        '''Test 3: simulated input MS, default output'''
         myvis = self.vis_f
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
         mysdm = sdm(self.out)
-        self.rval = mysdm.fromms('myinput.ms',archiveid="S1", useversion='v3')
+        self.rval = mysdm.fromms('myinput.ms',archiveid="S1")
         self.assertNotEqual(self.rval,False)
         omsname = "test"+str(3)+self.out
         os.system('rm -rf '+omsname+'; mv exportasdm-output.asdm '+omsname)
         self.verify_asdm(omsname, True)
 
     def test4(self):
-        '''Test 4: real input MS, default output, v3'''
+        '''Test 4: real input MS, default output'''
         myvis = self.vis_d
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
         mysdm = sdm(self.out)
-        self.rval = mysdm.fromms('myinput.ms', archiveid="S1", apcorrected=False, useversion='v3')
+        self.rval = mysdm.fromms('myinput.ms', archiveid="S1", apcorrected=False)
         self.assertNotEqual(self.rval,False)
         omsname = "test"+str(4)+self.out
         os.system('rm -rf '+omsname+'; mv exportasdm-output.asdm '+omsname)
         self.verify_asdm(omsname, False)
 
     def test5(self):
-        '''Test 5: real input MS, MS has several SPWs observed in parallel, v3 - not supported, expected error'''
+        '''Test 5: real input MS, MS has several SPWs observed in parallel - not supported, expected error'''
         myvis = self.vis_e
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
         mysdm = sdm(self.out)
-        self.rval = mysdm.fromms('myinput.ms', archiveid="S1", apcorrected=False, useversion = 'v3')
+        self.rval = mysdm.fromms('myinput.ms', archiveid="S1", apcorrected=False)
         self.assertFalse(self.rval)
 
     def test6(self):
-        '''Test 6: simulated input MS with pointing table, default output, v3'''
+        '''Test 6: simulated input MS with pointing table, default output'''
         myvis = self.vis_g
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
         mysdm = sdm(self.out)
-        self.rval = mysdm.fromms('myinput.ms', archiveid="S002", apcorrected=False, useversion = 'v3')
+        self.rval = mysdm.fromms('myinput.ms', archiveid="S002", apcorrected=False)
         self.assertNotEqual(self.rval,False)
         omsname = "test"+str(6)+self.out
         os.system('rm -rf '+omsname+'; mv exportasdm-output.asdm '+omsname)
         self.verify_asdm(omsname, True)
 
     def test7(self):
-        '''Test 7: v3, simulated input MS, default output'''
+        '''Test 7: simulated input MS, default output'''
         myvis = self.vis_f
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
         mysdm = sdm(self.out)
-        self.rval = mysdm.fromms('myinput.ms', archiveid="S1", useversion='v3')
+        self.rval = mysdm.fromms('myinput.ms', archiveid="S1")
         self.assertNotEqual(self.rval,False)
         omsname = "test"+str(7)+self.out
         os.system('rm -rf '+omsname+'; mv exportasdm-output.asdm '+omsname)
         self.verify_asdm(omsname, True)
 
     def test8(self):
-        '''Test 8: v3, real input MS, default output'''
+        '''Test 8: real input MS, default output'''
         myvis = self.vis_d
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
         mysdm = sdm(self.out)
-        self.rval = mysdm.fromms('myinput.ms', archiveid="S1", apcorrected=False, useversion='v3')
+        self.rval = mysdm.fromms('myinput.ms', archiveid="S1", apcorrected=False)
         self.assertNotEqual(self.rval,False)
         omsname = "test"+str(8)+self.out
         os.system('rm -rf '+omsname+'; mv exportasdm-output.asdm '+omsname)
         self.verify_asdm(omsname, False)
 
     def test9(self):
-        '''Test 9: v3, simulated input MS with pointing table, default output'''
+        '''Test 9: simulated input MS with pointing table, default output'''
         myvis = self.vis_g
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
         mysdm = sdm(self.out)
-        self.rval = mysdm.fromms('myinput.ms', archiveid="S002", apcorrected=False, useversion='v3')
+        self.rval = mysdm.fromms('myinput.ms', archiveid="S002", apcorrected=False)
         self.assertNotEqual(self.rval,False)
         omsname = "test"+str(9)+self.out
         os.system('rm -rf '+omsname+'; mv exportasdm-output.asdm '+omsname)
