@@ -47,6 +47,16 @@ else:
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     validator_exc_type = RuntimeError
 
+def searchInFile(filename, searched):
+    """
+    Search for a substring in a file
+    """
+    with open(filename) as searched_file:
+        for line in searched_file:
+            if searched in line:
+                return True
+        return False
+
 
 class test_listcal_minimal(unittest.TestCase):
     """
@@ -131,8 +141,60 @@ class test_listcal_minimal(unittest.TestCase):
         self.assertFalse(os.path.isfile(self._listfile))
 
 
+class listcal_test(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        if not CASA6:
+            default(listcal)
+
+        vis_name = 'ngc5921.ms'
+        caltable_name = 'ngc5921.ref1a.gcal'
+
+        gainvis_name = 'gaincaltest2.ms'
+        gaincaltable_name = 'gaincaltest2.ms.G0'
+        shutil.copytree(os.path.join(datapath,vis_name),vis_name)
+        shutil.copytree(os.path.join(datapath,caltable_name),caltable_name)
+        shutil.copytree(os.path.join(datapath, gainvis_name), gainvis_name)
+        shutil.copytree(os.path.join(datapath, gaincaltable_name), gaincaltable_name)
+        cls._vis = vis_name
+        cls._caltable = caltable_name
+        cls._gainvis = gainvis_name
+        cls._gaincaltable = gaincaltable_name
+        cls._listfile = 'listcal_listfile.txt'
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls._vis)
+        shutil.rmtree(cls._caltable)
+        shutil.rmtree(cls._gainvis)
+        shutil.rmtree(cls._gaincaltable)
+
+    def tearDown(self):
+        if os.path.isfile(self._listfile):
+            os.remove(self._listfile)
+
+    def test_fieldSelection(self):
+        listcal(vis=self._vis, caltable=self._caltable, field='N5921_2', listfile=self._listfile)
+
+        self.assertFalse(searchInFile(self._listfile, '1331+30500002_0'), msg='Found fields that are not selected')
+        self.assertTrue(searchInFile(self._listfile, 'N5921_2'), msg='did not find selected field')
+
+    def test_antennaSelection(self):
+        listcal(vis=self._vis, caltable=self._caltable, antenna='VA01', listfile=self._listfile)
+
+        self.assertFalse(searchInFile(self._listfile, 'VA02'), msg='Found anntennas that were not selected')
+        self.assertTrue(searchInFile(self._listfile, 'VA01'), msg='The selected antenna was not found')
+
+    def test_spwSelection(self):
+        listcal(vis=self._gainvis, caltable=self._gaincaltable, spw='1', listfile=self._listfile)
+
+        self.assertFalse(searchInFile(self._listfile, 'SpwID = 0'), msg='Found spw that was not selected')
+        self.assertTrue(searchInFile(self._listfile, 'SpwID = 1'), msg='Did not find the selected spw')
+
+
 def suite():
-    return [test_listcal_minimal]
+    return [test_listcal_minimal, listcal_test]
 
 if __name__ == '__main__':
     unittest.main()
