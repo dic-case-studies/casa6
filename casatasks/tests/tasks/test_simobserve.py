@@ -9,11 +9,8 @@ import unittest
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import (
-        ctsys, image, ms, msmetadata, quanta, atmosphere,
-        simulator, componentlist, table
-    )
-    from casatasks import simobserve, flagdata
+    from casatools import ctsys, image, ms, msmetadata, quanta, atmosphere
+    from casatasks import simobserve
     from casatasks.private.simutil import *
 
     # CASA5 uses the global versions of these tools
@@ -22,9 +19,6 @@ if is_CASA6:
     _msmd = msmetadata()
     _qa = quanta()
     _at = atmosphere()
-    _sm = simulator()
-    _cl = componentlist()
-    _tb = table()
 else:
     from __main__ import default
     from tasks import *
@@ -45,10 +39,7 @@ else:
     _msmd = msmd
     _qa = qa
     _at = at
-    _sm = smtool()
-    _cl = cltool()
-    _tb = tbtool()
-
+    
 #
 # Unit test of simobserve task.
 # 
@@ -2280,173 +2271,11 @@ class simobserve_badinputs(simobserve_unittest_base):
             pos=str(e).find("Parameter verification failed")
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
-
-class sm_predict_test(unittest.TestCase):
-    """
-    scastro recommends putting simulator tool method tasks that depend on simutil
-    in test_simobserve, see CAS-13439
-    """   
-    comp_list = 'mycomplist.cl'
-    orig_ms = 'myms.ms'
-    ref_flux = 5
-
-    @classmethod
-    def __delete(cls):
-        m = glob.glob(cls.orig_ms + '*')
-        m.append(cls.comp_list)
-        for x in m:
-            if os.path.exists(x):
-                shutil.rmtree(x)
-
-
-    def setUp(self):
-        self.__delete()
-
-    def tearDown(self):
-        self.__delete()
-
-    @classmethod
-    def __phase_center_string(cls, ra, dec, frame):
-        return ' '.join([frame, ra, dec])
-
-    @classmethod
-    def __makeMSFrame(cls, radir, decdir, dirframe):
-        """
-        Construct an empty Measurement Set that has the desired
-        observation setup.
-        """
-        # Open the simulator
-        _sm.open(ms=cls.orig_ms)
-
-        # Read/create an antenna configuration.
-        # Canned antenna config text files are located at
-        # /home/casa/data/trunk/alma/simmos/*cfg
-        if is_CASA6:
-            antennalist = os.path.join(
-                ctsys.resolve("alma/simmos"), "vla.d.cfg"
-            )
-        else:
-            antennalist = os.path.join(
-                '/home', 'casa', 'data', 'trunk', 'alma', 'simmos', "vla.d.cfg"
-            )
-
-        # Fictitious telescopes can be simulated by specifying x, y, z, d,
-        # an, telname, antpos.
-        # x,y,z are locations in meters in ITRF (Earth centered)
-        # coordinates.
-        # d, an are lists of antenna diameter and name.
-        # telname and obspos are the name and coordinates of the
-        # observatory.
-        (x, y, z, d, an, an2, telname, obspos) = (
-            simutil().readantenna(antennalist)
-        )
-
-        # Set the antenna configuration
-        _sm.setconfig(
-            telescopename=telname, x=x, y=y, z=z, dishdiameter=d,
-            mount=['alt-az'], antname=an, coordsystem='global',
-            referencelocation=me.observatory(telname)
-        )
-
-        # Set the polarization mode (this goes to the FEED subtable)
-        _sm.setfeed(mode='perfect R L', pol=[''])
-
-        # Set the spectral window and polarization (one
-        # data-description-id).
-        # Call multiple times with different names for multiple SPWs or
-        # pol setups.
-        _sm.setspwindow(
-            spwname="LBand", freq='1.0GHz', deltafreq='0.1GHz',
-            freqresolution='0.1GHz', nchannels=5, stokes='RR LL'
-        )
-
-        # Setup source/field information (i.e. where the observation phase
-        # center is) Call multiple times for different pointings or source
-        # locations.
-        _sm.setfield(
-            sourcename="fake", sourcedirection=me.direction(
-                rf=dirframe, v0=radir, v1=decdir
-            )
-        )
-
-        # Set shadow/elevation limits (if you care). These set flags.
-        _sm.setlimits(shadowlimit=0.01, elevationlimit='1deg')
-
-        # Leave autocorrelations out of the MS.
-        _sm.setauto(autocorrwt=0.0)
-
-        # Set the integration time, and the convention to use for timerange
-        # specification
-        # Note : It is convenient to pick the hourangle mode as all times
-        #   specified in sm.observe() will be relative to when the source
-        #   transits.
-        _sm.settimes(
-            integrationtime='2000s', usehourangle=True,
-            referencetime=me.epoch('UTC', '2019/10/4/00:00:00')
-        )
-
-        # Construct MS metadata and UVW values for one scan and ddid
-        # Call multiple times for multiple scans.
-        # Call this with different sourcenames (fields) and spw/pol
-        # settings as defined above.
-        # Timesteps will be defined in intervals of 'integrationtime',
-        # between starttime and stoptime.
-        _sm.observe(
-            sourcename="fake", spwname='LBand', starttime='-5.0h',
-            stoptime='+5.0h'
-        )
-        # Close the simulator
-        _sm.close()
-        # Unflag everything (unless you care about elevation/shadow flags)
-        flagdata(vis=cls.orig_ms, mode='unflag')
-
-    @ classmethod
-    def __makeCompList(cls, ra, dec, frame):
-        _cl.addcomponent(
-            dir=cls.__phase_center_string(ra, dec, frame),
-            flux=cls.ref_flux,      # For a gaussian, this is the
-                                    # integrated area.
-            fluxunit='Jy', freq='1.5GHz', shape='point',
-            spectrumtype="plp",  index=[3,2]
-        )
-        # Save the file
-        _cl.rename(filename=cls.comp_list)
-        _cl.done()
-
-    def test_plp(self):
-        """CAS-13439 verify support for plp, spectral curvature model"""
-        # This is the source position
-        radir = '19h53m50'
-        decdir = '40d06m00'
-        dirframe = 'J2000'
-        # this is the field center
-        fra = radir
-        fdec = decdir
-        fframe = dirframe
-
-        self.__makeMSFrame(fra, fdec, fframe)
-        # Make the component list
-        self.__makeCompList(radir, decdir, dirframe)
-        # Predict Visibilities
-        _sm.openfromms(self.orig_ms)
-        # Predict from a component list
-        _sm.predict(complist=self.comp_list, incremental=False)
-        _sm.close()
-        _tb.open(self.orig_ms)
-        x = _tb.getcol('DATA')[0,:,50]
-        _tb.done()
-        r = numpy.array([1, 1.1, 1.2, 1.3, 1.4])/1.5
-        expec = 5*r**(3 + 2*numpy.log(r))
-        self.assertTrue(
-            numpy.allclose(numpy.real(x), expec, rtol=5e-8),
-            'Incorrect visibility amplitiudes'
-        )
         
+
 def suite():
-    return [
-        simobserve_sky, simobserve_comp, simobserve_skycomp,
-        simobserve_noise, simobserve_badinputs, sm_predict_test
-    ]
+    return [simobserve_sky, simobserve_comp, simobserve_skycomp,
+            simobserve_noise,simobserve_badinputs]
 
 if is_CASA6:
     if __name__ == '__main__':
