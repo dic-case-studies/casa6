@@ -1017,7 +1017,11 @@ def get_cxx_compiler_includes_from_setuputils():
     # create instance of casa_build_ext (as in setuputils externals) to get the include flags from it
     wheel_build_ext_cmd = casa_build_ext(Distribution())
     wheel_build_ext_cmd.ensure_finalized()
-    return ['-I'+inc for inc in wheel_build_ext_cmd.include_dirs]
+    # I (BGB) don't know where "-Ibinding" is coming from for bdist_util TODO find argument origins
+    # I also don't think that this argument really matters, but I'm adding it here just to ensure
+    # that make and bdist_wheel build with all of the same arguments.
+    incs = wheel_build_ext_cmd.include_dirs + ["binding"]
+    return ['-I'+inc for inc in incs]
 
 def get_use_grpc():
    return ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] )
