@@ -298,6 +298,7 @@ private_scripts = [ 'src/scripts/userconfig.py',
                     'src/tasks/task_sdintimaging.py',
                     'src/scripts/sdint_helper.py',
                     'src/scripts/tec_maps.py',
+                    'src/tasks/task_imbaseline.py',
 ]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
@@ -536,6 +537,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdpolaverage.xml',
               'xml/sdsidebandsplit.xml',
               'xml/plotprofilemap.xml',
+              'xml/imbaseline.xml',
 ]
 
 if pyversion < 3:
