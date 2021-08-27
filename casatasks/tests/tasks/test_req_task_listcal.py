@@ -58,6 +58,17 @@ def searchInFile(filename, searched):
         return False
 
 
+def getLine(filename, lineNum):
+
+    counter = 0
+    with open(filename) as fout:
+        for line in fout:
+            if counter == lineNum:
+                return line
+            else:
+                counter += 1
+
+
 class test_listcal_minimal(unittest.TestCase):
     """
     Most basic ways of calling listcal, with an existing small dataset from the
@@ -192,6 +203,31 @@ class listcal_test(unittest.TestCase):
         self.assertFalse(searchInFile(self._listfile, 'SpwID = 0'), msg='Found spw that was not selected')
         self.assertTrue(searchInFile(self._listfile, 'SpwID = 1'), msg='Did not find the selected spw')
 
+    def test_headerLayout(self):
+        listcal(vis=self._gainvis, caltable=self._gaincaltable, listfile=self._listfile)
+
+        header = getLine(self._listfile, 0)
+
+        self.assertTrue("SpwID" in header)
+        self.assertTrue("Date" in header)
+        self.assertTrue("CalTable" in header)
+        self.assertTrue("MS name" in header)
+
+    def test_spectralWindowHeader(self):
+        listcal(vis=self._gainvis, caltable=self._gaincaltable, listfile=self._listfile)
+
+        header = getLine(self._listfile, 14)
+
+        self.assertTrue("SpwID" in header)
+        self.assertTrue("Date" in header)
+        self.assertTrue("CalTable" in header)
+        self.assertTrue("MS name" in header)
+
+    def test_headerColumnLabels(self):
+        listcal(vis=self._gainvis, caltable=self._gaincaltable, listfile=self._listfile)
+
+        header = getLine(self._listfile, 3)
+        self.assertTrue(header.startswith("Time       Field      Chn| Amp    Phs  F  Amp    Phs  F| Amp    Phs  F  Amp    Phs  F| Amp    Phs  F  Amp    Phs  F| Amp    Phs  F  Amp    Phs  F|"))
 
 def suite():
     return [test_listcal_minimal, listcal_test]
