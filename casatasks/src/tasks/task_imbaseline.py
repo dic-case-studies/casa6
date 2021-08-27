@@ -2199,27 +2199,4 @@ class EmptyMSBaseInformation:
                'TYPE': 'StandardStMan'}}
 
 
-# temporary main
 
-workdir = 'working'
-if os.path.exists(workdir):
-    shutil.rmtree(workdir)
-os.mkdir(workdir)
-os.chdir(workdir)
-
-try:
-    sample_image = '/nfsstore/casa_share/casatestdata/image/ref_multipix.signalband'
-    #sample_image = '/nfsstore/casa_share/casatestdata/image/expected.im'
-
-    # pipeline_regression_dir = '/nfsstore/nakazato/pipeline/regression_ref'
-    # sample_project = 'm100'
-    # sample_fits_image = 'uid___A002_X345678_X90.M100_sci.virtspw23.cube.I.sd.fits'
-    # sample_image = 'm100_spw23.image'
-
-    # importfits(fitsimage=f'{pipeline_regression_dir}/{sample_project}/products/{sample_fits_image}', imagename=sample_image)
-
-    imbaseline(imagename=sample_image, linefile="output_ms.image", dirkernel="boxcar", spkernel="boxcar", major = "5arcsec", minor = "2arcsec", pa = "20deg", 
-    blfunc='poly', applyfft=True)
-
-finally:
-    os.chdir("..")
