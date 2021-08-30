@@ -32,13 +32,14 @@ import unittest
 is_CASA6 = False
  
 try:
-    from casatools import ctsys, simulator, componentlist, table, agentflagger
+    from casatools import ctsys, simulator, componentlist, table, agentflagger, measures
 
     is_CASA6 = True
     _sm = simulator()
     _cl = componentlist()
     _tb = table()
     _af = agentflagger()
+    _me = measures()
  
     # Location of input data
     datapath = ctsys.resolve('unittest/simulator/')
@@ -50,6 +51,7 @@ except ImportError:
     _cl = cltool()
     _tb = tbtool()
     _af = agentflagger()
+    _me = measures()
     
     # Location of input data
     datapath = os.path.join(os.environ['CASAPATH'].split()[0], 'casatestdata/unittest/simulator/')
@@ -124,7 +126,7 @@ class sm_predict_test(unittest.TestCase):
         _sm.setconfig(
             telescopename=telname, x=x, y=y, z=z, dishdiameter=d,
             mount=['alt-az'], antname=an, coordsystem='global',
-            referencelocation=me.observatory(telname)
+            referencelocation=_me.observatory(telname)
         )
 
         # Set the polarization mode (this goes to the FEED subtable)
@@ -143,7 +145,7 @@ class sm_predict_test(unittest.TestCase):
         # center is) Call multiple times for different pointings or source
         # locations.
         _sm.setfield(
-            sourcename="fake", sourcedirection=me.direction(
+            sourcename="fake", sourcedirection=_me.direction(
                 rf=dirframe, v0=radir, v1=decdir
             )
         )
@@ -161,7 +163,7 @@ class sm_predict_test(unittest.TestCase):
         #   transits.
         _sm.settimes(
             integrationtime='2000s', usehourangle=True,
-            referencetime=me.epoch('UTC', '2019/10/4/00:00:00')
+            referencetime=_me.epoch('UTC', '2019/10/4/00:00:00')
         )
 
         # Construct MS metadata and UVW values for one scan and ddid
