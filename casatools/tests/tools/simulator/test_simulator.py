@@ -33,7 +33,6 @@ is_CASA6 = False
  
 try:
     from casatools import ctsys, simulator, componentlist, table, agentflagger
-    from casatasks.private.simutil import *
 
     is_CASA6 = True
     _sm = simulator()
