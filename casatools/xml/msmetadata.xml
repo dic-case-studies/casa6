@@ -107,7 +107,6 @@ windows in the dataset and close the tool.
 
                 The window is classified as a TDM spectral window if it is neither a WVR window,
                 a channel average window, nor an FDM window.
->>>>>>> master:casa5/gcwrap/tools/ms/msmetadata.xml
  
             </description>
             <example>
