@@ -549,6 +549,22 @@ std::string utils::resolve(const std::string &subdir) {
     return regrec;
 }
 
+#ifdef CASATOOLS
+bool utils::remove_service( const std::string& uri ) {
+    std::list<casatools::ServiceId> servs = casatools::get_state( ).services( );
+    for ( std::list<casatools::ServiceId>::const_iterator it=servs.begin( ); it != servs.end( ); ++it ) {
+        if ( uri == it->uri( ) ) {
+            *itsLog << LogOrigin("utils","remove_service") <<
+                "removing service " <<
+                it->uri( ) << "/" << it->id( ) << std::endl;
+            auto id = it->id( );
+            return casatools::get_state( ).removeService(id);
+        }
+    }
+    return false;
+}
+#endif
+
 void utils::shutdown( ) {
     casatools::get_state( ).shutdown( );
     // this will result in the deletion of casacore state object

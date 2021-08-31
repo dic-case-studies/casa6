@@ -1,32 +1,32 @@
-from __future__ import absolute_import
-import numpy
 import os
 
 # get is_python3 and is_CASA6
 from casatasks.private.casa_transition import *
+
 if is_CASA6:
-    from casatools import singledishms, table
-    from casatools import ms as mstool
     from casatasks import casalog
+    from casatools import ms as mstool
+    from casatools import singledishms, table
+
     from . import sdutil
     from .mstools import write_history
 
-    ms = mstool( )
-    sdms = singledishms( )
-    tb = table( )
+    ms = mstool()
+    sdms = singledishms()
+    tb = table()
 else:
-    from taskinit import casalog, gentools
-    from mstools import write_history
     import sdutil
-    ms,sdms,tb = gentools(['ms','sdms','tb'])
+    from mstools import write_history
+    from taskinit import casalog, gentools
+    ms, sdms, tb = gentools(['ms', 'sdms', 'tb'])
 
-def sdsmooth(infile=None, datacolumn=None, antenna=None, 
-              field=None, spw=None, timerange=None, scan=None, 
-              pol=None, intent=None, reindex=None,
-              kernel=None, kwidth=None,
-              outfile=None, overwrite=None):
 
-    casalog.origin('sdsmooth')
+@sdutil.sdtask_decorator
+def sdsmooth(infile=None, datacolumn=None, antenna=None,
+             field=None, spw=None, timerange=None, scan=None,
+             pol=None, intent=None, reindex=None,
+             kernel=None, kwidth=None,
+             outfile=None, overwrite=None):
 
     try:
         if len(outfile) == 0:
