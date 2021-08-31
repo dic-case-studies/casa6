@@ -93,7 +93,7 @@ if CASA6 and has_mpi:
 
 # global defs
 basename=['X54','X220']
-makeplots=False
+makeplots=True
 print("Make plots?: {}".format(makeplots))
 therefant = 'DV01'
 mynumsubmss = 4
@@ -178,15 +178,19 @@ class regression_alma_m100_test(unittest.TestCase):
         mask2 = "M100line-orig.mask"
         mask3 = "test-M100line-orig.mask"
 
-        os.symlink(datapath+myasdm_dataset_name, myasdm_dataset_name)
-        os.symlink(datapath+myasdm_dataset2_name, myasdm_dataset2_name)
+        if not (os.path.exists(myasdm_dataset_name)):
+            os.symlink(datapath+myasdm_dataset_name, myasdm_dataset_name)
+        if not (os.path.exists(myasdm_dataset2_name)):
+            os.symlink(datapath+myasdm_dataset2_name, myasdm_dataset2_name)
 
-        shutil.copytree(datapath+mask1, mask1, symlinks=True)
-        shutil.copytree(datapath+mask2, mask2, symlinks=True)
-        shutil.copytree(datapath+mask3, mask3, symlinks=True)
+        if not (os.path.exists(mask1)):
+            shutil.copytree(datapath+mask1, mask1, symlinks=True)
+        if not (os.path.exists(mask2)):
+            shutil.copytree(datapath+mask2, mask2, symlinks=True)
+        if not (os.path.exists(mask3)):
+            shutil.copytree(datapath+mask3, mask3, symlinks=True)
 
     def tearDown(self):
-
         os.system("rm -rf cal*")
         os.system("rm -rf M100*")
         os.system("rm -rf test-M100*")
@@ -259,10 +263,15 @@ class regression_alma_m100_test(unittest.TestCase):
                 if(makeplots):
                     for spw in ['9','11','13','15']:
                         for name in basename:
-                            plotcal(caltable='cal-tsys_'+name+'.fdm', xaxis='freq', yaxis='amp',
-                                    spw=spw, subplot=721, overplot=False,
-                                    iteration='antenna', plotrange=[0, 0, 40, 180], plotsymbol='.',
-                                    figfile='cal-tsys_per_spw_'+spw+'_'+name+'.png')
+#                             plotcal(caltable='cal-tsys_'+name+'.fdm', xaxis='freq', yaxis='amp',
+#                                     spw=spw, subplot=721, overplot=False,
+#                                     iteration='antenna', plotrange=[0, 0, 40, 180], plotsymbol='.',
+#                                     figfile='cal-tsys_per_spw_'+spw+'_'+name+'.png')
+                            plotms(vis='cal-tsys_'+name+'.fdm', xaxis='freq', yaxis='amp',
+                                    spw=spw, overwrite=False,
+                                    iteraxis='antenna', plotrange=[0, 0, 40, 180], customsymbol=True,
+                                    symbolshape='dot',
+                                    showgui=False, plotfile='cal-tsys_per_spw_'+spw+'_'+name+'.png')
 
                 timing(mystep, thesteps)
 
@@ -295,11 +304,11 @@ class regression_alma_m100_test(unittest.TestCase):
                     flagmanager(vis=name+'.ms', mode='restore', versionname='Original')
                     flagdata(vis=name + '.ms', mode='list', inpfile=myflagcmd, flagbackup=False)
 
-                    if(makeplots):
-                        # Plot amplitude vs time
-                        plotms(vis=name+'.ms', xaxis='time', yaxis='amp', spw='1',
-                           averagedata=True, avgchannel='4000', coloraxis='field',
-                           iteraxis='spw', plotfile=name+'-amp-vs-time.png', overwrite=True)
+#                     if(makeplots):
+#                         # Plot amplitude vs time
+#                         plotms(vis=name+'.ms', xaxis='time', yaxis='amp', spw='1',
+#                            averagedata=True, avgchannel='4000', coloraxis='field',
+#                            iteraxis='spw', showgui=False, plotfile=name+'-amp-vs-time.png', overwrite=True)
 
                 timing(mystep, thesteps)
 
@@ -447,17 +456,27 @@ class regression_alma_m100_test(unittest.TestCase):
                             selectdata=False, solint='int', refant=therefant, calmode='p')
 
                     if(makeplots):
-                        plotcal(caltable='cal-'+name+'-BPint.Gp',
+#                         plotcal(caltable='cal-'+name+'-BPint.Gp',
+#                                 xaxis = 'time', yaxis = 'phase',
+#                                 poln='X', customsymbol=True, symbolshape='circle'='o', plotrange = [0,0,-180,180],
+#                                 iteration = 'spw',
+#                                 figfile='cal-'+name+'-phase_vs_time_XX.BPint.Gp.png', subplot = 221)
+                        plotms(vis='cal-'+name+'-BPint.Gp',
                                 xaxis = 'time', yaxis = 'phase',
-                                poln='X', plotsymbol='o', plotrange = [0,0,-180,180],
-                                iteration = 'spw',
-                                figfile='cal-'+name+'-phase_vs_time_XX.BPint.Gp.png', subplot = 221)
+                                correlation='X', customsymbol=True, symbolshape='circle', plotrange = [0,0,-180,180],
+                                iteraxis = 'spw',
+                                showgui=False, plotfile='cal-'+name+'-phase_vs_time_XX.BPint.Gp.png')
 
-                        plotcal(caltable='cal-'+name+'-BPint.Gp',
+#                         plotcal(caltable='cal-'+name+'-BPint.Gp',
+#                                 xaxis = 'time', yaxis = 'phase',
+#                                 poln='Y', plotsymbol='o', plotrange = [0,0,-180,180],
+#                                 iteration = 'spw',
+#                                 figfile='cal-'+name+'-phase_vs_time_YY.BPint.Gp.png', subplot = 221)
+                        plotms(vis='cal-'+name+'-BPint.Gp',
                                 xaxis = 'time', yaxis = 'phase',
-                                poln='Y', plotsymbol='o', plotrange = [0,0,-180,180],
-                                iteration = 'spw',
-                                figfile='cal-'+name+'-phase_vs_time_YY.BPint.Gp.png', subplot = 221)
+                                correlation='Y', customsymbol=True, symbolshape='circle', plotrange = [0,0,-180,180],
+                                iteraxis = 'spw',
+                                showgui=False, plotfile='cal-'+name+'-phase_vs_time_YY.BPint.Gp.png')
 
                 timing(mystep, thesteps)
 
@@ -480,19 +499,31 @@ class regression_alma_m100_test(unittest.TestCase):
 
                     if(makeplots):
                         for spw in ['0','1','2','3']:
-                            plotcal(caltable = 'cal-'+name+'.B1',
+#                             plotcal(caltable = 'cal-'+name+'.B1',
+#                                     xaxis='freq', yaxis='phase', spw=spw, antenna='',
+#                                     iteration='antenna',
+#                                     subplot=431, overplot=False, plotrange = [0,0,-70,70],
+#                                     plotsymbol='.', timerange='',
+#                                     figfile='cal-'+name+'-phase.spw'+spw+'.B1.png')
+                            plotms(vis = 'cal-'+name+'.B1',
                                     xaxis='freq', yaxis='phase', spw=spw, antenna='',
-                                    iteration='antenna',
-                                    subplot=431, overplot=False, plotrange = [0,0,-70,70],
-                                    plotsymbol='.', timerange='',
-                                    figfile='cal-'+name+'-phase.spw'+spw+'.B1.png')
+                                    iteraxis='antenna',
+                                    overwrite=False, plotrange = [0,0,-70,70],
+                                    customsymbol=True, symbolshape='dot', timerange='',
+                                    showgui=False, plotfile='cal-'+name+'-phase.spw'+spw+'.B1.png')
 
-                            plotcal(caltable = 'cal-'+name+'.B1',
+#                             plotcal(caltable = 'cal-'+name+'.B1',
+#                                     xaxis='freq', yaxis='amp', spw=spw,
+#                                     iteration='antenna',
+#                                     subplot=431, overplot=False,
+#                                     plotsymbol='.', timerange='',
+#                                     figfile='cal-'+name+'-amplitude.spw'+spw+'.B1.png')
+                            plotms(vis = 'cal-'+name+'.B1',
                                     xaxis='freq', yaxis='amp', spw=spw,
-                                    iteration='antenna',
-                                    subplot=431, overplot=False,
-                                    plotsymbol='.', timerange='',
-                                    figfile='cal-'+name+'-amplitude.spw'+spw+'.B1.png')
+                                    iteraxis='antenna',
+                                     overwrite=False,
+                                    customsymbol=True, symbolshape='dot', timerange='',
+                                    showgui=False, plotfile='cal-'+name+'-amplitude.spw'+spw+'.B1.png')
                 timing(mystep, thesteps)
 
 
@@ -543,17 +574,27 @@ class regression_alma_m100_test(unittest.TestCase):
                     refant=therefant, calmode='p')
 
                     if(makeplots):
-                        plotcal(caltable='cal-'+name+'-int.Gp',
+#                         plotcal(caltable='cal-'+name+'-int.Gp',
+#                                 xaxis = 'time', yaxis = 'phase',
+#                                 poln='X', plotsymbol='o', plotrange = [0,0,-180,180],
+#                                 iteration = 'spw',
+#                                 figfile='cal-'+name+'-phase_vs_time_XX.int.Gp.png', subplot = 221)
+                        plotms(vis='cal-'+name+'-int.Gp',
                                 xaxis = 'time', yaxis = 'phase',
-                                poln='X', plotsymbol='o', plotrange = [0,0,-180,180],
-                                iteration = 'spw',
-                                figfile='cal-'+name+'-phase_vs_time_XX.int.Gp.png', subplot = 221)
+                                correlation='X', customsymbol=True, symbolshape='circle', plotrange = [0,0,-180,180],
+                                iteraxis = 'spw',
+                                showgui=False, plotfile='cal-'+name+'-phase_vs_time_XX.int.Gp.png')
 
-                        plotcal(caltable='cal-'+name+'-int.Gp',
+#                         plotcal(caltable='cal-'+name+'-int.Gp',
+#                                 xaxis = 'time', yaxis = 'phase',
+#                                 poln='Y', plotsymbol='o', plotrange = [0,0,-180,180],
+#                                 iteration = 'spw',
+#                                 figfile='cal-'+name+'-phase_vs_time_YY.int.Gp.png', subplot = 221)
+                        plotms(vis='cal-'+name+'-int.Gp',
                                 xaxis = 'time', yaxis = 'phase',
-                                poln='Y', plotsymbol='o', plotrange = [0,0,-180,180],
-                                iteration = 'spw',
-                                figfile='cal-'+name+'-phase_vs_time_YY.int.Gp.png', subplot = 221)
+                                correlation='Y', customsymbol=True, symbolshape='circle', plotrange = [0,0,-180,180],
+                                iteraxis = 'spw',
+                                showgui=False, plotfile='cal-'+name+'-phase_vs_time_YY.int.Gp.png')
 
                 timing(mystep, thesteps)
 
@@ -575,17 +616,23 @@ class regression_alma_m100_test(unittest.TestCase):
                     refant=therefant, calmode='p')
 
                     if(makeplots):
-                        plotcal(caltable='cal-'+name+'-scan.Gp',
-                            xaxis = 'time', yaxis = 'phase',
-                         poln='X', plotsymbol='o', plotrange = [0,0,-180,180],
-                         iteration = 'spw',
-                         figfile='cal-'+name+'-phase_vs_time_XX.scan.Gp.png', subplot = 221)
+#                         plotcal(caltable='cal-'+name+'-scan.Gp',
+#                             xaxis = 'time', yaxis = 'phase',
+#                          poln='X', plotsymbol='o', plotrange = [0,0,-180,180],
+#                          iteration = 'spw',
+#                          figfile='cal-'+name+'-phase_vs_time_XX.scan.Gp.png', subplot = 221)
+                        plotms(vis='cal-'+name+'-scan.Gp',xaxis = 'time', yaxis = 'phase',
+                         correlation='X', customsymbol=True, symbolshape='circle', plotrange = [0,0,-180,180],iteraxis = 'spw',
+                         showgui=False, plotfile='cal-'+name+'-phase_vs_time_XX.scan.Gp.png')
 
-                        plotcal(caltable='cal-'+name+'-scan.Gp',
-                            xaxis = 'time', yaxis = 'phase',
-                         poln='Y', plotsymbol='o', plotrange = [0,0,-180,180],
-                         iteration = 'spw',
-                         figfile='cal-'+name+'-phase_vs_time_YY.scan.Gp.png', subplot = 221)
+#                         plotcal(caltable='cal-'+name+'-scan.Gp',
+#                             xaxis = 'time', yaxis = 'phase',
+#                          poln='Y', plotsymbol='o', plotrange = [0,0,-180,180],
+#                          iteration = 'spw',
+#                          figfile='cal-'+name+'-phase_vs_time_YY.scan.Gp.png', subplot = 221)
+                        plotms(vis='cal-'+name+'-scan.Gp',xaxis = 'time', yaxis = 'phase',
+                         correlation='Y', customsymbol=True, symbolshape='circle', plotrange = [0,0,-180,180],iteraxis = 'spw',
+                         showgui=False, plotfile='cal-'+name+'-phase_vs_time_YY.scan.Gp.png')
 
                 timing(mystep, thesteps)
 
@@ -607,17 +654,23 @@ class regression_alma_m100_test(unittest.TestCase):
                     refant=therefant, calmode='ap')
 
                     if(makeplots):
-                        plotcal(caltable='cal-'+name+'-scan.Gap',
-                        xaxis = 'time', yaxis = 'amp',
-                        poln='X', plotsymbol='o',
-                        iteration = 'spw',
-                        figfile='cal-'+name+'-amp_vs_time_XX.scan.Gap.png', subplot = 221)
+#                         plotcal(caltable='cal-'+name+'-scan.Gap',
+#                         xaxis = 'time', yaxis = 'amp',
+#                         poln='X', plotsymbol='o',
+#                         iteration = 'spw',
+#                         figfile='cal-'+name+'-amp_vs_time_XX.scan.Gap.png', subplot = 221)
+                        plotms(vis='cal-'+name+'-scan.Gap',xaxis = 'time', yaxis = 'amp',
+                        correlation='X', customsymbol=True, symbolshape='circle',iteraxis = 'spw',
+                        showgui=False, plotfile='cal-'+name+'-amp_vs_time_XX.scan.Gap.png')
 
-                        plotcal(caltable='cal-'+name+'-scan.Gap',
-                        xaxis = 'time', yaxis = 'amp',
-                        poln='Y', plotsymbol='o',
-                        iteration = 'spw',
-                        figfile='cal-'+name+'-amp_vs_time_YY.scan.Gap.png', subplot = 221)
+#                         plotcal(caltable='cal-'+name+'-scan.Gap',
+#                         xaxis = 'time', yaxis = 'amp',
+#                         poln='Y', plotsymbol='o',
+#                         iteration = 'spw',
+#                         figfile='cal-'+name+'-amp_vs_time_YY.scan.Gap.png', subplot = 221)
+                        plotms(vis='cal-'+name+'-scan.Gap',xaxis = 'time', yaxis = 'amp',
+                        correlation='Y', customsymbol=True, symbolshape='circle',iteraxis = 'spw',
+                        showgui=False, plotfile='cal-'+name+'-amp_vs_time_YY.scan.Gap.png')
 
                 timing(mystep, thesteps)
 
