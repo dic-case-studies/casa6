@@ -144,7 +144,7 @@ class JyperkGencal():
                                                         timeout=timeout, retry=retry,
                                                         retry_wait_time=retry_wait_time):
                 _cb.specifycal(caltable=caltable, time='', spw=selection['spw'],
-                            caltype='amp', antenna=selection['antenna'], pol=selection['pol'],
+                            caltype='amp', antenna=selection['antenna'], # pol=selection['pol'],
                             parameter=param, infile='', uniform=uniform)
        
         except UserWarning as instance:
