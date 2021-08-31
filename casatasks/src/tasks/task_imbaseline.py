@@ -10,6 +10,7 @@ from casatools import image, table, regionmanager, quanta, singledishms
 from casatools import ms as mstool
 from casatasks import casalog
 from casatasks.private import sdutil
+from casatasks.private.sdutil import table_manager
 from casatasks.private.ialib import write_image_history
 
 ia = image()
@@ -34,7 +35,7 @@ class ImBaselineVals:
         self.sdbaseline_avg_limit = avg_limit   # maskmode = auto
         self.sdbaseline_minwidth = minwidth     # maskmode = auto
         self.sdbaseline_edge = edge             # maskmode = auto
-        self.sdbaseline_blfunc = blfunc         # poly(default)/chebyshev/cspline/sinusoid/variable
+        self.sdbaseline_blfunc = blfunc.lower() # poly(default)/chebyshev/cspline/sinusoid/variable
         self.sdbaseline_order = order           # blfunc = poly/chebyshev
         self.sdbaseline_npiece = npiece         # blfunc = cspline
         self.sdbaseline_applyfft = applyfft     # blfunc = sinusoid
@@ -99,22 +100,65 @@ class ImBaselineVals:
         self.datacolumn = 'DATA'
         self.overwrite = True
 
-    def check_args(self):
-        self._check_linefile()
-        self._check_dirkernel()
-        self._check_spkernel()
-        self._check_blparam()
-        self._check_fftthresh()
+        self._check_args()
 
-    def _check_linefile(self):
-        if len(self.linefile):
-            if os.path.exists(self.linefile):
-                raise ValueError(f'Error: file {self.linefile} already exists, please delete before continuing.', 'SEVERE')
+    def _check_args(self):
+        self.__check_imagename()
+        self.__check_linefile()
+        self.__check_maskmode()
+        self.__check_blfunc()
+        self.__check_dirkernel()
+        self.__check_spkernel()
+
+    def __check_imagename(self):
+        if not os.path.exists(self.imagename):
+            raise ValueError(f'Error: file {self.imagename} is not found.', 'SEVERE')
+
+    def __check_linefile(self):
+        if self.linefile == '':
+            self.linefile = os.path.basename(self.imagename).rstrip('/') + '_bs'
+        if os.path.exists(self.linefile):
+            raise ValueError(f'Error: file {self.linefile} already exists, please delete before continuing.', 'SEVERE')
+
+    def __check_maskmode(self):
+        maskmode_list = self.sdbaseline_maskmode == 'list'
+        maskmode_auto = self.sdbaseline_maskmode == 'auto'
+        if not ( maskmode_list or maskmode_auto ):
+            raise ValueError('Unsupported maskmode, ' + self.sdbaseline_maskmode)
+        if maskmode_list:
+            self.sdbaseline_thresh = 5.0
+            self.sdbaseline_avg_limit = self.sdbaseline_minwidth = 4
+            self.sdbaseline_edge = [0, 0]
         else:
-            casalog.post("The linefile parameter is empty, consequently the"
-                         + " spectral line image will NOT be\nsaved on disk.", 'WARN')
+            self.sdbaseline_chans = ''
 
-    def _check_dirkernel(self):
+    def __check_blfunc(self):
+        blfunc_poly = self.sdbaseline_blfunc == 'poly'
+        blfunc_chebyshev = self.sdbaseline_blfunc == 'chebyshev'
+        blfunc_cspline = self.sdbaseline_blfunc == 'cspline'
+        blfunc_sinusoid = self.sdbaseline_blfunc == 'sinusoid'
+        blfunc_variable = self.sdbaseline_blfunc == 'variable'
+        if not (blfunc_poly or blfunc_chebyshev or blfunc_cspline or blfunc_sinusoid or blfunc_variable):
+            raise ValueError('Unsupported blfunc, ' + self.sdbaseline_blfunc)
+        
+        if not (blfunc_poly or blfunc_chebyshev):
+            self.sdbaseline_order = 5
+        if not blfunc_cspline:
+            self.sdbaseline_npiece = 3
+        if not blfunc_sinusoid:
+            self.sdbaseline_applyfft = True
+            self.sdbaseline_fftthresh = 3.0
+            self.sdbaseline_addwn = [0]
+            self.sdbaseline_rejwn = []
+        if not blfunc_variable:
+            self.sdbaseline_blparam = ''
+        else:
+            self.sdbaseline_clipniter = 0
+            self.sdbaseline_clipthresh = 3.0
+            if not os.path.exists(self.sdbaseline_blparam):
+                raise ValueError("input file '%s' does not exists" % self.blparam)
+
+    def __check_dirkernel(self):
         self.pass_imsmooth = self.imsmooth_kernel == 'none'
         self.dir_ikernel = self.imsmooth_kernel == 'image'
         self.dir_bkernel = self.imsmooth_kernel == 'boxcar'
@@ -125,7 +169,7 @@ class ImBaselineVals:
         if self.pass_imsmooth:
             self.imsmooth_output = self.imagename
 
-    def _check_spkernel(self):
+    def __check_spkernel(self):
         self.pass_sdsmooth = self.sdsmooth_kernel == 'none'
         self.sp_bkernel = self.sdsmooth_kernel == 'boxcar'
         self.sp_gkernel = self.sdsmooth_kernel == 'gaussian'
@@ -134,45 +178,7 @@ class ImBaselineVals:
         
         if self.pass_sdsmooth:
             self.sdsmooth_output = self.temporary_vis
-    
-    def _check_blparam(self):
-        if self.sdbaseline_blfunc == 'variable' and not os.path.exists(self.sdbaseline_blparam):
-            raise ValueError("input file '%s' does not exists" % self.blparam)
             
-    def _check_fftthresh(self):
-        has_valid_type = isinstance(self.sdbaseline_fftthresh, float) or isinstance(self.sdbaseline_fftthresh, int) or isinstance(self.sdbaseline_fftthresh, str)
-        if not has_valid_type:
-            raise ValueError('fftthresh must be float or integer or string.')
-
-        not_positive_mesg = 'threshold given to fftthresh must be positive.'
-        
-        if isinstance(self.sdbaseline_fftthresh, str):
-            try:
-                val_not_positive = False
-                if 3 < len(self.sdbaseline_fftthresh) and self.sdbaseline_fftthresh[:3] == 'top':
-                    val_top = int(self.sdbaseline_fftthresh[3:])
-                    if (val_top <= 0):
-                        val_not_positive = True
-                elif 5 < len(self.sdbaseline_fftthresh) and self.sdbaseline_fftthresh[-5:] == 'sigma':
-                    val_sigma = float(self.sdbaseline_fftthresh[:-5])
-                    if (val_sigma <= 0.0):
-                        val_not_positive = True
-                else:
-                    val_sigma = float(self.sdbaseline_fftthresh)
-                    if (val_sigma <= 0.0):
-                        val_not_positive = True
-                
-                if val_not_positive:
-                    raise ValueError(not_positive_mesg)
-            except Exception as e:
-                if (str(e) == not_positive_mesg):
-                    raise
-                else:
-                    raise ValueError('fftthresh has a wrong format.')
-
-        else:
-            if self.sdbaseline_fftthresh <= 0.0:
-                raise ValueError(not_positive_mesg)
 
 @sdutil.sdtask_decorator
 def imbaseline(
@@ -185,7 +191,6 @@ def imbaseline(
     vals = ImBaselineVals(imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                          edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter,
                          clipthresh, dirkernel, major, minor, pa, kimage, scale, spkernel, kwidth)
-    vals.check_args()
 
     prepare(vals)
 
@@ -367,24 +372,24 @@ def __create_maintable(vals: ImBaselineVals = None, overWrite: bool = True):
 
 def __create_antenna_table(vals: ImBaselineVals = None):
     __create_subtable(vals.temporary_vis, "ANTENNA", EmptyMSBaseInformation.antenna_desc, EmptyMSBaseInformation.antenna_dminfo)
-    with sdutil.tbmanager(os.path.join(vals.temporary_vis, 'ANTENNA'), nomodify=False) as tb:
+    with table_manager(os.path.join(vals.temporary_vis, 'ANTENNA'), nomodify=False) as tb:
         tb.addrows(1)
 
 def __create_data_description_table(vals: ImBaselineVals = None):
     __create_subtable(vals.temporary_vis, "DATA_DESCRIPTION", EmptyMSBaseInformation.data_description_desc, EmptyMSBaseInformation.data_description_dminfo)
-    with sdutil.tbmanager(os.path.join(vals.temporary_vis, 'DATA_DESCRIPTION'), nomodify=False) as tb:
+    with table_manager(os.path.join(vals.temporary_vis, 'DATA_DESCRIPTION'), nomodify=False) as tb:
         tb.addrows(1)
         tb.putcell('SPECTRAL_WINDOW_ID', 0, 0)
         tb.putcell('POLARIZATION_ID', 0, 0)
 
 def __create_feed_table(vals: ImBaselineVals = None):
     __create_subtable(vals.temporary_vis, "FEED", EmptyMSBaseInformation.feed_desc, EmptyMSBaseInformation.feed_dminfo)
-    with sdutil.tbmanager(os.path.join(vals.temporary_vis, 'FEED'), nomodify=False) as tb:
+    with table_manager(os.path.join(vals.temporary_vis, 'FEED'), nomodify=False) as tb:
         tb.addrows(1)
 
 def __create_field_table(vals: ImBaselineVals = None):
     __create_subtable(vals.temporary_vis, "FIELD", EmptyMSBaseInformation.field_desc, EmptyMSBaseInformation.field_dminfo)
-    with sdutil.tbmanager(os.path.join(vals.temporary_vis, 'FIELD'), nomodify=False) as tb:
+    with table_manager(os.path.join(vals.temporary_vis, 'FIELD'), nomodify=False) as tb:
         tb.addrows(1)
         tb.putcell('DELAY_DIR', 0, np.zeros((2,1)))
         tb.putcell('PHASE_DIR', 0, np.zeros((2,1)))
@@ -398,7 +403,7 @@ def __create_history_table(vals: ImBaselineVals = None):
 
 def __create_observation_table(vals: ImBaselineVals = None):
     __create_subtable(vals.temporary_vis, "OBSERVATION", EmptyMSBaseInformation.observation_desc, EmptyMSBaseInformation.observation_dminfo)
-    with sdutil.tbmanager(os.path.join(vals.temporary_vis, 'OBSERVATION'), nomodify=False) as tb:
+    with table_manager(os.path.join(vals.temporary_vis, 'OBSERVATION'), nomodify=False) as tb:
         tb.addrows(1)
 
 def __create_pointing_table(vals: ImBaselineVals = None):
@@ -406,7 +411,7 @@ def __create_pointing_table(vals: ImBaselineVals = None):
 
 def __create_polarization_table(vals: ImBaselineVals = None):
     __create_subtable(vals.temporary_vis, "POLARIZATION", EmptyMSBaseInformation.polarization_desc, EmptyMSBaseInformation.polarization_dminfo)
-    with sdutil.tbmanager(os.path.join(vals.temporary_vis, 'POLARIZATION'), nomodify=False) as tb:
+    with table_manager(os.path.join(vals.temporary_vis, 'POLARIZATION'), nomodify=False) as tb:
         corr_type = np.ones(1, dtype=int)
         corr_product = np.ones(2, dtype=int).reshape((2, 1))
         if tb.nrows() == 0:
@@ -423,7 +428,7 @@ def __create_source_table(vals: ImBaselineVals = None):
 
 def __create_special_window_table(vals: ImBaselineVals = None):
     __create_subtable(vals.temporary_vis, "SPECTRAL_WINDOW", EmptyMSBaseInformation.special_window_desc, EmptyMSBaseInformation.special_window_dminfo)
-    with sdutil.tbmanager(os.path.join(vals.temporary_vis, 'SPECTRAL_WINDOW'), nomodify=False) as tb:
+    with table_manager(os.path.join(vals.temporary_vis, 'SPECTRAL_WINDOW'), nomodify=False) as tb:
         cw = np.ones(vals.imnchan, dtype=float) * 1e6
         cf = 1e9 + np.arange(vals.imnchan, dtype=float) * 1e6
 
@@ -438,7 +443,7 @@ def __create_special_window_table(vals: ImBaselineVals = None):
 
 def __create_state_table(vals: ImBaselineVals = None):
     __create_subtable(vals.temporary_vis, "STATE", EmptyMSBaseInformation.state_desc, EmptyMSBaseInformation.state_dminfo)
-    with sdutil.tbmanager(os.path.join(vals.temporary_vis, 'STATE'), nomodify=False) as tb:
+    with table_manager(os.path.join(vals.temporary_vis, 'STATE'), nomodify=False) as tb:
         if tb.nrows() == 0:
             tb.addrows(1)
         tb.putcell('OBS_MODE', 0, 'OBSERVE_TARGET#ON_SOURCE_IMAGE_DOMAIN')
@@ -479,7 +484,7 @@ def _copy_image_array_to_ms(vals: ImBaselineVals = None):
     casalog.post(f'axis index: {xax} {yax} {polax} {spax}')
 
     # which data column to use
-    with sdutil.tbmanager(vals.temporary_vis, nomodify=False) as tb:
+    with table_manager(vals.temporary_vis, nomodify=False) as tb:
         # also set FLAG, SIGMA, WEIGHT, and UVW
         # r2p is a mapping between MS row and image array slice
         xax, yax = vals.diraxis
@@ -525,10 +530,6 @@ def do_sdsmooth(vals: ImBaselineVals = None):
 
 def do_sdbaseline(vals: ImBaselineVals = None):
     print("start sdbaseline")
-    vals.sdbaseline_blfunc = vals.sdbaseline_blfunc.lower()
-    
-    if isinstance(vals.sdbaseline_fftthresh, str):
-        vals.sdbaseline_fftthresh = vals.sdbaseline_fftthresh.lower()
 
     try:
         blparam_file = vals.sdsmooth_output + '_blparam.txt'
@@ -606,7 +607,7 @@ def _remove_data(filename):
 
 def _remove_sorted_table_keyword(infile):
     res = {'is_sorttab': False, 'sorttab_keywd': '', 'sorttab_name': ''}
-    with sdutil.tbmanager(infile, nomodify=False) as tb:
+    with table_manager(infile, nomodify=False) as tb:
         try:
             sorttab_keywd = 'SORTED_TABLE'
             if sorttab_keywd in tb.keywordnames():
@@ -621,7 +622,7 @@ def _remove_sorted_table_keyword(infile):
 
 def _restore_sorted_table_keyword(infile, sorttab_info):
     if sorttab_info['is_sorttab'] and sorttab_info['sorttab_name'] != '':
-        with sdutil.tbmanager(infile, nomodify=False) as tb:
+        with table_manager(infile, nomodify=False) as tb:
             try:
                 tb.putkeyword(sorttab_info['sorttab_keywd'],
                               sorttab_info['sorttab_name'])
@@ -773,9 +774,9 @@ def _make_image_array(vals):
     nx, ny = vals.dirshape
     arr = np.empty((nx,ny,vals.imnchan))
     if vals.polaxisexist:
-        arr = np.expand_dims(arr, vals.polaxis)
+        arr = np.expand_dims(arr, vals.polaxis[0])
     pos = 0
-    with sdutil.tbmanager(vals.sdbaseline_output) as tb:
+    with table_manager(vals.sdbaseline_output) as tb:
         ndim = tb.getcell(vals.datacolumn, 0).ndim
         for i in range(nx):
             for j in range(ny):
