@@ -1,11 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" ?>
-<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
-      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task type="function" name="phaseshift" category="manipulation">
+<task category="manipulation" name="phaseshift" type="function">
     <shortdescription>Rotate a Measurement Set to a new phase-center</shortdescription>
         <description>
 This application changes the phase center of a selected subset of an input MS, by taking into
@@ -15,7 +10,7 @@ phases, and a new phase_direction entry in the FIELD sub-table.
         </description>
 
         <input>
-            <param type="string" name="vis" mustexist="true">
+            <param mustexist="true" name="vis" type="path">
                 <shortdescription>Name of input visibility file</shortdescription>
                 <description>Name of input visibility file
                      Default: none, must be specified
@@ -25,7 +20,7 @@ phases, and a new phase_direction entry in the FIELD sub-table.
                 <value type="string"/>
             </param>
 
-            <param type="string" name="outputvis">
+            <param name="outputvis" type="string">
                 <shortdescription>Name of output visibility file</shortdescription>
                 <description>Name of output visibility file
                      Default: None, must be specified
@@ -35,8 +30,8 @@ phases, and a new phase_direction entry in the FIELD sub-table.
                 <value/>
             </param>
 
-            <!-- MMS-CASE parameters -->
-            <param type="bool" name="keepmms">
+            
+            <param name="keepmms" type="bool">
                 <shortdescription>Create a Multi-MS as the output if the input is a Multi-MS.</shortdescription>
                 <description>Create a Multi-MS as the output if the input is a
 Multi-MS.
@@ -53,8 +48,8 @@ Multi-MS.
                 <value>True</value>
             </param>
     
-            <!-- SELECTION parameters -->    
-            <param type="string" name="field">
+                
+            <param name="field" type="string">
                 <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
                 <description>Select field using field id(s) or field name(s)
                      Default: '' (all fields)
@@ -75,7 +70,7 @@ Multi-MS.
                 <value type="string"/>
             </param>
 
-            <param type="string" name="spw">
+            <param name="spw" type="string">
                 <shortdescription>Select spectral window/channels</shortdescription>
                 <description>Select spectral window/channels
                      Default: ''=all spectral windows and channels
@@ -94,7 +89,7 @@ Multi-MS.
                 <value type="string"/>
             </param>
     
-            <param type="string" name="scan" >
+            <param name="scan" type="string">
                 <shortdescription>Scan number range</shortdescription>
                 <description>Scan number range
                      Default: '' = all
@@ -102,7 +97,7 @@ Multi-MS.
                 <value type="string"/>
             </param>
 
-            <param type="string" name="intent" >
+            <param name="intent" type="string">
                 <shortdescription>Select observing intent</shortdescription>
                 <description>Select observing intent
                      Default: '' (no selection by intent)
@@ -113,7 +108,7 @@ Multi-MS.
                 <value type="string"/>
             </param>
     
-            <param type="string" name="array">
+            <param name="array" type="string">
                 <shortdescription>Select (sub)array(s) by array ID number.</shortdescription>
                 <description>(Sub)array number range
                      Default: '' (all)
@@ -121,7 +116,7 @@ Multi-MS.
                 <value type="string"/>
             </param>
     
-            <param type="string" name="observation">
+            <param name="observation" type="string">
                 <shortdescription>Select by observation ID(s)</shortdescription>
                 <description>Select by observation ID(s)
                      Default: '' = all
@@ -131,7 +126,7 @@ Multi-MS.
                 <value type="string"/>
             </param>
 
-            <param type="string" name="datacolumn" ignorecase="True">
+            <param ignorecase="True" name="datacolumn" type="string">
                 <shortdescription>Which data column(s) to process</shortdescription>
                 <description>Which data column(s) to process
                      (case-insensitive).
@@ -144,7 +139,7 @@ Multi-MS.
                         Example: datacolumn='data'
                 </description>
                 <value>all</value>
-                <allowed kind="enum" ignorecase="True">
+                <allowed ignorecase="True" kind="enum">
                     <value>all</value>
                     <value>corrected</value>
                     <value>data</value>
@@ -157,7 +152,7 @@ Multi-MS.
                 </allowed>
             </param>
     
-            <param type="string" name="phasecenter">
+            <param name="phasecenter" type="string">
     	        <shortdescription>Direction coordinates of the desired center. MUST BE SPECIFIED</shortdescription>
     	        <description>Direction coordinates of new phase center, specified as absolute
                      world coordinates including frame, eg 
@@ -181,5 +176,5 @@ Multi-MS.
     	        <value type="string"/>
             </param>
         </input>
-    </task>
+    <returns>void</returns></task>
  </casaxml>
