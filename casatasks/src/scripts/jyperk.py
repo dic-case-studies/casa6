@@ -15,7 +15,7 @@ import certifi
 import numpy as np
 
 from casatasks import casalog
-from casatasks.private.sdutil import table_selector, tbmanager, toolmanager
+from casatasks.private.sdutil import table_selector, table_manager, tool_manager
 from casatools import measures
 from casatools import ms as mstool
 from casatools import msmetadata, quanta, table
@@ -156,7 +156,7 @@ class InterpolationParamsGenerator():
 
     @staticmethod
     def _extract_msmetadata(science_windows, vis):
-        with toolmanager(vis, msmetadata) as msmd:  
+        with tool_manager(vis, msmetadata) as msmd:  
             timerange = msmd.timerangeforobs(0)
             antenna_names = msmd.antennanames()
             basebands = dict((i, msmd.baseband(i)) for i in science_windows)
@@ -168,7 +168,7 @@ class InterpolationParamsGenerator():
     @staticmethod
     def _get_available_spw(vis, spw):
         science_windows = InterpolationParamsGenerator._get_science_windows(vis, spw=spw)
-        with toolmanager(vis, msmetadata) as msmd:  
+        with tool_manager(vis, msmetadata) as msmd:  
             spwnames = msmd.namesforspws(science_windows)
 
         spw = ','.join(map(str, [i for i, name in enumerate(spwnames) if not name.startswith('WVR')]))
@@ -190,7 +190,7 @@ class InterpolationParamsGenerator():
 
     @staticmethod
     def _get_mean_temperature(vis):
-        with tbmanager(os.path.join(vis, 'WEATHER')) as tb:
+        with table_manager(os.path.join(vis, 'WEATHER')) as tb:
             valid_temperatures = np.ma.masked_array(
                 tb.getcol("TEMPERATURE"),
                 tb.getcol("TEMPERATURE_FLAG")
@@ -199,7 +199,7 @@ class InterpolationParamsGenerator():
     
     @staticmethod
     def _get_mean_freqs(vis, science_windows):
-        with tbmanager(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
+        with table_manager(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
             mean_freqs = dict((i, tb.getcell('CHAN_FREQ', i).mean()) for i in science_windows)
         return mean_freqs
 
@@ -282,14 +282,14 @@ class Bands():
 
     @staticmethod
     def _get_spwnames(vis, science_windows):
-        with toolmanager(vis, msmetadata) as msmd:
+        with tool_manager(vis, msmetadata) as msmd:
             spwnames = msmd.namesforspws(science_windows)
         return spwnames
 
     @staticmethod
     def _get_known_bands(vis):
         science_windows = Bands._get_all_science_windows(vis)
-        with toolmanager(vis, msmetadata) as msmd:
+        with tool_manager(vis, msmetadata) as msmd:
             spwnames = msmd.namesforspws(science_windows)    
         bands = Bands._extract_bands_from_spwnames(science_windows, spwnames)
         return bands
@@ -303,7 +303,7 @@ class Bands():
 
     @staticmethod
     def _extract_mean_freqs(science_windows, vis):
-        with toolmanager(vis, msmetadata) as msmd:  
+        with tool_manager(vis, msmetadata) as msmd:  
             mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_windows)
         return mean_freqs
 
@@ -319,7 +319,7 @@ class MeanElevation():
 
     @staticmethod
     def _get_stateid(vis): ###
-        with toolmanager(vis, mstool) as ms:
+        with tool_manager(vis, mstool) as ms:
             ms.msselect({'scanintent': 'OBSERVE_TARGET#ON_SOURCE'})
             selected = ms.msselectedindices()
 
@@ -328,7 +328,7 @@ class MeanElevation():
 
     @staticmethod
     def _get_science_dd(vis):
-        with toolmanager(vis, msmetadata) as msmd:  
+        with tool_manager(vis, msmetadata) as msmd:  
             science_spw = list(np.intersect1d(
                 msmd.almaspws(tdm=True, fdm=True),
                 msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
@@ -350,7 +350,7 @@ class MeanElevation():
         elevations = []       
         qa = quanta()
 
-        with toolmanager(vis, msmetadata) as msmd:
+        with tool_manager(vis, msmetadata) as msmd:
             for row in rows:
                 dirs = msmd.pointingdirection(row, initialrow=row)
                 assert dirs['antenna1']['pointingdirection']['refer'].startswith('AZEL')
