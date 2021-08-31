@@ -270,7 +270,7 @@ class regression_alma_m100_test(unittest.TestCase):
                             plotms(vis='cal-tsys_'+name+'.fdm', xaxis='freq', yaxis='amp',
                                     spw=spw, overwrite=False,
                                     iteraxis='antenna', plotrange=[0, 0, 40, 180], customsymbol=True,
-                                    symbolshape='dot',
+                                    symbolshape='autoscaling',
                                     showgui=False, plotfile='cal-tsys_per_spw_'+spw+'_'+name+'.png')
 
                 timing(mystep, thesteps)
@@ -509,7 +509,7 @@ class regression_alma_m100_test(unittest.TestCase):
                                     xaxis='freq', yaxis='phase', spw=spw, antenna='',
                                     iteraxis='antenna',
                                     overwrite=False, plotrange = [0,0,-70,70],
-                                    customsymbol=True, symbolshape='dot', timerange='',
+                                    customsymbol=True, symbolshape='autoscaling', timerange='',
                                     showgui=False, plotfile='cal-'+name+'-phase.spw'+spw+'.B1.png')
 
 #                             plotcal(caltable = 'cal-'+name+'.B1',
@@ -522,7 +522,7 @@ class regression_alma_m100_test(unittest.TestCase):
                                     xaxis='freq', yaxis='amp', spw=spw,
                                     iteraxis='antenna',
                                      overwrite=False,
-                                    customsymbol=True, symbolshape='dot', timerange='',
+                                    customsymbol=True, symbolshape='autoscaling', timerange='',
                                     showgui=False, plotfile='cal-'+name+'-amplitude.spw'+spw+'.B1.png')
                 timing(mystep, thesteps)
 
