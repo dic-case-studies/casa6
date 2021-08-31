@@ -19,12 +19,12 @@
         <value/>
     </param>
 
-    <param name="datacolumn" type="string">
+    <param type="string" name="datacolumn">
     <shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</shortdescription>
     <description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</description>
         
         <value>data</value>
-        <allowed kind="enum" ignorecase="true">
+        <allowed ignorecase="true" kind="enum">
             <value>data</value>
             <value>float_data</value>
             <value>corrected</value>

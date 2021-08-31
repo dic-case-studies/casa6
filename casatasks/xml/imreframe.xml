@@ -18,12 +18,12 @@
         <example>output='newframed.image'; output='' will modify input image</example>
     </param>
 
-    <param type="string" name="outframe">
+    <param name="outframe" type="string">
     <shortdescription>Spectral frame in which the frequency or velocity values will be reported by default</shortdescription>
     <description>Spectral frame in which the frequency or velocity values will be reported by default</description>
         
         <value>lsrk</value>
-    <allowed kind="enum" ignorecase="true">
+    <allowed ignorecase="true" kind="enum">
       <value>lsrk</value>
       <value>lsrd</value>
       <value>bary</value>

@@ -30,12 +30,12 @@ pipeline processing for huge dataset.
         <value/>
     </param>
 
-    <param name="datacolumn" type="string">
+    <param type="string" name="datacolumn">
     <shortdescription>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</shortdescription>
     <description>name of data column to be used [&quot;data&quot;, &quot;float_data&quot;, or &quot;corrected&quot;]</description>
         
         <value>data</value>
-        <allowed kind="enum" ignorecase="true">
+        <allowed ignorecase="true" kind="enum">
             <value>data</value>
             <value>float_data</value>
             <value>corrected</value>
@@ -83,12 +83,12 @@ pipeline processing for huge dataset.
         <value>True</value>
     </param>
 
-    <param type="string" name="maskmode">
+    <param name="maskmode" type="string">
         <shortdescription>mode of setting additional channel masks</shortdescription>
 
         <description>mode of setting additional channel masks. &quot;list&quot; and &quot;auto&quot; are available now.</description>
         <value>list</value>
-        <allowed kind="enum" ignorecase="true">
+        <allowed ignorecase="true" kind="enum">
             <value>auto</value>
             <value>list</value>
 
@@ -125,12 +125,12 @@ pipeline processing for huge dataset.
         <value>True</value>
     </param>
 
-    <param type="any" name="blformat" subparam="true">
+    <param subparam="true" name="blformat" type="any">
         <shortdescription>format(s) of file(s) in which best-fit parameters are written</shortdescription>
         <description>format(s) of file(s) in which best-fit parameters are written [&quot;text&quot;, &quot;csv&quot;, &quot;table&quot; or &quot;&quot;]</description>
         <type>string</type><type>stringVec</type>
         <value type="string">text</value>
-        <allowed kind="enum" ignorecase="true">
+        <allowed ignorecase="true" kind="enum">
             <value>table</value>
             <value>text</value>
             <value>csv</value>
@@ -149,11 +149,11 @@ pipeline processing for huge dataset.
         <value/>
     </param>
 
-    <param type="string" name="blfunc">
+    <param name="blfunc" type="string">
         <shortdescription>baseline model function</shortdescription>
         <description>baseline model function [&quot;poly&quot;, &quot;chebyshev&quot;, &quot;cspline&quot;, &quot;sinusoid&quot;, or &quot;variable&quot;(expert mode)]</description>
         <value>poly</value>
-        <allowed kind="enum" ignorecase="true">
+        <allowed ignorecase="true" kind="enum">
             <value>poly</value>
             <value>chebyshev</value>
             <value>cspline</value>
@@ -177,11 +177,11 @@ pipeline processing for huge dataset.
         <value>True</value>
     </param>
 
-    <param type="string" name="fftmethod" subparam="true">
-        <shortdescription>method for automatically set wave numbers of sinusoids ["fft"]</shortdescription>
+    <param subparam="true" name="fftmethod" type="string">
+        <shortdescription>method for automatically set wave numbers of sinusoids [&quot;fft&quot;]</shortdescription>
         <description>method for automatically set wave numbers of sinusoids</description>
         <value>fft</value>
-        <allowed kind="enum" ignorecase="true">
+        <allowed ignorecase="true" kind="enum">
             <value>fft</value>
         </allowed>
     </param>
