@@ -49,6 +49,9 @@ values. See description below for details of gridfunction available.
   </description>
 
   <input>
+
+
+
     <param type="pathVec" name="infiles" mustexist="true"><shortdescription>a list of names of input SD Measurementsets (only MS is allowed for this task)</shortdescription><description>a list of names of input SD Measurementsets (only MS is allowed for this task)</description>
             
             <value/>
@@ -64,6 +67,8 @@ values. See description below for details of gridfunction available.
             <description>overwrite the output file if already exists [True, False]</description>
             <value>False</value>
     </param>
+    
+
 
     <param type="any" name="field"><shortdescription>select data by field IDs and names, e.g. \'3C2*\' (\'\'=all)</shortdescription><description>select data by field IDs and names, e.g. \'3C2*\' (\'\'=all)</description>
             
@@ -94,6 +99,14 @@ values. See description below for details of gridfunction available.
             <type>string</type><type>stringVec</type>
             <value type="string">OBSERVE_TARGET#ON_SOURCE</value>
     </param>
+    
+    <param type="string" name="timerange">
+            <shortdescription>select data by range of time, e.g. 20:15:00~20:16:00 (\'\'=all)</shortdescription>
+            <description>select data by range of time, e.g. 20:15:00~20:16:00 (\'\'=all)</description>
+            <value/>
+    </param>
+    
+
 
     <param type="string" name="mode">
             <description>spectral gridding type</description>
@@ -150,11 +163,11 @@ values. See description below for details of gridfunction available.
         </allowed>
     </param>
 
-    <param type="string" name="outframe" subparam="true">
+    <param subparam="true" name="outframe" type="string">
             <shortdescription>velocity frame of output image [\'lsrk\', \'lsrd\', \'bary\', \'geo\', \'topo\', \'galacto\', \'lgroup\', \'cmb\'] (\'\'=current frame or LSRK for multiple-MS inputs) </shortdescription>
             <description>velocity frame of output image (''=current frame or LSRK for multiple-MS inputs)</description>
-            <value></value>
-            <allowed kind="enum" ignorecase="true">
+            <value/>
+            <allowed ignorecase="true" kind="enum">
                     <value>lsrk</value>
                     <value>lsrd</value>
                     <value>bary</value>
@@ -174,6 +187,8 @@ values. See description below for details of gridfunction available.
                     <value/>
            </allowed>
     </param>
+
+
 
     <param type="string" name="gridfunction">
             <shortdescription>gridding function for imaging [\'BOX\', \'SF\', \'PB\', \'GAUSS\' or \'GJINC\'] (see description in help)</shortdescription>

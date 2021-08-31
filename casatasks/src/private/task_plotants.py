@@ -7,13 +7,9 @@ import sys
 import numpy as np
 import pylab as pl
 from textwrap import wrap
-if is_CASA6:
-        from casatools import table, msmetadata, quanta, ms, measures
-        from casatasks import casalog
-else:
-        from casac import table, msmetadata, quanta, ms, measures
-        from taskinit import casalog
-        from casa_system import casa
+
+from casatools import table, msmetadata, quanta, ms, measures, ctsys
+from casatasks import casalog
 
 def plotants( vis=None, figfile=None,
               antindex=None, logpos=None,
@@ -60,14 +56,10 @@ def plotants( vis=None, figfile=None,
                 and format of the export.
         """
 
-        # for CASA6, check for --nogui to force showgui to be False
-        # showgui is also false if --agg or --pipeline is set
-        # --pipeline also sets sets --agg, but --agg may not be used on the
-        # command line so both --pipeline and --agg need to be checked here
-        if is_CASA6 and ('--nogui' in sys.argv or '--agg' in sys.argv or '--pipeline' in sys.argv):
-                showgui = False
+        # use ctsys values
+        showplot = showgui and not ctsys.getnogui() and not ctsys.getagg() and not ctsys.getpipeline()
 
-        if not showgui:
+        if not showplot:
                 pl.close()
                 pl.ioff()
         else:
@@ -102,7 +94,7 @@ def plotants( vis=None, figfile=None,
         if logpos:
                 plotAntennasLog(telescope, names, ids, xpos, ypos, antindex, stations)
         else:
-                plotAntennas(telescope, names, ids, xpos, ypos, antindex, stations, showgui)
+                plotAntennas(telescope, names, ids, xpos, ypos, antindex, stations, showplot)
         pl.title(title, {'fontsize':12})
         
         if figfile:
@@ -320,7 +312,7 @@ def plotAntennasLog(telescope, names, ids, xpos, ypos, antindex, stations):
                                 rotation=angle, weight='semibold')
 
         # Set minimum and maximum radius.
-        ax.set_rmax(rmax)
+        ax.set_rmax(rmax)  
         ax.set_rmin(rmin)
 
         # Make room for 2-line title

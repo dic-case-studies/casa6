@@ -28,7 +28,7 @@ Convert a CASA visibility file (MS) into an ALMA or EVLA Science Data Model
           <value/>
     </param>
 
-    <param type="string" name="datacolumn">
+    <param name="datacolumn" type="string">
 <shortdescription>Which data column(s) to process.</shortdescription>
 <description>Which data column(s) to use for processing
                      (case-insensitive).
@@ -44,7 +44,7 @@ Convert a CASA visibility file (MS) into an ALMA or EVLA Science Data Model
                      the task will exit with an error.
 </description>
       <value>data</value>
-      <allowed kind="enum"  ignorecase="True">
+      <allowed ignorecase="True" kind="enum">
          <value>data</value>
          <value>corrected</value>
          <value>model</value>
@@ -103,21 +103,25 @@ exec block) in the output ASDM
       <value>True</value>
     </param>
     <param name="showversion" type="bool">
-<shortdescription>Report the version of ASDM class set being used</shortdescription>
-<description>Report the version of ASDM class set being used
-                     Default: True
+<shortdescription>Deprecated: Report the version of ASDM class set being used</shortdescription>
+<description>Deprecated. This parameter will be removed in a future release, this is no longer relevant.
+             Report the version of ASDM class set being used
+                     Default: False
                      Options: True|False
 </description>
-      <value>True</value>
+      <value>False</value>
     </param>
 
     <param name="useversion" type="string">
-<shortdescription>Selects the version of MS2asdm to be used</shortdescription>
-<description>Selects the version of MS2asdm to be used
-                     Default: 'v3'
+<shortdescription>Deprecated: Selects the version of MS2asdm to be used</shortdescription>
+<description>Deprecated. This parameter will be removed in a future release. This is no longer relevant.
+             Selects the version of MS2asdm to be used
+                     Default: 'deprecated'
+                     Options: deprecated, v3
 </description>
-      <value>v3</value>
+      <value>deprecated</value>
       <allowed kind="enum">
+        <value>deprecated</value>
         <value>v3</value>
         <value/>
       </allowed>
