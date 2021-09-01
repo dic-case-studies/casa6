@@ -20,9 +20,12 @@ sdms = singledishms()
 
 class ImBaselineVals:
 
-    def __init__(self, imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth, edge,
-                 blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh, dirkernel,
-                 major, minor, pa, kimage, scale, spkernel, kwidth):
+    def __init__(self, imagename: str = '', linefile: str = '', output_cont: bool = False, bloutput: str = '', maskmode: str = 'list',
+                chans: str = '', thresh: float = 5.0, avg_limit: int = 4, minwidth: int = 4, edge: List[int] = [0, 0],
+                blfunc: str = 'poly', order: int = 5, npiece: int = 3, applyfft: bool = True, fftthresh: float = 3.0,
+                addwn: List[int] = [0], rejwn: List[int] = [], blparam: str = '', clipniter: int = 0, clipthresh: float = 3.0,
+                dirkernel: str = 'none', major: str = '', minor: str = '', pa: str = '', kimage: str = '',
+                scale: float = -1.0, spkernel: str = 'none', kwidth: int = 5):
         self.imagename = imagename
         self.linefile = linefile
         self.output_cont = output_cont
@@ -168,6 +171,13 @@ class ImBaselineVals:
         
         if self.pass_imsmooth:
             self.imsmooth_output = self.imagename
+        elif self.dir_ikernel:
+            self.imsmooth_major = self.imsmooth_minor = self.imsmooth_pa = ''
+            if self.imsmooth_kimage != '' and not os.path.exists(self.imsmooth_kimage):
+                raise ValueError(f'Error: file {self.imsmooth_kimage} is not found.', 'SEVERE')
+        else:
+            self.imsmooth_kimage = ''
+            self.imsmooth_scale = -1.0
 
     def __check_spkernel(self):
         self.pass_sdsmooth = self.sdsmooth_kernel == 'none'
@@ -178,16 +188,40 @@ class ImBaselineVals:
         
         if self.pass_sdsmooth:
             self.sdsmooth_output = self.temporary_vis
+            self.sdsmooth_kwidth = 5
+
+    def convert_baselining_dict(self):
+        return { 'blfunc' : self.sdbaseline_blfunc,
+                 'datacolumn' : self.datacolumn.lower(),
+                 'outfile' : self.sdbaseline_output,
+                 'bloutput' : ','.join(self.sdbaseline_bloutput),
+                 'dosubtract' : self.sdbaseline_dosubtract,
+                 'spw' : self.sdbaseline_spw,
+                 'pol' : self.sdbaseline_pol,
+                 'linefinding' : (self.sdbaseline_maskmode=='auto'),
+                 'threshold' : self.sdbaseline_thresh,
+                 'avg_limit' : self.sdbaseline_avg_limit,
+                 'minwidth' : self.sdbaseline_minwidth,
+                 'edge' : self.sdbaseline_edge,
+                 'order' : self.sdbaseline_order,
+                 'npiece' : self.sdbaseline_npiece,
+                 'applyfft' : self.sdbaseline_applyfft,
+                 'fftmethod' : self.sdbaseline_fftmethod,
+                 'fftthresh' : self.sdbaseline_fftthresh,
+                 'addwn' : self.sdbaseline_addwn,
+                 'rejwn' : self.sdbaseline_rejwn,
+                 'clip_threshold_sigma' : self.sdbaseline_clipthresh,
+                 'num_fitting_max' : self.sdbaseline_clipniter+1,
+                 'blparam' : self.sdbaseline_blparam,
+                 'verbose' : False,
+                 'updateweight' : self.sdbaseline_updateweight,
+                 'sigmavalue' : self.sdbaseline_sigmavalue }
             
 
 @sdutil.sdtask_decorator
-def imbaseline(
-        imagename: str = '', linefile: str = '', output_cont: bool = False, bloutput: str = '', maskmode: str = 'list',
-        chans: str = '', thresh: float = 5.0, avg_limit: int = 4, minwidth: int = 4, edge: List[int] = [0, 0],
-        blfunc: str = 'poly', order: int = 5, npiece: int = 3, applyfft: bool = True, fftthresh: float = 3.0,
-        addwn: List[int] = [0], rejwn: List[int] = [], blparam: str = '', clipniter: int = 0, clipthresh: float = 3.0,
-        dirkernel: str = 'none', major: str = '', minor: str = '', pa: str = '', kimage: str = '',
-        scale: float = -1.0, spkernel: str = 'none', kwidth: int = 5):
+def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
+                edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter,
+                clipthresh, dirkernel, major, minor, pa, kimage, scale, spkernel, kwidth):
     vals = ImBaselineVals(imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                          edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter,
                          clipthresh, dirkernel, major, minor, pa, kimage, scale, spkernel, kwidth)
@@ -463,7 +497,6 @@ def __create_subtable(ms: str, subtable: str, desc: str, dminfo: str):
     finally:
         tb.close()
 
-
 def _copy_image_array_to_ms(vals: ImBaselineVals = None):
     # get image array and mask from the image
     ia.open(vals.imsmooth_output)
@@ -532,59 +565,22 @@ def do_sdbaseline(vals: ImBaselineVals = None):
     print("start sdbaseline")
 
     try:
-        blparam_file = vals.sdsmooth_output + '_blparam.txt'
-        if os.path.exists(blparam_file):
-            _remove_data(blparam_file)  # CAS-11781
+        _prepare_sdbaseline(vals)
 
-        spw = '*' if vals.sdbaseline_spw == '' else vals.sdbaseline_spw
-
-        if vals.sdbaseline_blfunc == 'sinusoid':
-            vals.sdbaseline_addwn = sdutil.parse_wavenumber_param(vals.sdbaseline_addwn)
-            vals.sdbaseline_rejwn = sdutil.parse_wavenumber_param(vals.sdbaseline_rejwn)
-
-        vals.sdbaseline_bloutput = _prepare_for_blformat_bloutput(vals.sdsmooth_output, vals.sdbaseline_bloutput, True)
-
-        _output_bloutput_text_header(vals.sdbaseline_bloutput[1],
-                                    vals.sdbaseline_maskmode,
-                                    vals.sdsmooth_output, vals.sdbaseline_output)
+        _output_bloutput_text_header(vals)
         
         if vals.sdbaseline_blfunc == 'variable':
             sorttab_info = _remove_sorted_table_keyword(vals.sdsmooth_output)
 
-        selection = ms.msseltoindex(vis=vals.sdsmooth_output, spw=spw, field=vals.sdbaseline_field, 
-                                    baseline='', time='', scan=vals.sdbaseline_scan)
+        selected_spw = sdutil.get_spwids( ms.msseltoindex(vis=vals.sdsmooth_output, spw=vals.sdbaseline_spw, 
+                                                          field=vals.sdbaseline_field, baseline='', time='',
+                                                          scan=vals.sdbaseline_scan) )
         sdms.open(vals.sdsmooth_output)
-        sdms.set_selection(spw=sdutil.get_spwids(selection),
-                            field=vals.sdbaseline_field, antenna=vals.sdbaseline_antenna,
+        sdms.set_selection(spw=selected_spw, field=vals.sdbaseline_field, antenna=vals.sdbaseline_antenna,
                             timerange=vals.sdbaseline_timerenge, scan=vals.sdbaseline_scan,
                             polarization=vals.sdbaseline_pol, intent=vals.sdbaseline_intent,
                             reindex=vals.sdbaseline_reindex)
-        params, func = _prepare_for_baselining(sdms, blfunc=vals.sdbaseline_blfunc,
-                                                datacolumn=vals.datacolumn.lower(),
-                                                outfile=vals.sdbaseline_output,
-                                                bloutput=','.join(vals.sdbaseline_bloutput),
-                                                dosubtract=vals.sdbaseline_dosubtract,
-                                                spw=spw,
-                                                pol=vals.sdbaseline_pol,
-                                                linefinding=(vals.sdbaseline_maskmode=='auto'),
-                                                threshold=vals.sdbaseline_thresh,
-                                                avg_limit=vals.sdbaseline_avg_limit,
-                                                minwidth=vals.sdbaseline_minwidth,
-                                                edge=vals.sdbaseline_edge,
-                                                order=vals.sdbaseline_order,
-                                                npiece=vals.sdbaseline_npiece,
-                                                applyfft=vals.sdbaseline_applyfft,
-                                                fftmethod=vals.sdbaseline_fftmethod,
-                                                fftthresh=vals.sdbaseline_fftthresh,
-                                                addwn=vals.sdbaseline_addwn,
-                                                rejwn=vals.sdbaseline_rejwn,
-                                                clip_threshold_sigma=vals.sdbaseline_clipthresh,
-                                                num_fitting_max=vals.sdbaseline_clipniter+1,
-                                                blparam=vals.sdbaseline_blparam,
-                                                verbose=False,
-                                                updateweight=vals.sdbaseline_updateweight,
-                                                sigmavalue=vals.sdbaseline_sigmavalue
-                                                )
+        func, params = _prepare_for_baselining(sdms, vals.convert_baselining_dict())
         func(**params)
         sdms.close()
         
@@ -595,7 +591,20 @@ def do_sdbaseline(vals: ImBaselineVals = None):
     except Exception:
         raise
 
-def _remove_data(filename):
+def _prepare_sdbaseline(vals: ImBaselineVals = None):
+    blparam_file = vals.sdsmooth_output + '_blparam.txt'
+    if os.path.exists(blparam_file):
+        __remove_data(blparam_file)  # CAS-11781
+    
+    if vals.sdbaseline_spw == '': vals.sdbaseline_spw = '*'
+
+    if vals.sdbaseline_blfunc == 'sinusoid':
+        vals.sdbaseline_addwn = sdutil.parse_wavenumber_param(vals.sdbaseline_addwn)
+        vals.sdbaseline_rejwn = sdutil.parse_wavenumber_param(vals.sdbaseline_rejwn)
+    
+    vals.sdbaseline_bloutput = __prepare_for_blformat_bloutput(vals.sdsmooth_output, vals.sdbaseline_bloutput, True)
+
+def __remove_data(filename):
     if os.path.exists(filename):
         if os.path.isdir(filename):
             shutil.rmtree(filename)
@@ -629,7 +638,7 @@ def _restore_sorted_table_keyword(infile, sorttab_info):
             except Exception:
                 raise
 
-def _prepare_for_baselining(sdms, **keywords):
+def _prepare_for_baselining(sdms, keywords):
     params = {}
     funcname = 'subtract_baseline'
 
@@ -649,17 +658,18 @@ def _prepare_for_baselining(sdms, **keywords):
         funcname += ('_' + blfunc)
     else:
         raise ValueError("Unsupported blfunc = %s" % blfunc)
-    if blfunc!= 'variable':
+    if blfunc != 'variable':
         keys += ['clip_threshold_sigma', 'num_fitting_max']
         keys += ['linefinding', 'threshold', 'avg_limit', 'minwidth', 'edge']
+        
     for key in keys: params[key] = keywords[key]
 
     baseline_func = getattr(sdms, funcname)
 
-    return params, baseline_func
+    return baseline_func, params
 
 
-def _prepare_for_blformat_bloutput(infile, bloutput, overwrite):
+def __prepare_for_blformat_bloutput(infile, bloutput, overwrite):
     # force to string list
     blformat = ['text']
     bloutput = [bloutput]
@@ -717,14 +727,14 @@ def __get_normalised_name(infile, blformat, bloutput, name, ext, overwrite):
             raise Exception(fname + ' exists.')
     return fname
 
-def _output_bloutput_text_header(fname, maskmode, infile, outfile):
-    if fname == '': return
+def _output_bloutput_text_header(vals: ImBaselineVals = None):
+    if vals.sdbaseline_bloutput[1] == '': return
     
-    with open(fname, 'w') as f:
+    with open(vals.sdbaseline_bloutput[1], 'w') as f:
 
-        info = [['Source Table', infile],
-                ['Output File', outfile if (outfile != '') else infile],
-                ['Mask mode', maskmode]]
+        info = [['Source Table', vals.sdsmooth_output],
+                ['Output File', vals.sdbaseline_output if (vals.sdbaseline_output != '') else vals.sdsmooth_output],
+                ['Mask mode', vals.sdbaseline_maskmode]]
         separator = '#' * 60 + '\n'
         
         f.write(separator)
@@ -2160,3 +2170,12 @@ class EmptyMSBaseInformation:
                         'PERSCACHESIZE': 2},
                'TYPE': 'StandardStMan'}}
 
+shutil.rmtree("working")
+os.mkdir("working")
+os.chdir("working")
+imagefile = "/nfsstore/casa_share/casatestdata/image/ref_multipix.signalband"
+#imagefile = "/nfsstore/casa_share/casatestdata/image/expected.im"
+
+imbaseline(imagename=imagefile, linefile="output",  spkernel="gaussian", major='20arcsec', minor='10arcsec', pa="0deg", blfunc='sinusoid', output_cont=True)
+
+os.chdir("..")
