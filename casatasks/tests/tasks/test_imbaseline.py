@@ -45,19 +45,19 @@ class imsmooth_test(unittest.TestCase):
 
     def tearDown(self):
         self.assertTrue(len(_tb.showcache()) == 0)
-        # # make sure directory is clean as per verification test requirement
-        # cwd = os.getcwd()
-        # for filename in os.listdir(cwd):
-        #     file_path = os.path.join(cwd, filename)
-        #     try:
-        #         if os.path.isfile(file_path) or os.path.islink(file_path):
-        #             os.unlink(file_path)
-        #         # elif os.path.isdir(file_path):
-        #         #     # CASA 5 tests need this directory
-        #         #     if filename != 'xml':
-        #         #         shutil.rmtree(file_path)
-        #     except Exception as e:
-        #         print('Failed to delete %s. Reason: %s' % (file_path, e)) 
+        # make sure directory is clean as per verification test requirement
+        cwd = os.getcwd()
+        for filename in os.listdir(cwd):
+            file_path = os.path.join(cwd, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    # CASA 5 tests need this directory
+                    if filename != 'xml':
+                        shutil.rmtree(file_path)
+            except Exception as e:
+                print('Failed to delete %s. Reason: %s' % (file_path, e)) 
     
     def test_input(self):
         '''Imsmooth: Testing INPUT/OUTPUT tests'''
@@ -85,11 +85,10 @@ class imsmooth_test(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']\
                     +"\nError: Badfile, 'g192', was not reported as missing."
 
-        outfile = 'input_test1'
         vals = blv(imagename = self.tiny, dirkernel='gaussian', major="2.5arcsec", minor="2arcsec", pa="0deg")
-        vals.imsmooth_output = outfile
+        vals.imsmooth_output = 'input_test1'
         do_imsmooth(vals)
-        self.assertTrue(os.path.exists(outfile))
+        self.assertTrue(os.path.exists(vals.imsmooth_output))
 
         #######################################################################
         # Testing the outfile parameter.
@@ -98,17 +97,15 @@ class imsmooth_test(unittest.TestCase):
         #######################################################################
         casalog.post( "The OUTFILE parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
         
-        outfile = 'input_test2'
         vals = blv(imagename = self.tiny, dirkernel='gaussian', major="2.5arcsec", minor="2arcsec", pa="0deg")
-        vals.imsmooth_output = outfile
+        vals.imsmooth_output = 'input_test2'
         do_imsmooth(vals)
-        self.assertTrue(os.path.exists(outfile))
+        self.assertTrue(os.path.exists(vals.imsmooth_output))
 
-        outfile = 'input_test2'
         vals = blv(imagename = self.tiny, dirkernel='gaussian', major="2.5arcsec", minor="2arcsec", pa="0deg")
-        vals.imsmooth_output = outfile
+        vals.imsmooth_output = 'input_test2'
         do_imsmooth(vals)
-        self.assertTrue(os.path.exists(outfile))
+        self.assertTrue(os.path.exists(vals.imsmooth_output))
 
         #######################################################################
         # Testing KERNEL parameter, valid values 0 and greater
@@ -118,9 +115,8 @@ class imsmooth_test(unittest.TestCase):
         casalog.post( "The KERNEL parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
 
         try:
-            outfile = 'input_test3'
             vals = blv(imagename = self.tiny, dirkernel='junk', major="2.5arcsec", minor="2arcsec", pa="0deg")
-            vals.imsmooth_output = outfile
+            vals.imsmooth_output = 'input_test3'
             do_imsmooth(vals)
         except:
             pass
@@ -130,30 +126,58 @@ class imsmooth_test(unittest.TestCase):
                 +"\nError: No exception thrown for bad kernel value, 'junk'"
 
         try:
-            outfile = 'input_test4'
             vals = blv(imagename = self.tiny, dirkernel='gaussian', major="2.5arcsec", minor="2arcsec", pa="0deg")
-            vals.imsmooth_output = outfile
+            vals.imsmooth_output = 'input_test4'
             do_imsmooth(vals)
         except:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Gaussian smoothing failed."
-        if ( not os.path.exists( outfile ) ): 
+        if ( not os.path.exists( vals.imsmooth_output ) ): 
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
-                       +f"\nError: output file {outfile} was NOT created."
+                       +f"\nError: output file {vals.imsmooth_output} was NOT created."
 
         try:
-            outfile = 'input_test5'
-            vals = blv(imagename = self.tiny, dirkernel='gaussian', major="2arcsec", minor="2arcsec", pa="0deg")
-            vals.imsmooth_output = outfile
+            vals = blv(imagename = self.tiny, dirkernel='boxcar', major="2arcsec", minor="2arcsec", pa="0deg")
+            vals.imsmooth_output = 'input_test5'
             do_imsmooth(vals)
         except Exception as err:
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
                      +"\nError: Boxcar smoothing failed. " \
                      +str(err)
-        if ( not os.path.exists( outfile )): 
+        if ( not os.path.exists( vals.imsmooth_output )): 
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
-                       +f"\nError: output file {outfile} was NOT created."
+                       +f"\nError: output file {vals.imsmooth_output} was NOT created."
+
+        #######################################################################
+        # Testing MAJOR parameter
+        # Expects a numerical value: 1, '2pix', '0.5arcsec'
+        # Tests include: invalid values, valid values, major < minor 
+        #######################################################################
+        casalog.post( "The MAJOR parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
+        
+        try:
+            vals = blv(imagename = self.tiny, dirkernel='boxcar', major="bad", minor="2arcsec", pa="0deg")
+            vals.imsmooth_output = 'input_test8'
+            do_imsmooth(vals)
+        except:
+            no_op='noop'
+        else:
+            retValue['success']=False
+            retValue['error_msgs']=retValue['error_msgs']\
+                    +"\nError: Bad major value, 'bad', was not reported."
+
+        try:
+            vals = blv(imagename = self.tiny, dirkernel='boxcar', major="-5", minor="2arcsec", pa="0deg")
+            vals.imsmooth_output = 'input_test9'
+            do_imsmooth( vals )
+        except:
+            no_op='noop'
+        else:
+            retValue['success']=False
+            retValue['error_msgs']=retValue['error_msgs']\
+                    +"\nError: Bad major value, '-5', was not reported."
+    
