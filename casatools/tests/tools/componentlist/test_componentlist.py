@@ -139,16 +139,21 @@ class componentlist_test(unittest.TestCase):
             mycl.getspectrum(0)['type'] == 'Constant', 'Incorrect spectral type'
         )
         mycl.setspectrum(0, type='plp', index=coeffs)
+        mytype = mycl.spectrumtype(0)
         x = mycl.getspectrum(0)
         mycl.close()
         self.assertTrue(
             (x['coeffs'] == coeffs).all(), "Incorrect coefficients found"
         ) 
         self.assertTrue(
+            mytype == 'Power Logarithmic Polynomial',
+            'Incorrect spectral type'
+        )
+        self.assertTrue(
             x['type'] == 'Power Logarithmic Polynomial',
             'Incorrect spectral type'
         )
-
+ 
 def suite():
     return [componentlist_test]
 

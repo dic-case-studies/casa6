@@ -2197,9 +2197,8 @@ An integer between 0 and one less than the list length, inclusively</description
   <description>
     The spectrumtype function returns the current spectral shape of the
     specified component. The spectral shape defines how the flux of
-    the component varies with frequency. Currently there are two
-    spectral shapes available. These are 'Constant' and 'Spectral
-    Index'. This function returns one of these two strings.
+    the component varies with frequency. Returns one of "Constant",
+    "Spectral Index", "Tabular Spectrum", and "Power Logarithmic Polynomial".
 
   </description>
   <input>
