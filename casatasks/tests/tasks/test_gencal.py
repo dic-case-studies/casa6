@@ -538,7 +538,7 @@ class TestJyPerK(unittest.TestCase):
         shutil.rmtree(self.test_tmp_dir)
    
     def delete_dir(self, path):
-        if (os.path.exists(path)):
+        if os.path.exists(path):
             shutil.rmtree(path)
 
     def test_jyperk_gencal_for_factor_file(self):
