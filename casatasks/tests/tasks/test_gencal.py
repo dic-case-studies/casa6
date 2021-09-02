@@ -525,14 +525,17 @@ class TestJyPerK(unittest.TestCase):
             shutil.rmtree(self.test_tmp_dir)
         os.mkdir(self.test_tmp_dir)
 
-        # test_data_path = ctsys.resolve('measurementset/almasd')
-        test_data_path = 'test_data'
-        
-        self.vis = os.path.join(test_data_path, 'uid___A002_X85c183_X36f.ms')
-        self.caltable = '/'.join([self.test_tmp_dir, 'jyperk_file.cal'])
-        self.jyperk_factor_csv = os.path.join(test_data_path, 'jyperk_factor.csv')
+        test_data_path = ctsys.resolve('measurementset/almasd')
+        test_data_path2 = 'test_data'
 
-        self.reffile_for_factor_csv = '/'.join([test_data_path, 'jyperk_file.cal'])
+        ms_key = 'uid___A002_X85c183_X36f.ms'
+        self.vis = os.path.join(self.test_tmp_dir, ms_key)
+        shutil.copytree(os.path.join(test_data_path, '.'.join([ms_key, 'sel'])),
+                        self.vis, symlinks=True)
+
+        self.caltable = '/'.join([self.test_tmp_dir, 'jyperk_file.cal'])
+        self.jyperk_factor_csv = os.path.join(test_data_path2, 'jyperk_factor.csv')
+        self.reffile_for_factor_csv = '/'.join([test_data_path2, 'jyperk_file.cal'])
 
     def tearDown(self):
         shutil.rmtree(self.test_tmp_dir)
