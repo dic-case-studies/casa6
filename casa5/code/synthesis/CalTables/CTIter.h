@@ -29,9 +29,11 @@
 #define CALIBRATION_CALTABITER_H
 
 #include <casa/aips.h>
+#include <measures/Measures/MBaseline.h>
 #include <measures/Measures/MEpoch.h>
 #include <ms/MSOper/MSDerivedValues.h>
 #include <tables/Tables/TableIter.h>
+
 #include <synthesis/CalTables/NewCalTable.h>
 #include <synthesis/CalTables/CTMainColumns.h>
 #include <synthesis/CalTables/CTColumns.h>
@@ -83,7 +85,7 @@ public:
   virtual ~ROCTIter();
   
   // Iteration operators
-  inline void reset() { ti_->reset(); this->attach(); updatePhaseCenter(); };
+  void reset();
   inline casacore::Bool pastEnd() { return ti_->pastEnd(); };
   void next();
   void next0();
@@ -165,6 +167,7 @@ public:
   casacore::Double hourang(casacore::Double time) const;
   casacore::Float parang0(casacore::Double time) const;
 
+  casacore::Matrix<casacore::Double> uvw() const;
  protected:
 
   // Attach accessors
@@ -178,6 +181,10 @@ public:
 
   // Update phase center in MSDerivedValues
   void updatePhaseCenter();
+
+  // Initialize and calculate uvw for each antenna
+  void initUVW();
+  void calculateAntennaUVW();
 
   // Remember the sort columns...
   casacore::Vector<casacore::String> sortCols_;
@@ -202,10 +209,17 @@ public:
   // Per-iteration columns
   ROCTMainColumns *iROCTMainCols_;
 
-  // For calculating az, el, hourang, parang
-  casacore::MSDerivedValues* msd_;
+  // For calculating axes: az, el, ha, pa, uvw
+  bool init_uvw_;
+  casacore::Int nAnt_, lastfield_;
+  casacore::Double lasttime_;
+  casacore::MDirection phaseCenter_;
   casacore::MEpoch epoch_;
-  casacore::Int lastfield_;
+  casacore::MPosition refAntPos_;
+  casacore::MSDerivedValues* msd_;
+  casacore::MBaseline::Types baseline_type_, phasedir_type_;
+  casacore::Vector<casacore::MVBaseline> mvbaselines_;              // ant pos rel to ant0
+  casacore::Vector<casacore::Vector<casacore::Double>> antennaUVW_; // [u,v,w] for each ant
 };
 
 // Writable version (limited to certain 'columns')

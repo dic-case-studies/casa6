@@ -29,7 +29,6 @@
 #include <plotms/Data/PlotMSCTAverager.h>
 #include <plotms/Data/PlotMSIndexer.h>
 #include <plotms/PlotMS/PlotMS.h>
-#include <plotms/PlotMS/PlotMSLabelFormat.h>
 #include <plotms/Threads/ThreadCommunication.h>
 
 #include <casa/OS/Timer.h>
@@ -40,6 +39,7 @@
 #include <casa/Utilities/Sort.h>
 #include <casa/Arrays/ArrayMath.h>
 #include <graphics/GenericPlotter/Plotter.h>
+#include <ms/MSSel/MSSelectionTools.h>
 #include <synthesis/CalTables/CTColumns.h>
 #include <synthesis/MeasurementComponents/VisCalGlobals.h>
 #include <synthesis/MeasurementComponents/BPoly.h>
@@ -59,11 +59,11 @@ extern "C" {
 
 CalCache::CalCache(PlotMSApp* parent):
   PlotMSCacheBase(parent),
-  divZero_(False),
   ci_p(nullptr),
   wci_p(nullptr),
   basis_("unknown"),
   parsAreComplex_(False),
+  divZero_(False),
   msname_("")
 {
 }
@@ -99,6 +99,19 @@ void CalCache::setFilename(String filename) {
     if ((calType_=="T Jones") && (tab.keywordSet().isDefined("CAL_DESC"))) {
       throw AipsError(calType_ + " tables in the old cal table format are unsupported in plotms.");
     }
+
+    if (tab.keywordSet().isDefined("MSName")) {
+        casacore::String msname = tab.keywordSet().asString("MSName");
+        setMSName(msname);
+    }
+}
+
+void CalCache::setMSName(String msname) {
+  // set msname_ (with path) if valid
+  Path filepath(filename_);
+  String path(filepath.dirName());
+  if (!path.empty()) path += "/";
+  msname_ = path + msname;
 }
 
 //*********************************
@@ -737,11 +750,9 @@ void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
         case PMS::TIME: // assumes time unique 
             time_(chunk) = cti.thisTime();
             break;
-        /*        
         case PMS::TIME_INTERVAL: // assumes timeInterval unique in cti chunk
-            timeIntr_(chunk) = cti.interval()(0); 
+            timeIntr_(chunk) = cti.thisInterval();
             break;
-        */
         case PMS::SPW:
             spw_(chunk) = cti.thisSpw();
             break;
@@ -823,6 +834,94 @@ void CalCache::loadCalAxis(ROCTIter& cti, casacore::Int chunk, PMS::Axis axis,
                             (a1(irow)*(a1(irow) + 1))/2 + a2(irow);
                     }
                 }
+            }
+            break;
+        }
+        case PMS::U: {
+            *u_[chunk] = cti.uvw().row(0);
+            break;
+        }
+        case PMS::V: {
+            *v_[chunk] = cti.uvw().row(1);
+            break;
+        }
+        case PMS::W: {
+            *w_[chunk] = cti.uvw().row(2);
+            break;
+        }
+        case PMS::UVDIST: {
+            Array<Double> u(cti.uvw().row(0));
+            Array<Double> v(cti.uvw().row(1));
+            *uvdist_[chunk] = sqrt(u*u+v*v);
+            break;
+        }
+        case PMS::UVDIST_L: {
+            Array<Double> u(cti.uvw().row(0));
+            Array<Double> v(cti.uvw().row(1));
+            Vector<Double> uvdistM = sqrt(u*u + v*v);
+            uvdistM /= C::c;
+
+            casacore::Vector<casacore::Double> freqs;
+            cti.freq(freqs);
+
+            auto nrow = cti.nrow();
+            uvdistL_[chunk]->resize(cti.nchan(), nrow);
+            Vector<Double> uvrow;
+            for (int irow = 0; irow < nrow; ++irow) {
+                uvrow.reference(uvdistL_[chunk]->column(irow));
+                uvrow.set(uvdistM(irow));
+                uvrow *= freqs;
+            }
+            break;
+        }
+        case PMS::UWAVE: {
+            Vector<Double> uM(cti.uvw().row(0));
+            uM /= C::c;
+
+            casacore::Vector<casacore::Double> freqs;
+            cti.freq(freqs);
+
+            auto nrow = cti.nrow();
+            uwave_[chunk]->resize(cti.nchan(), nrow);
+            Vector<Double> urow;
+            for (int irow = 0; irow < nrow; ++irow) {
+                urow.reference(uwave_[chunk]->column(irow));
+                urow.set(uM(irow));
+                urow *= freqs;
+            }
+            break;
+        }
+        case PMS::VWAVE: {
+            Vector<Double> vM(cti.uvw().row(1));
+            vM /= C::c;
+
+            casacore::Vector<casacore::Double> freqs;
+            cti.freq(freqs);
+
+            auto nrow = cti.nrow();
+            vwave_[chunk]->resize(cti.nchan(), nrow);
+            Vector<Double> vrow;
+            for (int irow = 0; irow < nrow; ++irow) {
+                vrow.reference(vwave_[chunk]->column(irow));
+                vrow.set(vM(irow));
+                vrow *= freqs;
+            }
+            break;
+        }
+        case PMS::WWAVE: {
+            Vector<Double> wM(cti.uvw().row(2));
+            wM /= C::c;
+
+            casacore::Vector<casacore::Double> freqs;
+            cti.freq(freqs);
+
+            auto nrow = cti.nrow();
+            wwave_[chunk]->resize(cti.nchan(), nrow);
+            Vector<Double> wrow;
+            for (int irow = 0; irow < nrow; ++irow) {
+                wrow.reference(wwave_[chunk]->column(irow));
+                wrow.set(wM(irow));
+                wrow *= freqs;
             }
             break;
         }
@@ -1468,16 +1567,6 @@ void CalCache::countChunks(Int nchunks, vector<PMS::Axis>& loadAxes,
   setCache(nchunks, loadAxes, loadData);
 }
 
-void CalCache::setMSname(String msname) {
-  // set msname_ (with path) if valid
-  Path filepath(filename_);
-  String path(filepath.dirName());
-  if (!path.empty()) path += "/";
-  msname_ = path + msname;
-  if (msname.empty() || !Table::isReadable(msname_))
-    throw(AipsError("Associated MS is not available, cannot plot solutions."));
-}
-
 void CalCache::getNamesFromMS() {
   // Set antenna and field names for Locate.
   MSMetaInfoForCal msmeta(msname_);
@@ -1561,7 +1650,10 @@ void CalCache::loadBPoly(vector<PMS::Axis>& loadAxes,
   // Set ms-related data
   ROCalDescColumns calDescCol(pt);
   String msname(calDescCol.msName()(0));
-  setMSname(msname); // add path
+  setMSName(msname); // add path
+  if (msname_.empty() || !Table::isReadable(msname_)) {
+    throw(AipsError("Associated MS is not available, cannot plot solutions."));
+  }
   getNamesFromMS();  // field and antenna
 
   // Set number of antennas
@@ -1789,7 +1881,10 @@ void CalCache::loadGSpline(vector<PMS::Axis>& loadAxes,
   ROGJonesSplineMCol mainCol(selct);
   ROCalDescColumns calDescCol(selct);
   String msname(calDescCol.msName()(0));
-  setMSname(msname); // add path
+  setMSName(msname); // add path
+  if (msname_.empty() || !Table::isReadable(msname_)) {
+    throw(AipsError("Associated MS is not available, cannot plot solutions."));
+  }
   getNamesFromMS();  // field and antenna
 
   // count and load chunks

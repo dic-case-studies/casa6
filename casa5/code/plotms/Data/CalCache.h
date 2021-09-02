@@ -86,6 +86,8 @@ private:
   // Forbid copy for now
   CalCache(const CalCache&);
 
+  void setMSName(casacore::String msname); // set msname_; adds path to name
+
   // NewCalTable:
   void loadNewCalTable(std::vector<PMS::Axis>& loadAxes,
     std::vector<PMS::DataColumn>& loadData,
@@ -138,7 +140,6 @@ private:
   // CalTable:
   void countChunks(casacore::Int nrowMain, std::vector<PMS::Axis>& loadAxes,
     std::vector<PMS::DataColumn>& loadData, ThreadCommunication* thread);
-  void setMSname(casacore::String msname); // set msname_; adds path to name
   void getNamesFromMS();                   // for locate
   void setUpLoad(ThreadCommunication* thread, casacore::Slice& parSlice);
   // get type-specific axis for raw viscube data
@@ -174,8 +175,6 @@ private:
   casacore::Slice getParSlice(casacore::String axis, casacore::String polnSel);
   // Check for divide-by-zero (=inf); set to 1.0 and flag it
   void checkRatioArray(casacore::Array<float>& array, int chunk);
-  // Check divide-by-zero in ratio plot (checkRatioArray)
-  bool divZero_;
 
   // NewCalTable iterator pointers and sort columns
   ROCTIter* ci_p;
@@ -189,11 +188,14 @@ private:
   casacore::Bool parsAreComplex_;
   casacore::IPosition parshape_;
 
-  // For CalTable (cannot plot BPOLY or GSPLINE without MS)
+  // Check divide-by-zero in ratio plot (checkRatioArray)
+  bool divZero_;
+
+  // For CalTable types which need the MS to plot
   casacore::String msname_;
 };
-typedef casacore::CountedPtr<CalCache> CalCachePtr;
 
+typedef casacore::CountedPtr<CalCache> CalCachePtr;
 
 }
 

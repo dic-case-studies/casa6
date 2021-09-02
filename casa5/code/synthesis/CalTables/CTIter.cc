@@ -25,6 +25,8 @@
 //#
 //----------------------------------------------------------------------------
 
+#include <measures/Measures/Muvw.h>
+#include <measures/Measures/MCBaseline.h>
 #include <msvis/MSVis/ViImplementation2.h>
 #include <synthesis/CalTables/CTIter.h>
 #include <tables/Tables/ScalarColumn.h>
@@ -44,7 +46,9 @@ ROCTIter::ROCTIter(NewCalTable tab, const Block<String>& sortcol) :
   ti_(NULL),
   inct_(NULL),
   iROCTMainCols_(NULL),
-  lastfield_(-1)
+  init_uvw_(false),
+  lastfield_(-1),
+  lasttime_(-1.0)
 {
 
   ti_=new TableIterator(tab,sortcol);
@@ -61,6 +65,9 @@ ROCTIter::ROCTIter(NewCalTable tab, const Block<String>& sortcol) :
   msd_ = new MSDerivedValues();
   msd_->setAntennas(calCol_.antenna());
   epoch_ = calCol_.timeMeas()(0);
+
+  // Initialize antenna positions for uvw
+  initUVW();
 
   /*
   cout << "singleSpw_ = " << boolalpha << singleSpw_ << endl;
@@ -84,6 +91,13 @@ ROCTIter::~ROCTIter()
   if (msd_!=NULL) delete msd_;
 };
 
+void ROCTIter::reset() {
+  ti_->reset();
+  this->attach();
+  updatePhaseCenter();
+  calculateAntennaUVW();
+}
+
 void ROCTIter::next() { 
   // Advance the TableIterator
   ti_->next();
@@ -92,20 +106,27 @@ void ROCTIter::next() {
   this->attach();
 
   if (!pastEnd()) {
-    updatePhaseCenter();
+    // Update phase center and uvw if needed
+    Int field = thisField();
+    Double time = thisTime();
+
+    if (field != lastfield_) {
+      updatePhaseCenter();
+    }
+
+    if ((time != lasttime_) || (field != lastfield_)) {
+      calculateAntennaUVW();
+    }
+
+    lastfield_ = field;
+    lasttime_ = time;
   }
 }
 
 void ROCTIter::updatePhaseCenter() {
-  // Set MSDerivedValues phase center when changed
-  Int field = thisField();
-
-  if (field != lastfield_) {
-    Double time = thisTime();
-    MDirection phaseCenter = calCol_.field().phaseDirMeas(field, time);
-    msd_->setFieldCenter(phaseCenter);
-    lastfield_ = field;
-  }
+  // Set MSDerivedValues phase center for field
+  phaseCenter_ = calCol_.field().phaseDirMeas(thisField(), thisTime());
+  msd_->setFieldCenter(phaseCenter_);
 }
 
 void ROCTIter::next0() { 
@@ -217,6 +238,78 @@ casacore::Double ROCTIter::hourang(casacore::Double time) const {
 
 casacore::Float ROCTIter::parang0(casacore::Double time) const {
   return vi::ViImplementation2::parang0Calculate(time, *msd_, epoch_);
+}
+
+casacore::Matrix<casacore::Double> ROCTIter::uvw() const {
+  casacore::Vector<casacore::Int> ant1 = antenna1();
+  casacore::Vector<casacore::Int> ant2 = antenna2();
+  auto nbaseline = ant1.size();
+  casacore::Matrix<casacore::Double> uvw(3, nbaseline);
+
+  for (uInt i = 0; i < ant1.size(); ++i) {
+    uvw.column(i) = antennaUVW_[ant2(i)] - antennaUVW_[ant1(i)];
+  }
+
+  return uvw;
+}
+
+void ROCTIter::initUVW() {
+  // Calculate relative positions of antennas
+  nAnt_ = calCol_.antenna().nrow();
+  auto antPosMeas = calCol_.antenna().positionMeas();
+  refAntPos_ = antPosMeas(0); // use first antenna for reference
+  auto refAntPosValue = refAntPos_.getValue();
+
+  // Set up baseline and uvw types
+  MBaseline::getType(baseline_type_, MPosition::showType(refAntPos_.getRef().getType()));
+  MBaseline::getType(phasedir_type_, MDirection::showType(phaseCenter_.getRef().getType()));
+
+  mvbaselines_.resize(nAnt_);
+
+  for (Int ant = 0; ant < nAnt_; ++ant) {
+    // MVBaselines are basically xyz Vectors, not Measures
+    mvbaselines_[ant] = MVBaseline(refAntPosValue, antPosMeas(ant).getValue());    
+  }
+
+  init_uvw_ = true;
+}
+
+void ROCTIter::calculateAntennaUVW() {
+  // Set antennaUVW_ for current iteration when field or time changes
+  if (!init_uvw_) {
+    initUVW();
+  }
+
+  MEpoch epoch = iROCTMainCols_->timeMeas()(0);
+  MeasFrame measFrame(refAntPos_, epoch, phaseCenter_);
+
+  // Antenna frame
+  MBaseline::Ref baselineRef(baseline_type_);
+  MVBaseline mvbaseline;
+  MBaseline baselineMeas;
+  baselineMeas.set(mvbaseline, baselineRef);
+  baselineMeas.getRefPtr()->set(measFrame);
+
+  // Conversion engine to phasedir type
+  MBaseline::Ref uvwRef(phasedir_type_);
+  MBaseline::Convert baselineConv(baselineMeas, uvwRef);
+
+  // WSRT convention: phase opposite to VLA (l increases toward increasing RA)
+  bool wsrtConvention = calCol_.observation().telescopeName()(thisObs()) == "WSRT";
+
+  antennaUVW_.resize(nAnt_);
+
+  for (int i = 0; i < nAnt_; ++i) {
+    baselineMeas.set(mvbaselines_[i], baselineRef);
+    MBaseline baselineOutFrame = baselineConv(baselineMeas);
+    MVuvw uvwOutFrame(baselineOutFrame.getValue(), phaseCenter_.getValue());
+
+    if (wsrtConvention) {
+      antennaUVW_[i] = -uvwOutFrame.getValue();
+    } else {
+      antennaUVW_[i] = uvwOutFrame.getValue();
+    }
+  }
 }
 
 void ROCTIter::attach() {
