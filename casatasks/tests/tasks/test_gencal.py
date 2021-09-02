@@ -518,6 +518,12 @@ class gencal_tsys_test(unittest.TestCase):
 
 
 class TestJyPerK(unittest.TestCase):
+    """Tests for gencal() which the caltype is 'jyperk'.
+
+    The caltype jyperk is a type of amp. In the process of specifycal() executed 
+    within gencal(), the value loaded from a csv file with factor or obtained
+    from the Jy/K Web API is given as the 'parameter' argument.
+    """
     def setUp(self):
         self.test_tmp_dir = 'tmp_test_gencal'
 
@@ -544,6 +550,8 @@ class TestJyPerK(unittest.TestCase):
             shutil.rmtree(path)
 
     def test_jyperk_gencal_for_factor_file(self):
+        """Test the behavior when the infile parameter is defined in gencal().
+        """
         self.delete_dir(self.caltable)
 
         gencal(vis=self.vis,
