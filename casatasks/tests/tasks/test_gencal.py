@@ -518,11 +518,15 @@ class gencal_tsys_test(unittest.TestCase):
 
 
 class TestJyPerK(unittest.TestCase):
-    """Tests for gencal() which the caltype is 'jyperk'.
+    """Tests pecifying antenna-based calibration values with external resource.
+    
+    The caltype jyperk is a type of amplitude correction or 'amp'. In the process
+    of specifycal() executed within gencal(), the values loaded from a csv file 
+    with factors or obtained from the Jy/K Web API are given as the 'parameter'
+    argument.
 
-    The caltype jyperk is a type of amp. In the process of specifycal() executed 
-    within gencal(), the value loaded from a csv file with factor or obtained
-    from the Jy/K Web API is given as the 'parameter' argument.
+    Details are as follows.
+    https://open-jira.nrao.edu/browse/CAS-12236
     """
     def setUp(self):
         self.test_tmp_dir = 'tmp_test_gencal'
@@ -551,6 +555,10 @@ class TestJyPerK(unittest.TestCase):
 
     def test_jyperk_gencal_for_factor_file(self):
         """Test the behavior when the infile parameter is defined in gencal().
+
+        The following arguments are required for this test.
+        * caltype='jyperk'
+        * infile
         """
         self.delete_dir(self.caltable)
 
