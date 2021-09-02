@@ -137,12 +137,18 @@ class JyperkGencal():
                parameter=None, uniform=None):
         try:
             # don't need scr col for this
+            
+            vis_key = os.path.basename(vis)
+
             _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)  
 
             for selection, param in JyperkGencal.__gen_specifycal_input(vis=vis, spw=spw,
                                                         endpoint=endpoint, infile=infile,
                                                         timeout=timeout, retry=retry,
                                                         retry_wait_time=retry_wait_time):
+                if not selection['vis'] == vis_key:
+                    continue
+
                 _cb.specifycal(caltable=caltable, time='', spw=selection['spw'],
                             caltype='amp', antenna=selection['antenna'], # pol=selection['pol'],
                             parameter=param, infile='', uniform=uniform)
@@ -169,6 +175,7 @@ class JyperkGencal():
 
         for factor in factors:
             selection = {}
+            selection['vis'] = factor[0]
             selection['antenna'] = factor[1]
             selection['spw'] = factor[2]
             selection['pol'] = factor[3]
