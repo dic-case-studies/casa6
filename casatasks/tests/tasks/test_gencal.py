@@ -554,7 +554,7 @@ class TestJyPerK(unittest.TestCase):
             shutil.rmtree(path)
 
     def test_jyperk_gencal_for_factor_file(self):
-        """Test the behavior when the infile parameter is defined in gencal().
+        """Test to check that the factors in the csv file are applied to the caltable.
 
         The following arguments are required for this test.
         * caltype='jyperk'
