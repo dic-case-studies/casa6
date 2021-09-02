@@ -552,8 +552,8 @@ class TestJyPerK(unittest.TestCase):
                )
         self.assertTrue(os.path.exists(self.caltable))
 
-        reference = self.reffile_for_factor_csv
-        self.assertTrue(th.compTables(self.caltable, reference, ['WEIGHT']))
+        self.assertTrue(th.compTables(self.caltable, self.reffile_for_factor_csv, 
+                                      ['WEIGHT']))
 
         self.delete_dir(self.caltable)
 
