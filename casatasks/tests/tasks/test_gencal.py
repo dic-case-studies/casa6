@@ -517,6 +517,47 @@ class gencal_tsys_test(unittest.TestCase):
         self.assertTrue(th.compTables(caltab, evncal, ['FPARAM', 'WEIGHT']))
 
 
+class TestJyPerK(unittest.TestCase):
+    def setUp(self):
+        self.test_tmp_dir = 'tmp_test_gencal'
+
+        if (os.path.exists(self.test_tmp_dir)):
+            shutil.rmtree(self.test_tmp_dir)
+        os.mkdir(self.test_tmp_dir)
+
+        # test_data_path = ctsys.resolve('measurementset/almasd')
+        test_data_path = 'test_data'
+        
+        self.vis = os.path.join(test_data_path, 'uid___A002_X85c183_X36f.ms')
+        self.caltable = '/'.join([self.test_tmp_dir, 'jyperk_file.cal'])
+        self.jyperk_factor_csv = os.path.join(test_data_path, 'jyperk_factor.csv')
+
+        self.reffile_for_factor_csv = '/'.join([test_data_path, 'jyperk_file.cal'])
+
+    def tearDown(self):
+        shutil.rmtree(self.test_tmp_dir)
+   
+    def delete_dir(self, path):
+        if (os.path.exists(path)):
+            shutil.rmtree(path)
+
+    def test_jyperk_gencal_for_factor_file(self):
+        self.delete_dir(self.caltable)
+
+        gencal(vis=self.vis,
+               caltable=self.caltable,
+               caltype='jyperk',
+               infile=self.jyperk_factor_csv,
+               uniform=False
+               )
+        self.assertTrue(os.path.exists(self.caltable))
+
+        reference = self.reffile_for_factor_csv
+        self.assertTrue(th.compTables(self.caltable, reference, ['WEIGHT']))
+
+        self.delete_dir(self.caltable)
+
+
 def suite():
     return [gencal_antpostest,
             test_gencal_antpos_alma,
