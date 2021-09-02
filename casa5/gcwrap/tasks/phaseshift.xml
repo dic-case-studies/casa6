@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" ?>
+<casaxml xmlns="http://casa.nrao.edu/schema/psetTypes.html"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd
+      file:///opt/casa/code/xmlcasa/xml/casa.xsd">
+
+<task type="function" name="phaseshift" category="manipulation">
+    <shortdescription>Rotate a Measurement Set to a new phase-center</shortdescription>
+        <description>
+This application changes the phase center of a selected subset of an input MS, by taking into
+account the full 3D geometry in the UVW plane (similar to the phasecenter setting in the
+imaging tasks). This function produces an output MS with modified UVW values, visibility
+phases, and a new phase_direction entry in the FIELD sub-table.
+        </description>
+
+        <input>
+            <param type="string" name="vis" mustexist="true">
+                <shortdescription>Name of input visibility file</shortdescription>
+                <description>Name of input visibility file
+                     Default: none, must be specified
+
+                        Example: vis='ngc5921.ms'
+                </description>
+                <value type="string"/>
+            </param>
+
+            <param type="string" name="outputvis">
+                <shortdescription>Name of output visibility file</shortdescription>
+                <description>Name of output visibility file
+                     Default: None, must be specified
+
+                        Example: outputvis='ngc5921_out.ms'
+                </description>
+                <value/>
+            </param>
+
+            <!-- MMS-CASE parameters -->
+            <param type="bool" name="keepmms">
+                <shortdescription>Create a Multi-MS as the output if the input is a Multi-MS.</shortdescription>
+                <description>Create a Multi-MS as the output if the input is a
+Multi-MS.
+
+                     Default: True
+                     Options: True|False
+
+                     By default it will create a Multi-MS when the
+                     input is a Multi-MS. The output Multi-MS will
+                     have the same partition axis of the input
+                     MMS. See CASA Docs for more information on
+                     the MMS format.
+                </description>
+                <value>True</value>
+            </param>
+    
+            <!-- SELECTION parameters -->    
+            <param type="string" name="field">
+                <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
+                <description>Select field using field id(s) or field name(s)
+                     Default: '' (all fields)
+                     
+                     Use 'go listobs' to obtain the list id's or
+                     names. If field string is a non-negative integer,
+                     it is assumed a field index,  otherwise, it is
+                     assumed a field name.
+
+                        Examples:
+                        field='0~2'; field ids 0,1,2
+                        field='0,4,5~7'; field ids 0,4,5,6,7
+                        field='3C286,3C295'; field named 3C286 and
+                        3C295
+                        field = '3,4C*'; field id 3, all names
+                        starting with 4C
+                </description>
+                <value type="string"/>
+            </param>
+
+            <param type="string" name="spw">
+                <shortdescription>Select spectral window/channels</shortdescription>
+                <description>Select spectral window/channels
+                     Default: ''=all spectral windows and channels
+           
+                        Examples:
+                        spw='0~2,4'; spectral windows 0,1,2,4 (all channels)
+                        spw='&lt;2';  spectral windows less than 2 (i.e. 0,1)
+                        spw='0:5~61'; spw 0, channels 5 to 61
+                        spw='0,10,3:3~45'; spw 0,10 all channels, spw
+                        3 - chans 3 to 45.
+                        spw='0~2:2~6'; spw 0,1,2 with channels 2
+                        through 6 in each.
+                        spw = '*:3~64'  channels 3 through 64 for all sp id's
+                        spw = ' :3~64' will NOT work.
+                </description>
+                <value type="string"/>
+            </param>
+    
+            <param type="string" name="scan" >
+                <shortdescription>Scan number range</shortdescription>
+                <description>Scan number range
+                     Default: '' = all
+                </description>
+                <value type="string"/>
+            </param>
+
+            <param type="string" name="intent" >
+                <shortdescription>Select observing intent</shortdescription>
+                <description>Select observing intent
+                     Default: '' (no selection by intent)
+
+                        Example: intent='*BANDPASS*'  (selects data
+                        labelled with BANDPASS intent)
+                </description>
+                <value type="string"/>
+            </param>
+    
+            <param type="string" name="array">
+                <shortdescription>Select (sub)array(s) by array ID number.</shortdescription>
+                <description>(Sub)array number range
+                     Default: '' (all)
+                </description>
+                <value type="string"/>
+            </param>
+    
+            <param type="string" name="observation">
+                <shortdescription>Select by observation ID(s)</shortdescription>
+                <description>Select by observation ID(s)
+                     Default: '' = all
+
+                         Example: observation='0~2,4'
+                </description>
+                <value type="string"/>
+            </param>
+
+            <param type="string" name="datacolumn" ignorecase="True">
+                <shortdescription>Which data column(s) to process</shortdescription>
+                <description>Which data column(s) to process
+                     (case-insensitive).
+                     Default: 'all' (= whichever of the options that
+                     are present)
+                     Options: 'data', 'model', 'corrected',
+                     'all','float_data', 'lag_data',
+                     'float_data,data', 'lag_data,data'
+
+                        Example: datacolumn='data'
+                </description>
+                <value>all</value>
+                <allowed kind="enum" ignorecase="True">
+                    <value>all</value>
+                    <value>corrected</value>
+                    <value>data</value>
+                    <value>model</value>
+                    <value>data,model,corrected</value>
+                    <value>float_data</value>
+                    <value>lag_data</value>
+                    <value>float_data,data</value>
+                    <value>lag_data,data</value>
+                </allowed>
+            </param>
+    
+            <param type="string" name="phasecenter">
+    	        <shortdescription>Direction coordinates of the desired center. MUST BE SPECIFIED</shortdescription>
+    	        <description>Direction coordinates of new phase center, specified as absolute
+                     world coordinates including frame, eg 
+ 
+                phasecenter = 'J2000 19h53m50 40d06m00'
+                phasecenter = 'B1950 292.5deg -40.0deg'
+                phasecenter = 'ICRS 13:05:27.2780 -049.28.04.458'
+                phasecenter = 'GALACTIC 47.5rad -60.22rad'
+
+            Time dependent systems (eg, AZEL) are not supported, nor are ephemeris objects.
+    	
+    		This will change the phase of the baseline visibilities so that the 
+    		final image is centered at the new location. Additionally the uvw 
+    		coordinates and the the PHASE_DIR column from the FIELD sub-table 
+    		will be changed accordingly. 
+    	
+    		This operation will be done for all selected fields, so all fields in the output
+            MS will have as center the new location. The new phase center is not constrained to
+            be located inside any images to be created.
+                </description>
+    	        <value type="string"/>
+            </param>
+        </input>
+    </task>
+ </casaxml>
