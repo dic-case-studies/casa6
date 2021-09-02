@@ -264,14 +264,6 @@ def do_imsmooth(vals: ImBaselineVals = None):
     vals.reg = myrg.frombcs(csys=mycsys.torecord(), shape=ia.shape(), chans=vals.imsmooth_chans)
     myrg.done()
     mycsys.done()
-
-    if not vals.dir_ikernel:
-        if isinstance(vals.imsmooth_major, (int, float)):
-            vals.imsmooth_major = str(vals.imsmooth_major)+'arcsec'
-        if isinstance(vals.imsmooth_minor, (int, float)):
-            vals.imsmooth_minor = str(vals.imsmooth_minor)+'arcsec'
-        if isinstance(vals.imsmooth_pa, (int, float)):
-            vals.imsmooth_pa = str(vals.imsmooth_pa)+'deg'
     
     outia = None
     try:
@@ -2170,12 +2162,3 @@ class EmptyMSBaseInformation:
                         'PERSCACHESIZE': 2},
                'TYPE': 'StandardStMan'}}
 
-shutil.rmtree("working")
-os.mkdir("working")
-os.chdir("working")
-imagefile = "/nfsstore/casa_share/casatestdata/image/ref_multipix.signalband"
-#imagefile = "/nfsstore/casa_share/casatestdata/image/expected.im"
-
-imbaseline(imagename=imagefile, linefile="output",  spkernel="gaussian", major='20arcsec', minor='10arcsec', pa="0deg", blfunc='sinusoid', output_cont=True)
-
-os.chdir("..")
