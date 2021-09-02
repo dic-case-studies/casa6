@@ -521,8 +521,7 @@ class TestJyPerK(unittest.TestCase):
     def setUp(self):
         self.test_tmp_dir = 'tmp_test_gencal'
 
-        if (os.path.exists(self.test_tmp_dir)):
-            shutil.rmtree(self.test_tmp_dir)
+        self.delete_dir(self.test_tmp_dir)
         os.mkdir(self.test_tmp_dir)
 
         test_data_path = ctsys.resolve('measurementset/almasd')
