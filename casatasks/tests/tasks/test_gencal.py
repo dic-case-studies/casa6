@@ -543,7 +543,7 @@ class TestJyPerK(unittest.TestCase):
         os.mkdir(cls.test_tmp_dir)
 
         original_vis = os.path.join(cls.test_data_path, '.'.join([cls.ms_key, 'sel']))
-        shutil.copytree(original_vis, cls.vis, symlinks=True)
+        shutil.copytree(original_vis, cls.vis, symlinks=False)
 
     @classmethod
     def tearDownClass(cls):
@@ -562,7 +562,7 @@ class TestJyPerK(unittest.TestCase):
     def _copy_dir(self, file_name):
         original = os.path.join(self.test_data_path, file_name)
         distination = os.path.join(self.test_tmp_dir, dist_file_name)
-        shutil.copytree(original, distination, symlinks=True)
+        shutil.copytree(original, distination, symlinks=False)
         return distination
 
     def test_jyperk_gencal_for_factor_file(self):
