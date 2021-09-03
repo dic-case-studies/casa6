@@ -559,7 +559,7 @@ class TestJyPerK(unittest.TestCase):
         * caltype='jyperk'
         * infile
         """
-        reffile_for_factor_csv = '/'.join([self.test_data_path2, 'jyperk_file.cal'])
+        reffile_for_factor_csv = os.path.join(self.test_data_path2, 'jyperk_file.cal')
 
         self.delete_dir(self.caltable)
 
