@@ -531,9 +531,17 @@ class TestJyPerK(unittest.TestCase):
     test_tmp_dir = 'tmp_test_gencal'
     
     ms_key = 'uid___A002_X85c183_X36f.ms'
-    vis = os.path.join(self.test_tmp_dir, ms_key)
+    vis = os.path.join(test_tmp_dir, ms_key)
     test_data_path = ctsys.resolve('measurementset/almasd')
     test_data_path = 'test_data' # should move test data collection
+
+    caltable = os.path.join(test_tmp_dir, 'generated_caltable_by_gencal.cal')
+
+    def setUp(self):
+        self._delete_dir(self.caltable)
+
+    def tearDown(self):
+        self._delete_dir(self.caltable)
 
     @classmethod
     def setUpClass(cls):
@@ -575,17 +583,14 @@ class TestJyPerK(unittest.TestCase):
         jyperk_factor_csv = self._copy_file('jyperk_factor.csv')
         reference_caltable = self._copy_dir('ref_caltable_for_jyperk_with_factor_file.cal')
 
-        caltable = '/'.join([self.test_tmp_dir, 'caltable_for_jyperk_with_factor_file.cal'])
-        self._delete_dir(caltable)
-
         gencal(vis=self.vis,
-               caltable=caltable,
+               caltable=self.caltable,
                caltype='jyperk',
                infile=jyperk_factor_csv,
                uniform=False
                )
-        self.assertTrue(os.path.exists(caltable))
-        self.assertTrue(th.compTables(caltable, reference_caltable, ['WEIGHT']))
+        self.assertTrue(os.path.exists(self.caltable))
+        self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
 
 
 def suite():
