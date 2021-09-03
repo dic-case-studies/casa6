@@ -532,8 +532,6 @@ class TestJyPerK(unittest.TestCase):
     
     ms_key = 'uid___A002_X85c183_X36f.ms'
     vis = os.path.join(test_tmp_dir, ms_key)
-    test_data_path = ctsys.resolve('measurementset/almasd')
-    test_data_path = 'test_data' # should move test data collection
 
     caltable = os.path.join(test_tmp_dir, 'generated_caltable_by_gencal.cal')
 
@@ -550,7 +548,8 @@ class TestJyPerK(unittest.TestCase):
 
         os.mkdir(cls.test_tmp_dir)
 
-        original_vis = os.path.join(cls.test_data_path, '.'.join([cls.ms_key, 'sel']))
+        ms_datapath = ctsys.resolve('measurementset/almasd')
+        original_vis = os.path.join(ms_datapath, '.'.join([cls.ms_key, 'sel']))
         shutil.copytree(original_vis, cls.vis, symlinks=False)
 
     @classmethod
@@ -562,13 +561,13 @@ class TestJyPerK(unittest.TestCase):
             shutil.rmtree(path)
 
     def _copy_file(self, file_name):
-        original = os.path.join(self.test_data_path, file_name)
+        original = os.path.join(datapath, file_name)
         destination = os.path.join(self.test_tmp_dir, file_name)
         shutil.copyfile(original, destination)
         return destination
 
     def _copy_dir(self, file_name):
-        original = os.path.join(self.test_data_path, file_name)
+        original = os.path.join(datapath, file_name)
         destination = os.path.join(self.test_tmp_dir, dist_file_name)
         shutil.copytree(original, destination, symlinks=False)
         return destination
