@@ -518,7 +518,7 @@ class gencal_tsys_test(unittest.TestCase):
 
 
 class TestJyPerK(unittest.TestCase):
-    """Tests pecifying antenna-based calibration values with external resource.
+    """Tests specifying antenna-based calibration values with external resource.
     
     The caltype jyperk is a type of amplitude correction or 'amp'. In the process
     of specifycal() executed within gencal(), the values loaded from a csv file 
