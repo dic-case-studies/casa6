@@ -419,6 +419,7 @@ xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
               'casa-source/gcwrap/tasks/sdpolaverage.xml': 'xml/sdpolaverage.xml',
               'casa-source/gcwrap/tasks/sdsidebandsplit.xml': 'xml/sdsidebandsplit.xml',
               'casa-source/gcwrap/tasks/plotprofilemap.xml': 'xml/plotprofilemap.xml',
+              'casa-source/gcwrap/tasks/imbaseline.xml': 'xml/imbaseline.xml',
 }
 
 xml_files = [ 'xml/imhead.xml',
