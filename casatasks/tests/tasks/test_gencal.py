@@ -561,6 +561,15 @@ class TestJyPerK(unittest.TestCase):
         if os.path.exists(path):
             shutil.rmtree(path)
 
+    def _read_cparam_as_real(self, name):
+        tb = table()
+        tb.open(name)
+        try:
+            paramlist = tb.getcol('CPARAM').real
+        finally:
+            tb.close()
+        return paramlist[0,0], paramlist[1,0]
+
     def test_jyperk_gencal_for_factor_file(self):
         """Test to check that the factors in the csv file are applied to the caltable.
 
@@ -580,6 +589,17 @@ class TestJyPerK(unittest.TestCase):
 
         reference_caltable = os.path.join(datapath, 'caltable_for_jyperk_with_factor_file.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
+
+        reference = np.array([1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,
+            1.,1.,1.,1.,1.,1., 1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,
+            0.13882191479206085,0.13882191479206085,0.13882191479206085,
+            1.,1.,1.,0.13728643953800201,0.13728643953800201,0.13728643953800201,
+            1.,1.,1.,0.13593915104866028,0.13593915104866028,0.13593915104866028,
+            1.,1.,1.,0.13782501220703125,0.13782501220703125,0.13782501220703125,
+            1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.])
+        
+        p1, p2 = self._read_cparam_as_real(self.caltable)
+        self.assertTrue((reference == p1).all())
 
 
 def suite():
