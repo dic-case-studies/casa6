@@ -555,15 +555,15 @@ class TestJyPerK(unittest.TestCase):
 
     def _copy_file(self, file_name):
         original = os.path.join(self.test_data_path, file_name)
-        distination = os.path.join(self.test_tmp_dir, file_name)
-        shutil.copyfile(original, distination)
-        return distination
+        destination = os.path.join(self.test_tmp_dir, file_name)
+        shutil.copyfile(original, destination)
+        return destination
 
     def _copy_dir(self, file_name):
         original = os.path.join(self.test_data_path, file_name)
-        distination = os.path.join(self.test_tmp_dir, dist_file_name)
-        shutil.copytree(original, distination, symlinks=False)
-        return distination
+        destination = os.path.join(self.test_tmp_dir, dist_file_name)
+        shutil.copytree(original, destination, symlinks=False)
+        return destination
 
     def test_jyperk_gencal_for_factor_file(self):
         """Test to check that the factors in the csv file are applied to the caltable.
