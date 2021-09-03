@@ -587,8 +587,6 @@ class TestJyPerK(unittest.TestCase):
         self.assertTrue(os.path.exists(caltable))
         self.assertTrue(th.compTables(caltable, reference_caltable, ['WEIGHT']))
 
-        self._delete_dir(caltable)
-
 
 def suite():
     return [gencal_antpostest,
