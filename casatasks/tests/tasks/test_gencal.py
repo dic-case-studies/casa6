@@ -528,29 +528,42 @@ class TestJyPerK(unittest.TestCase):
     Details are as follows.
     https://open-jira.nrao.edu/browse/CAS-12236
     """
-    def setUp(self):
-        self.test_tmp_dir = 'tmp_test_gencal'
+    test_tmp_dir = 'tmp_test_gencal'
+    
+    ms_key = 'uid___A002_X85c183_X36f.ms'
+    vis = os.path.join(self.test_tmp_dir, ms_key)
+    test_data_path = ctsys.resolve('measurementset/almasd')
+    test_data_path = 'test_data' # should move test data collection
 
-        self.delete_dir(self.test_tmp_dir)
-        os.mkdir(self.test_tmp_dir)
+    @classmethod
+    def setUpClass(cls):
+        if os.path.exists(cls.test_tmp_dir):
+            shutil.rmtree(cls.test_tmp_dir)
 
-        test_data_path = ctsys.resolve('measurementset/almasd')
-        self.test_data_path2 = 'test_data'
+        os.mkdir(cls.test_tmp_dir)
 
-        ms_key = 'uid___A002_X85c183_X36f.ms'
-        self.vis = os.path.join(self.test_tmp_dir, ms_key)
-        shutil.copytree(os.path.join(test_data_path, '.'.join([ms_key, 'sel'])),
-                        self.vis, symlinks=True)
+        original_vis = os.path.join(cls.test_data_path, '.'.join([cls.ms_key, 'sel']))
+        shutil.copytree(original_vis, cls.vis, symlinks=True)
 
-        self.caltable = '/'.join([self.test_tmp_dir, 'jyperk_file.cal'])
-        self.jyperk_factor_csv = os.path.join(self.test_data_path2, 'jyperk_factor.csv')
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.test_tmp_dir)
 
-    def tearDown(self):
-        shutil.rmtree(self.test_tmp_dir)
-   
-    def delete_dir(self, path):
+    def _delete_dir(self, path):
         if os.path.exists(path):
             shutil.rmtree(path)
+
+    def _copy_file(self, file_name):
+        original = os.path.join(self.test_data_path, file_name)
+        distination = os.path.join(self.test_tmp_dir, file_name)
+        shutil.copyfile(original, distination)
+        return distination
+
+    def _copy_dir(self, file_name):
+        original = os.path.join(self.test_data_path, file_name)
+        distination = os.path.join(self.test_tmp_dir, dist_file_name)
+        shutil.copytree(original, distination, symlinks=True)
+        return distination
 
     def test_jyperk_gencal_for_factor_file(self):
         """Test to check that the factors in the csv file are applied to the caltable.
@@ -559,22 +572,22 @@ class TestJyPerK(unittest.TestCase):
         * caltype='jyperk'
         * infile
         """
-        reffile_for_factor_csv = os.path.join(self.test_data_path2, 'jyperk_file.cal')
+        jyperk_factor_csv = self._copy_file('jyperk_factor.csv')
+        reference_caltable = self._copy_dir('ref_caltable_for_jyperk_with_factor_file.cal')
 
-        self.delete_dir(self.caltable)
+        caltable = '/'.join([self.test_tmp_dir, 'caltable_for_jyperk_with_factor_file.cal'])
+        self._delete_dir(caltable)
 
         gencal(vis=self.vis,
-               caltable=self.caltable,
+               caltable=caltable,
                caltype='jyperk',
-               infile=self.jyperk_factor_csv,
+               infile=jyperk_factor_csv,
                uniform=False
                )
-        self.assertTrue(os.path.exists(self.caltable))
+        self.assertTrue(os.path.exists(caltable))
+        self.assertTrue(th.compTables(caltable, reference_caltable, ['WEIGHT']))
 
-        self.assertTrue(th.compTables(self.caltable, reffile_for_factor_csv, 
-                                      ['WEIGHT']))
-
-        self.delete_dir(self.caltable)
+        self._delete_dir(caltable)
 
 
 def suite():
