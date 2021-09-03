@@ -535,7 +535,7 @@ class TestJyPerK(unittest.TestCase):
         os.mkdir(self.test_tmp_dir)
 
         test_data_path = ctsys.resolve('measurementset/almasd')
-        test_data_path2 = 'test_data'
+        self.test_data_path2 = 'test_data'
 
         ms_key = 'uid___A002_X85c183_X36f.ms'
         self.vis = os.path.join(self.test_tmp_dir, ms_key)
@@ -543,8 +543,7 @@ class TestJyPerK(unittest.TestCase):
                         self.vis, symlinks=True)
 
         self.caltable = '/'.join([self.test_tmp_dir, 'jyperk_file.cal'])
-        self.jyperk_factor_csv = os.path.join(test_data_path2, 'jyperk_factor.csv')
-        self.reffile_for_factor_csv = '/'.join([test_data_path2, 'jyperk_file.cal'])
+        self.jyperk_factor_csv = os.path.join(self.test_data_path2, 'jyperk_factor.csv')
 
     def tearDown(self):
         shutil.rmtree(self.test_tmp_dir)
@@ -560,6 +559,8 @@ class TestJyPerK(unittest.TestCase):
         * caltype='jyperk'
         * infile
         """
+        reffile_for_factor_csv = '/'.join([self.test_data_path2, 'jyperk_file.cal'])
+
         self.delete_dir(self.caltable)
 
         gencal(vis=self.vis,
@@ -570,7 +571,7 @@ class TestJyPerK(unittest.TestCase):
                )
         self.assertTrue(os.path.exists(self.caltable))
 
-        self.assertTrue(th.compTables(self.caltable, self.reffile_for_factor_csv, 
+        self.assertTrue(th.compTables(self.caltable, reffile_for_factor_csv, 
                                       ['WEIGHT']))
 
         self.delete_dir(self.caltable)
