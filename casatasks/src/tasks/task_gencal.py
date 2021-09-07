@@ -146,8 +146,6 @@ class JyperkGencal():
                                                         endpoint=endpoint, infile=infile,
                                                         timeout=timeout, retry=retry,
                                                         retry_wait_time=retry_wait_time):
-                if not selection['vis'] == vis_key:
-                    continue
 
                 _cb.specifycal(caltable=caltable, time='', spw=selection['spw'],
                             caltype='amp', antenna=selection['antenna'], # pol=selection['pol'],
@@ -173,6 +171,10 @@ class JyperkGencal():
                                             timeout=timeout, retry=retry, 
                                             retry_wait_time=retry_wait_time)
 
+        factors = JyperkGencal.__extract_valid_factor(factors, os.path.basename(vis))
+        if len(factors) == 0:
+            raise Exception('There is no factor.')
+
         for factor in factors:
             selection = {}
             selection['vis'] = factor[0]
@@ -181,6 +183,14 @@ class JyperkGencal():
             selection['pol'] = factor[3]
             
             yield selection, 1/np.sqrt(float(factor[4]))
+
+    @classmethod
+    def __extract_valid_factor(cls, factors, vis_key):
+        valid_factors = []
+        for factor in factors:
+            if factor[0] == vis_key:
+                valid_factors.append(factor)
+        return valid_factors
 
 
 __gencal_factory = {
