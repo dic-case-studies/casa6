@@ -581,7 +581,6 @@ class TestJyPerK(unittest.TestCase):
         * caltype='jyperk'
         * infile
         """
-        
         gencal(vis=self.vis,
                caltable=self.caltable,
                caltype='jyperk',
@@ -607,8 +606,6 @@ class TestJyPerK(unittest.TestCase):
     def test_not_vis_name_in_factor_csv(self):
         """Test to check a caltable does not been generated when there are not vis name in the factor csv file.
         """
-        jyperk_factor_csv = '/work/test/yohei/c/cas12236/test_data/unittest/gencal/jyperk_factor.csv'
-        
         vis = '.'.join([self.vis, 'sel'])
         self._delete_dir(vis)
         os.symlink(self.vis, vis)
