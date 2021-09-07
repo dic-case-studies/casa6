@@ -100,7 +100,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=[ ] #'scipy','numpy', 'six' 
+    install_requires=['pytest'] #'scipy','numpy', 'six' 
 )
 
 # Delete Copy of File to avoid accidental commit to this location
