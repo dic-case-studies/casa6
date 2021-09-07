@@ -613,13 +613,12 @@ class TestJyPerK(unittest.TestCase):
         self._delete_dir(vis)
         os.symlink(self.vis, vis)
         
-        gencal(vis=vis,
-               caltable=self.caltable,
-               caltype='jyperk',
-               infile=self.jyperk_factor_csv,
-               uniform=False)
-        
-        self.assertFalse(os.path.exists(self.caltable))
+        with self.assertRaises(Exception):
+            gencal(vis=vis,
+                caltable=self.caltable,
+                caltype='jyperk',
+                infile=self.jyperk_factor_csv,
+                uniform=False)
 
 
 def suite():
