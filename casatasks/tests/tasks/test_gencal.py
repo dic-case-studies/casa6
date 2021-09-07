@@ -610,6 +610,7 @@ class TestJyPerK(unittest.TestCase):
         jyperk_factor_csv = '/work/test/yohei/c/cas12236/test_data/unittest/gencal/jyperk_factor.csv'
         
         vis = '.'.join([self.vis, 'sel'])
+        self._delete_dir(vis)
         os.symlink(self.vis, vis)
         
         gencal(vis=vis,
