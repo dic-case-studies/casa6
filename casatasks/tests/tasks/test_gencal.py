@@ -558,8 +558,8 @@ class TestJyPerK(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(cls.working_directory)
         os.chdir(cls.casa_cwd_path)
+        shutil.rmtree(cls.working_directory)
 
     def _delete_dir(self, path):
         if os.path.exists(path):
