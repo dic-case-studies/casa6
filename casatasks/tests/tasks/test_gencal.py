@@ -603,7 +603,7 @@ class TestJyPerK(unittest.TestCase):
             1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.])
         
         p1, p2 = self._read_cparam_as_real(self.caltable)
-        self.assertTrue((reference == p1).allclose())
+        self.assertTrue(np.allclose(reference, p1))
 
 
 def suite():
