@@ -161,6 +161,7 @@ class listcal_test(unittest.TestCase):
 
         vis_name = 'ngc5921.ms'
         caltable_name = 'ngc5921.ref1a.gcal'
+        reffile_name = 'reflistcal.txt'
 
         gainvis_name = 'gaincaltest2.ms'
         gaincaltable_name = 'gaincaltest2.ms.G0'
@@ -168,11 +169,13 @@ class listcal_test(unittest.TestCase):
         shutil.copytree(os.path.join(datapath,caltable_name),caltable_name)
         shutil.copytree(os.path.join(datapath, gainvis_name), gainvis_name)
         shutil.copytree(os.path.join(datapath, gaincaltable_name), gaincaltable_name)
+        shutil.copyfile(os.path.join(datapath, reffile_name), reffile_name)
         cls._vis = vis_name
         cls._caltable = caltable_name
         cls._gainvis = gainvis_name
         cls._gaincaltable = gaincaltable_name
         cls._listfile = 'listcal_listfile.txt'
+        cls._reffile = reffile_name
 
     @classmethod
     def tearDownClass(cls):
@@ -180,6 +183,7 @@ class listcal_test(unittest.TestCase):
         shutil.rmtree(cls._caltable)
         shutil.rmtree(cls._gainvis)
         shutil.rmtree(cls._gaincaltable)
+        os.remove(cls._reffile)
 
     def tearDown(self):
         if os.path.isfile(self._listfile):
@@ -228,6 +232,16 @@ class listcal_test(unittest.TestCase):
 
         header = getLine(self._listfile, 3)
         self.assertTrue(header.startswith("Time       Field      Chn| Amp    Phs  F  Amp    Phs  F| Amp    Phs  F  Amp    Phs  F| Amp    Phs  F  Amp    Phs  F| Amp    Phs  F  Amp    Phs  F|"))
+
+    def test_compareValues(self):
+        listcal(vis=self._gainvis, caltable=self._gaincaltable, listfile=self._listfile)
+
+        with open(self._listfile) as file1:
+            with open(self._reffile) as file2:
+                diff = set(file1).difference(file2)
+
+        # There are differences in the file path when running the command
+        self.assertTrue(len(diff) == 4)
 
 def suite():
     return [test_listcal_minimal, listcal_test]
