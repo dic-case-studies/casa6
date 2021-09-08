@@ -4,6 +4,7 @@ import numpy
 import shutil
 import unittest
 import math
+from scipy import signal
 
 from casatools import ctsys, image, regionmanager, componentlist, table, quanta
 from casatasks import imbaseline, casalog, imsubimage
@@ -15,11 +16,12 @@ _tb = table()
 _qa = quanta()
 ctsys_resolve = ctsys.resolve
 
+### imsmooth ###
 
 class imsmooth_test(unittest.TestCase):
 
     image_names=['g192_a2.image', 'g192_a2.image-2.rgn']
-    datapath = ctsys_resolve('unittest/imbaseline/')
+    datapath = ctsys_resolve('unittest/imsmooth/')
     targetres_im = "imsmooth_targetres.fits"
     tiny = "tiny.im"
 
@@ -375,6 +377,7 @@ class imsmooth_test(unittest.TestCase):
         myia.done()
         diff = conv - bessel
         self.assertTrue(abs(diff).max() < 2e-7)
+
 
 def suite():
     return [imsmooth_test]    
