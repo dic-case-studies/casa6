@@ -85,7 +85,7 @@ public:
   // Juat define the active-set aspen scales
   void defineAspScales(std::vector<casacore::Float>& scaleSizes);
 
-  void switchedToHogbom();
+  void switchedToHogbom(bool runlong= false);
   void setOrigDirty(const casacore::Matrix<casacore::Float>& dirty);
   void setFusedThreshold(const casacore::Float fusedThreshold = 0.0) { itsFusedThreshold = fusedThreshold; }
   void setUserLargestScale(const casacore::Int largestScale = -1) { itsUserLargestScale = float(largestScale); }
