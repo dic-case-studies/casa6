@@ -184,7 +184,7 @@ class ImBaselineVals:
         self.sp_bkernel = self.sdsmooth_kernel == 'boxcar'
         self.sp_gkernel = self.sdsmooth_kernel == 'gaussian'
         if not ( self.pass_sdsmooth or self.sp_bkernel or self.sp_gkernel ):
-            raise ValueError('Unsupported spectral smoothing kernel, ' + self.spkernel)
+            raise ValueError('Unsupported spectral smoothing kernel, ' + self.sdsmooth_kernel)
         
         if self.pass_sdsmooth:
             self.sdsmooth_output = self.temporary_vis

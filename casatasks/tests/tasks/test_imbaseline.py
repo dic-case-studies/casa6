@@ -1,14 +1,16 @@
 import random
 import os
 import numpy
+import re
 import shutil
 import unittest
 import math
 from scipy import signal
 
-from casatools import ctsys, image, regionmanager, componentlist, table, quanta
+from casatools import ctsys, image, regionmanager, componentlist, table, quanta ,ms
 from casatasks import imbaseline, casalog, imsubimage
-from casatasks.private.task_imbaseline import ImBaselineVals as blv, do_imsmooth
+from casatasks.private.task_imbaseline import ImBaselineVals as blv, do_imsmooth, do_sdsmooth
+from casatasks.private.sdutil import table_manager
 
 _ia = image()
 _rg = regionmanager()
@@ -379,8 +381,281 @@ class imsmooth_test(unittest.TestCase):
         self.assertTrue(abs(diff).max() < 2e-7)
 
 
+### sdsmooth ###
+
+def gaussian_kernel(nchan, kwidth):
+    sigma = kwidth / (2.0 * math.sqrt(2.0 * math.log(2.0)))
+    g = signal.gaussian(nchan, sigma, False)
+    g /= g.sum()
+    g0 = g[0]
+    g[:-1] = g[1:]
+    g[-1] = g0
+    return g
+
+class sdsmooth_test_base(unittest.TestCase):
+    """
+    Base class for sdsmooth unit test.
+    The following attributes/functions are defined here.
+
+        datapath
+        decorators (invalid_argument_case, exception_case)
+    """
+    datapath=ctsys.resolve('unittest/sdsmooth/')
+    infile_data = 'tsdsmooth_test.ms'
+    infile_float = 'tsdsmooth_test_float.ms'
+
+    # task execution result
+    result = None
+
+    @property
+    def outfile(self):
+        return self.infile.rstrip('/') + '_out'
+
+    # decorators
+    @staticmethod
+    def invalid_argument_case(func):
+        """
+        Decorator for the test case that is intended to fail
+        due to invalid argument.
+        """
+        import functools
+        @functools.wraps(func)
+        def wrapper(self):
+            func(self)
+            self.assertFalse(self.result, msg='The task must return False')
+        return wrapper
+
+    @staticmethod
+    def exception_case(exception_type, exception_pattern):
+        """
+        Decorator for the test case that is intended to throw
+        exception.
+
+            exception_type: type of exception
+            exception_pattern: regex for inspecting exception message
+                               using re.search
+        """
+        def wrapper(func):
+            import functools
+            @functools.wraps(func)
+            def _wrapper(self):
+                self.assertTrue(len(exception_pattern) > 0, msg='Internal Error')
+                with self.assertRaises(exception_type) as ctx:
+                    func(self)
+                    self.fail(msg='The task must throw exception')
+                the_exception = ctx.exception
+                message = str(the_exception)
+                self.assertIsNotNone(re.search(exception_pattern, message), msg='error message \'%s\' is not expected.'%(message))
+            return _wrapper
+        return wrapper
+
+    @staticmethod
+    def weight_case(func):
+        import functools
+        @functools.wraps(func)
+        def wrapper(self):
+            with table_manager(self.infile) as tb:
+                for irow in range(tb.nrows()):
+                    self.assertTrue(tb.iscelldefined('WEIGHT_SPECTRUM', irow))
+
+            # weight mode flag
+            self.weight_propagation = True
+
+            func(self)
+
+        return wrapper
+
+    def exec_sdsmooth(self, infile, outfile, vals):
+        vals.temporary_vis = infile
+        vals.sdsmooth_output = outfile
+        do_sdsmooth(vals)
+
+    def run_test(self, *args, **kwargs):
+        datacol_name = self.datacolumn.upper()
+        weight_mode = hasattr(self, 'weight_propagation') and getattr(self, 'weight_propagation') is True
+
+        if 'kwidth' in kwargs:
+            kwidth = kwargs['kwidth']
+        else:
+            kwidth = 5
+
+        vals = blv(imagename=self.infile, spkernel='gaussian', kwidth=kwidth)
+        self.exec_sdsmooth(self.infile, self.outfile, vals)
+
+        # sanity check
+        self.assertTrue(os.path.exists(self.outfile), msg='Output file is not properly created.')
+
+        if 'spw' in kwargs:
+            spw = kwargs['spw']
+        else:
+            spw = ''
+        dd_selection = None
+        if len(spw) == 0:
+            expected_nrow = 2
+            with table_manager(self.infile) as tb:
+                data_in = tb.getvarcol(datacol_name)
+                flag_in = tb.getvarcol('FLAG')
+                if weight_mode:
+                    weight_in = tb.getvarcol('WEIGHT_SPECTRUM')
+        else:
+            myms = ms()
+            a = myms.msseltoindex(self.infile, spw=spw)
+            spw_selection = a['spw']
+            dd_selection = a['dd']
+            expected_nrow = len(spw_selection)
+            with table_manager(self.infile) as tb:
+                try:
+                    tsel = tb.query('DATA_DESC_ID IN %s'%(dd_selection.tolist()))
+                    data_in = tsel.getvarcol(datacol_name)
+                    flag_in = tsel.getvarcol('FLAG')
+                    if weight_mode:
+                        weight_in = tsel.getvarcol('WEIGHT_SPECTRUM')
+                finally:
+                    tsel.close()
+
+        with table_manager(self.outfile) as tb:
+            nrow = tb.nrows()
+            data_out = tb.getvarcol(datacol_name)
+            flag_out = tb.getvarcol('FLAG')
+            if weight_mode:
+                weight_out = tb.getvarcol('WEIGHT_SPECTRUM')
+
+        # verify nrow
+        self.assertEqual(nrow, expected_nrow, msg='Number of rows mismatch (expected %s actual %s)'%(expected_nrow, nrow))
+
+        # verify data
+        eps = 1.0e-6
+        for key in data_out.keys():
+            row_in = data_in[key]
+            flg_in = flag_in[key]
+            row_in[numpy.where(flg_in == True)] = 0.0
+            row_out = data_out[key]
+            self.assertEqual(row_in.shape, row_out.shape, msg='Shape mismatch in row %s'%(key))
+
+            npol, nchan, _ = row_out.shape
+            kernel_array = gaussian_kernel(nchan, kwidth)
+            expected = numpy.convolve(row_in[0,:,0], kernel_array, mode='same')
+            output = row_out[0,:,0]
+            zero_index = numpy.where(numpy.abs(expected) <= eps)
+            self.assertTrue(all(numpy.abs(output[zero_index]) < eps), msg='Failed to verify zero values: row %s'%(key))
+            nonzero_index= numpy.where(numpy.abs(expected) > eps)
+            diff = numpy.abs((output[nonzero_index] - expected[nonzero_index]) / expected[nonzero_index].max())
+            #print diff
+            #print output[nonzero_index]
+            #print expected[nonzero_index]
+            self.assertTrue(all(diff < eps), msg='Failed to verify nonzero values: row %s'%(key))
+            #print 'row_in', row_in[0,:,0].tolist()
+            #print 'gaussian', kernel_array.tolist()
+            #print 'expected', expected.tolist()
+            #print 'result', row_out[0,:,0].tolist()
+
+            # weight check if this is weight test
+            if weight_mode:
+                #print 'Weight propagation test'
+                wgt_in = weight_in[key]
+                wgt_out = weight_out[key]
+                wkwidth = int(kwidth + 0.5)
+                wkwidth += (1 if wkwidth % 2 == 0 else 0)
+                half_width = wkwidth // 2
+                peak_chan = kernel_array.argmax()
+                start_chan = peak_chan - half_width
+                wkernel = kernel_array[start_chan:start_chan+wkwidth].copy()
+                wkernel /= sum(wkernel)
+                weight_expected = wgt_in.copy()
+                for ichan in range(half_width, nchan-half_width):
+                    s = numpy.zeros(npol, dtype=float)
+                    for jchan in range(wkwidth):
+                        s += wkernel[jchan] * wkernel[jchan] / wgt_in[:,ichan-half_width+jchan,0]
+                    weight_expected[:,ichan,0] = 1.0 / s
+                #print weight_expected[:,:10]
+                diff = numpy.abs((wgt_out - weight_expected) / weight_expected)
+                self.assertTrue(all(diff.flatten() < eps), msg='Failed to verify spectral weight: row %s'%(key))
+
+    def _setUp(self, files):
+        for f in files:
+            if os.path.exists(f):
+                shutil.rmtree(f)
+            shutil.copytree(os.path.join(self.datapath, f), f)
+
+    def _tearDown(self, files):
+        for f in files:
+            if os.path.exists(f):
+                shutil.rmtree(f)
+
+    def setUp(self):
+        self._setUp([self.infile])
+
+    def tearDown(self):
+        self._tearDown([self.infile, self.outfile])
+
+class sdsmooth_test_fail(sdsmooth_test_base):
+    """
+    Unit test for task sdsmooth.
+
+    The list of tests:
+    test_sdsmooth_fail01 --- default parameters (raises an error)
+    test_sdsmooth_fail02 --- invalid kernel type
+    test_sdsmooth_fail03 --- invalid selection (empty selection result)
+    test_sdsmooth_fail04 --- outfile exists (overwrite=False)
+    test_sdsmooth_fail05 --- empty outfile
+    test_sdsmooth_fail06 --- invalid data column name
+    """
+    invalid_argument_case = sdsmooth_test_base.invalid_argument_case
+    exception_case = sdsmooth_test_base.exception_case
+
+    infile = sdsmooth_test_base.infile_data
+
+    @invalid_argument_case
+    def test_sdsmooth_fail01(self):
+        """test_sdsmooth_fail01 --- default parameters (raises an error)"""
+        self.assertRaises(Exception, do_sdsmooth)
+
+    @invalid_argument_case
+    def test_sdsmooth_fail02(self):
+        """test_sdsmooth_fail02 --- invalid kernel type"""
+        self.assertRaises(ValueError, blv, imagename=self.infile, spkernel='normal') # must move to blv test part
+
+    @exception_case(RuntimeError, 'Spw Expression: No match found for 3')
+    def test_sdsmooth_fail03(self):
+        """test_sdsmooth_fail03 --- invalid selection (empty selection result)"""
+        vals = blv(imagename=self.infile, spkernel='gaussian')
+        vals.sdsmooth_spw = '3'
+        self.exec_sdsmooth(self.infile, self.outfile, vals)
+
+
+class sdsmooth_test_complex(sdsmooth_test_base):
+    """
+    Unit test for task sdsmooth. Process MS having DATA column.
+
+    The list of tests:
+    test_sdsmooth_complex_fail01 --- non-existing data column (FLOAT_DATA)
+    test_sdsmooth_complex_gauss01 --- gaussian smoothing (kwidth 5)
+    test_sdsmooth_complex_gauss02 --- gaussian smoothing (kwidth 3)
+    test_sdsmooth_complex_select --- data selection (spw)
+    test_sdsmooth_complex_overwrite --- overwrite existing outfile (overwrite=True)
+    """
+    exception_case = sdsmooth_test_base.exception_case
+    infile = sdsmooth_test_base.infile_data
+    datacolumn = 'data'
+
+    @exception_case(RuntimeError, 'Desired column \(FLOAT_DATA\) not found in the input MS')
+    def test_sdsmooth_complex_fail01(self):
+        """test_sdsmooth_complex_fail01 --- non-existing data column (FLOAT_DATA)"""
+        vals = blv(imagename=self.infile, spkernel='gaussian')
+        vals.datacolumn = datacolumn='float_data'
+        self.exec_sdsmooth(self.infile, self.outfile, vals)
+
+    def test_sdsmooth_complex_gauss01(self):
+        """test_sdsmooth_complex_gauss01 --- gaussian smoothing (kwidth 5)"""
+        self.run_test(kwidth=5)
+
+    def test_sdsmooth_complex_gauss02(self):
+        """test_sdsmooth_complex_gauss02 --- gaussian smoothing (kwidth 3)"""
+        self.run_test(kwidth=3)
+
 def suite():
-    return [imsmooth_test]    
+    return [imsmooth_test, sdsmooth_test_fail, sdsmooth_test_complex]    
 
 if __name__ == '__main__':
+    os.chdir("/work/dev/shimada/casa6.13520/tmp")
     unittest.main()
