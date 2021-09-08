@@ -1693,9 +1693,11 @@ def write_makefile_begin(targets, mode="genmake"):
         mk.write("\nDEPDIR := " + depdir + "\n")
         mk.write("# override optimization for debug builds")
         mk.write("\ndebug: OPTIM_FLAGS := -g \n")
+        mk.write("\nrelwithdebinfo: OPTIM_FLAGS := -g $(OPTIM_FLAGS) \n")
         mk.write("\n.PHONY: " + all_target + "\n")
         mk.write(all_target + ": " + sep.join(targets) + "\n")
         mk.write('\ndebug: ' + all_target)
+        mk.write('\nrelwithdebinfo: ' + all_target)
         mk.write(
             sep.join([
                 "\n", clean_target, ": "
@@ -1705,7 +1707,7 @@ def write_makefile_begin(targets, mode="genmake"):
         )
 
 def filter_optim_debug(cmd):
-    # take out explicit optimization/debugging flags
+    # take out explicit optimization/debugging flags, these are controlled instead with the make target
     cmd = cmd.replace('-g ', '')
     cmd = re.sub('-Wp,-D_FORTIFY_SOURCE=\d+', '', cmd)
     return re.sub('-O\d+','', cmd)
