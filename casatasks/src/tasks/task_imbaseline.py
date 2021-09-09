@@ -32,7 +32,7 @@ class ImBaselineVals:
 
         # sdbaseline
         self.sdbaseline_bloutput = bloutput
-        self.sdbaseline_maskmode = maskmode     # list(default)/auto
+        self.sdbaseline_maskmode = maskmode.lower() # list(default)/auto
         self.sdbaseline_chans = chans           # maskmode = list
         self.sdbaseline_thresh = thresh         # maskmode = auto
         self.sdbaseline_avg_limit = avg_limit   # maskmode = auto
@@ -240,7 +240,9 @@ def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thre
         do_sdsmooth(vals)
         print("end sdsmooth")
 
+    print("start sdbaseline")
     do_sdbaseline(vals)
+    print("end sdbaseline")
 
     convert_ms_to_image(vals)
 
@@ -554,7 +556,6 @@ def do_sdsmooth(vals: ImBaselineVals = None):
 ### sdbaseline ###
 
 def do_sdbaseline(vals: ImBaselineVals = None):
-    print("start sdbaseline")
 
     try:
         _prepare_sdbaseline(vals)
@@ -578,7 +579,6 @@ def do_sdbaseline(vals: ImBaselineVals = None):
         
         if vals.sdbaseline_blfunc == 'variable':
             _restore_sorted_table_keyword(vals.sdsmooth_output, sorttab_info)
-
 
     except Exception:
         raise
