@@ -20,7 +20,7 @@
         <value/>
     </param>
 
-    <param type="path" name="linefile" kind="text" mustexist="true"><shortdescription>output continuum subtracted image file name</shortdescription><description></description>        
+    <param type="path" name="linefile" kind="text"><shortdescription>output continuum subtracted image file name</shortdescription><description></description>        
         <value/>
     </param>
 
@@ -28,7 +28,7 @@
         <value type="bool">False</value>
     </param>
 
-    <param type="path" name="bloutput" kind="text" mustexist="true"><shortdescription>name of file in which best-fit parameters are written. No output if &quot;&quot; (default).</shortdescription><description></description>        
+    <param type="path" name="bloutput" kind="text"><shortdescription>name of file in which best-fit parameters are written. No output if &quot;&quot; (default).</shortdescription><description></description>        
         <value/>
     </param>
 
