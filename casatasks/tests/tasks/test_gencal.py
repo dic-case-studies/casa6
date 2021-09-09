@@ -575,11 +575,11 @@ class TestJyPerK(unittest.TestCase):
         return paramlist[0,0], paramlist[1,0]
 
     def test_jyperk_gencal_for_asdm_web_api(self):
-        """Test to check that the factors in the csv file are applied to the caltable.
+        """Test to check that the factors from the web API are applied to the caltable.
 
         The following arguments are required for this test.
         * caltype='jyperk'
-        * infile
+        * endpoint='asdm'
         """
         gencal(vis=self.vis,
                caltable=self.caltable,
