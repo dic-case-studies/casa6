@@ -610,7 +610,7 @@ class TestJyPerK(unittest.TestCase):
         self._delete_dir(vis)
         os.symlink(self.vis, vis)
         
-        with self.assertRaises(Exception):
+        with self.assertRaises(Exception, msg='There is no factor.'):
             gencal(vis=vis,
                 caltable=self.caltable,
                 caltype='jyperk',
