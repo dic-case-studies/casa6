@@ -24,11 +24,11 @@
         <value/>
     </param>
 
-    <param type="bool" name="output_cont"><shortdescription>output continuum image. Name will be imagename + '.cont'</shortdescription><description></description>
+    <param type="bool" name="output_cont"><shortdescription>output continuum image. Name will be imagename + &quot;.cont&quot;</shortdescription><description></description>
         <value type="bool">False</value>
     </param>
 
-    <param type="path" name="bloutput" kind="text" mustexist="true"><shortdescription>name of file in which best-fit parameters are written. No output if '' (default).</shortdescription><description></description>        
+    <param type="path" name="bloutput" kind="text" mustexist="true"><shortdescription>name of file in which best-fit parameters are written. No output if &quot;&quot; (default).</shortdescription><description></description>        
         <value/>
     </param>
 
