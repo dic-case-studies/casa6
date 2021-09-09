@@ -628,12 +628,14 @@ class TestJyPerK(unittest.TestCase):
         self._delete_dir(vis)
         os.symlink(self.vis, vis)
         
-        with self.assertRaises(Exception, msg='There is no factor.'):
+        with self.assertRaises(Exception) as cm:
             gencal(vis=vis,
                 caltable=self.caltable,
                 caltype='jyperk',
                 infile=self.jyperk_factor_csv,
                 uniform=False)
+
+        self.assertEqual(cm.exception.args[0], 'There is no factor.')
 
 
 def suite():
