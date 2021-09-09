@@ -318,7 +318,7 @@ class MeanElevation():
         science_dd = cls._get_science_dd(vis)
         rows = cls._query_rows(vis, science_dd, stateid, antenna_id)
 
-        return cls._calc_elevation_mean(rows)
+        return cls._calc_elevation_mean(rows, vis)
 
     @staticmethod
     def _get_stateid(vis): ###
@@ -349,7 +349,7 @@ class MeanElevation():
         return rows
 
     @staticmethod
-    def _calc_elevation_mean(rows):
+    def _calc_elevation_mean(rows, vis):
         elevations = []       
         qa = quanta()
 
