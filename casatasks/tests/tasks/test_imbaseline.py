@@ -3,6 +3,7 @@ import os
 import numpy
 import re
 import shutil
+import sys
 import unittest
 import math
 from scipy import signal
@@ -10,7 +11,7 @@ from scipy import signal
 from casatools import ctsys, image, regionmanager, componentlist, table, quanta ,ms
 from casatasks import imbaseline, casalog, imsubimage
 from casatasks.private.task_imbaseline import ImBaselineVals as blv, do_imsmooth, do_sdsmooth
-from casatasks.private.sdutil import table_manager
+from casatasks.private.sdutil import table_manager, calibrater_manager
 
 _ia = image()
 _rg = regionmanager()
@@ -469,6 +470,11 @@ class sdsmooth_test_base(unittest.TestCase):
         vals.temporary_vis = infile
         vals.sdsmooth_output = outfile
         do_sdsmooth(vals)
+    
+    def set_blv_params(self, vals, args):
+        for key, val in args.items():
+            if key in vals.__dict__:
+                vals.__dict__[key] = val
 
     def run_test(self, *args, **kwargs):
         datacol_name = self.datacolumn.upper()
@@ -480,6 +486,7 @@ class sdsmooth_test_base(unittest.TestCase):
             kwidth = 5
 
         vals = blv(imagename=self.infile, spkernel='gaussian', kwidth=kwidth)
+        vals.datacolumn = datacol_name
         self.exec_sdsmooth(self.infile, self.outfile, vals)
 
         # sanity check
@@ -596,13 +603,9 @@ class sdsmooth_test_fail(sdsmooth_test_base):
     test_sdsmooth_fail01 --- default parameters (raises an error)
     test_sdsmooth_fail02 --- invalid kernel type
     test_sdsmooth_fail03 --- invalid selection (empty selection result)
-    test_sdsmooth_fail04 --- outfile exists (overwrite=False)
-    test_sdsmooth_fail05 --- empty outfile
-    test_sdsmooth_fail06 --- invalid data column name
     """
     invalid_argument_case = sdsmooth_test_base.invalid_argument_case
     exception_case = sdsmooth_test_base.exception_case
-
     infile = sdsmooth_test_base.infile_data
 
     @invalid_argument_case
@@ -631,8 +634,6 @@ class sdsmooth_test_complex(sdsmooth_test_base):
     test_sdsmooth_complex_fail01 --- non-existing data column (FLOAT_DATA)
     test_sdsmooth_complex_gauss01 --- gaussian smoothing (kwidth 5)
     test_sdsmooth_complex_gauss02 --- gaussian smoothing (kwidth 3)
-    test_sdsmooth_complex_select --- data selection (spw)
-    test_sdsmooth_complex_overwrite --- overwrite existing outfile (overwrite=True)
     """
     exception_case = sdsmooth_test_base.exception_case
     infile = sdsmooth_test_base.infile_data
@@ -642,7 +643,7 @@ class sdsmooth_test_complex(sdsmooth_test_base):
     def test_sdsmooth_complex_fail01(self):
         """test_sdsmooth_complex_fail01 --- non-existing data column (FLOAT_DATA)"""
         vals = blv(imagename=self.infile, spkernel='gaussian')
-        vals.datacolumn = datacolumn='float_data'
+        vals.datacolumn = 'float_data'
         self.exec_sdsmooth(self.infile, self.outfile, vals)
 
     def test_sdsmooth_complex_gauss01(self):
@@ -653,9 +654,313 @@ class sdsmooth_test_complex(sdsmooth_test_base):
         """test_sdsmooth_complex_gauss02 --- gaussian smoothing (kwidth 3)"""
         self.run_test(kwidth=3)
 
+
+class sdsmooth_test_float(sdsmooth_test_base):
+    """
+    Unit test for task sdsmooth. Process MS having FLOAT_DATA column.
+
+    The list of tests:
+    test_sdsmooth_float_fail01 --- non-existing data column (DATA)
+    test_sdsmooth_float_gauss01 --- gaussian smoothing (kwidth 5)
+    test_sdsmooth_float_gauss02 --- gaussian smoothing (kwidth 3)
+    """
+    exception_case = sdsmooth_test_base.exception_case
+    infile = sdsmooth_test_base.infile_float
+    datacolumn = 'float_data'
+
+    @exception_case(RuntimeError, 'Desired column \(DATA\) not found in the input MS')
+    def test_sdsmooth_float_fail01(self):
+        """test_sdsmooth_complex_fail01 --- non-existing data column (DATA)"""
+        vals = blv(imagename=self.infile, spkernel='gaussian')
+        vals.datacolumn = 'data'
+        self.exec_sdsmooth(self.infile, self.outfile, vals)
+
+    def test_sdsmooth_float_gauss01(self):
+        """test_sdsmooth_float_gauss01 --- gaussian smoothing (kwidth 5)"""
+        self.run_test(kwidth=5)
+
+    def test_sdsmooth_float_gauss02(self):
+        """test_sdsmooth_float_gauss02 --- gaussian smoothing (kwidth 3)"""
+        self.run_test(kwidth=3)
+
+class sdsmooth_test_weight(sdsmooth_test_base):
+    """
+    Unit test for task sdsmooth. Verify weight propagation.
+
+    The list of tests:
+    test_sdsmooth_weight_gauss01 --- gaussian smoothing (kwidth 5)
+    test_sdsmooth_weight_gauss02 --- gaussian smoothing (kwidth 3)
+    """
+    weight_case = sdsmooth_test_base.weight_case
+    infile = sdsmooth_test_base.infile_data
+    datacolumn = 'data'
+
+    def setUp(self):
+        super(sdsmooth_test_weight, self).setUp()
+
+        # initialize WEIGHT_SPECTRUM
+        with calibrater_manager(self.infile) as cb:
+            cb.initweights()
+
+    @weight_case
+    def test_sdsmooth_weight_gauss01(self):
+        """test_sdsmooth_weight_gauss01 --- gaussian smoothing (kwidth 5)"""
+        self.run_test(kwidth=5)
+
+    @weight_case
+    def test_sdsmooth_weight_gauss02(self):
+        """test_sdsmooth_weight_gauss02 --- gaussian smoothing (kwidth 3)"""
+        self.run_test(kwidth=3)
+
+
+class sdsmooth_test_boxcar(sdsmooth_test_base):
+    """
+    Unit test for checking boxcar smoothing.
+
+    The input data (sdsmooth_delta.ms) has data with the following features:
+      in row0, pol0: 1 at index 100, 0 elsewhere,
+      in row0, pol1: 1 at index 0 and 2047(i.e., at both ends), 0 elsewhere,
+      in row1, pol0: 1 at index 10 and 11, 0 elsewhere,
+      in row1, pol1: 0 throughout.
+    If input spectrum has delta-function-like feature, the
+    expected output spectrum will be smoothing kernel itself.
+    As for the data at [row0, pol0], the output data will be:
+      kwidth==1 -> spec[100] = 1
+      kwidth==2 -> spec[100,101] = 1/2 (=0.5)
+      kwidth==3 -> spec[99,100,101] = 1/3 (=0.333...)
+      kwidth==4 -> spec[99,100,101,102] = 1/4 (=0.25)
+      kwidth==5 -> spec[98,99,100,101,102] = 1/5 (=0.2)
+      and so on.
+    """
+
+    infile = 'tsdsmooth_delta.ms'
+    datacolumn = 'float_data'
+    centers = {'00': [100], '01': [0,2047], '10': [10,11], '11':[]}
+
+    def _getLeftWidth(self, kwidth):
+        assert(0 < kwidth)
+        return (2-kwidth)//2
+
+    def _getRightWidth(self, kwidth):
+        assert(0 < kwidth)
+        return kwidth//2
+
+    def _checkResult(self, spec, kwidth, centers, tol=5.0e-06):
+        sys.stdout.write('testing kernel_width = '+str(kwidth)+'...')
+        for i in range(len(spec)):
+            count = 0
+            for j in range(len(centers)):
+                lidx = centers[j] + self._getLeftWidth(kwidth)
+                ridx = centers[j] + self._getRightWidth(kwidth)
+                if (lidx <= i) and (i <= ridx): count += 1
+            value = count/float(kwidth)
+            self.assertTrue(((spec[i] - value) < tol), msg='Failed.')
+        sys.stdout.write('OK.\n')
+
+    def setUp(self):
+        super(sdsmooth_test_boxcar, self).setUp()
+
+    def test000(self):
+        # testing kwidth from 1 to 5.
+        for kwidth in range(1,6):
+            vals = blv(imagename=self.infile, spkernel='boxcar', kwidth = kwidth)
+            vals.datacolumn = self.datacolumn
+            self.exec_sdsmooth(self.infile, self.outfile, vals)
+            with table_manager(self.outfile) as tb:
+                for irow in range(tb.nrows()):
+                    spec = tb.getcell(self.datacolumn.upper(), irow)
+                    for ipol in range(len(spec)):
+                        center = self.centers[str(irow)+str(ipol)]
+                        self._checkResult(spec[ipol], kwidth, center)
+
+    def test000_datacolumn_uppercase(self):
+        # testing kwidth from 1 to 5.
+        datacolumn = "FLOAT_DATA"
+        for kwidth in range(1,6):
+            vals = blv(imagename=self.infile, spkernel='boxcar', kwidth = kwidth)
+            vals.datacolumn = self.datacolumn
+            self.exec_sdsmooth(self.infile, self.outfile, vals)
+            with table_manager(self.outfile) as tb:
+                for irow in range(tb.nrows()):
+                    spec = tb.getcell(datacolumn.upper(), irow)
+                    for ipol in range(len(spec)):
+                        center = self.centers[str(irow)+str(ipol)]
+                        self._checkResult(spec[ipol], kwidth, center)
+
+
+class sdsmooth_selection(sdsmooth_test_base, unittest.TestCase):
+    infile = "analytic_type1.sm.ms"
+    outfile = "smoothed.ms"
+    # common_param = dict(infile=infile, outfile=outfile,
+    #                     kernel='boxcar', kwidth=5)
+    selections=dict(sdsmooth_intent=("CALIBRATE_ATMOSPHERE#OFF*", [1]),
+                    sdsmooth_antenna=("DA99", [1]),
+                    sdsmooth_field=("M1*", [0]),
+                    sdsmooth_spw=(">6", [1]),
+                    sdsmooth_timerange=("2013/4/28/4:13:21",[1]),
+                    sdsmooth_scan=("0~8", [0]),
+                    sdsmooth_pol=("YY", [1]))
+    verbose = False
+
+    def _get_selection_string(self, key):
+        if key not in self.selections.keys():
+            raise ValueError("Invalid selection parameter %s" % key)
+        return {key: self.selections[key][0]}
+
+    def _get_selected_row_and_pol(self, key):
+        if key not in self.selections.keys():
+            raise ValueError("Invalid selection parameter %s" % key)
+        pols = [0,1]
+        rows = [0,1]
+        if key == 'sdsmooth_pol':  #self.selection stores pol ids
+            pols = self.selections[key][1]
+        else: #self.selection stores row ids
+            rows = self.selections[key][1]
+        return (rows, pols)
+
+    def _get_reference(self, nchan, row_offset, pol_offset, datacol):
+        if datacol.startswith("float"):
+            col_offset = 10
+        elif datacol.startswith("corr"):
+            col_offset = 50
+        else:
+            raise ValueError("Got unexpected datacolumn.")
+        spike_chan = col_offset + 20*row_offset + 10*pol_offset
+        reference = numpy.zeros(nchan)
+        reference[spike_chan-2:spike_chan+3] = 0.2
+        if self.verbose: print("reference=%s" % str(reference))
+        return reference
+
+    def run_test(self, sel_param, datacolumn, reindex=True):
+        inparams = self._get_selection_string(sel_param)
+        vals = blv(imagename=self.infile, spkernel='boxcar', kwidth=5)
+        vals.datacolumn = datacolumn
+        vals.sdsmooth_reindex = reindex
+        self.set_blv_params(vals, inparams)
+        self.exec_sdsmooth(self.infile, self.outfile, vals)
+        self._test_result(self.outfile, sel_param, datacolumn)
+
+    def _test_result(self, msname, sel_param, dcol, atol=1.e-5, rtol=1.e-5):
+        # Make sure output MS exists
+        self.assertTrue(os.path.exists(msname), "Could not find output MS")
+        # Compare output MS with reference (nrow, npol, and spectral values)
+        (rowids, polids) = self._get_selected_row_and_pol(sel_param)
+        if dcol.startswith("float"):
+            testcolumn = "FLOAT_DATA"
+        else: #output is in DATA column
+            testcolumn = "DATA"
+        _tb.open(msname)
+        try:
+            self.assertEqual(_tb.nrows(), len(rowids), "Row number is wrong %d (expected: %d)" % (_tb.nrows(), len(rowids)))
+            for out_row in range(len(rowids)):
+                in_row = rowids[out_row]
+                sp = _tb.getcell(testcolumn, out_row)
+                self.assertEqual(sp.shape[0], len(polids), "Number of pol is wrong in row=%d:  %d (expected: %d)" % (out_row,len(polids),sp.shape[0]))
+                nchan = sp.shape[1]
+                for out_pol in range(len(polids)):
+                    in_pol = polids[out_pol]
+                    reference = self._get_reference(nchan, in_row, in_pol, dcol)
+                    if self.verbose: print("data=%s" % str(sp[out_pol]))
+                    self.assertTrue(numpy.allclose(sp[out_pol], reference,
+                                                   atol=atol, rtol=rtol),
+                                    "Smoothed spectrum differs in row=%d, pol=%d" % (out_row, out_pol))
+        finally:
+            _tb.close()
+
+
+    def testIntentF(self):
+        """Test selection by intent (float_data)"""
+        self.run_test("sdsmooth_intent", "float_data")
+
+    def testIntentC(self):
+        """Test selection by intent (corrected)"""
+        self.run_test("sdsmooth_intent", "corrected")
+
+    def testAntennaF(self):
+        """Test selection by antenna (float_data)"""
+        self.run_test("sdsmooth_antenna", "float_data")
+
+    def testAntennaC(self):
+        """Test selection by antenna (corrected)"""
+        self.run_test("sdsmooth_antenna", "corrected")
+
+    def testFieldF(self):
+        """Test selection by field (float_data)"""
+        self.run_test("sdsmooth_field", "float_data")
+
+    def testFieldC(self):
+        """Test selection by field (corrected)"""
+        self.run_test("sdsmooth_field", "corrected")
+
+    def testSpwF(self):
+        """Test selection by spw (float_data)"""
+        self.run_test("sdsmooth_spw", "float_data")
+
+    def testSpwC(self):
+        """Test selection by spw (corrected)"""
+        self.run_test("sdsmooth_spw", "corrected")
+
+    def testTimerangeF(self):
+        """Test selection by timerange (float_data)"""
+        self.run_test("sdsmooth_timerange", "float_data")
+
+    def testTimerangeC(self):
+        """Test selection by timerange (corrected)"""
+        self.run_test("sdsmooth_timerange", "corrected")
+
+    def testScanF(self):
+        """Test selection by scan (float_data)"""
+        self.run_test("sdsmooth_scan", "float_data")
+
+    def testScanC(self):
+        """Test selection by scan (corrected)"""
+        self.run_test("sdsmooth_scan", "corrected")
+
+    def testPolF(self):
+        """Test selection by pol (float_data)"""
+        self.run_test("sdsmooth_pol", "float_data")
+
+    def testPolC(self):
+        """Test selection by pol (corrected)"""
+        self.run_test("sdsmooth_pol", "corrected")
+
+    def testReindexSpw(self):
+        """Test reindex =T/F in spw selection"""
+        for datacol in ['float_data', 'corrected']:
+            print("Test: %s" % datacol.upper())
+            for (reindex, ddid, spid) in zip([True, False], [0, 1], [0,7]):
+                print("- reindex=%s" % str(reindex))
+                self.run_test("sdsmooth_spw", datacol, reindex=reindex)
+                _tb.open(self.outfile)
+                try:
+                    self.assertEqual(ddid, _tb.getcell('DATA_DESC_ID', 0),
+                                     "comparison of DATA_DESCRIPTION_ID failed.")
+                finally: _tb.close()
+                _tb.open(self.outfile+'/DATA_DESCRIPTION')
+                try:
+                    self.assertEqual(spid, _tb.getcell('SPECTRAL_WINDOW_ID', ddid),
+                                     "comparison of SPW_ID failed.")
+                finally: _tb.close()
+                shutil.rmtree(self.outfile)
+
+    def testReindexIntent(self):
+        """Test reindex =T/F in intent selection"""
+        for datacol in ['float_data', 'corrected']:
+            print("Test: %s" % datacol.upper())
+            for (reindex, idx) in zip([True, False], [0, 4]):
+                print("- reindex=%s" % str(reindex))
+                self.run_test("sdsmooth_intent", datacol, reindex=reindex)
+                _tb.open(self.outfile)
+                try:
+                    self.assertEqual(idx, _tb.getcell('STATE_ID', 0),
+                                     "comparison of state_id failed.")
+                finally: _tb.close()
+                shutil.rmtree(self.outfile)
+
+
 def suite():
-    return [imsmooth_test, sdsmooth_test_fail, sdsmooth_test_complex]    
+    return [imsmooth_test, sdsmooth_test_fail, sdsmooth_test_complex, sdsmooth_test_float,
+            sdsmooth_test_weight, sdsmooth_test_boxcar, sdsmooth_selection]    
 
 if __name__ == '__main__':
-    os.chdir("/work/dev/shimada/casa6.13520/tmp")
     unittest.main()
