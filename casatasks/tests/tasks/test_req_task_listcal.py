@@ -190,24 +190,28 @@ class listcal_test(unittest.TestCase):
             os.remove(self._listfile)
 
     def test_fieldSelection(self):
+        """ Checks that specific fields can be selected """
         listcal(vis=self._vis, caltable=self._caltable, field='N5921_2', listfile=self._listfile)
 
         self.assertFalse(searchInFile(self._listfile, '1331+30500002_0'), msg='Found fields that are not selected')
         self.assertTrue(searchInFile(self._listfile, 'N5921_2'), msg='did not find selected field')
 
     def test_antennaSelection(self):
+        """ Checks that specific antenna can be selected """
         listcal(vis=self._vis, caltable=self._caltable, antenna='VA01', listfile=self._listfile)
 
         self.assertFalse(searchInFile(self._listfile, 'VA02'), msg='Found anntennas that were not selected')
         self.assertTrue(searchInFile(self._listfile, 'VA01'), msg='The selected antenna was not found')
 
     def test_spwSelection(self):
+        """ Check that specific spectral windows can be selected """
         listcal(vis=self._gainvis, caltable=self._gaincaltable, spw='1', listfile=self._listfile)
 
         self.assertFalse(searchInFile(self._listfile, 'SpwID = 0'), msg='Found spw that was not selected')
         self.assertTrue(searchInFile(self._listfile, 'SpwID = 1'), msg='Did not find the selected spw')
 
     def test_headerLayout(self):
+        """ Check that the header is layed out in the form described in the documentation """
         listcal(vis=self._gainvis, caltable=self._gaincaltable, listfile=self._listfile)
 
         header = getLine(self._listfile, 0)
@@ -218,6 +222,7 @@ class listcal_test(unittest.TestCase):
         self.assertTrue("MS name" in header)
 
     def test_spectralWindowHeader(self):
+        """ Check that there is spectral window, date, caltable name, and ms name in the header """
         listcal(vis=self._gainvis, caltable=self._gaincaltable, listfile=self._listfile)
 
         header = getLine(self._listfile, 14)
@@ -228,12 +233,14 @@ class listcal_test(unittest.TestCase):
         self.assertTrue("MS name" in header)
 
     def test_headerColumnLabels(self):
+        """ Check that the data columns are labeled as described """
         listcal(vis=self._gainvis, caltable=self._gaincaltable, listfile=self._listfile)
 
         header = getLine(self._listfile, 3)
         self.assertTrue(header.startswith("Time       Field      Chn| Amp    Phs  F  Amp    Phs  F| Amp    Phs  F  Amp    Phs  F| Amp    Phs  F  Amp    Phs  F| Amp    Phs  F  Amp    Phs  F|"))
 
     def test_compareValues(self):
+        """ Compare the values in the output to a reference output for the same table """
         listcal(vis=self._gainvis, caltable=self._gaincaltable, listfile=self._listfile)
 
         with open(self._listfile) as file1:
