@@ -592,6 +592,42 @@ class TestJyPerK(unittest.TestCase):
         reference_caltable = os.path.join(datapath, 'caltable_for_jyperk_with_asdm_web_api.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
 
+    def test_jyperk_gencal_for_model_fit_web_api(self):
+        """Test to check that the factors from the web API are applied to the caltable.
+
+        The following arguments are required for this test.
+        * caltype='jyperk'
+        * endpoint='model-fit'
+        """
+        gencal(vis=self.vis,
+               caltable=self.caltable,
+               caltype='jyperk',
+               endpoint='model-fit'
+               uniform=False)
+
+        self.assertTrue(os.path.exists(self.caltable))
+
+        reference_caltable = os.path.join(datapath, 'caltable_for_jyperk_with_model_fit_web_api.cal')
+        self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
+
+    def test_jyperk_gencal_for_interpolation_web_api(self):
+        """Test to check that the factors from the web API are applied to the caltable.
+
+        The following arguments are required for this test.
+        * caltype='jyperk'
+        * endpoint='interpolation'
+        """
+        gencal(vis=self.vis,
+               caltable=self.caltable,
+               caltype='jyperk',
+               endpoint='interpolation'
+               uniform=False)
+
+        self.assertTrue(os.path.exists(self.caltable))
+
+        reference_caltable = os.path.join(datapath, 'caltable_for_jyperk_with_interpolation_web_api.cal')
+        self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
+
     def test_jyperk_gencal_for_factor_file(self):
         """Test to check that the factors in the csv file are applied to the caltable.
 
