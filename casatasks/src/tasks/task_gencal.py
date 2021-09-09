@@ -161,6 +161,10 @@ class JyperkGencal():
     def __gen_specifycal_input(cls, vis=None, spw='*',
                             endpoint='asdm', infile=None,
                             timeout=180, retry=3, retry_wait_time=5):
+        # The default infile is defined 'string' in gencal.xml.
+        if infile == '':
+            infile = None
+
         if not infile is None:
             f = JyPerKReader4File(infile)
             factors = f.get()

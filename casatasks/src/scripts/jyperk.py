@@ -41,6 +41,9 @@ def gen_factor_via_web_api(vis, spw='*',
         retry_wait_time {int} -- Waiting time [sec] until next query when the Web API
             access fails, defaults to 5 sec.
     """
+    if spw == '':
+        spw = '*'
+
     assert endpoint in ['asdm', 'model-fit', 'interpolation'], \
         'The JyPerKDatabaseClient class requires one of endpoint: asdm, model-fit or interpolation'
 
@@ -520,10 +523,8 @@ class Translator():
         Returns:
             list -- Formatted list of Jy/K factors.
         """
-        template = string.Template('$MS $Antenna $Spwid I $factor')
-
-        basename = os.path.basename(vis.rstrip('/'))          
-        factors = [list(map(str, template.safe_substitute(vis=basename, **factor).split())) for factor in factors]
+        template = string.Template('$MS $Antenna $Spwid I $factor')        
+        factors = [list(map(str, template.safe_substitute(**factor).split())) for factor in factors]
         return factors
 
     @staticmethod
