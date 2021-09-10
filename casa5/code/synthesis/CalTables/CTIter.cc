@@ -41,33 +41,25 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 ROCTIter::ROCTIter(NewCalTable tab, const Block<String>& sortcol) :
   sortCols_(sortcol.begin( ),sortcol.end( )),
   singleSpw_(false),
-  parentNCT_(tab),
-  calCol_(tab),
-  ti_(NULL),
-  inct_(NULL),
-  iROCTMainCols_(NULL),
+  calCol_(nullptr),
+  ti_(nullptr),
+  inct_(nullptr),
+  iROCTMainCols_(nullptr),
   init_uvw_(false),
+  thisfield_(-1),
   lastfield_(-1),
-  lasttime_(-1.0)
+  thistime_(0.0),
+  lasttime_(0.0)
 {
-
   ti_=new TableIterator(tab,sortcol);
-
   // Attach initial accessors:
   attach();
 
-  //  cout << "CTIter sort columns (" << sortCols_.nelements() << "): " << sortCols_ << endl;
+  calCol_ = new ROCTColumns(tab);
+  epoch_ = calCol_->timeMeas()(0);
 
   // If SPW a sort column, then 
   singleSpw_=anyEQ(sortCols_,String("SPECTRAL_WINDOW_ID"));
-
-  // Initialize MSDerivedValues and MEpoch
-  msd_ = new MSDerivedValues();
-  msd_->setAntennas(calCol_.antenna());
-  epoch_ = calCol_.timeMeas()(0);
-
-  // Initialize antenna positions for uvw
-  initUVW();
 
   /*
   cout << "singleSpw_ = " << boolalpha << singleSpw_ << endl;
@@ -85,17 +77,36 @@ ROCTIter::ROCTIter(NewCalTable tab, const Block<String>& sortcol) :
 
 ROCTIter::~ROCTIter()
 {
-  if (ti_!=NULL) delete ti_;
-  if (iROCTMainCols_!=NULL) delete iROCTMainCols_;
-  if (inct_!=NULL) delete inct_;
-  if (msd_!=NULL) delete msd_;
+  if (calCol_!=nullptr) delete calCol_;
+  if (ti_!=nullptr) delete ti_;
+  if (iROCTMainCols_!=nullptr) delete iROCTMainCols_;
+  if (inct_!=nullptr) delete inct_;
 };
+
+void ROCTIter::setCTColumns(const NewCalTable& tab) {
+  delete calCol_;
+  calCol_ = new ROCTColumns(tab);
+}
 
 void ROCTIter::reset() {
   ti_->reset();
   this->attach();
+
+  // Save then update values
+  lastfield_ = thisfield_;
+  lasttime_ = thistime_;
+  thisfield_ = thisField();
+  thistime_ = thisTime();
+
+  // must be done before uvw
   updatePhaseCenter();
-  calculateAntennaUVW();
+
+  if (!init_uvw_) {
+    // Initialize MVBaselines from antenna positions
+    initUVW();
+  }
+
+  updateAntennaUVW();
 }
 
 void ROCTIter::next() { 
@@ -107,26 +118,26 @@ void ROCTIter::next() {
 
   if (!pastEnd()) {
     // Update phase center and uvw if needed
-    Int field = thisField();
-    Double time = thisTime();
+    // Save then update values
+    lastfield_ = thisfield_;
+    lasttime_ = thistime_;
+    thisfield_ = thisField();
+    thistime_ = thisTime();
 
-    if (field != lastfield_) {
+    if ((thisfield_ != lastfield_) || (thistime_ != lasttime_)) {
       updatePhaseCenter();
+      updateAntennaUVW();
     }
-
-    if ((time != lasttime_) || (field != lastfield_)) {
-      calculateAntennaUVW();
-    }
-
-    lastfield_ = field;
-    lasttime_ = time;
   }
 }
 
 void ROCTIter::updatePhaseCenter() {
   // Set MSDerivedValues phase center for field
-  phaseCenter_ = calCol_.field().phaseDirMeas(thisField(), thisTime());
-  msd_->setFieldCenter(phaseCenter_);
+  if ((thisfield_ == -1) || (thistime_ == 0)) {
+    return;
+  }
+
+  phaseCenter_ = calCol_->field().phaseDirMeas(thisfield_, thistime_);
 }
 
 void ROCTIter::next0() { 
@@ -193,7 +204,7 @@ Vector<Int> ROCTIter::chan() const {
 
 Int ROCTIter::nchan() const {
   if (singleSpw_)
-    return calCol_.spectralWindow().numChan()(this->thisSpw());
+    return calCol_->spectralWindow().numChan()(this->thisSpw());
   else
     // more than one spw per iteration...
     throw(AipsError("Please sort by spw."));
@@ -201,7 +212,7 @@ Int ROCTIter::nchan() const {
 
 void ROCTIter::chan(Vector<Int>& v) const {
   if (singleSpw_) {
-    v.resize(calCol_.spectralWindow().numChan()(this->thisSpw()));
+    v.resize(calCol_->spectralWindow().numChan()(this->thisSpw()));
     // TBD: observe channel selection here:
     indgen(v);
   }
@@ -219,7 +230,7 @@ Vector<Double> ROCTIter::freq() const {
 void ROCTIter::freq(Vector<Double>& v) const {
   if (singleSpw_) {
     v.resize();
-    calCol_.spectralWindow().chanFreq().get(this->thisSpw(),v);
+    calCol_->spectralWindow().chanFreq().get(this->thisSpw(),v);
   }
   else
     // more than one spw per iteration...
@@ -227,26 +238,56 @@ void ROCTIter::freq(Vector<Double>& v) const {
 }
 
 casacore::MDirection ROCTIter::azel0(casacore::Double time) const {
+  if (thisfield_ == -1) {
+    throw(AipsError("Cannot calculate azel with no field ID."));
+  }
+
+  casacore::MSDerivedValues msd;
+  msd.setAntennas(calCol_->antenna());
+  msd.setFieldCenter(phaseCenter_);
+
   casacore::MDirection azel;
-  vi::ViImplementation2::azel0Calculate(time, *msd_, azel, epoch_);
+  vi::ViImplementation2::azel0Calculate(time, msd, azel, epoch_);
   return azel;
 }
 
 casacore::Double ROCTIter::hourang(casacore::Double time) const {
-  return vi::ViImplementation2::hourangCalculate(time, *msd_, epoch_);
+  if (thisfield_ == -1) {
+    throw(AipsError("Cannot calculate hourang with no field ID."));
+  }
+
+  casacore::MSDerivedValues msd;
+  msd.setAntennas(calCol_->antenna());
+  msd.setFieldCenter(phaseCenter_);
+  return vi::ViImplementation2::hourangCalculate(time, msd, epoch_);
 }
 
 casacore::Float ROCTIter::parang0(casacore::Double time) const {
-  return vi::ViImplementation2::parang0Calculate(time, *msd_, epoch_);
+  if (thisfield_ == -1) {
+    throw(AipsError("Cannot calculate parang with no field ID."));
+  }
+
+  casacore::MSDerivedValues msd;
+  msd.setAntennas(calCol_->antenna());
+  msd.setFieldCenter(phaseCenter_);
+  return vi::ViImplementation2::parang0Calculate(time, msd, epoch_);
 }
 
 casacore::Matrix<casacore::Double> ROCTIter::uvw() const {
-  casacore::Vector<casacore::Int> ant1 = antenna1();
+  if (thisfield_ == -1) {
+    throw(AipsError("UVW axes cannot be calculated with no field phase center."));  
+  }
+
   casacore::Vector<casacore::Int> ant2 = antenna2();
+  if (ant2(0) == -1) {
+    throw(AipsError("UVW axes cannot be calculated for antenna-based calibration tables."));  
+  }
+
+  casacore::Vector<casacore::Int> ant1 = antenna1();
   auto nbaseline = ant1.size();
   casacore::Matrix<casacore::Double> uvw(3, nbaseline);
 
-  for (uInt i = 0; i < ant1.size(); ++i) {
+  for (uInt i = 0; i < nbaseline; ++i) {
     uvw.column(i) = antennaUVW_[ant2(i)] - antennaUVW_[ant1(i)];
   }
 
@@ -255,14 +296,13 @@ casacore::Matrix<casacore::Double> ROCTIter::uvw() const {
 
 void ROCTIter::initUVW() {
   // Calculate relative positions of antennas
-  nAnt_ = calCol_.antenna().nrow();
-  auto antPosMeas = calCol_.antenna().positionMeas();
+  nAnt_ = calCol_->antenna().nrow();
+  auto antPosMeas = calCol_->antenna().positionMeas();
   refAntPos_ = antPosMeas(0); // use first antenna for reference
   auto refAntPosValue = refAntPos_.getValue();
 
   // Set up baseline and uvw types
   MBaseline::getType(baseline_type_, MPosition::showType(refAntPos_.getRef().getType()));
-  MBaseline::getType(phasedir_type_, MDirection::showType(phaseCenter_.getRef().getType()));
 
   mvbaselines_.resize(nAnt_);
 
@@ -274,10 +314,10 @@ void ROCTIter::initUVW() {
   init_uvw_ = true;
 }
 
-void ROCTIter::calculateAntennaUVW() {
+void ROCTIter::updateAntennaUVW() {
   // Set antennaUVW_ for current iteration when field or time changes
-  if (!init_uvw_) {
-    initUVW();
+  if (thisfield_ == -1) {
+    return; // no phase center
   }
 
   MEpoch epoch = iROCTMainCols_->timeMeas()(0);
@@ -291,11 +331,16 @@ void ROCTIter::calculateAntennaUVW() {
   baselineMeas.getRefPtr()->set(measFrame);
 
   // Conversion engine to phasedir type
-  MBaseline::Ref uvwRef(phasedir_type_);
+  casacore::MBaseline::Types phasedir_type;
+  MBaseline::getType(phasedir_type, MDirection::showType(phaseCenter_.getRef().getType()));
+  MBaseline::Ref uvwRef(phasedir_type);
   MBaseline::Convert baselineConv(baselineMeas, uvwRef);
 
   // WSRT convention: phase opposite to VLA (l increases toward increasing RA)
-  bool wsrtConvention = calCol_.observation().telescopeName()(thisObs()) == "WSRT";
+  Int obsId = thisObs();
+  if (obsId < 0) obsId = 0;
+  casacore::String telescope = calCol_->observation().telescopeName()(obsId);
+  bool wsrtConvention = (telescope == "WSRT");
 
   antennaUVW_.resize(nAnt_);
 
@@ -313,9 +358,10 @@ void ROCTIter::calculateAntennaUVW() {
 }
 
 void ROCTIter::attach() {
-  // Attach accessors:
+  // Attach accessors for current iteration:
   if (iROCTMainCols_!=NULL) delete iROCTMainCols_;
   if (inct_!=NULL) delete inct_;
+
   inct_= new NewCalTable(ti_->table());
   iROCTMainCols_ = new ROCTMainColumns(*inct_);
 }

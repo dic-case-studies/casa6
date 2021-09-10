@@ -163,10 +163,8 @@ void CalCache::loadIt(vector<PMS::Axis>& loadAxes,
   fldnames_.resize();
   positions_.resize();
 
-  vector<PMS::DataColumn> loadData(loadAxes.size());
-  for (uInt i=0; i<loadData.size(); ++i) { 
-    loadData[i] = PMS::DEFAULT_DATACOLUMN;
-  }
+  vector<PMS::DataColumn> loadData;
+  loadData.assign(loadAxes.size(), PMS::DEFAULT_DATACOLUMN);
 
   if (calType_=="BPOLY") {
     loadBPoly(loadAxes, loadData, thread);
@@ -575,7 +573,6 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
   // Access to header info and subtables when loading axes
   String partype = parsAreComplex_ ? "Complex" : "Float";
   CTDesc caltabdesc(partype, msname_, calType_, basis_);
-  ROCTColumns ctcols(ci.table());
 
   chshapes_.resize(4, nChunk_);
   goodChunk_.resize(nChunk_);
@@ -625,6 +622,7 @@ void CalCache::loadCalChunks(ROCTIter& ci, PlotMSAveraging& pmsAveraging,
     if (avgTable.nrow() > 0) {
       // Attach iterator for accessor
       ROCTIter avgTableCti(avgTable, sortColumns_);
+      avgTableCti.setCTColumns(ci.table());
       avgTableCti.reset();
 
       // Cache data shape

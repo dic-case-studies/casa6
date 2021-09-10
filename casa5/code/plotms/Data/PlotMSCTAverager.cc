@@ -156,6 +156,7 @@ void PlotMSCTAverager::finalizeAverage() {
       main_row_record.defineAntenna2(antenna2(ibln));
       main_row_record.defineInterval(0); // axis not supported
       main_row_record.defineScanNo(avgScan_(ibln));
+      main_row_record.defineObsId(obsid_(ibln));
 
       if (isComplex_p) {
         main_row_record.defineCParam(cparam[ibln]);
@@ -207,6 +208,10 @@ void PlotMSCTAverager::initialize(ROCTIter& cti) {
   avgSpw_p = cti.thisSpw();
   timeRef_p = cti.thisTime();
   Int obsid = cti.thisObs();
+
+  if (averaging_p.antenna() && (cti.thisAntenna2() == -1)) {
+    throw(AipsError("Antenna averaging invalid for pure antenna-based table"));
+  }
 
   // Immutables:
   isComplex_p = cti.table().isComplex();
@@ -494,6 +499,7 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti) {
     cout << " PMSCTA::antAccumulate() " << endl;
   }
 
+
   if (!initialized_p) {
     initialize(cti);
   }
@@ -543,7 +549,7 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti) {
     // These antennas occur (even if flagged) in input, so preserve in output
     blnOK_p(obln_i) = true;
     blnOK_p(obln_j) = true;
-      
+ 
     for (Int ipol = 0; ipol < nPoln_p; ++ipol) {
       Int outchan(-1);
       for (Int ichan = 0; ichan < cti.nchan(); ichan++) {

@@ -90,6 +90,9 @@ public:
   void next();
   void next0();
 
+  // When not included in ctor tab
+  void setCTColumns(const NewCalTable& tab);
+
   // Return the current table iteration
   NewCalTable table() const { return NewCalTable(ti_->table()); };
 
@@ -182,9 +185,10 @@ public:
   // Update phase center in MSDerivedValues
   void updatePhaseCenter();
 
-  // Initialize and calculate uvw for each antenna
+  // Initialize and calculate uvw for each antenna.
+  // Based on msvis MSUVWGenerator
   void initUVW();
-  void calculateAntennaUVW();
+  void updateAntennaUVW();
 
   // Remember the sort columns...
   casacore::Vector<casacore::String> sortCols_;
@@ -193,12 +197,8 @@ public:
   //   safe to access channel axis info
   casacore::Bool singleSpw_;
 
-  // The parent NewCalTable (casacore::Table) object 
-  //  (stays in scope for the life of the CTIter)
-  NewCalTable parentNCT_;
-
   // Access to subtables (e.g., for frequencies)
-  ROCTColumns calCol_;
+  ROCTColumns* calCol_;
 
   // The underlying TableIterator
   casacore::TableIterator *ti_;
@@ -209,15 +209,14 @@ public:
   // Per-iteration columns
   ROCTMainColumns *iROCTMainCols_;
 
-  // For calculating axes: az, el, ha, pa, uvw
+  // For calculated axes
   bool init_uvw_;
-  casacore::Int nAnt_, lastfield_;
-  casacore::Double lasttime_;
+  casacore::Int nAnt_, thisfield_, lastfield_;
+  casacore::Double thistime_, lasttime_;
   casacore::MDirection phaseCenter_;
   casacore::MEpoch epoch_;
   casacore::MPosition refAntPos_;
-  casacore::MSDerivedValues* msd_;
-  casacore::MBaseline::Types baseline_type_, phasedir_type_;
+  casacore::MBaseline::Types baseline_type_;
   casacore::Vector<casacore::MVBaseline> mvbaselines_;              // ant pos rel to ant0
   casacore::Vector<casacore::Vector<casacore::Double>> antennaUVW_; // [u,v,w] for each ant
 };
