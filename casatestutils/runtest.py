@@ -1,6 +1,48 @@
 ########################################################################################################################
 ############################################            Imports            #############################################
 ########################################################################################################################
+def write_conftest(filepath):
+    string = """
+import pytest
+import inspect
+
+@pytest.mark.trylast
+def pytest_configure(config):
+    terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
+    config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+
+class TestDescriptionPlugin:
+
+    def __init__(self, terminal_reporter):
+        self.terminal_reporter = terminal_reporter
+        self.desc = None
+        self.funcn = None
+
+    def pytest_runtest_protocol(self, item):
+        #from pprint import pprint
+        #d = item.__dict__
+        #pprint(d, indent=2)
+        self.desc = inspect.getdoc(item.obj)
+        #print(item._nodeid)
+        self.funcn = item._nodeid
+
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_runtest_logstart(self, nodeid, location):
+        #print("Verbosity Level: {}".format(self.terminal_reporter.verbosity))
+        if self.terminal_reporter.verbosity == 0:
+            yield
+            self.terminal_reporter.write(f'\n{self.funcn} \n')
+        else:
+            self.terminal_reporter.write('\n')
+            yield
+            if self.desc:
+                    self.terminal_reporter.write(f'\n{self.desc} \n')
+            else:
+                    self.terminal_reporter.write(f'\n')
+    """
+    file_obj = open(filepath,'w')
+    file_obj.write(repr(string))
+    file_obj.close()
 
 import argparse
 import os
@@ -459,8 +501,7 @@ def run(testnames):
                 gather_all_tests(workpath +'almatasks/', workdir + "all/")
                 cmd = [ workdir ]
                 cmd = ["--continue-on-collection-errors"] + cmd
-                if verbose:
-                    cmd = ["--verbose"] + cmd
+                cmd = ["--verbose"] + cmd
 
 
                 if DRY_RUN:
@@ -484,7 +525,10 @@ def run(testnames):
                     print("No Tests to Run")
                 else:
                     print("Running Command: pytest {}".format(cmd))
+                    conf_name = os.path.join(os.getcwd(),"conftest.py")
+                    write_conftest(conf_name)
                     pytest.main(cmd)
+                    os.remove(conf_name)
 
             else:
                 print("Tests: {}".format(testnames))
@@ -556,11 +600,8 @@ def run(testnames):
                                 traceback.print_exc()
                                 
                         # https://docs.pytest.org/en/stable/usage.html
-                        if verbose:
-                            cmd = ["--verbose"] + ["--tb=long"] + cmd
-                        elif not verbose:
-                            cmd = ["-ra"] + ["--tb=short"] + cmd
-                            #cmd = ["-ra"] + ["--tb=long"] + cmd
+                        
+                        cmd = ["--verbose"] + ["--tb=long"] + cmd
 
                         if DRY_RUN:
                             cmd = ["--collect-only"] + cmd
@@ -589,7 +630,10 @@ def run(testnames):
                             os.chdir("{}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
                             print("Test Directory: {}".format(os.getcwd()))
                             print("Running Command: pytest {}".format(cmd))
+                            conf_name = os.path.join(os.getcwd(),"conftest.py")
+                            write_conftest(conf_name)
                             pytest.main(cmd)
+                            os.remove(conf_name)
                             os.chdir(myworkdir)
 
                     ##################################################
@@ -633,12 +677,7 @@ def run(testnames):
                         except:
                             traceback.print_exc()
 
-                        if verbose:
-                            cmd = ["--verbose"] + ["--tb=long"] + cmd
-                        elif not verbose:
-                            cmd = ["-ra"] + ["--tb=short"] + cmd
-                            #cmd = ["-ra"] + ["--tb=long"] + cmd
-
+                        cmd = ["--verbose"] + ["--tb=long"] + cmd
 
                         if DRY_RUN:
                             cmd = ["--collect-only"] + cmd
@@ -666,7 +705,10 @@ def run(testnames):
                             os.chdir(workdir + "{}/".format(dirname))
                             print("Test Directory: {}".format(os.getcwd()))
                             print("Running Command: pytest {}".format(cmd))
+                            conf_name = os.path.join(os.getcwd(),"conftest.py")
+                            write_conftest(conf_name)
                             pytest.main(cmd)
+                            os.remove(conf_name)
                             os.chdir(myworkdir)
             os.chdir(cwd)
 
