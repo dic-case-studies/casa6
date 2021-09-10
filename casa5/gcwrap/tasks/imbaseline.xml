@@ -89,7 +89,7 @@
 
     <param type="int" name="npiece" subparam="true"><shortdescription>number of element polynomials for cubic spline curve</shortdescription><description>number of element polynomials for cubic spline curve</description>
         
-        <value>2</value>
+        <value>3</value>
     </param>
 
     <param type="bool" name="applyfft" subparam="true"><shortdescription>automatically set wave numbers of sinusoids</shortdescription><description>automatically set wave numbers of sinusoids</description>
@@ -97,17 +97,17 @@
         <value>True</value>
     </param>
 
-        <param type="any" name="fftthresh" subparam="true"><shortdescription>threshold to select wave numbers of sinusoids</shortdescription><description>threshold to select wave numbers of sinusoids</description>
+        <param type="double" name="fftthresh" subparam="true"><shortdescription>threshold to select wave numbers of sinusoids</shortdescription><description>threshold to select wave numbers of sinusoids</description>
         
-        <value type="double">3.0</value>
+        <value>3.0</value>
     </param>
 
-    <param type="any" name="addwn" subparam="true"><shortdescription>additional wave numbers to use</shortdescription><description>additional wave numbers to use</description>
+    <param type="intVec" name="addwn" subparam="true"><shortdescription>additional wave numbers to use</shortdescription><description>additional wave numbers to use</description>
         
         <value type="intVec"><value>0</value></value>
     </param>
 
-    <param type="any" name="rejwn" subparam="true"><shortdescription>wave numbers NOT to use</shortdescription><description>wave numbers NOT to use</description>
+    <param type="intVec" name="rejwn" subparam="true"><shortdescription>wave numbers NOT to use</shortdescription><description>wave numbers NOT to use</description>
         
         <value type="intVec"/>
     </param>
@@ -129,7 +129,7 @@
 
     <param type="string" name="dirkernel"><shortdescription>Type of kernel to use to image smoothing. Acceptable values are &quot;none&quot;, &quot;boxcar&quot;, &quot;gaussian&quot; for a gaussian kernel, &quot;image&quot; to use an image as the kernel.</shortdescription><description></description>
         
-        <value>gauss</value>
+        <value>none</value>
         <allowed kind="enum">
             <value>none</value>
             <value>gaussian</value>
@@ -138,28 +138,24 @@
         </allowed>
     </param>
 
-    <param type="any" name="major" subparam="true"><shortdescription>Major axis for the kernels. Standard quantity representation. Must be specified for kernel=&quot;boxcar&quot;.</shortdescription><description>Major axis for the kernels. Standard quantity representation. Must be specified for kernel=&quot;boxcar&quot;.</description>
-        
-        <any type="variant" limittype="string int float record"/>
-        <value type="string"/>
+    <param type="string" name="major" subparam="true"><shortdescription>Major axis for the kernels. Standard quantity representation. Must be specified for kernel=&quot;boxcar&quot;.</shortdescription><description>Major axis for the kernels. Standard quantity representation. Must be specified for kernel=&quot;boxcar&quot;.</description>
+        <value/>
         <example>&quot;4arcsec&quot;</example>
     </param>
 
-    <param type="any" name="minor" subparam="true"><shortdescription>Minor axis. Standard quantity representation. Must be specified for kernel=&quot;boxcar&quot;.</shortdescription><description>Minor axis. Standard quantity representation. Must be specified for kernel=&quot;boxcar&quot;.</description>
+    <param type="string" name="minor" subparam="true"><shortdescription>Minor axis. Standard quantity representation. Must be specified for kernel=&quot;boxcar&quot;.</shortdescription><description>Minor axis. Standard quantity representation. Must be specified for kernel=&quot;boxcar&quot;.</description>
         
-        <any type="variant" limittype="string int float record"/>
-        <value type="string"/>
+        <value/>
         <example>&quot;2arcsec&quot;</example>
     </param>
 
-    <param type="any" name="pa" subparam="true"><shortdescription>Position angle used only for gaussian kernel. Standard quantity representation.</shortdescription><description>Position angle used only for gaussian kernel. Standard quantity representation.</description>
+    <param type="string" name="pa" subparam="true"><shortdescription>Position angle used only for gaussian kernel. Standard quantity representation.</shortdescription><description>Position angle used only for gaussian kernel. Standard quantity representation.</description>
         
-        <any type="variant" limittype="string int float record"/>
-        <value type="string"/>
+        <value/>
         <example>&quot;40deg&quot;</example>
     </param>
 
-    <param type="string" name="kimage" subparam="true"><shortdescription>Kernel image name. Only used if kernel=&quot;i&quot; or &quot;image&quot;.</shortdescription><description>Kernel image name. Only used if kernel=&quot;i&quot; or &quot;image&quot;.</description>
+    <param type="path" name="kimage" subparam="true"><shortdescription>Kernel image name. Only used if kernel=&quot;i&quot; or &quot;image&quot;.</shortdescription><description>Kernel image name. Only used if kernel=&quot;i&quot; or &quot;image&quot;.</description>
         
         <value/>
     </param>
@@ -228,8 +224,6 @@
 
         <when param="dirkernel">
             <equals value="gaussian">
-                <default param="beam"><value type="string"/></default>
-                <default param="targetres"><value type="bool">False</value></default>
                 <default param="major"><value type="string"/></default>
                 <default param="minor"><value type="string"/></default>
                 <default param="pa"><value type="string"/></default>
