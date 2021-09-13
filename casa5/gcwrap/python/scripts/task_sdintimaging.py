@@ -143,9 +143,9 @@ def setup_imager(imagename, specmode,calcres,calpsf,inparams):
             casalog.post("***Time for major cycle (calcres=T): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 
         ## In case of no deconvolution iterations....
-        if locparams['niter']==0 and calcres==False:
-            if savemodel != "none":
-                imagertool.predictModel()
+        #if locparams['niter']==0 and calcres==False:
+        #    if savemodel != "none":
+        #        imagertool.predictModel()
 
     sdintlib.copy_restoringbeam(fromthis=imagename+'.psf', tothis=imagename+'.residual')
     return imagertool
@@ -412,7 +412,7 @@ def sdintimaging(
 
     restart,#=True,
 
-    savemodel,#="none",
+    #savemodel,#="none",
 
 #    makeimages,#="auto"
     calcres,#=True,
@@ -797,11 +797,11 @@ def sdintimaging(
         imager.deleteTools()
         deconvolver.deleteTools()
    
-        # CAS-10721 
-        if niter>0 and savemodel != "none":
-            casalog.post("Please check the casa log file for a message confirming that the model was saved after the last major cycle. If it doesn't exist, please re-run tclean with niter=0,calcres=False,calcpsf=False in order to trigger a 'predict model' step that obeys the savemodel parameter.","WARN","task_tclean")
-
-
+        if parallel==True and not (specmode =='mfs' or specmode=='cont'):
+            casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
+            #imager.concatImages(type=concattype)
+            deconvolver.concatImages(type=concattype)
+        
     finally:
         if imager != None:
             imager.deleteTools() 

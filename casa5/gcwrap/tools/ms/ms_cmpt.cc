@@ -492,7 +492,7 @@ ms::close()
 {
     Bool rstat(false);
     try {
-        if(!detached()){
+        if(!detached(false)){
             *itsLog << LogOrigin("ms", "close");
             *itsLog << LogIO::NORMAL3;
             if (itsMS->isWritable()) {
@@ -6709,15 +6709,17 @@ ms::done()
 }
 
 bool
-ms::detached()
+ms::detached(Bool verbose)
 {
     Bool rstat(false);
     try {
         if (itsMS->isNull()) {
-            *itsLog << LogOrigin("ms", __func__);
-            *itsLog << LogIO::SEVERE
+            if (verbose) {
+                *itsLog << LogOrigin("ms", __func__);
+                *itsLog << LogIO::SEVERE
                     << "ms is not attached to a file - cannot perform operation.\n"
                     << "Call ms.open('filename') to reattach." << LogIO::POST;
+            }
             rstat = true;
         }
     } catch (AipsError x) {
