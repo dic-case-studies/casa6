@@ -288,9 +288,30 @@ def git_fetch_casa_tests(path):
     subprocess.call(["git","config","core.sparseCheckout","true"])
     print("tests/tasks", file=open(".git/info/sparse-checkout", "a"))
     subprocess.call(['git','pull','--quiet','origin','master'])
+
+    ## casaviewer
+
     os.chdir(os.path.dirname(os.getcwd()))
+    os.makedirs("casaviewer")
+    os.chdir("casaviewer")
+    subprocess.call(["git","init", "--quiet"])
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casaviewer.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("tests/tasks", file=open(".git/info/sparse-checkout", "a"))
+    subprocess.call(['git','pull','--quiet','origin','master'])
 
+    ## casampi
 
+    os.chdir(os.path.dirname(os.getcwd()))
+    os.makedirs("casampi")
+    os.chdir("casampi")
+    subprocess.call(["git","init", "--quiet"])
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casampi.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("src/casampi/tests", file=open(".git/info/sparse-checkout", "a"))
+    subprocess.call(['git','pull','--quiet','origin','master'])
+
+    os.chdir(os.path.dirname(os.getcwd()))
     os.chdir(cwd)
 
 def git_fetch_casa_tests_branch(path, branch):
@@ -499,6 +520,8 @@ def run(testnames):
                 gather_all_tests(workpath +'casa6/', workdir + "all/")
                 gather_all_tests(workpath +'casaplotms/', workdir + "all/")
                 gather_all_tests(workpath +'almatasks/', workdir + "all/")
+                gather_all_tests(workpath +'casaviewer/', workdir + "all/")
+                gather_all_tests(workpath +'casampi/', workdir + "all/")
                 cmd = [ workdir ]
                 cmd = ["--continue-on-collection-errors"] + cmd
                 cmd = ["--verbose"] + ["-rA"] + cmd
@@ -584,6 +607,8 @@ def run(testnames):
                                 gather_all_tests(workpath +'casa6/', workdir + "tests/")
                                 gather_all_tests(workpath +'casaplotms/', workdir + "tests/")
                                 gather_all_tests(workpath +'almatasks/', workdir + "tests/")
+                                gather_all_tests(workpath +'casaviewer/', workdir + "tests/")
+                                gather_all_tests(workpath +'casampi/', workdir + "tests/")
                                 gittest = False
 
                         if test.endswith(".py"):
