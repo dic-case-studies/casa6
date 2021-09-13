@@ -1,3 +1,5 @@
+# image-based line finding and baseline subtraction.
+
 import os
 import sys
 import shutil
@@ -19,6 +21,12 @@ ms = mstool()
 sdms = singledishms()
 
 class ImBaselineVals:
+    """ImBaselineVals is to handle input data set of imbaseline task.
+    The task contains five parts, imsmooth, MS creating, sdsmooth, sdbaseline, image output.
+    Each parts require different parameters, so the task has a very large number of parameters.
+    In order to simplify the handling of parameters, all parameters are held in an instance of 
+    this class, all methods get/set all parameters from it.
+    """
 
     def __init__(self, imagename: str = '', linefile: str = '', output_cont: bool = False, bloutput: str = '', maskmode: str = 'list',
                 chans: str = '', thresh: float = 5.0, avg_limit: int = 4, minwidth: int = 4, edge: List[int] = [0, 0],
@@ -162,14 +170,14 @@ class ImBaselineVals:
                 raise ValueError("input file '%s' does not exists" % self.blparam)
 
     def __check_dirkernel(self):
-        self.pass_imsmooth = self.imsmooth_kernel == 'none'
+        self.dir_none = self.imsmooth_kernel == 'none'
         self.dir_ikernel = self.imsmooth_kernel == 'image'
         self.dir_bkernel = self.imsmooth_kernel == 'boxcar'
         self.dir_gkernel = self.imsmooth_kernel == 'gaussian'
-        if not ( self.pass_imsmooth or self.dir_gkernel or self.dir_bkernel or self.dir_ikernel ):
+        if not ( self.dir_none or self.dir_gkernel or self.dir_bkernel or self.dir_ikernel ):
             raise ValueError('Unsupported direction smoothing kernel, ' + self.imsmooth_kernel)
         
-        if self.pass_imsmooth:
+        if self.dir_none:
             self.imsmooth_output = self.imagename
         elif self.dir_ikernel:
             self.imsmooth_major = self.imsmooth_minor = self.imsmooth_pa = ''
@@ -180,17 +188,24 @@ class ImBaselineVals:
             self.imsmooth_scale = -1.0
 
     def __check_spkernel(self):
-        self.pass_sdsmooth = self.sdsmooth_kernel == 'none'
+        self.sp_none = self.sdsmooth_kernel == 'none'
         self.sp_bkernel = self.sdsmooth_kernel == 'boxcar'
         self.sp_gkernel = self.sdsmooth_kernel == 'gaussian'
-        if not ( self.pass_sdsmooth or self.sp_bkernel or self.sp_gkernel ):
+        if not ( self.sp_none or self.sp_bkernel or self.sp_gkernel ):
             raise ValueError('Unsupported spectral smoothing kernel, ' + self.sdsmooth_kernel)
         
-        if self.pass_sdsmooth:
+        if self.sp_none:
             self.sdsmooth_output = self.temporary_vis
             self.sdsmooth_kwidth = 5
+    
+    def enable_imsmooth(self):
+        return not self.dir_none
+    
+    def enable_sdsmooth(self):
+        return not self.sp_none
 
-    def convert_baselining_dict(self):
+    def convert_sdbaselining_dict(self):
+        """convert properties to a dictionary for sdbaseline process"""
         return { 'blfunc' : self.sdbaseline_blfunc,
                  'datacolumn' : self.datacolumn.lower(),
                  'outfile' : self.sdbaseline_output,
@@ -222,324 +237,353 @@ class ImBaselineVals:
 def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                 edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter,
                 clipthresh, dirkernel, major, minor, pa, kimage, scale, spkernel, kwidth):
+    """
+    The main method of imbaseline.
+    """
     vals = ImBaselineVals(imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                          edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter,
                          clipthresh, dirkernel, major, minor, pa, kimage, scale, spkernel, kwidth)
 
     prepare(vals)
 
-    if not vals.pass_imsmooth:
+    # imsmooth -> convert casaimage to MS -> sdsmooth
+    # -> sdbaseline -> convert MS to image
+
+    # imsmooth
+    if vals.enable_imsmooth():
         print("start imsmooth")
-        do_imsmooth(vals)
+        Imsmooth.execute(vals)
         print("end imsmooth")
 
-    convert_image_to_ms(vals)
+    # casaimage -> MS
+    Image2MSConverter.convert(vals)
 
-    if not vals.pass_sdsmooth:
+    # sdsmooth
+    if vals.enable_sdsmooth():
         print("start sdsmooth")
         do_sdsmooth(vals)
         print("end sdsmooth")
 
+    # sdbaseline
     print("start sdbaseline")
     do_sdbaseline(vals)
     print("end sdbaseline")
 
+    # MS -> casaimage
     convert_ms_to_image(vals)
 
+    # end
 
 def prepare(vals: ImBaselineVals = None):
     ia.dohistory(False)
 
-def convert_image_to_ms(vals: ImBaselineVals = None):
-    _get_image_params_from_imsmooth_output(vals)
-    _create_empty_ms(vals)
-    _copy_image_array_to_ms(vals)
-
 
 ### imsmooth ###
+class Imsmooth():
 
-def do_imsmooth(vals: ImBaselineVals = None):
+    def __init__(self, vals: ImBaselineVals = None):
+        self.vals = vals
 
-    ia.open(vals.imagename)
-    mycsys = ia.coordsys()
-    myrg = regionmanager()
-    vals.reg = myrg.frombcs(csys=mycsys.torecord(), shape=ia.shape(), chans=vals.imsmooth_chans)
-    myrg.done()
-    mycsys.done()
-    
-    outia = None
-    try:
-        if vals.dir_gkernel:
-            outia = _imsmooth_gckernel(vals)
-        elif vals.dir_bkernel:
-            outia = _imsmooth_bkernel(vals)
-        elif vals.dir_ikernel:
-            outia = _imsmooth_ikernel(vals)
+    @staticmethod
+    def execute(vals: ImBaselineVals = None):
+        """Execute imsmooth.
+        This code is based on task_imsmooth."""
 
-    finally:
-        ia.done()
-        if outia: outia.done()
-
-def _imsmooth_ikernel(vals):
-    return ia.convolve(
-                    outfile=vals.imsmooth_output, kernel=vals.imsmooth_kimage, scale=vals.imsmooth_scale, region=vals.reg,
-                    mask=vals.imsmooth_mask, overwrite=vals.overwrite, stretch=vals.imsmooth_stretch 
-                )
-
-def _imsmooth_bkernel(vals):
-    if not vals.imsmooth_major or not vals.imsmooth_minor:
-        raise ValueError("Both major and minor must be specified.")
-
-    casalog.post( "ia.sepconvolve( axes=[0,1],"+\
-                            "types=['boxcar','boxcar' ],"+\
-                            "widths=[ "+str(vals.imsmooth_minor)+", "+str(vals.imsmooth_major)+" ],"+ \
-                            "region="+str(vals.reg)+",outfile="+vals.imsmooth_output+" )",\
-                            'DEBUG2' )
-    return ia.sepconvolve(
-                    axes=[0,1], types=['box','box'], widths=[ vals.imsmooth_minor, vals.imsmooth_major ],
-                    region=vals.reg, outfile=vals.imsmooth_output,
-                    mask=vals.imsmooth_mask, overwrite=vals.overwrite, stretch=vals.imsmooth_stretch 
-                )
-
-def _imsmooth_gckernel(vals):
-
-    if not vals.imsmooth_major:
-        raise ValueError("Major axis must be specified")
-    if not vals.imsmooth_minor:
-        raise ValueError("Minor axis must be specified")
-    if not vals.imsmooth_pa:
-        raise ValueError("Position angle must be specified")
+        ims = Imsmooth(vals)
+        ia.open(ims.vals.imagename)
+        mycsys = ia.coordsys()
+        myrg = regionmanager()
+        ims.vals.reg = myrg.frombcs(csys=mycsys.torecord(), shape=ia.shape(), chans=ims.vals.imsmooth_chans)
+        myrg.done()
+        mycsys.done()
         
-    return ia.convolve2d(
-                    axes=[0,1], region=vals.reg, major=vals.imsmooth_major,
-                    minor=vals.imsmooth_minor, pa=vals.imsmooth_pa, outfile=vals.imsmooth_output,
-                    mask=vals.imsmooth_mask, stretch=vals.imsmooth_stretch, targetres=vals.imsmooth_targetres,
-                    beam=vals.imsmooth_beam, overwrite=vals.overwrite
-                )
+        outia = None
+        try:
+            if ims.vals.dir_gkernel:
+                outia = ims._imsmooth_gckernel()
+            elif ims.vals.dir_bkernel:
+                outia = ims._imsmooth_bkernel()
+            elif ims.vals.dir_ikernel:
+                outia = ims._imsmooth_ikernel()
 
-def _get_image_params_from_imsmooth_output(vals: ImBaselineVals = None):
-    try:
-        ia.open(vals.imsmooth_output)
-        cs = ia.coordsys()
-        vals.imshape = ia.shape()
-        vals.diraxis = cs.findcoordinate('direction')['world']
-        vals.spaxis = cs.findcoordinate('spectral')['world'] # 3 or 2
-        vals.polaxis = cs.findcoordinate('stokes')['world']  # 2 or 3 or None
-    finally:
-        cs.done()
+        finally:
+            ia.done()
+            if outia: outia.done()
+
+    def _imsmooth_ikernel(self):
+        # image kernel for image smoothing
+        return ia.convolve(
+                        outfile=self.vals.imsmooth_output, kernel=self.vals.imsmooth_kimage, scale=self.vals.imsmooth_scale, 
+                        region=self.vals.reg, mask=self.vals.imsmooth_mask, overwrite=self.vals.overwrite, stretch=self.vals.imsmooth_stretch 
+                    )
+
+    def _imsmooth_bkernel(self):
+        # boxcar kernel for image smoothing
+        if not self.vals.imsmooth_major or not self.vals.imsmooth_minor:
+            raise ValueError("Both major and minor must be specified.")
+
+        casalog.post( "ia.sepconvolve( axes=[0,1],"+\
+                                "types=['boxcar','boxcar' ],"+\
+                                "widths=[ "+str(self.vals.imsmooth_minor)+", "+str(self.vals.imsmooth_major)+" ],"+ \
+                                "region="+str(self.vals.reg)+",outfile="+self.vals.imsmooth_output+" )",\
+                                'DEBUG2' )
+        return ia.sepconvolve(
+                        axes=[0,1], types=['box','box'], widths=[ self.vals.imsmooth_minor, self.vals.imsmooth_major ],
+                        region=self.vals.reg, outfile=self.vals.imsmooth_output,
+                        mask=self.vals.imsmooth_mask, overwrite=self.vals.overwrite, stretch=self.vals.imsmooth_stretch 
+                    )
+
+    def _imsmooth_gckernel(self):
+        # gaussian kernel for image smoothing
+        if not self.vals.imsmooth_major:
+            raise ValueError("Major axis must be specified")
+        if not self.vals.imsmooth_minor:
+            raise ValueError("Minor axis must be specified")
+        if not self.vals.imsmooth_pa:
+            raise ValueError("Position angle must be specified")
+            
+        return ia.convolve2d(
+                        axes=[0,1], region=self.vals.reg, major=self.vals.imsmooth_major,
+                        minor=self.vals.imsmooth_minor, pa=self.vals.imsmooth_pa, outfile=self.vals.imsmooth_output,
+                        mask=self.vals.imsmooth_mask, stretch=self.vals.imsmooth_stretch, targetres=self.vals.imsmooth_targetres,
+                        beam=self.vals.imsmooth_beam, overwrite=self.vals.overwrite
+                    )
+
+class Image2MSConverter():
+
+    def __init__(self, vals: ImBaselineVals = None):
+        self.vals = vals
+
+    @staticmethod
+    def convert(vals: ImBaselineVals = None):
+        i2ms = Image2MSConverter(vals)
+        i2ms.get_image_params_from_imsmooth_output()
+        i2ms.create_empty_ms()
+        i2ms.copy_image_array_to_ms()
+
+    def get_image_params_from_imsmooth_output(self):
+        try:
+            ia.open(self.vals.imsmooth_output)
+            cs = ia.coordsys()
+            self.vals.imshape = ia.shape()
+            self.vals.diraxis = cs.findcoordinate('direction')['world']
+            self.vals.spaxis = cs.findcoordinate('spectral')['world'] # 3 or 2
+            self.vals.polaxis = cs.findcoordinate('stokes')['world']  # 2 or 3 or None
+        finally:
+            cs.done()
+            ia.done()
+
+        assert len(self.vals.diraxis) > 0
+
+        self.vals.spaxisexist = len(self.vals.spaxis) == 1
+        self.vals.polaxisexist = len(self.vals.polaxis) == 1
+
+        self.vals.dirshape = self.vals.imshape[self.vals.diraxis]
+        self.vals.imnrow = np.prod(self.vals.dirshape)
+
+        if self.vals.spaxisexist:
+            self.vals.imnchan = self.vals.imshape[self.vals.spaxis[0]]
+        else:
+            self.vals.imnchan = 1
+        if self.vals.polaxisexist:
+            self.vals.imnpol = self.vals.imshape[self.vals.polaxis[0]]
+        else:
+            self.vals.imnpol = 1
+        print(f'image shape is {self.vals.imshape}, direciton {self.vals.dirshape} ({self.vals.imnrow} pixels), npol {self.vals.imnpol}, nchan {self.vals.imnchan}')
+
+        # if imnchan is too few, say, <10, sdbaseline should abort
+        if self.vals.imnchan < 10:
+            print(f'nchan {self.vals.imnchan} is too few to perform baseline subtraction')
+            return False
+        return True
+
+
+    ### creating empty MS ###
+
+    def create_empty_ms(self):
+
+        self.__check_ms_path()
+        self.__create_maintable()
+        self.__create_antenna_table()
+        self.__create_data_description_table()
+        self.__create_feed_table()
+        self.__create_field_table()
+        self.__create_flag_cmd_table()
+        self.__create_history_table()
+        self.__create_observation_table()
+        self.__create_pointing_table()
+        self.__create_polarization_table()
+        self.__create_processor_table()
+        self.__create_source_table()
+        self.__create_special_window_table()
+        self.__create_state_table()
+
+    def __create_maintable(self):
+
+        tb = table()
+        try:
+            tb.create(self.vals.temporary_vis, EmptyMSBaseInformation.ms_desc, dminfo=EmptyMSBaseInformation.ms_dminfo)
+            tb.putkeyword(keyword="MS_VERSION", value=2)
+            nrow = tb.nrows()
+            nrow_req = self.vals.imnrow * self.vals.imnpol
+            nrow = tb.nrows()
+            if nrow != nrow_req:
+                tb.addrows(nrow_req)
+            ddid = tb.getcol('DATA_DESC_ID')
+            ddid[:] = 0
+            tb.putcol('DATA_DESC_ID', ddid)
+            dummy = np.zeros(nrow_req, dtype=int)
+            tb.putcol('ANTENNA1', dummy)
+            tb.putcol('ANTENNA2', dummy)
+            tb.putcol('STATE_ID', dummy)
+            time_list = 4304481539.999771 + np.arange(nrow_req) * 30.0
+            tb.putcol('TIME', time_list)
+            print(f'number of rows {nrow}, number of image pixels {self.vals.imnrow}, number of pols {self.vals.imnpol}, required rows {nrow_req}')
+        finally:
+            tb.close()
+
+    def __create_antenna_table(self):
+        self.__create_subtable("ANTENNA", EmptyMSBaseInformation.antenna_desc, EmptyMSBaseInformation.antenna_dminfo)
+        with table_manager(os.path.join(self.vals.temporary_vis, 'ANTENNA'), nomodify=False) as tb:
+            tb.addrows(1)
+
+    def __create_data_description_table(self):
+        self.__create_subtable("DATA_DESCRIPTION", EmptyMSBaseInformation.data_description_desc, EmptyMSBaseInformation.data_description_dminfo)
+        with table_manager(os.path.join(self.vals.temporary_vis, 'DATA_DESCRIPTION'), nomodify=False) as tb:
+            tb.addrows(1)
+            tb.putcell('SPECTRAL_WINDOW_ID', 0, 0)
+            tb.putcell('POLARIZATION_ID', 0, 0)
+
+    def __create_feed_table(self):
+        self.__create_subtable("FEED", EmptyMSBaseInformation.feed_desc, EmptyMSBaseInformation.feed_dminfo)
+        with table_manager(os.path.join(self.vals.temporary_vis, 'FEED'), nomodify=False) as tb:
+            tb.addrows(1)
+
+    def __create_field_table(self):
+        self.__create_subtable("FIELD", EmptyMSBaseInformation.field_desc, EmptyMSBaseInformation.field_dminfo)
+        with table_manager(os.path.join(self.vals.temporary_vis, 'FIELD'), nomodify=False) as tb:
+            tb.addrows(1)
+            tb.putcell('DELAY_DIR', 0, np.zeros((2,1)))
+            tb.putcell('PHASE_DIR', 0, np.zeros((2,1)))
+            tb.putcell('REFERENCE_DIR', 0, np.zeros((2,1)))
+
+    def __create_flag_cmd_table(self):
+        self.__create_subtable("FLAG_CMD", EmptyMSBaseInformation.flag_cmd_desc, EmptyMSBaseInformation.flag_cmd_dminfo)
+
+    def __create_history_table(self):
+        self.__create_subtable("HISTORY", EmptyMSBaseInformation.history_desc, EmptyMSBaseInformation.history_dminfo)
+
+    def __create_observation_table(self):
+        self.__create_subtable("OBSERVATION", EmptyMSBaseInformation.observation_desc, EmptyMSBaseInformation.observation_dminfo)
+        with table_manager(os.path.join(self.vals.temporary_vis, 'OBSERVATION'), nomodify=False) as tb:
+            tb.addrows(1)
+
+    def __create_pointing_table(self):
+        self.__create_subtable("POINTING", EmptyMSBaseInformation.pointing_desc, EmptyMSBaseInformation.pointing_dminfo)
+
+    def __create_polarization_table(self):
+        self.__create_subtable("POLARIZATION", EmptyMSBaseInformation.polarization_desc, EmptyMSBaseInformation.polarization_dminfo)
+        with table_manager(os.path.join(self.vals.temporary_vis, 'POLARIZATION'), nomodify=False) as tb:
+            corr_type = np.ones(1, dtype=int)
+            corr_product = np.ones(2, dtype=int).reshape((2, 1))
+            if tb.nrows() == 0:
+                tb.addrows(1)
+            tb.putcell('NUM_CORR', 0, 1)
+            tb.putcell('CORR_TYPE', 0, corr_type)
+            tb.putcell('CORR_PRODUCT', 0, corr_product)
+
+    def __create_processor_table(self):
+        self.__create_subtable("PROCESSOR", EmptyMSBaseInformation.processor_desc, EmptyMSBaseInformation.processor_dminfo)
+
+    def __create_source_table(self):
+        self.__create_subtable("SOURCE", EmptyMSBaseInformation.source_desc, EmptyMSBaseInformation.source_dminfo)
+
+    def __create_special_window_table(self):
+        self.__create_subtable("SPECTRAL_WINDOW", EmptyMSBaseInformation.special_window_desc, EmptyMSBaseInformation.special_window_dminfo)
+        with table_manager(os.path.join(self.vals.temporary_vis, 'SPECTRAL_WINDOW'), nomodify=False) as tb:
+            cw = np.ones(self.vals.imnchan, dtype=float) * 1e6
+            cf = 1e9 + np.arange(self.vals.imnchan, dtype=float) * 1e6
+
+            if tb.nrows() == 0:
+                tb.addrows(1)
+            tb.putcell('NUM_CHAN', 0, self.vals.imnchan)
+            tb.putcell('CHAN_FREQ', 0, cf)
+            tb.putcell('CHAN_WIDTH', 0, cw)
+            tb.putcell('RESOLUTION', 0, cw)
+            tb.putcell('EFFECTIVE_BW', 0, cw)
+            tb.putcell('TOTAL_BANDWIDTH', 0, cw.sum())
+
+    def __create_state_table(self):
+        self.__create_subtable("STATE", EmptyMSBaseInformation.state_desc, EmptyMSBaseInformation.state_dminfo)
+        with table_manager(os.path.join(self.vals.temporary_vis, 'STATE'), nomodify=False) as tb:
+            if tb.nrows() == 0:
+                tb.addrows(1)
+            tb.putcell('OBS_MODE', 0, 'OBSERVE_TARGET#ON_SOURCE_IMAGE_DOMAIN')
+
+    def __check_ms_path(self, overWrite: bool = True):
+        exists = os.path.exists(self.vals.temporary_vis)
+        if overWrite and exists:
+            shutil.rmtree(self.vals.temporary_vis)
+        return exists
+
+    def __create_subtable(self, subtable: str, desc: str, dminfo: str):
+        tb = table()
+        try:
+            tb.create(f"{self.vals.temporary_vis}/{subtable}", desc, dminfo=dminfo)
+            tb.open(self.vals.temporary_vis, nomodify=False)
+            tb.putkeyword(subtable, f"Table: {self.vals.temporary_vis}/{subtable}")
+        finally:
+            tb.close()
+
+    def copy_image_array_to_ms(self):
+        # get image array and mask from the image
+        ia.open(self.vals.imsmooth_output)
+        arr = ia.getchunk()
+        msk = ia.getchunk(getmask=True)
         ia.done()
 
-    assert len(vals.diraxis) > 0
+        # put image array slices to MS DATA column
+        # axis indices for spatial, spectral and polarization axes
+        xax, yax = self.vals.diraxis
+        spax = self.vals.spaxis[0]
+        if self.vals.polaxisexist:
+            polax = self.vals.polaxis[0]
+        else:
+            arr = np.expand_dims(arr, axis=3)
+            msk = np.expand_dims(msk, axis=3)
+            polax = 3
+        casalog.post(f'axis index: {xax} {yax} {polax} {spax}')
 
-    vals.spaxisexist = len(vals.spaxis) == 1
-    vals.polaxisexist = len(vals.polaxis) == 1
+        # which data column to use
+        with table_manager(self.vals.temporary_vis, nomodify=False) as tb:
+            # also set FLAG, SIGMA, WEIGHT, and UVW
+            # r2p is a mapping between MS row and image array slice
+            xax, yax = self.vals.diraxis
 
-    vals.dirshape = vals.imshape[vals.diraxis]
-    vals.imnrow = np.prod(vals.dirshape)
-
-    if vals.spaxisexist:
-        vals.imnchan = vals.imshape[vals.spaxis[0]]
-    else:
-        vals.imnchan = 1
-    if vals.polaxisexist:
-        vals.imnpol = vals.imshape[vals.polaxis[0]]
-    else:
-        vals.imnpol = 1
-    print(f'image shape is {vals.imshape}, direciton {vals.dirshape} ({vals.imnrow} pixels), npol {vals.imnpol}, nchan {vals.imnchan}')
-
-    # if imnchan is too few, say, <10, sdbaseline should abort
-    if vals.imnchan < 10:
-        print(f'nchan {vals.imnchan} is too few to perform baseline subtraction')
-        return False
-    return True
-
-
-### creating empty MS ###
-
-def _create_empty_ms(vals: ImBaselineVals = None):
-
-    __check_ms_path(vals.temporary_vis)
-    __create_maintable(vals)
-    __create_antenna_table(vals)
-    __create_data_description_table(vals)
-    __create_feed_table(vals)
-    __create_field_table(vals)
-    __create_flag_cmd_table(vals)
-    __create_history_table(vals)
-    __create_observation_table(vals)
-    __create_pointing_table(vals)
-    __create_polarization_table(vals)
-    __create_processor_table(vals)
-    __create_source_table(vals)
-    __create_special_window_table(vals)
-    __create_state_table(vals)
-
-def __create_maintable(vals: ImBaselineVals = None, overWrite: bool = True):
-
-    tb = table()
-    try:
-        tb.create(vals.temporary_vis, EmptyMSBaseInformation.ms_desc, dminfo=EmptyMSBaseInformation.ms_dminfo)
-        tb.putkeyword(keyword="MS_VERSION", value=2)
-        nrow = tb.nrows()
-        nrow_req = vals.imnrow * vals.imnpol
-        nrow = tb.nrows()
-        if nrow != nrow_req:
-            tb.addrows(nrow_req)
-        ddid = tb.getcol('DATA_DESC_ID')
-        ddid[:] = 0
-        tb.putcol('DATA_DESC_ID', ddid)
-        dummy = np.zeros(nrow_req, dtype=int)
-        tb.putcol('ANTENNA1', dummy)
-        tb.putcol('ANTENNA2', dummy)
-        tb.putcol('STATE_ID', dummy)
-        time_list = 4304481539.999771 + np.arange(nrow_req) * 30.0
-        tb.putcol('TIME', time_list)
-        print(f'number of rows {nrow}, number of image pixels {vals.imnrow}, number of pols {vals.imnpol}, required rows {nrow_req}')
-    finally:
-        tb.close()
-
-def __create_antenna_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "ANTENNA", EmptyMSBaseInformation.antenna_desc, EmptyMSBaseInformation.antenna_dminfo)
-    with table_manager(os.path.join(vals.temporary_vis, 'ANTENNA'), nomodify=False) as tb:
-        tb.addrows(1)
-
-def __create_data_description_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "DATA_DESCRIPTION", EmptyMSBaseInformation.data_description_desc, EmptyMSBaseInformation.data_description_dminfo)
-    with table_manager(os.path.join(vals.temporary_vis, 'DATA_DESCRIPTION'), nomodify=False) as tb:
-        tb.addrows(1)
-        tb.putcell('SPECTRAL_WINDOW_ID', 0, 0)
-        tb.putcell('POLARIZATION_ID', 0, 0)
-
-def __create_feed_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "FEED", EmptyMSBaseInformation.feed_desc, EmptyMSBaseInformation.feed_dminfo)
-    with table_manager(os.path.join(vals.temporary_vis, 'FEED'), nomodify=False) as tb:
-        tb.addrows(1)
-
-def __create_field_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "FIELD", EmptyMSBaseInformation.field_desc, EmptyMSBaseInformation.field_dminfo)
-    with table_manager(os.path.join(vals.temporary_vis, 'FIELD'), nomodify=False) as tb:
-        tb.addrows(1)
-        tb.putcell('DELAY_DIR', 0, np.zeros((2,1)))
-        tb.putcell('PHASE_DIR', 0, np.zeros((2,1)))
-        tb.putcell('REFERENCE_DIR', 0, np.zeros((2,1)))
-
-def __create_flag_cmd_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "FLAG_CMD", EmptyMSBaseInformation.flag_cmd_desc, EmptyMSBaseInformation.flag_cmd_dminfo)
-
-def __create_history_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "HISTORY", EmptyMSBaseInformation.history_desc, EmptyMSBaseInformation.history_dminfo)
-
-def __create_observation_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "OBSERVATION", EmptyMSBaseInformation.observation_desc, EmptyMSBaseInformation.observation_dminfo)
-    with table_manager(os.path.join(vals.temporary_vis, 'OBSERVATION'), nomodify=False) as tb:
-        tb.addrows(1)
-
-def __create_pointing_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "POINTING", EmptyMSBaseInformation.pointing_desc, EmptyMSBaseInformation.pointing_dminfo)
-
-def __create_polarization_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "POLARIZATION", EmptyMSBaseInformation.polarization_desc, EmptyMSBaseInformation.polarization_dminfo)
-    with table_manager(os.path.join(vals.temporary_vis, 'POLARIZATION'), nomodify=False) as tb:
-        corr_type = np.ones(1, dtype=int)
-        corr_product = np.ones(2, dtype=int).reshape((2, 1))
-        if tb.nrows() == 0:
-            tb.addrows(1)
-        tb.putcell('NUM_CORR', 0, 1)
-        tb.putcell('CORR_TYPE', 0, corr_type)
-        tb.putcell('CORR_PRODUCT', 0, corr_product)
-
-def __create_processor_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "PROCESSOR", EmptyMSBaseInformation.processor_desc, EmptyMSBaseInformation.processor_dminfo)
-
-def __create_source_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "SOURCE", EmptyMSBaseInformation.source_desc, EmptyMSBaseInformation.source_dminfo)
-
-def __create_special_window_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "SPECTRAL_WINDOW", EmptyMSBaseInformation.special_window_desc, EmptyMSBaseInformation.special_window_dminfo)
-    with table_manager(os.path.join(vals.temporary_vis, 'SPECTRAL_WINDOW'), nomodify=False) as tb:
-        cw = np.ones(vals.imnchan, dtype=float) * 1e6
-        cf = 1e9 + np.arange(vals.imnchan, dtype=float) * 1e6
-
-        if tb.nrows() == 0:
-            tb.addrows(1)
-        tb.putcell('NUM_CHAN', 0, vals.imnchan)
-        tb.putcell('CHAN_FREQ', 0, cf)
-        tb.putcell('CHAN_WIDTH', 0, cw)
-        tb.putcell('RESOLUTION', 0, cw)
-        tb.putcell('EFFECTIVE_BW', 0, cw)
-        tb.putcell('TOTAL_BANDWIDTH', 0, cw.sum())
-
-def __create_state_table(vals: ImBaselineVals = None):
-    __create_subtable(vals.temporary_vis, "STATE", EmptyMSBaseInformation.state_desc, EmptyMSBaseInformation.state_dminfo)
-    with table_manager(os.path.join(vals.temporary_vis, 'STATE'), nomodify=False) as tb:
-        if tb.nrows() == 0:
-            tb.addrows(1)
-        tb.putcell('OBS_MODE', 0, 'OBSERVE_TARGET#ON_SOURCE_IMAGE_DOMAIN')
-
-def __check_ms_path(ms: str = None, overWrite: bool = True):
-    exists = os.path.exists(ms)
-    if overWrite and exists:
-        shutil.rmtree(ms)
-    return exists
-
-def __create_subtable(ms: str, subtable: str, desc: str, dminfo: str):
-    tb = table()
-    try:
-        tb.create(f"{ms}/{subtable}", desc, dminfo=dminfo)
-        tb.open(ms, nomodify=False)
-        tb.putkeyword(subtable, f"Table: {ms}/{subtable}")
-    finally:
-        tb.close()
-
-def _copy_image_array_to_ms(vals: ImBaselineVals = None):
-    # get image array and mask from the image
-    ia.open(vals.imsmooth_output)
-    arr = ia.getchunk()
-    msk = ia.getchunk(getmask=True)
-    ia.done()
-
-    # put image array slices to MS DATA column
-    # axis indices for spatial, spectral and polarization axes
-    xax, yax = vals.diraxis
-    spax = vals.spaxis[0]
-    if vals.polaxisexist:
-        polax = vals.polaxis[0]
-    else:
-        arr = np.expand_dims(arr, axis=3)
-        msk = np.expand_dims(msk, axis=3)
-        polax = 3
-    casalog.post(f'axis index: {xax} {yax} {polax} {spax}')
-
-    # which data column to use
-    with table_manager(vals.temporary_vis, nomodify=False) as tb:
-        # also set FLAG, SIGMA, WEIGHT, and UVW
-        # r2p is a mapping between MS row and image array slice
-        xax, yax = vals.diraxis
-
-        index_list = [0, 0, 0, 0]
-        index_list[spax] = np.arange(vals.imnchan)
-        r2p = []
-        nx, ny = vals.dirshape
-        irow = 0
-        wgt = np.ones(1, dtype=float)
-        uvw = np.zeros(3, dtype=float)
-        for ix in range(nx):
-            index_list[xax] = ix
-            for iy in range(ny):
-                index_list[yax] = iy
-                for ip in range(vals.imnpol):
-                    index_list[polax] = ip
-                    slice = tuple(index_list)
-                    subarr = arr[slice]
-                    submsk = np.logical_not(msk[slice])
-                    print(f'slice={slice}, subarr={subarr[200:-200]}')
-                    r2p.append(slice)
-                    tb.putcell(vals.datacolumn, irow, np.expand_dims(subarr, axis=0))
-                    tb.putcell('FLAG', irow, np.expand_dims(submsk, axis=0))
-                    tb.putcell('SIGMA', irow, wgt)
-                    tb.putcell('WEIGHT', irow, wgt)
-                    tb.putcell('UVW', irow, uvw)
-                    irow += 1
+            index_list = [0, 0, 0, 0]
+            index_list[spax] = np.arange(self.vals.imnchan)
+            r2p = []
+            nx, ny = self.vals.dirshape
+            irow = 0
+            wgt = np.ones(1, dtype=float)
+            uvw = np.zeros(3, dtype=float)
+            for ix in range(nx):
+                index_list[xax] = ix
+                for iy in range(ny):
+                    index_list[yax] = iy
+                    for ip in range(self.vals.imnpol):
+                        index_list[polax] = ip
+                        slice = tuple(index_list)
+                        subarr = arr[slice]
+                        submsk = np.logical_not(msk[slice])
+                        print(f'slice={slice}, subarr={subarr[200:-200]}')
+                        r2p.append(slice)
+                        tb.putcell(self.vals.datacolumn, irow, np.expand_dims(subarr, axis=0))
+                        tb.putcell('FLAG', irow, np.expand_dims(submsk, axis=0))
+                        tb.putcell('SIGMA', irow, wgt)
+                        tb.putcell('WEIGHT', irow, wgt)
+                        tb.putcell('UVW', irow, uvw)
+                        irow += 1
 
 
 ### sdsmooth ###
@@ -573,7 +617,7 @@ def do_sdbaseline(vals: ImBaselineVals = None):
                             timerange=vals.sdbaseline_timerenge, scan=vals.sdbaseline_scan,
                             polarization=vals.sdbaseline_pol, intent=vals.sdbaseline_intent,
                             reindex=vals.sdbaseline_reindex)
-        func, params = _prepare_for_baselining(sdms, vals.convert_baselining_dict())
+        func, params = _prepare_for_baselining(sdms, vals.convert_sdbaselining_dict())
         func(**params)
         sdms.close()
         
@@ -2161,4 +2205,3 @@ class EmptyMSBaseInformation:
                         'MaxCacheSize': 2,
                         'PERSCACHESIZE': 2},
                'TYPE': 'StandardStMan'}}
-
