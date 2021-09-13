@@ -51,8 +51,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                                 itsMinResidual(0),itsMinResidualNoMask(0),
                                 itsPeakResidualNoMask(0), itsNsigma(0),
                                 itsMadRMS(0), itsMaskSum(0),
-                                itsSummaryMinor(IPosition(2,8,0)),
-				itsNSummaryFields(8),
+                                itsSummaryMinor(IPosition(2,SIMinorCycleController::nSummaryFields,0)),
 				itsDeconvolverID(0) 
   {}
 
@@ -281,7 +280,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     /* Reset Counters and summary for the current set of minorcycle iterations */
     itsIterDone = 0;
     itsIterDiff = -1;
-    itsSummaryMinor.resize( IPosition( 2, itsNSummaryFields, 0) , true );
+    itsSummaryMinor.resize( IPosition( 2, SIMinorCycleController::nSummaryFields, 0) , true );
 
     return returnRecord;
   }
@@ -324,33 +323,38 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsCycleIterDone = 0;
   }
 
-  void SIMinorCycleController::addSummaryMinor(uInt deconvolverid, uInt subimageid, Float startmodel, Float startpeakresidual,Float model, Float peakresidual)
+  void SIMinorCycleController::addSummaryMinor(uInt deconvolverid, uInt chan, uInt pol, Int cycleStartIter, Int startIterDone, Float startmodelflux, Float startpeakresidual, Float modelflux, Float peakresidual, Int stopCode)
   {
     LogIO os( LogOrigin("SIMinorCycleController", __FUNCTION__ ,WHERE) );
 
     IPosition shp = itsSummaryMinor.shape();
-    if( shp.nelements() != 2 && shp[0] != itsNSummaryFields ) 
+    if( shp.nelements() != 2 && shp[0] != SIMinorCycleController::nSummaryFields ) 
       throw(AipsError("Internal error in shape of minor-cycle summary record"));
-
-     // Note : itsNSummaryFields is hard-coded to 6 in the SIMinorCycleController constructors.
-     itsSummaryMinor.resize( IPosition( 2, itsNSummaryFields, shp[1]+1 ) , true );
+     itsSummaryMinor.resize( IPosition( 2, SIMinorCycleController::nSummaryFields, shp[1]+1 ) , true );
      // iterations done
      itsSummaryMinor( IPosition(2, 0, shp[1] ) ) = itsIterDone;
      // peak residual
      itsSummaryMinor( IPosition(2, 1, shp[1] ) ) = (Double) peakresidual;
      // model flux
-     itsSummaryMinor( IPosition(2, 2, shp[1] ) ) = (Double) model;
+     itsSummaryMinor( IPosition(2, 2, shp[1] ) ) = (Double) modelflux;
      // cycle threshold
      itsSummaryMinor( IPosition(2, 3, shp[1] ) ) = itsCycleThreshold;
      // mapper id
      itsSummaryMinor( IPosition(2, 4, shp[1] ) ) = deconvolverid;
-     // chunk id (channel/stokes)
-     itsSummaryMinor( IPosition(2, 5, shp[1] ) ) = subimageid;
+     // channel id
+     itsSummaryMinor( IPosition(2, 5, shp[1] ) ) = chan;
+     // polarity id
+     itsSummaryMinor( IPosition(2, 6, shp[1] ) ) = pol;
+     // cycle start iterations done (ie earliest iterDone for the entire minor cycle)
+     itsSummaryMinor( IPosition(2, 7, shp[1] ) ) = cycleStartIter;
+     // starting iterations done
+     itsSummaryMinor( IPosition(2, 8, shp[1] ) ) = startIterDone;
      // starting peak residual
-     itsSummaryMinor( IPosition(2, 6, shp[1] ) ) = (Double) startpeakresidual;
+     itsSummaryMinor( IPosition(2, 9, shp[1] ) ) = (Double) startpeakresidual;
      // starting model flux
-     itsSummaryMinor( IPosition(2, 7, shp[1] ) ) = (Double) startmodel;
-
+     itsSummaryMinor( IPosition(2, 10, shp[1] ) ) = (Double) startmodelflux;
+     // stopcode
+     itsSummaryMinor( IPosition(2, 11, shp[1] ) ) = stopCode;
   }// end of addSummaryMinor
 
   void SIMinorCycleController::compressSummaryMinor(Record& rec){

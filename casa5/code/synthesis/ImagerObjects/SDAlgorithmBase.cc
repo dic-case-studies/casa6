@@ -106,6 +106,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
        << LogIO::POST;
 
     Float itsPBMask = loopcontrols.getPBMask();
+    Int cycleStartIteration = loopcontrols.getIterDone();
 
     Float maxResidualAcrossPlanes=0.0; Int maxResChan=0,maxResPol=0;
     Float totalFluxAcrossPlanes=0.0;
@@ -211,26 +212,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             }
 	    loopcontrols.setPeakResidual( peakresidual );
 	    loopcontrols.resetMinResidual(); // Set it to current initial peakresidual.
-
             
 	    stopCode = checkStop( loopcontrols,  peakresidual );
 
-	    cout << "Add summary minor for chan -- start  " << chanid + polid*nSubChans << endl;
-	    /// add stopcode too ? 
-	    loopcontrols.addSummaryMinor( deconvolverid, chanid+polid*nSubChans, 
-					  startmodelflux, startpeakresidual, modelflux, peakresidual);
-
-
-	    // stopCode=0;
-
 	    if( validMask && stopCode==0 )
 	      {
-                
-		// Record info about the start of the minor cycle iterations
-		//loopcontrols.addSummaryMinor( deconvolverid, chanid+polid*nSubChans, 
-		//			      modelflux, peakresidual );
-		//		loopcontrols.setPeakResidual( peakresidual );
-
 		// Init the deconvolver
                  //where we write in model and residual may be
                 {
@@ -277,10 +263,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		    loopcontrols.incrementMinorCycleCount( iterdone ); // CAS-8767 : add subimageindex and merge with addSummaryMinor call later.
 		    
 		    stopCode = checkStop( loopcontrols,  peakresidual );
-		    
-		    //		    cout << "Add summary minor for chan  " << chanid + polid*nSubChans << endl;
-		    //		    loopcontrols.addSummaryMinor( deconvolverid, chanid+polid*nSubChans, 
-		    //				  startmodelflux, startpeakresidual, modelflux, peakresidual);
 
 		    /// Catch the situation where takeOneStep returns without satisfying any
 		    ///  convergence criterion. For now, takeOneStep is the entire minor cycle.
@@ -346,10 +328,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	       os << LogIO::POST;
 	       
-	       cout << "Add summary minor for chan  " << chanid + polid*nSubChans << endl;
-	       /// add stopcode too ? 
-	       loopcontrols.addSummaryMinor( deconvolverid, chanid+polid*nSubChans, 
-					     startmodelflux, startpeakresidual, modelflux, peakresidual);
+	    cout << "Add summary minor for chan  " << chanid + polid*nSubChans << endl;
+	    loopcontrols.addSummaryMinor( deconvolverid, chanid, polid, cycleStartIteration,
+	                                  startiteration, startmodelflux, startpeakresidual, modelflux, peakresidual, stopCode);
 
 	    
 	    loopcontrols.resetCycleIter(); 
