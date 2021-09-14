@@ -1,49 +1,6 @@
 ########################################################################################################################
 ############################################            Imports            #############################################
 ########################################################################################################################
-def write_conftest(filepath):
-    string = """
-import pytest
-import inspect
-
-@pytest.mark.trylast
-def pytest_configure(config):
-    terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
-    config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
-
-class TestDescriptionPlugin:
-
-    def __init__(self, terminal_reporter):
-        self.terminal_reporter = terminal_reporter
-        self.desc = None
-        self.funcn = None
-
-    def pytest_runtest_protocol(self, item):
-        #from pprint import pprint
-        #d = item.__dict__
-        #pprint(d, indent=2)
-        self.desc = inspect.getdoc(item.obj)
-        #print(item._nodeid)
-        self.funcn = item._nodeid
-
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_runtest_logstart(self, nodeid, location):
-        #print("Verbosity Level: {}".format(self.terminal_reporter.verbosity))
-        if self.terminal_reporter.verbosity == 0:
-            yield
-            self.terminal_reporter.write(f'\n{self.funcn} \n')
-        else:
-            self.terminal_reporter.write('\n')
-            yield
-            if self.desc:
-                    self.terminal_reporter.write(f'\n{self.desc} \n')
-            else:
-                    self.terminal_reporter.write(f'\n')
-    """
-    file_obj = open(filepath,'w')
-    file_obj.write(repr(string))
-    file_obj.close()
-
 import argparse
 import os
 import shutil
@@ -55,13 +12,12 @@ import json
 import datetime
 import platform
 
-
-default_timeout = 1800
-sys.path.insert(0,'')
-
 ########################################################################################################################
 ######################################            Imports / Constants            #######################################
 ########################################################################################################################
+
+default_timeout = 1800
+sys.path.insert(0,'')
 
 # mem mode variables
 HAVE_MEMTEST=True
@@ -129,6 +85,97 @@ DRY_RUN = False
 ########################################################################################################################
 ###########################################            Functions            ############################################
 ########################################################################################################################
+# At the moment, this needs to be a sep function due to repr and escape characters, try/ except for osx
+def write_conftest_linux(filepath):
+    string = """
+import pytest
+import inspect
+
+@pytest.mark.trylast
+def pytest_configure(config):
+    terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
+    config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+
+class TestDescriptionPlugin:
+
+    def __init__(self, terminal_reporter):
+        self.terminal_reporter = terminal_reporter
+        self.desc = None
+        self.funcn = None
+
+    def pytest_runtest_protocol(self, item):
+        #from pprint import pprint
+        #d = item.__dict__
+        #pprint(d, indent=2)
+        self.desc = inspect.getdoc(item.obj)
+        #print(item._nodeid)
+        self.funcn = item._nodeid
+
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_runtest_logstart(self, nodeid, location):
+        #print("Verbosity Level: {}".format(self.terminal_reporter.verbosity))
+        if self.terminal_reporter.verbosity == 0:
+            yield
+            self.terminal_reporter.write(f'\n{self.funcn} \n')
+        else:
+            self.terminal_reporter.write('\n')
+            yield
+            if self.desc:
+                    self.terminal_reporter.write(f'\n{self.desc} \n')
+            else:
+                    self.terminal_reporter.write(f'\n')
+    """
+    file_obj = open(filepath,'w')
+    file_obj.write(repr(string))
+    file_obj.close()
+
+# At the moment, this needs to be a sep function due to repr and escape characters, try/ except for osx
+def write_conftest_osx(filepath):
+    string = """
+import pytest
+import inspect
+
+@pytest.mark.trylast
+def pytest_configure(config):
+    terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
+    try:
+        config.pluginmanager.unregister(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+    except:
+        pass
+    config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+
+class TestDescriptionPlugin:
+
+    def __init__(self, terminal_reporter):
+        self.terminal_reporter = terminal_reporter
+        self.desc = None
+        self.funcn = None
+
+    def pytest_runtest_protocol(self, item):
+        #from pprint import pprint
+        #d = item.__dict__
+        #pprint(d, indent=2)
+        self.desc = inspect.getdoc(item.obj)
+        #print(item._nodeid)
+        self.funcn = item._nodeid
+
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_runtest_logstart(self, nodeid, location):
+        #print("Verbosity Level: {}".format(self.terminal_reporter.verbosity))
+        if self.terminal_reporter.verbosity == 0:
+            yield
+            self.terminal_reporter.write(f'\\n{self.funcn} \\n')
+        else:
+            self.terminal_reporter.write('\\n')
+            yield
+            if self.desc:
+                    self.terminal_reporter.write(f'\\n{self.desc} \\n')
+            else:
+                    self.terminal_reporter.write(f'\\n')
+    """
+    file_obj = open(filepath,'w')
+    file_obj.write(string)
+    file_obj.close()
 
 class casa_test:
     def __init__(self,
@@ -549,7 +596,10 @@ def run(testnames):
                 else:
                     print("Running Command: pytest {}".format(cmd))
                     conf_name = os.path.join(os.getcwd(),"conftest.py")
-                    write_conftest(conf_name)
+                    if platform.system() == 'Darwin':
+                        write_conftest_osx(conf_name)
+                    else:
+                        write_conftest_linux(conf_name)
                     pytest.main(cmd)
                     os.remove(conf_name)
 
@@ -656,9 +706,12 @@ def run(testnames):
                             print("Test Directory: {}".format(os.getcwd()))
                             print("Running Command: pytest {}".format(cmd))
                             conf_name = os.path.join(os.getcwd(),"conftest.py")
-                            write_conftest(conf_name)
+                            if platform.system() == 'Darwin':
+                                write_conftest_osx(conf_name)
+                            else:
+                                write_conftest_linux(conf_name)
                             pytest.main(cmd)
-                            os.remove(conf_name)
+                            #os.remove(conf_name)
                             os.chdir(myworkdir)
 
                     ##################################################
@@ -731,7 +784,10 @@ def run(testnames):
                             print("Test Directory: {}".format(os.getcwd()))
                             print("Running Command: pytest {}".format(cmd))
                             conf_name = os.path.join(os.getcwd(),"conftest.py")
-                            write_conftest(conf_name)
+                            if platform.system() == 'Darwin':
+                                write_conftest_osx(conf_name)
+                            else:
+                                write_conftest_linux(conf_name)
                             pytest.main(cmd)
                             os.remove(conf_name)
                             os.chdir(myworkdir)
