@@ -111,10 +111,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
    void addSummaryMinor(casacore::uInt deconvolverid, casacore::uInt channel, casacore::uInt polarity,
                         casacore::Int cycleStartIter, casacore::Int startIterDone, casacore::Float startmodel, casacore::Float startpeakresidual, casacore::Float startpeakresidualnomask,
                         casacore::Float model, casacore::Float peakresidual, casacore::Float peakresidualnomask, casacore::Int stopCode);
-   //this is to reduce the size of the summaryminor matrix in the output record.
-   // It can get  big with information for the same channel repeated many times
-   // this reduces the info to max of peak residuals and sum of iterations etc for the same channel
-   static void compressSummaryMinor(casacore::Record& rec);
     
     /* Variables to track status inside each Deconvolver */
     casacore::Float getPeakResidual();

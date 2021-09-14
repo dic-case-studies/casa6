@@ -333,7 +333,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 	       os << LogIO::POST;
 	       
-	    cout << "Add summary minor for chan  " << chanid + polid*nSubChans << endl;
 	    loopcontrols.addSummaryMinor( deconvolverid, chanid, polid, cycleStartIteration,
 	                                  startiteration, startmodelflux, startpeakresidual, startpeakresidualnomask,
 	                                  modelflux, peakresidual, peakresidualnomask, stopCode);

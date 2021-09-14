@@ -412,9 +412,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		IPosition cShp = itsSummaryMinor.shape();
 		IPosition nShp = summary.shape();
 
-		cout << "Summary shape : " << summary.shape() << endl;
-		cout << "ItsSummaryMinor shape : " << itsSummaryMinor.shape() << endl;
-
 		if( cShp.nelements() != 2 || cShp[0] != SIMinorCycleController::nSummaryFields ||
 			nShp.nelements() != 2 || nShp[0] != SIMinorCycleController::nSummaryFields ) 
 			throw(AipsError("Internal error in shape of global minor-cycle summary record"));
