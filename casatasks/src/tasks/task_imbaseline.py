@@ -111,27 +111,27 @@ class ImBaselineVals:
         self.datacolumn = 'DATA'
         self.overwrite = True
 
-        self._check_args()
+        self.__check_args()
 
-    def _check_args(self):
-        self.__check_imagename()
-        self.__check_linefile()
-        self.__check_maskmode()
-        self.__check_blfunc()
-        self.__check_dirkernel()
-        self.__check_spkernel()
+    def __check_args(self):
+        self.__check_arg_imagename()
+        self.__check_arg_linefile()
+        self.__check_arg_maskmode()
+        self.__check_arg_blfunc()
+        self.__check_arg_dirkernel()
+        self.__check_arg_spkernel()
 
-    def __check_imagename(self):
+    def __check_arg_imagename(self):
         if not os.path.exists(self.imagename):
             raise ValueError(f'Error: file {self.imagename} is not found.', 'SEVERE')
 
-    def __check_linefile(self):
+    def __check_arg_linefile(self):
         if self.linefile == '':
             self.linefile = os.path.basename(self.imagename).rstrip('/') + '_bs'
         if os.path.exists(self.linefile):
             raise ValueError(f'Error: file {self.linefile} already exists, please delete before continuing.', 'SEVERE')
 
-    def __check_maskmode(self):
+    def __check_arg_maskmode(self):
         maskmode_list = self.sdbaseline_maskmode == 'list'
         maskmode_auto = self.sdbaseline_maskmode == 'auto'
         if not ( maskmode_list or maskmode_auto ):
@@ -143,7 +143,7 @@ class ImBaselineVals:
         else:
             self.sdbaseline_chans = ''
 
-    def __check_blfunc(self):
+    def __check_arg_blfunc(self):
         blfunc_poly = self.sdbaseline_blfunc == 'poly'
         blfunc_chebyshev = self.sdbaseline_blfunc == 'chebyshev'
         blfunc_cspline = self.sdbaseline_blfunc == 'cspline'
@@ -169,7 +169,7 @@ class ImBaselineVals:
             if not os.path.exists(self.sdbaseline_blparam):
                 raise ValueError("input file '%s' does not exists" % self.blparam)
 
-    def __check_dirkernel(self):
+    def __check_arg_dirkernel(self):
         self.dir_none = self.imsmooth_kernel == 'none'
         self.dir_ikernel = self.imsmooth_kernel == 'image'
         self.dir_bkernel = self.imsmooth_kernel == 'boxcar'
@@ -187,7 +187,7 @@ class ImBaselineVals:
             self.imsmooth_kimage = ''
             self.imsmooth_scale = -1.0
 
-    def __check_spkernel(self):
+    def __check_arg_spkernel(self):
         self.sp_none = self.sdsmooth_kernel == 'none'
         self.sp_bkernel = self.sdsmooth_kernel == 'boxcar'
         self.sp_gkernel = self.sdsmooth_kernel == 'gaussian'
@@ -198,10 +198,10 @@ class ImBaselineVals:
             self.sdsmooth_output = self.temporary_vis
             self.sdsmooth_kwidth = 5
     
-    def enable_imsmooth(self):
+    def imsmooth_enable(self):
         return not self.dir_none
     
-    def enable_sdsmooth(self):
+    def sdsmooth_enable(self):
         return not self.sp_none
 
     def convert_sdbaselining_dict(self):
@@ -234,11 +234,11 @@ class ImBaselineVals:
             
 
 @sdutil.sdtask_decorator
-def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
-                edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter,
-                clipthresh, dirkernel, major, minor, pa, kimage, scale, spkernel, kwidth):
+def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth, edge, blfunc, order, 
+               npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh, dirkernel, major, minor, pa, kimage, 
+               scale, spkernel, kwidth):
     """
-    The main method of imbaseline.
+    THE MAIN METHOD OF IMBASELINE.
     """
     vals = ImBaselineVals(imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                          edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter,
@@ -250,27 +250,27 @@ def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thre
     # -> sdbaseline -> convert MS to image
 
     # imsmooth
-    if vals.enable_imsmooth():
+    if vals.imsmooth_enable():
         print("start imsmooth")
-        Imsmooth.execute(vals)
+        Imsmooth(vals).execute()
         print("end imsmooth")
 
     # casaimage -> MS
-    Image2MSConverter.convert(vals)
+    Image2MSConverter(vals).convert()
 
     # sdsmooth
-    if vals.enable_sdsmooth():
+    if vals.sdsmooth_enable():
         print("start sdsmooth")
-        do_sdsmooth(vals)
+        Sdsmooth(vals).execute()
         print("end sdsmooth")
 
     # sdbaseline
     print("start sdbaseline")
-    do_sdbaseline(vals)
+    Sdbaseline(vals).execute()
     print("end sdbaseline")
 
     # MS -> casaimage
-    convert_ms_to_image(vals)
+    MS2ImageConverter(vals).convert()
 
     # end
 
@@ -278,46 +278,45 @@ def prepare(vals: ImBaselineVals = None):
     ia.dohistory(False)
 
 
-### imsmooth ###
 class Imsmooth():
+    """
+    imsmooth execution class
+    This code is based on task_imsmooth.
+    """
 
     def __init__(self, vals: ImBaselineVals = None):
         self.vals = vals
 
-    @staticmethod
-    def execute(vals: ImBaselineVals = None):
-        """Execute imsmooth.
-        This code is based on task_imsmooth."""
+    def execute(self):
 
-        ims = Imsmooth(vals)
-        ia.open(ims.vals.imagename)
+        ia.open(self.vals.imagename)
         mycsys = ia.coordsys()
         myrg = regionmanager()
-        ims.vals.reg = myrg.frombcs(csys=mycsys.torecord(), shape=ia.shape(), chans=ims.vals.imsmooth_chans)
+        self.vals.reg = myrg.frombcs(csys=mycsys.torecord(), shape=ia.shape(), chans=self.vals.imsmooth_chans)
         myrg.done()
         mycsys.done()
         
         outia = None
         try:
-            if ims.vals.dir_gkernel:
-                outia = ims._imsmooth_gckernel()
-            elif ims.vals.dir_bkernel:
-                outia = ims._imsmooth_bkernel()
-            elif ims.vals.dir_ikernel:
-                outia = ims._imsmooth_ikernel()
+            if self.vals.dir_gkernel:
+                outia = self.__imsmooth_gckernel()
+            elif self.vals.dir_bkernel:
+                outia = self.__imsmooth_bkernel()
+            elif self.vals.dir_ikernel:
+                outia = self.__imsmooth_ikernel()
 
         finally:
             ia.done()
             if outia: outia.done()
 
-    def _imsmooth_ikernel(self):
+    def __imsmooth_ikernel(self):
         # image kernel for image smoothing
         return ia.convolve(
                         outfile=self.vals.imsmooth_output, kernel=self.vals.imsmooth_kimage, scale=self.vals.imsmooth_scale, 
                         region=self.vals.reg, mask=self.vals.imsmooth_mask, overwrite=self.vals.overwrite, stretch=self.vals.imsmooth_stretch 
                     )
 
-    def _imsmooth_bkernel(self):
+    def __imsmooth_bkernel(self):
         # boxcar kernel for image smoothing
         if not self.vals.imsmooth_major or not self.vals.imsmooth_minor:
             raise ValueError("Both major and minor must be specified.")
@@ -329,11 +328,11 @@ class Imsmooth():
                                 'DEBUG2' )
         return ia.sepconvolve(
                         axes=[0,1], types=['box','box'], widths=[ self.vals.imsmooth_minor, self.vals.imsmooth_major ],
-                        region=self.vals.reg, outfile=self.vals.imsmooth_output,
-                        mask=self.vals.imsmooth_mask, overwrite=self.vals.overwrite, stretch=self.vals.imsmooth_stretch 
+                        region=self.vals.reg, outfile=self.vals.imsmooth_output, mask=self.vals.imsmooth_mask, 
+                        overwrite=self.vals.overwrite, stretch=self.vals.imsmooth_stretch 
                     )
 
-    def _imsmooth_gckernel(self):
+    def __imsmooth_gckernel(self):
         # gaussian kernel for image smoothing
         if not self.vals.imsmooth_major:
             raise ValueError("Major axis must be specified")
@@ -349,19 +348,21 @@ class Imsmooth():
                         beam=self.vals.imsmooth_beam, overwrite=self.vals.overwrite
                     )
 
+
 class Image2MSConverter():
+    """
+    The class does convert a Casa image to a MeasurementSet.
+    """
 
     def __init__(self, vals: ImBaselineVals = None):
         self.vals = vals
 
-    @staticmethod
-    def convert(vals: ImBaselineVals = None):
-        i2ms = Image2MSConverter(vals)
-        i2ms.get_image_params_from_imsmooth_output()
-        i2ms.create_empty_ms()
-        i2ms.copy_image_array_to_ms()
+    def convert(self):
+        self.__get_image_params_from_imsmooth_output()
+        self.__create_empty_ms()
+        self.__copy_image_array_to_ms()
 
-    def get_image_params_from_imsmooth_output(self):
+    def __get_image_params_from_imsmooth_output(self):
         try:
             ia.open(self.vals.imsmooth_output)
             cs = ia.coordsys()
@@ -397,10 +398,7 @@ class Image2MSConverter():
             return False
         return True
 
-
-    ### creating empty MS ###
-
-    def create_empty_ms(self):
+    def __create_empty_ms(self):
 
         self.__check_ms_path()
         self.__create_maintable()
@@ -535,7 +533,7 @@ class Image2MSConverter():
         finally:
             tb.close()
 
-    def copy_image_array_to_ms(self):
+    def __copy_image_array_to_ms(self):
         # get image array and mask from the image
         ia.open(self.vals.imsmooth_output)
         arr = ia.getchunk()
@@ -586,262 +584,285 @@ class Image2MSConverter():
                         irow += 1
 
 
-### sdsmooth ###
+class Sdsmooth():
+    """
+    sdsmooth execution class
+    This code is based on task_sdsmooth.
+    """
+    def __init__(self, vals: ImBaselineVals = None):
+        self.vals = vals
 
-def do_sdsmooth(vals: ImBaselineVals = None):
-    sdms.open(vals.temporary_vis)
-    sdms.set_selection(spw=vals.sdsmooth_spw, field=vals.sdsmooth_field, antenna=vals.sdsmooth_antenna,
-                        timerange=vals.sdsmooth_timerange, scan=vals.sdsmooth_scan, polarization=vals.sdsmooth_pol,
-                        intent=vals.sdsmooth_intent, reindex=vals.sdsmooth_reindex)
-    sdms.smooth(type=vals.sdsmooth_kernel, width=vals.sdsmooth_kwidth, outfile=vals.sdsmooth_output, datacolumn=vals.datacolumn.lower())
-    sdms.close()
-
-
-### sdbaseline ###
-
-def do_sdbaseline(vals: ImBaselineVals = None):
-
-    try:
-        _prepare_sdbaseline(vals)
-
-        _output_bloutput_text_header(vals)
-        
-        if vals.sdbaseline_blfunc == 'variable':
-            sorttab_info = _remove_sorted_table_keyword(vals.sdsmooth_output)
-
-        selected_spw = sdutil.get_spwids( ms.msseltoindex(vis=vals.sdsmooth_output, spw=vals.sdbaseline_spw, 
-                                                          field=vals.sdbaseline_field, baseline='', time='',
-                                                          scan=vals.sdbaseline_scan) )
-        sdms.open(vals.sdsmooth_output)
-        sdms.set_selection(spw=selected_spw, field=vals.sdbaseline_field, antenna=vals.sdbaseline_antenna,
-                            timerange=vals.sdbaseline_timerenge, scan=vals.sdbaseline_scan,
-                            polarization=vals.sdbaseline_pol, intent=vals.sdbaseline_intent,
-                            reindex=vals.sdbaseline_reindex)
-        func, params = _prepare_for_baselining(sdms, vals.convert_sdbaselining_dict())
-        func(**params)
+    def execute(self):
+        sdms.open(self.vals.temporary_vis)
+        sdms.set_selection(spw=self.vals.sdsmooth_spw, field=self.vals.sdsmooth_field, antenna=self.vals.sdsmooth_antenna,
+                            timerange=self.vals.sdsmooth_timerange, scan=self.vals.sdsmooth_scan, polarization=self.vals.sdsmooth_pol,
+                            intent=self.vals.sdsmooth_intent, reindex=self.vals.sdsmooth_reindex)
+        sdms.smooth(type=self.vals.sdsmooth_kernel, width=self.vals.sdsmooth_kwidth, outfile=self.vals.sdsmooth_output,
+                    datacolumn=self.vals.datacolumn.lower())
         sdms.close()
-        
-        if vals.sdbaseline_blfunc == 'variable':
-            _restore_sorted_table_keyword(vals.sdsmooth_output, sorttab_info)
 
-    except Exception:
-        raise
 
-def _prepare_sdbaseline(vals: ImBaselineVals = None):
-    blparam_file = vals.sdsmooth_output + '_blparam.txt'
-    if os.path.exists(blparam_file):
-        __remove_data(blparam_file)  # CAS-11781
+class Sdbaseline():
+    """
+    sdbaseline execution class
+    This code is based on task_sdbaseline.
+    """
+    def __init__(self, vals: ImBaselineVals = None):
+        self.vals = vals
     
-    if vals.sdbaseline_spw == '': vals.sdbaseline_spw = '*'
+    def execute(self):
 
-    if vals.sdbaseline_blfunc == 'sinusoid':
-        vals.sdbaseline_addwn = sdutil.parse_wavenumber_param(vals.sdbaseline_addwn)
-        vals.sdbaseline_rejwn = sdutil.parse_wavenumber_param(vals.sdbaseline_rejwn)
-    
-    vals.sdbaseline_bloutput = __prepare_for_blformat_bloutput(vals.sdsmooth_output, vals.sdbaseline_bloutput, True)
-
-def __remove_data(filename):
-    if os.path.exists(filename):
-        if os.path.isdir(filename):
-            shutil.rmtree(filename)
-        elif os.path.isfile(filename):
-            os.remove(filename)
-        else:
-            # could be a symlink
-            os.remove(filename)
-
-def _remove_sorted_table_keyword(infile):
-    res = {'is_sorttab': False, 'sorttab_keywd': '', 'sorttab_name': ''}
-    with table_manager(infile, nomodify=False) as tb:
         try:
-            sorttab_keywd = 'SORTED_TABLE'
-            if sorttab_keywd in tb.keywordnames():
-                res['is_sorttab'] = True
-                res['sorttab_keywd'] = sorttab_keywd
-                res['sorttab_name'] = tb.getkeyword(sorttab_keywd)
-                tb.removekeyword(sorttab_keywd)
+            self.__prepare_sdbaseline()
+
+            self.__output_bloutput_text_header()
+            
+            if self.vals.sdbaseline_blfunc == 'variable':
+                sorttab_info = self.__remove_sorted_table_keyword(self.vals.sdsmooth_output)
+
+            selected_spw = sdutil.get_spwids( ms.msseltoindex(vis=self.vals.sdsmooth_output, spw=self.vals.sdbaseline_spw, 
+                                                            field=self.vals.sdbaseline_field, baseline='', time='',
+                                                            scan=self.vals.sdbaseline_scan) )
+            sdms.open(self.vals.sdsmooth_output)
+            sdms.set_selection(spw=selected_spw, field=self.vals.sdbaseline_field, antenna=self.vals.sdbaseline_antenna,
+                                timerange=self.vals.sdbaseline_timerenge, scan=self.vals.sdbaseline_scan,
+                                polarization=self.vals.sdbaseline_pol, intent=self.vals.sdbaseline_intent,
+                                reindex=self.vals.sdbaseline_reindex)
+            func, params = self.__prepare_for_baselining(sdms, self.vals.convert_sdbaselining_dict())
+            func(**params)
+            sdms.close()
+            
+            if self.vals.sdbaseline_blfunc == 'variable':
+                self.__restore_sorted_table_keyword(self.vals.sdsmooth_output, sorttab_info)
+
         except Exception:
             raise
 
-    return res
+    def __prepare_sdbaseline(self):
+        blparam_file = self.vals.sdsmooth_output + '_blparam.txt'
+        if os.path.exists(blparam_file):
+            self.__remove_data(blparam_file)  # CAS-11781
+        
+        if self.vals.sdbaseline_spw == '': self.vals.sdbaseline_spw = '*'
 
-def _restore_sorted_table_keyword(infile, sorttab_info):
-    if sorttab_info['is_sorttab'] and sorttab_info['sorttab_name'] != '':
+        if self.vals.sdbaseline_blfunc == 'sinusoid':
+            self.vals.sdbaseline_addwn = sdutil.parse_wavenumber_param(self.vals.sdbaseline_addwn)
+            self.vals.sdbaseline_rejwn = sdutil.parse_wavenumber_param(self.vals.sdbaseline_rejwn)
+        
+        self.vals.sdbaseline_bloutput = self.__prepare_for_blformat_bloutput(self.vals.sdsmooth_output, self.vals.sdbaseline_bloutput, True)
+
+    def __remove_data(self, filename):
+        if os.path.exists(filename):
+            if os.path.isdir(filename):
+                shutil.rmtree(filename)
+            elif os.path.isfile(filename):
+                os.remove(filename)
+            else:
+                # could be a symlink
+                os.remove(filename)
+
+    def __remove_sorted_table_keyword(self, infile):
+        res = {'is_sorttab': False, 'sorttab_keywd': '', 'sorttab_name': ''}
         with table_manager(infile, nomodify=False) as tb:
             try:
-                tb.putkeyword(sorttab_info['sorttab_keywd'],
-                              sorttab_info['sorttab_name'])
+                sorttab_keywd = 'SORTED_TABLE'
+                if sorttab_keywd in tb.keywordnames():
+                    res['is_sorttab'] = True
+                    res['sorttab_keywd'] = sorttab_keywd
+                    res['sorttab_name'] = tb.getkeyword(sorttab_keywd)
+                    tb.removekeyword(sorttab_keywd)
             except Exception:
                 raise
 
-def _prepare_for_baselining(sdms, keywords):
-    params = {}
-    funcname = 'subtract_baseline'
+        return res
 
-    blfunc = keywords['blfunc']
-    keys = ['datacolumn', 'outfile', 'bloutput', 'dosubtract', 'spw', 
-            'updateweight', 'sigmavalue']
-    if blfunc in ['poly', 'chebyshev']:
-        keys += ['blfunc', 'order']
-    elif blfunc == 'cspline':
-        keys += ['npiece']
-        funcname += ('_' + blfunc)
-    elif blfunc =='sinusoid':
-        keys += ['applyfft', 'fftmethod', 'fftthresh', 'addwn', 'rejwn']
-        funcname += ('_' + blfunc)
-    elif blfunc == 'variable':
-        keys += ['blparam', 'verbose']
-        funcname += ('_' + blfunc)
-    else:
-        raise ValueError("Unsupported blfunc = %s" % blfunc)
-    if blfunc != 'variable':
-        keys += ['clip_threshold_sigma', 'num_fitting_max']
-        keys += ['linefinding', 'threshold', 'avg_limit', 'minwidth', 'edge']
-        
-    for key in keys: params[key] = keywords[key]
+    def __restore_sorted_table_keyword(self, infile, sorttab_info):
+        if sorttab_info['is_sorttab'] and sorttab_info['sorttab_name'] != '':
+            with table_manager(infile, nomodify=False) as tb:
+                try:
+                    tb.putkeyword(sorttab_info['sorttab_keywd'],
+                                sorttab_info['sorttab_name'])
+                except Exception:
+                    raise
 
-    baseline_func = getattr(sdms, funcname)
+    def __prepare_for_baselining(self, sdms, keywords):
+        params = {}
+        funcname = 'subtract_baseline'
 
-    return baseline_func, params
-
-
-def __prepare_for_blformat_bloutput(infile, bloutput, overwrite):
-    # force to string list
-    blformat = ['text']
-    bloutput = [bloutput]
-
-    if __has_duplicate_nonnull_element_ex(bloutput, blformat):
-        raise ValueError('duplicate elements in bloutput.')
-
-    # fill bloutput items to be output, then rearrange them
-    # in the order of blformat_item.
-    return __normalise_bloutput(infile, blformat, bloutput, overwrite)
-
-def __has_duplicate_nonnull_element(in_list):
-    #return True if in_list has duplicated elements other than ''
-    duplicates = [key for key, val in Counter(in_list).items() if val > 1]
-    len_duplicates = len(duplicates)
-    
-    if (len_duplicates >= 2):
-        return True
-    elif (len_duplicates == 1):
-        return (duplicates[0] != '')
-    else: #len_duplicates == 0
-        return False
-
-
-def __has_duplicate_nonnull_element_ex(lst, base):
-    # lst and base must have the same length.
-    #
-    # (1) extract elements from lst and make a new list
-    #     if the element of base with the same index
-    #     is not ''.
-    # (2) check if the list made in (1) has duplicated
-    #     elements other than ''.
-    
-    return __has_duplicate_nonnull_element(
-        [lst[i] for i in range(len(lst)) if base[i] != ''])
-
-def __normalise_bloutput(infile, blformat, bloutput, overwrite):
-    normalised_bloutput = []
-    for item in zip(['csv', 'text', 'table'], ['csv', 'txt', 'bltable']):
-        normalised_bloutput.append(
-            __get_normalised_name(infile, blformat, bloutput, item[0], item[1], overwrite))
-    return normalised_bloutput
-
-def __get_normalised_name(infile, blformat, bloutput, name, ext, overwrite):
-    fname = ''
-    blformat_lower = [s.lower() for s in blformat]
-    if (name in blformat_lower):
-        fname = bloutput[blformat_lower.index(name)]
-        if (fname == ''):
-            fname = infile + '_blparam.' + ext
-    if os.path.exists(fname):
-        if overwrite:
-            os.system('rm -rf %s' % fname)
+        blfunc = keywords['blfunc']
+        keys = ['datacolumn', 'outfile', 'bloutput', 'dosubtract', 'spw', 
+                'updateweight', 'sigmavalue']
+        if blfunc in ['poly', 'chebyshev']:
+            keys += ['blfunc', 'order']
+        elif blfunc == 'cspline':
+            keys += ['npiece']
+            funcname += ('_' + blfunc)
+        elif blfunc =='sinusoid':
+            keys += ['applyfft', 'fftmethod', 'fftthresh', 'addwn', 'rejwn']
+            funcname += ('_' + blfunc)
+        elif blfunc == 'variable':
+            keys += ['blparam', 'verbose']
+            funcname += ('_' + blfunc)
         else:
-            raise Exception(fname + ' exists.')
-    return fname
+            raise ValueError("Unsupported blfunc = %s" % blfunc)
+        if blfunc != 'variable':
+            keys += ['clip_threshold_sigma', 'num_fitting_max']
+            keys += ['linefinding', 'threshold', 'avg_limit', 'minwidth', 'edge']
+            
+        for key in keys: params[key] = keywords[key]
 
-def _output_bloutput_text_header(vals: ImBaselineVals = None):
-    if vals.sdbaseline_bloutput[1] == '': return
-    
-    with open(vals.sdbaseline_bloutput[1], 'w') as f:
+        baseline_func = getattr(sdms, funcname)
 
-        info = [['Source Table', vals.sdsmooth_output],
-                ['Output File', vals.sdbaseline_output if (vals.sdbaseline_output != '') else vals.sdsmooth_output],
-                ['Mask mode', vals.sdbaseline_maskmode]]
-        separator = '#' * 60 + '\n'
+        return baseline_func, params
+
+
+    def __prepare_for_blformat_bloutput(self, infile, bloutput, overwrite):
+        # force to string list
+        blformat = ['text']
+        bloutput = [bloutput]
+
+        if self.__has_duplicate_nonnull_element_ex(bloutput, blformat):
+            raise ValueError('duplicate elements in bloutput.')
+
+        # fill bloutput items to be output, then rearrange them
+        # in the order of blformat_item.
+        return self.__normalise_bloutput(infile, blformat, bloutput, overwrite)
+
+    def __has_duplicate_nonnull_element(self, in_list):
+        #return True if in_list has duplicated elements other than ''
+        duplicates = [key for key, val in Counter(in_list).items() if val > 1]
+        len_duplicates = len(duplicates)
         
-        f.write(separator)
-        for i in range(len(info)):
-            f.write('%12s: %s\n' % tuple(info[i]))
-        f.write(separator)
-        f.write('\n')
+        if (len_duplicates >= 2):
+            return True
+        elif (len_duplicates == 1):
+            return (duplicates[0] != '')
+        else: #len_duplicates == 0
+            return False
 
 
-### imaging ###
+    def __has_duplicate_nonnull_element_ex(self, lst, base):
+        # lst and base must have the same length.
+        #
+        # (1) extract elements from lst and make a new list
+        #     if the element of base with the same index
+        #     is not ''.
+        # (2) check if the list made in (1) has duplicated
+        #     elements other than ''.
+        
+        return self.__has_duplicate_nonnull_element([lst[i] for i in range(len(lst)) if base[i] != ''])
 
-def convert_ms_to_image(vals: ImBaselineVals = None):
-    print("start imaging")
-    _make_output_file(vals) # mask data is copied in this method 
+    def __normalise_bloutput(self, infile, blformat, bloutput, overwrite):
+        normalised_bloutput = []
+        for item in zip(['csv', 'text', 'table'], ['csv', 'txt', 'bltable']):
+            normalised_bloutput.append(
+                self.__get_normalised_name(infile, blformat, bloutput, item[0], item[1], overwrite))
+        return normalised_bloutput
 
-    arr = _make_image_array(vals)
-    print("end arraying")
-    if vals.output_cont:
-        _output_cont_image(vals, arr)
-    _output_image(vals, arr)
-    print("end imaging")
+    def __get_normalised_name(self, infile, blformat, bloutput, name, ext, overwrite):
+        fname = ''
+        blformat_lower = [s.lower() for s in blformat]
+        if (name in blformat_lower):
+            fname = bloutput[blformat_lower.index(name)]
+            if (fname == ''):
+                fname = infile + '_blparam.' + ext
+        if os.path.exists(fname):
+            if overwrite:
+                os.system('rm -rf %s' % fname)
+            else:
+                raise Exception(fname + ' exists.')
+        return fname
 
-def _output_image(vals, arr):
-    try:
-        ia.open(vals.linefile)
-        ia.putchunk(pixels=arr, locking=True)
+    def __output_bloutput_text_header(self):
+        if self.vals.sdbaseline_bloutput[1] == '': return
+        
+        with open(self.vals.sdbaseline_bloutput[1], 'w') as f:
 
+            info = [['Source Table', self.vals.sdsmooth_output],
+                    ['Output File', self.vals.sdbaseline_output if (self.vals.sdbaseline_output != '') else self.vals.sdsmooth_output],
+                    ['Mask mode', self.vals.sdbaseline_maskmode]]
+            separator = '#' * 60 + '\n'
+            
+            f.write(separator)
+            for i in range(len(info)):
+                f.write('%12s: %s\n' % tuple(info[i]))
+            f.write(separator)
+            f.write('\n')
+
+
+class MS2ImageConverter():
+    """
+    The class does convert a MeasurementSet to a Casa image.
+    """
+
+    def __init__(self, vals: ImBaselineVals = None):
+        self.vals = vals
+
+    def convert(self):
+        print("start imaging")
+        self.__make_output_file() # mask data is copied in this method 
+
+        self.__make_image_array()
+        print("end arraying")
+        if self.vals.output_cont:
+            self.__output_cont_image()
+        self.__output_image()
+        print("end imaging")
+
+    def __output_image(self):
         try:
-            param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
-            vars = locals( )
-            param_vals = [vars[p] for p in param_names]
-            write_image_history(ia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
-        except Exception as instance:
-            casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
-    finally:
-        ia.done()
+            ia.open(self.vals.linefile)
+            ia.putchunk(pixels=self.array, locking=True)
 
-def _output_cont_image(vals: ImBaselineVals = None, arr: array = None):
-    try:
-        ia.open(vals.output_cont_file)
-        data = ia.getchunk()
-        ia.putchunk(pixels=data-arr, locking=True)
-    finally:
-        ia.done()
+            try:
+                param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
+                vars = locals( )
+                param_vals = [vars[p] for p in param_names]
+                write_image_history(ia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
+            except Exception as instance:
+                casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
+        finally:
+            ia.done()
 
-def _make_image_array(vals):
-    nx, ny = vals.dirshape
-    arr = np.empty((nx,ny,vals.imnchan))
-    if vals.polaxisexist:
-        arr = np.expand_dims(arr, vals.polaxis[0])
-    pos = 0
-    with table_manager(vals.sdbaseline_output) as tb:
-        ndim = tb.getcell(vals.datacolumn, 0).ndim
-        for i in range(nx):
-            for j in range(ny):
-                if ndim == 3:
-                    arr[i][j][0] =  tb.getcell(vals.datacolumn, pos)[0].real
-                else:
-                    arr[i][j] =  tb.getcell(vals.datacolumn, pos)[0].real
-                pos += 1
-    return arr
+    def __output_cont_image(self):
+        try:
+            ia.open(self.vals.output_cont_file)
+            ia.putchunk(pixels = ia.getchunk() - self.array, locking = True)
+        finally:
+            ia.done()
 
+    def __make_image_array(self):
+        nx, ny = self.vals.dirshape
+        self.array = np.empty((nx,ny,self.vals.imnchan))
+        if self.vals.polaxisexist:
+            self.array = np.expand_dims(self.array, self.vals.polaxis[0])
+        pos = 0
+        with table_manager(self.vals.sdbaseline_output) as tb:
+            ndim = tb.getcell(self.vals.datacolumn, 0).ndim
+            for i in range(nx):
+                for j in range(ny):
+                    if ndim == 3:
+                        self.array[i][j][0] =  tb.getcell(self.vals.datacolumn, pos)[0].real
+                    else:
+                        self.array[i][j] =  tb.getcell(self.vals.datacolumn, pos)[0].real
+                    pos += 1
 
-def _make_output_file(vals: ImBaselineVals = None):
-    shutil.copytree(vals.imagename, vals.linefile)
-    if vals.output_cont:
-        shutil.copytree(vals.imagename, vals.output_cont_file)
+    def __make_output_file(self):
+        shutil.copytree(self.vals.imagename, self.vals.linefile)
+        if self.vals.output_cont:
+            shutil.copytree(self.vals.imagename, self.vals.output_cont_file)
 
 
 
 class EmptyMSBaseInformation:
+    """
+    The Parameters class for creating an empty MeasurementSet.
+
+    This class contains dictionaries to create an empty MS using table.create(), and it has no method.
+    Dictionaries have two types; desc(desctiption) and dminfo(data management infomation), 
+    these are used as arguments of table.create(), and for a table creating, it needs a desc dict and a dminfo dict.
+    so there are dicts of twice of table amount in a MeasurementSet.
+    """
 
     ms_desc = {
         'ANTENNA1': {'comment': 'ID of first antenna in interferometer',
