@@ -45,7 +45,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   class SIMinorCycleController
  {
   public:
-    static const casacore::Int nSummaryFields = 12;
+    static const casacore::Int nSummaryFields = 14;
 
     // make noncopyable...
     SIMinorCycleController( const SIMinorCycleController& ) = delete;
@@ -109,8 +109,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     void setUpdatedModelFlag(casacore::Bool updatedmodel);
 
    void addSummaryMinor(casacore::uInt deconvolverid, casacore::uInt channel, casacore::uInt polarity,
-                        casacore::Int cycleStartIter, casacore::Int startIterDone, casacore::Float startmodel, casacore::Float startpeakresidual,
-                        casacore::Float model, casacore::Float peakresidual, casacore::Int stopCode);
+                        casacore::Int cycleStartIter, casacore::Int startIterDone, casacore::Float startmodel, casacore::Float startpeakresidual, casacore::Float startpeakresidualnomask,
+                        casacore::Float model, casacore::Float peakresidual, casacore::Float peakresidualnomask, casacore::Int stopCode);
    //this is to reduce the size of the summaryminor matrix in the output record.
    // It can get  big with information for the same channel repeated many times
    // this reduces the info to max of peak residuals and sum of iterations etc for the same channel

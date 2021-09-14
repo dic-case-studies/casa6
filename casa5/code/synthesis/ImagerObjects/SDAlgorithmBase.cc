@@ -119,24 +119,26 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    itsImages = imagestore->getSubImageStore( 0, 1, chanid, nSubChans, polid, nSubPols );
 
 	    Int startiteration = loopcontrols.getIterDone(); // TODO : CAS-8767 key off subimage index
-	    Float peakresidual=0.0;
+	    Float peakresidual=0.0, peakresidualnomask=0.0;
 	    Float modelflux=0.0;
 	    Int iterdone=0;
 
 	    ///itsMaskHandler.resetMask( itsImages ); //, (loopcontrols.getCycleThreshold()/peakresidual) );
 	    Int stopCode=0;
 
-	    Float startpeakresidual = 0.0;
+	    Float startpeakresidual = 0.0, startpeakresidualnomask = 0.0;
 	    Float startmodelflux = 0.0;
             Array<Double> robustrms;
 
 	    Bool validMask = ( itsImages->getMaskSum() > 0 );
 
+	    peakresidualnomask = itsImages->getPeakResidual();
 	    if( validMask ) peakresidual = itsImages->getPeakResidualWithinMask();
-	    else peakresidual = itsImages->getPeakResidual();
+	    else peakresidual = peakresidualnomask;
 	    modelflux = itsImages->getModelFlux();
 
 	    startpeakresidual = peakresidual;
+	    startpeakresidualnomask = peakresidualnomask;
 	    startmodelflux = modelflux;
 
             //Float nsigma = 150.0; // will set by user, fixed for 3sigma for now.
@@ -285,6 +287,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                   finalizeDeconvolver();
                 }
 
+                // get the new peakres without a mask for the summary minor
+                peakresidualnomask = itsImages->getPeakResidual();
+
 	      }// if validmask
 	    
 	    // same as checking on itscycleniter.....
@@ -330,7 +335,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	       
 	    cout << "Add summary minor for chan  " << chanid + polid*nSubChans << endl;
 	    loopcontrols.addSummaryMinor( deconvolverid, chanid, polid, cycleStartIteration,
-	                                  startiteration, startmodelflux, startpeakresidual, modelflux, peakresidual, stopCode);
+	                                  startiteration, startmodelflux, startpeakresidual, startpeakresidualnomask,
+	                                  modelflux, peakresidual, peakresidualnomask, stopCode);
 
 	    
 	    loopcontrols.resetCycleIter(); 

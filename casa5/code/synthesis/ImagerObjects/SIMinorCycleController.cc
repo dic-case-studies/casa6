@@ -323,7 +323,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsCycleIterDone = 0;
   }
 
-  void SIMinorCycleController::addSummaryMinor(uInt deconvolverid, uInt chan, uInt pol, Int cycleStartIter, Int startIterDone, Float startmodelflux, Float startpeakresidual, Float modelflux, Float peakresidual, Int stopCode)
+  void SIMinorCycleController::addSummaryMinor(uInt deconvolverid, uInt chan, uInt pol,
+                                               Int cycleStartIter, Int startIterDone, Float startmodelflux, Float startpeakresidual, Float startpeakresidualnomask,
+                                               Float modelflux, Float peakresidual, Float peakresidualnomask, Int stopCode)
   {
     LogIO os( LogOrigin("SIMinorCycleController", __FUNCTION__ ,WHERE) );
 
@@ -353,8 +355,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      itsSummaryMinor( IPosition(2, 9, shp[1] ) ) = (Double) startpeakresidual;
      // starting model flux
      itsSummaryMinor( IPosition(2, 10, shp[1] ) ) = (Double) startmodelflux;
-     // stopcode
-     itsSummaryMinor( IPosition(2, 11, shp[1] ) ) = stopCode;
+     // starting peak residual, not limited to the user's mask
+     itsSummaryMinor( IPosition(2, 11, shp[1] ) ) = (Double) startpeakresidualnomask;
+     // peak residual, not limited to the user's mask
+     itsSummaryMinor( IPosition(2, 12, shp[1] ) ) = (Double) peakresidualnomask;
+     // starting model flux
+     itsSummaryMinor( IPosition(2, 13, shp[1] ) ) = stopCode;
   }// end of addSummaryMinor
 
   void SIMinorCycleController::compressSummaryMinor(Record& rec){

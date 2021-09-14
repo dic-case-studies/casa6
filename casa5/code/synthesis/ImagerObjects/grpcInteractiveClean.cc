@@ -834,8 +834,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			state.SummaryMinor( IPosition(2,9,cShp[1]+row) ) = summary(IPosition(2,9,row));
 			// starting model flux
 			state.SummaryMinor( IPosition(2,10,cShp[1]+row) ) = summary(IPosition(2,10,row));
-			// stopcode
+			// starting peak residual, not limited to the user's mask
 			state.SummaryMinor( IPosition(2,11,cShp[1]+row) ) = summary(IPosition(2,11,row));
+			// peak residual, not limited to the user's mask
+			state.SummaryMinor( IPosition(2,12,cShp[1]+row) ) = summary(IPosition(2,12,row));
+			// stopcode
+			state.SummaryMinor( IPosition(2,13,cShp[1]+row) ) = summary(IPosition(2,13,row));
 		}
 	}
 
