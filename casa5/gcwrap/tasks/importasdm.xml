@@ -399,16 +399,6 @@ wvr_corrected_data='both'
         <value>False</value>
     </param>
 
-    <param type="bool" name="showversion">
-<shortdescription>Deprecated: Report the version of asdm2MS being used</shortdescription>
-<description>Deprecated. This parameter will be removed in a future release, this is no longer relevant.
-             Report the version of asdm2MS being used
-                     Default: False
-                     Options: False|True
-</description>
-        <value>False</value>
-    </param>
-
     <constraints>
         <when param="createmms">
             <equals type="bool" value="False"/>
@@ -429,21 +419,6 @@ wvr_corrected_data='both'
         </when>
 
     </constraints>
-
-    <param type="string" name="useversion" >
-<shortdescription>Deprecated: Version of asdm2MS to be used (should work for all data)</shortdescription>
-<description>Deprecated. This parameter will be removed in a future release. This is no longer relevant.
-             Version of asdm2MS to be used
-                     Default: 'deprecated' (should work for all data)
-                     Options: deprecated, v3
-</description>
-        <value>deprecated</value>
-        <allowed kind="enum">
-          <value>deprecated</value>
-          <value>v3</value>
-          <value></value>
-        </allowed>
-    </param>
 
     <param type="bool" name="bdfflags">
 <shortdescription>Set the MS FLAG column according to the ASDM _binary_ flags</shortdescription>

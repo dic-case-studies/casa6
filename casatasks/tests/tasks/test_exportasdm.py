@@ -161,20 +161,16 @@ class exportasdm_test(unittest.TestCase):
         self.assertTrue(self.rval)
 
     def test2(self):
-        '''Test 2: small input MS, default output, v3'''
+        '''Test 2: small input MS, default output'''
         myvis = self.vis_b
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
-        # setting useversion and showversion to non-default values
-        # produces the deprecation message, both options are not actually used.
         self.rval = exportasdm(
                 vis = 'myinput.ms',
                 asdm = self.out,
                 archiveid="S1",
                 verbose=True,
-                apcorrected=False,
-                showversion=True,
-                useversion='v3')
+                apcorrected=False)
 
         self.assertNotEqual(self.rval,False)
         omsname = "test"+str(2)+self.out
@@ -286,7 +282,7 @@ class exportasdm_test(unittest.TestCase):
 
     @unittest.skip("test disabled")
     def test10(self):
-        '''Test 10: v3, ALMA input MS with pointing table and various shortcomings, default output'''
+        '''Test 10: ALMA input MS with pointing table and various shortcomings, default output'''
         myvis = self.vis_c
 ##        os.system('rm -rf myinput.ms')
 ##        os.system('cp -R ' + myvis + ' myinput.ms')
@@ -294,8 +290,6 @@ class exportasdm_test(unittest.TestCase):
 ##             vis = 'myinput.ms',
 ##             asdm = self.out,
 ##             archiveid="S002",
-##             apcorrected=False,
-##             useversion='v3'
 ##             )
         self.assertNotEqual(self.rval,False)
 ##        omsname = "test"+str(10)+self.out

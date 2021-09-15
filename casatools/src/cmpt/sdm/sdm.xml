@@ -30,20 +30,6 @@
 
     </method>
 
-    <method type="function" name="sdmversion">
-
-      <shortdescription>Returns SDM version number on which this tool operates</shortdescription>
-
-      <description/>
-
-      <input/>
-
-      <returns type="string"/>
-
-      <example/>
-
-    </method>    <!-- sdmversion -->
-
     <method type="function" name="summarystr">
 
       <!-- someday we may want a "summaryrec" which returns something useful to scripts -->
@@ -113,17 +99,6 @@
         <param type="bool" name="verbose">
           <description>produce log output</description>
           <value>true</value>
-        </param>
-        <param type="string" name="useversion">
-          <description>
-            DEPRECATED, will be eliminated in a future release. Selects the version of MS2asdm to be used (no longer relevant)
-          </description>
-              <value>deprecated</value>
-              <allowed kind="enum">
-                <value>deprecated</value>
-                <value>v3</value>
-                <value/>
-              </allowed>
         </param>
       </input>
 
@@ -280,11 +255,6 @@
               <value>false</value>
         </param>
 
-        <param type="bool" name="showversion">
-              <description>DEPRECATED, will be eliminated in a future reelase. Report the version of asdm2MS being used</description>
-              <value>false</value>
-        </param>
-
         <constraints>
           <when param="createmms">
             <equals type="bool" value="false"/>
@@ -304,16 +274,6 @@
           </when>
         </constraints>
 
-        <param type="string" name="useversion" >
-              <description>DEPRECATED, will be eliminated in a future release. Version of asdm2MS to be used (no longer relevant)</description>
-              <value>deprecated</value>
-              <allowed kind="enum">
-                <value>deprecated</value>
-                <value>v3</value>
-                <value/>
-              </allowed>
-        </param>
-
         <param type="bool" name="bdfflags">
               <description>Set the MS FLAG column according to the ASDM _binary_ flags</description>
               <value>false</value>
@@ -331,7 +291,7 @@
 
         <param type="double" name="polyephem_tabtimestep">
           <description>Timestep (days) for the tabulation of polynomial ephemerides. A value &lt;= 0 disables tabulation.</description>
-          <!-- c++ default (in asdm2MS.cc) for this was 0.001 -->
+         <!-- c++ default (in asdm2MS.cc) for this was 0.001 -->
           <value>0.</value>
         </param>
 

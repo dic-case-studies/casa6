@@ -896,17 +896,14 @@ namespace casac {
                     const std::string &wvr_corrected_data, const std::string &scans, bool ignore_time,
                     bool process_syspower, bool process_caldevice, bool process_pointing, bool process_flags,
                     double tbuff, bool applyflags, bool savecmds, const ::casac::variant& outfile /*const std::vector<string> &outfile*/,
-                    bool flagbackup, bool verbose, bool overwrite, bool showversion, const std::string &useversion,
+                    bool flagbackup, bool verbose, bool overwrite,
                     bool bdfflags, bool with_pointing_correction, bool convert_ephem2geo,
                     double polyephem_tabtimestep ) {
         sdm::verbose = verbose;
-	if (useversion != "deprecated") {
-	  sdm::warning("useversion is deprecated. It will be removed in a future version. The value is no longer relevant and is ignored.");
-	}
         if ( gen_ms( vis, createmms, separationaxis, numsubms, corr_mode, srt, time_sampling, ocorr_mode, compression,
                      lazy, asis, wvr_corrected_data, scans, ignore_time, process_syspower, process_caldevice,
                      process_pointing, process_flags, tbuff, applyflags, savecmds, outfile, flagbackup, verbose,
-                     overwrite, showversion, useversion, bdfflags, with_pointing_correction,
+                     overwrite, bdfflags, with_pointing_correction,
                      convert_ephem2geo, polyephem_tabtimestep ) ) {
             if ( bdfflags ) {
                 bool uncorrected_data = false;
@@ -923,7 +920,7 @@ namespace casac {
                       const std::string &wvr_corrected_data, const std::string &scans, bool ignore_time,
                       bool process_syspower, bool process_caldevice, bool process_pointing, bool process_flags,
                       double tbuff, bool applyflags, bool savecmds, const ::casac::variant& outfile /*const std::vector<string> &outfile*/,
-                      bool flagbackup, bool verbose, bool overwrite, bool showversion, const std::string &useversion,
+                      bool flagbackup, bool verbose, bool overwrite,
                       bool bdfflags, bool with_pointing_correction, bool convert_ephem2geo,
                       double polyephem_tabtimestep ) {
 
@@ -967,7 +964,6 @@ namespace casac {
             SCANS                      ---> scans
             LOGFILE                    --->
             VERBOSE                    ---> verbose
-            REVISION                   ---> showversion 
             DRYRUN                     ---> NULL
             IGNORETIME                 ---> ignore_time    
             NOCALDEV                   ---> not process_caldevice
@@ -985,16 +981,6 @@ namespace casac {
             MSDIRPREFIX                ---> ms
             CHECKDUPINTS               ---> "true"
             ********************************************************************************/
-
-            // Revision ? displays revision's info and returns without filling anything
-            string revision = "$Id: asdm2MS.cpp,v 1.84 2011/10/25 14:56:48 mcaillat Exp $\n";
-            if (showversion) {
-                errstream.str("");
-		errstream << "showversion is deprected and will be removed in a future release, the version string is no longer relevant.\n";
-                errstream << revision ;
-		sdm::warning(errstream.str());
-		return false;
-            }
 
             // non-default input data selection is incompatible with the lazy mode
             bool lazyModeOK = true;
@@ -3275,12 +3261,8 @@ namespace casac {
 
     bool sdm::fromms( const std::string &mspath, const std::string &datacolumn, const std::string &archiveid,
                       const std::string &rangeid, double subscanduration, double sbduration,
-                      bool apcorrected, bool verbose, const std::string &useversion ) {
+                      bool apcorrected, bool verbose) {
         struct stat path_stat;
-        sdm::verbose = verbose;
-	if (useversion != "deprecated") {
-	  sdm::warning("useversion is deprecated. It will be removed in a future version. The value is no longer relevant and is ignored.");
-	}
         if ( stat( sdm_path.c_str( ), &path_stat ) != -1 ) {
             if ( S_ISREG(path_stat.st_mode) )
                 throw casacore::AipsError("SDM path exists and is a file");
@@ -3294,11 +3276,6 @@ namespace casac {
         casacore::MeasurementSet ms(mspath.c_str( ));
         casa::MS2ASDM m2a(ms);
         return m2a.writeASDM( sdm_path, datacolumn, archiveid, rangeid, verbose, subscanduration, sbduration, apcorrected );
-    }
-
-    std::string sdm::sdmversion( ) {
-        sdm::warning("sdmversion is deprecated and will be removed in a future release");
-        return "sdm-3.0";
     }
 
     std::string sdm::summarystr( ) {
