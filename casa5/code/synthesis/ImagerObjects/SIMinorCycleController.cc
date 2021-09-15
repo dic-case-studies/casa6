@@ -359,7 +359,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      itsSummaryMinor( IPosition(2, 11, shp[1] ) ) = (Double) startpeakresidualnomask;
      // peak residual, not limited to the user's mask
      itsSummaryMinor( IPosition(2, 12, shp[1] ) ) = (Double) peakresidualnomask;
-     // starting model flux
+     // stopcode
      itsSummaryMinor( IPosition(2, 13, shp[1] ) ) = stopCode;
   }// end of addSummaryMinor
   
