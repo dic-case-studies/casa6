@@ -67,11 +67,13 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 		}
 		Vector<Double> blc(2), trc(2);
 		WorldCanvas *cwc = itsCurrentWC;
-		blc(0) = cwc->linXMin();
-		blc(1) = cwc->linYMin();
-		trc(0) = cwc->linXMax();
-		trc(1) = cwc->linYMax();
-		zoomed(blc, trc);
+        if ( cwc ) {
+            blc(0) = cwc->linXMin();
+            blc(1) = cwc->linYMin();
+            trc(0) = cwc->linXMax();
+            trc(1) = cwc->linYMax();
+            zoomed(blc, trc);
+        }
 	}
 
 	void MWCRTZoomer::zoomIn(Double factor) {

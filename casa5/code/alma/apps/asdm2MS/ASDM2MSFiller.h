@@ -143,6 +143,7 @@ class ASDM2MSFiller {
   casacore::MSMainColumns  *itsMSCol;
   casacore::ScalarColumn<casacore::String> *itsWinFuncCol;
   casacore::ScalarColumn<casacore::Int> *itsNumBinCol;
+  casacore::ScalarColumn<casacore::String> *itsCorrBitCol;
   casacore::String     itsMSPath;
   casacore::uInt     itsMSMainRow;
   /*casacore::TiledDataStManAccessor itsImWgtAcc;*/
@@ -388,7 +389,8 @@ class ASDM2MSFiller {
 			 const std::vector<int>&	assoc_sp_id_,
 			 const std::vector<std::string>&	assoc_nature_,
 			 const std::string &         windowFunction_,
-			 int                    numBin_);
+			 int                    numBin_,
+                         const std::string & corrBit_ );
 
   int  addUniqueState(bool sig_,
 		      bool ref_,
