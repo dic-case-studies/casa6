@@ -116,17 +116,17 @@ class TestDescriptionPlugin:
         #print("Verbosity Level: {}".format(self.terminal_reporter.verbosity))
         if self.terminal_reporter.verbosity == 0:
             yield
-            self.terminal_reporter.write(f'\n{self.funcn} \n')
+            self.terminal_reporter.write(f'\\n{self.funcn} \\n')
         else:
-            self.terminal_reporter.write('\n')
+            self.terminal_reporter.write('\\n')
             yield
             if self.desc:
-                    self.terminal_reporter.write(f'\n{self.desc} \n')
+                    self.terminal_reporter.write(f'\\n{self.desc} \\n')
             else:
-                    self.terminal_reporter.write(f'\n')
+                    self.terminal_reporter.write(f'\\n')
     """
     file_obj = open(filepath,'w')
-    file_obj.write(repr(string))
+    file_obj.write(string)
     file_obj.close()
 
 # At the moment, this needs to be a sep function due to repr and escape characters, try/ except for osx
@@ -711,7 +711,7 @@ def run(testnames):
                             else:
                                 write_conftest_linux(conf_name)
                             pytest.main(cmd)
-                            #os.remove(conf_name)
+                            os.remove(conf_name)
                             os.chdir(myworkdir)
 
                     ##################################################
