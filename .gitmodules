@@ -2,6 +2,5 @@
 	path = casatools/grpc-source
 	url = https://github.com/grpc/grpc
 [submodule "casatools/casacore"]
-    path = casatools/casacore
-    url = https://github.com/casacore/casacore.git
-
+	path = casatools/casacore
+	url = https://github.com/casacore/casacore.git
