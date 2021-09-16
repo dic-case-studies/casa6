@@ -25,6 +25,7 @@
 //#
 #include <synthesis/ImagerObjects/DistSIIterBot.h>
 #include <synthesis/ImagerObjects/SIIterBot.h>
+#include <synthesis/ImagerObjects/SIMinorCycleController.h>
 #include <casadbus/session/DBusSession.h>
 #include <casadbus/utilities/Conversion.h>
 
