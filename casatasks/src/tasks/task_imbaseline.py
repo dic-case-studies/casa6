@@ -251,23 +251,23 @@ def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thre
 
     # imsmooth
     if vals.imsmooth_enable():
-        print("start imsmooth")
+        casalog.post("start imsmooth", "DEBUG2")
         Imsmooth(vals).execute()
-        print("end imsmooth")
+        casalog.post("end imsmooth", "DEBUG2")
 
     # casaimage -> MS
     Image2MSConverter(vals).convert()
 
     # sdsmooth
     if vals.sdsmooth_enable():
-        print("start sdsmooth")
+        casalog.post("start sdsmooth", "DEBUG2")
         Sdsmooth(vals).execute()
-        print("end sdsmooth")
+        casalog.post("end sdsmooth", "DEBUG2")
 
     # sdbaseline
-    print("start sdbaseline")
+    casalog.post("start sdbaseline", "DEBUG2")
     Sdbaseline(vals).execute()
-    print("end sdbaseline")
+    casalog.post("end sdbaseline", "DEBUG2")
 
     # MS -> casaimage
     MS2ImageConverter(vals).convert()
@@ -392,11 +392,12 @@ class Image2MSConverter():
             self.vals.imnpol = self.vals.imshape[self.vals.polaxis[0]]
         else:
             self.vals.imnpol = 1
-        print(f'image shape is {self.vals.imshape}, direciton {self.vals.dirshape} ({self.vals.imnrow} pixels), npol {self.vals.imnpol}, nchan {self.vals.imnchan}')
+        casalog.post(f'image shape is {self.vals.imshape}, direciton {self.vals.dirshape} ({self.vals.imnrow} pixels), ' + \
+                     f'npol {self.vals.imnpol}, nchan {self.vals.imnchan}', 'DEBUG2')
 
         # if imnchan is too few, say, <10, sdbaseline should abort
         if self.vals.imnchan < 10:
-            print(f'nchan {self.vals.imnchan} is too few to perform baseline subtraction')
+            casalog.post(f'nchan {self.vals.imnchan} is too few to perform baseline subtraction', 'DEBUG2')
             return False
         return True
 
@@ -438,7 +439,8 @@ class Image2MSConverter():
             tb.putcol('STATE_ID', dummy)
             time_list = 4304481539.999771 + np.arange(nrow_req) * 30.0
             tb.putcol('TIME', time_list)
-            print(f'number of rows {nrow}, number of image pixels {self.vals.imnrow}, number of pols {self.vals.imnpol}, required rows {nrow_req}')
+            casalog.post(f'number of rows {nrow}, number of image pixels {self.vals.imnrow}, number of pols {self.vals.imnpol}, ' +\
+                         f'required rows {nrow_req}', 'DEBUG2')
         finally:
             tb.close()
 
@@ -552,7 +554,7 @@ class Image2MSConverter():
             arr = np.expand_dims(arr, axis=3)
             msk = np.expand_dims(msk, axis=3)
             polax = 3
-        casalog.post(f'axis index: {xax} {yax} {polax} {spax}')
+        casalog.post(f'axis index: {xax} {yax} {polax} {spax}', 'DEBUG2')
 
         # which data column to use
         with table_manager(self.vals.temporary_vis, nomodify=False) as tb:
@@ -576,7 +578,7 @@ class Image2MSConverter():
                         slice = tuple(index_list)
                         subarr = arr[slice]
                         submsk = np.logical_not(msk[slice])
-                        print(f'slice={slice}, subarr={subarr[200:-200]}')
+                        casalog.post(f'slice={slice}, subarr={subarr[200:-200]}', 'DEBUG2')
                         r2p.append(slice)
                         tb.putcell(self.vals.datacolumn, irow, np.expand_dims(subarr, axis=0))
                         tb.putcell('FLAG', irow, np.expand_dims(submsk, axis=0))
@@ -801,15 +803,15 @@ class MS2ImageConverter():
         self.vals = vals
 
     def convert(self):
-        print("start imaging")
+        casalog.post("start imaging", "DEBUG2")
         self.__make_output_file() # mask data is copied in this method 
 
         self.__make_image_array()
-        print("end arraying")
+        casalog.post("end arraying", "DEBUG2")
         if self.vals.output_cont:
             self.__output_cont_image()
         self.__output_image()
-        print("end imaging")
+        casalog.post("end imaging", "DEBUG2")
 
     def __output_image(self):
         try:
