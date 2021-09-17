@@ -158,6 +158,7 @@ void PlotMSCTAverager::finalizeAverage() {
       main_row_record.defineAntenna2(antenna2(ibln));
       main_row_record.defineInterval(0); // axis not supported
       main_row_record.defineScanNo(avgScan_(ibln));
+      main_row_record.defineObsId(obsid_(ibln));
 
       if (isComplex_p) {
         main_row_record.defineCParam(cparam[ibln]);
