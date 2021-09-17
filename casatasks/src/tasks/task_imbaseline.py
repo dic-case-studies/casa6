@@ -852,9 +852,11 @@ class MS2ImageConverter():
                     pos += 1
 
     def __make_output_file(self):
-        shutil.copytree(self.vals.imagename, self.vals.linefile)
+        ia.fromimage(infile=self.vals.imagename, outfile=self.vals.linefile)
+        ia.done()
         if self.vals.output_cont:
-            shutil.copytree(self.vals.imagename, self.vals.output_cont_file)
+            ia.fromimage(infile=self.vals.imagename, outfile=self.vals.output_cont_file)
+            ia.done()
 
 
 
