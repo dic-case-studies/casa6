@@ -323,24 +323,24 @@ class Imsmooth():
         outia = None
         try:
             if self.vals.dir_gkernel:
-                outia = self.__imsmooth_gckernel()
+                outia = self.__execute_image_smoothing_by_gaussian_kernel()
             elif self.vals.dir_bkernel:
-                outia = self.__imsmooth_bkernel()
+                outia = self.__execute_image_smoothing_by_boxcar_kernel()
             elif self.vals.dir_ikernel:
-                outia = self.__imsmooth_ikernel()
+                outia = self.__execute_image_smoothing_by_image_kernel()
 
         finally:
             ia.done()
             if outia: outia.done()
 
-    def __imsmooth_ikernel(self):
+    def __execute_image_smoothing_by_image_kernel(self):
         # image kernel for image smoothing
         return ia.convolve(
                         outfile=self.vals.imsmooth_output, kernel=self.vals.imsmooth_kimage, scale=self.vals.imsmooth_scale, 
                         region=self.vals.reg, mask=self.vals.imsmooth_mask, overwrite=self.vals.overwrite, stretch=self.vals.imsmooth_stretch 
                     )
 
-    def __imsmooth_bkernel(self):
+    def __execute_image_smoothing_by_boxcar_kernel(self):
         # boxcar kernel for image smoothing
         if not self.vals.imsmooth_major or not self.vals.imsmooth_minor:
             raise ValueError("Both major and minor must be specified.")
@@ -356,7 +356,7 @@ class Imsmooth():
                         overwrite=self.vals.overwrite, stretch=self.vals.imsmooth_stretch 
                     )
 
-    def __imsmooth_gckernel(self):
+    def __execute_image_smoothing_by_gaussian_kernel(self):
         # gaussian kernel for image smoothing
         if not self.vals.imsmooth_major:
             raise ValueError("Major axis must be specified")
