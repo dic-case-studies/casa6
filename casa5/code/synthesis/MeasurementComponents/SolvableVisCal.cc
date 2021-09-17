@@ -191,7 +191,7 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
       width_(ispw).resize(1);
 
       // calculate
-      freq_(ispw).set(sum( (Array<double,std::__1::allocator<double>>) f*w));   // weighed rel freq sum 
+      freq_(ispw).set(sum( (Array<Double>) f*w));   // weighed rel freq sum 
       width_(ispw).set(sum(w));     // sum of norm'd width weights
       freq_(ispw)/=width_(ispw);    // divide by weight sum
 
@@ -284,8 +284,8 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
 	Vector<Double> w(width_(ispw)/width1(aggspw));
 	
 	// accumulate
-	freq_(aggspw)+= ( (Array<double,std::__1::allocator<double>>) f*w);
-	width_(aggspw)+= ( (Array<double,std::__1::allocator<double>>) w*w);
+	freq_(aggspw)+= ( (Array<Double>) f*w);
+	width_(aggspw)+= ( (Array<Double>) w*w);
 	effBW_(aggspw)+= w;
 	
 	// This acculated spw now refers to aggspw:
