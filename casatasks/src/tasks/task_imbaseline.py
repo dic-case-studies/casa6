@@ -250,6 +250,9 @@ def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thre
                scale, spkernel, kwidth):
     """
     THE MAIN METHOD OF IMBASELINE.
+
+    All specifications of arguments are defined in:
+    https://open-jira.nrao.edu/browse/CAS-13520
     """
     vals = ImBaselineVals(imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                          edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter,
