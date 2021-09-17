@@ -209,10 +209,10 @@ class ImBaselineVals:
             if not os.path.exists(filename):
                 return filename
     
-    def imsmooth_enable(self):
+    def enable_imsmooth_execution(self):
         return not self.dir_none
     
-    def sdsmooth_enable(self):
+    def enable_sdsmooth_execution(self):
         return not self.sp_none
 
     def convert_sdbaselining_dict(self):
@@ -261,7 +261,7 @@ def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thre
     # -> sdbaseline -> convert MS to image
 
     # imsmooth
-    if vals.imsmooth_enable():
+    if vals.enable_imsmooth_execution():
         casalog.post("start imsmooth", "DEBUG2")
         Imsmooth(vals).execute()
         casalog.post("end imsmooth", "DEBUG2")
@@ -270,7 +270,7 @@ def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thre
     Image2MSConverter(vals).convert()
 
     # sdsmooth
-    if vals.sdsmooth_enable():
+    if vals.enable_sdsmooth_execution():
         casalog.post("start sdsmooth", "DEBUG2")
         Sdsmooth(vals).execute()
         casalog.post("end sdsmooth", "DEBUG2")
