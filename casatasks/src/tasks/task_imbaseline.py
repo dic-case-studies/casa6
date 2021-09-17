@@ -35,6 +35,10 @@ class ImBaselineVals:
                 addwn: List[int] = [0], rejwn: List[int] = [], blparam: str = '', clipniter: int = 0, clipthresh: float = 3.0,
                 dirkernel: str = 'none', major: str = '', minor: str = '', pa: str = '', kimage: str = '',
                 scale: float = -1.0, spkernel: str = 'none', kwidth: int = 5):
+        """
+        All specifications of arguments are defined in:
+        https://open-jira.nrao.edu/browse/CAS-13520
+        """
         self.imagename = imagename
         self.linefile = linefile
         self.output_cont = output_cont
