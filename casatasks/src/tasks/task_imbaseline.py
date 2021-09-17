@@ -140,7 +140,7 @@ class ImBaselineVals:
         maskmode_list = self.sdbaseline_maskmode == 'list'
         maskmode_auto = self.sdbaseline_maskmode == 'auto'
         if not ( maskmode_list or maskmode_auto ):
-            raise ValueError('Unsupported maskmode, ' + self.sdbaseline_maskmode)
+            raise ValueError(f'Unsupported maskmode, {self.sdbaseline_maskmode}', 'SEVERE')
         if maskmode_list:
             self.sdbaseline_thresh = 5.0
             self.sdbaseline_avg_limit = self.sdbaseline_minwidth = 4
@@ -155,7 +155,7 @@ class ImBaselineVals:
         blfunc_sinusoid = self.sdbaseline_blfunc == 'sinusoid'
         blfunc_variable = self.sdbaseline_blfunc == 'variable'
         if not (blfunc_poly or blfunc_chebyshev or blfunc_cspline or blfunc_sinusoid or blfunc_variable):
-            raise ValueError('Unsupported blfunc, ' + self.sdbaseline_blfunc)
+            raise ValueError(f'Unsupported blfunc, {self.sdbaseline_blfunc}', 'SEVERE')
         
         if not (blfunc_poly or blfunc_chebyshev):
             self.sdbaseline_order = 5
@@ -172,7 +172,7 @@ class ImBaselineVals:
             self.sdbaseline_clipniter = 0
             self.sdbaseline_clipthresh = 3.0
             if not os.path.exists(self.sdbaseline_blparam):
-                raise ValueError("input file '%s' does not exists" % self.blparam)
+                raise ValueError(f"input file '{self.blparam}' does not exists", 'SEVERE')
 
     def __check_arg_dirkernel(self):
         self.dir_none = self.imsmooth_kernel == 'none'
@@ -180,7 +180,7 @@ class ImBaselineVals:
         self.dir_bkernel = self.imsmooth_kernel == 'boxcar'
         self.dir_gkernel = self.imsmooth_kernel == 'gaussian'
         if not ( self.dir_none or self.dir_gkernel or self.dir_bkernel or self.dir_ikernel ):
-            raise ValueError('Unsupported direction smoothing kernel, ' + self.imsmooth_kernel)
+            raise ValueError(f'Unsupported direction smoothing kernel, {self.imsmooth_kernel}', 'SEVERE')
         
         if self.dir_none:
             self.imsmooth_output = self.imagename
@@ -197,7 +197,7 @@ class ImBaselineVals:
         self.sp_bkernel = self.sdsmooth_kernel == 'boxcar'
         self.sp_gkernel = self.sdsmooth_kernel == 'gaussian'
         if not ( self.sp_none or self.sp_bkernel or self.sp_gkernel ):
-            raise ValueError('Unsupported spectral smoothing kernel, ' + self.sdsmooth_kernel)
+            raise ValueError(f'Unsupported spectral smoothing kernel, {self.sdsmooth_kernel}', 'SEVERE')
         
         if self.sp_none:
             self.sdsmooth_output = self.temporary_vis
