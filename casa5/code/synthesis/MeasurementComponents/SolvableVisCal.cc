@@ -122,13 +122,260 @@ SolNorm::Type SolNorm::normTypeFromString(String type) {
   else {
     throw(AipsError("Invalid normalization type specifiec!"));
   }						
-  // Shouldn't reach here
-  return SolNorm::UNKNOWN;
+  // Shouldn't reach here  return SolNorm::UNKNOWN;
 
 }
 
 
 
+
+
+// **********************************************************
+//  FreqMetaData Implementations
+//
+
+FreqMetaData::FreqMetaData() : 
+  ok_(False),   // ok requires running calcFreqMeta later
+  freq_(Vector< Vector<Double> >()),
+  width_(Vector< Vector<Double> >()),
+  effBW_(Vector< Vector<Double> >()),
+  spwfanin_()
+{}
+
+
+void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
+				const Vector< Vector<Double> >& mswidth,
+				const Vector<uInt>& selspw,
+				Bool freqdep,Bool combspw,
+				const Vector<Int>& spwfanin) {
+
+  // Max number of spws
+  uInt nspw(msfreq.nelements());
+
+  // Size up the Vector of spw freq Vectors
+  freq_.resize(nspw);
+  width_.resize(nspw);
+  effBW_.resize(nspw);
+
+  // Gather MS freq info
+  for (uInt i=0;i<selspw.nelements();++i) {
+    uInt ispw=selspw(i);
+    uInt nchan=msfreq(ispw).nelements();
+
+    // This ensures msfreq/mswidth consistent with selspw
+    //   (each selspw has at least one channel of freq info)
+    if (nchan<1)
+      throw(AipsError("No frequency information for a selected spw!"));
+
+
+    // Set nominal per-spw solution frequencies
+    if (!freqdep && nchan>1) {
+
+      //      cout << "Not freqdep and multi-chan data..." 
+      //	   << "Soln freqs will be collapsed to single channel."  << endl;
+
+
+      //  solutions NOT freq dep but  more than one MS channel to solve from
+      //    --> Average chan freqs to single fiducial value
+      //   (this is a parameterized solution, like delay or fringefit...)
+
+
+      // Manage value scale, to avoid loss of precision
+      Double freq0=msfreq(ispw)(0);  // Lop off large freq value
+      Double width1=mswidth(ispw)(0);  // Divide widths by typical value (also ensures abs)
+      Vector<Double> f=msfreq(ispw)-freq0;               // relative freq
+      Vector<Double> w=mswidth(ispw)/width1;  // width-weights
+
+      // output info will be single-channel
+      freq_(ispw).resize(1);
+      width_(ispw).resize(1);
+
+      // calculate
+      freq_(ispw).set(sum( (Array<double,std::__1::allocator<double>>) f*w));   // weighed rel freq sum 
+      width_(ispw).set(sum(w));     // sum of norm'd width weights
+      freq_(ispw)/=width_(ispw);    // divide by weight sum
+
+      // Restore offsets to final values
+      freq_(ispw)+=freq0;         // add offset back in
+      width_(ispw)*=width1;       // mult by width norm
+
+    } else {
+      // Solutions ARE freq-dep, or only one channel, 
+      //     so just adopt MS frequencies (NB: possibly already decimated by VI2)
+      //  TBD: could use reference here (only if ~combspw)?
+      //cout << "Soln is freqdep, or only one channel..." 
+      //<< "Soln freqs are just the VI2 data freqs" << endl;
+      freq_(ispw).assign(msfreq(ispw));
+      width_(ispw).assign(mswidth(ispw));
+    }
+
+    // Assume effective BW is just the width
+    effBW_(ispw).reference(width_(ispw));
+
+  }
+
+  // Collapse over spws if combining them...
+  if (combspw && spwfanin.nelements()>1) {
+
+    //    cout << "Combining spws!" << endl;
+
+    // Remember the fan-in
+    spwfanin_.resize();
+    spwfanin_.assign(spwfanin);
+
+    // Keep track of which spws are aggregate spws
+    //  (none are yet)
+    Vector<Bool> isAggspw(nspw,false);
+
+    Vector<Double> freq0(nspw,0);
+    Vector<Double> width1(nspw,0);
+
+    for (uInt ispw=0;ispw<spwfanin.nelements();++ispw) {
+
+      // Step over unmapped spws...
+      if (spwfanin(ispw)<0)
+	continue;
+
+      //  The following assumes fan-in is always to lowest spw id in group 
+      if (Int(ispw)==spwfanin(ispw)) {	
+
+	//	cout << "Aggregate spw = " << ispw << endl;
+
+	isAggspw(ispw)=true;
+
+	// This is a spw in which we'll accumulate
+	
+	// Offsets for precision 
+	freq0(ispw)=freq_(ispw)(0);
+	width1(ispw)=width_(ispw)(0);
+
+	freq_(ispw)-=freq0(ispw);
+	width_(ispw)/=width1(ispw);
+
+	// begin to accumulate effBW
+	effBW_(ispw).resize();    // break prior reference to width_
+	effBW_(ispw).assign(width_(ispw));   // copy in this spw's width_
+
+	// weight the freqs with widths
+	freq_(ispw)*=width_(ispw);
+
+	// weight the widths with the widths
+	//  (we will end up with a width-weighted width over spws)
+	width_(ispw)*=width_(ispw);
+
+      }
+      else {
+	uInt aggspw(spwfanin(ispw));
+
+	if (ispw<=aggspw) 
+	  throw(AipsError("Cannot accumulate into spw with a lower spw id."));
+
+
+	//	cout << "Accumulating spw=" << ispw << " into aggspw="<< aggspw << endl;
+
+	// Trap incompatible spws
+	if (freq_(ispw).nelements()!=freq_(aggspw).nelements())
+	  throw(AipsError("Cannont combine spws with differing nchan!"));
+
+	//  TBD: recognize/handle sideband and width variation if nchan>1 ?
+
+	// Offsets for precision
+	Vector<Double> f(freq_(ispw)-freq0(aggspw));
+	Vector<Double> w(width_(ispw)/width1(aggspw));
+	
+	// accumulate
+	freq_(aggspw)+= ( (Array<double,std::__1::allocator<double>>) f*w);
+	width_(aggspw)+= ( (Array<double,std::__1::allocator<double>>) w*w);
+	effBW_(aggspw)+= w;
+	
+	// This acculated spw now refers to aggspw:
+	freq_(ispw).reference(freq_(aggspw));
+	width_(ispw).reference(width_(aggspw));
+	effBW_(ispw).reference(effBW_(aggspw));
+
+      }
+    }
+
+    // Finish weighted mean calculation
+    for (uInt ispw=0;ispw<spwfanin.nelements();++ispw) {
+      
+      // Step over non-agg spws
+      if (!isAggspw(ispw))
+	continue;
+
+      //      cout << "Finalizing freq averages for agg spw = " << ispw << endl;
+
+      if (freq0(ispw)>0.0 && effBW_(ispw).nelements()>0 && allGT(effBW_(ispw),0.0)) {
+	freq_(ispw)/=effBW_(ispw);
+	width_(ispw)/=effBW_(ispw);
+
+	// put offsets back in
+	freq_(ispw)+=freq0(ispw);
+	width_(ispw)*=width1(ispw);
+	effBW_(ispw)*=width1(ispw);
+      }
+      else {
+	throw(AipsError("Problem completing combspw freq average."));
+      }
+    } // ispw
+    //    cout << "Finished combining spws." << endl;
+
+  } // combspw? 
+  else {
+
+    // For safety, make spwfanin the identity vector
+    spwfanin_.resize(nspw);
+    indgen(spwfanin_);
+
+  }
+    
+
+  // If we get here, we should be ok!
+  ok_=true;
+
+}
+
+
+Bool FreqMetaData::ok() const {
+  if (ok_)
+    return true;
+  else
+    throw(AipsError("FreqMetaData not initialized!"));
+  return false;
+
+}
+
+
+const Vector<Double>& FreqMetaData::freq(Int spw) const {
+  if (ok() && freq_(spw).nelements()>0) 
+    return freq_(spw);
+  else
+    throw(AipsError("Bad spw in FreqMetaData!"));
+
+}
+const Vector<Double>& FreqMetaData::width(Int spw) const {
+  if (ok() && width_(spw).nelements()>0) 
+    return width_(spw);
+  else
+    throw(AipsError("Bad spw in FreqMetaData!"));
+
+}
+const Vector<Double>& FreqMetaData::effBW(Int spw) const {
+  if (ok() && effBW_(spw).nelements()>0) 
+    return effBW_(spw);
+  else
+    throw(AipsError("Bad spw in FreqMetaData!"));
+
+}
+
+Int FreqMetaData::fannedInSpw(Int spw) const {
+
+  if (ok() && Int(spwfanin_.nelements())>spw && spwfanin_(spw)>-1)
+    return spwfanin_(spw);
+  else
+    throw(AipsError("Bad spw fan-in in FreqMetaData::faninoutspw."));
+
+}
 
 
 // **********************************************************
@@ -146,6 +393,7 @@ SolvableVisCal::SolvableVisCal(VisSet& vs) :
   minTimePerSolution_p(10000000), 
   avgTimePerSolution_p(0),
   timer_p(),
+  freqMetaData_(),
   calTableName_(""),
   calTableSelect_(""),
   append_(false),
@@ -2497,6 +2745,9 @@ void SolvableVisCal::createMemCalTable2() {
 
 void SolvableVisCal::setOrVerifyCTFrequencies(Int spw) {
 
+  //  cout << "SVC::setOrVerifyCTFrequencies......." << endl;
+
+
   // Assumes currFreq() is set properly (see syncSolveMeta)
 
   // Access SPW subtable columns
@@ -2515,7 +2766,7 @@ void SolvableVisCal::setOrVerifyCTFrequencies(Int spw) {
 
   if (needToSet) {
 
-    //    cout << "Setting freqs in spw=" << spw << endl;
+    //cout << "Setting freqs in spw=" << spw << endl;
     
     // Existing values (from the _unaveraged_ MS)
     Vector<Double> chfr,chwid,chres,cheff;
@@ -2562,6 +2813,10 @@ void SolvableVisCal::setOrVerifyCTFrequencies(Int spw) {
       cheff.resize(1);  cheff.set(totbw);
     }
 
+    cout << "sOVCTF: spw=" << spw 
+	 << " chfr=" << chfr << " fMD.freq=" << freqMetaData_.freq(spw) 
+	 << " diff=" << chfr-freqMetaData_.freq(spw) << endl;
+
     // Export revised values to the table
     spwcol.chanFreq().put(spw,chfr);
     spwcol.chanWidth().put(spw,chwid);
@@ -2575,7 +2830,7 @@ void SolvableVisCal::setOrVerifyCTFrequencies(Int spw) {
   else {
     // Only verify that freqs haven't changed
 
-    //    cout << "Verifying freqs in spw=" << spw << endl;
+    //cout << "Verifying freqs in spw=" << spw << endl;
 
     Vector<Double> currCTFreq;
     spwcol.chanFreq().get(spw,currCTFreq);
@@ -2600,6 +2855,136 @@ void SolvableVisCal::setOrVerifyCTFrequencies(Int spw) {
     }
   }
 }
+
+void SolvableVisCal::setCTFrequencies(Int spw) {
+
+  //  cout << "SVC::setCTFrequencies......." << endl;
+
+
+  // Discern spw to which to write
+  Int outspw=spw;
+  // If combining spws, freqMetaData_ knows the fan-in
+  if (combspw())
+    outspw=freqMetaData_.fannedInSpw(spw);
+
+
+  // Access SPW subtable columns
+  CTColumns ctcol(*ct_);
+  CTSpWindowColumns& spwcol(ctcol.spectralWindow());
+
+  // If row is flagged, then it hasn't been set yet (in this execution or any prior)
+  Bool needToSet(spwcol.flagRow().get(outspw));
+
+
+  //  cout << "needToSet = " << boolalpha << needToSet << endl;
+
+
+  if (needToSet) {
+
+    //cout << "Setting freqs for spw=" << outspw << endl;
+
+    // const references to freq info from freqMetaData_
+    const Vector<Double>& chfr(freqMetaData_.freq(outspw));
+    const Vector<Double>& chwid(freqMetaData_.width(outspw));
+    const Vector<Double>& cheff(freqMetaData_.effBW(outspw));
+
+    // Derived info
+    const Vector<Double>& chres(chfr);   // resolution same as freq
+    Int numChan=chfr.nelements();
+    Double totbw=sum(chfr);
+
+    // TBD: add some sanity checks, e.g., numChan==1 if !freqDepPar, etc.
+
+    // Set freq info in the table
+    spwcol.chanFreq().put(outspw,chfr);
+    spwcol.chanWidth().put(outspw,chwid);
+    spwcol.resolution().put(outspw,chres);
+    spwcol.effectiveBW().put(outspw,cheff);
+    spwcol.numChan().put(outspw,numChan);
+    spwcol.totalBandwidth().put(outspw,totbw);
+    spwcol.flagRow().put(outspw,False);
+
+
+  }
+  else {
+
+    // outspw already written (in this execution or a previous one with append=True)
+    //  Verify that info matches...
+
+    //cout << "Verifying freqs for spw=" << outspw << endl;
+
+    // Existing freqs in table...
+    Vector<Double> currCTFreq;
+    spwcol.chanFreq().get(outspw,currCTFreq);
+    Int numChan;
+    spwcol.numChan().get(outspw,numChan);
+
+    // Current solution freqs
+    const Vector<Double>& chfr(freqMetaData_.freq(outspw));
+    const Int numChanOut(chfr.nelements());
+
+    // If values mismatch, we need to abort
+    if (numChan!=numChanOut || !allEQ(currCTFreq,chfr)) {
+      cout << "For spw=" << outspw << ":" << endl;
+      cout << "Current CalTable nchan= " << numChan << endl;
+      cout << "Current CalTable freq = " << currCTFreq << endl;
+      cout << "Current Solution nchan= " << numChan << endl;
+      cout << "Current Solution freq = " << chfr << endl;
+      cout << "Diff = " << chfr-currCTFreq << endl;
+      
+      throw(AipsError("Mismatch between Solution frequencies and existing CalTable frequencies for spw="+String::toString(spw)));
+    }
+
+  } // !needToSet
+
+}
+
+// Discern detailed frequency meta info for solutions (solve context)
+void SolvableVisCal::discernAndSetSolnFrequencies(const vi::VisibilityIterator2& vi, const Vector<uInt>& selspws) {
+
+  //  cout << endl << "SVC::discernAndSetSolnFrequencies---------------------------" << endl;
+
+  // TBD:  When aggregating, we should verify that all frames are consistent
+  Vector<Int> frames(vi.spectralWindowSubtablecols().measFreqRef().getColumn());
+  //cout << "vi.spectralWindowSubtablecols().measFreqRef() = " << frames << endl;
+
+  // Gather MS freq info
+  Vector< Vector<Double> > MSfreq(nSpw(),Vector<Double>()), MSwidth(nSpw(),Vector<Double>());
+  for (uInt i=0;i<selspws.nelements();++i) {
+    uInt ispw=selspws(i);
+
+    MSfreq(ispw).assign(vi.getImpl()->getFrequencies(-1.0e0,frames(ispw),ispw,0));
+    MSwidth(ispw).assign(vi.getImpl()->getChanWidths(-1.0e0,frames(ispw),ispw,0));
+
+    //    cout << "Spw=" << ispw << ":" << endl 
+    //	 << " MSfreq=" << MSfreq(ispw) << endl
+    //	 << " MSwidth=" << MSwidth(ispw) << endl;
+  }
+
+  // Nominally empty spwFanIn...
+  Vector<Int> spwFanIn;
+
+  // Work out spwFanIn from selecte spws, if we are combining spws...
+  if (combspw()) {
+
+    // We're combining, so set up the "spwmap" for spw fan-in
+    spwFanIn.resize(nSpw());
+    spwFanIn.set(-1);  // -1 means not included
+
+    // Use the MINIMUM spwid from selection for the aggregate
+    Int aggSpw=min(selspws);
+    for (uInt iselspw=0;iselspw<selspws.nelements();++iselspw) 
+      spwFanIn(iselspw)=aggSpw;
+
+  }
+
+  // Now delegate the freq meta calculation to the FreqMetaData object
+  freqMetaData_.calcFreqMeta(MSfreq,MSwidth,selspws,freqDepPar(),combspw(),spwFanIn);
+
+  // TBD: Add log info, probably inside FreqMetaData...
+
+}
+
 
 
 //  VI2------------------------^
