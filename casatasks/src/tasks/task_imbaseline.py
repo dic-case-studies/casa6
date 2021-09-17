@@ -616,31 +616,27 @@ class Sdbaseline():
     
     def execute(self):
 
-        try:
-            self.__prepare_sdbaseline()
+        self.__prepare_sdbaseline()
 
-            self.__output_bloutput_text_header()
-            
-            if self.vals.sdbaseline_blfunc == 'variable':
-                sorttab_info = self.__remove_sorted_table_keyword(self.vals.sdsmooth_output)
+        self.__output_bloutput_text_header()
+        
+        if self.vals.sdbaseline_blfunc == 'variable':
+            sorttab_info = self.__remove_sorted_table_keyword(self.vals.sdsmooth_output)
 
-            selected_spw = sdutil.get_spwids( ms.msseltoindex(vis=self.vals.sdsmooth_output, spw=self.vals.sdbaseline_spw, 
-                                                            field=self.vals.sdbaseline_field, baseline='', time='',
-                                                            scan=self.vals.sdbaseline_scan) )
-            sdms.open(self.vals.sdsmooth_output)
-            sdms.set_selection(spw=selected_spw, field=self.vals.sdbaseline_field, antenna=self.vals.sdbaseline_antenna,
-                                timerange=self.vals.sdbaseline_timerenge, scan=self.vals.sdbaseline_scan,
-                                polarization=self.vals.sdbaseline_pol, intent=self.vals.sdbaseline_intent,
-                                reindex=self.vals.sdbaseline_reindex)
-            func, params = self.__prepare_for_baselining(sdms, self.vals.convert_sdbaselining_dict())
-            func(**params)
-            sdms.close()
-            
-            if self.vals.sdbaseline_blfunc == 'variable':
-                self.__restore_sorted_table_keyword(self.vals.sdsmooth_output, sorttab_info)
-
-        except Exception:
-            raise
+        selected_spw = sdutil.get_spwids( ms.msseltoindex(vis=self.vals.sdsmooth_output, spw=self.vals.sdbaseline_spw, 
+                                                        field=self.vals.sdbaseline_field, baseline='', time='',
+                                                        scan=self.vals.sdbaseline_scan) )
+        sdms.open(self.vals.sdsmooth_output)
+        sdms.set_selection(spw=selected_spw, field=self.vals.sdbaseline_field, antenna=self.vals.sdbaseline_antenna,
+                            timerange=self.vals.sdbaseline_timerenge, scan=self.vals.sdbaseline_scan,
+                            polarization=self.vals.sdbaseline_pol, intent=self.vals.sdbaseline_intent,
+                            reindex=self.vals.sdbaseline_reindex)
+        func, params = self.__prepare_for_baselining(sdms, self.vals.convert_sdbaselining_dict())
+        func(**params)
+        sdms.close()
+        
+        if self.vals.sdbaseline_blfunc == 'variable':
+            self.__restore_sorted_table_keyword(self.vals.sdsmooth_output, sorttab_info)
 
     def __prepare_sdbaseline(self):
         blparam_file = self.vals.sdsmooth_output + '_blparam.txt'
