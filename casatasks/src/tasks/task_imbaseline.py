@@ -254,9 +254,12 @@ def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thre
     All specifications of arguments are defined in:
     https://open-jira.nrao.edu/browse/CAS-13520
     """
-    vals = ImBaselineVals(imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
-                         edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter,
-                         clipthresh, dirkernel, major, minor, pa, kimage, scale, spkernel, kwidth)
+    vals = ImBaselineVals(imagename = imagename, linefile = linefile, output_cont = output_cont, bloutput = bloutput, 
+                          maskmode = maskmode, chans = chans, thresh = thresh, avg_limit = avg_limit, minwidth = minwidth,
+                          edge = edge, blfunc = blfunc, order = order, npiece = npiece, applyfft = applyfft, 
+                          fftthresh = fftthresh, addwn = addwn, rejwn = rejwn, blparam = blparam, clipniter = clipniter,
+                          clipthresh = clipthresh, dirkernel = dirkernel, major = major, minor = minor, pa = pa, 
+                          kimage = kimage, scale = scale, spkernel = spkernel, kwidth = kwidth)
 
     prepare(vals)
 
