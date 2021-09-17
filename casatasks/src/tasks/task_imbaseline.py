@@ -822,7 +822,10 @@ class MS2ImageConverter():
 
     def convert(self):
         casalog.post("start imaging", "DEBUG2")
-        self.__make_output_file() # mask data is copied in this method 
+        try:
+            self.__make_output_file() # mask data is copied in this method 
+        except Exception as instance:
+            casalog.post(f"*** Error '{instance}'", 'SEVERE')
 
         self.__make_image_array()
         casalog.post("end arraying", "DEBUG2")
@@ -842,7 +845,7 @@ class MS2ImageConverter():
                 param_vals = [vars[p] for p in param_names]
                 write_image_history(ia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
             except Exception as instance:
-                casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
+                casalog.post(f"*** Error '{instance}' updating HISTORY", 'WARN')
         finally:
             ia.done()
 
@@ -870,11 +873,13 @@ class MS2ImageConverter():
                     pos += 1
 
     def __make_output_file(self):
-        ia.fromimage(infile=self.vals.imagename, outfile=self.vals.linefile)
+        if not ia.fromimage(infile=self.vals.imagename, outfile=self.vals.linefile):
+            raise Exception(f'Some error occured, infile:{self.vals.imagename}, outfile:{self.vals.linefile}')
         ia.done()
-        if self.vals.output_cont:
-            ia.fromimage(infile=self.vals.imagename, outfile=self.vals.output_cont_file)
-            ia.done()
+        if self.vals.output_cont and \
+           not ia.fromimage(infile=self.vals.imagename, outfile=self.vals.output_cont_file):
+            raise Exception(f'Some error occured, infile:{self.vals.imagename}, outfile:{self.vals.output_cont_file}')
+        ia.done()
 
 
 
