@@ -62,6 +62,9 @@ except ImportError:
 IS_CASA6 = False
 CASA6 = False
 HAVE_CASA6 = False
+verbose = False
+DRY_RUN = False
+RUN_ALL = False
 
 # JIRA BRANCH TO CHECKOUT
 JIRA_BRANCH = None
@@ -80,9 +83,6 @@ RUN_SUBTEST = False
 
 # Dry run of Tests
 DRY_RUN = False
-
-# Define which tests to run
-whichtests = 0
 
 ########################################################################################################################
 ###########################################            Functions            ############################################
@@ -176,6 +176,7 @@ def list_tests():
     if IS_CASA6:
         git_fetch_casa_tests(os.getcwd() +"/testlist/casa6")
         gather_all_tests(os.getcwd() +"/testlist/casa6",os.getcwd() +"/testlist/")
+        gather_all_tests(os.getcwd() +"/testlist/casaplotms/", workdir + "testlist/")
         tests = sorted(os.listdir(os.getcwd() +"/testlist/"))
         for test in tests:
             if test.startswith("test"):
@@ -195,8 +196,10 @@ def git_fetch_casa_tests(path):
     os.makedirs(path)
 
     os.chdir(path)
-    subprocess.call(["git","init", "--quiet"])
     FNULL = open(os.devnull, 'w')
+
+    ## Main
+    subprocess.call(["git","init", "--quiet"])
     subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casa6.git"], stdout=FNULL, stderr=subprocess.STDOUT)
     subprocess.call(["git","config","core.sparseCheckout","true"])
 
@@ -216,12 +219,36 @@ def git_fetch_casa_tests(path):
     print("casatools/tests/tools/vpmmanager", file=open(".git/info/sparse-checkout", "a"))
 
     print("casatests/benchmarks", file=open(".git/info/sparse-checkout", "a"))
-    print("casatests/e2e", file=open(".git/info/sparse-checkout", "a"))
+    print("casatests/regression", file=open(".git/info/sparse-checkout", "a"))
     print("casatests/performance", file=open(".git/info/sparse-checkout", "a"))
     print("casatests/pipeline", file=open(".git/info/sparse-checkout", "a"))
     print("casatests/stakeholders", file=open(".git/info/sparse-checkout", "a"))
 
     subprocess.call(["git","pull","--quiet","origin","master"])
+
+    ## Plotms
+    os.chdir(os.path.dirname(os.getcwd()))
+    os.makedirs("casaplotms")
+    os.chdir("casaplotms")
+    subprocess.call(["git","init", "--quiet"])
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casaplotms.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("tests/plotms", file=open(".git/info/sparse-checkout", "a"))
+    subprocess.call(['git','pull','--quiet','origin','master'])
+
+    ## Almatasks
+
+    os.chdir(os.path.dirname(os.getcwd()))
+    os.makedirs("almatasks")
+    os.chdir("almatasks")
+    subprocess.call(["git","init", "--quiet"])
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/almatasks.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("tests/tasks", file=open(".git/info/sparse-checkout", "a"))
+    subprocess.call(['git','pull','--quiet','origin','master'])
+    os.chdir(os.path.dirname(os.getcwd()))
+
+
     os.chdir(cwd)
 
 def git_fetch_casa_tests_branch(path, branch):
@@ -428,6 +455,8 @@ def run(testnames):
                 git_fetch_casa_tests( workpath + 'casa6')
                 os.makedirs(workdir + "all/")
                 gather_all_tests(workpath +'casa6/', workdir + "all/")
+                gather_all_tests(workpath +'casaplotms/', workdir + "all/")
+                gather_all_tests(workpath +'almatasks/', workdir + "all/")
                 cmd = [ workdir ]
                 cmd = ["--continue-on-collection-errors"] + cmd
                 if verbose:
@@ -500,6 +529,8 @@ def run(testnames):
                                 git_fetch_casa_tests_branch(workpath + 'casa6/', JIRA_BRANCH)
                                 os.makedirs(workdir + "tests/")
                                 gather_all_tests(workpath +'casa6/', workdir + "tests/")
+                                # gather_all_tests(workpath +'casaplotms/', workdir + "tests/")
+                                # gather_all_tests(workpath +'almatasks/', workdir + "tests/")
                                 gittest = False
 
                             else:
@@ -507,6 +538,8 @@ def run(testnames):
                                 git_fetch_casa_tests( workpath + 'casa6/')
                                 os.makedirs(workdir + "tests/")
                                 gather_all_tests(workpath +'casa6/', workdir + "tests/")
+                                gather_all_tests(workpath +'casaplotms/', workdir + "tests/")
+                                gather_all_tests(workpath +'almatasks/', workdir + "tests/")
                                 gittest = False
 
                         if test.endswith(".py"):
@@ -883,6 +916,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
 ########################################            Main-Start-Up            ###########################################
 ########################################################################################################################
 
+
 if __name__ == "__main__":
 
     print("HAVE_MEMTEST: {}".format(HAVE_MEMTEST))
@@ -893,7 +927,7 @@ if __name__ == "__main__":
     print("HAVE_CASA6: {}".format(HAVE_CASA6))
     print("")
 
-    verbose = False
+    
 
     # List of tests to run
     testnames = []
@@ -969,12 +1003,10 @@ if __name__ == "__main__":
         sys.exit()
 
     ## Dry Run
-    DRY_RUN = False
     if args.dry_run:
         DRY_RUN = True
 
     ## RUN ALL
-    RUN_ALL = False
     if args.all:
         RUN_ALL = True
         testnames = ["all"]

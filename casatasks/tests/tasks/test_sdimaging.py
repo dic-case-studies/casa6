@@ -14,7 +14,7 @@ if is_CASA6:
     from casatools import ctsys, image, regionmanager, measures, msmetadata, table, quanta
     from casatools import ms as mstool
     from casatasks import sdimaging, flagdata
-    from casatasks.private.sdutil import tbmanager, toolmanager, table_selector
+    from casatasks.private.sdutil import table_manager, tool_manager, table_selector
 
     ### for selection_syntax import
     #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -48,7 +48,7 @@ else:
 
     from sdimaging import sdimaging
     from flagdata import flagdata
-    from sdutil import tbmanager, toolmanager, table_selector
+    from sdutil import tbmanager as table_manager, toolmanager as tool_manager, table_selector
 
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
@@ -2154,7 +2154,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         if os.path.exists(self.outfile):
             shutil.rmtree(self.outfile)
         default(sdimaging)
-        with tbmanager(self.rawfile) as tb:
+        with table_manager(self.rawfile) as tb:
             self.nchan = len(tb.getcell('DATA', 0)[0])
 
     def tearDown(self):
@@ -2231,7 +2231,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
     def _get_refmask(self, file, chanmerge=False):
         res = []
-        with tbmanager(file) as tb:
+        with table_manager(file) as tb:
             for i in [0, self.imsize[0]//2]:
                 for j in [0, self.imsize[1]//3, self.imsize[1]*2//3]:
                     k_range = [0] if chanmerge else [0, 5, 9]
@@ -2241,7 +2241,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
     def _get_refweight(self, file, chanmerge=False):
         res = []
-        with tbmanager(file) as tb:
+        with table_manager(file) as tb:
             for i in [0, self.imsize[0]//2]:
                 for j in [0, self.imsize[1]//3, self.imsize[1]*2//3]:
                     k_range = [0] if chanmerge else [0, 5, 9]
@@ -2251,7 +2251,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
     def _get_refvalues(self, file, chanmerge=False):
         res = []
-        with tbmanager(file) as tb:
+        with table_manager(file) as tb:
             for i in [self.imsize[0]//2, 0]:
                 for j in [0, self.imsize[1]//3, self.imsize[1]*2//3]:
                     irow = self.imsize[0]*j+i
@@ -2275,7 +2275,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     def _checkvalue(self, file, is_maskfile, x_range, y_range, f_range, ref_value, chanmerge=False):
         tol=1e-5
         colname = 'PagedArray' if is_maskfile else 'map'
-        with tbmanager(file) as tb:
+        with table_manager(file) as tb:
             val = tb.getcell(colname, 0)
 
         boolean_types = (bool, numpy.bool, numpy.bool_)
@@ -2900,7 +2900,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
 
     def check_spline_works(self, outfile, multiple_ms=False):
         weightfile = outfile + '.weight'
-        with tbmanager(weightfile) as tb:
+        with table_manager(weightfile) as tb:
             mapdata = tb.getcell('map', 0)
         # for pixels with strong weight value(>14), collect their distance from the image
         # center and then compute the mean and sigma of their distribution.
@@ -2958,9 +2958,9 @@ class sdimaging_test_interp(sdimaging_unittest_base):
             img1 += '.weight'
             img2 += '.weight'
 
-        with tbmanager(img1) as tb:
+        with table_manager(img1) as tb:
             mapdata1 = tb.getcell('map', 0)
-        with tbmanager(img2) as tb:
+        with table_manager(img2) as tb:
             mapdata2 = tb.getcell('map', 0)
 
         self.assertTrue(numpy.allclose(mapdata1, mapdata2, rtol=1.0e-5, atol=1.0e-5),
@@ -3465,7 +3465,7 @@ def get_mapextent(infile, scan=None):
     try:
         s.save(outfile)
         if scan is None:
-            with tbmanager(outfile) as tb:
+            with table_manager(outfile) as tb:
                 dir = tb.getcol('DIRECTION')
         else:
             with table_selector(outfile, taql='SCANNO==16') as tb:
@@ -3513,7 +3513,7 @@ def str_to_deg(s):
     return qa.quantity(s)['value']
 
 def calc_statistics(imagename):
-    with toolmanager(imagename, image) as ia:
+    with tool_manager(imagename, image) as ia:
         s = ia.statistics()
     return s
 
