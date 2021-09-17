@@ -492,7 +492,7 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti, std::vector<casacore::Sl
               accumFreq_(outchan) += iterFreq(channum);
             }
           }
-		  
+  
           if (avgChan_p) {
             // Add channel to list
             chanNumsAveraged.push_back(channum);
@@ -551,6 +551,10 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti, std::vector<casacore::S
 
   if (debug_) {
     cout << " PMSCTA::antAccumulate() " << endl;
+  }
+
+  if (cti.thisAntenna2() == -1) {
+    throw(AipsError("Antenna averaging invalid for pure antenna-based table."));
   }
 
   if (!initialized_p) {
