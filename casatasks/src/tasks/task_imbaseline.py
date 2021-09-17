@@ -116,27 +116,27 @@ class ImBaselineVals:
         self.datacolumn = 'DATA'
         self.overwrite = True
 
-        self.__check_args()
+        self.__prepare_args()
 
-    def __check_args(self):
-        self.__check_arg_imagename()
-        self.__check_arg_linefile()
-        self.__check_arg_maskmode()
-        self.__check_arg_blfunc()
-        self.__check_arg_dirkernel()
-        self.__check_arg_spkernel()
+    def __prepare_args(self):
+        self.__prepare_arg_imagename()
+        self.__prepare_arg_linefile()
+        self.__prepare_arg_maskmode()
+        self.__prepare_arg_blfunc()
+        self.__prepare_arg_dirkernel()
+        self.__prepare_arg_spkernel()
 
-    def __check_arg_imagename(self):
+    def __prepare_arg_imagename(self):
         if not os.path.exists(self.imagename):
             raise ValueError(f'Error: file {self.imagename} is not found.', 'SEVERE')
 
-    def __check_arg_linefile(self):
+    def __prepare_arg_linefile(self):
         if self.linefile == '':
             self.linefile = os.path.basename(self.imagename).rstrip('/') + '_bs'
         if os.path.exists(self.linefile):
             raise ValueError(f'Error: file {self.linefile} already exists, please delete before continuing.', 'SEVERE')
 
-    def __check_arg_maskmode(self):
+    def __prepare_arg_maskmode(self):
         maskmode_list = self.sdbaseline_maskmode == 'list'
         maskmode_auto = self.sdbaseline_maskmode == 'auto'
         if not ( maskmode_list or maskmode_auto ):
@@ -148,7 +148,7 @@ class ImBaselineVals:
         else:
             self.sdbaseline_chans = ''
 
-    def __check_arg_blfunc(self):
+    def __prepare_arg_blfunc(self):
         blfunc_poly = self.sdbaseline_blfunc == 'poly'
         blfunc_chebyshev = self.sdbaseline_blfunc == 'chebyshev'
         blfunc_cspline = self.sdbaseline_blfunc == 'cspline'
@@ -174,7 +174,7 @@ class ImBaselineVals:
             if not os.path.exists(self.sdbaseline_blparam):
                 raise ValueError(f"input file '{self.blparam}' does not exists", 'SEVERE')
 
-    def __check_arg_dirkernel(self):
+    def __prepare_arg_dirkernel(self):
         self.dir_none = self.imsmooth_kernel == 'none'
         self.dir_ikernel = self.imsmooth_kernel == 'image'
         self.dir_bkernel = self.imsmooth_kernel == 'boxcar'
@@ -192,7 +192,7 @@ class ImBaselineVals:
             self.imsmooth_kimage = ''
             self.imsmooth_scale = -1.0
 
-    def __check_arg_spkernel(self):
+    def __prepare_arg_spkernel(self):
         self.sp_none = self.sdsmooth_kernel == 'none'
         self.sp_bkernel = self.sdsmooth_kernel == 'boxcar'
         self.sp_gkernel = self.sdsmooth_kernel == 'gaussian'
