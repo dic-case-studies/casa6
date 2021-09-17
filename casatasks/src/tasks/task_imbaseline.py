@@ -289,12 +289,14 @@ class Imsmooth():
 
     def execute(self):
 
-        ia.open(self.vals.imagename)
-        mycsys = ia.coordsys()
-        myrg = regionmanager()
-        self.vals.reg = myrg.frombcs(csys=mycsys.torecord(), shape=ia.shape(), chans=self.vals.imsmooth_chans)
-        myrg.done()
-        mycsys.done()
+        try:
+            ia.open(self.vals.imagename)
+            mycsys = ia.coordsys()
+            myrg = regionmanager()
+            self.vals.reg = myrg.frombcs(csys=mycsys.torecord(), shape=ia.shape(), chans=self.vals.imsmooth_chans)
+        finally:
+            myrg.done()
+            mycsys.done()
         
         outia = None
         try:
