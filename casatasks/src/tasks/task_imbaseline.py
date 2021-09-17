@@ -7,6 +7,7 @@ from typing import List
 import numpy as np
 from numpy import array, uint64
 from collections import Counter
+import uuid
 
 from casatools import image, table, regionmanager, quanta, singledishms
 from casatools import ms as mstool
@@ -103,7 +104,7 @@ class ImBaselineVals:
         self.sdsmooth_reindex = True
 
         # imbaseline local
-        self.temporary_vis = 'temp.ms'
+        self.temporary_vis = self.__generate_temporary_vis_name()
         self.imsmooth_output = 'imsmooth_output.image'
         self.sdsmooth_output = 'sdsmooth_output.ms'
         self.sdbaseline_output = 'sdbaseline_output.ms'
@@ -197,6 +198,12 @@ class ImBaselineVals:
         if self.sp_none:
             self.sdsmooth_output = self.temporary_vis
             self.sdsmooth_kwidth = 5
+
+    def __generate_temporary_vis_name(self):
+        while True:
+            filename = str(uuid.uuid4()) + '.ms'
+            if not os.path.exists(filename):
+                return filename
     
     def imsmooth_enable(self):
         return not self.dir_none
