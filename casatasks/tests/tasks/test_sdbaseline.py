@@ -12,7 +12,7 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, table
     from casatasks import sdbaseline
-    from casatasks.private.sdutil import tbmanager
+    from casatasks.private.sdutil import table_manager
 
     ### for selection_syntax import
     from casatestutils import selection_syntax
@@ -29,7 +29,7 @@ else:
     from tasks import *
     from taskinit import *
     from sdbaseline import sdbaseline
-    from sdutil import tbmanager
+    from sdutil import tbmanager as table_manager
     # the global tb tool is used here as is
 
     try:
@@ -37,7 +37,7 @@ else:
     except:
         import tests.selection_syntax as selection_syntax
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
@@ -197,7 +197,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
     Base class for sdbaseline unit test
     """
     # Data path of input/output
-    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
+    datapath = ctsys_resolve('unittest/sdbaseline/')
     taskname = "sdbaseline"
     verboselog = False
 
@@ -389,10 +389,10 @@ class sdbaseline_unittest_base(unittest.TestCase):
         if select_pol: pol_sel = self._getListSelection(pol)
         if not colname: colname='FLOAT_DATA'
         self._checkfile(filename)
-        with tbmanager(filename) as tb:
+        with table_manager(filename) as tb:
             data = tb.getcol(colname)
             ddid = tb.getcol('DATA_DESC_ID')
-        with tbmanager(filename+'/DATA_DESCRIPTION') as tb:
+        with table_manager(filename + '/DATA_DESCRIPTION') as tb:
             spwid = tb.getcol('SPECTRAL_WINDOW_ID').tolist()
         if not select_spw: spw_sel = spwid
         # get the selected DD IDs from selected SPW IDs.
@@ -640,9 +640,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
             shutil.rmtree(self.infile+ '_blparam.btable')
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
+        remove_files_dirs(self.infile)
+        remove_files_dirs(self.outroot)
 
     def test000(self):
         """Basic Test 000: default values for all parameters"""
@@ -680,6 +679,41 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         datacolumn = 'float_data'
         maskmode = 'list'
         blfunc = 'poly'
+        spw = '3'
+        pol = 'LL'
+        overwrite = True
+        result = sdbaseline(infile=infile, datacolumn=datacolumn,
+                             maskmode=maskmode, blfunc=blfunc, 
+                             spw=spw, pol=pol, outfile=outfile,
+                             overwrite=overwrite)
+        # sdbaseline returns None if it runs successfully
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        # uncomment the next line once blparam file can be output
+        #self._compareBLparam(outfile+"_blparam.txt",self.blrefroot+tid)
+        results = self._getStats(outfile)
+        print(self._getStats(outfile))
+        theresult = None
+        for i in range(len(results)):
+            theresult = results[i]
+
+        reference = {'rms': 0.16677055621054496,
+                     'min': -2.5817961692810059,
+                     'max': 1.3842859268188477,
+                     'median': -0.00086212158203125,
+                     'stddev': 0.16677055621054496,
+                     }
+
+        self._compareStats(theresult, reference)
+
+    def test001_uppercase_params(self):
+        """Basic Test 001: simple successful case: blfunc = 'poly', maskmode = 'list' and masklist=[] (no mask)"""
+        tid = '001'
+        infile = self.infile
+        outfile = self.outroot+tid+'.ms'
+        datacolumn = 'FLOAT_DATA'
+        maskmode = 'LIST'
+        blfunc = 'POLY'
         spw = '3'
         pol = 'LL'
         overwrite = True
@@ -928,9 +962,8 @@ class sdbaseline_maskTest(sdbaseline_unittest_base):
 
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
+        remove_files_dirs(self.infile)
+        remove_files_dirs(self.outroot)
 
     def test100(self):
         """Mask Test 100: with masked ranges at the edges of spectrum. blfunc must be cspline."""
@@ -1022,6 +1055,10 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
     test023 --- sinusoid-related parameters with default values
     test024 --- addwn has too large value but rejwn removes it
     
+    test021_uppercase_params --- specify fftthresh by 'SIGMA' + checking residual rms
+    test022_uppercase_params --- specify fftthresh by 'TOP' + checking residual rms
+    test025_uppercase_params --- specify fftmethod by 'FFT'    
+
     test100 --- no effective wave number set (addwn empty list, applyfft=False)
     test101 --- no effective wave number set (addwn empty list, applyfft=True)
     test102 --- no effective wave number set (addwn empty tuple, applyfft=False)
@@ -1086,10 +1123,8 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             shutil.rmtree(self.infile+ '_blparam.btable')
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-            pass
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
 
     def test000(self):
         """Sinusoid Test 000: addwn as integer"""
@@ -1359,6 +1394,22 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         stat = self._getStats(filename=outfile, pol='0')
         self.assertTrue(stat[0]['rms'] < torr)
 
+    def test021_uppercase_params(self):
+        """Sinusoid Test 021: specify fftthresh by 'SIGMA' + checking residual rms"""
+        tid = '021'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'FLOAT_DATA'
+        addwn = '0'
+        fftthresh = '3.0SIGMA'
+        torr = 1.0e-6
+        result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
+                             blfunc='sinusoid',addwn=addwn,applyfft=True,fftthresh=fftthresh)
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
     def test022(self):
         """Sinusoid Test 022: specify fftthresh by 'top' + checking residual rms"""
         tid = '022'
@@ -1367,6 +1418,22 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         datacolumn = 'float_data'
         addwn = '0'
         fftthresh = 'top4'
+        torr = 1.0e-6
+        result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
+                             blfunc='sinusoid',addwn=addwn,applyfft=True,fftthresh=fftthresh)
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
+    def test022_uppercase_params(self):
+        """Sinusoid Test 022: specify fftthresh by 'TOP' + checking residual rms"""
+        tid = '022'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'FLOAT_DATA'
+        addwn = '0'
+        fftthresh = 'TOP4'
         torr = 1.0e-6
         result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
                              blfunc='sinusoid',addwn=addwn,applyfft=True,fftthresh=fftthresh)
@@ -1399,8 +1466,24 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
                              blfunc='sinusoid',applyfft=applyfft,addwn=addwn,rejwn=rejwn)
         self.assertEqual(result,None,
                          msg="The task returned '"+str(result)+"' instead of None")
-        
-        
+
+    def test025_uppercase_params(self):
+        """Sinusoid Test 025: specify fftmethod by 'FFT' + checking residual rms"""
+        tid = '025'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'FLOAT_DATA'
+        addwn = '0'
+        fftmethod = 'FFT'
+        fftthresh = '3.0SIGMA'
+        torr = 1.0e-6
+        result = sdbaseline(infile=infile,datacolumn=datacolumn,outfile=outfile,
+                             blfunc='sinusoid',addwn=addwn,applyfft=True,fftmethod=fftmethod,fftthresh=fftthresh)
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
     def test100(self):
         """Sinusoid Test 100: no effective wave number set (addwn empty list, applyfft=False)"""
         tid = '100'
@@ -1912,9 +1995,8 @@ class sdbaseline_multi_IF_test(sdbaseline_unittest_base):
 
 
     def tearDown(self):
-        if os.path.exists(self.infile):
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
 
     @unittest.skip("Not currently part of the the test suite")
     def test200(self):
@@ -2007,9 +2089,8 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
 
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
 
     def _checkBltableVar(self, outms, bltable, blparam, option):
         npol = 2
@@ -2030,7 +2111,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 self.assertEqual(not is_skipped, tb.getcell('APPLY', irow)[ipol][0]);
                 if is_skipped: continue
             
-                self.assertEqual(self.ftype[blparam['btype'][i]], tb.getcell('FUNC_TYPE', irow)[ipol][0]);
+                self.assertEqual(self.ftype[blparam['btype'][i].lower()], tb.getcell('FUNC_TYPE', irow)[ipol][0]);
                 fparam_key = 'order' if (blparam['btype'][i] != 'cspline') else 'npiec'
                 self.assertEqual(blparam[fparam_key][i], tb.getcell('FUNC_PARAM', irow)[ipol][0])
             
@@ -2061,7 +2142,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         tb.open(bltable)
         for irow in range(tb.nrows()):
             for ipol in range(len(tb.getcell('RMS', irow))):
-                self.assertEqual(tb.getcell('FUNC_TYPE', irow)[ipol], self.ftype[blfunc])
+                self.assertEqual(tb.getcell('FUNC_TYPE', irow)[ipol], self.ftype[blfunc.lower()])
                 self.assertEqual(tb.getcell('FUNC_PARAM', irow)[ipol], order)
                 ref = self._getStats(filename=outms, spw=str(irow), pol=str(ipol), mask=mask[irow])
                 # tolerance value in the next line is temporarily set a bit large 
@@ -2153,6 +2234,40 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
             fparam = npiece if blfunc[i] == 'cspline' else order
             self._checkBltable(outfile, bloutput, blfunc[i], fparam, mask)
 
+    def test301_uppercase_params(self):
+        """test301: poly/chebyshev/cspline baselining, output bltable"""
+        self.tid='301'
+        infile = self.infile
+        datacolumn='FLOAT_DATA'
+        spw='0:1000~3500;5000~7500,1:500~7500,2:500~2500;3500~7500'
+        mask=[ [[1000,3500],[5000,7500]],
+               [[500,7500]],
+               [[500,2500],[3500,7500]]
+               ]
+        blmode='FIT'
+        blformat='TABLE'
+        dosubtract=True
+        blfunc=['POLY','CHEBYSHEV','CSPLINE']
+        order=5
+        npiece=4
+        rms_s0p0_ms = [0.150905484071, 0.150905484071, 0.149185846787]
+
+        for i in range(len(blfunc)):
+            print('testing blfunc='+blfunc[i]+'...')
+            outfile = self.outroot+self.tid+blfunc[i]+'.ms'
+            bloutput= self.outroot+self.tid+blfunc[i]+'.bltable'
+            result = sdbaseline(infile=infile,datacolumn=datacolumn,
+                                 blmode=blmode,blformat=blformat,bloutput=bloutput,
+                                 spw=spw,blfunc=blfunc[i],order=order,npiece=npiece,
+                                 dosubtract=dosubtract,outfile=outfile)
+            self.assertEqual(result,None,
+                             msg="The task returned '"+str(result)+"' instead of None")
+            msresult = self._getStats(filename=outfile, spw='0', pol='0', mask=mask[0])
+            self._checkValue(rms_s0p0_ms[i], msresult[0]['stddev'], 1.0e-6)
+
+            fparam = npiece if blfunc[i] == 'CSPLINE' else order
+            self._checkBltable(outfile, bloutput, blfunc[i], fparam, mask)
+
     def test302(self):
         """test302: per-spectrum baselining, output bltable"""
         self.tid='302'
@@ -2188,7 +2303,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         blfunc=['poly','chebyshev','cspline']
         order=5
         npiece=4
-        with tbmanager(infile) as tb:
+        with table_manager(infile) as tb:
             nrow_data = tb.nrows()
         testmode = ['masked_masked', 'masked_unselect', 'unselect_masked']
         prange = [[0,1], [0], [1]]
@@ -2218,7 +2333,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                                      dosubtract=dosubtract,outfile=outfile)
                 self.assertEqual(result,None,
                                  msg="The task returned '"+str(result)+"' instead of None")
-                with tbmanager(bloutput) as tb:
+                with table_manager(bloutput) as tb:
                     nrow_bltable = tb.nrows()
                 self.assertTrue((nrow_bltable == nrow_data - 1), 
                                 msg="The baseline table is not shortened...")
@@ -2237,7 +2352,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         blformat='table'
         blfunc='variable'
         dosubtract=True
-        with tbmanager(infile) as tb:
+        with table_manager(infile) as tb:
             nrow_data = tb.nrows()
         testmode = ['masked_masked', 'masked_unselect', 'unselect_masked']
         prange = [[0,1], [0], [1]]
@@ -2267,7 +2382,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                                  blmode=blmode,blformat=blformat,bloutput=bloutput,
                                  spw=spw,pol=pol,blfunc=blfunc,blparam=blparam,
                                  dosubtract=dosubtract,outfile=outfile)
-            with tbmanager(bloutput) as tb:
+            with table_manager(bloutput) as tb:
                 nrow_bltable = tb.nrows()
             self.assertTrue((nrow_bltable == nrow_data - 1), 
                             msg="The baseline table is not shortened...")
@@ -2324,19 +2439,18 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
         default(sdbaseline)
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
 
     def _checkResult(self, outfile, option):
         npol = 2
-        with tbmanager(outfile) as tb:
+        with table_manager(outfile) as tb:
             out_spec = tb.getcol('FLOAT_DATA')
             out_flag = tb.getcol('FLAG')
-        with tbmanager(self.reffile) as tb:
+        with table_manager(self.reffile) as tb:
             ref_spec = tb.getcol('FLOAT_DATA')
             ref_flag = tb.getcol('FLAG')
-        with tbmanager(self.infile) as tb:
+        with table_manager(self.infile) as tb:
             in_spec = tb.getcol('FLOAT_DATA')
             in_flag = tb.getcol('FLAG')
             nrow     = tb.nrows()
@@ -2366,6 +2480,17 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
         outfile = self.outroot+self.tid+'.ms'
         result = sdbaseline(infile=self.infile,datacolumn='float_data',
                              blmode=self.blmode,bltable=self.bltable,
+                             outfile=outfile)
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        self._checkResult(outfile, '')
+
+    def test400_uppercase_params(self):
+        """test400: apply baseline table with blmode='APPLY'. all bltable entries applied to all MS data."""
+        self.tid = '400'
+        outfile = self.outroot+self.tid+'.ms'
+        result = sdbaseline(infile=self.infile,datacolumn='float_data',
+                             blmode=self.blmode.upper(),bltable=self.bltable,
                              outfile=outfile)
         self.assertEqual(result,None,
                          msg="The task returned '"+str(result)+"' instead of None")
@@ -2461,7 +2586,8 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
 
 
     def tearDown(self):
-        self._remove([self.infile, self.outfile])
+        remove_files_dirs(os.path.splitext(self.infile)[0])
+        remove_single_file_dir(self.outfile)
 
     def _refetch_files(self, files, from_dir=None):
         if type(files)==str: files = [files]
@@ -2499,7 +2625,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         ispec = 0
         stats_list = []
         valid_idx = []
-        with tbmanager(self.outfile) as tb:
+        with table_manager(self.outfile) as tb:
             for rowid in range(tb.nrows()):
                 data = tb.getcell(colname, rowid)
                 flag = tb.getcell('FLAG', rowid)
@@ -2787,12 +2913,29 @@ Basic unit tests for task sdbaseline. No interactive testing.
 
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-            shutil.rmtree(self.infile)
-        os.system('rm -rf '+self.outroot+'*')
-        if os.path.exists(self.outfile):
-            shutil.rmtree(self.outfile)
-        #print 'test'
+        remove_single_file_dir(self.infile)
+        remove_single_file_dir(self.outroot)
+        remove_single_file_dir(self.outfile)
+        remove_single_file_dir(self.bloutput)
+        remove_single_file_dir(self.blparam)
+        remove_single_file_dir(self.bloutput_poly_txt)
+        remove_single_file_dir(self.bloutput_poly_csv)
+        remove_single_file_dir(self.bloutput_cspline_txt)
+        remove_single_file_dir(self.bloutput_cspline_csv)
+        remove_single_file_dir(self.bloutput_variable_txt)
+        remove_single_file_dir(self.bloutput_variable_csv)
+        remove_single_file_dir(self.blfunc)
+        remove_single_file_dir(self.bloutput_sinusoid_txt)
+        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn0_txt)
+        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn02_txt)
+        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn1_txt)
+        remove_single_file_dir(self.bloutput_sinusoid_csv)
+        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn0_csv)
+        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn02_csv)
+        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn1_csv)
+        remove_single_file_dir(self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt)
+        remove_single_file_dir('test.csv')
+        remove_single_file_dir('test.table')
         
 
     def run_test(self, **kwargs):
@@ -4556,11 +4699,8 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
         default(sdbaseline)
 
     def tearDown(self):
-        if (os.path.exists(self.infile)):
-           shutil.rmtree(self.infile)
-        for outname in glob.glob(self.outroot+'*'):
-           if os.path.isdir(outname): shutil.rmtree(outname)
-           else: os.remove(outname)
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
 
     def flag(self, infile, edge=None, rowidx=None):
         rowflag = True if edge is None else False
@@ -4663,7 +4803,7 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
 #         self.run_test(self.sinustat, spw=self.spw, edge=self.noedge, blfunc='sinusoid')
 
 class sdbaseline_selection(unittest.TestCase):
-    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
+    datapath = ctsys_resolve('unittest/sdbaseline/')
     infile = "analytic_type1.bl.ms"
     outfile = "baselined.ms"
     bloutfile = infile + "_blparam.txt"
@@ -4690,10 +4830,7 @@ class sdbaseline_selection(unittest.TestCase):
  
     def _clearup(self):
         for name in self.templist:
-            if os.path.isdir(name):
-                shutil.rmtree(name)
-            elif os.path.exists(name):
-                os.remove(name)
+            remove_single_file_dir(name)
 
     def setUp(self):
         self._clearup()
@@ -4901,7 +5038,7 @@ class sdbaseline_updateweightTest(sdbaseline_unittest_base):
     to confirm if WEIGHT_SPECTRUM column is removed
     """
 
-    datapath = ctsys_resolve('regression/unittest/tsdcal')
+    datapath = ctsys_resolve('unittest/sdbaseline/')
     infile = 'uid___A002_X6218fb_X264.ms'
     outroot = sdbaseline_unittest_base.taskname+'_updateweighttest'
     outfile = outroot + '.ms'
@@ -4916,11 +5053,11 @@ class sdbaseline_updateweightTest(sdbaseline_unittest_base):
         default(sdbaseline)
 
     def tearDown(self):
-        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.infile)
         remove_files_dirs(self.outroot)
 
     def test000(self):
-        with tbmanager(self.infile) as tb:
+        with table_manager(self.infile) as tb:
             colnames_in = tb.colnames()
         infile_has_wspec = 'WEIGHT_SPECTRUM' in colnames_in
         self.assertTrue(infile_has_wspec,
@@ -4928,7 +5065,7 @@ class sdbaseline_updateweightTest(sdbaseline_unittest_base):
         
         sdbaseline(**self.params)
 
-        with tbmanager(self.outfile) as tb:
+        with table_manager(self.outfile) as tb:
             colnames_out = tb.colnames()
         outfile_no_wspec = 'WEIGHT_SPECTRUM' not in colnames_out
         self.assertTrue(outfile_no_wspec,
@@ -4957,7 +5094,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
     test052 --- blmode='apply', spw to flag channels 4500-6499
     """
 
-    datapath = ctsys_resolve('regression/unittest/tsdbaseline')
+    datapath = ctsys_resolve('unittest/sdbaseline/')
     infile = 'analytic_order3_withoffset.ms'
     outroot = sdbaseline_unittest_base.taskname + '_updateweighttest'
     outfile = outroot + '.ms'
@@ -4975,9 +5112,9 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
                 del self.params[key]
 
     def _check_weight_identical(self):
-        with tbmanager(self.infile) as tb:
+        with table_manager(self.infile) as tb:
             wgt_in = tb.getcol('WEIGHT')
-        with tbmanager(self.outfile) as tb:
+        with table_manager(self.outfile) as tb:
             wgt_out = tb.getcol('WEIGHT')
         self.assertTrue(numpy.array_equal(wgt_in, wgt_out),
                         msg='WEIGHT column is unexpectedly updated!')
@@ -4996,7 +5133,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         Note that the values in the WEIGHT column should be
         zero in case all channels are flagged.
         """
-        with tbmanager(self.outfile) as tb:
+        with table_manager(self.outfile) as tb:
             wgt = tb.getcol('WEIGHT')
             data = tb.getcol('FLOAT_DATA')
             flag = tb.getcol('FLAG')
@@ -5038,7 +5175,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
 
     def add_mask(self):
         # flag channels from 4500 to 6499 for each spectrum
-        with tbmanager(self.infile, nomodify=False) as tb:
+        with table_manager(self.infile, nomodify=False) as tb:
             flag = tb.getcol('FLAG')
             for ipol in range(len(flag)):
                 for irow in range(len(flag[0][0])):
@@ -5053,7 +5190,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         default(sdbaseline)
 
     def tearDown(self):
-        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.infile)
         remove_files_dirs(self.outroot)
 
     def test000(self):

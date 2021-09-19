@@ -274,7 +274,7 @@
          number of pixels must be even and factorizable by 2,3,5,7 only.
 </description>
       <any limittypes="int intArray" type="variant"/>
-      <value type="intArray">100</value>
+      <value type="intArray"><value>100</value></value>
     </param>
 
     <param name="cell" type="any"> 
@@ -865,27 +865,6 @@
       <value type="string"/>
     </param>
 
-    <param subparam="true" name="chanchunks" type="int">
-     <shortdescription>Number of channel chunks</shortdescription>
-<description>Number of channel chunks to grid separately
-
-                       For large image cubes, the gridders can run into memory limits
-                       as they loop over all available image planes for each row of data
-                       accessed. To prevent this problem, we can grid subsets of channels
-                       in sequence so that at any given time only part of the image cube
-                       needs to be loaded into memory. This parameter controls the
-                       number of chunks to split the cube into.
-
-                       Example :  chanchunks = 4
-
-                       [ This feature is experimental and may have restrictions on how
-                          chanchunks is to be chosen. For now, please pick chanchunks so
-                          that nchan/chanchunks is an integer. ]
-
-</description>
-      <value type="int">1</value>
-    </param>
-
     <param subparam="true" name="wprojplanes" type="int">
      <shortdescription>Number of distinct w-values for convolution functions</shortdescription>
 <description>Number of distinct w-values at which to compute and use different
@@ -1178,7 +1157,9 @@ to use the correct direction in which the antenna is pointing with respect to th
 
                       Note : To prevent the internal T/F mask from appearing in anything other
                                  than the .pb and .image.pbcor images, 'pblimit' can be set to a
-                                 negative number. The absolute value will still be used as a valid 'pblimit'.
+                                 negative number. 
+                                 The absolute value will still be used as a valid 'pblimit' for normalization
+                                 purposes. So, for example, pick pblimit=-0.1 (and not pblimit=-1). 
                                  A tclean restart using existing output images on disk that already
                                  have this T/F mask in the .residual and .image but only pblimit set
                                  to a negative value, will remove this mask after the next major cycle.
@@ -1535,8 +1516,8 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
     <param name="weighting" type="string">
-           <shortdescription>Weighting scheme (natural,uniform,briggs, briggsabs[experimental])</shortdescription>
-<description>Weighting scheme (natural,uniform,briggs,superuniform,radial, briggsabs)
+           <shortdescription>Weighting scheme (natural,uniform,briggs, briggsabs[experimental], briggsbwtaper[experimental])</shortdescription>
+<description>Weighting scheme (natural,uniform,briggs,superuniform,radial, briggsabs, briggsbwtaper)
 
                        During gridding of the dirty or residual image, each visibility value is
                        multiplied by a weight before it is accumulated on the uv-grid.
@@ -1597,9 +1578,14 @@ to use the correct direction in which the antenna is pointing with respect to th
                                                                    closer to natural weighting.
 
                        weighting='radial' : Gridding weights are given by ' data_weight * uvdistance '
-
                                                       This method approximately minimizes rms sidelobes
                                                       for an east-west synthesis array.
+                                                      
+                       weighting='briggsbwtaper' : A modified version of Briggs weighting for cubes where an inverse uv taper,
+                                                         which is proportional to the fractional bandwidth of the entire cube,
+                                                         is applied per channel. The objective is to modify cube (perchanweightdensity = True)
+                                                         imaging weights to have a similar density to that of the continuum imaging weights.
+                                                         This is currently an experimental weighting scheme being developed for ALMA.
 
                For more details on weighting please see Chapter3
                of Dan Briggs' thesis (http://www.aoc.nrao.edu/dissertations/dbriggs)
@@ -1613,6 +1599,7 @@ to use the correct direction in which the antenna is pointing with respect to th
         <value>briggsabs</value>
         <value>radial</value>
         <value>superuniform</value>
+        <value>briggsbwtaper</value>
       </allowed>
 
     </param>
@@ -1900,9 +1887,6 @@ to use the correct direction in which the antenna is pointing with respect to th
 
                        interactive=True will trigger an interactive GUI at every major cycle
                        boundary (after the major cycle and before the minor cycle).
-
-                       The interactive mode is currently not available for parallel cube imaging (please also
-                       refer to the Note under the documentation for 'parallel' below).
 
                        Options for runtime parameter modification are :
 
@@ -2347,11 +2331,42 @@ to use the correct direction in which the antenna is pointing with respect to th
       </description>
       <value type="bool">True</value>
     </param>
-
-
-
-
-
+    
+    
+    <param subparam="true" name="psfcutoff" type="double">
+        <shortdescription> All pixels in the main lobe of the PSF above psfcutoff are used to fit a Gaussian beam (the Clean beam).</shortdescription>
+        <description>
+            When the .psf image is created a 2 dimensional Gaussian is fit to the main lobe of the PSF.
+            Which pixels in the PSF are fitted is determined by psfcutoff.
+            The default value of psfcutoff is 0.35 and can varied from 0.01 to 0.99.
+            Fitting algorithm:
+                - A region of 41 x 41 pixels around the peak of the PSF is compared against the psfcutoff.
+                    Sidelobes are ignored by radially searching from the PSF peak.
+                - Calculate the bottom left corner (blc) and top right corner (trc) from the points. Expand blc and trc with a number of pixels (5).
+                - Create a new sub-matrix from blc and trc.
+                - Interpolate matrix to a target number of points (3001) using CUBIC spline.
+                - All the non-sidelobe points, in the interpolated matrix, that are above the psfcutoff are used to fit a Gaussian.
+                    A Levenberg-Marquardt algorithm is used.
+                - If the fitting fails the algorithm is repeated with the psfcutoff decreased (psfcutoff=psfcutoff/1.5).
+                    A message in the log will apear if the fitting fails along with the new value of psfcutoff.
+                    This will be done up to 50 times if fitting fails.
+            This Gaussian beam is defined by a major axis, minor axis, and position angle.
+            During the restoration process, this Gaussian beam is used as the Clean beam.
+            Varying psfcutoff might be useful for producing a better fit for highly non-Gaussian PSFs, however, the resulting fits should be carefully checked.
+            This parameter should rarely be changed.
+            
+            (This is not the support size for clark clean.)
+        </description>
+        <value type="double">0.35</value>
+<!--       <allowed kind="range">
+          <value range="min">0.01</value>
+          <value range="max">0.99</value>
+          </allowed>
+-->
+    </param>
+    
+    
+  
 
     <param name="parallel" type="bool">
       <shortdescription>Run major cycles in parallel</shortdescription>
@@ -2380,7 +2395,6 @@ to use the correct direction in which the antenna is pointing with respect to th
                                     - There is currently no communication between them to synchronize
                                        information such as peak residual and cyclethreshold. Therefore,
                                        different chunks may trigger major cycles at different levels.
-                                    - For cube imaging in parallel, there is currently no interactive masking.
                                    (Proper synchronization of iteration control is work in progress.)
 
 </description>
@@ -2397,7 +2411,12 @@ to use the correct direction in which the antenna is pointing with respect to th
 
    <constraints>
 
-
+     <when param="calcpsf">
+           <equals value="True" type="bool">
+             <default param="psfcutoff"><value>0.35</value></default>
+           </equals>
+    </when>
+    
 
      <when param="selectdata">
       <equals value="True" type="bool">
@@ -2427,7 +2446,6 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="veltype"><value>&quot;radio&quot;</value></default>
          <default param="restfreq"><value>[]</value></default>
          <default param="interpolation"><value>&quot;linear&quot;</value></default>
-         <default param="chanchunks"><value>1</value></default>
          <default param="perchanweightdensity"><value>True</value></default>
        </equals>
        <equals value="cubesource" type="string">
@@ -2438,7 +2456,6 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="veltype"><value>&quot;radio&quot;</value></default>
          <default param="restfreq"><value>[]</value></default>
          <default param="interpolation"><value>&quot;linear&quot;</value></default>
-         <default param="chanchunks"><value>1</value></default>
          <default param="perchanweightdensity"><value>True</value></default>
        </equals>
        
@@ -2449,7 +2466,6 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="veltype"><value>&quot;radio&quot;</value></default>
          <default param="restfreq"><value>[]</value></default>
          <default param="interpolation"><value>&quot;linear&quot;</value></default>
-         <default param="chanchunks"><value>1</value></default>
          <default param="perchanweightdensity"><value>False</value></default>
        </equals>
      </when>
@@ -2556,6 +2572,10 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="robust"><value>0.5</value></default>
          <default param="noise"><value>&quot;1.0Jy&quot;</value></default>
          <default param="npixels"><value>0</value></default>
+         <default param="uvtaper"><value>[]</value></default>
+       </equals>
+       <equals value="briggsbwtaper" type="string">
+         <default param="robust"><value>0.5</value></default>
          <default param="uvtaper"><value>[]</value></default>
        </equals>
      </when>

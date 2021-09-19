@@ -23,6 +23,8 @@ if is_CASA6:
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
     #from casatasks import imregrid
     from .sdint_helper import *
+    from casatools import table
+    from casatools import synthesisimager,synthesisutils
 else:
     from taskinit import *
     from tasks import *
@@ -32,11 +34,26 @@ else:
     from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from imagerhelpers.input_parameters import ImagerParameters
     from sdint_helper import *
+    table=casac.table
+    synthesisimager=casac.synthesisimager
+    synthesisutils=casac.synthesisutils
+
+try:
+    if is_CASA6:
+        from casampi.MPIEnvironment import MPIEnvironment
+        from casampi import MPIInterface
+    else:
+        from mpi4casa.MPIEnvironment import MPIEnvironment
+        from mpi4casa import MPIInterface
+    mpi_available = True
+except ImportError:
+    mpi_available = False
 
 sdintlib = SDINT_helper()
+synu = synthesisutils()
 
 # setup functions
-def setup_imagerObj(parallel, paramList=None):
+def setup_imagerObj(paramList=None):
     """
     setup imaging parameters
     """
@@ -53,7 +70,7 @@ def setup_imagerObj(parallel, paramList=None):
         return PySynthesisImager(params=paramList)
 
 
-def setup_imager(imagename,parallel, specmode,calcres,calpsf,inparams):
+def setup_imager(imagename, specmode,calcres,calpsf,inparams):
     """
      Setup cube imaging for major cycles.
      - Do initialization
@@ -83,7 +100,7 @@ def setup_imager(imagename,parallel, specmode,calcres,calpsf,inparams):
     #                              wbawp=True)
 
     ## Major cycle is either PySynthesisImager or PyParallelCubeSynthesisImager
-    imagertool = setup_imagerObj(locparams['parallel'], params)
+    imagertool = setup_imagerObj(params)
 
     #self.imagertool = PySynthesisImager(params=params)
     imagertool.initializeImagers()
@@ -97,7 +114,7 @@ def setup_imager(imagename,parallel, specmode,calcres,calpsf,inparams):
     ## Extra one for psfphasecenter...
     imagerInst=None
     if((psfphasecenter != '') and (gridder=='mosaic')):
-        imagerInst = setup_imagerObj(locparams['parallel'])
+        imagerInst = setup_imagerObj()
 
   
     gridder = locparams['gridder']
@@ -126,14 +143,14 @@ def setup_imager(imagename,parallel, specmode,calcres,calpsf,inparams):
             casalog.post("***Time for major cycle (calcres=T): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 
         ## In case of no deconvolution iterations....
-        if locparams['niter']==0 and calcres==False:
-            if savemodel != "none":
-                imagertool.predictModel()
+        #if locparams['niter']==0 and calcres==False:
+        #    if savemodel != "none":
+        #        imagertool.predictModel()
 
     sdintlib.copy_restoringbeam(fromthis=imagename+'.psf', tothis=imagename+'.residual')
     return imagertool
 
-def setup_deconvolver(imagename,parallel,specmode,inparams):
+def setup_deconvolver(imagename,specmode,inparams):
     """
     Cube or MFS minor cycles. 
     """
@@ -150,7 +167,7 @@ def setup_deconvolver(imagename,parallel,specmode,inparams):
     #                              mask=self.mask)
     inparams['imagename']=imagename
     params = ImagerParameters(**inparams)
-    deconvolvertool = setup_imagerObj(inparams['parallel'], params)
+    deconvolvertool = setup_imagerObj(params)
 
     ## Why are we initializing these ? 
     deconvolvertool.initializeImagers()
@@ -309,7 +326,7 @@ def sdintimaging(
 #    sysvel,#='',
 #    sysvelframe,#='',
     interpolation,#='',
-    chanchunks,#=1,
+#    chanchunks,#=1,
     perchanweightdensity, #=''
     ## 
     ####### Gridding parameters
@@ -395,14 +412,14 @@ def sdintimaging(
 
     restart,#=True,
 
-    savemodel,#="none",
+    #savemodel,#="none",
 
 #    makeimages,#="auto"
     calcres,#=True,
-    calcpsf,#=True,
+    calcpsf):#=True,
 
     ####### State parameters
-    parallel):#=False):
+    #parallel):#=False):
 
 
     ##################################################
@@ -461,18 +478,25 @@ def sdintimaging(
         casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') applies only to specmode='mfs' or specmode='cube' with nterms=1 or specmode='cubedata' with nterms=1.", "WARN", "task_sdintimaging" )
         return
       
-    if(deconvolver=="mtmfs" and (specmode=='cube' or specmode=='cubedata') and nterms==1 and parallel==True):
-        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube', nterms=1 currently only works in serial.", "WARN", "task_sdintimaging" )
+    if(deconvolver=="mtmfs" and (specmode=='cube' or specmode=='cubedata') and nterms==1 ):
+        casalog.post( "The MSMFS algorithm (deconvolver='mtmfs') with specmode='cube', nterms=1 is currently not supported. Please use deconvolver='multiscale' instead for cubes.", "WARN", "task_sdintimaging" )
         return
 
     if(specmode=='mfs' and deconvolver!='mtmfs'):
         casalog.post("Currently, only the multi-term MFS algorithm is supported for specmode=mfs. To make a single plane MFS image (while retaining the frequency dependence for the cube major cycle stage), please pick nterms=1 along with deconvolver=mtmfs. The scales parameter is still usable for multi-scale multi-term deconvolution","WARN","task_sdintimaging")
         return;
-
-
-    if parallel==True:
-        casalog.post("Cube parallelization (all major cycles) is currently not supported via task_sdintimaging. This will be enabled after a cube parallelization rework.")
+        
+    if(gridder=='awproject'):
+        casalog.post("The awproject gridder is temporarily not supported with cube major cycles. Support will be brought back in a subsequent release.","WARN","task_sdintimaging")
         return;
+
+    if(usedata=='sd'):
+        casalog.post("The Single-Dish-Only mode of sdintimaging is better supported via the deconvolve task which supports spectral cube, mfs and multi-term mfs deconvolution in the image domain alone. The deconvolve task is the more appropriate version to use for stand-alone image-domain deconvolution, and will not have the bookkeeping overheads currently present in the sdintimaging task's sd-only mode. Please note that the 'sd' option of the sdintimaging task will be removed in a subsequent release.  Please refer to the task deconvolve documentation for instructions on how to prepare image and psf cubes for the deconvolve task for all these modes.","WARN","task_sdintimaging");
+
+
+#    if parallel==True:
+#        casalog.post("Cube parallelization (all major cycles) is currently not supported via task_sdintimaging. This will be enabled after a cube parallelization rework.")
+#        return;
 
     #####################################################
     #### Construct ImagerParameters object
@@ -509,41 +533,25 @@ def sdintimaging(
     
     if len(pointingoffsetsigdev)>0 and pointingoffsetsigdev[0]!=0.0 and usepointing==True and gridder.count('awproj')>1:
         casalog.post("pointingoffsetsigdev will be used for pointing corrections with AWProjection", "WARN") 
-#    if pointingoffsetsigdev!=[] and usepointing==False:
-#        casalog.post("pointingoffsetsigdev is only revelent when usepointing is True", "WARN") 
 
-#    pcube=False
-    concattype=''
-    if parallel==True and specmode!='mfs':
-        concattype='copyvirtual'
-#        pcube=True
-#        parallel=False
+    #=========================================================
+    ####set the children to load c++ libraries and applicator
+    ### make workers ready for c++ based mpicommands
+    cppparallel=False
+    if mpi_available and MPIEnvironment.is_mpi_enabled:
+        mint=MPIInterface.MPIInterface()
+        cl=mint.getCluster()
+        if(is_CASA6):
+            cl._cluster.pgc("from casatools import synthesisimager", False)
+            cl._cluster.pgc("si=synthesisimager()", False)
+        else:
+            cl._cluster.pgc("from casac import casac", False)
+            cl._cluster.pgc("si=casac.synthesisimager()", False) 
+        cl._cluster.pgc("si.initmpi()", False)
+        cppparallel=True
+        ###ignore chanchunk
+        bparm['chanchunks']=1
 
-    # catch non operational case (parallel cube tclean with interative=T)
-    if parallel==True and specmode!='mfs' and interactive:
-        casalog.post( "Interactive mode is not currently supported with parallel cube CLEANing, please restart by setting interactive=F", "WARN", "task_tclean" )
-        return
-   
-    ## move to a function
-    ## Setup Imager objects, for different parallelization schemes.
-    ##imagerInst=PySynthesisImager
-    ##if parallel==False and pcube==False:
-    ##     imager = PySynthesisImager(params=paramList)
-    ##     imagerInst=PySynthesisImager
-    #3elif parallel==True:
-    ##     imager = PyParallelContSynthesisImager(params=paramList)
-    ##     imagerInst=PyParallelContSynthesisImager
-    ##elif pcube==True:
-    ##     imager = PyParallelCubeSynthesisImager(params=paramList)
-    ##     imagerInst=PyParallelCubeSynthesisImager
-         # virtualconcat type - changed from virtualmove to virtualcopy 2016-07-20
-         #using ia.imageconcat now the name changed to copyvirtual 2019-08-12
-    ##     concattype='copyvirtual'
-    ##else:
-    ##     casalog.post('Invalid parallel combination in doClean.')
-    ##     return False
-
-        
     
     retrec={}
 
@@ -553,7 +561,7 @@ def sdintimaging(
         ### debug (remove it later) 
         casalog.post("INT cube setup ....")
         t0=time.time();
-        imager=setup_imager(int_cube, parallel, specmode, calcres, calcpsf, bparm) 
+        imager=setup_imager(int_cube, specmode, calcres, calcpsf, bparm) 
 
 
         ##imager.initializeImagers()
@@ -568,7 +576,7 @@ def sdintimaging(
             ### debug (remove it later) 
             casalog.post("Combined image setup ....")
             t0=time.time();
-            deconvolver=setup_deconvolver(decname, parallel, specmode, bparm )
+            deconvolver=setup_deconvolver(decname, specmode, bparm )
             #imager.initializeDeconvolvers()
             t1=time.time();
             #casalog.post("***Time for initializing deconvolver(s): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
@@ -622,6 +630,9 @@ def sdintimaging(
                                 usedata=usedata,
                                 chanwt = inpparams['chanwt'])
 
+        #print("Fitting for cube")
+        synu.fitPsfBeam(joint_cube)
+
         ###############
         ##### Placeholder code for PSF renormalization if needed
         #####  Note : If this is enabled, we'll need to restrict the use of 'faceting' as .sumwt shape changes.
@@ -646,6 +657,8 @@ def sdintimaging(
                                         mtname=joint_multiterm+'.residual',
                                         nterms=nterms, reffreq=inpparams['reffreq'], dopsf=False)
 
+            #print("Fit for multiterm")
+            synu.fitPsfBeam(joint_multiterm,nterms=nterms)
 
         if niter>0 :
             isit = deconvolver.hasConverged()
@@ -654,7 +667,23 @@ def sdintimaging(
             while ( not deconvolver.hasConverged() ):
  
                 t0=time.time();
+
+                #### Print out the peak of the residual image here to check !!! 
+#                if specmode=='mfs':
+#                    print('Max of joint residual before initminorcycle' + str(imstat(joint_multiterm+'.residual.tt0',verbose=False)['max'][0]))
+#                else:
+#                    print('Max of joint residual before initminorcycle' + str(imstat(joint_cube+'.residual',verbose=False)['max'][0]))
+
+
+
                 deconvolver.runMinorCycle()
+
+#                if specmode=='mfs':
+#                    print('Max of joint residual after minorcycle' + str(imstat(joint_multiterm+'.residual.tt0',verbose=False)['max'][0]))
+#                else:
+#                    print('Max of joint residual after minorcycle' + str(imstat(joint_cube+'.residual',verbose=False)['max'][0]))
+
+
                 t1=time.time();
                 casalog.post("***Time for minor cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_sdintimaging");
 
@@ -674,11 +703,17 @@ def sdintimaging(
 
                 if applypb==True:
                     ## Take the int_cube.model to flat sky. 
+                    if specmode=='cube':
+                        ## Divide the model by the frequency-dependent PB to get to flat-sky
+                        fdep_pb = True
+                    else:
+                        ## Divide the model by the common PB to get to get to flat-sky
+                        fdep_pb = False
                     sdintlib.modify_with_pb(inpcube=int_cube+'.model',
                                             pbcube=int_cube+'.pb',
                                             cubewt=int_cube+'.sumwt',
                                             chanwt=inpparams['chanwt'],
-                                            action='div', pblimit=pblimit,freqdep=False)
+                                            action='div', pblimit=pblimit,freqdep=fdep_pb)
 
                 if usedata!="int":
                     ## copy the int_cube.model to the sd_cube.model
@@ -695,7 +730,12 @@ def sdintimaging(
 
                 ## Major cycle for interferometer data
                 t0=time.time();
-                imager.runMajorCycle()
+ #               print('Max of int residual before major cycle' + str(imstat(int_cube+'.residual',verbose=False)['max'][0]))
+ #               print('Max of int model before major cycle' + str(imstat(int_cube+'.model',verbose=False)['max'][0]))
+
+                if usedata != "sd":
+                    imager.runMajorCycle()
+ #               print('Max of int residual after major cycle' + str(imstat(int_cube+'.residual',verbose=False)['max'][0]))
                 t1=time.time();
                 casalog.post("***Time for major cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 
@@ -721,7 +761,10 @@ def sdintimaging(
                                                 mtname=joint_multiterm+'.residual',
                                                 nterms=nterms, reffreq=inpparams['reffreq'], dopsf=False)
 
-
+#                if specmode=='mfs':
+#                    print('Max of residual after feather step ' + str(imstat(joint_multiterm+'.residual.tt0',verbose=False)['max'][0]))
+#                else:
+#                    print('Max of residual after feather step ' + str(imstat(joint_cube+'.residual',verbose=False)['max'][0]))
 
 
                 deconvolver.updateMask()
@@ -754,19 +797,14 @@ def sdintimaging(
         imager.deleteTools()
         deconvolver.deleteTools()
    
-        if parallel==True and not (specmode =='mfs' or specmode=='cont'):
-            casalog.post("Running virtualconcat (type=%s) of sub-cubes" % concattype,"INFO2", "task_tclean")
-            #imager.concatImages(type=concattype)
-            deconvolver.concatImages(type=concattype)
-        
-        # CAS-10721 
-        if niter>0 and savemodel != "none":
-            casalog.post("Please check the casa log file for a message confirming that the model was saved after the last major cycle. If it doesn't exist, please re-run tclean with niter=0,calcres=False,calcpsf=False in order to trigger a 'predict model' step that obeys the savemodel parameter.","WARN","task_tclean")
-
 
     finally:
         if imager != None:
             imager.deleteTools() 
+        if(cppparallel):
+            ###release workers back to python mpi control
+            si=synthesisimager()
+            si.releasempi()
 
         #clean up tmp files
         deleteTmpFiles()

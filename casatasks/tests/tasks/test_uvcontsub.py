@@ -23,7 +23,7 @@ else:
 
     # uses the global tb tool
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
@@ -37,8 +37,8 @@ Features tested:
   4. It gets the right answer for a known line + 0th order continuum,
      even when fitorder = 4.
 '''
-uvcdatadir = 'uvcontsub' 
-datapath = 'regression/unittest'
+#uvcdatadir = 'uvcontsub' 
+datapath = 'unittest/uvcontsub/'
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -96,9 +96,10 @@ class UVContsubUnitTestBase(unittest.TestCase):
         if testmms:
             print("Testing on MMSs.")
         
-        self.inpms = uvcdatadir+'/'+inpms
-        if not os.path.exists(uvcdatadir):
-            os.system('mkdir '+ uvcdatadir)
+#        self.inpms = uvcdatadir+'/'+inpms
+        self.inpms = inpms
+#        if not os.path.exists(uvcdatadir):
+#            os.system('mkdir '+ uvcdatadir)
 
         if not os.path.exists(self.inpms):
             try:

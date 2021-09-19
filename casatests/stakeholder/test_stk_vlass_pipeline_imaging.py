@@ -135,7 +135,7 @@ except ImportError:
     from parallel.parallel_task_helper import ParallelTaskHelper
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 from casatestutils.imagerhelpers import TestHelpers
@@ -146,7 +146,7 @@ from casatestutils import stats_dict
 
 # Path to data
 #data_path = '/lustre/rurvashi/StakeholderTests/VLASS/DATA_FOR_CAS12427/'
-data_path = ctsys_resolve('stakeholders/vlass/')
+data_path = ctsys_resolve('stakeholder/vlass/')
 
 ##############################################################
 ############# Test settings #######################
@@ -185,11 +185,11 @@ class test_base(unittest.TestCase):
     # Separate functions here, for special-case tests that need their own MS.
     def prepData(self,msname=""):
         self.dataset1 = 'vlass1.1_rowtest_6fields.ms' #'PcorrVis_field18954.ms'
-        self.fieldname1 = fieldnames['18954']
-        self.timerange1two = alltimes['18954']['two']
+        # self.fieldname1 = fieldnames['18954']
+        # self.timerange1two = alltimes['18954']['two']
 
-        self.dataset2 =  'vlass1.1_rowtest_6fields.ms' #'PcorrVis_field18957.ms'
-        self.fieldname2 = fieldnames['18957']
+        # self.dataset2 =  'vlass1.1_rowtest_6fields.ms' #'PcorrVis_field18957.ms'
+        # self.fieldname2 = fieldnames['18957']
 
     def getNameDoc(self):
         '''Run this function inside a test case'''
@@ -289,7 +289,7 @@ class Test_vlass_1p1_row(test_base):
         self.oldACU = '!'+self.newACU
 
         # To use subdir in the output image names in some tests (CAS-10937)
-        self.img_subdir = 'refimager_tst_subdir'
+        # self.img_subdir = 'refimager_tst_subdir'
         self.parallel = False
         if ParallelTaskHelper.isMPIEnabled():
             self.parallel = True
@@ -298,9 +298,11 @@ class Test_vlass_1p1_row(test_base):
         generate_weblog("tclean_VLASS_pipeline",test_dict)
         self._myia.done()
         # Delete the images created by each test case
-        # Are they called tst* or im_test*
-        os.system('rm -rf '+self.img+'*')
-        os.system('rm -rf '+self.img_subdir)
+        keep=('.png')
+        toss=(self.img)#, self.img_subdir)
+        rm_iter = filter(lambda x: x.startswith(toss) and not x.endswith(keep), os.listdir())
+        for rm_file in rm_iter:
+            os.system('rm -rf '+rm_file)
 
     @classmethod
     def tearDownClass(cls):

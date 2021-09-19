@@ -71,7 +71,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 class VisEquation;
 class SolveDataBuffer;
 class SDBList;
-//class VisibilityIterator2;
 
 class SolNorm {
 
@@ -627,14 +626,7 @@ protected:
   inline casacore::Bool& simOnTheFly() { 
     //    cout << "simOTF=" << onthefly_ << endl;
     return onthefly_; };
-
-
-  // Access to per-spw calibration solution (par) reference frequencies
-  //  These are the frequencies that label calibration (via SVC) in CalTables
-  inline const casacore::Vector<casacore::Double>& solutionFreq(const casacore::Int spw) const  { return solutionFreq_(spw); };
-  inline void setsolutionFreq(const casacore::Int spw,const casacore::Vector<casacore::Double>& freq)  { solutionFreq_(spw).assign(freq); };
-
-
+    
   // Frequency meta data for solutions (for CalTable labels...)
   FreqMetaData freqMetaData_;
 
@@ -728,8 +720,6 @@ private:
   casacore::Double dataInterval_;
   casacore::Double fitWt_;
   casacore::Double fit_;
-
-  casacore::Vector<casacore::Vector<casacore::Double> > solutionFreq_;  //  (nSpw)(nChan
 
   // Current parameters
   casacore::PtrBlock<casacore::Cube<casacore::Complex>*> solveCPar_;  // [nSpw](nPar,1,{1|nElem})

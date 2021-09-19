@@ -9,7 +9,7 @@ from casatools import table
 
 _tb = table()
 
-datapath = 'regression/unittest/imsubimage/'
+#datapath = 'regression/unittest/imsubimage/'
 
 class ia_subimage_test(unittest.TestCase):
     

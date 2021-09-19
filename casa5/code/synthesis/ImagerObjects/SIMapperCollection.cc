@@ -104,8 +104,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     auto appvectors = [](std::vector<String>&  a, const std::vector<String> b) {  a.insert(std::end(a), std::begin(b), std::end(b));};
     for(Int mapperid=0;mapperid<nMappers();mapperid++ )
       {
-	appvectors( outstr, (itsMappers[mapperid]->getFTM2(True)->cleanupTempFiles(mess)).tovector());
-	appvectors(outstr, (itsMappers[mapperid]->getFTM2(False)->cleanupTempFiles(mess)).tovector());
+        if((itsMappers[mapperid]->getFTM2())){
+          appvectors( outstr, (itsMappers[mapperid]->getFTM2(True)->cleanupTempFiles(mess)).tovector());
+          appvectors(outstr, (itsMappers[mapperid]->getFTM2(False)->cleanupTempFiles(mess)).tovector());
+        }
       }
     return outstr;
   }

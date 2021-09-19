@@ -9,20 +9,16 @@ import sys
 import filecmp
 import glob
 
+from casatestutils import testhelper as th
+
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    #import testhelper as th
     from casatools import ctsys, ms, table, msmetadata, agentflagger
     from casatasks import applycal, cvel, cvel2, flagcmd, flagdata, importasdm, listpartition, listobs, mstransform, setjy, split
     #from casatasks import importasdm     ### tar files have been created to avoid the importasdm dependency
 
     # Define the root for the data files
-    datapath = ctsys.resolve('regression/unittest/mstransform')
-    mstransform_datapath = datapath
-    flagdata_datapath = ctsys.resolve('regression/unittest/flagdata')
-    importasdm_datapath = ctsys.resolve('regression/unittest/importasdm')
-    importasdm_datapath_2 = ctsys.resolve('regression/asdm-import/input')
+    datapath = ctsys.resolve('unittest/mstransform/')
 
     af_local = agentflagger()
     msmd_local = msmetadata()
@@ -32,19 +28,11 @@ else:
     from tasks import mstransform, cvel, cvel2, listpartition, listobs, setjy, flagdata, split, applycal, importasdm, flagcmd
     from taskinit import mstool, tbtool, msmdtool, aftool
     from __main__ import default
-    #import testhelper as th
-    from sdutil import tbmanager, toolmanager, table_selector
+#    from sdutil import tbmanager, tool_manager, table_selector
 
     # Define the root for the data files
     datapath = os.environ.get('CASAPATH').split()[0] + \
-               "/data/regression/unittest/mstransform/"
-    mstransform_datapath = datapath
-    flagdata_datapath = os.environ.get('CASAPATH').split()[0] + \
-                        "/data/regression/unittest/flagdata/"
-    importasdm_datapath = os.environ.get('CASAPATH').split()[0]+ \
-                          '/data/regression/unittest/importasdm/'
-    importasdm_datapath_2 = os.environ.get('CASAPATH').split()[0] + \
-                            "/data/regression/asdm-import/input/"
+               "/casatestdata/unittest/mstransform/"
 
     af_local = aftool()
     ms_local = mstool()
@@ -135,7 +123,7 @@ class test_base(unittest.TestCase):
     def setUp_floatcol(cls):
         # 15 rows, 3 scans, 9 spw, mixed chans, XX,YY, FLOAT_DATA col
         test_base.vis = 'SDFloatColumn.ms'
-        cls._setup_std_reusing_input_vis(cls.vis, datapath_sp=flagdata_datapath)
+        cls._setup_std_reusing_input_vis(cls.vis, datapath_sp=datapath)
 
     @classmethod
     def setUp_3c84(cls):
@@ -219,7 +207,7 @@ class test_base(unittest.TestCase):
         test_base.vis = asdmname+'.ms'
         cls.flagfile = asdmname+'_cmd.txt'
 
-        os.system('ln -sf {0}'.format(os.path.join(importasdm_datapath, asdmname)))
+        os.system('ln -sf {0}'.format(os.path.join(datapath, asdmname)))
         importasdm(asdmname, convert_ephem2geo=False, flagbackup=False, process_syspower=False, lazy=True,
                    scans='1', savecmds=True, overwrite=True)
 
@@ -227,7 +215,7 @@ class test_base(unittest.TestCase):
         '''Create MMSs for tests with input MMS'''
         prefix = msfile.rstrip('.ms')
         if not os.path.exists(msfile):
-            os.system('cp -RL '+ os.path.join(mstransform_datapath, msfile) +' '+ msfile)
+            os.system('cp -RL '+ os.path.join(datapath, msfile) +' '+ msfile)
         
         # Create an MMS for the tests
         self.testmms = prefix + ".test.mms"
@@ -747,7 +735,7 @@ class test_regridms_negative_width(test_base):
         nchan = 10
         mstransform(vis=self.vis, outputvis=self.outputvis, datacolumn='data',
                     regridms=True, outframe='BARY',
-                    mode='velocity', veltype='radio', restfreq='{0:.0f}Hz'.format(restf),
+                    mode='velocity', veltype='RADIO', restfreq='{0:.0f}Hz'.format(restf),
                     nchan=nchan, start='25km/s', width='-1km/s')
 
         chan_freqs, chan_widths = th.get_channel_freqs_widths(self.outputvis, 0)
@@ -1013,6 +1001,25 @@ class test_Hanning_with_g19(test_base):
         self.outputms = "hann1.ms"
         mstransform(vis=self.vis, outputvis=self.outputms, combinespws=False, hanning=True,
                     datacolumn='data')
+
+        self.assertTrue(os.path.exists(self.outputms))
+        ret = th.verifyMS(self.outputms, 24, 128, 0)
+        self.assertTrue(ret[0],ret[1])
+        ret = th.verifyMS(self.outputms, 24, 128, 2)
+        self.assertTrue(ret[0],ret[1])
+        ret = th.verifyMS(self.outputms, 24, 128, 15)
+        self.assertTrue(ret[0],ret[1])
+        ret = th.verifyMS(self.outputms, 24, 128, 18)
+        self.assertTrue(ret[0],ret[1])
+        ret = th.verifyMS(self.outputms, 24, 128, 23)
+        self.assertTrue(ret[0],ret[1])
+
+    def test_hanning1_datacolumn_uppercase(self):
+        '''mstransform: Apply Hanning smoothing in MS with 24 spws. Do not combine spws.'''
+
+        self.outputms = "hann1.ms"
+        mstransform(vis=self.vis, outputvis=self.outputms, combinespws=False, hanning=True,
+                    datacolumn='DATA')
 
         self.assertTrue(os.path.exists(self.outputms))
         ret = th.verifyMS(self.outputms, 24, 128, 0)
@@ -5737,21 +5744,21 @@ class test_otf_calibration(test_base_compare):
 
         super(test_otf_calibration,self).setUp()
         
-        if os.path.exists('ngc5921_regression'): os.system('rm -rf ' + 'ngc5921_regression')
-        os.system('cp -RL {0} .'.format(os.path.join(datapath, 'ngc5921_regression')))
+        if os.path.exists('mstransform_reference'): os.system('rm -rf ' + 'mstransform_reference')
+        os.system('cp -RL {0} .'.format(os.path.join(datapath, 'mstransform_reference')))
         
-        self.vis = 'ngc5921_regression/ngc5921.ms'
+        self.vis = 'mstransform_reference/ngc5921.ms'
         self.outvis = 'mst_otf_calibration.ms'
         self.refvis = 'applycal_split_otf_calibration.ms'
         self.outvis_sorted = 'mst_otf_calibration-sorted.ms'
         self.refvis_sorted = 'applycal_split_otf_sorted.ms'
-        self.auxfile = 'ngc5921_regression/ngc5921_callib.txt'
+        self.auxfile = 'mstransform_reference/ngc5921_callib.txt'
         
     def tearDown(self):
         
         super(test_otf_calibration,self).tearDown()
         
-        os.system('rm -rf '+ 'ngc5921_regression')
+        os.system('rm -rf '+ 'mstransform_reference')
         
     def test_otf_calibration_mst_vs_applycal_split(self):
         
@@ -5801,15 +5808,14 @@ class test_no_reindexing_ephemeris_copy(test_base):
         self.outvis = 'split_ephemeris_no_reindex.ms'
         self.splitvis = 'split_ephemeris_no_reindex.split.ms'
         self.asdm = 'uid___A002_X997a62_X8c-short'
-        datapath = importasdm_datapath_2
         os.system('cp -RL {0} {1}'.format(os.path.join(datapath, self.asdm), self.asdm))
 
         importasdm(self.asdm, vis=self.outvis, convert_ephem2geo=True, process_pointing=False, flagbackup=False)
-        if os.path.isfile(os.path.join(mstransform_datapath,self.asdm+".tar.xz")):
-            os.system('tar -Jxf {0}'.format(os.path.join(mstransform_datapath,
+        if os.path.isfile(os.path.join(datapath,self.asdm+".tar.xz")):
+            os.system('tar -Jxf {0}'.format(os.path.join(datapath,
                                                          self.asdm+".tar.xz")))
         else:
-            os.system('cp -RL {0} {1}'.format(os.path.join(importasdm_datapath_2, self.asdm),
+            os.system('cp -RL {0} {1}'.format(os.path.join(datapath, self.asdm),
                                               self.asdm))
 
     def tearDown(self):

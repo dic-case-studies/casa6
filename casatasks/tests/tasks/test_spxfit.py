@@ -53,9 +53,11 @@
 # <example>
 #
 # This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
+# the command line in casa 5 via eg
 #
 # `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_spxfit[test1,test2,...]
+#
+# in casa 6 you can run the test using python or the casa command and point to the test source script
 #
 # </example>
 #
@@ -77,7 +79,7 @@ from casatasks import spxfit
 
 nanvalue = 4.53345345
 
-datapath=ctsys.resolve('regression/unittest/spxfit')
+datapath=ctsys.resolve('unittest/spxfit/')
 
 myia = image()
 _fn = functional()

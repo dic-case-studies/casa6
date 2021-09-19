@@ -24,6 +24,7 @@
 
 #include <mstransform/TVI/PolAverageTVI.h>
 #include <mstransform/TVI/PointingInterpolationTVI.h>
+#include <mstransform/TVI/SDAtmosphereCorrectionTVI.h>
 
 #include <limits>
 
@@ -157,6 +158,11 @@ void MSTransformManager::initialize()
 	phaseShifting_p = false;
 	dx_p = 0;
 	dy_p = 0;
+
+	// CAS-12706 To run phase shift via a TVI which has
+	// support for shifting across large offset/angles
+	tviphaseshift_p = False;
+	tviphaseshiftConfig_p = Record();
 
 	// Time transformation parameters
 	scalarAverage_p = false;
@@ -320,7 +326,8 @@ void MSTransformManager::configure(Record &configuration)
 	setSpwAvg(configuration);
 	parsePolAvgParams(configuration);
 	parsePointingsInterpolationParams(configuration);
-
+	parsePhaseShiftSubParams(configuration);
+	parseAtmCorrectionParams(configuration);
 
 	return;
 }
@@ -1035,6 +1042,39 @@ void MSTransformManager::parsePhaseShiftParams(Record &configuration)
 }
 
 // -----------------------------------------------------------------------
+// CAS-12706 To run phase shift via a TVI which has
+// support for shifting across large offset/angles
+// -----------------------------------------------------------------------
+void MSTransformManager::parsePhaseShiftSubParams(Record &configuration)
+{
+	int exists = -1;
+
+	exists = -1;
+	exists = configuration.fieldNumber("tviphaseshift");
+	if (exists >= 0)
+	{
+		configuration.get (exists, tviphaseshift_p);
+
+		if (tviphaseshift_p)
+		{
+			// Extract the callib Record
+			exists = -1;
+			exists = configuration.fieldNumber("tviphaseshiftlib");
+			if (configuration.type(exists) == TpRecord)
+			{
+				tviphaseshiftConfig_p = configuration.subRecord(exists);
+			}
+
+			logger_p 	<< LogIO::NORMAL << LogOrigin("MSTransformManager",__FUNCTION__)
+						<< "Phase shifting via TVI with support for large offset/angle "
+						<< LogIO::POST;
+		}
+	}
+
+	return;
+}
+
+// -----------------------------------------------------------------------
 // Method to parse the time average specification
 // -----------------------------------------------------------------------
 void MSTransformManager::parseTimeAvgParams(Record &configuration)
@@ -1277,6 +1317,16 @@ void MSTransformManager::parsePointingsInterpolationParams(casacore::Record &con
 	}
 }
 
+void MSTransformManager::parseAtmCorrectionParams(casacore::Record &configuration) {
+    String key("atmCor");
+    if (configuration.isDefined(key)) {
+        doAtmCor_p = configuration.asBool(key);
+        atmCorConfig_p = configuration;
+    } else {
+        doAtmCor_p = False;
+    }
+}
+
 // -----------------------------------------------------------------------
 // Method to open the input MS, select the data and create the
 // structure of the output MS filling the auxiliary tables.
@@ -1300,11 +1350,11 @@ void MSTransformManager::open()
 	inputMs_p = dataHandler_p->getInputMS();
 	// Note: We always get the input number of channels because we don't know if pre-averaging will be necessary
 	getInputNumberOfChannels();
-	
+
 	// Check available data cols to pass this information on to MSTransformDataHandler which creates the MS structure
 	checkDataColumnsAvailable();
 	checkDataColumnsToFill();
-	
+
 
 	// Check whether the MS has correlator pre-averaging and we are smoothing or averaging
 	checkCorrelatorPreaveraging();
@@ -3062,6 +3112,13 @@ void MSTransformManager::separateSpwSubtable()
                         snbCol.put(rowIndex, snbCol(0));
                     }
 
+                    if (spwTable.tableDesc().isColumn("SDM_CORR_BIT") &&
+                        spwTable.tableDesc().columnDescSet().isDefined("SDM_CORR_BIT"))
+                    {
+                        ScalarColumn<String> corrBitCol(spwTable, "SDM_CORR_BIT");
+                        corrBitCol.put(rowIndex, corrBitCol(0));
+                    }
+
 				}
 
 				if ( (spw_i < nspws_p-1) or (tailOfChansforLastSpw_p == 0) )
@@ -4320,7 +4377,7 @@ void MSTransformManager::reindexDDISubTable()
     		rowIndex += 1;
     	}
 
-    	// Delete the old rows  
+    	// Delete the old rows
     	rownr_t nrowsToDelete = ddiCols.nrow()-nspws_p;
     	if (nrowsToDelete > 0)
     	{
@@ -4904,7 +4961,7 @@ void MSTransformManager::checkSPWChannelsKnownLimitation()
 {
   if (not combinespws_p)
     return;
-  
+
   auto nSpws = inputMs_p->spectralWindow().nrow();
   if (1 >= nSpws or numOfInpChanMap_p.empty() or numOfSelChanMap_p.empty())
     return;
@@ -4914,7 +4971,7 @@ void MSTransformManager::checkSPWChannelsKnownLimitation()
 			   [&firstNum](const std::pair<casacore::uInt,casacore::uInt> &other) {
 			     return firstNum != other.second; });
 
-  
+
   if (numOfSelChanMap_p.end() != diff) {
     auto otherNum = diff->second;
     throw AipsError("Currently the option 'combinespws' is only supported when the number "
@@ -5674,6 +5731,31 @@ void MSTransformManager::generateIterator()
 			  visibilityIterator_p = new vi::VisibilityIterator2(vi::PointingInterpolationVi2Factory(pointingsInterpolationConfig_p, selectedInputMs_p,
 			      vi::SortColumns(sortColumns_p, false), timeBin_p, isWritable));
 			}
+			// CAS-12706 To run phase shift via a TVI which has
+			// support for shifting across large offset/angles
+			else if (tviphaseshift_p) {
+
+				// First determine number of layers
+				uInt nTVIs = 2;
+
+				// Init vector of TVI factories and populate it
+				uInt TVIFactoryIdx = 0;
+				Vector<vi::ViiLayerFactory*> TVIFactories(nTVIs);
+
+				// Data layer
+				vi::IteratingParameters ipar(timeBin_p,vi::SortColumns(sortColumns_p, false));
+				vi::VisIterImpl2LayerFactory dataLayerTVIFactory(selectedInputMs_p,ipar,isWritable);
+				TVIFactories[TVIFactoryIdx]=&dataLayerTVIFactory;
+				TVIFactoryIdx++;
+
+				// Phaseshift layer
+				vi::PhaseShiftingTVILayerFactory *phaseShiftingTVILayerFactory = NULL;
+				phaseShiftingTVILayerFactory = new vi::PhaseShiftingTVILayerFactory (tviphaseshiftConfig_p);
+				TVIFactories[TVIFactoryIdx]=phaseShiftingTVILayerFactory;
+				TVIFactoryIdx++;
+
+				visibilityIterator_p = new vi::VisibilityIterator2 (TVIFactories);
+			}
 			// Plain VI
 			else
 			{
@@ -5703,6 +5785,40 @@ void MSTransformManager::generateIterator()
 	else if (pointingsInterpolation_p) {
 		visibilityIterator_p = new vi::VisibilityIterator2(vi::PointingInterpolationVi2Factory(pointingsInterpolationConfig_p, selectedInputMs_p,
 				vi::SortColumns(sortColumns_p, false), timeBin_p, isWritable));
+	}
+	// CAS-12706 To run phase shift via a TVI which has
+	// support for shifting across large offset/angles
+	else if (tviphaseshift_p) {
+
+		// First determine number of layers
+		uInt nTVIs = 2;
+
+		// Init vector of TVI factories and populate it
+		uInt TVIFactoryIdx = 0;
+		Vector<vi::ViiLayerFactory*> TVIFactories(nTVIs);
+
+		// Data layer
+		vi::IteratingParameters ipar(timeBin_p,vi::SortColumns(sortColumns_p, false));
+		vi::VisIterImpl2LayerFactory dataLayerTVIFactory(selectedInputMs_p,ipar,isWritable);
+		TVIFactories[TVIFactoryIdx]=&dataLayerTVIFactory;
+		TVIFactoryIdx++;
+
+		// Phaseshift layer
+		vi::PhaseShiftingTVILayerFactory *phaseShiftingTVILayerFactory = nullptr;
+		phaseShiftingTVILayerFactory = new vi::PhaseShiftingTVILayerFactory (tviphaseshiftConfig_p);
+		TVIFactories[TVIFactoryIdx]=phaseShiftingTVILayerFactory;
+		TVIFactoryIdx++;
+
+		visibilityIterator_p = new vi::VisibilityIterator2 (TVIFactories);
+	// Offline ATM correction
+    }
+    // Offline ATM correction
+	else if (doAtmCor_p) {
+		visibilityIterator_p = new vi::VisibilityIterator2(
+			vi::SDAtmosphereCorrectionVi2Factory(
+				atmCorConfig_p, selectedInputMs_p, vi::SortColumns(sortColumns_p, false), timeBin_p, isWritable
+			)
+		);
 	}
 	// Plain VI
 	else

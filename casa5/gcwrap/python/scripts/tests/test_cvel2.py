@@ -17,7 +17,8 @@ if is_CASA6:
     mytb = table()
     myqa = quanta()
 
-    ctsys_resolve = ctsys.resolve
+    datapath = ctsys.resolve('unittest/cvel/')
+    ephedata = ctsys.resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab')
 else:
     from __main__ import default
     from tasks import cvel2, cvel, partition, importuvfits, split
@@ -28,12 +29,8 @@ else:
     mytb = tbtool()
     myqa = qa
 
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
-        return os.path.join(dataPath,apath)
-
-# Alternative path for data
-datapath = None
+    datapath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/unittest/cvel/')
+    ephedata = os.path.join(os.environ['CASAPATH'].split()[0],'data/ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -49,7 +46,7 @@ if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
 
 myname = 'test_cvel'
 vis_a = 'ngc4826.ms'
-vis_b = 'test.ms'
+vis_b = 'ARP299F_sma_2scans_24spws_negative_chanwidth.ms'
 vis_c = 'jupiter6cm.demo-thinned.ms'
 vis_d = 'g19_d2usb_targets_line-shortened-thinned.ms'
 vis_e = 'evla-highres-sample-thinned.ms'
@@ -101,7 +98,7 @@ class test_base(unittest.TestCase):
         if testmms:
             os.system('cp -RL ' + datapath + vis_a + ' .')
         elif (not os.path.exists(vis_a)):
-            importuvfits(fitsfile=ctsys_resolve('regression/ngc4826/fitsfiles/ngc4826.ll.fits5'), # 10 MB
+            importuvfits(fitsfile=os.path.join(datapath,'ngc4826.ll.fits5'), # 10 MB
                          vis=vis_a)
             
     def setUp_vis_b(self):
@@ -109,35 +106,37 @@ class test_base(unittest.TestCase):
         if testmms:
             os.system('cp -RL ' + datapath + vis_b + ' .')
         elif(not os.path.exists(vis_b)):
-            os.system('cp -R '+ctsys_resolve('regression/fits-import-export/input/test.ms')+' .') # 27 MB
+            os.system('cp -RL '+os.path.join(datapath,'ARP299F_sma_2scans_24spws_negative_chanwidth.ms')+' .') # 27 MB
     
     def setUp_vis_c(self):
         # 93 scans, spw=0,1, data
         if testmms:
             os.system('cp -RL ' + datapath + vis_c + ' .')
         elif(not os.path.exists(vis_c)):
-            os.system('cp -R '+ctsys_resolve('regression/cvel/input/jupiter6cm.demo-thinned.ms')+' .') # 124 MB
+            os.system('cp -RL '+os.path.join(datapath,'jupiter6cm.demo-thinned.ms')+' .') # 124 MB
 
     def setUp_vis_d(self):
         # scan=3,4 spw=0~23, data
         if testmms:
             os.system('cp -RL ' + datapath + vis_d + ' .')
         elif(not os.path.exists(vis_d)):
-            os.system('cp -R '+ctsys_resolve('regression/cvel/input/g19_d2usb_targets_line-shortened-thinned.ms')+' .') # 48 MB
+            os.system('cp -RL '+os.path.join(datapath,'g19_d2usb_targets_line-shortened-thinned.ms')+' .') # 48 MB
+            print('HERE')
+            os.system('ls -l')
 
     def setUp_vis_e(self):
         # scan=44,45 spw=0,1, data
         if testmms:
             os.system('cp -RL ' + datapath + vis_e + ' .')
         elif(not os.path.exists(vis_e)):
-            os.system('cp -R '+ctsys_resolve('regression/cvel/input/evla-highres-sample-thinned.ms')+' .') # 74 MB
+            os.system('cp -RL '+os.path.join(datapath,'evla-highres-sample-thinned.ms')+' .') # 74 MB
 
     def setUp_vis_f(self):
         # scan=1,2 spw=0~23, data
         if testmms:
             os.system('cp -RL ' + datapath + vis_f + ' .')
         elif(not os.path.exists(vis_f)):
-            os.system('cp -R '+ctsys_resolve('regression/unittest/cvel/test_cvel1.ms')+' .') # 39 MB
+            os.system('cp -RL '+os.path.join(datapath,'test_cvel1.ms')+' .') # 39 MB
             
     def setUp_vis_g(self):
         if testmms:
@@ -169,8 +168,7 @@ class test_base(unittest.TestCase):
             mytb.putcol('TIME', a)
             mytb.close()
             myms.open(vis_g, nomodify=False)
-            myms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
-                            'Jupiter_54708-55437dUTC', 0)
+            myms.addephemeris(0,ephedata,'Jupiter_54708-55437dUTC', 0)
             myms.close()
     
     def setUp_4ants(self):
@@ -178,16 +176,16 @@ class test_base(unittest.TestCase):
         self.vis = "Four_ants_3C286.ms"
 
         if os.path.exists(self.vis):
-           self.cleanup()
+            self.cleanup()
 
-        os.system('cp -RL '+self.datapath + self.vis +' '+ self.vis)
+        os.system('cp -RL '+datapath + self.vis +' '+ self.vis)
         if not is_CASA6:
             default(cvel2)
 
     def setUp_mms_vis_c(self):
         # 93 scans, spw=0,1
         if (not os.path.exists(vis_c)):
-            os.system('cp -R '+ctsys_resolve('regression/cvel/input/jupiter6cm.demo-thinned.ms')+' .') 
+            os.system('cp -RL '+os.path.join(datapath,'jupiter6cm.demo-thinned.ms')+' .') 
 
     def createMMS(self, msfile, axis='auto',scans='',spws='', fields='', numms=64):
         '''Create MMSs for tests with input MMS'''
@@ -318,6 +316,35 @@ class cvel2_test(test_base):
         ret = (verify_ms(outfile, 2, 32, 0))
         self.assertTrue(ret[0],ret[1])
 
+    def test6_datacolumn_uppercase(self):
+        '''cvel2 6: I/O vis set, more complex input vis, one field selected, one spw selected, passall = True'''
+        if testmms:
+            return
+        self.setUp_vis_a()
+        myvis = vis_a
+        os.system('ln -sf ' + myvis + ' myinput.ms')
+        rval = cvel2(
+            vis = 'myinput.ms',
+            datacolumn='ALL',
+            outputvis = outfile,
+            field = '1',
+            spw = '0',
+            nchan = 32,
+            start = 10,
+            passall = True
+            )
+        self.assertNotEqual(rval,False)
+        
+        # Simulate the passall=True. This MS has fields 0~6
+        desel = outfile+'.deselected'
+        split(vis='myinput.ms',outputvis=desel,field='0,2,3,4,5,6',spw='0',datacolumn='all')
+        mslocal = mstool()
+        mslocal.open(outfile, nomodify=False)
+        mslocal.concatenate(msfile=desel)            
+        mslocal.close()
+        ret = (verify_ms(outfile, 2, 32, 0))
+        self.assertTrue(ret[0],ret[1])
+
     ## # Tests with more than one spectral window ###################
     
     def test7(self):
@@ -414,6 +441,28 @@ class cvel2_test(test_base):
             nchan = 1,
             start = 1,
             outframe = 'lsrk'
+            )
+        self.assertNotEqual(rval,False)
+        ret = verify_ms(outfile, 1, 1, 0)
+        self.assertTrue(ret[0],ret[1])
+
+    def test11_outframe_uppercase(self):
+        '''cvel2 11: I/O vis set, input vis with two spws, one field selected, 
+           2 spws selected, passall = False, regridding 4...'''
+        self.setUp_vis_c()
+        myvis = vis_c
+        os.system('ln -sf ' + myvis + ' myinput.ms')
+
+        rval = cvel2(
+            vis = 'myinput.ms',
+            outputvis = outfile,
+            field = '10',
+            spw = '0,1',
+            passall = False,
+            mode='channel',
+            nchan = 1,
+            start = 1,
+            outframe = 'LSRK'
             )
         self.assertNotEqual(rval,False)
         ret = verify_ms(outfile, 1, 1, 0)
@@ -719,7 +768,33 @@ class cvel2_test(test_base):
         self.assertNotEqual(rval,False)
         ret = verify_ms(outfile, 1, 40, 0)
         self.assertTrue(ret[0],ret[1])
-    
+ 
+    def test25_veltype_uppercase(self):
+        '''cvel2 25: SMA input MS, 24 spws to combine, optical velocity mode, 40 output channels'''
+        self.setUp_vis_d()
+        myvis = vis_d
+        os.system('ln -sf ' + myvis + ' myinput.ms')
+        lambda0 = 2.99792E8/220398.676E6
+        lambda1 = 2.99792E8/229586E6
+        lambda2 = 2.99792E8/(229586E6+1600E3)
+        vopt = (lambda1-lambda0)/lambda0 * 2.99792E8
+        vwidth = vopt - (lambda2-lambda0)/lambda0 * 2.99792E8
+        vopt = vopt-vwidth/2.
+        rval = cvel2(
+            vis = 'myinput.ms',
+            outputvis = outfile,
+            mode='velocity',
+            nchan = 40,
+            restfreq = '220398.676MHz',
+            start = str(vopt)+'m/s',
+            width = str(vwidth)+'m/s',
+            phasecenter = "J2000 18h25m56.09 -12d04m28.20",
+            veltype = 'OPTICAL'
+            )
+        self.assertNotEqual(rval,False)
+        ret = verify_ms(outfile, 1, 40, 0)
+        self.assertTrue(ret[0],ret[1])
+   
     def test26(self):
         '''cvel2 26: SMA input MS, 24 spws to combine, optical velocity mode, 40 output channels'''
         self.setUp_vis_d()

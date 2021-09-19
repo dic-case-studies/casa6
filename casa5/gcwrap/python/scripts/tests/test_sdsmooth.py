@@ -45,9 +45,9 @@ class sdsmooth_test_base(unittest.TestCase):
     """
     # Data path of input
     if is_CASA6:
-        datapath=ctsys.resolve('regression/unittest/tsdsmooth')
+        datapath=ctsys.resolve('unittest/sdsmooth/')
     else:
-        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/tsdsmooth')
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/sdsmooth/')
 
     # Input
     infile_data = 'tsdsmooth_test.ms'
@@ -455,6 +455,20 @@ class sdsmooth_test_boxcar(sdsmooth_test_base):
             with sdutil.tbmanager(self.outfile) as tb:
                 for irow in range(tb.nrows()):
                     spec = tb.getcell(self.datacolumn.upper(), irow)
+                    for ipol in range(len(spec)):
+                        center = self.centers[str(irow)+str(ipol)]
+                        self._checkResult(spec[ipol], kwidth, center)
+
+    def test000_datacolumn_uppercase(self):
+        # testing kwidth from 1 to 5.
+        datacolumn = "FLOAT_DATA"
+        for kwidth in range(1,6):
+            result = sdsmooth(infile=self.infile, outfile=self.outfile,
+                               datacolumn=datacolumn, overwrite=True,
+                               kernel='boxcar', kwidth = kwidth)
+            with sdutil.tbmanager(self.outfile) as tb:
+                for irow in range(tb.nrows()):
+                    spec = tb.getcell(datacolumn.upper(), irow)
                     for ipol in range(len(spec)):
                         center = self.centers[str(irow)+str(ipol)]
                         self._checkResult(spec[ipol], kwidth, center)

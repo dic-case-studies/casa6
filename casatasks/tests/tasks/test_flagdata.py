@@ -37,10 +37,11 @@ else:
     #import testhelper as th
 
     def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
+        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
         return os.path.join(dataPath,apath)
 
 from casatestutils import testhelper as th
+
 #from IPython.kernel.core.display_formatter import PPrintDisplayFormatter
 
 #
@@ -75,7 +76,7 @@ def create_input(str_text, filename):
     return
 
 # Path for data
-datapath = ctsys_resolve("regression/unittest/flagdata")
+datapath = ctsys_resolve("unittest/flagdata/")
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -392,7 +393,7 @@ class test_base(unittest.TestCase):
         else:
             print("Moving data...")
             os.system('cp -RH ' + \
-                      ctsys_resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                      ctsys_resolve(os.path.join(datapath,self.vis)) + \
                       ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
@@ -407,7 +408,7 @@ class test_base(unittest.TestCase):
         else:
             print("Moving data...")
             os.system('cp -RH ' + \
-                      ctsys_resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                      ctsys_resolve(os.path.join(datapath,self.vis)) + \
                       ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')        
@@ -423,7 +424,7 @@ class test_base(unittest.TestCase):
         else:
             print("Moving data...")
             os.system('cp -RH ' + \
-                      ctsys_resolve(os.path.join("regression/unittest/flagdata",self.vis)) + \
+                      ctsys_resolve(os.path.join(datapath,self.vis)) + \
                       ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
@@ -432,7 +433,6 @@ class test_base(unittest.TestCase):
         
     def setUp_weightcol(self):
         '''Small MS with two rows and WEIGHT column'''
-        datapath = ctsys_resolve("regression/unittest/mstransform")
 
         inpvis = "combine-1-timestamp-2-SPW-no-WEIGHT_SPECTRUM-Same-Exposure.ms"
         self.vis = "msweight.ms"
@@ -449,7 +449,6 @@ class test_base(unittest.TestCase):
         
     def setUp_tbuff(self):
         '''Small ALMA MS with low-amp points to be flagged with tbuff parameter'''
-        datapath = ctsys_resolve("regression/unittest/flagdata")
         
         self.vis = 'uid___A002_X72c4aa_X8f5_scan21_spw18_field2_corrXX.ms'
         if os.path.exists(self.vis):
@@ -468,6 +467,20 @@ class test_base(unittest.TestCase):
         self.unflag_ms()        
         default(flagdata)
         
+    def setUp_evla_15A_397(self):
+        '''EVLA example MS wich has decreasing number of rows per chunk when traversed with VI/VB2'''        
+
+        self.vis = 'evla_15A-397_spw1_7_scan_4_6.ms'
+        if os.path.exists(self.vis):
+            print("The MS is already around, just unflag")
+        else:
+            print("Moving data...")
+            os.system('cp -RH '+os.path.join(datapath,self.vis)+' ' + self.vis)
+
+        os.system('rm -rf ' + self.vis + '.flagversions')
+        self.unflag_ms()
+        default(flagdata)
+
     def unflag_ms(self):
         aflocal.open(self.vis)
         aflocal.selectdata()
@@ -963,6 +976,25 @@ class test_rflag(test_base):
         # This test is mischievous, manipulates the model column. Don't leave a messed up MS.
         os.system('rm -rf {0}'.format(self.vis))
        
+class test_rflag_evla(test_base):
+    """flagdata:: Test of mode = 'rflag'"""
+
+    def setUp(self):
+        self.setUp_evla_15A_397()
+
+    def test_rflag_CAS_13360(self):
+        '''flagdata:: rflag in a MS which has decreasing number of rows in subsequent chunks'''
+        
+        flagdata(vis='evla_15A-397_spw1_7_scan_4_6.ms', mode='rflag', \
+                 datacolumn='data', ntime='scan', combinescans=False, \
+                 extendflags=False, winsize=3, timedev='', freqdev='',\
+                 timedevscale=5.0, freqdevscale=5.0, spectralmax=1000000.0, \
+                 spectralmin=0.0, flagbackup=False)
+
+        res = flagdata(vis=self.vis, mode='summary')
+        self.assertEqual(res['flagged'], 3185281)
+
+
 class test_shadow(test_base):
     def setUp(self):
         self.setUp_shadowdata2()
@@ -1134,7 +1166,7 @@ class test_msselection(test_base):
         # Copy the input flagcmd file with a non-existing spw name
         # flagsfile has spw='"Subband:1","Subband:2","Subband:8"
         flagsfile = 'cas9366.flags.txt'
-        os.system('cp -rf '+os.path.join(datapath,flagsfile)+' '+ ' .')
+        os.system('cp -RH '+os.path.join(datapath,flagsfile)+' '+ ' .')
         
         # Try to flag
         try:
@@ -4192,6 +4224,7 @@ def suite():
     return [test_dict_consolidation,
             test_antint,
             test_rflag,
+            test_rflag_evla,
             test_tfcrop,
             test_shadow,
             test_selections,

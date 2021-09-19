@@ -709,6 +709,9 @@ def run_with_old_pyplot_style(func):
     def func_old_style(*args, **kwargs):
         if is_CASA6:
             with pb.style.context('classic'):
+                pb.rc('axes.formatter', useoffset=False)
+                pb.rc('axes', grid=True)
+                pb.rc('axes.grid', axis='both', which='major')
                 return func(*args, **kwargs)
         else:
             return func(*args, **kwargs)
@@ -742,15 +745,24 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     -- Todd Hunter
     """
 
+    axes = dict() # keep track of already created axes
     def safe_pb_subplot(xframe):
         """
         CAS-12786: old pyplots (up to CASA 5.6.1 used to accept "220" in the pos parameter
         Newer pyplots won't. Assume the index effectively used was 1 ("221")
+        
+        CAS-13276: pb.subplot will return a different instance in future matplotlib versions rather than
+        the same instance. We need to keep track of the axes that have been already created; otherwise, we will lose plots.
         """
+        if (axes.get(xframe) != None):
+            return axes.get(xframe)
+
         if str(xframe).endswith('0'):
             adesc = pb.subplot(xframe + 1)
         else:
             adesc = pb.subplot(xframe)
+        
+        axes[xframe] = adesc
         return adesc
 
     casalog.origin('plotbandpass')

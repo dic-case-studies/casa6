@@ -100,7 +100,6 @@ scripts/task_bandpass.py
 scripts/task_blcal.py
 scripts/task_browsetable.py
 scripts/task_calstat.py
-scripts/task_clean.py
 scripts/task_clearcal.py
 scripts/task_clearstat.py
 scripts/task_concat.py
@@ -124,6 +123,7 @@ scripts/task_ft.py
 scripts/task_gaincal.py
 scripts/task_gencal.py
 scripts/task_hanningsmooth.py
+scripts/task_phaseshift.py
 scripts/task_help.py
 scripts/task_imcollapse.py
 scripts/task_imcontsub.py

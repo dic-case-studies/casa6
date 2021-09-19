@@ -126,6 +126,8 @@ protected:
   casacore::String itsNormType;
 
   casacore::String itsUseBeam;
+    
+  casacore::Float itsPsfcutoff;
 
 };
 

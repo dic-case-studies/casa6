@@ -28,53 +28,47 @@ try:
     from casatasks import imdev
     tb = casatools.table()
     ia = casatools.image()
+    # imports from merged test_imdev
+    from casatools import regionmanager as rgtool
     CASA6 = True
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
+
 import sys
 import os
 import unittest
 import shutil
 import numpy
-from filecmp import dircmp
 import numbers
+import math
 
 ### DATA ###
 
 if CASA6:
-    datapath = casatools.ctsys.resolve('image/orion_tfeather.im')
-    datapath2 = casatools.ctsys.resolve('image/ngc5921.clean.image')
-    stokespath = casatools.ctsys.resolve('image/image_input_processor.im/')
-    interppath = casatools.ctsys.resolve('image/f2h_quantile.im')
-    #old test data
-    oldPath = casatools.ctsys.resolve('image/')
-    input0 = oldPath + "100x100x2.im"
-    ref0 = oldPath + "ref0.im"
+    dataroot = casatools.ctsys.resolve('unittest/imdev/')
 
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/orion_tfeather.im'
-        datapath2 = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/ngc5921.clean.image'
-        stokespath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/image_input_processor.im/'
-        interppath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/f2h_quantile.im/'
-        # test_imdev data path
-        oldPath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/'
-        input0 = oldPath + "100x100x2.im"
-        ref0 = oldPath + "ref0.im"
+    dataroot = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imdev/'
+ 
+datapath = os.path.join(dataroot, 'orion_tfeather.im')
+datapath2 = os.path.join(dataroot, 'ngc5921.clean.image')
+stokespath = os.path.join(dataroot, 'image_input_processor.im')
+interppath = os.path.join(dataroot, 'f2h_quantile.im')
+reference_path = dataroot+'/imdev_reference/'
 
-        
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/orion_tfeather.im'
-        datapath2 = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/ngc5921.clean.image'
-        stokespath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/image_input_processor.im/'
-        interppath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/f2h_quantile.im/'
-        # test_imdev data path
-        oldPath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/'
-        input0 = oldPath + "100x100x2.im"
-        ref0 = oldPath + "ref0.im"
+input0 = dataroot + "100x100x2.im"
+ref0 = reference_path + "ref0.im"
+# Merged test data
+ref1 = reference_path + "ref1.im"
+ref2 = reference_path + "ref2.im"
+ref3 = reference_path + "ref3.im"
+ref4 = reference_path + "ref4.im"
+ref5 = reference_path + "ref5.im"
+ref6 = reference_path + "ref6.im"
+ref7 = reference_path + "ref7.im"
         
 
 def imArray(image):
@@ -92,6 +86,43 @@ output3 = 'testimage3.im'
 
 
 class imdev_test(unittest.TestCase):
+    
+    ### Compare function from merged test_imdev
+    def _compare(self, resold, resnew, helpstr):
+        mytype = type(resold)
+        self.assertTrue(mytype == type(resnew), helpstr + ": types differ")
+        if mytype == dict:
+            for k in resold.keys():
+                self._compare(resold[k], resnew[k], helpstr)
+        elif mytype == numpy.ndarray:
+            oldarray = resold.ravel()
+            newarray = resnew.ravel()
+            self.assertTrue(
+                len(oldarray) == len(newarray),
+                helpstr + ": array lengths not equal"
+            )
+            for i in range(len(oldarray)):
+                self._compare(oldarray[i], newarray[i], helpstr)
+        elif mytype == str:
+            self.assertTrue(
+                resold == resnew,
+                helpstr + ": string inequality, old = " + resold + ", new = " + resnew
+            )
+        elif isinstance(resold, numbers.Integral) or mytype == numpy.int32:
+            self.assertTrue(
+                resold == resnew,
+                helpstr + ": integral inequality, old = " + str(resold) + ", new = " + str(resnew)
+            )
+        elif isinstance(resold, numbers.Real):
+            self.assertTrue(
+                resold == resnew
+                or abs(resnew / resold - 1) < 1e-6,
+                helpstr + "float inequality: old = " + str(resold)
+                + ", new = " + str(resnew)
+            )
+        else:
+            self.assertTrue(False, "Unhandled type " + str(mytype))
+    ###
 
     
     def setUp(self):
@@ -119,6 +150,9 @@ class imdev_test(unittest.TestCase):
 
         if os.path.exists("mycirc.im"):
             shutil.rmtree("mycirc.im")
+        
+        if os.path.exists("out0.im"):
+            shutil.rmtree("out0.im")
 
         self._myia.done()
         self.assertTrue(len(tb.showcache()) == 0)
@@ -239,15 +273,18 @@ class imdev_test(unittest.TestCase):
 
         imdev(imagename=datapath2, outfile=output)
         imdev(imagename=datapath2, outfile=output2, mask='"testcopy.im">0.1')
-
-        origRes = imArray(output)
-        finRes = imArray(output2)
-
-        dcmp = dircmp(output, output2)
+        
+        ia.open(output)
+        origMask = ia.maskhandler('get')
+        ia.close()
+        
+        ia.open(output2)
+        finMask = ia.maskhandler('get')
+        ia.close()
+        
+        self.assertFalse(numpy.array_equal(origMask, finMask))
 
         self.assertTrue(os.path.exists(output2))
-
-        self.assertTrue(len(dcmp.diff_files) > 0)
         
         
     def test_overwrite(self):
@@ -330,7 +367,6 @@ class imdev_test(unittest.TestCase):
 
 
 
-        # dcmp = dircmp(output, output2)
         print(imArray(output).shape)
         print(imArray(output2).shape)
         print("is equal: ", numpy.array_equal(imArray(output), imArray(output2)))
@@ -351,9 +387,10 @@ class imdev_test(unittest.TestCase):
         imdev(imagename=datapath, outfile=output)
         imdev(imagename=datapath, outfile=output2, stattype='median')
         
-        dcmp = dircmp(output, output2)
-        
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        res1 = imArray(output)
+        res2 = imArray(output2)
+    
+        self.assertFalse(numpy.array_equal(res1, res2))
         
         
     def test_statalg(self):
@@ -361,10 +398,11 @@ class imdev_test(unittest.TestCase):
 
         imdev(imagename=datapath, outfile=output, xlength=10)
         imdev(imagename=datapath, outfile=output2, xlength=10, statalg='chauvenet')
+    
+        res1 = imArray(output)
+        res2 = imArray(output2)
         
-        dcmp = dircmp(output, output2)
-        
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        self.assertFalse(numpy.array_equal(res1, res2))
     
     
     def test_zscore(self):
@@ -372,10 +410,11 @@ class imdev_test(unittest.TestCase):
 
         imdev(imagename=datapath, outfile=output, xlength=10, statalg='chauvenet')
         imdev(imagename=datapath, outfile=output2, xlength=10, statalg='chauvenet', zscore=2)
+    
+        res1 = imArray(output)
+        res2 = imArray(output2)
         
-        dcmp = dircmp(output, output2)
-        
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        self.assertFalse(numpy.array_equal(res1, res2))
         
         
     def test_maxiter(self):
@@ -383,10 +422,12 @@ class imdev_test(unittest.TestCase):
 
         imdev(imagename=datapath, outfile=output, xlength=10, statalg='chavenet')
         imdev(imagename=datapath, outfile=output2, xlength=10, statalg='chauvenet', maxiter=2)
+    
+        res1 = imArray(output)
+        res2 = imArray(output2)
         
-        dcmp = dircmp(output, output2)
-        
-        self.assertTrue(len(dcmp.diff_files) > 0)
+        self.assertFalse(numpy.array_equal(res1, res2))
+    
 
     # test cases from test_imdev
 
@@ -423,9 +464,6 @@ class imdev_test(unittest.TestCase):
             "incorrect grid pixel value"
         )
         myia.done()
-
-
-        
         
         
 def suite():

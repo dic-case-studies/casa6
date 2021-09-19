@@ -72,7 +72,7 @@ from taskinit import *
 from __main__ import *
 import unittest
 
-datapath=os.environ.get('CASAPATH').split()[0]+'/data/regression/unittest/po_tool/'
+datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata//unittest/imagepol/'
 eq_beams = datapath + "pol_eq_beams.fits"
 neq_beams = datapath + "pol_neq_beams.fits"
 

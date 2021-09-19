@@ -55,8 +55,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
  class SIIterBot;
  class VisImagingWeight;
 
-// <summary> Class that contains functions needed for imager </summary>
+ /**
+ * Holds technical processing info related to parallelization and memory use, as introduced
+ * in CAS-12204. This is meant to go into the image meta-info, such as the 'miscinfo' record.
+ * The TcleanProcessingInfo holds: number of subcubes (chanchunks), number of MPI
+ * processors used for these calculations, memory available, estimated required memory.
+ */
+struct TcleanProcessingInfo
+{
+  unsigned int mpiprocs = 0;
+  unsigned int chnchnks = 0;
+  float memavail = -.1;
+  float memreq = -.1;
+};
 
+// <summary> Class that contains functions needed for imager </summary>
 class SynthesisImager 
 {
  public:
@@ -166,7 +179,7 @@ class SynthesisImager
 	      const casacore::String& filtertype=casacore::String("Gaussian"),
 	      const casacore::Quantity& filterbmaj=casacore::Quantity(0.0,"deg"),
 	      const casacore::Quantity& filterbmin=casacore::Quantity(0.0,"deg"),
-	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg")  );
+	      const casacore::Quantity& filterbpa=casacore::Quantity(0.0,"deg"), casacore::Double fracBW=0.0);
 
   virtual casacore::Bool weight(const Record&){ return false;}; /*not implemented here */
   //Stores the weight density in an image. Returns the image name 
@@ -186,7 +199,8 @@ class SynthesisImager
   Record executeMajorCycle(const casacore::Record& controls);
 
   // make the psf images  i.e grid weight rather than data
-  void makePSF();
+  // Returns a record which may contains names of temporary files to be deleted
+  casacore::Record makePSF();
 
   // Calculate apparent sensitivity (for _Visibility_ spectrum)
   //  _Image_ spectral grid TBD
@@ -284,9 +298,10 @@ protected:
 					 casacore::String mappertype="default", 
 					 casacore::uInt ntaylorterms=1,
 					 casacore::Quantity distance=casacore::Quantity(0.0, "m"),
+					 const TcleanProcessingInfo &procInfo = TcleanProcessingInfo(),
 					 casacore::uInt facets=1,
 					 casacore::Bool useweightimage=false,
-					 casacore::Vector<casacore::String> startmodel=casacore::Vector<casacore::String>(0));
+					 const casacore::Vector<casacore::String> &startmodel=casacore::Vector<casacore::String>(0));
   
   // Choose between different types of Mappers (single term, multiterm, imagemosaic, faceted)
   casacore::CountedPtr<SIMapper> createSIMapper(casacore::String mappertype,  
@@ -363,7 +378,7 @@ protected:
 			  casacore::String mappertype=casacore::String("default"),
 			  float padding=1.0,
 			  casacore::uInt ntaylorterms=1,
-			  casacore::Vector<casacore::String> startmodel=casacore::Vector<casacore::String>(0));
+			  const casacore::Vector<casacore::String> &startmodel=casacore::Vector<casacore::String>(0));
 
   virtual void unlockMSs();
 
@@ -439,7 +454,9 @@ protected:
   casacore::Bool doingCubeGridding_p;
   
   casacore::Record normpars_p;
+  casacore::CoordinateSystem csys_p;
   std::vector<casacore::String> tempFileNames_p;
+
 };
 
 

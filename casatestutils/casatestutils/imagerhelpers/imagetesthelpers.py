@@ -19,7 +19,6 @@ import six
 
 casa5 = False
 casa6 = False
-__bypass_parallel_processing = 0
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -35,6 +34,21 @@ if is_CASA6:
     _ia  = casatools.image()
     _cb = casatools.calibrater()
     from casatasks import casalog
+
+    casampi_imported = False
+    import importlib
+    _casampi_spec = importlib.util.find_spec('casampi')
+    if _casampi_spec:
+        # don't catch import error from casampi if it is found in the system modules
+        from casampi.MPIEnvironment import MPIEnvironment
+        casampi_imported = True
+    else:
+        casalog.post('casampi not available - not testing MPIEnvironment stuff', 'WARN')
+
+    def tclean_param_names():
+        from casatasks.tclean import _tclean_t
+        return _tclean_t.__code__.co_varnames[:_tclean_t.__code__.co_argcount]
+
     casa6 = True
 
 else:
@@ -45,12 +59,9 @@ else:
     from taskinit import tbtool, mstool, iatool, cbtool
     from taskinit import *
     from casa_stack_manip import stack_find, find_casa
-    try:
-        from mpi4casa.MPIEnvironment import MPIEnvironment
-        if not MPIEnvironment.is_mpi_enabled:
-            __bypass_parallel_processing = 1
-    except ImportError:
-        print("MPIEnvironment not Enabled")
+    from mpi4casa.MPIEnvironment import MPIEnvironment
+    casampi_imported = True
+
     _tb = tbtool()
     _tbt = tbtool()
     _ia = iatool()
@@ -60,12 +71,24 @@ else:
         casaglobals=True
         casac = stack_find("casac")
         casalog = stack_find("casalog")
+
+    def tclean_param_names():
+        # alternatively could use from tasks import tclean; tclean.parameters
+        from task_tclean import tclean
+        return tclean.__code__.co_varnames[:tclean.__code__.co_argcount]
+
     casa5 = True
 
 ############################################################################################
 ##################################       imagerhelpers       ###############################
 ############################################################################################
 class TestHelpers:
+
+    # For comparison with keywords added by tclean in its output images
+    if casampi_imported:
+        num_mpi_procs = 1 + len(MPIEnvironment.mpi_server_rank_list())
+    else:
+        num_mpi_procs = 1
 
     def delmodels(self,msname="",modcol='nochange'):
        TestHelpers().delmodkeywords(msname) ## Get rid of extra OTF model keywords that sometimes persist...
@@ -469,8 +492,9 @@ class TestHelpers:
                 result, pstr = self.check_val(list1[i], list2[i], \
                     valname=test+' index '+str(i), exact=exact, epsilon=epsilon)
                 if result == False:
-                    report = pstr
-                    break
+                    report += pstr
+                    #report = pstr
+                    #break
                 i += 1
         else:
             result = False
@@ -575,7 +599,8 @@ class TestHelpers:
                 if issues:
                     pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
         if not pstr:
-            pstr += 'All expected keywords in imageinfo, miscinfo, and coords found.\n'
+            pstr += ('All expected keywords in imageinfo, miscinfo, and coords found. '
+                     '({})\n'.format(testname, TestHelpers().verdict(False)))
         return pstr
 
     def check_im_keywords(self, imname, check_misc=True, check_extended=True):
@@ -631,7 +656,9 @@ class TestHelpers:
         pstr += TestHelpers().check_expected_entries(mandatory_imageinfo, imageinfo, keys)
         if check_misc:
             if check_extended:
-                mandatory_miscinfo = ['INSTRUME', 'distance']
+                # basic miscinfo and 'TcleanProcessingInfo' as per CAS-12204
+                mandatory_miscinfo = ['INSTRUME', 'distance',
+                                      'mpiprocs', 'chnchnks', 'memreq', 'memavail']
                 pstr += TestHelpers().check_expected_entries(mandatory_miscinfo, miscinfo, keys)
             forbidden_miscinfo = ['OBJECT', 'TELESCOP']
             pstr += TestHelpers().check_forbidden_entries(forbidden_miscinfo, miscinfo, keys)
@@ -648,6 +675,13 @@ class TestHelpers:
                 # TODO: many tests leave 'distance' empty. Assume that's acceptable...
                 if entry != 'distance' and not keys[record][entry]:
                     pstr += ('entry {0} is found in record {1} but it is empty ({2})\n'.format(entry, record, TestHelpers().verdict(False)))
+
+                # ensure mpiprocs is correct. Other keywords added in CAS-12204 have more
+                # variable values (memavail, memreq, etc.) and cannot be compared here.
+                if entry == 'mpiprocs':
+                    if keys[record][entry] != self.num_mpi_procs:
+                        pstr += ('mpiprocs is not as expected. It is {} but it should be {}, ({})'.
+                                 format(keys[record][entry], self.num_mpi_procs, TestHelpers().verdict(False)))
         return pstr
 
     def check_forbidden_entries(self, entries, record, keys):
@@ -655,6 +689,74 @@ class TestHelpers:
         for entry in entries:
             if entry in keys[record]:
                 pstr += ('entry {0} should not be in record {1} ({2})\n'.format(entry, record, TestHelpers().verdict(False)))
+        return pstr
+
+    def check_history(self, imlist, testname="check_history"):
+        """
+        Checks presence of the logtable and rows with history information (task name,
+        CASA version, all task parameters, etc.).
+
+        :param imlist: names of the images produced by a test execution.
+        :param testname: name to use in the checks report string
+        :returns: the usual (test_imager_helper) string with success/error messages.
+        """
+        pstr = ''
+        for imname in imlist:
+            if os.path.exists(imname):
+                issues = TestHelpers().check_im_history(imname)
+                if issues:
+                    pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
+        if not pstr:
+            pstr += ('[{}] All expected history entries found. ({})\n'.
+                     format(testname, TestHelpers().verdict(True)))
+        return pstr
+
+    def check_im_history(self, imname):
+        """
+        Check the history records in an image, ensuring the taskname, CASA version, and
+        full list of parameters is found (all the same number of times).
+
+        :param imname: image name (output image from tclean)
+        :returns: the usual (test_imager_helper) string with success/error messages.
+        Errors are marked with the tag '(Fail' as per self.verdict().
+        """
+        ia_open = False
+        try:
+            _ia.open(imname)
+            ia_open = True
+            history = _ia.history(list=False)
+        except RuntimeError as exc:
+            pstr = ('Cannot retrieve history subtable from image: {}. Error: {}'.
+                    format(imname, exc))
+            return pstr
+        finally:
+            if ia_open:
+                _ia.close()
+
+        pstr = ''
+        ncalls = sum(line.startswith('taskname=tclean') for line in history)
+        nversions = sum(line.startswith('version:') for line in history)
+        if ncalls < 1:
+            pstr += ('No calls to tclean were found in history. ({})\n'.
+                     format(TestHelpers().verdict(False)))
+        if nversions < 1:
+            pstr += ('No CASA version was found in history. ({})\n'.
+                     format(TestHelpers().verdict(False)))
+        # allow for impbcor history which puts one version line in some tests
+        if ncalls != nversions and not nversions == ncalls+1:
+            pstr += ('The number of taskname entries ({}) and CASA version entries ({}) do '
+                     'not match. ({})\n'.format(ncalls, nversions,
+                                                TestHelpers().verdict(False)))
+        for param in tclean_param_names():
+            nparval = sum('=' in line and line.split('=')[0].strip() == param for
+                          line in history)
+            if nparval < 1:
+                pstr += ('No entries for tclean parameter {} found in history. ({})'
+                         '.'.format(param, TestHelpers().verdict(False)))
+            if nparval != ncalls:
+                pstr += ("The number of history entries for parameter '{}' ({}) and task "
+                         "calls ({}) do not match ({}).".
+                         format(param, nparval, ncalls, TestHelpers().verdict(False)))
         return pstr
 
     def check_pix_val(self, imname, theval=0, thepos=[0, 0, 0, 0], exact=False, epsilon=0.05, testname="check_pix_val"):
@@ -727,6 +829,8 @@ class TestHelpers:
                 print("pstr after checkims = {}".format(pstr))
                 pstr += TestHelpers().check_keywords(imgexist)
                 print("pstr after check_keywords = {}".format(pstr))
+                pstr += TestHelpers().check_history(imgexist)
+                print("pstr after check_history = {}".format(pstr))
         return pstr
 
     def check_imexistnot(self, imgexistnot):
@@ -789,7 +893,70 @@ class TestHelpers:
                         pstr += TestHelpers().check_ref_freq(ii[0], ii[1], epsilon=epsilon)
         return pstr
 
-    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05):
+    def check_tfmask(self, tfmask, testname="check_tfmask"):
+        pstr = ''
+        if tfmask != None:
+            if type(tfmask) == list:
+                for ii in tfmask:
+                    if type(ii) == tuple and len(ii) == 2:
+                        _ia.open(ii[0])
+                        mname = _ia.maskhandler('get')
+                        mreport = "[" + testname + "]  T/F mask name for " + ii[0] +  " is : " + str(mname)
+                        if mname==ii[1]:
+                            mreport = mreport + " ("+TestHelpers().verdict(True) +" : should be " + str(ii[1]) + ") \n"
+                        else:
+                            mreport = mreport + " ("+TestHelpers().verdict(False) +" : should be " + str(ii[1]) + ") \n"
+                        _ia.close()
+                        pstr += mreport
+            print(pstr)
+        return pstr
+
+
+    def get_log_length(self):
+        return os.path.getsize(casalog.logfile())
+
+    def check_logs(self, start, expected, testname="check_logs"):
+        """ Test that there are log lines that match the expected regex strings (one line per expected string). """
+        # Example usage:
+        # logstart = test_helper.get_log_length()
+        # tclean(...)
+        # report = test_helper.check_logs(logstart, expected=[ r"-+ Run Minor Cycle Iterations  -+" ])
+        import re
+
+        # read all lines from the logfile that are relevant to this test
+        lines = []
+        with open(casalog.logfile(), 'r') as f:
+            f.seek(start)
+            lines = f.readlines()
+        # casalog.post("Searching through " + str(len(lines)) + " log lines", "SEVERE") # debugging
+
+        # find expected matches
+        unmet = []
+        for i in range(len(expected)):
+            expectation = re.compile(expected[i])
+            # casalog.post("expected["+str(i)+"]: "+expected[i], "SEVERE") # debugging
+            found = -1
+            for j in range(len(lines)):
+                if (expectation.search(lines[j]) != None):
+                    found = j
+                    break
+                else:
+                    pass
+                    # casalog.post("  X: " + lines[j].rstrip(), "SEVERE") # debugging
+            if (found == -1):
+                unmet.append(expected[i])
+                # casalog.post("  expectation not met", "SEVERE") # debugging
+            else:
+                del lines[found]
+                # casalog.post("  expectation met by line: " + lines[found].rstrip(), "SEVERE") # debugging
+
+        # check that all expectations were met
+        if (len(unmet) == 0):
+            return "[ {} ]: found {} matching log lines (Pass)\n".format(testname, len(expected))
+        else:
+            return "[ {} ]: found {} out of {} matching log lines (Fail, unmet expectations: {})\n".format(testname, len(expected)-len(unmet), len(expected), ", ".join(unmet))
+
+    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05,tfmask=None):
         """
             ret=None,
             peakres=None, # a float
@@ -804,6 +971,7 @@ class TestHelpers:
             tabcache=True,
             stopcode=None,
             reffreq=None # list of tuples of (imagename, reffreq)
+            tfmask=None # list of tuples of (imagename, maskname). 
         """
         pstr = "[ checkall ] \n"
         if ret != None and type(ret) == dict:
@@ -832,14 +1000,14 @@ class TestHelpers:
         pstr += TestHelpers().check_tabcache(tabcache)
         pstr += TestHelpers().check_stopcode(stopcode, ret)
         pstr += TestHelpers().check_reffreq(reffreq, epsilon=epsilon)
+        pstr += TestHelpers().check_tfmask(tfmask)
         return pstr
 
     def check_final(self, pstr=""):
 
-        if not isinstance(pstr, six.string_types):
-            return False
+        import re
         casalog.post(pstr, 'INFO')
-        if pstr.count("Fail") > 0:
+        if len(re.findall(r"\(.?Fail",pstr)) > 0:
             return False
         return True
         
@@ -932,3 +1100,4 @@ class TestHelpers:
                 mergedret=ret
 
         return mergedret
+

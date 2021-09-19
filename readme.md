@@ -1,4 +1,4 @@
-## CASA 6
+## CASA 6 
 
 CASA 6 marks a major new chapter in CASA's development. With CASA 6, tools and
 tasks will be available as Python wheels from a [PyPI repository](https://casa-pip.nrao.edu/).
@@ -62,7 +62,7 @@ the bash command line if the casashell module has been installed:
 or from Python 3:
 ```
 -bash-4.2$ python3
-Python 3.6.7 (default, Aug 16 2019, 18:25:33) 
+Python 3.6.7 (default, Aug 16 2019, 18:25:33)
 [GCC 5.3.1 20160406 (Red Hat 5.3.1-6)] on linux
 Type "help", "copyright", "credits" or "license" for more information.
 >>> from casashell import start_casa
@@ -91,3 +91,43 @@ CASA 6 currently includes:
   3. casalogger
   4. casaplotserver
 
+### Debugging with GDB and Valgrind
+
+To build casatools with debugging symbols, run casatools/setup.py with either the debug or
+relwithdebinfo flags. For example:
+```
+-bash-4.2$ ./setup.py --debug bdist_wheel
+-bash-4.2$ ./setup.py --relwithdebinfo bdist_wheel
+```
+
+To run casa with gdb, start casa (interactively or from a script) and attach to it's
+process id:
+```
+-bash-4.2$ ps -e | grep python3
+25915 pts/2    00:00:01 python3
+-bash-4.2$ gdb -p 25915
+```
+Then set breakpoints like normal, albeit with some name wrangling:
+```
+(gdb) break casa6core::MeasurementSet::MeasurementSet()
+Breakpoint 1 at 0x7ff0d026b010: file casacore/ms/MeasurementSets/MeasurementSet.cc, line 68.
+(gdb) continue
+```
+
+To run casa with valgrind + gdb, start with valgrind with PYTHONMALLOC=malloc, emulate what
+the bin/casa perl script does, and attach gdb with the target command. For example, to start
+casa and look for memory mismanagement:
+```
+-bash-4.2$ LITHDIR="casalith/build-casalith/work/linux/output/casa-bbean-6.2.0-9"
+-bash-4.2$ EXTPATH="${LITHDIR}/lib/py/bin:${LITHDIR}/lib/casa/bin:${PATH}"
+-bash-4.2$ PATH="$EXTPATH" PYTHONMALLOC=malloc valgrind --tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes \
+> --log-file=valgrind.log "${LITHDIR}/lib/py/bin/python3" -m casashell --nogui --log2term -c <yourpythonfile>.py
+```
+Now in another terminal, attach gdb:
+```
+-bash-4.2$ PATH="$EXTPATH" gdb "${LITHDIR}/lib/py/bin/python3"
+(gdb) target remote | /usr/bin/vgdb
+(gdb) break casa6core::MeasurementSet::MeasurementSet()
+Breakpoint 1 at 0x7ff0d026b010: file casacore/ms/MeasurementSets/MeasurementSet.cc, line 68.
+(gdb) continue
+```

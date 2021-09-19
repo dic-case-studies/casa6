@@ -40,25 +40,24 @@ import os
 import unittest
 import shutil
 import time
-import casaTestHelper
+from casatestutils import generate_weblog
+from casatestutils import stats_dict
+from casatestutils import add_to_dict
+from casatestutils.compare import compare_caltables
+from casatestutils.compare import compare_dictionaries
+
 import numpy
 
 # DATA #
 if CASA6:
-    datapath = casatools.ctsys.resolve('visibilities/vla/ngc5921.ms/')
-    caldata = casatools.ctsys.resolve('caltables/ngcgain.G0/')
-    refcal = casatools.ctsys.resolve('caltables/polfromgainCalCompare.cal')
+    datapath = casatools.ctsys.resolve('unittest/polfromgain/ngc5921.ms/')
+    caldata = casatools.ctsys.resolve('unittest/polfromgain/ngcgain.G0/')
+    refcal = casatools.ctsys.resolve('unittest/polfromgain/polfromgainCalCompare.cal')
 
 else:
-    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/ngc5921.ms/'
-        caldata = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/ngcgain.G0/'
-        refcal = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/caltables/polfromgainCalCompare.cal'
-
-    else:
-        datapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/vla/ngc5921.ms/'
-        caldata = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/ngcgain.G0/'
-        refcal = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/caltables/polfromgainCalCompare.cal'
+    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/polfromgain/ngc5921.ms/'
+    caldata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/polfromgain/ngcgain.G0/'
+    refcal = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/polfromgain/polfromgainCalCompare.cal'
         
 datacopy = 'gaincopy.ms'
 calpath = 'polfromgainout.cal'
@@ -86,34 +85,34 @@ class polfromgain_test(unittest.TestCase):
     
     @classmethod
     def tearDownClass(cls):
-        casaTestHelper.generate_weblog("polfromgain", test_dict)
+        generate_weblog("polfromgain", test_dict)
     
-    @casaTestHelper.stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_dictOutput(self):
         ''' Check that the task takes a MS and outputs a dictionary '''
         result = polfromgain(datacopy, tablein=caldata)
-        casaTestHelper.add_to_dict(self, output=test_dict, dataset=datacopy, resulting_dict = result)
+        add_to_dict(self, output=test_dict, dataset=datacopy, resulting_dict = result)
         
         self.assertTrue(type(result) == type({}))
         
-    @casaTestHelper.stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_calTable(self):
         ''' Check that using the caltable param creates a new cal file '''
         polfromgain(datacopy, tablein=caldata, caltable=calpath)
         cal_exists = os.path.exists(calpath)
-        casaTestHelper.add_to_dict(self, output=test_dict, dataset=datacopy)
+        add_to_dict(self, output=test_dict, dataset=datacopy)
         
         self.assertTrue(cal_exists)
         
-    @casaTestHelper.stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_dictContains(self):
         ''' Check that the dict contains all the correct infromation '''
-        casaTestHelper.add_to_dict(self, output=test_dict, dataset=datacopy)
+        add_to_dict(self, output=test_dict, dataset=datacopy)
         refdict = {'1331+30500002_0': {}, '1445+09900002_0': {'Spw0': [1.0, 0.0085134637703004248, 0.025951269611231682, 0.0], 'SpwAve': [1.0, 0.0085134637703004248, 0.025951269611231682, 0.0]}, 'N5921_2': {}}
         result = polfromgain(datacopy, tablein=caldata)
         print(result)
         print(refdict)
-        print(casaTestHelper.compare_dictionaries(result, refdict))
+        print(compare_dictionaries(result, refdict))
         
         keyCheck = result.keys() == refdict.keys()
         Spw0Check = numpy.all(numpy.isclose(refdict['1445+09900002_0']['Spw0'],result['1445+09900002_0']['Spw0'], rtol = 8e-7, atol=1e-8))
@@ -127,14 +126,14 @@ class polfromgain_test(unittest.TestCase):
         
         #self.assertTrue(casaTestHelper.compare_dictionaries(result, refdict, rtol = 8e-7))
         
-    @casaTestHelper.stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_calTableContains(self):
         ''' Check that the contents of the calibration table match the reference file '''
         result = polfromgain(datacopy, tablein=caldata, caltable=calpath)
-        casaTestHelper.add_to_dict(self, output=test_dict, dataset=datacopy, resulting_dict=result)
+        add_to_dict(self, output=test_dict, dataset=datacopy, resulting_dict=result)
         
         
-        self.assertTrue(casaTestHelper.compare_caltables(calpath, refcopy))
+        self.assertTrue(compare_caltables(calpath, refcopy))
     
     
 def suite():

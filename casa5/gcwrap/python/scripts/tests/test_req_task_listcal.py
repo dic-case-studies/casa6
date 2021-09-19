@@ -31,12 +31,12 @@ import os
 import shutil
 import unittest
 
-reg_unittest_datap = 'regression/unittest'
+reg_unittest_datap = 'unittest/listcal/'
 if CASA6:
     datapath = casatools.ctsys.resolve(reg_unittest_datap)
 else:
     datapath = os.path.join(os.path.join(os.environ.get('CASAPATH').split()[0],
-                                         'data'), reg_unittest_datap)
+                                         'casatestdata'), reg_unittest_datap)
 
 # This is for tests that check what the parameter validator does when parameters are
 # given wrong types - these don't exercise the task but the parameter validator!
@@ -51,7 +51,7 @@ else:
 class test_listcal_minimal(unittest.TestCase):
     """
     Most basic ways of calling listcal, with an existing small dataset from the
-    'regression/unittest' input data that is used in the bandpass and gaincal tests.
+    'unittest' input data that is used in the bandpass and gaincal tests.
     This is just a start, to have some tests for the task listcal.
     """
 
@@ -62,10 +62,8 @@ class test_listcal_minimal(unittest.TestCase):
 
         vis_name = 'ngc5921.ms'
         caltable_name = 'ngc5921.ref1a.gcal'
-        os.system('cp -RL {} .'.format(os.path.join(datapath, 'gaincal/{}'.
-                                                    format(vis_name))))
-        os.system('cp -RL {} .'.format(os.path.join(datapath, 'gaincal/{}'.
-                                                    format(caltable_name))))
+        shutil.copytree(os.path.join(datapath,vis_name),vis_name)
+        shutil.copytree(os.path.join(datapath,caltable_name),caltable_name)
         cls._vis = vis_name
         cls._caltable = caltable_name
         cls._listfile = 'listcal_listfile.txt'

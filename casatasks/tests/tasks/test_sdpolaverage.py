@@ -9,9 +9,9 @@ import sys
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import sdpolaverage
-    from casatasks.private.sdutil import tbmanager
+    from casatasks.private.sdutil import table_manager
     from casatools import ctsys
-    datapath = ctsys.resolve('regression/unittest/tsdfit/')
+    datapath = ctsys.resolve('unittest/sdpolaverage/')
 
     # default isn't used in casatasks
     def default(atask):
@@ -20,10 +20,10 @@ if is_CASA6:
 else:
     from tasks import sdpolaverage
     from __main__ import default
-    from sdutil import tbmanager
+    from sdutil import tbmanager as table_manager
 
     # Define the root for the data files
-    datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/tsdfit/"
+    datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/sdpolaverage/"
 
 
 def weighToSigma(weight):
@@ -71,7 +71,7 @@ class test_sdpolaverage(unittest.TestCase):
         self.inputms = "analytic_type1.fit.ms"
         self.outputms = "polave.ms"
         #datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/tsdfit/"
-        os.system('cp -RL ' + datapath + self.inputms + ' ' + self.inputms)
+        os.system('cp -RH ' + datapath + self.inputms + ' ' + self.inputms)
         default(sdpolaverage)
 
     def tearDown(self):
@@ -80,9 +80,9 @@ class test_sdpolaverage(unittest.TestCase):
 
     def test_default(self):
         sdpolaverage(infile=self.inputms, outfile=self.outputms, datacolumn='float_data')
-        with tbmanager(self.inputms) as tb:
+        with table_manager(self.inputms) as tb:
             indata = tb.getcell('FLOAT_DATA', 0)
-        with tbmanager(self.outputms) as tb:
+        with table_manager(self.outputms) as tb:
             outdata = tb.getcell('FLOAT_DATA', 0)
 
         self.assertEqual(len(indata), len(outdata), 'Input and output data have different shape.')
@@ -93,9 +93,9 @@ class test_sdpolaverage(unittest.TestCase):
     def test_stokes_float_data(self):
         sdpolaverage(infile=self.inputms, outfile=self.outputms, polaverage='stokes', datacolumn='float_data')
         # check data
-        with tbmanager(self.inputms) as tb:
+        with table_manager(self.inputms) as tb:
             indata = tb.getcell('FLOAT_DATA', 0)
-        with tbmanager(self.outputms) as tb:
+        with table_manager(self.outputms) as tb:
             outdata = tb.getcell('FLOAT_DATA', 0)
 
         self.assertEqual(len(outdata), 1, 'No averaging over polarization?')
@@ -105,11 +105,11 @@ class test_sdpolaverage(unittest.TestCase):
             check_eq(outdata[0][i], mean, tol)
 
         # check polarization id (should be 1)
-        with tbmanager(self.outputms) as tb:
+        with table_manager(self.outputms) as tb:
             outddesc = tb.getcell('DATA_DESC_ID', 0)
-        with tbmanager(self.outputms + '/DATA_DESCRIPTION') as tb:
+        with table_manager(self.outputms + '/DATA_DESCRIPTION') as tb:
             outpolid = tb.getcol('POLARIZATION_ID')
-        with tbmanager(self.outputms + '/POLARIZATION') as tb:
+        with table_manager(self.outputms + '/POLARIZATION') as tb:
             outpoltype = tb.getcell('CORR_TYPE', outpolid[outddesc])
 
         self.assertEqual(len(outpoltype), 1, 'Polarization id is inconsistent with data.')
@@ -118,9 +118,9 @@ class test_sdpolaverage(unittest.TestCase):
     def test_stokes_corrected_data(self):
         sdpolaverage(infile=self.inputms, outfile=self.outputms, polaverage='stokes', datacolumn='corrected')
         # check data
-        with tbmanager(self.inputms) as tb:
+        with table_manager(self.inputms) as tb:
             indata = tb.getcell('CORRECTED_DATA', 0)
-        with tbmanager(self.outputms) as tb:
+        with table_manager(self.outputms) as tb:
             outdata = tb.getcell('DATA', 0)
 
         self.assertEqual(len(outdata), 1, 'No averaging over polarization?')
@@ -131,11 +131,11 @@ class test_sdpolaverage(unittest.TestCase):
             check_eq(outdata[0][i].imag, mean.imag, tol)
 
         # check polarization id (should be 1)
-        with tbmanager(self.outputms) as tb:
+        with table_manager(self.outputms) as tb:
             outddesc = tb.getcell('DATA_DESC_ID', 0)
-        with tbmanager(self.outputms + '/DATA_DESCRIPTION') as tb:
+        with table_manager(self.outputms + '/DATA_DESCRIPTION') as tb:
             outpolid = tb.getcol('POLARIZATION_ID')
-        with tbmanager(self.outputms + '/POLARIZATION') as tb:
+        with table_manager(self.outputms + '/POLARIZATION') as tb:
             outpoltype = tb.getcell('CORR_TYPE', outpolid[outddesc])
 
         self.assertEqual(len(outpoltype), 1, 'Polarization id is inconsistent with data.')

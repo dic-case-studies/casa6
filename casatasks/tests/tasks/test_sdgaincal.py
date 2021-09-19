@@ -14,7 +14,7 @@ if is_CASA6:
     from casatools import table as tbtool
     from casatools import ms as mstool
     from casatasks import sdgaincal, mstransform, sdcal
-    from casatasks.private import sdutil
+    from casatasks.private.sdutil import table_manager
 
     ### for testhelper import
     sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -28,7 +28,7 @@ else:
     from sdgaincal import sdgaincal
     from mstransform_cli import mstransform_cli
     from sdcal_cli import sdcal_cli
-    import sdutil
+    from sdutil import tbmanager as table_manager
 
 
 class sdgaincal_test_base(unittest.TestCase):
@@ -38,10 +38,10 @@ class sdgaincal_test_base(unittest.TestCase):
     This class defines attributes and methods common to test cases
     """
     if is_CASA6:
-        datapath=ctsys.resolve('regression/unittest/sdgaincal')
+        datapath=ctsys.resolve('unittest/sdgaincal/')
     else:
-        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'data/regression/unittest/sdgaincal')
-
+        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/sdgaincal/')
+    
     def __copy_from_datapath(self, filename):
         if os.path.exists(filename):
             shutil.rmtree(filename)
@@ -579,7 +579,7 @@ class sdgaincal_single_polarization_test(sdgaincal_test_base):
                         datacolumn='float_data')
 
         self.assertTrue(os.path.exists(self.infile_YY))
-        with sdutil.tbmanager(self.infile_YY) as tb:
+        with table_manager(self.infile_YY) as tb:
             try:
                 for irow in range(tb.nrows()):
                     flag = tb.getcell('FLAG', irow)

@@ -37,6 +37,15 @@ namespace casa {
 
     constexpr char grpcPlotMS::APP_SERVER_SWITCH[];
 
+    ::grpc::Status grpcPMSPing::now( ::grpc::ServerContext*, const ::google::protobuf::Empty*, ::google::protobuf::Empty* ) {
+        static const auto debug = getenv("GRPC_DEBUG");
+        if ( debug ) {
+            std::cerr << "received ping event..." << std::endl;
+            fflush(stderr);
+        }
+        return grpc::Status::OK;
+    }
+
     ::grpc::Status grpcPMSShutdown::now(::grpc::ServerContext*, const ::google::protobuf::Empty*, ::google::protobuf::Empty*) {
         if (getenv("GRPC_DEBUG")) {
             std::cerr << "received shutdown notification..." << std::endl;
