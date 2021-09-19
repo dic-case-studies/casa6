@@ -758,8 +758,6 @@ Vector<Double> ChannelAverageTVI::getChanWidths ( Double time,
 	// Transform data
 	transformer.transform();
 
-	cout << "***** ChannelAverageTVI::getChanWidths *****" << endl;
-
 	return outputWidths;
 }
 

@@ -123,12 +123,19 @@ public:
   // Public access to spw fan-in
   casacore::Int fannedInSpw(casacore::Int spw) const;
 
+  // Has freq meta data been calculated?
   casacore::Bool ok() const;
+
+  // Return list of valid spws
+  const casacore::Vector<casacore::Int>& validSpws() const;
 
 private:
 
   // true if we have run calcFreqMeta (indicates valid freq info contained herein
   casacore::Bool ok_;
+
+  // List of valid spws (calc'd in calcFreqMeta)
+  casacore::Vector<casacore::Int> validspws_;
 
   // The freq meta data arrays  [nSpw][nChan]
   casacore::Vector< casacore::Vector<casacore::Double> > freq_, width_, effBW_;

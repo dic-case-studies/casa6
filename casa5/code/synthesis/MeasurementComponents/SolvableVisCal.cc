@@ -136,6 +136,7 @@ SolNorm::Type SolNorm::normTypeFromString(String type) {
 
 FreqMetaData::FreqMetaData() : 
   ok_(False),   // ok requires running calcFreqMeta later
+  validspws_(),
   freq_(Vector< Vector<Double> >()),
   width_(Vector< Vector<Double> >()),
   effBW_(Vector< Vector<Double> >()),
@@ -152,10 +153,17 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
   // Max number of spws
   uInt nspw(msfreq.nelements());
 
+  // We will keep track of which spws get set
+  Vector<Bool> validspw(nspw,false);
+
   // Size up the Vector of spw freq Vectors
   freq_.resize(nspw);
   width_.resize(nspw);
   effBW_.resize(nspw);
+
+  // We will log some pertinent info
+  LogIO log;
+  log << LogOrigin("FreqMetaData","calcFreqMeta") << LogIO::NORMAL << "Derived frequency meta-info for solutions:" << LogIO::POST;
 
   // Gather MS freq info
   for (uInt i=0;i<selspw.nelements();++i) {
@@ -209,8 +217,22 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
       width_(ispw).assign(mswidth(ispw));
     }
 
+    { 
+      // Report spw freq-metadetails....
+      ostringstream os;
+      os.precision(15);
+      os << " Selected spw=" << ispw << " (nchan=" << freq_(ispw).nelements() << ") has centroid freq = " << mean(freq_(ispw));
+      log << LogIO::NORMAL << os  << LogIO::POST;
+      //log << LogOrigin("FreqMetaData","calcFreqMeta") << LogIO::NORMAL << os  << LogIO::POST;
+    }
+
+
+
     // Assume effective BW is just the width
     effBW_(ispw).reference(width_(ispw));
+
+    // Remember we set this spw
+    validspw(ispw)=true;
 
   }
 
@@ -219,13 +241,18 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
 
     //    cout << "Combining spws!" << endl;
 
-    // Remember the fan-in
+    // Remember the fan-in vector
     spwfanin_.resize();
     spwfanin_.assign(spwfanin);
+
 
     // Keep track of which spws are aggregate spws
     //  (none are yet)
     Vector<Bool> isAggspw(nspw,false);
+
+    // Keep track of fanned-in spws per agg spw
+    Vector< Vector<Int> > fannedin(nspw,Vector<Int>(0));
+
 
     Vector<Double> freq0(nspw,0);
     Vector<Double> width1(nspw,0);
@@ -242,6 +269,14 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
 	//	cout << "Aggregate spw = " << ispw << endl;
 
 	isAggspw(ispw)=true;
+
+	// Just to be sure...
+	validspw(ispw)=true;
+
+	// Add this (agg) spw to fanned in list
+	uInt nfanin=fannedin(ispw).nelements();
+	fannedin(ispw).resize(nfanin+1,true);  // copies elements
+	fannedin(ispw)(nfanin)=ispw;
 
 	// This is a spw in which we'll accumulate
 	
@@ -267,6 +302,10 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
       else {
 	uInt aggspw(spwfanin(ispw));
 
+	uInt nfanin=fannedin(aggspw).nelements();
+	fannedin(aggspw).resize(nfanin+1,true);  // copies elements
+	fannedin(aggspw)(nfanin)=ispw;
+
 	if (ispw<=aggspw) 
 	  throw(AipsError("Cannot accumulate into spw with a lower spw id."));
 
@@ -279,7 +318,7 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
 
 	//  TBD: recognize/handle sideband and width variation if nchan>1 ?
 
-	// Offsets for precision
+	// Offsets forp recision
 	Vector<Double> f(freq_(ispw)-freq0(aggspw));
 	Vector<Double> w(width_(ispw)/width1(aggspw));
 	
@@ -293,6 +332,10 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
 	width_(ispw).reference(width_(aggspw));
 	effBW_(ispw).reference(effBW_(aggspw));
 
+	// This spw no longer autonomously "valid"
+	//   (aggspw is the relevant valid one)
+	validspw(ispw)=false;
+	
       }
     }
 
@@ -313,11 +356,21 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
 	freq_(ispw)+=freq0(ispw);
 	width_(ispw)*=width1(ispw);
 	effBW_(ispw)*=width1(ispw);
+
+	{ 
+	  // Report fanin details....
+	  ostringstream os;
+	  os.precision(15);
+	  os << " Combining spws=" << fannedin(ispw) << " into (aggregate) spw=" << ispw << " (nchan=" << freq_(ispw).nelements() << ") at centroid freq = " << mean(freq_(ispw));
+	  log << LogIO::NORMAL << os << LogIO::POST;
+	  //log << LogOrigin("FreqMetaData","calcFreqMeta") << LogIO::NORMAL << os << LogIO::POST;
+	}
+
       }
       else {
 	throw(AipsError("Problem completing combspw freq average."));
       }
-    } // ispw
+    } // ispw (fanin spws only)
     //    cout << "Finished combining spws." << endl;
 
   } // combspw? 
@@ -328,7 +381,11 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
     indgen(spwfanin_);
 
   }
-    
+
+  // Fill validspws_ vector    
+  Vector<Int> spwlist(nspw);
+  indgen(spwlist);
+  validspws_.assign(spwlist(validspw).getCompressedArray());
 
   // If we get here, we should be ok!
   ok_=true;
@@ -342,6 +399,15 @@ Bool FreqMetaData::ok() const {
   else
     throw(AipsError("FreqMetaData not initialized!"));
   return false;
+
+}
+
+const Vector<Int>& FreqMetaData::validSpws() const {
+
+  if (ok() && validspws_.nelements()>0)
+    return validspws_;
+  else
+    throw(AipsError("No valid spws in FreqMetaData!"));
 
 }
 
@@ -2813,10 +2879,6 @@ void SolvableVisCal::setOrVerifyCTFrequencies(Int spw) {
       cheff.resize(1);  cheff.set(totbw);
     }
 
-    cout << "sOVCTF: spw=" << spw 
-	 << " chfr=" << chfr << " fMD.freq=" << freqMetaData_.freq(spw) 
-	 << " diff=" << chfr-freqMetaData_.freq(spw) << endl;
-
     // Export revised values to the table
     spwcol.chanFreq().put(spw,chfr);
     spwcol.chanWidth().put(spw,chwid);
@@ -2867,7 +2929,6 @@ void SolvableVisCal::setCTFrequencies(Int spw) {
   if (combspw())
     outspw=freqMetaData_.fannedInSpw(spw);
 
-
   // Access SPW subtable columns
   CTColumns ctcol(*ct_);
   CTSpWindowColumns& spwcol(ctcol.spectralWindow());
@@ -2908,8 +2969,11 @@ void SolvableVisCal::setCTFrequencies(Int spw) {
   }
   else {
 
-    // outspw already written (in this execution or a previous one with append=True)
-    //  Verify that info matches...
+    // outspw already set (not yet written to disk, unless (possibly) append=True; checked elsewhere)
+    //  Verify that info matches...  this shouldn't be necessary, in general,
+    //  as discernAndSetSolutionFrequencies sets the rigorously....
+    // TBD: test against _apparent_ frequencies in this soluton interval, e.g.,
+    //   are available spws consistent....  (and merely warn)
 
     //cout << "Verifying freqs for spw=" << outspw << endl;
 
@@ -2981,7 +3045,45 @@ void SolvableVisCal::discernAndSetSolnFrequencies(const vi::VisibilityIterator2&
   // Now delegate the freq meta calculation to the FreqMetaData object
   freqMetaData_.calcFreqMeta(MSfreq,MSwidth,selspws,freqDepPar(),combspw(),spwFanIn);
 
-  // TBD: Add log info, probably inside FreqMetaData...
+
+  // If appending, check current/pending freq meta data againt existing info on disk
+  if (append()) {
+    const CTSpectralWindow ctspw(calTableName()+"/SPECTRAL_WINDOW");
+    const CTSpWindowColumns& spwcol(ctspw);
+
+    // Which spws are we procssing now?
+    Vector<Int> validfMDspws(freqMetaData_.validSpws());
+
+    // If current spws already in disk table, freq meta must match!
+    for (uInt i=0;i<validfMDspws.nelements();++i) {
+      const Int& ispw(validfMDspws(i));
+
+      // If disk table already has this spw set (not flagged), we need to check for a match
+      if (!spwcol.flagRow().get(ispw)) {
+	
+	// disk table info
+	const uInt numChan(spwcol.numChan().get(ispw));
+	const Vector<Double> currCTFreq(spwcol.chanFreq().get(ispw));
+
+	// current pending freq info
+	const Vector<Double>& fMDfreq(freqMetaData_.freq(ispw));
+
+	// TBD: check other freq meta info (width, resoln, effBW)?
+
+	// Insist nchan and freq(s) match!
+	if (numChan!=fMDfreq.nelements() || !allEQ(currCTFreq,fMDfreq))
+	  throw(AipsError("Mismatch with frequency meta-data in append to "+
+			  calTableName()+" detected in spw="+String::toString(ispw)+". Check spw selection."));
+
+      } // !flagged in disk table
+
+    } // validfMDspws(i}
+
+  } // append?
+
+
+
+  // TBD: Add more log info, probably inside FreqMetaData...
 
 }
 
