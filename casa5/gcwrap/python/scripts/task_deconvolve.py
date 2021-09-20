@@ -83,9 +83,10 @@ def check_requiredimgs_exist(imagename, inp):
 
     # check for .pb image in the case that nsigma > 0
     # see comments on CAS-13144 about casa crashing as to why this check is here
-    if (imagename+".pb" not in allfiles):
-        if (inp['nsigma'] > 0):
-            raise RuntimeError("The parameter nsigma>0 ("+str(inp['nsigma'])+") requires a .pb image to be available.")
+    if (inp['nsigma'] > 0):
+        reqpb = ".pb" if (inp['deconvolver'] != 'mtmfs') else ".pb.tt0"
+        if (imagename+reqpb not in allfiles):
+            raise RuntimeError("The parameter nsigma>0 ("+str(inp['nsigma'])+") requires a "+reqpb+" image to be available.")
 
 def check_starmodel_model_collisions(startmodel, imagename, deconvolver):
     # check for startmodel(s)

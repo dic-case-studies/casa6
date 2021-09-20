@@ -585,75 +585,87 @@
 #threshold:"1Jy"
 #testname: test_minimages_threshold
 #
-#120. Test non-default value for nsigma with only the .residual and .psf present
+#120. Test non-default value for nsigma with only the .residual, .psf, and .pb present
 #nsigma:1.5
 #testname: test_minimages_nsigma
 #
-#121. Test non-default value for cyclefactor with only the .residual and .psf present
+#121. Test non-default value for nsigma with only the .residual and .psf present
+#nsigma:1.5
+#testname: test_minimages_nsigma_nopb
+#
+#122. Test non-default value for mtmfs+nsigma with only the .residual, .psf, and .pb present
+#nsigma:1.5
+#testname: test_minimages_nsigma_mtmfs
+#
+#123. Test non-default value for mtmfs+nsigma with only the .residual and .psf present
+#nsigma:1.5
+#testname: test_minimages_nsigma_nopb_mtmfs
+#
+#124. Test non-default value for cyclefactor with only the .residual and .psf present
 #cyclefactor:5.0
 #testname: test_minimages_cyclefactor
 #
-#122. Test non-default value for minpsffraction with only the .residual and .psf present
+#125. Test non-default value for minpsffraction with only the .residual and .psf present
 #minpsffraction:0.5
 #testname: test_minimages_minpsffraction
 #
-#123. Test non-default value for maxpsffraction with only the .residual and .psf present
+#126. Test non-default value for maxpsffraction with only the .residual and .psf present
 #maxpsffraction:0.5
 #testname: test_minimages_maxpsffraction
 #
-#124. Test non-default value for interactive with only the .residual and .psf present
+#127. Test non-default value for interactive with only the .residual and .psf present
 #interactive:0
 #testname: test_minimages_interactive
 #
-#125. Test non-default value for fastnoise with only the .residual and .psf present
+#128. Test non-default value for fastnoise with only the .residual and .psf present
 #fastnoise:False
 #testname: test_minimages_fastnoise
 #
-#126. Test non-default value for usemask with only the .residual and .psf present
+#129. Test non-default value for usemask with only the .residual and .psf present
 #usemask:"pb"
 #testname: test_minimages_usemask
 #
-#127. Test non-default value for mask with only the .residual and .psf present
+#130. Test non-default value for mask with only the .residual and .psf present
 #mask:'circle[[40pix,40pix],10pix]'
 #testname: test_minimages_mask
 #
-#128. Test non-default value for sidelobethreshold with only the .residual and .psf present
+#131. Test non-default value for sidelobethreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", sidelobethreshold:10.0
 #testname: test_minimages_sidelobethreshold
 #
-#129. Test non-default value for noisethreshold with only the .residual and .psf present
+#132. Test non-default value for noisethreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", noisethreshold:10.0
 #testname: test_minimages_noisethreshold
 #
-#130. Test non-default value for lownoisethreshold with only the .residual and .psf present
+#133. Test non-default value for lownoisethreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", lownoisethreshold:10.0
 #testname: test_minimages_lownoisethreshold
 #
-#131. Test non-default value for negativethreshold with only the .residual and .psf present
+#134. Test non-default value for negativethreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", negativethreshold:0.5
 #testname: test_minimages_negativethreshold
 #
-#132. Test non-default value for smoothfactor with only the .residual and .psf present
+#135. Test non-default value for smoothfactor with only the .residual and .psf present
 #usemask:"auto-multithresh", smoothfactor:0.5
 #testname: test_minimages_smoothfactor
 #
-#133. Test non-default value for minbeamfrac with only the .residual and .psf present
+#136. Test non-default value for minbeamfrac with only the .residual and .psf present
 #usemask:"auto-multithresh", minbeamfrac:0.5
 #testname: test_minimages_minbeamfrac
 #
-#134. Test non-default value for cutthreshold with only the .residual and .psf present
+#137. Test non-default value for cutthreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", cutthreshold:0.5
 #testname: test_minimages_cutthreshold
 #
-#135. Test non-default value for growiterations with only the .residual and .psf present
+#138. Test non-default value for growiterations with only the .residual and .psf present
 #usemask:"auto-multithresh", growiterations:1
 #testname: test_minimages_growiterations
 #
-#136. Test non-default value for dogrowprune with only the .residual and .psf present
+#139. Test non-default value for dogrowprune with only the .residual and .psf present
 #usemask:"auto-multithresh", dogrowprune:False
 #testname: test_minimages_dogrowprune
 #
-#137. Test non-default value for verbose with only the .residual and .psf present
+#140. Test non-default value for verbose with only the .residual and .psf present
 #verbose:True
 #testname: test_minimages_verbose
 #
@@ -775,14 +787,15 @@ class testref_base(unittest.TestCase):
                     shutil.copytree(srctbl, dsttbl)
 
     @classmethod
-    def staticCopyFromCache(cls, msfile="", imagename="", cachedir=""):
+    def staticCopyFromCache(cls, msfile="", imagename="", cachedir="", copytbls=None):
         """ Copy all "self.img".* generated image files (eg tst.model/tst.model.tt0) from the local directory "cachedir" to the working directory.
             If staticCopyToCache was previously used by this class (does not need to be the same instance of the class), then the msfile, imagename, and cachedir
             from that staticCopyToCache call will be used. """
-        msfile    = msfile    if msfile!=""    else cls.msfile
-        imagename = imagename if imagename!="" else cls.img
-        cachedir  = cachedir  if cachedir!=""  else cls.cachedir
-        for tbl in cls.inptbls:
+        msfile    = msfile    if msfile!=""     else cls.msfile
+        imagename = imagename if imagename!=""  else cls.img
+        cachedir  = cachedir  if cachedir!=""   else cls.cachedir
+        copytbls  = copytbls  if copytbls!=None else cls.inptbls
+        for tbl in copytbls:
             for ttn in ["", ".tt0", ".tt1", ".tt2", ".tt3", ".tt4", ".tt5"]:
                 ext = tbl+ttn
                 if os.path.exists(os.path.join(cachedir, msfile+ext)):
@@ -1771,7 +1784,7 @@ class test_mask(testref_base):
         # this should error out ('tst.mask.txt' has been deleted)
         os.system("rm -rf "+self.img+".mask")
         os.system("rm -rf "+mname)
-        strcheck = "'mask' parameter specified as a filename '"+mname+"', but no such file exists"
+        strcheck = r"'mask' parameter specified as a filename '"+mname+r"', but no such file exists"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(**deconvolve_args)
 
@@ -2106,7 +2119,7 @@ class test_imgval(testref_base):
         self.ivsetup()
         os.system("mv {0}{1} {0}_bak{1}".format(self.img, ext))
 
-        strcheck = "missing one or more of the required images"
+        strcheck = r"missing one or more of the required images"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10)
 
@@ -2124,7 +2137,7 @@ class test_imgval(testref_base):
         os.system("mv {0} {1}".format(fn1, fn2))
 
         imtrans(imagename=self.img+"_bak"+ext, outfile=self.img+ext, order="3012")
-        strcheck = "(There is a shape mismatch between existing images|There is a coordinate system mismatch between existing images on disk and current parameters)"
+        strcheck = r"(There is a shape mismatch between existing images|There is a coordinate system mismatch between existing images on disk and current parameters)"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, **deconvolve_args)
 
@@ -2140,7 +2153,7 @@ class test_imgval(testref_base):
         os.system("mv {0}{1} {0}_bak{1}".format(self.img, ext))
 
         imrebin(imagename=self.img+"_bak"+ext, outfile=self.img+ext, factor=[50,50])
-        strcheck = "(There is a shape mismatch between existing images|There is a coordinate system mismatch between existing images on disk and current parameters)"
+        strcheck = r"(There is a shape mismatch between existing images|There is a coordinate system mismatch between existing images on disk and current parameters)"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, **deconvolve_args)
 
@@ -2294,7 +2307,7 @@ class test_imgval(testref_base):
         # Throws an error if startmodel is set but does not exist
         ######################################################################################
         self.ivsetup()
-        strcheck = "does not exist"
+        strcheck = r"does not exist"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, startmodel='doesnotexists.model')
 
@@ -2309,7 +2322,7 @@ class test_imgval(testref_base):
         deconvolve(imagename=self.img, niter=10)
         shutil.copytree(self.mname, self.mname2)
         
-        strcheck = "exists"
+        strcheck = r"exists"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
 
@@ -2344,7 +2357,7 @@ class test_imgval(testref_base):
             
         os.system("rm -rf "+self.mname)
         self.assertTrue(os.path.exists(self.mname2) and not os.path.exists(self.mname), "File {0} did not get translated to {1}!".format(self.mname, self.mname2))
-        strcheck = "Error in setting"
+        strcheck = r"Error in setting"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, startmodel=self.mname2)
 
@@ -2461,7 +2474,7 @@ class test_mtmfsimgval(testref_base):
         self.ivsetup()
         os.system("mv {0}{1}.tt1 {0}_bak{1}.tt1".format(self.img, ext))
 
-        strcheck = "missing one or more of the required images"
+        strcheck = r"missing one or more of the required images"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs')
 
@@ -2479,7 +2492,7 @@ class test_mtmfsimgval(testref_base):
         os.system("mv {0} {1}".format(fn1, fn2))
 
         imtrans(imagename=self.img+"_bak"+ext+ttn, outfile=self.img+ext+ttn, order="3012")
-        strcheck = "(There is a shape mismatch between existing images|There is a coordinate system mismatch between existing images on disk and current parameters)"
+        strcheck = r"(There is a shape mismatch between existing images|There is a coordinate system mismatch between existing images on disk and current parameters)"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs', **deconvolve_args)
 
@@ -2495,7 +2508,7 @@ class test_mtmfsimgval(testref_base):
         os.system("mv {0}{1}{2} {0}_bak{1}{2}".format(self.img, ext, ttn))
 
         imrebin(imagename=self.img+"_bak"+ext+ttn, outfile=self.img+ext+ttn, factor=[2,2])
-        strcheck = "(There is a shape mismatch between existing images|There is a coordinate system mismatch between existing images on disk and current parameters)"
+        strcheck = r"(There is a shape mismatch between existing images|There is a coordinate system mismatch between existing images on disk and current parameters)"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs', **deconvolve_args)
 
@@ -2650,7 +2663,7 @@ class test_mtmfsimgval(testref_base):
         # Throws an error if startmodel is set but does not exist
         ######################################################################################
         self.ivsetup()
-        strcheck = "does not exist"
+        strcheck = r"does not exist"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, startmodel='doesnotexists.model', deconvolver='mtmfs')
 
@@ -2665,7 +2678,7 @@ class test_mtmfsimgval(testref_base):
         deconvolve(imagename=self.img, niter=10, deconvolver='mtmfs')
         shutil.copytree(self.mname, self.mname2)
         
-        strcheck = "exists"
+        strcheck = r"exists"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, startmodel=self.mname2, deconvolver='mtmfs')
 
@@ -2700,7 +2713,7 @@ class test_mtmfsimgval(testref_base):
             
         os.system("rm -rf "+self.mname)
         self.assertTrue(os.path.exists(self.mname2) and not os.path.exists(self.mname), "File {0} did not get translated to {1}!".format(self.mname, self.mname2))
-        strcheck = "Error in setting"
+        strcheck = r"Error in setting"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, startmodel=self.mname2, deconvolver='mtmfs')
 
@@ -3105,8 +3118,6 @@ class test_niterparms(testref_base):
 
 ##Task level tests : verify that the minimal set of images (.residual and .psf) can be used with each of the other parameters
 class test_minimages(testref_base):
-    inptbls = [".residual", ".psf"]
-
     @classmethod
     def setUpClass(cls):
         super(test_minimages, cls).setUpClass()
@@ -3115,10 +3126,11 @@ class test_minimages(testref_base):
         cls.staticPrepData(msfile, tclean_args={'imsize':100, 'cell':['10.0arcsec','10.0arcsec']})
         cls.staticCopyToCache(msfile, imagename=cls.img, cachedir='imgval_cache')
 
-    def misetup(self):
+    def misetup(self, copytbls=None):
         # we can use a cache here because tclean was run only run once, during setUpClass
+        copytbls = copytbls if copytbls != None else [".residual", ".psf"]
         self.delData()
-        type(self).staticCopyFromCache()
+        type(self).staticCopyFromCache(copytbls=copytbls)
 
     # Test 111
     def test_minimages_deconvolver_clark(self):
@@ -3216,14 +3228,49 @@ class test_minimages(testref_base):
     def test_minimages_nsigma(self):
         """ [minimages] test_minimages_nsigma """
         ######################################################################################
+        # Test non-default value for nsigma with the .residual, .psf, and .pb present
+        ######################################################################################
+        self.misetup(['.residual', '.psf', '.pb'])
+        deconvolve(imagename=self.img, niter=10, nsigma=1.5, threshold="1Jy")
+        report=th.checkall(imgexist=[self.img+'.image'])
+
+    # Test 121
+    def test_minimages_nsigma_nopb(self):
+        """ [minimages] test_minimages_nsigma """
+        ######################################################################################
         # Test non-default value for nsigma with only the .residual and .psf present
         ######################################################################################
         self.misetup()
-        strcheck = "require.*\\.pb.*image"
+        strcheck = r"require.*\.pb .*image"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, nsigma=1.5)#=0.0
 
-    # Test 121
+    # Test 122
+    def test_minimages_nsigma_mtmfs(self):
+        """ [minimages] test_minimages_nsigma """
+        ######################################################################################
+        # Test non-default value for nsigma with only the .residual, .psf, and .pb present
+        ######################################################################################
+        # can't use misetup because mtmfs requires different input images
+        self.prepData('refim_point.ms', tclean_args={'imsize':100, 'cell':'10.0arcsec', 'deconvolver':'mtmfs', 'nterms':2})
+        os.system('rm -rf tst.alpha* tst.image* tst.mask* tst.model* tst.sumwt*')
+        deconvolve(imagename=self.img, niter=10, deconvolver="mtmfs", nterms=2, nsigma=1.5)
+        report=th.checkall(imgexist=[self.img+'.image.tt0'])
+
+    # Test 123
+    def test_minimages_nsigma_nopb_mtmfs(self):
+        """ [minimages] test_minimages_nsigma """
+        ######################################################################################
+        # Test non-default value for nsigma with only the .residual and .psf present
+        ######################################################################################
+        # can't use misetup because mtmfs requires different input images
+        self.prepData('refim_point.ms', tclean_args={'imsize':100, 'cell':'10.0arcsec', 'deconvolver':'mtmfs', 'nterms':2})
+        os.system('rm -rf tst.alpha* tst.image* tst.mask* tst.model* tst.sumwt* tst.pb*')
+        strcheck = r"require.*\.pb\.tt0 .*image"
+        with self.assertRaisesRegex(RuntimeError, strcheck):
+            deconvolve(imagename=self.img, niter=10, deconvolver="mtmfs", nterms=2, nsigma=1.5)#=0.0
+
+    # Test 124
     def test_minimages_cyclefactor(self):
         """ [minimages] test_minimages_cyclefactor """
         ######################################################################################
@@ -3233,7 +3280,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, cyclefactor=5.0)#=1.0,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 122
+    # Test 125
     def test_minimages_minpsffraction(self):
         """ [minimages] test_minimages_minpsffraction """
         ######################################################################################
@@ -3243,7 +3290,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, minpsffraction=0.5)#=0.1,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 123
+    # Test 126
     def test_minimages_maxpsffraction(self):
         """ [minimages] test_minimages_maxpsffraction """
         ######################################################################################
@@ -3253,7 +3300,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, maxpsffraction=0.5)#=0.8,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 124
+    # Test 127
     def test_minimages_interactive(self):
         """ [minimages] test_minimages_interactive """
         ######################################################################################
@@ -3263,7 +3310,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, interactive=0)#=False,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 125
+    # Test 128
     def test_minimages_fastnoise(self):
         """ [minimages] test_minimages_fastnoise """
         ######################################################################################
@@ -3273,18 +3320,18 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, fastnoise=False)#=True,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 126
+    # Test 129
     def test_minimages_usemask(self):
         """ [minimages] test_minimages_usemask """
         ######################################################################################
         # Test non-default value for usemask with only the .residual and .psf present
         ######################################################################################
         self.misetup()
-        strcheck = "Need .*(pb|PB).* image"
+        strcheck = r"Need .*(pb|PB).* image"
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, usemask="pb", pbmask=0.2)#='user',
 
-    # Test 127
+    # Test 130
     def test_minimages_mask(self):
         """ [minimages] test_minimages_mask """
         ######################################################################################
@@ -3294,7 +3341,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, mask='circle[[40pix,40pix],10pix]')#='',
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 128
+    # Test 131
     def test_minimages_sidelobethreshold(self):
         """ [minimages] test_minimages_sidelobethreshold """
         ######################################################################################
@@ -3304,7 +3351,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", sidelobethreshold=10.0)#=5.0,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 129
+    # Test 132
     def test_minimages_noisethreshold(self):
         """ [minimages] test_minimages_noisethreshold """
         ######################################################################################
@@ -3314,7 +3361,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", noisethreshold=10.0)#=3.0,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 130
+    # Test 133
     def test_minimages_lownoisethreshold(self):
         """ [minimages] test_minimages_lownoisethreshold """
         ######################################################################################
@@ -3324,7 +3371,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", lownoisethreshold=10.0)#=3.0,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 131
+    # Test 134
     def test_minimages_negativethreshold(self):
         """ [minimages] test_minimages_negativethreshold """
         ######################################################################################
@@ -3334,7 +3381,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", negativethreshold=0.5)#=0.0,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 132
+    # Test 135
     def test_minimages_smoothfactor(self):
         """ [minimages] test_minimages_smoothfactor """
         ######################################################################################
@@ -3344,7 +3391,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", smoothfactor=0.5)#=1.0,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 133
+    # Test 136
     def test_minimages_minbeamfrac(self):
         """ [minimages] test_minimages_minbeamfrac """
         ######################################################################################
@@ -3354,7 +3401,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", minbeamfrac=0.5)#=0.3, 
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 134
+    # Test 137
     def test_minimages_cutthreshold(self):
         """ [minimages] test_minimages_cutthreshold """
         ######################################################################################
@@ -3364,7 +3411,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", cutthreshold=0.5)#=0.01,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 135
+    # Test 138
     def test_minimages_growiterations(self):
         """ [minimages] test_minimages_growiterations """
         ######################################################################################
@@ -3374,7 +3421,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", growiterations=1)#=100
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 136
+    # Test 139
     def test_minimages_dogrowprune(self):
         """ [minimages] test_minimages_dogrowprune """
         ######################################################################################
@@ -3384,7 +3431,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", dogrowprune=False)#=True
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 137
+    # Test 140
     def test_minimages_verbose(self):
         """ [minimages] test_minimages_verbose """
         ######################################################################################
