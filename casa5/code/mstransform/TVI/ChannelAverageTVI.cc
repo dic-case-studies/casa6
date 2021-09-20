@@ -723,7 +723,7 @@ Vector<Double> ChannelAverageTVI::getChanWidths ( Double time,
 	  return getVii()->getChanWidths(time,frameOfReference,spectralWindowId,msId);
 	}
 
-	// Get frequencies from input VI
+	// Get widths from input VI
 	Vector<Double> inputWidths = getVii()->getChanWidths(time,frameOfReference,
 							     spectralWindowId,msId);
 	// Pass-thru for single-channel case
@@ -732,7 +732,7 @@ Vector<Double> ChannelAverageTVI::getChanWidths ( Double time,
 	if (inputWidths.nelements()==1)
 	  return inputWidths;
 
-	// Produce output (transformed) frequencies
+	// Produce output (summed) widths
 	Vector<Double> outputWidths(spwOutChanNumMap_p[spectralWindowId],0);
 
 	// Gather input data

@@ -227,7 +227,6 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
     }
 
 
-
     // Assume effective BW is just the width
     effBW_(ispw).reference(width_(ispw));
 
@@ -261,13 +260,13 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
 
       // Step over unmapped spws...
       if (spwfanin(ispw)<0)
-	continue;
+	continue; 
 
       //  The following assumes fan-in is always to lowest spw id in group 
       if (Int(ispw)==spwfanin(ispw)) {	
 
-	//	cout << "Aggregate spw = " << ispw << endl;
-
+	//cout << "Aggregate spw = " << ispw << endl;
+	
 	isAggspw(ispw)=true;
 
 	// Just to be sure...
@@ -317,11 +316,12 @@ void FreqMetaData::calcFreqMeta(const Vector< Vector<Double> >& msfreq,
 	  throw(AipsError("Cannont combine spws with differing nchan!"));
 
 	//  TBD: recognize/handle sideband and width variation if nchan>1 ?
+	//  (at the moment, there is no SB info in the sign of the width)
 
-	// Offsets forp recision
+	// Offsets for precision (from aggspw!)
 	Vector<Double> f(freq_(ispw)-freq0(aggspw));
 	Vector<Double> w(width_(ispw)/width1(aggspw));
-	
+
 	// accumulate
 	freq_(aggspw)+= ( (Array<Double>) f*w);
 	width_(aggspw)+= ( (Array<Double>) w*w);
@@ -3038,7 +3038,7 @@ void SolvableVisCal::discernAndSetSolnFrequencies(const vi::VisibilityIterator2&
     // Use the MINIMUM spwid from selection for the aggregate
     Int aggSpw=min(selspws);
     for (uInt iselspw=0;iselspw<selspws.nelements();++iselspw) 
-      spwFanIn(iselspw)=aggSpw;
+      spwFanIn(selspws(iselspw))=aggSpw;
 
   }
 
