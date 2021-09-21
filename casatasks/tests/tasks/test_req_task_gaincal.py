@@ -676,6 +676,252 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(flT[1,0,20:30][7])       # spw 2, antenna 7, pol=Y
         # (spw 3 tested above)
 
+
+
+    def test_FreqMetaData1a(self):
+        '''
+            test_FreqMetaData1a: No explicit spw selection + append
+            -------------------
+        '''
+        # 1a. No explicit spw selection                                                                                                                                                                           
+
+        # extract MS frequencies, upon which caltable frequency meta data are based
+        tb.open(datacopy+'/SPECTRAL_WINDOW')
+        msfreq=tb.getcol('CHAN_FREQ')
+        tb.close()
+
+
+        # the caltable
+        ct='fmd1a.G'
+
+        # create the table
+        gaincal(vis=datacopy,caltable=ct,scan='2,4,6',spw='',solint='inf',smodel=[1,0,0,0])
+
+        tb.open(ct+'/SPECTRAL_WINDOW')
+        ctfreq=tb.getcol('CHAN_FREQ')
+        ctspwflag=tb.getcol('FLAG_ROW')  # shoule be [F,F,F,F]   # all spws unflagged
+        tb.close()
+        fdiff=(ctfreq[0,:] - np.mean(msfreq,0))/ctfreq[0,:]  # should be all ~zero  (<1e-15)
+
+        tb.open(ct)
+        ctnrows=tb.nrows()   # ctnrows should be 120 = (nant=10)*(nspw=4)*(nscan=3)
+        tb.close()
+
+        #print(ctnrows, ctspwflag, fdiff)
+        self.assertTrue(np.all(ctspwflag==False))  # all spws unflagged
+        self.assertTrue(ctnrows==120)
+        self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
+
+        #  + append=True
+        gaincal(vis=datacopy,caltable=ct,scan='14,16',spw='',solint='inf',smodel=[1,0,0,0],append=True)
+
+        tb.open(ct+'/SPECTRAL_WINDOW')
+        ctfreq=tb.getcol('CHAN_FREQ')
+        ctspwflag=tb.getcol('FLAG_ROW')  # shoule be [F,F,F,F]   # all spws unflagged
+        tb.close()
+        fdiff=(ctfreq[0,:] - np.mean(msfreq,0))/ctfreq[0,:]  # should be all ~zero  (<1e-15)
+
+        tb.open(ct)
+        ctnrows=tb.nrows()   # ctnrows should be 200 = (nant=10)*(nspw=4)*(nscan=3+2)
+        tb.close()
+
+        #print(ctnrows, ctspwflag, fdiff)
+        self.assertTrue(np.all(ctspwflag==False))  # all spws unflagged
+        self.assertTrue(ctnrows==200)
+        self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
+
+
+
+    def test_FreqMetaData1b(self):
+        '''
+            test_FreqMetaData1b: Non-trivial spw/channel selection + append
+            -------------------
+        '''
+
+        # 1b  Non-trivial spw selection, including some channel selection
+
+        # extract MS frequencies, upon which caltable frequency meta data are based
+        tb.open(datacopy+'/SPECTRAL_WINDOW')
+        msfreq=tb.getcol('CHAN_FREQ')
+        tb.close()
+
+        # the caltable
+        ct='fmd1b.G'
+
+        # create the table
+        gaincal(vis=datacopy,caltable=ct,scan='2,4,6',spw='1:1~4,2,3:4~7',solint='inf',smodel=[1,0,0,0])
+
+        tb.open(ct+'/SPECTRAL_WINDOW')
+        ctfreq=tb.getcol('CHAN_FREQ',1,3)  # only 1,2,3
+        ctspwflag=tb.getcol('FLAG_ROW')  # shoule be [T,F,F,F]   # spw 0 is flagged (not selected)
+        tb.close()
+        fdiff=ctfreq[0,:].copy()
+        fdiff[0]-=np.mean(msfreq[1:5,1])  # chans 1-4 
+        fdiff[1]-=np.mean(msfreq[:,2])    # all chans
+        fdiff[2]-=np.mean(msfreq[4:8,3])  # chans 4-7
+        fdiff/=ctfreq[0,:]    # should be ~zero (<1e-15)
+
+        tb.open(ct)
+        ctnrows=tb.nrows()   # ctnrows should be 90 = (nant=10)*(nspw=3)*(nscan=3)
+        tb.close()
+
+        #print(ctnrows, ctspwflag, fdiff)
+        self.assertTrue(np.all(ctspwflag==[True,False,False,False]))  # only spw 0 flagged
+        self.assertTrue(ctnrows==90)
+        self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
+
+        
+        #  different spw selection (MISMATCHED in spw 3!) + append=True   THIS SHOULD FAIL W/ EXCEPTION
+        try:
+            gaincal(vis=datacopy,caltable=ct,scan='21,23',spw='0,1:1~4,2,3:0~1',solint='inf',smodel=[1,0,0,0],append=True)
+            print("In testFreqMetaData1b, a gaincal which should have thrown an exception did not!")
+            self.assertTrue(False)
+        except RuntimeError:
+            self.assertTrue(True)
+
+
+        #  different spw selection (overlaps correctly with above) + append=True
+        gaincal(vis=datacopy,caltable=ct,scan='14,16',spw='0,1:1~4,2',solint='inf',smodel=[1,0,0,0],append=True)
+
+        tb.open(ct+'/SPECTRAL_WINDOW')
+        ctfreq=tb.getcol('CHAN_FREQ')    # all spws now
+        ctspwflag=tb.getcol('FLAG_ROW')  # shoule be [F,F,F,F]   # all spws unflagged
+        tb.close()
+        fdiff=ctfreq[0,:].copy()
+        fdiff[0]-=np.mean(msfreq[:,0])  # all chans
+        fdiff[1]-=np.mean(msfreq[1:5,1])  # chans 1-4 
+        fdiff[2]-=np.mean(msfreq[:,2])    # all chans
+        fdiff[3]-=np.mean(msfreq[4:8,3])  # chans 4-7
+        fdiff/=ctfreq[0,:]    # should be ~zero (<1e-15)
+
+        tb.open(ct)
+        ctnrows=tb.nrows()   # ctnrows should be 150 = (nant=10)*(nspw=3)*(nscan=3+2)  (NB: different 3 spws)  
+        tb.close()
+
+        #print(ctnrows, ctspwflag, fdiff)
+        self.assertTrue(np.all(ctspwflag==False))  # solutions for all spws now
+        self.assertTrue(ctnrows==150)
+        self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
+
+
+    def test_FreqMetaData2a(self):
+        '''
+            test_FreqMetaData2a: No explicit spw selection w/ combine=spw + append
+            -------------------
+        '''
+        # 2a. No explicit spw selection w/ combine='spw'
+
+        # extract MS frequencies, upon which caltable frequency meta data are based
+        tb.open(datacopy+'/SPECTRAL_WINDOW')
+        msfreq=tb.getcol('CHAN_FREQ')
+        tb.close()
+
+        # the caltable
+        ct='fmd2a.G'
+
+        # create table
+        gaincal(vis=datacopy,caltable=ct,scan='2,4,6',spw='',combine='spw',solint='inf',smodel=[1,0,0,0])
+
+        tb.open(ct+'/SPECTRAL_WINDOW')
+        ctfreq=tb.getcol('CHAN_FREQ',0,1)  # only 0
+        ctspwflag=tb.getcol('FLAG_ROW')    # should be [F,T,T,T]   # only for spw 0
+        tb.close()
+        fdiff=(ctfreq[0,0]-np.mean(msfreq,(0,1)))/ctfreq[0,0]     # should be ~zero (<1e-15)
+
+        tb.open(ct)
+        ctnrows=tb.nrows()   # ctnrows should be 30 = (nant=10)*(nspw=1)*(nscan=3)
+        tb.close()
+
+        #print(ctnrows, ctspwflag, fdiff)
+        self.assertTrue(np.all(ctspwflag==[False,True,True,True]))  # only spw 0 unflagged
+        self.assertTrue(ctnrows==30)
+        self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
+        
+        #  + append=True
+        gaincal(vis=datacopy,caltable=ct,scan='14,16',spw='',combine='spw',solint='inf',smodel=[1,0,0,0],append=True)
+
+        tb.open(ct+'/SPECTRAL_WINDOW')
+        ctfreq=tb.getcol('CHAN_FREQ',0,1)  # only 0
+        ctspwflag=tb.getcol('FLAG_ROW')    # should be [F,T,T,T]   # only for spw 0
+        tb.close()
+        fdiff=(ctfreq[0,0]-np.mean(msfreq,(0,1)))/ctfreq[0,0]   # should be ~zero (<1e-15)
+
+        tb.open(ct)
+        ctnrows=tb.nrows()   # ctnrows should be 50 = (nant=10)*(nspw=1)*(nscan=3+2)
+        tb.close()
+
+        #print(ctnrows, ctspwflag, fdiff)
+        self.assertTrue(np.all(ctspwflag==[False,True,True,True]))  # only spw 0 unflagged
+        self.assertTrue(ctnrows==50)
+        self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
+
+
+
+    def test_FreqMetaData2b(self):
+        '''
+            test_FreqMetaData2b: Non-trivial spw/channel selection  w/ combine=spw + append
+            -------------------
+        '''
+        # 2b. Non-trivial spw selection, including some channel selection, w/ combine='spw'  fanin:  [1,2,3]->[1]
+
+        # extract MS frequencies, upon which caltable frequency meta data are based
+        tb.open(datacopy+'/SPECTRAL_WINDOW')
+        msfreq=tb.getcol('CHAN_FREQ')
+        tb.close()
+
+
+        # the caltable
+        ct='fmd2b.G'
+
+        # create table
+        gaincal(vis=datacopy,caltable=ct,scan='2,4,6',spw='1:1~4,2,3:4~7',combine='spw',solint='inf',smodel=[1,0,0,0])
+
+        tb.open(ct+'/SPECTRAL_WINDOW')
+        ctfreq=tb.getcol('CHAN_FREQ',1,1)  # only 1
+        ctspwflag=tb.getcol('FLAG_ROW')    # should be [T,F,T,T]   # only unflagged for spw 1
+        tb.close()
+        fdiff=(ctfreq[0,0]-np.mean(list(msfreq[1:5,1])+list(msfreq[:,2])+list(msfreq[4:8,3])))/ctfreq[0,0]   # should be ~zero (<1e-15)
+
+        tb.open(ct)
+        ctnrows=tb.nrows()   # ctnrows should be 30 = (nant=10)*(nspw=1)*(nscan=3)
+        tb.close()
+
+        #print(ctnrows, ctspwflag, fdiff)
+        self.assertTrue(np.all(ctspwflag==[True,False,True,True]))  # only spw 0 unflagged
+        self.assertTrue(ctnrows==30)
+        self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
+
+
+        # attemp to append incongruent channel selection (fanin is still [1,2,3]->[1])   SHOULD FAIL W/ EXCEPTION
+        try:
+            gaincal(vis=datacopy,caltable=ct,scan='21,23',spw='1:1~4,2,3:0~1',combine='spw',solint='inf',smodel=[1,0,0,0],append=True)
+            print("In testFreqMetaData2b, a gaincal which should have thrown an exception did not!")
+            self.assertTrue(False)
+        except RuntimeError:
+            self.assertTrue(True)
+
+        #  + append=True
+        gaincal(vis=datacopy,caltable=ct,scan='14,16',spw='1:1~4,2,3:4~7',combine='spw',solint='inf',smodel=[1,0,0,0],append=True)
+
+        tb.open(ct+'/SPECTRAL_WINDOW')
+        ctfreq=tb.getcol('CHAN_FREQ',1,1)  # only 1
+        ctspwflag=tb.getcol('FLAG_ROW')    # should be [T,F,T,T]   # only unflagged for spw 1
+        tb.close()
+        fdiff=(ctfreq[0,0]-np.mean(list(msfreq[1:5,1])+list(msfreq[:,2])+list(msfreq[4:8,3])))/ctfreq[0,0]    # should be ~zero (<1e-15)
+
+        tb.open(ct)
+        ctnrows=tb.nrows()   # ctnrows should be 50 = (nant=10)*(nspw=1)*(nscan=3+2)
+        tb.close()
+
+        #print(ctnrows, ctspwflag, fdiff)
+        self.assertTrue(np.all(ctspwflag==[True,False,True,True]))  # only spw 0 unflagged
+        self.assertTrue(ctnrows==50)
+        self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
+
+
+
+
+
 def suite():
     return[gaincal_test]
 
