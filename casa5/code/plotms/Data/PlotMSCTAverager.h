@@ -186,6 +186,7 @@ private:
   casacore::Cube<casacore::Float> accumWt_;
   casacore::Cube<casacore::Bool> avgFlag_;
   casacore::Vector<casacore::Double> accumFreq_; // if channel averaging
+  casacore::Vector<casacore::Int> nAccumFreq_;   // if channel averaging
 
   // For channel averaging: nrow is number of averaged channels,
   // each row is vector of channels averaged into each averaged channel

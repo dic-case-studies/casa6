@@ -123,8 +123,7 @@ void CalCache::loadIt(vector<PMS::Axis>& loadAxes,
 
   // Warn that transformations will be ignored
   if (transformations().anyTransform()) {
-    logWarn("CalCache::loadIt",
-      "Transformations ignored: not supported for calibration tables");
+    logWarn("CalCache::loadIt", "Transformations ignored: not supported for calibration tables.");
   }
 
   // poln ratio
@@ -188,8 +187,13 @@ void CalCache::loadNewCalTable(vector<PMS::Axis>& loadAxes,
   PlotMSAveraging pmsAveraging(averaging());
   casacore::Bool readonly(True);
   setUpCalIter(*selct, pmsAveraging, readonly);
+
+  // Set data shape
   ci_p->reset();
   parshape_ = ci_p->flag().shape();
+
+  // Set frequency frame
+  freqFrame_ = static_cast<MFrequency::Types>(ci_p->freqFrame(ci_p->thisSpw()));
 
   // Size cache arrays based on number of chunks
   if (pmsAveraging.anyAveraging()) {
