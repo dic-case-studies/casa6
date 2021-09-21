@@ -459,8 +459,10 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti, std::vector<casacore::Sl
               accumParamErr_(outPos) = 0.0;
               accumSnr_(outPos) = 0.0;
               accumWt_(outPos) = 0.0;
-              accumFreq_(outchan) = 0.0;
-              nAccumFreq_(outchan) = 0;
+              if (avgChan_p) {
+                accumFreq_(outchan) = 0.0;
+                nAccumFreq_(outchan) = 0;
+              }
             }
           } else { // input flagged
             // Only accumulate if output is also flagged
@@ -488,8 +490,10 @@ void PlotMSCTAverager::simpleAccumulate (ROCTIter& cti, std::vector<casacore::Sl
             accumParamErr_(outPos) += wt * iterParamErr(inPos);
             accumSnr_(outPos) += wt * iterSnr(inPos);
 
-            accumFreq_(outchan) += iterFreq(channum);
-            ++nAccumFreq_(outchan);
+            if (avgChan_p) {
+              accumFreq_(outchan) += iterFreq(channum);
+              ++nAccumFreq_(outchan);
+            }
           }
 
           if (avgChan_p) {
@@ -652,8 +656,10 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti, std::vector<casacore::S
                 accumParamErr_(iaPos) = 0.0;
                 accumSnr_(iaPos) = 0.0;
                 accumWt_(iaPos) = 0.0;
-                accumFreq_(outchan) = 0.0;
-                nAccumFreq_(outchan) = 0;
+                if (avgChan_p) {
+                  accumFreq_(outchan) = 0.0;
+                  nAccumFreq_(outchan) = 0;
+                }
               }
             }
           } else { // input cell is flagged
@@ -699,8 +705,10 @@ void PlotMSCTAverager::antennaAccumulate (ROCTIter& cti, std::vector<casacore::S
 
           if (accum_i || accum_j) {
             accumCount++;
-            accumFreq_(outchan) += iterFreq(channum);
-            ++nAccumFreq_(outchan);
+            if (avgChan_p) {
+              accumFreq_(outchan) += iterFreq(channum);
+              ++nAccumFreq_(outchan);
+            }
           }
 
           if (avgChan_p) {
