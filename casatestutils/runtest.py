@@ -173,6 +173,7 @@ def write_conftest_osx(filepath):
     string = """
 import pytest
 import inspect
+import os
 
 @pytest.mark.trylast
 def pytest_configure(config):
