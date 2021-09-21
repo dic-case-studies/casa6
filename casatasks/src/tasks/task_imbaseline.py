@@ -823,7 +823,9 @@ class MS2ImageConverter():
     def convert(self):
         casalog.post("start imaging", "DEBUG2")
         try:
-            self.__make_output_file() # mask data is copied in this method 
+            self.__make_output_file(infile=self.vals.imagename, outfile=self.vals.linefile) # mask data is copied in this method 
+            if self.vals.output_cont:
+                self.__make_output_file(infile=self.vals.imagename, outfile=self.vals.output_cont_file)
         except Exception as instance:
             casalog.post(f"*** Error '{instance}'", 'SEVERE')
 
@@ -872,16 +874,14 @@ class MS2ImageConverter():
                         self.array[i][j] =  tb.getcell(self.vals.datacolumn, pos)[0].real
                     pos += 1
 
-    def __make_output_file(self):
-        if not ia.fromimage(infile=self.vals.imagename, outfile=self.vals.linefile):
-            raise Exception(f'Some error occured, infile:{self.vals.imagename}, outfile:{self.vals.linefile}')
+    def __make_output_file(self, infile:str = None, outfile:str = None):
+        if not os.path.exists(infile):
+            raise Exception(f'Image files not found, infile:{self.vals.imagename}')
+        not_ok = not ia.fromimage(infile=infile, outfile=outfile)
         ia.done()
-        if self.vals.output_cont and \
-           not ia.fromimage(infile=self.vals.imagename, outfile=self.vals.output_cont_file):
-            raise Exception(f'Some error occured, infile:{self.vals.imagename}, outfile:{self.vals.output_cont_file}')
-        ia.done()
-
-
+        if not_ok:
+            raise Exception(f'Some error occured, infile:{infile}, outfile:{outfile}')
+    
 
 class EmptyMSBaseInformation:
     """
