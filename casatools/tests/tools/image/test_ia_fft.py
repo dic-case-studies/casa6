@@ -1,5 +1,5 @@
 ##########################################################################
-# imfit_test.py
+# test_ia_fft.py
 #
 # Copyright (C) 2008, 2009
 # Associated Universities, Inc. Washington DC, USA.
@@ -48,15 +48,6 @@
 # <synopsis>
 # Test the ia.fft() method.
 # </synopsis> 
-#
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_ia_fft[test1,test2,...]
-#
-# </example>
 #
 # <motivation>
 # To provide a test standard for the ia.fft tool method to ensure
@@ -111,9 +102,12 @@ class ia_fft_test(unittest.TestCase):
             yy.fft, real="real1.im", mask=mymask + ">0",
             stretch=False
         )
+        real = 'real2.im'
         zz = yy.fft(
-            real="real2.im", mask=mymask + ">0", stretch=True
+            real=real, mask=mymask + ">0", stretch=True
         )
+        shutil.rmtree(mymask)
+        shutil.rmtree(real)
         self.assertTrue(type(zz) == type(False))
         yy.done()
         
@@ -129,23 +123,23 @@ class ia_fft_test(unittest.TestCase):
             imag = "imag.im" + t
             amp = "amp.im" + t
             phase = "phase.im" + t
-            complex = "complex.im" + t
+            _complex = "complex.im" + t
             myia.fft(
                 real=real, imag=imag, amp=amp,
-                phase=phase, complex=complex
+                phase=phase, complex=_complex
             )
-            for im in [real, imag, amp, phase, complex]:
+            for im in [real, imag, amp, phase, _complex]:
                 expec = 1
                 if im == imag or im == phase:
                     expec = 0
-                elif im == complex:
+                elif im == _complex:
                     expec = 1 + 0j
                 myia.open(im)
                 got = myia.getchunk()
                 myia.done()
                 self.assertTrue((got == expec).all())
-                
-                
+                shutil.rmtree(im)
+
     def test_regression(self):
         """Was regression test in imagetest"""
 
@@ -216,8 +210,11 @@ class ia_fft_test(unittest.TestCase):
         b2 = c.imag
         b3 = abs(c)
        
-        ok = testim.done() and im1.done() and im2.done() and im3.done() and im4.done()
-        self.assertTrue(ok)
+        self.assertTrue(
+            testim.done() and im1.done(remove=True)
+            and im2.done(remove=True) and im3.done(remove=True)
+            and im4.done(remove=True)
+        )
 
     def test_history(self):
         """verify history writing"""
@@ -232,7 +229,27 @@ class ia_fft_test(unittest.TestCase):
             myia.done()
             self.assertTrue("ia.fft" in msgs[-2])
             self.assertTrue("ia.fft" in msgs[-1])
-        
+            shutil.rmtree(im)
+
+    def test_units(self):
+        """
+        CAS-13489: test output units
+
+        The output phase image should have units of radians
+        If the input image represents the image plane and has units of Jy/beam or Jy/pixel,
+        then the ouptut (uv-plane) images should have units of Jy. If the input image has
+        a beam, the beam should be copied to the output images.
+        If the input image represents the uv-plane, then the brightness unit of the
+        output (image plane) images should be Jy/beam or Jy/pixel, depending on if the
+        input image has a beam or not.
+        """
+        _ia = iatool()
+        # create image-domain image
+        _ia.fromshape("", [20, 20])
+        self.assertTrue(_ia.setbrightnessunit('Jy/pixel'), 'Failed to set brightness unit')
+        _ia.done()
+
+
 def suite():
     return [ia_fft_test]
 
