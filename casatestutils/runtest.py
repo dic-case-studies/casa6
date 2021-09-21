@@ -90,6 +90,7 @@ def write_conftest_linux(filepath):
     string = """
 import pytest
 import inspect
+import os
 
 @pytest.mark.trylast
 def pytest_configure(config):
@@ -124,6 +125,44 @@ class TestDescriptionPlugin:
                     self.terminal_reporter.write(f'\\n{self.desc} \\n')
             else:
                     self.terminal_reporter.write(f'\\n')
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(item, call):
+        outcome = yield
+        report = outcome.get_result()
+        #print(dir(report))
+        report.start = call.start
+        report.stop = call.stop
+        if report.when=='teardown':
+            filepath = os.path.join(os.getcwd(),'short_summary.log')
+
+            file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+            file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid,))
+            file_obj.close()
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(item, call):
+        outcome = yield
+        report = outcome.get_result()
+        if report.when=='call':
+            filepath = os.path.join(os.getcwd(),'short_summary.log')
+            # write short summary to file
+            file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+            file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid))
+            file_obj.close()
+
+            # Write not pass to Textfile
+            if report.outcome != 'passed':
+                file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+                file_obj.write("\\tDuration: {}s\\n".format(round(report.duration,5)))
+                file_obj.write("\\tMessage : {}\\n".format(report.longrepr.reprcrash.message))
+                file_obj.close()
+                filepath = os.path.join(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')),'summary_of_failed.log')
+                file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+                file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid))
+                file_obj.write("\\tDuration: {}s\\n".format(round(report.duration,5)))
+                file_obj.write("\\tMessage : {}\\n".format(report.longrepr.reprcrash.message))
+                file_obj.close()
     """
     file_obj = open(filepath,'w')
     file_obj.write(string)
@@ -172,6 +211,30 @@ class TestDescriptionPlugin:
                     self.terminal_reporter.write(f'\\n{self.desc} \\n')
             else:
                     self.terminal_reporter.write(f'\\n')
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(item, call):
+        outcome = yield
+        report = outcome.get_result()
+        if report.when=='call':
+            filepath = os.path.join(os.getcwd(),'short_summary.log')
+            # write short summary to file
+            file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+            file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid))
+            file_obj.close()
+
+            # Write not pass to Textfile
+            if report.outcome != 'passed':
+                file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+                file_obj.write("\\tDuration: {}s\\n".format(round(report.duration,5)))
+                file_obj.write("\\tMessage : {}\\n".format(report.longrepr.reprcrash.message))
+                file_obj.close()
+                filepath = os.path.join(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')),'summary_of_failed.log')
+                file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+                file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid))
+                file_obj.write("\\tDuration: {}s\\n".format(round(report.duration,5)))
+                file_obj.write("\\tMessage : {}\\n".format(report.longrepr.reprcrash.message))
+                file_obj.close()
     """
     file_obj = open(filepath,'w')
     file_obj.write(string)
@@ -571,7 +634,7 @@ def run(testnames):
                 gather_all_tests(workpath +'casampi/', workdir + "all/")
                 cmd = [ workdir ]
                 cmd = ["--continue-on-collection-errors"] + cmd
-                cmd = ["--verbose"] + ["-rA"] + cmd
+                cmd = ["--verbose"] + ["-ra"] + cmd
 
 
                 if DRY_RUN:
@@ -676,7 +739,7 @@ def run(testnames):
                                 
                         # https://docs.pytest.org/en/stable/usage.html
                         
-                        cmd = ["--verbose"] + ["-rA"] + ["--tb=long"] + cmd
+                        cmd = ["--verbose"] + ["-ra"] + ["--tb=long"] + cmd
 
                         if DRY_RUN:
                             cmd = ["--collect-only"] + cmd
@@ -755,7 +818,7 @@ def run(testnames):
                         except:
                             traceback.print_exc()
 
-                        cmd = ["--verbose"] + ["-rA"] + ["--tb=long"] + cmd
+                        cmd = ["--verbose"] + ["-ra"] + ["--tb=long"] + cmd
 
                         if DRY_RUN:
                             cmd = ["--collect-only"] + cmd
