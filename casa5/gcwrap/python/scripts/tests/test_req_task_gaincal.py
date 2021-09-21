@@ -226,6 +226,19 @@ class gaincal_test(unittest.TestCase):
         if os.path.exists(selectCal):
             shutil.rmtree(selectCal)
 
+        # Removing frequency metadata cal tables
+        if os.path.exists('fmd1a.G'):
+            shutil.rmtree('fmd1a.G')
+
+        if os.path.exists('fmd1b.G'):
+            shutil.rmtree('fmd1b.G')
+
+        if os.path.exists('fmd2a.G'):
+            shutil.rmtree('fmd2a.G')
+            
+        if os.path.exists('fmd2b.G'):
+            shutil.rmtree('fmd2b.G')
+
     def test_correctGains(self):
         '''
             test_correctGains
