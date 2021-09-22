@@ -155,22 +155,7 @@ class ImBaselineVals:
         blfunc_variable = self.sdbaseline_blfunc == 'variable'
         if not (blfunc_poly or blfunc_chebyshev or blfunc_cspline or blfunc_sinusoid or blfunc_variable):
             raise ValueError(f'Unsupported blfunc, {self.sdbaseline_blfunc}', 'SEVERE')
-        
-        if not (blfunc_poly or blfunc_chebyshev):
-            self.sdbaseline_order = 5
-        if not blfunc_cspline:
-            self.sdbaseline_npiece = 3
-        if not blfunc_sinusoid:
-            self.sdbaseline_applyfft = True
-            self.sdbaseline_fftthresh = 3.0
-            self.sdbaseline_addwn = [0]
-            self.sdbaseline_rejwn = []
-        if not blfunc_variable:
-            self.sdbaseline_blparam = ''
-        else:
-            self.sdbaseline_clipniter = 0
-            self.sdbaseline_clipthresh = 3.0
-            if not os.path.exists(self.sdbaseline_blparam):
+        if blfunc_variable and not os.path.exists(self.sdbaseline_blparam):
                 raise ValueError(f"input file '{self.blparam}' does not exists", 'SEVERE')
 
     def __prepare_arg_dirkernel(self):
