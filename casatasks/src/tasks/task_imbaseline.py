@@ -289,17 +289,15 @@ def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thre
     # MS -> casaimage
     MS2ImageConverter(vals).convert()
 
-    cleanup_temporary_dirs(vals, False)
+    cleanup(vals)
     # end
 
 def prepare(vals: ImBaselineVals = None):
     ia.dohistory(False)
 
-def cleanup_temporary_dirs(vals: ImBaselineVals = None, debug: bool = True):
-    if debug: return
-    for path in [vals.temporary_vis, vals.imsmooth_output, vals.sdsmooth_output]:
-        if os.path.exists(path):
-            os.rmdir(path)
+def cleanup(vals: ImBaselineVals = None, debug: bool = True):
+    if not debug and os.path.exists(vals.temporary_vis):
+        os.rmdir(vals.temporary_vis)
 
 
 class Imsmooth():
