@@ -21,6 +21,7 @@ qa = quanta()
 ms = mstool()
 sdms = singledishms()
 
+
 class ImBaselineVals:
     """ImBaselineVals is to handle input data set of imbaseline task.
     The task contains five parts, imsmooth, MS creating, sdsmooth, sdbaseline, image output.
@@ -271,8 +272,10 @@ def imbaseline(imagename = None, linefile = None, output_cont = None, bloutput =
     cleanup_temporary_dirs(vals, False)
     # end
 
+
 def prepare(vals: ImBaselineVals = None):
     ia.dohistory(False)
+
 
 def cleanup_temporary_dirs(vals: ImBaselineVals = None, debug: bool = True):
     if debug: return
