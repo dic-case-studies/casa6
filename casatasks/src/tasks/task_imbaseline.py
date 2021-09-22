@@ -301,7 +301,7 @@ def cleanup_temporary_dirs(vals: ImBaselineVals = None, debug: bool = True):
             shutil.rmtree(path)
 
 
-class Imsmooth():
+class Imsmooth:
     """
     imsmooth execution class
     This code is based on task_imsmooth.
@@ -374,7 +374,7 @@ class Imsmooth():
                     )
 
 
-class Image2MSConverter():
+class Image2MSConverter:
     """
     The class does convert a Casa image to a MeasurementSet.
     """
@@ -611,7 +611,7 @@ class Image2MSConverter():
                         irow += 1
 
 
-class Sdsmooth():
+class Sdsmooth:
     """
     sdsmooth execution class
     This code is based on task_sdsmooth.
@@ -629,7 +629,7 @@ class Sdsmooth():
         sdms.close()
 
 
-class Sdbaseline():
+class Sdbaseline:
     """
     sdbaseline execution class
     This code is based on task_sdbaseline.
@@ -738,7 +738,7 @@ class Sdbaseline():
             f.write('\n')
 
 
-class MS2ImageConverter():
+class MS2ImageConverter:
     """
     The class does convert a MeasurementSet to a Casa image.
     """
