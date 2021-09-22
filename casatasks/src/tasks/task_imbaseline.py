@@ -29,39 +29,38 @@ class ImBaselineVals:
     this class, all methods get/set all parameters from it.
     """
 
-    def __init__(self, imagename: str = '', linefile: str = '', output_cont: bool = False, bloutput: str = '', maskmode: str = 'list',
-                chans: str = '', thresh: float = 5.0, avg_limit: int = 4, minwidth: int = 4, edge: List[int] = [0, 0],
-                blfunc: str = 'poly', order: int = 5, npiece: int = 3, applyfft: bool = True, fftthresh: float = 3.0,
-                addwn: List[int] = [0], rejwn: List[int] = [], blparam: str = '', clipniter: int = 0, clipthresh: float = 3.0,
-                dirkernel: str = 'none', major: str = '', minor: str = '', pa: str = '', kimage: str = '',
-                scale: float = -1.0, spkernel: str = 'none', kwidth: int = 5):
+    def __init__(self, imagename = None, linefile = None, output_cont = None, bloutput = None, maskmode = None, chans = None, 
+                 thresh = None, avg_limit = None, minwidth = None, edge = None, blfunc = None, order = None, npiece = None, 
+                 applyfft = None, fftthresh = None, addwn = None, rejwn = None, blparam = None, clipniter = None, 
+                 clipthresh = None, dirkernel = None, major = None, minor = None, pa = None, kimage = None, scale = None, 
+                 spkernel = None, kwidth = None):
         """
         All specifications of arguments are defined in:
         https://open-jira.nrao.edu/browse/CAS-13520
         """
-        self.imagename = imagename
-        self.linefile = linefile
-        self.output_cont = output_cont
+        self.imagename = imagename if imagename != None else ''
+        self.linefile = linefile if linefile != None else ''
+        self.output_cont = output_cont if output_cont != None else False
 
         # sdbaseline
-        self.sdbaseline_bloutput = bloutput
-        self.sdbaseline_maskmode = maskmode.lower() # list(default)/auto
-        self.sdbaseline_chans = chans           # maskmode = list
-        self.sdbaseline_thresh = thresh         # maskmode = auto
-        self.sdbaseline_avg_limit = avg_limit   # maskmode = auto
-        self.sdbaseline_minwidth = minwidth     # maskmode = auto
-        self.sdbaseline_edge = edge             # maskmode = auto
-        self.sdbaseline_blfunc = blfunc.lower() # poly(default)/chebyshev/cspline/sinusoid/variable
-        self.sdbaseline_order = order           # blfunc = poly/chebyshev
-        self.sdbaseline_npiece = npiece         # blfunc = cspline
-        self.sdbaseline_applyfft = applyfft     # blfunc = sinusoid
-        self.sdbaseline_fftmethod = 'fft'       # blfunc = sinusoid
-        self.sdbaseline_fftthresh = fftthresh   # blfunc = sinusoid
-        self.sdbaseline_addwn = addwn           # blfunc = sinusoid
-        self.sdbaseline_rejwn = rejwn           # blfunc = sinusoid
-        self.sdbaseline_blparam = blparam       # blfunc = variable
-        self.sdbaseline_clipniter = clipniter
-        self.sdbaseline_clipthresh = clipthresh
+        self.sdbaseline_bloutput = bloutput if bloutput != None else ''
+        self.sdbaseline_maskmode = maskmode.lower() if maskmode != None else 'list' # list(default)/auto
+        self.sdbaseline_chans = chans if chans != None else ''                 # maskmode = list
+        self.sdbaseline_thresh = thresh if thresh != None else 5.0             # maskmode = auto
+        self.sdbaseline_avg_limit = avg_limit if avg_limit != None else 4      # maskmode = auto
+        self.sdbaseline_minwidth = minwidth if minwidth != None else 4         # maskmode = auto
+        self.sdbaseline_edge = edge if edge != None else [0, 0]                # maskmode = auto
+        self.sdbaseline_blfunc = blfunc.lower() if blfunc != None else 'poly'  # poly(default)/chebyshev/cspline/sinusoid/variable
+        self.sdbaseline_order = order if order != None else 5                  # blfunc = poly/chebyshev
+        self.sdbaseline_npiece = npiece if npiece != None else 3               # blfunc = cspline
+        self.sdbaseline_applyfft = applyfft if applyfft != None else True      # blfunc = sinusoid
+        self.sdbaseline_fftmethod = 'fft'                                      # blfunc = sinusoid
+        self.sdbaseline_fftthresh = fftthresh if fftthresh != None else 3.0    # blfunc = sinusoid
+        self.sdbaseline_addwn = addwn if addwn != None else [0]                # blfunc = sinusoid
+        self.sdbaseline_rejwn = rejwn if rejwn != None else []                 # blfunc = sinusoid
+        self.sdbaseline_blparam = blparam if blparam != None else ''           # blfunc = variable
+        self.sdbaseline_clipniter = clipniter if clipniter != None else 0
+        self.sdbaseline_clipthresh = clipthresh if clipthresh != None else 3.0
         self.sdbaseline_antenna = ''
         self.sdbaseline_field = ''
         self.sdbaseline_spw = ''
@@ -79,12 +78,12 @@ class ImBaselineVals:
         self.sdbaseline_minnrow = 1000
 
         # imsmooth
-        self.imsmooth_kernel = dirkernel        # none(default)/gaussian/boxcar/image
-        self.imsmooth_major = major             # dirkernel = gaussian/boxcar
-        self.imsmooth_minor = minor             # dirkernel = gaussian/boxcar
-        self.imsmooth_pa = pa                   # dirkernel = gaussian/boxcar
-        self.imsmooth_kimage = kimage           # dirkernel = image
-        self.imsmooth_scale = scale             # dirkernel = image
+        self.imsmooth_kernel = dirkernel if dirkernel != None else 'none'  # none(default)/gaussian/boxcar/image
+        self.imsmooth_major = major if major != None else ''               # dirkernel = gaussian/boxcar
+        self.imsmooth_minor = minor if minor != None else ''               # dirkernel = gaussian/boxcar
+        self.imsmooth_pa = pa if pa != None else ''                        # dirkernel = gaussian/boxcar
+        self.imsmooth_kimage = kimage if kimage != None else ''            # dirkernel = image
+        self.imsmooth_scale = scale if scale != None else -1.0             # dirkernel = image
         self.imsmooth_targetres = False
         self.imsmooth_mask = ''
         self.imsmooth_beam = {}
@@ -95,8 +94,8 @@ class ImBaselineVals:
         self.imsmooth_stretch = False
 
         # sdsmooth
-        self.sdsmooth_kernel = spkernel         # none(default)/gaussian/boxcar
-        self.sdsmooth_kwidth = kwidth           # gaussian/boxcar
+        self.sdsmooth_kernel = spkernel if spkernel != None else 'none'    # none(default)/gaussian/boxcar
+        self.sdsmooth_kwidth = kwidth if kwidth != None else 5             # gaussian/boxcar
         self.sdsmooth_spw = ''
         self.sdsmooth_field = ''
         self.sdsmooth_antenna = ''
@@ -223,9 +222,11 @@ class ImBaselineVals:
             
 
 @sdutil.sdtask_decorator
-def imbaseline(imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth, edge, blfunc, order, 
-               npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh, dirkernel, major, minor, pa, kimage, 
-               scale, spkernel, kwidth):
+def imbaseline(imagename = None, linefile = None, output_cont = None, bloutput = None, maskmode = None, chans = None, 
+               thresh = None, avg_limit = None, minwidth = None, edge = None, blfunc = None, order = None, npiece = None, 
+               applyfft = None, fftthresh = None, addwn = None, rejwn = None, blparam = None, clipniter = None, 
+               clipthresh = None, dirkernel = None, major = None, minor = None, pa = None, kimage = None, scale = None, 
+               spkernel = None, kwidth = None):
     """
     THE MAIN METHOD OF IMBASELINE.
 
