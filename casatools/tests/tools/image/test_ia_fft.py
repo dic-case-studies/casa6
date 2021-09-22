@@ -274,8 +274,36 @@ class ia_fft_test(unittest.TestCase):
                 _ia.open(im)
                 bunit = _ia.brightnessunit()
                 beam = _ia.restoringbeam()
-                _ia.done(remove=True)
+                _ia.done(remove=(im != real))
                 expec = 'Jy'
+                if im == phase:
+                    expec = 'rad'
+                self.assertTrue(
+                    bunit == expec, 'image ' + im + ' has unit ' + bunit
+                    + ' but should be ' + expec
+                )
+                if bu == 'Jy/pixel':
+                    self.assertTrue(beam == {}, 'this image should have no restoring beam')
+                elif bu == 'Jy/beam':
+                    self.assertTrue(beam['major'] == bmaj, 'Incorrect restoring beam')
+                    self.assertTrue(beam['minor'] == bmin, 'Incorrect restoring beam')
+                    self.assertTrue(beam['positionangle'] == bpa, 'Incorrect restoring beam')
+            # transform from uv to image plane
+            real1 = 'real1.im'
+            _ia.open(real)
+            self.assertTrue(
+                _ia.fft(
+                    real=real1, imag=imag, amp=amp,
+                    phase=phase, complex=_complex, axes=[0, 1],
+                ), 'ia.fft() failed'
+            )
+            _ia.done(remove=True)
+            for im in (real1, imag, amp, phase, _complex):
+                _ia.open(im)
+                bunit = _ia.brightnessunit()
+                beam = _ia.restoringbeam()
+                _ia.done(remove=True)
+                expec = bu
                 if im == phase:
                     expec = 'rad'
                 self.assertTrue(

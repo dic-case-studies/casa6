@@ -192,8 +192,18 @@ void ImageFFT<T>::_copyMost(casacore::ImageInterface<U>& out) const {
 
 template <class T> template <class U>
 void ImageFFT<T>::_fixBUnit(casacore::ImageInterface<U>& out) const {
-    if (out.units() == "Jy/beam") {
+    Unit bu = out.units();
+    if (bu == "Jy/beam") {
         out.setUnits("Jy");
+    }
+    if (bu == "Jy") {
+        if (out.imageInfo().hasBeam()) {
+            // uv-plane -> image-plane with beam
+            out.setUnits("Jy/beam");
+        }
+        else {
+            out.setUnits("Jy/pixel");
+        }
     }
 }
 
