@@ -128,6 +128,7 @@ void ImageFFT<T>::getComplex(casacore::ImageInterface<ComplexType>& out) const {
     );
     _copyMost(out);
     out.copyData(*_tempImagePtr);
+    _fixBUnit(out);
 }
 
 template <class T>
@@ -138,6 +139,7 @@ void ImageFFT<T>::getReal(ImageInterface<RealType>& out) const {
     );
     _copyMost(out);
 	out.copyData(LatticeExpr<RealType>(real(*_tempImagePtr)));
+    _fixBUnit(out);
 }
 
 template <class T>
@@ -148,6 +150,7 @@ void ImageFFT<T>::getImaginary(ImageInterface<RealType>& out) const {
     );
     _copyMost(out);
     out.copyData(LatticeExpr<RealType>(imag(*_tempImagePtr)));
+    _fixBUnit(out);
 }
 
 template <class T>
@@ -158,6 +161,7 @@ void ImageFFT<T>::getAmplitude(ImageInterface<RealType>& out) const {
     );
     _copyMost(out);
     out.copyData(LatticeExpr<RealType>(abs(*_tempImagePtr)));
+    _fixBUnit(out);
 }
 
 template <class T>
@@ -168,7 +172,7 @@ void ImageFFT<T>::getPhase(ImageInterface<RealType>& out) const {
     );
 	_copyMost(out);
   	out.copyData(LatticeExpr<RealType>(arg(*_tempImagePtr)));
-  	out.setUnits(Unit("deg"));
+  	out.setUnits(Unit("rad"));
 }
 
 template <class T> template <class U>
@@ -184,6 +188,13 @@ void ImageFFT<T>::_copyMost(casacore::ImageInterface<U>& out) const {
         "Could not replace CoordinateSystem in output phase image"
     );
     _copyMiscellaneous(out);
+}
+
+template <class T> template <class U>
+void ImageFFT<T>::_fixBUnit(casacore::ImageInterface<U>& out) const {
+    if (out.units() == "Jy/beam") {
+        out.setUnits("Jy");
+    }
 }
 
 template <class T> void ImageFFT<T>::checkAxes(

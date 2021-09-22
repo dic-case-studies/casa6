@@ -75,6 +75,7 @@ except ImportError:
 datapath = ctsys_resolve('unittest/ia_fft/')
 
 from casatools import image as iatool
+from casatools import quanta as qatool
 from casatools import table
 
 class ia_fft_test(unittest.TestCase):
@@ -243,11 +244,50 @@ class ia_fft_test(unittest.TestCase):
         output (image plane) images should be Jy/beam or Jy/pixel, depending on if the
         input image has a beam or not.
         """
+        qa = qatool()
+        bmaj = qa.quantity('4arcmin')
+        bmin = qa.quantity('3arcmin')
+        bpa = qa.quantity('60deg')
         _ia = iatool()
-        # create image-domain image
-        _ia.fromshape("", [20, 20])
-        self.assertTrue(_ia.setbrightnessunit('Jy/pixel'), 'Failed to set brightness unit')
-        _ia.done()
+        for bu in ('Jy/beam', 'Jy/pixel'):
+            # create image-domain image
+            _ia.fromshape("", [20, 20])
+            self.assertTrue(_ia.setbrightnessunit('Jy/pixel'), 'Failed to set brightness unit')
+            if bu == 'Jy/beam':
+                self.assertTrue(
+                    _ia.setrestoringbeam(major=bmaj, minor=bmin, pa=bpa),
+                    'Failed to set restoring beam'
+                )
+            real = "real.im"
+            imag = "imag.im"
+            amp = "amp.im"
+            phase = "phase.im"
+            _complex = "complex.im"
+            self.assertTrue(
+                _ia.fft(
+                    real=real, imag=imag, amp=amp,
+                    phase=phase, complex=_complex
+                ), 'ia.fft() failed'
+            )
+            _ia.done()
+            for im in (real, imag, amp, phase, _complex):
+                _ia.open(im)
+                bunit = _ia.brightnessunit()
+                beam = _ia.restoringbeam()
+                _ia.done(remove=True)
+                expec = 'Jy'
+                if im == phase:
+                    expec = 'rad'
+                self.assertTrue(
+                    bunit == expec, 'image ' + im + ' has unit ' + bunit
+                    + ' but should be ' + expec
+                )
+                if bu == 'Jy/pixel':
+                    self.assertTrue(beam == {}, 'this image should have no restoring beam')
+                elif bu == 'Jy/beam':
+                    self.assertTrue(beam['major'] == bmaj, 'Incorrect restoring beam')
+                    self.assertTrue(beam['minor'] == bmin, 'Incorrect restoring beam')
+                    self.assertTrue(beam['positionangle'] == bpa, 'Incorrect restoring beam')
 
 
 def suite():
