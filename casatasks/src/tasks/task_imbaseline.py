@@ -877,9 +877,9 @@ class MS2ImageConverter():
     def __make_output_file(self, infile:str = None, outfile:str = None):
         if not os.path.exists(infile):
             raise Exception(f'Image files not found, infile:{self.vals.imagename}')
-        not_ok = not ia.fromimage(infile=infile, outfile=outfile)
+        ok = ia.fromimage(infile=infile, outfile=outfile)
         ia.done()
-        if not_ok:
+        if not ok:
             raise Exception(f'Some error occured, infile:{infile}, outfile:{outfile}')
     
 
