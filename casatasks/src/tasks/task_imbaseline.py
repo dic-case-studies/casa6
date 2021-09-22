@@ -60,8 +60,8 @@ class ImBaselineVals:
         self.sdbaseline_addwn = addwn           # blfunc = sinusoid
         self.sdbaseline_rejwn = rejwn           # blfunc = sinusoid
         self.sdbaseline_blparam = blparam       # blfunc = variable
-        self.sdbaseline_clipniter = clipniter   # blfunc = variable
-        self.sdbaseline_clipthresh = clipthresh # blfunc = variable
+        self.sdbaseline_clipniter = clipniter
+        self.sdbaseline_clipthresh = clipthresh
         self.sdbaseline_antenna = ''
         self.sdbaseline_field = ''
         self.sdbaseline_spw = ''
