@@ -73,7 +73,6 @@ class ImBaselineVals:
         self.sdbaseline_blmode = 'fit'
         self.sdbaseline_dosubtract = True
         self.sdbaseline_blformat = 'text'
-        self.sdbaseline_bloutput = ''
         self.sdbaseline_updateweight = False
         self.sdbaseline_sigmavalue = 'stddev'
         self.sdbaseline_showprogress = False
@@ -220,7 +219,7 @@ class ImBaselineVals:
         return { 'blfunc' : self.sdbaseline_blfunc,
                  'datacolumn' : self.datacolumn.lower(),
                  'outfile' : self.sdbaseline_output,
-                 'bloutput' : ','.join(self.sdbaseline_bloutput),
+                 'bloutput' : f',{self.sdbaseline_bloutput},',
                  'dosubtract' : self.sdbaseline_dosubtract,
                  'spw' : self.sdbaseline_spw,
                  'pol' : self.sdbaseline_pol,
@@ -663,28 +662,11 @@ class Sdbaseline():
             self.__restore_sorted_table_keyword(self.vals.sdsmooth_output, sorttab_info)
 
     def __prepare_sdbaseline(self):
-        blparam_file = self.vals.sdsmooth_output + '_blparam.txt'
-        if os.path.exists(blparam_file):
-            self.__remove_data(blparam_file)  # CAS-11781
-        
         if self.vals.sdbaseline_spw == '': self.vals.sdbaseline_spw = '*'
-
         if self.vals.sdbaseline_blfunc == 'sinusoid':
             self.vals.sdbaseline_addwn = sdutil.parse_wavenumber_param(self.vals.sdbaseline_addwn)
             self.vals.sdbaseline_rejwn = sdutil.parse_wavenumber_param(self.vals.sdbaseline_rejwn)
         
-        self.vals.sdbaseline_bloutput = self.__prepare_for_blformat_bloutput(self.vals.sdsmooth_output, self.vals.sdbaseline_bloutput, True)
-
-    def __remove_data(self, filename):
-        if os.path.exists(filename):
-            if os.path.isdir(filename):
-                shutil.rmtree(filename)
-            elif os.path.isfile(filename):
-                os.remove(filename)
-            else:
-                # could be a symlink
-                os.remove(filename)
-
     def __remove_sorted_table_keyword(self, infile):
         res = {'is_sorttab': False, 'sorttab_keywd': '', 'sorttab_name': ''}
         with table_manager(infile, nomodify=False) as tb:
@@ -739,68 +721,10 @@ class Sdbaseline():
 
         return baseline_func, params
 
-
-    def __prepare_for_blformat_bloutput(self, infile, bloutput, overwrite):
-        # force to string list
-        blformat = ['text']
-        bloutput = [bloutput]
-
-        if self.__has_duplicate_nonnull_element_ex(bloutput, blformat):
-            raise ValueError('duplicate elements in bloutput.')
-
-        # fill bloutput items to be output, then rearrange them
-        # in the order of blformat_item.
-        return self.__normalise_bloutput(infile, blformat, bloutput, overwrite)
-
-    def __has_duplicate_nonnull_element(self, in_list):
-        #return True if in_list has duplicated elements other than ''
-        duplicates = [key for key, val in Counter(in_list).items() if val > 1]
-        len_duplicates = len(duplicates)
-        
-        if (len_duplicates >= 2):
-            return True
-        elif (len_duplicates == 1):
-            return (duplicates[0] != '')
-        else: #len_duplicates == 0
-            return False
-
-
-    def __has_duplicate_nonnull_element_ex(self, lst, base):
-        # lst and base must have the same length.
-        #
-        # (1) extract elements from lst and make a new list
-        #     if the element of base with the same index
-        #     is not ''.
-        # (2) check if the list made in (1) has duplicated
-        #     elements other than ''.
-        
-        return self.__has_duplicate_nonnull_element([lst[i] for i in range(len(lst)) if base[i] != ''])
-
-    def __normalise_bloutput(self, infile, blformat, bloutput, overwrite):
-        normalised_bloutput = []
-        for item in zip(['csv', 'text', 'table'], ['csv', 'txt', 'bltable']):
-            normalised_bloutput.append(
-                self.__get_normalised_name(infile, blformat, bloutput, item[0], item[1], overwrite))
-        return normalised_bloutput
-
-    def __get_normalised_name(self, infile, blformat, bloutput, name, ext, overwrite):
-        fname = ''
-        blformat_lower = [s.lower() for s in blformat]
-        if (name in blformat_lower):
-            fname = bloutput[blformat_lower.index(name)]
-            if (fname == ''):
-                fname = infile + '_blparam.' + ext
-        if os.path.exists(fname):
-            if overwrite:
-                os.system('rm -rf %s' % fname)
-            else:
-                raise Exception(fname + ' exists.')
-        return fname
-
     def __output_bloutput_text_header(self):
-        if self.vals.sdbaseline_bloutput[1] == '': return
+        if self.vals.sdbaseline_bloutput == '': return
         
-        with open(self.vals.sdbaseline_bloutput[1], 'w') as f:
+        with open(self.vals.sdbaseline_bloutput, 'w') as f:
 
             info = [['Source Table', self.vals.sdsmooth_output],
                     ['Output File', self.vals.sdbaseline_output if (self.vals.sdbaseline_output != '') else self.vals.sdsmooth_output],
