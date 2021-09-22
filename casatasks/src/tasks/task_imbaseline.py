@@ -299,7 +299,7 @@ def cleanup_temporary_dirs(vals: ImBaselineVals = None, debug: bool = True):
     if debug: return
     for path in [vals.temporary_vis, vals.imsmooth_output, vals.sdsmooth_output, vals.sdbaseline_output]:
         if os.path.exists(path):
-            os.rmdir(path)
+            shutil.rmtree(path)
 
 
 class Imsmooth():
