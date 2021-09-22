@@ -240,7 +240,6 @@ def imbaseline(imagename = None, linefile = None, output_cont = None, bloutput =
                           fftthresh = fftthresh, addwn = addwn, rejwn = rejwn, blparam = blparam, clipniter = clipniter,
                           clipthresh = clipthresh, dirkernel = dirkernel, major = major, minor = minor, pa = pa, 
                           kimage = kimage, scale = scale, spkernel = spkernel, kwidth = kwidth)
-
     prepare(vals)
 
     # imsmooth -> convert casaimage to MS -> sdsmooth
@@ -294,7 +293,6 @@ class Imsmooth:
         self.vals = vals
 
     def execute(self):
-
         try:
             ia.open(self.vals.imagename)
             mycsys = ia.coordsys()
@@ -312,7 +310,6 @@ class Imsmooth:
                 outia = self.__execute_image_smoothing_by_boxcar_kernel()
             elif self.vals.dir_ikernel:
                 outia = self.__execute_image_smoothing_by_image_kernel()
-
         finally:
             ia.done()
             if outia: outia.done()
@@ -408,7 +405,6 @@ class Image2MSConverter:
         return True
 
     def __create_empty_ms(self):
-
         self.__check_ms_path()
         self.__create_maintable()
         self.__create_antenna_table()
@@ -426,7 +422,6 @@ class Image2MSConverter:
         self.__create_state_table()
 
     def __create_maintable(self):
-
         tb = table()
         try:
             tb.create(self.vals.temporary_vis, EmptyMSBaseInformation.ms_desc, dminfo=EmptyMSBaseInformation.ms_dminfo)
@@ -621,9 +616,7 @@ class Sdbaseline:
         self.vals = vals
     
     def execute(self):
-
         self.__prepare_sdbaseline()
-
         self.__output_bloutput_text_header()
         
         if self.vals.sdbaseline_blfunc == 'variable':
@@ -708,7 +701,6 @@ class Sdbaseline:
         if self.vals.sdbaseline_bloutput == '': return
         
         with open(self.vals.sdbaseline_bloutput, 'w') as f:
-
             info = [['Source Table', self.vals.sdsmooth_output],
                     ['Output File', self.vals.sdbaseline_output if (self.vals.sdbaseline_output != '') else self.vals.sdsmooth_output],
                     ['Mask mode', self.vals.sdbaseline_maskmode]]
@@ -749,7 +741,6 @@ class MS2ImageConverter:
         try:
             ia.open(self.vals.linefile)
             ia.putchunk(pixels=self.array, locking=True)
-
             try:
                 param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
                 vars = locals( )
