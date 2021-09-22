@@ -740,7 +740,7 @@ def run(testnames):
                                 
                         # https://docs.pytest.org/en/stable/usage.html
                         
-                        cmd = ["--verbose"] + ["-ra"] + ["--tb=long"] + cmd
+                        cmd = ["--verbose"] + ["-ra"] + ["--tb=short"] + cmd
 
                         if DRY_RUN:
                             cmd = ["--collect-only"] + cmd
@@ -819,7 +819,7 @@ def run(testnames):
                         except:
                             traceback.print_exc()
 
-                        cmd = ["--verbose"] + ["-ra"] + ["--tb=long"] + cmd
+                        cmd = ["--verbose"] + ["-ra"] + ["--tb=short"] + cmd
 
                         if DRY_RUN:
                             cmd = ["--collect-only"] + cmd
