@@ -75,9 +75,9 @@ class ImBaselineVals:
         self.sdbaseline_blformat = 'text'
         self.sdbaseline_bloutput = ''
         self.sdbaseline_updateweight = False
-        self.sdbaseline_sigmavalue = 'stddev'   # maybe not use
-        self.sdbaseline_showprogress = False    # not use
-        self.sdbaseline_minnrow = 1000          # not use
+        self.sdbaseline_sigmavalue = 'stddev'
+        self.sdbaseline_showprogress = False
+        self.sdbaseline_minnrow = 1000
 
         # imsmooth
         self.imsmooth_kernel = dirkernel        # none(default)/gaussian/boxcar/image
