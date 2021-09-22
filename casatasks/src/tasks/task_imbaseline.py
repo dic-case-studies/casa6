@@ -139,13 +139,7 @@ class ImBaselineVals:
         maskmode_list = self.sdbaseline_maskmode == 'list'
         maskmode_auto = self.sdbaseline_maskmode == 'auto'
         if not ( maskmode_list or maskmode_auto ):
-            raise ValueError(f'Unsupported maskmode, {self.sdbaseline_maskmode}', 'SEVERE')
-        if maskmode_list:
-            self.sdbaseline_thresh = 5.0
-            self.sdbaseline_avg_limit = self.sdbaseline_minwidth = 4
-            self.sdbaseline_edge = [0, 0]
-        else:
-            self.sdbaseline_chans = ''
+            raise ValueError(f'Unsupported maskmode, {self.sdbaseline_maskmode}', 'SEVERE')s
 
     def __prepare_arg_blfunc(self):
         blfunc_poly = self.sdbaseline_blfunc == 'poly'
