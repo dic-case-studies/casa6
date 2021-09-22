@@ -114,6 +114,7 @@ class ImBaselineVals:
         self.output_cont_file = os.path.basename(self.imagename)+".cont"
         self.datacolumn = 'DATA'
         self.overwrite = True
+        self.debug = False
 
         self.__prepare_args()
 
@@ -242,42 +243,46 @@ def imbaseline(imagename = None, linefile = None, output_cont = None, bloutput =
                           kimage = kimage, scale = scale, spkernel = spkernel, kwidth = kwidth)
     prepare(vals)
 
-    # imsmooth -> convert casaimage to MS -> sdsmooth
-    # -> sdbaseline -> convert MS to image
+    try:
+        # imsmooth -> convert casaimage to MS -> sdsmooth
+        # -> sdbaseline -> convert MS to image
 
-    # imsmooth
-    if vals.enable_imsmooth_execution():
-        casalog.post("start imsmooth", "DEBUG2")
-        Imsmooth(vals).execute()
-        casalog.post("end imsmooth", "DEBUG2")
+        # imsmooth
+        if vals.enable_imsmooth_execution():
+            casalog.post("start imsmooth", "DEBUG2")
+            Imsmooth(vals).execute()
+            casalog.post("end imsmooth", "DEBUG2")
 
-    # casaimage -> MS
-    Image2MSConverter(vals).convert()
+        # casaimage -> MS
+        Image2MSConverter(vals).convert()
 
-    # sdsmooth
-    if vals.enable_sdsmooth_execution():
-        casalog.post("start sdsmooth", "DEBUG2")
-        Sdsmooth(vals).execute()
-        casalog.post("end sdsmooth", "DEBUG2")
+        # sdsmooth
+        if vals.enable_sdsmooth_execution():
+            casalog.post("start sdsmooth", "DEBUG2")
+            Sdsmooth(vals).execute()
+            casalog.post("end sdsmooth", "DEBUG2")
 
-    # sdbaseline
-    casalog.post("start sdbaseline", "DEBUG2")
-    Sdbaseline(vals).execute()
-    casalog.post("end sdbaseline", "DEBUG2")
+        # sdbaseline
+        casalog.post("start sdbaseline", "DEBUG2")
+        Sdbaseline(vals).execute()
+        casalog.post("end sdbaseline", "DEBUG2")
 
-    # MS -> casaimage
-    MS2ImageConverter(vals).convert()
-
-    cleanup_temporary_dirs(vals, False)
-    # end
+        # MS -> casaimage
+        MS2ImageConverter(vals).convert()
+    finally:
+        cleanup(vals)
 
 
 def prepare(vals: ImBaselineVals = None):
     ia.dohistory(False)
 
 
-def cleanup_temporary_dirs(vals: ImBaselineVals = None, debug: bool = True):
-    if debug: return
+def cleanup(vals: ImBaselineVals = None):
+    __cleanup_temporary_dirs(vals)
+
+
+def __cleanup_temporary_dirs(vals: ImBaselineVals = None):
+    if vals.debug: return
     for path in [vals.temporary_vis, vals.imsmooth_output, vals.sdsmooth_output, vals.sdbaseline_output]:
         if os.path.exists(path):
             shutil.rmtree(path)
