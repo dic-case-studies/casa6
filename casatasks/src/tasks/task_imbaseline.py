@@ -174,7 +174,7 @@ class ImBaselineVals:
         self.sp_none = self.sdsmooth_kernel == 'none'
         self.sp_bkernel = self.sdsmooth_kernel == 'boxcar'
         self.sp_gkernel = self.sdsmooth_kernel == 'gaussian'
-        if not ( self.sp_none or self.sp_bkernel or self.sp_gkernel ):
+        if not (self.sp_none or self.sp_bkernel or self.sp_gkernel):
             raise ValueError(f'Unsupported spectral smoothing kernel, {self.sdsmooth_kernel}', 'SEVERE')
         
         if self.sp_none:
