@@ -130,7 +130,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    Float startmodelflux = 0.0;
             Array<Double> robustrms;
 
-	    Float masksum = itsImages->getMaskSum()
+	    Float masksum = itsImages->getMaskSum();
 	    Bool validMask = ( masksum > 0 );
 
 	    peakresidualnomask = itsImages->getPeakResidual();

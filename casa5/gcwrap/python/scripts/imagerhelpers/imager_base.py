@@ -12,11 +12,13 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink, ctsys, table
     from casatasks import casalog
+    from casatasks.private.imagerhelpers.summary_minor import SummaryMinor
 
     ctsys_hostinfo = ctsys.hostinfo
     _tb = table()
 else:
     from taskinit import *
+    from imagerhelpers.summary_minor import SummaryMinor
 
     synthesisimager = casac.synthesisimager
     synthesisdeconvolver = casac.synthesisdeconvolver
@@ -221,6 +223,8 @@ class PySynthesisImager:
         summ = self.IBtool.getiterationsummary()
         if ('stopcode' in summ):
             summ['stopDescription'] = self.getStopDescription(summ['stopcode'])
+        if ('summaryminor' in summ):
+            summ['summaryminor'] = SummaryMinor(summ['summaryminor'])
         #self.plotReport( summ, fignum )
         return summ
 
