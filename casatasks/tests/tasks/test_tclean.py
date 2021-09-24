@@ -99,7 +99,7 @@ import operator
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
      from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
-     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata
+     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata, makemask
      from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
      from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
      from casatasks import impbcor
@@ -906,6 +906,53 @@ class test_iterbot(testref_base):
           self.assertTrue(self.check_final(report))
 
 
+     def test_iterbot_mfs_restart_updatedmask(self): 
+          """ [iterbot] Test_mfs_restart_updatedmask : restart mfs with an updated mask (CAS-13508 fix) """
+          self.prepData('refim_twopoints_twochan.ms')
+          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='mfs',deconvolver='hogbom',niter=2,parallel=self.parallel)
+          os.system('rm -rf '+self.img+'.mask')
+
+          # Create a new mask around the 1Jy source only. 
+          mask_around_dim_source='circle[[256pix,256pix],30pix]'
+          makemask(inpimage=self.img+'.residual', inpmask=mask_around_dim_source, output=self.img+'.mask.dim.source',overwrite=True,mode='copy')
+          mask_around_dim_source=self.img+'.mask.dim.source'
+
+          # 2nd clean with the updated mask
+          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='mfs',niter=1,calcres=False, calcpsf=False, restart=True, mask=mask_around_dim_source, interactive=0,parallel=self.parallel)
+
+          ret={}
+          if self.parallel:
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'stopcode'])
+          else:
+            ret=retpar 
+          
+          # check initial cyclethreshold
+          # true value: 0.14600408
+          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], firstcyclethresh=0.14600408)
+
+          self.assertTrue(self.check_final(report))
+
+     def test_iterbot_mfs_restart_pbmask(self): 
+          """ [iterbot] Test_mfs_restart_updatedmask : restart mfs with pbmask (CAS-13508 fix) """
+          self.prepData('refim_twopoints_twochan.ms')
+          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='mfs',deconvolver='hogbom',niter=2,parallel=self.parallel)
+          os.system('rm -rf '+self.img+'.mask')
+
+          # 2nd clean with pbmask 
+          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='mfs',niter=1,calcres=False, calcpsf=False, restart=True, usemask='pb', pbmask=0.7, interactive=0,parallel=self.parallel)
+
+          ret={}
+          if self.parallel:
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'stopcode'])
+          else:
+            ret=retpar 
+          
+          # check initial cyclethreshold
+          # true value: 0.14600408
+          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], firstcyclethresh=0.1460498)
+
+          self.assertTrue(self.check_final(report))
+##############################################
 ##############################################
 ##############################################
 

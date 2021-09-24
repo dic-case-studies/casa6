@@ -826,11 +826,11 @@ class TestHelpers:
         if imgexist != None:
             if type(imgexist) == list:
                 pstr += TestHelpers().check_ims(imgexist, True)
-                print("pstr after checkims = {}".format(pstr))
+                #print("pstr after checkims = {}".format(pstr))
                 pstr += TestHelpers().check_keywords(imgexist)
-                print("pstr after check_keywords = {}".format(pstr))
+                #print("pstr after check_keywords = {}".format(pstr))
                 pstr += TestHelpers().check_history(imgexist)
-                print("pstr after check_history = {}".format(pstr))
+                #print("pstr after check_history = {}".format(pstr))
         return pstr
 
     def check_imexistnot(self, imgexistnot):
@@ -956,7 +956,7 @@ class TestHelpers:
         else:
             return "[ {} ]: found {} out of {} matching log lines (Fail, unmet expectations: {})\n".format(testname, len(expected)-len(unmet), len(expected), ", ".join(unmet))
 
-    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05,tfmask=None):
+    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, firstcyclethresh=None, epsilon=0.05,tfmask=None):
         """
             ret=None,
             peakres=None, # a float
@@ -971,6 +971,7 @@ class TestHelpers:
             tabcache=True,
             stopcode=None,
             reffreq=None # list of tuples of (imagename, reffreq)
+            first/pstcyclethresh = None, #a float 
             tfmask=None # list of tuples of (imagename, maskname). 
         """
         pstr = "[ checkall ] \n"
@@ -988,6 +989,8 @@ class TestHelpers:
                 if nmajordone != None:
                     out, message = TestHelpers().check_val(val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True)
                     pstr = pstr + message
+                if firstcyclethresh != None:
+                    out, mssage = TestHelpers().check_val(val=ret['summaryminor'][3][0], correctval=firstcyclethresh, valname='initial cyclethreshold', epsilon=epsilon)
             except Exception as e:
                 logging.info(ret)
                 raise
