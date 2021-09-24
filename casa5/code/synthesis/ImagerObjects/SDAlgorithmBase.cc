@@ -130,7 +130,8 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	    Float startmodelflux = 0.0;
             Array<Double> robustrms;
 
-	    Bool validMask = ( itsImages->getMaskSum() > 0 );
+	    Float masksum = itsImages->getMaskSum()
+	    Bool validMask = ( masksum > 0 );
 
 	    peakresidualnomask = itsImages->getPeakResidual();
 	    if( validMask ) peakresidual = itsImages->getPeakResidualWithinMask();
@@ -335,7 +336,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 	       
 	    loopcontrols.addSummaryMinor( deconvolverid, chanid, polid, cycleStartIteration,
 	                                  startiteration, startmodelflux, startpeakresidual, startpeakresidualnomask,
-	                                  modelflux, peakresidual, peakresidualnomask, stopCode);
+	                                  modelflux, peakresidual, peakresidualnomask, masksum, stopCode);
 
 	    
 	    loopcontrols.resetCycleIter(); 

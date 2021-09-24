@@ -445,8 +445,10 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 			itsSummaryMinor( IPosition(2,11,cShp[1]+row) ) = summary(IPosition(2,11,row));
 			// peak residual, not limited to the user's mask
 			itsSummaryMinor( IPosition(2,12,cShp[1]+row) ) = summary(IPosition(2,12,row));
-			// stopcode
+			// number of pixels in the mask
 			itsSummaryMinor( IPosition(2,13,cShp[1]+row) ) = summary(IPosition(2,13,row));
+			// stopcode
+			itsSummaryMinor( IPosition(2,14,cShp[1]+row) ) = summary(IPosition(2,14,row));
 		}
 	}
   
