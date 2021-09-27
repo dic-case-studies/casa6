@@ -73,6 +73,42 @@ class TestModelFitParamsGenerator(JyPerKWithVisTestCase):
         self.assertEqual(param.subparam, {'vis': 'uid___A002_X85c183_X36f.ms', 'spwid': 1})
 
 
+class TestBands(JyPerKWithVisTestCase):
+    """test Bands class.
+    """        
+    def test_get_params(self):
+        science_windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                                    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                                    21, 22, 23, 24])
+        spwnames = ['ALMA_RB_03#BB_1#SW-01#FULL_RES', 'ALMA_RB_03#BB_1#SW-01#CH_AVG',
+                    'ALMA_RB_03#BB_2#SW-01#FULL_RES', 'ALMA_RB_03#BB_2#SW-01#CH_AVG',
+                    'ALMA_RB_03#BB_3#SW-01#FULL_RES', 'ALMA_RB_03#BB_3#SW-01#CH_AVG',
+                    'ALMA_RB_03#BB_4#SW-01#FULL_RES', 'ALMA_RB_03#BB_4#SW-01#CH_AVG',
+                    'ALMA_RB_03#BB_1#SW-01#FULL_RES', 'ALMA_RB_03#BB_1#SW-01#CH_AVG',
+                    'ALMA_RB_03#BB_2#SW-01#FULL_RES', 'ALMA_RB_03#BB_2#SW-01#CH_AVG',
+                    'ALMA_RB_03#BB_3#SW-01#FULL_RES', 'ALMA_RB_03#BB_3#SW-01#CH_AVG',
+                    'ALMA_RB_03#BB_4#SW-01#FULL_RES', 'ALMA_RB_03#BB_4#SW-01#CH_AVG',
+                    'ALMA_RB_03#BB_1#SW-01#FULL_RES', 'ALMA_RB_03#BB_1#SW-01#CH_AVG',
+                    'ALMA_RB_03#BB_2#SW-01#FULL_RES', 'ALMA_RB_03#BB_2#SW-01#CH_AVG',
+                    'ALMA_RB_03#BB_3#SW-01#FULL_RES', 'ALMA_RB_03#BB_3#SW-01#CH_AVG',
+                    'ALMA_RB_03#BB_4#SW-01#FULL_RES', 'ALMA_RB_03#BB_4#SW-01#CH_AVG']
+        mean_freqs = {1: 90994575000.0, 2: 90978950000.0, 3: 92932075000.0, 
+                      4: 92924262500.0, 5: 102994575000.0, 6: 102986762500.0, 
+                      7: 104994575000.0, 8: 104986762500.0, 9: 100949999999.89998, 
+                      10: 100926562499.9, 11: 102765150000.0, 12: 102741712500.0, 
+                      13: 112807150000.0, 14: 112783712500.0, 15: 114682150000.0, 
+                      16: 114658712500.0, 17: 100949999999.89996, 18: 100949755859.275, 
+                      19: 102765150000.0, 20: 102764905859.375, 21: 112807150000.0, 
+                      22: 112806905859.375, 23: 114682150000.0, 24: 114681905859.375}
+
+        bands = jyperk.Bands.get(science_windows, spwnames, mean_freqs, self.vis)
+        
+        ref_bands = {1: 3, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 
+                 3, 11: 3, 12: 3, 13: 3, 14: 3, 15: 3, 16: 3, 17: 3, 18: 3,
+                 19: 3, 20: 3, 21: 3, 22: 3, 23: 3, 24: 3}
+        self.assertEqual(bands, ref_bands)
+
+
 class TestJyPerKReader4File(unittest.TestCase):
     """test TestJyPerKReader class.
     """
