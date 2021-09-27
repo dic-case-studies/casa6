@@ -21,8 +21,8 @@ class TestASDMParamsGenerator(unittest.TestCase):
             self.assertEqual(param.subparam, './uid___A002_X85c183_X36f.ms')
 
 
-class TestInterpolationParamsGenerator(unittest.TestCase):
-    """test ASDMParamsGenerator class.
+class JyPerKWithVisTestCase(unittest.TestCase):
+    """This is a test case for Jy/K with VIS data.
     """
     working_directory = 'working_directory_for_jyperk'
     vis = 'uid___A002_X85c183_X36f.ms'
@@ -37,8 +37,7 @@ class TestInterpolationParamsGenerator(unittest.TestCase):
         os.mkdir(cls.working_directory)
         os.chdir(cls.working_directory)
 
-        # ms_datapath = ctsys.resolve('measurementset/almasd')
-        ms_datapath = '/nfsstore/casa_share/casatestdata-exp/measurementset/almasd'
+        ms_datapath = ctsys.resolve('measurementset/almasd')
         original_vis = os.path.join(ms_datapath, f'{cls.vis}.sel')
         shutil.copytree(original_vis, cls.vis, symlinks=False)
 
@@ -46,7 +45,11 @@ class TestInterpolationParamsGenerator(unittest.TestCase):
     def tearDownClass(cls):
         os.chdir(cls.casa_cwd_path)
         shutil.rmtree(cls.working_directory)
-        
+
+
+class TestInterpolationParamsGenerator(JyPerKWithVisTestCase):
+    """test ASDMParamsGenerator class.
+    """        
     def test_get_params(self):
         params = jyperk.InterpolationParamsGenerator.get_params(self.vis, spw='1')
         
@@ -57,7 +60,9 @@ class TestInterpolationParamsGenerator(unittest.TestCase):
         self.assertEqual(param.subparam, {'vis': 'uid___A002_X85c183_X36f.ms', 'spwid': 1})
 
 
-class TestModelFitParamsGenerator(TestInterpolationParamsGenerator):
+class TestModelFitParamsGenerator(JyPerKWithVisTestCase):
+    """test ModelFitParamsGenerator class.
+    """       
     def test_get_params(self):
         params = jyperk.ModelFitParamsGenerator.get_params(self.vis, spw='1')
         
