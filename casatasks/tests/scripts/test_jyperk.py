@@ -9,6 +9,18 @@ if is_CASA6:
     from casatools import ctsys
 
 
+class TestASDMParamsGenerator(unittest.TestCase):
+    """test ASDMParamsGenerator class.
+    """
+    vis = "./uid___A002_X85c183_X36f.ms"
+        
+    def test_get_params(self):
+        params = jyperk.ASDMParamsGenerator.get_params(self.vis)
+        for param in params:
+            self.assertEqual(param.param, {'uid': 'uid://A002/X85c183/X36f'})
+            self.assertEqual(param.subparam, './uid___A002_X85c183_X36f.ms')
+
+                                                                                                                      
 class TestJyPerKReader4File(unittest.TestCase):
     """test TestJyPerKReader class.
     """
