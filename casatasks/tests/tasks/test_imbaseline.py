@@ -27,7 +27,7 @@ class imsmooth_test(unittest.TestCase):
     datapath = ctsys_resolve('unittest/imsmooth/')
     targetres_im = "imsmooth_targetres.fits"
     tiny = "tiny.im"
-
+    
     def setUp(self):
         if os.path.exists(self.image_names[0]):
             for file in self.image_names:
@@ -68,7 +68,7 @@ class imsmooth_test(unittest.TestCase):
         '''Imsmooth: Testing INPUT/OUTPUT tests'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         casalog.post( "Starting imsmooth INPUT/OUTPUT tests.", 'NORMAL2' )
-
+        
         #######################################################################
         # Testing the imagename parameter.
         #    1. Bad file name should throw and exception
@@ -1760,7 +1760,3 @@ def suite():
             sdsmooth_test_fail, sdsmooth_test_complex, sdsmooth_test_float,
             sdsmooth_test_weight, sdsmooth_test_boxcar, sdsmooth_selection,
             sdbaseline_basic_test]    
-
-if __name__ == '__main__':
-    os.chdir("/work/dev/shimada/casa6.13520/tmp")
-    unittest.main()
