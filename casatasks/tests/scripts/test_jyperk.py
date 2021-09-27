@@ -20,7 +20,54 @@ class TestASDMParamsGenerator(unittest.TestCase):
             self.assertEqual(param.param, {'uid': 'uid://A002/X85c183/X36f'})
             self.assertEqual(param.subparam, './uid___A002_X85c183_X36f.ms')
 
-                                                                                                                      
+
+class TestInterpolationParamsGenerator(unittest.TestCase):
+    """test ASDMParamsGenerator class.
+    """
+    working_directory = 'working_directory_for_jyperk'
+    vis = 'uid___A002_X85c183_X36f.ms'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.casa_cwd_path = os.getcwd()
+
+        if os.path.exists(cls.working_directory):
+            shutil.rmtree(cls.working_directory)
+
+        os.mkdir(cls.working_directory)
+        os.chdir(cls.working_directory)
+
+        # ms_datapath = ctsys.resolve('measurementset/almasd')
+        ms_datapath = '/nfsstore/casa_share/casatestdata-exp/measurementset/almasd'
+        original_vis = os.path.join(ms_datapath, f'{cls.vis}.sel')
+        shutil.copytree(original_vis, cls.vis, symlinks=False)
+
+    @classmethod
+    def tearDownClass(cls):
+        os.chdir(cls.casa_cwd_path)
+        shutil.rmtree(cls.working_directory)
+        
+    def test_get_params(self):
+        params = jyperk.InterpolationParamsGenerator.get_params(self.vis, spw='1')
+        
+        param = params.__next__()
+        self.assertEqual(param.param, {'date': '2014-07-01T21:49:32', 'temperature': 266.50347483801465, 
+                                       'delta_days': 1000, 'antenna': 'DA61', 'elevation': 51.11212932686397, 
+                                       'band': 3, 'baseband': 1, 'frequency': 90994575000.0})
+        self.assertEqual(param.subparam, {'vis': 'uid___A002_X85c183_X36f.ms', 'spwid': 1})
+
+
+class TestModelFitParamsGenerator(TestInterpolationParamsGenerator):
+    def test_get_params(self):
+        params = jyperk.ModelFitParamsGenerator.get_params(self.vis, spw='1')
+        
+        param = params.__next__()
+        self.assertEqual(param.param, {'date': '2014-07-01T21:49:32', 'temperature': 266.50347483801465,
+                                       'antenna': 'DA61', 'elevation': 51.11212932686397, 'band': 3, 
+                                       'baseband': 1, 'frequency': 90994575000.0})
+        self.assertEqual(param.subparam, {'vis': 'uid___A002_X85c183_X36f.ms', 'spwid': 1})
+
+
 class TestJyPerKReader4File(unittest.TestCase):
     """test TestJyPerKReader class.
     """
