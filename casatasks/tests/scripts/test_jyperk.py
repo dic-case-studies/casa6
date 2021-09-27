@@ -92,6 +92,19 @@ class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
         self.assertEqual(bands, ref_bands)
 
 
+class TestModelFitParamsGenerator(JyPerKWithVisTestCase):
+    """test ModelFitParamsGenerator class.
+    """       
+    def test_get_params(self):
+        params = jyperk.ModelFitParamsGenerator.get_params(self.vis, spw='1')
+        
+        param = params.__next__()
+        self.assertEqual(param.param, {'date': '2014-07-01T21:49:32', 'temperature': 266.50347483801465,
+                                       'antenna': 'DA61', 'elevation': 51.11212932686397, 'band': 3, 
+                                       'baseband': 1, 'frequency': 90994575000.0})
+        self.assertEqual(param.subparam, {'vis': 'uid___A002_X85c183_X36f.ms', 'spwid': 1})
+
+
 class TestJyPerKReader4File(unittest.TestCase):
     """test TestJyPerKReader class.
     """
