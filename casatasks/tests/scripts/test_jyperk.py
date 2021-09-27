@@ -47,10 +47,10 @@ class JyPerKWithVisTestCase(unittest.TestCase):
         shutil.rmtree(cls.working_directory)
 
 
-class TestInterpolationParamsGenerator(JyPerKWithVisTestCase):
-    """test ASDMParamsGenerator class.
+class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
+    """test collection for interpolation logic classes.
     """        
-    def test_get_params(self):
+    def test_get_params_in_InterpolationParamsGenerator(self):
         params = jyperk.InterpolationParamsGenerator.get_params(self.vis, spw='1')
         
         param = params.__next__()
@@ -58,25 +58,8 @@ class TestInterpolationParamsGenerator(JyPerKWithVisTestCase):
                                        'delta_days': 1000, 'antenna': 'DA61', 'elevation': 51.11212932686397, 
                                        'band': 3, 'baseband': 1, 'frequency': 90994575000.0})
         self.assertEqual(param.subparam, {'vis': 'uid___A002_X85c183_X36f.ms', 'spwid': 1})
-
-
-class TestModelFitParamsGenerator(JyPerKWithVisTestCase):
-    """test ModelFitParamsGenerator class.
-    """       
-    def test_get_params(self):
-        params = jyperk.ModelFitParamsGenerator.get_params(self.vis, spw='1')
-        
-        param = params.__next__()
-        self.assertEqual(param.param, {'date': '2014-07-01T21:49:32', 'temperature': 266.50347483801465,
-                                       'antenna': 'DA61', 'elevation': 51.11212932686397, 'band': 3, 
-                                       'baseband': 1, 'frequency': 90994575000.0})
-        self.assertEqual(param.subparam, {'vis': 'uid___A002_X85c183_X36f.ms', 'spwid': 1})
-
-
-class TestBands(JyPerKWithVisTestCase):
-    """test Bands class.
-    """        
-    def test_get_params(self):
+      
+    def test_get_params_in_Bands(self):
         science_windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
                                     11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
                                     21, 22, 23, 24])
