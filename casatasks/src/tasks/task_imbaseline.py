@@ -538,10 +538,11 @@ class Image2MSConverter:
         tb = table()
         try:
             tb.create(f"{self.vals.temporary_vis}/{subtable}", desc, dminfo=dminfo)
-            tb.open(self.vals.temporary_vis, nomodify=False)
-            tb.putkeyword(subtable, f"Table: {self.vals.temporary_vis}/{subtable}")
         finally:
             tb.close()
+        with table_manager(self.vals.temporary_vis, nomodify=False) as tb:
+            tb.open(self.vals.temporary_vis, nomodify=False)
+            tb.putkeyword(subtable, f"Table: {self.vals.temporary_vis}/{subtable}")
 
     def __copy_image_array_to_ms(self):
         # get image array and mask from the image
