@@ -185,6 +185,8 @@ using namespace casa::vi;
       nVisChan_p.resize();
       nVisChan_p=other.nVisChan_p;
       spectralCoord_p=other.spectralCoord_p;
+      visPolMap_p.resize();
+      visPolMap_p=other.visPolMap_p;
       //doConversion_p.resize();
       //doConversion_p=other.doConversion_p;
       pointingDirCol_p=other.pointingDirCol_p;
@@ -484,25 +486,13 @@ using namespace casa::vi;
 
       //matchAllSpwChans(vb);
       
-      chanMap.resize();
-      matchChannel(vb);
-      //chanMap=multiChanMap_p[vb.spectralWindows()(0)];
-      if(chanMap.nelements() == 0)
-        chanMap=Vector<Int>(vb.getFrequencies(0).nelements(), -1);
-
-      {
-        //logIO() << LogIO::DEBUGGING << "Channel Map: " << chanMap << LogIO::POST;
-      }
-      // Should never get here
-      if(max(chanMap)>=nchan||min(chanMap)<-2) {
-        logIO() << "Illegal Channel Map: " << chanMap << LogIO::EXCEPTION;
-      }
-
       // Polarization map
       Int stokesIndex=coords.findCoordinate(Coordinate::STOKES);
       AlwaysAssert(stokesIndex>-1, AipsError);
       StokesCoordinate stokesCoord=coords.stokesCoordinate(stokesIndex);
       Vector<Stokes::StokesTypes> visPolMap(vb.getCorrelationTypesSelected());
+      visPolMap_p.resize();
+      visPolMap_p=visPolMap;
       nvispol=visPolMap.nelements();
       AlwaysAssert(nvispol>0, AipsError);
       polMap.resize(nvispol);
@@ -556,7 +546,23 @@ using namespace casa::vi;
       }
       //logIO() << LogIO::DEBUGGING << "Polarization map = "<< polMap
       //	    << LogIO::POST;
+      //As matchChannel calls matchPol ...it has to be called after setting pol state      
+      chanMap.resize();
+      matchChannel(vb);
+      //chanMap=multiChanMap_p[vb.spectralWindows()(0)];
+      if(chanMap.nelements() == 0)
+        chanMap=Vector<Int>(vb.getFrequencies(0).nelements(), -1);
 
+      {
+        //logIO() << LogIO::DEBUGGING << "Channel Map: " << chanMap << LogIO::POST;
+      }
+      // Should never get here
+      if(max(chanMap)>=nchan||min(chanMap)<-2) {
+        logIO() << "Illegal Channel Map: " << chanMap << LogIO::EXCEPTION;
+      }
+
+
+      
       initPolInfo(vb);
       Vector<Int> intpolmap(visPolMap.nelements());
       for (uInt kk=0; kk < intpolmap.nelements(); ++kk){
@@ -1534,7 +1540,6 @@ using namespace casa::vi;
     outRecord.define("chanmap", chanMap);
     outRecord.define("polmap", polMap);
     outRecord.define("nvischanmulti", nVisChan_p);
-
     //save moving source related variables
     storeMovingSourceState(error, outRecord);
     //outRecord.define("doconversion", doConversion_p);
@@ -1733,6 +1738,7 @@ using namespace casa::vi;
       spectralCoord_p=*tmpSpec;
       delete tmpSpec;
     }
+    visPolMap_p.resize();
     if(inRecord.isDefined("ephemeristable")){
       String ephemtab;
       inRecord.get("ephemeristable", ephemtab);
@@ -1978,13 +1984,77 @@ using namespace casa::vi;
         return false;
       }
 
+      matchPol(vb);
+      
 
-
-
-      return true;
 
     }
 
+  Bool FTMachine::matchPol(const vi::VisBuffer2& vb){
+    Vector<Stokes::StokesTypes> visPolMap(vb.getCorrelationTypesSelected());
+    if((visPolMap.nelements() == visPolMap_p.nelements()) &&allEQ(visPolMap, visPolMap_p))
+      return True;
+    Int stokesIndex=image->coordinates().findCoordinate(Coordinate::STOKES);
+    AlwaysAssert(stokesIndex>-1, AipsError);
+    StokesCoordinate stokesCoord=image->coordinates().stokesCoordinate(stokesIndex);
+
+
+    visPolMap_p.resize();
+    visPolMap_p=visPolMap;
+    nvispol=visPolMap.nelements();
+    AlwaysAssert(nvispol>0, AipsError);
+    polMap.resize(nvispol);
+    polMap=-1;
+    Int pol=0;
+    Bool found=false;
+    // First we try matching Stokes in the visibilities to
+    // Stokes in the image that we are gridding into.
+    for (pol=0;pol<nvispol;pol++) {
+      Int p=0;
+      if(stokesCoord.toPixel(p, Stokes::type(visPolMap(pol)))) {
+        AlwaysAssert(p<npol, AipsError);
+        polMap(pol)=p;
+        found=true;
+      }
+    }
+      // If this fails then perhaps we were looking to grid I
+      // directly. If so then we need to check that the parallel
+      // hands are present in the visibilities.
+    if(!found) {
+      Int p=0;
+      if(stokesCoord.toPixel(p, Stokes::I)) {
+        polMap=-1;
+        if(vb.polarizationFrame()==MSIter::Linear) {
+          p=0;
+          for (pol=0;pol<nvispol;pol++) {
+            if(Stokes::type(visPolMap(pol))==Stokes::XX)
+              {polMap(pol)=0;p++;found=true;};
+            if(Stokes::type(visPolMap(pol))==Stokes::YY)
+              {polMap(pol)=0;p++;found=true;};
+          }
+        }
+        else {
+          p=0;
+          for (pol=0;pol<nvispol;pol++) {
+            if(Stokes::type(visPolMap(pol))==Stokes::LL)
+              {polMap(pol)=0;p++;found=true;};
+            if(Stokes::type(visPolMap(pol))==Stokes::RR)
+              {polMap(pol)=0;p++;found=true;};
+          }
+        }
+        if(!found) {
+          logIO() <<  "Cannot find polarization map: visibility polarizations = "
+    					<< visPolMap << LogIO::EXCEPTION;
+        }
+    	else {
+    		
+    		//logIO() << LogIO::DEBUGGING << "Transforming I only" << LogIO::POST;
+    	}
+      };
+    }
+
+    return True;
+  } 
 
   Vector<String> FTMachine::cleanupTempFiles(const String& mess){
     briggsWeightor_p=nullptr;
