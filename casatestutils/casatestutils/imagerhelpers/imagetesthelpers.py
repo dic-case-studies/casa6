@@ -990,7 +990,8 @@ class TestHelpers:
                     out, message = TestHelpers().check_val(val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True)
                     pstr = pstr + message
                 if firstcyclethresh != None:
-                    out, mssage = TestHelpers().check_val(val=ret['summaryminor'][3][0], correctval=firstcyclethresh, valname='initial cyclethreshold', epsilon=epsilon)
+                    out, message = TestHelpers().check_val(val=ret['summaryminor'][3][0], correctval=firstcyclethresh, valname='initial cyclethreshold', epsilon=epsilon)
+                    pstr = pstr + message
             except Exception as e:
                 logging.info(ret)
                 raise
