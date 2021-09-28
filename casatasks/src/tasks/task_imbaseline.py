@@ -541,7 +541,6 @@ class Image2MSConverter:
         finally:
             tb.close()
         with table_manager(self.vals.temporary_vis, nomodify=False) as tb:
-            tb.open(self.vals.temporary_vis, nomodify=False)
             tb.putkeyword(subtable, f"Table: {self.vals.temporary_vis}/{subtable}")
 
     def __copy_image_array_to_ms(self):
