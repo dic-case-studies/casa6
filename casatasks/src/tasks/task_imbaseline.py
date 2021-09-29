@@ -13,7 +13,7 @@ from casatools import image, table, regionmanager, quanta, singledishms
 from casatools import ms as mstool
 from casatasks import casalog
 from casatasks.private import sdutil
-from casatasks.private.sdutil import table_manager
+from casatasks.private.sdutil import table_manager, tool_manager
 from casatasks.private.ialib import write_image_history
 
 ia = image()
@@ -545,10 +545,9 @@ class Image2MSConverter:
 
     def __copy_image_array_to_ms(self):
         # get image array and mask from the image
-        ia.open(self.vals.imsmooth_output)
-        arr = ia.getchunk()
-        msk = ia.getchunk(getmask=True)
-        ia.done()
+        with tool_manager(self.vals.imsmooth_output, image) as ia:
+            arr = ia.getchunk()
+            msk = ia.getchunk(getmask=True)
 
         # put image array slices to MS DATA column
         # axis indices for spatial, spectral and polarization axes
