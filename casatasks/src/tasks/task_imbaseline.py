@@ -284,7 +284,7 @@ def cleanup(vals: ImBaselineVals = None):
 def __cleanup_temporary_dirs(vals: ImBaselineVals = None):
     if vals.debug: return
     for path in [vals.temporary_vis, vals.imsmooth_output, vals.sdsmooth_output, vals.sdbaseline_output]:
-        if os.path.exists(path):
+        if os.path.exists(path) and path != vals.imagename:
             shutil.rmtree(path)
 
 
