@@ -742,18 +742,15 @@ class MS2ImageConverter:
         casalog.post("end imaging", "DEBUG2")
 
     def __output_image(self):
-        try:
-            ia.open(self.vals.linefile)
+        with tool_manager(self.vals.linefile, image) as ia:
             ia.putchunk(pixels=self.array, locking=True)
             try:
                 param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
-                vars = locals( )
+                vars = locals()
                 param_vals = [vars[p] for p in param_names]
                 write_image_history(ia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
             except Exception as instance:
                 casalog.post(f"*** Error '{instance}' updating HISTORY", 'WARN')
-        finally:
-            ia.done()
 
     def __output_cont_image(self):
         try:
