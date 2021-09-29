@@ -273,7 +273,7 @@ def imbaseline(imagename = None, linefile = None, output_cont = None, bloutput =
         cleanup(vals)
 
 
-def prepare(vals: ImBaselineVals = None):
+def prepare():
     ia.dohistory(False)
 
 
