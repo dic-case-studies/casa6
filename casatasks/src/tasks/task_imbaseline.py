@@ -373,16 +373,15 @@ class Image2MSConverter:
         self.__copy_image_array_to_ms()
 
     def __get_image_params_from_imsmooth_output(self):
-        try:
-            ia.open(self.vals.imsmooth_output)
-            cs = ia.coordsys()
-            self.vals.imshape = ia.shape()
-            self.vals.diraxis = cs.findcoordinate('direction')['world']
-            self.vals.spaxis = cs.findcoordinate('spectral')['world'] # 3 or 2
-            self.vals.polaxis = cs.findcoordinate('stokes')['world']  # 2 or 3 or None
-        finally:
-            cs.done()
-            ia.done()
+        with tool_manager(self.vals.imsmooth_output, image) as ia:
+            try:
+                cs = ia.coordsys()
+                self.vals.imshape = ia.shape()
+                self.vals.diraxis = cs.findcoordinate('direction')['world']
+                self.vals.spaxis = cs.findcoordinate('spectral')['world'] # 3 or 2
+                self.vals.polaxis = cs.findcoordinate('stokes')['world']  # 2 or 3 or None
+            finally:
+                cs.done()
 
         assert len(self.vals.diraxis) > 0
 
@@ -759,18 +758,14 @@ class MS2ImageConverter:
     def __make_image_array(self):
         nx, ny = self.vals.dirshape
         self.array = np.empty((nx,ny,self.vals.imnchan))
-        if self.vals.polaxisexist:
-            self.array = np.expand_dims(self.array, self.vals.polaxis[0])
         pos = 0
         with table_manager(self.vals.sdbaseline_output) as tb:
-            ndim = tb.getcell(self.vals.datacolumn, 0).ndim
             for i in range(nx):
                 for j in range(ny):
-                    if ndim == 3:
-                        self.array[i][j][0] =  tb.getcell(self.vals.datacolumn, pos)[0].real
-                    else:
-                        self.array[i][j] =  tb.getcell(self.vals.datacolumn, pos)[0].real
+                    self.array[i][j] = tb.getcell(self.vals.datacolumn, pos)[0].real
                     pos += 1
+        if self.vals.polaxisexist:
+            self.array = np.expand_dims(self.array, self.vals.polaxis[0])
 
     def __make_output_file(self, infile:str = None, outfile:str = None):
         if not os.path.exists(infile):
