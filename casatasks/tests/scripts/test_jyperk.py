@@ -91,6 +91,10 @@ class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
                  19: 3, 20: 3, 21: 3, 22: 3, 23: 3, 24: 3}
         self.assertEqual(bands, ref_bands)
 
+    def test_get_params_in_MeanElevation(self):
+        mean_elevation = jyperk.MeanElevation.get(self.vis, 0)
+        self.assertEqual(bands, ref_bands)
+
 
 class TestModelFitParamsGenerator(JyPerKWithVisTestCase):
     """test ModelFitParamsGenerator class.
