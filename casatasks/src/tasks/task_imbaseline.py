@@ -753,11 +753,8 @@ class MS2ImageConverter:
                 casalog.post(f"*** Error '{instance}' updating HISTORY", 'WARN')
 
     def __output_cont_image(self):
-        try:
-            ia.open(self.vals.output_cont_file)
+        with tool_manager(self.vals.output_cont_file, image) as ia:
             ia.putchunk(pixels = ia.getchunk() - self.array, locking = True)
-        finally:
-            ia.done()
 
     def __make_image_array(self):
         nx, ny = self.vals.dirshape
