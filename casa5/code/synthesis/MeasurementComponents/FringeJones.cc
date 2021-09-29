@@ -2261,7 +2261,7 @@ FringeJones::selfSolveOne(SDBList& sdbs) {
              << "Valid spws are " << freqMetaData_.validSpws() << endl;
     }
     Int spw = currSpw();
-    Double reffreq = freqMetaData_.freq(spw)(0); // This can't be right
+    Double reffreq = freqMetaData_.freq(spw)(0); 
     Double t0 = sdbs(0).time()(0);
     Double dt0 = refTime() - t0;
     //Double df0 = ref_freq - sdbs.freqs()(0);
