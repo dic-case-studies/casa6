@@ -142,7 +142,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
           if (maskString!="") {
             //TTDEBUG
             os<<"maskString is defined..."<<LogIO::POST;
-            if (maskString < PATH_MAX) checkfname = True; 
+            if (maskString < itsPATH_MAX) checkfname = True; 
             if (checkfname && !(Table::isReadable(maskString))) {
               os<<" if it is not table ....isReadable.."<<LogIO::POST;
               try {
@@ -162,52 +162,31 @@ namespace casa { //# NAMESPACE CASA - BEGIN
               }
             }  
             if (isCasaImage) {
-                os<<"isCasaImage=true"<<LogIO::POST;
-            //if ( Table::isReadable(maskString) ) {
-            //  Table imtab = Table(maskString, Table::Old);
-            //  Vector<String> colnames = imtab.tableDesc().columnNames();
-            //  if ( colnames[0]=="map" ) {
-                // looks like a CASA image ... probably should check coord exists in the keyword also...
-                //          cout << "copy this input mask...."<<endl;
-                // Include checks if the degenerate axes exit or removed.
-                // expandMask will add a degenerate axis to match the output
-                //PagedImage<Float> inmask(maskString); 
+                //os<<"isCasaImage=true"<<LogIO::POST;
 		std::shared_ptr<ImageInterface<Float> > inmaskptr;
                 LatticeBase* latt =ImageOpener::openImage(maskString);
                 inmaskptr.reset(dynamic_cast<ImageInterface<Float>* >(latt));
-                //IPosition inShape = inmask.shape();
                 IPosition inShape = inmaskptr->shape();
                 IPosition outShape = imstore->mask()->shape();
-                //Int specAxis = CoordinateUtil::findSpectralAxis(inmask.coordinates());
                 Int specAxis = CoordinateUtil::findSpectralAxis(inmaskptr->coordinates());
                 Int inNchan = (specAxis==-1? 1: inShape(specAxis) );
                 Int outSpecAxis = CoordinateUtil::findSpectralAxis(imstore->mask()->coordinates());
                 Vector <Stokes::StokesTypes> inWhichPols, outWhichPols;
-                //Int stokesAxis = CoordinateUtil::findStokesAxis(inWhichPols, inmask.coordinates());
                 Int stokesAxis = CoordinateUtil::findStokesAxis(inWhichPols, inmaskptr->coordinates());
                 Int inNstokes = (stokesAxis==-1? 1: inShape(stokesAxis) );
                 Int outStokesAxis = CoordinateUtil::findStokesAxis(outWhichPols, imstore->mask()->coordinates());
-                //if (inShape(specAxis) == 1 && outShape(outSpecAxis)>1) {
                 if (inNchan == 1 && outShape(outSpecAxis)>1) {
                   os << "Extending mask image: " << maskString << LogIO::POST;
-                  //expandMask(inmask, tempMaskImage);
                   expandMask(*inmaskptr, tempMaskImage);
                 }
-                //else if(inShape(stokesAxis) == 1 && outShape(outStokesAxis) > 1 ) {
                 else if(inNstokes == 1 && outShape(outStokesAxis) > 1 ) {
                   os << "Extending mask image along Stokes axis: " << maskString << LogIO::POST;
-                  //expandMask(inmask, tempMaskImage);
                   expandMask(*inmaskptr, tempMaskImage);
                 }
                 else {
                   os << "Copying mask image: " << maskString << LogIO::POST;
-                  //copyMask(inmask, tempMaskImage);
                   copyMask(*inmaskptr, tempMaskImage);
                 }
-              //}// end of ''map''
-              //else {
-              //  throw(AipsError(maskString+" does not appear to be valid image mask"));
-              //}
             }// end of readable table
             else {
               //
@@ -274,7 +253,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       //interpret maskString 
       if (maskString !="") {
         Bool checkfname(False);
-        if (maskString < PATH_MAX) checkfname=True;
+        if (maskString < itsPATH_MAX) checkfname=True;
 	if (checkfname && Table::isReadable(maskString) ) {
 	  Table imtab = Table(maskString, Table::Old);
 	  Vector<String> colnames = imtab.tableDesc().columnNames();
