@@ -429,7 +429,6 @@ String&	CubeMajorCycleAlgorithm::name(){
 		chanBeg=0;
 		chanEnd=sumwt.shape()[3]-1;
 	}
-        sumwt.unlock();
         sumwt.tempClose();
 	////For some small channel ms's retuning trigger a vi2/vb2 bug in nChannels
 	///avoid retuning for small images
