@@ -23,9 +23,8 @@ sdms = singledishms()
 
 
 class ImBaselineVals:
-    """
-    ImBaselineVals is to handle input data set of imbaseline task.
-
+    """ImBaselineVals is to handle input data set of imbaseline task.
+    
     The task contains five parts, imsmooth, MS creating, sdsmooth, sdbaseline, image output.
     Each parts require different parameters, so the task has a very large number of parameters.
     In order to simplify the handling of parameters, all parameters are held in an instance of 
@@ -779,8 +778,7 @@ class MS2ImageConverter:
     
 
 class EmptyMSBaseInformation:
-    """
-    The Parameters class for creating an empty MeasurementSet.
+    """The Parameters class for creating an empty MeasurementSet.
 
     This class contains dictionaries to create an empty MS using table.create(), and it has no method.
     Dictionaries have two types; desc(desctiption) and dminfo(data management infomation), 
