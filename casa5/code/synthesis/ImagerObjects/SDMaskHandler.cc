@@ -84,6 +84,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     itsRms = DBL_MAX;
     itsSidelobeLevel = 0.0;
     //itsPBMaskLevel = 0.0;
+
+#ifdef PATH_MAX
+    itsPATH_MAX = PATH_MAX;
+#else
+    itsPATH_MAX = 1024;
+#endif
   }
   
   SDMaskHandler::~SDMaskHandler()
@@ -120,19 +126,27 @@ namespace casa { //# NAMESPACE CASA - BEGIN
   {
     LogIO os( LogOrigin("SDMaskHandler","fillMask",WHERE) );
     String maskString;
+    Bool checkfname(False);
     try {
       TempImage<Float> tempAllMaskImage(imstore->mask()->shape(), imstore->mask()->coordinates(), memoryToUse());
       tempAllMaskImage.set(0.0);
       if (maskStrings.nelements()) {
         //working temp mask image
         TempImage<Float> tempMaskImage(imstore->mask()->shape(), imstore->mask()->coordinates(), memoryToUse());
+        //TTDEBUG
+        os<<"Calling copyMask"<<LogIO::POST;
         copyMask(*(imstore->mask()), tempMaskImage);
         for (uInt imsk = 0; imsk < maskStrings.nelements(); imsk++) {
           maskString = maskStrings[imsk];
           Bool isCasaImage(false);
           if (maskString!="") {
-            if (!(Table::isReadable(maskString))) {
+            //TTDEBUG
+            os<<"maskString is defined..."<<LogIO::POST;
+            if (maskString < PATH_MAX) checkfname = True; 
+            if (checkfname && !(Table::isReadable(maskString))) {
+              os<<" if it is not table ....isReadable.."<<LogIO::POST;
               try {
+                os<<"ok now calling imageOpner..."<<LogIO::POST;
                 if (ImageOpener::imageType(maskString)==ImageOpener::IMAGECONCAT) isCasaImage=true;
                 os <<"IT'S A CONCATImage"<<LogIO::POST;
               } 
@@ -141,9 +155,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
               }
             }
             else {
+              if (checkfname) {
               Table imtab = Table(maskString, Table::Old);
               Vector<String> colnames = imtab.tableDesc().columnNames();
               if ( colnames[0]=="map" ) isCasaImage=true;
+              }
             }  
             if (isCasaImage) {
                 os<<"isCasaImage=true"<<LogIO::POST;
@@ -197,6 +213,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
               //
               std::unique_ptr<Record> myrec(nullptr);
               try {
+                if (checkfname) {
                 myrec.reset(RegionManager::readImageFile(maskString,String("temprgrec")));
                 if (myrec!=0) {
                   Bool ret(false);
@@ -210,6 +227,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
                   //PagedImage<Float> testtempim(tempMaskImage.shape(), tempMaskImage.coordinates(), "_testTempim");
                   //ret=SDMaskHandler::regionToImageMask(testtempim, myrec, dummyqmat, dummyfmat);
                   //if (!ret) cout<<"regionToImageMask 2nd failed..."<<endl;
+                }
                 }
               }
               catch (...) {
@@ -227,9 +245,12 @@ namespace casa { //# NAMESPACE CASA - BEGIN
             }// end of region string
           }// end of non-emtpy maskstring
          
+          //TTDEBUG
+          os<<"create addedmask..."<<LogIO::POST;
           LatticeExpr<Float> addedmask( tempMaskImage + tempAllMaskImage ); 
           tempAllMaskImage.copyData( LatticeExpr<Float>( iif(addedmask > 0.0, 1.0, 0.0) ) );
         }
+        os<<"imstore->mask()->copyData.."<<LogIO::POST;
         imstore->mask()->copyData(tempAllMaskImage);
         imstore->mask()->unlock();
       }
@@ -252,7 +273,9 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       
       //interpret maskString 
       if (maskString !="") {
-	if ( Table::isReadable(maskString) ) {
+        Bool checkfname(False);
+        if (maskString < PATH_MAX) checkfname=True;
+	if (checkfname && Table::isReadable(maskString) ) {
 	  Table imtab = Table(maskString, Table::Old);
 	  Vector<String> colnames = imtab.tableDesc().columnNames();
 	  if ( colnames[0]=="map" ) {
@@ -492,11 +515,23 @@ namespace casa { //# NAMESPACE CASA - BEGIN
      try {
        IPosition imshape = regionImage.shape();
        CoordinateSystem csys = regionImage.coordinates();
-       File fname(text); 
+       os<<"CHECK if it is a file name..."<<LogIO::POST;
+       #ifdef PATH_MAX
+         os<<"PATH_MAX is "<<PATH_MAX<<LogIO::POST;
+       #else
+         os<<"PATH_MAX is not defined"<<LogIO::POST;
+       #endif
+       Bool checkfname(False);
+       File fname; 
+       if (text < PATH_MAX) {
+          checkfname=True;
+          fname=text; 
+       }
        Record* imageRegRec=0;
        Record myrec;
        //Record imageRegRec;
-       if (fname.exists() && fname.isRegular()) {
+       if (checkfname && fname.exists() && fname.isRegular()) {
+         os<<"DONE CHECK if it is a file name..."<<LogIO::POST;
          RegionTextList  CRTFList(text, csys, imshape);
          myrec = CRTFList.regionAsRecord();
        }
@@ -578,10 +613,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       SPCIIF templateim(new TempImage<Float>(outshape,outcsys, memoryToUse()));
       Record* dummyrec = 0;
       //ImageRegridder regridder(tempim, outfilename, templateim, axes, dummyrec, "", true, outshape);
+      //TTDEBUG
+      os <<"Calling ImagerRerider..."<<LogIO::POST;
       ImageRegridder<Float> regridder(tempim, "", templateim, axes, dummyrec, "", true, outshape);
       regridder.setMethod(Interpolate2D::LINEAR);
       SPIIF retim = regridder.regrid();
       //outImageMask.copyData( (LatticeExpr<Float>) iif(*retim > 0.1, 1.0, 0.0)  );
+      //TTDEBUG
+      os<<"getMask for retimmask"<<LogIO::POST;
       ArrayLattice<Bool> retimmask(retim->getMask());
       //LatticeExpr<Float> withmask( (*retim) * iif(retimmask,1.0,0.0) );
       //outImageMask.copyData( withmask );
