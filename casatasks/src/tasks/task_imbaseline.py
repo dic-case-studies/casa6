@@ -23,7 +23,9 @@ sdms = singledishms()
 
 
 class ImBaselineVals:
-    """ImBaselineVals is to handle input data set of imbaseline task.
+    """
+    ImBaselineVals is to handle input data set of imbaseline task.
+
     The task contains five parts, imsmooth, MS creating, sdsmooth, sdbaseline, image output.
     Each parts require different parameters, so the task has a very large number of parameters.
     In order to simplify the handling of parameters, all parameters are held in an instance of 
