@@ -30,11 +30,11 @@ class ImBaselineVals:
     this class, all methods get/set all parameters from it.
     """
 
-    def __init__(self, imagename = None, linefile = None, output_cont = None, bloutput = None, maskmode = None, chans = None, 
-                 thresh = None, avg_limit = None, minwidth = None, edge = None, blfunc = None, order = None, npiece = None, 
-                 applyfft = None, fftthresh = None, addwn = None, rejwn = None, blparam = None, clipniter = None, 
-                 clipthresh = None, dirkernel = None, major = None, minor = None, pa = None, kimage = None, scale = None, 
-                 spkernel = None, kwidth = None):
+    def __init__(self, imagename=None, linefile=None, output_cont=None, bloutput=None, maskmode=None, chans=None, 
+                 thresh=None, avg_limit=None, minwidth=None, edge=None, blfunc=None, order=None, npiece=None, 
+                 applyfft=None, fftthresh=None, addwn=None, rejwn=None, blparam=None, clipniter=None, 
+                 clipthresh=None, dirkernel=None, major=None, minor=None, pa=None, kimage=None, scale=None, 
+                 spkernel=None, kwidth=None):
         """
         All specifications of arguments are defined in:
         https://open-jira.nrao.edu/browse/CAS-13520
@@ -224,24 +224,24 @@ class ImBaselineVals:
             
 
 @sdutil.sdtask_decorator
-def imbaseline(imagename = None, linefile = None, output_cont = None, bloutput = None, maskmode = None, chans = None, 
-               thresh = None, avg_limit = None, minwidth = None, edge = None, blfunc = None, order = None, npiece = None, 
-               applyfft = None, fftthresh = None, addwn = None, rejwn = None, blparam = None, clipniter = None, 
-               clipthresh = None, dirkernel = None, major = None, minor = None, pa = None, kimage = None, scale = None, 
-               spkernel = None, kwidth = None):
+def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, maskmode=None, chans=None, 
+               thresh=None, avg_limit=None, minwidth=None, edge=None, blfunc=None, order=None, npiece=None, 
+               applyfft=None, fftthresh=None, addwn=None, rejwn=None, blparam=None, clipniter=None, 
+               clipthresh=None, dirkernel=None, major=None, minor=None, pa=None, kimage=None, scale=None, 
+               spkernel=None, kwidth=None):
     """
     THE MAIN METHOD OF IMBASELINE.
 
     All specifications of arguments are defined in:
     https://open-jira.nrao.edu/browse/CAS-13520
     """
-    vals = ImBaselineVals(imagename = imagename, linefile = linefile, output_cont = output_cont, bloutput = bloutput, 
-                          maskmode = maskmode, chans = chans, thresh = thresh, avg_limit = avg_limit, minwidth = minwidth,
-                          edge = edge, blfunc = blfunc, order = order, npiece = npiece, applyfft = applyfft, 
-                          fftthresh = fftthresh, addwn = addwn, rejwn = rejwn, blparam = blparam, clipniter = clipniter,
-                          clipthresh = clipthresh, dirkernel = dirkernel, major = major, minor = minor, pa = pa, 
-                          kimage = kimage, scale = scale, spkernel = spkernel, kwidth = kwidth)
-    prepare(vals)
+    vals = ImBaselineVals(imagename=imagename, linefile=linefile, output_cont=output_cont, bloutput=bloutput, 
+                          maskmode=maskmode, chans=chans, thresh=thresh, avg_limit=avg_limit, minwidth=minwidth,
+                          edge=edge, blfunc=blfunc, order=order, npiece=npiece, applyfft=applyfft, 
+                          fftthresh=fftthresh, addwn=addwn, rejwn=rejwn, blparam=blparam, clipniter=clipniter,
+                          clipthresh=clipthresh, dirkernel=dirkernel, major=major, minor=minor, pa=pa, 
+                          kimage=kimage, scale=scale, spkernel=spkernel, kwidth=kwidth)
+    prepare()
 
     try:
         # imsmooth -> convert casaimage to MS -> sdsmooth
