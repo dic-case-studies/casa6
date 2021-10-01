@@ -255,6 +255,24 @@ returns true if initalization was performed; returns false if initialization was
   </param>
 </input>
 
+<input>
+  <param type="bool" name="nogui">
+    <description>are guis disabled at startup</description>
+  </param>
+</input>
+
+<input>
+  <param type="bool" name="agg">
+    <description>was the graphical backend disabled at startup</description>
+  </param>
+</input>
+
+<input>
+  <param type="bool" name="pipeline">
+    <description>was the pipeline included at startup</description>
+  </param>
+</input>
+
 <returns type="bool"/>
 </method>
 
@@ -350,6 +368,40 @@ elements of the data path.
 
 <!-- ******************************************************************************** -->
 
+<!-- ******************** functions to get startup config values ******************** -->
+
+<method type="function" name="getnogui">
+  <shortdescription>gets the nogui config value</shortdescription>
+
+  <description>
+    Returns the value of the nogui parameter used at startup. Defaults to False.
+  </description>
+
+  <returns type="bool"/>
+</method>
+
+<method type="function" name="getagg">
+  <shortdescription>gets the agg config value</shortdescription>
+
+  <description>
+    Returns the value of the agg parameter used at startup. Defaults to False.
+  </description>
+
+  <returns type="bool"/>
+</method>
+
+<method type="function" name="getpipeline">
+  <shortdescription>gets the pipeline config value</shortdescription>
+
+  <description>
+    Returns the value of the pipeline parameter used at startup. Defaults to False.
+  </description>
+
+  <returns type="bool"/>
+</method>
+
+<!-- ******************************************************************************** -->
+
 <!-- ******************** functions to manage the service registry ****************** -->
 
 <method type="function" name="registry">
@@ -370,6 +422,26 @@ returns record containing the information about the services that have been regi
 </description>
 
 <returns type="record"/>
+</method>
+
+<method type="function" name="remove_service">
+<shortdescription>remove a service using its URI</shortdescription>
+
+<description>
+Remove a service from the registry using the URI for the
+service. The URI should be a string that looks something
+like "0.0.0.0:34101". This function returns true if the
+removal was successful. Otherwise, it returns false.
+</description>
+
+<input>
+  <param type="string" name="uri">
+	<description>uri (Address) of the service to remove.</description>
+	<value/>
+  </param>
+</input>
+
+<returns type="bool"/>
 </method>
 
 <method type="function" name="shutdown">

@@ -893,7 +893,70 @@ class TestHelpers:
                         pstr += TestHelpers().check_ref_freq(ii[0], ii[1], epsilon=epsilon)
         return pstr
 
-    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05):
+    def check_tfmask(self, tfmask, testname="check_tfmask"):
+        pstr = ''
+        if tfmask != None:
+            if type(tfmask) == list:
+                for ii in tfmask:
+                    if type(ii) == tuple and len(ii) == 2:
+                        _ia.open(ii[0])
+                        mname = _ia.maskhandler('get')
+                        mreport = "[" + testname + "]  T/F mask name for " + ii[0] +  " is : " + str(mname)
+                        if mname==ii[1]:
+                            mreport = mreport + " ("+TestHelpers().verdict(True) +" : should be " + str(ii[1]) + ") \n"
+                        else:
+                            mreport = mreport + " ("+TestHelpers().verdict(False) +" : should be " + str(ii[1]) + ") \n"
+                        _ia.close()
+                        pstr += mreport
+            print(pstr)
+        return pstr
+
+
+    def get_log_length(self):
+        return os.path.getsize(casalog.logfile())
+
+    def check_logs(self, start, expected, testname="check_logs"):
+        """ Test that there are log lines that match the expected regex strings (one line per expected string). """
+        # Example usage:
+        # logstart = test_helper.get_log_length()
+        # tclean(...)
+        # report = test_helper.check_logs(logstart, expected=[ r"-+ Run Minor Cycle Iterations  -+" ])
+        import re
+
+        # read all lines from the logfile that are relevant to this test
+        lines = []
+        with open(casalog.logfile(), 'r') as f:
+            f.seek(start)
+            lines = f.readlines()
+        # casalog.post("Searching through " + str(len(lines)) + " log lines", "SEVERE") # debugging
+
+        # find expected matches
+        unmet = []
+        for i in range(len(expected)):
+            expectation = re.compile(expected[i])
+            # casalog.post("expected["+str(i)+"]: "+expected[i], "SEVERE") # debugging
+            found = -1
+            for j in range(len(lines)):
+                if (expectation.search(lines[j]) != None):
+                    found = j
+                    break
+                else:
+                    pass
+                    # casalog.post("  X: " + lines[j].rstrip(), "SEVERE") # debugging
+            if (found == -1):
+                unmet.append(expected[i])
+                # casalog.post("  expectation not met", "SEVERE") # debugging
+            else:
+                del lines[found]
+                # casalog.post("  expectation met by line: " + lines[found].rstrip(), "SEVERE") # debugging
+
+        # check that all expectations were met
+        if (len(unmet) == 0):
+            return "[ {} ]: found {} matching log lines (Pass)\n".format(testname, len(expected))
+        else:
+            return "[ {} ]: found {} out of {} matching log lines (Fail, unmet expectations: {})\n".format(testname, len(expected)-len(unmet), len(expected), ", ".join(unmet))
+
+    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05,tfmask=None):
         """
             ret=None,
             peakres=None, # a float
@@ -908,6 +971,7 @@ class TestHelpers:
             tabcache=True,
             stopcode=None,
             reffreq=None # list of tuples of (imagename, reffreq)
+            tfmask=None # list of tuples of (imagename, maskname). 
         """
         pstr = "[ checkall ] \n"
         if ret != None and type(ret) == dict:
@@ -936,6 +1000,7 @@ class TestHelpers:
         pstr += TestHelpers().check_tabcache(tabcache)
         pstr += TestHelpers().check_stopcode(stopcode, ret)
         pstr += TestHelpers().check_reffreq(reffreq, epsilon=epsilon)
+        pstr += TestHelpers().check_tfmask(tfmask)
         return pstr
 
     def check_final(self, pstr=""):
@@ -1035,3 +1100,4 @@ class TestHelpers:
                 mergedret=ret
 
         return mergedret
+
