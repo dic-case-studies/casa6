@@ -232,7 +232,7 @@ class test_onefield(testref_base):
           tricky_imagename = self.img + '_uid___A001_X1234a_X56cb.s19_0.J2253+1608_bp.more-dash.virtspw19.mfs.I.iter0.hoghbom'
           ret = tclean(vis=self.msfile,imagename=tricky_imagename,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,parallel=self.parallel)#,phasecenter='J2000 19h59m57.5s +40d49m00.077s')
           exist_list = [tricky_imagename + ext for ext in ['.psf', '.residual', '.image', '.model', '.pb', '.sumwt']]
-          report = self.th.checkall(ret=ret, peakres=0.35, modflux=0.77, iterdone=10, imgexist=exist_list, imgval=[(tricky_imagename+'.psf',1.0,[50,50,0,0])], tfmask=[(self.img+'.image',['mask0']), (self.img+'.pb',['mask0'])] )
+          report = self.th.checkall(ret=ret, peakres=0.35, modflux=0.77, iterdone=10, imgexist=exist_list, imgval=[(tricky_imagename+'.psf',1.0,[50,50,0,0])], tfmask=[(tricky_imagename+'.image',['mask0']), (tricky_imagename+'.pb',['mask0'])] )
           self.assertTrue(self.check_final(pstr=report))
 
      def test_onefield_mem(self):
