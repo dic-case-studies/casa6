@@ -3240,29 +3240,29 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   vi::VisibilityIterator2& vi(vi2org.makeFullVI());
   //  cout << "VI Layers: " << vi.ViiType() << endl;
 
-
-
-
   // Establish output freq meta data prior to solving  (CAS-12735 and related)
-
-  // We can't proceed rationally if we have more than one freqSelection (multiple MSs)
-  AlwaysAssert(frequencySelections_p->size()<2,AipsError);
 
   // Discern (even implicitly-)selected spw subset
   set<uInt> selspwset;
-  {
+  if (!simdata_p)  {
+
+    // We can't proceed rationally if we have more than one freqSelection (multiple MSs)
+    //  (this is a sort-of out-of-the-blue test here....)
+    AlwaysAssert(frequencySelections_p->size()<2,AipsError);
+
     // TBD can we use the msmc_p?  (or maybe it is for the whole MS, not just the selected one?)
     MSMetaData msmdtmp(mssel_p,50.0);
     selspwset=msmdtmp.getSpwIDs();
-  }
+  } 
 
   // Extract selected spw list as a Vector<uInt>
   Vector<uInt> selspwlist;
-  if (selspwset.size()>0) {
+  if (!simdata_p && selspwset.size()>0) {
     Vector<uInt> vtmp(selspwset.begin(),selspwset.size(),0);
     selspwlist.reference(vtmp);
   } else {
     // All spws in the MS  (this is a last resort!)
+    // NB: This is used in simdata_p=True context!
     selspwlist.resize(msmc_p->nSpw());
     indgen(selspwlist);
   }
