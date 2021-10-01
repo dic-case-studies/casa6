@@ -204,6 +204,7 @@ void UVContSubTVI::initialize()
 		MSSelection mssel;
 		mssel.setSpwExpr(fitspw_p);
 		Matrix<Int> spwchan = mssel.getChanList(&(inputVii_p->ms()));
+
 		// Create line-free channel map
 	    uInt nSelections = spwchan.shape()[0];
 	    map<Int,vector<Int> > lineFreeChannelMap;
