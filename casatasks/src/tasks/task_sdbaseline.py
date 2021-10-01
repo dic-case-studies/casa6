@@ -1,29 +1,29 @@
+from __future__ import absolute_import
+import numpy
 import os
-import shutil
+import contextlib
 from collections import Counter
 
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
-
 if is_CASA6:
-    from casatasks import casalog
+    from casatools import singledishms, table, msmetadata
     from casatools import ms as mstool
-    from casatools import msmetadata, singledishms, table
-
-    from . import sdutil
+    from casatasks import casalog
     from .mstools import write_history
+    from . import sdutil
 
     ms = mstool()
     sdms = singledishms()
     tb = table()
     msmd = msmetadata()
 else:
-    import sdutil
+    from taskinit import gentools, casalog
     from mstools import write_history
-    from taskinit import casalog, gentools
+    import sdutil
     ms, sdms, tb, msmd = gentools(['ms', 'sdms', 'tb', 'msmd'])
 
-@sdutil.sdtask_decorator
+
 def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                spw=None, timerange=None, scan=None, pol=None, intent=None,
                reindex=None, maskmode=None, thresh=None, avg_limit=None,
@@ -36,6 +36,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                showprogress=None, minnrow=None, 
                outfile=None, overwrite=None):
 
+    casalog.origin('sdbaseline')
     try:
         # CAS-12985 requests the following params be given case insensitively,
         # so they need to be converted to lowercase here (2021/1/28 WK)
@@ -152,7 +153,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
 
         # Remove {WEIGHT|SIGMA}_SPECTRUM columns if updateweight=True (CAS-13161)
         if updateweight:
-            with sdutil.table_manager(outfile, nomodify=False) as mytb:
+            with sdutil.tbmanager(outfile, nomodify=False) as mytb:
                 cols_remove = []
                 for col in ['WEIGHT_SPECTRUM', 'SIGMA_SPECTRUM']:
                     if col in mytb.colnames():
@@ -382,7 +383,7 @@ def prepare_for_baselining(**keywords):
     
 def remove_sorted_table_keyword(infile):
     res = {'is_sorttab': False, 'sorttab_keywd': '', 'sorttab_name': ''}
-    with sdutil.table_manager(infile, nomodify=False) as tb:
+    with sdutil.tbmanager(infile, nomodify=False) as tb:
         try:
             sorttab_keywd = 'SORTED_TABLE'
             if sorttab_keywd in tb.keywordnames():
@@ -397,7 +398,7 @@ def remove_sorted_table_keyword(infile):
 
 def restore_sorted_table_keyword(infile, sorttab_info):
     if sorttab_info['is_sorttab'] and (sorttab_info['sorttab_name'] != ''):
-        with sdutil.table_manager(infile, nomodify=False) as tb:
+        with sdutil.tbmanager(infile, nomodify=False) as tb:
             try:
                 tb.putkeyword(sorttab_info['sorttab_keywd'],
                               sorttab_info['sorttab_name'])

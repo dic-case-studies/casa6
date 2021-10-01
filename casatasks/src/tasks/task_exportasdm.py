@@ -49,11 +49,11 @@ def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=Non
 
         verbose     -- produce log output, default: True
 
-        showversion -- Deprecated: report the version of the ASDM class set, 
-                 default: False
+        showversion -- report the version of the ASDM class set, 
+                 default: True
 
-        useversion -- Deprecated: Selects the version of MS2asdm to be used (presently only \'v3\' is available)
-              default: deprecated
+        useversion -- Selects the version of MS2asdm to be used (presently only \'v3\' is available)
+              default: v3
 
         """
         #Python script
@@ -189,10 +189,6 @@ def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=Non
         if is_CASA6:
                 # sdm tool
                 _sdm = sdm(asdm)
-                if showversion:
-                        casalog.post('Deprecated: showversion is deprecated and will be removed in a future release. showversion has been ignored for all CASA 6 releases.', 'WARN')
-                if useversion is not 'deprecated':
-                        casalog.post('Deprecated: useversion is deprecated and will be removed in a future release. The value is no longer relevant.', 'WARN')
                 rval = _sdm.fromms(tsortvis, datacolumn, archiveid, rangeid, ssdur_secs, sbdur_secs, apcorrected, verbose)
                 # this line is independent of CASA version, but is here so that the CASA5 version can do additional error reporting after cleaning up this temporary MS
                 os.system('rm -rf '+tsortvis)
@@ -214,7 +210,7 @@ def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=Non
                         execute_string+= ' --revision'
 
                 theexecutable = 'MS2asdm'
-                if (useversion == 'v3' or useversion == 'deprecated'):
+                if (useversion == 'v3'):
                         theexecutable = 'MS2asdm'
 
                 execute_string += ' ' + tsortvis + ' ' + asdm

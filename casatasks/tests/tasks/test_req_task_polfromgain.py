@@ -43,8 +43,8 @@ import time
 from casatestutils import generate_weblog
 from casatestutils import stats_dict
 from casatestutils import add_to_dict
-from casatestutils.compare import compare_caltables
-from casatestutils.compare import compare_dictionaries
+from casatestutils import compare_caltables
+from casatestutils import compare_dictionaries
 
 import numpy
 

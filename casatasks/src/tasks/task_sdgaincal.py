@@ -1,14 +1,18 @@
+from __future__ import absolute_import
+import sys
 import os
+import numpy
+import numpy.random as random
+import shutil
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatasks import casalog
-    from . import sdutil
-    from .sdutil import calibrater_manager
+    from casatools import calibrater
+    from casatasks import casalog, applycal
 else:
     from taskinit import casalog
-    from . import sdutil
-    from sdutil import cbmanager as calibrater_manager
+    from taskinit import cbtool as calibrater
+    from applycal import applycal
 
 DEFAULT_VALUE = {'interp': 'linear',
                  'spwmap': [-1]}
@@ -19,7 +23,7 @@ def parse_interp_item(interp):
         return DEFAULT_VALUE['interp']
     else:
         return interp
-
+    
 def parse_interp(interp, index):
     assert index >= 0
     if isinstance(interp, str):
@@ -34,7 +38,7 @@ def parse_interp(interp, index):
             # interp is a list of strings
             return parse_interp_item(interp[index])
     assert False
-
+    
 def parse_spwmap_item(spwmap):
     assert hasattr(spwmap, '__iter__')
     if len(spwmap) == 0:
@@ -60,25 +64,31 @@ def parse_spwmap(spwmap, index):
         return spwmap
     assert False
 
-@sdutil.sdtask_decorator
 def sdgaincal(infile=None, calmode=None, radius=None, smooth=None, 
               antenna=None, field=None, spw=None, scan=None, intent=None, 
-              applytable=None, interp=None, spwmap=None, outfile='', overwrite=False):
-
-    # outfile must be specified
-    if (outfile == '') or not isinstance(outfile, str):
-        raise ValueError("outfile is empty.")
-
-    # overwrite check
-    if os.path.exists(outfile) and not overwrite:
-        raise RuntimeError(outfile + ' exists.')
-
-    if infile is None or not isinstance(infile, str) or not os.path.exists(infile):
-        raise RuntimeError('infile not found - please verify the name')
-
+              applytable=None, interp=None, spwmap=None, outfile='', overwrite=False): 
+    
+    casalog.origin('sdgaincal')
+    
     # Calibrater tool
-    with calibrater_manager(infile) as mycb:
+    mycb = calibrater()
 
+    try:
+        # outfile must be specified
+        if (outfile == '') or not isinstance(outfile, str):
+            raise ValueError("outfile is empty.")
+        
+        # overwrite check
+        if os.path.exists(outfile) and not overwrite:
+            raise RuntimeError(outfile + ' exists.')
+        
+        # open MS
+        if isinstance(infile, str) and os.path.exists(infile):
+            #mycb.setvi(old=True)
+            mycb.open(filename=infile, compress=False, addcorr=False, addmodel=False)
+        else:
+            raise RuntimeError('infile not found - please verify the name')
+        
         # select data
         if isinstance(antenna, str) and len(antenna) > 0:
             baseline = '{ant}&&&'.format(ant=antenna)
@@ -129,4 +139,8 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
         # solve
         mycb.solve()
 
-
+        ## reporting calibration solution
+        #reportsolvestats(mycb.activityrec());
+    
+    finally:
+        mycb.close()

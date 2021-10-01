@@ -64,14 +64,6 @@ class PyParallelContSynthesisImager(PySynthesisImager):
          self.toolsi=None
 
 #############################################
-    def resetSaveModelParams(self, params=None):
-         mainparams = params.getSelPars()
-         for n in self.allselpars: # for all nodes
-             for v in self.allselpars[n]: # for all MSes
-                 self.allselpars[n][v]['readonly']=mainparams[v]['readonly']
-                 self.allselpars[n][v]['usescratch']=mainparams[v]['usescratch']
-
-#############################################
     def initializeImagers(self):
         ### Drygridding, and Coordsys comes from a single imager on MAIN node.
         ### No startmodel confusion. It's created only once and then scattered.

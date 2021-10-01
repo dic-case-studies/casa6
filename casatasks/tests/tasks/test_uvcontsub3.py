@@ -23,7 +23,7 @@ else:
 
     # uses the global tb tool
 
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
+    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data')
     def ctsys_resolve(apath):
         return os.path.join(dataRoot,apath)
 
@@ -37,7 +37,8 @@ Features tested:
   4. It gets the right answer for a known line + 0th order continuum,
      even when fitorder = 4.
 '''
-datapath = 'unittest/uvcontsub/'
+uvcdatadir = 'uvcontsub'
+datapath = 'regression/unittest'
 
 # eliminated dependence on test_split (TT)
 #class UVContChecker(SplitChecker):
@@ -76,7 +77,13 @@ class UVContsub3UnitTestBase(unittest.TestCase):
         """
         initialize
         """
-        self.inpms = inpms
+        self.inpms = uvcdatadir+'/'+inpms
+        if not os.path.exists('unittest/uvcontsub3'):
+            os.system('mkdir -p unittest/uvcontsub')
+
+        if not os.path.exists(uvcdatadir):
+            os.system('mkdir '+ uvcdatadir)
+
         if not os.path.exists(self.inpms):
             try:
                 shutil.copytree(ctsys_resolve(os.path.join(datapath,self.inpms)), self.inpms)

@@ -378,17 +378,6 @@ casacore::Vector<casacore::Double> PlotMSAtm::calcOverlayCurve(
         new atm::RefractiveIndexProfile(*specGrid, *atmProfile);
     atm::SkyStatus* skyStatus = new atm::SkyStatus(*refIdxProfile);
     skyStatus->setUserWH2O(atm::Length(pwv_, atm::Length::UnitMilliMeter));
-    parent_->logmesg("atm",
-                     "spectralGrid -- numCalcChan, refchan, refFreq, chanSep:" + String::toString(numCalcChan)
-                     + " " + String::toString(refChan)
-                     + " " + String::toString(refFreq)
-                     + " " + String::toString(chanSep)
-                     ,
-                    PlotLogger::MSG_WARN);
-    parent_->logmesg("atm",
-                     "setUsetWH2O, pwv_:" + String::toString(pwv_),
-                    PlotLogger::MSG_WARN);
-    
 
     // calculate opacities and airmass
     casacore::Vector<casacore::Double> dryOpacity(numCalcChan);
@@ -400,11 +389,6 @@ casacore::Vector<casacore::Double> PlotMSAtm::calcOverlayCurve(
     }
     airmass_ = computeMeanAirmass();
 
-
-    parent_->logmesg("atm",
-                     "airmass__:" + String::toString(airmass_),
-                    PlotLogger::MSG_WARN);
-    
     // calculate atm/tsky
     atmTransmission = exp(-airmass_ * (wetOpacity + dryOpacity));
     if (!showatm_) {
@@ -449,19 +433,6 @@ atm::AtmProfile* PlotMSAtm::getAtmProfile() {
     // pressure step factor, top altitude
     casacore::Double TLR(-5.6), h0(2.0), dp(10.0), dPm(1.2), maxAlt(48.0);
     unsigned int atmtype(atm::midlatWinter);
-    parent_->logmesg("getAtmProfile",
-                     "pressure_ (mbar):" + String::toString(weather_.asDouble("pressure")),
-                    PlotLogger::MSG_WARN);
-    parent_->logmesg("getAtmProfile",
-                     "temperature_ (K):" + String::toString(weather_.asDouble("temperature")),
-                    PlotLogger::MSG_WARN);
-    parent_->logmesg("getAtmProfile",
-                     "humidity_ (percent):" + String::toString(weather_.asDouble("humidity")),
-                    PlotLogger::MSG_WARN);
-    parent_->logmesg("getAtmProfile",
-                     "atmtype (int):" + String::toString(atmtype),
-                    PlotLogger::MSG_WARN);
-
     atm::AtmProfile* atmProfile = new atm::AtmProfile(
         atm::Length(altitude,atm::Length::UnitMeter),
         atm::Pressure(weather_.asDouble("pressure"), atm::Pressure::UnitMilliBar),

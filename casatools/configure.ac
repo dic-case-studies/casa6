@@ -1,5 +1,5 @@
 AC_INIT([casa], [4.6.0])
-AC_COPYRIGHT([Copyright (C) 2017-2021 Associated Universities, Inc. Washington DC, USA.])
+AC_COPYRIGHT([Copyright (C) 2017 Associated Universities, Inc. Washington DC, USA.])
 AC_REVISION([syscmd([ac/scripts/configure.commit])])
 
 m4_include([ac/m4/m4_ax_pkg_prog_pkg_config.m4])

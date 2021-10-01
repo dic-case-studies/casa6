@@ -1,33 +1,30 @@
+from __future__ import absolute_import
 import os
 import re
 
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
-
 if is_CASA6:
+    from casatools import singledishms, calibrater, agentflagger, ms
     from casatasks import casalog
-    from casatools import agentflagger, calibrater, ms, singledishms
-    from . import sdutil
-
     from .mstools import write_history
 
-    mysdms = singledishms()
-    mycb = calibrater()
-    myms = ms()
+    mysdms = singledishms( )
+    mycb = calibrater( )
+    myms = ms( )
 else:
-    from casac import casac
-    from mstools import write_history
     from taskinit import *
-    import sdutil
+    from mstools import write_history
+    from casac import casac
 
     agentflagger = casac.agentflagger
 
     mysdms, mycb, myms = gentools(['sdms', 'cb', 'ms'])
 
-@sdutil.sdtask_decorator
 def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, parallel=None):
     """
     """
+    casalog.origin('importasap')
 
     try:
         if infile is None or outputvis is None:
@@ -50,7 +47,7 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
         # import
         status = mysdms.importasap(infile, outputvis, parallel)
 
-        if status:
+        if status == True:
             # flagversions file must be deleted 
             flagversions = outputvis.rstrip('/') + '.flagversions'
             if os.path.exists(flagversions):
@@ -61,8 +58,8 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
             mycb.initweights(wtmode='nyq')
 
             # create flagbackup file if user requests it
-            if flagbackup:
-                aflocal = agentflagger()
+            if flagbackup == True:
+                aflocal = agentflagger( )
                 aflocal.open(outputvis)
                 aflocal.saveflagversion('Original',
                                         comment='Original flags at import into CASA using importasap',

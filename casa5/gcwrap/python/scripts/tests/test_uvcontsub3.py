@@ -1,31 +1,12 @@
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import numpy
 import sys
 import shutil
+from __main__ import default
+from tasks import *
+from taskinit import *
+#from tests.test_split import check_eq, SplitChecker
 import unittest
-
-from casatasks.private.casa_transition import *
-if is_CASA6:
-    from casatools import ctsys, table
-    from casatasks import uvcontsub3
-    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-
-    tb = table( )
-
-    ctsys_resolve = ctsys.resolve
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from parallel.parallel_task_helper import ParallelTaskHelper
-
-    # uses the global tb tool
-
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
 
 '''
 Unit tests for task uvcontsub3.
@@ -37,7 +18,7 @@ Features tested:
   4. It gets the right answer for a known line + 0th order continuum,
      even when fitorder = 4.
 '''
-datapath = 'unittest/uvcontsub/'
+datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/uvcontsub/'
 
 # eliminated dependence on test_split (TT)
 #class UVContChecker(SplitChecker):
@@ -79,9 +60,9 @@ class UVContsub3UnitTestBase(unittest.TestCase):
         self.inpms = inpms
         if not os.path.exists(self.inpms):
             try:
-                shutil.copytree(ctsys_resolve(os.path.join(datapath,self.inpms)), self.inpms)
-            except Exception:
-                raise Exception("Missing input MS: " + datapath + '/' + self.inpms) 
+                shutil.copytree(datapath + inpms, inpms)
+            except Exception, e:
+                raise Exception, "Missing input MS: " + datapath + inpms
 
     def cleanup(self):
         """
@@ -106,14 +87,14 @@ class UVContsub3UnitTestBase(unittest.TestCase):
                 if hasattr(are_eq, 'all'):
                     are_eq = are_eq.all()
                 if not are_eq:
-                    raise ValueError('!=')
+                    raise ValueError, '!='
             except ValueError:
                 errmsg = "%r != %r" % (val, expval)
                 if (len(errmsg) > 66): # 66 = 78 - len('ValueError: ')
                     errmsg = "\n%r\n!=\n%r" % (val, expval)
-                raise ValueError(errmsg)
-            except Exception as e:
-                print("Error comparing", val, "to", expval)
+                raise ValueError, errmsg
+            except Exception, e:
+                print "Error comparing", val, "to", expval
                 raise e
 
 
@@ -132,11 +113,11 @@ class zeroth(UVContsub3UnitTestBase):
         infitorder = 0
 
         try:
-            print("\nRunning uvcontsub3")
+            print "\nRunning uvcontsub3"
             uvran = uvcontsub3(self.inpms, fitspw='0:0~5;18~23',
                                fitorder=infitorder)
-        except Exception as e:
-            print("Error running uvcontsub3")
+        except Exception, e:
+            print "Error running uvcontsub3"
             raise e
         specms = self.inpms + '.contsub'
         tb.open(specms)
@@ -145,10 +126,10 @@ class zeroth(UVContsub3UnitTestBase):
         shutil.rmtree(specms)
         self.assertTrue(uvran)
 
-        print("Continuum-subtracted data in line-free region")
+        print "Continuum-subtracted data in line-free region"
         self.check_eq(record['contsub'][:,21],   # RR, LL
                  numpy.array([ 0.+0.j,  0.+0.j]), 0.0001)
-        print("Continuum-subtracted data in line region")
+        print "Continuum-subtracted data in line region"
         self.check_eq(record['contsub'][:,9],   # RR, LL
                  numpy.array([87.+26.j, 31.+20.j]), 0.0001)
         
@@ -167,11 +148,11 @@ class fourth(UVContsub3UnitTestBase):
         infitorder = 4
 
         try:
-            print("\nRunning uvcontsub3")
+            print "\nRunning uvcontsub3"
             uvran = uvcontsub3(self.inpms, fitspw='0:0~5;18~23',
                                fitorder=infitorder)
-        except Exception as e:
-            print("Error running uvcontsub3")
+        except Exception, e:
+            print "Error running uvcontsub3"
             raise e
         specms = self.inpms + '.contsub'
         tb.open(specms)
@@ -180,7 +161,7 @@ class fourth(UVContsub3UnitTestBase):
         shutil.rmtree(specms)
         self.assertTrue(uvran)
 
-        print("Continuum-subtracted data")
+        print "Continuum-subtracted data"
         self.check_eq(record['contsub'],   # [[RR], [LL]]
                  numpy.array([[0.00000+0.00000j,    0.00000+0.00000j,
                                0.00000+0.00000j,    0.00000+0.00000j,
@@ -222,12 +203,12 @@ class combspw(UVContsub3UnitTestBase):
         for infitorder in fitorders:
             record[infitorder]={}
             try:
-                print("\nRunning uvcontsub3")
+                print "\nRunning uvcontsub3"
                 uvran = uvcontsub3(self.inpms, fitspw='1~10:5~122,15~22:5~122',
                                    spw='6~14', combine='spw',
                                    fitorder=infitorder)
-            except Exception as e:
-                print("Error running uvcontsub3")
+            except Exception, e:
+                print "Error running uvcontsub3"
                 raise e
 
             specms = self.inpms + '.contsub'
@@ -239,10 +220,10 @@ class combspw(UVContsub3UnitTestBase):
             shutil.rmtree(specms)
             self.assertTrue(uvran)
  
-        print("combspw fitorder=0 line estimate")
+        print "combspw fitorder=0 line estimate"
         self.check_eq(record[0]['contsub'], -6.2324+17.9865j, 0.001)
 
-        print("combspw fitorder=1 line estimate")
+        print "combspw fitorder=1 line estimate"
         self.check_eq(record[1]['contsub'], -6.2533+17.6584j, 0.001)
         
 class knowncombspw(UVContsub3UnitTestBase):
@@ -260,12 +241,12 @@ class knowncombspw(UVContsub3UnitTestBase):
         infitorder = 1
 
         try:
-            print("\nRunning uvcontsub3")
+            print "\nRunning uvcontsub3"
             uvran = uvcontsub3(self.inpms, fitspw='0,1:0~15,3:23~31,4',
                                spw='1~3', combine='spw',
                                fitorder=infitorder)
-        except Exception as e:
-            print("Error running uvcontsub3")
+        except Exception, e:
+            print "Error running uvcontsub3"
             raise e
         specms = self.inpms + '.contsub'
         tb.open(specms)
@@ -280,7 +261,7 @@ class knowncombspw(UVContsub3UnitTestBase):
         shutil.rmtree(specms)
         self.assertTrue(uvran)
 
-        print("The blueward side")
+        print "The blueward side"
         self.check_eq(record['blue'],
                  numpy.array([ -3.03268433e-04 +1.00890160e-01j,
                                -3.02314758e-04 +9.34381485e-02j,
@@ -315,7 +296,7 @@ class knowncombspw(UVContsub3UnitTestBase):
                                 2.47078934e+01 +1.22314072e+01j,
                                 3.39962006e+01 +1.68681087e+01j]), 0.001)
 
-        print("The known line")
+        print "The known line"
         self.check_eq(record['line'],
                  numpy.array([   1.53886628 +0.8961916j ,    2.52163553 +1.38012409j,
                                  4.02423143 +2.12396812j,    6.25472546 +3.23176193j,
@@ -335,7 +316,7 @@ class knowncombspw(UVContsub3UnitTestBase):
                                 42.87281799+21.33958817j,   31.81188011+15.80166435j]),
                  0.001)
 
-        print("The redward side")
+        print "The redward side"
         self.check_eq(record['red'],
                  numpy.array([  1.23712059e+02 +6.19947433e+01j,
                                 1.04113014e+02 +5.21877708e+01j,
@@ -372,7 +353,3 @@ class knowncombspw(UVContsub3UnitTestBase):
         
 def suite():
     return [zeroth, fourth, combspw, knowncombspw]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()

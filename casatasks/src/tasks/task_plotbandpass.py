@@ -709,9 +709,6 @@ def run_with_old_pyplot_style(func):
     def func_old_style(*args, **kwargs):
         if is_CASA6:
             with pb.style.context('classic'):
-                pb.rc('axes.formatter', useoffset=False)
-                pb.rc('axes', grid=True)
-                pb.rc('axes.grid', axis='both', which='major')
                 return func(*args, **kwargs)
         else:
             return func(*args, **kwargs)

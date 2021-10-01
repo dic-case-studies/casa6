@@ -1,15 +1,15 @@
+from __future__ import absolute_import
+import sys
 import os
-import shutil
-
 import numpy
 import numpy.random as random
+import shutil
+
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
-
 if is_CASA6:
-    from casatasks import casalog
-    from casatools import calibrater, ms, table
-
+    from casatools import calibrater, table, ms
+    from casatasks import casalog, applycal
     from . import sdutil
     from .mstools import write_history
 
@@ -20,15 +20,14 @@ if is_CASA6:
     # MS tool
     myms = ms()
 else:
-    import sdutil
+    from taskinit import *
     from applycal import applycal
     from mstools import write_history
-    from taskinit import *
+    import sdutil
 
     # Calibrator tool
     (cb,myms) = gentools(['cb','ms'])
 
-@sdutil.sdtask_decorator
 def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
            width=0.5, elongated=False, applytable='',interp='', spwmap={},
            outfile='', overwrite=False, field='', spw='', scan='',intent=''): 
@@ -176,7 +175,7 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
 
 def inspect_caltype(table):
     caltype = 'UNKNOWN'
-    with sdutil.table_manager(table) as tb:
+    with sdutil.tbmanager(table) as tb:
         if 'VisCal' in tb.keywordnames():
             caltype = tb.getkeyword('VisCal')
     return caltype

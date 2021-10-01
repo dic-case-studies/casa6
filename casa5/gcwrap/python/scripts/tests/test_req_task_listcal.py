@@ -51,7 +51,7 @@ else:
 class test_listcal_minimal(unittest.TestCase):
     """
     Most basic ways of calling listcal, with an existing small dataset from the
-    'unittest' input data that is used in the bandpass and gaincal tests.
+    'regression/unittest' input data that is used in the bandpass and gaincal tests.
     This is just a start, to have some tests for the task listcal.
     """
 

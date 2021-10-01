@@ -17,7 +17,7 @@ if is_CASA6:
     def default(atask):
         pass
 
-    from casatasks.private.sdutil import table_manager
+    from casatasks.private.sdutil import tbmanager
     from casatools import ctsys
     datapath=ctsys.resolve('unittest/nrobeamaverage/')
 
@@ -27,7 +27,7 @@ else:
     from taskinit import tbtool as table
 
     from __main__ import default
-    from sdutil import tbmanager as table_manager
+    from sdutil import tbmanager
 
     # Define the root for the data files
     datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/nrobeamaverage/"
@@ -80,12 +80,12 @@ class test_nrobeamaverage(unittest.TestCase):
         os.system('rm -rf ' + self.o_ms)
 
     def _get_antid(self):
-        with table_manager(self.i_ms + '/ANTENNA') as tb:
+        with tbmanager(self.i_ms + '/ANTENNA') as tb:
             acol = tb.getcol('NAME')
         return range(len(acol))
 
     def _get_onsource_stateid(self):
-        with table_manager(self.i_ms + '/STATE') as tb:
+        with tbmanager(self.i_ms + '/STATE') as tb:
             ocol = tb.getcol('OBS_MODE')
         res = None
         for i in range(len(ocol)):
@@ -106,7 +106,7 @@ class test_nrobeamaverage(unittest.TestCase):
         self.o_tm, self.o_a1, self.o_a2, self.o_dd, self.o_sc, self.o_st = self._do_get_data(self.o_ms)
 
     def _do_get_data(self, msname):
-        with table_manager(msname) as tb:
+        with tbmanager(msname) as tb:
             tm = tb.getcol('TIME')
             a1 = tb.getcol('ANTENNA1')
             a2 = tb.getcol('ANTENNA2')
@@ -141,10 +141,10 @@ class test_nrobeamaverage(unittest.TestCase):
     def check_values(self, num_ave=None, beam=None):
         if num_ave is None:
             for iidx in range(len(self.i_tm)):
-                with table_manager(self.i_ms) as tb:
+                with tbmanager(self.i_ms) as tb:
                     self.i_dat = tb.getcell('FLOAT_DATA', iidx)
                 oidx = self._get_index_outdata(iidx)
-                with table_manager(self.o_ms) as tb:
+                with tbmanager(self.o_ms) as tb:
                     self.o_dat = tb.getcell('FLOAT_DATA', oidx)
                 self._do_check_values(iidx, oidx, beam)
             return
@@ -220,7 +220,7 @@ class test_nrobeamaverage(unittest.TestCase):
         for i in range(len(self.i_tm)):
             if (self.i_st[i] == state) and (self.i_dd[i] == spw):
                 if (self.i_tm[i] == ival['tm1']) or (self.i_tm[i] == ival['tm2']):
-                    with table_manager(self.i_ms) as tb:
+                    with tbmanager(self.i_ms) as tb:
                         in_dat.append(tb.getcell('FLOAT_DATA', i))
         ival['dat'] = in_dat
 
@@ -230,7 +230,7 @@ class test_nrobeamaverage(unittest.TestCase):
                 oval['tm'] = self.o_tm[i]
                 oval['a1'] = self.o_a1[i]
                 oval['a2'] = self.o_a2[i]
-                with table_manager(self.o_ms) as tb:
+                with tbmanager(self.o_ms) as tb:
                     oval['dat'] = tb.getcell('FLOAT_DATA', i)
                     oval['wgt'] = tb.getcell('WEIGHT', i)
                     oval['sig'] = tb.getcell('SIGMA', i)

@@ -1,33 +1,30 @@
 import os
-
 import numpy
 import pylab as pl
-from casatasks.private.casa_transition import is_CASA6
 
+from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import casalog
-    from casatools import image, quanta
-
-    from . import sdutil
-
+    from casatools import quanta
+    from casatools import image
 else:
-    import sdutil
     from taskinit import casalog
-    from taskinit import iatool as image
     from taskinit import qatool as quanta
+    from taskinit import iatool as image
+
 
 qa = quanta()
 
 
-@sdutil.sdtask_decorator
 def plotprofilemap(imagename=None, figfile=None, overwrite=None, transparent=None,
                    pol=None, spectralaxis=None, restfreq=None, plotrange=None, title=None,
                    linecolor=None, linestyle=None, linewidth=None,
                    separatepanel=None, plotmasked=None, maskedcolor=None,
                    showaxislabel=None, showtick=None, showticklabel=None,
                    figsize=None, numpanels=None):
+    casalog.origin('plotprofilemap')
 
-    if len(figfile) > 0 and os.path.exists(figfile) and not overwrite:
+    if len(figfile) > 0 and os.path.exists(figfile) and overwrite == False:
         raise RuntimeError('overwrite is False and output file exists: \'%s\''%(figfile))
 
     image = SpectralImage(imagename)

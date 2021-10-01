@@ -203,7 +203,6 @@ namespace casac {
         itsMSCol		= 0;
         itsWinFuncCol           = 0;
         itsNumBinCol            = 0;
-	itsCorrBitCol           = 0;
         itsNumAntenna		= 0;
         itsScanNumber         = 0;
 
@@ -222,7 +221,7 @@ namespace casac {
 
     // The destructor
     ASDM2MSFiller::~ASDM2MSFiller() {
-        // end flushes to the MS and deletes itsMS, itsMSCol, itsWinFuncCol, itsNumBinCol, itsCorrBitCol
+        // end flushes to the MS and deletes itsMS and itsMSCol and itsWinFuncCol and itsNumBinCol
         end();
     }
 
@@ -384,7 +383,7 @@ namespace casac {
             MSSpectralWindow::addColumnToDesc (td, MSSpectralWindow::ASSOC_SPW_ID);
             MSSpectralWindow::addColumnToDesc (td, MSSpectralWindow::ASSOC_NATURE);
 
-            // add the non-standard SDM_WINDOW_FUNCTION, SDM_NUM_BIN, SDM_CORR_BIT columns
+            // add the non-standard SDM_WINDOW_FUNCTION and SDM_NUM_BIN columns
             ScalarColumnDesc<String> sdmWinFuncDesc("SDM_WINDOW_FUNCTION","windowFunction value found in SDM");
             sdmWinFuncDesc.setDefault("UNKNOWN");
             td.addColumn(sdmWinFuncDesc);
@@ -392,10 +391,6 @@ namespace casac {
             ScalarColumnDesc<Int> sdmNumBinDesc("SDM_NUM_BIN","numBin value found in or inferred from SDM");
             sdmNumBinDesc.setDefault(1);
             td.addColumn(sdmNumBinDesc);
-
-	    ScalarColumnDesc<String> sdmCorrBitDesc("SDM_CORR_BIT","correlationBit value found in SDM");
-	    sdmCorrBitDesc.setDefault("UNKNOWN");
-	    td.addColumn(sdmCorrBitDesc);
 
             itsMS->spectralWindow().addColumn(td,spwStMan);
             //SetupNewTable tabSetup(itsMS->spectralWindowTableName(),
@@ -539,10 +534,6 @@ namespace casac {
         // get the SPECTRAL_WINDOW::SDM_NUM_BIN column here so it doesn't need to be
         // constructed each time a value is written to it
         itsNumBinCol = new ScalarColumn<Int>(itsMS->spectralWindow(), "SDM_NUM_BIN");
-
-	// get the SPECTRAL_WINDOW::SDM_CORR_BIT column here so it doesn't need to be
-	// constructed each time a value is written to it
-	itsCorrBitCol = new ScalarColumn<String>(itsMS->spectralWindow(), "SDM_CORR_BIT");
 
         //cout << "\n";
         {
@@ -1759,8 +1750,7 @@ namespace casac {
                                           const vector<int>&		assoc_sp_id_,
                                           const vector<string>&      assoc_nature_,
                                           const string & windowFunction_,
-                                          int numBin_,
-					  const string & corrBit_ ) {
+                                          int numBin_ ) {
  
         MSSpectralWindow msspwin = itsMS -> spectralWindow();
         MSSpWindowColumns msspwinCol(msspwin);
@@ -1813,9 +1803,6 @@ namespace casac {
 
         // non-standard SDM_NUM_BIN column
         itsNumBinCol->put(crow, numBin_);
-
-	// non-standard SDM_CORR_BIT column
-	itsCorrBitCol->put(crow, corrBit_);
 
         //msspwin.flush();
         // cout << "\n";
@@ -2212,10 +2199,6 @@ namespace casac {
             delete itsNumBinCol;
             itsNumBinCol = 0;
         }
-	if (itsCorrBitCol) {
-	  delete itsCorrBitCol;
-	  itsCorrBitCol = 0;
-	}
         if (itsMS) {
             itsMS->flush();
             delete itsMS;

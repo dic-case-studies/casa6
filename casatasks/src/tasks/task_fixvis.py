@@ -71,9 +71,6 @@ def fixvis(vis, outputvis='',field='', refcode='', reuse=True, phasecenter='', d
         shutil.copytree(src, dest, symlinks=True)
 
     casalog.origin('fixvis')
-    casalog.post(
-        '**ALERT:** Deprecated in CASA 5.9/6.3. Please use task **phaseshift** instead.', 'WARN'
-    )
 
     if vis == outputvis or outputvis == '':
         casalog.post('Will overwrite original MS ...', 'NORMAL')

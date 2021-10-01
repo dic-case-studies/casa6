@@ -13,10 +13,6 @@ if (casa['state']['telemetry-enabled'] == True):
     # Set back to "casa" so that the current logging is not altered
     casalog.origin("")
 
-# Last message to the log and terminal on startup (except for the
-# "Enter doc('start')" print to the terminal below)
-checkgeodetic()
-
 if casa['flags'].execute:
     import os.path
 

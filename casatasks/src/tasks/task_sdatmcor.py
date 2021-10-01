@@ -5,13 +5,17 @@ import os
 import shutil
 
 import numpy as np
-from casatasks.private.casa_transition import is_CASA6
 
+from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import casalog
-    from casatasks.private import sdutil, simutil
+    from casatasks.private import sdutil
+    from casatasks.private import simutil
     from casatools import ms as mstool
-    from casatools import msmetadata, quanta, singledishms
+    from casatools import msmetadata
+    from casatools import quanta
+    from casatools import singledishms
+    from casatools import table
 
     ut = simutil.simutil()
     qa = quanta()
@@ -28,9 +32,11 @@ if is_CASA6:
 else:
     import sdutil
     from simutil import simutil
-    from taskinit import casalog, gentools
+    from taskinit import casalog
+    from taskinit import gentools
     from taskinit import msmdtool as msmetadata
-    from taskinit import mstool, qa
+    from taskinit import mstool
+    from taskinit import qa
     from taskinit import tbtool as table
 
     ut = simutil()
@@ -43,6 +49,16 @@ else:
 
         def next(self):
             return next(self._iter)
+
+
+@contextlib.contextmanager
+def open_table(path, nomodify=True):
+    tb = table()
+    tb.open(path, nomodify=nomodify)
+    try:
+        yield tb
+    finally:
+        tb.close()
 
 
 @contextlib.contextmanager
@@ -109,7 +125,7 @@ def parse_gainfactor(gainfactor):
         # should be the name of caltable
         if not os.path.exists(gainfactor):
             raise FileNotFoundError('"{}" should exist.'.format(gainfactor))
-        with sdutil.table_manager(gainfactor) as tb:
+        with open_table(gainfactor) as tb:
             if 'FPARAM' in tb.colnames():
                 col = 'FPARAM'
             elif 'CPARAM' in tb.colnames():
@@ -133,7 +149,7 @@ def parse_gainfactor(gainfactor):
 
 
 def gaindict2list(msname, gaindict):
-    with sdutil.table_manager(os.path.join(msname, 'SPECTRAL_WINDOW')) as tb:
+    with open_table(os.path.join(msname, 'SPECTRAL_WINDOW')) as tb:
         nspw = tb.nrows()
 
     gainlist = np.ones(nspw, dtype=float)
@@ -159,7 +175,7 @@ def get_all_spws_from_main(msname):
     Returns:
         list: list of available spectral window ids
     """
-    with sdutil.table_manager(msname) as tb:
+    with open_table(msname) as tb:
         ddids = np.unique(tb.getcol('DATA_DESC_ID'))
     with open_msmd(msname) as msmd:
         spws_all = [msmd.spwfordatadesc(ddid) for ddid in ddids]
@@ -224,7 +240,7 @@ def get_mount_off_source_commands(msname):
     Returns:
         np.ndarray: list of flag commands
     """
-    with sdutil.table_manager(os.path.join(msname, 'FLAG_CMD')) as tb:
+    with open_table(os.path.join(msname, 'FLAG_CMD')) as tb:
         if tb.nrows() > 0:
             tsel = tb.query('REASON=="Mount_is_off_source"')
             try:
@@ -435,7 +451,7 @@ def get_default_antenna(msname):
         int: default antenna id
     """
     # get list of antenna Ids from MAIN table
-    with sdutil.table_manager(msname) as tb:
+    with open_table(msname) as tb:
         ant_list = np.unique(tb.getcol('ANTENNA1'))
 
     # No Available antenna
@@ -480,7 +496,7 @@ def get_default_altitude(msname, antid):
     decide default value of 'Altitude' for Atm Correction.
     This requires to calculate Elevation from Antenna Position Information.
     """
-    with sdutil.table_manager(os.path.join(msname, 'ANTENNA')) as tb:
+    with open_table(os.path.join(msname, 'ANTENNA')) as tb:
         # obtain the antenna Position (Earth Center) specified by antid
         X, Y, Z = (float(i) for i in tb.getcell('POSITION', antid))
 
@@ -608,7 +624,6 @@ def get_configuration_for_atmcor(infile, spw, outputspw, gainfactor, user_inputs
     return config
 
 
-@sdutil.sdtask_decorator
 def sdatmcor(
         infile=None, datacolumn=None, outfile=None, overwrite=None,
         field=None, spw=None, scan=None, antenna=None,
@@ -621,6 +636,9 @@ def sdatmcor(
         altitude=None, temperature=None, pressure=None, humidity=None, pwv=None,
         dp=None, dpm=None,
         layerboundaries=None, layertemperature=None):
+
+    # task name
+    casalog.origin('sdatmcor')
 
     try:
         # Input/Output error check and internal set up.

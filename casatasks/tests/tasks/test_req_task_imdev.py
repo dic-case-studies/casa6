@@ -28,21 +28,17 @@ try:
     from casatasks import imdev
     tb = casatools.table()
     ia = casatools.image()
-    # imports from merged test_imdev
-    from casatools import regionmanager as rgtool
     CASA6 = True
 except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
-
 import sys
 import os
 import unittest
 import shutil
 import numpy
 import numbers
-import math
 
 ### DATA ###
 
@@ -57,18 +53,8 @@ datapath = os.path.join(dataroot, 'orion_tfeather.im')
 datapath2 = os.path.join(dataroot, 'ngc5921.clean.image')
 stokespath = os.path.join(dataroot, 'image_input_processor.im')
 interppath = os.path.join(dataroot, 'f2h_quantile.im')
-reference_path = dataroot+'/imdev_reference/'
-
 input0 = dataroot + "100x100x2.im"
-ref0 = reference_path + "ref0.im"
-# Merged test data
-ref1 = reference_path + "ref1.im"
-ref2 = reference_path + "ref2.im"
-ref3 = reference_path + "ref3.im"
-ref4 = reference_path + "ref4.im"
-ref5 = reference_path + "ref5.im"
-ref6 = reference_path + "ref6.im"
-ref7 = reference_path + "ref7.im"
+ref0 = dataroot + "imdev_reference/ref0.im"
         
 
 def imArray(image):
@@ -86,43 +72,6 @@ output3 = 'testimage3.im'
 
 
 class imdev_test(unittest.TestCase):
-    
-    ### Compare function from merged test_imdev
-    def _compare(self, resold, resnew, helpstr):
-        mytype = type(resold)
-        self.assertTrue(mytype == type(resnew), helpstr + ": types differ")
-        if mytype == dict:
-            for k in resold.keys():
-                self._compare(resold[k], resnew[k], helpstr)
-        elif mytype == numpy.ndarray:
-            oldarray = resold.ravel()
-            newarray = resnew.ravel()
-            self.assertTrue(
-                len(oldarray) == len(newarray),
-                helpstr + ": array lengths not equal"
-            )
-            for i in range(len(oldarray)):
-                self._compare(oldarray[i], newarray[i], helpstr)
-        elif mytype == str:
-            self.assertTrue(
-                resold == resnew,
-                helpstr + ": string inequality, old = " + resold + ", new = " + resnew
-            )
-        elif isinstance(resold, numbers.Integral) or mytype == numpy.int32:
-            self.assertTrue(
-                resold == resnew,
-                helpstr + ": integral inequality, old = " + str(resold) + ", new = " + str(resnew)
-            )
-        elif isinstance(resold, numbers.Real):
-            self.assertTrue(
-                resold == resnew
-                or abs(resnew / resold - 1) < 1e-6,
-                helpstr + "float inequality: old = " + str(resold)
-                + ", new = " + str(resnew)
-            )
-        else:
-            self.assertTrue(False, "Unhandled type " + str(mytype))
-    ###
 
     
     def setUp(self):
@@ -150,9 +99,6 @@ class imdev_test(unittest.TestCase):
 
         if os.path.exists("mycirc.im"):
             shutil.rmtree("mycirc.im")
-        
-        if os.path.exists("out0.im"):
-            shutil.rmtree("out0.im")
 
         self._myia.done()
         self.assertTrue(len(tb.showcache()) == 0)
@@ -464,6 +410,9 @@ class imdev_test(unittest.TestCase):
             "incorrect grid pixel value"
         )
         myia.done()
+
+
+        
         
         
 def suite():

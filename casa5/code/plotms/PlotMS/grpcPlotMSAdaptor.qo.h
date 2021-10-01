@@ -31,19 +31,12 @@
 #include <plotms/PlotMS/PlotEngine.h>
 #include <casagrpc/protos/plotms.grpc.pb.h>
 #include <casagrpc/protos/shutdown.grpc.pb.h>
-#include <casagrpc/protos/ping.grpc.pb.h>
 #include <plotms/Gui/PlotMSPlotter.qo.h>
 #include <plotms/Plots/PlotMSPlotParameterGroups.h>
 #include <QObject>
 #include <map>
 
 namespace casa { //# NAMESPACE CASA - BEGIN
-
-    class grpcPMSPing : public ::casatools::rpc::Ping::Service {
-    public:
-        grpcPMSPing( ) { }
-        ::grpc::Status now(::grpc::ServerContext*, const ::google::protobuf::Empty*, ::google::protobuf::Empty*);
-    };
 
     class grpcPMSShutdown : public QObject, public ::casatools::rpc::Shutdown::Service {
 
@@ -216,8 +209,7 @@ namespace casa { //# NAMESPACE CASA - BEGIN
     public:
         grpcPlotMSState(PlotEngine *v) :
             plotms_service(new grpcPlotMS(v)),
-            shutdown_service(new grpcPMSShutdown(v)),
-            ping_service(new grpcPMSPing( )) { }
+            shutdown_service(new grpcPMSShutdown(v)) { }
 
         std::string uri;
 
@@ -225,7 +217,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
         std::unique_ptr<grpcPlotMS> plotms_service;
         std::unique_ptr<grpcPMSShutdown> shutdown_service;
-        std::unique_ptr<grpcPMSPing> ping_service;
 
         ~grpcPlotMSState( ) {
             if (getenv("GRPC_DEBUG")) {

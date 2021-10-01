@@ -14,7 +14,7 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, table, ms
     from casatasks import sdfit, flagdata
-    from casatasks.private.sdutil import table_manager
+    from casatasks.private.sdutil import tbmanager
 
     ### for selection_syntax import
     #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -33,7 +33,7 @@ else:
     from taskinit import *
 
     from sdfit import sdfit
-    from sdutil import tbmanager as table_manager
+    from sdutil import tbmanager
 
     try:
         from . import selection_syntax
@@ -359,10 +359,10 @@ class sdfit_unittest_base(unittest.TestCase):
         if select_pol: pol_sel = self._getListSelection(pol)
         if not colname: colname='FLOAT_DATA'
         self._checkfile(filename)
-        with table_manager(filename) as tb:
+        with tbmanager(filename) as tb:
             data = tb.getcol(colname)
             ddid = tb.getcol('DATA_DESC_ID')
-        with table_manager(filename + '/DATA_DESCRIPTION') as tb:
+        with tbmanager(filename+'/DATA_DESCRIPTION') as tb:
             spwid = tb.getcol('SPECTRAL_WINDOW_ID').tolist()
         if not select_spw: spw_sel = spwid
         # get the selected DD IDs from selected SPW IDs.
@@ -646,7 +646,7 @@ class sdfit_basicTest(sdfit_unittest_base):
             result = sdfit(infile=infile, datacolumn=datacolumn)
 
             npol = 2
-            with table_manager(infile) as tb:
+            with tbmanager(infile) as tb:
                 nrow = tb.nrows()
 
             for key in result.keys():

@@ -3,6 +3,7 @@ import sys
 import filecmp
 import os
 import numpy
+import six
 import numbers
 import shutil
 try:
@@ -436,7 +437,7 @@ def compare_dictionaries(  dictionary1, dictionary2, skipkeys = None, rtol=8e-7,
                     logging.info("{0}:{1} != {0}:{2}".format(key,dictionary1[key],dictionary2[key]))
                     return False
         # Compare Strings
-        elif isinstance(dictionary1[key], str) and isinstance(dictionary2[key], str):
+        elif isinstance(dictionary1[key], six.string_types) and isinstance(dictionary2[key], six.string_types):
             if (dictionary1[key] == dictionary2[key]):
                 pass
             else:
@@ -507,7 +508,7 @@ def compare_pixel_value( imagename=None, refimage=None, loc=None):
         @return: True if the pixel values match at the provided index or slice. Returns False otherwise
     '''
     if imagename != None and refimage != None:
-        if isinstance(loc, str):
+        if isinstance(loc, six.string_types):
             _tb.open(imagename)
             image1 = _tb.getcol('map')
             _tb.close()
@@ -558,7 +559,7 @@ def compare_pixel_mask( maskname='', refmask=None, refval=None, loc=None):
                 logging.warning('Invalid refmask file name')
         elif refmask == None and refval != None:
             # If using a reference value compare the value/shape to the selected slice
-            if isinstance(loc, str):
+            if isinstance(loc, six.string_types):
                 _tb.open(maskname)
                 image = _tb.getcol('PagedArray')
                 _tb.close()

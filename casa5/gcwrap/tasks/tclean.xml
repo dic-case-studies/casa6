@@ -1157,9 +1157,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
                       Note : To prevent the internal T/F mask from appearing in anything other
                                  than the .pb and .image.pbcor images, 'pblimit' can be set to a
-                                 negative number. 
-                                 The absolute value will still be used as a valid 'pblimit' for normalization
-                                 purposes. So, for example, pick pblimit=-0.1 (and not pblimit=-1). 
+                                 negative number. The absolute value will still be used as a valid 'pblimit'.
                                  A tclean restart using existing output images on disk that already
                                  have this T/F mask in the .residual and .image but only pblimit set
                                  to a negative value, will remove this mask after the next major cycle.
@@ -1888,6 +1886,9 @@ to use the correct direction in which the antenna is pointing with respect to th
                        interactive=True will trigger an interactive GUI at every major cycle
                        boundary (after the major cycle and before the minor cycle).
 
+                       The interactive mode is currently not available for parallel cube imaging (please also
+                       refer to the Note under the documentation for 'parallel' below).
+
                        Options for runtime parameter modification are :
 
                        Interactive clean mask : Draw a 1/0 mask (appears as a contour) by hand.
@@ -2395,6 +2396,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                     - There is currently no communication between them to synchronize
                                        information such as peak residual and cyclethreshold. Therefore,
                                        different chunks may trigger major cycles at different levels.
+                                    - For cube imaging in parallel, there is currently no interactive masking.
                                    (Proper synchronization of iteration control is work in progress.)
 
 </description>

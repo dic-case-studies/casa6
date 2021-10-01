@@ -19,14 +19,14 @@ if is_CASA6:
     #    os.path.dirname(
     #        os.path.abspath(
     #            os.path.dirname(__file__))))
-    from casatasks.private.sdutil import table_manager
+    from casatasks.private.sdutil import tbmanager
     from casatools import ctsys
     datapath = ctsys.resolve('unittest/sdtimeaverage/')
 
 else:
     from tasks import sdtimeaverage
     from __main__ import default
-    from sdutil import tbmanager as table_manager
+    from sdutil import tbmanager
 
     # Define the root for the data files
     datapath = os.environ.get('CASAPATH').split(
@@ -363,7 +363,7 @@ class test_sdtimeaverage(unittest.TestCase):
     # MAIN #
     def _get_main(self, msname):
         # get MAIN table data
-        with table_manager(msname) as tb:
+        with tbmanager(msname) as tb:
             # Key data
             self.tm = tb.getcol('TIME')
             self.a1 = tb.getcol('ANTENNA1')
@@ -373,7 +373,7 @@ class test_sdtimeaverage(unittest.TestCase):
 
     # DATA (spectra) #
     def _get_spectra(self, msname, row):
-        with table_manager(msname) as tb:
+        with tbmanager(msname) as tb:
             # Spectra Data
             self.data = tb.getcell('FLOAT_DATA', row)
             self.wgt = tb.getcell('WEIGHT', row)
@@ -398,7 +398,7 @@ class test_sdtimeaverage(unittest.TestCase):
         baseTime = 0.0  # gives start time in JD.
 
         # Table Access (with numPy array operation)
-        with table_manager(msName, nomodify=False) as tb:
+        with tbmanager(msName, nomodify=False) as tb:
 
             # reduce MS row size if reduce size is specified.
             if (nReduce != 0):
@@ -454,7 +454,7 @@ class test_sdtimeaverage(unittest.TestCase):
     def _set_telescopename(self, msName, telName):
         print("------ changing Telscope Name. ")
         msObservation = msName + '/OBSERVATION'
-        with table_manager(msObservation, nomodify=False) as tb:
+        with tbmanager(msObservation, nomodify=False) as tb:
             tb.putcell('TELESCOPE_NAME', 0, telName)
             # tb.resync()
 

@@ -435,7 +435,7 @@ template <class T> uInt ImageMetaDataBase<T>::_getAxisNumber(
 }
 
 template <class T> String ImageMetaDataBase<T>::_getEpochString() const {
-    return MVTime(_getObsDate().getValue()).string(MVTime::YMD, 12);
+    return MVTime(_getObsDate().getValue()).string(MVTime::YMD);
 }
 
 template <class T> IPosition ImageMetaDataBase<T>::_getShape() const {

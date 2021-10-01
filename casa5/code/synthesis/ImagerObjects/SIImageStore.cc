@@ -1553,7 +1553,6 @@ void SIImageStore::setWeightDensity( std::shared_ptr<SIImageStore> imagetoset )
     catch (const AipsError& x) {
       throw(AipsError("Error in copying internal T/F mask : " + x.getMesg() ));
     }
-
     return True;
   }
   

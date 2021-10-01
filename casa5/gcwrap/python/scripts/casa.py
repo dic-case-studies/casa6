@@ -192,7 +192,6 @@ from ft import  ft
 from gaincal import  gaincal
 from gencal import  gencal
 from hanningsmooth import  hanningsmooth
-from phaseshift import  phaseshift
 from imcollapse import  imcollapse
 from imcontsub import  imcontsub
 from imdev import  imdev

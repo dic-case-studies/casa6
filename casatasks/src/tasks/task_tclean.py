@@ -454,14 +454,6 @@ def tclean(
                 ## Get summary from iterbot
                 if type(interactive) != bool:
                     retrec=imager.getSummary();
-                
-                if savemodel!='none' and (interactive==True or usemask=='auto-multithresh' or nsigma>0.0):
-                    paramList.resetParameters()
-                    if parallel and specmode=='mfs':
-                        # For parallel mfs, also needs to reset the parameters for each node
-                        imager.resetSaveModelParams(paramList)
-                    imager.initializeImagers()
-                    imager.predictModel()
 
             ## Restore images.
             if restoration==True:  

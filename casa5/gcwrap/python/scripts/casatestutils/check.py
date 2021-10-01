@@ -1,7 +1,7 @@
 import os
 import logging
 import numpy
-
+import six
 try:
     # CASA 6
     logging.debug("Importing CASAtools")
@@ -52,7 +52,7 @@ class Check(object):
             @param atol: The absolute tolerance used in the numpy.isclose function
             @return: True if the shape and value of the refval and selected pixel match.
         '''
-        if not isinstance(loc, str):
+        if not isinstance(loc, six.string_types):
             raise TypeError('Please give target location in string list format "20,30,2:4"')
         if os.path.exists(imagename):
             tb.open(imagename)
