@@ -204,7 +204,9 @@ void UVContSubTVI::initialize()
 		MSSelection mssel;
 		mssel.setSpwExpr(fitspw_p);
 		Matrix<Int> spwchan = mssel.getChanList(&(inputVii_p->ms()));
-
+                
+                logger_p 	<< LogIO::SEVERE << LogOrigin("UVContSubTVI", __FUNCTION__)
+						<< "spwchan is: " << spwchan << LogIO::POST;
 		// Create line-free channel map
 	    uInt nSelections = spwchan.shape()[0];
 	    map<Int,vector<Int> > lineFreeChannelMap;

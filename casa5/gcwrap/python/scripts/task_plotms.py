@@ -964,8 +964,10 @@ def plotms(vis=None,
                 plotUpdated = pm.save( plotfile, expformat, verbose, highres, dpi, width, height)
 
     except Exception, instance:
+        import traceback
         plotUpdated = False
-        print "Exception during plotms task: ", instance
+        print("Exception during plotms task: {}".format(instance))
+        traceback.print_exc()
         
     if not plotUpdated:
         checkProcesses() # see if something crashed, log failure

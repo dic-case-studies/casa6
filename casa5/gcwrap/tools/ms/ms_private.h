@@ -1,4 +1,4 @@
-casacore::Bool detached();
+casacore::Bool detached(casacore::Bool verbose=true);
 casacore::Bool ready2write_();
 casacore::Bool doMSSelection(const ::casac::record& exprs, 
 	const bool onlyparse=false);

@@ -438,6 +438,11 @@ void PlotMSApp::initialize(bool connectToDBus, bool userGui
         QObject::connect( shutdown_svc, SIGNAL(exit_now( )),
                           qplotobj, SLOT(grpc_exit_now( )) );
         // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+        // ping service is used by casatools etc. to check to see if gRPC
+        // server is still running...
+        auto ping_svc = state->ping_service.get( );
+        builder.RegisterService(ping_svc);
+        // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
         // all gui operations must happen in the "gui thread" because Qt is not
         // thread-safe... connect qt events from services to PlotMSPlotter so that
         // grpc events/commands can be executed in the Qt GUI thread...

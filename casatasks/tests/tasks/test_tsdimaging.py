@@ -8,7 +8,7 @@ import shutil
 import unittest
 import numpy
 import math
-
+import stat
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, image, regionmanager, measures, msmetadata, table, quanta
@@ -16,7 +16,9 @@ if is_CASA6:
     from casatasks import casalog
     from casatasks import flagdata
     from casatasks import tsdimaging as sdimaging
-    from casatasks.private.sdutil import tbmanager, toolmanager, table_selector
+    from casatasks import split as split_ms
+    from casatasks.private.sdutil import tool_manager, table_manager, table_selector, is_ms
+    from enum import Enum
 
     ### for selection_syntax import
     #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -29,7 +31,7 @@ if is_CASA6:
 
     ctsys_resolve = ctsys.resolve
 
-    from casatasks.private.task_tsdimaging import image_suffix
+    from casatasks.private.task_tsdimaging import image_suffix, weight_suffix
 
     from casatestutils import restfreqtool
 
@@ -56,7 +58,7 @@ else:
         from tests.testutils import TableCacheValidator
 
     from tsdimaging import tsdimaging as sdimaging
-    from sdutil import tbmanager, toolmanager, table_selector
+    from sdutil import tbmanager as table_manager, toolmanager as tool_manager, table_selector
 
     dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
     def ctsys_resolve(apath):
@@ -75,7 +77,6 @@ me = measures()
 qa = quanta()
 tb = table()
 ms = mstool()
-
 
 #
 # Unit test of sdimaging task.
@@ -144,9 +145,169 @@ def remove_table(filename):
             os.remove(filename)
 
 
-###
-# Base class for sdimaging unit test
-###
+class FileManager:
+    """Helper class for copying datasets from casatestdata repository directory.
+    
+    Motivation: avoid copying multiple times a dataset shared by multiple tests
+    Caveat: tsdimaging requires write access to MS MAIN table
+    Assumption: all tests are run in the same working directory.
+    """
+
+    def __init__(self,repo_dir):
+        if not os.path.isdir(repo_dir):
+            raise ValueError(f'Not a directory: {repo_dir}')
+        if not os.path.isabs(repo_dir):
+            raise ValueError(f'Expected absolute path, got: {repo_dir}')
+        self._repo_dir = repo_dir
+        self._local_dir = os.getcwd()
+        real_repo_dir = os.path.realpath(repo_dir)
+        real_local_dir = os.path.realpath(self._local_dir)
+        if real_local_dir.startswith(real_repo_dir):
+            raise ValueError('Local dir: {} is under repo dir: {}'.format(self._local_dir,self._repo_dir))
+        self._files = set()
+        self._log(f'Local directory: {self.local_dir}')
+
+    @property
+    def repo_dir(self):
+        return self._repo_dir
+
+    @property
+    def local_dir(self):
+        return self._local_dir
+
+    def assert_is_valid(self,name):
+        is_invalid = (
+            not name or
+            os.path.sep in name or
+            name == '.' or
+            name == '..' or
+            not os.path.exists(os.path.join(self.repo_dir,name)))
+
+        if is_invalid:
+            raise ValueError(f'File: {name} not found in repository: {self.repo_dir}')
+    
+    def assert_workdir_did_not_changed(self):
+        cwd = os.getcwd()
+        if cwd != self.local_dir:
+            raise RuntimeError(f'Working directory changed ! From: {self.local_dir} to: {cwd}')
+
+    def _log(self,msg,priority='INFO',origin=''):
+        casalog.origin('test_tsdimaging::FileManager')
+        casalog.post(msg,priority=priority,origin=origin)
+        casalog.origin('')
+
+    def _delete(self,file_basename):
+        self.assert_workdir_did_not_changed()
+        self.assert_is_valid(file_basename)
+        self.unlock_owner_write_protection(file_basename)
+        self._log(f'Deleting: {file_basename}',origin='_delete')
+        if os.path.isdir(file_basename) and not os.path.islink(file_basename):
+            shutil.rmtree(file_basename)
+        else:
+            os.remove(file_basename)
+    
+    def delete_cache(self):
+        self.assert_workdir_did_not_changed()
+        for f in self._files:
+            self._delete(f)
+
+    @classmethod
+    def remove_permissions(cls,mode,flags):
+        return mode & ~flags
+
+    @classmethod
+    def add_permissions(cls,mode,flags):
+        return mode | flags
+
+    @classmethod
+    def write_protect(cls,path):
+        """Write protect MS to be sdimaged, as far as we can.
+        
+        When path is a directory it is more or less assumed to be an MS.
+        Sadly, we can not sdimage an MS having a write-protected MAIN table.
+        """
+        can_write = stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
+        if os.path.isdir(path):
+            for root, dirs, files in os.walk(path):
+                targets = [root]
+                targets.extend([os.path.join(root,f) for f in files])
+                for target in targets:
+                    root_base = os.path.basename(root)
+                    target_base = os.path.basename(target)
+                    # Imager creates scratch columns in MAIN table (?)
+                    if is_ms(root): continue
+                    # Imager writes to HISTORY table
+                    if root_base == 'HISTORY': continue
+                    # Allow write access to lock files
+                    if target_base == 'table.lock': continue
+                    cur_mode = stat.S_IMODE(os.stat(target).st_mode)
+                    new_mode = cls.remove_permissions(cur_mode,can_write)
+                    os.chmod(target,new_mode)
+        else:
+            cur_mode = stat.S_IMODE(os.stat(path).st_mode)
+            new_mode = cls.remove_permissions(cur_mode,can_write)
+            os.chmod(path,new_mode)
+
+    @classmethod
+    def unlock_owner_write_protection(cls,path):
+        flags = stat.S_IWUSR
+        if os.path.isdir(path):
+            for root, dirs, files in os.walk(path):
+                targets = [root]
+                targets.extend([os.path.join(root,f) for f in files])
+                for target in targets:
+                    cur_mode = stat.S_IMODE(os.stat(target).st_mode)
+                    new_mode = cls.add_permissions(cur_mode,flags)
+                    os.chmod(target,new_mode)
+        else:
+            cur_mode = stat.S_IMODE(os.stat(path).st_mode)
+            new_mode = cls.remove_permissions(cur_mode,flags)
+            os.chmod(path,new_mode)
+        
+    def smart_copy(self,file_basename):
+        """Copy a dataset from casatestdata only when strictly required"""
+        
+        self.assert_workdir_did_not_changed()
+        self.assert_is_valid(file_basename)
+        log_origin = 'smart_copy'
+
+        src = os.path.join(self.repo_dir,file_basename)
+        dst = file_basename
+
+        # What shall we do ?
+        if os.path.exists(dst):
+            # We have a local copy and ...
+            if not file_basename in self._files:
+                # it's not our's 
+                must_delete = True
+                must_copy = True
+            else:
+                # we "own" it
+                must_delete = False
+                must_copy = False
+        else:
+            # No local copy
+            must_delete = False
+            must_copy = True
+
+        # Now do it
+        if must_delete:
+            self._delete(dst)
+
+        if must_copy:
+            # Make a read-only copy and ...
+            if os.path.isdir(src):
+                shutil.copytree(src,dst)
+            else:
+                shutil.copy(src,dst)
+            self.write_protect(dst)
+            # remember we did
+            self._files.add(file_basename)
+            self._log(f'Copied: {src} to: {dst}',origin=log_origin)
+
+        if not must_delete and not must_copy:
+            self._log(f'Already have: {file_basename}. Skipping copy of: {src}',origin=log_origin)
+        
 class sdimaging_standard_paramset(object):
     rawfile='sdimaging.ms'
     phasecenter='J2000 17:18:29 +59.31.23'
@@ -159,7 +320,16 @@ class sdimaging_standard_paramset(object):
     start=400
     width=10
 
+###
+# Base class for sdimaging unit test
+###
+
 class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
+    #FIXME: only code of common interest to all tests of all derived
+    # test classe should be here. The rest should be moved outside,
+    # for easier readbility and maintenance.
+    # sdimaging_standard_paramset is no longer of common interest.
+    # We can use it, but not derive from it.
     """
     Base class for sdimaging unit test
 
@@ -190,7 +360,6 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
     """
     taskname='sdimaging'
     datapath=ctsys_resolve('unittest/tsdimaging/')
-    #rawfile='sdimaging.ms'
     postfix='.im'
     ms_nchan = 1024
 #     phasecenter='J2000 17:18:29 +59.31.23'
@@ -445,7 +614,6 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
             self.run_exception_case(task_param, expected_msg, expected_type)
         else:
             self.assertFalse(sdimaging(**task_param))
-
 
 ###
 # Test on bad parameter settings
@@ -1305,6 +1473,93 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         self.run_test(self.task_param, outshape, dirax)
 
 ###
+# Helper classes for test_timerange* tests of class sdimaging_test_selection
+###
+
+class TimeSelectionPattern(Enum):
+    VALUE_DEFAULT = 'default'
+    VALUE_EXACT = 'exact'
+    VALUE_GT = 'gt'
+    VALUE_INTERVAL = 'delta'
+    VALUE_LT = 'lt'
+    VALUE_RANGE = 'range'
+
+
+class TestTimeRangeHelper:
+    """Provides parameters and compute expected results for test_timerange* tests"""
+    
+    _default_params = {
+        'infiles': ['uid___A002_Xae00c5_X2e6b.ms.cal.split.shrink.ms'],
+        'outfile': 'selection_time.ms.sdimaging',
+        'overwrite': True,
+        'nchan': 1,
+        'cell': ['9.0arcsec','9.0arcsec'], 
+        'imsize': [250,250],
+        'gridfunction': 'SF', 
+        'convsupport': 6, 
+        'stokes': 'I', 
+        'phasecenter': 'ICRS 17:43:50 -023.15.00'
+    } 
+    
+    @classmethod
+    def params(cls,time_pattern):
+        params = copy.deepcopy(cls._default_params)
+        pattern = TimeSelectionPattern
+        if time_pattern is pattern.VALUE_DEFAULT:
+            timerange = ''
+        elif time_pattern is pattern.VALUE_EXACT:
+            timerange = '20:15:00'
+        elif time_pattern is pattern.VALUE_GT:
+            timerange = '>20:15:00'
+        elif time_pattern is pattern.VALUE_LT:
+            timerange = '<20:15:00.50'
+        elif time_pattern is pattern.VALUE_RANGE:
+            timerange = '20:15:00.20~20:15:01.50'
+        elif time_pattern is pattern.VALUE_INTERVAL:
+            timerange = '20:14:59.50+00:00:01.00'
+        else:
+            raise ValueError(f"Illegal time pattern: {time_pattern}")
+        params['timerange'] = timerange
+        params['outfile'] += '.' + time_pattern.value
+        return copy.deepcopy(params)
+    
+    @staticmethod
+    def expected_results(params,debug=False):
+        """ 
+        Compute expected sdimaging results for test_timerange_* unit tests
+
+        params -- sdimaging parameters, with the following limitations:
+                    * len(infiles) = 1
+        """
+
+        # Step 1: create new on-disk time-selected MS
+        input_ms = params['infiles'][0]
+        # ---- 1.1 Split input MS by time
+        sel_ms_name = os.path.basename(input_ms) + '.split'
+        if os.path.exists(sel_ms_name):
+            if os.path.isdir(sel_ms_name):
+                shutil.rmtree(sel_ms_name)
+            else:
+                os.remove(sel_ms_name)
+        try:
+            split_ms(vis=input_ms, outputvis=sel_ms_name, timerange=params['timerange'])
+            # ---- 1.2 Restore original POINTING table
+            org_pointing = os.path.join(input_ms, 'POINTING')
+            ref_pointing = os.path.join(sel_ms_name, 'POINTING')
+            shutil.rmtree(ref_pointing)
+            shutil.copytree(org_pointing, ref_pointing)
+            FileManager.unlock_owner_write_protection(ref_pointing)
+        
+            # Step 2: Image whole on-disk time-selected MS
+            sel_ms_imaging_params = copy.deepcopy(params)
+            sel_ms_imaging_params['infiles'] = [sel_ms_name]
+            sel_ms_imaging_params['timerange'] = ''
+            sdimaging(**sel_ms_imaging_params)
+        finally:
+            if not debug:
+                remove_table(sel_ms_name)
+
+###
 # Test data selection
 ###
 class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_unittest_base):
@@ -1312,6 +1567,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     Test selection syntax. Selection parameters to test are:
     field, spw (with selection), scan, stokes, and antenna
     """
+    _file_mgr = None
 
     prefix = sdimaging_unittest_base.taskname+'TestSel'
     outfile = prefix+sdimaging_unittest_base.postfix
@@ -1363,6 +1619,10 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     spw_region_chan1 = {'blc': [1,1,0,2], 'trc': [11,11,0,7]}
 
     @property
+    def file_mgr(self):
+        return self._file_mgr
+
+    @property
     def task(self):
         return sdimaging
 
@@ -1370,9 +1630,22 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     def spw_channel_selection(self):
         return True
 
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._file_mgr = FileManager(sdimaging_unittest_base.datapath)
+    
+    @classmethod
+    def tearDownClass(cls):
+        file_mgr = cls._file_mgr
+        if file_mgr:
+            file_mgr.delete_cache()
+
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
+        #FIXME: this copies all registered rawfiles
+        # before any test of the class is executed,
+        # even if the test to be run needs none or only 1 of them.
         for name in self.rawfiles:
             remove_table(name)
             shutil.copytree(os.path.join(self.datapath, name), name)
@@ -1407,6 +1680,13 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         if box is not None:
             self._checkstats_box(outfile,refstats,box=box,
                                  atol=atol,rtol=rtol)
+
+    def _fetch_and_run(self, task_params):
+        for infile in task_params['infiles']:
+            if infile:
+                self.file_mgr.smart_copy(infile)
+
+        self.run_task(**task_params)
 
 
     ####################
@@ -2050,6 +2330,78 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         # Tests
         self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
 
+    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    def test_timerange_value_default(self):
+        """test_timerange_value_default: Test default value for timerange"""
+        helper = TestTimeRangeHelper
+        params = helper.params(TimeSelectionPattern.VALUE_DEFAULT)
+        self._test_timerange(params)
+
+    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    def test_timerange_value_exact(self):
+        """test_timerange_value_exact: Test timerange selection by syntax 'T0'"""
+        helper = TestTimeRangeHelper
+        params = helper.params(TimeSelectionPattern.VALUE_EXACT)
+        self._test_timerange(params)
+
+    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    def test_timerange_value_gt(self):
+        """test_timerange_value_gt: Test timerange selection by syntax '>T0'"""
+        helper = TestTimeRangeHelper
+        params = helper.params(TimeSelectionPattern.VALUE_GT)
+        self._test_timerange(params)
+
+    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    def test_timerange_value_interval(self):
+        """test_timerange_value_interval: Test timerange selection by syntax 'T0+dT'"""
+        helper = TestTimeRangeHelper
+        params = helper.params(TimeSelectionPattern.VALUE_INTERVAL)
+        self._test_timerange(params)
+
+    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    def test_timerange_value_lt(self):
+        """test_timerange_value_lt: Test timerange selection by syntax '<T0'"""
+        helper = TestTimeRangeHelper
+        params = helper.params(TimeSelectionPattern.VALUE_LT)
+        self._test_timerange(params)
+
+    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    def test_timerange_value_range(self):
+        """test_timerange_value_default: Test default value for timerange"""
+        helper = TestTimeRangeHelper
+        params = helper.params(TimeSelectionPattern.VALUE_RANGE)
+        self._test_timerange(params)
+    
+    def _test_timerange(self,task_params,debug=False):
+        # Compute results
+        self._fetch_and_run(task_params)
+        # Compute reference results
+        ref_params = copy.deepcopy(task_params)
+        ref_params['outfile'] += '.ref'
+        TestTimeRangeHelper.expected_results(ref_params,debug)
+        # Compare results with reference
+        for suffix in [image_suffix,weight_suffix]:
+            img_file = task_params['outfile'] + suffix
+            ref_img_file = ref_params['outfile'] + suffix
+            self.assertTrue(os.path.exists(img_file))
+            self.assertTrue(os.path.exists(ref_img_file))
+            try:
+                with tool_manager(img_file, image) as ia:
+                    img_data = ia.getchunk()
+                    img_mask = ia.getchunk(getmask=True)
+                with tool_manager(ref_img_file, image) as ref_ia:
+                    ref_img_data = ref_ia.getchunk()
+                    ref_img_mask = ref_ia.getchunk(getmask=True)
+                self.assertEqual(img_data.shape, ref_img_data.shape)
+                self.assertTrue(numpy.allclose(img_data,ref_img_data,rtol=0.0))
+                self.assertTrue(numpy.array_equal(img_mask,ref_img_mask))
+            finally:
+                if not debug:
+                    remove_table(img_file)
+                    remove_table(ref_img_file)
+
+
+
     ####################
     # Helper functions
     ####################
@@ -2191,7 +2543,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
         remove_table(self.outfile)
         default(sdimaging)
-        with tbmanager(self.rawfile) as tb:
+        with table_manager(self.rawfile) as tb:
             self.nchan = len(tb.getcell('DATA', 0)[0])
 
         # fix timestamp issue
@@ -2209,7 +2561,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         # but they are intended to be allocated to different pointing
         # directions. to enable it, timestamps are artificially shifted
         # by a value significantly larger than integration time.
-        with tbmanager(self.rawfile, nomodify=False) as tb:
+        with table_manager(self.rawfile, nomodify=False) as tb:
             nrow = tb.nrows()
             ddid = numpy.unique(tb.getcol('DATA_DESC_ID'))
             nchunk = len(ddid)
@@ -2224,7 +2576,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
                 tshift[ifrom:ito] = torig[ifrom:ito] + ichunk * max_interval
             tb.putcol('TIME', tshift)
 
-        with tbmanager(os.path.join(self.rawfile, 'POINTING'), nomodify=False) as tb:
+        with table_manager(os.path.join(self.rawfile, 'POINTING'), nomodify=False) as tb:
             tb.putcol('TIME', tshift)
 
     def testFlag01(self):
@@ -2297,7 +2649,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
     def _get_refmask(self, file, chanmerge=False):
         res = []
-        with tbmanager(file) as tb:
+        with table_manager(file) as tb:
             for i in [0, self.imsize[0] // 2]:
                 for j in [0, self.imsize[1] // 3, self.imsize[1] * 2 // 3]:
                     k_range = [0] if chanmerge else [0, 5, 9]
@@ -2307,7 +2659,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
     def _get_refweight(self, file, chanmerge=False):
         res = []
-        with tbmanager(file) as tb:
+        with table_manager(file) as tb:
             for i in [0, self.imsize[0] // 2]:
                 for j in [0, self.imsize[1] // 3, self.imsize[1] * 2 // 3]:
                     k_range = [0] if chanmerge else [0, 5, 9]
@@ -2317,7 +2669,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
     def _get_refvalues(self, file, chanmerge=False):
         res = []
-        with tbmanager(file) as tb:
+        with table_manager(file) as tb:
             for i in [self.imsize[0] // 2, 0]:
                 for j in [0, self.imsize[1] // 3, self.imsize[1] * 2 // 3]:
                     irow = self.imsize[0]*j+i
@@ -2341,7 +2693,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
     def _checkvalue(self, file, is_maskfile, x_range, y_range, f_range, ref_value, chanmerge=False):
         tol=1e-5
         colname = 'PagedArray' if is_maskfile else 'map'
-        with tbmanager(file) as tb:
+        with table_manager(file) as tb:
             val = tb.getcell(colname, 0)
 
         boolean_types = (bool, numpy.bool, numpy.bool_)
@@ -2654,7 +3006,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     def run_test(self, restfreq_ref, beam_ref, cell_ref, stats, **kwargs):
         self.param.update(**kwargs)
         status = sdimaging(**self.param)
-        if status is False:
+        if not status:
             return status
         stats.pop('sumsq')
         outfile = self.outfile + image_suffix
@@ -2989,7 +3341,7 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
 
-        with tbmanager(outfile) as tb:
+        with table_manager(outfile) as tb:
             imdata = tb.getcell('map', 0)
             imsize = self.param_base['imsize']
             for y in range(imsize):
@@ -3054,7 +3406,7 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
         lorentz_factor = restfreqtool.get_lorentz_factor(metadataset)
         fmin_ok = restfreqtool.is_frequency_close(msrange.min, imrange.min, lorentz_factor, rtol=rtol)
         fmax_ok = restfreqtool.is_frequency_close(msrange.max, imrange.max, lorentz_factor, rtol=rtol)
-        print('Result = {}'.format((fmin_ok is True) and (fmax_ok is True)))
+        print('Result = {}'.format(fmin_ok and fmax_ok))
         self.assertTrue(fmin_ok)
         self.assertTrue(fmax_ok)
 
@@ -3165,7 +3517,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
 
     def check_spline_works(self, outfile, multiple_ms=False):
         weightfile = outfile + '.weight'
-        with tbmanager(weightfile) as tb:
+        with table_manager(weightfile) as tb:
             mapdata = tb.getcell('map', 0)
         # for pixels with strong weight value(>14), collect their distance from the image
         # center and then compute the mean and sigma of their distribution.
@@ -3221,9 +3573,9 @@ class sdimaging_test_interp(sdimaging_unittest_base):
         img1 = image1 + suffix
         img2 = image2 + suffix
 
-        with tbmanager(img1) as tb:
+        with table_manager(img1) as tb:
             mapdata1 = tb.getcell('map', 0)
-        with tbmanager(img2) as tb:
+        with table_manager(img2) as tb:
             mapdata2 = tb.getcell('map', 0)
 
         self.assertTrue(numpy.allclose(mapdata1, mapdata2, rtol=1.0e-5, atol=1.0e-5),
@@ -3303,7 +3655,7 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
         self.run_test()
 
         weightfile = self.outfile + '.weight'
-        with tbmanager(weightfile) as tb:
+        with table_manager(weightfile) as tb:
             mapdata = tb.getcell('map', 0)
         # for pixels with strong weight value(>14), collect their distance from the image
         # center and then compute the mean and sigma of their distribution.
@@ -3872,7 +4224,7 @@ def get_mapextent(infile, scan=None):
     try:
         s.save(outfile)
         if scan is None:
-            with tbmanager(outfile) as tb:
+            with table_manager(outfile) as tb:
                 dir = tb.getcol('DIRECTION')
         else:
             with table_selector(outfile, taql='SCANNO==16') as tb:
@@ -3920,7 +4272,7 @@ def str_to_deg(s):
     return qa.quantity(s)['value']
 
 def calc_statistics(imagename):
-    with toolmanager(imagename, image) as ia:
+    with tool_manager(imagename, image) as ia:
         s = ia.statistics()
     return s
 
@@ -3942,7 +4294,6 @@ def calc_mapproperty(statistics):
     ddec = abs(trcdec - blcdec)
     return {'extent': numpy.array([dra, ddec]), 'npix': npix,
             'blc': numpy.array([blcra, blcdec]), 'trc': numpy.array([trcra, trcdec])}
-
 
 def suite():
     return [
