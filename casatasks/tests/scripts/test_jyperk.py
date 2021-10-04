@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import unittest
@@ -107,6 +108,103 @@ class TestModelFitParamsGenerator(JyPerKWithVisTestCase):
                                        'antenna': 'DA61', 'elevation': 51.11212932686397, 'band': 3, 
                                        'baseband': 1, 'frequency': 90994575000.0})
         self.assertEqual(param.subparam, {'vis': 'uid___A002_X85c183_X36f.ms', 'spwid': 1})
+
+
+class TestRequestsManager(unittest.TestCase):
+    """test RequestsManager class.
+    """
+
+    vis = "uid___A002_Xb32033_X9067.ms"
+    
+    params = MagicMock()
+    params.param.return_value = {'uid': 'uid://A002/Xb32033/X9067'}
+
+    @patch('casatasks.private.jyperk.urlopen')
+    def test_get_not_filtered(self, urlopen_patch):
+        content_body = '''
+        {"success": true, "data": "dummy"}
+        '''
+
+        mock = MagicMock()
+        mock.__enter__.return_value.read.return_value = content_body
+        urlopen_patch.return_value = mock
+        
+        client = jyperk.JyPerKDatabaseClient('asdm', urlopen_patch)
+        
+        params = jyperk.ASDMParamsGenerator.get_params(self.vis)
+
+        manager = jyperk.RequestsManager(client)
+        result = manager.get(params)
+        
+        reference = [{'response': {'success': True, 'data': 'dummy'}, 'aux': 'uid___A002_Xb32033_X9067.ms'}]
+        self.assertEqual(result, reference)
+
+    @patch('casatasks.private.jyperk.urlopen')
+    def test_get_filtered(self, urlopen_patch):
+        content_body = '''
+        {"success": false, "data": "dummy", "error": "dummy"}
+        '''
+
+        mock = MagicMock()
+        mock.__enter__.return_value.read.return_value = content_body
+        urlopen_patch.return_value = mock
+        
+        client = jyperk.JyPerKDatabaseClient('asdm', urlopen_patch)
+        
+        params = jyperk.ASDMParamsGenerator.get_params(self.vis)
+
+        manager = jyperk.RequestsManager(client)
+        result = manager.get(params)
+        
+        reference = []
+        self.assertEqual(result, reference)
+
+
+class TestJyPerKDatabaseClient(unittest.TestCase):
+    """test JyPerKDatabaseClient class.
+    """
+
+    param = {'uid': 'uid://A002/X85c183/X36f'}
+    
+    @patch("casatasks.private.jyperk.urlopen")
+    def test_get_as_success(self, urlopen_patch):
+        
+        content_body = '''
+        {"success": true}
+        '''
+        
+        mock = MagicMock()
+        mock.__enter__.return_value.read.return_value = content_body
+        urlopen_patch.return_value = mock
+        
+        client = jyperk.JyPerKDatabaseClient('asdm')
+        json_obj = client.get(self.param)
+              
+        self.assertEqual(json_obj, json.loads(content_body))
+
+    @patch("casatasks.private.jyperk.urlopen")
+    def test_get_as_httperror(self, urlopen_patch):
+        urlopen_patch.side_effect = HTTPError('', 500, '', {}, None)
+        
+        client = jyperk.JyPerKDatabaseClient('asdm', retry=1, retry_wait_time=0.1)
+        
+        with self.assertRaises(RuntimeError) as cm:
+            client.get(self.param)
+       
+        msg = 'Failed to load URL: https://asa.alma.cl/science/jy-kelvins/asdm/?uid=uid%3A%2F%2FA002%2FX85c183%2FX36f'
+        self.assertEqual(cm.exception.args[0].split('\n')[0], msg)
+
+    @patch("casatasks.private.jyperk.urlopen")
+    def test_get_as_urlerror(self, urlopen_patch):
+        urlopen_patch.side_effect = URLError('')
+        
+        client = jyperk.JyPerKDatabaseClient('asdm', retry=1, retry_wait_time=0.1)
+        
+        with self.assertRaises(RuntimeError) as cm:
+            client.get(self.param)
+       
+        msg = 'Failed to load URL: https://asa.alma.cl/science/jy-kelvins/asdm/?uid=uid%3A%2F%2FA002%2FX85c183%2FX36f'
+        self.assertEqual(cm.exception.args[0].split('\n')[0], msg)
 
 
 class TestJyPerKReader4File(unittest.TestCase):
