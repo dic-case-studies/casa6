@@ -1753,7 +1753,7 @@ void PlotMSIndexer::reportMeta(Double x, Double y, Bool masked,stringstream& ss)
 		ss << "*";
 	} else {
 		if (plotmscache_->netAxesMask_[dataIndex_](1)) {
-			if (isMS && pmsAvg.channel() && pmsAvg.channelValue()>1) {
+			if (pmsAvg.channel() && pmsAvg.channelValue()>1) {
 				Vector<Int> chansPerBin = plotmscache_->getChansPerBin(currChunk_, ichan);
 				ss << "<" << chansPerBin[0] << "~" << chansPerBin[chansPerBin.size()-1] << ">";
 			} else {
