@@ -224,8 +224,8 @@ class FreqMetaTests(unittest.TestCase):
         tblocal.open(mbdcal + '/SPECTRAL_WINDOW')
         flagrow = tblocal.getcol('FLAG_ROW')
         # There are only 4 spws in n08c1!
-        self.assertTrue((flagrow==[False] + 3*[True]).all())
         tblocal.close()
+        self.assertTrue((flagrow==[False] + 3*[True]).all())
         # Only two scans in unit test ms
         # /scratch/small/UnitTest/n08c1.ms
         # 10-Mar-2008/17:06:00.0 - 17:09:00.0     1      3 4C39.25                   4320  [0,1,2,3]  [1, 1, 1, 1] 
