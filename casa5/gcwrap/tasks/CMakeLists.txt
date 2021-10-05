@@ -30,6 +30,7 @@ ft.xml
 gaincal.xml
 gencal.xml
 hanningsmooth.xml
+phaseshift.xml
 imcollapse.xml
 imcontsub.xml
 imdev.xml
