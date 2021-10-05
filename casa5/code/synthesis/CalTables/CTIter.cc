@@ -355,6 +355,10 @@ void ROCTIter::updateAntennaUVW() {
       antennaUVW_[i] = uvwOutFrame.getValue();
     }
   }
+
+int ROCTIter::freqFrame(int spwId) const {
+  int frame = calCol_.spectralWindow().measFreqRef()(spwId);
+  return frame;
 }
 
 void ROCTIter::attach() {

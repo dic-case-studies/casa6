@@ -207,7 +207,7 @@ void CTMainRecord::defineObsId (const Int& obsId)
 {
 // Define the OBSERVATION_ID field value
 // Input:
-//    obsId          const Int&            OBSERVATION_ID value
+//    obsId            const Int&            OBSERVATION_ID value
 // Output to private data:
 //    itsRecord        Record                Underlying record object
 //
