@@ -207,6 +207,55 @@ class TestJyPerKDatabaseClient(unittest.TestCase):
         self.assertEqual(cm.exception.args[0].split('\n')[0], msg)
 
 
+class TestTranslator(unittest.TestCase):
+    vis = 'uid___A002_X85c183_X36f.ms'
+    responsed_factors = [{'Antenna': 'DA61', 'Spwid': 17, 'origSpwid': 20, 'Polarization': 
+                'Polarization_0', 'MS': 'uid___A002_X85c183_X36f.ms', 'factor': 43.768}, 
+                {'Antenna': 'DA61', 'Spwid': 19, 'origSpwid': 22, 'Polarization': 
+                'Polarization_0', 'MS': 'uid___A002_X85c183_X36fa.ms', 'factor': 43.776},
+                {'Antenna': 'DA61', 'Spwid': 21, 'origSpwid': 24, 'Polarization':
+                'Polarization_0', 'MS': 'uid___A002_X85c183_X36f.ms', 'factor': 43.824}]
+
+    factors = [['uid___A002_X85c183_X36f.ms', 'DA61', '17', 'I', '43.768'],
+              ['uid___A002_X85c183_X36fa.ms', 'DA61', '19', 'I', '43.776'],
+              ['uid___A002_X85c183_X36f.ms', 'DA61', '21', 'I', '43.824']]
+
+    @classmethod
+    def setUpClass(cls):
+        cls.casa_cwd_path = os.getcwd()
+
+        if os.path.exists(cls.working_directory):
+            shutil.rmtree(cls.working_directory)
+
+        os.mkdir(cls.working_directory)
+        os.chdir(cls.working_directory)
+
+        ms_datapath = ctsys.resolve('measurementset/almasd')
+        original_vis = os.path.join(ms_datapath, '.'.join([cls.vis, 'sel']))
+        shutil.copytree(original_vis, cls.vis, symlinks=False)
+
+    @classmethod
+    def tearDownClass(cls):
+        os.chdir(cls.casa_cwd_path)
+        shutil.rmtree(cls.working_directory)
+
+    def _delete_dir(self, path):
+        if os.path.exists(path):
+            shutil.rmtree(path)
+
+    def test_format_cal_table_format(self):
+        factors = jyperk.Translator.format_cal_table_format(self.responsed_factors)
+        self.assertEqual(factors, self.factors)
+        
+    def test_filter_jyperk_by_vis(self):
+        selected = jyperk.Translator.filter_jyperk(self.vis, self.factors, '*')
+        self.assertEqual(selected, [self.factors[0], self.factors[2]])
+
+    def test_filter_jyperk_by_vis_and_spw(self):
+        selected = jyperk.Translator.filter_jyperk(self.vis, self.factors, '17')
+        self.assertEqual(selected, [self.factors[0]])
+
+
 class TestJyPerKReader4File(unittest.TestCase):
     """test TestJyPerKReader class.
     """
