@@ -384,7 +384,7 @@ class RequestsManager():
 
     def _filter_success_is_true(self, dataset):
         return [data for data in dataset if data['response']['success']]
-        
+
 
 class JyPerKDatabaseClient():
     """ Get values from Jy/K Web API.
@@ -595,12 +595,23 @@ class InterpolationRspTranslator():
         for data in dataset:
             # aux is dictionary holding vis and spw id
             aux = data['aux']
-            assert isinstance(aux, dict)
-            assert ('vis' in aux) and ('spwid' in aux)
+            if not isinstance(aux, dict):
+                raise TypeError('The response.aux in the JSON obtained from Jy/K db must be dict.')
+
+            if not 'vis' in aux:
+                raise KeyError('The response.aux in the JSON obtained from Jy/K db must contain vis.')
+
+            if not 'spwid' in aux:
+                raise KeyError('The response.aux in the JSON obtained from Jy/K db must contain spwid.')
+
             spwid = aux['spwid']
-            assert isinstance(spwid, int)
+            if not isinstance(spwid, int):
+                raise TypeError('The response.aux.spwid in the JSON obtained from Jy/K db must be int.')
+
             vis = aux['vis']
-            assert isinstance(vis, str)
+            if not isinstance(vis, str):
+                raise TypeError('The response.aux.vis in the JSON obtained from Jy/K db must be str.')
+
             basename = os.path.basename(vis.rstrip('/'))
 
             factor = _extract_factor(data)

@@ -1,3 +1,4 @@
+from copy import deepcopy
 import json
 import os
 import shutil
@@ -95,6 +96,141 @@ class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
     def test_get_params_in_MeanElevation(self):
         mean_elevation = jyperk.MeanElevation.get(self.vis, 0)
         self.assertEqual(bands, ref_bands)
+
+
+class TestInterpolationRspTranslator(unittest.TestCase):
+    vis = 'uid___A002_X85c183_X36f.ms'
+    response = ({'response': {'success': True, 'timestamp': '2021-10-05T05:51:20', 'elapsed': '0:00:00.461', 
+               'error': None, 'query': {'elevation': '51.11212932686397', 'temperature': '266.50347483801465',
+               'antenna': 'DA61', 'band': '3', 'frequency': '90994575000.0', 'date': '2014-07-01T21:49:32',
+               'baseband': '1', 'delta_days': '1000'}, 'data': {'factor': {'std': 2.004, 'n': 18, 'mean':
+               44.672}}}, 'aux': {'vis': './uid___A002_X85c183_X36f.ms', 'spwid': 1}}, {'response': {'success':
+               True, 'timestamp': '2021-10-05T05:51:21', 'elapsed': '0:00:00.442', 'error': None, 'query':
+               {'elevation': 'nan', 'temperature': '266.50347483801465', 'antenna': 'PM03', 'band': '3',
+               'frequency': '90994575000.0', 'date': '2014-07-01T21:49:32', 'baseband': '1', 'delta_days':
+               '1000'}, 'data': {'factor': {'std': 2.004, 'n': 18, 'mean': 44.672}}}, 'aux': {'vis':
+               './uid___A002_X85c183_X36f.ms', 'spwid': 1}})
+    response2 = [deepcopy(response1[0])]
+    response2[0]['aux'] = 'some string'
+    response3 = [deepcopy(response1[0])]
+    response3[0]['aux'].pop('vis')
+    response4 = [deepcopy(response1[0])]
+    response4[0]['aux'].pop('spwid')
+    response5 = [deepcopy(response1[0])]
+    response5[0]['aux']['spwid'] = 'na'
+    response6 = [deepcopy(response1[0])]
+    response6[0]['aux']['vis'] = None
+    factors = (['uid___A002_X85c183_X36f.ms', 'DA61', '1', 'I', '44.672'],
+               ['uid___A002_X85c183_X36f.ms', 'PM03', '1', 'I', '44.672'])
+
+    @classmethod
+    def setUpClass(cls):
+        cls.casa_cwd_path = os.getcwd()
+
+        if os.path.exists(cls.working_directory):
+            shutil.rmtree(cls.working_directory)
+
+        os.mkdir(cls.working_directory)
+        os.chdir(cls.working_directory)
+
+        ms_datapath = ctsys.resolve('measurementset/almasd')
+        original_vis = os.path.join(ms_datapath, '.'.join([cls.vis, 'sel']))
+        shutil.copytree(original_vis, cls.vis, symlinks=False)
+
+    @classmethod
+    def tearDownClass(cls):
+        os.chdir(cls.casa_cwd_path)
+        shutil.rmtree(cls.working_directory)
+
+    def _delete_dir(self, path):
+        if os.path.exists(path):
+            shutil.rmtree(path)
+
+    def test_convert(self):
+        converted = jyperk.InterpolationRspTranslator.convert(self.response, self.vis)
+        self.assertEqual(converted, self.factors)
+
+    def test_convert_as_aux1(self):
+        """Check the response.aux in the JSON obtained from Jy/K is dict."""
+        with self.assertRaises(TypeError) as cm:
+            converted = jyperk.InterpolationRspTranslator.convert(self.response2, self.vis)
+
+        self.assertEqual(cm.exception.args[0],
+                         'The response.aux in the JSON obtained from Jy/K db must be dict.')
+
+    def test_convert_as_aux2(self):
+        """Check the response.aux in the JSON obtained from Jy/K contain vis."""
+        with self.assertRaises(KeyError) as cm:
+            converted = jyperk.InterpolationRspTranslator.convert(self.response3, self.vis)
+
+        self.assertEqual(cm.exception.args[0],
+                         'The response.aux in the JSON obtained from Jy/K db must contain vis.')
+
+    def test_convert_as_aux3(self):
+        """Check the response.aux in the JSON obtained from Jy/K contain spwid."""
+        with self.assertRaises(KeyError) as cm:
+            converted = jyperk.InterpolationRspTranslator.convert(self.response4, self.vis)
+
+        self.assertEqual(cm.exception.args[0],
+                         'The response.aux in the JSON obtained from Jy/K db must contain spwid.')
+
+    def test_convert_as_spwid(self):
+        """Check the response.aux.spwid in the JSON obtained from Jy/K is int."""
+        with self.assertRaises(TypeError) as cm:
+            converted = jyperk.InterpolationRspTranslator.convert(self.response5, self.vis)
+
+        self.assertEqual(cm.exception.args[0],
+                         'The response.aux.spwid in the JSON obtained from Jy/K db must be int.')
+
+    def test_convert_as_vis(self):
+        """Check the response.aux.vis in the JSON obtained from Jy/K is str."""
+        with self.assertRaises(TypeError) as cm:
+            converted = jyperk.InterpolationRspTranslator.convert(self.response6, self.vis)
+
+        self.assertEqual(cm.exception.args[0],
+                         'The response.aux.vis in the JSON obtained from Jy/K db must be str.')
+
+
+class TestModelFitRspTranslator(unittest.TestCase):
+    vis = 'uid___A002_X85c183_X36f.ms'
+    response = [{'response': {'success': True, 'timestamp': '2021-10-05T06:53:58', 'elapsed': '0:00:00.015',
+               'error': None, 'query': {'elevation': '51.11212932686397', 'temperature': '266.50347483801465',
+               'antenna': 'DA61', 'band': '3', 'frequency': '90994575000.0', 'date': '2014-07-01T21:49:32',
+               'baseband': '1'}, 'data': {'factor': 43.719}}, 'aux': {'vis': './uid___A002_X85c183_X36f.ms',
+               'spwid': 1}}, {'response': {'success': True, 'timestamp': '2021-10-05T06:53:59', 'elapsed':
+               '0:00:00.004', 'error': None, 'query': {'elevation': 'nan', 'temperature': '266.50347483801465',
+               'antenna': 'PM03', 'band': '3', 'frequency': '90994575000.0', 'date': '2014-07-01T21:49:32',
+               'baseband': '1'}, 'data': {'factor': 43.719}}, 'aux': {'vis': './uid___A002_X85c183_X36f.ms',
+               'spwid': 1}}]
+    factors = [['uid___A002_X85c183_X36f.ms', 'DA61', '1', 'I', '43.719'],
+               ['uid___A002_X85c183_X36f.ms', 'PM03', '1', 'I', '43.719']]
+
+    @classmethod
+    def setUpClass(cls):
+        cls.casa_cwd_path = os.getcwd()
+
+        if os.path.exists(cls.working_directory):
+            shutil.rmtree(cls.working_directory)
+
+        os.mkdir(cls.working_directory)
+        os.chdir(cls.working_directory)
+
+        ms_datapath = ctsys.resolve('measurementset/almasd')
+        original_vis = os.path.join(ms_datapath, '.'.join([cls.vis, 'sel']))
+        shutil.copytree(original_vis, cls.vis, symlinks=False)
+
+    @classmethod
+    def tearDownClass(cls):
+        os.chdir(cls.casa_cwd_path)
+        shutil.rmtree(cls.working_directory)
+
+    def _delete_dir(self, path):
+        if os.path.exists(path):
+            shutil.rmtree(path)
+
+    def test_convert(self):
+        converted = jyperk.ModelFitRspTranslator.convert(self.response, self.vis)
+        self.assertEqual(converted, self.factors)
 
 
 class TestModelFitParamsGenerator(JyPerKWithVisTestCase):
@@ -254,6 +390,45 @@ class TestTranslator(unittest.TestCase):
     def test_filter_jyperk_by_vis_and_spw(self):
         selected = jyperk.Translator.filter_jyperk(self.vis, self.factors, '17')
         self.assertEqual(selected, [self.factors[0]])
+
+
+class TestASDMRspTranslator(unittest.TestCase):
+    vis = 'uid___A002_X85c183_X36f.ms'
+    response = [{'response': {'success': True, 'timestamp': '2021-10-05T03:46:16',
+                'elapsed': '0:00:09.795','error': None, 'query': {'uid': 'uid://A002/X85c183/X36f'},
+                'data': {'length': 12, 'factors': [{'Antenna': 'DA61', 'Spwid': 17, 'origSpwid': 20,
+                'Polarization': 'Polarization_0', 'MS': 'uid___A002_X85c183_X36f.ms','factor': 43.768},
+                {'Antenna': 'DA61','Spwid': 19, 'origSpwid': 22, 'Polarization': 'Polarization_0',
+                'MS': 'uid___A002_X85c183_X36f.ms', 'factor': 43.776}]}}}]
+    factors = [['uid___A002_X85c183_X36f.ms', 'DA61', '17', 'I', '43.768'],
+               ['uid___A002_X85c183_X36f.ms', 'DA61', '19', 'I', '43.776']]
+
+    @classmethod
+    def setUpClass(cls):
+        cls.casa_cwd_path = os.getcwd()
+
+        if os.path.exists(cls.working_directory):
+            shutil.rmtree(cls.working_directory)
+
+        os.mkdir(cls.working_directory)
+        os.chdir(cls.working_directory)
+
+        ms_datapath = ctsys.resolve('measurementset/almasd')
+        original_vis = os.path.join(ms_datapath, '.'.join([cls.vis, 'sel']))
+        shutil.copytree(original_vis, cls.vis, symlinks=False)
+
+    @classmethod
+    def tearDownClass(cls):
+        os.chdir(cls.casa_cwd_path)
+        shutil.rmtree(cls.working_directory)
+
+    def _delete_dir(self, path):
+        if os.path.exists(path):
+            shutil.rmtree(path)
+
+    def test_convert(self):
+        converted = jyperk.ASDMRspTranslator.convert(self.response, self.vis)
+        self.assertEqual(converted, self.factors)
 
 
 class TestJyPerKReader4File(unittest.TestCase):
