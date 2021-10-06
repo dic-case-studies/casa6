@@ -960,7 +960,8 @@ module_cflags = { 'casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_
                                         '-DUseCasacoreNamespace', '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', \
                                         '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
                                         '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-fPIC' ] \
-                                        + platform_cflags[sys.platform] }
+                                        + platform_cflags[sys.platform],
+                       'sakura-source/': platform_cflags[sys.platform] }
 
 def get_ccache():
     return [ props['build.compiler.ccache'] ] if 'build.compiler.ccache' in props and len(props['build.compiler.ccache']) > 0 else [ ]
@@ -1127,7 +1128,7 @@ def customize_compiler(self):
     else:
         library_mangle = { }
                 
-    # Mimic the makefile so that the same ccache results can be used:
+    # Mimic the makefile so that the same build objects can be used:
     filtered_sys_cflags = filter_optim_debug(update_sys_cflags()).split() # yes, we join only to take advantage of filter_optim_debug
 
     def _link(target_desc, objects, output_filename, output_dir=None,
@@ -1750,13 +1751,14 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
             + '{dflags} -c $< -o $@' \
             + '\n\t$(POSTCOMPILE)'
     )
-    src = [
-        CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM, GRPC_REGISTRAR, SOURCE_BINDING
-    ]
-    cflags = [
-        module_cflags['/code/'], module_cflags['casacore/'],
-        platform_cflags[sys.platform], module_cflags['/code/'],
-        platform_cflags[sys.platform], module_cflags['binding/']
+    # this should mimic module_cflags
+    src_and_flags = [
+        (CODE_SRC, module_cflags['/code/']),
+        (CORE_SRC, module_cflags['casacore/']),
+        (SAKURA_SRC, module_cflags['sakura-source/']),
+        (CODE_ATM, module_cflags['/code/']),
+        (GRPC_REGISTRAR, platform_cflags[sys.platform]),
+        (SOURCE_BINDING, module_cflags['binding/'])
     ]
 
     includes = sep.join(get_new_cxx_compiler_includes() + get_cxx_compiler_includes_from_setuputils() + get_cflags())
@@ -1769,7 +1771,7 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
     targdirs = set()
     cpp_list = []
     with open("makefile", "a") as mk:
-        for (mysrc, myflags) in zip(src, cflags):
+        for (mysrc, myflags) in src_and_flags:
             dflags = sep.join(myflags + duse_grpc + grpc_dirs)
             myinc = includes
             if mysrc == SOURCE_BINDING:
