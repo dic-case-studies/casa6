@@ -19,9 +19,48 @@ _tb = table()
 _qa = quanta()
 ctsys_resolve = ctsys.resolve
 
+class test_base(unittest.TestCase):
+
+    @staticmethod
+    def invalid_argument_case(func):
+        """
+        Decorator for the test case that is intended to fail
+        due to invalid argument.
+        """
+        import functools
+        @functools.wraps(func)
+        def wrapper(self):
+            func(self)
+            self.assertFalse(self.result, msg='The task must return False')
+        return wrapper
+
+    @staticmethod
+    def exception_case(exception_type, exception_pattern):
+        """
+        Decorator for the test case that is intended to throw
+        exception.
+
+            exception_type: type of exception
+            exception_pattern: regex for inspecting exception message
+                               using re.search
+        """
+        def wrapper(func):
+            import functools
+            @functools.wraps(func)
+            def _wrapper(self):
+                self.assertTrue(len(exception_pattern) > 0, msg='Internal Error')
+                with self.assertRaises(exception_type) as ctx:
+                    func(self)
+                    self.fail(msg='The task must throw exception')
+                the_exception = ctx.exception
+                message = str(the_exception)
+                self.assertIsNotNone(re.search(exception_pattern, message), msg='error message \'%s\' is not expected.'%(message))
+            return _wrapper
+        return wrapper
+
 ### imsmooth ###
 
-class imsmooth_test(unittest.TestCase):
+class imsmooth_test(test_base):
 
     image_names=['g192_a2.image', 'g192_a2.image-2.rgn']
     datapath = ctsys_resolve('unittest/imsmooth/')
@@ -393,7 +432,7 @@ def gaussian_kernel(nchan, kwidth):
     g[-1] = g0
     return g
 
-class sdsmooth_test_base(unittest.TestCase):
+class sdsmooth_test_base(test_base):
     """
     Base class for sdsmooth unit test.
     The following attributes/functions are defined here.
@@ -411,44 +450,6 @@ class sdsmooth_test_base(unittest.TestCase):
     @property
     def outfile(self):
         return self.infile.rstrip('/') + '_out'
-
-    # decorators
-    @staticmethod
-    def invalid_argument_case(func):
-        """
-        Decorator for the test case that is intended to fail
-        due to invalid argument.
-        """
-        import functools
-        @functools.wraps(func)
-        def wrapper(self):
-            func(self)
-            self.assertFalse(self.result, msg='The task must return False')
-        return wrapper
-
-    @staticmethod
-    def exception_case(exception_type, exception_pattern):
-        """
-        Decorator for the test case that is intended to throw
-        exception.
-
-            exception_type: type of exception
-            exception_pattern: regex for inspecting exception message
-                               using re.search
-        """
-        def wrapper(func):
-            import functools
-            @functools.wraps(func)
-            def _wrapper(self):
-                self.assertTrue(len(exception_pattern) > 0, msg='Internal Error')
-                with self.assertRaises(exception_type) as ctx:
-                    func(self)
-                    self.fail(msg='The task must throw exception')
-                the_exception = ctx.exception
-                message = str(the_exception)
-                self.assertIsNotNone(re.search(exception_pattern, message), msg='error message \'%s\' is not expected.'%(message))
-            return _wrapper
-        return wrapper
 
     @staticmethod
     def weight_case(func):
@@ -1109,7 +1110,7 @@ def remove_files_dirs(filename):
         remove_single_file_dir(filename)
 
 
-class sdbaseline_unittest_base(unittest.TestCase):
+class sdbaseline_unittest_base(test_base):
     """
     Base class for sdbaseline unit test
     """
@@ -1754,9 +1755,1820 @@ class sdbaseline_basic_test(sdbaseline_unittest_base):
             self.assertIn('Spw Expression: No match found for 10,', str(e))
 
 
+class sdbaseline_mask_test(sdbaseline_unittest_base):
+    """
+    Tests for various mask selections. No interactive testing.
+
+    List of tests:
+    test100 --- with masked ranges at the edges of spectrum. blfunc is cspline.
+    test101 --- with masked ranges not touching spectrum edge
+
+    Note: input data is generated from a single dish regression data,
+    'OrionS_rawACSmod', as follows:
+      default(sdcal)
+      sdcal(infile='OrionS_rawACSmod',scanlist=[20,21,22,23],
+                calmode='ps',tau=0.09,outfile='temp.asap')
+      default(sdcal)
+      sdcal(infile='temp.asap',timeaverage=True,
+                tweight='tintsys',outfile='temp2.asap')
+      sdsave(infile='temp2.asap',outformat='MS2',
+                outfile='OrionS_rawACSmod_calave.ms')
+    """
+    # Input and output names
+    infile = 'OrionS_rawACSmod_calave.ms'
+    outroot = sdbaseline_unittest_base.taskname+'_masktest'
+    blrefroot = os.path.join(sdbaseline_unittest_base.datapath,'refblparam_mask')
+    tid = None
+
+    # Channel range excluding bad edge
+    search = [[200,7599]]
+    # Baseline channels. should be identical to one selected by 'auto' mode
+    blchan0 = [[200,3979],[4152,7599]]
+    blchan2 = [[200,2959],[3120,7599]]
+
+    # reference values
+    ref_pol0if0 =  {'linemaxpos': 4102.0, 'linesum': 103.81604766845703,
+                    'linemax': 1.6280698776245117,
+                    'baserms': 0.15021507441997528,
+                    'basestd': 0.15022546052932739}
+    ref_pol0if2 = {#'linemaxpos': 3045.0, 'linesum': 127.79755401611328,
+                   #'linemax': 2.0193681716918945,
+                   #'baserms': 0.13134850561618805,
+                   #'basestd': 0.1313575953245163}
+                   'rms': 0.13134850561618805,
+                   'stddev': 0.1313575953245163}
+     
+    def setUp(self):
+        if os.path.exists(self.infile):
+            shutil.rmtree(self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+
+    def tearDown(self):
+        remove_files_dirs(self.infile)
+        remove_files_dirs(self.outroot)
+
+    def test100(self):
+        """Mask Test 100: with masked ranges at the edges of spectrum. blfunc must be cspline."""
+        self.tid='100'
+        infile = self.infile
+        outfile = self.outroot+self.tid+'.ms'
+        datacolumn='float_data'
+        mode = 'list'
+        spw = '2:%s'%(';'.join(map(self._get_range_in_string,self.search)))
+        pol = 'RR'
+        blfunc = 'cspline'
+        npiece = 4
+
+        vals = blv(imagename=infile, maskmode=mode)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_maskmode = mode
+        vals.sdbaseline_spw = spw
+        vals.sdbaseline_pol = pol
+        vals.sdbaseline_blfunc = blfunc
+        vals.sdbaseline_npiece = npiece
+        vals.datacolumn = datacolumn
+        result = Sdbaseline(vals).execute()
+
+        # sdbaseline returns None if it runs successfully
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        # Compare IF2
+        testval = self._getStats(filename=outfile, spw='', pol=0, mask=self.search)
+        ref100 = {'rms': 0.18957555661537034,
+                  'min': -0.48668813705444336,
+                  'max': 1.9516196250915527,
+                  'median': -0.013428688049316406,
+                  'stddev': 0.18957555661537034,
+                  'row': 0,
+                  'pol': 0}
+        self._compareStats(testval[0], ref100)
+
+    def test101(self):
+        """Mask Test 101: with masked ranges not touching spectrum edge"""
+        self.tid='101'
+        infile = self.infile
+        outfile = self.outroot+self.tid+'.ms'
+        datacolumn='float_data'
+        mode = 'list'
+        spw = '2:%s'%(';'.join(map(self._get_range_in_string,self.blchan2)))
+        pol = 'RR'
+
+        print('spw =', spw)
+
+        vals = blv(imagename=infile, maskmode=mode)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_maskmode = mode
+        vals.sdbaseline_spw = spw
+        vals.sdbaseline_pol = pol
+        vals.datacolumn = datacolumn
+        result = Sdbaseline(vals).execute()
+
+        # sdbaseline returns None if it runs successfully
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        # Compare IF2
+        testval = self._getStats(filename=outfile, spw='', pol=0, mask=self.blchan2)
+        self._compareStats(testval[0],self.ref_pol0if2)
+        #self._compareBLparam(self.outroot+self.tid+'.asap_blparam.txt',\
+        #                     self.blrefroot+self.tid)
+
+    def _get_range_in_string(self, valrange):
+        if isinstance(valrange, list) or isinstance(valrange, tuple):
+            return str(valrange[0])+'~'+str(valrange[1])
+        else:
+            return False
+
+
+class sdbaseline_sinusoid_test(sdbaseline_unittest_base):
+    """
+    Tests for sinusoidal baseline fitting. No interactive testing.
+
+    List of tests:
+    test000 --- addwn as integer
+    test001 --- addwn as list of an integer
+    test002 --- addwn as list of integers
+    test003 --- addwn as tuple of an integer
+    test004 --- addwn as tuple of integers
+    test005 --- addwn as string (single wave number)
+    test006 --- addwn as string (comma-separated wave numbers)
+    test007 --- addwn as string (wave number range specified with '-')
+    test008 --- addwn as string (wave number range specified with '~')
+    test009 --- addwn as string (less or equal pattern 1)
+    test010 --- addwn as string (less or equal pattern 2)
+    test011 --- addwn as string (less or equal pattern 3)
+    test012 --- addwn as string (less or equal pattern 4)
+    test013 --- addwn as string (less pattern 1)
+    test014 --- addwn as string (less pattern 2)
+    test015 --- addwn as string (greater or equal pattern 1)
+    test016 --- addwn as string (greater or equal pattern 2)
+    test017 --- addwn as string (greater or equal pattern 3)
+    test018 --- addwn as string (greater or equal pattern 4)
+    test019 --- addwn as string (greater pattern 1)
+    test020 --- addwn as string (greater pattern 2)
+    test021 --- specify fftthresh by 'sigma' + checking residual rms
+    test022 --- specify fftthresh by 'top' + checking residual rms
+    test023 --- sinusoid-related parameters with default values
+    test024 --- addwn has too large value but rejwn removes it
+    
+    test021_uppercase_params --- specify fftthresh by 'SIGMA' + checking residual rms
+    test022_uppercase_params --- specify fftthresh by 'TOP' + checking residual rms
+    test025_uppercase_params --- specify fftmethod by 'FFT'    
+
+    test100 --- no effective wave number set (addwn empty list, applyfft=False)
+    test101 --- no effective wave number set (addwn empty list, applyfft=True)
+    test102 --- no effective wave number set (addwn empty tuple, applyfft=False)
+    test103 --- no effective wave number set (addwn empty tuple, applyfft=True)
+    test104 --- no effective wave number set (addwn empty string, applyfft=False)
+    test105 --- no effective wave number set (addwn empty string, applyfft=True)
+    test106 --- no effective wave number set (addwn and rejwn identical, applyfft=False)
+    test107 --- no effective wave number set (addwn and rejwn identical, applyfft=True)
+    test108 --- no effective wave number set (rejwn covers wider range than that of addwn, applyfft=False)
+    test109 --- no effective wave number set (rejwn covers wider range than that of addwn, applyfft=True)
+    test110 --- wn range greater than upper limit
+    test111 --- explicitly specify wn value (greater than upper limit)
+    test112 --- explicitly specify wn value (negative)
+    test113 --- explicitly specify wn value (addwn has negative and greater than upper limit)
+    test114 --- explicitly specify wn value (both addwn/rejwn have negative and greater than upper limit)
+    test115 --- wrong fftthresh (as list)
+    test116 --- wrong fftthresh (as string 'asigma')
+    test117 --- wrong fftthresh (as string 'topa')
+    test118 --- wrong fftthresh (as string 'top3sigma')
+    test119 --- wrong fftthresh (as string 'a123')
+    test120 --- wrong fftthresh (as string '')
+    test121 --- wrong fftthresh (as string '-3.0')
+    test122 --- wrong fftthresh (as string '0.0')
+    test123 --- wrong fftthresh (as string '-3')
+    test124 --- wrong fftthresh (as string '0')
+    test125 --- wrong fftthresh (as string '-3.0sigma')
+    test126 --- wrong fftthresh (as string '0.0sigma')
+    test127 --- wrong fftthresh (as string '-3sigma')
+    test128 --- wrong fftthresh (as string '0sigma')
+    test129 --- wrong fftthresh (as string 'top-3')
+    test130 --- wrong fftthresh (as string 'top0')
+    test131 --- wrong fftthresh (as string 'top1.5')
+    test132 --- wrong fftthresh (as float -3.0)
+    test133 --- wrong fftthresh (as float 0.0)
+    test134 --- wrong fftthresh (as int -3)
+    test135 --- wrong fftthresh (as int 0)
+
+    Note: The input data 'sinusoidal.ms' has just two spectral data,
+          which are actually identical and described as 
+          spec[i] = sin(i*2*PI/8191) + 4 * sin(i*2*PI/8191*3)
+                    + 8 * sin(i*2*PI/8191*5) + 2 * sin(i*2*PI/8191*12).
+          addwn='1,3,5,12' will be enough to perfectly fit this spectrum, but
+          applyfft=True and fftthresh='top4' will also do.
+    """
+    # Input and output names
+    infile = 'sinusoidal.ms'
+    outroot = sdbaseline_unittest_base.taskname + '_sinusoidtest'
+    tid = None
+    exception_case = sdbaseline_unittest_base.exception_case
+
+    def setUp(self):
+        if os.path.exists(self.infile):
+            shutil.rmtree(self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+
+    def tearDown(self):
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
+        
+    def test000(self):
+        """Sinusoid Test 000: addwn as integer"""
+        tid = '000'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = 0
+
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test001(self):
+        """Sinusoid Test 001: addwn as list of an integer"""
+        tid = '001'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = [0]
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test002(self):
+        """Sinusoid Test 002: addwn as list of integers"""
+        tid = '002'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = [0,1]
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test003(self):
+        """Sinusoid Test 003: addwn as tuple of an integer"""
+        tid = '003'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = [0]
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test004(self):
+        """Sinusoid Test 004: addwn as tuple of integers"""
+        tid = '004'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = [0,1]
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test005(self):
+        """Sinusoid Test 005: addwn as string (single wave number)"""
+        tid = '005'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '0'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test006(self):
+        """Sinusoid Test 006: addwn as string (comma-separated wave numbers)"""
+        tid = '006'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '0,1'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test007(self):
+        """Sinusoid Test 007: addwn as string (wave number range specified with '-')"""
+        tid = '007'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '0-2'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test008(self):
+        """Sinusoid Test 008: addwn as string (wave number range specified with '~')"""
+        tid = '008'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '0~2'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test009(self):
+        """Sinusoid Test 009: addwn as string (less or equal pattern 1)"""
+        tid = '009'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '<=2'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test010(self):
+        """Sinusoid Test 010: addwn as string (less or equal pattern 2)"""
+        tid = '010'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '=<2'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test011(self):
+        """Sinusoid Test 011: addwn as string (less or equal pattern 3)"""
+        tid = '011'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '2>='
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test012(self):
+        """Sinusoid Test 012: addwn as string (less or equal pattern 4)"""
+        tid = '012'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '2=>'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test013(self):
+        """Sinusoid Test 013: addwn as string (less pattern 1)"""
+        tid = '013'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '<2'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test014(self):
+        """Sinusoid Test 014: addwn as string (less pattern 2)"""
+        tid = '014'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '2>'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test015(self):
+        """Sinusoid Test 015: addwn as string (greater or equal pattern 1)"""
+        tid = '015'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '4090<='
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test016(self):
+        """Sinusoid Test 016: addwn as string (greater or equal pattern 2)"""
+        tid = '016'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '4090=<'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test017(self):
+        """Sinusoid Test 017: addwn as string (greater or equal pattern 3)"""
+        tid = '017'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '>=4090'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test018(self):
+        """Sinusoid Test 018: addwn as string (greater or equal pattern 4)"""
+        tid = '018'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '=>4090'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test019(self):
+        """Sinusoid Test 019: addwn as string (greater pattern 1)"""
+        tid = '019'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '4090<'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test020(self):
+        """Sinusoid Test 020: addwn as string (greater pattern 2)"""
+        tid = '020'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '>4090'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    def test021(self):
+        """Sinusoid Test 021: specify fftthresh by 'sigma' + checking residual rms"""
+        tid = '021'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '0'
+        fftthresh = '3.0sigma'
+        torr = 1.0e-6
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        vals.sdbaseline_fftthresh = fftthresh
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
+    @exception_case(RuntimeError, 'fftthresh has a wrong value')
+    def test021_uppercase_params(self):
+        """Sinusoid Test 021: specify fftthresh by 'SIGMA' + checking residual rms"""
+        tid = '021'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'FLOAT_DATA'
+        addwn = '0'
+        fftthresh = '3.0SIGMA'
+        torr = 1.0e-6
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        vals.sdbaseline_fftthresh = fftthresh
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
+    def test022(self):
+        """Sinusoid Test 022: specify fftthresh by 'top' + checking residual rms"""
+        tid = '022'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '0'
+        fftthresh = 'top4'
+        torr = 1.0e-6
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        vals.sdbaseline_fftthresh = fftthresh
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
+    def test022_uppercase_params(self):
+        """Sinusoid Test 022: specify fftthresh by 'TOP' + checking residual rms"""
+        tid = '022'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'FLOAT_DATA'
+        addwn = '0'
+        fftthresh = 'TOP4'
+        torr = 1.0e-6
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        vals.sdbaseline_fftthresh = fftthresh
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
+    def test023(self):
+        """Sinusoid Test 023: sinusoid-related parameters with default values"""
+        tid = '023'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        
+    def test024(self):
+        """Sinusoid Test 024: addwn has too large value but rejwn removes it"""
+        tid = '024'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = [0,10000]
+        rejwn = '4000<'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        vals.sdbaseline_rejwn = rejwn
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+    @exception_case(RuntimeError, 'fftthresh has a wrong value')
+    def test025_uppercase_params(self):
+        """Sinusoid Test 025: specify fftmethod by 'FFT' + checking residual rms"""
+        tid = '025'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'FLOAT_DATA'
+        addwn = '0'
+        fftmethod = 'FFT'
+        fftthresh = '3.0SIGMA'
+        torr = 1.0e-6
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        vals.sdbaseline_fftmethod = fftmethod
+        vals.sdbaseline_fftthresh = fftthresh
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+        stat = self._getStats(filename=outfile, pol='0')
+        self.assertTrue(stat[0]['rms'] < torr)
+
+    def test100(self):
+        """Sinusoid Test 100: no effective wave number set (addwn empty list, applyfft=False)"""
+        tid = '100'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = []
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'addwn must contain at least one element.')
+        
+    def test101(self):
+        """Sinusoid Test 101: no effective wave number set (addwn empty list, applyfft=True)"""
+        tid = '101'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = []
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'addwn must contain at least one element.')
+        
+    def test102(self):
+        """Sinusoid Test 102: no effective wave number set (addwn empty tuple, applyfft=False)"""
+        tid = '102'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = []
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'addwn must contain at least one element.')
+        
+    def test103(self):
+        """Sinusoid Test 103: no effective wave number set (addwn empty tuple, applyfft=True)"""
+        tid = '103'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = ()
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'addwn must contain at least one element.')
+
+    def test104(self):
+        """Sinusoid Test 104: no effective wave number set (addwn empty string, applyfft=False)"""
+        tid = '104'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = ''
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'string index out of range')
+        
+    def test105(self):
+        """Sinusoid Test 105: no effective wave number set (addwn empty string, applyfft=True)"""
+        tid = '105'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = ''
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'string index out of range')
+        
+    def test106(self):
+        """Sinusoid Test 106: no effective wave number set (addwn and rejwn identical, applyfft=False)"""
+        tid = '106'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = [0,1,2]
+        rejwn = [0,1,2]
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.sdbaseline_rejwn = rejwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
+
+    def test107(self):
+        """Sinusoid Test 107: no effective wave number set (addwn and rejwn identical, applyfft=True)"""
+        tid = '107'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = [0,1,2]
+        rejwn = [0,1,2]
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.sdbaseline_rejwn = rejwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
+        
+    def test108(self):
+        """Sinusoid Test 108: no effective wave number set (rejwn covers wider range than that of addwn, applyfft=False)"""
+        tid = '108'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '<5'
+        rejwn = '<10'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.sdbaseline_rejwn = rejwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = False
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
+        
+    def test109(self):
+        """Sinusoid Test 109: no effective wave number set (rejwn covers wider range than that of addwn, applyfft=True)"""
+        tid = '109'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '<5'
+        rejwn = '<10'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.sdbaseline_rejwn = rejwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
+
+    def test110(self):
+        """Sinusoid Test 110: wn range greater than upper limit"""
+        tid = '110'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = '5000<'
+        rejwn = '<5100'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.sdbaseline_rejwn = rejwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
+
+    def test111(self):
+        """Sinusoid Test 111: explicitly specify wn value (greater than upper limit)"""
+        tid = '111'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = [5000,5500]
+        rejwn = []
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.sdbaseline_rejwn = rejwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
+
+    def test112(self):
+        """Sinusoid Test 112: explicitly specify wn value (negative)"""
+        tid = '112'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = [-10,5]
+        rejwn = []
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.sdbaseline_rejwn = rejwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'wrong value given for addwn/rejwn')
+
+    def test113(self):
+        """Sinusoid Test 113: explicitly specify wn value (addwn has negative and greater than upper limit)"""
+        tid = '113'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = [-10,5000]
+        rejwn = []
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.sdbaseline_rejwn = rejwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'wrong value given for addwn/rejwn')
+
+    def test114(self):
+        """Sinusoid Test 114: explicitly specify wn value (both addwn/rejwn have negative and greater than upper limit)"""
+        tid = '114'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        addwn = [-10,5000]
+        rejwn = [-10,5500]
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_addwn = addwn
+        vals.sdbaseline_rejwn = rejwn
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'wrong value given for addwn/rejwn')
+
+    def test115(self):
+        """Sinusoid Test 115: wrong fftthresh (as list)"""
+        tid = '115'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = [3.0]
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'fftthresh must be float or integer or string.')
+
+    def test116(self):
+        """Sinusoid Test 116: wrong fftthresh (as string 'asigma')"""
+        tid = '116'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = 'asigma'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
+
+    def test117(self):
+        """Sinusoid Test 117: wrong fftthresh (as string 'topa')"""
+        tid = '117'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = 'topa'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
+
+    def test118(self):
+        """Sinusoid Test 118: wrong fftthresh (as string 'top3sigma')"""
+        tid = '118'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = 'top3sigma'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'fftthresh has a wrong format.')
+
+    def test119(self):
+        """Sinusoid Test 119: wrong fftthresh (as string 'a123')"""
+        tid = '119'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = 'a123'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'fftthresh has a wrong value.')
+
+    def test120(self):
+        """Sinusoid Test 120: wrong fftthresh (as string '')"""
+        tid = '120'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = ''
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'fftthresh has a wrong value')
+
+    # def test121(self):
+    #     """Sinusoid Test 121: wrong fftthresh (as string '-3.0')"""
+    #     tid = '121'
+    #     infile = self.infile
+    #     outfile = self.outroot + tid + '.ms'
+    #     datacolumn = 'float_data'
+    #     fftthresh = '-3.0'
+    #     vals = blv(imagename=infile)
+    #     vals.sdsmooth_output = infile
+    #     vals.sdbaseline_output = outfile
+    #     vals.sdbaseline_fftthresh = fftthresh
+    #     vals.datacolumn = datacolumn
+    #     vals.sdbaseline_blfunc = 'sinusoid'
+    #     vals.sdbaseline_applyfft = True
+    #     try:
+    #         result = Sdbaseline(vals).execute()
+    #     except Exception as e:
+    #         self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
+
+    def test122(self):
+        """Sinusoid Test 122: wrong fftthresh (as string '0.0')"""
+        tid = '122'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = '0.0'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
+
+    # def test123(self):
+    #     """Sinusoid Test 123: wrong fftthresh (as string '-3')"""
+    #     tid = '123'
+    #     infile = self.infile
+    #     outfile = self.outroot + tid + '.ms'
+    #     datacolumn = 'float_data'
+    #     fftthresh = '-3'
+    #     vals = blv(imagename=infile)
+    #     vals.sdsmooth_output = infile
+    #     vals.sdbaseline_output = outfile
+    #     vals.sdbaseline_fftthresh = fftthresh
+    #     vals.datacolumn = datacolumn
+    #     vals.sdbaseline_blfunc = 'sinusoid'
+    #     vals.sdbaseline_applyfft = True
+    #     try:
+    #         result = Sdbaseline(vals).execute()
+    #     except Exception as e:
+    #         self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
+
+    def test124(self):
+        """Sinusoid Test 124: wrong fftthresh (as string '0')"""
+        tid = '124'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = '0'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
+
+    # def test125(self):
+    #     """Sinusoid Test 125: wrong fftthresh (as string '-3.0sigma')"""
+    #     tid = '125'
+    #     infile = self.infile
+    #     outfile = self.outroot + tid + '.ms'
+    #     datacolumn = 'float_data'
+    #     fftthresh = '-3.0sigma'
+    #     vals = blv(imagename=infile)
+    #     vals.sdsmooth_output = infile
+    #     vals.sdbaseline_output = outfile
+    #     vals.sdbaseline_fftthresh = fftthresh
+    #     vals.datacolumn = datacolumn
+    #     vals.sdbaseline_blfunc = 'sinusoid'
+    #     vals.sdbaseline_applyfft = True
+    #     try:
+    #         result = Sdbaseline(vals).execute()
+    #     except Exception as e:
+    #         self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
+
+    def test126(self):
+        """Sinusoid Test 126: wrong fftthresh (as string '0.0sigma')"""
+        tid = '126'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = '0.0sigma'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
+
+    # def test127(self):
+    #     """Sinusoid Test 127: wrong fftthresh (as string '-3sigma')"""
+    #     tid = '127'
+    #     infile = self.infile
+    #     outfile = self.outroot + tid + '.ms'
+    #     datacolumn = 'float_data'
+    #     fftthresh = '-3sigma'
+    #     vals = blv(imagename=infile)
+    #     vals.sdsmooth_output = infile
+    #     vals.sdbaseline_output = outfile
+    #     vals.sdbaseline_fftthresh = fftthresh
+    #     vals.datacolumn = datacolumn
+    #     vals.sdbaseline_blfunc = 'sinusoid'
+    #     vals.sdbaseline_applyfft = True
+    #     try:
+    #         result = Sdbaseline(vals).execute()
+    #     except Exception as e:
+    #         self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
+
+    def test128(self):
+        """Sinusoid Test 128: wrong fftthresh (as string '0sigma')"""
+        tid = '128'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = '0sigma'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
+
+    def test129(self):
+        """Sinusoid Test 129: wrong fftthresh (as string 'top-3')"""
+        tid = '129'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = 'top-3'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
+
+    def test130(self):
+        """Sinusoid Test 130: wrong fftthresh (as string 'top0')"""
+        tid = '130'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = 'top0'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        try:
+            result = Sdbaseline(vals).execute()
+        except Exception as e:
+            self.assertEqual(str(e), 'threshold given to fftthresh must be positive.')
+
+    def test131(self):
+        """Sinusoid Test 131: wrong fftthresh (as string 'top1.5')"""
+        tid = '131'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = 'top1.5'
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        Sdbaseline(vals).execute()
+
+    @exception_case(RuntimeError, 'fftthresh has a wrong value')
+    def test132(self):
+        """Sinusoid Test 132: wrong fftthresh (as float -3.0)"""
+        tid = '132'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = -3.0
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        Sdbaseline(vals).execute()
+
+    def test133(self):
+        """Sinusoid Test 133: wrong fftthresh (as float 0.0)"""
+        tid = '133'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = 0.0
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        Sdbaseline(vals).execute()
+
+    @exception_case(RuntimeError, 'fftthresh has a wrong value')
+    def test134(self):
+        """Sinusoid Test 134: wrong fftthresh (as int -3)"""
+        tid = '134'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = -3
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        Sdbaseline(vals).execute()
+
+    def test135(self):
+        """Sinusoid Test 135: wrong fftthresh (as int 0)"""
+        tid = '135'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        fftthresh = 0
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_fftthresh = fftthresh
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_blfunc = 'sinusoid'
+        vals.sdbaseline_applyfft = True
+        Sdbaseline(vals).execute()
+
+
+class sdbaseline_outbltable_test(sdbaseline_unittest_base):
+    """
+    Tests for outputting baseline table
+
+    List of tests
+    test300 --- blmode='fit', bloutput='', dosubtract=False (no baselining, no bltable output)
+    test301 --- blmode='fit', bloutput!='', dosubtract=True, blfunc='poly'/'chebyshev'/'cspline'
+                (poly/chebyshev/cspline fit in MS, bltable is written)
+    test302 --- blmode='fit', bloutput!='', dosubtract=True, blfunc='variable'
+                (variable fit in MS, bltable is written)
+                testing 3 cases:
+                    (1) blparam contains values for all spectra
+                    (2) no values for a spectrum (row=2,pol=1), which is to be skipped
+                    (3) values commented out for a spectrum (row=2,pol=1), which is to be skipped
+    test303 --- blmode='fit', bloutput!='', dosubtract=True, blfunc='poly','chebyshev','cspline'
+                testing if bltable is shortened
+                testing 3 cases:
+                    (1) all spectra in row 2 are flagged entirely
+                    (2) in row 2, entirely flagged for pol 0, also pol 1 is unselected
+                    (3) in row 2, entirely flagged for pol 1, also pol 0 is unselected
+    test304 --- same as test303, but for blfunc='variable'
+
+    Note: input data is generated from a single dish regression data,
+    'OrionS_rawACSmod', as follows:
+      default(sdcal)
+      sdcal(infile='OrionS_rawACSmod',scanlist=[20,21,22,23],
+                calmode='ps',tau=0.09,outfile='temp.asap')
+      default(sdcal)
+      sdcal(infile='temp.asap',timeaverage=True,
+                tweight='tintsys',outfile='temp2.asap')
+      sdsave(infile='temp2.asap',outformat='MS2',
+                outfile='OrionS_rawACSmod_calave.ms')
+    """
+    # Input and output names
+    infile = 'OrionS_rawACSmod_calave.ms'
+    outroot = sdbaseline_unittest_base.taskname+'_bltabletest'
+    tid = None
+    ftype = {'poly': 0, 'chebyshev': 1, 'cspline': 2, 'sinusoid': 3}
+
+    def setUp(self):
+        if os.path.exists(self.infile):
+            shutil.rmtree(self.infile)
+        shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
+
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+
+    def tearDown(self):
+        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.outroot)
+
+    def _checkBltableVar(self, outms, bltable, blparam, option):
+        npol = 2
+        results = [[4.280704], [3.912475],
+                   [4.323003, 0.00196013], [3.839441, -8.761247e-06],
+                   [4.280719, 0.00255683, 0.00619966], [4.140454, -7.516477e-05, 6.538814e-09],
+                   [4.221929, -8.751897e-06, -6.81303991e-09, 3.36383428e-13],
+                   [3.983634, -6.322114e-06, -1.11215614e-08, 7.00922610e-13]
+                   ]
+        rms = [0.162739, 0.182507, 0.140955, 0.159999, 0.132135, 0.381708, 0.128761, 0.146849]
+        _tb.open(bltable)
+        try:
+            for i in range(npol*_tb.nrows()):
+                irow = i // npol
+                ipol = i % npol
+                is_skipped = (option != '') and (irow == 2) and (ipol == 1)
+
+                self.assertEqual(not is_skipped, _tb.getcell('APPLY', irow)[ipol][0])
+                if is_skipped: continue
+            
+                self.assertEqual(self.ftype[blparam['btype'][i].lower()], _tb.getcell('FUNC_TYPE', irow)[ipol][0]);
+                fparam_key = 'order' if (blparam['btype'][i] != 'cspline') else 'npiec'
+                self.assertEqual(blparam[fparam_key][i], _tb.getcell('FUNC_PARAM', irow)[ipol][0])
+            
+                if (blparam['btype'][i] == 'cspline'):
+                    for j in range(blparam['npiec'][i]):
+                        self.assertEqual(0.0, _tb.getcell('FUNC_FPARAM', irow)[ipol][j])
+                else:
+                    self.assertEqual(0, len(_tb.getcell('FUNC_FPARAM', irow)[ipol]))
+                for j in range(len(results[i])):
+                    self._checkValue(results[i][j], _tb.getcell('RESULT', irow)[ipol][j], 1.0e-5)
+                self._checkValue(rms[i], _tb.getcell('RMS', irow)[ipol][0], 1.0e-1)
+                self._checkValue(float(blparam['cthre'][i]), _tb.getcell('CLIP_THRESHOLD', irow)[ipol][0], 1.0e-6)
+                self.assertEqual(blparam['nclip'][i], _tb.getcell('CLIP_ITERATION', irow)[ipol][0])
+                uself = (blparam['uself'][i] == 'true')
+                self.assertEqual(uself, _tb.getcell('USE_LF', irow)[ipol][0])
+                lthre = 5.0 if ((blparam['lthre'][i] == '') or not uself) else float(blparam['lthre'][i])
+                self._checkValue(lthre, _tb.getcell('LF_THRESHOLD', irow)[ipol][0], 1.0e-6)
+                chavg = 0 if (blparam['chavg'][i] == '') else int(blparam['chavg'][i])
+                self.assertEqual(chavg, _tb.getcell('LF_AVERAGE', irow)[ipol][0])
+                ledge = 0 if ((blparam['ledge'][i] == '') or not uself) else int(blparam['ledge'][i])
+                self.assertEqual(ledge, _tb.getcell('LF_EDGE', irow)[ipol][0])
+                redge = 0 if ((blparam['redge'][i] == '') or not uself) else int(blparam['redge'][i])
+                self.assertEqual(redge, _tb.getcell('LF_EDGE', irow)[ipol][1])
+        finally:
+            _tb.close()
+    
+    def _checkBltable(self, outms, bltable, blfunc, order, mask):
+        _tb.open(bltable)
+        for irow in range(_tb.nrows()):
+            for ipol in range(len(_tb.getcell('RMS', irow))):
+                self.assertEqual(_tb.getcell('FUNC_TYPE', irow)[ipol], self.ftype[blfunc.lower()])
+                self.assertEqual(_tb.getcell('FUNC_PARAM', irow)[ipol], order)
+                ref = self._getStats(filename=outms, spw=str(irow), pol=str(ipol), mask=mask[irow])
+                # tolerance value in the next line is temporarily set a bit large 
+                # since rms in bltable is smaller than expected because it is
+                # calculated based on masklist currently stored in bltable, which 
+                # is after an extra clipping.
+                # this bug is already fixed in trunk of Sakura, so once libsakura
+                # is updated we can set smaller tolerance value. (2015/4/22 WK)
+                self._checkValue(ref[0]['rms'], _tb.getcell('RMS', irow)[ipol][0], 2.0e-2)
+        _tb.close()
+
+    def _checkValue(self, ref, out, tol=1.0e-02):
+        #print '###################################'
+        #print 'ref = ' + str(ref) + ', out = ' + str(out)
+        if (abs(ref) > tol) or (abs(out) > tol):
+            if ref != 0.0:
+                rel = abs((out - ref)/ref)
+            elif out != 0.0:
+                rel = abs((out - ref)/out)
+            else:
+                rel = abs(out - ref)
+            self.assertTrue((rel < tol), msg='the output ('+str(out)+') differs from reference ('+str(ref)+')')
+
+
+    def test300(self):
+        """test300: no baselining, no bltable output"""
+        self.tid='300'
+        infile = self.infile
+        outfile = self.outroot+self.tid+'.ms'
+        datacolumn='float_data'
+        blmode='fit'
+        bloutput=''
+        dosubtract=False
+
+        vals = blv(imagename=infile)
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_output = outfile
+        vals.sdbaseline_blmode = blmode
+        vals.datacolumn = datacolumn
+        vals.sdbaseline_bloutput = bloutput
+        vals.sdbaseline_dosubtract = dosubtract
+        result = Sdbaseline(vals).execute()
+        self.assertEqual(result,None,
+                         msg="The task returned '"+str(result)+"' instead of None")
+
+        spec_in = []
+        _tb.open(infile)
+        for i in range(_tb.nrows()):
+            spec_in.append(_tb.getcell('FLOAT_DATA', i))
+        _tb.close()
+        spec_out = []
+        _tb.open(outfile)
+        for i in range(_tb.nrows()):
+            spec_out.append(_tb.getcell('FLOAT_DATA', i))
+        _tb.close()
+        for irow in range(len(spec_in)):
+            for ipol in range(len(spec_in[0])):
+                for ichan in range(len(spec_in[0][0])):
+                    self.assertEqual(spec_in[irow][ipol][ichan], spec_out[irow][ipol][ichan],
+                                     msg="output spectrum modified at row="+str(irow)+
+                                     ",pol="+str(ipol)+",chan="+str(ichan))
+
+class sdbaseline_variable_test(sdbaseline_unittest_base):
+    """
+    Tests for blfunc='variable'
+
+    List of tests necessary
+    00: test baseline subtraction with variable baseline functions and orders
+    01: test skipping rows by comment, i.e., lines start with '#' (rows should be flagged)
+    02: test skipping rows by non-existent lines in blparam file (rows should be flagged)
+    03: test mask selection
+    04: test data selection
+    05: test clipping
+    06: duplicated fitting parameter in blparam file (the last one is adopted)
+    NOT IMPLEMENTED YET
+    * test dosubtract = False
+    * line finder
+    * edge flagging
+    """
+    outfile='variable_bl.ms'
+    column='float_data'
+    nspec = 4
+    refstat0 = {'max': [0.0]*nspec, 'min': [0.0]*nspec,
+                'rms': [0.0]*nspec, 'stddev': [0.0]*nspec}
+    
+    def setUp(self):
+        if hasattr(self, 'infile'):
+            self.__refetch_files(self.infile)
+
+    def tearDown(self):
+        remove_files_dirs(os.path.splitext(self.infile)[0])
+        remove_single_file_dir(self.outfile)
+
+    def _refetch_files(self, files, from_dir=None):
+        if type(files)==str: files = [files]
+        self._remove(files)
+        self._copy(files, from_dir)
+
+    def __select_stats(self, stats, idx_list):
+        """
+        Returns a dictionary with selected elements of statistics
+        stats    : a dictionary of statistics
+        idx_list : a list of indices to select in stats
+        """
+        ret_dict = {}
+        for key in stats.keys():
+            ret_dict[key] = [stats[key][idx] for idx in idx_list]
+        return ret_dict
+
+    def _run_test(self, infile, reference, mask=None, rtol=1.e-5, atol=1.e-6, flag_spec=(), vals:blv=None):
+        """
+        Run sdbaseline with mode='variable' and test output MS.
+
+        infile    : input ms name
+        reference : reference statistic values in form {'key': [value0, value1, ...], ...}
+        mask      : list of masklist to calculate statistics of output MS (None=use all)
+        rtol, atol: relative and absolute tolerance of comparison.
+        flag_spec : a list of rowid and polid pair whose spectrum should be flagged in output MS
+        **task_param : additional parameters to invoke task. blfunc and outfile are predefined.
+        """
+        self.infile = infile
+        vals.sdsmooth_output = infile
+        vals.sdbaseline_blfunc = 'variable'
+        Sdbaseline(vals).execute()
+        colname = (vals.datacolumn if vals.datacolumn else 'data').upper()
+
+        # calculate statistics of valid spectrum. Test flagged spectrum.
+        ivalid_spec = 0
+        ispec = 0
+        stats_list = []
+        valid_idx = []
+        with table_manager(self.outfile) as tb:
+            for rowid in range(tb.nrows()):
+                data = tb.getcell(colname, rowid)
+                flag = tb.getcell('FLAG', rowid)
+                npol = len(data)
+                for polid in range(npol):
+                    if (rowid, polid) in flag_spec:
+                        # for flagged rows
+                        self.assertTrue(flag[polid].all(),
+                                        "row=%d, pol=%d should be flagged" % (rowid, polid))
+                    else:
+                        spec = data[polid,:]
+                        masklist = mask[ivalid_spec] if mask is not None else None
+                        stats_list.append(self._calc_stats_of_array(spec, masklist))
+                        ivalid_spec += 1
+                        valid_idx.append(ispec)
+                    ispec += 1
+        # shrink reference list if # of processed spectra is smaller than reference (selection)
+        if len(stats_list) < len(list(reference.values())[0]):
+            self.assertEqual(len(valid_idx), len(stats_list),
+                             "Internal error: len(valid_idx)!=len(stats_list)")
+            reference = self.__select_stats(reference, valid_idx)
+
+        currstat = self._convert_statslist_to_dict(stats_list)
+        #print("cruustat=%s" % str(currstat))
+        self._compareStats(currstat, reference, rtol=1.0e-6, atol=1.0e-6)
+
+    def testVariable00(self):
+        """Test blfunc='variable' with variable baseline functions and orders"""
+        infile='analytic_variable.ms'
+        self.paramfile='analytic_variable_blparam.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
+        vals = blv(imagename=infile)
+        vals.sdbaseline_blparam = self.paramfile
+        vals.datacolumn = self.column
+        vals.sdbaseline_output = self.outfile
+        self._run_test(infile,self.refstat0,vals=vals)
+
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+
+    def testVariable01(self):
+        """Test blfunc='variable' with skipping rows by comment ('#') (rows should be flagged)"""
+        infile='analytic_variable.ms'
+        self.paramfile='analytic_variable_blparam_comment.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
+        vals = blv(imagename=infile)
+        vals.sdbaseline_blparam = self.paramfile
+        vals.datacolumn = self.column
+        vals.sdbaseline_output = self.outfile
+        self._run_test(infile,self.refstat0,flag_spec=[(0,0)],vals=vals)
+
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+
+    def testVariable02(self):
+        """Test blfunc='variable' with non-existent lines in blparam file (rows should be flagged)"""
+        infile='analytic_variable.ms'
+        self.paramfile='analytic_variable_blparam_2lines.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
+        vals = blv(imagename=infile)
+        vals.sdbaseline_blparam = self.paramfile
+        vals.datacolumn = self.column
+        vals.sdbaseline_output = self.outfile
+        self._run_test(infile,self.refstat0,flag_spec=[(0,0),(1,1)],vals=vals)
+
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+
+    def testVariable03(self):
+        """Test blfunc='variable' with mask selection"""
+        infile='analytic_order3_withoffset.ms'
+        self.paramfile='analytic_variable_blparam_mask.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
+        mask = [[[0,4000],[6000,8000]], [[0,5000],[6000,8000]], [[0,3000],[5000,8000]], None]
+        vals = blv(imagename=infile)
+        vals.sdbaseline_blparam = self.paramfile
+        vals.datacolumn = self.column
+        vals.sdbaseline_output = self.outfile
+        self._run_test(infile,self.refstat0,mask=mask,vals=vals)
+    
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+
+    def testVariable04(self):
+        """Test blfunc='variable' with data selection (spw='1')"""
+        infile='analytic_variable.ms'
+        self.paramfile='analytic_variable_blparam_spw1.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
+        vals = blv(imagename=infile)
+        vals.sdbaseline_blparam = self.paramfile
+        vals.datacolumn = self.column
+        vals.sdbaseline_output = self.outfile
+        vals.sdbaseline_spw = '1'
+        self._run_test(infile,self.refstat0,vals=vals)
+
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+
+    # def testVariable05(self):
+    #     """Test blfunc='variable' with clipping"""
+    #     infile='analytic_order3_withoffset.ms'
+    #     self.paramfile='analytic_variable_blparam_clip.txt'
+    #     self._refetch_files([infile, self.paramfile], self.datapath)
+    #     mask = [[[0,4000],[6000,8000]], [[0,5000],[6000,8000]], [[0,3000],[5000,8000]], None]
+    #     vals = blv(imagename=infile)
+    #     vals.sdbaseline_blparam = self.paramfile
+    #     vals.datacolumn = self.column
+    #     vals.sdbaseline_output = self.outfile
+    #     self._run_test(infile,self.refstat0,atol=1.e-5,mask=mask,vals=vals)
+
+    #     if os.path.exists(self.infile+'_blparam.txt'):
+    #         os.remove(self.infile+ '_blparam.txt')
+
+    def testVariable06(self):
+        """Test blfunc='variable' with duplicated fitting parameters (the last one is adopted)"""
+        infile='analytic_variable.ms'
+        self.paramfile='analytic_variable_blparam_duplicate.txt'
+        self._refetch_files([infile, self.paramfile], self.datapath)
+        vals = blv(imagename=infile)
+        vals.sdbaseline_blparam = self.paramfile
+        vals.datacolumn = self.column
+        vals.sdbaseline_output = self.outfile
+        self._run_test(infile,self.refstat0,vals=vals)
+
+        if os.path.exists(self.infile+'_blparam.txt'):
+            os.remove(self.infile+ '_blparam.txt')
+
 
 def suite():
     return [imsmooth_test, 
             sdsmooth_test_fail, sdsmooth_test_complex, sdsmooth_test_float,
             sdsmooth_test_weight, sdsmooth_test_boxcar, sdsmooth_selection,
-            sdbaseline_basic_test]    
+            sdbaseline_basic_test, sdbaseline_mask_test, sdbaseline_sinusoid_test,
+            sdbaseline_outbltable_test, sdbaseline_variable_test]    
