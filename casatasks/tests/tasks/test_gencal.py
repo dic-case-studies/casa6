@@ -584,7 +584,7 @@ class TestJyPerK(unittest.TestCase):
         gencal(vis=self.vis,
                caltable=self.caltable,
                caltype='jyperk',
-               endpoint='asdm'
+               endpoint='asdm',
                uniform=False)
 
         self.assertTrue(os.path.exists(self.caltable))
@@ -602,7 +602,7 @@ class TestJyPerK(unittest.TestCase):
         gencal(vis=self.vis,
                caltable=self.caltable,
                caltype='jyperk',
-               endpoint='model-fit'
+               endpoint='model-fit',
                uniform=False)
 
         self.assertTrue(os.path.exists(self.caltable))
@@ -620,7 +620,7 @@ class TestJyPerK(unittest.TestCase):
         gencal(vis=self.vis,
                caltable=self.caltable,
                caltype='jyperk',
-               endpoint='interpolation'
+               endpoint='interpolation',
                uniform=False)
 
         self.assertTrue(os.path.exists(self.caltable))
