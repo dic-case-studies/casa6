@@ -1,0 +1,239 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+
+        <tool module="synthesisnormalizer" name="synthesisnormalizer">
+	<needs>synthesisimstore</needs>
+        <shortdescription>tool for synthesis imaging</shortdescription>
+       
+<description>
+synthesisnormalizer is an tool that accomplishes gather/scatter for parallel major cycle runs
+</description>
+
+<code>
+	<include>synthesisnormalizer_forward.h</include>
+<private>
+	<include>synthesisnormalizer_private.h</include>
+</private>
+
+</code>
+
+
+
+ 
+   <method name="synthesisnormalizer" type="constructor">
+   <shortdescription>Construct an synthesisnormalizer tool</shortdescription>
+   
+<description>
+This is used to construct {\tt synthesisnormalizer} tool. 
+
+</description>
+<input>
+
+</input>
+<returns type="synthesisnormalizer"/>
+<example>
+
+
+</example>
+</method>
+
+
+
+
+   <method name="setupnormalizer" type="function">
+   <shortdescription>Set parameters to control scatter/gather operations</shortdescription>
+
+<description>
+</description>
+<input>
+
+     <param name="normpars" type="record">
+     <description>All parameters for gather/scatter. Mainly file names</description>
+     <value type="record"/>
+     </param>
+
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="gatherweightdensity" type="function">
+   <shortdescription>Gather Gridded Weight images</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="scatterweightdensity" type="function">
+   <shortdescription>Scatter summed Gridded Weight images</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="gatherpsfweight" type="function">
+   <shortdescription>Gather PSFs if needed</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="gatherresidual" type="function">
+   <shortdescription>Gather Residual Imaged if needed</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="dividepsfbyweight" type="function">
+   <shortdescription>Divide psf by weight</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="normalizeprimarybeam" type="function">
+   <shortdescription>Normalize PB to peak 1</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="divideresidualbyweight" type="function">
+   <shortdescription>Divide residual by weight</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="dividemodelbyweight" type="function">
+   <shortdescription>Divide model by weight</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="multiplymodelbyweight" type="function">
+   <shortdescription>Multiply model by weight</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="scattermodel" type="function">
+   <shortdescription>Scatter model if needed</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="getimstore" type="function">
+   <shortdescription>Get Image store</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="synthesisimstore"/>
+</method>
+
+
+
+   <method name="unlockimages" type="function">
+   <shortdescription>unlock the images held by this normalizer</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="bool"/>
+</method>
+
+
+
+
+   <method name="setimstore" type="function">
+   <shortdescription>Set ImageStore</shortdescription>
+
+<description>
+</description>
+<input>
+
+     <param name="imstore" type="synthesisimstore">
+     <description> Image Store object  </description>
+     <value/>
+     </param>
+
+</input>
+
+<returns type="bool"/>
+</method>
+
+
+
+
+   <method name="done" type="function">
+   <shortdescription>Close the tool</shortdescription>
+
+<description>
+</description>
+<input>
+
+</input>
+<returns type="bool"/>
+</method>
+
+</tool>
+
+</casaxml>
