@@ -1,0 +1,257 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns="http://casa.nrao.edu/schema/psetTypes.html" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+<task type="function" name="plotprofilemap" category="visualization">
+
+  <shortdescription>Makes profile map.</shortdescription>
+      
+  <description>
+  The plotprofilemap makes spectral profile map from specified image. 
+  The task accepts both CASA image and FITS cube as an input.
+  </description>
+
+  <input>
+    <param type="path" name="imagename" mustexist="true"><shortdescription>Input image name (CASA image or FITS)</shortdescription><description>Input image name (CASA image or FITS)</description>
+      
+      <value/>
+    </param>
+
+    <param type="string" name="figfile"><shortdescription>Output figure name</shortdescription><description>Output figure name</description>
+      
+      <value/>
+    </param>
+
+    <param type="bool" name="overwrite" subparam="true"><shortdescription>Overwrite existing figfile</shortdescription><description>Overwrite existing figfile</description>
+      
+      <value>False</value>
+    </param>
+    
+    <param type="bool" name="transparent" subparam="true"><shortdescription>Output transparent figure</shortdescription><description>Output transparent figure</description>
+      
+      <value>False</value>
+    </param>
+    
+    <param type="int" name="pol"><shortdescription>Polarization component to be plotted</shortdescription><description>Polarization component to be plotted</description>
+      
+      <value>0</value>
+    </param>
+    
+    <param type="string" name="spectralaxis"><shortdescription>Type of spectral axis</shortdescription><description>Type of spectral axis</description>
+      
+      <value/>
+      <allowed kind="enum">
+        <value/>
+        <value>frequency</value>
+        <value>channel</value>
+        <value>velocity</value>
+      </allowed>
+    </param>
+    
+    <param type="string" name="restfreq" subparam="true"><shortdescription>Rest frequency</shortdescription><description>Rest frequency</description>
+      
+      <value/>
+    </param>
+    
+    <param type="string" name="plotrange"><shortdescription>Spectral axis range to plot</shortdescription><description>Spectral axis range to plot</description>
+      
+      <value/>
+    </param>
+    
+    <param type="string" name="title"><shortdescription>Title of the plot</shortdescription><description>Title of the plot</description>
+      
+      <value/>
+    </param>
+    
+  <param type="string" name="linecolor"><shortdescription>Line color</shortdescription><description>Line color</description>
+    
+    <value>b</value>
+  </param>
+  
+  <param type="string" name="linestyle"><shortdescription>Line style</shortdescription><description>Line style</description>
+    
+    <value>-</value>
+  </param>
+  
+  <param type="double" name="linewidth"><shortdescription>Line width in points</shortdescription><description>Line width in points</description>
+    
+    <value>0.2</value>
+  </param>
+
+    <param type="bool" name="separatepanel"><shortdescription>Separate plots</shortdescription><description>Separate plots</description>
+      
+      <value>True</value>
+    </param>
+    
+    <param type="string" name="plotmasked"><shortdescription>Masked data handling</shortdescription><description>Masked data handling</description>
+      
+      <value>empty</value>
+      <allowed kind="enum">
+        <value>empty</value>
+        <value>text</value>
+        <value>zero</value>
+        <value>none</value>
+        <value>plot</value>
+      </allowed>
+    </param>
+    
+    <param type="string" name="maskedcolor" subparam="true"><shortdescription>Line color for masked data</shortdescription><description>Line color for masked data</description>
+      
+      <value>gray</value>
+    </param>
+    
+    <param type="bool" name="showaxislabel"><shortdescription>Show axis labels on the bottom left panel</shortdescription><description>Show axis labels on the bottom left panel</description>
+      
+      <value>False</value>
+    </param>
+    
+    <param type="bool" name="showtick"><shortdescription>Show axis ticks</shortdescription><description>Show axis ticks</description>
+      
+      <value>False</value>
+    </param>
+    
+    <param type="bool" name="showticklabel" subparam="true"><shortdescription>Show axis tick labels on the bottom left panel</shortdescription><description>Show axis tick labels on the bottom left panel</description>
+      
+      <value>False</value>
+    </param>
+
+    <param type="string" name="figsize"><shortdescription>Size of the figure</shortdescription><description>Size of the figure</description>
+      
+      <value/>
+    </param>
+    
+    <param type="string" name="numpanels"><shortdescription>Number of panels</shortdescription><description>Number of panels</description>
+      
+      <value/>
+    </param>
+    
+    <constraints>
+      <when param="figfile">
+        <notequals type="string" value="">
+          <default param="overwrite"><value type="bool">False</value></default>
+          <default param="transparent"><value type="bool">False</value></default>
+        </notequals>
+      </when>
+      <when param="spectralaxis">
+        <equals type="string" value=""/>
+        <equals type="string" value="velocity">
+          <default param="restfreq"><value type="string"/></default>
+        </equals>
+      </when>
+      <when param="plotmasked">
+        <equals type="string" value="empty"/>
+        <equals type="string" value="plot">
+          <default param="maskedcolor"><value type="string">gray</value></default>
+        </equals>
+        <equals type="string" value="zero">
+          <default param="maskedcolor"><value type="string">gray</value></default>
+        </equals>
+      </when>
+      <when param="showtick">
+        <equals type="bool" value="False"/>
+        <equals type="bool" value="True">
+          <default param="showticklabel"><value type="bool">False</value></default>
+        </equals>
+      </when>
+    </constraints>
+  </input>
+
+  <returns type="variant" limittypes="void record">
+  </returns>
+
+  <example>
+
+The plotprofilemap makes spectral profile map from specified image. 
+The task accepts both CASA image and FITS cube as an input.
+    
+It is necessary to specify existing CASA image or FITS cube as an 
+imagename. Otherwise, the task will fail. If figfile is specified, 
+profile map is saved as an PNG image. Please set overwrite to False 
+if you don't want to overwrite existing file. 
+
+    Keyword arguments:
+    imagename -- input image name (CASA image or FITS cube)
+    figfile -- output PNG image name. No output if figfile is empty
+               default: '' (no output)
+    overwrite -- overwrite existing output file
+                 default: False
+    transparent -- output transparent figure
+                   default: False
+    pol -- polarization component to be plotted. It is an index for stokes axis 
+           of the image.
+           default: 0
+    spectralaxis -- spectral axis type
+                    default: '' (use image's spectral axis)
+                    options: 'channel', 'freuquency', 'velocity'
+    restfreq -- rest frequency 
+                default: '' (use image's rest frequency)
+                example: '100GHz'
+    plotrange -- spectral axis range to plot. unit for the range depends on 
+                 what spectral axis is chosen: channel for 'channel', GHz for 
+                 'frequency', and km/s for 'velocity'
+                 default: '' (whole range)
+                 example: '0~1000' (from 0.0 to 1000.0)
+                          '~1000' (from minimul value to 1000.0)
+                          '24~' (from 24.0 to maximum value)
+    title -- title of the plot
+             default: '' (no title)
+    linecolor -- line color in matplotlib format
+                 default: 'b' (blue)
+                 example: 'r' (red), 'black', '#ff99ff'
+    linestyle -- line style in matplotlib format
+                 default: '-' (solid line)
+                 example: '..' (dotted line), '.-' (solid line with point marker) 
+    linewidth -- line width in points
+                 default: 0.2
+    separatepanel -- separate panels
+                     default: True
+    plotmasked -- masked data handling
+                  default: 'empty' (show empty panel)
+                  option: 'zero' (plot zero level)
+                          'none' (show nothing)
+                          'text' (show text indicating 'NO DATA')
+                          'plot' (plot masked data with different 
+                                  color specified by maskedcolor)
+    maskedcolor -- line color for masked data
+    showaxislabel -- Show axis labels on the bottom left panel
+                     default: False
+    showtick -- Show ticks
+                default: False
+    showticklabel -- Show tick labels on the bottom left panel
+                     default: False
+    figsize -- size of the figure
+               default: '' (matplotlib default)
+               example: '10cm' (10cm square)
+                        '122mm,10cm' (122mm width and 10cm height)
+    numpanels -- Number of panels
+                 default: '' (auto)
+                 example: '6,8' (nx=6, ny=8)
+                          '8' (nx=8, ny=8)
+                          
+Number of panels along horizontal and vertical direction can be specified 
+via the parameter 'numpanels'. It should be a string containing numerical 
+value indicating number of panels. If only one number is given it will be 
+applied to both axes. If you want to provide different numbers to horizontal 
+and vertical axes, you should give two numbers as a string separated by comma. 
+See example of the above parameter description section. 
+
+If the number of panels is less than the number of pixels of input image, 
+more than one pixels are assigned to one panel. In that case, spectra to be 
+shown are the average of the assigned spectra in each pixel.
+  
+Default value for numpanels is empty string ('') which corresponds to an auto 
+calculation of the number of panels based on the number of pixels of input 
+image. Formula for the number of horizontal and vertical panels, nh and nv, 
+are as follows:
+
+    npanel = min(max(nx, ny), 8)
+    step = (max(nx, ny) - 1) / npanel + 1
+    nh = nx / step + 1
+    nv = ny / step + 1
+  
+where nx and ny are the number of pixels along direction axes. In the above 
+calculation, upper limit for nh and nv is 9.
+
+  </example>
+
+</task>
+
+</casaxml>
