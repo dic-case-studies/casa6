@@ -271,13 +271,18 @@ class casa_test:
     def __hash__(self):
         return hash(('name', self.name,'path', self.path, 'options', self.options))
 
+def read_conf(conf):
+    with open(conf) as f:
+        lines = [line.rstrip() for line in f]
+    return dict(x.split('==') for x in lines)
+
 def fetch_tests(work_dir, branch):
 
     repo_path = "https://open-bitbucket.nrao.edu/scm/casa/"
     source_dir=work_dir + "/casasources"
     if not os.path.exists(source_dir):
         os.makedirs(source_dir)
-    repositories = ["casampi", "casaplotms", "almatasks", "casa6","casaviewer"]
+    repositories = ["casa6", "casampi", "casaplotms", "almatasks","casaviewer"]
     # All of the repositositories have their tests in different directories
     # so we need a mapping
     def get_repo_test_paths(x):
@@ -295,7 +300,23 @@ def fetch_tests(work_dir, branch):
         print(cmd)
         r = ShellRunner()
         r.runshell(cmd, default_timeout, source_dir)
-        cmd = ("git checkout " + branch).split()
+        if branch != 'master' and repo != 'casa6':
+            cmd = 'git ls-remote --heads {}{} {} | wc -l'.format(repo_path, repo, branch )
+            #print(cmd)
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell = True)
+            out = proc.stdout.read()
+            if int(out)== 0: 
+                if repo in ['casaplotserver', 'casaplotms','casaviewer','casampi','almatasks','casatelemetry']:
+                    branchtag = "tags/{}".format(read_conf(source_dir+"/casa6/build.conf")[repo])
+                cmd = ("git checkout " + branchtag).split()
+            else:
+                cmd = ("git checkout " + branch).split()
+        elif branch == 'master' and repo != 'casa6' and os.path.isfile(source_dir+"/casa6/build.conf"):
+            if repo in ['casaplotserver', 'casaplotms','casaviewer','casampi','almatasks','casatelemetry']:
+                branchtag = "tags/{}".format(read_conf(source_dir+"/casa6/build.conf")[repo])
+            cmd = ("git checkout " + branchtag).split()
+        else:
+            cmd = ("git checkout " + branch).split()
         print(cmd)
         r = ShellRunner()
         r.runshell(cmd, default_timeout, source_dir + "/" + repo)
