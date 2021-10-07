@@ -38,7 +38,7 @@ class ImBaselineVals:
                  spkernel=None, kwidth=None):
         """
         All specifications of arguments are defined in:
-        https://open-jira.nrao.edu/browse/CAS-13520
+        https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imbaseline.html#casatasks.analysis.imbaseline
         """
         self.imagename = imagename if imagename != None else ''
         self.linefile = linefile if linefile != None else ''
