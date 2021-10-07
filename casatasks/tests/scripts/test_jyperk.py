@@ -3,6 +3,8 @@ import json
 import os
 import shutil
 import unittest
+from unittest.mock import patch, MagicMock
+from urllib.error import HTTPError, URLError
 
 from casatasks.private import jyperk
 from casatasks.private.casa_transition import is_CASA6
