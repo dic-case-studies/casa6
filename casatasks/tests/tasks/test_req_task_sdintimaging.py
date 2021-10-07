@@ -308,10 +308,10 @@ class test_singlepointing(testref_base):
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 0.991, [400,400,0,0]),
-                                   (outimg+'.image.tt0', 1.187, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.262, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -0.954, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.195, [300,400,0,0]) ])      # extended emission with alpha=0
+                                   (outimg+'.image.tt0', 1.182, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.282, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -0.957, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.179, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
@@ -424,10 +424,10 @@ class test_singlepointing(testref_base):
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 0.99, [400,400,0,0]),
                                    (outimg+'.psf', 0.99, [400,400,0,1]),
-                                   (outimg+'.image', 1.66, [350,433,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.461, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 1.091, [350,433,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.216, [300,400,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 1.67, [350,433,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.462, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 1.084, [350,433,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.230, [300,400,0,1]) ])      # extended emission with alpha=0
         ## Check multiple channels. point source flux is same, extended emission will be different because of resolution change.
         self.checkfinal(pstr=report)
 
@@ -544,11 +544,11 @@ class test_singlepointing(testref_base):
         report=th.checkall(imgexist=[outimg+'.psf.tt0', 
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
-                           imgval=[(outimg+'.psf.tt0', 0.990, [400,400,0,0]),
-                                   (outimg+'.image.tt0', 1.144, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.371, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -1.29, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.101, [300,400,0,0]) ])      # extended emission with alpha=0
+                           imgval=[(outimg+'.psf.tt0', 0.991, [400,400,0,0]),
+                                   (outimg+'.image.tt0', 1.138, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.373, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -1.30, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.0727, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
@@ -626,10 +626,10 @@ class test_singlepointing(testref_base):
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 0.990, [400,400,0,0]),
-                                   (outimg+'.image.tt0', 1.189, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.261, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -0.939, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.0736, [300,400,0,0]) ])      # extended emission with alpha=0
+                                   (outimg+'.image.tt0', 1.186, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.287, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -0.950, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.126, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
