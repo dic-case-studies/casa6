@@ -1,6 +1,6 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
-<task category="single dish" name="imbaseline" type="function">
+<task category="analysis" name="imbaseline" type="function">
 <shortdescription>Image-based baseline subtraction for single-dish data</shortdescription>
 
 <description>Image-based baseline subtraction for single-dish data</description>
