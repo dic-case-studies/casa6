@@ -1,0 +1,481 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+
+
+ 
+     <tool module="scimath" name="functional">
+     <shortdescription>Functionals handling</shortdescription>
+
+<code>
+	<include>functional_forward.h</include>
+    <private>
+	    <include>functional_private.h</include>
+    </private>
+</code>
+
+<description>
+
+\bigskip
+
+{\it Introduction}
+
+A functional is a function with parameters, defined as $f(p;x)$, where
+$p$ are the parameters, and $x$ the arguments. Methods are available to
+calculate the value of a function for a series of argument values for
+the given set of parameters, and for the automatic calculation of the
+derivatives with respect to the parameters.
+
+The created functionals can be used in the fitting \tool\ or in any
+other \tool\ that needs to have generic function values or their derivatives.
+
+A functional has a mask associated with it, to indicate if certain
+parameters have to be solved for. See
+<link anchor="functionals:functionals.masks.function">masks</link> for details.
+
+Functionals are created in a variety of ways, in general by
+specifying the name of the functional, together with some necessary
+information like e.g. the order of a polynomial, or the code needed
+to compile your privately defined function. Parameters can be set at
+creation time or later.
+
+\begin{verbatim}
+- a = fs.gaussian1d()	           # creates a 1D Gaussian, default arguments
+- b = fs.open('gaussian1')         # creates the same one
+- a.state()                        # the 'state' of the functional
+[type=0, order=-1, ndim=1, npar=3, params=[1 0 1] ] 
+- a.type()                         # its type
+gaussian1d 
+- a.ndim()                         # its dimension (number of arguments)
+1 
+- a.npar()                         # its number of parameters
+3 
+- b.state()
+[type=0, order=-1, ndim=1, npar=3, params=[1 0 1] ] 
+- a.f(1);                          # the value at x=1
+0.0625
+- a.fdf([0,0.5]);                  # value and derivatives
+[[1:2,]
+    1   1   0       0
+    0.5 0.5 1.38629 0.693147] 
+\end{verbatim}
+
+In some cases an {\em order} can be specified as well (e.g. for
+polynomials):
+\begin{verbatim}
+- a := dfs.poly(3)               # creates a 3rd order polynomial
+- b := dfs.functional('polyn',3) # creates the same one, but with
+                                 # original defaults
+- a.state()
+[type=5, order=3, ndim=1, npar=4, params=[1 1 1 1] ] 
+- b.state()
+[type=5, order=3, ndim=1, npar=4, params=[0 0 0 0] ] 
+\end{verbatim}
+
+An extremely valuable aspect of the Functionals module is the ability to
+create a functional from a compiled string specifying an arbitrary
+function.  For example, let us make our own polynomial $1 + 2*x + 3*x^2$
+and evaluate it at a few abcissa locations
+
+\begin{verbatim}
+- a := dfs.compiled ('p0 + p1*x + p2*x*x', [1,2,3])   # Define
+- a.f([0,10,20])                                      # Evaluate at x=[0,10,20]
+[1 321 1241]  
+\end{verbatim}
+
+The functions created can also be used to specify the function to be
+fitted in a least squares fit (see the fitting \tool\ ).
+
+</description>
+
+
+
+
+
+
+
+
+
+
+
+
+
+   <method name="functional" type="constructor">
+   <shortdescription>Construct a functional tool</shortdescription>
+<description>
+Create a {\tt functional} tool.
+</description>
+</method>
+
+
+
+
+
+
+
+
+
+
+
+   <method name="f" type="function">
+   <shortdescription>Calculate the value of the functional</shortdescription>
+   
+<input>
+     <param name="x" direction="in" type="any">
+        <type>double</type><type>doubleVec</type>
+        <description>real argument values</description>
+        <value type="double">0</value>
+     </param>
+</input>
+<returns type="any">
+   <any type="variant"/>
+   <description>
+   double or array of doubles
+   </description>
+</returns>
+<description>
+
+Calculate the value of the functional.
+
+</description>
+
+<example>
+
+gfn = fn.gaussian1d(2, 0, 1)
+#returns 0.125
+gfn.f(1)              
+# returns array([  1.25000000e-01,   3.05175781e-05])
+gfn.f([1,2])
+
+</example>
+</method>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   <method name="ndim" type="function">
+   <shortdescription>Get the number of dimensions</shortdescription>
+   
+<input>
+</input>
+<returns type="int">integer</returns>
+<description>
+Return the number of dimensions.
+</description>
+
+<example>
+
+a = fn.gaussian1d()
+# nd is set to 1
+nd = fn.ndim()
+
+</example>
+</method>
+--&gt;
+
+
+
+
+
+
+
+
+
+
+
+
+<comment>
+   <method name="copyfrom" type="function">
+   <shortdescription>Copy from the given functional.</shortdescription>
+
+<input>
+     <param name="funcin" direction="in" type="functional">
+     <description>The functional to copy from</description>
+     </param>
+</input>
+<returns type="bool">true retuned when copy is successful.</returns>
+
+<description>
+</description>
+<example>
+</example>
+</method>
+</comment>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <method name="done" type="function">
+   <shortdescription>Free resources of the functional</shortdescription>
+   
+<input>
+</input>
+<returns type="bool"/>
+<description>
+
+Free the functional's resources.
+
+</description>
+
+<example>
+
+- a:=dfs.gaussian1d()
+- a.setparameters([2,1,3])
+T 
+- a.state()
+[type=0, order=-1, ndim=1, npar=3, params=[2 1 3] , masks=[T T T] ] 
+- a.done()
+T 
+- is_functional(a)
+F 
+- a
+F 
+
+</example>
+</method>
+
+
+
+   <method name="gaussian1d" type="function">
+   <shortdescription>Create and return a new functional tool representing a 1D Gaussian function</shortdescription>
+
+<input>
+     <param name="amplitude" direction="in" type="double">
+        <value>1</value>
+     <description>amplitude of Gaussian</description>
+     </param>
+
+     <param name="center" direction="in" type="double">
+     <description>center of Gaussian</description>
+     <value>0</value>
+     </param>
+
+     <param name="fwhm" direction="in" type="double">
+     <description>FWHM of Gaussian</description>
+     <value>1</value>
+     </param>
+</input>
+<returns type="functional">Functional</returns>
+<description>
+
+Create a 1-dimensional Gaussian with the specified amplitude, fwhm, and
+center. 
+
+</description>
+
+<example>
+
+# get the value and derivatives of a Gaussian with
+# height=2; center at x=1; a width of 1 at x=[0,1,2]
+gfn = fn.gaussian1d(2,1,1)
+
+# returns array([ 0.125,  2.   ,  0.125])
+vals = gfn.f([0, 1, 2])
+
+</example>
+</method>
+
+
+
+   <method name="gaussian2d" type="function">
+   <shortdescription>Create a 2D Gaussian function</shortdescription>
+   
+<input>
+     <param name="amplitude" direction="in" type="double">
+        <description>Amplitude of Gaussian</description>
+        <value>1</value>
+     </param>
+     
+    <param name="center" direction="in" type="doubleVec">
+        <description>Center (x,y) position. Must have exactly 2 elements.</description>
+        <value><value>-1</value></value>
+     </param>
+     <param name="fwhm" direction="in" type="doubleVec">
+        <description>FWHM of the axes. Must have exactly 2 elements.</description>
+        <value><value>-1</value></value>
+     </param>
+     <param name="pa" direction="in" type="any">
+        <type>string</type><type>doubleQuant</type>
+        <description>The angle between the positive y axis and the major axis, measured counterclockwise.</description>
+        <value>0</value>
+     </param>
+</input>
+<returns type="functional">Functional</returns>
+<description>
+
+Create a 2-dimensional Gaussian with the specified amplitude, fwhms, and
+center. The created functional has method {\em f}  to
+calculate the function value at a series of {\em x, y} values, or the
+value.
+
+</description>
+
+<example>
+
+# major axis along the y axis
+g2d = fn.gaussian2d(1,[0,0],[3,2],&quot;90deg&quot;)
+
+# both these commands return 0.5
+v = g2d([0, 1])
+v = g2d([1.5, 0])
+
+# returns array([ 0.5,  0.5])
+v =  g2d.f([0,1,1.5,0])
+
+
+</example>
+</method>
+
+
+<method name="polynomial" type="function">
+   <shortdescription>Create and return a new functional tool representing a 1D polynomial function, y = c_0 + c_1*x + c_2*x**2 + ... + c_n*x**n</shortdescription>
+
+<input>
+     <param name="coefficients" direction="in" type="doubleVec">
+        <value><value>0</value></value>
+        <description>Array of coefficients. Number of coefficients determines order of polynomial.</description>
+     </param>
+</input>
+<returns type="functional">Functional</returns>
+<description>
+
+Create a 1-dimensional polynomial function with the specified coefficents.
+
+</description>
+
+<example>
+
+# get the value and derivatives of 3 + 2*x + 4*x*x
+poly = fn.powerlogpoly(3, 2, 4)
+
+# value at 3
+vals = poly.f(3)
+
+</example>
+</method>
+
+<method name="powerlogpoly" type="function">
+   <shortdescription>Create and return a new functional tool representing a 1D power log polynomial function, y = c_0 * x**( c_1 + c_2*ln(x) + c_3*ln(x)**2 + ... c_n*ln(x)**(n-1)</shortdescription>
+
+<input>
+     <param name="coefficients" direction="in" type="doubleVec">
+        <value><value>0</value></value>
+        <description>Array of coefficients.</description>
+     </param>
+</input>
+<returns type="functional">Functional</returns>
+<description>
+
+Create a 1-dimensional power log polynomial function with the specified coefficents.
+
+</description>
+
+<example>
+
+# get the value and derivatives of 2*x**(1+ln(x))
+plp = fn.powerlogpoly(2,1,1)
+
+# value at 3
+vals = plp.f(3)
+
+</example>
+</method>
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</tool>
+
+</casaxml>

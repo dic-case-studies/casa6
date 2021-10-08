@@ -72,7 +72,6 @@ With the CASA build environment set up, the CASAtools module can be built like:
 Linux:
 ```
 -bash-4.2$ cd casa6/casatools
--bash-4.2$ scripts/gcw-pick
 -bash-4.2$ autoconf
 -bash-4.2$ ./configure
 -bash-4.2$ ./setup.py build
@@ -81,10 +80,8 @@ Linux:
 Macos
 ```
 cd casa6/casatools
-scripts/gcw-pick && autoconf && CC=/usr/bin/cc CXX=/usr/bin/c++ ./configure && ./setup.py build
+autoconf && CC=/usr/bin/cc CXX=/usr/bin/c++ ./configure && ./setup.py build
 ```
-
-The `gcw-pick` script adjusts the standard CASA source tree for building with `setup.py`, and once CASAtools is integrated with CASA this step will not be necessary. `gcw-pick` may run for quite a while...
 
 A particular version of Python can be selected at configure time like:
 ```
@@ -97,7 +94,6 @@ but as noted above, [CASAtasks](https://open-bitbucket.nrao.edu/projects/CASA/re
 On Linux, one can alternately use **make**, which supports incremental and parallel builds that are useful for development. In this case, the steps are
 ```
 -bash-4.2$ cd casatools
--bash-4.2$ scripts/gcw-pick
 -bash-4.2$ autoconf
 -bash-4.2$ ./configure
 -bash-4.2$ ./setup.py genmake
@@ -174,14 +170,6 @@ it on the command line like:
 ```
 Here, ```test_constructor``` is one test within the ```coordsys_test``` *TestCase* specified in ```test_coordsys.py```.
 
-#### Notes
-
-If some time has passed since the last build, you should (sometimes) remove *xml-casa-assembly-1.65.jar*, e.g.
-```
--bash-4.2$ rm ./scripts/java/xml-casa-assembly-1.65.jar
--bash-4.2$ scripts/gcw-pick
-```
-before rebuilding because this [JAR](https://en.wikipedia.org/wiki/JAR_(file_format)) file is automatically fetched from a download site by *gcw-pick*. However, it is not fetched if it already exists. Deleting the current copy will result in a new copy being fetched which *may* be newer.
 
 ## Available Tools
 
@@ -231,7 +219,7 @@ The user initalization and customization file for the CASAtools module is `~/.ca
 
 ## Changes from Standard CASA
 
-While the goal was to simply reconstitute the [CASA tools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa/browse/gcwrap/tools) within a unencumbered python module, deviations were required as work progressed. These deviations are divided into categories based upon whether the change relates to the way the tools behave or the way the XML files are structured. The *gcw-pick* script includes an automatic XML update function which is able to make some of the more basic changes to the XML code automatically as the XML files are pulled from the *casa-source/gcwrap* tree into CASAtools.
+While the goal was to simply reconstitute the [CASA tools](https://open-bitbucket.nrao.edu/projects/CASA/repos/casa/browse/gcwrap/tools) within a unencumbered python module, deviations were required as work progressed. These deviations are divided into categories based upon whether the change relates to the way the tools behave or the way the XML files are structured. 
 
 ### Changes to Behavior
 
