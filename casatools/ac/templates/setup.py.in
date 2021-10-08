@@ -1164,6 +1164,14 @@ def customize_compiler(self):
             ['-L' + get_casac_dir() + os.sep + 'lib'] + \
             list(dropwhile(lambda x: not x.startswith('-L'),self.linker_so))
 
+        # For some unknown reason, two of the linker arguments are concatenated together without a space.
+        # "-L/opt/rh/rh-python36/root/usr/lib64-Wl,-z,relro"
+        for i in range(len(self.linker_so)):
+            if "-Wl,-z,relro" in self.linker_so[i] and self.linker_so[i].index("-Wl,-z,relro") != 0: # terrible hack
+                self.linker_so[i] = self.linker_so[i].split("-Wl,-z,relro")[0]
+                self.linker_so.insert(i+1, "-Wl,-z,relro")
+                break
+
         superld(target_desc, objects, output_filename, output_dir,
                 [library_mangle[l] if l in library_mangle else l for l in libraries],
                 library_dirs+local_library_path, runtime_library_dirs, export_symbols,
@@ -1594,7 +1602,7 @@ def get_tp_libs():
     return [
             'sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f', 'fftw3_threads',
             'fftw3','lapack','wcs','cfitsio','rpfits','blas'
-        ] + get_grpc_libs() + ['readline', 'gfortran', 'dl'] + mpi_libs
+        ] + get_grpc_libs() + ['readline', 'gfortran', 'dl'] + mpi_libs + ['python3.6m']
 
 def get_gfortran_lib_path( ):
     proc = Popen([ props['build.compiler.fortran'], "-print-search-dirs"], stdout=PIPE, stderr=PIPE )
@@ -1927,6 +1935,7 @@ def write_casacode_linker():
     # FIXME hardcoded because I don't know where it comes from
     # ldflags1 += ' -shared -L/opt/rh/rh-python36/root/usr/lib64 -Wl,-z,relro -Wl,-rpath,'
     # ldflags1 += '/opt/rh/rh-python36/root/usr/lib64 -Wl,--enable-new-dtags'
+    # I don't know where setuputils gets its -lpython3.6m ~BGB
     modulelib = os.sep.join([moduledir, "__casac__", "lib"])
     ldflags2 = '-L/opt/rh/rh-python36/root/usr/lib64 -L' + modulelib
     # this needs to be added for the gcwrap tool libraries, but if added here, it breaks
