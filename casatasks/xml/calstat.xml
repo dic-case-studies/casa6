@@ -1,0 +1,88 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+<task category="information, calibration" name="calstat" type="function">
+<shortdescription>Displays statistical information on a calibration table</shortdescription>
+  <description>
+This task returns statistical information about a column in a
+calibration table. The following values are computed: mean value, sum
+of values, sum of squared values, median, median absolute deviation,
+quartile, minimum, maximum, variance, standard deviation, root mean
+square.
+</description>
+<example>
+  </example>
+
+<input>
+    <param mustexist="true" name="caltable" type="path">
+<shortdescription>Name of input calibration table</shortdescription>
+<description>Name of input calibration table
+                     Default: ''
+
+                        Example: vis='ggtau.1mm.amp.gcal'
+</description>
+            <value/>
+    </param>
+
+    <param name="axis" type="string">
+<shortdescription>Which values to use</shortdescription>
+<description>Which data to analyze.
+                     Default: 'amplitude'
+                     Options: 'amp', 'amplitude', 'phase', 'real',
+                     'imag', 'imaginary'. Also, the name of any real
+                     valued MS column can be given, e.g. TIME,
+                     POLY_COEFF_AMP, REF_ANT, ANTENNA1, FLAG, ...
+
+                     Note: the phase of a complex number is in
+                     radians in the range [-pi; pi].
+</description>
+        <value type="string">amplitude</value>
+    </param>
+
+    <param subparam="true" name="datacolumn" type="string">
+<shortdescription>Which data column to use</shortdescription>
+<description>Which data column to use if axis is 'amp', 'amplitude', 'phase', 'real', 'imag' or 'imaginary'.
+                     Default: 'gain'
+</description>
+      <value type="string">gain</value>
+    </param>
+
+    <constraints>
+    <when param="axis">
+      <equals value="amp" type="string">
+        <default param="datacolumn"><value type="string">gain</value></default>
+      </equals>
+      <equals value="amplitude" type="string">
+        <default param="datacolumn"><value type="string">gain</value></default>
+      </equals>
+      <equals value="phase" type="string">
+        <default param="datacolumn"><value type="string">gain</value></default>
+      </equals>
+      <equals value="real" type="string">
+        <default param="datacolumn"><value type="string">gain</value></default>
+      </equals>
+      <equals value="imag" type="string">
+        <default param="datacolumn"><value type="string">gain</value></default>
+      </equals>
+      <equals value="imaginary" type="string">
+        <default param="datacolumn"><value type="string">gain</value></default>
+      </equals>
+    </when>
+    </constraints>
+
+</input>
+
+    
+
+<returns>any</returns>
+
+<example>
+
+For more information, see the task pages of calstat in CASA Docs:
+
+https://casa.nrao.edu/casadocs/
+
+</example>
+
+</task>
+
+</casaxml>
