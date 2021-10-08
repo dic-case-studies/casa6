@@ -1989,7 +1989,6 @@ using namespace casa::vi;
     	}
       };
     }
-
     return True;
   } 
 
@@ -2541,9 +2540,21 @@ using namespace casa::vi;
 	
 	// Take sumWeights from corrToStokes here....
         LatticeLocker lock1 (*(imstore->sumwt()), FileLocker::Write);
-	Matrix<Float> sumWeightStokes( (imstore->sumwt())->shape()[2], (imstore->sumwt())->shape()[3]   );
-	StokesImageUtil::ToStokesSumWt( sumWeightStokes, sumWeights );
-
+        Matrix<Float> sumWeightStokes((imstore->sumwt())->shape()(2), (imstore->sumwt())->shape()(3));
+        
+        //  convertArray(sumWtComp, sumWeights);
+        CoordinateSystem incoord=image->coordinates();
+        CoordinateSystem outcoord=imstore->sumwt()->coordinates();
+        StokesImageUtil::ToStokesSumWt(sumWeightStokes, sumWeights, outcoord, incoord);
+        
+        
+        Array<Float> sumWtArr(IPosition(4,1,1,sumWeights.shape()[0], sumWeights.shape()[1]));
+        
+        IPosition blc(4, 0, 0, 0, 0);
+         IPosition trc(4, 0, 0, sumWeightStokes.shape()[0]-1, sumWeightStokes.shape()[1]-1);
+        sumWtArr(blc, trc).reform(sumWeightStokes.shape())=sumWeightStokes;
+        
+	//StokesImageUtil::ToStokesSumWt( sumWeightStokes, sumWeights );
 	AlwaysAssert( ( (imstore->sumwt())->shape()[2] == sumWeightStokes.shape()[0] ) && 
 		      ((imstore->sumwt())->shape()[3] == sumWeightStokes.shape()[1] ) , AipsError );
 
