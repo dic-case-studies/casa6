@@ -1,0 +1,86 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+
+
+
+<tool module="miriad" name="miriadfiller">
+
+<shortdescription>Tool for the importmiriad task</shortdescription>
+
+<description/>
+
+
+<method name="miriadfiller" type="constructor">
+
+  <shortdescription>Construct a miriadfiller tool</shortdescription>
+
+  <description/>
+
+  <input/>
+
+  <returns type="miriadfiller"/>
+
+  <example/>
+
+</method>
+
+<method name="fill" type="function">
+
+  <shortdescription>Perform fill operation</shortdescription>
+
+  <description/>
+
+  <input>
+
+    <param name="vis" type="string">
+    <description>Name of output visibility file (MS)</description>
+    </param>
+
+    <param name="inputfile" type="string">
+    <description>Name of miriad input file</description>
+    </param>
+
+    <param name="tsys" type="bool">
+    <description>Fill weights from Tsys in data?</description>
+    <value>false</value>
+    </param>
+
+    <param name="spw" type="intVec">
+    <description>Spectral windows to load, default=all</description>
+    <value><value>-1</value></value>
+    </param>
+
+    <param name="vel" type="string">
+    <description>Velocity system to use (LSRK, LSRD, TOPO)? Default is telescope dependent</description>
+    <value/>
+    </param>
+
+    <param name="linecal" type="bool">
+    <description>(CARMA) Apply line calibration</description>
+    <value>false</value>
+    </param>
+
+    <param name="wide" type="intVec">
+    <description>(CARMA) Select wide window averages</description>
+    <value/>
+    </param>
+
+    <param name="debug" type="int">
+    <description>Display increasingly verbose debug messages</description>
+    <value>0</value>
+    </param>
+
+  </input>
+
+  <returns type="void"/>
+
+  <example>
+    mf=miriadfiller()
+    mf.fill(vis='mir.ms',inputfile='mydata.uv',tsys=True,spw='0,1')
+  </example>
+
+</method>
+
+</tool>
+
+</casaxml>
