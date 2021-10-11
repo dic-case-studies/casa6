@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 from __future__ import print_function
+import csv
 import os
 import sys
 import shutil
 import numpy as np
 import numpy.ma as ma
 import unittest
+from unittest.mock import patch
 
 from casatasks.private.casa_transition import is_CASA6
 from casatestutils import testhelper as th
@@ -575,14 +577,15 @@ class TestJyPerK(unittest.TestCase):
         return paramlist[0,0], paramlist[1,0]
 
     def _load_jyperkdb_responses(self, test_data):
-        self.responses = {}
+        responses = {}
         with open(test_data) as f:
-            reader = csv.reader(f)
+            reader = csv.reader(f, delimiter='\t')
             for row in reader:
-                self.responses[row[0]] = row[1]
+                responses[row[0]] = row[1]
+        return responses
 
-    @patch('casatasks.private.jyperk.RequestsManager._retrieve')
-    def test_jyperk_gencal_for_asdm_web_api(self):
+    @patch('casatasks.private.jyperk.JyPerKDatabaseClient._try_to_get_response')
+    def test_jyperk_gencal_for_asdm_web_api(self, mock_retrieve):
         """Test to check that the factors from the web API are applied to the caltable.
 
         The following arguments are required for this test.
@@ -606,8 +609,8 @@ class TestJyPerK(unittest.TestCase):
         reference_caltable = os.path.join(datapath, 'caltable_for_jyperk_with_asdm_web_api.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
 
-    @patch('casatasks.private.jyperk.RequestsManager._retrieve')
-    def test_jyperk_gencal_for_model_fit_web_api(self):
+    @patch('casatasks.private.jyperk.JyPerKDatabaseClient._try_to_get_response')
+    def test_jyperk_gencal_for_model_fit_web_api(self, mock_retrieve):
         """Test to check that the factors from the web API are applied to the caltable.
 
         The following arguments are required for this test.
@@ -631,8 +634,8 @@ class TestJyPerK(unittest.TestCase):
         reference_caltable = os.path.join(datapath, 'caltable_for_jyperk_with_model_fit_web_api.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
 
-    @patch('casatasks.private.jyperk.RequestsManager._retrieve')
-    def test_jyperk_gencal_for_interpolation_web_api(self):
+    @patch('casatasks.private.jyperk.JyPerKDatabaseClient._try_to_get_response')
+    def test_jyperk_gencal_for_interpolation_web_api(self, mock_retrieve):
         """Test to check that the factors from the web API are applied to the caltable.
 
         The following arguments are required for this test.
