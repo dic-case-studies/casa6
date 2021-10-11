@@ -581,6 +581,7 @@ class TestJyPerK(unittest.TestCase):
             for row in reader:
                 self.responses[row[0]] = row[1]
 
+    @patch('casatasks.private.jyperk.RequestsManager._retrieve')
     def test_jyperk_gencal_for_asdm_web_api(self):
         """Test to check that the factors from the web API are applied to the caltable.
 
@@ -588,6 +589,12 @@ class TestJyPerK(unittest.TestCase):
         * caltype='jyperk'
         * endpoint='asdm'
         """
+        def mock_retrieve(url):
+            return responses[url]
+
+        responses = self._load_jyperkdb_responses(os.path.join(datapath, 'jyperkdb_responses_for_asdm.csv'))
+        mock_retrieve.side_effect = mock_retrieve
+
         gencal(vis=self.vis,
                caltable=self.caltable,
                caltype='jyperk',
