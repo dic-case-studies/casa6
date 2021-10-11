@@ -242,6 +242,8 @@ def deconvolve(
         if cyclethreshold != 0:
             cyclethreshold = cyclethreshold if (type(cyclethreshold) == str) else (str(cyclethreshold*1000)+'mJy')
             paramList.setIterPars({'cyclethreshold': cyclethreshold, 'cyclethresholdismutable': False})
+        else:
+            casalog.post("Calculating cyclethreshold based on current image, threshold, and other stopping criteria", "INFO")
 
         #####################################################
         #### Run the minor cycle
