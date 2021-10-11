@@ -592,11 +592,11 @@ class TestJyPerK(unittest.TestCase):
         * caltype='jyperk'
         * endpoint='asdm'
         """
-        def mock_retrieve(url):
+        def get_response(url):
             return responses[url]
 
         responses = self._load_jyperkdb_responses(os.path.join(datapath, 'jyperkdb_responses_for_asdm.csv'))
-        mock_retrieve.side_effect = mock_retrieve
+        mock_retrieve.side_effect = get_response
 
         gencal(vis=self.vis,
                caltable=self.caltable,
@@ -617,11 +617,11 @@ class TestJyPerK(unittest.TestCase):
         * caltype='jyperk'
         * endpoint='model-fit'
         """
-        def mock_retrieve(url):
+        def get_response(url):
             return responses[url]
 
         responses = self._load_jyperkdb_responses(os.path.join(datapath, 'jyperkdb_responses_for_model-fit.csv'))
-        mock_retrieve.side_effect = mock_retrieve
+        mock_retrieve.side_effect = get_response
 
         gencal(vis=self.vis,
                caltable=self.caltable,
@@ -642,11 +642,11 @@ class TestJyPerK(unittest.TestCase):
         * caltype='jyperk'
         * endpoint='interpolation'
         """
-        def mock_retrieve(url):
+        def get_response(url):
             return responses[url]
 
         responses = self._load_jyperkdb_responses(os.path.join(datapath, 'jyperkdb_responses_for_interpolation.csv'))
-        mock_retrieve.side_effect = mock_retrieve
+        mock_retrieve.side_effect = get_response
 
         gencal(vis=self.vis,
                caltable=self.caltable,
