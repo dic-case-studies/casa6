@@ -379,12 +379,30 @@
       <value type="double">0.1</value>
     </param>
 
+    <param subparam="true" name="cyclethreshold" type="any">
+        <shortdescription>Stopping threshold </shortdescription>
+        <description>Stopping threshold (number in units of Jy, or string)
+          
+                        A global stopping threshold that the peak residual (within clean mask)
+                        across all image planes is compared to. If set, then this value will be used
+                        to compare against. If left at the default (0.0), then a new value will be
+                        computed using the other stopping criteria parameters (see threshold) and
+                        used in place of cyclethreshold.
+
+                        The 'cyclethreshold' value is also made visible and editable in the
+                        interactive GUI when deconvolve is run with interactive=True.
+        </description>
+
+        <value type="double">0.0</value>
+    </param>
+
     <param subparam="true" name="threshold" type="any">
       <shortdescription>Stopping threshold </shortdescription>
-      <description>Stopping threshold (number in units of Jy, or string)
+      <description>Tclean's stopping threshold (number in units of Jy, or string)
 
-                        A global stopping threshold that the peak residual (within clean mask)
-                        across all image planes is compared to.
+                        When cyclethreshold isn't set explicitly, the value of threshold is used as
+                        part of the compilation to automatically determine a cyclethreshold value.
+                        This is mainly for maintaing compatibility with tclean.
 
                         threshold = 0.005  : 5mJy
                         threshold = '5.0mJy'
@@ -408,10 +426,6 @@
                                the description under nsigma), then cyclethreshold is further modified as,
                                
                                cyclethreshold = max( cyclethreshold, nsgima_threshold )
-                               
-                               
-                               'cyclethreshold' is made visible and editable only in the
-                               interactive GUI when deconvolve is run with interactive=True.
       </description>
 
       <value type="double">0.0</value>

@@ -149,6 +149,7 @@ def deconvolve(
     ##### Iteration control
     niter,#=0, 
     gain,#=0.1,
+    cyclethreshold,#=0.0,
     threshold,#=0.0, 
     nsigma,#=0.0
     cyclefactor,#=1.0,
@@ -236,6 +237,11 @@ def deconvolve(
 
         ## create the parameters list help object
         paramList=ImagerParameters(**bparm)
+
+        # Assign cyclethreshold explicitly, if set explicitly by the user
+        if cyclethreshold != 0:
+            cyclethreshold = cyclethreshold if (type(cyclethreshold) == str) else (str(cyclethreshold*1000)+'mJy')
+            paramList.setIterPars({'cyclethreshold': cyclethreshold, 'cyclethresholdismutable': False})
 
         #####################################################
         #### Run the minor cycle

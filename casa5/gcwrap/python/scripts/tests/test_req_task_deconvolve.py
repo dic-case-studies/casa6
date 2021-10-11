@@ -1016,6 +1016,20 @@ class test_iterbot(testref_base):
 
         self.checkfinal(report)
 
+    def test_iterbot_cyclethreshold_str(self):
+        self.prepData('refim_point.ms', tclean_args={'imsize':100,'cell':'9.0arcsec'})
+        results = deconvolve(imagename=self.img, cyclethreshold='1.058mJy', niter=2000, interactive=0)
+        report = th.checkall(ret=results['retrec'], iterdone=1077, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
+
+        self.checkfinal(report)
+
+    def test_iterbot_cyclethreshold_num(self):
+        self.prepData('refim_point.ms', tclean_args={'imsize':100,'cell':'9.0arcsec','nchan':1})
+        results = deconvolve(imagename=self.img, cyclethreshold=1.058e-3, niter=2000, interactive=0)
+        report = th.checkall(ret=results['retrec'], iterdone=1077, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
+
+        self.checkfinal(report)
+
 ##############################################
 ##############################################
 
