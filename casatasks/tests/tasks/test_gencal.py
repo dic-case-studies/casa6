@@ -574,6 +574,13 @@ class TestJyPerK(unittest.TestCase):
             tb.close()
         return paramlist[0,0], paramlist[1,0]
 
+    def _load_jyperkdb_responses(self, test_data):
+        self.responses = {}
+        with open(test_data) as f:
+            reader = csv.reader(f)
+            for row in reader:
+                self.responses[row[0]] = row[1]
+
     def test_jyperk_gencal_for_asdm_web_api(self):
         """Test to check that the factors from the web API are applied to the caltable.
 
@@ -592,6 +599,7 @@ class TestJyPerK(unittest.TestCase):
         reference_caltable = os.path.join(datapath, 'caltable_for_jyperk_with_asdm_web_api.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
 
+    @patch('casatasks.private.jyperk.RequestsManager._retrieve')
     def test_jyperk_gencal_for_model_fit_web_api(self):
         """Test to check that the factors from the web API are applied to the caltable.
 
@@ -599,6 +607,12 @@ class TestJyPerK(unittest.TestCase):
         * caltype='jyperk'
         * endpoint='model-fit'
         """
+        def mock_retrieve(url):
+            return responses[url]
+
+        responses = self._load_jyperkdb_responses(os.path.join(datapath, 'jyperkdb_responses_for_model-fit.csv'))
+        mock_retrieve.side_effect = mock_retrieve
+
         gencal(vis=self.vis,
                caltable=self.caltable,
                caltype='jyperk',
@@ -610,6 +624,7 @@ class TestJyPerK(unittest.TestCase):
         reference_caltable = os.path.join(datapath, 'caltable_for_jyperk_with_model_fit_web_api.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
 
+    @patch('casatasks.private.jyperk.RequestsManager._retrieve')
     def test_jyperk_gencal_for_interpolation_web_api(self):
         """Test to check that the factors from the web API are applied to the caltable.
 
@@ -617,6 +632,12 @@ class TestJyPerK(unittest.TestCase):
         * caltype='jyperk'
         * endpoint='interpolation'
         """
+        def mock_retrieve(url):
+            return responses[url]
+
+        responses = self._load_jyperkdb_responses(os.path.join(datapath, 'jyperkdb_responses_for_interpolation.csv'))
+        mock_retrieve.side_effect = mock_retrieve
+
         gencal(vis=self.vis,
                caltable=self.caltable,
                caltype='jyperk',
