@@ -1,0 +1,81 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+      <task category="import/export" name="importfitsidi" type="function">
+    <shortdescription>Convert a FITS-IDI file to a CASA visibility data set</shortdescription>
+<description>
+Convert a FITS-IDI file to a CASA visiblity data set.
+If several files are given, they will be concatenated into one MS.
+</description>
+    <input>
+        <param name="fitsidifile" mustexist="true" type="pathVec">
+<shortdescription>Name(s) of input FITS-IDI file(s)</shortdescription>
+<description>Name(s) of input FITS-IDI file(s)
+                     Default: none (must be supplied)
+
+                        Examples: 
+                        fitsidifile='3C273XC1.IDI'
+                        fitsidifile=['3C273XC1.IDI1','3C273XC1.IDI2']
+</description>
+            <value/>
+        </param>
+
+        <param name="vis" type="string">
+<shortdescription>Name of output visibility file</shortdescription>
+<description>Name of output visibility file
+                     Default: none
+
+                        Example: outputvis='3C273XC1.ms'
+</description>
+            <value/>
+        </param>
+
+        <param name="constobsid" type="bool">
+<shortdescription>If True, give constant obs ID==0 to the data from all input fitsidi files (False = separate obs id for each file)</shortdescription>
+<description>If True, give constant obs ID==0 to the data from all
+input fitsidi files (False = separate obs id for each file)
+                     Default: False (new obs id for each input file)
+                     Options: False|True
+
+
+</description>
+          <value>False</value>
+        </param>
+
+        <param name="scanreindexgap_s" type="double">
+<shortdescription>Min time gap (seconds) between integrations to start a new scan</shortdescription>
+<description>Min time gap (seconds) between integrations to start a
+new scan
+                     Default: 0. (no reindexing)
+
+                     If &gt; 0., a new scan is started whenever the gap
+                     between two integrations is &gt; the given value
+                     (seconds) or when a new field starts or when the
+                     ARRAY_ID changes.
+</description>
+          <value>0.</value>
+        </param>
+
+        <param name="specframe" type="string">
+<shortdescription>Spectral reference frame for all spectral windows in the output MS</shortdescription>
+<description>This frame will be used to set the spectral reference
+frame for all spectral windows in the output MS
+                     Default: GEO (geocentric)
+                     Options: GEO|TOPO|LSRK|BARY
+
+                     NOTE: if specframe is set to TOPO, the reference
+                     location will be taken from the Observatories
+                     table in the CASA data repository for the given
+                     name of the observatory. You can edit that table
+                     and add new rows.
+</description>
+            <value>GEO</value>
+        </param>
+
+    </input>
+
+<example>
+FOR MORE INFORMATION, SEE THE TASK PAGES OF IMPORTFITSIDI IN CASA DOCS:
+https://casa.nrao.edu/casadocs/
+ </example>
+ <returns>void</returns></task>
+ </casaxml>

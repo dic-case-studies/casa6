@@ -1,0 +1,51 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+      <task visibility="experimental" category="import/export" name="importgmrt" type="function">
+<shortdescription>Convert a UVFITS file to a CASA visibility data set</shortdescription>
+    <description>
+Convert a GRMT FITS file to a CASA visiblity data set.
+Also read GMRT flag file(s) and flag data based on the contents of the
+files.
+    </description>
+    <input>
+        <param name="fitsfile" mustexist="true" type="path">
+<shortdescription>Name of input UV FITS file</shortdescription>
+<description>Name of input UV FITS file
+                     Default: none
+
+                        Example: fitsimage='3C273XC1.fits'
+</description>
+            <value/>
+        </param>
+
+        <param name="flagfile" type="any">
+<shortdescription>List of files containing flagging information.</shortdescription>
+<description>List of files containing flagging information.
+                     Default: none
+
+                        Examples:
+                        flagfile='3c273XC1.flag'
+                        flagfile=['3c273Cc1_1.flag','3c273Cc2_1.flag',']
+</description>
+            <type>string</type><type>stringVec</type>
+            <value type="string"/>
+        </param>
+
+        <param name="vis" type="string">
+<shortdescription>Name of input visibility file</shortdescription>
+<description>Name of input visibility file
+                     Default: none
+
+                        Example: vis='ngc5921.ms'
+</description>
+            <value/>
+        </param>
+
+    </input>
+
+<example>
+FOR MORE INFORMATION, SEE THE TASK PAGES OF IMPORTGMRT IN CASA DOCS:
+https://casa.nrao.edu/casadocs/
+ </example>
+ <returns>void</returns></task>
+ </casaxml>
