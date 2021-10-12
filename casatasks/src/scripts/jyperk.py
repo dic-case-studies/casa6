@@ -669,6 +669,9 @@ class JyPerKReader4File():
         Returns:
             list -- [['MS','ant','spwid','polid','factor'], ...]
         """
+        if not os.path.isfile(self.infile):
+            raise OSError(f'There is no Jy/K db-derived factor file: {self.infile}')
+
         with open(self.infile, 'r') as f:
             return list(self._extract_jyperk_from_csv(f))
 
