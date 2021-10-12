@@ -1,0 +1,116 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd       file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+      <task category="import/export" name="importfits" type="function">
+    <shortdescription>Convert an image FITS file into a CASA image</shortdescription>
+<description>
+Convert an image FITS file into a CASA image
+</description>
+    <input>
+        <param name="fitsimage" mustexist="true" type="path">
+<shortdescription>Name of input image FITS file</shortdescription>
+<description>Name of input image FITS file
+                     Default: none
+
+                        Example: fitsimage='3C273XC1.fits'
+</description>
+            <value/>
+        </param>
+
+        <param name="imagename" type="string">
+<shortdescription>Name of output CASA image</shortdescription>
+<description>Name of output CASA image
+                     Default: none
+
+                        Example: fitsimage='3C273XC1.image'
+</description>
+            <value/>
+        </param>
+
+        <param name="whichrep" type="int">
+<shortdescription>If fits image has multiple coordinate reps, choose one.</shortdescription>
+<description>If fits image has multiple coordinate reps, choose one.
+                     Default: 0 (means first)
+
+                        Example: whichrep=1
+</description>
+            <value>0</value>
+        </param>
+
+        <param name="whichhdu" type="int">
+<shortdescription>If fits file contains multiple images, choose one (0 = first HDU, -1 = first valid image).</shortdescription>
+<description>If fits file contains multiple images, choose one
+                     Default: -1 (use the first valid one)
+
+                     NOTE: 0 = first HDU, -1 = first valid image
+
+                        Example: whichhdu=1
+</description>
+            <value>-1</value>
+        </param>
+
+        <param name="zeroblanks" type="bool">
+<shortdescription>Set blanked pixels to zero (not NaN)</shortdescription>
+<description>Set blanked pixels to zero (not NaN)
+                     Default: True
+                     Options: True|False
+</description>
+            <value>True</value>
+        </param>
+
+        <param name="overwrite" type="bool">
+<shortdescription>Overwrite output file if it exists?</shortdescription>
+ <description>Overwrite output file if it exists?
+                     Default: False
+                     Options: False|True
+</description>
+            <value>False</value>
+        </param>
+
+        <param name="defaultaxes" type="bool">
+<shortdescription>Add the default 4D coordinate axes where they are missing; value True requires setting defaultaxesvalues</shortdescription>
+<description>Add the default 4D coordinate axes where they are
+missing
+                     Default: False
+                     Options: False|True
+
+                     IMPORTANT: value True requires setting defaultaxesvalues
+</description>
+            <value>False</value>
+        </param>
+
+        <param name="defaultaxesvalues" type="variant">
+<shortdescription>List of values to assign to added degenerate axes when defaultaxes==True (ra,dec,freq,stokes)</shortdescription>
+<description>List of values to assign to added degenerate axes when
+defaultaxes==True (ra,dec,freq,stokes)
+                     Default: []
+
+                     For existing axes, empty strings can be given as
+                     values. For the directions and spectral values,
+                     any valid angle/frequency expressions can be
+                     given.
+
+                        Example: defaultaxesvalues=['19h30m00',
+                        '-02d30m00', '88.5GHz', 'Q'] 
+</description>
+            <value>[]</value>
+        </param>
+
+        <param name="beam" type="variant">
+<shortdescription>List of values to be used to define the synthesized beam [BMAJ,BMIN,BPA] (as in the FITS keywords)</shortdescription>
+<description>List of values to be used to define the synthesized beam
+[BMAJ,BMIN,BPA] (as in the FITS keywords)
+                     Default: [] (i.e.take from FITS file)
+
+                        Example: beam=['0.35arcsec', '0.24arcsec',
+                        '25deg']
+</description>
+            <value>[]</value>
+        </param>
+    </input>
+
+<example>
+FOR MORE INFORMATION, SEE THE TASK PAGES OF IMPORTFITS IN CASA DOCS:
+https://casa.nrao.edu/casadocs/
+ </example>
+ <returns>void</returns></task>
+ </casaxml>

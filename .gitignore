@@ -97,3 +97,6 @@ casa5/gcwrap/tools/synthesis/pdf_files
 !casa5/gcwrap/python/scripts/imagerhelpers/*~
 !casa5/gcwrap/python/scripts/imagerhelpers/*.swp
 !casa5/gcwrap/python/scripts/imagerhelpers/*.swo
+casatools/binding/generated/
+casatools/binding/include/toolversion.h
+casatools/binding/source/version.cc
