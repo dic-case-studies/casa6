@@ -592,6 +592,12 @@ class InterpolationRspTranslator():
 
     @staticmethod
     def _extract_factor(data):
+        if data['response']['query']['elevation'] == 'nan':
+            casalog.post('The elevation mean is np.nan, so the factor is set 1.',
+                         priority='WARN',
+                         origin='jyperk.MeanElevation._calc_elevation_mean')
+            return 1
+
         return data['response']['data']['factor']['mean']
 
     @staticmethod
