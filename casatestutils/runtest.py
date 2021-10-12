@@ -894,7 +894,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
         if "mpi" in test.options and sys.platform != "darwin" and ( pmode == 'parallel' or pmode == 'both'):
             print("Running test: {} in MPI mode".format(test.name))
             casa_exe = exec_path + "/mpicasa"
-            casaopts = "-n " + str(ncores) + " " + exec_path + "/casa" + " --nogui --nologger --log2term --agg "
+            casaopts = "-n " + str(ncores) + " " + exec_path + "/casa" + " --nogui --nologger --log2term --agg " + rcdir + " "
             assert (test != None)
             cmd = (casa_exe + " " + casaopts + " -c " + test.path).split()
             cwd = work_dir + "/" + test.name
@@ -1019,6 +1019,7 @@ if __name__ == "__main__":
     parser.add_argument('-j','--test_group',  help='Filter tests by a comma separated list of components', required=False)
     parser.add_argument('-m','--pmode',  help='Parallelization mode: serial, parallel, both', required=False)
     parser.add_argument('--bamboo', help='Set Bamboo Flag to True',default=False,action='store_true', required=False)
+    parser.add_argument('-r','--rcdir',  help='Casa rcdir', required=False)
 
     if not IS_CASA6:
         if "-c" in sys.argv:
@@ -1032,6 +1033,10 @@ if __name__ == "__main__":
 
     print("Operating system: " +  platform.system())
     print("")
+    rcdir=""
+    if args.rcdir is not None:
+        rcdir="--rcdir=" + args.rcdir
+    print("rcdir: " + rcdir)
 
     if args.test_group is not None:
         components = args.test_group
