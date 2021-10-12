@@ -165,7 +165,7 @@ class JyperkGencal():
         if infile == '':
             infile = None
 
-        if not infile is None:
+        if infile is not None:
             f = JyPerKReader4File(infile)
             factors = f.get()
 
