@@ -361,7 +361,13 @@ class MeanElevation():
                 elevations.append(el_deg['value'])
 
         elevations = np.asarray(elevations)
-        return elevations.mean()
+
+        if len(elevations) == 0:
+            elevation_mean = np.nan
+        else:
+            elevation_mean = elevations.mean()
+
+        return elevation_mean
 
 
 class RequestsManager():
