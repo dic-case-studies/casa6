@@ -35,7 +35,7 @@ class JyPerKWithVisTestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.casa_cwd_path = os.getcwd()
 
-        if os.path.exists(cls.working_directory):
+        if os.path.isdir(cls.working_directory):
             shutil.rmtree(cls.working_directory)
 
         os.mkdir(cls.working_directory)
@@ -129,7 +129,7 @@ class TestInterpolationRspTranslator(unittest.TestCase):
     def setUpClass(cls):
         cls.casa_cwd_path = os.getcwd()
 
-        if os.path.exists(cls.working_directory):
+        if os.path.isdir(cls.working_directory):
             shutil.rmtree(cls.working_directory)
 
         os.mkdir(cls.working_directory)
@@ -145,7 +145,7 @@ class TestInterpolationRspTranslator(unittest.TestCase):
         shutil.rmtree(cls.working_directory)
 
     def _delete_dir(self, path):
-        if os.path.exists(path):
+        if os.path.isdir(path):
             shutil.rmtree(path)
 
     def test_convert(self):
@@ -211,7 +211,7 @@ class TestModelFitRspTranslator(unittest.TestCase):
     def setUpClass(cls):
         cls.casa_cwd_path = os.getcwd()
 
-        if os.path.exists(cls.working_directory):
+        if os.path.isdir(cls.working_directory):
             shutil.rmtree(cls.working_directory)
 
         os.mkdir(cls.working_directory)
@@ -227,7 +227,7 @@ class TestModelFitRspTranslator(unittest.TestCase):
         shutil.rmtree(cls.working_directory)
 
     def _delete_dir(self, path):
-        if os.path.exists(path):
+        if os.path.isdir(path):
             shutil.rmtree(path)
 
     def test_convert(self):
@@ -362,7 +362,7 @@ class TestTranslator(unittest.TestCase):
     def setUpClass(cls):
         cls.casa_cwd_path = os.getcwd()
 
-        if os.path.exists(cls.working_directory):
+        if os.path.isdir(cls.working_directory):
             shutil.rmtree(cls.working_directory)
 
         os.mkdir(cls.working_directory)
@@ -378,7 +378,7 @@ class TestTranslator(unittest.TestCase):
         shutil.rmtree(cls.working_directory)
 
     def _delete_dir(self, path):
-        if os.path.exists(path):
+        if os.path.isdir(path):
             shutil.rmtree(path)
 
     def test_format_cal_table_format(self):
@@ -409,7 +409,7 @@ class TestASDMRspTranslator(unittest.TestCase):
     def setUpClass(cls):
         cls.casa_cwd_path = os.getcwd()
 
-        if os.path.exists(cls.working_directory):
+        if os.path.isdir(cls.working_directory):
             shutil.rmtree(cls.working_directory)
 
         os.mkdir(cls.working_directory)
@@ -425,7 +425,7 @@ class TestASDMRspTranslator(unittest.TestCase):
         shutil.rmtree(cls.working_directory)
 
     def _delete_dir(self, path):
-        if os.path.exists(path):
+        if os.path.isdir(path):
             shutil.rmtree(path)
 
     def test_convert(self):
@@ -443,7 +443,7 @@ class TestJyPerKReader4File(unittest.TestCase):
     def setUpClass(cls):
         cls.casa_cwd_path = os.getcwd()
 
-        if os.path.exists(cls.working_directory):
+        if os.path.isdir(cls.working_directory):
             shutil.rmtree(cls.working_directory)
 
         os.mkdir(cls.working_directory)
@@ -459,7 +459,7 @@ class TestJyPerKReader4File(unittest.TestCase):
         shutil.rmtree(cls.working_directory)
 
     def _delete_dir(self, path):
-        if os.path.exists(path):
+        if os.path.isdir(path):
             shutil.rmtree(path)
 
     @classmethod

@@ -548,7 +548,7 @@ class TestJyPerK(unittest.TestCase):
     def setUpClass(cls):
         cls.casa_cwd_path = os.getcwd()
 
-        if os.path.exists(cls.working_directory):
+        if os.path.isdir(cls.working_directory):
             shutil.rmtree(cls.working_directory)
 
         os.mkdir(cls.working_directory)
@@ -564,7 +564,7 @@ class TestJyPerK(unittest.TestCase):
         shutil.rmtree(cls.working_directory)
 
     def _delete_dir(self, path):
-        if os.path.exists(path):
+        if os.path.isdir(path):
             shutil.rmtree(path)
 
     def _read_cparam_as_real(self, name):
