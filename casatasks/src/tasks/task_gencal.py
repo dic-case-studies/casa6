@@ -165,7 +165,7 @@ class JyperkGencal():
         if infile == '':
             infile = None
 
-        if infile is not None:
+        if infile is str:
             f = JyPerKReader4File(infile)
             factors = f.get()
 
@@ -174,6 +174,8 @@ class JyperkGencal():
                                             endpoint=endpoint, 
                                             timeout=timeout, retry=retry, 
                                             retry_wait_time=retry_wait_time)
+        else:
+            raise Exception('The infile argument should be str or None.')
 
         factors = JyperkGencal.__extract_valid_factor(factors, os.path.basename(vis))
         if len(factors) == 0:

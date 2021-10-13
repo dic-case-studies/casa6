@@ -704,6 +704,20 @@ class TestJyPerK(unittest.TestCase):
 
         self.assertEqual(cm.exception.args[0], 'There is no factor.')
 
+    def test_infile_is_incorrect_type(self):
+        """Test to check for ejecting raise when infile is incorrect type.
+        """
+        from casatasks.private.task_gencal import gencal as private_gencal
+        
+        with self.assertRaises(Exception) as cm:
+            private_gencal(vis=self.vis,
+                caltable=self.caltable,
+                caltype='jyperk',
+                infile=[self.jyperk_factor_csv],
+                uniform=False)
+
+        self.assertEqual(cm.exception.args[0], 'The infile argument should be str or None.')
+
 
 def suite():
     return [gencal_antpostest,
