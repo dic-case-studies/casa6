@@ -213,7 +213,7 @@ class TestRequestsManager(unittest.TestCase):
     params.param.return_value = {'uid': 'uid://A002/Xb32033/X9067'}
 
     @patch('casatasks.private.jyperk.urlopen')
-    def test_get_not_filtered(self, urlopen_patch):
+    def test_get_with_success(self, urlopen_patch):
         content_body = '''
         {"success": true, "data": "dummy"}
         '''
@@ -222,18 +222,17 @@ class TestRequestsManager(unittest.TestCase):
         mock.__enter__.return_value.read.return_value = content_body
         urlopen_patch.return_value = mock
         
-        client = jyperk.JyPerKDatabaseClient('asdm', urlopen_patch)
+        client = jyperk.JyPerKDatabaseClient('asdm')
+        manager = jyperk.RequestsManager(client)
         
         params = jyperk.ASDMParamsGenerator.get_params(self.vis)
-
-        manager = jyperk.RequestsManager(client)
         result = manager.get(params)
         
         reference = [{'response': {'success': True, 'data': 'dummy'}, 'aux': 'uid___A002_Xb32033_X9067.ms'}]
         self.assertEqual(result, reference)
 
     @patch('casatasks.private.jyperk.urlopen')
-    def test_get_filtered(self, urlopen_patch):
+    def test_get_without_success(self, urlopen_patch):
         content_body = '''
         {"success": false, "data": "dummy", "error": "dummy"}
         '''
@@ -242,11 +241,10 @@ class TestRequestsManager(unittest.TestCase):
         mock.__enter__.return_value.read.return_value = content_body
         urlopen_patch.return_value = mock
         
-        client = jyperk.JyPerKDatabaseClient('asdm', urlopen_patch)
+        client = jyperk.JyPerKDatabaseClient('asdm')
+        manager = jyperk.RequestsManager(client)
         
         params = jyperk.ASDMParamsGenerator.get_params(self.vis)
-
-        manager = jyperk.RequestsManager(client)
         result = manager.get(params)
         
         reference = []
