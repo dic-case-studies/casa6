@@ -207,7 +207,7 @@ class TestRequestsManager(unittest.TestCase):
     """test RequestsManager class.
     """
 
-    vis = "uid___A002_Xb32033_X9067.ms"
+    vis = 'uid___A002_Xb32033_X9067.ms'
     
     params = MagicMock()
     params.param.return_value = {'uid': 'uid://A002/Xb32033/X9067'}
