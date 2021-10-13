@@ -692,8 +692,8 @@ class TestJyPerK(unittest.TestCase):
         """Test to check a caltable does not been generated when there are not vis name in the factor csv file.
         """
         vis = 'non-existent-observation.ms'
-        self._delete_dir(vis)
-        os.symlink(self.vis, vis)
+        if not os.path.isfile(vis):
+            os.symlink(self.vis, vis)
         
         with self.assertRaises(Exception) as cm:
             gencal(vis=vis,
