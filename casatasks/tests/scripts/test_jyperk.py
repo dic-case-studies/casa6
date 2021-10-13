@@ -259,7 +259,7 @@ class TestJyPerKDatabaseClient(unittest.TestCase):
 
     param = {'uid': 'uid://A002/X85c183/X36f'}
     
-    @patch("casatasks.private.jyperk.urlopen")
+    @patch('casatasks.private.jyperk.urlopen')
     def test_get_as_success(self, urlopen_patch):
         
         content_body = '''
@@ -275,7 +275,7 @@ class TestJyPerKDatabaseClient(unittest.TestCase):
               
         self.assertEqual(json_obj, json.loads(content_body))
 
-    @patch("casatasks.private.jyperk.urlopen")
+    @patch('casatasks.private.jyperk.urlopen')
     def test_get_as_httperror(self, urlopen_patch):
         urlopen_patch.side_effect = HTTPError('', 500, '', {}, None)
         
@@ -287,7 +287,7 @@ class TestJyPerKDatabaseClient(unittest.TestCase):
         msg = 'Failed to load URL: https://asa.alma.cl/science/jy-kelvins/asdm/?uid=uid%3A%2F%2FA002%2FX85c183%2FX36f'
         self.assertEqual(cm.exception.args[0].split('\n')[0], msg)
 
-    @patch("casatasks.private.jyperk.urlopen")
+    @patch('casatasks.private.jyperk.urlopen')
     def test_get_as_urlerror(self, urlopen_patch):
         urlopen_patch.side_effect = URLError('')
         
