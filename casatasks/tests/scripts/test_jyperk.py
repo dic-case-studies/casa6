@@ -67,22 +67,23 @@ class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
                                        'band': 3, 'baseband': 1, 'frequency': 90994575000.0})
         self.assertEqual(param.subparam, {'vis': 'uid___A002_X85c183_X36f.ms', 'spwid': 1})
       
+    def _generate_spwnames(self):
+        spwnames = []
+        for i in range(3):
+            for bb in range(1, 5):
+                for resolution in ['FULL_RES', 'CH_AVG']:
+                    spwnames.append(f'ALMA_RB_03#BB_{str(bb)}#SW-01#{resolution}')
+        return spwnames
+
+    def _generate_ref_bands(self):
+        ref_bands = {}
+        for i in range(1, 25):
+            ref_bands[i] = 3
+        return ref_bands
+
     def test_get_params_in_Bands(self):
-        science_windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-                                    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-                                    21, 22, 23, 24])
-        spwnames = ['ALMA_RB_03#BB_1#SW-01#FULL_RES', 'ALMA_RB_03#BB_1#SW-01#CH_AVG',
-                    'ALMA_RB_03#BB_2#SW-01#FULL_RES', 'ALMA_RB_03#BB_2#SW-01#CH_AVG',
-                    'ALMA_RB_03#BB_3#SW-01#FULL_RES', 'ALMA_RB_03#BB_3#SW-01#CH_AVG',
-                    'ALMA_RB_03#BB_4#SW-01#FULL_RES', 'ALMA_RB_03#BB_4#SW-01#CH_AVG',
-                    'ALMA_RB_03#BB_1#SW-01#FULL_RES', 'ALMA_RB_03#BB_1#SW-01#CH_AVG',
-                    'ALMA_RB_03#BB_2#SW-01#FULL_RES', 'ALMA_RB_03#BB_2#SW-01#CH_AVG',
-                    'ALMA_RB_03#BB_3#SW-01#FULL_RES', 'ALMA_RB_03#BB_3#SW-01#CH_AVG',
-                    'ALMA_RB_03#BB_4#SW-01#FULL_RES', 'ALMA_RB_03#BB_4#SW-01#CH_AVG',
-                    'ALMA_RB_03#BB_1#SW-01#FULL_RES', 'ALMA_RB_03#BB_1#SW-01#CH_AVG',
-                    'ALMA_RB_03#BB_2#SW-01#FULL_RES', 'ALMA_RB_03#BB_2#SW-01#CH_AVG',
-                    'ALMA_RB_03#BB_3#SW-01#FULL_RES', 'ALMA_RB_03#BB_3#SW-01#CH_AVG',
-                    'ALMA_RB_03#BB_4#SW-01#FULL_RES', 'ALMA_RB_03#BB_4#SW-01#CH_AVG']
+        science_windows = np.array(range(1, 25))
+        spwnames = self._generate_spwnames()
         mean_freqs = {1: 90994575000.0, 2: 90978950000.0, 3: 92932075000.0, 
                       4: 92924262500.0, 5: 102994575000.0, 6: 102986762500.0, 
                       7: 104994575000.0, 8: 104986762500.0, 9: 100949999999.89998, 
@@ -91,12 +92,9 @@ class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
                       16: 114658712500.0, 17: 100949999999.89996, 18: 100949755859.275, 
                       19: 102765150000.0, 20: 102764905859.375, 21: 112807150000.0, 
                       22: 112806905859.375, 23: 114682150000.0, 24: 114681905859.375}
-
         bands = jyperk.Bands.get(science_windows, spwnames, mean_freqs, self.vis)
+        ref_bands = self._generate_ref_bands()
         
-        ref_bands = {1: 3, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 3, 10: 
-                 3, 11: 3, 12: 3, 13: 3, 14: 3, 15: 3, 16: 3, 17: 3, 18: 3,
-                 19: 3, 20: 3, 21: 3, 22: 3, 23: 3, 24: 3}
         self.assertEqual(bands, ref_bands)
 
     def test_get_params_in_MeanElevation(self):
