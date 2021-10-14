@@ -555,7 +555,7 @@ class TestJyPerK(unittest.TestCase):
         os.chdir(cls.working_directory)
 
         ms_datapath = ctsys.resolve('measurementset/almasd')
-        original_vis = os.path.join(ms_datapath, f'jyperk/{cls.vis}.sel')
+        original_vis = os.path.join(ms_datapath, f'{cls.vis}.sel')
         shutil.copytree(original_vis, cls.vis, symlinks=False)
 
     @classmethod
