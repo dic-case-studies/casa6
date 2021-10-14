@@ -56,6 +56,11 @@ class JyPerKWithVisTestCase(unittest.TestCase):
 
 class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
     """test collection for interpolation logic classes.
+
+    This test target classes are:
+    * InterpolationParamsGenerator
+    * Bands
+    * MeanElevation
     """
 
     def test_get_params_in_InterpolationParamsGenerator(self):
