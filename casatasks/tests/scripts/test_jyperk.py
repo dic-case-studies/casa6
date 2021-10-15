@@ -104,7 +104,7 @@ class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
 
     def test_get_params_in_MeanElevation(self):
         mean_elevation = jyperk.MeanElevation.get(self.vis, 0)
-        assert math.isclose(mean_elevation, 51.11212932686397)
+        assert math.isclose(mean_elevation, 51.11212932686397, rel_tol=1e-8)
 
 
 class TestInterpolationRspTranslator(JyPerKWithVisTestCase):
