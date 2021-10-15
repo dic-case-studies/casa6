@@ -38,6 +38,23 @@ This is used to construct {\tt synthesisimstore} tool.
 </method>
 
 
+  <method name="getImage" type="function">
+    <shortdescription>Directly open the image from the image store.</shortdescription>
+     
+    <input>
+      <param name="imageId" type="string">
+        <description>The type of image (example "PB").</description>
+      </param>
+      <param name="taylorTerm" type="int">
+        <description>The taylor term, if using the MTMFS deconvolver.</description>
+        <value>0</value>
+      </param>
+    </input>
+    <returns type="image"/>
+    <description>Directly open the image from the image store.</description>
+  </method>
+
+
 
 
 
