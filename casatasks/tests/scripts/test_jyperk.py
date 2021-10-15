@@ -263,24 +263,19 @@ class TestRequestsManager(unittest.TestCase):
 class TestJyPerKDatabaseClient(unittest.TestCase):
     """test JyPerKDatabaseClient class.
     """
-
+    content_body = '''{"success": true}'''
     param = {'uid': 'uid://A002/X85c183/X36f'}
     
     @patch('casatasks.private.jyperk.urlopen')
     def test_get_as_success(self, urlopen_patch):
-        
-        content_body = '''
-        {"success": true}
-        '''
-        
         mock = MagicMock()
-        mock.__enter__.return_value.read.return_value = content_body
+        mock.__enter__.return_value.read.return_value = self.content_body
         urlopen_patch.return_value = mock
         
         client = jyperk.JyPerKDatabaseClient('asdm')
         json_obj = client.get(self.param)
               
-        self.assertEqual(json_obj, json.loads(content_body))
+        self.assertEqual(json_obj, json.loads(self.content_body))
         self.assertTrue(urlopen_patch.called)
         self.assertTrue(urlopen_patch.call_count == 1)
 
@@ -298,6 +293,21 @@ class TestJyPerKDatabaseClient(unittest.TestCase):
         self.assertTrue(urlopen_patch.called)
         self.assertTrue(urlopen_patch.call_count == 1)
 
+    @patch("casatasks.private.jyperk.urlopen")
+    def test_get_as_500_500_200(self, urlopen_patch):
+        error = HTTPError('', 500, '', {}, None)
+        
+        mock = MagicMock()
+        mock.__enter__.return_value.read.side_effect = [error, error, self.content_body]
+        urlopen_patch.return_value = mock
+        
+        client = jyperk.JyPerKDatabaseClient('asdm', retry=3, retry_wait_time=0.1)
+        json_obj = client.get(self.param)
+              
+        self.assertEqual(json_obj, json.loads(self.content_body))
+        self.assertTrue(urlopen_patch.called)
+        self.assertTrue(urlopen_patch.call_count == 3)
+
     @patch('casatasks.private.jyperk.urlopen')
     def test_get_as_urlerror(self, urlopen_patch):
         urlopen_patch.side_effect = URLError('')
@@ -311,6 +321,7 @@ class TestJyPerKDatabaseClient(unittest.TestCase):
         self.assertEqual(cm.exception.args[0].split('\n')[0], msg)
         self.assertTrue(urlopen_patch.called)
         self.assertTrue(urlopen_patch.call_count == 1)
+
 
 class TestTranslator(JyPerKWithVisTestCase):
     responsed_factors = [{'Antenna': 'DA61', 'Spwid': 17, 'origSpwid': 20, 'Polarization': 
