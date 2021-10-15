@@ -235,6 +235,8 @@ class TestRequestsManager(unittest.TestCase):
         
         reference = [{'response': {'success': True, 'data': 'dummy'}, 'aux': 'uid___A002_Xb32033_X9067.ms'}]
         self.assertEqual(result, reference)
+        self.assertTrue(urlopen_patch.called)
+        self.assertTrue(urlopen_patch.call_count == 1)
 
     @patch('casatasks.private.jyperk.urlopen')
     def test_get_without_success(self, urlopen_patch):
@@ -254,6 +256,8 @@ class TestRequestsManager(unittest.TestCase):
         
         reference = []
         self.assertEqual(result, reference)
+        self.assertTrue(urlopen_patch.called)
+        self.assertTrue(urlopen_patch.call_count == 1)
 
 
 class TestJyPerKDatabaseClient(unittest.TestCase):
@@ -277,6 +281,8 @@ class TestJyPerKDatabaseClient(unittest.TestCase):
         json_obj = client.get(self.param)
               
         self.assertEqual(json_obj, json.loads(content_body))
+        self.assertTrue(urlopen_patch.called)
+        self.assertTrue(urlopen_patch.call_count == 1)
 
     @patch('casatasks.private.jyperk.urlopen')
     def test_get_as_httperror(self, urlopen_patch):
@@ -289,6 +295,8 @@ class TestJyPerKDatabaseClient(unittest.TestCase):
        
         msg = 'Failed to load URL: https://asa.alma.cl/science/jy-kelvins/asdm/?uid=uid%3A%2F%2FA002%2FX85c183%2FX36f'
         self.assertEqual(cm.exception.args[0].split('\n')[0], msg)
+        self.assertTrue(urlopen_patch.called)
+        self.assertTrue(urlopen_patch.call_count == 1)
 
     @patch('casatasks.private.jyperk.urlopen')
     def test_get_as_urlerror(self, urlopen_patch):
@@ -301,7 +309,8 @@ class TestJyPerKDatabaseClient(unittest.TestCase):
        
         msg = 'Failed to load URL: https://asa.alma.cl/science/jy-kelvins/asdm/?uid=uid%3A%2F%2FA002%2FX85c183%2FX36f'
         self.assertEqual(cm.exception.args[0].split('\n')[0], msg)
-
+        self.assertTrue(urlopen_patch.called)
+        self.assertTrue(urlopen_patch.call_count == 1)
 
 class TestTranslator(JyPerKWithVisTestCase):
     responsed_factors = [{'Antenna': 'DA61', 'Spwid': 17, 'origSpwid': 20, 'Polarization': 

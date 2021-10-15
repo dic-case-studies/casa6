@@ -610,6 +610,7 @@ class TestJyPerK(unittest.TestCase):
         reference_caltable = os.path.join(
                 datapath, 'jyperk/reference/web_api_with_asdm.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
+        self.assertTrue(urlopen_patch.called)
 
     @patch('casatasks.private.jyperk.JyPerKDatabaseClient._try_to_get_response')
     def test_jyperk_gencal_for_model_fit_web_api(self, mock_retrieve):
@@ -637,6 +638,7 @@ class TestJyPerK(unittest.TestCase):
         reference_caltable = os.path.join(
                 datapath, 'jyperk/reference/web_api_with_model_fit.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
+        self.assertTrue(urlopen_patch.called)
 
     @patch('casatasks.private.jyperk.JyPerKDatabaseClient._try_to_get_response')
     def test_jyperk_gencal_for_interpolation_web_api(self, mock_retrieve):
@@ -664,6 +666,7 @@ class TestJyPerK(unittest.TestCase):
         reference_caltable = os.path.join(
                 datapath, 'jyperk/reference/web_api_with_interpolation.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
+        self.assertTrue(urlopen_patch.called)
 
     def test_jyperk_gencal_for_factor_file(self):
         """Test to check that the factors in the csv file are applied to the caltable.
