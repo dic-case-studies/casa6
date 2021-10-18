@@ -1304,8 +1304,8 @@ class test_stokes(testref_base):
 #          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='cube')
 #          report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.0,[50,50,0,1]),(self.img+'.image',2.0,[50,50,1,1]), (self.img+'.image',3.0,[50,50,2,1]),(self.img+'.image',4.0,[50,50,4,1]) ])
 
-     def test_stokes_mixed_mfs_I(self):  # CAS-13618
-          """ [stokes] Test_Stokes_I_mixed_mfs mfs with Circular Pol dataset"""
+     def test_stokes_mixed_mfs_I_and_U(self):  # CAS-13618
+          """ [stokes] Test_Stokes_I_and_U_mixed_mfs mfs with Circular Pol dataset"""
           self.prepData('refim_point_linRL.ms')
           vis = self.msfile
           ## Split across time
@@ -1329,11 +1329,22 @@ class test_stokes(testref_base):
                vis+'_tmp_mixed_chan.ms'
           ]
 
+          ## Test imaging of Stokes I on its own
           i=0
           report=''
           for vis in vislist:
                tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='I',parallel=self.parallel)
                report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0])])
+               i = i+1
+
+          ## Test imaging of Stokes U on its own
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='U',parallel=self.parallel)
+               if i in [1,5]:
+                    u_true=0.0
+               else:
+                    u_true=3.0
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',u_true,[50,50,0,0])])
                i = i+1
      
           self.assertTrue(self.check_final(report))
@@ -1367,12 +1378,21 @@ class test_stokes(testref_base):
           report=''
           for vis in vislist:
                tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',parallel=self.parallel)
-               ## To be added later when Stokes IQUV is fully enabled for mixed pols...
-               #if i in [1,5]:
-               #     u_true=0.0
-               #else:
-               #     u_true=3.0
-               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0]) ]) #,(self.img+'_'+str(i)+'.image',u_true,[50,50,2,0])])
+               if i in [1,5]:
+                    i_true=1.0
+                    q_true=2.0
+                    u_true=0.0    # for a dataset with X,Y feeds, parallel hands give only I,Q
+                    v_true=0.0    # for a dataset with X,Y feeds, parallel hands give only I,Q
+               else:
+                    i_true=1.0
+                    q_true=2.0
+                    u_true=3.0
+                    v_true=4.0
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],
+                                              imgval=[(self.img+'_'+str(i)+'.image',i_true,[50,50,0,0]) ,
+                                                      (self.img+'_'+str(i)+'.image',q_true,[50,50,1,0]),
+                                                      (self.img+'_'+str(i)+'.image',u_true,[50,50,2,0]),
+                                                      (self.img+'_'+str(i)+'.image',v_true,[50,50,4,0])   ])
                i = i+1
      
           self.assertTrue(self.check_final(report))
