@@ -42,12 +42,17 @@
 # </prerequisite>
 #
 # <etymology>
-# Test for the ia.fft tool method
+# Test for the ia.fft() tool method
 # </etymology>
 #
 # <synopsis>
 # Test the ia.fft() method.
 # </synopsis> 
+#
+# <example>
+# This test can be run via
+# PYTHONPATH=<my python path> python casatools/tests/tools/image/test_ia_fft.py
+# </example>
 #
 # <motivation>
 # To provide a test standard for the ia.fft() tool method to ensure
