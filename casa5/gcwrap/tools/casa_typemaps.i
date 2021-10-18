@@ -79,7 +79,7 @@ using namespace casac;
 %typemap(in) string& (std::unique_ptr<string> deleter) {
    if(PyString_Check($input)){
        if(!$1){
-	  
+
 	   deleter.reset (new string(PyString_AsString($input)));
 	   $1 = deleter.get();
 
@@ -198,7 +198,7 @@ if($1){
             return NULL;
         }
     } else {
-	PyErr_SetString (PyExc_RuntimeError, 
+	PyErr_SetString (PyExc_RuntimeError,
                          "BugCheck: Argument not initialized???");
 	return nullptr;
     }
@@ -383,7 +383,7 @@ if($1){
 %typemap(in) record {
    if(PyDict_Check($input)){
       try {
-          $1 = pyobj2variant($input, true).asRecord();      
+          $1 = pyobj2variant($input, true).asRecord();
       } catch (const casacore::AipsError &ae) {
           PyErr_SetString(PyExc_RuntimeError, ae.what());
           return NULL;
@@ -400,7 +400,7 @@ if($1){
 %typemap(in) record * (std::unique_ptr<record> deleter){
    if(PyDict_Check($input)){
       try {
-         deleter.reset (new record(pyobj2variant($input, true).asRecord()));      
+         deleter.reset (new record(pyobj2variant($input, true).asRecord()));
          $1 = deleter.get();
       } catch (const casacore::AipsError &ae) {
           PyErr_SetString(PyExc_RuntimeError, ae.what());
@@ -421,7 +421,7 @@ if($1){
        // Put value into unique_ptr so it gets free when method exits
       try {
          deleter.reset (new record(pyobj2variant($input, true).asRecord()));
-         $1 = deleter.get(); 
+         $1 = deleter.get();
       } catch (const casacore::AipsError &ae) {
           PyErr_SetString(PyExc_RuntimeError, ae.what());
           return NULL;
@@ -513,7 +513,7 @@ if($1){
 
 %typemap(in) std::vector<double> & (std::unique_ptr<std::vector<double> > deleter){
    std::vector<ssize_t> shape;
-  
+
    if(!$1){
        deleter.reset (new std::vector<double>(0));
        $1 = deleter.get();
@@ -754,25 +754,31 @@ if($1){
 
 %typemap(out) Quantity& {
    $result = PyDict_New();
-   PyDict_SetItem($result, PyString_FromString("unit"), PyString_FromString($1.units.c_str()));
+   PyObject *s = PyString_FromString($1.units.c_str());
+   PyDict_SetItemString($result, "unit", s);
+   Py_DECREF(s);
    PyObject *v = casac::map_vector($1.value);
-   PyDict_SetItem($result, PyString_FromString("value"), v);
+   PyDict_SetItemString($result, "value", v);
    Py_DECREF(v);
 }
 
 %typemap(out) Quantity {
    $result = PyDict_New();
-   PyDict_SetItem($result, PyString_FromString("unit"), PyString_FromString($1.units.c_str()));
+   PyObject *s = PyString_FromString($1.units.c_str());
+   PyDict_SetItemString($result, "unit", s);
+   Py_DECREF(s);
    PyObject *v = casac::map_vector($1.value);
-   PyDict_SetItem($result, PyString_FromString("value"), v);
+   PyDict_SetItemString($result, "value", v);
    Py_DECREF(v);
 }
 
 %typemap(out) Quantity* {
    $result = PyDict_New();
-   PyDict_SetItem($result, PyString_FromString("unit"), PyString_FromString($1->units.c_str()));
+   PyObject *s = PyString_FromString($1->units.c_str());
+   PyDict_SetItemString($result, "unit", s);
+   Py_DECREF(s);
    PyObject *v = casac::map_vector($1->value);
-   PyDict_SetItem($result, PyString_FromString("value"), v);
+   PyDict_SetItemString($result, "value", v);
    Py_DECREF(v);
    delete $1;
 }
@@ -869,7 +875,7 @@ if($1){
           PyErr_SetString(PyExc_RuntimeError, "integer overflow");
           return NULL;
       }
-      PyDict_SetItem($result, PyString_FromString(key.c_str()), v);
+      PyDict_SetItemString($result, key.c_str(), v);
       Py_DECREF(v);
    }
 }
@@ -889,7 +895,7 @@ if($1){
           PyErr_SetString(PyExc_RuntimeError, "integer overflow");
           return NULL;
       }
-      PyDict_SetItem($result, PyString_FromString(key.c_str()), v);
+      PyDict_SetItemString($result, key.c_str(), v);
       Py_DECREF(v);
    }
 }
@@ -910,7 +916,7 @@ if($1){
              PyErr_SetString(PyExc_RuntimeError, "integer overflow");
              return NULL;
          }
-         PyDict_SetItem($result, PyString_FromString(key.c_str()), v);
+         PyDict_SetItemString($result, key.c_str(), v);
          Py_DECREF(v);
       }
       delete $1;
@@ -1106,7 +1112,7 @@ if($1){
           PyErr_SetString(PyExc_RuntimeError, "integer overflow");
           return NULL;
       }
-      PyDict_SetItem(o, PyString_FromString(key.c_str()), v);
+      PyDict_SetItemString(o, key.c_str(), v);
       Py_DECREF(v);
    }
    if((!$result) || ($result == Py_None)){
@@ -1128,9 +1134,11 @@ if($1){
 
 %typemap(argout) Quantity& OUTARGQUANTITY{
    PyObject *o = PyDict_New();
-   PyDict_SetItem(o, PyString_FromString("unit"), PyString_FromString($1->units.c_str()));
+   PyObject *s = PyString_FromString($1->units.c_str())
+   PyDict_SetItemString(o, "unit", s);
+   Py_DECREF(s);
    PyObject *v = casac::map_vector($1->value);
-   PyDict_SetItem(o, PyString_FromString("value"), v);
+   PyDict_SetItemString(o, "value", v);
    Py_DECREF(v);
    if((!$result) || ($result == Py_None)){
       $result = o;

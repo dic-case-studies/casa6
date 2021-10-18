@@ -489,7 +489,7 @@ PyObject *convert_idl_complex_to_python_complex(const casac::complex &from) {
 	const std::string &key = (*iter).first;										\
 	const variant &val = (*iter).second;										\
 	PyObject *v = variant2pyobj( val );										\
-	PyDict_SetItem(result, PyString_FromString(key.c_str()), v);							\
+	PyDict_SetItemString(result, key.c_str(), v);							\
 	Py_DECREF(v);													\
     }															\
 															\
@@ -772,7 +772,7 @@ static int unmap_array_pylist( PyObject *array, std::vector<ssize_t> &shape, cas
 		list_elements = true;
 		if ( number_elements < 0 )
 		    number_elements = element_size;
-                // to allow irregular shaped python list 
+                // to allow irregular shaped python list
                 // (e.g. [[1,2,3],[4]]
 		//if ( element_size != number_elements )
 		//    return 0;
