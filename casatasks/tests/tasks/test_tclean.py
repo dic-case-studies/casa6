@@ -1340,7 +1340,7 @@ class test_stokes(testref_base):
           ## Test imaging of Stokes U on its own
           for vis in vislist:
                tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='U',parallel=self.parallel)
-               if i in [1,5]:
+               if i in [10,14]:
                     u_true=0.0
                else:
                     u_true=3.0
@@ -1392,7 +1392,7 @@ class test_stokes(testref_base):
                                               imgval=[(self.img+'_'+str(i)+'.image',i_true,[50,50,0,0]) ,
                                                       (self.img+'_'+str(i)+'.image',q_true,[50,50,1,0]),
                                                       (self.img+'_'+str(i)+'.image',u_true,[50,50,2,0]),
-                                                      (self.img+'_'+str(i)+'.image',v_true,[50,50,4,0])   ])
+                                                      (self.img+'_'+str(i)+'.image',v_true,[50,50,3,0])   ])
                i = i+1
      
           self.assertTrue(self.check_final(report))
