@@ -2004,6 +2004,7 @@ bool PlotMSPlot::axisIsAveraged(PMS::Axis axis, PlotMSAveraging averaging) {
 				avgAxis = true;
 			break;
 		case PMS::CHANNEL:
+		case PMS::FREQUENCY:
 			if (averaging.channel())
 				avgAxis = true;
 			break;
@@ -2025,7 +2026,7 @@ void PlotMSPlot::addAxisDescription(casacore::String& label, PMS::Axis axis,
 		label.gsub("(from 1858/11/17)", ""); // remove date
 	}
 	// "Average" for MS types
-	if ((commonCacheType == PlotMSCacheBase::MS) && averaged) {
+	if (averaged) {
 		label = "Average " + label;
 	}
 	// "Poln" for CAL types
@@ -2306,8 +2307,7 @@ void PlotMSPlot::setXAxisLabel(PlotCanvasPtr canvas,
 				} else {
 					coordSysFrameLabel += PMS::latitudeName(xFrame);
 				}
-			} else if ((dataParams[i]->cacheType() == PlotMSCacheBase::MS) &&
-					   ((xAxis == PMS::FREQUENCY) || (xAxis == PMS::VELOCITY))) {
+			} else if ((xAxis == PMS::FREQUENCY) || (xAxis == PMS::VELOCITY)) {
 				casacore::MFrequency::Types mfreqType = plots[i]->cache().getFreqFrame();
                 if (mfreqType < casacore::MFrequency::N_Types) {
 					casacore::String plotFreqFrame = casacore::MFrequency::showType(mfreqType);
@@ -2616,9 +2616,7 @@ void PlotMSPlot::setYAxesLabels(PlotCanvasPtr canvas,
 					canvasParams[plotindex]->yAxisFont(yindex): defaultFontSize);
 				int cacheType(dataParams[plotindex]->cacheType());
 
-				// averaging cal table not supported
-				bool averaged = ((cacheType == PlotMSCacheBase::MS) &&
-					(axisIsAveraged(yaxis, dataParams[plotindex]->averaging())));
+				bool averaged = axisIsAveraged(yaxis, dataParams[plotindex]->averaging());
 				// poln ratio not supported for MS
 				bool polnRatio = ((cacheType == PlotMSCacheBase::CAL) &&
 					(dataParams[plotindex]->selection().corr() == "/"));

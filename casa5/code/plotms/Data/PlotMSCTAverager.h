@@ -38,7 +38,7 @@
 namespace casa { //# NAMESPACE CASA - BEGIN
 
 // <summary>
-// A class to average (NewCalTable chunks for PlotMS
+// A class to average NewCalTable chunks for PlotMS
 // </summary>
 //
 // <use visibility=export>
@@ -90,8 +90,8 @@ public:
   };
 
   // Accumulate a chunk
-  inline void accumulate (ROCTIter& cti) {
-    averaging_p.antenna() ? antennaAccumulate(cti) : simpleAccumulate(cti);
+  inline void accumulate (ROCTIter& cti, std::vector<casacore::Slice>& chansel) {
+    averaging_p.antenna() ? antennaAccumulate(cti, chansel) : simpleAccumulate(cti, chansel);
   };
 
   // Finalize averaging by writing values to CTMainRecord vector
@@ -99,10 +99,14 @@ public:
 
   // Return the result in NewCalTable filled with CTMainRecord vector
   void fillAvgCalTable(NewCalTable& tab);
-  // CTMainRecord does not include chan or freq
-  inline casacore::Int nchan() { return avgChan_p ? nAvgChan_p : nChan_p; };
-  inline casacore::Vector<casacore::Double> avgfreq() { return avgFreq_; };
 
+  // CTMainRecord does not include chan or freq
+  casacore::Int nchan();
+  inline casacore::Vector<casacore::Int> chan() { return avgChan_; };
+  inline casacore::Vector<casacore::Double> freq() { return avgFreq_; };
+
+  // For channel averaging: for each output channel, row is vector of which channels were averaged together
+  inline casacore::Array<casacore::Int> chansPerBin() { return chansPerBin_; }; // [nchan, nbin]
 private:
   // Prohibit null constructor, copy constructor and assignment for now
   PlotMSCTAverager();
@@ -110,11 +114,11 @@ private:
   PlotMSCTAverager (const PlotMSCTAverager&);
 
   // Initialize the next accumulation
-  void initialize(ROCTIter& cti);
+  void initialize(ROCTIter& cti, std::vector<casacore::Slice>& chansel);
 
   // Different accumulate versions
-  void simpleAccumulate(ROCTIter& cti);     // ordinary averaging
-  void antennaAccumulate (ROCTIter& cti);   // antenna-based averaging
+  void simpleAccumulate (ROCTIter& cti, std::vector<casacore::Slice>& chansel);  // ordinary averaging
+  void antennaAccumulate (ROCTIter& cti, std::vector<casacore::Slice>& chansel); // antenna-based averaging
 
   // Hash function to return a row index for a baseline-based cal table;
   // Returns 0 if baseline averaging, ant1 for antenna-based table
@@ -126,12 +130,15 @@ private:
   // Input averaging options
   PlotMSAveraging averaging_p;
 
-  // Number of antennas, polarizations, channels, and baselines
-  casacore::Int nAnt_p, nPoln_p, nChan_p, nBlnMax_p;
+  // Number of antennas, polarizations, and baselines
+  casacore::Int nAnt_p, nPoln_p, nBlnMax_p;
 
-  // For channel averaging
-  casacore::Bool avgChan_p;
-  casacore::Int nChanPerBin_p, nAvgChan_p;
+  // Number of channels, selected channels, averaged channels
+  casacore::Int nChan_p, nAvgChan_p, nSelChan_p;
+
+  // For channel averaging and selection
+  casacore::Bool avgChan_p, selChan_p;
+  casacore::Int nChanPerBin_p;
 
   // Data is Complex or Float
   casacore::Bool isComplex_p;
@@ -179,6 +186,11 @@ private:
   casacore::Cube<casacore::Float> accumWt_;
   casacore::Cube<casacore::Bool> avgFlag_;
   casacore::Vector<casacore::Double> accumFreq_; // if channel averaging
+  casacore::Vector<casacore::Int> nAccumFreq_;   // if channel averaging
+
+  // For channel averaging: nrow is number of averaged channels,
+  // each row is vector of channels averaged into each averaged channel
+  casacore::Array<casacore::Int> chansPerBin_;
 
   // Averaged results
   std::vector<CTMainRecord> main_rows_;

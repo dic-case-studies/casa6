@@ -1,7 +1,6 @@
 ########################################################################################################################
 ############################################            Imports            #############################################
 ########################################################################################################################
-
 import argparse
 import os
 import shutil
@@ -13,13 +12,12 @@ import json
 import datetime
 import platform
 
-
-default_timeout = 1800
-sys.path.insert(0,'')
-
 ########################################################################################################################
 ######################################            Imports / Constants            #######################################
 ########################################################################################################################
+
+default_timeout = 1800
+sys.path.insert(0,'')
 
 # mem mode variables
 HAVE_MEMTEST=True
@@ -62,6 +60,9 @@ except ImportError:
 IS_CASA6 = False
 CASA6 = False
 HAVE_CASA6 = False
+verbose = False
+DRY_RUN = False
+RUN_ALL = False
 
 # JIRA BRANCH TO CHECKOUT
 JIRA_BRANCH = None
@@ -81,12 +82,164 @@ RUN_SUBTEST = False
 # Dry run of Tests
 DRY_RUN = False
 
-# Define which tests to run
-whichtests = 0
-
 ########################################################################################################################
 ###########################################            Functions            ############################################
 ########################################################################################################################
+# At the moment, this needs to be a sep function due to repr and escape characters, try/ except for osx
+def write_conftest_linux(filepath):
+    string = """
+import pytest
+import inspect
+import os
+
+@pytest.mark.trylast
+def pytest_configure(config):
+    terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
+    config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+
+class TestDescriptionPlugin:
+
+    def __init__(self, terminal_reporter):
+        self.terminal_reporter = terminal_reporter
+        self.desc = None
+        self.funcn = None
+
+    def pytest_runtest_protocol(self, item):
+        #from pprint import pprint
+        #d = item.__dict__
+        #pprint(d, indent=2)
+        self.desc = inspect.getdoc(item.obj)
+        #print(item._nodeid)
+        self.funcn = item._nodeid
+
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_runtest_logstart(self, nodeid, location):
+        #print("Verbosity Level: {}".format(self.terminal_reporter.verbosity))
+        if self.terminal_reporter.verbosity == 0:
+            yield
+            self.terminal_reporter.write(f'\\n{self.funcn} \\n')
+        else:
+            self.terminal_reporter.write('\\n')
+            yield
+            if self.desc:
+                    self.terminal_reporter.write(f'\\n{self.desc} \\n')
+            else:
+                    self.terminal_reporter.write(f'\\n')
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(item, call):
+        outcome = yield
+        report = outcome.get_result()
+        #print(dir(report))
+        report.start = call.start
+        report.stop = call.stop
+        if report.when=='teardown':
+            filepath = os.path.join(os.getcwd(),'short_summary.log')
+
+            file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+            file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid,))
+            file_obj.close()
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(item, call):
+        outcome = yield
+        report = outcome.get_result()
+        if report.when=='call':
+            filepath = os.path.join(os.getcwd(),'short_summary.log')
+            # write short summary to file
+            file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+            file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid))
+            file_obj.close()
+
+            # Write not pass to Textfile
+            if report.outcome != 'passed':
+                file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+                file_obj.write("\\tDuration: {}s\\n".format(round(report.duration,5)))
+                file_obj.write("\\tMessage : {}\\n".format(report.longrepr.reprcrash.message))
+                file_obj.close()
+                filepath = os.path.join(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')),'summary_of_failed.log')
+                file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+                file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid))
+                file_obj.write("\\tDuration: {}s\\n".format(round(report.duration,5)))
+                file_obj.write("\\tMessage : {}\\n".format(report.longrepr.reprcrash.message))
+                file_obj.close()
+    """
+    file_obj = open(filepath,'w')
+    file_obj.write(string)
+    file_obj.close()
+
+# At the moment, this needs to be a sep function due to repr and escape characters, try/ except for osx
+def write_conftest_osx(filepath):
+    string = """
+import pytest
+import inspect
+import os
+
+@pytest.mark.trylast
+def pytest_configure(config):
+    terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
+    try:
+        config.pluginmanager.unregister(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+    except:
+        pass
+    config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+
+class TestDescriptionPlugin:
+
+    def __init__(self, terminal_reporter):
+        self.terminal_reporter = terminal_reporter
+        self.desc = None
+        self.funcn = None
+
+    def pytest_runtest_protocol(self, item):
+        #from pprint import pprint
+        #d = item.__dict__
+        #pprint(d, indent=2)
+        self.desc = inspect.getdoc(item.obj)
+        #print(item._nodeid)
+        self.funcn = item._nodeid
+
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_runtest_logstart(self, nodeid, location):
+        #print("Verbosity Level: {}".format(self.terminal_reporter.verbosity))
+        if self.terminal_reporter.verbosity == 0:
+            yield
+            self.terminal_reporter.write(f'\\n{self.funcn} \\n')
+        else:
+            self.terminal_reporter.write('\\n')
+            yield
+            if self.desc:
+                    self.terminal_reporter.write(f'\\n{self.desc} \\n')
+            else:
+                    self.terminal_reporter.write(f'\\n')
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(item, call):
+        outcome = yield
+        report = outcome.get_result()
+        if report.when=='call':
+            filepath = os.path.join(os.getcwd(),'short_summary.log')
+            # write short summary to file
+            file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+            file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid))
+            file_obj.close()
+
+            # Write not pass to Textfile
+            if report.outcome != 'passed':
+                file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+                file_obj.write("\\tDuration: {}s\\n".format(round(report.duration,5)))
+                file_obj.write("\\tMessage : {}\\n".format(report.longrepr.reprcrash.message))
+                file_obj.close()
+                filepath = os.path.join(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')),'summary_of_failed.log')
+                file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+                file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid))
+                file_obj.write("\\tDuration: {}s\\n".format(round(report.duration,5)))
+                file_obj.write("\\tMessage : {}\\n".format(report.longrepr.reprcrash.message))
+                file_obj.close()
+    """
+    file_obj = open(filepath,'w')
+    file_obj.write(string)
+    file_obj.close()
 
 class casa_test:
     def __init__(self,
@@ -176,6 +329,7 @@ def list_tests():
     if IS_CASA6:
         git_fetch_casa_tests(os.getcwd() +"/testlist/casa6")
         gather_all_tests(os.getcwd() +"/testlist/casa6",os.getcwd() +"/testlist/")
+        gather_all_tests(os.getcwd() +"/testlist/casaplotms/", workdir + "testlist/")
         tests = sorted(os.listdir(os.getcwd() +"/testlist/"))
         for test in tests:
             if test.startswith("test"):
@@ -195,8 +349,10 @@ def git_fetch_casa_tests(path):
     os.makedirs(path)
 
     os.chdir(path)
-    subprocess.call(["git","init", "--quiet"])
     FNULL = open(os.devnull, 'w')
+
+    ## Main
+    subprocess.call(["git","init", "--quiet"])
     subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casa6.git"], stdout=FNULL, stderr=subprocess.STDOUT)
     subprocess.call(["git","config","core.sparseCheckout","true"])
 
@@ -216,12 +372,57 @@ def git_fetch_casa_tests(path):
     print("casatools/tests/tools/vpmmanager", file=open(".git/info/sparse-checkout", "a"))
 
     print("casatests/benchmarks", file=open(".git/info/sparse-checkout", "a"))
-    print("casatests/e2e", file=open(".git/info/sparse-checkout", "a"))
+    print("casatests/regression", file=open(".git/info/sparse-checkout", "a"))
     print("casatests/performance", file=open(".git/info/sparse-checkout", "a"))
     print("casatests/pipeline", file=open(".git/info/sparse-checkout", "a"))
     print("casatests/stakeholders", file=open(".git/info/sparse-checkout", "a"))
 
     subprocess.call(["git","pull","--quiet","origin","master"])
+
+    ## Plotms
+    os.chdir(os.path.dirname(os.getcwd()))
+    os.makedirs("casaplotms")
+    os.chdir("casaplotms")
+    subprocess.call(["git","init", "--quiet"])
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casaplotms.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("tests/plotms", file=open(".git/info/sparse-checkout", "a"))
+    subprocess.call(['git','pull','--quiet','origin','master'])
+
+    ## Almatasks
+
+    os.chdir(os.path.dirname(os.getcwd()))
+    os.makedirs("almatasks")
+    os.chdir("almatasks")
+    subprocess.call(["git","init", "--quiet"])
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/almatasks.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("tests/tasks", file=open(".git/info/sparse-checkout", "a"))
+    subprocess.call(['git','pull','--quiet','origin','master'])
+
+    ## casaviewer
+
+    os.chdir(os.path.dirname(os.getcwd()))
+    os.makedirs("casaviewer")
+    os.chdir("casaviewer")
+    subprocess.call(["git","init", "--quiet"])
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casaviewer.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("tests/tasks", file=open(".git/info/sparse-checkout", "a"))
+    subprocess.call(['git','pull','--quiet','origin','master'])
+
+    ## casampi
+
+    os.chdir(os.path.dirname(os.getcwd()))
+    os.makedirs("casampi")
+    os.chdir("casampi")
+    subprocess.call(["git","init", "--quiet"])
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casampi.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("src/casampi/tests", file=open(".git/info/sparse-checkout", "a"))
+    subprocess.call(['git','pull','--quiet','origin','master'])
+
+    os.chdir(os.path.dirname(os.getcwd()))
     os.chdir(cwd)
 
 def git_fetch_casa_tests_branch(path, branch):
@@ -428,10 +629,13 @@ def run(testnames):
                 git_fetch_casa_tests( workpath + 'casa6')
                 os.makedirs(workdir + "all/")
                 gather_all_tests(workpath +'casa6/', workdir + "all/")
+                gather_all_tests(workpath +'casaplotms/', workdir + "all/")
+                gather_all_tests(workpath +'almatasks/', workdir + "all/")
+                gather_all_tests(workpath +'casaviewer/', workdir + "all/")
+                gather_all_tests(workpath +'casampi/', workdir + "all/")
                 cmd = [ workdir ]
                 cmd = ["--continue-on-collection-errors"] + cmd
-                if verbose:
-                    cmd = ["--verbose"] + cmd
+                cmd = ["--verbose"] + ["-ra"] + cmd
 
 
                 if DRY_RUN:
@@ -455,7 +659,13 @@ def run(testnames):
                     print("No Tests to Run")
                 else:
                     print("Running Command: pytest {}".format(cmd))
+                    conf_name = os.path.join(os.getcwd(),"conftest.py")
+                    if platform.system() == 'Darwin':
+                        write_conftest_osx(conf_name)
+                    else:
+                        write_conftest_linux(conf_name)
                     pytest.main(cmd)
+                    os.remove(conf_name)
 
             else:
                 print("Tests: {}".format(testnames))
@@ -500,6 +710,8 @@ def run(testnames):
                                 git_fetch_casa_tests_branch(workpath + 'casa6/', JIRA_BRANCH)
                                 os.makedirs(workdir + "tests/")
                                 gather_all_tests(workpath +'casa6/', workdir + "tests/")
+                                # gather_all_tests(workpath +'casaplotms/', workdir + "tests/")
+                                # gather_all_tests(workpath +'almatasks/', workdir + "tests/")
                                 gittest = False
 
                             else:
@@ -507,6 +719,10 @@ def run(testnames):
                                 git_fetch_casa_tests( workpath + 'casa6/')
                                 os.makedirs(workdir + "tests/")
                                 gather_all_tests(workpath +'casa6/', workdir + "tests/")
+                                gather_all_tests(workpath +'casaplotms/', workdir + "tests/")
+                                gather_all_tests(workpath +'almatasks/', workdir + "tests/")
+                                gather_all_tests(workpath +'casaviewer/', workdir + "tests/")
+                                gather_all_tests(workpath +'casampi/', workdir + "tests/")
                                 gittest = False
 
                         if test.endswith(".py"):
@@ -523,11 +739,8 @@ def run(testnames):
                                 traceback.print_exc()
                                 
                         # https://docs.pytest.org/en/stable/usage.html
-                        if verbose:
-                            cmd = ["--verbose"] + ["--tb=long"] + cmd
-                        elif not verbose:
-                            cmd = ["-ra"] + ["--tb=short"] + cmd
-                            #cmd = ["-ra"] + ["--tb=long"] + cmd
+                        
+                        cmd = ["--verbose"] + ["-ra"] + ["--tb=short"] + cmd
 
                         if DRY_RUN:
                             cmd = ["--collect-only"] + cmd
@@ -556,7 +769,13 @@ def run(testnames):
                             os.chdir("{}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
                             print("Test Directory: {}".format(os.getcwd()))
                             print("Running Command: pytest {}".format(cmd))
+                            conf_name = os.path.join(os.getcwd(),"conftest.py")
+                            if platform.system() == 'Darwin':
+                                write_conftest_osx(conf_name)
+                            else:
+                                write_conftest_linux(conf_name)
                             pytest.main(cmd)
+                            os.remove(conf_name)
                             os.chdir(myworkdir)
 
                     ##################################################
@@ -600,12 +819,7 @@ def run(testnames):
                         except:
                             traceback.print_exc()
 
-                        if verbose:
-                            cmd = ["--verbose"] + ["--tb=long"] + cmd
-                        elif not verbose:
-                            cmd = ["-ra"] + ["--tb=short"] + cmd
-                            #cmd = ["-ra"] + ["--tb=long"] + cmd
-
+                        cmd = ["--verbose"] + ["-ra"] + ["--tb=short"] + cmd
 
                         if DRY_RUN:
                             cmd = ["--collect-only"] + cmd
@@ -633,7 +847,13 @@ def run(testnames):
                             os.chdir(workdir + "{}/".format(dirname))
                             print("Test Directory: {}".format(os.getcwd()))
                             print("Running Command: pytest {}".format(cmd))
+                            conf_name = os.path.join(os.getcwd(),"conftest.py")
+                            if platform.system() == 'Darwin':
+                                write_conftest_osx(conf_name)
+                            else:
+                                write_conftest_linux(conf_name)
                             pytest.main(cmd)
+                            os.remove(conf_name)
                             os.chdir(myworkdir)
             os.chdir(cwd)
 
@@ -883,6 +1103,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
 ########################################            Main-Start-Up            ###########################################
 ########################################################################################################################
 
+
 if __name__ == "__main__":
 
     print("HAVE_MEMTEST: {}".format(HAVE_MEMTEST))
@@ -893,7 +1114,7 @@ if __name__ == "__main__":
     print("HAVE_CASA6: {}".format(HAVE_CASA6))
     print("")
 
-    verbose = False
+    
 
     # List of tests to run
     testnames = []
@@ -969,12 +1190,10 @@ if __name__ == "__main__":
         sys.exit()
 
     ## Dry Run
-    DRY_RUN = False
     if args.dry_run:
         DRY_RUN = True
 
     ## RUN ALL
-    RUN_ALL = False
     if args.all:
         RUN_ALL = True
         testnames = ["all"]
