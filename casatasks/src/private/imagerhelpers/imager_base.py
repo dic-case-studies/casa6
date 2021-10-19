@@ -190,35 +190,6 @@ class PySynthesisImager:
 
 #############################################
 
-    def indexMinorCycleSummaryBySubimage(summaryminor):
-        """Re-indexes summaryminor from [row,column] to [channel,polarity,row,cycle]."""
-        # get some properties of the summaryminor matrix
-        nrows = summaryminor.shape[0]
-        ncols = summaryminor.shape[1]
-        chans = list(np.sort(np.unique(summaryminor[5])))
-        chans = [int(x) for x in chans]
-        pols = list(np.sort(np.unique(summaryminor[6])))
-        pols = [int(x) for x in pols]
-        ncycles = int( ncols / (len(chans)*len(pols)) )
-
-        # reindex based on subimage index (aka chan/pol index)
-        # ret is the return dictionary[chans][pols][rows][cycles]
-        # cummulativeCnt counts how many cols we've read for each channel/polarity/row
-        ret = [[0]*ncycles for row in range(nrows)]
-        ret = {pol:copy.deepcopy(ret) for pol in pols}
-        ret = {chan:copy.deepcopy(ret) for chan in chans}
-        cummulativeCnt = copy.deepcopy(ret) # copy ret's structure
-        for rowIdx in range(nrows):
-            for colIdx in range(ncols):
-                chan = int(summaryminor[5][colIdx])
-                pol = int(summaryminor[6][colIdx])
-                val = summaryminor[rowIdx][colIdx]
-                cummulativeCol = int(cummulativeCnt[chan][pol][rowIdx][0]) # ignore last index
-                ret[chan][pol][rowIdx][cummulativeCol] = val
-                cummulativeCnt[chan][pol][rowIdx][0] += 1
-
-        return ret
-
     def getSummary(self,fignum=1):
         summ = self.IBtool.getiterationsummary()
         if ('stopcode' in summ):

@@ -7,22 +7,55 @@ if is_CASA6:
 else:
     from taskinit import *
 
-'''
-A return object from tclean's minor cycles. Gathers the information together
-in a way that makes it easier to query for exactly what you want.
-'''
+class SummaryMinor(dict):
+    """A return object from tclean's minor cycles. Gathers the information together
+    in a way that makes it easier to query for exactly what you want.
 
-class SummaryMinor:
-    #                           0           1          2            3              4           5       6      7                  8                9               10                11 "No Mask"      12           13         14
-    rowDescriptionsOldOrder = ["iterDone", "peakRes", "modelFlux", "cycleThresh", "mapperId", "chan", "pol", "cycleStartIters", "startIterDone", "startPeakRes", "startModelFlux", "startPeakResNM", "peakResNM", "masksum", "stopCode"]
-    rowDescriptions         = ["startIterDone", "iterDone", "startPeakRes", "peakRes", "startModelFlux", "modelFlux", "startPeakResNM", "peakResNM", "cycleThresh", "mapperId", "cycleStartIters", "masksum", "stopCode", "chan", "pol"]
+    The structure for this dictionary is:
+        {
+            channel id: {
+                polarity id: {
+                    summary key: {
+                        cycle: value
+                    }
+                }
+            }
+        }
+
+    Examples:
+    
+        1. To get the number of iterations done on the channel 5 during the first minor cycle:
+            chan5iters = ret[5][0][0]['iterDone']
+    
+        2. To get the number of available channels, and the ids of those channels:
+            nchans = len(ret)
+            avail_chans = ret.keys()
+
+        3. To get the available minor cycle summary statistics:
+            statkeys = ret.rowDescriptions
+
+    There are also a few additional methods:
+        getMatrix(): returns the original numpy.ndarray matrix
+        getDict(calc_iterdone_deltas, keep_startvals): to get the iterDone stat for iterations across all channels
+
+    Extends the python dictionary interface (try the command "help(dict)" for more information on builtin python dicts)."""
+    #                           0           1          2            3              4           5       6      7                  8                9               10                11 "No Mask"      12           13         14         15
+    rowDescriptionsOldOrder = ["iterDone", "peakRes", "modelFlux", "cycleThresh", "mapperId", "chan", "pol", "cycleStartIters", "startIterDone", "startPeakRes", "startModelFlux", "startPeakResNM", "peakResNM", "masksum", "mpiServer", "stopCode"]
+    rowDescriptions         = ["startIterDone", "iterDone", "startPeakRes", "peakRes", "startModelFlux", "modelFlux", "startPeakResNM", "peakResNM", "cycleThresh", "mapperId", "cycleStartIters", "masksum", "mpiServer", "stopCode", "chan", "pol"]
     rowStartDescs           = ["startIterDone",             "startPeakRes",            "startModelFlux",              "startPeakResNM"]
 
-    def __init__(self, summaryminor_matrix):
+    def __init__(self, summaryminor_matrix, summaryminor_dict = None):
         self.summaryminor_matrix = summaryminor_matrix
-        self.summaryminor_reorg = None
+        if (summaryminor_dict == None):
+            summaryminor_dict = SummaryMinor.indexMinorCycleSummaryBySubimage(self.summaryminor_matrix)
+        self.summaryminor_dict = summaryminor_dict
+        percycleiters_dict = SummaryMinor._getPerCycleDict(copy.deepcopy(summaryminor_dict))
+        self.update(percycleiters_dict)
 
     def getMatrix(self):
+        """Returns the original numpy.ndarray matrix.
+        Index 0: row (see this.rowDescriptionsOldOrder)
+        Index 1: values for all the minor cycles"""
         return self.summaryminor_matrix
 
     def indexMinorCycleSummaryBySubimage(summaryminor):
@@ -66,13 +99,11 @@ class SummaryMinor:
 
         return ret
 
-    def getDict(self, calc_iterdone_deltas=True, keep_startvals=False):
-        if self.summaryminor_reorg == None:
-            self.summaryminor_reorg = SummaryMinor.indexMinorCycleSummaryBySubimage(self.summaryminor_matrix)
-        ret = self.summaryminor_reorg
+    def _getPerCycleDict(summaryminor_dict, calc_iterdone_deltas=None, keep_startvals=None):
+        calc_iterdone_deltas = True if (calc_iterdone_deltas == None) else calc_iterdone_deltas
+        keep_startvals       = True if (keep_startvals == None)       else keep_startvals
+        ret = summaryminor_dict
 
-        if (calc_iterdone_deltas) or (not keep_startvals):
-            ret = copy.deepcopy(ret)
         if calc_iterdone_deltas:
             for chan in ret:
                 for pol in ret[chan]:
@@ -86,10 +117,16 @@ class SummaryMinor:
 
         return ret
 
-    def __str__(self):
-        diffsDict = self.getDict()
-        ret = "SummaryMinor obj {\n"
-        for chan in diffsDict:
-            ret += "    "+str(chan)+": "+str(diffsDict[chan])+",\n"
-        ret += "}"
+    def getMatrix(self):
+        """Returns the numpy.ndarray representation of the minor cycle summary."""
+        return self.summaryminor_matrix
+
+    def getDict(self, calc_iterdone_deltas=None, keep_startvals=None):
+        """Computes the per-minor-cycle values for iterDone.
+
+        calc_iterdone_deltas: replaces the original "iterDone" value with the iterations done per cycle
+        keep_startvals: don't toss out the start* statistics
+        """
+        ret = SummaryMinor(self.summaryminor_matrix, self.summaryminor_dict)
+        ret = SummaryMinor._getPerCycleDict(ret, calc_iterdone_deltas, keep_startvals)
         return ret
