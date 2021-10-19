@@ -1746,10 +1746,12 @@ void AspMatrixCleaner::switchedToHogbom(bool runlong)
   itsNthHogbom += 1;
   itsNumIterNoGoodAspen.resize(0);
   //itsNumHogbomIter = ceil(100 + 50 * (exp(0.05*itsNthHogbom) - 1)); // zhang's formula
-  itsNumHogbomIter = ceil(50 + 2 * (exp(0.05*itsNthHogbom) - 1)); // genie's formula
+  //itsNumHogbomIter = ceil(50 + 2 * (exp(0.05*itsNthHogbom) - 1)); // genie's formula
+  itsNumHogbomIter = 51; // genie's formula - removed itsNthHogbom to remove the state dependency. The diff from the above is neligible
 
   if (runlong)
-    itsNumHogbomIter = ceil(500 + 50 * (exp(0.05*itsNthHogbom) - 1));
+    //itsNumHogbomIter = ceil(500 + 50 * (exp(0.05*itsNthHogbom) - 1));
+    itsNumHogbomIter = 510;
 
   os << LogIO::NORMAL3 << "Run hogbom for " << itsNumHogbomIter << " iterations." << LogIO::POST;
 }
