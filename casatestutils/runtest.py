@@ -672,8 +672,6 @@ def run(testnames):
                     # https://docs.pytest.org/en/stable/usage.html
                     
                     cmd = ["--verbose"] + ["-ra"] + ["--tb=short"] + cmd
-<<<<<<< HEAD
-
                     if DRY_RUN:
                         cmd = ["--collect-only"] + cmd
                     
@@ -688,25 +686,6 @@ def run(testnames):
                         print("No Tests to Run")
                         sys.exit()
                     else:
-
-=======
-
-                    if DRY_RUN:
-                        cmd = ["--collect-only"] + cmd
-                    
-                    if not os.path.isdir(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3])):
-                        os.makedirs(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3]))
-                    xmlfile = workpath + 'xml/{}/nose.xml'.format(test if not test.endswith(".py") else test[:-3])
-
-                    cmd = ["--junitxml={}".format(xmlfile)] + ["-s"] + ["--disable-pytest-warnings"] + cmd
-                    #print("Running Command: pytest {}".format(cmd))
-                    #print("Work Path: {}".format(workpath))
-                    if len(os.listdir(workpath)) < 1: # If only the XML dir was created
-                        print("No Tests to Run")
-                        sys.exit()
-                    else:
-
->>>>>>> master
                         myworkdir = os.getcwd()
                         os.chdir("{}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
                         print("Test Directory: {}".format(os.getcwd()))
