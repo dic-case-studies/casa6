@@ -6,6 +6,7 @@ import shutil
 import unittest
 from unittest.mock import patch, MagicMock
 from urllib.error import HTTPError, URLError
+import uuid
 
 from casatasks.private import jyperk
 from casatasks.private.casa_transition import is_CASA6
@@ -29,7 +30,6 @@ class TestASDMParamsGenerator(unittest.TestCase):
 class JyPerKWithVisTestCase(unittest.TestCase):
     """This is a test case for Jy/K with VIS data.
     """
-    working_directory = 'working_directory_for_jyperk'
     data_path = 'measurementset/almasd'
     vis = 'uid___A002_X85c183_X36f.ms'
     original = f'{vis}.sel'
@@ -37,10 +37,8 @@ class JyPerKWithVisTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.casa_cwd_path = os.getcwd()
-
-        if os.path.isdir(cls.working_directory):
-            shutil.rmtree(cls.working_directory)
-
+        cls.working_directory = JyPerKWithVisTestCase._generate_uniq_fuse_name_in_cwd(
+                                    prefix='working_directory_for_jyperk_')
         os.mkdir(cls.working_directory)
         os.chdir(cls.working_directory)
 
@@ -52,6 +50,13 @@ class JyPerKWithVisTestCase(unittest.TestCase):
     def tearDownClass(cls):
         os.chdir(cls.casa_cwd_path)
         shutil.rmtree(cls.working_directory)
+
+    @staticmethod
+    def _generate_uniq_fuse_name_in_cwd(prefix='', suffix=''):
+        while True:
+            fuse_name = f'{prefix}{str(uuid.uuid4())}{suffix}'
+            if not os.path.isdir(fuse_name):
+                return fuse_name
 
 
 class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
@@ -366,22 +371,26 @@ class TestASDMRspTranslator(JyPerKWithVisTestCase):
 class TestJyPerKReader4File(unittest.TestCase):
     """test TestJyPerKReader class.
     """
-    working_directory = 'working_directory_for_jyperk'
     jyperk_factor_path = 'jyperk_factor.csv'
 
     @classmethod
     def setUpClass(cls):
         cls.casa_cwd_path = os.getcwd()
-
-        if os.path.isdir(cls.working_directory):
-            shutil.rmtree(cls.working_directory)
-
+        cls.working_directory = TestJyPerKReader4File._generate_uniq_fuse_name_in_cwd(
+                                    prefix='working_directory_for_jyperk_')
         os.mkdir(cls.working_directory)
         os.chdir(cls.working_directory)
 
         cls._generate_jyperk_factor_csv()
 
         ms_datapath = ctsys.resolve('measurementset/almasd')
+
+    @staticmethod
+    def _generate_uniq_fuse_name_in_cwd(prefix='', suffix=''):
+        while True:
+            fuse_name = f'{prefix}{str(uuid.uuid4())}{suffix}'
+            if not os.path.isdir(fuse_name):
+                return fuse_name
 
     @classmethod
     def tearDownClass(cls):
