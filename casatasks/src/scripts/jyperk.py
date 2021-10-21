@@ -1,6 +1,5 @@
 import collections
 import csv
-import datetime
 import json
 import os
 import re
