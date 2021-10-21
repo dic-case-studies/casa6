@@ -275,6 +275,19 @@
              "comment":""
         },
         {
+             "testNumber":"3176",
+             "testName":"Uvcontsub2021",
+             "testScript":"test_task_req_uvcontsub2021",
+             "testType":"functionalTest",
+             "testLevel":"critical",
+             "Maintainer":"Federico Montesino",
+             "MaintainerEmail":"fpouzols@eso.org",
+             "priority":"3",
+             "tag":"manipulation",
+             "suppressEmail": false,
+             "comment":""
+        },
+        {
              "testNumber":"3180",
              "testName":"Uvcontsub3",
              "testScript":"test_uvcontsub3",
