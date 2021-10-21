@@ -17,7 +17,7 @@ from casatasks import casalog
 from casatasks.private.sdutil import table_selector, table_manager, tool_manager
 from casatools import measures
 from casatools import ms as mstool
-from casatools import msmetadata, quanta, table
+from casatools import msmetadata, quanta
 
 
 ### web api part

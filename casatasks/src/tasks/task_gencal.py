@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-
 import os
 import warnings
 
@@ -136,9 +135,6 @@ class JyperkGencal():
                parameter=None, uniform=None):
         try:
             # don't need scr col for this
-            
-            vis_key = os.path.basename(vis)
-
             _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)  
 
             for selection, param in JyperkGencal.__gen_specifycal_input(vis=vis, spw=spw,

@@ -145,7 +145,7 @@ class TestInterpolationRspTranslator(JyPerKWithVisTestCase):
     def test_convert_as_aux1(self):
         """Check the response.aux in the JSON obtained from Jy/K is dict."""
         with self.assertRaises(TypeError) as cm:
-            converted = jyperk.InterpolationRspTranslator.convert(self.response2, self.vis)
+            jyperk.InterpolationRspTranslator.convert(self.response2, self.vis)
 
         self.assertEqual(cm.exception.args[0],
                          'The response.aux in the JSON obtained from Jy/K db must be dict.')
@@ -153,7 +153,7 @@ class TestInterpolationRspTranslator(JyPerKWithVisTestCase):
     def test_convert_as_aux2(self):
         """Check the response.aux in the JSON obtained from Jy/K contain vis."""
         with self.assertRaises(KeyError) as cm:
-            converted = jyperk.InterpolationRspTranslator.convert(self.response3, self.vis)
+            jyperk.InterpolationRspTranslator.convert(self.response3, self.vis)
 
         self.assertEqual(cm.exception.args[0],
                          'The response.aux in the JSON obtained from Jy/K db must contain vis.')
@@ -161,7 +161,7 @@ class TestInterpolationRspTranslator(JyPerKWithVisTestCase):
     def test_convert_as_aux3(self):
         """Check the response.aux in the JSON obtained from Jy/K contain spwid."""
         with self.assertRaises(KeyError) as cm:
-            converted = jyperk.InterpolationRspTranslator.convert(self.response4, self.vis)
+            jyperk.InterpolationRspTranslator.convert(self.response4, self.vis)
 
         self.assertEqual(cm.exception.args[0],
                          'The response.aux in the JSON obtained from Jy/K db must contain spwid.')
@@ -169,7 +169,7 @@ class TestInterpolationRspTranslator(JyPerKWithVisTestCase):
     def test_convert_as_spwid(self):
         """Check the response.aux.spwid in the JSON obtained from Jy/K is int."""
         with self.assertRaises(TypeError) as cm:
-            converted = jyperk.InterpolationRspTranslator.convert(self.response5, self.vis)
+            jyperk.InterpolationRspTranslator.convert(self.response5, self.vis)
 
         self.assertEqual(cm.exception.args[0],
                          'The response.aux.spwid in the JSON obtained from Jy/K db must be int.')
@@ -177,7 +177,7 @@ class TestInterpolationRspTranslator(JyPerKWithVisTestCase):
     def test_convert_as_vis(self):
         """Check the response.aux.vis in the JSON obtained from Jy/K is str."""
         with self.assertRaises(TypeError) as cm:
-            converted = jyperk.InterpolationRspTranslator.convert(self.response6, self.vis)
+            jyperk.InterpolationRspTranslator.convert(self.response6, self.vis)
 
         self.assertEqual(cm.exception.args[0],
                          'The response.aux.vis in the JSON obtained from Jy/K db must be str.')
@@ -384,8 +384,6 @@ class TestJyPerKReader4File(unittest.TestCase):
         os.chdir(cls.working_directory)
 
         cls._generate_jyperk_factor_csv()
-
-        ms_datapath = ctsys.resolve('measurementset/almasd')
 
     @staticmethod
     def _generate_uniq_fuse_name_in_cwd(prefix='', suffix=''):
