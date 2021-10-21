@@ -67,18 +67,6 @@ mynumsubmss = 4
 mms = False
 
 ############    Imports    #################
-CASA6 = False
-try:
-    import casatools
-    cu = casatools.utils
-    from casatasks import importasdm, listobs, flagdata, sdcal, sdbaseline, sdimaging, imhead, immoments, imstat, exportfits, casalog
-    from casaplotms import plotms
-    CASA6 = True
-except ImportError:
-    from __main__ import *
-    from tasks import *
-    from taskinit import *
-
 import time
 import os
 import numpy
@@ -88,6 +76,10 @@ import traceback
 import unittest
 import glob
 
+import casatools
+cu = casatools.utils
+from casatasks import importasdm, listobs, flagdata, sdcal, sdbaseline, sdimaging, imhead, immoments, imstat, exportfits, casalog
+from casaplotms import plotms
 
 
 #############################
@@ -152,10 +144,7 @@ steptime = []
 #    for i in range(0, len(steptime)):
 #        casalog.post( '  '+str(thesteps[i])+'   '+str(steptime[i])+'  '+str(steptime[i]/totaltime*100.) +' ['+step_title[thesteps[i]]+']', 'WARN')
 
-if CASA6:
-    datapath = casatools.ctsys.resolve('regression/alma_M100_sd/')
-else:
-    pass
+datapath = casatools.ctsys.resolve('regression/alma_M100_sd/')
 
 class regression_alma_m100_test(unittest.TestCase):
 
@@ -740,8 +729,6 @@ class regression_alma_m100_test(unittest.TestCase):
 def suite():
     return [regression_alma_m100_test]
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
 

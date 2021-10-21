@@ -22,33 +22,14 @@ import shutil
 import unittest
 
 
-CASA6 = False
-try:
-    from casatools import ctsys, image, ms
-    from casatasks import simobserve, simanalyze, casalog
-    CASA6 = True
+from casatools import ctsys, image, ms
+from casatasks import simobserve, simanalyze, casalog
 
-    _ia = image()
-    _ms = ms()
-    
-    def default(atask):
-        pass
-except ImportError:
-    from tasks import simobserve, simanalyze
-    from taskinit import iatool, mstool, casalog
-    from __main__ import default
+_ia = image()
+_ms = ms()
 
-    _ia = iatool()
-    _ms = mstool()
-
-if CASA6:
-    datadir = ctsys.resolve('regression/sim_TP/')
-    cfgdir = ctsys.resolve('alma/simmos/')
-
-else:
-    repodir = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-    datadir = repodir + 'regression/sim_TP/'
-    cfgdir = repodir + 'alma/simmos/'
+datadir = ctsys.resolve('regression/sim_TP/')
+cfgdir = ctsys.resolve('alma/simmos/')
 
 projname = "m51sd_co32"
 
@@ -77,7 +58,6 @@ class regression_sim_TP_test(unittest.TestCase):
         startTime = time.time()
         startProc = time.perf_counter()
         
-        default(simobserve)
         simobserve(project = projname, skymodel = self.modelname, inbright = '0.004', indirection = 'B1950 23h59m59.96 -34d59m59.50',
                    incell = '0.5arcsec',incenter = '330.076GHz' , inwidth = '50MHz',
                    setpointings = True,integration = '10s', 
@@ -92,7 +72,6 @@ class regression_sim_TP_test(unittest.TestCase):
 
         logprint('simanalyze of total power (M51)')
        
-        default(simanalyze)
         simanalyze(project=projname, image=True, imsize=[512,512], cell='1.0arcsec',
                    imdirection = 'B1950 23h59m59.96 -34d59m59.50', analyze=True,
                    showpsf = False, showresidual = False, showconvolved = True, graphics='file',
