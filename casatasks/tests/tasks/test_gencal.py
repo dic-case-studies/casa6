@@ -2,21 +2,20 @@ from __future__ import absolute_import
 from __future__ import print_function
 import csv
 import os
-import sys
 import shutil
-import numpy as np
-import numpy.ma as ma
 import unittest
 from unittest.mock import patch
 import uuid
+
+import numpy as np
 
 from casatasks.private.casa_transition import is_CASA6
 from casatestutils import testhelper as th
 
 if is_CASA6:
-    from casatools import ctsys, table
     from casatasks import gencal, rmtables
-    from casatasks.private import tec_maps    
+    from casatasks.private import tec_maps
+    from casatools import ctsys, table
 
     _tb= table()
 
@@ -612,7 +611,7 @@ class TestJyPerK(unittest.TestCase):
         reference_caltable = os.path.join(
                 datapath, 'jyperk/reference/web_api_with_asdm.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
-        self.assertTrue(urlopen_patch.called)
+        self.assertTrue(mock_retrieve.called)
 
     @patch('casatasks.private.jyperk.JyPerKDatabaseClient._try_to_get_response')
     def test_jyperk_gencal_for_model_fit_web_api(self, mock_retrieve):
@@ -640,7 +639,7 @@ class TestJyPerK(unittest.TestCase):
         reference_caltable = os.path.join(
                 datapath, 'jyperk/reference/web_api_with_model_fit.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
-        self.assertTrue(urlopen_patch.called)
+        self.assertTrue(mock_retrieve.called)
 
     @patch('casatasks.private.jyperk.JyPerKDatabaseClient._try_to_get_response')
     def test_jyperk_gencal_for_interpolation_web_api(self, mock_retrieve):
@@ -668,7 +667,7 @@ class TestJyPerK(unittest.TestCase):
         reference_caltable = os.path.join(
                 datapath, 'jyperk/reference/web_api_with_interpolation.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
-        self.assertTrue(urlopen_patch.called)
+        self.assertTrue(mock_retrieve.called)
 
     def test_jyperk_gencal_for_factor_file(self):
         """Test to check that the factors in the csv file are applied to the caltable.

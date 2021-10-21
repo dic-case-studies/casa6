@@ -8,6 +8,8 @@ from unittest.mock import patch, MagicMock
 from urllib.error import HTTPError, URLError
 import uuid
 
+import numpy as np
+
 from casatasks.private import jyperk
 from casatasks.private.casa_transition import is_CASA6
 
@@ -113,7 +115,7 @@ class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
 
 
 class TestInterpolationRspTranslator(JyPerKWithVisTestCase):
-    response = ({'response': {'success': True, 'timestamp': '2021-10-05T05:51:20', 'elapsed': '0:00:00.461', 
+    response1 = ({'response': {'success': True, 'timestamp': '2021-10-05T05:51:20', 'elapsed': '0:00:00.461', 
                'error': None, 'query': {'elevation': '51.11212932686397', 'temperature': '266.50347483801465',
                'antenna': 'DA61', 'band': '3', 'frequency': '90994575000.0', 'date': '2014-07-01T21:49:32',
                'baseband': '1', 'delta_days': '1000'}, 'data': {'factor': {'std': 2.004, 'n': 18, 'mean':
@@ -137,7 +139,7 @@ class TestInterpolationRspTranslator(JyPerKWithVisTestCase):
                ['uid___A002_X85c183_X36f.ms', 'PM03', '1', 'I', '44.672'])
 
     def test_convert(self):
-        converted = jyperk.InterpolationRspTranslator.convert(self.response, self.vis)
+        converted = jyperk.InterpolationRspTranslator.convert(self.response1, self.vis)
         self.assertEqual(converted, self.factors)
 
     def test_convert_as_aux1(self):
