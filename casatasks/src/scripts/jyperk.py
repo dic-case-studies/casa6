@@ -20,7 +20,7 @@ from casatools import ms as mstool
 from casatools import msmetadata, quanta
 
 
-### web api part
+# Jy/K DB part
 def gen_factor_via_web_api(vis, spw='*',
                            endpoint='asdm',
                            timeout=180, retry=3, retry_wait_time=5):
@@ -31,7 +31,7 @@ def gen_factor_via_web_api(vis, spw='*',
     Arguments:
         vis {str}: The file path of the visibility data.
         spw {str}: Spectral windows.
-        endpoint (str) -- The endpoint of Jy/K DB Web API to access. Options are 
+        endpoint (str) -- The endpoint of Jy/K DB Web API to access. Options are
             'asdm' (default), 'model-fit', 'interpolation'.
         timeout {int} --- Maximum waiting time [sec] for the Web API access, defaults
             to 180 sec.
@@ -47,22 +47,25 @@ def gen_factor_via_web_api(vis, spw='*',
         'The JyPerKDatabaseClient class requires one of endpoint: asdm, model-fit or interpolation'
 
     return __factor_creator_via_jy_per_k_db(endpoint=endpoint, vis=vis, spw=spw,
-                                            factory = __jyperk_factory[endpoint],
-                                            timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
+                                            factory=__jyperk_factory[endpoint],
+                                            timeout=timeout, retry=retry,
+                                            retry_wait_time=retry_wait_time)
 
 
-def __factor_creator_via_jy_per_k_db(endpoint='', vis=None, spw='*', 
-                                     factory = None,
+def __factor_creator_via_jy_per_k_db(endpoint='', vis=None, spw='*',
+                                     factory=None,
                                      timeout=180, retry=3, retry_wait_time=5):
     params_generator = factory[0]
     response_translator = factory[1]
-    
+
     params = params_generator.get_params(vis, spw=spw)
-    client = JyPerKDatabaseClient(endpoint, 
-        timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
+    client = JyPerKDatabaseClient(endpoint,
+                                  timeout=timeout, retry=retry,
+                                  retry_wait_time=retry_wait_time)
     manager = RequestsManager(client)
     resps = manager.get(params)
     return response_translator.convert(resps, vis, spw=spw)
+
 
 QueryStruct = collections.namedtuple('QueryStruct', ['param', 'subparam'])
 ResponseStruct = collections.namedtuple('ResponseStruct', ['response', 'subparam'])
@@ -87,9 +90,9 @@ class ASDMParamsGenerator():
                 ModelFitParamsGenerator).
 
         Returns:
-            Generator Object -- yield QueryStruct() object. A sample like below. 
+            Generator Object -- yield QueryStruct() object. A sample like below.
                 QueryStruct(
-                    param={'uid': 'uid://A002/X85c183/X36f'}, 
+                    param={'uid': 'uid://A002/X85c183/X36f'},
                     subparam='./uid___A002_X85c183_X36f.ms'
                 )
         """
@@ -124,11 +127,11 @@ class InterpolationParamsGenerator():
     @classmethod
     def get_params(cls, vis, spw='*'):
         if spw == '':
-            spw='*'
+            spw = '*'
 
         if spw == '*':
             spw = cls._get_available_spw(vis, spw)
-        
+
         params = {}
 
         science_windows = cls._get_science_windows(vis, spw)
@@ -144,7 +147,7 @@ class InterpolationParamsGenerator():
         for antenna_id, antenna_name in enumerate(antenna_names):
             params['antenna'] = antenna_name
             params['elevation'] = MeanElevation.get(vis, antenna_id)
- 
+
             for sw_id in science_windows:
                 params['band'] = bands[sw_id]
                 params['baseband'] = basebands[sw_id]
@@ -161,7 +164,7 @@ class InterpolationParamsGenerator():
 
     @staticmethod
     def _extract_msmetadata(science_windows, vis):
-        with tool_manager(vis, msmetadata) as msmd:  
+        with tool_manager(vis, msmetadata) as msmd:
             timerange = msmd.timerangeforobs(0)
             antenna_names = msmd.antennanames()
             basebands = dict((i, msmd.baseband(i)) for i in science_windows)
@@ -169,11 +172,11 @@ class InterpolationParamsGenerator():
             spwnames = msmd.namesforspws(science_windows)
 
         return timerange, antenna_names, basebands, mean_freqs, spwnames
-   
+
     @staticmethod
     def _get_available_spw(vis, spw):
         science_windows = InterpolationParamsGenerator._get_science_windows(vis, spw=spw)
-        with tool_manager(vis, msmetadata) as msmd:  
+        with tool_manager(vis, msmetadata) as msmd:
             spwnames = msmd.namesforspws(science_windows)
 
         spw = ','.join(map(str, [i for i, name in enumerate(spwnames) if not name.startswith('WVR')]))
@@ -199,9 +202,9 @@ class InterpolationParamsGenerator():
             valid_temperatures = np.ma.masked_array(
                 tb.getcol("TEMPERATURE"),
                 tb.getcol("TEMPERATURE_FLAG")
-            )       
+            )
         return valid_temperatures.mean()
-    
+
     @staticmethod
     def _get_mean_freqs(vis, science_windows):
         with table_manager(os.path.join(vis, 'SPECTRAL_WINDOW')) as tb:
@@ -234,7 +237,7 @@ class Bands():
 
         First the method scan 'spwnames', if the band can be detect, the method will
         adopt this value. In other case, the method compare the freq with the 'mean_freqs'
-        at which the band was detect, the method detect the band from the frequencies 
+        at which the band was detect, the method detect the band from the frequencies
         that are closest to the result.
         """
         bands = cls._extract_bands_from_spwnames(science_windows, spwnames)
@@ -263,14 +266,14 @@ class Bands():
         """Filter mean freqs without 'ALMA_RB_'."""
         filtered_mean_freqs = {}
         for sw, spwname in zip(science_windows, spwnames):
-            if not 'ALMA_RB_' in spwname:
+            if 'ALMA_RB_' not in spwname:
                 filtered_mean_freqs[sw] = mean_freqs[sw]
         return filtered_mean_freqs
 
     @staticmethod
     def _detect_bands_from_mean_freqs(target_mean_freqs, vis):
         """Extract bands using the mean freqs.
-        
+
         Params:
             target_mean_freqs {dict} -- The mean freqs which does not been detected the bands.
             vis {str}: The file path of the visibility data.
@@ -302,10 +305,10 @@ class Bands():
     def _get_known_bands(vis):
         science_windows = Bands._get_all_science_windows(vis)
         with tool_manager(vis, msmetadata) as msmd:
-            spwnames = msmd.namesforspws(science_windows)    
+            spwnames = msmd.namesforspws(science_windows)
         bands = Bands._extract_bands_from_spwnames(science_windows, spwnames)
         return bands
-    
+
     @staticmethod
     def _get_all_science_windows(vis):
         ms = mstool()
@@ -315,14 +318,14 @@ class Bands():
 
     @staticmethod
     def _extract_mean_freqs(science_windows, vis):
-        with tool_manager(vis, msmetadata) as msmd:  
+        with tool_manager(vis, msmetadata) as msmd:
             mean_freqs = dict((i, msmd.meanfreq(i)) for i in science_windows)
         return mean_freqs
 
 
 class MeanElevation():
     """A class to extract elevations from the VIS file and calcurate elevations average.
-    
+
     Usage:
         mean_elevation = MeanElevation.get(vis, antenna_id)
     """
@@ -337,7 +340,7 @@ class MeanElevation():
         return cls._calc_elevation_mean(rows, vis)
 
     @staticmethod
-    def _get_stateid(vis): ###
+    def _get_stateid(vis):
         with tool_manager(vis, mstool) as ms:
             ms.msselect({'scanintent': 'OBSERVE_TARGET#ON_SOURCE'})
             selected = ms.msselectedindices()
@@ -347,7 +350,7 @@ class MeanElevation():
 
     @staticmethod
     def _get_science_dd(vis):
-        with tool_manager(vis, msmetadata) as msmd:  
+        with tool_manager(vis, msmetadata) as msmd:
             science_spw = list(np.intersect1d(
                 msmd.almaspws(tdm=True, fdm=True),
                 msmd.spwsforintent('OBSERVE_TARGET#ON_SOURCE')
@@ -355,7 +358,7 @@ class MeanElevation():
             science_dd = [msmd.datadescids(spw=i)[0] for i in science_spw]
 
         return science_dd
-        
+
     @staticmethod
     def _query_rows(vis, science_dd, stateid, antenna_id):
         query = f'ANTENNA1=={antenna_id}&&ANTENNA2=={antenna_id}&&DATA_DESC_ID=={science_dd[0]}&&STATE_ID IN {list(stateid)}'
@@ -366,7 +369,7 @@ class MeanElevation():
 
     @staticmethod
     def _calc_elevation_mean(rows, vis):
-        elevations = []       
+        elevations = []
         qa = quanta()
 
         with tool_manager(vis, msmetadata) as msmd:
@@ -388,7 +391,7 @@ class MeanElevation():
 
 class RequestsManager():
     """A class to manage the Jy/K Database access by the param.
-    
+
     Usage:
         vis = "./uid___A002_Xb32033_X9067.ms"
         client = JyPerKDatabaseClient('asdm')
@@ -421,9 +424,9 @@ class JyPerKDatabaseClient():
 
     def __init__(self, endpoint, timeout=180, retry=3, retry_wait_time=5):
         """Set the parameters to be used when accessing the Web API.
-        
+
         Arguments:
-            endpoint (str) -- The endpoint of Jy/K DB Web API to access. Options are 
+            endpoint (str) -- The endpoint of Jy/K DB Web API to access. Options are
                 'asdm' (default), 'model-fit', 'interpolation'.
             timeout {int} --- Maximum waiting time [sec] for the Web API access, defaults
                 to 180 sec.
@@ -487,12 +490,12 @@ class JyPerKDatabaseClient():
             with urlopen(url, context=ssl_context, timeout=self.timeout) as resp:
                 body = resp.read()
                 return {'status': 'Success', 'err_msg': None, 'body': body}
-        except HTTPError as e: # 4xx, 5xx
+        except HTTPError as e:  # 4xx, 5xx
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: HTTPError(code={0}, Reason="{1}")\n'.format(e.code, e.reason)
             casalog.post(msg)
             return {'status': 'HTTPError', 'err_msg': msg}
-        except URLError as e: # not connect
+        except URLError as e:  # not connect
             msg = 'Failed to load URL: {0}\n'.format(url) \
                 + 'Error Message: URLError(Reason="{0}")\n'.format(e.reason)
             casalog.post(msg)
@@ -534,7 +537,7 @@ class Translator():
     """A class containing the methods required to convert Jy/K DB responses into factors."""
 
     @staticmethod
-    def format_cal_table_format(factors): #_format_jyperk
+    def format_cal_table_format(factors):  # _format_jyperk
         """Format given dictionary to the formatted list.
 
         Sample formated list:
@@ -549,7 +552,7 @@ class Translator():
         Returns:
             list -- Formatted list of Jy/K factors.
         """
-        template = string.Template('$MS $Antenna $Spwid I $factor')        
+        template = string.Template('$MS $Antenna $Spwid I $factor')
         factors = [list(map(str, template.safe_substitute(**factor).split())) for factor in factors]
         return factors
 
@@ -560,7 +563,7 @@ class Translator():
         selected = ms.msseltoindex(vis=vis, spw=spw)
         science_windows = selected['spw']
         filtered = [
-            i for i in factors if (len(i) == 5) 
+            i for i in factors if (len(i) == 5)
             and (
                 i[0] == os.path.basename(vis.rstrip('/')) and (int(i[2]) in science_windows)
             )
@@ -628,17 +631,17 @@ class InterpolationRspTranslator():
     @staticmethod
     def _dataset_to_cal_dict(dataset, _extract_factor):
         return_data = []
-        
+
         for data in dataset:
             # aux is dictionary holding vis and spw id
             aux = data['aux']
             if not isinstance(aux, dict):
                 raise TypeError('The response.aux in the JSON obtained from Jy/K db must be dict.')
 
-            if not 'vis' in aux:
+            if 'vis' not in aux:
                 raise KeyError('The response.aux in the JSON obtained from Jy/K db must contain vis.')
 
-            if not 'spwid' in aux:
+            if 'spwid' not in aux:
                 raise KeyError('The response.aux in the JSON obtained from Jy/K db must contain spwid.')
 
             spwid = aux['spwid']
@@ -656,7 +659,7 @@ class InterpolationRspTranslator():
             antenna = data['response']['query']['antenna']
 
             return_data.append({'MS': basename, 'Antenna': antenna, 'Spwid': spwid,
-                         'Polarization': polarization, 'factor': factor})
+                                'Polarization': polarization, 'factor': factor})
         return return_data
 
 
@@ -689,9 +692,9 @@ class JyPerKReader4File():
             infile {str} -- The file path of CSV which the factors are stored.
         """
         self.infile = infile
-        
+
     def get(self):
-        """Reads jyperk factors from a file and returns a string list.
+        """Read jyperk factors from a file and returns a string list.
 
         Returns:
             list -- [['MS','ant','spwid','polid','factor'], ...]
