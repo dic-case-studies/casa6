@@ -218,7 +218,7 @@ class regression_alma_m100_test(unittest.TestCase):
 
 
             startTime=time.time()
-            startProc=time.clock()
+            startProc=time.perf_counter()
 
 
 
@@ -235,7 +235,7 @@ class regression_alma_m100_test(unittest.TestCase):
 
             importasdm(asdm = rawname, vis=msname, overwrite=True)
 
-            importproc=time.clock()
+            importproc=time.perf_counter()
             importtime=time.time()
 
             # listobs task generates detailed information of the MS
@@ -298,7 +298,7 @@ class regression_alma_m100_test(unittest.TestCase):
                 action = 'apply'
             )
 
-            flagproc = time.clock()
+            flagproc = time.perf_counter()
             flagtime = time.time()
 
 
@@ -312,7 +312,7 @@ class regression_alma_m100_test(unittest.TestCase):
                 spwmap  = {'1':[9],'3':[11],'5':[13],'7':[15]},
             )
 
-            sdcalproc=time.clock()
+            sdcalproc=time.perf_counter()
             sdcaltime=time.time()
 
 
@@ -334,7 +334,7 @@ class regression_alma_m100_test(unittest.TestCase):
                 overwrite = True
             )
 
-            sdbaselineproc = time.clock()
+            sdbaselineproc = time.perf_counter()
             sdbaselinetime = time.time()
 
             # Plot the calibrated spectra, using the plotms task.
@@ -436,7 +436,7 @@ class regression_alma_m100_test(unittest.TestCase):
             imhead(imagename=outfile, mode='put', hdkey='bunit', hdvalue='K')
 
 
-            combproc=time.clock()
+            combproc=time.perf_counter()
             combtime=time.time()
 
 
@@ -464,7 +464,7 @@ class regression_alma_m100_test(unittest.TestCase):
 
 
 
-            #imageproc=time.clock()
+            #imageproc=time.perf_counter()
             #imagetime = time.time()
 
             # -- endl of M100 script

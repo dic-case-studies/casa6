@@ -85,7 +85,7 @@ class regression_components_skymodel_test(unittest.TestCase):
         '''Test components and skymodel...'''
 
         startTime = time.time()
-        startProc = time.clock()
+        startProc = time.perf_counter()
         
         # Check if modelimage and antennalist are being read from original repository
         # ground must be set here to use appropriate defaults for "tsys-atm" when run without casalith sub-parameter defaults
@@ -103,7 +103,7 @@ class regression_components_skymodel_test(unittest.TestCase):
                    graphics="file", verbose=True)
 
         endTime = time.time()
-        endProc = time.clock()
+        endProc = time.perf_counter()
 
         # Regression
 

@@ -73,7 +73,7 @@ class regression_sim_cube_test(unittest.TestCase):
         logprint("simobserve of test cube")
 
         startTime = time.time()
-        startProc = time.clock()
+        startProc = time.perf_counter()
 
         default("simobserve")
         simobserve(project=projname, skymodel="testcube2",inbright=".1",indirection="J2000 19h00m00s -40d00m00s",
@@ -82,7 +82,7 @@ class regression_sim_cube_test(unittest.TestCase):
                    totaltime="7200s",thermalnoise="",graphics="file",verbose=True,overwrite=True)
 
         endTime = time.time()
-        endProc = time.clock()
+        endProc = time.perf_counter()
 
         # Regression
         logprint("********** Regression *****************")

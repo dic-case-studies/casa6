@@ -75,7 +75,7 @@ class regression_sim_TP_test(unittest.TestCase):
         logprint('sd total power simobserve of M51')
 
         startTime = time.time()
-        startProc = time.clock()
+        startProc = time.perf_counter()
         
         default(simobserve)
         simobserve(project = projname, skymodel = self.modelname, inbright = '0.004', indirection = 'B1950 23h59m59.96 -34d59m59.50',
@@ -88,7 +88,7 @@ class regression_sim_TP_test(unittest.TestCase):
                    graphics="file", verbose=True, overwrite = True)
 
         obsEndTime = time.time()
-        obsEndProc = time.clock()
+        obsEndProc = time.perf_counter()
 
         logprint('simanalyze of total power (M51)')
        
@@ -99,7 +99,7 @@ class regression_sim_TP_test(unittest.TestCase):
                    verbose=True)
 
         endTime = time.time()
-        endProc = time.clock()
+        endProc = time.perf_counter()
 
         # Regression
 
