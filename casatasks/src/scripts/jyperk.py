@@ -24,7 +24,7 @@ from casatools import msmetadata, quanta
 def gen_factor_via_web_api(vis, spw='*',
                            endpoint='asdm',
                            timeout=180, retry=3, retry_wait_time=5):
-    """ Generate factor via Jy/K Web API.
+    """Generate factors via Jy/K Web API.
 
     This function will be used task_gencal.
 
@@ -50,25 +50,26 @@ def gen_factor_via_web_api(vis, spw='*',
                                             factory = __jyperk_factory[endpoint],
                                             timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
 
+
 def __factor_creator_via_jy_per_k_db(endpoint='', vis=None, spw='*', 
                                      factory = None,
                                      timeout=180, retry=3, retry_wait_time=5):
-        params_generator = factory[0]
-        response_translator = factory[1]
-        
-        params = params_generator.get_params(vis, spw=spw)
-        client = JyPerKDatabaseClient(endpoint, 
-            timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
-        manager = RequestsManager(client)
-        resps = manager.get(params)
-        return response_translator.convert(resps, vis, spw=spw)
+    params_generator = factory[0]
+    response_translator = factory[1]
+    
+    params = params_generator.get_params(vis, spw=spw)
+    client = JyPerKDatabaseClient(endpoint, 
+        timeout=timeout, retry=retry, retry_wait_time=retry_wait_time)
+    manager = RequestsManager(client)
+    resps = manager.get(params)
+    return response_translator.convert(resps, vis, spw=spw)
 
 QueryStruct = collections.namedtuple('QueryStruct', ['param', 'subparam'])
 ResponseStruct = collections.namedtuple('ResponseStruct', ['response', 'subparam'])
 
 
 class ASDMParamsGenerator():
-    """ Generate required parameters for Jy/K Web API.
+    """A class to generate required parameters for Jy/K Web API with asdm.
 
     Usage:
         vis = "./uid___A002_X85c183_X36f.ms"
@@ -77,7 +78,7 @@ class ASDMParamsGenerator():
 
     @classmethod
     def get_params(cls, vis, spw=None):
-        """ Generate required parameters for Jy/K Web API.
+        """Generate required parameters for Jy/K Web API.
 
         Arguments:
             vis {str} -- The file path of the visibility data.
@@ -96,7 +97,7 @@ class ASDMParamsGenerator():
 
     @staticmethod
     def _vis_to_uid(vis):
-        """ Convert MS name like 'uid___A002_Xabcd_X012 into uid://A002/Xabcd/X012'.
+        """Convert MS name like 'uid___A002_Xabcd_X012 into uid://A002/Xabcd/X012'.
 
         Arguments:
             vis {str} -- The file path of the visibility data.
@@ -113,11 +114,13 @@ class ASDMParamsGenerator():
 
 
 class InterpolationParamsGenerator():
-    """
+    """A class to generate required parameters for Jy/K Web API with interpolation.
+
     Usage:
         vis = './uid___A002_X85c183_X36f.ms'
         params = InterpolationParamsGenerator.get_params(vis)
     """
+
     @classmethod
     def get_params(cls, vis, spw='*'):
         if spw == '':
@@ -211,15 +214,23 @@ class InterpolationParamsGenerator():
 
 
 class ModelFitParamsGenerator(InterpolationParamsGenerator):
+    """A class to generate required parameters for Jy/K Web API with model-fit."""
+
     @staticmethod
     def _get_aux_params():
         return {}
 
 
 class Bands():
+    """A class to extract all bands corresponding from VIS file.
+
+    Usage:
+        bands = Bands.get(science_windows, spwnames, mean_freqs, vis)
+    """
+
     @classmethod
     def get(cls, science_windows, spwnames, mean_freqs, vis):
-        """ Return all bands corresponding to the 'science_window' given in the input.
+        """Return all bands corresponding to the 'science_window' given in the input.
 
         First the method scan 'spwnames', if the band can be detect, the method will
         adopt this value. In other case, the method compare the freq with the 'mean_freqs'
@@ -237,7 +248,7 @@ class Bands():
 
     @staticmethod
     def _extract_bands_from_spwnames(science_windows, spwnames):
-        """ Extract bands that contain band information in the spwname.
+        """Extract bands that contain band information in the spwname.
 
         The spwnames is like 'X835577456#ALMA_RB_06#BB_2#SW-01#CH_AVG'.
         """
@@ -249,8 +260,7 @@ class Bands():
 
     @staticmethod
     def _filter_mean_freqs_with_undetected_band(science_windows, spwnames, mean_freqs):
-        """ Filter mean freqs without 'ALMA_RB_'.
-        """
+        """Filter mean freqs without 'ALMA_RB_'."""
         filtered_mean_freqs = {}
         for sw, spwname in zip(science_windows, spwnames):
             if not 'ALMA_RB_' in spwname:
@@ -259,7 +269,7 @@ class Bands():
 
     @staticmethod
     def _detect_bands_from_mean_freqs(target_mean_freqs, vis):
-        """ Extract bands using the mean freqs.
+        """Extract bands using the mean freqs.
         
         Params:
             target_mean_freqs {dict} -- The mean freqs which does not been detected the bands.
@@ -311,8 +321,15 @@ class Bands():
 
 
 class MeanElevation():
+    """A class to extract elevations from the VIS file and calcurate elevations average.
+    
+    Usage:
+        mean_elevation = MeanElevation.get(vis, antenna_id)
+    """
+
     @classmethod
     def get(cls, vis, antenna_id):
+        """Get elevations aveage."""
         stateid = cls._get_stateid(vis)
         science_dd = cls._get_science_dd(vis)
         rows = cls._query_rows(vis, science_dd, stateid, antenna_id)
@@ -370,7 +387,7 @@ class MeanElevation():
 
 
 class RequestsManager():
-    """ Manage the Jy/K Database access by the param.
+    """A class to manage the Jy/K Database access by the param.
     
     Usage:
         vis = "./uid___A002_Xb32033_X9067.ms"
@@ -381,9 +398,11 @@ class RequestsManager():
     """
 
     def __init__(self, client):
+        """Set client."""
         self.client = client
 
     def get(self, params):
+        """Get the responses of the Jy/K DB."""
         dataset = [{'response': self.client.get(param.param), 'aux': param.subparam} for param in params]
         return self._filter_success_is_true(dataset)
 
@@ -392,7 +411,7 @@ class RequestsManager():
 
 
 class JyPerKDatabaseClient():
-    """ Get values from Jy/K Web API.
+    """A class to get values from Jy/K Web API.
 
     The Jy/K Web API address is 'https://asa.alma.cl/science/jy-kelvins'. The address
     can be changed with the environment variable 'JYPERKDB_URL'.
@@ -401,7 +420,7 @@ class JyPerKDatabaseClient():
     BASE_URL = os.getenv('JYPERKDB_URL', 'https://asa.alma.cl/science/jy-kelvins')
 
     def __init__(self, endpoint, timeout=180, retry=3, retry_wait_time=5):
-        """ Set the parameters to be used when accessing the Web API.
+        """Set the parameters to be used when accessing the Web API.
         
         Arguments:
             endpoint (str) -- The endpoint of Jy/K DB Web API to access. Options are 
@@ -421,7 +440,7 @@ class JyPerKDatabaseClient():
         self.retry_wait_time = retry_wait_time
 
     def get(self, param):
-        """ Get the Web API response.
+        """Get the Web API response.
 
         Arguments:
             param {dict} -- The parameters used in the Web API.
@@ -446,7 +465,7 @@ class JyPerKDatabaseClient():
         return query
 
     def _retrieve(self, url):
-        """ Access to Jy/K DB and return response.
+        """Access to Jy/K DB and return response.
 
         Arguments:
             url {str} -- url to retrieve in the Jy/K Web API.
@@ -512,9 +531,11 @@ class JyPerKDatabaseClient():
 
 
 class Translator():
+    """A class containing the methods required to convert Jy/K DB responses into factors."""
+
     @staticmethod
     def format_cal_table_format(factors): #_format_jyperk
-        """ Format given dictionary to the formatted list.
+        """Format given dictionary to the formatted list.
 
         Sample formated list:
             [['MS_name', 'antenna_name', 'spwid', 'pol string', 'factor'],
@@ -534,6 +555,7 @@ class Translator():
 
     @staticmethod
     def filter_jyperk(vis, factors, spw):
+        """Filter factors using spw."""
         ms = mstool()
         selected = ms.msseltoindex(vis=vis, spw=spw)
         science_windows = selected['spw']
@@ -547,9 +569,11 @@ class Translator():
 
 
 class ASDMRspTranslator():
+    """A class to convert the response for asdm from the Jy/K DB to factors."""
+
     @classmethod
     def convert(cls, data, vis, spw='*'):
-        """ Convert from the response to list with factor.
+        """Convert from the response to list with factor.
 
         Arguments:
             spw {None}  -- This parameter is not used. It is provided to align the
@@ -573,9 +597,11 @@ class ASDMRspTranslator():
 
 
 class InterpolationRspTranslator():
+    """A class to convert the responses for interpolation from the Jy/K DB to factors."""
+
     @classmethod
     def convert(cls, data_set, vis, spw='*'):
-        """ Convert from the response to list with factor.
+        """Convert from the response to list with factor.
 
         Arguments:
             data_set {dict} -- The result of the Web API.
@@ -635,6 +661,8 @@ class InterpolationRspTranslator():
 
 
 class ModelFitRspTranslator(InterpolationRspTranslator):
+    """A class to convert the responses for model-fit from the Jy/K DB to factors."""
+
     @staticmethod
     def _extract_factor(data):
         return data['response']['data']['factor']
@@ -649,13 +677,13 @@ __jyperk_factory = {
 
 # file part
 class JyPerKReader4File():
-    """ Read factor via the local file.
+    """A class to read from CSV file and format factors.
 
     This function will be used task_gencal.
     """
 
     def __init__(self, infile):
-        """ Set a parameter.
+        """Set a parameter.
 
         Arguments:
             infile {str} -- The file path of CSV which the factors are stored.
@@ -663,7 +691,7 @@ class JyPerKReader4File():
         self.infile = infile
         
     def get(self):
-        """ Reads jyperk factors from a file and returns a string list.
+        """Reads jyperk factors from a file and returns a string list.
 
         Returns:
             list -- [['MS','ant','spwid','polid','factor'], ...]

@@ -177,8 +177,7 @@ class gencal_antpostest(unittest.TestCase):
 
 
 class test_gencal_antpos_alma(unittest.TestCase):
-    """
-    Tests the automatic generation of antenna position corrections for ALMA
+    """Tests the automatic generation of antenna position corrections for ALMA.
 
     New REST web service:
     https://bitbucket.sco.alma.cl/projects/ALMA/repos/almasw/browse/CONTROL-SERVICES/PositionsService

@@ -18,8 +18,8 @@ if is_CASA6:
 
 
 class TestASDMParamsGenerator(unittest.TestCase):
-    """test ASDMParamsGenerator class.
-    """
+    """Test ASDMParamsGenerator class."""
+
     vis = "./uid___A002_X85c183_X36f.ms"
         
     def test_get_params(self):
@@ -30,8 +30,8 @@ class TestASDMParamsGenerator(unittest.TestCase):
 
 
 class JyPerKWithVisTestCase(unittest.TestCase):
-    """This is a test case for Jy/K with VIS data.
-    """
+    """Utility class for Jy/K with VIS data."""
+
     data_path = 'measurementset/almasd'
     vis = 'uid___A002_X85c183_X36f.ms'
     original = f'{vis}.sel'
@@ -62,7 +62,7 @@ class JyPerKWithVisTestCase(unittest.TestCase):
 
 
 class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
-    """test collection for interpolation logic classes.
+    """Test collection for interpolation logic classes.
 
     This test target classes are:
     * InterpolationParamsGenerator
@@ -184,6 +184,7 @@ class TestInterpolationRspTranslator(JyPerKWithVisTestCase):
 
 
 class TestModelFitRspTranslator(JyPerKWithVisTestCase):
+    """Test ModelFitRspTranslator class."""
     response = [{'response': {'success': True, 'timestamp': '2021-10-05T06:53:58', 'elapsed': '0:00:00.015',
                'error': None, 'query': {'elevation': '51.11212932686397', 'temperature': '266.50347483801465',
                'antenna': 'DA61', 'band': '3', 'frequency': '90994575000.0', 'date': '2014-07-01T21:49:32',
@@ -202,8 +203,7 @@ class TestModelFitRspTranslator(JyPerKWithVisTestCase):
 
 
 class TestModelFitParamsGenerator(JyPerKWithVisTestCase):
-    """test ModelFitParamsGenerator class.
-    """
+    """Test ModelFitParamsGenerator class."""
 
     def test_get_params(self):
         params = jyperk.ModelFitParamsGenerator.get_params(self.vis, spw='1')
@@ -216,8 +216,7 @@ class TestModelFitParamsGenerator(JyPerKWithVisTestCase):
 
 
 class TestRequestsManager(unittest.TestCase):
-    """test RequestsManager class.
-    """
+    """Test RequestsManager class."""
 
     vis = 'uid___A002_Xb32033_X9067.ms'
     
@@ -268,8 +267,8 @@ class TestRequestsManager(unittest.TestCase):
 
 
 class TestJyPerKDatabaseClient(unittest.TestCase):
-    """test JyPerKDatabaseClient class.
-    """
+    """Test JyPerKDatabaseClient class."""
+
     content_body = '''{"success": true}'''
     param = {'uid': 'uid://A002/X85c183/X36f'}
     
@@ -331,6 +330,8 @@ class TestJyPerKDatabaseClient(unittest.TestCase):
 
 
 class TestTranslator(JyPerKWithVisTestCase):
+    """Test Translator class."""
+
     responsed_factors = [{'Antenna': 'DA61', 'Spwid': 17, 'origSpwid': 20, 'Polarization': 
                 'Polarization_0', 'MS': 'uid___A002_X85c183_X36f.ms', 'factor': 43.768}, 
                 {'Antenna': 'DA61', 'Spwid': 19, 'origSpwid': 22, 'Polarization': 
@@ -356,6 +357,8 @@ class TestTranslator(JyPerKWithVisTestCase):
 
 
 class TestASDMRspTranslator(JyPerKWithVisTestCase):
+    """Test ASDMRspTranslator class."""
+
     response = [{'response': {'success': True, 'timestamp': '2021-10-05T03:46:16',
                 'elapsed': '0:00:09.795','error': None, 'query': {'uid': 'uid://A002/X85c183/X36f'},
                 'data': {'length': 12, 'factors': [{'Antenna': 'DA61', 'Spwid': 17, 'origSpwid': 20,
@@ -371,8 +374,8 @@ class TestASDMRspTranslator(JyPerKWithVisTestCase):
 
 
 class TestJyPerKReader4File(unittest.TestCase):
-    """test TestJyPerKReader class.
-    """
+    """Test JyPerKReader4File class."""
+
     jyperk_factor_path = 'jyperk_factor.csv'
 
     @classmethod

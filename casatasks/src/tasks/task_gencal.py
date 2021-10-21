@@ -128,11 +128,17 @@ class AntposGencal():
 
 
 class JyperkGencal():
+    """A class to generate factors using the Jy/K DB or the factor CSV file.
+    
+    This class will be called if the caltype is 'jyperk'.
+    """
+
     @classmethod
     def gencal(cls, vis=None, caltable=None, caltype=None, infile='None',
                endpoint='asdm', timeout=180, retry=3, retry_wait_time=5,
                spw=None, antenna=None, pol=None,
                parameter=None, uniform=None):
+        """Generate calibration table."""
         try:
             # don't need scr col for this
             _cb.open(filename=vis, compress=False, addcorr=False, addmodel=False)  
