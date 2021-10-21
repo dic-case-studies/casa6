@@ -2181,6 +2181,16 @@
             "comment":""
         },
         {
+            "testScript":"test_req_task_uvcontsub2021",
+            "testType":"casatasks",
+            "maintainer":"Federico Montesino",
+            "maintainerEmail":"fpouzols@eso.org",
+            "testOptions":[],
+            "testGroup":["uvcontsub"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_uvfits",
             "testType":"casatools",
             "maintainer":"David Mehringer",
