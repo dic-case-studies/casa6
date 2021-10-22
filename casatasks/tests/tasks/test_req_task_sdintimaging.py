@@ -174,9 +174,9 @@ class testref_base(unittest.TestCase):
 
     def tearDown(self):
         # Default: delete all (input and output data)
-        #self.delData()
+        self.delData()
         # leave for input and output (e.g. for debugging)
-        self.delData(delinput=False, deloutput=False)
+        # self.delData(delinput=False, deloutput=False)
 
     @classmethod
     def tearDownClass(cls):
@@ -231,6 +231,7 @@ class testref_base(unittest.TestCase):
         if delinput:
             if hasattr(self,'msfile') and self.msfile!='':
                 os.system('rm -rf ' + self.msfile)
+                os.system('rm -rf ' + self.msfile + '.flagversions')
             if hasattr(self,'refmsfile') and self.refmsfile!='':
                 os.system('rm -rf ' + self.refmsfile)
             if hasattr(self,'sdimage') and self.sdimage!='':
@@ -244,13 +245,7 @@ class testref_base(unittest.TestCase):
 
 
     def checkfinal(self,pstr=""):
-        th.check_final(pstr)
-
-#          pstr += "["+inspect.stack()[1][3]+"] : To re-run this test :  runUnitTest.main(['test_req_task_sdintimaging["+ inspect.stack()[1][3] +"]'])"
-#          casalog.post(pstr,'INFO')
-#          if( pstr.count("( Fail") > 0 ):
-#              print(pstr)
-#              self.fail("\n"+pstr)
+        self.assertTrue(th.check_final(pstr))
 
 ### functional tests for sdintimaging start here ####
 
@@ -313,10 +308,10 @@ class test_singlepointing(testref_base):
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 0.991, [400,400,0,0]),
-                                   (outimg+'.image.tt0', 1.187, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.262, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -0.954, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.195, [300,400,0,0]) ])      # extended emission with alpha=0
+                                   (outimg+'.image.tt0', 1.182, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.282, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -0.957, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.179, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
@@ -388,7 +383,8 @@ class test_singlepointing(testref_base):
         outimg = imname+'.joint.multiterm'
         report=th.checkall(imgexist=[outimg+'.psf.tt0', 
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
-                                     outimg+'.image.tt1',outimg+'.alpha'], 
+                                     outimg+'.image.tt1',outimg+'.alpha'],
+                                     check_keywords_misc=False, # sdonly images don't go through the vivb2 and don't need the keywords from CAS-12204
                            imgval=[(outimg+'.psf.tt0', 1.0, [400,400,0,0]),
                                    (outimg+'.image.tt0', 7.91, [350,433,0,0]),    # point source with alpha=-1
                                    (outimg+'.image.tt0', 15.3, [300,400,0,0]),        # extended emission with alpha=0
@@ -428,10 +424,10 @@ class test_singlepointing(testref_base):
                                      outimg+'.residual', outimg+'.image'], 
                            imgval=[(outimg+'.psf', 0.99, [400,400,0,0]),
                                    (outimg+'.psf', 0.99, [400,400,0,1]),
-                                   (outimg+'.image', 1.66, [350,433,0,0]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.461, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.image', 1.091, [350,433,0,1]),    # point source of 1 Jy
-                                   (outimg+'.image', 0.216, [300,400,0,1]) ])      # extended emission with alpha=0
+                                   (outimg+'.image', 1.67, [350,433,0,0]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.462, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.image', 1.084, [350,433,0,1]),    # point source of 1 Jy
+                                   (outimg+'.image', 0.230, [300,400,0,1]) ])      # extended emission with alpha=0
         ## Check multiple channels. point source flux is same, extended emission will be different because of resolution change.
         self.checkfinal(pstr=report)
 
@@ -476,7 +472,7 @@ class test_singlepointing(testref_base):
 
 
     #Test6
-    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skip("Skip test. check_keywords is failing")
     def test_singlepointing_cube_sdonly(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='cube', usedata='sd')
         """ [singlePointing] Test_singlepointing_cube_sdonly """
@@ -504,7 +500,8 @@ class test_singlepointing(testref_base):
 
         outimg = imname+'.joint.cube'
         report=th.checkall(imgexist=[outimg+'.psf', 
-                                     outimg+'.residual', outimg+'.image'], 
+                                     outimg+'.residual', outimg+'.image'],
+                                     check_keywords_misc=False, # sdonly images don't go through the vivb2 and don't need the keywords from CAS-12204
                            imgval=[(outimg+'.psf', 1.0, [400,400,0,0]),
                                    (outimg+'.psf', 1.0, [400,400,0,1]),
                                    (outimg+'.image', 18.65, [350,433,0,0]),    # point source of 1 Jy
@@ -547,11 +544,11 @@ class test_singlepointing(testref_base):
         report=th.checkall(imgexist=[outimg+'.psf.tt0', 
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
-                           imgval=[(outimg+'.psf.tt0', 0.990, [400,400,0,0]),
-                                   (outimg+'.image.tt0', 1.144, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.371, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -1.29, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.101, [300,400,0,0]) ])      # extended emission with alpha=0
+                           imgval=[(outimg+'.psf.tt0', 0.991, [400,400,0,0]),
+                                   (outimg+'.image.tt0', 1.138, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.373, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -1.30, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.0727, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
@@ -629,10 +626,10 @@ class test_singlepointing(testref_base):
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
                                      outimg+'.image.tt1',outimg+'.alpha'], 
                            imgval=[(outimg+'.psf.tt0', 0.990, [400,400,0,0]),
-                                   (outimg+'.image.tt0', 1.189, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.image.tt0', 0.261, [300,400,0,0]),        # extended emission with alpha=0
-                                   (outimg+'.alpha', -0.939, [350,433,0,0]),    # point source with alpha=-1
-                                   (outimg+'.alpha', 0.0736, [300,400,0,0]) ])      # extended emission with alpha=0
+                                   (outimg+'.image.tt0', 1.186, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.image.tt0', 0.287, [300,400,0,0]),        # extended emission with alpha=0
+                                   (outimg+'.alpha', -0.950, [350,433,0,0]),    # point source with alpha=-1
+                                   (outimg+'.alpha', 0.126, [300,400,0,0]) ])      # extended emission with alpha=0
         
         self.checkfinal(pstr=report)
 
@@ -763,7 +760,8 @@ class test_mosaic(testref_base):
         outimg = imname+'.joint.multiterm'
         report=th.checkall(imgexist=[outimg+'.psf.tt0', 
                                      outimg+'.residual.tt0', outimg+'.image.tt0', 
-                                     outimg+'.image.tt1',outimg+'.alpha'], 
+                                     outimg+'.image.tt1',outimg+'.alpha'],
+                                     check_keywords_misc=False, # sdonly images don't go through the vivb2 and don't need the keywords from CAS-12204
                            imgval=[(outimg+'.psf.tt0', 1.0, [750,750,0,0]),
                                    (outimg+'.image.tt0', 7.756, [700,783,0,0]),    # point source with alpha=-1
                                    (outimg+'.image.tt0', 15.68, [650,720,0,0]),        # extended emission with alpha=0
@@ -848,7 +846,7 @@ class test_mosaic(testref_base):
 
 
     #Test12
-  #  @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    # @unittest.skip("Skip test. check_keywords is failing")
     def test_mosaic_cube_sdonly(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='cube', usedata='sd')
         """ [Mosaic] Test_mosaic_cube_sdonly """
@@ -874,7 +872,8 @@ class test_mosaic(testref_base):
         ret = sdintimaging(usedata='sd', sdimage=self.sdimage, sdpsf=self.sdpsf, vis=self.msfile,imagename=imname,imsize=self.imsize,cell=self.cell,phasecenter=self.phasecenter, specmode='cube', gridder='mosaic', nchan=self.nchan, reffreq=self.reffreq, pblimit=self.pblimit,interpolation=self.interpolation, deconvolver=deconvolver, scales=self.scales, niter=self.niter, cycleniter=self.cycleniter, mask=self.mask, interactive=0,pbmask=0.2)
         outimg = imname+'.joint.cube'
         report=th.checkall(imgexist=[outimg+'.psf', 
-                                     outimg+'.residual', outimg+'.image'], 
+                                     outimg+'.residual', outimg+'.image'],
+                                     check_keywords_misc=False, # sdonly images don't go through the vivb2 and don't need the keywords from CAS-12204
                            imgval=[(outimg+'.psf', 1.0, [750,750,0,0]),
                                    (outimg+'.psf', 1.0, [750,750,0,1]),
                                    (outimg+'.image', 18.17, [700,783,0,0]),    # point source of 1 Jy
@@ -911,7 +910,7 @@ class test_compare_sdint_tclean(testref_base):
         outimname1 = imname1+'.joint.cube'
 
         report=th.checkall(imgexist=[outimname1+'.psf', outimname1+'.image',
-                                     imname2+'.psf', imname2+'.image'], 
+                                     imname2+'.psf', imname2+'.image'],
                            imgval=[(outimname1+'.psf', 1.0, [100,100,0,0]),
                                    (imname2+'.psf', 1.0, [100,100,0,0]),
                                    (outimname1+'.residual', 0.809179, [100,100,0,0]),  ## End of minor cycle : 0.818269. Changes to 0.809179 after major cycle. 

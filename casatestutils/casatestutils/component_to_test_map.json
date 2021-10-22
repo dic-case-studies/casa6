@@ -2239,27 +2239,6 @@
             "testGroup":["wvrgcal"],
             "timeout":0,
             "comment":""
-        },
-        {
-            "testScript":"test_asdmsummary_fail",
-            "testType":"casatasks",
-            "maintainer":"Akeem Wells",
-            "maintainerEmail":"awells@nrao.edu",
-            "testOptions":[],
-            "testGroup":["asdmsummary"],
-            "timeout":0,
-            "comment":"For Bamboo Testing"
-        },
-        {
-            "testScript":"test_bandpass_fail",
-            "testType":"casatasks",
-            "maintainer":"Akeem Wells",
-            "maintainerEmail":"awells@nrao.edu",
-            "testOptions":[],
-            "testGroup":["bandpass"],
-            "timeout":0,
-            "comment":"For Bamboo Testing"
         }
-
     ]
 }
