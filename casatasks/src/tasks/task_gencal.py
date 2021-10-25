@@ -65,6 +65,8 @@ def gencal(vis=None, caltable=None, caltype=None, infile='None',
     else:
         gencal_type = caltype
 
+    # If developer want to add new gencal task, developer should develop a new gencal class and
+    # add the class to __gencal_factory dictionary.
     gencal = __gencal_factory[gencal_type]
     gencal.gencal(vis=vis, caltable=caltable, caltype=caltype, infile=infile,
                   endpoint=endpoint, timeout=timeout, retry=retry, retry_wait_time=retry_wait_time,
@@ -128,7 +130,7 @@ class AntposGencal():
 
 
 class JyperkGencal():
-    """A class to generate factors using the Jy/K DB or the factor CSV file.
+    """A class to generate caltable using the Jy/K DB or the factor CSV file.
 
     This class will be called if the caltype is 'jyperk'.
     """
