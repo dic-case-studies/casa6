@@ -527,7 +527,7 @@ class TestJyPerK(unittest.TestCase):
     """
 
     vis = 'uid___A002_X85c183_X36f.ms'
-    jyperk_factor_csv = os.path.join(datapath, 'jyperk/factor.csv')
+    jyperk_factor_csv = os.path.join(datapath, 'jyperk_factor.csv')
 
     @classmethod
     def setUpClass(cls):
@@ -538,8 +538,7 @@ class TestJyPerK(unittest.TestCase):
         os.mkdir(cls.directory_name)
         os.chdir(cls.working_directory)
 
-        ms_datapath = ctsys.resolve('measurementset/almasd')
-        original_vis = os.path.join(ms_datapath, f'{cls.vis}.sel')
+        original_vis = os.path.join(datapath, f'{cls.vis}.sel')
         shutil.copytree(original_vis, cls.vis, symlinks=False)
 
     @classmethod
@@ -592,7 +591,7 @@ class TestJyPerK(unittest.TestCase):
             return responses[url]
 
         responses = self._load_jyperkdb_responses(
-                os.path.join(datapath, 'jyperk/web_api_response/asdm.csv'))
+                os.path.join(datapath, 'jyperk_web_api_response/asdm.csv'))
         mock_retrieve.side_effect = get_response
 
         gencal(vis=self.vis,
@@ -604,7 +603,7 @@ class TestJyPerK(unittest.TestCase):
         self.assertTrue(os.path.exists(self.caltable))
 
         reference_caltable = os.path.join(
-                datapath, 'jyperk/reference/web_api_with_asdm.cal')
+                datapath, 'jyperk_reference/web_api_with_asdm.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
         self.assertTrue(mock_retrieve.called)
 
@@ -620,7 +619,7 @@ class TestJyPerK(unittest.TestCase):
             return responses[url]
 
         responses = self._load_jyperkdb_responses(
-                os.path.join(datapath, 'jyperk/web_api_response/model-fit.csv'))
+                os.path.join(datapath, 'jyperk_web_api_response/model-fit.csv'))
         mock_retrieve.side_effect = get_response
 
         gencal(vis=self.vis,
@@ -632,7 +631,7 @@ class TestJyPerK(unittest.TestCase):
         self.assertTrue(os.path.exists(self.caltable))
 
         reference_caltable = os.path.join(
-                datapath, 'jyperk/reference/web_api_with_model_fit.cal')
+                datapath, 'jyperk_reference/web_api_with_model_fit.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
         self.assertTrue(mock_retrieve.called)
 
@@ -648,7 +647,7 @@ class TestJyPerK(unittest.TestCase):
             return responses[url]
 
         responses = self._load_jyperkdb_responses(
-                os.path.join(datapath, 'jyperk/web_api_response/interpolation.csv'))
+                os.path.join(datapath, 'jyperk_web_api_response/interpolation.csv'))
         mock_retrieve.side_effect = get_response
 
         gencal(vis=self.vis,
@@ -660,7 +659,7 @@ class TestJyPerK(unittest.TestCase):
         self.assertTrue(os.path.exists(self.caltable))
 
         reference_caltable = os.path.join(
-                datapath, 'jyperk/reference/web_api_with_interpolation.cal')
+                datapath, 'jyperk_reference/web_api_with_interpolation.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
         self.assertTrue(mock_retrieve.called)
 
@@ -680,7 +679,7 @@ class TestJyPerK(unittest.TestCase):
         self.assertTrue(os.path.exists(self.caltable))
 
         reference_caltable = os.path.join(
-                datapath, 'jyperk/reference/factor_file.cal')
+                datapath, 'jyperk_reference/factor_file.cal')
         self.assertTrue(th.compTables(self.caltable, reference_caltable, ['WEIGHT']))
 
         reference = \
