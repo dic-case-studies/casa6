@@ -138,8 +138,8 @@ class TestInterpolationRspTranslator(JyPerKWithVisTestCase):
     response5[0]['aux']['spwid'] = 'na'
     response6 = [deepcopy(response1[0])]
     response6[0]['aux']['vis'] = None
-    factors = (['uid___A002_X85c183_X36f.ms', 'DA61', '1', 'I', '44.672'],
-               ['uid___A002_X85c183_X36f.ms', 'PM03', '1', 'I', '44.672'])
+    factors = [['uid___A002_X85c183_X36f.ms', 'DA61', '1', 'I', '44.672'],
+               ['uid___A002_X85c183_X36f.ms', 'PM03', '1', 'I', '1']]
 
     def test_convert(self):
         converted = jyperk.InterpolationRspTranslator.convert(self.response1, self.vis)
