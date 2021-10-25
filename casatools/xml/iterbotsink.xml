@@ -1,0 +1,217 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+
+ 
+        <tool module="synthesisiterbot" name="iterbotsink">
+        <shortdescription>tool for synthesis imaging</shortdescription>
+       
+<description>
+synthesisiterbot is an tool that accomplishes synthesis processing.
+A {\tt synthesisiterbot} must be constructed for each MeasurementSet for which one
+wishes to do processing. Multiple copies of {\tt synthesisiterbot} may
+be made at any time (provide they are given different names).
+
+NOTE: this is an abreviated version of the synthesisiterbot found in the CASA 5 series.
+This version just provides a storage sink for non-interactive operation.
+
+</description>
+
+<code>
+	<include>iterbotsink_forward.h</include>
+<private>
+	<include>iterbotsink_private.h</include>
+</private>
+
+</code>
+
+
+
+ 
+   <method name="iterbotsink" type="constructor">
+   <shortdescription>Construct an synthesisiterbot tool</shortdescription>
+   
+<description>
+This is used to construct {\tt synthesisiterbot} tool. 
+
+</description>
+<input>
+
+</input>
+<returns type="iterbotsink"/>
+<example>
+
+
+</example>
+</method>
+
+
+
+   <method name="setupiteration" type="function">
+   <shortdescription>Set parameters to control iteration mechanisms</shortdescription>
+
+<description>
+</description>
+<input>
+
+     <param name="iterpars" type="record">
+     <description>All parameters that control iterations</description>
+     <value type="record"/>
+     </param>
+
+</input>
+<returns type="record"/>
+</method>
+
+
+
+   <method name="cleanComplete" type="function">
+   <shortdescription>Return true when we have completed this clean</shortdescription>
+
+<description>
+</description>
+<input>
+
+     <param name="lastcyclecheck" type="bool">
+     <description>Check using peak residual before major cycle.</description>
+     <value type="bool">false</value>
+     </param>
+
+</input>
+<returns type="int"/>
+</method>
+
+
+
+   <method name="endmajorcycle" type="function">
+   <shortdescription>Record the end of a major cycle</shortdescription>
+
+<description>
+</description>
+<input/>
+<returns type="bool"/>
+</method>
+
+
+   <method name="resetminorcycleinfo" type="function">
+   <shortdescription>Reset info about peak residual and masks, before start minor cycles</shortdescription>
+
+<description>
+</description>
+<input/>
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="getminorcyclecontrols" type="function">
+   <shortdescription>Get the controller for a minor cycle</shortdescription>
+
+<description>
+</description>
+<input>
+
+</input>
+<returns type="record"/>
+</method>
+
+
+
+   <method name="mergeexecrecord" type="function">
+   <shortdescription>Update the iterbot with iteration stats from the deconvolver</shortdescription>
+
+<description>
+</description>
+<input>
+     <param name="execrecord" type="record">
+     <description>Pass in the output of synthesisdeconvolver.executeminorcycle()</description>
+     <value type="record"/>
+     </param>
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="changestopflag" type="function">
+   <shortdescription>Change the stop flag (for interactive clean)</shortdescription>
+
+<description>
+</description>
+<input>
+     <param name="stopflag" type="bool">
+     <description>Set to False for the next cleanComplete() check to stop the run</description>
+     <value>false</value>
+     </param>
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="mergeinitrecord" type="function">
+   <shortdescription>Initialize the iterbot with starting peak residuals</shortdescription>
+
+<description>
+</description>
+<input>
+     <param name="initrecord" type="record">
+     <description>Pass in the output of synthesisdeconvolver.initminorcycle()</description>
+     <value type="record"/>
+     </param>
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+
+
+   <method name="getiterationdetails" type="function">
+   <shortdescription>Return a record with the details of the iteration</shortdescription>
+
+<description>
+</description>
+<input/>
+<returns type="record"/>
+</method>
+
+
+
+
+   <method name="pauseforinteraction" type="function">
+   <shortdescription>Pause for interaction</shortdescription>
+
+<description>
+</description>
+<input/>
+<returns type="record"/>
+</method>
+
+
+
+
+   <method name="getiterationsummary" type="function">
+   <shortdescription>Return a record with a summary of the iteration</shortdescription>
+
+<description>
+</description>
+<input/>
+<returns type="record"/>
+</method>
+
+
+
+   <method name="done" type="function">
+   <shortdescription>Close the tool</shortdescription>
+
+<description>
+</description>
+<input>
+
+</input>
+<returns type="bool"/>
+</method>
+
+</tool>
+
+</casaxml>

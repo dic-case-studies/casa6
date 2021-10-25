@@ -1,0 +1,873 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+
+ 
+        <tool module="synthesisimager" name="synthesisimager">
+	<needs>synthesisimstore</needs>
+        <shortdescription>tool for synthesis imaging</shortdescription>
+       
+<description>
+synthesisimager is an tool that accomplishes synthesis processing.
+A {\tt synthesisimager} must be constructed for each MeasurementSet for which one
+wishes to do processing. Multiple copies of {\tt synthesisimager} may
+be made at any time (provide they are given different names).
+</description>
+
+<code>
+	<include>synthesisimager_forward.h</include>
+<private>
+	<include>synthesisimager_private.h</include>
+</private>
+
+</code>
+
+
+
+ 
+   <method name="synthesisimager" type="constructor">
+   <shortdescription>Construct an synthesisimager tool</shortdescription>
+   
+<description>
+This is used to construct {\tt synthesisimager} tool. 
+
+</description>
+<input>
+
+</input>
+<returns type="synthesisimager"/>
+<example>
+
+
+</example>
+</method>
+
+
+
+   <method name="selectdata" type="function">
+   <shortdescription>Select data from one MS</shortdescription>
+
+<description>
+</description>
+<input>
+     <param name="selpars" type="record">
+     <description>All parameters that control selection within one MS</description>
+     <value type="record"/>
+     </param>
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="tuneselectdata" type="function">
+   <shortdescription>reselect the data to match image definition</shortdescription>
+
+<description>
+</description>
+<input>
+</input>
+<returns type="record"/>
+</method>
+
+   <method name="defineimage" type="function">
+   <shortdescription>Define image coordinate systems FTMs</shortdescription>
+
+<description>
+</description>
+<input>
+     <param name="impars" type="record">
+     <description>All parameters that control image coordinate system definition</description>
+     <value type="record"/>
+     </param>
+
+     <param name="gridpars" type="record">
+     <description>All parameters that control ftmachines and gridding parameters</description>
+     <value type="record"/>
+     </param>
+
+</input>
+<returns type="bool"/>
+</method>
+
+
+  <method name="normalizerinfo" type="function">
+   <shortdescription>pass normalizer info for C++ normalization in lieu of python based normalization</shortdescription>
+
+<description>
+</description>
+<input>
+     <param name="normpars" type="record">
+     <description>Normalization parameters in a record</description>
+     <value type="record"/>
+     </param> 
+
+</input>
+<returns type="bool"/>
+</method>
+
+
+ 
+   <method name="setdata" type="function">
+   <shortdescription>Select data from one MS via conventional parameters (in lieu of selectdata)</shortdescription>
+
+<description>
+Select data from one MS. Call this function in succession if there are
+multiple MSs. 
+</description>
+<input>
+
+     <param name="msname" type="string">
+     <description>Name of one measurement set</description>
+     <value type="string"/>
+     </param>
+
+     <param name="spw" type="string">
+     <description>Spectral Window / Channel / Frequency selection</description>
+     <value type="string"/>
+     </param>
+
+     <param name="freqbeg" type="string">
+     <description>Starting frequency/velocity/channel as a string with units. If spw is also supplied, the intersection will be used </description>
+     <value type="string"/>
+     </param>
+
+     <param name="freqend" type="string">
+     <description>End frequency/velocity/channel as a string with units.</description>
+     <value type="string"/>
+     </param>
+
+     <param name="freqframe" type="string">
+     <description>Frequency frame in which freqbeg and freqend are specified.</description>
+     <value type="string">LSRK</value>
+     </param>
+
+     <param name="field" type="string">
+     <description>Field selection</description>
+     <value type="string"/>
+     </param>
+
+     <param name="antenna" type="string">
+     <description>Antenna / Baseline selection</description>
+     <value type="string"/>
+     </param>
+
+     <param name="timestr" type="string">
+     <description>Time range selection</description>
+     <value type="string"/>
+     </param>
+
+     <param name="scan" type="string">
+     <description>Scan selection</description>
+     <value type="string"/>
+     </param>
+
+     <param name="obs" type="string">
+     <description>Observation id selection</description>
+     <value type="string"/>
+     </param>
+
+     <param name="state" type="string">
+     <description>Scan Intent or State selection</description>
+     <value type="string"/>
+     </param>
+
+     <param name="uvdist" type="string">
+     <description>UV range selection</description>
+     <value type="string"/>
+     </param>
+
+     <param name="taql" type="string">
+     <description>Generic taql selection</description>
+     <value type="string"/>
+     </param>
+
+     <param name="usescratch" type="bool">
+     <description>Use scratch column (True) or virtual records (False) for model data</description>
+     <value type="bool">false</value>
+     </param>
+
+     <param name="readonly" type="bool">
+     <description>Open the MS in readonly mode. No model data will be written.</description>
+     <value type="bool">false</value>
+     </param>
+
+     <param name="incrmodel" type="bool">
+     <description>Subtract existing model data and start with residuals</description>
+     <value type="bool">false</value>
+     </param>
+
+
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="setimage" type="function">
+   <shortdescription>Define the image coordinate systems and types via conventinal parameters in lieu of defineimage</shortdescription>
+
+<description>
+Define the image coordinate systems and shapes.
+</description>
+<input>
+
+     <param name="imagename" type="string">
+     <description>Base image name</description>
+     <value/>
+     </param>
+
+     <param name="nx" type="int">
+     <description>Total number of spatial pixels in x</description>
+     <value>128</value>
+     </param>
+
+     <param name="ny" type="int">
+     <description>Total number of spatial pixels in y</description>
+     <value>-1</value>
+     </param>
+
+     <param name="cellx" type="any">
+     <description>Cellsize in x (e.g. '1arcsec')</description>
+     <any type="variant"/>
+     <value>1.0</value>
+     </param>
+
+     <param name="celly" type="any">
+     <description>Cellsize in y (e.g. '1arcsec')</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+
+     <param name="stokes" type="string">
+     <description>Stokes parameters to image (e.g. 'IQUV')</description>
+     <value>IV</value>
+     <value>IQU</value>
+     <value>IQUV</value>
+     <value>I</value>
+     </param>
+
+
+     <param name="phasecenter" type="any">
+     <description>Direction of phase center as a diretion measure or a field id 
+     </description>
+     <any type="variant"/>
+     <value>0</value>
+     </param>
+
+
+     <param name="nchan" type="int">
+     <description>Number of channels; a -1 (default) means all the channels 
+      as selected in selectvis and combined into one continuum channel
+     </description>
+     <value>-1</value>
+     </param>
+
+     <param name="freqstart" type="any">
+     <description>Start channel; A 0-relative channel number of the spwid  or a frequency quantity      or a velocity quantity or radial velocity measure</description>
+     <any type="variant"/>
+     <value>0</value>
+     </param>
+
+     <param name="freqstep" type="any">
+     <description>Step in channel; integer for number of channels or frequency quantity or velocity quantity or radial velocity measure </description>
+     <any type="variant"/>
+     <value>1</value>
+     </param>
+
+     <param name="restfreq" type="any">
+     <description>rest frequency to use; default =\&gt; use the one available in ms
+     </description>
+     <any type="variant"/>
+     <value/>
+     </param>
+
+     <param name="facets" type="int">
+     <description>Number of facets on each axis</description>
+     <value>1</value>
+     </param>
+
+     <param name="ftmachine" type="string">
+     <description>FT-Machine type</description>
+     <value type="string">gridft</value>
+     </param>
+
+     <param name="ntaylorterms" type="int">
+     <description>Number of terms for a spectral Taylor expansion</description>
+     <value>1</value>
+     </param>
+
+     <param name="reffreq" type="any">
+     <description>Reference Frequency of the image. Also used in the Taylor expansion. </description>
+     <any type="variant"/>
+     <value/>
+     </param>
+
+     <param name="projection" type="string">
+     <description>Image coordinate system projection</description>
+     <value type="string">SIN</value>
+     </param>
+
+     <param name="distance" type="any">
+     <description>Distance to object: usually ignore this! (m)</description>
+     <any type="variant"/>
+     <value>0.0</value>
+     </param>
+
+     <param name="freqframe" type="string">
+     <description>Frequency frame in which freqstart and freqstep are specified.</description>
+     <value type="string">LSRK</value>
+     </param>
+
+     <param name="tracksource" type="bool">
+     <description>Track a source. </description>
+     <value type="bool">false</value>
+     </param>
+
+     <param name="trackdir" type="any">
+     <description>Name of moving source, e.g planet or moon, to keep fixed in image</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+
+     <param name="overwrite" type="bool">
+     <description>Overwrite the image if it exists (true)</description>
+     <value type="bool">true</value>
+     </param>
+
+     <param name="padding" type="float">
+     <description>FFT padding</description>
+     <value type="float">1.0</value>
+     </param>
+
+     <param name="useautocorr" type="bool">
+     <description>Use auto correlations</description>
+     <value type="bool">false</value>
+     </param>
+
+     <param name="usedoubleprec" type="bool">
+     <description>Double Precision gridding or not</description>
+     <value>true</value>
+     </param>
+
+     <param name="wprojplanes" type="int">
+     <description>Number of w-projection planes</description>
+     <value>1</value>
+     </param>
+
+     <param name="convfunc" type="string">
+     <description>Name of convolution function</description>
+     <value>SF</value>
+     </param>
+
+     <param name="startmodel" type="string">
+     <description>Starting model ( image name or component list name )</description>
+     <value/>
+     </param>
+
+     <param name="aterm" type="bool">
+     <description>Set the antenna aperture tmer (aterm) on/off</description>
+     <value>true</value>
+     </param>
+
+     <param name="psterm" type="bool">
+     <description>Set the Prolate Spheroidal term (psterm) on/off</description>
+     <value>true</value>
+     </param>
+
+     <param name="mterm" type="bool">
+     <description>Set the mosaic term (mterm) on/off</description>
+     <value>false</value>
+     </param>
+
+     <param name="wbawp" type="bool">
+     <description>Set usage of the wide-band A-Projection algorithm</description>
+     <value>true</value>
+     </param>
+
+     <param name="cfcache" type="string">
+     <description>Name of convolution function disk cache</description>
+     <value/>
+     </param>
+
+     <param name="usepointing" type="bool">
+     <description>Control application of the pointing correction</description>
+     <value>false</value>
+     </param>
+
+     <param name="pointingoffsetsigdev" type="any">
+     <description>Control application of the pointing correction for heterogenous
+     array allowing for antenna pointing group identification using this parameter.
+     The parameter has a significant cost on the memory used for gridding. Please
+     utilize it wisely.</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+
+     <param name="dopbcorr" type="bool">
+     <description>Control normalization of the raw image by the model PB</description>
+     <value>true</value>
+     </param>
+
+     <param name="conjbeams" type="bool">
+     <description>Set conjbeams on/off </description>
+     <value>false</value>
+     </param>
+
+     <param name="computepastep" type="float">
+     <description>Increment in PA after which re-computation of the
+     GCFs is triggered.  360.0 implies compute GCFs for only the first
+     PA value encountered in the MS.</description>
+     <value>360.0</value>
+     </param>
+
+     <param name="rotatepastep" type="float">
+     <description>Increment in PA after which trigger in-memory
+     rotation of the GCF nearest to the current PA value in the CF cache.</description>
+     <value>5.0</value>
+     </param>
+
+
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+
+
+   <method name="setweighting" type="function">
+   <shortdescription>Set parameters to control weighting during imaging</shortdescription>
+
+<description>
+</description>
+<input>
+
+     <param name="type" type="string">
+     <description>Data weighting scheme</description>
+     <value>natural</value>
+     </param>
+
+     <param name="rmode" type="string">
+     <description>rmode</description>
+     <value>norm</value>
+     </param>
+
+     <param name="noise" type="any">
+     <description>Noise level</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+
+     <param name="robust" type="double">
+     <description>Robustness weighting factor</description>
+     <value>0.0</value>
+     </param>
+
+     <param name="fieldofview" type="any">
+     <description>Field of view</description>
+     <any type="variant"/>
+     <value/>
+     </param>
+
+     <param name="npixels" type="int">
+     <description>NPixels</description>
+     <value>0</value>
+     </param>
+
+     <param name="multifield" type="bool">
+     <description>Multifield</description>
+     <value>false</value>
+     </param>
+     <param name="usecubebriggs" type="bool">
+       <description>Use per channel weight density calculation for Briggs style weighting</description>
+       <value>false</value>
+     </param>
+     <param name="uvtaper" type="stringVec">
+     <description>Parameters of uv-taper Gaussian</description>
+     <value/>
+     </param>
+
+
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+
+   <method name="makepsf" type="function">
+   <shortdescription>Make the psf</shortdescription>
+
+<description>
+</description>
+<input/>
+<returns type="bool"/>
+</method>
+
+
+
+
+   <method name="apparentsens" type="function">
+   <shortdescription>Calculate apparent aggregate sensitivity in the selected visibilities</shortdescription>
+
+<description>
+</description>
+<returns type="record"/>
+</method>
+
+
+   <method name="predictmodel" type="function">
+   <shortdescription>Predict model visibilities.</shortdescription>
+
+<description>
+</description>
+<input/>
+<returns type="bool"/>
+</method>
+
+
+
+<method name="drygridding" type="function">
+  <shortdescription>Run a dry gridding run.</shortdescription>
+
+  <description>
+  </description>
+  <input>
+    <param name="cflist" type="stringVec">
+      <description>
+	List of CFs
+      </description>
+      <value><value>
+      </value></value>
+    </param>
+  </input>
+  <returns type="bool"/>
+</method>
+
+
+
+<method name="fillcfcache" type="function">
+  <shortdescription>
+    Fill a potentially blank CFCache held inside the AWProject-class
+    FTMachines.
+  </shortdescription>
+
+  <description>
+  </description>
+  <input>
+    <param name="cflist" type="stringVec">
+      <description>
+	List of CFs
+      </description>
+      <value><value>
+      </value></value>
+    </param>
+
+    <param name="ftmname" type="string">
+      <description>
+	Name of the FTMachine used
+      </description>
+      <value>
+      </value>
+    </param>
+
+    <param name="cfcpath" type="string">
+      <description>
+	Path to the CFCache on the disk
+      </description>
+      <value>
+      </value>
+    </param>
+
+    <param name="pstermon" type="bool">
+      <description>
+	Is the PS-term ON?
+      </description>
+      <value>
+	false
+      </value>
+    </param>
+
+    <param name="atermon" type="bool">
+      <description>
+	Is the A-term ON?
+      </description>
+      <value>
+	true
+      </value>
+    </param>
+
+    <param name="conjbeams" type="bool">
+      <description>
+	Use WB A-Projection algorithm (use frequency-conjugate beams)?
+      </description>
+      <value>
+	false
+      </value>
+    </param>
+
+
+  </input>
+  <returns type="bool"/>
+</method>
+
+
+
+<method name="reloadcfcache" type="function">
+  <shortdescription>
+    Re-load the CFCache, the name of which should already be set in
+    the tool.
+  </shortdescription>
+
+  <description>
+  </description>
+  <input>
+  </input>
+  <returns type="bool"/>
+</method>
+
+
+
+
+   <method name="executemajorcycle" type="function">
+   <shortdescription>Run a major cycle</shortdescription>
+
+<description>
+</description>
+<input>
+     <param name="controls" type="record">
+     <description>All parameters that control major cycle</description>
+     <value type="record"/>
+     </param>
+</input>
+<returns type="bool"/>
+</method>
+
+
+   <method name="makepb" type="function">
+   <shortdescription>Make the primary beam</shortdescription>
+
+<description>
+</description>
+<input/>
+<returns type="bool"/>
+</method>
+
+
+   <method name="makesdimage" type="function">
+   <shortdescription>Make the single-dish image</shortdescription>
+
+<description>
+</description>
+<input/>
+<returns type="bool"/>
+</method>
+
+
+   <method name="makesdpsf" type="function">
+   <shortdescription>Make the single-dish PSF</shortdescription>
+
+<description>
+</description>
+<input/>
+<returns type="bool"/>
+</method>
+
+   <method name="makeimage" type="function">
+   <shortdescription>calculate images of different type by gridding</shortdescription>
+
+<description>
+This tool function actually does gridding (and Fourier inversion if
+needed) of visibility data to make an image. It allows calculation of
+various types of image:
+\begin{description}
+\item[observed] Make the dirty image from the DATA column ({\em default})
+\item[model] Make the dirty image from the MODEL\_DATA column
+\item[corrected] Make the dirty image from the CORRECTED\_DATA column
+\item[residual] Make the dirty image from the difference of the
+CORRECTED\_DATA and MODEL\_DATA columns
+\item[psf] Make the point spread function
+\item[singledish] Make a single dish image
+\item[coverage] Make a single dish or mosaic coverage image
+\item[holography] Make a complex holography image (experimental)
+
+\end{description}
+</description>
+<input>
+
+     <param name="type" type="string">
+     <description>Type of output image</description>
+     <value>observed</value>
+     <allowed kind="enum">
+      <value>observed</value>
+      <value>model</value>
+      <value>corrected</value>
+      <value>residual</value>
+      <value>psf</value>
+      <value>singledish</value>
+      <value>coverage</value>
+      <value>holography</value>
+     </allowed>
+     </param>
+
+     <param name="image" type="string">
+     <description>Name of output image</description>
+     <value/>
+     </param>
+
+     <param name="compleximage" type="string">
+     <description>Name of output complex image</description>
+     <value/>  
+     </param>
+
+     <param name="model" type="int">
+     <description>In case of multifield which image</description>
+     <value>0</value>
+     </param>
+
+     
+     
+</input>
+<returns type="bool"/>
+</method>
+
+   <method name="unlockimages" type="function">
+   <shortdescription>release some images attached to this process</shortdescription>
+
+<description>
+  Try to unlock images if the need arise
+</description>
+<input>
+   <param name="imagefieldid" type="int">
+     <description>which image or outlier to unlock</description>
+     <value>0</value>
+   </param>
+   </input>
+<returns type="bool"/>
+</method>
+
+
+   <method name="estimatememory" type="function">
+   <shortdescription>Get an estimate in kilobytes of memory that will be needed</shortdescription>
+
+<description>
+  This function returns an estimate of the memory (RAM) to be used by sythesisimager tool. Need to be run after functions setdata and defineimage are done
+</description>
+<input/>
+<returns type="any"><any type="variant"/></returns>
+</method>
+
+   <method name="getimstore" type="function">
+   <shortdescription>Get Image Store</shortdescription>
+
+<description>
+</description>
+<input>
+
+     <param name="id" type="int">
+     <description>Image field id</description>
+     <value type="int">0</value>
+     </param>
+
+</input>
+
+<returns type="synthesisimstore"/>
+</method>
+
+
+
+   <method name="getcsys" type="function">
+   <shortdescription>get internally stored coordsys record</shortdescription>
+<description>
+</description>
+<input>
+</input>
+<returns type="record"/>
+</method>
+
+
+
+   <method name="updatenchan" type="function">
+   <shortdescription>get internally stored updated nchan </shortdescription>
+<description>
+</description>
+<input>
+</input>
+<returns type="int"/>
+</method>
+
+
+
+   <method name="getweightdensity" type="function">
+   <shortdescription>Save natural gridded wt to disk.</shortdescription>
+
+<description>
+</description>
+<input/>
+<returns type="string"/>
+</method>
+
+
+
+   <method name="setweightdensity" type="function">
+   <shortdescription>Load the gridded weight density into image weighting generation  </shortdescription>
+
+   <description>
+     Load the gridded weight density into image weighting; useful in parallel when weight density is combined into one image and loaded in each process. if no imagename is passed the imagename.weight is loaded 
+   </description>
+   <input>
+     <param name="type" type="string">
+       <description>name of image holding combined weight density</description>
+       <value/>
+     </param>
+   </input>
+<returns type="bool"/>
+</method>
+
+
+   <method name="initmpi" type="function">
+   <shortdescription>init c++ based mpi</shortdescription>
+
+<description>
+</description>
+<input>
+
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+
+   <method name="releasempi" type="function">
+   <shortdescription>release c++ based mpi back to python</shortdescription>
+
+<description>
+</description>
+<input>
+
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+
+
+   <method name="done" type="function">
+   <shortdescription>Close the tool</shortdescription>
+
+<description>
+</description>
+<input>
+
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+
+</tool>
+
+</casaxml>

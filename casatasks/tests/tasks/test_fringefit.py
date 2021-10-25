@@ -196,7 +196,6 @@ class Fringefit_refant_bookkeeping_tests(unittest.TestCase):
         refant_ind = 1
         fringefit(vis=self.msfile, caltable=self.sbdcal, refant='WB')
         tblocal.open(self.sbdcal)
-        print("Haha, yes", file=sys.stderr)
         fparam = tblocal.getcol('FPARAM')
         flag = tblocal.getcol('FLAG')
         tblocal.close()
@@ -204,8 +203,46 @@ class Fringefit_refant_bookkeeping_tests(unittest.TestCase):
             self.assertTrue(abs(fparam[i, 0, refant_ind]) < eps )
             self.assertTrue(abs(fparam[i, 0, refant_ind]) < eps)
 
+class FreqMetaTests(unittest.TestCase):
+    prefix = 'n08c1'
+    msfile = prefix + '.ms'
+
+    def setUp(self):
+        shutil.copytree(os.path.join(datapath, self.msfile), self.msfile)
+
+    def tearDown(self):
+        shutil.rmtree(self.msfile)
+        shutil.rmtree(self.prefix + '.mbdcal', True)
+
+    def test_metadata(self):
+        sbdcal = self.prefix + '-zerorates.sbdcal'
+        mbdcal = self.prefix + '.mbdcal'
+        fringefit(vis=self.msfile, caltable=sbdcal, field='4C39.25',
+                  refant='EF', zerorates=True)
+        fringefit(vis=self.msfile, caltable=mbdcal, spw="0,1,2,3", field='J0916+3854', timerange="17:10:00~17:11:00",
+                   combine='spw', gaintable=[sbdcal], refant='EF')
+        tblocal.open(mbdcal + '/SPECTRAL_WINDOW')
+        flagrow = tblocal.getcol('FLAG_ROW')
+        # There are only 4 spws in n08c1!
+        tblocal.close()
+        self.assertTrue((flagrow==[False] + 3*[True]).all())
+        # Only two scans in unit test ms
+        # /scratch/small/UnitTest/n08c1.ms
+        # 10-Mar-2008/17:06:00.0 - 17:09:00.0     1      3 4C39.25                   4320  [0,1,2,3]  [1, 1, 1, 1] 
+        #             17:09:00.0 - 17:11:00.0     2      2 J0916+3854                2880  [0,1,2,3]  [1, 1, 1, 1] 
+        try:
+            fringefit(vis=self.msfile, caltable=mbdcal, spw="0:6~32,1,2,3", field='J0916+3854', timerange="17:10:00~17:11:00",
+                      combine='spw', gaintable=[sbdcal], refant='EF', append=True)
+            print("In test_metadata, a fringefit which should have thrown an exception did not!")
+            self.assertTrue(False)
+        except RuntimeError as e: 
+            print(e)
+            self.assertTrue(True)
 
 
+        
+        
+        
         
 def suite():
     return [Fringefit_tests, Fringefit_single_tests, Fringefit_dispersive_tests]

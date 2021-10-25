@@ -1,0 +1,1830 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd         file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+  
+  
+  
+  
+<tool module="simulator" name="simulator">
+  <shortdescription>Tool for simulation</shortdescription>
+  
+  <code>
+    <include>simulator_forward.h</include>
+    <private>
+      <include>simulator_private.h</include>
+    </private>
+  </code>
+  
+  <description> 
+    
+    simulator provides a unified interface for simulation of telescope
+    processing.  It can create a MeasurementSet from scratch or read in an
+    existing MeasurementSet, it can predict synthesis data onto the (u,v)
+    coordinates or single dish data onto (ra,dec) points, and it can
+    corrupt this data through Gaussian errors, an atmospheric model, or
+    through specific errors residing in (anti-) calibration tables.
+    
+    In the observing phase, simulator creates a MeasurementSet and
+    calculates uvw values. You first make a simulator tool, with the name
+    of the MeasurementSet that you wish to construct. Next you use the
+    various set* methods to set up the observing (antenna locations,
+    sources, spectral windows, etc.). Then you call the observe method for
+    each observing scan you wish to make, or observemany to create several
+    scans. You specify the source name, spectral window name, and
+    observing times. After this, you have a MeasurementSet that is
+    complete but visibilities=0.
+    
+    In the prediction phase, you fill a MeasurementSet (either one newly
+    created or a pre-existing one, perhaps from a real telescope) with
+    data from a model or componentlist, and then corrupt the measurements
+    (if desired).
+    
+    NOTE: sm.predict assumes model image units are Jy/pixel, and in fact
+      will overwrite the brightness units of the image itself!
+
+    The <link anchor="imager:imager.ft.function">ft</link> function of
+    the <link anchor="imager:imager">imager</link> tool can also be used
+    to calculate the model visibility for a model image
+    or <link anchor="componentmodels">componentmodels</link>.
+    
+    To apply errors, first set up the various effects using the relevant
+    set* methods, and then call corrupt.
+
+    Some important details:
+    - One call to observe generates one scan (all rows have the same SCAN_NUMBER).
+    - The start and stop times specified to observe need not be contiguous and 
+      so one can simulate antenna drive times or other gaps.
+    - Currently there is only a rudimentary method to calculate patterns of 
+      observing (mosaicing), since it is easy to do this via sequences of calls 
+      of observe, or simutil::calcpointings, or the simobserve task
+    - The heavy duty columns (DATA, FLAG, IMAGING_WEIGHT, etc. are tiled. New 
+      tiles are generated for each scan. Thus the TSM files will not get very 
+      large.
+    - predict(incremental=False) calculates new visibilities and replaces the 
+      DATA column,
+    - predict(incremental=True) calculates new visibilities, adds them to the 
+      DATA column
+    - predict for any value of incremental then sets CORRECTED_DATA equal to 
+      DATA, and MODEL_DATA to 1
+  </description>
+  
+  
+
+  
+  
+<method name="simulator" type="constructor">
+  <shortdescription>Construct a simulator tool</shortdescription>
+  <description>
+    Create a simulator tool.
+  </description>
+  <returns type="simulatorobject">simulator tool</returns>
+  <example>
+    # create a simulator tool
+    mysim = smtool();    
+  </example>
+</method>  
+
+
+
+<method name="open" type="function">
+  <shortdescription>Construct a simulator tool and create a new MeasurementSet</shortdescription>
+  <description>
+    A simulator tool can either operate on an existing MeasurementSet,
+    predicting and/or corrupting data on the existing uvw coordinates 
+
+    -- to do that open the MS with sm.openfromms(msname). 
+
+    or it can be used to create a new MeasurementSet from descriptions of 
+    the array configuration and the observational parameters 
+
+    -- to create a new MS, use this method sm.open(msname).
+
+    You will also need to run setconfig, setfield, setspw, setspwindow, 
+    setfeed, and settimes.
+
+    Creating the actual (empty) MS is accomplished with sm.observe.  
+    Data can be subsequently sm.predict-ed and sm.corrupt-ed.  
+
+    NOTE: sm.predict assumes the model image units are Jy/pixel, and 
+      in fact will overwrite the brightness units of the image itself!
+  </description>
+  <input>    
+    <param name="ms" type="string">
+      <description>MeasurementSet to be created</description>
+      <value/>
+    </param>
+  </input>
+  <returns type="bool">Boolean</returns>
+  <example>    
+    In this example, we read in the antenna coordinates from an ASCII file, 
+    and simulate a single-pointing VLA observation with a calibrator. 
+    Note that no primary beam attenuation will be applied (see sm.setvp).
+
+    tabname = 'VLAC.LOCAL.TAB'
+    asciifile = 'VLAC.LOCAL.STN'
+    mytab=table.create()
+    mytab.fromascii(tabname, asciifile);
+    xx=[]; yy:=[]; zz:=[]; diam:=[];
+    xx = mytab.getcol('X');  
+    yy = mytab.getcol('Y');
+    zz = mytab.getcol('Z');
+    diam = mytab.getcol('DIAM');
+    #
+    sm.open('NEW1.ms')
+    # do configuration
+    posvla = me.observatory('vla');  #  me.observatory('ALMA') also works!
+    sm.setconfig(telescopename='VLA', x=xx, y=yy, z=zz, dishdiameter=diam, 
+	         mount='alt-az', antname='VLA',
+                 coordsystem='local', referencelocation=posvla);
+
+    # Initialize the spectral windows    
+    sm.setspwindow(spwname='CBand', freq='5GHz',
+		   deltafreq='50MHz',
+		   freqresolution='50MHz',
+		   nchannels=1,
+		   stokes='RR RL LR LL');
+    sm.setspwindow(spwname='LBand', freq='1.420GHz',
+		   deltafreq='3.2MHz',
+		   freqresolution='3.2MHz',
+		   nchannels=32,
+		   stokes='RR LL');
+    
+    # Initialize the source and calibrater
+    sm.setfield(sourcename='My cal',
+		sourcedirection=['J2000','00h0m0.0','+45.0.0.000'],
+		calcode='A');
+    sm.setfield(sourcename='My source',
+		sourcedirection=['J2000','01h0m0.0','+47.0.0.000']);
+  
+    sm.setlimits(shadowlimit=0.001, elevationlimit='8.0deg');
+    sm.setauto(autocorrwt=0.0);
+    
+    sm.settimes(integrationtime='10s', usehourangle=F, 
+                referencetime=me.epoch('utc', 'today'));
+    
+    sm.observe('My cal', 'LBand', starttime='0s', stoptime='300s');
+    sm.observe('My source', 'LBand', starttime='310s', stoptime='720s');
+    sm.observe('My cal', 'CBand', starttime='720s', stoptime='1020s');
+    sm.observe('My source', 'CBand', starttime='1030s', stoptime='1500s');
+    
+    sm.setdata(spwid=1, fieldid=1);
+    sm.predict(imagename='M31.MOD');
+    sm.setdata(spwid=2, fieldid=2);
+    sm.predict(imagename='BigLBand.MOD');
+    sm.close();    
+  </example>
+</method>
+
+ 
+<method name="openfromms" type="function">
+  <shortdescription>Construct a simulator tool using an already existing  MS</shortdescription> 
+  <description>
+    A simulator tool can either operate on an existing MeasurementSet,
+    predicting and/or corrupting data on the existing uvw coordinates
+    - to do that open the MS with sm.openfromms(msname)    
+    or it can be used to create a new MeasurementSet from descriptions of
+    the array configuration and the observational parameters.
+    - to create a new MS, use sm.open(msname).
+    
+    NOTE: sm.predict assumes the model image units are Jy/pixel, and in
+      fact will overwrite the brightness units of the image itself!
+  </description>
+  <input>
+    
+    <param name="ms" type="string">
+      <description>MeasurementSet to be processed</description>
+      <value/>
+      <choice>'MS'</choice>
+    </param>
+  </input>
+  <returns type="bool"> Boolean</returns>
+  <example>
+    sm.openfromms('3C273XC1.MS');
+    sm.predict('3C273XC1.imagename');
+    sm.setnoise(simplenoise='10mJy');
+    sm.setgain(interval='100s', amplitude=0.01);
+    sm.corrupt();
+    sm.close();
+  </example>
+</method>
+
+
+
+ 
+<method name="close" type="function">
+  <shortdescription>Close the simulator tool</shortdescription>
+  <description>
+    Close tools and write data to disk. This is a synonym for done.
+  </description>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+<method name="done" type="function">
+  <shortdescription>Close the simulator tool</shortdescription>  
+  <description>
+    Close tools and write data to disk. This is a synonym for done.
+  </description>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+<method name="name" type="function">
+  <shortdescription>Provide the name of the attached MeasurementSet</shortdescription>
+  <description>
+    Returns the name of the attached MeasurementSet.
+  </description>
+  <returns type="string">String</returns>
+</method>
+
+
+<method name="summary" type="function">
+  <shortdescription>Summarize the current state</shortdescription>
+  <description>
+    Writes a summary of the currently set properties to the default logger.
+  </description>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+<method name="type" type="function">
+  <shortdescription>Return the type of this tool</shortdescription>  
+  <returns type="string">String or fail</returns>
+  <description>
+    This function returns the string `Simulator'.  It is used so that in a
+    script, you can make sure this variable is a simulator tool.
+  </description>
+</method>
+
+
+
+<method name="settimes" type="function">
+  <shortdescription>Set integration time, etc.</shortdescription>
+  <description>
+    This method sets values to be used in sm.observe.  
+    
+    If usehourangle=False, the start and stop times in sm.observe are
+    referenced to referencetime.
+    
+    If usehourangle=True, then in sm.observe, starttime/stoptime will be
+    interpreted as startha/stopha.
+    In that case, the start and stop times are calculated such that the
+    start time is later than the reference time, but less than one day
+    later.  The hour angles refer to the first source observed.
+  </description>
+  
+  <input>    
+    <param name="integrationtime" type="any">
+      <description>Integration time</description>
+      <any type="variant"/> 
+      <value>10s</value>
+    </param>
+    
+    <param name="usehourangle" type="bool">
+      <description>Use starttime/stoptime as hour angles - else they are referenced to referencetime</description>
+      <value>true</value>
+    </param>
+    
+    <param name="referencetime" type="any">
+      <description>Reference time for starttime and stoptime. Epoch Measure . E.g me.epoch('UTC', '50000.0d')
+      </description>
+      <any type="variant"/>
+      <value>50000.0d</value>
+      <choice>epoch measure</choice>
+    </param>
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+<method name="observe" type="function">
+  <shortdescription>Observe a given configuration</shortdescription>
+  
+  <description>
+    Observe a given source with a given spectral window for the specified
+    times, including start, stop, integration, and gap times.
+    
+    If usehourangle=False (set with settimes), the start and stop times
+    are referenced to referencetime.
+    
+    If userhourangle=True, starttime/stoptime are interpreted as
+    startha/stopha, the start and stop times are calculated such that the
+    start time is later than the reference time, but less than one day
+    later, and the hour angles refer to the first source observed.
+    
+    setconfig, setspwindow, setfeed, and setfield must
+    be run before observe can be run.
+    
+    See also sm.observemany 
+  </description>
+  <input>
+    
+    <param name="sourcename" type="string">
+      <description>Name of source or field (must be specified)</description>
+      <value/>
+      <choice>None</choice>
+    </param>
+    
+    <param name="spwname" type="string">
+      <description>Unique user-supplied name for this spectral window</description>
+      <value/>
+      <choice>None</choice>
+    </param>
+    
+    <param name="starttime" type="any">
+      <description>Start time referenced to referencetime, or start hour angle</description>
+      <any type="variant"/>
+      <value>0s</value>
+    </param>
+    
+    <param name="stoptime" type="any">
+      <description>Stop time referenced to referencetime, or stop hour angle</description>
+      <any type="variant"/>
+      <value>3600s</value>
+    </param>
+
+    <param name="add_observation" type="bool">
+      <description>Add a new line to the OBSERVATION subtable for this call</description>
+      <value type="bool">false</value>
+    </param>
+
+    <param name="state_sig" type="bool">
+      <description>a new line will be added to STATE if the following don't match</description>
+      <value type="bool">true</value>
+    </param>
+    
+    <param name="state_ref" type="bool">
+      <value type="bool">false</value>
+    </param>
+    
+    <param name="state_cal" type="double">
+      <value>0.0</value>
+    </param>
+    
+    <param name="state_load" type="double">
+      <value>0.0</value>
+    </param>
+    
+    <param name="state_sub_scan" type="int">
+      <value>0</value>
+    </param>
+    
+    <param name="state_obs_mode" type="string">
+      <value>OBSERVE_TARGET.ON_SOURCE</value>
+    </param>
+
+    <param name="observer" type="string">
+      <value>CASA simulator</value>
+    </param>
+
+    <param name="project" type="string">
+      <value>CASA simulation</value>
+    </param>
+
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+<method name="observemany" type="function">
+  <shortdescription>Observe a given configuration</shortdescription>
+  
+  <description>
+    Observe given sources with a given spectral window for the specified
+    times, including start, stop, integration, and gap times.
+    
+    If usehourangle=False (set with settimes), the start and stop times
+    are referenced to referencetime.
+    
+    If userhourangle=True, starttime/stoptime are interpreted as
+    startha/stopha, the start and stop times are calculated such that the
+    start time is later than the reference time, but less than one day
+    later, and the hour angles refer to the first source observed.
+    
+    See also sm.observe
+  </description>
+  <input>
+    
+    <param name="sourcenames" type="stringVec">
+      <description>Name of sources</description>
+      <value/>
+      <choice>None</choice>
+    </param>
+    
+    <param name="spwname" type="string">
+      <description>Unique user-supplied name for this spectral window</description>
+      <value/>
+      <choice>None</choice>
+    </param>
+    
+    <param name="starttimes" type="stringVec">
+      <description>Start times referenced to referencetime, or start hour angle</description>
+      <value><value>0s</value></value>
+    </param>
+    
+    <param name="stoptimes" type="stringVec">
+      <description>Stop time referenced to referencetime, or stop hour angle</description>
+      <value><value>3600s</value></value>
+    </param>
+    
+    <param name="directions" type="stringVec">
+      <description/>
+      <value><value/></value>
+    </param>
+
+
+    <param name="add_observation" type="bool">
+      <description>Add a new line to the OBSERVATION subtable for this
+      call</description>
+      <value type="bool">false</value>
+    </param>
+
+    <param name="state_sig" type="bool">
+      <description>a new line will be added to STATE if the following don't match</description>
+      <value type="bool">true</value>
+    </param>
+    
+    <param name="state_ref" type="bool">
+      <value type="bool">false</value>
+    </param>
+    
+    <param name="state_cal" type="double">
+      <value>0.0</value>
+    </param>
+    
+    <param name="state_load" type="double">
+      <value>0.0</value>
+    </param>
+    
+    <param name="state_sub_scan" type="int">
+      <value>0</value>
+    </param>
+    
+    <param name="state_obs_mode" type="string">
+      <value>OBSERVE\_TARGET#ON\_SOURCE</value>
+    </param>
+
+    <param name="observer" type="string">
+      <value>CASA simulator</value>
+    </param>
+
+    <param name="project" type="string">
+      <value>CASA simulation</value>
+    </param>
+
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+<method name="setlimits" type="function">
+  <shortdescription>Set limits for observing</shortdescription>
+  
+  <description>
+    Data are flagged for two conditions:
+    
+    - Below elevation limit: If either of the antennas point below the
+    specified elevation limit then the data are flagged. The elevation is
+    calculated correctly for antennas at different locations (such as
+    occurs in VLBI).
+    
+    - Shadowing: If one antenna shadows another such that the fractional
+    (geometric) blockage is greater than the specified limit then the data
+    are flagged. No correction for blockage is made for shadowed but
+    non-flagged points.
+  </description>
+  <input>
+    
+    <param name="shadowlimit" type="double">
+      <description>Maximum fraction of geometrically shadowed area before flagging occurs</description>
+      <value>1e-6</value>
+      <choice>1e-6</choice>
+    </param>
+    
+    <param name="elevationlimit" type="any">
+      <description>Minimum elevation angle before flagging occurs</description>
+      <any type="variant"/>
+      <value>10deg</value>
+    </param>
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+
+
+
+
+<method name="setauto" type="function">
+  <shortdescription>Set autocorrelation weight</shortdescription>
+  
+  <description>
+  </description>
+  <input>
+    
+    <param name="autocorrwt" type="double">
+      <description>Weight to assign autocorrelations (0=none)</description>
+      <value>0.0</value>
+      <choice>0.0</choice>
+    </param>
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+
+
+
+<method name="setconfig" type="function">
+  <shortdescription>Set the antenna configuration</shortdescription>
+  
+  <description>
+    Set the positions of the antennas.  
+    - The name of the telescope will control which voltage pattern 
+      is applied to the data (see sm.setvp for details).
+    - The diameter(s) will be written to the antenna subtable but 
+      ONLY affect the calculated visibilities in sm.predict if 
+      telescope=ALMA,ACA,OVRO, *and*  ftmachine=mosaic
+      (see sm.setvp for details).
+    - simutil::readantenna can be used to read an antenna config. file
+      which includes many existing observatories.
+      see help for the simobserve task, or the example below
+  </description>
+  <input>
+    
+    <param name="telescopename" type="string">
+      <description>Name of the telescope we are simulating (determines VP)</description>
+      <value>VLA</value>
+      <choice>'VLA'</choice>
+    </param>
+    
+    <param name="x" type="doubleVec">
+      <description>Vector of x values of all antennas [m]</description>
+      <value><value>0</value></value>
+      <choice>[]</choice>
+    </param>
+    
+    <param name="y" type="doubleVec">
+      <description>Vector of y values of all antennas [m]</description>
+      <value><value>0</value></value>
+      <choice>[]</choice>
+    </param>
+    
+    <param name="z" type="doubleVec">
+      <description>Vector of z values of all antennas [m]</description>
+      <value><value>0</value></value>
+      <choice>[]</choice>
+    </param>
+    
+    <param name="dishdiameter" type="doubleVec">
+      <description>Vector of diameters of all antennas [m]</description>
+      <value><value>0</value></value>
+      <choice>[]</choice>
+    </param>
+    
+    <param name="offset" type="doubleVec">
+      <description>Vector of offset of all antennas [m]</description>
+      <value><value>0</value></value>
+      <choice>[]</choice>
+    </param>
+    
+    <param name="mount" type="stringVec">
+      <description>Vector of mount types of all antennas (recognized mounts are 'ALT-AZ', 'EQUATORIAL', 'X-Y', 'ORBITING', 'BIZARRE'</description>
+      <value><value>ALT-AZ</value></value>
+      <choice>[]</choice>
+    </param>
+    
+    <param name="antname" type="stringVec">
+      <description>Vector of names of all antennas</description>
+      <value><value>A</value></value>
+      <choice>[]</choice>
+    </param>
+    
+    <param name="padname" type="stringVec">
+      <description>Vector of names of pads or stations</description>
+      <value><value>P</value></value>
+      <choice>[]</choice>
+    </param>
+    
+    <param name="coordsystem" type="string">
+      <description>Coordinate system of antenna positions [x,y,z], 
+	possibilities are 'global', 'local' , 'longlat'</description>
+      <value>global</value>
+      <choice>'global'</choice>
+    </param>
+    
+    <param name="referencelocation" type="any">
+      <description>Reference location [required for local coords] Position Measure of Coordinates of array location. E.g me.position('ITRF', '30.5deg', -20.2deg', 6000km') or  me.observatory('ALMA')
+      </description>
+      <any type="variant"/>
+      <value>ALMA</value>
+      <choice>position measure</choice>
+    </param>
+  </input>
+  <returns type="bool">Bool</returns>
+  <example>
+
+    # known antenna configurations are stored in the data repository, 
+    # for historical reasons under &quot;alma&quot; even though this includes all
+    # known observatories:
+    configdir=casa.values()[0]['data']+&quot;/alma/simmos/&quot;
+
+    # please look in that directory if your observatory is present.
+    # if so, simutil can be used to read the file:
+    from simutil import simutil
+    # a simutil must be instantiated to use most methods
+    u=simutil()
+    x,y,z,d,padnames,telescope,posobs = u.readantenna(configdir+&quot;vla.a.cfg&quot;)
+
+    # note that readantenna converts the positions to earth-centered 
+    # global, from whatever format is in the configuration file, so 
+    # coordsystem=&quot;global&quot; should be used in setconfig
+    sm.setconfig(telescopename=telescope, x=x, y=y, z=z, 
+                 dishdiameter=d.tolist(), 
+                 mount=['alt-az'], antname=padnames,
+                 coordsystem='global', referencelocation=pospbs);
+  </example>
+</method>
+
+
+
+
+<method name="setfeed" type="function">
+  <shortdescription>Set the feed parameters</shortdescription>
+  
+  <description>
+    Specify feed parameters. At this moment, you only have the choice
+    between 'perfect R L' and 'perfect X Y' (i.e., you cannot invent
+    your own corrupted feeds yet).  Doesn't need to be run if you want
+    perfect R and L feeds.
+  </description>
+  <input>
+    
+    <param name="mode" type="string">
+      <description>Mode for specifying feed parameters (currently, perfect only)</description>
+      <value/>
+    </param>
+    <param name="x" type="doubleVec">
+      <description> Some very secretive feed array parameter x</description>
+      <value><value>0</value></value>
+    </param>
+    
+    <param name="y" type="doubleVec">
+      <description> Some more very secretive feed array parameter y
+      </description>
+      <value><value>0</value></value>
+    </param>
+    <param name="pol" type="stringVec">
+      <description> 
+      </description>
+      <value><value>R</value></value>
+      
+    </param>
+    
+    
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+<method name="setfield" type="function">
+  <shortdescription>Set one or more observed fields</shortdescription>
+  
+  <description>
+    Set one or more observed fields, including name and coordinates.
+    Can be invoked multiple times for a complex observation.
+    Must be invoked at least once before sm.observe.
+    
+    If the distance to the object is set then the phase term includes a
+    curvature for the near-field effect at the center of the image.
+  </description>
+  <input>
+    
+    <param name="sourcename" type="string">
+      <description>Name of source or field (must be specified)</description>
+      <value>SOURCE</value>
+      <choice>'unknown'</choice>
+    </param>
+    
+    <param name="sourcedirection" type="any">
+      <description>Direction Measure of Coordinates of source to be observed. E.g me.direction('J2000', '30.5deg','-20.2deg').
+      </description>
+      <any type="variant"/>
+      <value/>
+    </param>
+    
+    <param name="calcode" type="string">
+      <description>Calibration code</description>
+      <value/>
+      <choice>'OBJ'</choice>
+    </param>
+    
+    <param name="distance" type="any">
+      <description>Distance to the object</description>
+      <any type="variant"/>
+      <value>0m</value>
+    </param>
+  </input>
+  <returns type="bool">Bool</returns>
+  <example>
+    
+    sm.setconfig(telescopename=telescope, x=x, y=y, z=z, 
+                 dishdiameter=d.tolist(), 
+                 mount=['alt-az'], antname=padnames,
+                 coordsystem='global', referencelocation=pospbs);
+
+    sm.setspwindow(spwname='XBAND', freq='8GHz', deltafreq='50MHz',
+                   freqresolution='50MHz', nchannels=1, stokes='RR
+                   LL');
+    dir0 = me.direction('B1950',  '16h00m0.0', '50d0m0.000')
+    sm.setfield(sourcename='SIMU1', sourcedirection=dir0);
+    sm.settimes(integrationtime=&quot;10s&quot;, usehourangle=True, 
+                referencetime=me.epoch('TAI', &quot;2012/01/01/00:00:00&quot;))
+    sm.observe(sourcename='SIMU1', spwname='XBAND',
+               starttime='0s', stoptime='3600s')
+
+    
+    
+  </example>
+</method>
+
+
+<method name="setmosaicfield" type="function">
+  <shortdescription>Set observed mosaic fields</shortdescription>
+  
+  <description>
+    Set mosaic fields by internally invoking setfield multiple times.
+    Currently only handle a rectangular mosaicing pattern.  Either
+    setfield or setmosaicfield must be invoked at least once before
+    observe.
+    
+    If the distance to the object is set then the phase term includes a
+    curvature for the near-field effect at the center of the image.
+  </description>
+  <input>
+    
+    <param name="sourcename" type="string">
+      <description>Name of source or field (must be specified).</description>
+      <value>SOURCE</value>
+      <choice>'unknown'</choice>
+    </param>
+    
+    <param name="calcode" type="string">
+      <description>Calibration code</description>
+      <value/>
+      <choice>''</choice>
+    </param>
+    
+    <param name="fieldcenter" type="any">
+      <description>Coordinates of mosaic field center</description>
+      <any type="variant"/>
+      <value/>
+      <choice>MDirection</choice>
+    </param>
+    
+    <param name="xmosp" type="int">
+      <description>Number of mosaic pointing in horizontal direction</description>
+      <value>1</value>
+    </param>
+    
+    <param name="ymosp" type="int">
+      <description>Number of mosaic pointing in vertical direction</description>
+      <value>1</value>
+    </param>
+    
+    <param name="mosspacing" type="any">
+      <description>Spacing between mosaic pointings</description>
+      <any type="variant"/>
+      <value>1arcsec</value>
+    </param>
+    
+    <param name="distance" type="any">
+      <description>Distance to the object</description>
+      <any type="variant"/>
+      <value>0m</value>
+    </param>
+  </input>
+  <returns type="bool">Bool</returns>
+  <example>
+    
+    sm.setconfig(telescopename='VLA', x=xx, y=yy, z=zz, dishdiameter=diam,
+                 mount='alt-az', antname='VLA',
+                 coordsystem='local', referencelocation=dm.observatory('vla'));
+                                                                                
+    sm.setspwindow(spwname='XBAND', freq='8GHz', deltafreq='50MHz',
+                   freqresolution='50MHz', nchannels=1, stokes='RR
+                   LL');
+    dir0 = me.direction('B1950',  '16h00m0.0', '50d0m0.000')
+    sm.setmosaicfield(sourcename='SIMU1', fieldcenter=dir0,
+                      xmosp=2, ymosp=2, mosspacing='154.5arcsec');
+    sm.settimes(integrationtime='10s');
+    sm.observe('SIMU1_1', 'XBAND', starttime='0s', stoptime='100s');
+    sm.observe('SIMU1_2', 'XBAND', starttime='110s', stoptime='210s');
+    sm.observe('SIMU1_3', 'XBAND', starttime='220s', stoptime='320s');
+    sm.observe('SIMU1_4', 'XBAND', starttime='330s', stoptime='430s');
+    
+    
+  </example>
+  In this example, a 2x2 mosaic pattern is set centered around the direction 
+  specified (dir0). The setmosaicfield name each mosaic field with i
+  sourcename+'_i', where i= 1..4.
+</method>
+
+
+
+ 
+<method name="setspwindow" type="function">
+   <shortdescription>Set one or more spectral windows</shortdescription>
+   
+   <description>
+     Set one or more spectral windows for the observations, including
+     starting frequency, number of channels, channel increment and
+     resolution, and stokes parameters observed.  Can be invoked
+     multiple times for a complex observation.  Must be invoked at
+     least once before observe.
+   </description>
+   <input>
+
+     <param name="spwname" type="string">
+     <description>Unique user-supplied name for this spectral window</description>
+     <value>XBAND</value>
+     <choice>'XBAND'</choice>
+     </param>
+
+     <param name="freq" type="any">
+     <description>Starting frequency</description>
+     <any type="variant"/>
+     <value>8.0e9Hz</value>
+     </param>
+
+     <param name="deltafreq" type="any">
+     <description>Frequency increment per channel</description>
+     <any type="variant"/>
+     <value>50e6Hz</value>
+     </param>
+
+     <param name="freqresolution" type="any">
+     <description>Frequency resolution per channel</description>
+     <any type="variant"/>
+     <value>50.e6Hz</value>
+     </param>
+
+     <param name="refcode" type="string">
+     <description>Spectral reference code e.g. LSRK, TOPO, BARY</description>
+     <value type="string">TOPO</value>
+     <allowed kind="enum">
+       <value type="string">LSRK</value>
+       <value type="string">LSRD</value>
+       <value type="string">BARY</value>
+       <value type="string">GEO</value>
+       <value type="string">TOPO</value>
+       <value type="string">GALACTO</value>
+       <value type="string">LGROUP</value>
+       <value type="string">CMB</value>
+     </allowed>
+     </param>
+
+     <param name="nchannels" type="int">
+     <description>Number of channels</description>
+     <value>1</value>
+     </param>
+
+     <param name="stokes" type="string">
+     <description>Stokes types to simulate</description>
+     <value>RR LL</value>
+     <choice>'RR LL'</choice>
+     </param>
+</input>
+<returns type="bool">Bool</returns>
+<example>
+
+To simulate a two spectral window (or two IF's in VLA jargon) data
+set, use setpwid as follows (here we are simulating 16 channels, 50MHz
+wide channel for each spectral window)
+
+
+sm.setspwindow(spwname='CBAND', freq='2GHz', deltafreq='50MHz',
+                   freqresolution='50MHz', nchannels=16, stokes='RR LL');
+
+sm.setspwindow(spwname='SBAND', freq='5GHz', deltafreq='50MHz',
+                   freqresolution='50MHz', nchannels=16, stokes='RR LL');
+
+
+Note that the spwname is used in observe to determine which spectral window
+to use.
+
+</example>
+</method>
+
+
+ 
+<method name="setdata" type="function">
+  <shortdescription>Set the data parameters selection for subsequent processing</shortdescription>
+  
+  <description>
+    This setup tool function selects which data are to be used
+    subsequently. After invocation of setdata, only the selected data are
+    operated on.
+  </description>
+  <input>
+    
+    <param name="spwid" type="intVec">
+      <description>Spectral Window Ids (0 relative) to select</description>
+      <value><value>0</value></value>
+    </param>
+    
+    <param name="fieldid" type="intVec">
+      <description>Field Ids (0 relative) to select</description>
+      <value><value>0</value></value>
+    </param>
+    
+    <param name="msselect" type="string">
+      <description>TAQL select string applied as a logical &quot;and&quot; with the other selections</description>
+      <value/>
+      <choice>String</choice>
+    </param>
+    
+    
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+
+ 
+<method name="predict" type="function">
+  <shortdescription>Predict astronomical data from an image or components</shortdescription>
+  
+  <description>
+    Predict astronomical data from an image.  The (u,v) coordinates
+    already exist, either from a MeasurementSet we have read in or by
+    generating the MeasurementSet coordinates and empty data through
+    smobserve.  This method calculates visibilities for those
+    coordinates.
+    
+    - predict(incremental=False) calculates new visibilities and
+      replaces the DATA column,
+    - predict(incremental=True) calculates new visibilities, adds
+      them to the DATA column
+    - predict for any value of incremental then sets CORRECTED_DATA
+      equal to DATA, and MODEL_DATA to 1
+    * predict assumes model image units are Jy/pixel, and in fact
+      will overwrite the brightness units of the image itself!
+    
+    * treatment of primary beam depends critically on parameters set in 
+      sm.setvp() and sm.setoptions(ftmachine) - see help sm.setvp for 
+      details. For componentlists, if sm.setvp() is run prior to predict, then the spectral variation of each component in the componentlist will include the multiplicative term of the beam value for each channel frequency. So a flat spectrum component will show the frequency variation of the beam in the predicted visibilities.
+    
+  </description>
+  <input>
+    
+    <param name="imagename" type="stringVec">
+      <description>Name of image from which to predict visibilities</description>
+      <value/>
+    </param>
+    
+    <param name="complist" type="string">
+      <description>Name of component list</description>
+      <value/>
+      <choice>String</choice>
+    </param>
+    
+    <param name="incremental" type="bool">
+      <description>Add this model to the existing Data Visibilities?</description>
+      <value>false</value>
+    </param>
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+ 
+<method name="setoptions" type="function">
+  <shortdescription>Set various processing options</shortdescription>
+  
+  <description>
+    Set options for predict.  See also imager help.
+    
+    To simulate single dish data, use gridft=SD and gridfunction=PB.
+    
+    To invoke primary beam convolution in the uv domain, use
+    ftmachine=&quot;mosaic&quot;.  This is the only option that allows
+    heterogeneous array simulation - see the example below and 
+    help sm.setvp for more details.
+  </description>
+  <input>
+    
+    <param name="ftmachine" type="string">
+      <description>Fourier transform machine. Possibilities are 'ft', 'sd', 'mosaic'</description>
+      <value>ft</value>
+      <choice>'ft'</choice>
+    </param>
+    
+    <param name="cache" type="int">
+      <description>Size of gridding cache in complex pixels</description>
+      <value>0</value>
+    </param>
+    
+    <param name="tile" type="int">
+      <description>Size of a gridding tile in pixels (in 1 dimension)</description>
+      <value>16</value>
+    </param>
+    
+    <param name="gridfunction" type="string">
+      <description>Gridding function. String: 'SF'|'BOX'|'PB' </description>
+      <value>SF</value>
+      <choice>'SF'</choice>
+    </param>
+    
+    <param name="location" type="any">
+      <description>Location used in phase rotations. Position Measure of Coordinates of array location. E.g me.position('ITRF', '30.5deg', '-20.2deg', '6000km') or  me.observatory('ALMA')
+      </description>
+      <any type="variant"/>
+      <value>ALMA</value>
+      <choice>position measure</choice>
+    </param>
+    
+    <param name="padding" type="double">
+      <description>Padding factor in image plane (\&gt;=1.0)</description>
+      <value>1.3</value>
+    </param>
+    
+    <param name="facets" type="int">
+      <description>Number of facets</description>
+      <value>1</value>
+    </param>
+    
+    <param name="maxdata" type="double">
+      <description>Maximum data to write to a single TSM file (MB)</description>
+      <value>2000.0</value>
+    </param>
+    
+    <param name="wprojplanes" type="int">
+      <description>Number of projection planes when using wproject as the ft-machine </description>
+      <value>1</value>
+    </param>
+    
+  </input>
+  <returns type="bool">Bool</returns>
+  <example>
+    # set some options
+    sm.setoptions(cache=10000000, tile=32, gridfunction='BOX', me.location('vla'))
+
+    
+    # set ftmachine to invoke uv-domain primary beam convolution, and use that 
+    # to simulate a heterogeneous ALMA 7m+12m array.
+    from simutil import simutil
+    u=simutil()
+    configdir=casa.values()[0]['data']+&quot;/alma/simmos/&quot;
+    x,y,z,d,padnames,telescope,posobs = u.readantenna(configdir+&quot;alma.cycle5.1.cfg&quot;)
+    x2,y2,z2,d2,padnames2,telescope2,posobs2 = u.readantenna(configdir+&quot;aca.cycle5.cfg&quot;)
+    
+    sm.open(&quot;new.het.alma.ms&quot;)
+    sm.setconfig(telescopename=&quot;ALMA&quot;,
+      x=np.append(x,x2),y=np.append(y,y2),z=np.append(z,z2),
+      dishdiameter=np.append(d,d2),
+      mount=['alt-az'], padname=np.append(padnames,padnames2).tolist(),
+      coordsystem='global', referencelocation=posobs)
+    sm.setspwindow(spwname=&quot;band1&quot;, freq=&quot;330GHz&quot;,
+      deltafreq=&quot;1GHz&quot;,freqresolution=&quot;1GHz&quot;,nchannels=1,stokes='XX YY')
+    sm.setfeed(mode='perfect X Y',pol=[''])
+    sm.setlimits(shadowlimit=0.01, elevationlimit='10deg')
+    sm.setauto(0.0)
+    sm.setfield(sourcename=&quot;src1&quot;, 
+      sourcedirection=&quot;ICRS 10:00:00.00 -23.01.22&quot;,
+      calcode=&quot;OBJ&quot;, distance='0m')
+    sm.setfield(sourcename=&quot;src2&quot;, 
+      sourcedirection=&quot;ICRS 10:00:00.00 -23.01.32&quot;,
+      calcode=&quot;OBJ&quot;, distance='0m')
+    sm.settimes(integrationtime=&quot;10s&quot;, usehourangle=True, 
+      referencetime=me.epoch('TAI', &quot;2012/01/01/00:00:00&quot;))
+    etime=&quot;600s&quot;
+    sm.observe(sourcename=&quot;src1&quot;, spwname=&quot;band1&quot;,
+      starttime=qa.mul(-1,qa.quantity(etime)),
+      stoptime=qa.quantity(0,&quot;s&quot;));
+    sm.observe(sourcename=&quot;src2&quot;, spwname=&quot;band1&quot;,
+      starttime=qa.quantity(0,&quot;s&quot;),
+      stoptime=qa.quantity(etime));
+    sm.setoptions(ftmachine=&quot;mosaic&quot;)
+    sm.predict(imagename=&quot;point.ra10.image&quot;)
+    sm.done()
+  </example>
+
+</method>
+
+
+
+
+ 
+<method name="setvp" type="function">
+  <shortdescription>Set the voltage pattern model for subsequent processing</shortdescription>
+  
+  <description>
+    Set the voltage pattern model (and hence, the primary beam) used
+    for a Telecope.  There are currently two ways to set the voltage
+    pattern: by using the extensive list of defaults which the system
+    knows about, or by creating a voltage pattern description with
+    the <link anchor="imager:vpmanager">vpmanager</link>.  If you are
+    simulating a telescope which doesn't yet exist, you will need to
+    supply a model voltage pattern using
+    the <link anchor="imager:vpmanager">vpmanager</link>.
+    
+    sm.predict behavior depends critically on the parameters here, and 
+    the ftmachine parameter set in sm.setoptions
+    
+    sm.predict will always query the vpmanager for a primary beam/VP pattern. 
+    if usedefaultvp==True, it will reset the vpmanager first, so that 
+      the PB obtained will be the default for the given telescope name
+    if usedefaultvp==False, it will check whether vptable is set, and if so, 
+      load that table into the vpmanager and use the beams therein.
+    if usedefaultvp==False and vptable is not set, it will use whatever is 
+      already set in the vpmanager (see example below for overriding a 
+      default telescope beam).
+    
+    What sm.predict does with the obtained PB depends on the ftmachine and 
+    dovp parameters:
+    
+    if ftmachine==&quot;mosaic&quot;:
+    - a message &quot;Performing Mosaic Gridding&quot; indicates that one is using 
+      uv domain convolution for simulating from images.
+    - if the primary beam returned by the vpmanager is ALMA, ACA, or OVRO, 
+      heterogeneous gridding will be invoked, and the dish diameter set
+      in sm.setconfig, or already in the antenna subtable, will be used
+      to convolve sky model images.
+      for ALMA or ACA, dish diameter =12m will use a 10.7m Airy pattern, 
+      and dish diameter =7m will use a 6.25m Airy pattern.
+      see help sm.setoptions for an example.
+    - otherwise the PB returned by the vpmanager will be used. 
+    * heterogeneous simulation only works at present from a sky model
+      image, NOT from sky model components. If you want to simulate a 
+      heterogeneous array, please add components to an image using 
+      ia.modify, and don't specify a component list in sm.predict.
+      Homogeneous array simulation from component lists works fine.
+    - IF dovp=True, the primary beam returned by the vpmanager will 
+      be used to convolve sky model components.  This is not automatically 
+      invoked by ftmachine=&quot;mosaic&quot;, but needs to be set explicitly with 
+      sm.setvp() if you are simulating from components in addition to or 
+      instead of sky model images.
+       
+    if ftmachine==&quot;ft&quot; (the default):
+    - a message &quot;Synthesis Gridding&quot; indicates that if requested with 
+      dovp==True, image domain PB convolution will be used.
+    - if dovp==True, the primary beam returned by the vpmanager will be 
+    used to convolve sky model components and images.
+         
+  </description>
+  <input>
+    
+    <param name="dovp" type="bool">
+      <description>Multiply by the voltage pattern (ie, primary beam) when simulating </description>
+      <value>true</value>
+    </param>
+    
+    <param name="usedefaultvp" type="bool">
+      <description>Look up the default VP for this telescope and frequency?</description>
+     <value>true</value>
+    </param>
+    
+    <param name="vptable" type="string">
+      <description>If usedefaultvp is false, provide a VP Table made with vpmanager</description>
+      <value/>
+      <choice>Table</choice>
+    </param>
+    
+    <param name="dosquint" type="bool">
+      <description>Activate the beam squint in the VP model</description>
+      <value>true</value>
+    </param>
+    
+    <param name="parangleinc" type="any">
+      <description>Parallactice angle increment for squint application</description>
+      <any type="variant"/>
+      <value>360deg</value>
+    </param>
+    
+    <param name="skyposthreshold" type="any">
+      <description> Position threshold on the sky for feed arrays ??
+      </description>
+      <any type="variant"/>
+      <value>180deg</value>
+    </param>
+    <param name="pblimit" type="double">
+      <description> Primary beam limit to use in feed arrays ?
+      </description>
+      <value>1.0e-2</value>
+     </param>
+    
+  </input>
+  <returns type="bool">Bool</returns>
+  <example>
+    # use the default primary beam in subsequent sm.predict (according to 
+    # whatever telescope name was set in sm.setconfig)
+    sm.setvp(dovp=True, usedefaultvp=True)
+    sm.predict(imagename=&quot;point.ra10.image&quot;,complist=&quot;point.cl&quot;)
+    
+    # use an alternate VP table e.g. of the format created by vpmanager:
+    sm.setvp(dovp=True, usedefaultvp=False, vptable='MyAlternateVLAPBModel.TAB', dosquint=F);
+    sm.predict(imagename=&quot;point.ra10.image&quot;,complist=&quot;point.cl&quot;)
+    
+    # set a VP and then use it overridding the default
+    # (if telescope=&quot;NGVLA&quot; was used previously in setconfig, 
+    # or if an MS was loaded with observatory name = &quot;NGVLA&quot;)
+    vp.setpbairy(telescope=&quot;NGVLA&quot;,dishdiam=&quot;10m&quot;,maxrad=&quot;5deg&quot;)
+    sm.setvp(dovp=True,usedefaultvp=False)
+    sm.predict(imagename=&quot;point.ra10.image&quot;,complist=&quot;point.cl&quot;)
+    
+  </example>
+</method>
+
+
+
+ 
+<method name="corrupt" type="function">
+  <shortdescription>Corrupt the data with visibility errors</shortdescription>
+  
+  <description>
+    Add errors specified by the set* functions (such as noise, gains,
+    polarization leakage, bandpass, etc) to the visibility data.  The
+    errors are applied to the DATA and CORRECTED_DATA columns.
+
+    Note that corrupt handles only
+    visibility-plane effects, not image-plane effects such as pointing
+    errors and voltage patterns, which get applied in predict.  Note, the
+    function applies errors to both cross- and auto-correlation data; The
+    auto-correlation data are corrupted properly only for the thermalnoise
+    set by setnoise.
+  </description>
+  
+  <returns type="bool">Boolean</returns>
+  <example>
+    
+    sm,openfromms('3C273XC1.MS');
+    sm.predict('3C273XC1.FAKE.IMAGE');
+    sm.setnoise( mode='simplenoise', simplenoise='0.1Jy');
+    sm.setpa( mode='calculate');
+    sm.corrupt();
+    
+  </example>
+</method>
+
+
+
+
+<method name="reset" type="function">
+  <shortdescription>Reset the corruption terms</shortdescription>   
+  <description>
+    Reset the visibility corruption terms: this means that corrupt
+    introduces no errors.
+  </description>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+
+<method name="setbandpass" type="function">
+  <shortdescription>Set the bandpasses</shortdescription>
+  
+  <description>
+    Set the level of bandpass errors. The error distributions are normal, mean
+    zero, with the variances as specified. (Not yet implemented).
+  </description>
+  <input>
+    
+    <param name="mode" type="string">
+      <description>Mode of operation. String: 'calculate'|'table'</description>
+      <value>calculate</value>
+      <choice>'calculate'</choice>
+    </param>
+    
+    <param name="table" type="string">
+      <description>Name of table</description>
+      <value/>
+      <choice>''</choice>
+    </param>
+    
+    <param name="interval" type="any">
+      <description>Coherence interval e.g. '1h'</description>
+      <any type="variant"/>
+      <value>3600s</value>
+    </param>
+    
+    <param name="amplitude" type="doubleVec">
+      <description>Variances errors in amplitude and phase</description>
+      <value><value>0.0</value></value>
+    </param>
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+<method name="setapply" type="function">
+  <shortdescription>Arrange for corruption by existing cal tables</shortdescription>
+  
+  <description>
+    Arrange for corruption by existing cal tables, in a manner
+    exactly analogous to calibrater.setapply.
+  </description>
+  <input>
+    
+    <param name="table" direction="in" type="string">
+      <description>Calibration table name</description>
+      <value/>
+    </param>
+    
+    <param name="type" direction="in" type="string">
+      <description>Component type</description>
+      <value>B</value>
+      <value>BPOLY</value>
+      <value>G</value>
+      <value>GSPLINE</value>
+      <value>D</value>
+      <value>P</value>
+      <value>T</value>
+      <value>TOPAC</value>
+      <value>GAINCURVE</value>
+      <value/>
+    </param>
+    
+    <param name="t" direction="in" type="double">
+      <description>Interpolation interval (seconds)</description>
+      <value>0.0</value>
+    </param>
+    
+    <param name="field" direction="in" type="any">
+      <description>Select on field</description>
+      <any type="variant"/>
+      <value/>
+    </param>
+    
+    <param name="interp" direction="in" type="string">
+      <description>Interpolation type (in time)</description>
+      <value>aipslin</value>
+      <value>nearest</value>
+      <value>linear</value>
+    </param>
+    
+    <param name="calwt" direction="in" type="bool">
+      <description>Calibrate weights?</description>
+      <value>false</value>
+    </param>
+    
+    <param name="spwmap" direction="in" type="intVec">
+      <description>Spectral windows to apply</description>
+      <value><value>-1</value></value>
+    </param>
+    
+    <param name="opacity" direction="in" type="double">
+      <description>Array-wide zenith opacity (for type='TOPAC')</description>
+      <value>0.0</value>
+    </param>
+    
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+<method name="setgain" type="function">
+  <shortdescription>Set the gains</shortdescription>
+  
+  <description>
+    Set the level of gain errors.  Gain drift is implemented as
+    fractional brownian motion with rms amplitude as specified.
+    Interval is not currently used.
+    
+  </description>
+  <input>
+    
+    <param name="mode" type="string">
+      <description>Mode of operation. String: 'fbm'</description>
+      <value>fbm</value>
+      <choice>'fbm'</choice>
+    </param>
+    
+    <param name="table" type="string">
+      <description>Optional name of table to write</description>
+      <value/>
+      <choice>''</choice>
+    </param>
+    
+    <param name="interval" type="any">
+      <description>timescale for gain variations NOT USED</description>
+      <any type="variant"/>
+      <value>10s</value>
+    </param>
+    
+    <param name="amplitude" type="doubleVec">
+      <description>amplitude scale (RMS) for gain variations [real,imag] or scalar</description>
+      <value><value>0.01</value></value>
+      <choice>[]</choice>
+    </param>
+    
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+
+<method name="settrop" type="function">
+  <shortdescription>Set tropospheric gain corruptions</shortdescription>
+  
+  <description>
+    Set up for corruption by the atmosphere - attenuation and increase in 
+    noise.
+  </description>
+  <input>
+    
+    <param name="mode" type="string">
+      <description>Mode of operation - screen or individual antennas</description>
+      <value>screen</value>
+      <choice>'screen'</choice>
+    </param>
+    
+    <param name="table" type="string">
+      <description>Name of optional cal table to write</description>
+      <value/>
+      <choice>''</choice>
+    </param>
+    
+    <param name="pwv" type="double">
+      <description>total precipitable water vapour in mm</description>
+      <value>3.0</value>
+    </param>
+    
+    <param name="deltapwv" type="double">
+      <description>RMS PWV fluctuations *as a fraction of PWV parameter*</description>
+      <value>0.15</value>
+    </param>
+    
+    <param name="beta" type="double">
+      <description>exponent of fractional brownian motion</description>
+      <value>1.1</value>
+    </param>
+    
+    <param name="windspeed" type="double">
+      <description>wind speed for screen type corruption (m/s)</description>
+      <value>7.</value>
+    </param>
+    
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+
+
+<method name="setpointingerror" type="function">
+  <shortdescription>Set the Pointing error</shortdescription>
+  
+  <description>
+    Set the pointing error from a calpointing table
+  </description>
+  <input>
+    
+    <param name="epjtablename" type="string">
+      <description>Name of a table that has E-Jones errors for Pointing
+      </description>
+      <value/>
+    </param>
+    
+    <param name="applypointingoffsets" type="bool">
+      <description>Apply pointing offsets</description>
+      <value>false</value>
+    </param>
+    
+    <param name="dopbcorrection" type="bool">
+      <description>apply primary beam correction</description>
+      <value>false</value>
+    </param>
+    
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+<method name="setleakage" type="function">
+  <shortdescription>Set the polarization leakage</shortdescription>
+  
+  <description>
+    Set the level of polarization leakage between feeds.
+    Currently, no time dependence is available.
+  </description>
+  <input>
+    
+    <param name="mode" type="string">
+      <description>Mode of operation. String: 'constant'</description>
+      <value>constant</value>
+      <choice>'constant'</choice>
+    </param>
+    
+    <param name="table" type="string">
+      <description>Optional name of table to write</description>
+      <value/>
+      <choice>''</choice>
+    </param>
+    
+    
+    
+    <param name="amplitude" type="doubleVec">
+      <description>Magnitude of pol leakage [real,imag]</description>
+      <value><value>0.01</value></value>
+      <choice>[]</choice>
+    </param>
+    
+    <param name="offset" type="doubleVec">
+      <description>Meam of pol leakage [real,imag]</description>
+      <value><value>0.</value></value>
+      <choice>[]</choice>
+    </param>
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+<method name="oldsetnoise" type="function">
+  <shortdescription>Set the noise level fixed sigma (mode=simplenoise) or
+    Brown's equation (mode=calculate) OBSOLETE VERSION</shortdescription>
+  
+  <description>
+    Set various system parameters from which the thermal (ie, random
+    additive) noise level will be calculated.
+    
+    For mode=simplenoise, one specifies the standard deviation for the
+    noise to be added to real and imaginary parts of the visibility.
+    
+    For mode=calculate, the noise will vary with dish diameter,
+    antenna efficiency, system temperature, opacity, sky temperature,
+    etc.  The noise will increase with the airmass if tau is greater
+    than zero.  The noise is calculated according to the Brown
+    Equation (ie, R.L. Brown's calculation of MMA sensitivity,
+    3Oct95): 
+    dS = 4*sqrt(2) *( T_rx*exp(-tau_atm) + 
+                      T_atm*( exp(tau_atm) - epsilon_l + T_cmb) )
+                   *epsilon_q *epsilon_a *pi *D^2 *sqrt(dnu*dt)
+  </description>
+  <input>
+
+    <param name="mode" type="string">
+      <description>Mode of operation. String: 'simplenoise'|'calculate' 
+      </description>
+      <value>calculate</value>
+      <choice>'simplenoise'</choice>
+      <choice>'calculate'</choice>
+    </param>
+    
+    <param name="table" type="string">
+      <description>Name of noise table - not currently implemented</description>
+      <value/>
+      <choice>''</choice>
+    </param>
+    
+    <param name="simplenoise" type="any">
+      <description>Level of noise (if mode=simplenoise)</description>
+      <any type="variant"/>
+      <value>0.0Jy</value>
+    </param>
+    
+    <param name="antefficiency" type="double">
+      <description>antenna efficiency</description>
+      <value>0.8</value>
+      <choice>0.8</choice>
+    </param>
+    
+    <param name="correfficiency" type="double">
+      <description>Correlation efficiency</description>
+      <value>0.85</value>
+      <choice>0.85</choice>
+    </param>
+    
+    <param name="spillefficiency" type="double">
+      <description>Forward spillover efficiency</description>
+      <value>0.85</value>
+      <choice>0.85</choice>
+    </param>
+    
+    <param name="tau" type="double">
+      <description>Atmospheric Opacity</description>
+      <value>0.1</value>
+      <choice>0.1</choice>
+    </param>
+    
+    <param name="trx" type="double">
+      <description>Receiver temp (ie, all non-atmospheric Tsys contributions) [K]</description>
+      <value>50</value>
+      <choice>50</choice>
+    </param>
+    
+    <param name="tatmos" type="double">
+      <description>(Physical, not Brightness) Temperature of atmosphere [K]</description>
+      <value>230.0</value>
+      <choice>230.0</choice>
+    </param>
+    
+    <param name="tcmb" type="double">
+      <description>Temperature of cosmic microwave background [K]</description>
+      <value>2.7</value>
+      <choice>2.7</choice>
+    </param>
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+
+
+<method name="setnoise" type="function">
+  <shortdescription>Set the noise level fixed sigma (mode=simplenoise) or
+    Brown's equation using the ATM model for frequency-dependent atmospheric
+    opacity (mode=tsys-atm) or Brown's equation, manually specifying the zenith
+    opacity (constant across the band) and atmospheric temperature 
+    (mode=tsys-manual)</shortdescription>
+
+  <description>
+    Set various system parameters from which the thermal (ie, random
+    additive) noise level will be calculated.
+    
+    For mode=simplenoise, one specifies the standard deviation &quot;sigma&quot;
+    for the noise to be added to real and imaginary parts of the visibility.
+    The noise in amplitude per visibility is approximately &quot;sigma&quot; although 
+      it is not Gaussian (see Thompson, Moran, and Swenson fig. 6.9)
+    and the point source noise in a Stokes I image will be 
+      ~sigma/sqrt(n_pol)/sqrt(n_baselines)/sqrt(n_integrations), 
+    where n_pol are the number of polarizations in the MS (typically 2),
+    and n_integrations are the number of correlator integration times 
+    in the MS (~ track time / int. time)
+    
+    For mode=tsys-atm or tsys-atm, the noise will vary with dish
+    diameter, antenna efficiency, system temperature, opacity, sky
+    temperature, etc.  The noise will increase with the airmass if tau
+    is greater than zero.  The noise is calculated according to the
+    Brown Equation (ie, R.L. Brown's calculation of MMA sensitivity,
+    3Oct95):
+    dS = 4*sqrt(2) *( T_rx*exp(-tau_atm) + 
+                      T_atm*( exp(tau_atm) - epsilon_l + T_cmb) )
+                   *epsilon_q *epsilon_a *pi *D^2 *sqrt(dnu*dt)
+
+
+    For mode=tsys-atm, the sky brightness temperature is calculated
+    using an atmospheric model created for the user-input PWV.  For
+    mode=tsys-manual, the user specifies the sky brightness temperature
+    manually.
+  </description>
+  
+  <input>
+    
+    <param name="mode" type="string">
+      <description>Mode of operation.</description>
+      <value>simplenoise</value>
+      <choice>'simplenoise'</choice>
+      <choice>'tsys-atm'</choice>
+      <choice>'tsys-manual'</choice>
+    </param>
+    
+    <param name="table" type="string">
+      <description>Name of optional cal table to write (if OTF=False)</description>
+      <value/>
+      <choice>''</choice>
+    </param>
+    
+    <param name="simplenoise" type="any">
+      <description>Level of noise if not calculated by amt</description>
+      <any type="variant"/>
+      <value>0.1Jy</value>
+    </param>
+    
+    <param name="pground" type="any">
+      <description>Ground pressure for ATM model (if tsys-atm)</description>
+      <any type="variant"/>
+      <value>560mbar</value>
+    </param>
+    
+    <param name="relhum" type="double">
+      <description>ground relative humidity for ATM model (if tsys-atm)</description>
+      <value>20.0</value>
+    </param>
+    
+    <param name="altitude" type="any">
+      <description>site altitude for ATM model (if tsys-atm)</description>
+      <any type="variant"/>
+      <value>5000m</value>
+    </param>
+    
+    <param name="waterheight" type="any">
+      <description>Height of water layer for ATM model (if tsys-atm)</description>
+      <any type="variant"/>
+      <value>200m</value>
+    </param>
+    
+    <param name="pwv" type="any">
+      <description>Precipitable Water Vapor ATM model (if tsys-atm)</description>
+      <any type="variant"/>
+      <value>1mm</value>
+    </param>
+     
+    <param name="tatmos" type="double">
+      <description>Temperature of atmosphere [K] (if tsys-manual)</description>
+      <value>250.0</value>
+    </param>
+    
+    <param name="tau" type="double">
+      <description>Zenith Atmospheric Opacity (if tsys-manual)</description>
+      <value>0.1</value>
+    </param>
+    
+    <param name="antefficiency" type="double">
+      <description>Antenna efficiency</description>
+      <value>0.8</value>
+    </param>
+    
+    <param name="spillefficiency" type="double">
+      <description>Forward spillover efficiency</description>
+      <value>0.85</value>
+    </param>
+    
+    <param name="correfficiency" type="double">
+      <description>Correlation efficiency</description>
+      <value>0.88</value>
+    </param>
+    
+    <param name="trx" type="double">
+      <description>Receiver temp (ie, all non-atmospheric Tsys contributions) [K]</description>
+      <value>50</value>
+    </param>
+    
+    <param name="tground" type="double">
+      <description>Temperature of ground/spill [K]</description>
+      <value>270.0</value>
+    </param>
+    
+    <param name="tcmb" type="double">
+      <description>Temperature of cosmic microwave background [K]</description>
+      <value>2.73</value>
+    </param>
+    
+    <param name="OTF" type="bool">
+      <description>calculate noise on-the-fly (WARNING: only experts with high-RAM machines should use False)</description>
+      <value type="bool">true</value>
+    </param>
+    
+    <param name="senscoeff" type="double">
+      <description>sensitivity constant (1./sqrt(2) for interferometer [default]; 1. for total power)</description>
+      <value>0.</value>
+    </param>
+    
+    <param name="rxtype" type="int">
+      <description>Receiver type; 0=2SB, 1=DSB e.g. ALMA B9</description>
+      <value>0</value>
+    </param>
+    
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+
+<method name="setpa" type="function">
+  <shortdescription>Corrupt phase by the parallactic angle</shortdescription>
+  
+  <description>
+    Corrupt phase by the parallactic angle
+  </description>
+  <input>
+    
+    <param name="mode" type="string">
+      <description>Mode of operation. String: 'calculate'|'table'</description>
+      <value>calculate</value>
+      <choice>'calculate'</choice>
+    </param>
+    
+    <param name="table" type="string">
+      <description>Name of table</description>
+      <value/>
+      <choice>''</choice>
+    </param>
+    
+    <param name="interval" type="any">
+      <description>Interval for parallactic angle application, e.g. '10s'</description>
+      <any type="variant"/>
+      <value>10s</value>
+    </param>
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+<method name="setseed" type="function">
+  <shortdescription>Set the seed for the random number generator</shortdescription>
+  
+  <description>
+    
+  </description>
+  <input>
+    
+    <param name="seed" type="int">
+      <description>Seed</description>
+      <value>185349251</value>
+      <choice>185349251</choice>
+    </param>
+  </input>
+  <returns type="bool">Bool</returns>
+</method>
+
+</tool>
+
+
+</casaxml>
