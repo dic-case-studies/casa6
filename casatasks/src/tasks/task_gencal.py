@@ -30,11 +30,11 @@ def gencal(vis=None, caltable=None, caltype=None, infile='None',
         vis {str} -- The file path stored the visibility data.
         caltable {str} -- A file name which store the caltable.
         caltype {str} -- The calibration type.
-        infile (str) -- Specifies the name of the file to read.
+        infile {str} -- Specifies the name of the file to read.
         subparameter of caltype='jyperk:
-            endpoint (str) -- The endpoint of the Jy/K DB Web API to access.
+            endpoint {str} -- The endpoint of the Jy/K DB Web API to access.
                 options are 'asdm' (default), 'model-fit', 'interpolation'.
-            timeout {int} --- Maximum waiting time [sec] for the Web API access,
+            timeout {int} -- Maximum waiting time [sec] for the Web API access,
                 defaults to 180 sec.
             retry {int} -- Number of retry when the Web API access fails,
                 defaults to 3 times.

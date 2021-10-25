@@ -29,11 +29,11 @@ def gen_factor_via_web_api(vis, spw='*',
     This function will be used task_gencal.
 
     Arguments:
-        vis {str}: The file path of the visibility data.
-        spw {str}: Spectral windows.
-        endpoint (str) -- The endpoint of Jy/K DB Web API to access. Options are
+        vis {str} -- The file path of the visibility data.
+        spw {str} -- Spectral windows.
+        endpoint {str} -- The endpoint of Jy/K DB Web API to access. Options are
             'asdm' (default), 'model-fit', 'interpolation'.
-        timeout {int} --- Maximum waiting time [sec] for the Web API access, defaults
+        timeout {int} -- Maximum waiting time [sec] for the Web API access, defaults
             to 180 sec.
         retry {int} -- Number of retry when the Web API access fails, defaults to 3
             times.
@@ -85,7 +85,7 @@ class ASDMParamsGenerator():
 
         Arguments:
             vis {str} -- The file path of the visibility data.
-            spw (None)  -- This parameter is not used. It is provided to align the
+            spw {str} -- This parameter is not used. It is provided to align the
                 calling method with other classes (InterpolationParamsGenerator and
                 ModelFitParamsGenerator).
 
@@ -276,7 +276,7 @@ class Bands():
 
         Params:
             target_mean_freqs {dict} -- The mean freqs which does not been detected the bands.
-            vis {str}: The file path of the visibility data.
+            vis {str} -- The file path of the visibility data.
         """
         known_bands = Bands._get_known_bands(vis)
         science_windows = list(known_bands.keys())
@@ -426,7 +426,7 @@ class JyPerKDatabaseClient():
         """Set the parameters to be used when accessing the Web API.
 
         Arguments:
-            endpoint (str) -- The endpoint of Jy/K DB Web API to access. Options are
+            endpoint {str} -- The endpoint of Jy/K DB Web API to access. Options are
                 'asdm' (default), 'model-fit', 'interpolation'.
             timeout {int} --- Maximum waiting time [sec] for the Web API access, defaults
                 to 180 sec.
@@ -579,7 +579,7 @@ class ASDMRspTranslator():
         """Convert from the response to list with factor.
 
         Arguments:
-            spw {None}  -- This parameter is not used. It is provided to align the
+            spw {str} -- This parameter is not used. It is provided to align the
                     calling method with other classes (InterpolationRspTranslator and
                     ModelFitRspTranslator).
 
@@ -610,6 +610,7 @@ class InterpolationRspTranslator():
             data_set {dict} -- The result of the Web API.
             vis {str} -- The file path of the visibility data.
             spw {str} -- Spectral windows.
+
         Returns:
             list -- List of Jy/K conversion factors with meta data.
         """
