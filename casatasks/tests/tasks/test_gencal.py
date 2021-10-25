@@ -535,7 +535,7 @@ class TestJyPerK(unittest.TestCase):
 
         cls.working_directory = TestJyPerK._generate_uniq_fuse_name_in_cwd(
                                     prefix='working_directory_for_jyperk_')
-        os.mkdir(cls.directory_name)
+        os.mkdir(cls.working_directory)
         os.chdir(cls.working_directory)
 
         original_vis = os.path.join(datapath, f'{cls.vis}.sel')
