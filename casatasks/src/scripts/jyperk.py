@@ -108,7 +108,7 @@ class ASDMParamsGenerator():
         Returns:
             str -- Corresponding ASDM uid.
         """
-        basename = os.path.basename(vis.rstrip('/'))
+        basename = os.path.basename(os.path.abspath(vis))
         pattern = '^uid___A[0-9][0-9][0-9]_X[0-9a-f]+_X[0-9a-f]+\.ms$'
         if re.match(pattern, basename):
             return basename.replace('___', '://').replace('_', '/').replace('.ms', '')
@@ -565,7 +565,7 @@ class Translator():
         filtered = [
             i for i in factors if (len(i) == 5)
             and (
-                i[0] == os.path.basename(vis.rstrip('/')) and (int(i[2]) in science_windows)
+                i[0] == os.path.basename(os.path.abspath(vis)) and (int(i[2]) in science_windows)
             )
         ]
         return filtered
@@ -652,7 +652,7 @@ class InterpolationRspTranslator():
             if not isinstance(vis, str):
                 raise TypeError('The response.aux.vis in the JSON obtained from Jy/K db must be str.')
 
-            basename = os.path.basename(vis.rstrip('/'))
+            basename = os.path.basename(os.path.abspath(vis))
 
             factor = _extract_factor(data)
             polarization = 'I'
