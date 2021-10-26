@@ -120,12 +120,54 @@ Current antenna-based gencal options (caltype) are:
    <param subparam="true" name="infile" type="string">
       <shortdescription>Input ancilliary file</shortdescription>
       <description>Input ancilliary file
-                     Subparameter of caltype='gc|gceff|tecim'
+                     Subparameter of caltype='gc|gceff|tecim|jyperk'
                      Default: none
       </description>
       <value/>
    </param>
-         
+
+   <param subparam="true" name="endpoint" type="string">
+      <shortdescription>Input endpoint of the Jy/K DB Web API</shortdescription>
+      <description>Input endpoint of the Jy/K DB Web API.
+                     Subparameter of caltype='jyperk'
+                     Default: 'asdm'
+                     Options: 'asdm', 'model-fit', 'interpolation'
+      </description>
+      <value/>
+      <allowed kind="enum">
+         <value>asdm</value>
+         <value>model-fit</value>
+         <value>interpolation</value>
+      </allowed>
+   </param>
+
+   <param subparam="true" name="timeout" type="int">
+      <shortdescription>Maximum waiting time [sec] for the Web API access</shortdescription>
+      <description>Maximum waiting time [sec] for the Web API access.
+                     Subparameter of caltype='jyperk'
+                     Subparameter of caltype='jyperk'Default: 180
+      </description>
+      <value/>
+   </param>
+
+   <param subparam="true" name="retry" type="int">
+      <shortdescription>Number of retry when the Web API access fails</shortdescription>
+      <description>Number of retry when the Web API access fails.
+                     Subparameter of caltype='jyperk'
+                     Default: 3
+      </description>
+      <value/>
+   </param>
+
+   <param subparam="true" name="retry_wait_time" type="int">
+      <shortdescription>Waiting time [sec] until next query</shortdescription>
+      <description>Waiting time [sec] until next query, when the Web API access fails.
+                     Subparameter of caltype='jyperk'
+                     Default: 5
+      </description>
+      <value/>
+   </param>
+
    <param name="spw" type="string">
       <shortdescription>Select spectral window/channels</shortdescription>
       <description>Select spectral window/channels
