@@ -30,7 +30,8 @@ def gencal(vis=None, caltable=None, caltype=None, infile='None',
         vis {str} -- The file path stored the visibility data.
         caltable {str} -- A file name which store the caltable.
         caltype {str} -- The calibration type.
-        infile {str} -- Specifies the name of the file to read.
+        Subparameter of caltype='gc|gceff|tecim|jyperk'
+            infile {str} -- Specifies the name of the file to read.
         subparameter of caltype='jyperk:
             endpoint {str} -- The endpoint of the Jy/K DB Web API to access.
                 options are 'asdm' (default), 'model-fit', 'interpolation'.
@@ -41,10 +42,10 @@ def gencal(vis=None, caltable=None, caltype=None, infile='None',
             retry_wait_time {int} -- Waiting time [sec] until next query
                 when the Web API access fails, defaults to 5 sec.
         spw {str} -- The spectral windows.
-        antenna {str} --
-        pol {str} --
-        parameter {} --
-        uniform {} --
+        antenna {str} -- Select data based on antenna/baseline.
+        pol {str} -- Polarization selection for specified parameters.
+        parameter {doubleVec} -- The calibration values.
+        uniform {bool} -- Assume uniform calibration values across the array.
     """
 
     # validate arguments
