@@ -729,7 +729,8 @@ def suite():
             test_gencal_antpos_alma,
             gencal_test_tec_vla,
             gencal_gaincurve_test,
-            gencal_tsys_test]
+            gencal_tsys_test,
+            TestJyPerK]
 
 
 if is_CASA6:
