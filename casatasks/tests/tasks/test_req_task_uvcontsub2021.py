@@ -28,29 +28,16 @@ import os
 import shutil
 import unittest
 
-CASA6 = False
-try:
-    from casatools import table, ctsys
-    from casatasks import uvcontsub2021
-    ctsys_resolve = ctsys.resolve
-    CASA6 = True
-except ImportError:
-    from tasks import uvcontsub2021
-    from taskinit import tbtool as table
-
-    dataroot = os.path.join(
-        os.environ.get('CASAPATH').split()[0], 'casatestdata'
-    )
-
-    def ctsys_resolve(mypath):
-        return os.path.join(dataroot, mypath)
+from casatools import table, ctsys
+from casatasks import uvcontsub2021
+ctsys_resolve = ctsys.resolve
 
 datadir = os.path.join('unittest', 'uvcontsub')
 ms_simple = 'known0.ms'
-datapath_simple = ctsys_resolve(os.path.join(datadir, ms_simple))
+datapath_simple = ctsys.resolve(os.path.join(datadir, ms_simple))
 
 ms_alma = 'uid___X02_X3d737_X1_01_small.ms'
-datapath_alma = ctsys_resolve(os.path.join('measurementset', 'alma', ms_alma))
+datapath_alma = ctsys.resolve(os.path.join('measurementset', 'alma', ms_alma))
 
 
 class uvcontsub2021_test(unittest.TestCase):
@@ -157,12 +144,8 @@ class uvcontsub2021_test(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='MODEL')
 
-        if CASA6:
-            with self.assertRaises(AssertionError):
-                res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='bogus')
-        else:
-            with self.assertRaises(RuntimeError):
-                res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='bogus')
+        with self.assertRaises(AssertionError):
+            res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='bogus')
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='DATA')
         self._check_return(res)
@@ -236,7 +219,7 @@ class uvcontsub2021_test(unittest.TestCase):
         self._check_rows(self.output, 'DATA', 340)
 
     def test_writemodel(self):
-        """ Check the model column is added to the output MS and its values maatch"""
+        """ Check the model column is added to the output MS and its values match"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, writemodel=True)
         self._check_return(res)
