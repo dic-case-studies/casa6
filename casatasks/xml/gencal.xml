@@ -133,12 +133,7 @@ Current antenna-based gencal options (caltype) are:
                      Default: 'asdm'
                      Options: 'asdm', 'model-fit', 'interpolation'
       </description>
-      <value/>
-      <allowed kind="enum">
-         <value>asdm</value>
-         <value>model-fit</value>
-         <value>interpolation</value>
-      </allowed>
+      <value>asdm</value>
    </param>
 
    <param subparam="true" name="timeout" type="int">
