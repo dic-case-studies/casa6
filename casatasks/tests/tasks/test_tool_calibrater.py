@@ -114,6 +114,7 @@ class calibrater_test(unittest.TestCase):
     def test_standardPath(self):
         """ open setapply setsolve state solve close """
 
+        cb.setvi(old=True)
         cb.open(self._vis)
         cb.setapply(table=self._cal)
         cb.setsolve(table='output.ms')
@@ -165,20 +166,19 @@ class calibrater_test(unittest.TestCase):
     def test_reinitModel(self):
         """ Check that initcalset will reset the CORRECTED_DATA to unity """
 
-        # do a calibration so that there is a MODEL_DATA col
-        cb.open(self._vis)
-        cb.setapply(table=self._cal)
-        cb.setsolve(table=self._cal)
-        cb.solve()
-        cb.close()
-
         # Need to be using the old vis
         cb.setvi(old=True)
 
-        # Now modify the MODEL_DATA column
-        tb.open(self._vis, nomodify=False)
-        col = tb.getcol('MODEL_DATA') + 2
-        tb.putcol('MODEL_DATA', col)
+
+        # do a calibration so that there is a MODEL_DATA col
+        cb.open(self._vis)
+        cb.setapply(table=self._cal)
+        cb.correct()
+        cb.close()
+
+        # Get the corrected data
+        tb.open(self._vis)
+        beforecol = tb.getcol('CORRECTED_DATA')
         tb.close()
 
         # Now to reinitialize
@@ -186,15 +186,14 @@ class calibrater_test(unittest.TestCase):
         cb.initcalset()
         cb.close()
 
-        # Check that the columns were reset to unity
-        tb.open(self.vis)
-        col = tb.getcol('MODEL_DATA')
+        # Get the corrected data after
+        tb.open(self._vis)
+        aftercol = tb.getcol('CORRECTED_DATA')
+        observed = tb.getcol('DATA')
         tb.close()
 
-        self.assertTrue(np.all(col[0] == 1))
-        self.assertTrue(np.all(col[1] == 0))
-        self.assertTrue(np.all(col[2] == 0))
-        self.assertTrue(np.all(col[3] == 1))
+        self.assertFalse(np.array_equal(beforecol, aftercol))
+        self.assertTrue(np.array_equal(aftercol, observed))
 
     def test_applyPosAngCal(self):
         # Is this needed? I think it's covered in task tests
@@ -588,7 +587,7 @@ class calibrater_test(unittest.TestCase):
         ref = np.mean(tb.getcol('MODEL_DATA'))
         tb.close()
 
-        self.assertTrue(np.isclose(ref, (0.49776817835921183+0.0001577823988490721j)))
+        self.assertTrue(np.isclose(ref, (0.3162506820017762+0.0490544367995527j)))
 
     def test_setCorrDepFlags(self):
         """ Check that corrdepflags will be checked """
