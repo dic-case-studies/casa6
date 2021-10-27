@@ -38,8 +38,8 @@ This is used to construct {\tt synthesisimstore} tool.
 </method>
 
 
-  <method name="getImage" type="function">
-    <shortdescription>Directly open the image from the image store.</shortdescription>
+  <method name="getImageName" type="function">
+    <shortdescription>Returns the name of the image, as seen by the image store.</shortdescription>
      
     <input>
       <param name="imageId" type="string">
@@ -50,8 +50,8 @@ This is used to construct {\tt synthesisimstore} tool.
         <value>0</value>
       </param>
     </input>
-    <returns type="image"/>
-    <description>Directly open the image from the image store.</description>
+    <returns type="string"/>
+    <description>Returns the name of the image, as seen by the image store.</description>
   </method>
 
 
