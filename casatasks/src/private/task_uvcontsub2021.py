@@ -1,20 +1,7 @@
-from __future__ import absolute_import
 import os
-
-# get is_CASA6, is_python3
-from casatasks.private.casa_transition import *
-if is_CASA6:
-    from casatools import ms, mstransformer
-    from casatasks import casalog
-    from .mstools import write_history
-
-else:
-    from taskinit import mstool, mttool
-    from taskinit import casalog
-    from mstools import write_history
-
-    mstransformer = mttool
-    ms = mstool
+from casatools import ms, mstransformer
+from casatasks import casalog
+from .mstools import write_history
 
 
 def uvcontsub2021(vis=None, outputvis=None, field=None, spw=None,
@@ -78,13 +65,10 @@ def uvcontsub2021(vis=None, outputvis=None, field=None, spw=None,
     try:
         mslocal = ms()
         param_names = uvcontsub2021.__code__.co_varnames[:uvcontsub2021.__code__.co_argcount]
-        if is_python3:
-            vars = locals()
-            param_vals = [vars[p] for p in param_names]
-        else:
-            param_vals = [eval(p) for p in param_names]
-            write_history(mslocal, outputvis, 'uvcontsub2021', param_names,
-                          param_vals, casalog)
+        loc_vars = locals()
+        param_vals = [loc_vars[p] for p in param_names]
+        write_history(mslocal, outputvis, 'uvcontsub2021', param_names,
+                      param_vals, casalog)
     except Exception as instance:
         casalog.post("*** Error \'{}\' updating HISTORY".format(instance), 'WARN')
     finally:
