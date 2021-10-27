@@ -453,7 +453,7 @@ class PySynthesisImager:
         if pixelVals.max() > 0:
             idx = np.unravel_index([pixelVals.argmax()], pixelVals.shape)
             idx = [x[0] for x in idx]  # (array([296]), array([147]), array([0]), array([0])) --> [296, 147, 0, 0]
-            casalog.post(f"Warning! Non-zero values at the edge of the .pb image can cause unexpected aliasing effects! (found value {pixelVals.max()} at index {idx})", "WARNING")
+            casalog.post(f"Warning! Non-zero values at the edge of the .pb image can cause unexpected aliasing effects! (found value {pixelVals.max()} at index {idx})", "WARN")
         # release the image
         _ia.close()
         _ia.done()
