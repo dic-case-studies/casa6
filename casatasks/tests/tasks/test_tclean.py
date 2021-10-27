@@ -941,7 +941,7 @@ class test_iterbot(testref_base):
      def test_iterbot_cube_restart_updatedmask(self): 
           """ [iterbot] Test_cube_restart_updatedmask : restart cube with an updated mask (CAS-13508 fix verification) """
           self.prepData('refim_twopoints_twochan.ms')
-          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=4,parallel=self.parallel)
+          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=4,interpolation='nearest', parallel=self.parallel)
           os.system('rm -rf '+self.img+'.mask')
 
           # Create a new mask around the 1Jy source only. 
@@ -950,7 +950,7 @@ class test_iterbot(testref_base):
           mask_around_dim_source=self.img+'.mask.dim.source'
 
           # 2nd clean with the updated mask
-          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',niter=10,calcres=False, calcpsf=False, restart=True, mask=mask_around_dim_source, interactive=0,parallel=self.parallel)
+          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',niter=10,calcres=False, calcpsf=False, restart=True, mask=mask_around_dim_source, interactive=0,interpolation='nearest', parallel=self.parallel)
 
           ret={}
           if self.parallel:
@@ -960,8 +960,8 @@ class test_iterbot(testref_base):
           
           # check initial cyclethreshold
           # true value: 
-          # 0.68944335
-          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.83,[256,256,0,0]),(self.img+'.model', 0.27, [256,256,0,1])], firstcyclethresh=0.68944335)
+          # 0.1988602
+          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.94,[256,256,0,0]),(self.img+'.model', 0.53, [256,256,0,1])], firstcyclethresh=0.1988602)
 
           self.assertTrue(self.check_final(report))
 
@@ -990,11 +990,11 @@ class test_iterbot(testref_base):
      def test_iterbot_cube_restart_pbmask(self): 
           """ [iterbot] Test_cube_restart_updatedmask : restart cube with pbmask (CAS-13508 fix verification) """
           self.prepData('refim_twopoints_twochan.ms')
-          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=4,parallel=self.parallel)
+          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=0,interpolation='nearest', parallel=self.parallel)
           os.system('rm -rf '+self.img+'.mask')
 
           # 2nd clean with pbmask 
-          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',niter=10,calcres=False, calcpsf=False, restart=True, usemask='pb', pbmask=0.8, interactive=0,parallel=self.parallel)
+          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',niter=10,calcres=False, calcpsf=False, restart=True, usemask='pb', pbmask=0.8, interactive=0, interpolation='nearest', parallel=self.parallel)
 
           ret={}
           if self.parallel:
@@ -1003,8 +1003,9 @@ class test_iterbot(testref_base):
             ret=retpar 
           
           # check initial cyclethreshold
-          # true value:0.68944335  
-          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.37,[256,256,0,0]),(self.img+'.model', 0.15, [256,256,0,1])],firstcyclethresh=0.68944335)
+          # true value:0.186613 
+          #report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.37,[256,256,0,0]),(self.img+'.model', 0.15, [256,256,0,1])],firstcyclethresh=0.68944335)
+          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.74,[256,256,0,0]),(self.img+'.model', 0.54, [256,256,0,1])],firstcyclethresh=0.18661306)
 
           self.assertTrue(self.check_final(report))
 ##############################################
