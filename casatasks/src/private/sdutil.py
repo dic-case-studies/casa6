@@ -1,6 +1,7 @@
 import abc
 import contextlib
 import functools
+import inspect
 import os
 import re
 import traceback
@@ -137,6 +138,50 @@ def sdtask_decorator(func):
             casalog.post(traceback_info, 'SEVERE')
             casalog.post(str(e), 'ERROR')
             raise
+        return retval
+    return wrapper
+
+def callable_sdtask_decorator(func):
+    """
+    This is a decorator function for sd tasks.
+    Currently the decorator does:
+
+       1) set origin to the logger
+       2) handle exception
+
+    So, you don't need to set origin in the task any more.
+    Also, you don't need to write anything about error
+    handling in the task. If you have something to do
+    at the end of the task execution, those should be
+    written in the destructor of worker class, not in
+    the 'finally' block.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+
+        caller = func.__name__
+        if '__taskcaller__' in kwargs:
+            caller = kwargs['__taskcaller__']
+            casalog.origin(kwargs['__taskcaller__'])
+            del(kwargs['__taskcaller__'])
+        else:
+            casalog.origin(caller)
+
+        retval = None
+        # Any errors are handled outside the task.
+        # however, the implementation below is effectively
+        # equivalent to handling it inside the task.
+        try:
+            # execute task
+            retval = func(*args, **kwargs)
+        except Exception as e:
+            traceback_info = __format_trace(traceback.format_exc())
+            casalog.post(traceback_info, 'SEVERE')
+            casalog.post(str(e), 'ERROR')
+            raise
+        finally:
+            if caller != func.__name__:
+                kwargs['__taskcaller__'] = caller
         return retval
     return wrapper
 

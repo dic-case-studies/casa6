@@ -1,787 +1,709 @@
 # image-based line finding and baseline subtraction.
 
+from abc import abstractmethod
 import os
 import sys
 import shutil
-from typing import List
+from typing import Any, Dict, List, Tuple
 import numpy as np
 from numpy import array, uint64
-from collections import Counter
 import uuid
 
-from casatools import image, table, regionmanager, quanta, singledishms
-from casatools import ms as mstool
+from casatools import image, table
 from casatasks import casalog
-from casatasks.private import sdutil
-from casatasks.private.sdutil import table_manager, tool_manager
+from casatasks.private.sdutil import table_manager, tool_manager, sdtask_decorator
 from casatasks.private.ialib import write_image_history
+from casatasks.private.task_imsmooth import imsmooth
+from casatasks.private.task_sdsmooth import sdsmooth
+from casatasks.private.task_sdbaseline import sdbaseline
 
 ia = image()
-qa = quanta()
-ms = mstool()
-sdms = singledishms()
+
+DATACOLUMN = 'DATA'
+OVERWRITE = True
+debug = False
 
 
-class ImBaselineVals:
-    """ImBaselineVals is to handle input data set of imbaseline task.
-    
-    The task contains five parts, imsmooth, MS creating, sdsmooth, sdbaseline, image output.
-    Each parts require different parameters, so the task has a very large number of parameters.
-    In order to simplify the handling of parameters, all parameters are held in an instance of 
-    this class, all methods get/set all parameters from it.
-    """
-
-    def __init__(self, imagename=None, linefile=None, output_cont=None, bloutput=None, maskmode=None, chans=None, 
-                 thresh=None, avg_limit=None, minwidth=None, edge=None, blfunc=None, order=None, npiece=None, 
-                 applyfft=None, fftthresh=None, addwn=None, rejwn=None, blparam=None, clipniter=None, 
-                 clipthresh=None, dirkernel=None, major=None, minor=None, pa=None, kimage=None, scale=None, 
-                 spkernel=None, kwidth=None):
-        """
-        All specifications of arguments are defined in:
-        https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imbaseline.html#casatasks.analysis.imbaseline
-        """
-        self.imagename = imagename if imagename != None else ''
-        self.linefile = linefile if linefile != None else ''
-        self.output_cont = output_cont if output_cont != None else False
-
-        # sdbaseline
-        self.sdbaseline_bloutput = bloutput if bloutput != None else ''
-        self.sdbaseline_maskmode = maskmode.lower() if maskmode != None else 'list' # list(default)/auto
-        self.sdbaseline_chans = chans if chans != None else ''                 # maskmode = list
-        self.sdbaseline_thresh = thresh if thresh != None else 5.0             # maskmode = auto
-        self.sdbaseline_avg_limit = avg_limit if avg_limit != None else 4      # maskmode = auto
-        self.sdbaseline_minwidth = minwidth if minwidth != None else 4         # maskmode = auto
-        self.sdbaseline_edge = edge if edge != None else [0, 0]                # maskmode = auto
-        self.sdbaseline_blfunc = blfunc.lower() if blfunc != None else 'poly'  # poly(default)/chebyshev/cspline/sinusoid/variable
-        self.sdbaseline_order = order if order != None else 5                  # blfunc = poly/chebyshev
-        self.sdbaseline_npiece = npiece if npiece != None else 3               # blfunc = cspline
-        self.sdbaseline_applyfft = applyfft if applyfft != None else True      # blfunc = sinusoid
-        self.sdbaseline_fftmethod = 'fft'                                      # blfunc = sinusoid
-        self.sdbaseline_fftthresh = fftthresh if fftthresh != None else 3.0    # blfunc = sinusoid
-        self.sdbaseline_addwn = addwn if addwn != None else [0]                # blfunc = sinusoid
-        self.sdbaseline_rejwn = rejwn if rejwn != None else []                 # blfunc = sinusoid
-        self.sdbaseline_blparam = blparam if blparam != None else ''           # blfunc = variable
-        self.sdbaseline_clipniter = clipniter if clipniter != None else 0
-        self.sdbaseline_clipthresh = clipthresh if clipthresh != None else 3.0
-        self.sdbaseline_antenna = ''
-        self.sdbaseline_field = ''
-        self.sdbaseline_spw = ''
-        self.sdbaseline_timerenge = ''
-        self.sdbaseline_scan = ''
-        self.sdbaseline_pol = ''
-        self.sdbaseline_intent = ''
-        self.sdbaseline_reindex = True
-        self.sdbaseline_blmode = 'fit'
-        self.sdbaseline_dosubtract = True
-        self.sdbaseline_blformat = 'text'
-        self.sdbaseline_updateweight = False
-        self.sdbaseline_sigmavalue = 'stddev'
-        self.sdbaseline_showprogress = False
-        self.sdbaseline_minnrow = 1000
-
-        # imsmooth
-        self.imsmooth_kernel = dirkernel if dirkernel != None else 'none'  # none(default)/gaussian/boxcar/image
-        self.imsmooth_major = major if major != None else ''               # dirkernel = gaussian/boxcar
-        self.imsmooth_minor = minor if minor != None else ''               # dirkernel = gaussian/boxcar
-        self.imsmooth_pa = pa if pa != None else ''                        # dirkernel = gaussian/boxcar
-        self.imsmooth_kimage = kimage if kimage != None else ''            # dirkernel = image
-        self.imsmooth_scale = scale if scale != None else -1.0             # dirkernel = image
-        self.imsmooth_targetres = False
-        self.imsmooth_mask = ''
-        self.imsmooth_beam = {}
-        self.imsmooth_region = ''
-        self.imsmooth_box = ''
-        self.imsmooth_chans = ''
-        self.imsmooth_stokes = ''
-        self.imsmooth_stretch = False
-
-        # sdsmooth
-        self.sdsmooth_kernel = spkernel if spkernel != None else 'none'    # none(default)/gaussian/boxcar
-        self.sdsmooth_kwidth = kwidth if kwidth != None else 5             # gaussian/boxcar
-        self.sdsmooth_spw = ''
-        self.sdsmooth_field = ''
-        self.sdsmooth_antenna = ''
-        self.sdsmooth_timerange = ''
-        self.sdsmooth_scan = ''
-        self.sdsmooth_pol = ''
-        self.sdsmooth_intent = ''
-        self.sdsmooth_reindex = True
-
-        # imbaseline local
-        self.temporary_vis = self.__generate_temporary_vis_name()
-        self.imsmooth_output = 'imsmooth_output.image'
-        self.sdsmooth_output = 'sdsmooth_output.ms'
-        self.sdbaseline_output = 'sdbaseline_output.ms'
-        self.output_cont_file = os.path.basename(self.imagename)+".cont"
-        self.datacolumn = 'DATA'
-        self.overwrite = True
-        self.debug = False
-
-        self.__prepare_args()
-
-    def __prepare_args(self):
-        self.__prepare_arg_imagename()
-        self.__prepare_arg_linefile()
-        self.__prepare_arg_maskmode()
-        self.__prepare_arg_blfunc()
-        self.__prepare_arg_dirkernel()
-        self.__prepare_arg_spkernel()
-
-    def __prepare_arg_imagename(self):
-        if not os.path.exists(self.imagename):
-            raise ValueError(f'Error: file {self.imagename} is not found.', 'SEVERE')
-
-    def __prepare_arg_linefile(self):
-        if self.linefile == '':
-            self.linefile = os.path.basename(self.imagename).rstrip('/') + '_bs'
-        if os.path.exists(self.linefile):
-            raise ValueError(f'Error: file {self.linefile} already exists, please delete before continuing.', 'SEVERE')
-
-    def __prepare_arg_maskmode(self):
-        maskmode_list = self.sdbaseline_maskmode == 'list'
-        maskmode_auto = self.sdbaseline_maskmode == 'auto'
-        if not (maskmode_list or maskmode_auto):
-            raise ValueError(f'Unsupported maskmode, {self.sdbaseline_maskmode}', 'SEVERE')
-
-    def __prepare_arg_blfunc(self):
-        blfunc_poly = self.sdbaseline_blfunc == 'poly'
-        blfunc_chebyshev = self.sdbaseline_blfunc == 'chebyshev'
-        blfunc_cspline = self.sdbaseline_blfunc == 'cspline'
-        blfunc_sinusoid = self.sdbaseline_blfunc == 'sinusoid'
-        blfunc_variable = self.sdbaseline_blfunc == 'variable'
-        if not (blfunc_poly or blfunc_chebyshev or blfunc_cspline or blfunc_sinusoid or blfunc_variable):
-            raise ValueError(f'Unsupported blfunc, {self.sdbaseline_blfunc}', 'SEVERE')
-        if blfunc_variable and not os.path.exists(self.sdbaseline_blparam):
-                raise ValueError(f"input file '{self.blparam}' does not exists", 'SEVERE')
-
-    def __prepare_arg_dirkernel(self):
-        self.dir_none = self.imsmooth_kernel == 'none'
-        self.dir_ikernel = self.imsmooth_kernel == 'image'
-        self.dir_bkernel = self.imsmooth_kernel == 'boxcar'
-        self.dir_gkernel = self.imsmooth_kernel == 'gaussian'
-        if not ( self.dir_none or self.dir_gkernel or self.dir_bkernel or self.dir_ikernel ):
-            raise ValueError(f'Unsupported direction smoothing kernel, {self.imsmooth_kernel}', 'SEVERE')
-        
-        if self.dir_none:
-            self.imsmooth_output = self.imagename
-        elif self.dir_ikernel:
-            self.imsmooth_major = self.imsmooth_minor = self.imsmooth_pa = ''
-            if self.imsmooth_kimage != '' and not os.path.exists(self.imsmooth_kimage):
-                raise ValueError(f'Error: file {self.imsmooth_kimage} is not found.', 'SEVERE')
-        else:
-            self.imsmooth_kimage = ''
-            self.imsmooth_scale = -1.0
-
-    def __prepare_arg_spkernel(self):
-        self.sp_none = self.sdsmooth_kernel == 'none'
-        self.sp_bkernel = self.sdsmooth_kernel == 'boxcar'
-        self.sp_gkernel = self.sdsmooth_kernel == 'gaussian'
-        if not (self.sp_none or self.sp_bkernel or self.sp_gkernel):
-            raise ValueError(f'Unsupported spectral smoothing kernel, {self.sdsmooth_kernel}', 'SEVERE')
-        
-        if self.sp_none:
-            self.sdsmooth_output = self.temporary_vis
-            self.sdsmooth_kwidth = 5
-
-    def __generate_temporary_vis_name(self):
-        while True:
-            filename = str(uuid.uuid4()) + '.ms'
-            if not os.path.exists(filename):
-                return filename
-    
-    def enable_imsmooth_execution(self):
-        return not self.dir_none
-    
-    def enable_sdsmooth_execution(self):
-        return not self.sp_none
-
-    def convert_sdbaselining_dict(self):
-        """convert properties to a dictionary for sdbaseline process"""
-        return {'blfunc' : self.sdbaseline_blfunc,
-                'datacolumn' : self.datacolumn.lower(),
-                'outfile' : self.sdbaseline_output,
-                'bloutput' : f',{self.sdbaseline_bloutput},',
-                'dosubtract' : self.sdbaseline_dosubtract,
-                'spw' : self.sdbaseline_spw,
-                'pol' : self.sdbaseline_pol,
-                'linefinding' : (self.sdbaseline_maskmode=='auto'),
-                'threshold' : self.sdbaseline_thresh,
-                'avg_limit' : self.sdbaseline_avg_limit,
-                'minwidth' : self.sdbaseline_minwidth,
-                'edge' : self.sdbaseline_edge,
-                'order' : self.sdbaseline_order,
-                'npiece' : self.sdbaseline_npiece,
-                'applyfft' : self.sdbaseline_applyfft,
-                'fftmethod' : self.sdbaseline_fftmethod,
-                'fftthresh' : self.sdbaseline_fftthresh,
-                'addwn' : self.sdbaseline_addwn,
-                'rejwn' : self.sdbaseline_rejwn,
-                'clip_threshold_sigma' : self.sdbaseline_clipthresh,
-                'num_fitting_max' : self.sdbaseline_clipniter+1,
-                'blparam' : self.sdbaseline_blparam,
-                'verbose' : False,
-                'updateweight' : self.sdbaseline_updateweight,
-                'sigmavalue' : self.sdbaseline_sigmavalue}
-            
-
-@sdutil.sdtask_decorator
-def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, maskmode=None, chans=None, 
-               thresh=None, avg_limit=None, minwidth=None, edge=None, blfunc=None, order=None, npiece=None, 
-               applyfft=None, fftthresh=None, addwn=None, rejwn=None, blparam=None, clipniter=None, 
-               clipthresh=None, dirkernel=None, major=None, minor=None, pa=None, kimage=None, scale=None, 
-               spkernel=None, kwidth=None):
+@sdtask_decorator
+def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, maskmode=None, chans=None, thresh=None,
+               avg_limit=None, minwidth=None, edge=None, blfunc=None, order=None, npiece=None, applyfft=None, fftthresh=None,
+               addwn=None, rejwn=None, blparam=None, clipniter=None, clipthresh=None, dirkernel=None, major=None, minor=None,
+               pa=None, kimage=None, scale=None, spkernel=None, kwidth=None):
     """
     THE MAIN METHOD OF IMBASELINE.
 
     All specifications of arguments are defined in:
     https://open-jira.nrao.edu/browse/CAS-13520
     """
-    vals = ImBaselineVals(imagename=imagename, linefile=linefile, output_cont=output_cont, bloutput=bloutput, 
-                          maskmode=maskmode, chans=chans, thresh=thresh, avg_limit=avg_limit, minwidth=minwidth,
-                          edge=edge, blfunc=blfunc, order=order, npiece=npiece, applyfft=applyfft, 
-                          fftthresh=fftthresh, addwn=addwn, rejwn=rejwn, blparam=blparam, clipniter=clipniter,
-                          clipthresh=clipthresh, dirkernel=dirkernel, major=major, minor=minor, pa=pa, 
-                          kimage=kimage, scale=scale, spkernel=spkernel, kwidth=kwidth)
+    __validate_imagename(imagename)
+    linefile = __prepare_linefile(linefile, imagename)
+    if not output_cont:
+        output_cont = False
+    output_cont_file = os.path.basename(imagename) + ".cont"
+    erase_queue = EraseQueue()
+
     prepare()
 
-    try:
-        # imsmooth -> convert casaimage to MS -> sdsmooth
-        # -> sdbaseline -> convert MS to image
+    imsmooth_output = execute_imsmooth(imagename, dirkernel, major, minor, pa, kimage, scale, erase_queue)
 
-        # imsmooth
-        if vals.enable_imsmooth_execution():
-            casalog.post("start imsmooth", "DEBUG2")
-            Imsmooth(vals).execute()
-            casalog.post("end imsmooth", "DEBUG2")
+    image2ms_output, image2ms_params = execute_image2ms(imsmooth_output, DATACOLUMN, erase_queue)
 
-        # casaimage -> MS
-        Image2MSConverter(vals).convert()
+    sdsmooth_output = execute_sdsmooth(image2ms_output, DATACOLUMN.lower(), spkernel, kwidth, erase_queue)
 
-        # sdsmooth
-        if vals.enable_sdsmooth_execution():
-            casalog.post("start sdsmooth", "DEBUG2")
-            Sdsmooth(vals).execute()
-            casalog.post("end sdsmooth", "DEBUG2")
+    sdbaseline_output = execute_sdbaseline(sdsmooth_output, DATACOLUMN.lower(), bloutput, maskmode, chans, thresh, avg_limit,
+                                           minwidth, edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
+                                           clipniter, clipthresh, erase_queue)
 
-        # sdbaseline
-        casalog.post("start sdbaseline", "DEBUG2")
-        Sdbaseline(vals).execute()
-        casalog.post("end sdbaseline", "DEBUG2")
+    execute_ms2image(sdbaseline_output, linefile, imagename, DATACOLUMN, output_cont, output_cont_file, image2ms_params)
 
-        # MS -> casaimage
-        MS2ImageConverter(vals).convert()
-    finally:
-        cleanup(vals)
+    erase_queue.clear(False)
+
+
+def execute_imsmooth(imagename, dirkernel, major, minor, pa, kimage, scale, erase_queue):
+    output_filepath = imagename
+
+    if __validate_imsmooth_execution(dirkernel):
+        casalog.post("execute image smoothing", "INFO")
+        imsmooth_output = __generate_temporary_filename("dirsmooth-", "im")
+        args, kargs = ImsmoothParams(imagename, imsmooth_output, dirkernel, major, minor, pa, kimage, scale)()
+        imsmooth(*args, **kargs)
+        output_filepath = imsmooth_output
+        erase_queue.append(Erasable(imsmooth_output))
+    else:
+        casalog.post("omit image smoothing", "INFO")
+        erase_queue.append(Unerasable(output_filepath))
+
+    return output_filepath
+
+
+def execute_image2ms(infile, datacolumn, erase_queue) -> Tuple[Any]:
+    casalog.post("convert casaimage to MeasurementSet", "INFO")
+    img2ms_output = __generate_temporary_filename("img2ms-", "ms")
+    i2mp = image2ms(Image2MSParams(infile, img2ms_output, datacolumn))
+    erase_queue.append(Erasable(img2ms_output))
+    return img2ms_output, i2mp
+
+
+def execute_sdsmooth(infile=None, datacolumn=None, spkernel=None, kwidth=None, erase_queue=None):
+    sdsmooth_output = infile
+
+    if __validate_sdsmooth_execution(spkernel):
+        casalog.post("execute spectral smoothing", "INFO")
+        sdsmooth_output = __generate_temporary_filename("spsmooth-", "ms")
+        sdsmooth(**SdsmoothParams(infile, sdsmooth_output, datacolumn, spkernel, kwidth)())
+        erase_queue.append(Erasable(sdsmooth_output))
+    else:
+        casalog.post("omit spectral smoothing", "INFO")
+
+    return sdsmooth_output
+
+
+def execute_sdbaseline(infile, datacolumn, bloutput, maskmode, chans, thresh, avg_limit, minwidth, edge, blfunc, order, npiece,
+                       applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh, erase_queue):
+    casalog.post("execute spectral baselining", "INFO")
+    sdbaseline_output = __generate_temporary_filename("baseline-", "ms")
+    sdbaseline(**SdbaselineParams(infile, sdbaseline_output, datacolumn, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
+               edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh)())
+    erase_queue.append(Erasable(sdbaseline_output))
+
+    return sdbaseline_output
+
+
+def execute_ms2image(infile, linefile, imagefile, datacolumn, output_cont, output_cont_file, i2ms):
+    casalog.post("convert MeasurementSet to casaimage", "INFO")
+    ms2image(MS2ImageParams(infile, linefile, imagefile, datacolumn, output_cont, output_cont_file, i2ms))
+
+
+def __validate_imagename(imagename):
+    if not os.path.exists(imagename):
+        raise ValueError(f'Error: file {imagename} is not found.', 'SEVERE')
+
+
+def __prepare_linefile(linefile, imagename):
+    if linefile == '':
+        linefile = os.path.basename(imagename).rstrip('/') + '_bs'
+    if not OVERWRITE and os.path.exists(linefile):
+        raise ValueError(f'Error: file {linefile} already exists, please delete before continuing.', 'SEVERE')
+    return linefile
+
+
+def __generate_temporary_filename(prefix: str='', ext: str='') -> str:
+    if ext != '':
+        ext = '.' + ext
+    while True:
+        filename = prefix + str(uuid.uuid4()) + ext
+        if not os.path.exists(filename):
+            return filename
+
+
+def __validate_imsmooth_execution(dirkernel):
+    def is_valid_kernel(kernel):
+        return kernel == 'none', kernel == 'image' or kernel == 'boxcar' or kernel == 'gaussian'
+
+    none, valid = is_valid_kernel(dirkernel)
+    if not none and not valid:
+        raise ValueError(f'Unsupported direction smoothing kernel, {dirkernel}', 'SEVERE')
+    if valid:
+        return True
+    return False
+
+
+def __validate_sdsmooth_execution(spkernel):
+    def is_valid_kernel(kernel):
+        return kernel == 'none', kernel == 'boxcar' or kernel == 'gaussian'
+
+    none, valid = is_valid_kernel(spkernel)
+    if not none and not valid:
+        raise ValueError(f'Unsupported spectral smoothing kernel, {spkernel}', 'SEVERE')
+    if valid:
+        return True
+    return False
 
 
 def prepare():
     ia.dohistory(False)
 
 
-def cleanup(vals: ImBaselineVals = None):
-    __cleanup_temporary_dirs(vals)
+class Validable:
+
+    @abstractmethod
+    def validate(self):
+        raise RuntimeError('Not implemented')
 
 
-def __cleanup_temporary_dirs(vals: ImBaselineVals = None):
-    if vals.debug: return
-    for path in [vals.temporary_vis, vals.imsmooth_output, vals.sdsmooth_output, vals.sdbaseline_output]:
-        if os.path.exists(path) and path != vals.imagename:
-            shutil.rmtree(path)
+class AbstractEraseable:
+
+    def __init__(self, filename):
+        self.path = filename
+
+    @abstractmethod
+    def erase(self):
+        raise RuntimeError('Not implemented')
 
 
-class Imsmooth:
-    """
-    imsmooth execution class
-    This code is based on task_imsmooth.
-    """
+class Erasable(AbstractEraseable):
 
-    def __init__(self, vals: ImBaselineVals = None):
-        self.vals = vals
-
-    def execute(self):
-        try:
-            ia.open(self.vals.imagename)
-            mycsys = ia.coordsys()
-            myrg = regionmanager()
-            self.vals.reg = myrg.frombcs(csys=mycsys.torecord(), shape=ia.shape(), chans=self.vals.imsmooth_chans)
-        finally:
-            myrg.done()
-            mycsys.done()
-        
-        outia = None
-        try:
-            if self.vals.dir_gkernel:
-                outia = self.__execute_image_smoothing_by_gaussian_kernel()
-            elif self.vals.dir_bkernel:
-                outia = self.__execute_image_smoothing_by_boxcar_kernel()
-            elif self.vals.dir_ikernel:
-                outia = self.__execute_image_smoothing_by_image_kernel()
-        finally:
-            ia.done()
-            if outia: outia.done()
-
-    def __execute_image_smoothing_by_image_kernel(self):
-        # image kernel for image smoothing
-        return ia.convolve(
-                        outfile=self.vals.imsmooth_output, kernel=self.vals.imsmooth_kimage, scale=self.vals.imsmooth_scale, 
-                        region=self.vals.reg, mask=self.vals.imsmooth_mask, overwrite=self.vals.overwrite, stretch=self.vals.imsmooth_stretch 
-                    )
-
-    def __execute_image_smoothing_by_boxcar_kernel(self):
-        # boxcar kernel for image smoothing
-        if not self.vals.imsmooth_major or not self.vals.imsmooth_minor:
-            raise ValueError("Both major and minor must be specified.")
-
-        casalog.post( "ia.sepconvolve( axes=[0,1],"+\
-                                "types=['boxcar','boxcar' ],"+\
-                                "widths=[ "+str(self.vals.imsmooth_minor)+", "+str(self.vals.imsmooth_major)+" ],"+ \
-                                "region="+str(self.vals.reg)+",outfile="+self.vals.imsmooth_output+" )",\
-                                'DEBUG2' )
-        return ia.sepconvolve(
-                        axes=[0,1], types=['box','box'], widths=[ self.vals.imsmooth_minor, self.vals.imsmooth_major ],
-                        region=self.vals.reg, outfile=self.vals.imsmooth_output, mask=self.vals.imsmooth_mask, 
-                        overwrite=self.vals.overwrite, stretch=self.vals.imsmooth_stretch 
-                    )
-
-    def __execute_image_smoothing_by_gaussian_kernel(self):
-        # gaussian kernel for image smoothing
-        if not self.vals.imsmooth_major:
-            raise ValueError("Major axis must be specified")
-        if not self.vals.imsmooth_minor:
-            raise ValueError("Minor axis must be specified")
-        if not self.vals.imsmooth_pa:
-            raise ValueError("Position angle must be specified")
-            
-        return ia.convolve2d(
-                        axes=[0,1], region=self.vals.reg, major=self.vals.imsmooth_major,
-                        minor=self.vals.imsmooth_minor, pa=self.vals.imsmooth_pa, outfile=self.vals.imsmooth_output,
-                        mask=self.vals.imsmooth_mask, stretch=self.vals.imsmooth_stretch, targetres=self.vals.imsmooth_targetres,
-                        beam=self.vals.imsmooth_beam, overwrite=self.vals.overwrite
-                    )
+    def erase(self, dry_run=True):
+        if not dry_run:
+            casalog.post(f"erase file:{self.path}", "DEBUG2")
+            if os.path.exists(self.path):
+                shutil.rmtree(self.path)
 
 
-class Image2MSConverter:
-    """
-    The class does convert a Casa image to a MeasurementSet.
-    """
+class Unerasable(AbstractEraseable):
 
-    def __init__(self, vals: ImBaselineVals = None):
-        self.vals = vals
+    def erase(self, dry_run=True):
+        casalog.post(f"un-erase file:{self.path}", "DEBUG2")
 
-    def convert(self):
-        self.__get_image_params_from_imsmooth_output()
-        self.__create_empty_ms()
-        self.__copy_image_array_to_ms()
 
-    def __get_image_params_from_imsmooth_output(self):
-        with tool_manager(self.vals.imsmooth_output, image) as ia:
-            try:
-                cs = ia.coordsys()
-                self.vals.imshape = ia.shape()
-                self.vals.diraxis = cs.findcoordinate('direction')['world']
-                self.vals.spaxis = cs.findcoordinate('spectral')['world'] # 3 or 2
-                self.vals.polaxis = cs.findcoordinate('stokes')['world']  # 2 or 3 or None
-            finally:
-                cs.done()
+class EraseQueue:
+    def __init__(self) -> None:
+        self.queue = []
 
-        assert len(self.vals.diraxis) > 0
-
-        self.vals.spaxisexist = len(self.vals.spaxis) == 1
-        self.vals.polaxisexist = len(self.vals.polaxis) == 1
-
-        self.vals.dirshape = self.vals.imshape[self.vals.diraxis]
-        self.vals.imnrow = np.prod(self.vals.dirshape)
-
-        if self.vals.spaxisexist:
-            self.vals.imnchan = self.vals.imshape[self.vals.spaxis[0]]
+    def append(self, file: AbstractEraseable=None):
+        if isinstance(file, AbstractEraseable):
+            self.queue.append(file)
         else:
-            self.vals.imnchan = 1
-        if self.vals.polaxisexist:
-            self.vals.imnpol = self.vals.imshape[self.vals.polaxis[0]]
-        else:
-            self.vals.imnpol = 1
-        casalog.post(f'image shape is {self.vals.imshape}, direciton {self.vals.dirshape} ({self.vals.imnrow} pixels), ' + \
-                     f'npol {self.vals.imnpol}, nchan {self.vals.imnchan}', 'DEBUG2')
+            raise ValueError('cannot append to erase queue')
 
-        # if imnchan is too few, say, <10, sdbaseline should abort
-        if self.vals.imnchan < 10:
-            casalog.post(f'nchan {self.vals.imnchan} is too few to perform baseline subtraction', 'DEBUG2')
-            return False
-        return True
+    def clear(self, dry_run=True):
+        for obj in self.queue:
+            obj.erase(dry_run)
+        self.queue.clear()
 
-    def __create_empty_ms(self):
-        self.__check_ms_path()
-        self.__create_maintable()
-        self.__create_antenna_table()
-        self.__create_data_description_table()
-        self.__create_feed_table()
-        self.__create_field_table()
-        self.__create_flag_cmd_table()
-        self.__create_history_table()
-        self.__create_observation_table()
-        self.__create_pointing_table()
-        self.__create_polarization_table()
-        self.__create_processor_table()
-        self.__create_source_table()
-        self.__create_special_window_table()
-        self.__create_state_table()
 
-    def __create_maintable(self):
-        tb = table()
+class ImsmoothParams(Validable):
+
+    TARGETRES = False
+    MASK = ''
+    BEAM = {}
+    REGION = ''
+    BOX = ''
+    CHANS = ''
+    STOKES = ''
+    STRETCH = False
+    OVERWRITE = True
+
+    def __init__(self, infile: str=None, outfile: str=None, dirkernel: str='none', major: str='', minor: str='', pa: str='',
+                 kimage: str='', scale: int=-1.0) -> None:
+        self.infile = infile
+        self.outfile = outfile
+        self.kernel = dirkernel if dirkernel is not None else 'none'       # none(default)/gaussian/boxcar/image
+        self.major = major if major is not None else ''                    # dirkernel = gaussian/boxcar
+        self.minor = minor if minor is not None else ''                    # dirkernel = gaussian/boxcar
+        self.pa = pa if pa is not None else ''                             # dirkernel = gaussian/boxcar
+        self.kimage = kimage if kimage is not None else ''                 # dirkernel = image
+        self.scale = scale if scale is not None else -1.0                  # dirkernel = image
+        self.validate()
+
+    def validate(self):
+        self.__validate_dirkernel()
+
+    def __validate_dirkernel(self):
+        if self.kernel == 'image':
+            self.major = self.minor = self.pa = ''
+            if self.kimage != '' and not os.path.exists(self.kimage):
+                raise ValueError(f'Error: file {self.kimage} is not found.', 'SEVERE')
+        else:  # bkernel/gkernel
+            self.kimage = ''
+            self.scale = -1.0
+
+    def __call__(self) -> Tuple:
+        return [self.infile, self.kernel, self.major, self.minor, self.pa, self.TARGETRES, self.kimage, self.scale,
+                self.REGION, self.BOX, self.CHANS, self.STOKES, self.MASK, self.outfile, self.STRETCH, self.OVERWRITE,
+                self.BEAM], dict(__taskcaller__="imbaseline")
+
+
+class SdsmoothParams(Validable):
+
+    SPW = ''
+    FIELD = ''
+    ANTENNA = ''
+    TIMERANGE = ''
+    SCAN = ''
+    POL = ''
+    INTENT = ''
+    REINDEX = True
+    OVERWRITE = True
+
+    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, spkernel: str='none', kwidth: int=5) -> None:
+        self.infile = infile
+        self.outfile = outfile
+        self.datacolumn = datacolumn
+        self.kernel = spkernel if spkernel is not None else 'none'   # none(default)/gaussian/boxcar
+        self.kwidth = kwidth if kwidth is not None else 5            # gaussian/boxcar
+        self.validate()
+
+    def validate(self):
+        pass
+
+    def __call__(self):
+        return dict(infile=self.infile, datacolumn=self.datacolumn, antenna=self.ANTENNA, field=self.FIELD, spw=self.SPW,
+                    timerange=self.TIMERANGE, scan=self.SCAN, pol=self.POL, intent=self.INTENT, reindex=self.REINDEX,
+                    kernel=self.kernel, kwidth=self.kwidth, outfile=self.outfile, overwrite=self.OVERWRITE,
+                    __taskcaller__="imbaseline")
+
+
+class SdbaselineParams(Validable):
+
+    ANTENNA = ''
+    FIELD = ''
+    SPW = ''
+    TIMERANGE = ''
+    SCAN = ''
+    POL = ''
+    INTENT = ''
+    REINDEX = True
+    BLMODE = 'fit'
+    DOSUBTRACT = True
+    BLFORMAT = 'text'
+    BLTABLE = ''
+    UPDATEWEIGHT = False
+    SIGMAVALUE = 'stddev'
+    SHOWPROGRESS = False
+    MINNROW = 1000
+    FFTMETHOD = 'fft'
+    VERBOSE = False
+    OVERWRITE = True
+
+    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, bloutput: str='', maskmode: str='list',
+                 chans: str='', thresh: float=5.0, avg_limit: int=4, minwidth: int=4, edge: List[int]=[0, 0], blfunc: str='poly',
+                 order: int=5, npiece: int=3, applyfft: bool=True, fftthresh: float=3.0, addwn: List=[0], rejwn: List=[],
+                 blparam: str='', clipniter: int=0, clipthresh: float=3.0) -> None:
+        self.infile = infile
+        self.outfile = outfile
+        self.datacolumn = datacolumn
+        self.bloutput = bloutput if bloutput is not None else ''
+        self.maskmode = maskmode.lower() if maskmode is not None else 'list'  # list(default)/auto
+        self.chans = chans if chans is not None else ''                       # maskmode = list
+        self.thresh = thresh if thresh is not None else 5.0                  # maskmode = auto
+        self.avg_limit = avg_limit if avg_limit is not None else 4            # maskmode = auto
+        self.minwidth = minwidth if minwidth is not None else 4               # maskmode = auto
+        self.edge = edge if edge is not None else [0, 0]                      # maskmode = auto
+        self.blfunc = blfunc.lower() if blfunc is not None else 'poly'        # poly(default)/chebyshev/cspline/sinusoid/variable
+        self.order = order if order is not None else 5                        # blfunc = poly/chebyshev
+        self.npiece = npiece if npiece is not None else 3                     # blfunc = cspline
+        self.applyfft = applyfft if applyfft is not None else True            # blfunc = sinusoid
+        self.fftthresh = fftthresh if fftthresh is not None else 3.0          # blfunc = sinusoid
+        self.addwn = addwn if addwn is not None else [0]                      # blfunc = sinusoid
+        self.rejwn = rejwn if rejwn is not None else []                       # blfunc = sinusoid
+        self.blparam = blparam if blparam is not None else ''                 # blfunc = variable
+        self.clipniter = clipniter if clipniter is not None else 0
+        self.clipthresh = clipthresh if clipthresh is not None else 3.0
+
+    def validate(self):
+        self.__validate_maskmode()
+        self.__validate_blfunc()
+
+    def __validate_maskmode(self):
+        maskmode_list = self.maskmode == 'list'
+        maskmode_auto = self.maskmode == 'auto'
+        if not (maskmode_list or maskmode_auto):
+            raise ValueError(f'Unsupported maskmode, {self.maskmode}', 'SEVERE')
+
+    def __validate_blfunc(self):
+        def is_valid_blfunc(self):
+            return self.blfunc == 'poly' or self.blfunc == 'chebyshev' or self.blfunc == 'cspline' or self.blfunc == 'sinusoid' \
+                or self.blfunc == 'variable'
+
+        if not is_valid_blfunc():
+            raise ValueError(f'Unsupported blfunc, {self.blfunc}', 'SEVERE')
+
+        if self.blfunc == 'variable' and not os.path.exists(self.blparam):
+            raise ValueError(f"input file '{self.blparam}' does not exists", 'SEVERE')
+
+    def __call__(self) -> Dict[str, Any]:
+        return dict(infile=self.infile, datacolumn=self.datacolumn, antenna=self.ANTENNA, field=self.FIELD, spw=self.SPW,
+                    timerange=self.TIMERANGE, scan=self.SCAN, pol=self.POL, intent=self.INTENT, reindex=self.REINDEX,
+                    maskmode=self.maskmode, thresh=self.thresh, avg_limit=self.avg_limit, minwidth=self.minwidth, edge=self.edge,
+                    blmode=self.BLMODE, dosubtract=self.DOSUBTRACT, blformat=self.BLFORMAT, bloutput=self.bloutput, bltable=self.BLTABLE,
+                    blfunc=self.blfunc, order=self.order, npiece=self.npiece, applyfft=self.applyfft, fftmethod=self.FFTMETHOD,
+                    fftthresh=self.fftthresh, addwn=self.addwn, rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter,
+                    blparam=self.blparam, verbose=self.VERBOSE, updateweight=self.UPDATEWEIGHT, sigmavalue=self.SIGMAVALUE,
+                    showprogress=self.SHOWPROGRESS, minnrow=self.MINNROW, outfile=self.outfile, overwrite=self.OVERWRITE,
+                    __taskcaller__="imbaseline")
+
+
+class Image2MSParams(Validable):
+
+    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA') -> None:
+        self.infile = infile
+        self.outfile = outfile
+        self.datacolumn = datacolumn
+        self.validate()
+
+    def validate(self):
+        self.__validate_outfile()
+
+    def __validate_outfile(self):
+        if os.path.exists(self.outfile):
+            raise ValueError(f"Folder exists:{self.outfile}")
+
+
+def image2ms(params: Image2MSParams=None):
+    __get_image_params_from_imsmooth_output(params)
+    __create_empty_ms(params)
+    __copy_image_array_to_ms(params)
+    return params
+
+
+def __get_image_params_from_imsmooth_output(params):
+    with tool_manager(params.infile, image) as ia:
         try:
-            tb.create(self.vals.temporary_vis, EmptyMSBaseInformation.ms_desc, dminfo=EmptyMSBaseInformation.ms_dminfo)
-            tb.putkeyword(keyword="MS_VERSION", value=2)
-            nrow = tb.nrows()
-            nrow_req = self.vals.imnrow * self.vals.imnpol
-            nrow = tb.nrows()
-            if nrow != nrow_req:
-                tb.addrows(nrow_req)
-            ddid = tb.getcol('DATA_DESC_ID')
-            ddid[:] = 0
-            tb.putcol('DATA_DESC_ID', ddid)
-            dummy = np.zeros(nrow_req, dtype=int)
-            tb.putcol('ANTENNA1', dummy)
-            tb.putcol('ANTENNA2', dummy)
-            tb.putcol('STATE_ID', dummy)
-            time_list = 4304481539.999771 + np.arange(nrow_req) * 30.0
-            tb.putcol('TIME', time_list)
-            casalog.post(f'number of rows {nrow}, number of image pixels {self.vals.imnrow}, number of pols {self.vals.imnpol}, ' +\
-                         f'required rows {nrow_req}', 'DEBUG2')
+            cs = ia.coordsys()
+            params.imshape = ia.shape()
+            params.diraxis = cs.findcoordinate('direction')['world']
+            params.spaxis = cs.findcoordinate('spectral')['world']  # 3 or 2
+            params.polaxis = cs.findcoordinate('stokes')['world']   # 2 or 3 or None
         finally:
-            tb.close()
+            cs.done()
 
-    def __create_antenna_table(self):
-        self.__create_subtable("ANTENNA", EmptyMSBaseInformation.antenna_desc, EmptyMSBaseInformation.antenna_dminfo)
-        with table_manager(os.path.join(self.vals.temporary_vis, 'ANTENNA'), nomodify=False) as tb:
+    assert len(params.diraxis) > 0
+
+    params.spaxisexist = len(params.spaxis) == 1
+    params.polaxisexist = len(params.polaxis) == 1
+
+    params.dirshape = params.imshape[params.diraxis]
+    params.imnrow = np.prod(params.dirshape)
+
+    if params.spaxisexist:
+        params.imnchan = params.imshape[params.spaxis[0]]
+    else:
+        params.imnchan = 1
+    if params.polaxisexist:
+        params.imnpol = params.imshape[params.polaxis[0]]
+    else:
+        params.imnpol = 1
+    casalog.post(f'image shape is {params.imshape}, direciton {params.dirshape} ({params.imnrow} pixels), '
+                 f'npol {params.imnpol}, nchan {params.imnchan}', 'DEBUG2')
+
+    # if imnchan is too few, say, <10, sdbaseline should abort
+    if params.imnchan < 10:
+        casalog.post(f'nchan {params.imnchan} is too few to perform baseline subtraction', 'DEBUG2')
+        return False
+    return True
+
+
+def __create_empty_ms(params):
+    __check_ms_path(params)
+    __create_maintable(params)
+    __create_antenna_table(params)
+    __create_data_description_table(params)
+    __create_feed_table(params)
+    __create_field_table(params)
+    __create_flag_cmd_table(params)
+    __create_history_table(params)
+    __create_observation_table(params)
+    __create_pointing_table(params)
+    __create_polarization_table(params)
+    __create_processor_table(params)
+    __create_source_table(params)
+    __create_special_window_table(params)
+    __create_state_table(params)
+
+
+def __create_maintable(params):
+    tb = table()
+    try:
+        tb.create(params.outfile, EmptyMSBaseInformation.ms_desc, dminfo=EmptyMSBaseInformation.ms_dminfo)
+        tb.putkeyword(keyword="MS_VERSION", value=2)
+        nrow = tb.nrows()
+        nrow_req = params.imnrow * params.imnpol
+        nrow = tb.nrows()
+        if nrow != nrow_req:
+            tb.addrows(nrow_req)
+        ddid = tb.getcol('DATA_DESC_ID')
+        ddid[:] = 0
+        tb.putcol('DATA_DESC_ID', ddid)
+        dummy = np.zeros(nrow_req, dtype=int)
+        tb.putcol('ANTENNA1', dummy)
+        tb.putcol('ANTENNA2', dummy)
+        tb.putcol('STATE_ID', dummy)
+        time_list = 4304481539.999771 + np.arange(nrow_req) * 30.0
+        tb.putcol('TIME', time_list)
+        casalog.post(f'number of rows {nrow}, number of image pixels {params.imnrow}, number of pols {params.imnpol}, '
+                     f'required rows {nrow_req}', 'DEBUG2')
+    finally:
+        tb.close()
+
+
+def __create_antenna_table(params):
+    __create_subtable(params.outfile, "ANTENNA", EmptyMSBaseInformation.antenna_desc, EmptyMSBaseInformation.antenna_dminfo)
+    with table_manager(os.path.join(params.outfile, 'ANTENNA'), nomodify=False) as tb:
+        tb.addrows(1)
+
+
+def __create_data_description_table(params):
+    __create_subtable(params.outfile, "DATA_DESCRIPTION", EmptyMSBaseInformation.data_description_desc,
+                      EmptyMSBaseInformation.data_description_dminfo)
+    with table_manager(os.path.join(params.outfile, 'DATA_DESCRIPTION'), nomodify=False) as tb:
+        tb.addrows(1)
+        tb.putcell('SPECTRAL_WINDOW_ID', 0, 0)
+        tb.putcell('POLARIZATION_ID', 0, 0)
+
+
+def __create_feed_table(params):
+    __create_subtable(params.outfile, "FEED", EmptyMSBaseInformation.feed_desc, EmptyMSBaseInformation.feed_dminfo)
+    with table_manager(os.path.join(params.outfile, 'FEED'), nomodify=False) as tb:
+        tb.addrows(1)
+
+
+def __create_field_table(params):
+    __create_subtable(params.outfile, "FIELD", EmptyMSBaseInformation.field_desc, EmptyMSBaseInformation.field_dminfo)
+    with table_manager(os.path.join(params.outfile, 'FIELD'), nomodify=False) as tb:
+        tb.addrows(1)
+        tb.putcell('DELAY_DIR', 0, np.zeros((2, 1)))
+        tb.putcell('PHASE_DIR', 0, np.zeros((2, 1)))
+        tb.putcell('REFERENCE_DIR', 0, np.zeros((2, 1)))
+
+
+def __create_flag_cmd_table(params):
+    __create_subtable(params.outfile, "FLAG_CMD", EmptyMSBaseInformation.flag_cmd_desc, EmptyMSBaseInformation.flag_cmd_dminfo)
+
+
+def __create_history_table(params):
+    __create_subtable(params.outfile, "HISTORY", EmptyMSBaseInformation.history_desc, EmptyMSBaseInformation.history_dminfo)
+
+
+def __create_observation_table(params):
+    __create_subtable(params.outfile, "OBSERVATION", EmptyMSBaseInformation.observation_desc, EmptyMSBaseInformation.observation_dminfo)
+    with table_manager(os.path.join(params.outfile, 'OBSERVATION'), nomodify=False) as tb:
+        tb.addrows(1)
+
+
+def __create_pointing_table(params):
+    __create_subtable(params.outfile, "POINTING", EmptyMSBaseInformation.pointing_desc, EmptyMSBaseInformation.pointing_dminfo)
+
+
+def __create_polarization_table(params):
+    __create_subtable(params.outfile, "POLARIZATION", EmptyMSBaseInformation.polarization_desc, EmptyMSBaseInformation.polarization_dminfo)
+    with table_manager(os.path.join(params.outfile, 'POLARIZATION'), nomodify=False) as tb:
+        corr_type = np.ones(1, dtype=int)
+        corr_product = np.ones(2, dtype=int).reshape((2, 1))
+        if tb.nrows() == 0:
             tb.addrows(1)
+        tb.putcell('NUM_CORR', 0, 1)
+        tb.putcell('CORR_TYPE', 0, corr_type)
+        tb.putcell('CORR_PRODUCT', 0, corr_product)
 
-    def __create_data_description_table(self):
-        self.__create_subtable("DATA_DESCRIPTION", EmptyMSBaseInformation.data_description_desc, EmptyMSBaseInformation.data_description_dminfo)
-        with table_manager(os.path.join(self.vals.temporary_vis, 'DATA_DESCRIPTION'), nomodify=False) as tb:
+
+def __create_processor_table(params):
+    __create_subtable(params.outfile, "PROCESSOR", EmptyMSBaseInformation.processor_desc, EmptyMSBaseInformation.processor_dminfo)
+
+
+def __create_source_table(params):
+    __create_subtable(params.outfile, "SOURCE", EmptyMSBaseInformation.source_desc, EmptyMSBaseInformation.source_dminfo)
+
+
+def __create_special_window_table(params):
+    __create_subtable(params.outfile, "SPECTRAL_WINDOW", EmptyMSBaseInformation.special_window_desc, EmptyMSBaseInformation.special_window_dminfo)
+    with table_manager(os.path.join(params.outfile, 'SPECTRAL_WINDOW'), nomodify=False) as tb:
+        cw = np.ones(params.imnchan, dtype=float) * 1e6
+        cf = 1e9 + np.arange(params.imnchan, dtype=float) * 1e6
+
+        if tb.nrows() == 0:
             tb.addrows(1)
-            tb.putcell('SPECTRAL_WINDOW_ID', 0, 0)
-            tb.putcell('POLARIZATION_ID', 0, 0)
+        tb.putcell('NUM_CHAN', 0, params.imnchan)
+        tb.putcell('CHAN_FREQ', 0, cf)
+        tb.putcell('CHAN_WIDTH', 0, cw)
+        tb.putcell('RESOLUTION', 0, cw)
+        tb.putcell('EFFECTIVE_BW', 0, cw)
+        tb.putcell('TOTAL_BANDWIDTH', 0, cw.sum())
 
-    def __create_feed_table(self):
-        self.__create_subtable("FEED", EmptyMSBaseInformation.feed_desc, EmptyMSBaseInformation.feed_dminfo)
-        with table_manager(os.path.join(self.vals.temporary_vis, 'FEED'), nomodify=False) as tb:
+
+def __create_state_table(params):
+    __create_subtable(params.outfile, "STATE", EmptyMSBaseInformation.state_desc, EmptyMSBaseInformation.state_dminfo)
+    with table_manager(os.path.join(params.outfile, 'STATE'), nomodify=False) as tb:
+        if tb.nrows() == 0:
             tb.addrows(1)
+        tb.putcell('OBS_MODE', 0, 'OBSERVE_TARGET#ON_SOURCE_IMAGE_DOMAIN')
 
-    def __create_field_table(self):
-        self.__create_subtable("FIELD", EmptyMSBaseInformation.field_desc, EmptyMSBaseInformation.field_dminfo)
-        with table_manager(os.path.join(self.vals.temporary_vis, 'FIELD'), nomodify=False) as tb:
-            tb.addrows(1)
-            tb.putcell('DELAY_DIR', 0, np.zeros((2,1)))
-            tb.putcell('PHASE_DIR', 0, np.zeros((2,1)))
-            tb.putcell('REFERENCE_DIR', 0, np.zeros((2,1)))
 
-    def __create_flag_cmd_table(self):
-        self.__create_subtable("FLAG_CMD", EmptyMSBaseInformation.flag_cmd_desc, EmptyMSBaseInformation.flag_cmd_dminfo)
+def __check_ms_path(params, overWrite: bool = True):
+    exists = os.path.exists(params.outfile)
+    if overWrite and exists:
+        shutil.rmtree(params.outfile)
+    return exists
 
-    def __create_history_table(self):
-        self.__create_subtable("HISTORY", EmptyMSBaseInformation.history_desc, EmptyMSBaseInformation.history_dminfo)
 
-    def __create_observation_table(self):
-        self.__create_subtable("OBSERVATION", EmptyMSBaseInformation.observation_desc, EmptyMSBaseInformation.observation_dminfo)
-        with table_manager(os.path.join(self.vals.temporary_vis, 'OBSERVATION'), nomodify=False) as tb:
-            tb.addrows(1)
+def __create_subtable(outfile, subtable: str, desc: str, dminfo: str):
+    tb = table()
+    try:
+        tb.create(f"{outfile}/{subtable}", desc, dminfo=dminfo)
+    finally:
+        tb.close()
+    with table_manager(outfile, nomodify=False) as tb:
+        tb.putkeyword(subtable, f"Table: {outfile}/{subtable}")
 
-    def __create_pointing_table(self):
-        self.__create_subtable("POINTING", EmptyMSBaseInformation.pointing_desc, EmptyMSBaseInformation.pointing_dminfo)
 
-    def __create_polarization_table(self):
-        self.__create_subtable("POLARIZATION", EmptyMSBaseInformation.polarization_desc, EmptyMSBaseInformation.polarization_dminfo)
-        with table_manager(os.path.join(self.vals.temporary_vis, 'POLARIZATION'), nomodify=False) as tb:
-            corr_type = np.ones(1, dtype=int)
-            corr_product = np.ones(2, dtype=int).reshape((2, 1))
-            if tb.nrows() == 0:
-                tb.addrows(1)
-            tb.putcell('NUM_CORR', 0, 1)
-            tb.putcell('CORR_TYPE', 0, corr_type)
-            tb.putcell('CORR_PRODUCT', 0, corr_product)
+def __copy_image_array_to_ms(params):
+    # get image array and mask from the image
+    with tool_manager(params.infile, image) as ia:
+        arr = ia.getchunk()
+        msk = ia.getchunk(getmask=True)
 
-    def __create_processor_table(self):
-        self.__create_subtable("PROCESSOR", EmptyMSBaseInformation.processor_desc, EmptyMSBaseInformation.processor_dminfo)
+    # put image array slices to MS DATA column
+    # axis indices for spatial, spectral and polarization axes
+    xax, yax = params.diraxis
+    spax = params.spaxis[0]
+    if params.polaxisexist:
+        polax = params.polaxis[0]
+    else:
+        arr = np.expand_dims(arr, axis=3)
+        msk = np.expand_dims(msk, axis=3)
+        polax = 3
+    casalog.post(f'axis index: {xax} {yax} {polax} {spax}', 'DEBUG2')
 
-    def __create_source_table(self):
-        self.__create_subtable("SOURCE", EmptyMSBaseInformation.source_desc, EmptyMSBaseInformation.source_dminfo)
+    # which data column to use
+    with table_manager(params.outfile, nomodify=False) as tb:
+        # also set FLAG, SIGMA, WEIGHT, and UVW
+        # r2p is a mapping between MS row and image array slice
+        xax, yax = params.diraxis
 
-    def __create_special_window_table(self):
-        self.__create_subtable("SPECTRAL_WINDOW", EmptyMSBaseInformation.special_window_desc, EmptyMSBaseInformation.special_window_dminfo)
-        with table_manager(os.path.join(self.vals.temporary_vis, 'SPECTRAL_WINDOW'), nomodify=False) as tb:
-            cw = np.ones(self.vals.imnchan, dtype=float) * 1e6
-            cf = 1e9 + np.arange(self.vals.imnchan, dtype=float) * 1e6
+        index_list = [0, 0, 0, 0]
+        index_list[spax] = np.arange(params.imnchan)
+        r2p = []
+        nx, ny = params.dirshape
+        irow = 0
+        wgt = np.ones(1, dtype=float)
+        uvw = np.zeros(3, dtype=float)
+        for ix in range(nx):
+            index_list[xax] = ix
+            for iy in range(ny):
+                index_list[yax] = iy
+                for ip in range(params.imnpol):
+                    index_list[polax] = ip
+                    slice = tuple(index_list)
+                    subarr = arr[slice]
+                    submsk = np.logical_not(msk[slice])
+                    casalog.post(f'slice={slice}, subarr={subarr[200:-200]}', 'DEBUG2')
+                    r2p.append(slice)
+                    tb.putcell(params.datacolumn, irow, np.expand_dims(subarr, axis=0))
+                    tb.putcell('FLAG', irow, np.expand_dims(submsk, axis=0))
+                    tb.putcell('SIGMA', irow, wgt)
+                    tb.putcell('WEIGHT', irow, wgt)
+                    tb.putcell('UVW', irow, uvw)
+                    irow += 1
 
-            if tb.nrows() == 0:
-                tb.addrows(1)
-            tb.putcell('NUM_CHAN', 0, self.vals.imnchan)
-            tb.putcell('CHAN_FREQ', 0, cf)
-            tb.putcell('CHAN_WIDTH', 0, cw)
-            tb.putcell('RESOLUTION', 0, cw)
-            tb.putcell('EFFECTIVE_BW', 0, cw)
-            tb.putcell('TOTAL_BANDWIDTH', 0, cw.sum())
 
-    def __create_state_table(self):
-        self.__create_subtable("STATE", EmptyMSBaseInformation.state_desc, EmptyMSBaseInformation.state_dminfo)
-        with table_manager(os.path.join(self.vals.temporary_vis, 'STATE'), nomodify=False) as tb:
-            if tb.nrows() == 0:
-                tb.addrows(1)
-            tb.putcell('OBS_MODE', 0, 'OBSERVE_TARGET#ON_SOURCE_IMAGE_DOMAIN')
+class MS2ImageParams(Validable):
 
-    def __check_ms_path(self, overWrite: bool = True):
-        exists = os.path.exists(self.vals.temporary_vis)
-        if overWrite and exists:
-            shutil.rmtree(self.vals.temporary_vis)
-        return exists
+    def __init__(self, infile: str=None, linefile: str='', imagefile: str='', datacolumn: str='DATA', output_cont: bool=False,
+                 output_cont_file: str='', i2ms: Image2MSParams=None) -> None:
+        self.infile = infile
+        self.linefile = linefile
+        self.imagename = imagefile
+        self.datacolumn = datacolumn
+        self.output_cont = output_cont
+        self.output_cont_file = output_cont_file
+        self.i2ms = i2ms
+        self.validate()
 
-    def __create_subtable(self, subtable: str, desc: str, dminfo: str):
-        tb = table()
+    def validate(self):
+        pass
+
+
+def ms2image(params: MS2ImageParams):
+    casalog.post("start imaging", "DEBUG2")
+    try:
+        __make_output_file(infile=params.imagename, outfile=params.linefile)  # mask data is copied in this method
+        if params.output_cont:
+            __make_output_file(infile=params.imagename, outfile=params.output_cont_file)
+    except Exception as instance:
+        casalog.post(f"*** Error '{instance}'", 'SEVERE')
+
+    __make_image_array(params)
+    casalog.post("end arraying", "DEBUG2")
+    if params.output_cont:
+        __output_cont_image(params)
+    __output_image(params)
+    casalog.post("end imaging", "DEBUG2")
+
+
+def __output_image(params):
+    with tool_manager(params.linefile, image) as ia:
+        ia.putchunk(pixels=params.array, locking=True)
         try:
-            tb.create(f"{self.vals.temporary_vis}/{subtable}", desc, dminfo=dminfo)
-        finally:
-            tb.close()
-        with table_manager(self.vals.temporary_vis, nomodify=False) as tb:
-            tb.putkeyword(subtable, f"Table: {self.vals.temporary_vis}/{subtable}")
-
-    def __copy_image_array_to_ms(self):
-        # get image array and mask from the image
-        with tool_manager(self.vals.imsmooth_output, image) as ia:
-            arr = ia.getchunk()
-            msk = ia.getchunk(getmask=True)
-
-        # put image array slices to MS DATA column
-        # axis indices for spatial, spectral and polarization axes
-        xax, yax = self.vals.diraxis
-        spax = self.vals.spaxis[0]
-        if self.vals.polaxisexist:
-            polax = self.vals.polaxis[0]
-        else:
-            arr = np.expand_dims(arr, axis=3)
-            msk = np.expand_dims(msk, axis=3)
-            polax = 3
-        casalog.post(f'axis index: {xax} {yax} {polax} {spax}', 'DEBUG2')
-
-        # which data column to use
-        with table_manager(self.vals.temporary_vis, nomodify=False) as tb:
-            # also set FLAG, SIGMA, WEIGHT, and UVW
-            # r2p is a mapping between MS row and image array slice
-            xax, yax = self.vals.diraxis
-
-            index_list = [0, 0, 0, 0]
-            index_list[spax] = np.arange(self.vals.imnchan)
-            r2p = []
-            nx, ny = self.vals.dirshape
-            irow = 0
-            wgt = np.ones(1, dtype=float)
-            uvw = np.zeros(3, dtype=float)
-            for ix in range(nx):
-                index_list[xax] = ix
-                for iy in range(ny):
-                    index_list[yax] = iy
-                    for ip in range(self.vals.imnpol):
-                        index_list[polax] = ip
-                        slice = tuple(index_list)
-                        subarr = arr[slice]
-                        submsk = np.logical_not(msk[slice])
-                        casalog.post(f'slice={slice}, subarr={subarr[200:-200]}', 'DEBUG2')
-                        r2p.append(slice)
-                        tb.putcell(self.vals.datacolumn, irow, np.expand_dims(subarr, axis=0))
-                        tb.putcell('FLAG', irow, np.expand_dims(submsk, axis=0))
-                        tb.putcell('SIGMA', irow, wgt)
-                        tb.putcell('WEIGHT', irow, wgt)
-                        tb.putcell('UVW', irow, uvw)
-                        irow += 1
-
-
-class Sdsmooth:
-    """
-    sdsmooth execution class
-    This code is based on task_sdsmooth.
-    """
-    def __init__(self, vals: ImBaselineVals = None):
-        self.vals = vals
-
-    def execute(self):
-        sdms.open(self.vals.temporary_vis)
-        sdms.set_selection(spw=self.vals.sdsmooth_spw, field=self.vals.sdsmooth_field, antenna=self.vals.sdsmooth_antenna,
-                            timerange=self.vals.sdsmooth_timerange, scan=self.vals.sdsmooth_scan, polarization=self.vals.sdsmooth_pol,
-                            intent=self.vals.sdsmooth_intent, reindex=self.vals.sdsmooth_reindex)
-        sdms.smooth(type=self.vals.sdsmooth_kernel, width=self.vals.sdsmooth_kwidth, outfile=self.vals.sdsmooth_output,
-                    datacolumn=self.vals.datacolumn.lower())
-        sdms.close()
-
-
-class Sdbaseline:
-    """
-    sdbaseline execution class
-    This code is based on task_sdbaseline.
-    """
-    def __init__(self, vals: ImBaselineVals = None):
-        self.vals = vals
-    
-    def execute(self):
-        self.__prepare_sdbaseline()
-        self.__output_bloutput_text_header()
-        
-        if self.vals.sdbaseline_blfunc == 'variable':
-            sorttab_info = self.__remove_sorted_table_keyword(self.vals.sdsmooth_output)
-
-        selected_spw = sdutil.get_spwids( ms.msseltoindex(vis=self.vals.sdsmooth_output, spw=self.vals.sdbaseline_spw, 
-                                                        field=self.vals.sdbaseline_field, baseline='', time='',
-                                                        scan=self.vals.sdbaseline_scan) )
-        sdms.open(self.vals.sdsmooth_output)
-        sdms.set_selection(spw=selected_spw, field=self.vals.sdbaseline_field, antenna=self.vals.sdbaseline_antenna,
-                            timerange=self.vals.sdbaseline_timerenge, scan=self.vals.sdbaseline_scan,
-                            polarization=self.vals.sdbaseline_pol, intent=self.vals.sdbaseline_intent,
-                            reindex=self.vals.sdbaseline_reindex)
-        func, params = self.__prepare_for_baselining(sdms, self.vals.convert_sdbaselining_dict())
-        func(**params)
-        sdms.close()
-        
-        if self.vals.sdbaseline_blfunc == 'variable':
-            self.__restore_sorted_table_keyword(self.vals.sdsmooth_output, sorttab_info)
-
-    def __prepare_sdbaseline(self):
-        if self.vals.sdbaseline_spw == '': self.vals.sdbaseline_spw = '*'
-        if self.vals.sdbaseline_blfunc == 'sinusoid':
-            self.vals.sdbaseline_addwn = sdutil.parse_wavenumber_param(self.vals.sdbaseline_addwn)
-            self.vals.sdbaseline_rejwn = sdutil.parse_wavenumber_param(self.vals.sdbaseline_rejwn)
-        
-    def __remove_sorted_table_keyword(self, infile):
-        res = {'is_sorttab': False, 'sorttab_keywd': '', 'sorttab_name': ''}
-        with table_manager(infile, nomodify=False) as tb:
-            try:
-                sorttab_keywd = 'SORTED_TABLE'
-                if sorttab_keywd in tb.keywordnames():
-                    res['is_sorttab'] = True
-                    res['sorttab_keywd'] = sorttab_keywd
-                    res['sorttab_name'] = tb.getkeyword(sorttab_keywd)
-                    tb.removekeyword(sorttab_keywd)
-            except Exception:
-                raise
-
-        return res
-
-    def __restore_sorted_table_keyword(self, infile, sorttab_info):
-        if sorttab_info['is_sorttab'] and sorttab_info['sorttab_name'] != '':
-            with table_manager(infile, nomodify=False) as tb:
-                try:
-                    tb.putkeyword(sorttab_info['sorttab_keywd'],
-                                sorttab_info['sorttab_name'])
-                except Exception:
-                    raise
-
-    def __prepare_for_baselining(self, sdms, keywords):
-        params = {}
-        funcname = 'subtract_baseline'
-
-        blfunc = keywords['blfunc']
-        keys = ['datacolumn', 'outfile', 'bloutput', 'dosubtract', 'spw', 
-                'updateweight', 'sigmavalue']
-        if blfunc in ['poly', 'chebyshev']:
-            keys += ['blfunc', 'order']
-        elif blfunc == 'cspline':
-            keys += ['npiece']
-            funcname += ('_' + blfunc)
-        elif blfunc =='sinusoid':
-            keys += ['applyfft', 'fftmethod', 'fftthresh', 'addwn', 'rejwn']
-            funcname += ('_' + blfunc)
-        elif blfunc == 'variable':
-            keys += ['blparam', 'verbose']
-            funcname += ('_' + blfunc)
-        else:
-            raise ValueError("Unsupported blfunc = %s" % blfunc)
-        if blfunc != 'variable':
-            keys += ['clip_threshold_sigma', 'num_fitting_max']
-            keys += ['linefinding', 'threshold', 'avg_limit', 'minwidth', 'edge']
-            
-        for key in keys: params[key] = keywords[key]
-
-        baseline_func = getattr(sdms, funcname)
-
-        return baseline_func, params
-
-    def __output_bloutput_text_header(self):
-        if self.vals.sdbaseline_bloutput == '': return
-        
-        with open(self.vals.sdbaseline_bloutput, 'w') as f:
-            info = [['Source Table', self.vals.sdsmooth_output],
-                    ['Output File', self.vals.sdbaseline_output if (self.vals.sdbaseline_output != '') else self.vals.sdsmooth_output],
-                    ['Mask mode', self.vals.sdbaseline_maskmode]]
-            separator = '#' * 60 + '\n'
-            
-            f.write(separator)
-            for i in range(len(info)):
-                f.write('%12s: %s\n' % tuple(info[i]))
-            f.write(separator)
-            f.write('\n')
-
-
-class MS2ImageConverter:
-    """
-    The class does convert a MeasurementSet to a Casa image.
-    """
-
-    def __init__(self, vals: ImBaselineVals = None):
-        self.vals = vals
-
-    def convert(self):
-        casalog.post("start imaging", "DEBUG2")
-        try:
-            self.__make_output_file(infile=self.vals.imagename, outfile=self.vals.linefile) # mask data is copied in this method 
-            if self.vals.output_cont:
-                self.__make_output_file(infile=self.vals.imagename, outfile=self.vals.output_cont_file)
+            param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
+            vars = locals()
+            param_vals = [vars[p] for p in param_names]
+            write_image_history(ia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
         except Exception as instance:
-            casalog.post(f"*** Error '{instance}'", 'SEVERE')
+            casalog.post(f"*** Error '{instance}' updating HISTORY", 'WARN')
 
-        self.__make_image_array()
-        casalog.post("end arraying", "DEBUG2")
-        if self.vals.output_cont:
-            self.__output_cont_image()
-        self.__output_image()
-        casalog.post("end imaging", "DEBUG2")
 
-    def __output_image(self):
-        with tool_manager(self.vals.linefile, image) as ia:
-            ia.putchunk(pixels=self.array, locking=True)
-            try:
-                param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
-                vars = locals()
-                param_vals = [vars[p] for p in param_names]
-                write_image_history(ia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
-            except Exception as instance:
-                casalog.post(f"*** Error '{instance}' updating HISTORY", 'WARN')
+def __output_cont_image(params):
+    with tool_manager(params.output_cont_file, image) as ia:
+        ia.putchunk(pixels=ia.getchunk() - params.array, locking=True)
 
-    def __output_cont_image(self):
-        with tool_manager(self.vals.output_cont_file, image) as ia:
-            ia.putchunk(pixels = ia.getchunk() - self.array, locking = True)
 
-    def __make_image_array(self):
-        nx, ny = self.vals.dirshape
-        self.array = np.empty((nx,ny,self.vals.imnchan))
-        pos = 0
-        with table_manager(self.vals.sdbaseline_output) as tb:
-            for i in range(nx):
-                for j in range(ny):
-                    self.array[i][j] = tb.getcell(self.vals.datacolumn, pos)[0].real
-                    pos += 1
-        if self.vals.polaxisexist:
-            self.array = np.expand_dims(self.array, self.vals.polaxis[0])
+def __make_image_array(params):
+    nx, ny = params.i2ms.dirshape
+    params.array = np.empty((nx, ny, params.i2ms.imnchan))
+    pos = 0
+    with table_manager(params.infile) as tb:
+        for i in range(nx):
+            for j in range(ny):
+                params.array[i][j] = tb.getcell(params.datacolumn, pos)[0].real
+                pos += 1
+    if params.i2ms.polaxisexist:
+        params.array = np.expand_dims(params.array, params.i2ms.polaxis[0])
 
-    def __make_output_file(self, infile:str = None, outfile:str = None):
-        if not os.path.exists(infile):
-            raise Exception(f'Image files not found, infile:{self.vals.imagename}')
-        ok = ia.fromimage(infile=infile, outfile=outfile)
-        ia.done()
-        if not ok:
-            raise Exception(f'Some error occured, infile:{infile}, outfile:{outfile}')
-    
+
+def __make_output_file(infile: str=None, outfile: str=None):
+    if not os.path.exists(infile):
+        raise Exception(f'Image files not found, infile:{infile}')
+    ok = ia.fromimage(infile=infile, outfile=outfile)
+    ia.done()
+    if not ok:
+        raise Exception(f'Some error occured, infile:{infile}, outfile:{outfile}')
+
 
 class EmptyMSBaseInformation:
     """The Parameters class for creating an empty MeasurementSet.
 
     This class contains dictionaries to create an empty MS using table.create(), and it has no method.
-    Dictionaries have two types; desc(desctiption) and dminfo(data management infomation), 
+    Dictionaries have two types; desc(desctiption) and dminfo(data management infomation),
     these are used as arguments of table.create(), and for a table creating, it needs a desc dict and a dminfo dict.
     so there are dicts of twice of table amount in a MeasurementSet.
     """
@@ -980,12 +902,12 @@ class EmptyMSBaseInformation:
         '*3': {'COLUMNS': array(['DATA'], dtype='<U16'),
                'NAME': 'TiledData',
                'SEQNR': 2,
-               'SPEC': {'DEFAULTTILESHAPE': array([2,   63, 1040]),
+               'SPEC': {'DEFAULTTILESHAPE': array([2, 63, 1040]),
                         'HYPERCUBES': {'*1': {'BucketSize': 1048320,
                                               'CellShape': array([2, 63]),
-                                              'CubeShape': array([2,    63, 22653]),
+                                              'CubeShape': array([2, 63, 22653]),
                                               'ID': {},
-                                              'TileShape': array([2,   63, 1040])}},
+                                              'TileShape': array([2, 63, 1040])}},
                         'IndexSize': 1,
                         'MAXIMUMCACHESIZE': 0,
                         'MaxCacheSize': 0,
@@ -994,12 +916,12 @@ class EmptyMSBaseInformation:
         '*4': {'COLUMNS': array(['FLAG'], dtype='<U16'),
                'NAME': 'TiledFlag',
                'SEQNR': 3,
-               'SPEC': {'DEFAULTTILESHAPE': array([2,   63, 1040]),
+               'SPEC': {'DEFAULTTILESHAPE': array([2, 63, 1040]),
                         'HYPERCUBES': {'*1': {'BucketSize': 16380,
                                               'CellShape': array([2, 63]),
-                                              'CubeShape': array([2,    63, 22653]),
+                                              'CubeShape': array([2, 63, 22653]),
                                               'ID': {},
-                                              'TileShape': array([2,   63, 1040])}},
+                                              'TileShape': array([2, 63, 1040])}},
                         'IndexSize': 1,
                         'MAXIMUMCACHESIZE': 0,
                         'MaxCacheSize': 0,
@@ -1008,7 +930,7 @@ class EmptyMSBaseInformation:
         '*5': {'COLUMNS': array(['FLAG_CATEGORY'], dtype='<U16'),
                'NAME': 'TiledFlagCategory',
                'SEQNR': 4,
-               'SPEC': {'DEFAULTTILESHAPE': array([2,   63,    1, 1040]),
+               'SPEC': {'DEFAULTTILESHAPE': array([2, 63, 1, 1040]),
                         'HYPERCUBES': {},
                         'IndexSize': 0,
                         'MAXIMUMCACHESIZE': 0,
@@ -1018,12 +940,12 @@ class EmptyMSBaseInformation:
         '*6': {'COLUMNS': array(['WEIGHT_SPECTRUM'], dtype='<U16'),
                'NAME': 'TiledWgtSpectrum',
                'SEQNR': 5,
-               'SPEC': {'DEFAULTTILESHAPE': array([2,   63, 1040]),
+               'SPEC': {'DEFAULTTILESHAPE': array([2, 63, 1040]),
                         'HYPERCUBES': {'*1': {'BucketSize': 524160,
                                               'CellShape': array([2, 63]),
-                                              'CubeShape': array([2,    63, 22653]),
+                                              'CubeShape': array([2, 63, 22653]),
                                               'ID': {},
-                                              'TileShape': array([2,   63, 1040])}},
+                                              'TileShape': array([2, 63, 1040])}},
                         'IndexSize': 1,
                         'MAXIMUMCACHESIZE': 0,
                         'MaxCacheSize': 0,
@@ -1958,9 +1880,9 @@ class EmptyMSBaseInformation:
         'CHAN_FREQ': {'comment': 'Center frequencies for each channel in the data matrix',
                       'dataManagerGroup': 'StandardStMan',
                       'dataManagerType': 'StandardStMan',
-                                         'keywords': {'MEASINFO': {'TabRefCodes': array([0,  1,  2,  3,  4,  5,  6,  7,  8, 64], dtype=uint64),
-                                                                   'TabRefTypes': array(['REST', 'LSRK', 'LSRD', 'BARY', 'GEO', 'TOPO', 'GALACTO', 'LGROUP',
-                                                                                        'CMB', 'Undefined'], dtype='<U16'),
+                                         'keywords': {'MEASINFO': {'TabRefCodes': array([0, 1, 2, 3, 4, 5, 6, 7, 8, 64], dtype=uint64),
+                                                                   'TabRefTypes': array(['REST', 'LSRK', 'LSRD', 'BARY', 'GEO', 'TOPO', 'GALACTO',
+                                                                                         'LGROUP', 'CMB', 'Undefined'], dtype='<U16'),
                                                                    'VarRefCol': 'MEAS_FREQ_REF',
                                                                    'type': 'frequency'},
                                                       'QuantumUnits': array(['Hz'], dtype='<U16')},
@@ -2043,9 +1965,9 @@ class EmptyMSBaseInformation:
         'REF_FREQUENCY': {'comment': 'The reference frequency',
                           'dataManagerGroup': 'StandardStMan',
                           'dataManagerType': 'StandardStMan',
-                                             'keywords': {'MEASINFO': {'TabRefCodes': array([0,  1,  2,  3,  4,  5,  6,  7,  8, 64], dtype=uint64),
-                                                                       'TabRefTypes': array(['REST', 'LSRK', 'LSRD', 'BARY', 'GEO', 'TOPO', 'GALACTO', 'LGROUP',
-                                                                                             'CMB', 'Undefined'], dtype='<U16'),
+                                             'keywords': {'MEASINFO': {'TabRefCodes': array([0, 1, 2, 3, 4, 5, 6, 7, 8, 64], dtype=uint64),
+                                                                       'TabRefTypes': array(['REST', 'LSRK', 'LSRD', 'BARY', 'GEO', 'TOPO', 'GALACTO',
+                                                                                             'LGROUP', 'CMB', 'Undefined'], dtype='<U16'),
                                                                        'VarRefCol': 'MEAS_FREQ_REF',
                                                                        'type': 'frequency'},
                                                           'QuantumUnits': array(['Hz'], dtype='<U16')},

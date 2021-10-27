@@ -23,7 +23,7 @@ else:
     from taskinit import casalog, gentools
     ms, sdms, tb, msmd = gentools(['ms', 'sdms', 'tb', 'msmd'])
 
-@sdutil.sdtask_decorator
+@sdutil.callable_sdtask_decorator
 def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                spw=None, timerange=None, scan=None, pol=None, intent=None,
                reindex=None, maskmode=None, thresh=None, avg_limit=None,
