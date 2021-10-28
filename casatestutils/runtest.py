@@ -1,7 +1,6 @@
 ########################################################################################################################
 ############################################            Imports            #############################################
 ########################################################################################################################
-
 import argparse
 import os
 import shutil
@@ -12,14 +11,13 @@ import unittest
 import json
 import datetime
 import platform
-
-
-default_timeout = 1800
-sys.path.insert(0,'')
-
+import re
 ########################################################################################################################
 ######################################            Imports / Constants            #######################################
 ########################################################################################################################
+
+default_timeout = 1800
+sys.path.insert(0,'')
 
 # mem mode variables
 HAVE_MEMTEST=True
@@ -61,7 +59,9 @@ except ImportError:
 
 IS_CASA6 = False
 CASA6 = False
-HAVE_CASA6 = False
+verbose = False
+DRY_RUN = False
+RUN_ALL = False
 
 # JIRA BRANCH TO CHECKOUT
 JIRA_BRANCH = None
@@ -73,20 +73,172 @@ try:
 except ImportError:
     CASA6 = True
     IS_CASA6 = True
-    HAVE_CASA6 = True
-
-# Use Nose attribute Functionality
-RUN_SUBTEST = False
 
 # Dry run of Tests
 DRY_RUN = False
 
-# Define which tests to run
-whichtests = 0
-
 ########################################################################################################################
 ###########################################            Functions            ############################################
 ########################################################################################################################
+# At the moment, this needs to be a sep function due to repr and escape characters, try/ except for osx
+def write_conftest_linux(filepath):
+    string = """
+import pytest
+import inspect
+import os
+
+@pytest.mark.trylast
+def pytest_configure(config):
+    terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
+    config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+
+class TestDescriptionPlugin:
+
+    def __init__(self, terminal_reporter):
+        self.terminal_reporter = terminal_reporter
+        self.desc = None
+        self.funcn = None
+
+    def pytest_runtest_protocol(self, item):
+        #from pprint import pprint
+        #d = item.__dict__
+        #pprint(d, indent=2)
+        self.desc = inspect.getdoc(item.obj)
+        #print(item._nodeid)
+        self.funcn = item._nodeid
+
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_runtest_logstart(self, nodeid, location):
+        #print("Verbosity Level: {}".format(self.terminal_reporter.verbosity))
+        if self.terminal_reporter.verbosity == 0:
+            yield
+            self.terminal_reporter.write(f'\\n{self.funcn} \\n')
+        else:
+            self.terminal_reporter.write('\\n')
+            yield
+            if self.desc:
+                    self.terminal_reporter.write(f'\\n{self.desc} \\n')
+            else:
+                    self.terminal_reporter.write(f'\\n')
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(item, call):
+        outcome = yield
+        report = outcome.get_result()
+        #print(dir(report))
+        report.start = call.start
+        report.stop = call.stop
+        if report.when=='teardown':
+            filepath = os.path.join(os.getcwd(),'short_summary.log')
+
+            file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+            file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid,))
+            file_obj.close()
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(item, call):
+        outcome = yield
+        report = outcome.get_result()
+        if report.when=='call':
+            filepath = os.path.join(os.getcwd(),'short_summary.log')
+            # write short summary to file
+            file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+            file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid))
+            file_obj.close()
+
+            # Write not pass to Textfile
+            if report.outcome != 'passed':
+                file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+                file_obj.write("\\tDuration: {}s\\n".format(round(report.duration,5)))
+                if report.outcome == 'failed':
+                    file_obj.write("\\tMessage : {}\\n".format(report.longrepr.reprcrash.message))
+                file_obj.close()
+                filepath = os.path.join(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')),'summary_of_failed.log')
+                file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+                file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid))
+                file_obj.write("\\tDuration: {}s\\n".format(round(report.duration,5)))
+                if report.outcome == 'failed':
+                    file_obj.write("\\tMessage : {}\\n".format(report.longrepr.reprcrash.message))
+                file_obj.close()
+    """
+    file_obj = open(filepath,'w')
+    file_obj.write(string)
+    file_obj.close()
+
+# At the moment, this needs to be a sep function due to repr and escape characters, try/ except for osx
+def write_conftest_osx(filepath):
+    string = """
+import pytest
+import inspect
+import os
+
+@pytest.mark.trylast
+def pytest_configure(config):
+    terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
+    try:
+        config.pluginmanager.unregister(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+    except:
+        pass
+    config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+
+class TestDescriptionPlugin:
+
+    def __init__(self, terminal_reporter):
+        self.terminal_reporter = terminal_reporter
+        self.desc = None
+        self.funcn = None
+
+    def pytest_runtest_protocol(self, item):
+        #from pprint import pprint
+        #d = item.__dict__
+        #pprint(d, indent=2)
+        self.desc = inspect.getdoc(item.obj)
+        #print(item._nodeid)
+        self.funcn = item._nodeid
+
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_runtest_logstart(self, nodeid, location):
+        #print("Verbosity Level: {}".format(self.terminal_reporter.verbosity))
+        if self.terminal_reporter.verbosity == 0:
+            yield
+            self.terminal_reporter.write(f'\\n{self.funcn} \\n')
+        else:
+            self.terminal_reporter.write('\\n')
+            yield
+            if self.desc:
+                    self.terminal_reporter.write(f'\\n{self.desc} \\n')
+            else:
+                    self.terminal_reporter.write(f'\\n')
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(item, call):
+        outcome = yield
+        report = outcome.get_result()
+        if report.when=='call':
+            filepath = os.path.join(os.getcwd(),'short_summary.log')
+            # write short summary to file
+            file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+            file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid))
+            file_obj.close()
+
+            # Write not pass to Textfile
+            if report.outcome != 'passed':
+                file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+                file_obj.write("\\tDuration: {}s\\n".format(round(report.duration,5)))
+                if report.outcome == 'failed':
+                    file_obj.write("\\tMessage : {}\\n".format(report.longrepr.reprcrash.message))
+                file_obj.close()
+                filepath = os.path.join(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')),'summary_of_failed.log')
+                file_obj = open(filepath, 'a' if os.path.isfile(filepath) else 'w')
+                file_obj.write("{} {}\\n".format(report.outcome.upper(), report.nodeid))
+                file_obj.write("\\tDuration: {}s\\n".format(round(report.duration,5)))
+                if report.outcome == 'failed':
+                    file_obj.write("\\tMessage : {}\\n".format(report.longrepr.reprcrash.message))
+                file_obj.close()
+    """
+    file_obj = open(filepath,'w')
+    file_obj.write(string)
+    file_obj.close()
 
 class casa_test:
     def __init__(self,
@@ -174,11 +326,14 @@ def list_tests():
     print('Full list of unit tests')
     print('-----------------------')
     if IS_CASA6:
+        if os.path.isdir(os.getcwd() +"/testlist/"):
+            shutil.rmtree(os.getcwd() +"/testlist/")
         git_fetch_casa_tests(os.getcwd() +"/testlist/casa6")
         gather_all_tests(os.getcwd() +"/testlist/casa6",os.getcwd() +"/testlist/")
+        gather_all_tests(os.getcwd() +"/testlist/casaplotms/", os.getcwd() + "/testlist/")
         tests = sorted(os.listdir(os.getcwd() +"/testlist/"))
         for test in tests:
-            if test.startswith("test"):
+            if test.startswith("test_"):
                 print(test)
     else:
         for t in readfile(LISTofTESTS):
@@ -195,8 +350,10 @@ def git_fetch_casa_tests(path):
     os.makedirs(path)
 
     os.chdir(path)
-    subprocess.call(["git","init", "--quiet"])
     FNULL = open(os.devnull, 'w')
+
+    ## Main
+    subprocess.call(["git","init", "--quiet"])
     subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casa6.git"], stdout=FNULL, stderr=subprocess.STDOUT)
     subprocess.call(["git","config","core.sparseCheckout","true"])
 
@@ -216,12 +373,57 @@ def git_fetch_casa_tests(path):
     print("casatools/tests/tools/vpmmanager", file=open(".git/info/sparse-checkout", "a"))
 
     print("casatests/benchmarks", file=open(".git/info/sparse-checkout", "a"))
-    print("casatests/e2e", file=open(".git/info/sparse-checkout", "a"))
+    print("casatests/regression", file=open(".git/info/sparse-checkout", "a"))
     print("casatests/performance", file=open(".git/info/sparse-checkout", "a"))
     print("casatests/pipeline", file=open(".git/info/sparse-checkout", "a"))
     print("casatests/stakeholders", file=open(".git/info/sparse-checkout", "a"))
 
     subprocess.call(["git","pull","--quiet","origin","master"])
+
+    ## Plotms
+    os.chdir(os.path.dirname(os.getcwd()))
+    os.makedirs("casaplotms")
+    os.chdir("casaplotms")
+    subprocess.call(["git","init", "--quiet"])
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casaplotms.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("tests/plotms", file=open(".git/info/sparse-checkout", "a"))
+    subprocess.call(['git','pull','--quiet','origin','master'])
+
+    ## Almatasks
+
+    os.chdir(os.path.dirname(os.getcwd()))
+    os.makedirs("almatasks")
+    os.chdir("almatasks")
+    subprocess.call(["git","init", "--quiet"])
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/almatasks.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("tests/tasks", file=open(".git/info/sparse-checkout", "a"))
+    subprocess.call(['git','pull','--quiet','origin','master'])
+
+    ## casaviewer
+
+    os.chdir(os.path.dirname(os.getcwd()))
+    os.makedirs("casaviewer")
+    os.chdir("casaviewer")
+    subprocess.call(["git","init", "--quiet"])
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casaviewer.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("tests/tasks", file=open(".git/info/sparse-checkout", "a"))
+    subprocess.call(['git','pull','--quiet','origin','master'])
+
+    ## casampi
+
+    os.chdir(os.path.dirname(os.getcwd()))
+    os.makedirs("casampi")
+    os.chdir("casampi")
+    subprocess.call(["git","init", "--quiet"])
+    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casampi.git"], stdout=FNULL, stderr=subprocess.STDOUT)
+    subprocess.call(["git","config","core.sparseCheckout","true"])
+    print("src/casampi/tests", file=open(".git/info/sparse-checkout", "a"))
+    subprocess.call(['git','pull','--quiet','origin','master'])
+
+    os.chdir(os.path.dirname(os.getcwd()))
     os.chdir(cwd)
 
 def git_fetch_casa_tests_branch(path, branch):
@@ -250,7 +452,6 @@ def git_fetch_casa_tests_branch(path, branch):
 
     os.chdir(cwd)
 
-
 def gather_all_tests(path, workpath):
 
     if sys.version_info[0] > 2:
@@ -274,19 +475,13 @@ def gather_single_tests(path, workpath,test):
 
 def print_test_classes(testnames):
     for test in testnames:
-        if verbose:
-            pytest.main(["--collect-only", "-q", "-v", test])
-        else:
-            pytest.main(["--collect-only", test])
+        pytest.main(["--collect-only", "-q", "-v", test])
 
 def clean_working_directory(workdir):
 
     print("Cleaning: {}".format(workdir))
     if os.path.exists(workdir):
-        try:
-            os.rmdir(workdir)
-        except:
-            shutil.rmtree(workdir)
+        shutil.rmtree(workdir)
 
 def getname(testfile):
     '''Get the test name from the command-line
@@ -305,41 +500,6 @@ def gettests(testfile):
         temp = testfile[n0+1:n1]
         tests = temp.split(',')
         return tests
-
-def getclasses(tests):
-    if HAVE_PYTEST:
-        for test in tests:
-            if test.endswith(".py"):
-                pytest.main(["--fixtures",test])
-    else:
-        #logger.debug("Start def getclasses()")
-        '''Get the classes of a test script It will copy the test script to /tmp and remove it afterwards'''
-        here = os.getcwd()
-        tmpdir = '/tmp'
-        for filename in testnames:
-            if not filename.startswith("test_"):
-                #print "Cannot Get Classes for Regression Test"
-                #logger.error("Cannot Get Classes for Regression Test: %s",filename)
-                return
-        try:
-            os.chdir(tmpdir)
-            
-            for filename in testnames:
-                tt = UnitTest(filename)
-                tt.copyTest(copyto=tmpdir)
-                classes = tt.getTestClasses(filename)
-                for c in classes:
-                    pprint.pprint('Class '+c.__name__)
-                    for attr, value in c.__dict__.iteritems():
-                        if len(attr) >= len("test") and attr[:len("test")] == "test":
-                            print('\t{}'.format(c(attr)))
-                os.remove(filename+'.py')
-                os.remove(filename+'.pyc')
-            os.chdir(here)
-        except:
-            print('--> ERROR: Cannot copy script to {}'.format(tmpdir))
-            #logger.error('Failed to open file', exc_info=True)
-            return
 
 def haslist(name):
     '''Check if specific list of tests have been requested'''
@@ -373,7 +533,8 @@ def unpack_tarball(pkg, outputdir):
     print(cmd)
     r = ShellRunner()
     output = r.runshell(cmd, default_timeout, cwd=os.getcwd())
-    installpath = outputdir + "/" + os.path.basename(pkg).replace(".tar.xz","")
+    # Remove .tar.xz extension and py3.x extension as necessary
+    installpath = outputdir + "/" + re.sub(r'-py3\..?', '', os.path.basename(pkg).replace(".tar.xz",""))
     return installpath
 
 def get_casatestutils_exec_path(pkg_dir):
@@ -413,7 +574,7 @@ def unpack_pkg(pkg, work_dir, outputdir):
 def run(testnames):
 
     if IS_CASA6:
-        #sys.path.append(os.path.abspath(os.path.basename(__file__)))
+
         if HAVE_PYTEST:
             cwd = os.getcwd() + "/"
             workpath = os.getcwd() +"/nosedir/"
@@ -423,218 +584,160 @@ def run(testnames):
             # Copy Tests to Working Directory
             os.makedirs(workdir)
 
-            if RUN_ALL:
-                print("Gathering All Tests")
-                git_fetch_casa_tests( workpath + 'casa6')
-                os.makedirs(workdir + "all/")
-                gather_all_tests(workpath +'casa6/', workdir + "all/")
-                cmd = [ workdir ]
-                cmd = ["--continue-on-collection-errors"] + cmd
-                if verbose:
-                    cmd = ["--verbose"] + cmd
+            print("Tests: {}".format(testnames))
+            gittest = True
 
+            for testname in testnames:
+                cmd = []
 
-                if DRY_RUN:
-                    cmd = ["--collect-only"] + cmd
-                    
-                if not os.path.isdir(workpath + '/xml/all/'):
-                    os.makedirs(workpath +  '/xml/all/')
-                xmlfile = workpath + '/xml/all/nose.xml'
+                # Copy Test To nosedir Directory if in cwd
+                if testname.startswith("test"):
+                    test = testname
+                    # Check if specific tests are requested
+                    if "[" and "]" in test:
+                        testname = getname(test)
+                        tests = gettests(test)
 
-                #########
-                #============================================================ warnings summary =====================================================
-                # ./lib/py/lib/python3.6/site-packages/_pytest/junitxml.py:436
-                # ./lib/py/lib/python3.6/site-packages/_pytest/junitxml.py:436:
-                # PytestDeprecationWarning: The 'junit_family' # default value will change to 'xunit2' in pytest 6.0.
-                # Add 'junit_family=xunit1' to your pytest.ini file to keep the current format in future versions of pytest and silence this warning.
-                #  _issue_warning_captured(deprecated.JUNIT_XML_DEFAULT_FAMILY, config.hook, 2)
-                #########
-                cmd = ["--junitxml={}".format(xmlfile)] + ["-s"] + cmd
+                        teststring = ""
+                        if len(tests) == 1:
+                            teststring = tests[0]
+                        elif len(tests) > 1:
+                            print(tests)
+                            teststring = " or ".join(tests)
 
-                if len(os.listdir(workdir + "all/")) == 0:
-                    print("No Tests to Run")
-                else:
-                    print("Running Command: pytest {}".format(cmd))
-                    pytest.main(cmd)
-
-            else:
-                print("Tests: {}".format(testnames))
-                gittest = True
-
-                for testname in testnames:
-                    cmd = []
-
-                    # Copy Test To nosedir Directory if in cwd
-                    if testname.startswith("test"):
+                        cmd = ["-k {}".format(teststring)] + cmd
                         test = testname
-                        # Check if specific tests are requested
-                        if "[" and "]" in test:
-                            testname = getname(test)
-                            tests = gettests(test)
-                            #print(testname)
-                            #print(tests)
 
-                            teststring = ""
-                            #print(len(tests))
-                            if len(tests) == 1:
-                                teststring = tests[0]
-                            elif len(tests) > 1:
-                                print(tests)
-                                teststring = " or ".join(tests)
-                            #workdir = os.getcwd() +"/workdir/nosedir/{}/".format(testname)
-                            #os.makedirs(workdir)
-                            #cmd = [ workdir ]
-                            #cmd = [ ".".join([testname,'py']), "-k {}".format(teststring)]
-                            cmd = ["-k {}".format(teststring)] + cmd
-                            test = testname
+                    # Set up Test Working Directory
+                    if not os.path.exists(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])):
+                        print("Setting Working Directory: {}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
+                        os.makedirs(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
+                        cmd = [ workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]) ] + cmd
 
-                        # Set up Test Working Directory
-                        if not os.path.exists(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])):
-                            print("Setting Working Directory: {}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
-                            os.makedirs(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                            cmd = [ workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]) ] + cmd
+                    # Check to see if tests need to be pulled from git. Only needs to be done once
+                    if not test.endswith(".py") and gittest == True:
+                        if JIRA_BRANCH is not None:
+                            git_fetch_casa_tests_branch(workpath + 'casa6/', JIRA_BRANCH)
+                            os.makedirs(workdir + "tests/")
+                            gather_all_tests(workpath +'casa6/', workdir + "tests/")
+                            # gather_all_tests(workpath +'casaplotms/', workdir + "tests/")
+                            # gather_all_tests(workpath +'almatasks/', workdir + "tests/")
+                            gittest = False
 
-                        # Check to see if tests need to be pulled from git. Only needs to be done once
-                        if not test.endswith(".py") and gittest == True:
-                            if JIRA_BRANCH is not None:
-                                git_fetch_casa_tests_branch(workpath + 'casa6/', JIRA_BRANCH)
-                                os.makedirs(workdir + "tests/")
-                                gather_all_tests(workpath +'casa6/', workdir + "tests/")
-                                gittest = False
-
-                            else:
-                                print("Fetching Tests From Git Main Since No Local Test is Given")
-                                git_fetch_casa_tests( workpath + 'casa6/')
-                                os.makedirs(workdir + "tests/")
-                                gather_all_tests(workpath +'casa6/', workdir + "tests/")
-                                gittest = False
-
-                        if test.endswith(".py"):
-                            try:
-                                print("Copying: {} to {}".format(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
-                                shutil.copy2(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                            except:
-                                traceback.print_exc()
                         else:
-                            try:
-                                print("Copying: {} to {}".format(workdir + "tests/",test), workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                                shutil.copy2("{}{}.py".format(workdir + "tests/",test), workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
-                            except:
-                                traceback.print_exc()
-                                
-                        # https://docs.pytest.org/en/stable/usage.html
-                        if verbose:
-                            cmd = ["--verbose"] + ["--tb=long"] + cmd
-                        elif not verbose:
-                            cmd = ["-ra"] + ["--tb=short"] + cmd
-                            #cmd = ["-ra"] + ["--tb=long"] + cmd
+                            print("Fetching Tests From Git Main Since No Local Test is Given")
+                            git_fetch_casa_tests( workpath + 'casa6/')
+                            os.makedirs(workdir + "tests/")
+                            gather_all_tests(workpath +'casa6/', workdir + "tests/")
+                            gather_all_tests(workpath +'casaplotms/', workdir + "tests/")
+                            gather_all_tests(workpath +'almatasks/', workdir + "tests/")
+                            gather_all_tests(workpath +'casaviewer/', workdir + "tests/")
+                            gather_all_tests(workpath +'casampi/', workdir + "tests/")
+                            gittest = False
 
-                        if DRY_RUN:
-                            cmd = ["--collect-only"] + cmd
-                        
-                        if not os.path.isdir(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3])):
-                            os.makedirs(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3]))
-                        xmlfile = workpath + 'xml/{}/nose.xml'.format(test if not test.endswith(".py") else test[:-3])
-
-                        #########
-                        #============================================================ warnings summary =====================================================
-                        # ./lib/py/lib/python3.6/site-packages/_pytest/junitxml.py:436
-                        # ./lib/py/lib/python3.6/site-packages/_pytest/junitxml.py:436:
-                        # PytestDeprecationWarning: The 'junit_family' # default value will change to 'xunit2' in pytest 6.0.
-                        # Add 'junit_family=xunit1' to your pytest.ini file to keep the current format in future versions of pytest and silence thiswarning.
-                        #  _issue_warning_captured(deprecated.JUNIT_XML_DEFAULT_FAMILY, config.hook, 2)
-                        #########
-                        cmd = ["--junitxml={}".format(xmlfile)] + ["-s"] + ["--disable-pytest-warnings"] + cmd
-                        #print("Running Command: pytest {}".format(cmd))
-                        #print("Work Path: {}".format(workpath))
-                        if len(os.listdir(workpath)) < 1: # If only the XML dir was created
-                            print("No Tests to Run")
-                            sys.exit()
-                        else:
-
-                            myworkdir = os.getcwd()
-                            os.chdir("{}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
-                            print("Test Directory: {}".format(os.getcwd()))
-                            print("Running Command: pytest {}".format(cmd))
-                            pytest.main(cmd)
-                            os.chdir(myworkdir)
-
-                    ##################################################
-                    ########## Real Path ##########
-                    ##################################################
-                     # Copy Test To nosedir Directory assuming it's in another location
-                    elif testname.startswith("/"):
-                        testpath = testname.split("[")[0]
-                        cmd = []
-                        dirname = testname.split("/")[-1]
-                        test = dirname
-                        if "[" and "]" in test:
-                            testname = getname(test)
-                            tests = gettests(test)
-                            #print(testname)
-                            #print(tests)
-
-                            teststring = ""
-                            #print(len(tests))
-                            if len(tests) == 1:
-                                teststring = tests[0]
-                            elif len(tests) > 1:
-                                print(tests)
-                                teststring = " or ".join(tests)
-                            #workdir = os.getcwd() +"/workdir/nosedir/{}/".format(testname)
-                            #os.makedirs(workdir)
-                            #cmd = [ workdir ]
-                            #cmd = [ ".".join([testname,'py']), "-k {}".format(teststring)]
-                            cmd = ["-k {}".format(teststring)] + cmd
-                            dirname = testname
-                        
-                        dirname = "{}".format(dirname if not dirname.endswith(".py") else dirname[:-3])
-
-                        # Set up Test Working Directory
-                        if not os.path.exists(workdir + "{}/".format(dirname)):
-                            print("Setting Working Directory: {}".format(workdir + "{}/".format(dirname)))
-                            os.makedirs(workdir + "{}/".format(dirname))
-                            cmd = [ workdir + "{}/".format(dirname) ] + cmd
+                    if test.endswith(".py"):
                         try:
-                            shutil.copy2(testpath, workdir + "{}/".format(dirname))
+                            print("Copying: {} to {}".format(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
+                            shutil.copy2(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
                         except:
                             traceback.print_exc()
+                    else:
+                        try:
+                            print("Copying: {} to {}".format(workdir + "tests/",test), workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
+                            shutil.copy2("{}{}.py".format(workdir + "tests/",test), workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
+                        except:
+                            traceback.print_exc()
+                            
+                    # https://docs.pytest.org/en/stable/usage.html
+                    
+                    cmd = ["--verbose"] + ["-ra"] + ["--tb=short"] + cmd
 
-                        if verbose:
-                            cmd = ["--verbose"] + ["--tb=long"] + cmd
-                        elif not verbose:
-                            cmd = ["-ra"] + ["--tb=short"] + cmd
-                            #cmd = ["-ra"] + ["--tb=long"] + cmd
+                    if DRY_RUN:
+                        cmd = ["--collect-only"] + cmd
+                    
+                    if not os.path.isdir(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3])):
+                        os.makedirs(workpath + '/xml/{}/'.format(test if not test.endswith(".py") else test[:-3]))
+                    xmlfile = workpath + 'xml/{}/nose.xml'.format(test if not test.endswith(".py") else test[:-3])
 
+                    cmd = ["--junitxml={}".format(xmlfile)] + ["-s"] + ["--disable-pytest-warnings"] + cmd
+                    #print("Running Command: pytest {}".format(cmd))
+                    #print("Work Path: {}".format(workpath))
+                    if len(os.listdir(workpath)) < 1: # If only the XML dir was created
+                        print("No Tests to Run")
+                        sys.exit()
+                    else:
 
-                        if DRY_RUN:
-                            cmd = ["--collect-only"] + cmd
-                        
-                        if not os.path.isdir(workpath + '/xml/{}/'.format(dirname)):
-                            os.makedirs(workpath + '/xml/{}/'.format(dirname))
-                        xmlfile = workpath + 'xml/{}/nose.xml'.format(dirname)
-
-                        #########
-                        #============================================================ warnings summary =====================================================
-                        # ./lib/py/lib/python3.6/site-packages/_pytest/junitxml.py:436
-                        # ./lib/py/lib/python3.6/site-packages/_pytest/junitxml.py:436:
-                        # PytestDeprecationWarning: The 'junit_family' # default value will change to 'xunit2' in pytest 6.0.
-                        # Add 'junit_family=xunit1' to your pytest.ini file to keep the current format in future versions of pytest and silence thiswarning.
-                        #  _issue_warning_captured(deprecated.JUNIT_XML_DEFAULT_FAMILY, config.hook, 2)
-                        #########
-                        cmd = ["--junitxml={}".format(xmlfile)] + ["-s"] + ["--disable-pytest-warnings"] + cmd
-                        #print("Running Command: pytest {}".format(cmd))
-                        #print("Work Path: {}".format(workpath))
-                        if len(os.listdir(workpath)) < 1: # If only the XML dir was created
-                            print("No Tests to Run")
-                            sys.exit()
+                        myworkdir = os.getcwd()
+                        os.chdir("{}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
+                        print("Test Directory: {}".format(os.getcwd()))
+                        print("Running Command: pytest {}".format(cmd))
+                        conf_name = os.path.join(os.getcwd(),"conftest.py")
+                        if platform.system() == 'Darwin':
+                            write_conftest_osx(conf_name)
                         else:
-                            myworkdir = os.getcwd()
-                            os.chdir(workdir + "{}/".format(dirname))
-                            print("Test Directory: {}".format(os.getcwd()))
-                            print("Running Command: pytest {}".format(cmd))
-                            pytest.main(cmd)
-                            os.chdir(myworkdir)
+                            write_conftest_linux(conf_name)
+                        pytest.main(cmd)
+                        os.remove(conf_name)
+                        os.chdir(myworkdir)
+
+                ##################################################
+                ########## Real Path ##########
+                ##################################################
+                 # Copy Test To nosedir Directory assuming it's in another location
+                elif testname.startswith("/"):
+                    testpath = testname.split("[")[0]
+                    cmd = []
+                    dirname = testname.split("/")[-1]
+                    test = dirname
+                    if "[" and "]" in test:
+                        testname = getname(test)
+                        tests = gettests(test)
+                        teststring = ""
+                        if len(tests) == 1:
+                            teststring = tests[0]
+                        elif len(tests) > 1:
+                            print(tests)
+                            teststring = " or ".join(tests)
+                        cmd = ["-k {}".format(teststring)] + cmd
+                        dirname = testname
+
+                    dirname = "{}".format(dirname if not dirname.endswith(".py") else dirname[:-3])
+
+                    # Set up Test Working Directory
+                    if not os.path.exists(workdir + "{}/".format(dirname)):
+                        print("Setting Working Directory: {}".format(workdir + "{}/".format(dirname)))
+                        os.makedirs(workdir + "{}/".format(dirname))
+                        cmd = [ workdir + "{}/".format(dirname) ] + cmd
+                    try:
+                        shutil.copy2(testpath, workdir + "{}/".format(dirname))
+                    except:
+                        traceback.print_exc()
+
+                    cmd = ["--verbose"] + ["-ra"] + ["--tb=short"] + cmd
+
+                    if DRY_RUN:
+                        cmd = ["--collect-only"] + cmd
+                    
+                    if not os.path.isdir(workpath + '/xml/{}/'.format(dirname)):
+                        os.makedirs(workpath + '/xml/{}/'.format(dirname))
+                    xmlfile = workpath + 'xml/{}/nose.xml'.format(dirname)
+                    cmd = ["--junitxml={}".format(xmlfile)] + ["-s"] + ["--disable-pytest-warnings"] + cmd
+                    if len(os.listdir(workpath)) < 1: # If only the XML dir was created
+                        print("No Tests to Run")
+                        sys.exit()
+                    else:
+                        myworkdir = os.getcwd()
+                        os.chdir(workdir + "{}/".format(dirname))
+                        print("Test Directory: {}".format(os.getcwd()))
+                        print("Running Command: pytest {}".format(cmd))
+                        conf_name = os.path.join(os.getcwd(),"conftest.py")
+                        if platform.system() == 'Darwin':
+                            write_conftest_osx(conf_name)
+                        else:
+                            write_conftest_linux(conf_name)
+                        pytest.main(cmd)
+                        os.remove(conf_name)
+                        os.chdir(myworkdir)
             os.chdir(cwd)
 
         if not HAVE_PYTEST:
@@ -792,7 +895,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
         if "mpi" in test.options and sys.platform != "darwin" and ( pmode == 'parallel' or pmode == 'both'):
             print("Running test: {} in MPI mode".format(test.name))
             casa_exe = exec_path + "/mpicasa"
-            casaopts = "-n " + str(ncores) + " " + exec_path + "/casa" + " --nogui --nologger --log2term --agg "
+            casaopts = "-n " + str(ncores) + " " + exec_path + "/casa" + " --nogui --nologger --log2term --agg " + rcdir + " "
             assert (test != None)
             cmd = (casa_exe + " " + casaopts + " -c " + test.path).split()
             cwd = work_dir + "/" + test.name
@@ -890,20 +993,17 @@ if __name__ == "__main__":
     print("HAVE_ROBOT: {}".format(HAVE_ROBOT))
     print("HAVE_PYTEST: {}".format(HAVE_PYTEST))
     print("HAVE_NOSE: {}".format(HAVE_NOSE))
-    print("HAVE_CASA6: {}".format(HAVE_CASA6))
     print("")
-
-    verbose = False
 
     # List of tests to run
     testnames = []
 
     parser = argparse.ArgumentParser(allow_abbrev=False)
-    parser.add_argument("-a", "--all", action='store_true',help='run all tests defined in trunk/gcwrap/python/scripts/tests/uTest_list.json.')
-    parser.add_argument("-i", "--list",action='store_true',help='print the list of tests & tags defined in ')
+
+    parser.add_argument("-i", "--list",action='store_true',help='print the list of tests & tags defined in component_to_test_map.json')
     parser.add_argument("-v", "--verbose",action='store_true',help="Verbose Test Execution")
     parser.add_argument("-x", "--dry-run",action='store_true',help="dry run Test Execution")
-    parser.add_argument("-s", "--classes",nargs='+',metavar='test',help='print the classes from a test script')
+    parser.add_argument("-s", "--classes",nargs='+',metavar='test',help='print the classes from a test script') # copy of Dry-Run
     parser.add_argument("-f", "--file",nargs='?', type=argparse.FileType('r'),help='run the tests defined in an ASCII file <list>; one test per line')
 
     # Component Arguments
@@ -920,6 +1020,7 @@ if __name__ == "__main__":
     parser.add_argument('-j','--test_group',  help='Filter tests by a comma separated list of components', required=False)
     parser.add_argument('-m','--pmode',  help='Parallelization mode: serial, parallel, both', required=False)
     parser.add_argument('--bamboo', help='Set Bamboo Flag to True',default=False,action='store_true', required=False)
+    parser.add_argument('-r','--rcdir',  help='Casa rcdir', required=False)
 
     if not IS_CASA6:
         if "-c" in sys.argv:
@@ -933,6 +1034,10 @@ if __name__ == "__main__":
 
     print("Operating system: " +  platform.system())
     print("")
+    rcdir=""
+    if args.rcdir is not None:
+        rcdir="--rcdir=" + args.rcdir
+    print("rcdir: " + rcdir)
 
     if args.test_group is not None:
         components = args.test_group
@@ -965,24 +1070,22 @@ if __name__ == "__main__":
     if args.verbose:
         verbose = True
     if args.list:
-        list_tests()
-        sys.exit()
+        try:
+            tmp = {}
+            import casatestutils as _;
+            with open("{}/{}".format(_.__path__[0], "component_to_test_map.json")) as ctt:
+                component_to_test_map = json.load(ctt)
+            for myDict in component_to_test_map["testlist"]:
+                tmp[myDict["testScript"]] = myDict["testGroup"]
+            for key, value in tmp.items():
+                print(key,value)
+        except:
+            list_tests()
+        sys.exit(1)
 
     ## Dry Run
-    DRY_RUN = False
-    if args.dry_run:
+    if args.dry_run or (args.classes is not None):
         DRY_RUN = True
-
-    ## RUN ALL
-    RUN_ALL = False
-    if args.all:
-        RUN_ALL = True
-        testnames = ["all"]
-
-    if args.classes is not None:
-        print(args.classes)
-        getclasses(args.classes)
-        os._exit(0)
 
     if args.file is not None:
         #logger.info('Reading Test List from %s: ', args.file)
@@ -1001,11 +1104,10 @@ if __name__ == "__main__":
         test_paths = [x.strip() for x in args.test_paths.split(',')]
 
     for arg in unknownArgs:
-        
         if arg.startswith(("-", "--")):
             raise ValueError('unrecognized argument: %s'%(arg))
             sys.exit()
-        
+
         else:
 
             if arg.startswith("test") and not RUN_ALL:
@@ -1069,16 +1171,11 @@ if __name__ == "__main__":
                 testnames = tests
 
             print("Testnames: {}".format(testnames))
-            #print("Test: {}".format(tests))
-            #sys.exit()
             if testnames == [] or len(testnames) == 0:
                 print("List of tests is empty")
                 parser.print_help(sys.stderr)
                 sys.exit(1)
-                #sys.exit()
-                #raise Exception("List of tests is empty")
             run(testnames)
     except:
         traceback.print_exc()
-
 

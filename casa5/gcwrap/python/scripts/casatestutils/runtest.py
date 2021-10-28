@@ -1,8 +1,10 @@
-from __future__ import print_function
+########################################################################################################################
+############################################            Imports            #############################################
+########################################################################################################################
+
 import argparse
 import os
 import shutil
-import logging
 import sys
 import traceback
 import subprocess
@@ -10,11 +12,77 @@ import unittest
 import json
 import datetime
 import platform
-from testrunner.shell_runner import ShellRunner
-from testrunner import xvfb_helper
-from testrunner.xunit import Xunit
+
+
 default_timeout = 1800
 sys.path.insert(0,'')
+
+########################################################################################################################
+######################################            Imports / Constants            #######################################
+########################################################################################################################
+
+# mem mode variables
+HAVE_MEMTEST=True
+MEM = 0
+try:
+    import memTest
+except ImportError:
+    HAVE_MEMTEST = False
+
+# cov mode variables
+HAVE_COVTEST=True
+COV = 0
+try:
+    import coverage
+except ImportError:
+    HAVE_COVTEST = False
+
+# pybot mode variables
+HAVE_ROBOT = True
+USE_PYBOT = 0
+try:
+    import robot
+except ImportError:
+    HAVE_ROBOT = False
+
+#### PYTEST IMPORT
+HAVE_PYTEST = True
+try:
+    import pytest
+except ImportError:
+    HAVE_PYTEST = False
+
+#### NOSE IMPORT
+HAVE_NOSE = True
+try:
+    import nose
+except ImportError:
+    HAVE_NOSE = False
+
+IS_CASA6 = False
+CASA6 = False
+HAVE_CASA6 = False
+verbose = False
+DRY_RUN = False
+RUN_ALL = False
+
+# JIRA BRANCH TO CHECKOUT
+JIRA_BRANCH = None
+
+try:
+    from __main__ import default
+    from tasks import *
+    from taskinit import *
+except ImportError:
+    CASA6 = True
+    IS_CASA6 = True
+    HAVE_CASA6 = True
+
+# Use Nose attribute Functionality
+RUN_SUBTEST = False
+
+# Dry run of Tests
+DRY_RUN = False
 
 ########################################################################################################################
 ###########################################            Functions            ############################################
@@ -219,7 +287,6 @@ def clean_working_directory(workdir):
             os.rmdir(workdir)
         except:
             shutil.rmtree(workdir)
-    
 
 def getname(testfile):
     '''Get the test name from the command-line
@@ -310,11 +377,13 @@ def unpack_tarball(pkg, outputdir):
     return installpath
 
 def get_casatestutils_exec_path(pkg_dir):
+    # Since runtest is no longer part of casatestutils, this may be removed.
     for currentpath, folders, files in os.walk(pkg_dir):
         for file in files:
             #print(">>>" + os.path.join(currentpath, file))
             if currentpath.endswith('casatestutils') and file == 'runtest.py':
                 return(os.path.join(currentpath, file))
+    return "/dev/null/"
 
 def unpack_pkg(pkg, work_dir, outputdir):
     if not os.path.exists(outputdir):
@@ -336,76 +405,6 @@ def unpack_pkg(pkg, work_dir, outputdir):
     if casatestutils_exec_path == None:
         raise Exception("Couldn't find casatestutils")
     return exec_path, casatestutils_exec_path
-
-
-########################################################################################################################
-######################################            Imports / Constants            #######################################
-########################################################################################################################
-# Python Version
-PYVER = str(sys.version_info[0]) + "." + str(sys.version_info[1])
-
-# mem mode variables
-HAVE_MEMTEST=True
-MEM = 0
-try:
-    import memTest
-except ImportError:
-    HAVE_MEMTEST = False
-
-# cov mode variables
-HAVE_COVTEST=True
-COV = 0
-try:
-    import coverage
-except ImportError:
-    HAVE_COVTEST = False
-
-# pybot mode variables
-HAVE_ROBOT = True
-USE_PYBOT = 0
-try:
-    import robot
-except ImportError:
-    HAVE_ROBOT = False
-
-#### PYTEST IMPORT
-HAVE_PYTEST = True
-try:
-    import pytest
-except ImportError:
-    HAVE_PYTEST = False
-
-#### NOSE IMPORT
-HAVE_NOSE = True
-try:
-    import nose
-except ImportError:
-    HAVE_NOSE = False
-
-IS_CASA6 = False
-CASA6 = False
-HAVE_CASA6 = False
-
-# JIRA BRANCH TO CHECKOUT
-JIRA_BRANCH = None
-
-try:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-except ImportError:
-    CASA6 = True
-    IS_CASA6 = True
-    HAVE_CASA6 = True
-
-# Use Nose attribute Functionality
-RUN_SUBTEST = False
-
-# Dry run of Tests
-DRY_RUN = False
-
-# Define which tests to run
-whichtests = 0
 
 ########################################################################################################################
 ##############################################            Run            ###############################################
@@ -457,14 +456,14 @@ def run(testnames):
                 else:
                     print("Running Command: pytest {}".format(cmd))
                     pytest.main(cmd)
-                
+
             else:
                 print("Tests: {}".format(testnames))
                 gittest = True
 
                 for testname in testnames:
                     cmd = []
-                    
+
                     # Copy Test To nosedir Directory if in cwd
                     if testname.startswith("test"):
                         test = testname
@@ -488,15 +487,13 @@ def run(testnames):
                             #cmd = [ ".".join([testname,'py']), "-k {}".format(teststring)]
                             cmd = ["-k {}".format(teststring)] + cmd
                             test = testname
-                            
+
                         # Set up Test Working Directory
                         if not os.path.exists(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])):
                             print("Setting Working Directory: {}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
                             os.makedirs(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
                             cmd = [ workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]) ] + cmd
-                            
 
-                            
                         # Check to see if tests need to be pulled from git. Only needs to be done once
                         if not test.endswith(".py") and gittest == True:
                             if JIRA_BRANCH is not None:
@@ -511,7 +508,7 @@ def run(testnames):
                                 os.makedirs(workdir + "tests/")
                                 gather_all_tests(workpath +'casa6/', workdir + "tests/")
                                 gittest = False
-                            
+
                         if test.endswith(".py"):
                             try:
                                 print("Copying: {} to {}".format(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
@@ -527,9 +524,10 @@ def run(testnames):
                                 
                         # https://docs.pytest.org/en/stable/usage.html
                         if verbose:
-                            cmd = ["--verbose"] + ["--tb=short"] + cmd
+                            cmd = ["--verbose"] + ["--tb=long"] + cmd
                         elif not verbose:
-                            cmd = ["-ra"] + ["--tb=line"] + cmd
+                            cmd = ["-ra"] + ["--tb=short"] + cmd
+                            #cmd = ["-ra"] + ["--tb=long"] + cmd
 
                         if DRY_RUN:
                             cmd = ["--collect-only"] + cmd
@@ -560,7 +558,7 @@ def run(testnames):
                             print("Running Command: pytest {}".format(cmd))
                             pytest.main(cmd)
                             os.chdir(myworkdir)
-                        
+
                     ##################################################
                     ########## Real Path ##########
                     ##################################################
@@ -601,11 +599,12 @@ def run(testnames):
                             shutil.copy2(testpath, workdir + "{}/".format(dirname))
                         except:
                             traceback.print_exc()
-     
+
                         if verbose:
-                            cmd = ["--verbose"] + ["--tb=short"] + cmd
+                            cmd = ["--verbose"] + ["--tb=long"] + cmd
                         elif not verbose:
-                            cmd = ["-ra"] + ["--tb=line"] + cmd
+                            cmd = ["-ra"] + ["--tb=short"] + cmd
+                            #cmd = ["-ra"] + ["--tb=long"] + cmd
 
 
                         if DRY_RUN:
@@ -636,168 +635,11 @@ def run(testnames):
                             print("Running Command: pytest {}".format(cmd))
                             pytest.main(cmd)
                             os.chdir(myworkdir)
-                            
-
             os.chdir(cwd)
 
-    if not IS_CASA6: # If in CASA5
-        if HAVE_NOSE:
-            # Global variable used by regression framework to determine pass/failure status
-            global regstate
-            regstate = False
-                
-            listtests = testnames
-            if listtests == '--Help' or listtests == []:
-                usage()
-                sys.exit()
-                
-            if listtests == '--list':
-                list_tests()
-                sys.exit()
-                        
-            if listtests == 'all':
-                whichtests = 0
-                # Get the full list of tests from file
-                listtests = readfile(LISTofTESTS)
-                if listtests == []:
-                    raise Exception('List of tests "{}" is empty or does not exist'.format(LISTofTESTS))
+        if not HAVE_PYTEST:
+            print("Missing Pytest")
 
-            elif (type(testnames) != type([])):
-                if (os.path.isfile(testnames)):
-                    # How to prevent it from opening a real test???
-                    whichtests = 1
-                    listtests = readfile(testnames)
-                    if listtests == []:
-                        raise Exception('List of tests is empty')
-                else:
-                    raise Exception('List of tests does not exist')
-                    
-            else:
-                # run specific tests
-                whichtests = 1
-
-
-            # Directories
-            PWD = os.getcwd()
-            WDIR = PWD+'/nosedir/'
-            
-            # Create a working directory
-            workdir = WDIR
-            print("Creating work directory: {}".format(workdir))
-            if os.access(workdir, os.F_OK) is False:
-                os.makedirs(workdir)
-            else:
-                shutil.rmtree(workdir)
-                os.makedirs(workdir)
-            
-            # Move to working dir
-            os.chdir(workdir)
-            
-            # Create a directory for nose's xml files
-            xmldir = WDIR+'xml/'
-            if os.access(xmldir, os.F_OK) is False:
-                os.makedirs(xmldir)
-            else:
-                shutil.rmtree(xmldir)
-                os.makedirs(xmldir)
-            
-            print("Starting unit tests for {}: ".format(listtests))
-
-            # ASSEMBLE and RUN the TESTS
-            if not whichtests:
-                '''Run all tests'''
-                list = []
-                testlist_to_execute= []
-                # awells CAS-10844 Fix
-                suiteList = []
-                for f in listtests:
-                    suite = unittest.TestSuite()
-                    try:
-                        tests = UnitTest(f).getUnitTest()
-                        if RUN_SUBTEST:
-                            testlist_to_execute = testlist_to_execute + getsubtests(f,tests)
-                        for test in tests:
-                            suite.addTest(test)
-                        suiteList.append(suite)
-                    except:
-                        traceback.print_exc()
-                list = suiteList
-
-            elif (whichtests == 1):
-                '''Run specific tests'''
-                list = []
-                testlist_to_execute= []
-                for f in listtests:
-                    if not haslist(f):
-                        testcases = UnitTest(f).getUnitTest()
-                        list = list+testcases
-
-                        if RUN_SUBTEST:
-                            testlist_to_execute = testlist_to_execute + getsubtests(f,list)
-                    else:
-                        ff = getname(f)
-                        tests = gettests(f)
-                        # allow splitting of large test groups into smaller chunks
-                        # large long running test groups make parallel test scheduling
-                        # a bit more complicated so splitting them to smaller groups
-                        # helps
-                        # syntax: [testsplit:chunk_index-number_of_chunks]
-                        if len(tests) == 1 and tests[0].startswith('testsplit:'):
-                            import math
-                            testcases = UnitTest(ff).getUnitTest()
-                            chk, nchk = map(int, tests[0].split(':')[1].split('-'))
-                            if chk > nchk or chk < 1:
-                                raise ValueError('testsplit chunk must be 1 <= nchunks')
-                            nchk = min(len(testcases), nchk)
-                            chksz = int(math.ceil(len(testcases) / float(nchk)))
-                            offset = (chk - 1) * chksz
-                            print("running tests {} to {}".format(offset, min(offset + chksz, len(testcases))))
-                            testcases = testcases[offset:offset + chksz]
-                        else:
-                            testcases = UnitTest(ff).getUnitTest(tests)
-                        list = list+testcases
-
-            if RUN_SUBTEST:
-
-
-                if len(testlist_to_execute) == 0:
-                    raise ValueError("Cannot Find Tests with Attribute:'{}'".format(ATTR_VAL))
-                if not whichtests:
-                    for i in range(0,len(list)):
-                        tmp = []
-                        for item in list[i]:
-                            if [item._testMethodName,item.__module__] in testlist_to_execute:
-                                tmp.append(item)
-                        list[i] =  unittest.TestSuite(tmp)
-                else:
-                    tmp = []
-                    for item in list:
-                        if [item._testMethodName,item.__module__] in testlist_to_execute:
-                            tmp.append(item)
-                    list = tmp
-
-            if (len(list) == 0):
-                os.chdir(PWD)
-                raise Exception('ERROR: There are no valid tests to run')
-
-
-            # Run all tests and create a XML report
-            xmlfile = xmldir+'nose.xml'
-
-            try:
-                if (HAVE_MEMTEST and MEM):
-                    regstate = nose.run(argv=[sys.argv[0],"-d","-s","--with-memtest","--verbosity=2",
-                                    "--memtest-file="+xmlfile], suite=list, addplugins=[memTest.MemTest()])
-                else:
-                    regstate = nose.run(argv=[sys.argv[0],"-d","-s","--with-xunit","--verbosity=2",
-                                    "--xunit-file="+xmlfile], suite=list)
-
-                os.chdir(PWD)
-            except:
-                print("Failed to run one or more tests")
-                traceback.print_exc()
-            else:
-                os.chdir(PWD)
 
 ########################################################################################################################
 #######################################            Run Bamboo Option            ########################################
@@ -809,6 +651,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
         test_list = [x.strip() for x in test_list.split(',')]
     if args.test_group is not None:
         test_group = [x.strip() for x in test_group.split(',')]
+
     # Unpack the distribution
     print ("Test list: " + str (test_list))
     print ("Test group: " + str (test_group))
@@ -816,10 +659,8 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
         raise Exception("Missing pkg")
     if work_dir is None:
         raise Exception("Missing work_dir")
-    #exec_path, casatestutils_exec_path = unpack_pkg(pkg, work_dir, work_dir + "/pkg")
-    exec_path =  "work/pkg/casa-6.3.0-11/bin"
-    casatestutils_exec_path = "work/pkg/casa-6.3.0-11/lib/py/lib/python3.6/site-packages/casatestutils/runtest.py"
-    #exec_path = "/tmp/work/pkg/CASA.app/Contents/MacOS"
+    exec_path, casatestutils_exec_path = unpack_pkg(pkg, work_dir, work_dir + "/pkg")
+
     print("Executable path: " + exec_path)
     print("casatestutils path: " + casatestutils_exec_path)
 
@@ -832,11 +673,9 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
         branch = "master"
 
     # Clone a default set of repositories to if test paths are not provided from command line
-    #if len(test_paths) == 0 :
-    #    test_paths = fetch_tests(str(work_dir), branch)
-    test_paths = ['work/casasources//casampi/src/casampi/tests', 'work/casasources//casaplotms/tests/plotms', 'work/casasources//almatasks/tests/tasks', 'work/casasources//casa6/casatests/regression/', 'work/casasources//casa6/casatests/stakeholder/', 'work/casasources//casa6/casatasks/tests/', 'work/casasources//casa6/casatools/tests/', 'work/casasources//casaviewer/tests/tasks']
+    if len(test_paths) == 0 :
+        test_paths = fetch_tests(str(work_dir), branch)
 
-    
     test_config = None
     if test_config_path == None:
        test_config_path = work_dir + "/casasources/casa6/casatestutils/casatestutils/component_to_test_map.json"
@@ -849,7 +688,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     test_config_elems = test_config['testlist']
 
     #print(test_config_elems)
-    print("TPS: ", test_paths)
+    print("Test Paths: ", test_paths)
 
     # Match the test names provided in the JSON file to the actual test locations.
     tests_to_run = []
@@ -879,7 +718,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
                                                       tuple(opts),
                                                       x['comment'],
                                                       timeout))
-    #print(tests_to_run)
+
     # Filter tests by test list
     if test_list is not None and len(test_list)>0:
         print ("Test list provided. Filtering tests.")
@@ -910,7 +749,6 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
                 raise Exception("Couldn't locate test: " + test)
         tests_to_run = tmp_tests_to_run
 
-    #print(tests_to_run)
     # Filter by Jira components
     if test_group is not None and len(test_group)>0:
         print("Jira component list provided. Filtering tests.")
@@ -948,7 +786,6 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     for test in tests_to_run:
         r = ShellRunner()
         xunit = Xunit()
-        casaopts = " --nogui --nologger --log2term"
 
         #pmodes: pmodes = ['serial','parallel','both']
         # Skip MPI on Darwin for now
@@ -957,24 +794,21 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
             casa_exe = exec_path + "/mpicasa"
             casaopts = "-n " + str(ncores) + " " + exec_path + "/casa" + " --nogui --nologger --log2term --agg "
             assert (test != None)
-            #cmd = (casa_exe + " " + casaopts + " -c " + casatestutils_exec_path + " " + test.path).split()
             cmd = (casa_exe + " " + casaopts + " -c " + test.path).split()
             cwd = work_dir + "/" + test.name
             if pmode == 'both': 
                 cwd = work_dir + "/" + test.name + '_mpi'
 
+            print("Running cmd " + str(cmd) + "in " + cwd)
             if not os.path.exists(cwd):
                 os.makedirs(cwd)
-            print("Running cmd " + str(cmd))
-            print("in "  + cwd)
             starttime = datetime.datetime.now()
-
             output = r.runshell(cmd, test.timeout,cwd)
-
             endtime = datetime.datetime.now()
             runtime = endtime - starttime
             xunit.append_result(test.name, str(runtime), len(output), output)
             print("")
+
             if pmode == 'both':
                 if "casampi" in test.name:
                     continue
@@ -982,40 +816,53 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
                 casaopts = " --nogui --nologger --log2term"
                 casa_exe = exec_path + "/casa"
                 assert (test != None)
-                #cmd = (casa_exe + " " + casaopts + " -c " + casatestutils_exec_path + " " + test.path).split()
                 cmd = (casa_exe + " " + casaopts + " -c " + test.path).split()
                 cwd = work_dir + "/" + test.name
+
+                print("Running cmd " + str(cmd) + "in " + cwd)
                 if not os.path.exists(cwd):
                     os.makedirs(cwd)
-                print("Running cmd " + str(cmd))
-                print("in "  + cwd)
                 starttime = datetime.datetime.now()
-
                 output = r.runshell(cmd, test.timeout,cwd)
-
                 endtime = datetime.datetime.now()
                 runtime = endtime - starttime
                 xunit.append_result(test.name, str(runtime), len(output), output)
                 print("")
 
-        #elif "mpi" not in test.options and ( pmode == 'serial'):
+        elif "mpi" not in test.options and sys.platform != "darwin" and ( pmode == 'parallel' or pmode == 'both'):
+            # Special Case when you have tests in the HPC / parallel list but no mpi test option
+            print("Running test: {} in Serial mode".format(test.name))
+            casaopts = " --nogui --nologger --log2term"
+            casa_exe = exec_path + "/casa"
+            assert (test != None)
+            cmd = (casa_exe + " " + casaopts + " -c " + test.path).split()
+            cwd = work_dir + "/" + test.name
+
+            print("Running cmd " + str(cmd) + "in " + cwd)
+            if not os.path.exists(cwd):
+                os.makedirs(cwd)
+            starttime = datetime.datetime.now()
+            output = r.runshell(cmd, test.timeout,cwd)
+            endtime = datetime.datetime.now()
+            runtime = endtime - starttime
+            xunit.append_result(test.name, str(runtime), len(output), output)
+            print("")
+
         elif pmode == 'serial':
             if "casampi" in test.name:
                 continue
             print("Running test: {} in Serial mode".format(test.name))
+            casaopts = " --nogui --nologger --log2term"
             casa_exe = exec_path + "/casa"
             assert (test != None)
-            #cmd = (casa_exe + " " + casaopts + " -c " + casatestutils_exec_path + " " + test.path).split()
             cmd = (casa_exe + " " + casaopts + " -c " + test.path).split()
             cwd = work_dir + "/" + test.name
+
+            print("Running cmd " + str(cmd) + "in " + cwd)
             if not os.path.exists(cwd):
                 os.makedirs(cwd)
-            print("Running cmd " + str(cmd))
-            print("in "  + cwd)
             starttime = datetime.datetime.now()
-
             output = r.runshell(cmd, test.timeout,cwd)
-
             endtime = datetime.datetime.now()
             runtime = endtime - starttime
             xunit.append_result(test.name, str(runtime), len(output), output)
@@ -1036,9 +883,9 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
 ########################################            Main-Start-Up            ###########################################
 ########################################################################################################################
 
+
 if __name__ == "__main__":
 
-    # mem mode variables
     print("HAVE_MEMTEST: {}".format(HAVE_MEMTEST))
     print("HAVE_COVTEST: {}".format(HAVE_COVTEST))
     print("HAVE_ROBOT: {}".format(HAVE_ROBOT))
@@ -1047,12 +894,11 @@ if __name__ == "__main__":
     print("HAVE_CASA6: {}".format(HAVE_CASA6))
     print("")
 
-    verbose = False
+    
 
-    #original_datapath = casa['dirs']['data']
     # List of tests to run
     testnames = []
-        
+
     parser = argparse.ArgumentParser(allow_abbrev=False)
     parser.add_argument("-a", "--all", action='store_true',help='run all tests defined in trunk/gcwrap/python/scripts/tests/uTest_list.json.')
     parser.add_argument("-i", "--list",action='store_true',help='print the list of tests & tags defined in ')
@@ -1060,10 +906,8 @@ if __name__ == "__main__":
     parser.add_argument("-x", "--dry-run",action='store_true',help="dry run Test Execution")
     parser.add_argument("-s", "--classes",nargs='+',metavar='test',help='print the classes from a test script')
     parser.add_argument("-f", "--file",nargs='?', type=argparse.FileType('r'),help='run the tests defined in an ASCII file <list>; one test per line')
-    #parser.add_argument("-m", "--mem",action='store_true',help='show the memory used by the tests and the number of files left open.')
 
     # Component Arguments
-
     parser.add_argument("-e","--mapfile", nargs='?', type=argparse.FileType('r'), help='Component to test map file', required=False)
     parser.add_argument("-b","--branch", help='JIRA Branch for test repository checkouts', required=False)
 
@@ -1075,10 +919,7 @@ if __name__ == "__main__":
     parser.add_argument('-l','--test_list', help='Filter tests by a comma separated list of tests', required=False)
     parser.add_argument('-c','--test_config',  help='Test configuration file', required=False)
     parser.add_argument('-j','--test_group',  help='Filter tests by a comma separated list of components', required=False)
-    # parser.add_argument('-b','--branch',  help='Branch for test repository checkouts', required=False) ## Duplicate
-
     parser.add_argument('-m','--pmode',  help='Parallelization mode: serial, parallel, both', required=False)
-
     parser.add_argument('--bamboo', help='Set Bamboo Flag to True',default=False,action='store_true', required=False)
 
     if not IS_CASA6:
@@ -1090,11 +931,9 @@ if __name__ == "__main__":
     
     print(args)
     print("")
-    #args=parser.parse_args()
 
     print("Operating system: " +  platform.system())
     print("")
-    # print(unknownArgs)
 
     if args.test_group is not None:
         components = args.test_group
@@ -1102,37 +941,39 @@ if __name__ == "__main__":
         print("Testing Components" + str(components))
         print("")
         
-        #
-        if args.mapfile is not None:
-            component_to_test_map = json.load(args.mapfile)
-        else:
-            import casatestutils as _;
-            with open("{}/{}".format(_.__path__[0], "component_to_test_map.json")) as ctt:
-                component_to_test_map = json.load(ctt)
-        
-        for c in components:
-            _isComponent = False
-            component = c.strip()
-            for myDict in component_to_test_map["testlist"]:
-                #print(component, myDict["testGroup"])
-                if component in myDict["testGroup"]:
-                    _isComponent = True
-                    testnames.append(myDict["testScript"])
-            if not _isComponent:
-                print("No Tests for Component: {}".format(component))
+        if not args.bamboo:
+            if args.mapfile is not None:
+                component_to_test_map = json.load(args.mapfile)
+            else:
+                try:
+                    import casatestutils as _;
+                    with open("{}/{}".format(_.__path__[0], "component_to_test_map.json")) as ctt:
+                        component_to_test_map = json.load(ctt)
+                except:
+                    print("No JSON file to Map")
+            
+            for c in components:
+                _isComponent = False
+                component = c.strip()
+                for myDict in component_to_test_map["testlist"]:
+                    #print(component, myDict["testGroup"])
+                    if component in myDict["testGroup"]:
+                        _isComponent = True
+                        testnames.append(myDict["testScript"])
+                if not _isComponent:
+                    print("No Tests for Component: {}".format(component))
 
     if args.verbose:
         verbose = True
     if args.list:
         list_tests()
         sys.exit()
+
     ## Dry Run
-    DRY_RUN = False
     if args.dry_run:
         DRY_RUN = True
 
     ## RUN ALL
-    RUN_ALL = False
     if args.all:
         RUN_ALL = True
         testnames = ["all"]
@@ -1141,7 +982,6 @@ if __name__ == "__main__":
         print(args.classes)
         getclasses(args.classes)
         os._exit(0)
-        
 
     if args.file is not None:
         #logger.info('Reading Test List from %s: ', args.file)
@@ -1151,11 +991,6 @@ if __name__ == "__main__":
                 testnames.append(re.sub(r'[\n\r]+', '',line))
             except:
                 raise Exception(" The list should contain one test per line.")
-                
-    #if args.mem: # run specific tests in mem mode
-    #    #logger.info('Setting Mem Mode')
-    #    MEM = 1
-
 
     if args.branch is not None:
         JIRA_BRANCH = args.branch
@@ -1165,21 +1000,21 @@ if __name__ == "__main__":
         test_paths = [x.strip() for x in args.test_paths.split(',')]
 
     for arg in unknownArgs:
+        
         if arg.startswith(("-", "--")):
             raise ValueError('unrecognized argument: %s'%(arg))
             sys.exit()
-        #
+        
         else:
+
             if arg.startswith("test") and not RUN_ALL:
                 testnames.append(arg)
             # local Path file
             #elif arg.startswith("./") and arg.endswith(".py") and not RUN_ALL:
             elif arg.startswith("./") and ".py" in arg and not RUN_ALL:
 
-                #testnames.append(arg[2:])
                 try:
                     real_path = os.path.realpath(arg[2:])
-                    #print("real_path: {}".format(real_path))
                     testnames.append(real_path)
                 except:
                     traceback.print_exc()
@@ -1187,14 +1022,15 @@ if __name__ == "__main__":
             elif (arg.startswith("../") or arg.startswith("/"))  and ".py" in arg and not RUN_ALL:
                 try:
                     real_path = os.path.realpath(arg)
-                    #print("real_path: {}".format(real_path))
                     testnames.append(real_path)
                 except:
                     traceback.print_exc()
 
     try:
-
         if args.bamboo:
+            from testrunner.shell_runner import ShellRunner
+            from testrunner import xvfb_helper
+            from testrunner.xunit import Xunit
             if args.pkg:
                 print("Package: " + args.pkg)
             print("Test configuration file: " + str(args.test_config))
@@ -1208,9 +1044,33 @@ if __name__ == "__main__":
 
         else:
             #If no tests are given, no subet tag or --all option
+            #print("Testnames: {}".format(testnames))
+            if args.test_paths is not None:
+                tests = []
+                test_paths = [x.strip() for x in args.test_paths.split(',')]
+                if len(testnames) == 0:
+                    for test_path in test_paths:
+                        for root, dirs, files in os.walk(test_path):
+                            for file in files:
+                                if file.endswith(".py") and file.startswith("test_"):
+                                     tests.append(os.path.join(root, file))
+                else:
+                    for test_path in test_paths:
+                        #print(test_path)
+                        for test in testnames:
+                            if not test.endswith(".py"): 
+                                test = test + ".py"
+                            #print(test)
+                            for root, dirs, files in os.walk(test_path):
+                                for file in files:
+                                    if file == test:
+                                        tests.append(os.path.join(root, file))
+                testnames = tests
+
             print("Testnames: {}".format(testnames))
+            #print("Test: {}".format(tests))
+            #sys.exit()
             if testnames == [] or len(testnames) == 0:
-                #TODO
                 print("List of tests is empty")
                 parser.print_help(sys.stderr)
                 sys.exit(1)
