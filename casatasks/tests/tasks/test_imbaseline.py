@@ -58,7 +58,3 @@ class test_base(unittest.TestCase):
             return _wrapper
         return wrapper
 
-
-if __name__ == '__main__':
-    os.chdir("/work/dev/shimada/casa6.13520.new/tmp")
-    unittest.main()
