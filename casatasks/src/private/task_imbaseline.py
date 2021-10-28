@@ -394,10 +394,10 @@ def __get_axis_position(val: array=None):
 
 
 def __get_image_params_from_imsmooth_output(params):
-    with tool_manager(params.infile, image) as ia:
+    with tool_manager(params.infile, image) as _ia:
         try:
-            cs = ia.coordsys()
-            params.im_shape = ia.shape()
+            cs = _ia.coordsys()
+            params.im_shape = _ia.shape()
             params.axis_dir = cs.findcoordinate('direction')['world']
             params.axis_sp = __get_axis_position(cs.findcoordinate('spectral')['world'])  # 3 or 2 or -1
             params.axis_pol = __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
@@ -574,15 +574,35 @@ def __create_subtable(outfile, subtable: str, desc: str, dminfo: str):
 
 
 def __copy_image_array_to_ms(params):
-    image_array, mask_array, axis_x, axis_y, axis_sp, axis_pol = __get_image_value(params)
+    __put_image_data_to_ms(params, *__get_image_value(params))
 
+
+def __get_image_value(params):
+    # get image array and mask from the image
+    with tool_manager(params.infile, image) as _ia:
+        arr = _ia.getchunk()
+        msk = _ia.getchunk(getmask=True)
+
+    # put image array slices to MS DATA column
+    # axis indices for spatial, spectral and polarization axes
+    xax, yax = params.axis_dir
+    spax = params.axis_sp
+    if params.axis_pol > 0:
+        polax = params.axis_pol
+    else:
+        arr = np.expand_dims(arr, axis=3)
+        msk = np.expand_dims(msk, axis=3)
+        polax = 3
+    casalog.post(f'axis index: {xax} {yax} {polax} {spax}', 'DEBUG2')
+    return arr, msk, xax, yax, spax, polax
+
+
+def __put_image_data_to_ms(params, image_array, mask_array, axis_x, axis_y, axis_sp, axis_pol):
     # which data column to use
     with table_manager(params.outfile, nomodify=False) as tb:
         # also set FLAG, SIGMA, WEIGHT, and UVW
-        # r2p is a mapping between MS row and image array slice
         index_list = [0, 0, 0, 0]
         index_list[axis_sp] = np.arange(params.im_nchan)
-        r2p = []
         nx, ny = params.dir_shape
         irow = 0
         wgt = np.ones(1, dtype=float)
@@ -597,33 +617,12 @@ def __copy_image_array_to_ms(params):
                     cell = image_array[slice]
                     mask = np.logical_not(mask_array[slice])
                     casalog.post(f'slice={slice}, cell={cell}', 'DEBUG2')
-                    r2p.append(slice)
                     tb.putcell(params.datacolumn, irow, np.expand_dims(cell, axis=0))
                     tb.putcell('FLAG', irow, np.expand_dims(mask, axis=0))
                     tb.putcell('SIGMA', irow, wgt)
                     tb.putcell('WEIGHT', irow, wgt)
                     tb.putcell('UVW', irow, uvw)
                     irow += 1
-
-
-def __get_image_value(params):
-    # get image array and mask from the image
-    with tool_manager(params.infile, image) as ia:
-        arr = ia.getchunk()
-        msk = ia.getchunk(getmask=True)
-
-    # put image array slices to MS DATA column
-    # axis indices for spatial, spectral and polarization axes
-    xax, yax = params.axis_dir
-    spax = params.axis_sp
-    if params.axis_pol > 0:
-        polax = params.axis_pol
-    else:
-        arr = np.expand_dims(arr, axis=3)
-        msk = np.expand_dims(msk, axis=3)
-        polax = 3
-    casalog.post(f'axis index: {xax} {yax} {polax} {spax}', 'DEBUG2')
-    return arr,msk,xax,yax,spax,polax
 
 
 class MS2ImageParams(Validable):
@@ -646,35 +645,31 @@ class MS2ImageParams(Validable):
 def ms2image(params: MS2ImageParams):
     casalog.post("start imaging", "DEBUG2")
     try:
-        __make_output_file(infile=params.imagename, outfile=params.linefile)  # mask data is copied in this method
+        __copy_image_file(params.imagename, params.linefile)  # mask data is also copied in this method
         if params.output_cont:
-            __make_output_file(infile=params.imagename, outfile=params.output_cont_file)
+            __copy_image_file(infile=params.imagename, outfile=params.output_cont_file)
     except Exception as instance:
         casalog.post(f"*** Error '{instance}'", 'SEVERE')
 
     __make_image_array(params)
     casalog.post("end arraying", "DEBUG2")
+
     if params.output_cont:
         __output_cont_image(params)
     __output_image(params)
     casalog.post("end imaging", "DEBUG2")
 
 
-def __output_image(params):
-    with tool_manager(params.linefile, image) as ia:
-        ia.putchunk(pixels=params.array, locking=True)
-        try:
-            param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
-            vars = locals()
-            param_vals = [vars[p] for p in param_names]
-            write_image_history(ia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
-        except Exception as instance:
-            casalog.post(f"*** Error '{instance}' updating HISTORY", 'WARN')
-
-
-def __output_cont_image(params):
-    with tool_manager(params.output_cont_file, image) as ia:
-        ia.putchunk(pixels=ia.getchunk() - params.array, locking=True)
+def __copy_image_file(infile: str=None, outfile: str=None):
+    if not os.path.exists(infile):
+        raise Exception(f'Image files not found, infile:{infile}')
+    try:
+        _ia = image()
+        ok = _ia.fromimage(infile=infile, outfile=outfile)
+        if not ok:
+            raise Exception(f'Some error occured, infile:{infile}, outfile:{outfile}')
+    finally:
+        _ia.done()
 
 
 def __make_image_array(params):
@@ -690,13 +685,21 @@ def __make_image_array(params):
         params.array = np.expand_dims(params.array, params.i2ms.axis_pol)
 
 
-def __make_output_file(infile: str=None, outfile: str=None):
-    if not os.path.exists(infile):
-        raise Exception(f'Image files not found, infile:{infile}')
-    ok = ia.fromimage(infile=infile, outfile=outfile)
-    ia.done()
-    if not ok:
-        raise Exception(f'Some error occured, infile:{infile}, outfile:{outfile}')
+def __output_image(params):
+    with tool_manager(params.linefile, image) as _ia:
+        _ia.putchunk(pixels=params.array, locking=True)
+        try:
+            param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
+            vars = locals()
+            param_vals = [vars[p] for p in param_names]
+            write_image_history(_ia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
+        except Exception as instance:
+            casalog.post(f"*** Error '{instance}' updating HISTORY", 'WARN')
+
+
+def __output_cont_image(params):
+    with tool_manager(params.output_cont_file, image) as _ia:
+        _ia.putchunk(pixels=_ia.getchunk() - params.array, locking=True)
 
 
 class EmptyMSBaseInformation:
@@ -2070,19 +2073,3 @@ class EmptyMSBaseInformation:
                         'MaxCacheSize': 2,
                         'PERSCACHESIZE': 2},
                'TYPE': 'StandardStMan'}}
-
-
-os.chdir("/work/dev/shimada/casa6.13520.new/tmp")
-if os.path.exists('working'):
-    shutil.rmtree("working")
-os.mkdir("working")
-os.chdir("working")
-
-_imagefile = "/remote/home/kazuhiko.shimada/test/ref_multipix.signalband"
-# imagefile = "/remote/home/kazuhiko.shimada/test/pv_mask_test.im"
-# imagefile = "/remote/home/kazuhiko.shimada/test/m100.image"
-
-imbaseline(imagename=_imagefile, linefile="output", dirkernel="gaussian", kwidth=50, spkernel="gaussian", major='20arcsec',
-           minor='10arcsec', pa="0deg", blfunc='sinusoid', output_cont=True)
-
-os.chdir("..")
