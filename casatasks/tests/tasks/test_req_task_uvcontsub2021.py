@@ -50,6 +50,7 @@ class uvcontsub2021_test(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(ms_simple)
+        shutil.rmtree(ms_alma)
 
     def setUp(self):
         # Input MS is always strictly read-only, one copy in setUpClass is enough
@@ -61,6 +62,19 @@ class uvcontsub2021_test(unittest.TestCase):
             shutil.rmtree(self.output)
 
     def _check_rows(self, vis, col_name, expected_rows, expected_val=None):
+        """
+        Meant to check rows of a column from an output MS produced by
+        uvcontsub2021. Uses unittest asserts to verify conditions.
+
+        :param vis: MS to check
+        :param col_name: name of column to check (MODEL_DATA, FIELD, etc.)
+        :param expected_rows: number of rows the column must have
+        :param expected_vals: for simple cases where the same value is expected in every row,
+                              ensure all rows have this value
+        """
+        # TODO: add simple checks of data column values (mean or similar). Overlaps partially
+        # with numerical tests. Like a parameter 'expected_mean=None' to compare approx.
+        # Perhaps a different function specific to data column checks
         tbt = table()
         try:
             tbt.open(vis)
@@ -150,13 +164,14 @@ class uvcontsub2021_test(unittest.TestCase):
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='DATA')
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 340)
+        # TODO need a 'datacolumn' test using CORRECTED - use another ms_alma or someth else
 
     def test_fitspw_empty(self):
         """Check that fitspw works. When empty, fit all channels in all SPWs"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='')
         self._check_return(res)
-        # TODO: better checks and most likely a better input ms (keep small)
+        # TODO: better checks and most likely a better input ms (prob ~pl-unittest)
         self._check_rows(self.output, 'DATA', 340)
 
     def test_fitspw_spws(self):
@@ -165,35 +180,73 @@ class uvcontsub2021_test(unittest.TestCase):
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='0')
         self._check_return(res)
-        # TODO: better checks and most likely a better input ms (keep small)
         self._check_rows(self.output, 'DATA', 340)
 
     def test_fitswp_channels(self):
         """Check that fitspw works. When selecting some channels in some SPWs,
-        fit those channels in those SPWs"""
+        fit those channels in those SPWs (like example 2 from task page)"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='0:5~19')
         self._check_return(res)
-        # TODO: better checks and most likely a better input ms (keep small)
         self._check_rows(self.output, 'DATA', 340)
 
     def test_fitspw_multifield(self):
-        """Check that fitspw works. Different fitspw strings for different fields"""
+        """Check that fitspw works. Different fitspw strings for different fields
+        (like example 4 from task page)"""
 
         with self.assertRaises(RuntimeError):
             # TODO: support this properly
             res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
                                 fitspw=['2', '0:100~500;600~910;1215~1678;1810~1903'])
             self._check_return(res)
-            # TODO: better checks and most likely a better input ms (keep small)
             self._check_rows(self.output, 'DATA', 1080)
+
+    def test_fitspw_multifield_wrong_field(self):
+        """Check that wrong fitspw lists produce an exception"""
+
+        with self.assertRaises(RuntimeError):
+            # TODO: support this properly
+            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                                fitspw=['99', '0:100~500;600~910;1215~1678;1810~1903'])
+            self._check_return(res)
+
+    def test_fitspw_separate_fields(self):
+        """Check that fitspw works. Different fitspw strings for different
+        fields, and each field to a different output MS (like example 3 from
+        task page)"""
+
+        res_f1 = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='1',
+                               fitspw='0:100~500;600~910;1215~1678;1810~1903')
+        self._check_return(res_f1)
+        self._check_rows(self.output, 'DATA', 360)
+
+        shutil.rmtree(self.output)
+        res_f2 = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='2',
+                               fitspw='0:100~1303')
+        self._check_return(res_f2)
+        self._check_rows(self.output, 'DATA', 120)
+
+    def test_fitspw_spws_sel(self):
+        """Check the use of spw selection and fitspw together"""
+
+        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, spw='0', fitspw='0')
+        self._check_return(res)
+        self._check_rows(self.output, 'DATA', 340)
+
+    def test_fitspw_spws_sel_wrong(self):
+        """Check that if the spw selection and fitspw are not compatible, an exception
+        is produced"""
+
+        with self.assertRaises(RuntimeError):
+            res = uvcontsub2021(vis=ms_simple, outputvis=self.output, spw='3', fitspw='0')
+            self._check_return(res)
 
     def test_fitmethod_gsl(self):
         """Check that methods work - gsl"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitmethod='gsl')
         self._check_return(res)
-        # TODO: better checks / overlaps with numerical tests
+        # TODO: better checks / but overlaps with numerical tests
         self._check_rows(self.output, 'DATA', 340)
 
     def test_fitmethod_casacore(self):
@@ -201,31 +254,34 @@ class uvcontsub2021_test(unittest.TestCase):
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitmethod='casacore')
         self._check_return(res)
-        # TODO: better checks / overlaps with numerical tests
+        # TODO: better checks / but overlaps with numerical tests
         self._check_rows(self.output, 'DATA', 340)
 
     def test_fitorder1(self):
-        """ Check different fit orders (0, 1, 2) work"""
+        """ Check different fit orders (0, 1, 2) work (like example 1 from task page)"""
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=1)
+        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=1,
+                            fitspw='0:2~20')
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 340)
 
     def test_fitorder2(self):
         """ Check different fit orders (0, 1, 2) work"""
 
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=2)
+        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=2,
+                            fitspw='0:2~20')
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 340)
 
     def test_writemodel(self):
-        """ Check the model column is added to the output MS and its values match"""
+        """ Check the model column is added to the output MS and its values match
+        (like example 5 from task page)"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, writemodel=True)
         self._check_return(res)
         # TODO: get model column, check input/DATA ~= output/DATA+MODEL
         with self.assertRaises(RuntimeError):
-            self._check_rows(self.output, 'MODEL', 1080)
+            self._check_rows(self.output, 'MODEL_DATA', 340)
 
 
 class uvcontsub2021_numerical_verification_test(unittest.TestCase):
