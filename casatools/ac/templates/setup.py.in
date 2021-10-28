@@ -1676,6 +1676,34 @@ grpath = get_casatools_rpath(True)
 ldflags3 = sep.join(gldflags + grpath)
 # ldflags3 += '-Wl,-rpath,\$$ORIGIN/lib:/usr/lib64'
 
+def insert_swig_directive(header_file: str) -> None:
+    """
+    Prepend %newobject SWIG directive to tool methods
+    that return any tool instance.
+    """
+    assert os.path.exists(header_file)
+    assert header_file.endswith('_cmpt.h')
+
+    pattern = re.compile(r'(^[ \t]*)casac::[a-z*]+[ \t]+([a-zA-Z0-9_]+)\(')
+
+    outputs = []
+    with open(header_file, 'r') as f:
+        for line in f:
+            match = re.search(pattern, line)
+            if match:
+                # print(f'matched: {line}')
+                indent = match.group(1)
+                method_name = match.group(2)
+                # print(f'method name: {method_name}')
+                outputs.append(f'{indent}#ifdef SWIG\n')
+                outputs.append(f'{indent}%newobject {method_name};\n')
+                outputs.append(f'{indent}#endif\n')
+            outputs.append(line)
+
+    with open(header_file, 'w') as f:
+        f.writelines(outputs)
+
+
 def write_makefile_begin(targets, mode="genmake"):
     clean_target = "clean"
     with open("makefile", "w") as mk:
@@ -2667,6 +2695,15 @@ if __name__ == '__main__':
         (I,L) = tool_files(t)
         incdirs[t] = I
         libsrc[t] = L
+
+    print('insert SWIG directives...')
+    for incdir in chain(*incdirs.values()):
+        for f in os.listdir(incdir):
+            if f.endswith('_cmpt.h'):
+                path = os.path.join(incdir, f)
+                print(f'processing {f}...')
+                insert_swig_directive(path)
+
     for lb in LIBS:
         incdirs[lb] = [ i for t in LIBS[lb] for i in incdirs[t] ]
         libsrc[lb] = [ l for t in LIBS[lb] for l in libsrc[t] ]
