@@ -387,39 +387,36 @@ def image2ms(params: Image2MSParams=None):
     return params
 
 
+def __get_axis_position(val: array=None):
+    if val is not None and len(val) > 0:
+        return val[0].item()
+    return -1
+
+
 def __get_image_params_from_imsmooth_output(params):
     with tool_manager(params.infile, image) as ia:
         try:
             cs = ia.coordsys()
-            params.imshape = ia.shape()
-            params.diraxis = cs.findcoordinate('direction')['world']
-            params.spaxis = cs.findcoordinate('spectral')['world']  # 3 or 2
-            params.polaxis = cs.findcoordinate('stokes')['world']   # 2 or 3 or None
+            params.im_shape = ia.shape()
+            params.axis_dir = cs.findcoordinate('direction')['world']
+            params.axis_sp = __get_axis_position(cs.findcoordinate('spectral')['world'])  # 3 or 2 or -1
+            params.axis_pol = __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
         finally:
             cs.done()
 
-    assert len(params.diraxis) > 0
+    assert len(params.axis_dir) > 0
 
-    params.spaxisexist = len(params.spaxis) == 1
-    params.polaxisexist = len(params.polaxis) == 1
+    params.dir_shape = params.im_shape[params.axis_dir]
+    params.im_nrow = np.prod(params.dir_shape)
+    params.im_nchan = params.im_shape[params.axis_sp] if params.axis_sp > 0 else 1
+    params.im_npol = params.im_shape[params.axis_pol] if params.axis_pol > 0 else 1
 
-    params.dirshape = params.imshape[params.diraxis]
-    params.imnrow = np.prod(params.dirshape)
+    casalog.post(f'image shape is {params.im_shape}, direciton {params.dir_shape} ({params.im_nrow} pixels), '
+                 f'npol {params.im_npol}, nchan {params.im_nchan}', 'DEBUG2')
 
-    if params.spaxisexist:
-        params.imnchan = params.imshape[params.spaxis[0]]
-    else:
-        params.imnchan = 1
-    if params.polaxisexist:
-        params.imnpol = params.imshape[params.polaxis[0]]
-    else:
-        params.imnpol = 1
-    casalog.post(f'image shape is {params.imshape}, direciton {params.dirshape} ({params.imnrow} pixels), '
-                 f'npol {params.imnpol}, nchan {params.imnchan}', 'DEBUG2')
-
-    # if imnchan is too few, say, <10, sdbaseline should abort
-    if params.imnchan < 10:
-        casalog.post(f'nchan {params.imnchan} is too few to perform baseline subtraction', 'DEBUG2')
+    # if im_nchan is too few, say, <10, sdbaseline should abort
+    if params.im_nchan < 10:
+        casalog.post(f'nchan {params.im_nchan} is too few to perform baseline subtraction', 'DEBUG2')
         return False
     return True
 
@@ -448,7 +445,7 @@ def __create_maintable(params):
         tb.create(params.outfile, EmptyMSBaseInformation.ms_desc, dminfo=EmptyMSBaseInformation.ms_dminfo)
         tb.putkeyword(keyword="MS_VERSION", value=2)
         nrow = tb.nrows()
-        nrow_req = params.imnrow * params.imnpol
+        nrow_req = params.im_nrow * params.im_npol
         nrow = tb.nrows()
         if nrow != nrow_req:
             tb.addrows(nrow_req)
@@ -461,7 +458,7 @@ def __create_maintable(params):
         tb.putcol('STATE_ID', dummy)
         time_list = 4304481539.999771 + np.arange(nrow_req) * 30.0
         tb.putcol('TIME', time_list)
-        casalog.post(f'number of rows {nrow}, number of image pixels {params.imnrow}, number of pols {params.imnpol}, '
+        casalog.post(f'number of rows {nrow}, number of image pixels {params.im_nrow}, number of pols {params.im_npol}, '
                      f'required rows {nrow_req}', 'DEBUG2')
     finally:
         tb.close()
@@ -538,12 +535,12 @@ def __create_source_table(params):
 def __create_special_window_table(params):
     __create_subtable(params.outfile, "SPECTRAL_WINDOW", EmptyMSBaseInformation.special_window_desc, EmptyMSBaseInformation.special_window_dminfo)
     with table_manager(os.path.join(params.outfile, 'SPECTRAL_WINDOW'), nomodify=False) as tb:
-        cw = np.ones(params.imnchan, dtype=float) * 1e6
-        cf = 1e9 + np.arange(params.imnchan, dtype=float) * 1e6
+        cw = np.ones(params.im_nchan, dtype=float) * 1e6
+        cf = 1e9 + np.arange(params.im_nchan, dtype=float) * 1e6
 
         if tb.nrows() == 0:
             tb.addrows(1)
-        tb.putcell('NUM_CHAN', 0, params.imnchan)
+        tb.putcell('NUM_CHAN', 0, params.im_nchan)
         tb.putcell('CHAN_FREQ', 0, cf)
         tb.putcell('CHAN_WIDTH', 0, cw)
         tb.putcell('RESOLUTION', 0, cw)
@@ -577,6 +574,39 @@ def __create_subtable(outfile, subtable: str, desc: str, dminfo: str):
 
 
 def __copy_image_array_to_ms(params):
+    image_array, mask_array, axis_x, axis_y, axis_sp, axis_pol = __get_image_value(params)
+
+    # which data column to use
+    with table_manager(params.outfile, nomodify=False) as tb:
+        # also set FLAG, SIGMA, WEIGHT, and UVW
+        # r2p is a mapping between MS row and image array slice
+        index_list = [0, 0, 0, 0]
+        index_list[axis_sp] = np.arange(params.im_nchan)
+        r2p = []
+        nx, ny = params.dir_shape
+        irow = 0
+        wgt = np.ones(1, dtype=float)
+        uvw = np.zeros(3, dtype=float)
+        for ix in range(nx):
+            index_list[axis_x] = ix
+            for iy in range(ny):
+                index_list[axis_y] = iy
+                for ip in range(params.im_npol):
+                    index_list[axis_pol] = ip
+                    slice = tuple(index_list)
+                    cell = image_array[slice]
+                    mask = np.logical_not(mask_array[slice])
+                    casalog.post(f'slice={slice}, cell={cell}', 'DEBUG2')
+                    r2p.append(slice)
+                    tb.putcell(params.datacolumn, irow, np.expand_dims(cell, axis=0))
+                    tb.putcell('FLAG', irow, np.expand_dims(mask, axis=0))
+                    tb.putcell('SIGMA', irow, wgt)
+                    tb.putcell('WEIGHT', irow, wgt)
+                    tb.putcell('UVW', irow, uvw)
+                    irow += 1
+
+
+def __get_image_value(params):
     # get image array and mask from the image
     with tool_manager(params.infile, image) as ia:
         arr = ia.getchunk()
@@ -584,46 +614,16 @@ def __copy_image_array_to_ms(params):
 
     # put image array slices to MS DATA column
     # axis indices for spatial, spectral and polarization axes
-    xax, yax = params.diraxis
-    spax = params.spaxis[0]
-    if params.polaxisexist:
-        polax = params.polaxis[0]
+    xax, yax = params.axis_dir
+    spax = params.axis_sp
+    if params.axis_pol > 0:
+        polax = params.axis_pol
     else:
         arr = np.expand_dims(arr, axis=3)
         msk = np.expand_dims(msk, axis=3)
         polax = 3
     casalog.post(f'axis index: {xax} {yax} {polax} {spax}', 'DEBUG2')
-
-    # which data column to use
-    with table_manager(params.outfile, nomodify=False) as tb:
-        # also set FLAG, SIGMA, WEIGHT, and UVW
-        # r2p is a mapping between MS row and image array slice
-        xax, yax = params.diraxis
-
-        index_list = [0, 0, 0, 0]
-        index_list[spax] = np.arange(params.imnchan)
-        r2p = []
-        nx, ny = params.dirshape
-        irow = 0
-        wgt = np.ones(1, dtype=float)
-        uvw = np.zeros(3, dtype=float)
-        for ix in range(nx):
-            index_list[xax] = ix
-            for iy in range(ny):
-                index_list[yax] = iy
-                for ip in range(params.imnpol):
-                    index_list[polax] = ip
-                    slice = tuple(index_list)
-                    subarr = arr[slice]
-                    submsk = np.logical_not(msk[slice])
-                    casalog.post(f'slice={slice}, subarr={subarr[200:-200]}', 'DEBUG2')
-                    r2p.append(slice)
-                    tb.putcell(params.datacolumn, irow, np.expand_dims(subarr, axis=0))
-                    tb.putcell('FLAG', irow, np.expand_dims(submsk, axis=0))
-                    tb.putcell('SIGMA', irow, wgt)
-                    tb.putcell('WEIGHT', irow, wgt)
-                    tb.putcell('UVW', irow, uvw)
-                    irow += 1
+    return arr,msk,xax,yax,spax,polax
 
 
 class MS2ImageParams(Validable):
@@ -678,16 +678,16 @@ def __output_cont_image(params):
 
 
 def __make_image_array(params):
-    nx, ny = params.i2ms.dirshape
-    params.array = np.empty((nx, ny, params.i2ms.imnchan))
+    nx, ny = params.i2ms.dir_shape
+    params.array = np.empty((nx, ny, params.i2ms.im_nchan))
     pos = 0
     with table_manager(params.infile) as tb:
         for i in range(nx):
             for j in range(ny):
                 params.array[i][j] = tb.getcell(params.datacolumn, pos)[0].real
                 pos += 1
-    if params.i2ms.polaxisexist:
-        params.array = np.expand_dims(params.array, params.i2ms.polaxis[0])
+    if params.i2ms.axis_pol > 0:
+        params.array = np.expand_dims(params.array, params.i2ms.axis_pol)
 
 
 def __make_output_file(infile: str=None, outfile: str=None):
@@ -2070,3 +2070,19 @@ class EmptyMSBaseInformation:
                         'MaxCacheSize': 2,
                         'PERSCACHESIZE': 2},
                'TYPE': 'StandardStMan'}}
+
+
+os.chdir("/work/dev/shimada/casa6.13520.new/tmp")
+if os.path.exists('working'):
+    shutil.rmtree("working")
+os.mkdir("working")
+os.chdir("working")
+
+_imagefile = "/remote/home/kazuhiko.shimada/test/ref_multipix.signalband"
+# imagefile = "/remote/home/kazuhiko.shimada/test/pv_mask_test.im"
+# imagefile = "/remote/home/kazuhiko.shimada/test/m100.image"
+
+imbaseline(imagename=_imagefile, linefile="output", dirkernel="gaussian", kwidth=50, spkernel="gaussian", major='20arcsec',
+           minor='10arcsec', pa="0deg", blfunc='sinusoid', output_cont=True)
+
+os.chdir("..")
