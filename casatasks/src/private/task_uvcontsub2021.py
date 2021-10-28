@@ -37,12 +37,19 @@ def uvcontsub2021(vis=None, outputvis=None, field=None, spw=None,
                   'reindex': False
                   }
         # Add uvcontsub-TVI config options
+        if fitmethod == 'gsl':
+            denoising_lib = True
+        elif fitmethod == 'casacore':
+            denoising_lib = False
+        else:
+            raise ValueError(f'Unrecognized fit method: {fitmethod}')
         uvcont_cfg = {'fitspw': fitspw,
+                      'denoising_lib': denoising_lib,
+                      'niter': 0,
                       'fitorder': fitorder,
+                      'writemodel': writemodel,
                       'want_cont': False,
-                      'denoising_lib': False,
-                      'nthreads': 0,
-                      'niter': 0
+                      'nthreads': None
                       }
         config['uvcontsublib'] = uvcont_cfg
 
