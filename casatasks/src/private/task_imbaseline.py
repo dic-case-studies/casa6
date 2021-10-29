@@ -2079,19 +2079,3 @@ class EmptyMSBaseInformation:
                         'PERSCACHESIZE': 2},
                'TYPE': 'StandardStMan'}}
 
-
-os.chdir("/work/dev/shimada/casa6.13520.new/tmp")
-if os.path.exists('working'):
-    shutil.rmtree("working")
-os.mkdir("working")
-os.chdir("working")
-
-_imagefile = "/remote/home/kazuhiko.shimada/test/ref_multipix.signalband"
-# imagefile = "/remote/home/kazuhiko.shimada/test/pv_mask_test.im"
-# _imagefile = "/remote/home/kazuhiko.shimada/test/m100.image"
-_imagefile = "/remote/home/kazuhiko.shimada/test/uid___A001_X1354_X12.NGC4945_sci.spw19.cube.I.sd.fits"
-
-imbaseline(imagename=_imagefile, linefile="output", dirkernel="gaussian", kwidth=50, spkernel="gaussian", major='20arcsec',
-           minor='10arcsec', pa="0deg", blfunc='sinusoid', output_cont=True)
-
-os.chdir("..")
