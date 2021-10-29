@@ -49,7 +49,7 @@ try:
     _ia = image()
     # Location of input data
     #datapath = ctsys.resolve('unittest/synthesisutils/')
-    datapath = '/Users/ttsutsum/SWDevel/casa/cas13590/data/'
+    datapath = '/export/home/murasame/casasrc/cas13590dev/testdata/'
 except ImportError:
     from __main__ import default
     from tasks import *
@@ -61,6 +61,10 @@ except ImportError:
  
 ####    Tests     ####
 class su_fitpsfbeam_test(unittest.TestCase):
+    ### su.fitpsBeam has three parameters, imagename, nterms, and psfcutoff.
+    ### nterms and psfcutoff have the default values but other values need to be tested.
+    ### Approriate multiterm psfs need to be present for nterms>1
+    
     ### Set Up
     def setUp(self):
         # input images
@@ -132,6 +136,37 @@ class su_fitpsfbeam_test(unittest.TestCase):
         ret2 = su.fitPsfBeam(imagename=psfim[:-4],psfcutoff=-1.0)   
         self.assertFalse(ret1)
         self.assertFalse(ret2)
+
+    def test_mfs_largerpsfcutoff(self):
+        '''Test that psfcutoff with a valid (larger) number  works '''
+        # prep psf image
+        # Save the origin restoringbeam for reference
+        psfim = self.inputims[0]
+        _ia.open(psfim)
+        origbeam = _ia.restoringbeam()
+        # Set different values for the beam
+        resetbeam = copy.deepcopy(origbeam)
+        resetbeam['major']['value']=1.0
+        resetbeam['minor']['value']=1.0
+        resetbeam['positionangle']['value']=0.0
+        _ia.setrestoringbeam(major=resetbeam['major'], minor=resetbeam['minor'], pa=resetbeam['positionangle'])
+        _ia.done()
+ 
+        # expected values
+        bmref= {'major': {'unit': 'arcsec', 'value': 49.89558029174805}, 'minor': {'unit': 'arcsec', 'value': 46.80238342285156}, 'positionangle': {'unit': 'deg', 'value': -88.28898620605469}}
+ 
+        ret = su.fitPsfBeam(imagename=psfim[:-4],psfcutoff=0.5)   
+        _ia.open(psfim)
+        newbeam = _ia.restoringbeam()
+        _ia.done()
+        print("psfim=",psfim)
+        print("origbeam=",origbeam)
+        print("newbeam=",newbeam)     
+
+        self.assertTrue(ret)
+        # test against expected values
+        # - original beam in psf image is different from fitted values
+        self.assertDictContainsSubset(newbeam, bmref)
 
     def test_mtmfs_nterms2(self):
         '''Test that fitting of multiterm  psf works '''
