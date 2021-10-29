@@ -5,6 +5,7 @@ import os
 import sys
 import shutil
 from typing import Any, Dict, List, Tuple
+from unittest.signals import installHandler
 import numpy as np
 from numpy import array, uint64
 import uuid
@@ -40,77 +41,68 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
     if not output_cont:
         output_cont = False
     output_cont_file = os.path.basename(imagename) + ".cont"
-    erase_queue = EraseQueue()
+    processing_file_stack = ProcessingFileStack(top=Unerasable(imagename))
 
     prepare()
 
-    imsmooth_output = execute_imsmooth(imagename, dirkernel, major, minor, pa, kimage, scale, erase_queue)
-
-    image2ms_output, image2ms_params = execute_image2ms(imsmooth_output, DATACOLUMN, erase_queue)
-
-    sdsmooth_output = execute_sdsmooth(image2ms_output, DATACOLUMN.lower(), spkernel, kwidth, erase_queue)
-
-    sdbaseline_output = execute_sdbaseline(sdsmooth_output, DATACOLUMN.lower(), bloutput, maskmode, chans, thresh, avg_limit,
-                                           minwidth, edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
-                                           clipniter, clipthresh, erase_queue)
-
-    execute_ms2image(sdbaseline_output, linefile, imagename, DATACOLUMN, output_cont, output_cont_file, image2ms_params)
-
-    erase_queue.clear(False)
+    try:
+        execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, processing_file_stack)
+        image2ms_params = execute_image2ms(DATACOLUMN, processing_file_stack)
+        execute_sdsmooth(DATACOLUMN.lower(), spkernel, kwidth, processing_file_stack)
+        execute_sdbaseline(DATACOLUMN.lower(), bloutput, maskmode, chans, thresh, avg_limit, minwidth,
+                           edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
+                           clipniter, clipthresh, processing_file_stack)
+        execute_ms2image(linefile, imagename, DATACOLUMN, output_cont, output_cont_file,
+                         image2ms_params, processing_file_stack)
+    finally:
+        processing_file_stack.clear(False)
 
 
-def execute_imsmooth(imagename, dirkernel, major, minor, pa, kimage, scale, erase_queue):
-    output_filepath = imagename
-
+def execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, processing_file_stack):
     if __validate_imsmooth_execution(dirkernel):
         casalog.post("execute image smoothing", "INFO")
-        imsmooth_output = __generate_temporary_filename("dirsmooth-", "im")
-        args, kargs = ImsmoothParams(imagename, imsmooth_output, dirkernel, major, minor, pa, kimage, scale)()
+        infile = processing_file_stack.top()
+        outfile = __generate_temporary_filename("dirsmooth-", "im")
+        args, kargs = ImsmoothParams(infile, outfile, dirkernel, major, minor, pa, kimage, scale)()
         imsmooth(*args, **kargs)
-        output_filepath = imsmooth_output
-        erase_queue.append(Erasable(imsmooth_output))
+        processing_file_stack.push(Erasable(outfile))
     else:
         casalog.post("omit image smoothing", "INFO")
-        erase_queue.append(Unerasable(output_filepath))
-
-    return output_filepath
 
 
-def execute_image2ms(infile, datacolumn, erase_queue) -> Tuple[Any]:
+def execute_image2ms(datacolumn, processing_file_stack) -> Tuple[Any]:
     casalog.post("convert casaimage to MeasurementSet", "INFO")
-    img2ms_output = __generate_temporary_filename("img2ms-", "ms")
-    i2mp = image2ms(Image2MSParams(infile, img2ms_output, datacolumn))
-    erase_queue.append(Erasable(img2ms_output))
-    return img2ms_output, i2mp
+    infile = processing_file_stack.top()
+    outfile = __generate_temporary_filename("img2ms-", "ms")
+    i2mp = image2ms(Image2MSParams(infile, outfile, datacolumn))
+    processing_file_stack.push(Erasable(outfile))
+    return i2mp
 
 
-def execute_sdsmooth(infile=None, datacolumn=None, spkernel=None, kwidth=None, erase_queue=None):
-    sdsmooth_output = infile
-
+def execute_sdsmooth(datacolumn=None, spkernel=None, kwidth=None, processing_file_stack=None):
     if __validate_sdsmooth_execution(spkernel):
         casalog.post("execute spectral smoothing", "INFO")
-        sdsmooth_output = __generate_temporary_filename("spsmooth-", "ms")
-        sdsmooth(**SdsmoothParams(infile, sdsmooth_output, datacolumn, spkernel, kwidth)())
-        erase_queue.append(Erasable(sdsmooth_output))
+        infile = processing_file_stack.top()
+        outfile = __generate_temporary_filename("spsmooth-", "ms")
+        sdsmooth(**SdsmoothParams(infile, outfile, datacolumn, spkernel, kwidth)())
+        processing_file_stack.push(Erasable(outfile))
     else:
         casalog.post("omit spectral smoothing", "INFO")
 
-    return sdsmooth_output
 
-
-def execute_sdbaseline(infile, datacolumn, bloutput, maskmode, chans, thresh, avg_limit, minwidth, edge, blfunc, order, npiece,
-                       applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh, erase_queue):
+def execute_sdbaseline(datacolumn, bloutput, maskmode, chans, thresh, avg_limit, minwidth, edge, blfunc, order, npiece,
+                       applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh, processing_file_stack):
     casalog.post("execute spectral baselining", "INFO")
-    sdbaseline_output = __generate_temporary_filename("baseline-", "ms")
-    sdbaseline(**SdbaselineParams(infile, sdbaseline_output, datacolumn, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
+    infile = processing_file_stack.top()
+    outfile = __generate_temporary_filename("baseline-", "ms")
+    sdbaseline(**SdbaselineParams(infile, outfile, datacolumn, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh)())
-    erase_queue.append(Erasable(sdbaseline_output))
-
-    return sdbaseline_output
+    processing_file_stack.push(Erasable(outfile))
 
 
-def execute_ms2image(infile, linefile, imagefile, datacolumn, output_cont, output_cont_file, i2ms):
+def execute_ms2image(linefile, imagefile, datacolumn, output_cont, output_cont_file, i2ms, processing_file_stack):
     casalog.post("convert MeasurementSet to casaimage", "INFO")
+    infile = processing_file_stack.top()
     ms2image(MS2ImageParams(infile, linefile, imagefile, datacolumn, output_cont, output_cont_file, i2ms))
 
 
@@ -196,20 +188,33 @@ class Unerasable(AbstractEraseable):
         casalog.post(f"un-erase file:{self.path}", "DEBUG2")
 
 
-class EraseQueue:
-    def __init__(self) -> None:
-        self.queue = []
+class ProcessingFileStack:
+    def __init__(self, top: AbstractEraseable=None) -> None:
+        self.stack = []
+        if top is not None:
+            self.push(top)
 
-    def append(self, file: AbstractEraseable=None):
-        if isinstance(file, AbstractEraseable):
-            self.queue.append(file)
+    def push(self, file: AbstractEraseable=None):
+        if isinstance(file, AbstractEraseable) and os.path.exists(file.path):
+            self.stack.append(file)
         else:
-            raise ValueError('cannot append to erase queue')
+            raise ValueError('cannot append it to erase queue')
+
+    def top(self) -> str:
+        if len(self.stack) > 0:
+            return self.stack[len(self.stack) - 1].path
+        else:
+            raise ValueError("OutputFileStack is empty")
+
+    def pop(self, dry_run=True) -> AbstractEraseable:
+        file = self.stack.pop()
+        file.erase(dry_run)
+        return file
 
     def clear(self, dry_run=True):
-        for obj in self.queue:
-            obj.erase(dry_run)
-        self.queue.clear()
+        for file in self.stack:
+            file.erase(dry_run)
+        self.stack.clear()
 
 
 class ImsmoothParams(Validable):
@@ -2073,3 +2078,20 @@ class EmptyMSBaseInformation:
                         'MaxCacheSize': 2,
                         'PERSCACHESIZE': 2},
                'TYPE': 'StandardStMan'}}
+
+
+os.chdir("/work/dev/shimada/casa6.13520.new/tmp")
+if os.path.exists('working'):
+    shutil.rmtree("working")
+os.mkdir("working")
+os.chdir("working")
+
+_imagefile = "/remote/home/kazuhiko.shimada/test/ref_multipix.signalband"
+# imagefile = "/remote/home/kazuhiko.shimada/test/pv_mask_test.im"
+# _imagefile = "/remote/home/kazuhiko.shimada/test/m100.image"
+_imagefile = "/remote/home/kazuhiko.shimada/test/uid___A001_X1354_X12.NGC4945_sci.spw19.cube.I.sd.fits"
+
+imbaseline(imagename=_imagefile, linefile="output", dirkernel="gaussian", kwidth=50, spkernel="gaussian", major='20arcsec',
+           minor='10arcsec', pa="0deg", blfunc='sinusoid', output_cont=True)
+
+os.chdir("..")
