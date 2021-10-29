@@ -169,8 +169,13 @@ class imsmooth_test(unittest.TestCase):
         execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, processing_file_stack)
         self.assertTrue(os.path.exists(processing_file_stack.top()))
 
+        processing_file_stack.clear()
+        try:
+            processing_file_stack.push(Unerasable("nonexists"))
+        except Exception:
+            pass
+        self.assertFalse(processing_file_stack.length() > 0)
+
 
 def suite():
     return [imsmooth_test]
-
-

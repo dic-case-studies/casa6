@@ -5,7 +5,6 @@ import os
 import sys
 import shutil
 from typing import Any, Dict, List, Tuple
-from unittest.signals import installHandler
 import numpy as np
 from numpy import array, uint64
 import uuid
@@ -215,6 +214,9 @@ class ProcessingFileStack:
         for file in self.stack:
             file.erase(dry_run)
         self.stack.clear()
+
+    def length(self) -> int:
+        return len(self.stack)
 
 
 class ImsmoothParams(Validable):
@@ -2078,4 +2080,3 @@ class EmptyMSBaseInformation:
                         'MaxCacheSize': 2,
                         'PERSCACHESIZE': 2},
                'TYPE': 'StandardStMan'}}
-
