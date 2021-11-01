@@ -195,9 +195,6 @@ class calibrater_test(unittest.TestCase):
         self.assertFalse(np.array_equal(beforecol, aftercol))
         self.assertTrue(np.array_equal(aftercol, observed))
 
-    def test_applyPosAngCal(self):
-        # Is this needed? I think it's covered in task tests
-        pass
 
     def test_resetSolveApply(self):
         """ Check that the reset function can clear set apply and solves """
@@ -598,10 +595,6 @@ class calibrater_test(unittest.TestCase):
         # This is simply checking the return code of the function
         self.assertTrue(result, msg="Setting of corrdepflags has failed")
 
-    def test_setModel(self):
-        # What is the epjones solver?
-        pass
-
     def test_solveBandpass(self):
         """ Check that solve band poly creates the output table"""
 
@@ -638,14 +631,17 @@ class calibrater_test(unittest.TestCase):
         self.assertTrue(os.path.exists('testcalout.cal'))
 
     def test_specifyCal(self):
-        # Unrecognized caltype. What should this be?
-        # Is this implimented? the example says TBD
-        pass
+        """ Check that specifycal can set values for specific spws and antennas"""
 
-    def test_validateCalLib(self):
-        # Need to know the layout of the callib
-        # This seems like it might be an incomplete task for now
-        pass
+        cb.open(self._vis)
+        cb.specifycal(caltable='testcalout.cal', spw='1', caltype='G', parameter=[3.0])
+        cb.close()
+
+        tb.open('testcalout.cal')
+        data = tb.getcol('CPARAM')
+        tb.close()
+
+        self.assertTrue(np.all(data[0][0][10:20] == (3.+0.j)))
 
     def test_corruptCal(self):
         """ Check that the MS is corrupted using the cal table """
