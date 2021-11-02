@@ -744,7 +744,6 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     http://casaguides.nrao.edu/index.php?title=Plotbandpass
     -- Todd Hunter
     """
-
     axes = dict() # keep track of already created axes
     def safe_pb_subplot(xframe):
         """
@@ -6616,7 +6615,7 @@ def getLOs(inputMs, verbose=True):
     -Todd Hunter
     """
     if (os.path.exists(inputMs)):
-        mytb = createCasaTool(tbtool)
+        mytb = createCasaTool(tbtool) # casatools.table
         if (os.path.exists("%s/ASDM_RECEIVER" % inputMs)):
             try:
                 mytb.open("%s/ASDM_RECEIVER" % inputMs)
@@ -7271,12 +7270,12 @@ def interpretLOs(vis, parentms='', showWVR=False,
                 sawWVR = True
         else:
             indices.append(i)
-    LOs = np.array(LOs)[indices]
-    bands = np.array(bands)[indices]
-    spws = list(np.array(spws)[indices])
-    names = np.array(names)[indices]
-    sidebands = np.array(sidebands)[indices]
-    receiverIds = np.array(receiverIds)[indices]
+    LOs = np.array(LOs, dtype=object)[indices]
+    bands = np.array(bands, dtype=object)[indices]
+    spws = list(np.array(spws, dtype=object)[indices])
+    names = np.array(names, dtype=object)[indices]
+    sidebands = np.array(sidebands, dtype=object)[indices]
+    receiverIds = np.array(receiverIds, dtype=object)[indices]
     index = list(range(len(spws)))
     mytb = createCasaTool(tbtool)
     mytb.open(vis+'/SPECTRAL_WINDOW')
