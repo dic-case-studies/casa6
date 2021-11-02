@@ -37,7 +37,7 @@ import shutil
  
 # Example of importing helper functions
 from casatestutils import testhelper as th
-from casatestutils.imagerhelpers import TestHelpers
+#from casatestutils.imagerhelpers import TestHelpers
  
 is_CASA6 = False
  
