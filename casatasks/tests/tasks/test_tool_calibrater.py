@@ -66,6 +66,16 @@ class calibrater_test(unittest.TestCase):
     def tearDownClass(cls):
         shutil.rmtree(cls._bandvis)
 
+        if os.path.exists('gainspline.AMP.pol0.log'):
+            os.remove('gainspline.AMP.pol0.log')
+        if os.path.exists('gainspline.AMP.pol1.log'):
+            os.remove('gainspline.AMP.pol1.log')
+        if os.path.exists('gainspline.PHASE.pol0.log'):
+            os.remove('gainspline.PHASE.pol0.log')
+        if os.path.exists('gainspline.PHASE.pol1.log'):
+            os.remove('gainspline.PHASE.pol1.log')
+
+
     def setUp(self):
         shutil.copytree(os.path.join(datapath, self._vis), self._vis)
         shutil.copytree(os.path.join(datapath, self._visObs), self._visObs)
