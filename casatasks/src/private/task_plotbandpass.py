@@ -7155,7 +7155,7 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
           conditions['temperature'] = np.mean(temperature[selectedValues])
           conditions['humidity'] = np.mean(relativeHumidity[selectedValues])
           if dewPoint is not None:
-              conditions['dewpoint'] = np.mean(dewPoint[selectedValues])
+              conditions['dewpoint'] = np.nanmean(dewPoint[selectedValues])
           conditions['windspeed'] = np.mean(windSpeed[selectedValues])
           conditions['winddirection'] = (180./math.pi)*np.arctan2(np.mean(sinWindDirection[selectedValues]),np.mean(cosWindDirection[selectedValues]))
           if (conditions['winddirection'] < 0):
@@ -7559,17 +7559,25 @@ def angularSeparation(ra0,dec0,ra1,dec1, returnComponents=False):
 
 def ComputeDewPointCFromRHAndTempC(relativeHumidity, temperature):
     """
-    inputs:  relativeHumidity in percentage, temperature in C
+    inputs: relativeHumidity in percentage, temperature in C
     output: in degrees C
     Uses formula from http://en.wikipedia.org/wiki/Dew_point#Calculating_the_dew_point
     Todd Hunter
     """
-    temperature = np.array(temperature)            # protect against it being a list
+    temperature = np.array(temperature)  # protect against it being a list
     relativeHumidity = np.array(relativeHumidity)  # protect against it being a list
-    es = 6.112*np.exp(17.67*temperature/(temperature+243.5))
-    E = relativeHumidity*0.01*es
-    dewPoint = 243.5*np.log(E/6.112)/(17.67-np.log(E/6.112))
-    return(dewPoint)
+    es = 6.112 * np.exp(17.67 * temperature / (temperature + 243.5))
+    E = relativeHumidity * 0.01 * es
+    # patch problematic cases where relativy humiditiy is -1
+    # requires changing numpy.mean to numpy.nanmean downstream the code to avoid bad averages of the dewpoint
+    dewPoint = np.zeros(len(E))
+    for i in range(len(E)):
+        if E[i] <= 0:
+            dewPoint[i] = None
+        else:
+            dewPoint[i] = 243.5 * np.log(E[i] / 6.112) / (17.67 - np.log(E[i] / 6.112))
+
+    return dewPoint
 
 def ComputeLST(mjdsec, longitude):
     """
