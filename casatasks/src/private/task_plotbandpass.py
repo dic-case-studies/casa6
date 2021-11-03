@@ -1522,7 +1522,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                     print("WARNING: spw %d is a WVR spw." % (myspw))
                     return
     spwsToPlot = keepSpwsToPlot[:]
-    if (spwsToPlot == []):
+    if (len(spwsToPlot) == 0):
         print("FATAL: no spws to plot")
         return
     originalSpwsToPlot = computeOriginalSpwsToPlot(spwsToPlot, originalSpw, tableFormat, debug)
@@ -2755,7 +2755,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     spwsToPlotInBaseband = []
     frequencyRangeToPlotInBaseband = []
     if (debug): print("up to basebands")
-    if (basebands == []):
+    if (len(basebands) == 0):
         # MS is too old to have BBC_NO
         if (debug): print("MS is too old to have BBC_NO")
         spwsToPlotInBaseband = [spwsToPlot]
