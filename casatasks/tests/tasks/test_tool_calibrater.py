@@ -57,7 +57,7 @@ class calibrater_test(unittest.TestCase):
         cls._vis = 'gaincaltest2.ms'
         cls._visObs = 'Itziar.ms'
         cls._cal = 'gaincaltest2.ms.G0'
-        cls._lib = os.path.join(datapath, 'refcallib.txt')
+        cls._lib = os.path.join(datapath, 'refcalgainG.txt')
 
         shutil.copytree(os.path.join(datapath, 'ngc5921.ms'), 'ngc5921.ms')
         cls._bandvis = 'ngc5921.ms'
