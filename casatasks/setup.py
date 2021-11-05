@@ -347,8 +347,6 @@ def generate_pyinit(moduledir,tasks):
         fd.write("\n")
         fd.write("def xml_interface_defs( ): return { %s }\n" % ", ".join(task_files_dict))
         fd.write("\n")
-        fd.write("import platform\n")
-        fd.write('casalog.post("Python version " + platform.python_version())\n')
         # Check if MPIEnvironment can be imported at all
         fd.write('mpi_env_found=False\n')
         fd.write('try:\n')
