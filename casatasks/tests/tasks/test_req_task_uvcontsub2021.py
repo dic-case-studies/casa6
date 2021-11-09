@@ -194,16 +194,27 @@ class uvcontsub2021_test(unittest.TestCase):
         """Check that fitspw works. Different fitspw strings for different fields
         (like example 4 from task page)"""
 
-        with self.assertRaises(RuntimeError):
-            # TODO: support this properly
-            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspw=[
-                                    ['1', 'NONE'],
-                                    ['2', '0:100~500;600~910;1215~1678;1810~1903'],
-                                    ['3', '0:100~1903']
-                                ])
-            self._check_return(res)
-            self._check_rows(self.output, 'DATA', 1080)
+        res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                            fitspw=[
+                                ['1', 'NONE'],
+                                ['2', '0:100~500;600~910;1215~1678;1810~1903'],
+                                ['3', '0:100~1903']
+                            ])
+        self._check_return(res)
+        self._check_rows(self.output, 'DATA', 1080)
+
+    def test_fitspw_multifield_blocks(self):
+        """Check that fitspw works. Different fitspw strings for different fields
+        but giving list of fields for a same fitspw"""
+
+        res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                            fitspw=[
+                                ['1, 2', '0:100~500;600~910;1215~1678;1810~1903'],
+                                ['3', '0:100~1903']
+                            ])
+        self._check_return(res)
+        self._check_rows(self.output, 'DATA', 1080)
+
 
     def test_fitspw_multifield_wrong_field(self):
         """Check that wrong fitspw lists produce an exception"""
@@ -238,7 +249,7 @@ class uvcontsub2021_test(unittest.TestCase):
             res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
                                 fitspw=[
                                     ['1', 'NONE'],
-                                    ['bla', '0:600~910;1215~1678'],
+                                    ['bla_fail', '0:600~910;1215~1678'],
                                     ['3', '0:100~1903']
                                 ])
 
