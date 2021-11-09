@@ -3576,7 +3576,7 @@ def write_task_history(images, tname, params, clog):
     history = ['taskname={0}'.format(tname)]
     history.append(_casa_version_string())
     # Add all task arguments.
-    for name, val in params:#range(len(param_names)):
+    for name, val in params:
         msg = "%-11s = " % name
         if type(val) == str:
             msg += '"'
@@ -3636,12 +3636,6 @@ def write_tclean_history(imagename, tname, params, clog):
                     accept.append(img)
             return accept
 
-<<<<<<< HEAD
-        img_exts = glob.glob(imagename + '*.*')
-        img_exts = filter_img_names(img_exts)
-        clog.post("Writing history into these images: {}".format(img_exts))
-        write_task_history(img_exts, tname, params, clog)
-=======
         def filter_obvious_nonimages(img_exts):
             """
             Try to filter out files that are not images but have been placed in the same
@@ -3662,37 +3656,9 @@ def write_tclean_history(imagename, tname, params, clog):
                       os.path.isdir(img) and os.path.isfile(os.path.join(img, *path_check))]
             return accept
 
-        iat = iatool()
-
         img_exts = glob.glob(imagename + '*.*')
         img_exts = filter_img_names(img_exts)
         img_exts = filter_obvious_nonimages(img_exts)
         clog.post("Searching for images with prefix '{}'... Found these, writing history "
                   "into them: {}".format(imagename, img_exts))
-
-        history = ['taskname={0}'.format(tname)]
-        history.append(_casa_version_string())
-        # Add all task arguments.
-        for name, val in params:
-            msg = "%-11s = " % name
-            if type(val) == str:
-                msg += '"'
-            msg += str(val)
-            if type(val) == str:
-                msg += '"'
-            history.append(msg)
-
-        for img in img_exts:
-            iat_open = False
-            try:
-                iat.open(img)
-                iat_open = True
-                iat.sethistory(origin=tname, history=history)
-            except RuntimeError:
-                clog.post('Could not open this directory as an image to write history: {}'.
-                          format(img), 'DEBUG')
-            finally:
-                if iat_open:
-                    iat.close()
-        iat.done()
->>>>>>> master
+        write_task_history(img_exts, tname, params, clog)

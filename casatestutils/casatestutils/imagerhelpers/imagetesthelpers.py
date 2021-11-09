@@ -51,6 +51,9 @@ if is_CASA6:
     def decon_param_names():
         from casatasks.deconvolve import _deconvolve_t
         return _deconvolve_t.__code__.co_varnames[:_deconvolve_t.__code__.co_argcount]
+    def sdint_param_names():
+        from casatasks.sdintimaging import _sdintimaging_t
+        return _sdintimaging_t.__code__.co_varnames[:_sdintimaging_t.__code__.co_argcount]
 
     casa6 = True
 
@@ -82,6 +85,9 @@ else:
     def decon_param_names():
         from tasks import deconvolve
         return deconvolve.parameters.keys()
+    def sdint_param_names():
+        from tasks import sdintimaging
+        return sdintimaging.parameters.keys()
 
     casa5 = True
 
@@ -589,7 +595,7 @@ class TestHelpers:
         logging.info(pstr)
         return pstr
 
-    def check_keywords(self, imlist, testname="check_keywords"):
+    def check_keywords(self, imlist, testname="check_keywords", check_misc=True):
         """
         Keyword related checks (presence/absence of records and entries in these records,
         in the keywords of the image table).
@@ -601,7 +607,7 @@ class TestHelpers:
         pstr = ''
         for imname in imlist:
             if os.path.exists(imname):
-                issues = TestHelpers().check_im_keywords(imname, check_misc=True, check_extended=True)
+                issues = TestHelpers().check_im_keywords(imname, check_misc=check_misc)
                 if issues:
                     pstr += '[{0}] {1}: {2}'.format(testname, imname, issues)
         if not pstr:
@@ -741,11 +747,19 @@ class TestHelpers:
             if ia_open:
                 _ia.close()
 
+        # build up a list of parameter names (to be evaluated as necessary)
+        task_param_names = {
+            "tclean": tclean_param_names,
+            "deconvolve": decon_param_names,
+            "sdintimaging": sdint_param_names
+        }
+
         pstr = ''
         ncallsdict = {}
-        ncallsdict['tclean']     = sum(line.startswith('taskname=tclean') for line in history)
-        ncallsdict['deconvolve'] = sum(line == 'taskname=deconvolve' for line in history)
-        ncalls                   = ncallsdict['tclean'] + ncallsdict['deconvolve']
+        ncallsdict['tclean']       = sum(line.startswith('taskname=tclean') for line in history)
+        ncallsdict['deconvolve']   = sum(line == 'taskname=deconvolve' for line in history)
+        ncallsdict['sdintimaging'] = sum(line == 'taskname=sdintimaging' for line in history)
+        ncalls                     = ncallsdict['tclean'] + ncallsdict['deconvolve'] + ncallsdict['sdintimaging']
         nversions = sum(line.startswith('version:') for line in history)
         if ncalls < 1:
             pstr += ('No calls to cleaning tasks were found in history. ({})\n'.
@@ -761,7 +775,7 @@ class TestHelpers:
 
         # check parameter names for cleaning tasks
         histories = TestHelpers().split_histories_by_task(history)
-        for tname in ['tclean', 'deconvolve']:
+        for tname in ['tclean', 'deconvolve', 'sdintimaging']:
             ntcalls = ncallsdict[tname]
             if ntcalls == 0:
                 continue
@@ -773,7 +787,9 @@ class TestHelpers:
                 pnames = tclean_param_names()
             else:
                 hist = histories['taskname='+tname]
-                pnames = decon_param_names() # TODO generify
+                if callable(task_param_names[tname]): # lazy evaluation of parameter names, since deconvolve doesn't exist in my branch yet
+                    task_param_names[tname] = task_param_names[tname]()
+                pnames = task_param_names[tname]
 
             # check parameters
             for param in pnames:
@@ -866,13 +882,13 @@ class TestHelpers:
         logging.info(pstr)
         return pstr
 
-    def check_imexist(self, imgexist):
+    def check_imexist(self, imgexist, check_keywords_misc=True):
         pstr = ''
         if imgexist != None:
             if type(imgexist) == list:
                 pstr += TestHelpers().check_ims(imgexist, True)
                 print("pstr after checkims = {}".format(pstr))
-                pstr += TestHelpers().check_keywords(imgexist)
+                pstr += TestHelpers().check_keywords(imgexist, check_misc=check_keywords_misc)
                 print("pstr after check_keywords = {}".format(pstr))
                 pstr += TestHelpers().check_history(imgexist)
                 print("pstr after check_history = {}".format(pstr))
@@ -1001,7 +1017,7 @@ class TestHelpers:
         else:
             return "[ {} ]: found {} out of {} matching log lines (Fail, unmet expectations: {})\n".format(testname, len(expected)-len(unmet), len(expected), ", ".join(unmet))
 
-    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05,tfmask=None):
+    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05, tfmask=None, check_keywords_misc=True):
         """
             ret=None,
             peakres=None, # a float
@@ -1037,7 +1053,7 @@ class TestHelpers:
                 logging.info(ret)
                 raise
         logging.info("Epsilon: {}".format(epsilon))
-        pstr += TestHelpers().check_imexist(imgexist)
+        pstr += TestHelpers().check_imexist(imgexist, check_keywords_misc=check_keywords_misc)
         pstr += TestHelpers().check_imexistnot(imgexistnot)
         pstr += TestHelpers().check_imval(imgval, epsilon=epsilon)
         pstr += TestHelpers().check_imvalexact(imgvalexact, epsilon=epsilon)

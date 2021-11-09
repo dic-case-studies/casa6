@@ -741,6 +741,12 @@ class TestHelpers:
             if ia_open:
                 _ia.close()
 
+        # build up a list of parameter names (to be evaluated as necessary)
+        task_param_names = {
+            "tclean": tclean_param_names,
+            "deconvolve": decon_param_names
+        }
+
         pstr = ''
         ncallsdict = {}
         ncallsdict['tclean']     = sum(line.startswith('taskname=tclean') for line in history)
@@ -773,7 +779,9 @@ class TestHelpers:
                 pnames = tclean_param_names()
             else:
                 hist = histories['taskname='+tname]
-                pnames = decon_param_names() # TODO generify
+                if callable(task_param_names[tname]): # lazy evaluation of parameter names, since deconvolve doesn't exist in my branch yet
+                    task_param_names[tname] = task_param_names[tname]()
+                pnames = task_param_names[tname]
 
             # check parameters
             for param in pnames:
