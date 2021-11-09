@@ -182,7 +182,7 @@ class uvcontsub2021_test(unittest.TestCase):
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 340)
 
-    def test_fitswp_channels(self):
+    def test_fitspw_channels(self):
         """Check that fitspw works. When selecting some channels in some SPWs,
         fit those channels in those SPWs (like example 2 from task page)"""
 
@@ -197,7 +197,11 @@ class uvcontsub2021_test(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             # TODO: support this properly
             res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspw=['2', '0:100~500;600~910;1215~1678;1810~1903'])
+                                fitspw=[
+                                    ['1', 'NONE'],
+                                    ['2', '0:100~500;600~910;1215~1678;1810~1903'],
+                                    ['3', '0:100~1903']
+                                ])
             self._check_return(res)
             self._check_rows(self.output, 'DATA', 1080)
 
@@ -207,8 +211,50 @@ class uvcontsub2021_test(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             # TODO: support this properly
             res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspw=['99', '0:100~500;600~910;1215~1678;1810~1903'])
+                                fitspw=[
+                                    ['99', '0:100~500;600~910;1215~1678;1810~1903']
+                                ])
             self._check_return(res)
+
+    def test_fitspw_multifield_wrong_format(self):
+        """Check that fitspw works. Different fitspw strings for different fields
+        (like example 4 from task page)"""
+
+        with self.assertRaises(RuntimeError):
+            # Wrong number of elements (not a list of pairs) - in third line
+            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                                fitspw=[
+                                    ['1', 'NONE'],
+                                    ['2', '0:100~500;600~910;1215~1678;1810~1903'],
+                                    ['3', '4', '0:100~1903']
+                                ])
+
+            self._check_return(res)
+            self._check_rows(self.output, 'DATA', 1080)
+
+        shutil.rmtree(self.output)
+        with self.assertRaises(RuntimeError):
+            # Wrong field
+            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                                fitspw=[
+                                    ['1', 'NONE'],
+                                    ['bla', '0:600~910;1215~1678'],
+                                    ['3', '0:100~1903']
+                                ])
+
+            self._check_return(res)
+            self._check_rows(self.output, 'DATA', 1080)
+
+        shutil.rmtree(self.output)
+        with self.assertRaises(RuntimeError):
+            # Repeated indices
+            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                                fitspw=[
+                                    ['1, 2', 'NONE'],
+                                    ['2', '0:100~500;600~910;1215~1678;1810~1903'],
+                                ])
+            self._check_return(res)
+            self._check_rows(self.output, 'DATA', 1080)
 
     def test_fitspw_separate_fields(self):
         """Check that fitspw works. Different fitspw strings for different
