@@ -408,6 +408,14 @@ class test_importfitsidi(unittest.TestCase):
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table '+name+' failed'
+
+            name = "OBSERVATION"
+            expected = [ ['TIME_RANGE', 0, [4.764708361e+09, 4.764708369e+09], 1E-8],
+                         ['TIME_RANGE', 1, [4.764708369e+09, 4.764708715e+09], 1E-8] ]
+            results = checktable(name, expected)
+            if not results:
+                retValue['success']=False
+                retValue['error_msgs']=retValue['error_msgs']+'Check of table '+name+' failed'
                 
         self.assertTrue(retValue['success'])
 
@@ -819,6 +827,13 @@ class test_importfitsidi(unittest.TestCase):
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table '+name+' failed'
             
+            name = "OBSERVATION"
+            expected = [ ['TIME_RANGE', 0, [4.764708361e+09, 4.764708715e+09], 1E-8] ]
+            results = checktable(name, expected)
+            if not results:
+                retValue['success']=False
+                retValue['error_msgs']=retValue['error_msgs']+'Check of table '+name+' failed'
+                
             _tb.open(msname+'/OBSERVATION')
             nr = _tb.nrows()
             _tb.close()
@@ -1014,6 +1029,76 @@ class test_importfitsidi(unittest.TestCase):
 
         self.assertTrue(retValue['success'])
 
+    def test7(self):
+        '''fitsidi-import: Test observation table after import of three input files'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
+
+        self.res = importfitsidi([my_dataset_names[0],my_dataset_names[1],my_dataset_names[2]],
+                                 msname, constobsid=True, scanreindexgap_s=1.5)
+        print(myname, ": Success! Now checking output ...")
+        mscomponents = set(["table.dat",
+#                            "table.f0",
+                            "table.f1",
+                            "table.f2",
+                            "table.f3",
+                            "table.f4",
+                            "table.f5",
+                            "table.f6",
+                            "table.f7",
+                            "table.f8",
+                            "ANTENNA/table.dat",
+                            "DATA_DESCRIPTION/table.dat",
+                            "FEED/table.dat",
+                            "FIELD/table.dat",
+                            "FLAG_CMD/table.dat",
+                            "HISTORY/table.dat",
+                            "OBSERVATION/table.dat",
+                            "POINTING/table.dat",
+                            "POLARIZATION/table.dat",
+                            "PROCESSOR/table.dat",
+                            "SPECTRAL_WINDOW/table.dat",
+                            "STATE/table.dat",
+                            "ANTENNA/table.f0",
+                            "DATA_DESCRIPTION/table.f0",
+                            "FEED/table.f0",
+                            "FIELD/table.f0",
+                            "FLAG_CMD/table.f0",
+                            "HISTORY/table.f0",
+                            "OBSERVATION/table.f0",
+                            "POINTING/table.f0",
+                            "POLARIZATION/table.f0",
+                            "PROCESSOR/table.f0",
+                            "SPECTRAL_WINDOW/table.f0",
+                            "STATE/table.f0"
+                            ])
+        for name in mscomponents:
+            if not os.access(msname+"/"+name, os.F_OK):
+                print(myname, ": Error  ", msname+"/"+name, "doesn't exist ...")
+                retValue['success']=False
+                retValue['error_msgs']=retValue['error_msgs']+msname+'/'+name+' does not exist'
+            else:
+                print(myname, ": ", name, "present.")
+        print(myname, ": MS exists. All tables present. Try opening as MS ...")
+        try:
+            _ms.open(msname)
+        except:
+            print(myname, ": Error  Cannot open MS table", tablename)
+            retValue['success']=False
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+        else:
+            _ms.close()
+            print(myname, ": OK. Checking tables in detail ...")
+            retValue['success']=True
+    
+            name = "OBSERVATION"
+            expected = [ ['TIME_RANGE', 0, [4.764708361e+09, 4.764708715e+09], 1E-8] ]
+            results = checktable(name, expected)
+            if not results:
+                retValue['success']=False
+                retValue['error_msgs']=retValue['error_msgs']+'Check of table '+name+' failed'
+                
+        self.assertTrue(retValue['success'])
+    
 def suite():
     return [test_importfitsidi]
     
