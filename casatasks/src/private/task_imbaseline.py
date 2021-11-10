@@ -1,6 +1,7 @@
 # image-based line finding and baseline subtraction.
 
 from abc import abstractmethod
+from genericpath import exists
 import os
 import sys
 import shutil
@@ -17,11 +18,120 @@ from casatasks.private.task_imsmooth import imsmooth
 from casatasks.private.task_sdsmooth import sdsmooth
 from casatasks.private.task_sdbaseline import sdbaseline
 
-ia = image()
+_ia = image()
 
 DATACOLUMN = 'DATA'
 OVERWRITE = True
 debug = False
+
+
+class Validable:
+
+    @abstractmethod
+    def validate(self):
+        raise RuntimeError('Not implemented')
+
+
+class AbstractEraseable:
+
+    def __init__(self, file: str=None, task: str=None):
+        self.path = file
+        self.task = task
+
+    @abstractmethod
+    def erase(self):
+        raise RuntimeError('Not implemented')
+
+
+class Erasable(AbstractEraseable):
+
+    def erase(self, dry_run=True):
+        if not dry_run:
+            casalog.post(f"erase file:{self.path}", "DEBUG2")
+            if os.path.exists(self.path):
+                shutil.rmtree(self.path)
+
+
+class Unerasable(AbstractEraseable):
+
+    def erase(self, dry_run=True):
+        casalog.post(f"un-erase file:{self.path}", "DEBUG2")
+
+
+class ProcessingFileStack:
+    def __init__(self, type: str=None, top: AbstractEraseable=None) -> None:
+        self.stack = []
+        self.type = type
+        if not type:
+            raise RuntimeError('type of processing stack is not defined')
+        if top is not None:
+            self.push(top)
+
+    def push(self, file: AbstractEraseable=None):
+        if isinstance(file, AbstractEraseable) and os.path.exists(file.path):
+            casalog.post(f'push f{file.path} into the stack type[{self.type}]', 'DEBUG2')
+            self.stack.append(file)
+        else:
+            raise ValueError('cannot append it to erase queue')
+
+    def pop(self) -> AbstractEraseable:
+        if self.height() <= 1:
+            raise RuntimeError(f'the stack type[{self.type}] cannot pop')
+        return self.stack.pop()
+
+    def peak(self) -> AbstractEraseable:
+        if len(self.stack) > 0:
+            picked = self.stack[len(self.stack) - 1]
+            casalog.post(f'pick from the stack type[{self.type}]: {picked.path}', 'DEBUG2')
+            return self.stack[len(self.stack) - 1]
+        else:
+            raise ValueError("the stack type[{self.type}] is empty")
+
+    def subpeak(self) -> AbstractEraseable:
+        if len(self.stack) > 1:
+            picked = self.stack[len(self.stack) - 2]
+            casalog.post(f'pick from sub peak of the stack type[{self.type}]: {picked.path}', 'DEBUG2')
+            return self.stack[len(self.stack) - 2]
+        else:
+            raise ValueError("the stack type[{self.type}] has only one stuff")
+
+    def bottom(self) -> AbstractEraseable:
+        if len(self.stack) > 0:
+            picked = self.stack[0]
+            casalog.post(f'pick from bottom of the stack type[{self.type}]: {picked.path}', 'DEBUG2')
+            return self.stack[0]
+        else:
+            raise ValueError("the stack type[{self.type}] has not have enough stuff")
+
+    def clear(self, dry_run=True):
+        for file in self.stack:
+            file.erase(dry_run)
+        self.stack.clear()
+
+    def height(self) -> int:
+        return len(self.stack)
+
+
+class ImageShape(Validable):
+
+    im_shape = None
+    axis_dir = None
+    axis_sp = None
+    axis_pol = None
+    dir_shape = None
+    im_nrow = None
+    im_nchan = None
+    im_npol = None
+
+    def validate(self):
+        if not len(self.axis_dir):
+            raise ValueError(f'invalid value: axis_dir {self.axis_dir}')
+
+        # if im_nchan is too few, say, <10, sdbaseline should abort
+        if self.im_nchan < 10:
+            raise ValueError(f'nchan {self.im_nchan} is too few to perform baseline subtraction')
+
+        # TODO: another validation
 
 
 @sdtask_decorator
@@ -37,72 +147,110 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
     """
     __validate_imagename(imagename)
     linefile = __prepare_linefile(linefile, imagename)
-    if not output_cont:
-        output_cont = False
-    output_cont_file = os.path.basename(imagename) + ".cont"
-    processing_file_stack = ProcessingFileStack(top=Unerasable(imagename))
+    image_stack = ProcessingFileStack(top=Unerasable(imagename), type='im')
+    ms_stack = ProcessingFileStack(type='ms')
 
     prepare()
 
     try:
-        execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, processing_file_stack)
-        image2ms_params = execute_image2ms(DATACOLUMN, processing_file_stack)
-        execute_sdsmooth(DATACOLUMN.lower(), spkernel, kwidth, processing_file_stack)
-        execute_sdbaseline(DATACOLUMN.lower(), bloutput, maskmode, chans, thresh, avg_limit, minwidth,
+        input_image_shape = get_image_shape(image_stack)
+        execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, image_stack)
+        execute_image2ms(DATACOLUMN, input_image_shape, image_stack, ms_stack)
+        execute_sdsmooth(DATACOLUMN, spkernel, kwidth, image_stack, ms_stack, input_image_shape)
+        execute_sdbaseline(DATACOLUMN, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                            edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
-                           clipniter, clipthresh, processing_file_stack)
-        execute_ms2image(linefile, imagename, DATACOLUMN, output_cont, output_cont_file,
-                         image2ms_params, processing_file_stack)
+                           clipniter, clipthresh, image_stack, ms_stack, input_image_shape)
+        execute_image_subtraction(linefile, image_stack)
+        if output_cont:
+            get_continuum_image(image_stack)
     finally:
-        processing_file_stack.clear(False)
+        image_stack.clear(False)
+        ms_stack.clear(False)
+
+    __write_image_history()
 
 
-def execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, processing_file_stack):
+def execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, stack):
     if __validate_imsmooth_execution(dirkernel):
         casalog.post("execute image smoothing", "INFO")
-        infile = processing_file_stack.top()
+        infile = stack.peak().path
         outfile = __generate_temporary_filename("dirsmooth-", "im")
         args, kargs = ImsmoothParams(infile, outfile, dirkernel, major, minor, pa, kimage, scale)()
         imsmooth(*args, **kargs)
-        processing_file_stack.push(Erasable(outfile))
+        stack.push(Erasable(file=outfile))
     else:
         casalog.post("omit image smoothing", "INFO")
 
 
-def execute_image2ms(datacolumn, processing_file_stack) -> Tuple[Any]:
+def execute_image2ms(datacolumn, input_image_shape, image_stack, ms_stack):
     casalog.post("convert casaimage to MeasurementSet", "INFO")
-    infile = processing_file_stack.top()
+    infile = image_stack.peak().path
     outfile = __generate_temporary_filename("img2ms-", "ms")
-    i2mp = image2ms(Image2MSParams(infile, outfile, datacolumn))
-    processing_file_stack.push(Erasable(outfile))
-    return i2mp
+    image2ms(Image2MSParams(infile, outfile, datacolumn, input_image_shape))
+    ms_stack.push(Erasable(file=outfile))
 
 
-def execute_sdsmooth(datacolumn=None, spkernel=None, kwidth=None, processing_file_stack=None):
+def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None, image_stack: ProcessingFileStack=None,
+                     ms_stack: ProcessingFileStack=None, image_shape: ImageShape=None):
     if __validate_sdsmooth_execution(spkernel):
         casalog.post("execute spectral smoothing", "INFO")
-        infile = processing_file_stack.top()
-        outfile = __generate_temporary_filename("spsmooth-", "ms")
-        sdsmooth(**SdsmoothParams(infile, outfile, datacolumn, spkernel, kwidth)())
-        processing_file_stack.push(Erasable(outfile))
+        input_ms = ms_stack.peak().path
+        output_ms = __generate_temporary_filename("spsmooth-", "ms")
+        base_image = image_stack.bottom().path
+        sdsmooth(**SdsmoothParams(input_ms, output_ms, datacolumn.lower(), spkernel, kwidth)())
+        ms_stack.push(Erasable(file=output_ms))
+        output_image = __convert_ms_to_image(base_image, output_ms, image_shape, datacolumn)
+        image_stack.push(Erasable(file=output_image))
     else:
         casalog.post("omit spectral smoothing", "INFO")
 
 
 def execute_sdbaseline(datacolumn, bloutput, maskmode, chans, thresh, avg_limit, minwidth, edge, blfunc, order, npiece,
-                       applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh, processing_file_stack):
+                       applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh, image_stack, ms_stack, image_shape):
     casalog.post("execute spectral baselining", "INFO")
-    infile = processing_file_stack.top()
-    outfile = __generate_temporary_filename("baseline-", "ms")
-    sdbaseline(**SdbaselineParams(infile, outfile, datacolumn, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
+    input_ms = ms_stack.peak().path
+    output_ms = __generate_temporary_filename("baseline-", "ms")
+    base_image = image_stack.bottom().path
+    sdbaseline(**SdbaselineParams(input_ms, output_ms, datacolumn.lower(), bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh)())
-    processing_file_stack.push(Erasable(outfile))
+    ms_stack.push(Erasable(file=output_ms))
+    output_image = __convert_ms_to_image(base_image, output_ms, image_shape, datacolumn)
+    image_stack.push(Erasable(file=output_image))
+    blparam_name = input_ms + '_blparam.' + SdbaselineParams.BLFORMAT
+    if os.path.exists(blparam_name):
+        __rename_blparam_filename(blparam_name, base_image)
 
 
-def execute_ms2image(linefile, imagefile, datacolumn, output_cont, output_cont_file, i2ms, processing_file_stack):
-    casalog.post("convert MeasurementSet to casaimage", "INFO")
-    infile = processing_file_stack.top()
-    ms2image(MS2ImageParams(infile, linefile, imagefile, datacolumn, output_cont, output_cont_file, i2ms))
+def execute_image_subtraction(linefile: str, image_stack: ProcessingFileStack):
+    if image_stack.height() < 3:  # did not smoothed
+        output_image = image_stack.pop().path
+        os.rename(output_image, linefile)
+        image_stack.push(Unerasable(file=linefile))
+    else:
+        smoothed_image = image_stack.subpeak().path
+        subtracted_image = image_stack.peak().path
+        base_image = image_stack.bottom().path
+        __copy_image_file(base_image, linefile)
+        __image_subtraction(smoothed_image, subtracted_image)
+        __image_subtraction(linefile, smoothed_image)
+
+
+def get_continuum_image(image_stack: ProcessingFileStack):
+    base_image = image_stack.bottom().path
+    output_image = os.path.basename(base_image) + '.cont'
+    __copy_image_file(base_image, output_image)
+
+    subtract_image = image_stack.peak().path
+    __image_subtraction(output_image, subtract_image)
+
+
+def __image_subtraction(operand_a: str, operand_b: str):
+    image_array = None
+    with tool_manager(operand_b, image) as _ia:
+        image_array = _ia.getchunk()
+
+    with tool_manager(operand_a, image) as _ia:
+        _ia.putchunk(pixels=_ia.getchunk() - image_array, locking=True)
 
 
 def __validate_imagename(imagename):
@@ -131,6 +279,8 @@ def __validate_imsmooth_execution(dirkernel):
     def is_valid_kernel(kernel):
         return kernel == 'none', kernel == 'image' or kernel == 'boxcar' or kernel == 'gaussian'
 
+    if not dirkernel:
+        dirkernel = 'none'
     none, valid = is_valid_kernel(dirkernel)
     if not none and not valid:
         raise ValueError(f'Unsupported direction smoothing kernel, {dirkernel}', 'SEVERE')
@@ -143,6 +293,8 @@ def __validate_sdsmooth_execution(spkernel):
     def is_valid_kernel(kernel):
         return kernel == 'none', kernel == 'boxcar' or kernel == 'gaussian'
 
+    if not spkernel:
+        spkernel = 'none'
     none, valid = is_valid_kernel(spkernel)
     if not none and not valid:
         raise ValueError(f'Unsupported spectral smoothing kernel, {spkernel}', 'SEVERE')
@@ -152,71 +304,7 @@ def __validate_sdsmooth_execution(spkernel):
 
 
 def prepare():
-    ia.dohistory(False)
-
-
-class Validable:
-
-    @abstractmethod
-    def validate(self):
-        raise RuntimeError('Not implemented')
-
-
-class AbstractEraseable:
-
-    def __init__(self, filename):
-        self.path = filename
-
-    @abstractmethod
-    def erase(self):
-        raise RuntimeError('Not implemented')
-
-
-class Erasable(AbstractEraseable):
-
-    def erase(self, dry_run=True):
-        if not dry_run:
-            casalog.post(f"erase file:{self.path}", "DEBUG2")
-            if os.path.exists(self.path):
-                shutil.rmtree(self.path)
-
-
-class Unerasable(AbstractEraseable):
-
-    def erase(self, dry_run=True):
-        casalog.post(f"un-erase file:{self.path}", "DEBUG2")
-
-
-class ProcessingFileStack:
-    def __init__(self, top: AbstractEraseable=None) -> None:
-        self.stack = []
-        if top is not None:
-            self.push(top)
-
-    def push(self, file: AbstractEraseable=None):
-        if isinstance(file, AbstractEraseable) and os.path.exists(file.path):
-            self.stack.append(file)
-        else:
-            raise ValueError('cannot append it to erase queue')
-
-    def top(self) -> str:
-        if len(self.stack) > 0:
-            return self.stack[len(self.stack) - 1].path
-        else:
-            raise ValueError("OutputFileStack is empty")
-
-    def pop(self, dry_run=True) -> AbstractEraseable:
-        file = self.stack.pop()
-        file.erase(dry_run)
-        return file
-
-    def clear(self, dry_run=True):
-        for file in self.stack:
-            file.erase(dry_run)
-        self.stack.clear()
-
-    def length(self) -> int:
-        return len(self.stack)
+    _ia.dohistory(False)
 
 
 class ImsmoothParams(Validable):
@@ -303,7 +391,7 @@ class SdbaselineParams(Validable):
     REINDEX = True
     BLMODE = 'fit'
     DOSUBTRACT = True
-    BLFORMAT = 'text'
+    BLFORMAT = 'csv'
     BLTABLE = ''
     UPDATEWEIGHT = False
     SIGMAVALUE = 'stddev'
@@ -371,12 +459,49 @@ class SdbaselineParams(Validable):
                     __taskcaller__="imbaseline")
 
 
+def __get_axis_position(val: array=None):
+    if val is not None and len(val) > 0:
+        return val[0].item()
+    return -1
+
+
+def get_image_shape(stack: ProcessingFileStack) -> ImageShape:
+    shape = ImageShape()
+    with tool_manager(stack.peak().path, image) as _ia:
+        try:
+            cs = _ia.coordsys()
+            shape.im_shape = _ia.shape()
+            shape.axis_dir = cs.findcoordinate('direction')['world']
+            shape.axis_sp = __get_axis_position(cs.findcoordinate('spectral')['world'])  # 3 or 2 or -1
+            shape.axis_pol = __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
+        finally:
+            cs.done()
+
+    shape.dir_shape = shape.im_shape[shape.axis_dir]
+    shape.im_nrow = np.prod(shape.dir_shape)
+    shape.im_nchan = shape.im_shape[shape.axis_sp] if shape.axis_sp > 0 else 1
+    shape.im_npol = shape.im_shape[shape.axis_pol] if shape.axis_pol > 0 else 1
+
+    casalog.post(f'image shape is {shape.im_shape}, direciton {shape.dir_shape} ({shape.im_nrow} pixels), '
+                 f'npol {shape.im_npol}, nchan {shape.im_nchan}', 'DEBUG2')
+
+    return shape
+
+
 class Image2MSParams(Validable):
 
-    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA') -> None:
+    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA', input_image_shape: ImageShape=None) -> None:
         self.infile = infile
         self.outfile = outfile
         self.datacolumn = datacolumn
+        self.im_shape = input_image_shape.im_shape
+        self.axis_dir = input_image_shape.axis_dir
+        self.axis_sp = input_image_shape.axis_sp
+        self.axis_pol = input_image_shape.axis_pol
+        self.dir_shape = input_image_shape.dir_shape
+        self.im_nrow = input_image_shape.im_nrow
+        self.im_nchan = input_image_shape.im_nchan
+        self.im_npol = input_image_shape.im_npol
         self.validate()
 
     def validate(self):
@@ -388,44 +513,9 @@ class Image2MSParams(Validable):
 
 
 def image2ms(params: Image2MSParams=None):
-    __get_image_params_from_imsmooth_output(params)
     __create_empty_ms(params)
     __copy_image_array_to_ms(params)
     return params
-
-
-def __get_axis_position(val: array=None):
-    if val is not None and len(val) > 0:
-        return val[0].item()
-    return -1
-
-
-def __get_image_params_from_imsmooth_output(params):
-    with tool_manager(params.infile, image) as _ia:
-        try:
-            cs = _ia.coordsys()
-            params.im_shape = _ia.shape()
-            params.axis_dir = cs.findcoordinate('direction')['world']
-            params.axis_sp = __get_axis_position(cs.findcoordinate('spectral')['world'])  # 3 or 2 or -1
-            params.axis_pol = __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
-        finally:
-            cs.done()
-
-    assert len(params.axis_dir) > 0
-
-    params.dir_shape = params.im_shape[params.axis_dir]
-    params.im_nrow = np.prod(params.dir_shape)
-    params.im_nchan = params.im_shape[params.axis_sp] if params.axis_sp > 0 else 1
-    params.im_npol = params.im_shape[params.axis_pol] if params.axis_pol > 0 else 1
-
-    casalog.post(f'image shape is {params.im_shape}, direciton {params.dir_shape} ({params.im_nrow} pixels), '
-                 f'npol {params.im_npol}, nchan {params.im_nchan}', 'DEBUG2')
-
-    # if im_nchan is too few, say, <10, sdbaseline should abort
-    if params.im_nchan < 10:
-        casalog.post(f'nchan {params.im_nchan} is too few to perform baseline subtraction', 'DEBUG2')
-        return False
-    return True
 
 
 def __create_empty_ms(params):
@@ -465,7 +555,8 @@ def __create_maintable(params):
         tb.putcol('STATE_ID', dummy)
         time_list = 4304481539.999771 + np.arange(nrow_req) * 30.0
         tb.putcol('TIME', time_list)
-        casalog.post(f'number of rows {nrow}, number of image pixels {params.im_nrow}, number of pols {params.im_npol}, '
+        casalog.post(f'number of rows {nrow}, number of image pixels {params.im_nrow}, '
+                     f'number of pols {params.im_npol}, '
                      f'required rows {nrow_req}', 'DEBUG2')
     finally:
         tb.close()
@@ -581,7 +672,7 @@ def __create_subtable(outfile, subtable: str, desc: str, dminfo: str):
 
 
 def __copy_image_array_to_ms(params):
-    __put_image_data_to_ms(params, *__get_image_value(params))
+    __put_image_data_into_ms(params, *__get_image_value(params))
 
 
 def __get_image_value(params):
@@ -604,7 +695,7 @@ def __get_image_value(params):
     return arr, msk, xax, yax, spax, polax
 
 
-def __put_image_data_to_ms(params, image_array, mask_array, axis_x, axis_y, axis_sp, axis_pol):
+def __put_image_data_into_ms(params, image_array, mask_array, axis_x, axis_y, axis_sp, axis_pol):
     # which data column to use
     with table_manager(params.outfile, nomodify=False) as tb:
         # also set FLAG, SIGMA, WEIGHT, and UVW
@@ -635,36 +726,57 @@ def __put_image_data_to_ms(params, image_array, mask_array, axis_x, axis_y, axis
 class MS2ImageParams(Validable):
 
     def __init__(self, infile: str=None, linefile: str='', imagefile: str='', datacolumn: str='DATA', output_cont: bool=False,
-                 output_cont_file: str='', i2ms: Image2MSParams=None) -> None:
+                 output_cont_file: str='', i2ms_params: Image2MSParams=None) -> None:
         self.infile = infile
         self.linefile = linefile
         self.imagename = imagefile
         self.datacolumn = datacolumn
         self.output_cont = output_cont
         self.output_cont_file = output_cont_file
-        self.i2ms = i2ms
+        self.i2ms = i2ms_params
         self.validate()
 
     def validate(self):
         pass
 
 
-def ms2image(params: MS2ImageParams):
-    casalog.post("start imaging", "DEBUG2")
-    try:
-        __copy_image_file(params.imagename, params.linefile)  # mask data is also copied in this method
-        if params.output_cont:
-            __copy_image_file(infile=params.imagename, outfile=params.output_cont_file)
-    except Exception as instance:
-        casalog.post(f"*** Error '{instance}'", 'SEVERE')
+def __change_file_extension(path: str, ext: str) -> str:
+    if not os.path.exists(path):
+        RuntimeError(f'cannot find path: {path}')
+    base, oldext = os.path.splitext(path)
+    new_path = base_path = f'{base}.{ext}'
+    i = 0
+    while True:
+        if not os.path.exists(new_path):
+            break
+        new_path = base_path + f'.{i}'
+        i += 1
+        if i > 10:
+            raise RuntimeError('some file system error occured')
+    return new_path
 
-    __make_image_array(params)
-    casalog.post("end arraying", "DEBUG2")
 
-    if params.output_cont:
-        __output_cont_image(params)
-    __output_image(params)
-    casalog.post("end imaging", "DEBUG2")
+def __rename_blparam_filename(filename: str=None, basename: str=None):
+        if not os.path.exists(filename):
+            return
+        newname = os.path.basename(basename) + '.ms_blparam.' + SdbaselineParams.BLFORMAT
+        if os.path.exists(newname):
+            return filename
+        try:
+            os.rename(filename, newname)
+        except:
+            casalog.post(f'rename failure:from {filename} to {newname}', 'SEVERE')
+            return filename
+        return newname
+
+def __convert_ms_to_image(base_image: str, input_ms: str, input_image_shape: ImageShape, datacolumn: str):
+    output_image = __change_file_extension(input_ms, 'im')
+    __copy_image_file(base_image, output_image)  # mask data is also copied in this method
+
+    image_array = __make_image_array(input_image_shape, input_ms, datacolumn)
+    __output_image(output_image, image_array)
+
+    return output_image
 
 
 def __copy_image_file(infile: str=None, outfile: str=None):
@@ -679,34 +791,38 @@ def __copy_image_file(infile: str=None, outfile: str=None):
         _ia.done()
 
 
-def __make_image_array(params):
-    nx, ny = params.i2ms.dir_shape
-    params.array = np.empty((nx, ny, params.i2ms.im_nchan))
+def __make_image_array(input_image_shape: ImageShape, infile: str, datacolumn: str) -> np.array:
+    nx, ny = input_image_shape.dir_shape
+    image_array = np.empty((nx, ny, input_image_shape.im_nchan))
     pos = 0
-    with table_manager(params.infile) as tb:
+    with table_manager(infile) as tb:
         for i in range(nx):
             for j in range(ny):
-                params.array[i][j] = tb.getcell(params.datacolumn, pos)[0].real
+                image_array[i][j] = tb.getcell(datacolumn, pos)[0].real
                 pos += 1
-    if params.i2ms.axis_pol > 0:
-        params.array = np.expand_dims(params.array, params.i2ms.axis_pol)
+    if input_image_shape.axis_pol > 0:
+        image_array = np.expand_dims(image_array, input_image_shape.axis_pol)
+    return image_array
 
 
-def __output_image(params):
-    with tool_manager(params.linefile, image) as _ia:
-        _ia.putchunk(pixels=params.array, locking=True)
-        try:
-            param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
-            vars = locals()
-            param_vals = [vars[p] for p in param_names]
-            write_image_history(_ia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
-        except Exception as instance:
-            casalog.post(f"*** Error '{instance}' updating HISTORY", 'WARN')
+def __output_image(outfile: str, image_array: np.array):
+    with tool_manager(outfile, image) as _ia:
+        _ia.putchunk(pixels=image_array, locking=True)
 
 
-def __output_cont_image(params):
-    with tool_manager(params.output_cont_file, image) as _ia:
-        _ia.putchunk(pixels=_ia.getchunk() - params.array, locking=True)
+def __write_image_history():
+    try:
+        param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
+        vars = locals()
+        param_vals = [vars[p] for p in param_names]
+        write_image_history(_ia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
+    except Exception as instance:
+        casalog.post(f"*** Error '{instance}' updating HISTORY", 'WARN')
+
+
+# def __output_cont_image(params):
+#     with tool_manager(params.output_cont_file, image) as _ia:
+#         _ia.putchunk(pixels=_ia.getchunk() - params.array, locking=True)
 
 
 class EmptyMSBaseInformation:
