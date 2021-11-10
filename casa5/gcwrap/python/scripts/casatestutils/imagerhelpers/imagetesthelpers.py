@@ -48,6 +48,9 @@ if is_CASA6:
     def tclean_param_names():
         from casatasks.tclean import _tclean_t
         return _tclean_t.__code__.co_varnames[:_tclean_t.__code__.co_argcount]
+    def decon_param_names():
+        from casatasks.deconvolve import _deconvolve_t
+        return _deconvolve_t.__code__.co_varnames[:_deconvolve_t.__code__.co_argcount]
 
     casa6 = True
 
@@ -76,6 +79,9 @@ else:
         # alternatively could use from tasks import tclean; tclean.parameters
         from task_tclean import tclean
         return tclean.__code__.co_varnames[:tclean.__code__.co_argcount]
+    def decon_param_names():
+        from tasks import deconvolve
+        return deconvolve.parameters.keys()
 
     casa5 = True
 
@@ -720,6 +726,8 @@ class TestHelpers:
         :returns: the usual (test_imager_helper) string with success/error messages.
         Errors are marked with the tag '(Fail' as per self.verdict().
         """
+        import itertools
+
         ia_open = False
         try:
             _ia.open(imname)
@@ -733,11 +741,20 @@ class TestHelpers:
             if ia_open:
                 _ia.close()
 
+        # build up a list of parameter names (to be evaluated as necessary)
+        task_param_names = {
+            "tclean": tclean_param_names,
+            "deconvolve": decon_param_names
+        }
+
         pstr = ''
-        ncalls = sum(line.startswith('taskname=tclean') for line in history)
+        ncallsdict = {}
+        ncallsdict['tclean']     = sum(line.startswith('taskname=tclean') for line in history)
+        ncallsdict['deconvolve'] = sum(line == 'taskname=deconvolve' for line in history)
+        ncalls                   = ncallsdict['tclean'] + ncallsdict['deconvolve']
         nversions = sum(line.startswith('version:') for line in history)
         if ncalls < 1:
-            pstr += ('No calls to tclean were found in history. ({})\n'.
+            pstr += ('No calls to cleaning tasks were found in history. ({})\n'.
                      format(TestHelpers().verdict(False)))
         if nversions < 1:
             pstr += ('No CASA version was found in history. ({})\n'.
@@ -747,17 +764,53 @@ class TestHelpers:
             pstr += ('The number of taskname entries ({}) and CASA version entries ({}) do '
                      'not match. ({})\n'.format(ncalls, nversions,
                                                 TestHelpers().verdict(False)))
-        for param in tclean_param_names():
-            nparval = sum('=' in line and line.split('=')[0].strip() == param for
-                          line in history)
-            if nparval < 1:
-                pstr += ('No entries for tclean parameter {} found in history. ({})'
-                         '.'.format(param, TestHelpers().verdict(False)))
-            if nparval != ncalls:
-                pstr += ("The number of history entries for parameter '{}' ({}) and task "
-                         "calls ({}) do not match ({}).".
-                         format(param, nparval, ncalls, TestHelpers().verdict(False)))
+
+        # check parameter names for cleaning tasks
+        histories = TestHelpers().split_histories_by_task(history)
+        for tname in ['tclean', 'deconvolve']:
+            ntcalls = ncallsdict[tname]
+            if ntcalls == 0:
+                continue
+
+            # get task parameters and history to be checked
+            if tname == 'tclean':
+                tclean_keys = list(filter(lambda line: line.startswith("taskname=tclean"), histories.keys()))
+                hist = list(itertools.chain.from_iterable([histories[k] for k in tclean_keys])) # concat all tclean* histories into one long list of lines
+                pnames = tclean_param_names()
+            else:
+                hist = histories['taskname='+tname]
+                if callable(task_param_names[tname]): # lazy evaluation of parameter names, since deconvolve doesn't exist in my branch yet
+                    task_param_names[tname] = task_param_names[tname]()
+                pnames = task_param_names[tname]
+
+            # check parameters
+            for param in pnames:
+                nparval = sum('=' in line and line.split('=')[0].strip() == param for
+                              line in hist)
+                if nparval < 1:
+                    pstr += ('No entries for {} parameter {} found in history. ({})'
+                             '.'.format(tname, param, TestHelpers().verdict(False)))
+                if nparval != ntcalls:
+                    pstr += ("The number of history entries for parameter '{}' ({}) and task "
+                             "calls ({}) do not match ({}).".
+                             format(param, nparval, ntcalls, TestHelpers().verdict(False)))
         return pstr
+
+    def split_histories_by_task(self, history):
+        """
+        Given the list of strings in history, split it wherever there is a "taskname=*" line.
+        Return a dictionary where the keys are the "taskname=*" lines, and the values are all lines
+        for that taskname.
+        """
+        ret = {}
+        task_line = ""
+        for line in history:
+            if line.startswith("taskname="):
+                task_line = line
+            if task_line not in ret:
+                ret[task_line] = []
+            ret[task_line].append(line)
+        return ret
 
     def check_pix_val(self, imname, theval=0, thepos=[0, 0, 0, 0], exact=False, epsilon=0.05, testname="check_pix_val"):
         pstr = ''
