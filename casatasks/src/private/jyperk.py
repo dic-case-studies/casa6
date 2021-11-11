@@ -512,7 +512,7 @@ class JyPerKDatabaseClient():
                 casalog.post(response_with_tag['err_msg'])
                 casalog.post(f'Sleeping for {str(self.retry_wait_time)} seconds because the request failed')
                 sleep(self.retry_wait_time)
-                casalog.post(f'Retry to access Jy/K DB ({str(i + 1)}/{str(self.retry)})')
+                casalog.post(f'Retry to access Jy/K DB ({str(i + 2)}/{str(self.retry)})')
 
         if response_with_tag['status'] != 'Success':
             raise RuntimeError(response_with_tag['err_msg'])
