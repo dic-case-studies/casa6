@@ -142,7 +142,7 @@ Current antenna-based gencal options (caltype) are:
                      Subparameter of caltype='jyperk'
                      Default: 180
       </description>
-      <value/>
+      <value>180</value>
    </param>
 
    <param subparam="true" name="retry" type="int">
@@ -151,7 +151,7 @@ Current antenna-based gencal options (caltype) are:
                      Subparameter of caltype='jyperk'
                      Default: 3
       </description>
-      <value/>
+      <value>3</value>
    </param>
 
    <param subparam="true" name="retry_wait_time" type="int">
@@ -160,7 +160,7 @@ Current antenna-based gencal options (caltype) are:
                      Subparameter of caltype='jyperk'
                      Default: 5
       </description>
-      <value/>
+      <value>5</value>
    </param>
 
    <param name="spw" type="string">
