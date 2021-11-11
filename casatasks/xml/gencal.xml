@@ -140,7 +140,7 @@ Current antenna-based gencal options (caltype) are:
       <shortdescription>Maximum waiting time [sec] for the Web API access</shortdescription>
       <description>Maximum waiting time [sec] for the Web API access.
                      Subparameter of caltype='jyperk'
-                     Subparameter of caltype='jyperk'Default: 180
+                     Default: 180
       </description>
       <value/>
    </param>
