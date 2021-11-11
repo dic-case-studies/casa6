@@ -464,7 +464,6 @@ class JyPerKDatabaseClient():
         # encode params
         encoded = urlencode(param)
         query = '?'.join([self.web_api_url, encoded])
-        casalog.post('Accessing Jy/K DB: query is "{}"'.format(query))
         return query
 
     def _retrieve(self, url):
@@ -502,11 +501,16 @@ class JyPerKDatabaseClient():
             return {'status': 'URLError', 'err_msg': msg}
 
     def _try_to_get_response(self, url):
+        casalog.post(f'Accessing Jy/K DB: request URL is "{url}"')
         for i in range(self.retry):
             response_with_tag = self._retrieve(url)
             if response_with_tag['status'] == 'Success':
                 return response_with_tag['body']
-            sleep(self.retry_wait_time)
+            
+            if i < self.retry - 1:
+                casalog.post(f'Sleeping for {str(self.retry_wait_time)} seconds because the request failed')
+                sleep(self.retry_wait_time)
+                casalog.post(f'Retry to access Jy/K DB ({str(i + 1)}/{str(self.retry)})')
 
         if response_with_tag['status'] != 'Success':
             raise RuntimeError(response_with_tag['err_msg'])
