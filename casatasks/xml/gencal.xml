@@ -58,7 +58,7 @@ Current antenna-based gencal options (caltype) are:
    </param>
    
    <param name="caltype" type="string">
-      <shortdescription>The calibration type: (amp, ph, sbd, mbd, antpos, antposvla, tsys, evlagain, opac, gc, gceff, eff, tecim)</shortdescription>
+      <shortdescription>The calibration type: (amp, ph, sbd, mbd, antpos, antposvla, tsys, evlagain, opac, gc, gceff, eff, tecim, jyperk)</shortdescription>
       <description>The calibration parameter type being specified
                         Default: none
                         Options: 'amp', 'ph', 'sbd', 'mbd', 'antpos',
