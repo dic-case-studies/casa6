@@ -127,7 +127,7 @@ Current antenna-based gencal options (caltype) are:
    </param>
 
    <param subparam="true" name="endpoint" type="string">
-      <shortdescription>Input endpoint of the Jy/K DB Web API</shortdescription>
+      <shortdescription>Input endpoint of the Jy/K DB Web API: (asdm, model-fit, interpolation)</shortdescription>
       <description>Input endpoint of the Jy/K DB Web API.
                      Subparameter of caltype='jyperk'
                      Default: 'asdm'
