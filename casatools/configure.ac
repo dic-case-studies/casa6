@@ -34,14 +34,10 @@ AC_MSG_NOTICE([host os is ${host_osname}])
 PWD=`pwd`
 AC_SUBST(PWD)
 
-AC_ARG_ENABLE([grpc], [  --disable-grpc          compile in support for gRPC],
-  [case "${enableval}" in
-     yes ) WITH_GRPC=1 ;;
-     no ) WITH_GRPC=0 ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --disable-grpc) ;;
-   esac],
-  [WITH_GRPC=1]
-)
+WITH_GRPC=1
+AC_ARG_ENABLE( [system-grpc], AS_HELP_STRING([--enable-system-grpc],[use system grpc libraries]),
+               [SYSTEM_GRPC=1], [SYSTEM_GRPC=0] )
+
 if [[ "x${CXX}" != "x" ]]; then
     dnl#########################################################################
     dnl##### set CXX_OVERRIDE to prevent all of our C++ machinations from  #####
@@ -85,7 +81,9 @@ if [[ "${ac_success}" = "no" ]]; then
         AC_MSG_ERROR([cannot find a C++ compiler that supports C++11, please include the path to one in your PATH environment variable])
     fi
 fi
-
+if [[ ! -e "${CXX}" ]]; then
+    CXX=`which ${CXX}`
+fi
 if [[ -x "${CXX}" ]]; then
     AC_MSG_NOTICE([C++11 compiler ${CXX}])
 else
@@ -99,6 +97,30 @@ AC_COMPILE_IFELSE( [AC_LANG_PROGRAM([[#include <ios>]],
                    [AC_MSG_RESULT([no])
                     AC_MSG_ERROR([C++ compiler is not new enough]) ] )
 
+if [[ "${SYSTEM_GRPC}" == "1" ]]; then
+    PKG_CHECK_MODULES( [GRPC], [grpc >= 6.0.0 grpc++ >= 1.16.1 protobuf >= 3.6.1 ], [
+                       AC_CHECK_PROGS([PROTOC], [protoc], [/usr/bin/false])
+                       if test "$PROTOC" = "/usr/bin/false"; then
+                           AC_MSG_FAILURE([grpc requested but protoc not found.])
+		       else
+		           PROTOC=`which protoc`
+                       fi
+                       AC_CHECK_PROGS([GRPC_CPP_PLUGIN], [grpc_cpp_plugin], [/usr/bin/false])
+                       if test "$GRPC_CPP_PLUGIN" = "/usr/bin/false"; then
+                           AC_MSG_FAILURE([grpc requested but grpc plugin for C++ not found.])
+		       else
+		           GRPC_CPP_PLUGIN=`which grpc_cpp_plugin`
+                       fi ] )
+    GRPC_DO_BUILD=0
+else
+    GRPC_DO_BUILD=1
+    PROTOC="/usr/bin/false"
+    GRPC_CPP_PLUGIN="/usr/bin/false"
+fi
+AC_SUBST(GRPC_CFLAGS)
+AC_SUBST(GRPC_LIBS)
+AC_SUBST(GRPC_DO_BUILD)
+AC_SUBST(PROTOC)
 
 dnl Add --with-mpi option to configure
 AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
