@@ -81,6 +81,7 @@ if [[ "${ac_success}" = "no" ]]; then
         AC_MSG_ERROR([cannot find a C++ compiler that supports C++11, please include the path to one in your PATH environment variable])
     fi
 fi
+
 if [[ ! -e "${CXX}" ]]; then
     CXX=`which ${CXX}`
 fi
@@ -97,30 +98,6 @@ AC_COMPILE_IFELSE( [AC_LANG_PROGRAM([[#include <ios>]],
                    [AC_MSG_RESULT([no])
                     AC_MSG_ERROR([C++ compiler is not new enough]) ] )
 
-if [[ "${SYSTEM_GRPC}" == "1" ]]; then
-    PKG_CHECK_MODULES( [GRPC], [grpc >= 6.0.0 grpc++ >= 1.16.1 protobuf >= 3.6.1 ], [
-                       AC_CHECK_PROGS([PROTOC], [protoc], [/usr/bin/false])
-                       if test "$PROTOC" = "/usr/bin/false"; then
-                           AC_MSG_FAILURE([grpc requested but protoc not found.])
-		       else
-		           PROTOC=`which protoc`
-                       fi
-                       AC_CHECK_PROGS([GRPC_CPP_PLUGIN], [grpc_cpp_plugin], [/usr/bin/false])
-                       if test "$GRPC_CPP_PLUGIN" = "/usr/bin/false"; then
-                           AC_MSG_FAILURE([grpc requested but grpc plugin for C++ not found.])
-		       else
-		           GRPC_CPP_PLUGIN=`which grpc_cpp_plugin`
-                       fi ] )
-    GRPC_DO_BUILD=0
-else
-    GRPC_DO_BUILD=1
-    PROTOC="/usr/bin/false"
-    GRPC_CPP_PLUGIN="/usr/bin/false"
-fi
-AC_SUBST(GRPC_CFLAGS)
-AC_SUBST(GRPC_LIBS)
-AC_SUBST(GRPC_DO_BUILD)
-AC_SUBST(PROTOC)
 
 dnl Add --with-mpi option to configure
 AC_ARG_WITH(mpi, [AS_HELP_STRING([--with-mpi],
@@ -297,6 +274,31 @@ AX_WCSLIB
 AX_RPFITS
 AX_GSL(2.0)
 AX_SWIG(3.0.0)
+
+if [[ "${SYSTEM_GRPC}" == "1" ]]; then
+    PKG_CHECK_MODULES( [GRPC], [grpc >= 6.0.0 grpc++ >= 1.16.1 protobuf >= 3.6.1 ], [
+                       AC_CHECK_PROGS([PROTOC], [protoc], [/usr/bin/false])
+                       if test "$PROTOC" = "/usr/bin/false"; then
+                           AC_MSG_FAILURE([grpc requested but protoc not found.])
+                       else
+                           PROTOC=`which protoc`
+                       fi
+                       AC_CHECK_PROGS([GRPC_CPP_PLUGIN], [grpc_cpp_plugin], [/usr/bin/false])
+                       if test "$GRPC_CPP_PLUGIN" = "/usr/bin/false"; then
+                           AC_MSG_FAILURE([grpc requested but grpc plugin for C++ not found.])
+		       else
+		           GRPC_CPP_PLUGIN=`which grpc_cpp_plugin`
+                       fi ] )
+    GRPC_DO_BUILD=0
+else
+    GRPC_DO_BUILD=1
+    PROTOC="/usr/bin/false"
+    GRPC_CPP_PLUGIN="/usr/bin/false"
+fi
+AC_SUBST(GRPC_CFLAGS)
+AC_SUBST(GRPC_LIBS)
+AC_SUBST(GRPC_DO_BUILD)
+AC_SUBST(PROTOC)
 
 #AC_MSG_CHECKING([for casa version number])
 #read -a full_version <<< "`scripts/version | perl -pe 's|^(\d+).(\d+).*?$|$1 $2 0 0|'`"
