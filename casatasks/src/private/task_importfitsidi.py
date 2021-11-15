@@ -97,9 +97,8 @@ def importfitsidi(fitsidifile,vis,constobsid=None,scanreindexgap_s=None,specfram
                     # get min and max time and write them into the first row;
                     casalog.post('Adjusting OBSERVATION table', 'INFO')
                     timeranges = mytb.getcol('TIME_RANGE')
-                    ttr = timeranges.transpose()
-                    newmin = min(ttr[0])
-                    newmax = max(ttr[1])
+                    newmin = min(timeranges[0])
+                    newmax = max(timeranges[1])
                     mytb.putcell('TIME_RANGE', 0, [newmin,newmax])
                     # delete the other rows
                     mytb.removerows(list(range(1,nobs)))
