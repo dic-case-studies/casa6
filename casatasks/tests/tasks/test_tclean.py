@@ -1329,7 +1329,7 @@ class test_stokes(testref_base):
                vis+'_tmp_mixed_chan.ms'
           ]
 
-          ## Test imaging of Stokes I on its own
+          ## Test mfs imaging of Stokes I on its own
           i=0
           report=''
           for vis in vislist:
@@ -1337,7 +1337,7 @@ class test_stokes(testref_base):
                report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0])])
                i = i+1
 
-          ## Test imaging of Stokes U on its own
+          ## Test mfs imaging of Stokes U on its own
           for vis in vislist:
                tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='U',parallel=self.parallel)
                if i in [10,14]:
@@ -1346,6 +1346,55 @@ class test_stokes(testref_base):
                     u_true=3.0
                report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',u_true,[50,50,0,0])])
                i = i+1
+    
+          self.assertTrue(self.check_final(report))
+
+     @unittest.skipIf(is_CASA6, "Skip because cube tests fail and must be fixed.")
+     def test_stokes_mixed_cube_I_and_U(self):  # CAS-13618
+          """ [stokes] Test_Stokes_I_and_U_mixed_mfs mfs with Circular Pol dataset"""
+          self.prepData('refim_point_linRL.ms')
+          vis = self.msfile
+          ## Split across time
+          split(vis=vis, correlation='RR,LL', timerange='18:57:30~22:00:00',outputvis=vis+'_tmp_2pol_time.ms')
+          split(vis=vis, timerange='>22:00:00',outputvis=vis+'_tmp_4pol_time.ms')
+          concat(vis=[vis+'_tmp_2pol_time.ms',vis+'_tmp_4pol_time.ms'], concatvis=vis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=vis, correlation='RR,LL', spw='0:0',outputvis=vis+'_tmp_2pol_chan.ms')
+          split(vis=vis, spw='0:1~2',outputvis=vis+'_tmp_4pol_chan.ms')
+          concat(vis=[vis+'_tmp_2pol_chan.ms',vis+'_tmp_4pol_chan.ms'], concatvis=vis+'_tmp_mixed_chan.ms')
+
+          vislist = [
+               vis,
+               vis+'_tmp_2pol_time.ms',
+               vis+'_tmp_4pol_time.ms',
+               [vis+'_tmp_2pol_time.ms',vis+'_tmp_4pol_time.ms'],
+               vis+'_tmp_mixed_time.ms',
+               vis+'_tmp_2pol_chan.ms',
+               vis+'_tmp_4pol_chan.ms',
+               [vis+'_tmp_2pol_chan.ms',vis+'_tmp_4pol_chan.ms'],
+               vis+'_tmp_mixed_chan.ms'
+          ]
+
+          ## Test mfs imaging of Stokes I on its own
+          i=0
+          report=''
+  
+          ## Test cube imaging of Stokes I on its own
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, specmode='cube',interpolation='nearest', stokes='I',parallel=self.parallel)
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,1])])  ## Check second channel
+               i = i+1
+
+          ## Test cube imaging of Stokes U on its own
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, specmode='cube',interpolation='nearest', stokes='U',parallel=self.parallel)
+               if i in [10,14]:
+                    u_true=0.0
+               else:
+                    u_true=3.0
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',u_true,[50,50,0,1])]) ## Check second channel
+               i = i+1
+
      
           self.assertTrue(self.check_final(report))
 
@@ -1376,6 +1425,7 @@ class test_stokes(testref_base):
 
           i=0
           report=''
+          ## Test MFS
           for vis in vislist:
                tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',parallel=self.parallel)
                if i in [1,5]:
@@ -1393,6 +1443,56 @@ class test_stokes(testref_base):
                                                       (self.img+'_'+str(i)+'.image',q_true,[50,50,1,0]),
                                                       (self.img+'_'+str(i)+'.image',u_true,[50,50,2,0]),
                                                       (self.img+'_'+str(i)+'.image',v_true,[50,50,3,0])   ])
+               i = i+1
+     
+          self.assertTrue(self.check_final(report))
+
+     @unittest.skipIf(is_CASA6, "Skip because cube tests fail and must be fixed.")
+     def test_stokes_mixed_cube_IQUV(self):  # CAS-13618
+          """ [stokes] Test_Stokes_IQUV_mixed_mfs with Linear Pol dataset and Stokes U"""
+          self.prepData('refim_point_linXY.ms')
+          vis = self.msfile
+          ## Split across time
+          split(vis=vis, correlation='XX,YY', timerange='18:57:30~22:00:00',outputvis=vis+'_tmp_2pol_time.ms')
+          split(vis=vis, timerange='>22:00:00',outputvis=vis+'_tmp_4pol_time.ms')
+          concat(vis=[vis+'_tmp_2pol_time.ms',vis+'_tmp_4pol_time.ms'], concatvis=vis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=vis, correlation='XX,YY', spw='0:0',outputvis=vis+'_tmp_2pol_chan.ms')
+          split(vis=vis, spw='0:1~2',outputvis=vis+'_tmp_4pol_chan.ms')
+          concat(vis=[vis+'_tmp_2pol_chan.ms',vis+'_tmp_4pol_chan.ms'], concatvis=vis+'_tmp_mixed_chan.ms')
+
+          vislist = [
+               vis,
+               vis+'_tmp_2pol_time.ms',
+               vis+'_tmp_4pol_time.ms',
+               [vis+'_tmp_2pol_time.ms',vis+'_tmp_4pol_time.ms'],
+               vis+'_tmp_mixed_time.ms',
+               vis+'_tmp_2pol_chan.ms',
+               vis+'_tmp_4pol_chan.ms',
+               [vis+'_tmp_2pol_chan.ms',vis+'_tmp_4pol_chan.ms'],
+               vis+'_tmp_mixed_chan.ms'
+          ]
+
+          i=0
+          report=''
+          ## Test CUBE
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV', specmode='cube',interpolation='nearest',parallel=self.parallel)
+               if i in [1,5]:
+                    i_true=1.0
+                    q_true=2.0
+                    u_true=0.0    # for a dataset with X,Y feeds, parallel hands give only I,Q
+                    v_true=0.0    # for a dataset with X,Y feeds, parallel hands give only I,Q
+               else:
+                    i_true=1.0
+                    q_true=2.0
+                    u_true=3.0
+                    v_true=4.0
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],             
+                                              imgval=[(self.img+'_'+str(i)+'.image',i_true,[50,50,0,1]) ,     # Check channel 1
+                                                      (self.img+'_'+str(i)+'.image',q_true,[50,50,1,1]),
+                                                      (self.img+'_'+str(i)+'.image',u_true,[50,50,2,1]),
+                                                      (self.img+'_'+str(i)+'.image',v_true,[50,50,3,1])   ])
                i = i+1
      
           self.assertTrue(self.check_final(report))
