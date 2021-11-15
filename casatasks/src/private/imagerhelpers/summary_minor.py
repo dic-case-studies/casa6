@@ -130,3 +130,8 @@ class SummaryMinor(dict):
         ret = SummaryMinor(self.summaryminor_matrix, self.summaryminor_dict)
         ret = SummaryMinor._getPerCycleDict(ret, calc_iterdone_deltas, keep_startvals)
         return ret
+
+    # pickle as a standard dictionary instead of this class, in case we unpickle and this class isn't available (aka not on the importable PYTHONPATH path)
+    def __reduce__(self):
+        #       class  init args  state  list vals  dict vals
+        return (dict,  tuple(),   None,  None,      self.items().__iter__())
