@@ -24,21 +24,24 @@ class SummaryMinor(dict):
 
     Examples:
     
-        1. To get the number of iterations done on the channel 5 during the first minor cycle:
-            chan5iters = ret[5][0][0]['iterDone']
+        1. To get the number of iterations done on the channel 5, polarity 0 during the second minor cycle:
+            chan5iters = summMin[5][0]['iterDone'][1]
     
         2. To get the number of available channels, and the ids of those channels:
-            nchans = len(ret)
-            avail_chans = ret.keys()
+            nchans = len(summMin)
+            avail_chans = summMin.keys()
 
         3. To get the available minor cycle summary statistics:
-            statkeys = ret.rowDescriptions
+            summaryKeys = summMin.rowDescriptions
 
     There are also a few additional methods:
         getMatrix(): returns the original numpy.ndarray matrix
         getDict(calc_iterdone_deltas, keep_startvals): to get the iterDone stat for iterations across all channels
 
-    Extends the python dictionary interface (try the command "help(dict)" for more information on builtin python dicts)."""
+    Extends the python dictionary interface (try the command "help(dict)" for more information on builtin python dicts).
+    
+    Note that this class will be saved as a plain python dict when saved with methods like pickle.dump() or numpy.save().
+    This is done to prevent issues when loading later, when this class might not be available to the python interpretter."""
     #                           0           1          2            3              4           5       6      7                  8                9               10                11 "No Mask"      12           13         14          15         16         17
     rowDescriptionsOldOrder = ["iterDone", "peakRes", "modelFlux", "cycleThresh", "mapperId", "chan", "pol", "cycleStartIters", "startIterDone", "startPeakRes", "startModelFlux", "startPeakResNM", "peakResNM", "masksum", "mpiServer", "peakMem", "runtime", "stopCode"]
     rowDescriptions         = ["startIterDone", "iterDone", "startPeakRes", "peakRes", "startModelFlux", "modelFlux", "startPeakResNM", "peakResNM", "cycleThresh", "mapperId", "cycleStartIters", "masksum", "mpiServer", "peakMem", "runtime", "stopCode", "chan", "pol"]
