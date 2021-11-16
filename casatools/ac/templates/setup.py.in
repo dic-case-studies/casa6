@@ -134,6 +134,7 @@ xml_jar_url = 'http://casa.nrao.edu/download/devel/xml-casa/java/%s' % xml_jar_f
 
 real_gnu = None
 gxx_version_number = 0
+gfortran_version_number = 0
 gfortran_flag_additions = [ ]
 
 if pyversion < 3:
@@ -349,7 +350,7 @@ def sakura_fetch( ):
         tf = tarfile.open(fileobj=s, mode="r|gz")
         tf.extractall( )
         os.rename('libsakura','sakura-source')
-        
+
 
 def sakura_files( ):
     return [ 'sakura-source/src/baseline.cc', 'sakura-source/src/bit_operation.cc',
@@ -392,6 +393,26 @@ def load_properties(filepath, sep='=', comment_char='#'):
     """
     Read the file passed as parameter as a properties file.
     """
+    def compiler_version( compiler ):
+        real_gnu = False
+        gnu_version = 0
+        proc = Popen([ compiler, "-v" ], stdout=PIPE, stderr=PIPE)
+        out,err = pipe_decode(proc.communicate( ))
+        gcc_versions = [s for s in (out + err).split('\n') if s.startswith("gcc version ")]
+        if len(gcc_versions) > 0 :
+            ###
+            ### get gcc version number because turning warnings into errors
+            ### causes problems for grpc with gcc 8...
+            match_ver = re.compile('\d+\.\d+\.\d+')
+            for v in gcc_versions:
+                nums = match_ver.findall(v)
+                if len(nums) > 0:
+                    elements = nums[0].split('.')
+                    if len(elements) == 3:
+                        gnu_version = int(elements[0])
+            real_gnu = True
+        return gnu_version, real_gnu
+
     props = {}
     with open(filepath, "rt") as f:
         for line in f:
@@ -407,28 +428,19 @@ def load_properties(filepath, sep='=', comment_char='#'):
 
     global real_gnu
     global gxx_version_number
+    global gfortran_version_number
+    global gfortran_flag_additions
     real_gnu = False
-    proc = Popen([ props['build.compiler.cxx'], "-v" ], stdout=PIPE, stderr=PIPE)
-    out,err = pipe_decode(proc.communicate( ))
-    gcc_versions = [s for s in (out + err).split('\n') if s.startswith("gcc version ")]
-    if len(gcc_versions) > 0 :
-        ###
-        ### get gcc version number because turning warnings into errors
-        ### causes problems for grpc with gcc 8...
-        match_ver = re.compile('\d+\.\d+\.\d+')
-        for v in gcc_versions:
-            nums = match_ver.findall(v)
-            if len(nums) > 0:
-                elements = nums[1].split('.')
-                if len(elements) == 3:
-                    gxx_version_number = int(elements[0])
-                    if gxx_version_number >= 10:
-                        print('adding gfortran flags for modern gfortran versions')
-                        gfortran_flag_additions.append('-fallow-argument-mismatch')
+    gxx_version_number, real_gnu = compiler_version( props['build.compiler.cxx'] )
+    gfortran_version_number, dummy = compiler_version( props['build.compiler.fortran'] )
+    print("     gxx version: %s" % gxx_version_number)
+    print("gfortran version: %s" % gfortran_version_number)
+    if gfortran_version_number >= 10:
+        print('adding gfortran flags for modern gfortran versions')
+        gfortran_flag_additions.append('-fallow-argument-mismatch')
 
-        if sys.platform == 'darwin':
-            print('using real GNU compiler on OSX...')
-        real_gnu = True
+    if real_gnu and sys.platform == 'darwin':
+        print('using real GNU compiler on OSX...')
 
     return props
 
@@ -605,7 +617,7 @@ def generate_pyinit(moduledir,tools):
                        raise ImportError('measures data is not available, visit http://go.nrao.edu/casadata-info for more information')
                    if len(ctsys.rundata( )) == 0:
                        ctsys.setrundata(__resolved_iers[:-21])
-                                                                                                               
+
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
@@ -989,17 +1001,17 @@ else:
 module_cflags = { 'casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', \
                                  '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
                                  '-DUSE_THREADS', '-DUseCasacoreNamespace', '-DWCSLIB_VERSION_MAJOR=5', \
-                                 '-DWCSLIB_VERSION_MINOR=15', '-fsigned-char', '-DWITHOUT_BOOST',
+                                 '-DWCSLIB_VERSION_MINOR=15', '-fsigned-char', '-DWITHOUT_BOOST', \
                                  '-DCASATOOLS', '-Dcasacore=casa6core', '-DCASADATA=\'"%CASAROOT%/data"\'', \
-                                 '-fPIC' ] + platform_cflags[sys.platform],
+                                  '-DYYERROR_IS_DECLARED', '-fPIC' ] + platform_cflags[sys.platform],
                        '/code/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', \
                                       '-DAIPS_HAS_QWT', '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', \
                                       '-DAIPS_STDLIB', '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', \
                                       '-DQWT6', '-DUseCasacoreNamespace', \
                                       '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-DNO_CRASH_REPORTER', \
                                       '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
-                                      '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-fPIC' ] \
-                                      + mpi_cxx_flags + platform_cflags[sys.platform],
+                                      '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-DYYERROR_IS_DECLARED', \
+                                      '-fPIC' ] + mpi_cxx_flags + platform_cflags[sys.platform],
                        'binding/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
                                         '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
                                         '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DQWT6', \
@@ -1043,7 +1055,7 @@ def get_optimization_flags():
         return ['-g']
     elif relwithdebinfo_build():
         return ['-g', '-O2']
-    else:    
+    else:
         return ['-O2']
 
 def get_new_cxx_compiler_flags():
@@ -1074,8 +1086,8 @@ def get_fortran_compiler_flags(ext):
         cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"] + gfortran_flag_additions
         if relwithdebinfo_build():
             cc_args.insert(0, "-g")
-   
-    
+
+
     if real_gnu and len(props['build.flags.compile.openmp']) > 0:
         ### we'll assume our fortran compiler is gfortran and set the openmp
         ### flags for gfortran if our main C++ compiler is really GNU and the
@@ -1157,8 +1169,11 @@ def customize_compiler(self):
         if fn.startswith('_') and fn.endswith('.so') or \
            fn.startswith('lib') and fn.endswith('.so') and \
            reduce( lambda acc,v: acc or v.endswith('_wrap.o'), objects, False ):
-            ##
-            ## otherwise on macos with anaconda WRT libcomponentlistcoordsysimage.cpython-38-darwin.dylib:
+            ## the latest python innovation is removing unused symbols, the macos flavor is '-Wl,-dead_strip_dylibs'
+            ## and the linux flavor is '-Wl,--as-needed'. However, when the swig wrappers are linked into a library
+            ## removing the dynamic loading initialization function causes dynamic loading to fail. An example of
+            ## such a library is libcomponentlistcoordsysimage.cpython-38-darwin.dylib, and removing unused symbls
+            ## results in an error like:
             ## -------- -------- ------- -------- -------- ------- -------- -------- ------- -------- -------- -------
             ## Traceback (most recent call last):
             ##  File "build/lib.macosx-10.9-x86_64-3.8/casatools/__casac__/coordsys.py", line 14, in swig_import_helper
@@ -1174,7 +1189,7 @@ def customize_compiler(self):
             ##  File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
             ##  ImportError: dynamic module does not define module export function (PyInit__coordsys)
             ## -------- -------- ------- -------- -------- ------- -------- -------- ------- -------- -------- -------
-            self.linker_so = [ v for v in self.linker_so if v != '-Wl,-dead_strip_dylibs' ]
+            self.linker_so = [ v for v in self.linker_so if v != '-Wl,-dead_strip_dylibs' and v != '-Wl,--as-needed' ]
 
         if fn.startswith('lib') and fn.endswith(".so"):
             print("linking shared library...")
@@ -1417,14 +1432,14 @@ class casa_build_ext(build_ext):
             print("Fixing rpaths")
             result = subprocess.run(['perl', 'scripts/fixrpath.pl'], stdout=subprocess.PIPE)
             print(result.stdout.decode('utf-8'))
-        
+
         if relwithdebinfo_build() and stripsyms_build():
             print("Extracting debug symbols")
             if not os.path.exists('./debugsymbols'):
                 os.makedirs('./debugsymbols')
             result = subprocess.run(['perl', 'scripts/extract_symbols.pl', 'ws=./debugsymbols', 'binaries=./build', 'version='+casatools_version ], stdout=subprocess.PIPE)
             print(result.stdout.decode('utf-8'))
-        
+
 
 
 class casa_test(Command):
