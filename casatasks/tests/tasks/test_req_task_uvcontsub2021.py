@@ -220,10 +220,25 @@ class uvcontsub2021_test(unittest.TestCase):
         """Check that wrong fitspw lists produce an exception"""
 
         with self.assertRaises(RuntimeError):
-            # TODO: support this properly
             res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
                                 fitspw=[
                                     ['99', '0:100~500;600~910;1215~1678;1810~1903']
+                                ])
+            self._check_return(res)
+
+        shutil.rmtree(self.output)
+        with self.assertRaises(RuntimeError):
+            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                                fitspw=[
+                                    ['-2', '0:100~500']
+                                ])
+            self._check_return(res)
+
+        shutil.rmtree(self.output)
+        with self.assertRaises(RuntimeError):
+            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                                fitspw=[
+                                    ['4', '0,1']
                                 ])
             self._check_return(res)
 
