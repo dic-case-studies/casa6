@@ -65,7 +65,7 @@ def uvsub(vis=None,reverse=False):
                           param_vals, casalog)
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
-                         'WARN')            
+                         'WARN')
 
     finally:
         _ms.close()
