@@ -972,7 +972,12 @@ if __name__ == "__main__":
                         _isComponent = True
                         testnames.append(myDict["testScript"])
                 if not _isComponent:
-                    print("No Tests for Component: {}".format(component))
+                    print("No Tests for Component: {}. Using Component 'default'".format(component))
+                    component = 'default'
+                    for myDict in component_to_test_map["testlist"]:
+                        if component in myDict["testGroup"]:
+                            _isComponent = True
+                            testnames.append(myDict["testScript"])
 
     if args.verbose:
         verbose = True
