@@ -16,17 +16,12 @@
 #
 #
 ##########################################################################
-CASA6=False
-try:
-    import casatools
-    from casatasks import casalog
-    cb = casatools.calibrater()
-    tb = casatools.table()
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
+
+
+import casatools
+from casatasks import casalog
+cb = casatools.calibrater()
+tb = casatools.table()
 
 import os
 import shutil
@@ -34,20 +29,11 @@ import unittest
 import numpy as np
 
 reg_unittest_datap = 'unittest/calibrater/'
-if CASA6:
-    datapath = casatools.ctsys.resolve(reg_unittest_datap)
-else:
-    datapath = os.path.join(os.path.join(os.environ.get('CASAPATH').split()[0],
-                                         'casatestdata'), reg_unittest_datap)
+datapath = casatools.ctsys.resolve(reg_unittest_datap)
 
 # This is for tests that check what the parameter validator does when parameters are
 # given wrong types - these don't exercise the task but the parameter validator!
-if CASA6:
-    validator_exc_type = AssertionError
-else:
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-    validator_exc_type = RuntimeError
+validator_exc_type = AssertionError
 
 
 class calibrater_test(unittest.TestCase):
@@ -58,15 +44,11 @@ class calibrater_test(unittest.TestCase):
         cls._visObs = 'Itziar.ms'
         cls._cal = 'gaincaltest2.ms.G0'
         cls._lib = os.path.join(datapath, 'refcalgainG.txt')
-
-        shutil.copytree(os.path.join(datapath, 'ngc5921.ms'), 'ngc5921.ms')
-        shutil.copytree(os.path.join(datapath, 'ngc5921.gcal'), 'ngc5921.gcal')
         cls._bandvis = 'ngc5921.ms'
         cls._bandcal = 'ngc5921.gcal'
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(cls._bandvis)
 
         if os.path.exists('gainspline.AMP.pol0.log'):
             os.remove('gainspline.AMP.pol0.log')
@@ -82,6 +64,9 @@ class calibrater_test(unittest.TestCase):
         shutil.copytree(os.path.join(datapath, self._vis), self._vis)
         shutil.copytree(os.path.join(datapath, self._visObs), self._visObs)
         shutil.copytree(os.path.join(datapath, self._cal), self._cal)
+        shutil.copytree(os.path.join(datapath, self._bandvis), self._bandvis)
+        shutil.copytree(os.path.join(datapath, self._bandcal), self._bandcal)
+
 
     def tearDown(self):
         if os.path.exists('testlog.log'):
@@ -98,6 +83,8 @@ class calibrater_test(unittest.TestCase):
         shutil.rmtree(self._vis)
         shutil.rmtree(self._cal)
         shutil.rmtree(self._visObs)
+        shutil.rmtree(self._bandvis)
+        shutil.rmtree(self._bandcal)
 
 
     def test_takesMs(self):
