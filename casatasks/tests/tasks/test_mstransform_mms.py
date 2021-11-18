@@ -995,11 +995,32 @@ class test_mms_input(test_base):
         self.assertEqual(t30, 100)
         self.assertEqual(t31, 79)
 
+    def test_timespan_scan_sel(self):
+        '''mstransform: using scan selection, timeaverage=True, timespan=scan. CAS-13646'''
+        self.createMMS(self.vis, axis='auto', spws='7,9,11,13')
+        self.outputms = "mstransform_scan_sel_timeavg_timespanscan.mms"
+        mstransform(vis=self.testmms, outputvis=self.outputms, datacolumn='data',
+                    scan='30,31',
+                    timeaverage=True, timebin='120s', timespan='scan')
+        self.assertTrue(ParallelDataHelper.isParallelMS(self.outputms),
+                        'Output should be an MMS')
+        self.assertEqual(ph.axisType(self.outputms),'scan,spw')
+
+        # msmdt = msmetadata()
+        try:
+            msmdt.open(self.outputms)
+            t30 = msmdt.exposuretime(30)['value']
+            t31 = msmdt.exposuretime(31)['value']
+        finally:
+            msmdt.close()
+        self.assertEqual(t30, 89)
+        self.assertEqual(t31, 90)
+
     def test_combspws_timespan_error(self):
         '''mstransform: combinespws=True, timespan=scan axis=auto timebin=40s'''
         self.createMMS(self.vis, axis='auto',spws='1,3', numms=4)
         self.outputms = "spanscan_comb.mms"
-        # combinespws is not possible. It should create and MS
+        # combinespws is not possible. It should create an MS
         mstransform(vis=self.testmms, outputvis=self.outputms, datacolumn='data',
                     combinespws=True, timeaverage=True, timebin='40s',timespan='scan')
         self.assertFalse(ParallelDataHelper.isParallelMS(self.outputms),'Output should be an MS')
