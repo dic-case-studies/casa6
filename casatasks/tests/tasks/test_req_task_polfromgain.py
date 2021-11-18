@@ -43,8 +43,8 @@ import time
 from casatestutils import generate_weblog
 from casatestutils import stats_dict
 from casatestutils import add_to_dict
-from casatestutils import compare_caltables
-from casatestutils import compare_dictionaries
+from casatestutils.compare import compare_caltables
+from casatestutils.compare import compare_dictionaries
 
 import numpy
 
@@ -87,7 +87,7 @@ class polfromgain_test(unittest.TestCase):
     def tearDownClass(cls):
         generate_weblog("polfromgain", test_dict)
     
-    stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_dictOutput(self):
         ''' Check that the task takes a MS and outputs a dictionary '''
         result = polfromgain(datacopy, tablein=caldata)
@@ -95,7 +95,7 @@ class polfromgain_test(unittest.TestCase):
         
         self.assertTrue(type(result) == type({}))
         
-    stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_calTable(self):
         ''' Check that using the caltable param creates a new cal file '''
         polfromgain(datacopy, tablein=caldata, caltable=calpath)
@@ -104,7 +104,7 @@ class polfromgain_test(unittest.TestCase):
         
         self.assertTrue(cal_exists)
         
-    stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_dictContains(self):
         ''' Check that the dict contains all the correct infromation '''
         add_to_dict(self, output=test_dict, dataset=datacopy)
@@ -126,7 +126,7 @@ class polfromgain_test(unittest.TestCase):
         
         #self.assertTrue(casaTestHelper.compare_dictionaries(result, refdict, rtol = 8e-7))
         
-    stats_dict(test_dict)
+    @stats_dict(test_dict)
     def test_calTableContains(self):
         ''' Check that the contents of the calibration table match the reference file '''
         result = polfromgain(datacopy, tablein=caldata, caltable=calpath)

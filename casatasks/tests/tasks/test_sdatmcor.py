@@ -9,7 +9,7 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import sdatmcor
     import casatasks.private.task_sdatmcor as sdatmcor_impl
-    import casatasks.private.sdutil as sdutil
+    from casatasks.private.sdutil import convert_antenna_spec_autocorr, get_antenna_selection_include_autocorr, table_manager
     # default isn't used in casatasks
 
     def default(atask):
@@ -36,7 +36,7 @@ else:
     from taskinit import cbtool as calibrater
     from taskinit import mstool
     from taskinit import qatool as quanta
-    import sdutil
+    from sdutil import convert_antenna_spec_autocorr, get_antenna_selection_include_autocorr, tbmanager as table_manager
 
     def ctsys_resolve(apath):
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0], 'casatestdata/')
@@ -71,7 +71,7 @@ def read_table(name, spw, cols=['STATE_ID', 'DATA']):
     ms = mstool()
     idx = ms.msseltoindex(name, spw=[int(spw)])
     ddid = idx['dd']
-    with sdutil.tbmanager(name) as tb:
+    with table_manager(name) as tb:
         tsel = tb.query('DATA_DESC_ID IN [{}]'.format(','.join([str(i) for i in ddid])))
         try:
             result_dict = dict((k, tsel.getcol(k)) for k in cols if k in tb.colnames())
@@ -84,7 +84,7 @@ def apply_gainfactor(name, spw, factor):
     ms = mstool()
     idx = ms.msseltoindex(name, spw=[int(spw)])
     ddid = idx['dd'][0]
-    with sdutil.tbmanager(name, nomodify=False) as tb:
+    with table_manager(name, nomodify=False) as tb:
         colnames = tb.colnames()
         tsel = tb.query('DATA_DESC_ID=={}'.format(ddid))
         try:
@@ -414,7 +414,7 @@ class test_sdatmcor(unittest.TestCase):
             ('0&&&;1', '0&&&;1&&&')
         ]
         for antenna, expected in test_cases0 + test_cases1:
-            actual = sdutil.convert_antenna_spec_autocorr(antenna)
+            actual = convert_antenna_spec_autocorr(antenna)
             self.assertEqual(actual, expected)
         # specific to get_antenna_selection_include_autocorr
         test_cases2 = [
@@ -422,7 +422,7 @@ class test_sdatmcor(unittest.TestCase):
             ('0&&&;1', '0&&&;1'),
         ]
         for antenna, expected in test_cases0 + test_cases2:
-            actual = sdutil.get_antenna_selection_include_autocorr(self.infile, antenna)
+            actual = get_antenna_selection_include_autocorr(self.infile, antenna)
             self.assertEqual(actual, expected)
 
     def test_get_default_antenna(self):
@@ -447,7 +447,7 @@ class test_sdatmcor(unittest.TestCase):
     def test_default_antenna_with_selection(self):
         """Test default antenna determination with data selection excluding the best one"""
         # check if the "best" antenna is not in the MAIN table
-        with sdutil.tbmanager(os.path.join(self.infile, 'ANTENNA'), nomodify=False) as tb:
+        with table_manager(os.path.join(self.infile, 'ANTENNA'), nomodify=False) as tb:
             # replace antenna name to simulate the data selection excluding PM02
             # PM01 <-> PM02
             tb.putcell('NAME', 0, 'PM02')
@@ -458,9 +458,10 @@ class test_sdatmcor(unittest.TestCase):
     def test_default_antenna_with_no_flag_commands(self):
         """Test default antenna determination for empty FLAG_CMD table"""
         # check if the task can handle empty FLAG_CMD table
-        with sdutil.tbmanager(os.path.join(self.infile, 'FLAG_CMD'), nomodify=False) as tb:
-            tb.removerows(np.fromiter(range(tb.nrows()), dtype=int))
-            self.assertEqual(tb.nrows(), 0)
+        with table_manager(os.path.join(self.infile, 'FLAG_CMD'), nomodify=False) as tb:
+            for i in range(tb.nrows()):
+                tb.putcell('REASON', i, 'NO_REASON')
+            tb.flush()
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: True})
 
@@ -476,6 +477,18 @@ class test_sdatmcor(unittest.TestCase):
         )
         self.check_result({19: True, 23: True})
 
+    def test_custom_atm_params_nounit(self):
+        """Test customized ATM parameters (no unit)"""
+        sdatmcor(
+            infile=self.infile, outfile=self.outfile, datacolumn='data',
+            dtem_dh=-5.7, h0=2.01,
+            atmdetail=True,
+            altitude=5100., temperature=290., pressure=700.,
+            humidity=30, pwv=10., dp=10., dpm=1.2,
+            layerboundaries=[800.,1500.], layertemperature=[250.,200.]
+        )
+        self.check_result({19: True, 23: True})
+
     def test_custom_atm_params_non_conform_list_input(self):
         """Test customized ATM parameters: non-conform layerboundaries and layertemperature"""
         with self.assertRaises(Exception):
@@ -487,7 +500,7 @@ class test_sdatmcor(unittest.TestCase):
 
 
 class ATMParamTest(unittest.TestCase):
-    def _param_test_template(self, valid_test_cases, invalid_user_input, user_default, task_default):
+    def _param_test_template(self, valid_test_cases, invalid_user_input, user_default, task_default, unit=''):
         # internal error
         wrong_task_default = 'NG'
         with self.assertRaises(RuntimeError):
@@ -512,17 +525,19 @@ class ATMParamTest(unittest.TestCase):
             param, is_customized = sdatmcor_impl.parse_atm_params(
                 user_input,
                 user_default,
-                task_default
+                task_default,
+                default_unit=unit
             )
+            print('param {} is_customized {}'.format(param, is_customized))
             self.assertEqual(is_customized, user_input != user_default)
-            if isinstance(param, dict):
-                expected_quanta = qa.quantity(expected)
-                self.assertTrue(qa.compare(param, expected_quanta))
-                self.assertTrue(qa.eq(param, expected_quanta))
+            if qa.isquantity(expected):
+                qparam = qa.quantity(param, unit)
+                self.assertTrue(qa.compare(qparam, expected))
+                self.assertTrue(qa.eq(qparam, expected))
             else:
                 self.assertEqual(param, expected)
 
-    def _list_param_test_template(self, valid_test_cases, invalid_user_input, user_default, task_default, element_unit):
+    def _list_param_test_template(self, valid_test_cases, invalid_user_input, user_default, task_default, unit):
         # internal error
         wrong_task_default = 'NG'
         with self.assertRaises(ValueError):
@@ -539,7 +554,7 @@ class ATMParamTest(unittest.TestCase):
                 invalid_user_input,
                 user_default,
                 task_default,
-                element_unit
+                unit
             )
 
         # valid inputs
@@ -550,12 +565,12 @@ class ATMParamTest(unittest.TestCase):
                 user_input,
                 user_default,
                 task_default,
-                element_unit
+                unit
             )
             self.assertEqual(is_customized, user_input != user_default)
             self.assertEqual(len(param), len(expected))
             for p, e in zip(param, expected):
-                expected_in_unit = qa.convert(e, element_unit)['value']
+                expected_in_unit = qa.convert(e, unit)['value']
                 self.assertEqual(p, expected_in_unit)
 
     def test_h0(self):
@@ -563,19 +578,20 @@ class ATMParamTest(unittest.TestCase):
         task_default_cases = ['2km', qa.quantity(2, 'km')]
         user_default = ''
         test_cases = [
-            (5.0, '5km'),
-            ('5', '5km'),
-            ('5km', '5km'),
-            ('5000m', '5km'),
-            ('500000cm', '5km'),
-            ('5000000mm', '5km'),
+            (5.0, 5.0),
+            ('5', 5.0),
+            ('5km', 5.0),
+            ('5000m', 5.0),
+            ('500000cm', 5.0),
+            ('5000000mm', 5.0),
         ]
         for task_default in task_default_cases:
             self._param_test_template(
                 valid_test_cases=test_cases,
                 invalid_user_input='273K',
                 user_default=user_default,
-                task_default=task_default
+                task_default=task_default,
+                unit='km'
             )
 
     def test_dtem_dh(self):
@@ -583,17 +599,18 @@ class ATMParamTest(unittest.TestCase):
         task_default_cases = ['-5.6K/km', qa.quantity(-5.6, 'K/km')]
         user_default = ''
         test_cases = [
-            (-5, '-5K/km'),
-            ('-5', '-5K/km'),
-            ('-5K/km', '-5K/km'),
-            ('-0.005K/m', '-5K/km'),
+            (-5, -5),
+            ('-5', -5),
+            ('-5K/km', -5),
+            ('-0.005K/m', -5),
         ]
         for task_default in task_default_cases:
             self._param_test_template(
                 valid_test_cases=test_cases,
                 invalid_user_input='2km',
                 user_default=user_default,
-                task_default=task_default
+                task_default=task_default,
+                unit='K/km'
             )
 
     def test_altitude(self):
@@ -601,17 +618,18 @@ class ATMParamTest(unittest.TestCase):
         task_default_cases = ['5000m', qa.quantity(5000, 'm')]
         user_default = ''
         test_cases = [
-            (4800, '4800m'),
-            ('4800', '4800m'),
-            ('4800m', '4800m'),
-            ('4.8km', '4800m')
+            (4800, 4800),
+            ('4800', 4800),
+            ('4800m', 4800),
+            ('4.8km', 4800)
         ]
         for task_default in task_default_cases:
             self._param_test_template(
                 valid_test_cases=test_cases,
                 invalid_user_input='273K',
                 user_default=user_default,
-                task_default=task_default
+                task_default=task_default,
+                unit='m'
             )
 
     def test_temperature(self):
@@ -619,16 +637,17 @@ class ATMParamTest(unittest.TestCase):
         task_default_cases = ['273K', qa.quantity(273, 'K')]
         user_default = ''
         test_cases = [
-            (300, '300K'),
-            ('300', '300K'),
-            ('300K', '300K')
+            (300, 300),
+            ('300', 300),
+            ('300K', 300)
         ]
         for task_default in task_default_cases:
             self._param_test_template(
                 valid_test_cases=test_cases,
                 invalid_user_input='273m',
                 user_default=user_default,
-                task_default=task_default
+                task_default=task_default,
+                unit='K'
             )
 
     def test_pressure(self):
@@ -636,18 +655,19 @@ class ATMParamTest(unittest.TestCase):
         task_default_cases = ['1000mbar', qa.quantity(1000, 'mbar')]
         user_default = ''
         test_cases = [
-            (1000, '1000mbar'),
-            ('1000', '1000mbar'),
-            ('1000mbar', '1000mbar'),
-            ('1bar', '1000mbar'),
-            ('1000hPa', '1000mbar')
+            (1000, 1000),
+            ('1000', 1000),
+            ('1000mbar', 1000),
+            ('1bar', 1000),
+            ('1000hPa', 1000)
         ]
         for task_default in task_default_cases:
             self._param_test_template(
                 valid_test_cases=test_cases,
                 invalid_user_input='273m',
                 user_default=user_default,
-                task_default=task_default
+                task_default=task_default,
+                unit='mbar'
             )
 
     def test_humidity(self):
@@ -655,16 +675,17 @@ class ATMParamTest(unittest.TestCase):
         task_default_cases = ['20%', qa.quantity(20, '%')]
         user_default = -1
         test_cases = [
-            (50, '50%'),
-            ('50', '50%'),
-            ('50%', '50%')
+            (50, 50),
+            ('50', 50),
+            ('50%', 50)
         ]
         for task_default in task_default_cases:
             self._param_test_template(
                 valid_test_cases=test_cases,
                 invalid_user_input='273K',
                 user_default=user_default,
-                task_default=task_default
+                task_default=task_default,
+                unit='%'
             )
 
     def test_pwv(self):
@@ -672,18 +693,19 @@ class ATMParamTest(unittest.TestCase):
         task_default_cases = ['1mm', qa.quantity(1, 'mm')]
         user_default = ''
         test_cases = [
-            (5, '5mm'),
-            ('5', '5mm'),
-            ('5mm', '5mm'),
-            ('0.5cm', '5mm'),
-            ('5e-3m', '5mm')
+            (5, 5),
+            ('5', 5),
+            ('5mm', 5),
+            ('0.5cm', 5),
+            ('5e-3m', 5)
         ]
         for task_default in task_default_cases:
             self._param_test_template(
                 valid_test_cases=test_cases,
                 invalid_user_input='273K',
                 user_default=user_default,
-                task_default=task_default
+                task_default=task_default,
+                unit='mm'
             )
 
     def test_dp(self):
@@ -691,18 +713,19 @@ class ATMParamTest(unittest.TestCase):
         task_default_cases = ['10mbar', qa.quantity(10, 'mbar')]
         user_default = ''
         test_cases = [
-            (10, '10mbar'),
-            ('10', '10mbar'),
-            ('10mbar', '10mbar'),
-            ('0.01bar', '10mbar'),
-            ('10hPa', '10mbar')
+            (10, 10),
+            ('10', 10),
+            ('10mbar', 10),
+            ('0.01bar', 10),
+            ('10hPa', 10)
         ]
         for task_default in task_default_cases:
             self._param_test_template(
                 valid_test_cases=test_cases,
                 invalid_user_input='273m',
                 user_default=user_default,
-                task_default=task_default
+                task_default=task_default,
+                unit='mbar'
             )
 
     def test_dpm(self):
@@ -718,7 +741,8 @@ class ATMParamTest(unittest.TestCase):
                 valid_test_cases=test_cases,
                 invalid_user_input='273K',
                 user_default=user_default,
-                task_default=task_default
+                task_default=task_default,
+                unit=''
             )
 
     def test_layerboundaries(self):
@@ -727,18 +751,18 @@ class ATMParamTest(unittest.TestCase):
         test_cases = [
             ([], []),
             ('', []),
-            ([1500, 2000], ['1500m', '2000m']),
-            (['1500m', '2000m'], ['1500m', '2000m']),
-            ('1500,2000', ['1500m', '2000m']),
-            ('1500m,2000m', ['1500m', '2000m']),
-            ('1500m, 2000m', ['1500m', '2000m']),
+            ([1500, 2000], [1500, 2000]),
+            (['1500m', '2000m'], [1500, 2000]),
+            ('1500,2000', [1500, 2000]),
+            ('1500m,2000m', [1500, 2000]),
+            ('1500m, 2000m', [1500, 2000]),
         ]
         self._list_param_test_template(
             valid_test_cases=test_cases,
             invalid_user_input='273K',
             user_default=user_default,
             task_default=task_default,
-            element_unit='m'
+            unit='m'
         )
 
     def test_layertemperature(self):
@@ -747,18 +771,18 @@ class ATMParamTest(unittest.TestCase):
         test_cases = [
             ([], []),
             ('', []),
-            ([270, 250], ['270K', '250K']),
-            (['270K', '250K'], ['270K', '250K']),
-            ('270,250', ['270K', '250K']),
-            ('270K,250K', ['270K', '250K']),
-            ('270K, 250K', ['270K', '250K']),
+            ([270, 250], [270, 250]),
+            (['270K', '250K'], [270, 250]),
+            ('270,250', [270, 250]),
+            ('270K,250K', [270, 250]),
+            ('270K, 250K', [270, 250]),
         ]
         self._list_param_test_template(
             valid_test_cases=test_cases,
             invalid_user_input='273m',
             user_default=user_default,
             task_default=task_default,
-            element_unit='K'
+            unit='K'
         )
 
 

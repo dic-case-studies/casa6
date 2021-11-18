@@ -33,3 +33,6 @@ casa_add_python ( tools tools_casatestutils_python lib/python${PYTHONV}/casatest
 )
 
 add_subdirectory ( imagerhelpers )
+add_subdirectory ( datahelpers )
+add_subdirectory ( testrunner )
+add_subdirectory ( stakeholder )
