@@ -1845,8 +1845,8 @@ save to FLAG_CMD
 <returns type="void"/>
 <example>
 
-FOR MORE INFORMATION, SEE THE TASK PAGES OF FLAGDATA IN CASA DOCS:
-https://casa.nrao.edu/casadocs/
+For more information, see the task pages of flagdata in CASA Docs:
+https://casadocs.readthedocs.io
 
 </example>
 
