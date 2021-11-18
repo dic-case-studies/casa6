@@ -13,14 +13,14 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import ctsys, table, ms
     from casatasks import sdsmooth
-    from casatasks.private import sdutil
+    from casatasks.private.sdutil import table_manager, calibrater_manager
 
     tb = table( )
 else:
     from __main__ import default
     from tasks import *
     from taskinit import *
-    import sdutil
+    from sdutil import tbmanager as table_manager, cbmanager as calibrater_manager
     from sdsmooth import sdsmooth
     from taskinit import mstool as ms
 
@@ -103,7 +103,7 @@ class sdsmooth_test_base(unittest.TestCase):
         import functools
         @functools.wraps(func)
         def wrapper(self):
-            with sdutil.tbmanager(self.infile) as tb:
+            with table_manager(self.infile) as tb:
                 for irow in range(tb.nrows()):
                     self.assertTrue(tb.iscelldefined('WEIGHT_SPECTRUM', irow))
 
@@ -136,10 +136,10 @@ class sdsmooth_test_base(unittest.TestCase):
         dd_selection = None
         if len(spw) == 0:
             expected_nrow = 2
-            with sdutil.tbmanager(self.infile) as tb:
+            with table_manager(self.infile) as tb:
                 data_in = tb.getvarcol(datacol_name)
                 flag_in = tb.getvarcol('FLAG')
-                if weight_mode is True:
+                if weight_mode:
                     weight_in = tb.getvarcol('WEIGHT_SPECTRUM')
         else:
             myms = ms()
@@ -147,21 +147,21 @@ class sdsmooth_test_base(unittest.TestCase):
             spw_selection = a['spw']
             dd_selection = a['dd']
             expected_nrow = len(spw_selection)
-            with sdutil.tbmanager(self.infile) as tb:
+            with table_manager(self.infile) as tb:
                 try:
                     tsel = tb.query('DATA_DESC_ID IN %s'%(dd_selection.tolist()))
                     data_in = tsel.getvarcol(datacol_name)
                     flag_in = tsel.getvarcol('FLAG')
-                    if weight_mode is True:
+                    if weight_mode:
                         weight_in = tsel.getvarcol('WEIGHT_SPECTRUM')
                 finally:
                     tsel.close()
 
-        with sdutil.tbmanager(self.outfile) as tb:
+        with table_manager(self.outfile) as tb:
             nrow = tb.nrows()
             data_out = tb.getvarcol(datacol_name)
             flag_out = tb.getvarcol('FLAG')
-            if weight_mode is True:
+            if weight_mode:
                 weight_out = tb.getvarcol('WEIGHT_SPECTRUM')
 
         # verify nrow
@@ -194,7 +194,7 @@ class sdsmooth_test_base(unittest.TestCase):
             #print 'result', row_out[0,:,0].tolist()
 
             # weight check if this is weight test
-            if weight_mode is True:
+            if weight_mode:
                 #print 'Weight propagation test'
                 wgt_in = weight_in[key]
                 wgt_out = weight_out[key]
@@ -386,7 +386,7 @@ class sdsmooth_test_weight(sdsmooth_test_base):
         super(sdsmooth_test_weight, self).setUp()
 
         # initialize WEIGHT_SPECTRUM
-        with sdutil.cbmanager(self.infile) as cb:
+        with calibrater_manager(self.infile) as cb:
             cb.initweights()
 
     @weight_case
@@ -452,7 +452,7 @@ class sdsmooth_test_boxcar(sdsmooth_test_base):
             result = sdsmooth(infile=self.infile, outfile=self.outfile,
                                datacolumn=self.datacolumn, overwrite=True,
                                kernel='boxcar', kwidth = kwidth)
-            with sdutil.tbmanager(self.outfile) as tb:
+            with table_manager(self.outfile) as tb:
                 for irow in range(tb.nrows()):
                     spec = tb.getcell(self.datacolumn.upper(), irow)
                     for ipol in range(len(spec)):
@@ -466,7 +466,7 @@ class sdsmooth_test_boxcar(sdsmooth_test_base):
             result = sdsmooth(infile=self.infile, outfile=self.outfile,
                                datacolumn=datacolumn, overwrite=True,
                                kernel='boxcar', kwidth = kwidth)
-            with sdutil.tbmanager(self.outfile) as tb:
+            with table_manager(self.outfile) as tb:
                 for irow in range(tb.nrows()):
                     spec = tb.getcell(datacolumn.upper(), irow)
                     for ipol in range(len(spec)):

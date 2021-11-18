@@ -1,0 +1,172 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+
+
+
+<tool module="vlafiller" name="vlafiller">
+
+<shortdescription>tool for VLA filler tasks</shortdescription>
+
+<description/>
+
+
+<method name="vlafiller" type="constructor">
+
+  <shortdescription>Construct an vlafiller tool</shortdescription>
+
+  <description/>
+
+  <input/>
+
+  <returns type="vlafiller"/>
+
+  <example/>
+
+</method>
+
+<method name="fill" type="function">
+
+  <shortdescription>Perform fill operations</shortdescription>
+
+  <description/>
+
+  <input>
+
+    <param name="msname" type="string">
+    <description>name of output ms</description>
+    </param>
+
+    <param name="inputfile" type="string">
+    <description>name of vla archive</description>
+    </param>
+
+    <param name="project" type="string">
+    <description>name of project to extract, defaults to all projects in input</description>
+    <value/>
+    </param>
+
+    <param name="start" type="string">
+    <description>start time to extract</description>
+    <value>1970/1/1/00:00:00</value>
+    </param>
+
+    <param name="stop" type="string">
+    <description>end time of extracted data</description>
+    <value>2199/1/1/23:59:59</value>
+    </param>
+
+    <param name="centerfreq" type="string">
+    <description>frequency of data to extract (used along with bandwidth param)</description>
+    <value>1.0e18Hz</value>
+    </param>
+
+    <param name="bandwidth" type="string">
+    <description>data around centerfreq to get out</description>
+    <value>2.0e18Hz</value>
+    </param>
+
+    <param name="bandname" type="string">
+    <description>name of band to extract</description>
+    <value>4</value>
+    <value>P</value>
+    <value>L</value>
+    <value>C</value>
+    <value>X</value>
+    <value>U</value>
+    <value>K</value>
+    <value>Q</value>
+    <value>*</value>
+    </param>
+
+    <param name="source" type="string">
+    <description>name of source</description>
+    <value/>
+    </param>
+
+    <param name="subarray" type="int">
+    <description>subarray - 0 means all subarrays</description>
+    <value>0</value>
+    </param>
+
+    <param name="qualifier" type="int">
+    <description>qualifier for source</description>
+    <value>-65536</value>
+    </param>
+
+    <param name="calcode" type="string">
+	    <description>Calibrator code, 1 character only</description>
+    <value> </value>
+    <value>*</value>
+    <value>\#</value>
+    </param>
+
+
+    <param name="overwrite" type="bool">
+    <description>overwrite or append</description>
+    <value>false</value>
+    </param>
+
+    <param name="freqtol" type="any">
+    <any type="variant"/>
+    <description>Frequency tolerance, the default tolerance for frequency
+    is set to be 6 times of the channel width. You may have to tweak the
+    tolerance depending on the dataset, just depends. </description>
+    <value type="double">0.0</value>
+    </param>
+
+    <param name="applytsys" type="bool">
+    <description>scale data and weights by Tsys info</description>
+    <value>true</value>
+    </param>
+
+    <param name="keepautocorr" type="bool">
+    <description> Fill autocorrelations along with cross correlation data. 
+    If False data that have same ANTENNA1 and ANTENNA2 are ignored 
+    </description>
+    <value>false</value>
+    </param>
+
+    <param name="antnamescheme" type="string">
+    <description> If 'new', VLA antenna name is prepended by EVLA or VLA 
+    to distinguish between the refurbished and non-refubished antennas. 'old'
+    will just put the VLA antenna identifier as is in the NAME 
+    column of the ANTENNA table.
+    </description>
+    <value>old</value>
+    <value>new</value>
+    </param>
+
+    <param name="useday" type="int">
+	    <description> 
+		    This option is only available at the AOC in Socorro!
+		    When filling at the AOC, select the online day file to use
+		    \&lt; 0 means any previous day up to 14
+		    0 means from the start of the current day
+		    \&gt; 0 means starting now
+	    </description>
+	    <value>1</value>
+    </param>
+                            
+    <param name="keepblanks" type="bool">
+       <description>Scans with blank (empty) source names (i.e. tipping scans) will be filled.
+       The default is to not fill.</description>
+       <value>false</value>
+    </param>     
+                            
+    <param name="evlabands" type="bool">
+	    <description>Use the EVLA frequencies and bandwith tolerances when specifying band codes or wavelengths.  </description>
+       <value>true</value>
+    </param>     
+
+
+  </input>
+
+  <returns type="void"/>
+
+  <example/>
+
+</method>
+
+</tool>
+
+</casaxml>
