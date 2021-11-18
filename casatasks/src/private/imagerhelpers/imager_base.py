@@ -443,7 +443,6 @@ class PySynthesisImager:
     def checkPB(self):
         """Checks for common problem cases in the .pb image"""
         import numpy as np
-        mssIdx = '0' # TODO iterate over MSes
         facetIdx = 0 # TODO iterate over facets
         imagename = self.SItool.getimstore(facetIdx).getImageName("PB");
         _ia.open(imagename)
