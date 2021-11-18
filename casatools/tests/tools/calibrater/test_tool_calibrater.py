@@ -60,7 +60,9 @@ class calibrater_test(unittest.TestCase):
         cls._lib = os.path.join(datapath, 'refcalgainG.txt')
 
         shutil.copytree(os.path.join(datapath, 'ngc5921.ms'), 'ngc5921.ms')
+        shutil.copytree(os.path.join(datapath, 'ngc5921.gcal'), 'ngc5921.gcal')
         cls._bandvis = 'ngc5921.ms'
+        cls._bandcal = 'ngc5921.gcal'
 
     @classmethod
     def tearDownClass(cls):
@@ -623,22 +625,40 @@ class calibrater_test(unittest.TestCase):
 
         cb.setvi(old=True, quiet=False)
         cb.open(self._bandvis)
-        cb.setsolvegainspline(table='gainspline',mode='AMP',splinetime=10800.0)
+        cb.setsolvegainspline(table='gainspline', mode='AMP', splinetime=10800.0)
         cb.solve()
         cb.close()
 
+        tb.open('gainspline')
+        nPolyAmp = tb.getcol('N_POLY_AMP')
+        nPolyPhase = tb.getcol('N_POLY_PHASE')
+        tb.close()
+
         # Check that the table was created
         self.assertTrue(os.path.exists('gainspline'))
+        self.assertTrue(np.all(nPolyAmp == 8))
+        self.assertTrue(np.all(nPolyPhase == 0))
 
     def test_smoothedCalTables(self):
         """ Check that the smooth command creates a smoothed cal table """
 
         # Open the caltable and run smooth
-        cb.open(self._vis)
-        cb.smooth(tablein=self._cal, tableout='testcalout.cal')
+        cb.open(self._bandvis)
+        cb.smooth(tablein=self._bandcal, tableout='testcalout.cal', smoothtype='mean', smoothtime=5000.0, field=1)
         cb.close()
-        # Check that the output table is created
-        self.assertTrue(os.path.exists('testcalout.cal'))
+
+        tb.open(self._bandcal)
+        olddata = tb.getcol('CPARAM')
+        tb.close()
+
+        tb.open('testcalout.cal')
+        data = tb.getcol('CPARAM')
+        tb.close()
+
+        # Check that the smoothed data is different than the original cal
+        self.assertFalse(np.array_equal(olddata, data))
+        # Compare the smoothed average to reference
+        self.assertTrue(np.isclose(np.mean(data), (1.4439346407141005+0.017319496272897555j)))
 
     def test_specifyCal(self):
         """ Check that specifycal can set values for specific spws and antennas"""
@@ -663,9 +683,20 @@ class calibrater_test(unittest.TestCase):
 
         tb.open(self._vis)
         columns = tb.colnames()
+        modelData = tb.getcol('MODEL_DATA')
+        corData = tb.getcol('CORRECTED_DATA')
+        data = tb.getcol('DATA')
         tb.close()
 
+        # Check that both the CORRECTED_DATA and MODEL_DATA columns are created
         self.assertTrue('CORRECTED_DATA' in columns)
+        self.assertTrue('MODEL_DATA' in columns)
+
+        # Check that the MODEL_DATA has been modified by the caltable
+        np.isclose(np.mean(modelData), (0.3162506820017762+0.0490544367995527j))
+        # Check that the CORRECTED_DATA is unchanged
+        np.array_equal(corData, data)
+
 
 
 def suite():
