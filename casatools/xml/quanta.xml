@@ -1,0 +1,2044 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+ 
+   <tool module="quanta" name="quanta">
+      <shortdescription>quanta tool handles units and quantities
+      </shortdescription>
+       
+
+<keyword>quanta</keyword>
+
+
+<code>
+<include>quanta_forward.h</include>
+<private>
+	<include>quanta_private.h</include>
+</private>
+</code>
+
+
+   <method name="quanta" type="constructor">
+   <shortdescription>Construct quanta tool</shortdescription>
+   
+<input>
+
+
+</input>
+<description>
+Create a quanta tool on the specified host (or by default the
+host you are running on). 
+</description>
+</method>
+
+
+ 
+   <method name="convertfreq" type="function">
+   <shortdescription>convert a frequency quantity to another unit</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>quantity to convert</description>
+     <value>1.0</value>
+     </param>
+
+     <param name="outunit" direction="in" type="string">
+     <description>unit to convert to</description>
+     <value>Hz</value>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+convertfreq converts a frequency quantity to another unit.
+
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t convertfreq Ex 1 \t----&quot;
+print qa.convertfreq('5GHz','cm')
+#{'value': 5.9958491599999997, 'unit': 'cm'}
+print qa.convertfreq('5cm','GHz')
+#{'value': 5.9958491599999997, 'unit': 'GHz'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="convertdop" type="function">
+   <shortdescription>convert a doppler velocity quantity to another unit</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>quantity to convert</description>
+     <value>0.0</value>
+     </param>
+
+     <param name="outunit" direction="in" type="string">
+     <description>unit to convert to</description>
+     <value>km/s</value>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+convertfreq converts a velocity quantity to another unit. Units are either
+ velocity or dimensionless.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t convertdop Ex 1 \t----&quot;
+print qa.convertdop('1','km/s')
+#{'value': 299792.45799999998, 'unit': 'km/s'}
+print qa.convertdop('10km/s','1') 
+#{'value': 3.3356409519815205e-05, 'unit': '1'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+
+
+ 
+   <method name="quantity" type="function">
+   <shortdescription>make a quantity from a string or from a numeric value
+    and a unit string</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>quantity or numeric or string to convert to quantity</description>
+     </param>
+
+     <param name="unitname" direction="in" type="string">
+     <description>unit string if v numeric</description>
+     <value/>
+     </param>
+
+</input>
+<returns type="record"/>
+<description>
+quantity makes a quantity from a string, or from a value and a
+string. Note that a function unit exists which is a synonym for
+quantity. If only a string is given, it can be a scalar string.
+The result will be a scalar quantity.
+
+
+If a numeric value and a unit string
+are given, the numeric value can be any numeric type, and can also be
+a vector of numeric values.  print qa.map() to get a list of recognized units.
+'d' is usually days, but can be degrees (see example).
+
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t quantity Ex 1 \t----&quot;
+tu = qa.quantity('1Jy')			# make quantity
+print tu
+#{'value': 1.0, 'unit': 'Jy'}
+print qa.quantity(tu)			# also accepts a quantity
+#{'value': 1.0, 'unit': 'Jy'}
+tu = qa.unit('1Jy')			# make quantity with synonym
+print tu
+#{'value': 1.0, 'unit': 'Jy'}
+print qa.quantity(-1.3, 'Jy')		# make quantity with separate value
+#{'value': -1.3, 'unit': 'Jy'}
+q1 = qa.quantity([8.57132661e+09, 1.71426532e+10], 'km/s') # Composite unit
+print q1
+#{'value': array([  8.57132661e+09,   1.71426532e+10]), 'unit': 'km/s'}
+q = qa.quantity('5d'); print q
+#{'value': 5.0, 'unit': 'd'}            # d = days
+q = qa.quantity('5 d'); print q
+#{'value': 5.0, 'unit': 'd'}            # even if there's a space, as of 5/28/09
+q = qa.quantity('5d30m'); print q
+#{'value': 5.5, 'unit': 'deg'}          # Unless followed by an m!
+qa.quantity('5d30s')                    # WRONG
+# {'unit': 'd30s', 'value': 5.0}        # I told you...
+qa.quantity('5d0m30s')                  # OK
+# {'unit': 'deg', 'value': 5.0083333333333337}
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+
+   <method name="getvalue" type="function">
+   <shortdescription>get the internal value of a quantity</shortdescription>
+   
+<input>
+     <param name="v" direction="in" type="variant">
+     <description>quantity</description>
+     </param>
+</input>
+<returns type="doubleVec"/>
+<description>
+getvalue returns the internal value of a quantity. It also can handle an array
+of quantities.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t getvalue Ex 1 \t----&quot;
+tu = qa.quantity(-1.3, 'Jy')         # make quantity
+print tu
+#{'value': -1.3, 'unit': 'Jy'}
+print qa.getvalue(tu)
+#-1.3 
+print qa.getunit(tu)
+#Jy 
+a = qa.quantity([3,5],'cm')
+print a
+#{'value': array([ 3.,  5.]), 'unit': 'cm'}
+print qa.getvalue(a)
+#[3.0, 5.0]
+#
+&quot;&quot;&quot;
+
+</example>
+
+%%print a
+%%#[id=quant, shape=2] 
+%%print qa.getvalue(a)
+%%#[5 7]  
+--&gt;
+
+</method>
+ 
+   <method name="getunit" type="function">
+   <shortdescription>get the internal unit of a quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>quantity</description>
+     </param>
+</input>
+<returns type="string"/>
+<description>
+getunit returns the internal unit string of a quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t getunit Ex 1 \t----&quot;
+tu = qa.quantity(-1.3, 'Jy')         # make quantity
+print tu
+#{'value': -1.3, 'unit': 'Jy'}
+print qa.getvalue(tu)
+#-1.3 
+print qa.getunit(tu)
+#Jy 
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="canonical" type="function">
+   <shortdescription>get canonical value of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>value to convert</description>
+     <value>1.0</value>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+canonical (with alias canon) gets the canonical value of a quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t canonical Ex 1 \t----&quot;
+print qa.canonical('1Jy')			# canonical value of a string
+#{'value': 1e-26, 'unit': 'kg.s-2'}
+print qa.canon(qa.quantity('1Jy'))		# canonical value of a unit
+#{'value': 1e-26, 'unit': 'kg.s-2'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="canon" type="function">
+   <shortdescription>get canonical value of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>value to convert</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+canon gets the canonical value of a quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t canon Ex 1 \t----&quot;
+print qa.canon('1Jy')			        # canonical value of a string
+#{'value': 1e-26, 'unit': 'kg.s-2'}
+print qa.canonical(qa.quantity('1Jy'))		# canonical value of a unit
+#{'value': 1e-26, 'unit': 'kg.s-2'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="convert" type="function">
+   <shortdescription>convert a quantity to another unit</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>quantity to convert</description>
+     </param>
+
+     <param name="outunit" direction="in" type="variant">
+     <description>unit to convert to</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+convert converts a quantity to another unit. If no output unit given,
+conversion is to canonical units
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t convert Ex 1 \t----&quot;
+tu = qa.quantity('5Mm/s')		# specify a quantity
+print tu
+#{'value': 5.0, 'unit': 'Mm/s'}
+print qa.convert(tu, 'pc/a')		# convert it to parsec per year
+#{'value': 0.0051135608266237404, 'unit': 'pc/a'}
+print qa.convert(tu)			# convert to canonical units
+#{'value': 5000000.0, 'unit': 'm.s-1'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="define" type="function">
+   <shortdescription>define a new unit name</shortdescription>
+   
+<input>
+
+     <param name="name" direction="in" type="string">
+     <description>name of unit to define</description>
+     </param>
+
+     <param name="v" direction="in" type="variant">
+     <description>quantity value of new unit</description>
+     <value>1</value>
+     </param>
+</input>
+<returns type="bool"/>
+<description>
+define defines the name and value of a user defined unit
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t define Ex 1 \t----&quot;
+print qa.define('JY','1Jy')			# your misspelling
+#True
+print qa.define('VLAunit', '0.898 JY')	# a special unit using it
+#True
+print qa.quantity('5 VLAunit') 			# check its use
+#{'value': 5.0, 'unit': 'VLAunit'}
+print qa.convert('5 VLAunit','Jy')
+#{'value': 4.4900000000000002, 'unit': 'Jy'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="map" type="function">
+   <shortdescription>list known unit names and constants</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="string">
+     <description>type of information to list - coded string</description>
+     <value>all</value>
+     </param>
+</input>
+<returns type="string">
+</returns>
+<description>
+map lists the known mapping of units and constants. It has a single argument,
+which can be a coded string (no-case, minimax match):
+\begin{description}
+\item[all] all of the following units (not constants): also the default 
+\item[Prefix] known decimal prefixes
+\item[SI] known SI units
+\item[Customary] a set of customary units known to programs
+\item[User] units defined by the user
+\item[Constants] known constants (note: only 'const', 'Const', 'constants'
+and 'Constants' recognised).
+\end{description}
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t map Ex 1 \t----&quot;
+print qa.map('pre')			# list decimal prefixes
+#        == Prefix ==== 20 ====
+#        E         (exa)                        1e+18
+#        G         (giga)                       1000000000
+#        M         (mega)                       1000000
+#        P         (peta)                       1e+15
+#        T         (tera)                       1e+12
+#        Y         (yotta)                      1e+24
+#        Z         (zetta)                      1e+21
+#        a         (atto)                       1e-18
+#        c         (centi)                      0.01
+#        d         (deci)                       0.1
+#        da        (deka)                       10
+#        f         (femto)                      1e-15
+#        h         (hecto)                      100
+#        k         (kilo)                       1000
+#        m         (milli)                      0.001
+#        n         (nano)                       1e-09
+#        p         (pico)                       1e-12
+#        u         (micro)                      1e-06
+#        y         (yocto)                      1e-24
+#        z         (zepto)                      1e-21
+print qa.map('Constants')			# list known constants
+#        == Constants ====
+#        pi    3.14..                    3.14159 
+#        ee    2.71..                    2.71828 
+#        c     light vel.                2.99792e+08 m/s
+#        G     grav. const               6.67259e-11 N.m2/kg2
+#        h     Planck const              6.62608e-34 J.s
+#        HI    HI line                   1420.41 MHz
+#        R     gas const                 8.31451 J/K/mol
+#        NA    Avogadro #                6.02214e+23 mol-1
+#        e     electron charge           1.60218e-19 C
+#        mp    proton mass               1.67262e-27 kg
+#        mp_me mp/me                     1836.15 
+#        mu0   permeability vac.         1.25664e-06 H/m
+#        eps0  permittivity vac.         1.60218e-19 C
+#        k     Boltzmann const           1.38066e-23 J/K
+#        F     Faraday const             96485.3 C/mol
+#        me    electron mass             9.10939e-31 kg
+#        re    electron radius           2.8179e-15 m
+#        a0    Bohr's radius             5.2918e-11 m
+#        R0    solar radius              6.9599e+08 m
+#        k2    IAU grav. const^2         0.000295912 AU3/d2/S0
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+
+
+   <method name="maprec" type="function">
+   <shortdescription>create record containing list of known unit names and
+   constants</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="string">
+     <description>type of information to list - coded string</description>
+     <value>all</value>
+     </param>
+</input>
+<returns type="record">returns a list in a record
+</returns>
+<description>
+maprec returns a record with the known mapping of units and constants. It has a single argument,
+which can be a coded string (no-case, minimax match):
+\begin{description}
+\item[all] all of the following units (not constants): also the default 
+\item[Prefix] known decimal prefixes
+\item[SI] known SI units
+\item[Customary] a set of customary units known to programs
+\item[User] units defined by the user
+\end{description}
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t maprec Ex 1 \t----&quot;
+p = qa.maprec('pre')			# list decimal prefixes
+print p['Prefix_G']
+#        G         (giga)               1000000000
+s = qa.maprec('SI')		        # list SI units
+print s['SI_Jy']
+#Jy        (jansky)                     1e-26 kg.s-2
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="fits" type="function">
+   <shortdescription>define some FITS units</shortdescription>
+   
+<input>
+</input>
+<returns type="bool"/>
+<description>
+fits defines some unit names used in reading and writing FITS files.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t fits Ex 1 \t----&quot;
+print qa.fits()
+#True
+print qa.map('user')
+#        == User ====
+#        BEAM      (dimensionless beam)         1 _
+#        DAYS      (day)                        86400 s
+#        DEG       (degree)                     0.0174532925199 rad
+#        DEGREES   (degree)                     0.0174532925199 rad
+#        HZ        (hertz)                      1 s-1
+#        JY        (jansky)                     1e-26 kg.s-2
+#        KELVIN    (kelvin)                     1 K
+#        KELVINS   (kelvin)                     1 K
+#        KM        (km)                         1000 m
+#        M         (meter)                      1 m
+#        METERS    (meter)                      1 m
+#        PASCAL    (pascal)                     1 m-1.kg.s-2
+#        PIXEL     (dimensionless pixel)        1 _
+#        S         (second)                     1 s
+#        SEC       (second)                     1 s
+#        SECONDS   (second)                     1 s
+#        VOLTS     (volt)                       1 m2.kg.s-3.A-1
+#        YEAR      (year)                       31557600 s
+#        YEARS     (year)                       31557600 s
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="angle" type="function">
+   <shortdescription>show an angle as a formatted string</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>angle quantity value to output</description>
+     </param>
+
+     <param name="prec" direction="in" type="int">
+     <description>number of digits shown</description>
+     <value>0</value>
+     </param>
+
+     <param name="form" direction="in" type="stringVec">
+     <description>formatting information in coded string array</description>
+     <value/>
+     </param>
+
+     <param name="showform" direction="in" type="bool">
+     <description>show square brackets and separating ,</description>
+     <value>false</value>
+     </param>
+</input>
+<returns type="stringVec"/>
+<description>
+angle converts an angle quantity to a formatted string. The formatting
+information is a precision (0 is default, 6 includes +-ddd.mm.ss) and a
+string array of codes (no-case, minimax match):
+Codes include:
+\begin{description}
+\item[clean] delete leading/trailing superfluous separators
+\item[no\_d] do not show degrees part
+\item[no\_dm] do not show degrees and minutes part
+\item[dig2] show only 2 digits of degrees in angle format
+\item[time] show as time (hh:mm:ss.ttt) rather than as angle
+\end{description}
+If a multi-dimensional value is given for the value $v$, the returned value
+is a string vector of a length equal to last dimension. Each string has a
+number of fields equal to the number of elements in all earlier
+dimensions. If the {\em showform} is $T$, each vector element is surrounded
+by a pair of square brackets if there is more than one entry, and fields are
+separated by a ','.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t angle Ex 1 \t----&quot;
+tu = qa.quantity('5.7.12.345678')		# define an angle
+print tu
+#{'value': 5.1200960216666669, 'unit': 'deg'}
+print qa.angle(tu)    				# default output
+#+005.07.12 
+print qa.angle(tu, prec=7)			# 7 digits
+#+005.07.12.3 
+print qa.angle(tu, prec=4)			# 4 digits
+#+005.07. 
+print qa.angle(tu, form=[&quot;tim&quot;,&quot;no_d&quot;])		# as time, no hours shown
+#:20:29 
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="time" type="function">
+   <shortdescription>show a time (or date) as a formatted string</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>time quantity value to output</description>
+     </param>
+
+     <param name="prec" direction="in" type="int">
+     <description>number of digits shown</description>
+     <value>0</value>
+     </param>
+
+     <param name="form" direction="in" type="stringVec">
+     <description>formatting information in coded string array</description>
+     <value/>
+     </param>
+
+     <param name="showform" direction="in" type="bool">
+     <description>show square brackets and separating ,</description>
+     <value>false</value>
+     </param>
+</input>
+<returns type="stringVec"/>
+<description>
+time converts a time quantity to a formatted string. The formatting
+information is a precision (0 is default, 6 includes hh.mm.ss) and a
+string array of codes (no-case, minimax match):
+Codes include:
+\begin{description}
+\item[clean] delete leading/trailing superfluous separators
+\item[no\_d] do not show hours part
+\item[no\_dm] do not show hours and minutes part
+\item[ymd] include a date as yyyy/mm/dd (date is by default not shown)
+\item[dmy] include a date as ddMMMyyyy (date is by default not shown)
+\item[mjd] include a date as Modified Julian Day (date is by default not shown)
+\item[fits] include a date and show time in FITS format: le from OS
+\item[angle] show in angle (dd.mm.ss.ttt) rather than time format
+\item[day] prefix day-of-week to output
+\item[local] show local time rather than UTC (add timezone offset)
+\item[no\_time] suppress printing of time part
+\end{description}
+If a multi-dimensional value is given for the value $v$, the returned value
+is a string vector of a length equal to last dimension. Each string has a
+number of fields equal to the number of elements in all earlier
+dimensions. If the {\em showform} is $T$, each vector element is surrounded
+by a pair of square brackets if there is more than one entry, and fields are
+separated by a ','.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t time Ex 1 \t----&quot;
+tu = qa.quantity('today')		# a time
+print tu
+#{'value': 54175.708981504627, 'unit': 'd'}
+print qa.time(tu)			# default format
+#17:00:56
+print qa.time(tu,form=&quot;dmy&quot;)  		# show date
+#16-Mar-2007/17:00:56
+print qa.time(tu,form=[&quot;ymd&quot;,&quot;day&quot;])	# and day
+#Fri-2007/03/16/17:00:56
+print qa.time(tu,form=&quot;fits&quot;)           # FITS format    
+#2007-03-16T17:00:56
+print qa.time(tu,form=[&quot;fits&quot;,&quot;local&quot;]) # local FITS format
+#2007-03-16T10:00:56-07:00
+print qa.time(tu,form=[&quot;ymd&quot;,&quot;local&quot;])  # local time         
+#2007/03/16/10:00:56
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="add" type="function">
+   <shortdescription>add quantities</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>value</description>
+     </param>
+
+     <param name="a" direction="in" type="variant">
+     <description>value</description>
+     <value>0</value>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+add adds two quantities
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t add Ex 1 \t----&quot;
+print qa.add('5m', '2yd')   
+#{'value': 6.8288000000000002, 'unit': 'm'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="sub" type="function">
+   <shortdescription>subtract quantities</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>value</description>
+     </param>
+
+     <param name="a" direction="in" type="variant">
+        <any type="variant"/>
+     <description>value</description>
+     <value>0</value>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+sub subtracts two quantities
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t sub Ex 1 \t----&quot;
+print qa.sub('5m', '2yd')   
+#{'value': 3.1712000000000002, 'unit': 'm'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="mul" type="function">
+   <shortdescription>multiply quantities</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>value</description>
+     </param>
+
+     <param name="a" direction="in" type="variant">
+     <description>value</description>
+     <value>1</value>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+mul multiplies two quantities
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t mul Ex 1 \t----&quot;
+print qa.mul('5m', '3s')
+#{'value': 15.0, 'unit': 'm.s'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="div" type="function">
+   <shortdescription>divides quantities</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>value</description>
+     </param>
+
+     <param name="a" direction="in" type="variant">
+     <description>value</description>
+     <value>1</value>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+div divides two quantities
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t div Ex 1 \t----&quot;
+print qa.div('5m', '3s') 
+#{'value': 1.6666666666666667, 'unit': 'm/(s)'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="neg" type="function">
+   <shortdescription>negate quantities</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>value</description>
+     <value>1</value>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+neg negates a quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t neg Ex 1 \t----&quot;
+print qa.neg('5m')   
+#{'value': -5.0, 'unit': 'm'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="norm" type="function">
+   <shortdescription>normalise angle</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="variant">
+     <description>angle quantity</description>
+     </param>
+
+     <param name="a" direction="in" type="double">
+     <description>lower interval boundary</description>
+     <value>-0.5</value>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+norm normalise angles in interval of $2\pi$ radians. The default interval is
+from -0.5 to +0.5 of a full interval (i.e. from -180 to +180 degrees). The
+lower end of the interval can be set as a fraction of $2\pi$
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t norm Ex 1 \t----&quot;
+print qa.norm('713deg')			#default normalisation
+#{'value': -6.9999999999999716, 'unit': 'deg'}
+print qa.norm('713deg', -2.5) 		# normalise to interval -900 - -540 deg
+#{'value': -727.0, 'unit': 'deg'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="le" type="function">
+   <shortdescription>compare quantities</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+
+     <param name="a" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     <value>0</value>
+     </param>
+</input>
+<returns type="bool"/>
+<description>
+le compares two quantities for less than or equal.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t le Ex 1 \t----&quot;
+print qa.le('5m', '2yd')   
+#False
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="lt" type="function">
+   <shortdescription>compare quantities</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+
+     <param name="a" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     <value>0</value>
+     </param>
+</input>
+<returns type="bool"/>
+<description>
+lt compares two quantities for less than.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t lt Ex 1 \t----&quot;
+print qa.lt('5m', '2yd') 
+#False
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="eq" type="function">
+   <shortdescription>compare quantities</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+
+     <param name="a" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     <value>0</value>
+     </param>
+</input>
+<returns type="bool"/>
+<description>
+eq compares two quantities for equality.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t eq Ex 1 \t----&quot;
+print qa.eq('5m', '2yd')  
+#False
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="ne" type="function">
+   <shortdescription>compare quantities</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+
+     <param name="a" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     <value>0</value>
+     </param>
+</input>
+<returns type="bool"/>
+<description>
+ne compares two quantities for non equality.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t ne Ex 1 \t----&quot;
+print qa.ne('5m', '2yd')   
+#True
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="gt" type="function">
+   <shortdescription>compare quantities</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+
+     <param name="a" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     <value>0</value>
+     </param>
+</input>
+<returns type="bool"/>
+<description>
+gt compares two quantities for greater than.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t gt Ex 1 \t----&quot;
+print qa.gt('5m', '2yd')   
+#True
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="ge" type="function">
+   <shortdescription>compare quantities</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+
+     <param name="a" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     <value>0</value>
+     </param>
+</input>
+<returns type="bool"/>
+<description>
+ge  compares two quantities for greater than or equal.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t ge Ex 1 \t----&quot;
+print qa.ge('5m', '2yd') 
+#True
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="sin" type="function">
+   <shortdescription>sine of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>angle quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+sin gives sine of angle quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t sin Ex 1 \t----&quot;
+print qa.sin('7deg')
+#{'value': 0.12186934340514748, 'unit': ''}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="cos" type="function">
+   <shortdescription>cosine of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>angle quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+cos gives cosine of angle quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t cos Ex 1 \t----&quot;
+print qa.cos('7deg')
+#{'value': 0.99254615164132198, 'unit': ''}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="tan" type="function">
+   <shortdescription>tangent of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>angle quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+tan gives tangent of angle quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t tan Ex 1 \t----&quot;
+print qa.tan('7deg')
+#{'value': 0.1227845609029046, 'unit': ''}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="asin" type="function">
+   <shortdescription>arcsine of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>non-dimensioned quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+asin gives arcsine of non-dimensioned quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t asin Ex 1 \t----&quot;
+print qa.convert(qa.asin(qa.sin('7deg')), 'deg')
+#{'value': 7.0, 'unit': 'deg'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="acos" type="function">
+   <shortdescription>arccosine of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>non-dimensioned quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+acos gives arccosine of non-dimensioned quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t acos Ex 1 \t----&quot;
+print qa.convert(qa.acos(qa.cos('7deg')), 'deg')
+#{'value': 7.0000000000000249, 'unit': 'deg'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="atan" type="function">
+   <shortdescription>arctangent of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>non-dimensioned quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+atan gives arctangent of non-dimensioned quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t atan Ex 1 \t----&quot;
+print qa.convert(qa.atan(qa.tan('7deg')), 'deg')
+#{'value': 7.0, 'unit': 'deg'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="atan2" type="function">
+   <shortdescription>arctangent of two quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>non-dimensioned quantity</description>
+     </param>
+
+     <param name="a" direction="in" type="any">
+        <any type="variant"/>
+     <description>non-dimensioned quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+atan gives arctangent of two non-dimensioned quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t atan2 Ex 1 \t----&quot;
+print qa.convert(qa.atan2(qa.sin('7deg'), qa.cos('7deg')), 'deg')
+#{'value': 7.0, 'unit': 'deg'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="abs" type="function">
+   <shortdescription>absolute value of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+abs gives absolute value of quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t abs Ex 1 \t----&quot;
+print qa.abs('-5km/s')
+#{'value': 5.0, 'unit': 'km/s'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="ceil" type="function">
+   <shortdescription>ceil value of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+ceil gives ceiling value of quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t ceil Ex 1 \t----&quot;
+print qa.ceil('5.1AU')
+#{'value': 6.0, 'unit': 'AU'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="floor" type="function">
+   <shortdescription>floor value of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+floor gives flooring value of quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t floor Ex 1 \t----&quot;
+print qa.floor('-5.1AU')
+#{'value': -6.0, 'unit': 'AU'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="log" type="function">
+   <shortdescription>logarithm of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>dimensionless quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+log gives natural logarithm of dimensionless quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t log Ex 1 \t----&quot;
+print qa.log('2')
+#{'value': 0.69314718055994529, 'unit': ''}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="log10" type="function">
+   <shortdescription>logarithm of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>dimensionless quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+log10 gives logarithm of dimensionless quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t log10 Ex 1 \t----&quot;
+print qa.log10('2')
+#{'value': 0.3010299956639812, 'unit': ''}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="exp" type="function">
+   <shortdescription>exponential of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>dimensionless quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+exp gives exponential value of dimensionless quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t exp Ex 1 \t----&quot;
+print qa.exp('2')
+#{'value': 7.3890560989306504, 'unit': ''}
+try:
+  print qa.exp('2m')
+except Exception, e:
+  print &quot;Caught an expected exception&quot;, e
+#Caught an expected exception Quantum::exp illegal unit type 'm'
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="sqrt" type="function">
+   <shortdescription>square root of quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>dimensionless quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+sqrt gives square root of quantity with only even powered dimensions
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t sqrt Ex 1 \t----&quot;
+print qa.sqrt('2m2')
+#{'value': 1.4142135623730951, 'unit': 'm'}
+try:
+  print qa.sqrt('2s')
+except Exception, e:
+  print &quot;Caught an expected exception&quot;, e
+#Caught an expected exception UnitVal::UnitVal Illegal unit dimensions for root
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="compare" type="function">
+   <shortdescription>compare dimensionality of units</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+
+     <param name="a" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+</input>
+<returns type="bool"/>
+<description>
+compare compares the dimensionality of units of two qauntities
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t compare Ex 1 \t----&quot;
+print qa.compare('5yd/a', '6m/s')  		# equal dimensions
+#True
+print qa.compare('5yd', '5s')		# unequal dimensions
+#False
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="check" type="function">
+   <shortdescription>check for proper unit string</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="string">
+     <description>value</description>
+     </param>
+</input>
+<returns type="bool"/>
+<description>
+check checks if the argument has a properly defined unit string
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t check Ex 1 \t----&quot;
+print qa.check('5AE/Jy.pc5/s')
+#True
+print qa.check('7MYs')
+#False
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="checkfreq" type="function">
+   <shortdescription>check for proper frequency unit</shortdescription>
+   
+<input>
+
+     <param name="cm" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+</input>
+<returns type="bool">bool</returns>
+<description>
+checkfreq checks if the argument has a properly defined frequency interpretable
+unit string
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t checkfreq Ex 1 \t----&quot;
+print qa.checkfreq('5GHz')
+#True
+print qa.checkfreq('5cm')  
+#True
+print qa.checkfreq('5cm/s2')
+#False
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="pow" type="function">
+   <shortdescription>raise quantity to power</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+
+     <param name="a" direction="in" type="int">
+     <description>power</description>
+     <value>1</value>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+pow raises a quantity to an integer power
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t pow Ex 1 \t----&quot;
+print qa.pow('7.2km/s', -3)
+#{'value': 0.0026791838134430724, 'unit': '(km/s)-3'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="constants" type="function">
+   <shortdescription>get a constant</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="string">
+     <description>name</description>
+     <value>pi</value>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+constants gets a named constant quantity. Names (no-case, minimax) are:
+
+        pi    3.14..                    3.14159 
+        ee    2.71..                    2.71828 
+        c     light vel.                2.99792e+08 m/s
+        G     grav. const               6.67259e-11 N.m2/kg2
+        h     Planck const              6.62608e-34 J.s
+        HI    HI line                   1420.41 MHz
+        R     gas const                 8.31451 J/K/mol
+        NA    Avogadro number           6.02214e+23 mol-1
+        e     electron charge           1.60218e-19 C
+        mp    proton mass               1.67262e-27 kg
+        mp\_me mp/me                     1836.15 
+        mu0   permeability vac.         1.25664e-06 H/m
+        eps0  permittivity vac.         1.60218e-19 C
+        k     Boltzmann const           1.38066e-23 J/K
+        F     Faraday const             96485.3 C/mol
+        me    electron mass             9.10939e-31 kg
+        re    electron radius           2.8179e-15 m
+        a0    Bohr's radius             5.2918e-11 m
+        R0    solar radius              6.9599e+08 m
+        k2    IAU grav. const\^2         0.000295912 AU3/d2/S0
+
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t constants Ex 1 \t----&quot;
+print qa.constants()
+#{'unit': '', 'value': 3.1415926535897931}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="isangle" type="function">
+   <shortdescription>check if valid angle or time quantity</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>angle/time quantity</description>
+     </param>
+</input>
+<returns type="bool"/>
+<description>
+isangle checks if the argument is a valid angle/time quantity.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t isangle Ex 1 \t----&quot;
+print qa.isangle(qa.constants('pi'))
+#False
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="totime" type="function">
+   <shortdescription>convert an angle (or a time) to a time</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>angle/time quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+totime converts an angle quantity (or a time) to a time quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t totime Ex 1 \t----&quot;
+print qa.totime('2d5m')
+#{'value': 0.0057870370370370376, 'unit': 'd'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="toangle" type="function">
+   <shortdescription>convert a time (or an angle) to an angle</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>angle/time quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+toangle converts a time quantity (or an angle) to an angle quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t toangle Ex 1 \t----&quot;
+print qa.toangle('5h30m12.6')
+#{'value': 82.552499999999995, 'unit': 'deg'}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="splitdate" type="function">
+   <shortdescription>split a date/time into a record</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>angle/time quantity</description>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+splitdate splits a date/time quantity into a record with constituent fields
+like year, yearday, month etc. All fields will be integer (to enable use as
+index and easy personal formatting), with the exception of the {\em s} field
+which is a double float. See the example for the fields returned.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t splitdate Ex 1 \t----&quot;
+print qa.splitdate('today')
+
+#{'mjd': 54175.752367291658, 'week': 11, 'usec': 533999, 'hour': 18,
+# 'min': 3, 'yearday': 75, 'msec': 533, 'month': 3, 's':
+# 24.533999226987362, 'sec': 24, 'weekday': 5, 'year': 2007, 'monthday':
+# 16} print qa.splitdate('183.33333333deg')
+#{'mjd': 0.50925925925000004, 'week': 46, 'usec': 999999, 'hour': 12,
+# 'min': 13, 'yearday': 321, 'msec': 999, 'month': 11, 's':
+# 19.999999200003487, 'sec': 19, 'weekday': 3, 'year': 1858,
+# 'monthday': 17}
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+ 
+   <method name="tos" type="function">
+   <shortdescription>convert quantity to string</shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value</description>
+     </param>
+
+     <param name="prec" direction="in" type="int">
+     <description>convert precision of value</description>
+     <value>9</value>
+     </param>
+</input>
+<returns type="string"/>
+<description>
+tos converts a quantity to a string with the precision defined with
+the {\em setformat('prec')} (which defaults to 9). If the optional
+{\em prec} argument is set to an integer value greater than 1, that
+precision is used in the conversion
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t tos Ex 1 \t----&quot;
+a = qa.quantity('2.56 yd/s')
+print a
+#{'value': 2.5600000000000001, 'unit': 'yd/s'}
+print qa.tos(a)
+#2.560000000yd/s
+a=qa.quantity(1./7, 'km/s')
+print qa.tos(a)
+#0.142857143km/s
+print qa.tos(a,2)
+#0.14km/s
+print qa.tos(a,20)
+#0.14285714285714284921km/s
+print qa.tos(a)   
+#0.142857143km/s
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+
+
+
+ 
+   <method name="type" type="function">
+   <shortdescription>type of tool</shortdescription>
+   
+<input>
+</input>
+<returns type="string"/>
+<description>
+type will return the tool name.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t type Ex 1 \t----&quot;
+print qa.type()
+#quanta 
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+
+
+ 
+   <method name="done" type="function">
+   <shortdescription>Free resources used by tool.  Current implementation
+    ignores input parameter, does nothing and returns true</shortdescription>
+   
+<input>
+
+     <param name="kill" direction="in" type="bool">
+     <description>force kill of the default tool (ignored)</description>
+     <value>false</value>
+     </param>
+</input>
+<returns type="bool"/>
+<description>
+Currently, this method is an NOP.
+
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t done Ex 1 \t----&quot;
+print qa.done()
+#True
+print qa.done()
+#True
+print qa.done(kill=T)
+#True
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+
+<method name="unit" type="function">
+<shortdescription>quantity from value v and unit string</shortdescription>
+
+<input>
+     <param name="v" direction="in" type="any">
+         <any type="variant"/>
+     <description/>
+     </param>
+
+     <param name="unitname" direction="in" type="string">
+     <description/>
+     <value/>
+     </param>
+</input>
+<returns type="record"/>
+<description>
+unit makes a quantity from a string, or from a value and a string.
+Note that unit is a synonym for quantity (see example there).
+</description>
+</method>
+
+<method name="isquantity" type="function">
+<shortdescription>Check if quantity</shortdescription>
+
+<input>
+     <param name="v" direction="in" type="any">
+         <any type="variant"/>
+     <description>value to be tested</description>
+     </param>
+</input>
+<returns type="bool"/>
+<description>
+Checks if the operand is a correct quantity
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t isQuantity Ex 1 \t----&quot;
+a = qa.quantity(&quot;5Jy&quot;)               # make a quantity
+print a
+#{'value': 5.0, 'unit': 'Jy'}
+print qa.isquantity(a)                  # is it one?
+#True
+print qa.isquantity(&quot;5Jy&quot;)              # and this string?
+#True
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+
+ 
+   <method name="setformat" type="function">
+   <shortdescription>set format for output of numbers. 
+   (NOT IMPLEMENTED YET!)</shortdescription>
+   
+<input>
+
+     <param name="t" direction="in" type="string">
+     <description>type -coded string indicating which format
+parameter to set</description>
+     <value/>
+     </param>
+
+     <param name="v" direction="in" type="string">
+     <description>format parameter value - numeric or coded string,
+depending on format type to be set</description>
+     <value>F</value>
+     </param>
+</input>
+<returns type="bool"/>
+
+
+</method>
+
+
+
+ 
+   <method name="getformat" type="function">
+   <shortdescription>get current output format
+   (NOT IMPLEMENTED YET!)</shortdescription>
+   
+<input>
+
+     <param name="t" direction="in" type="string">
+     <description>type - coded string</description>
+     <value/>
+     </param>
+</input>
+<returns type="string"/>
+<description>
+getformat returns the current format value set for the different
+format possibilities. See the
+<link anchor="quanta:quanta.setformat.function">setformat</link> function for the
+different format type descriptions. The known types are: \\
+prec, aprec, tprec, long, lat, len, dtime, elev, auto, vel, freq,
+dop, unit.
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t getformat Ex 1 \t----&quot;
+print qa.getformat('prec')
+#6 
+#setformat is NOT IMPLEMENTED YET!
+#qa.setformat('prec', 12)	# set precision to 12 significant digits
+#T 
+#print qa.getformat('prec')                                             
+#12 
+print qa.getformat('long')
+#hms
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+
+
+
+ 
+   <method name="formxxx" type="function">
+   <shortdescription>Format a quantity using given format, allowed are hms, dms, deg, rad, +deg.
+   </shortdescription>
+   
+<input>
+
+     <param name="v" direction="in" type="any">
+        <any type="variant"/>
+     <description>value to be converted</description>
+     </param>
+
+
+     <param name="format" direction="in" type="string">
+     <description>xxx can be hms, dms, deg, rad or +deg 
+        </description>
+     <value>dms</value>
+     </param>
+
+     <param name="prec" direction="in" type="int">
+     <description>digits in fractional part of output string for dms,hms</description>
+     <value>2</value>
+     </param>
+
+     
+
+</input>
+<returns type="string"/>
+If a multi-dimensional value is given for the value $v$ in the case of {\em
+dtime}, {\em long} or {\em lat}, the returned value
+is a string vector of a length equal to last dimension. Each string has a
+number of fields equal to the number of elements in all earlier
+dimensions. If the {\em showform} is $T$, each vector element is surrounded
+by a pair of square brackets if there is more than one entry, and fields are
+separated by a ','.
+<description>
+form.xxx (xxx can be lat, long, len, vel, freq, dtime, unit) will format the
+input into a string using the global format information set by setformat().
+</description>
+<example>
+
+&quot;&quot;&quot;
+#
+print &quot;\t----\t formxxx Ex 1 \t----&quot;
+#qa.setformat('freq','cm')
+#T 
+#qa.formxxx('freq',qa.quantity('5GHz'))
+#form_xxx NOT IMPLEMENTED YET!
+#5.99584916 cm 
+print &quot;Last example, exiting! ...&quot;
+exit()
+#
+&quot;&quot;&quot;
+
+</example>
+</method>
+
+
+
+</tool>
+
+
+</casaxml>

@@ -48,6 +48,9 @@ if is_CASA6:
     def tclean_param_names():
         from casatasks.tclean import _tclean_t
         return _tclean_t.__code__.co_varnames[:_tclean_t.__code__.co_argcount]
+    def decon_param_names():
+        from casatasks.deconvolve import _deconvolve_t
+        return _deconvolve_t.__code__.co_varnames[:_deconvolve_t.__code__.co_argcount]
 
     casa6 = True
 
@@ -76,6 +79,9 @@ else:
         # alternatively could use from tasks import tclean; tclean.parameters
         from task_tclean import tclean
         return tclean.__code__.co_varnames[:tclean.__code__.co_argcount]
+    def decon_param_names():
+        from tasks import deconvolve
+        return deconvolve.parameters.keys()
 
     casa5 = True
 
@@ -720,6 +726,8 @@ class TestHelpers:
         :returns: the usual (test_imager_helper) string with success/error messages.
         Errors are marked with the tag '(Fail' as per self.verdict().
         """
+        import itertools
+
         ia_open = False
         try:
             _ia.open(imname)
@@ -733,11 +741,20 @@ class TestHelpers:
             if ia_open:
                 _ia.close()
 
+        # build up a list of parameter names (to be evaluated as necessary)
+        task_param_names = {
+            "tclean": tclean_param_names,
+            "deconvolve": decon_param_names
+        }
+
         pstr = ''
-        ncalls = sum(line.startswith('taskname=tclean') for line in history)
+        ncallsdict = {}
+        ncallsdict['tclean']     = sum(line.startswith('taskname=tclean') for line in history)
+        ncallsdict['deconvolve'] = sum(line == 'taskname=deconvolve' for line in history)
+        ncalls                   = ncallsdict['tclean'] + ncallsdict['deconvolve']
         nversions = sum(line.startswith('version:') for line in history)
         if ncalls < 1:
-            pstr += ('No calls to tclean were found in history. ({})\n'.
+            pstr += ('No calls to cleaning tasks were found in history. ({})\n'.
                      format(TestHelpers().verdict(False)))
         if nversions < 1:
             pstr += ('No CASA version was found in history. ({})\n'.
@@ -747,17 +764,53 @@ class TestHelpers:
             pstr += ('The number of taskname entries ({}) and CASA version entries ({}) do '
                      'not match. ({})\n'.format(ncalls, nversions,
                                                 TestHelpers().verdict(False)))
-        for param in tclean_param_names():
-            nparval = sum('=' in line and line.split('=')[0].strip() == param for
-                          line in history)
-            if nparval < 1:
-                pstr += ('No entries for tclean parameter {} found in history. ({})'
-                         '.'.format(param, TestHelpers().verdict(False)))
-            if nparval != ncalls:
-                pstr += ("The number of history entries for parameter '{}' ({}) and task "
-                         "calls ({}) do not match ({}).".
-                         format(param, nparval, ncalls, TestHelpers().verdict(False)))
+
+        # check parameter names for cleaning tasks
+        histories = TestHelpers().split_histories_by_task(history)
+        for tname in ['tclean', 'deconvolve']:
+            ntcalls = ncallsdict[tname]
+            if ntcalls == 0:
+                continue
+
+            # get task parameters and history to be checked
+            if tname == 'tclean':
+                tclean_keys = list(filter(lambda line: line.startswith("taskname=tclean"), histories.keys()))
+                hist = list(itertools.chain.from_iterable([histories[k] for k in tclean_keys])) # concat all tclean* histories into one long list of lines
+                pnames = tclean_param_names()
+            else:
+                hist = histories['taskname='+tname]
+                if callable(task_param_names[tname]): # lazy evaluation of parameter names, since deconvolve doesn't exist in my branch yet
+                    task_param_names[tname] = task_param_names[tname]()
+                pnames = task_param_names[tname]
+
+            # check parameters
+            for param in pnames:
+                nparval = sum('=' in line and line.split('=')[0].strip() == param for
+                              line in hist)
+                if nparval < 1:
+                    pstr += ('No entries for {} parameter {} found in history. ({})'
+                             '.'.format(tname, param, TestHelpers().verdict(False)))
+                if nparval != ntcalls:
+                    pstr += ("The number of history entries for parameter '{}' ({}) and task "
+                             "calls ({}) do not match ({}).".
+                             format(param, nparval, ntcalls, TestHelpers().verdict(False)))
         return pstr
+
+    def split_histories_by_task(self, history):
+        """
+        Given the list of strings in history, split it wherever there is a "taskname=*" line.
+        Return a dictionary where the keys are the "taskname=*" lines, and the values are all lines
+        for that taskname.
+        """
+        ret = {}
+        task_line = ""
+        for line in history:
+            if line.startswith("taskname="):
+                task_line = line
+            if task_line not in ret:
+                ret[task_line] = []
+            ret[task_line].append(line)
+        return ret
 
     def check_pix_val(self, imname, theval=0, thepos=[0, 0, 0, 0], exact=False, epsilon=0.05, testname="check_pix_val"):
         pstr = ''
@@ -893,7 +946,69 @@ class TestHelpers:
                         pstr += TestHelpers().check_ref_freq(ii[0], ii[1], epsilon=epsilon)
         return pstr
 
-    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05):
+    def get_log_length(self):
+        return os.path.getsize(casalog.logfile())
+
+    def check_logs(self, start, expected, testname="check_logs"):
+        """ Test that there are log lines that match the expected regex strings (one line per expected string). """
+        # Example usage:
+        # logstart = test_helper.get_log_length()
+        # tclean(...)
+        # report = test_helper.check_logs(logstart, expected=[ r"-+ Run Minor Cycle Iterations  -+" ])
+        import re
+
+        # read all lines from the logfile that are relevant to this test
+        lines = []
+        with open(casalog.logfile(), 'r') as f:
+            f.seek(start)
+            lines = f.readlines()
+        # casalog.post("Searching through " + str(len(lines)) + " log lines", "SEVERE") # debugging
+
+        # find expected matches
+        unmet = []
+        for i in range(len(expected)):
+            expectation = re.compile(expected[i])
+            # casalog.post("expected["+str(i)+"]: "+expected[i], "SEVERE") # debugging
+            found = -1
+            for j in range(len(lines)):
+                if (expectation.search(lines[j]) != None):
+                    found = j
+                    break
+                else:
+                    pass
+                    # casalog.post("  X: " + lines[j].rstrip(), "SEVERE") # debugging
+            if (found == -1):
+                unmet.append(expected[i])
+                # casalog.post("  expectation not met", "SEVERE") # debugging
+            else:
+                del lines[found]
+                # casalog.post("  expectation met by line: " + lines[found].rstrip(), "SEVERE") # debugging
+
+        # check that all expectations were met
+        if (len(unmet) == 0):
+            return "[ {} ]: found {} matching log lines (Pass)\n".format(testname, len(expected))
+        else:
+            return "[ {} ]: found {} out of {} matching log lines (Fail, unmet expectations: {})\n".format(testname, len(expected)-len(unmet), len(expected), ", ".join(unmet))
+
+    def check_tfmask(self, tfmask, testname="check_tfmask"):
+        pstr = ''
+        if tfmask != None:
+            if type(tfmask) == list:
+                for ii in tfmask:
+                    if type(ii) == tuple and len(ii) == 2:
+                        _ia.open(ii[0])
+                        mname = _ia.maskhandler('get')
+                        mreport = "[" + testname + "]  T/F mask name for " + ii[0] +  " is : " + str(mname)
+                        if mname==ii[1]:
+                            mreport = mreport + " ("+TestHelpers().verdict(True) +" : should be " + str(ii[1]) + ") \n"
+                        else:
+                            mreport = mreport + " ("+TestHelpers().verdict(False) +" : should be " + str(ii[1]) + ") \n"
+                        _ia.close()
+                        pstr += mreport
+            print(pstr)
+        return pstr
+
+    def checkall(self, ret=None, peakres=None, modflux=None, iterdone=None, nmajordone=None, imgexist=None, imgexistnot=None, imgval=None, imgvalexact=None, imgmask=None, tabcache=True, stopcode=None, reffreq=None, epsilon=0.05,tfmask=None):
         """
             ret=None,
             peakres=None, # a float
@@ -908,6 +1023,7 @@ class TestHelpers:
             tabcache=True,
             stopcode=None,
             reffreq=None # list of tuples of (imagename, reffreq)
+            tfmask=None # list of tuples of (imagename, maskname). 
         """
         pstr = "[ checkall ] \n"
         if ret != None and type(ret) == dict:
@@ -936,14 +1052,14 @@ class TestHelpers:
         pstr += TestHelpers().check_tabcache(tabcache)
         pstr += TestHelpers().check_stopcode(stopcode, ret)
         pstr += TestHelpers().check_reffreq(reffreq, epsilon=epsilon)
+        pstr += TestHelpers().check_tfmask(tfmask)
         return pstr
 
     def check_final(self, pstr=""):
 
-        if not isinstance(pstr, six.string_types):
-            return False
+        import re
         casalog.post(pstr, 'INFO')
-        if pstr.count("Fail") > 0:
+        if len(re.findall(r"\(.?Fail",pstr)) > 0:
             return False
         return True
         
@@ -1036,3 +1152,4 @@ class TestHelpers:
                 mergedret=ret
 
         return mergedret
+

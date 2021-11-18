@@ -134,7 +134,7 @@ using namespace casac;
 
 %typemap(in) record {
    if(PyDict_Check($input)){
-      $1 = pyobj2variant($input, true).asRecord();      
+      $1 = pyobj2variant($input, true).asRecord();
    } else {
       PyErr_SetString(PyExc_TypeError,"not a dictionary");
    }
@@ -142,7 +142,7 @@ using namespace casac;
 
 %typemap(in) record *{
    if(PyDict_Check($input)){
-      $1 = new record(pyobj2variant($input, true).asRecord());      
+      $1 = new record(pyobj2variant($input, true).asRecord());
    } else {
       PyErr_SetString(PyExc_TypeError,"not a dictionary");
    }
@@ -150,7 +150,7 @@ using namespace casac;
 
 %typemap(in) record &{
    if(PyDict_Check($input)){
-      $1 = new record(pyobj2variant($input, true).asRecord());      
+      $1 = new record(pyobj2variant($input, true).asRecord());
    } else {
       PyErr_SetString(PyExc_TypeError,"not a dictionary");
    }
@@ -222,7 +222,7 @@ using namespace casac;
    std::vector<int> shape(0);
    PyObject *mytype = PyObject_Str(PyObject_Type($input));
    //cerr << PyString_AsString(mytype) << endl;
-  
+
    if(casac::pyarray_check($input)){
       //cerr << "numpy2vec" << endl;
       casac::numpy2vector($input, *$1, shape);
@@ -375,7 +375,7 @@ using namespace casac;
       const std::string &key = (*iter).first;
       const casac::variant &val = (*iter).second;
       PyObject *v = casac::variant2pyobj(val);
-      PyDict_SetItem($result, PyString_FromString(key.c_str()), v);
+      PyDict_SetItemString($result, key.c_str(), v);
       Py_DECREF(v);
    }
 }
@@ -386,7 +386,7 @@ using namespace casac;
       const std::string &key = (*iter).first;
       const casac::variant &val = (*iter).second;
       PyObject *v = casac::variant2pyobj(val);
-      PyDict_SetItem($result, PyString_FromString(key.c_str()), v);
+      PyDict_SetItemString($result, key.c_str(), v);
       Py_DECREF(v);
    }
 }
@@ -397,7 +397,7 @@ using namespace casac;
       const std::string &key = (*iter).first;
       const casac::variant &val = (*iter).second;
       PyObject *v = casac::variant2pyobj(val);
-      PyDict_SetItem($result, PyString_FromString(key.c_str()), v);
+      PyDict_SetItemString($result, key.c_str(), v);
       Py_DECREF(v);
    }
 }
@@ -408,7 +408,7 @@ using namespace casac;
       const std::string &key = (*iter).first;
       const casac::variant &val = (*iter).second;
       PyObject *v = casac::variant2pyobj(val);
-      PyDict_SetItem(o, PyString_FromString(key.c_str()), v);
+      PyDict_SetItemString(o, key.c_str(), v);
       Py_DECREF(v);
    }
    if((!$result) || ($result == Py_None)){
