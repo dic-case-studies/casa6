@@ -638,10 +638,7 @@ visibilities for flagging
                      average (WEIGHT_SPECTRUM for CORRECTED_DATA and
                      SIGMA_SPECTRUM for DATA).
 
-                     NOTE 1: Pre-average across channels is not
-                     supported in list mode.
-
-                     NOTE 2: Pre-average across channels is not
+                     NOTE: Pre-average across channels is not
                      supported for calibration tables 
 </description>
                 <type>bool</type><type>boolVec</type>
@@ -686,10 +683,7 @@ visibilities for flagging.
                      are used to average together data from different
                      integrations.
 
-                     NOTE 1: Pre-average across time is not
-                     supported in list mode.
-
-                     NOTE 2: Pre-average across time is not
+                     NOTE: Pre-average across time is not
                      supported for calibration tables 
 </description>
                 <type>bool</type><type>boolVec</type>
