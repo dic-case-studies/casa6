@@ -997,14 +997,14 @@ class test_mms_input(test_base):
 
     def test_timespan_scan_sel(self):
         '''mstransform: using scan selection, timeaverage=True, timespan=scan. CAS-13646'''
-        self.createMMS(self.vis, axis='auto', spws='7,9,11,13')
+        self.createMMS(self.vis, axis='spw', spws='7,9,11,13')
         self.outputms = "mstransform_scan_sel_timeavg_timespanscan.mms"
         mstransform(vis=self.testmms, outputvis=self.outputms, datacolumn='data',
                     scan='30,31',
                     timeaverage=True, timebin='120s', timespan='scan')
         self.assertTrue(ParallelDataHelper.isParallelMS(self.outputms),
                         'Output should be an MMS')
-        self.assertEqual(ph.axisType(self.outputms),'scan,spw')
+        self.assertEqual(ph.axisType(self.outputms),'spw')
 
         # msmdt = msmetadata()
         try:
@@ -1013,8 +1013,8 @@ class test_mms_input(test_base):
             t31 = msmdt.exposuretime(31)['value']
         finally:
             msmdt.close()
-        self.assertEqual(t30, 89)
-        self.assertEqual(t31, 90)
+        self.assertEqual(t30, 120)
+        self.assertEqual(t31, 59)
 
     def test_combspws_timespan_error(self):
         '''mstransform: combinespws=True, timespan=scan axis=auto timebin=40s'''
