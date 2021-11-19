@@ -4985,7 +4985,7 @@ class test_list_modes_forbidden_with_avg(test_base):
         res = flagdata(vis=self.vis, mode='summary')
         print('res: {}'.format(res))
         self.assertEqual(res['total'], 4399104)
-        self.assertEqual(res['flagged'], 254912)
+        self.assertEqual(res['flagged'], 591808)
 
 
 @unittest.skipIf(True,
