@@ -91,6 +91,41 @@ class uvcontsub2021_test(unittest.TestCase):
     def _check_return(self, res):
         self.assertEqual(res, {})
 
+    def _check_data_stats(self, vis, exp_mean, exp_median, exp_min, exp_max,
+                          col_name='DATA'):
+        """
+        WIP - check basic stats of data column, for now just to prevent uninteded changes
+        """
+        tbt = table()
+        try:
+            tbt.open(vis)
+            col = tbt.getcol(col_name)
+
+            nans = np.isnan(np.sum(col))
+            self.assertFalse(nans)
+            # ALMA test datasets have large numbers of 0s
+            # zeros_count = np.count_nonzero(col==0)
+            # self.assertEqual(0, zeros_count)
+            places = 5
+            if exp_mean is not None:
+                dmean = np.mean(col)
+                print('Mean: {}'.format(dmean))
+                self.assertAlmostEqual(dmean, exp_mean, places=places)
+            if exp_median is not None:
+                dmedian = np.median(col)
+                print('Median: {}'.format(dmedian))
+                self.assertAlmostEqual(dmedian, exp_median, places=places)
+            if exp_min is not None:
+                dmin = col.min()
+                print('Min: {}'.format(dmin))
+                self.assertAlmostEqual(dmin, exp_min, places=places)
+            if exp_max is not None:
+                dmax = col.max()
+                print('Max: {}'.format(dmax))
+                self.assertAlmostEqual(dmax, exp_max, places=places)
+        finally:
+            tbt.done()
+
     def test_makes_output_ms_data(self):
         """
         Check that in a simple command the input MS is taken and an output MS
@@ -101,6 +136,7 @@ class uvcontsub2021_test(unittest.TestCase):
         self._check_return(res)
         self.assertTrue(os.path.exists(self.output))
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
         # check also no-overwrite of existing MS
         with self.assertRaises(ValueError):
@@ -164,6 +200,7 @@ class uvcontsub2021_test(unittest.TestCase):
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='DATA')
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
         # TODO need a 'datacolumn' test using CORRECTED - use another ms_alma or someth else
 
     def test_fitspw_empty(self):
@@ -173,6 +210,7 @@ class uvcontsub2021_test(unittest.TestCase):
         self._check_return(res)
         # TODO: better checks and most likely a better input ms (prob ~pl-unittest)
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
     def test_fitspw_spws(self):
         """Check that fitspw works. When selecting some SPWs, fit all channels
@@ -181,6 +219,7 @@ class uvcontsub2021_test(unittest.TestCase):
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='0')
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
     def test_fitspw_channels(self):
         """Check that fitspw works. When selecting some channels in some SPWs,
@@ -189,6 +228,8 @@ class uvcontsub2021_test(unittest.TestCase):
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='0:5~19')
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, (-18.5249996-7.05000019j),
+                               (-19.7999992-13j), (-68-17.6000004j), (28+26.3999996j))
 
     def test_fitspw_multifield(self):
         """Check that fitspw works. Different fitspw strings for different fields
@@ -202,6 +243,8 @@ class uvcontsub2021_test(unittest.TestCase):
                             ])
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 1080)
+        self._check_data_stats(self.output, (-0.0123391838-6.38635834e-06j),
+                               0, (-0.655234873+0j), (2.09603309+0j))
 
     def test_fitspw_multifield_blocks(self):
         """Check that fitspw works. Different fitspw strings for different fields
@@ -214,7 +257,8 @@ class uvcontsub2021_test(unittest.TestCase):
                             ])
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 1080)
-
+        self._check_data_stats(self.output, (-0.0123391838-6.38635834e-06j),
+                               0, (-0.655234873+0j), (2.09603309+0j))
 
     def test_fitspw_multifield_wrong_field(self):
         """Check that wrong fitspw lists produce an exception"""
@@ -291,12 +335,16 @@ class uvcontsub2021_test(unittest.TestCase):
                                fitspw='0:100~500;600~910;1215~1678;1810~1903')
         self._check_return(res_f1)
         self._check_rows(self.output, 'DATA', 360)
+        self._check_data_stats(self.output, (-0.013026415-2.0328553e-05j),
+                               0j, (-0.633247495+0j), (2.01062560+0j))
 
         shutil.rmtree(self.output)
         res_f2 = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='2',
                                fitspw='0:100~1303')
         self._check_return(res_f2)
         self._check_rows(self.output, 'DATA', 120)
+        self._check_data_stats(self.output, (-0.0140258259+5.83529241e-06j),
+                               0j, (-0.588652134+0j), (1.83768487+0j))
 
     def test_fitspw_spws_sel(self):
         """Check the use of spw selection and fitspw together"""
@@ -304,6 +352,7 @@ class uvcontsub2021_test(unittest.TestCase):
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, spw='0', fitspw='0')
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
     def test_fitspw_spws_sel_wrong(self):
         """Check that if the spw selection and fitspw are not compatible, an exception
@@ -320,6 +369,7 @@ class uvcontsub2021_test(unittest.TestCase):
         self._check_return(res)
         # TODO: better checks / but overlaps with numerical tests
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
     def test_fitmethod_casacore(self):
         """Check that methods work - casacore"""
@@ -328,6 +378,7 @@ class uvcontsub2021_test(unittest.TestCase):
         self._check_return(res)
         # TODO: better checks / but overlaps with numerical tests
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
     def test_fitorder1(self):
         """ Check different fit orders (0, 1, 2) work (like example 1 from task page)"""
