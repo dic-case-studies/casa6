@@ -67,10 +67,6 @@ import unittest
 from casatools import image
 from casatools import linearmosaic
  
-# Example of importing helper functions
-from casatestutils import testhelper as th
-from casatestutils.imagerhelpers import TestHelpers
- 
 from casatools import ctsys
 
 ####    Tests     ####
@@ -153,7 +149,7 @@ class TestTask(unittest.TestCase):
         # the sault image value should be the same as the image value
         # possibly AlmostEqual should be used here eventually, but at the
         # moment they are identical.
-        self.assertEquals(fn_image_val, sw_image_val)
+        self.assertEqual(fn_image_val, sw_image_val)
 
     def test_flat_noise_flat_sky_input(self):
         '''test_flat_noise_flat_sky_input (flat noise type with flat sky input)'''
@@ -180,7 +176,7 @@ class TestTask(unittest.TestCase):
         # the sault image value should be the same as the image value
         # possibly AlmostEqual should be used here eventually, but at the
         # moment they are identical.
-        self.assertEquals(fn_image_val, sw_image_val)
+        self.assertEqual(fn_image_val, sw_image_val)
 
     def test_flat_sky(self):
         '''test_flat_sky (flat sky type with flat noise input'''
@@ -207,7 +203,7 @@ class TestTask(unittest.TestCase):
         # the sault image value should be the same as the image value
         # possibly AlmostEqual should be used here eventually, but at the
         # moment they are identical.
-        self.assertEquals(fn_image_val, sw_image_val)
+        self.assertEqual(fn_image_val, sw_image_val)
  
     def test_flat_sky_flat_sky_input(self):
         '''test_flat_sky_flat_sky_input (flat sky type with flat sky inputs)'''
@@ -235,7 +231,7 @@ class TestTask(unittest.TestCase):
         # the sault image value should be the same as the image value
         # possibly AlmostEqual should be used here eventually, but at the
         # moment they are identical.
-        self.assertEquals(fn_image_val, sw_image_val)
+        self.assertEqual(fn_image_val, sw_image_val)
  
     def test_flat_sky_existing_image(self):
         '''test_flat_sky_existing image (flat sky type onto an existing image)'''
@@ -267,7 +263,7 @@ class TestTask(unittest.TestCase):
         # the sault image value should be the same as the image value
         # possibly AlmostEqual should be used here eventually, but at the
         # moment they are identical.
-        self.assertEquals(fn_image_val, sw_image_val)
+        self.assertEqual(fn_image_val, sw_image_val)
  
 ####    Suite: Required for CASA5     ####
 def suite():
