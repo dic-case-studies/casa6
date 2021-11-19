@@ -229,6 +229,22 @@ TEST_F( SimpleSimVi2Test , SimpleSimVi2_Trivial ) {
 
   SimpleSimVi2Factory s0f(s0);
   std::unique_ptr<VisibilityIterator2> vi (new VisibilityIterator2(s0f));
+
+
+  int frame=vi->getImpl()->getReportingFrameOfReference();
+  //  cout << "frame = " << frame << endl;
+  EXPECT_EQ(-2,frame);
+
+  Vector<Double> freqs=vi->getImpl()->getFrequencies(-1,frame,0,0);
+  //cout.precision(15);
+  //cout << "freqs  = " << freqs << endl;
+  EXPECT_EQ(100000500000.,freqs[0]);
+  
+  Vector<Double> widths=vi->getImpl()->getChanWidths(-1,frame,0,0);
+  //  cout << "widths = " << widths << endl;
+  EXPECT_EQ(1000000.,widths[0]);
+
+
   VisBuffer2 *vb = vi->getImpl()->getVisBuffer();
 
   vi->originChunks();
@@ -279,6 +295,21 @@ TEST_F( SimpleSimVi2Test , SimpleSimVi2_Trivial ) {
 TEST_F( SimpleSimVi2Test , SimpleSimVi2_NonTrivial1 ) {
   SimpleSimVi2Factory s1f(s1);
   std::unique_ptr<VisibilityIterator2> vi (new VisibilityIterator2(s1f));
+
+
+  int frame=vi->getImpl()->getReportingFrameOfReference();
+  //  cout << "frame = " << frame << endl;
+  EXPECT_EQ(-2,frame);
+
+  Vector<Double> freqs=vi->getImpl()->getFrequencies(-1,frame,0,0);
+  //cout.precision(20);
+  //cout << "freqs  = " << freqs << endl;
+  EXPECT_EQ(FREQ+DF/2,freqs[0]);
+
+  Vector<Double> widths=vi->getImpl()->getChanWidths(-1,frame,0,0);
+  //cout << "widths = " << widths << endl;
+  EXPECT_EQ(DF,widths[0]);
+
   VisBuffer2 *vb = vi->getImpl()->getVisBuffer();
 
   vi->originChunks();
