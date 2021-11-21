@@ -4426,9 +4426,6 @@ class test_flags_propagation_base(test_base):
         return flag_cnt_and == flag_cnt_before
 
 
-@unittest.skipIf(False,
-                 "These tests were added in CAS-12737. Not clear what would be the right"
-                 "place for them.")
 class test_flags_propagation_channelavg(test_flags_propagation_base):
     """
     Tests on the number and positions of flags when using
@@ -4595,9 +4592,6 @@ class test_flags_propagation_channelavg(test_flags_propagation_base):
                         'Not all the flags set "before" are set "after"')
 
 
-@unittest.skipIf(False,
-                 "These tests were added in CAS-12737. Not clear what would be the right"
-                 "place for them.")
 class test_flags_propagation_timeavg(test_flags_propagation_base):
     """
     Tests on the number and positions of flags when using
@@ -4983,7 +4977,6 @@ class test_list_modes_forbidden_with_avg(test_base):
         self.assertEqual(res, {})
         # The return from listmode is not enough to know. Let's see if there are flags
         res = flagdata(vis=self.vis, mode='summary')
-        print('res: {}'.format(res))
         self.assertEqual(res['total'], 4399104)
         self.assertEqual(res['flagged'], 591808)
 
