@@ -1405,5 +1405,6 @@ def suite():
             test_no_reindexing,
             Cleanup]
 
+
 if __name__ == '__main__':
     unittest.main()
