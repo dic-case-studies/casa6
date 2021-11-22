@@ -45,7 +45,7 @@ def uvcontsub2021(vis=None, outputvis=None, field=None, spw=None,
             raise ValueError(f'Unrecognized fit method: {fitmethod}')
         uvcont_cfg = {'fitspw': fitspw,
                       'denoising_lib': denoising_lib,
-                      'niter': 0,
+                      'niter': 1,
                       'fitorder': fitorder,
                       'writemodel': writemodel,
                       'want_cont': False,
