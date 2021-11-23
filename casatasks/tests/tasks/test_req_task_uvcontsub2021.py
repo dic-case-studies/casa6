@@ -92,7 +92,7 @@ class uvcontsub2021_test(unittest.TestCase):
         self.assertEqual(res, {})
 
     def _check_data_stats(self, vis, exp_mean, exp_median, exp_min, exp_max,
-                          col_name='DATA'):
+                          col_name='DATA', places=5):
         """
         WIP - check basic stats of data column, for now just to prevent uninteded changes
         """
@@ -106,22 +106,17 @@ class uvcontsub2021_test(unittest.TestCase):
             # ALMA test datasets have large numbers of 0s
             # zeros_count = np.count_nonzero(col==0)
             # self.assertEqual(0, zeros_count)
-            places = 5
             if exp_mean is not None:
                 dmean = np.mean(col)
-                print('Mean: {}'.format(dmean))
                 self.assertAlmostEqual(dmean, exp_mean, places=places)
             if exp_median is not None:
                 dmedian = np.median(col)
-                print('Median: {}'.format(dmedian))
                 self.assertAlmostEqual(dmedian, exp_median, places=places)
             if exp_min is not None:
                 dmin = col.min()
-                print('Min: {}'.format(dmin))
                 self.assertAlmostEqual(dmin, exp_min, places=places)
             if exp_max is not None:
                 dmax = col.max()
-                print('Max: {}'.format(dmax))
                 self.assertAlmostEqual(dmax, exp_max, places=places)
         finally:
             tbt.done()
@@ -237,28 +232,42 @@ class uvcontsub2021_test(unittest.TestCase):
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
                             fitspw=[
+                                ['0', '0:100~500;600~910;1215~1678;1810~1903'],
                                 ['1', 'NONE'],
-                                ['2', '0:100~500;600~910;1215~1678;1810~1903'],
-                                ['3', '0:100~1903']
+                                ['2', '0:100~1903']
                             ])
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 1080)
-        self._check_data_stats(self.output, (-0.0123391838-6.38635834e-06j),
-                               0, (-0.655234873+0j), (2.09603309+0j))
+        self._check_data_stats(self.output, (0.0286860488-2.65735951e-06j), 0j,
+                               (-0.655080259+0j), (2.09603309+0j))
 
     def test_fitspw_multifield_blocks(self):
         """Check that fitspw works. Different fitspw strings for different fields
         but giving list of fields for a same fitspw"""
 
+        # Give some fields grouped
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
                             fitspw=[
-                                ['1, 2', '0:100~500;600~910;1215~1678;1810~1903'],
-                                ['3', '0:100~1903']
+                                ['0, 1', '0:100~500;600~900;1200~1900'],
+                                ['2', '0:100~1903']
                             ])
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 1080)
-        self._check_data_stats(self.output, (-0.0123391838-6.38635834e-06j),
-                               0, (-0.655234873+0j), (2.09603309+0j))
+        expected_vals = [(-0.0125788084-5.98476360e-06j), 0j,
+                         (-0.664994299+0j), (2.09603309+0j)]
+        self._check_data_stats(self.output, *expected_vals)
+
+        # Giving the fields one at a time should be equivalent
+        shutil.rmtree(self.output)
+        res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                            fitspw=[
+                                ['0', '0:100~500;600~900;1200~1900'],
+                                ['1', '0:100~500;600~900;1200~1900'],
+                                ['2', '0:100~1903']
+                            ])
+        self._check_return(res)
+        self._check_rows(self.output, 'DATA', 1080)
+        self._check_data_stats(self.output, *expected_vals)
 
     def test_fitspw_multifield_wrong_field(self):
         """Check that wrong fitspw lists produce an exception"""
@@ -387,6 +396,9 @@ class uvcontsub2021_test(unittest.TestCase):
                             fitspw='0:2~20')
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, (-8.56096448-3.18684196j),
+                               (-4.05263185-2.67017555j), (-60.7157898-9.26315689j),
+                               (45.24561309+28.1754398j))
 
     def test_fitorder2(self):
         """ Check different fit orders (0, 1, 2) work"""
@@ -395,6 +407,9 @@ class uvcontsub2021_test(unittest.TestCase):
                             fitspw='0:2~20')
         self._check_return(res)
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, (8.891941398+3.44454119j),
+                               (2.90232849+1.83334923j), (-42.0941238-14.0698833j),
+                               (92.6959686+31.4091110j))
 
     def test_writemodel(self):
         """ Check the model column is added to the output MS and its values match
