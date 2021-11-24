@@ -24,10 +24,10 @@ def callabletask_decorator(func):
     def wrapper(*args, **kwargs):
 
         caller = func.__name__
-        if '__taskcaller__' in kwargs:
-            caller = kwargs['__taskcaller__']
+        if '__taskcaller' in kwargs:
+            caller = kwargs['__taskcaller']
             casalog.origin(caller)
-            del(kwargs['__taskcaller__'])
+            del(kwargs['__taskcaller'])
         else:
             casalog.origin(caller)
 
@@ -45,7 +45,7 @@ def callabletask_decorator(func):
             raise
         finally:
             if caller != func.__name__:
-                kwargs['__taskcaller__'] = caller
+                kwargs['__taskcaller'] = caller
         return retval
     return wrapper
 
