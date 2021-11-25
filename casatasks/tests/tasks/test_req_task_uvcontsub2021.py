@@ -217,6 +217,15 @@ class uvcontsub2021_test(unittest.TestCase):
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
+    def test_fitspw_spw_one_chan(self):
+        """Check fitspw when selecting one spw with 1 channel (perfect fit if order 0)"""
+
+        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='0', fitspw='1')
+        self._check_return(res)
+        self._check_rows(self.output, 'DATA', 600)
+        self._check_data_stats(self.output, (0.115759703+7.48776972e-08j), 0j,
+                               (-0.00129960873+0.000193971457j), (1.41059673+0j))
+
     def test_fitspw_channels(self):
         """Check that fitspw works. When selecting some channels in some SPWs,
         fit those channels in those SPWs (like example 2 from task page)"""
