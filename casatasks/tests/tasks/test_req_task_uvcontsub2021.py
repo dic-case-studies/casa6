@@ -36,6 +36,7 @@ datadir = os.path.join('unittest', 'uvcontsub')
 ms_simple = 'known0.ms'
 datapath_simple = ctsys.resolve(os.path.join(datadir, ms_simple))
 
+# SPW 1 of this dataset has 1 channel
 ms_alma = 'uid___X02_X3d737_X1_01_small.ms'
 datapath_alma = ctsys.resolve(os.path.join('measurementset', 'alma', ms_alma))
 
