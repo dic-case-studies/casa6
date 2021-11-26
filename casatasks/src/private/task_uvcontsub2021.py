@@ -62,7 +62,7 @@ def uvcontsub2021(vis=None, outputvis=None, field=None, spw=None,
 
         # Run the tool
         casalog.post('Running continnum subtraction')
-        result = mtlocal.run()
+        mt_result = mtlocal.run()
         mtlocal.done()
 
     finally:
@@ -81,4 +81,4 @@ def uvcontsub2021(vis=None, outputvis=None, field=None, spw=None,
     finally:
         mslocal.done()
 
-    return result
+    return mt_result['uvcontsub']
