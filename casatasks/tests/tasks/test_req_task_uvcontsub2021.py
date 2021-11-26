@@ -89,8 +89,14 @@ class uvcontsub2021_test(unittest.TestCase):
         finally:
             tbt.done()
 
-    def _check_return(self, res):
-        self.assertEqual(res, {})
+    def _check_return(self, res, fields=None):
+        self.assertTrue('comment' in res)
+        self.assertTrue('goodness_of_fit' in res)
+        self.assertTrue('field' in res['goodness_of_fit'])
+        gof_field = res['goodness_of_fit']['field']
+        if fields:
+            for fid in fields:
+                self.assertTrue(str(fid) in gof_field)
 
     def _check_data_stats(self, vis, exp_mean, exp_median, exp_min, exp_max,
                           col_name='DATA', places=5):
@@ -246,7 +252,7 @@ class uvcontsub2021_test(unittest.TestCase):
                                 ['1', 'NONE'],
                                 ['2', '0:100~1903']
                             ])
-        self._check_return(res)
+        self._check_return(res, fields=[0,2])
         self._check_rows(self.output, 'DATA', 1080)
         self._check_data_stats(self.output, (0.0286860488-2.65735951e-06j), 0j,
                                (-0.655080259+0j), (2.09603309+0j))
