@@ -90,13 +90,36 @@ class uvcontsub2021_test(unittest.TestCase):
             tbt.done()
 
     def _check_return(self, res, fields=None):
-        self.assertTrue('comment' in res)
+        import pprint
+        verbose = False
+        if verbose:
+            pprint.pprint(res)
+
+        self.assertTrue('description' in res)
         self.assertTrue('goodness_of_fit' in res)
         self.assertTrue('field' in res['goodness_of_fit'])
         gof_field = res['goodness_of_fit']['field']
         if fields:
             for fid in fields:
                 self.assertTrue(str(fid) in gof_field)
+
+        for fid in gof_field:
+            self.assertTrue('scan' in gof_field[fid])
+            scans = gof_field[fid]['scan']
+            for sid in scans:
+                self.assertTrue('spw' in scans[sid])
+                spws = scans[sid]['spw']
+                for spw_id in spws:
+                    self.assertTrue('polarization' in spws[spw_id])
+                    pols = spws[spw_id]['polarization']
+                    for pid in pols:
+                        self.assertTrue('chi_squared') in pols[pid]
+                        stats = pols[pid]['chi_squared']
+                        for metric in ['average', 'min', 'max']:
+                            self.assertTrue(metric in stats)
+                            self.assertEqual(stats[metric].keys(), {'real', 'imag'})
+                            self.assertGreaterEqual(stats[metric]['real'], 0)
+                            self.assertGreaterEqual(stats[metric]['imag'], 0)
 
     def _check_data_stats(self, vis, exp_mean, exp_median, exp_min, exp_max,
                           col_name='DATA', places=5):
@@ -125,6 +148,10 @@ class uvcontsub2021_test(unittest.TestCase):
             if exp_max is not None:
                 dmax = col.max()
                 self.assertAlmostEqual(dmax, exp_max, places=places)
+
+            verbose = False
+            if verbose:
+                print(f'Mean, median, min, max: {dmean} {dmedian} {dmin} {dmax}')
         finally:
             tbt.done()
 
@@ -135,7 +162,7 @@ class uvcontsub2021_test(unittest.TestCase):
         """
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output)
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self.assertTrue(os.path.exists(self.output))
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
@@ -148,42 +175,42 @@ class uvcontsub2021_test(unittest.TestCase):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='2')
-        self._check_return(res)
+        self._check_return(res, fields=[2])
         self._check_rows(self.output, 'FIELD_ID', 120, 2)
 
     def test_select_spw(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, spw='1')
-        self._check_return(res)
+        self._check_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'DATA_DESC_ID', 810, 1)
 
     def test_select_scan(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, scan='2')
-        self._check_return(res)
+        self._check_return(res, fields=[1])
         self._check_rows(self.output, 'SCAN_NUMBER', 360, 2)
 
     def test_select_intent(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, intent='*AMPLI*')
-        self._check_return(res)
+        self._check_return(res, fields=[1])  # fields 0,2 excluded by intent selection
         self._check_rows(self.output, 'SCAN_NUMBER', 360, 2)
 
     def test_select_array(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, array='0')
-        self._check_return(res)
+        self._check_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'ARRAY_ID', 1080, 0)
 
     def test_select_observation(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, observation='0')
-        self._check_return(res)
+        self._check_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'OBSERVATION_ID', 1080, 0)
 
     def test_datacolumn(self):
@@ -200,7 +227,7 @@ class uvcontsub2021_test(unittest.TestCase):
             res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='bogus')
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='DATA')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
         # TODO need a 'datacolumn' test using CORRECTED - use another ms_alma or someth else
@@ -209,7 +236,7 @@ class uvcontsub2021_test(unittest.TestCase):
         """Check that fitspw works. When empty, fit all channels in all SPWs"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         # TODO: better checks and most likely a better input ms (prob ~pl-unittest)
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
@@ -219,7 +246,7 @@ class uvcontsub2021_test(unittest.TestCase):
         in those SPWs"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='0')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
@@ -227,7 +254,7 @@ class uvcontsub2021_test(unittest.TestCase):
         """Check fitspw when selecting one spw with 1 channel (perfect fit if order 0)"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='0', fitspw='1')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 600)
         self._check_data_stats(self.output, (0.115759703+7.48776972e-08j), 0j,
                                (-0.00129960873+0.000193971457j), (1.41059673+0j))
@@ -237,7 +264,7 @@ class uvcontsub2021_test(unittest.TestCase):
         fit those channels in those SPWs (like example 2 from task page)"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='0:5~19')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, (-18.5249996-7.05000019j),
                                (-19.7999992-13j), (-68-17.6000004j), (28+26.3999996j))
@@ -252,7 +279,7 @@ class uvcontsub2021_test(unittest.TestCase):
                                 ['1', 'NONE'],
                                 ['2', '0:100~1903']
                             ])
-        self._check_return(res, fields=[0,2])
+        self._check_return(res, fields=[0, 2])
         self._check_rows(self.output, 'DATA', 1080)
         self._check_data_stats(self.output, (0.0286860488-2.65735951e-06j), 0j,
                                (-0.655080259+0j), (2.09603309+0j))
@@ -267,7 +294,7 @@ class uvcontsub2021_test(unittest.TestCase):
                                 ['0, 1', '0:100~500;600~900;1200~1900'],
                                 ['2', '0:100~1903']
                             ])
-        self._check_return(res)
+        self._check_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'DATA', 1080)
         expected_vals = [(-0.0125788084-5.98476360e-06j), 0j,
                          (-0.664994299+0j), (2.09603309+0j)]
@@ -281,7 +308,7 @@ class uvcontsub2021_test(unittest.TestCase):
                                 ['1', '0:100~500;600~900;1200~1900'],
                                 ['2', '0:100~1903']
                             ])
-        self._check_return(res)
+        self._check_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'DATA', 1080)
         self._check_data_stats(self.output, *expected_vals)
 
@@ -358,7 +385,7 @@ class uvcontsub2021_test(unittest.TestCase):
 
         res_f1 = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='1',
                                fitspw='0:100~500;600~910;1215~1678;1810~1903')
-        self._check_return(res_f1)
+        self._check_return(res_f1, fields=[1])
         self._check_rows(self.output, 'DATA', 360)
         self._check_data_stats(self.output, (-0.013026415-2.0328553e-05j),
                                0j, (-0.633247495+0j), (2.01062560+0j))
@@ -366,7 +393,7 @@ class uvcontsub2021_test(unittest.TestCase):
         shutil.rmtree(self.output)
         res_f2 = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='2',
                                fitspw='0:100~1303')
-        self._check_return(res_f2)
+        self._check_return(res_f2, fields=[2])
         self._check_rows(self.output, 'DATA', 120)
         self._check_data_stats(self.output, (-0.0140258259+5.83529241e-06j),
                                0j, (-0.588652134+0j), (1.83768487+0j))
@@ -375,7 +402,7 @@ class uvcontsub2021_test(unittest.TestCase):
         """Check the use of spw selection and fitspw together"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, spw='0', fitspw='0')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
@@ -391,7 +418,7 @@ class uvcontsub2021_test(unittest.TestCase):
         """Check that methods work - gsl"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitmethod='gsl')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         # TODO: better checks / but overlaps with numerical tests
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
@@ -400,7 +427,7 @@ class uvcontsub2021_test(unittest.TestCase):
         """Check that methods work - casacore"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitmethod='casacore')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         # TODO: better checks / but overlaps with numerical tests
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
@@ -410,7 +437,7 @@ class uvcontsub2021_test(unittest.TestCase):
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=1,
                             fitspw='0:2~20')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, (-8.56096448-3.18684196j),
                                (-4.05263185-2.67017555j), (-60.7157898-9.26315689j),
@@ -421,7 +448,7 @@ class uvcontsub2021_test(unittest.TestCase):
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=2,
                             fitspw='0:2~20')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, (8.891941398+3.44454119j),
                                (2.90232849+1.83334923j), (-42.0941238-14.0698833j),
@@ -432,7 +459,7 @@ class uvcontsub2021_test(unittest.TestCase):
         (like example 5 from task page)"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, writemodel=True)
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         # TODO: get model column, check input/DATA ~= output/DATA+MODEL
         with self.assertRaises(RuntimeError):
             self._check_rows(self.output, 'MODEL_DATA', 340)
