@@ -1,64 +1,60 @@
-from __future__ import absolute_import
-import sys
-import unittest
+##########################################################################
+# test_mstransform_mms.py
+#
+# Copyright (C) 2016
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# You should have received a copy of the GNU Library General Public License
+# along with this library; if not, write to the Free Software Foundation,
+# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+#
+# Correspondence concerning AIPS++ should be adressed as follows:
+#        Internet email: aips2-request@nrao.edu.
+#        Postal address: AIPS++ Project Office
+#                        National Radio Astronomy Observatory
+#                        520 Edgemont Road
+#                        Charlottesville, VA 22903-2475 USA
+#
+# Test script for the CASA mstransform task when using the Multi-MS (MMS),
+#
+###########################################################################
+
 import os
+import unittest
 
 from casatestutils import testhelper as th
-#from casa5.gcwrap.python.scripts.casapy import false
 
-CASA6 = False
 has_mpi = False
-try:
-    from casatools import ctsys, ms, table, msmetadata, agentflagger
-    from casatasks import mstransform, cvel, flagdata, listpartition, listobs, partition, casalog
-    from casatasks.private import partitionhelper as ph
-    sys.path.append(os.path.abspath(os.path.dirname(__file__))) # May be needed for recipes.listshapes
-    from recipes.listshapes import listshapes
+from casatools import ctsys, ms, table, msmetadata, agentflagger
+from casatasks import mstransform, cvel, flagdata, listpartition, listobs, partition, casalog
+from casatasks.private import partitionhelper as ph
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
 
-    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-    from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
-    CASA6 = True
+aflocal = agentflagger()
+msmdt = msmetadata()
+mslocal = ms()
+tblocal = table()
 
-    # CASA6 doesn't need default(), and casatasks doesn't have default()
-    def default(atask):
-        pass
-
-    aflocal = agentflagger()
-    msmdt = msmetadata()
-    mslocal = ms()
-    tblocal = table()
-
-    datapath = ctsys.resolve('unittest/mstransform/')
-
-except ImportError:
-    from tasks import mstransform, partition, flagdata, cvel, listobs, listpartition
-    from taskinit import mstool, tbtool, msmdtool, aftool
-    from __main__ import default
-
-    import partitionhelper as ph
-    from recipes.listshapes import listshapes
-
-    from parallel.parallel_task_helper import ParallelTaskHelper
-    from parallel.parallel_data_helper import ParallelDataHelper
-    from mpi4casa.MPICommandClient import MPICommandClient
-    from mpi4casa.MPIEnvironment import MPIEnvironment
-    has_mpi = True
-
-    aflocal = aftool()
-    tblocal = tbtool()
-    mslocal = mstool()
-    msmdt = msmdtool()
-    datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/mstransform/"
-
+datapath = ctsys.resolve('unittest/mstransform/')
 
 # Safeguarding when running the test in macOS
-if CASA6:
-    try:
-        from casampi.MPIEnvironment import MPIEnvironment
-        from casampi.MPICommandClient import MPICommandClient
-        has_mpi = True
-    except:
-        casalog.post('casampi is not available. Running in serial', 'WARN')
+try:
+    from casampi.MPIEnvironment import MPIEnvironment
+    from casampi.MPICommandClient import MPICommandClient
+    has_mpi = True
+except:
+    casalog.post('casampi is not available. Running in serial', 'WARN')
 
 
 # Base class which defines setUp functions
@@ -73,7 +69,6 @@ class test_base(unittest.TestCase):
             self.cleanup()
 
         os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
-        default(mstransform)
 
     def setUp_jupiter(self):
         # data col, spw=0,1 1 channel each, TOPO, field=0~12, 93 scans
@@ -82,7 +77,6 @@ class test_base(unittest.TestCase):
             self.cleanup()
 
         os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
-        default(mstransform)
 
     def setUp_g19(self):
         # data with spw=0~23 128 channel each in LSRK, field=0,1
@@ -91,7 +85,6 @@ class test_base(unittest.TestCase):
             self.cleanup()
 
         os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
-        default(mstransform)
 
     def setUp_3c84(self):
         # MS is as follows (scan=1):
@@ -106,7 +99,6 @@ class test_base(unittest.TestCase):
             self.cleanup()
 
         os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
-        default(mstransform)
 
     def setUp_CAS_5013(self):
 
@@ -115,7 +107,6 @@ class test_base(unittest.TestCase):
             self.cleanup()
 
         os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
-        default(mstransform)
 
     def setUp_CAS_6733(self):
 
@@ -124,7 +115,6 @@ class test_base(unittest.TestCase):
             self.cleanup()
 
         os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
-        default(mstransform)
 
     def setUp_CAS_6941(self):
 
@@ -133,7 +123,6 @@ class test_base(unittest.TestCase):
             self.cleanup()
 
         os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
-        default(mstransform)
 
     def setUp_sub_tables_alma(self):
 
@@ -142,17 +131,15 @@ class test_base(unittest.TestCase):
             self.cleanup()
 
         os.system('cp -RH '+datapath + self.vis +' '+ self.vis)
-        default(mstransform)
 
     def createMMS(self, msfile, axis='auto',scans='',spws='', numms='auto'):
-        '''Create MMSs for tests with input MMS'''
+        """Create MMSs for tests with input MMS"""
         prefix = msfile.rstrip('.ms')
         if not os.path.exists(msfile):
             os.system('cp -RH '+datapath + msfile +' '+ msfile)
 
         # Create an MMS for the tests
         self.testmms = prefix + ".test.mms"
-        default(mstransform)
 
         if os.path.exists(self.testmms):
             os.system("rm -rf " + self.testmms)
@@ -160,7 +147,6 @@ class test_base(unittest.TestCase):
         print("................. Creating test MMS ..................")
         mstransform(vis=msfile, outputvis=self.testmms, datacolumn='data',
                     createmms=True,separationaxis=axis, scan=scans, spw=spws, numsubms=numms)
-
 
     def cleanup(self):
         os.system('rm -rf '+ self.vis)
@@ -199,7 +185,6 @@ class test_base_compare(test_base):
     def generate_tolerance_map(self):
 
         # Get column names
-        # mytb = tbtool()
         tblocal.open(self.refvis)
         self.columns = tblocal.colnames()
         tblocal.close()
@@ -246,18 +231,18 @@ class test_base_compare(test_base):
 
 
 class test_mms_transformations(test_base):
-    ''' Tests for combinespws parameter'''
+    """ Tests for combinespws parameter"""
 
     def setUp(self):
         self.setUp_4ants()
 
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
-        os.system('rm -rf '+ self.outputms)
+        os.system('rm -rf ' + self.vis)
+        os.system('rm -rf ' + self.outputms)
         os.system('rm -rf inpmms*.*ms combcvel*ms testmms*ms list.obs')
 
     def test_combspw1_3(self):
-        '''mstransform: Do not combine spws and create MMS with axis scan.'''
+        """mstransform: Do not combine spws and create MMS with axis scan."""
         self.setUp_jupiter()
         self.outputms = 'combspw13.mms'
         mstransform(vis=self.vis, outputvis=self.outputms, combinespws=False, spw='0,1',field = '12',
@@ -266,7 +251,6 @@ class test_mms_transformations(test_base):
         self.assertTrue(os.path.exists(self.outputms))
 
         # Should create 6 subMSs
-        # mslocal = mstool()
         mslocal.open(thems=self.outputms)
         sublist = mslocal.getreferencedtables()
         mslocal.close()
@@ -276,7 +260,7 @@ class test_mms_transformations(test_base):
         self.assertTrue(ret[0],ret[1])
 
     def test_combspw1_4(self):
-        '''mstransform: Combine some channels of two spws using MMS input'''
+        """mstransform: Combine some channels of two spws using MMS input"""
         # same test as test_combspw1_2
         mmsfile = "inpmms14.mms"
         # First create an MMS
@@ -293,13 +277,12 @@ class test_mms_transformations(test_base):
         self.assertTrue(ret[0],ret[1])
 
         # Compare with cvel results
-        default(cvel)
         cvel(vis=self.vis, outputvis='combcvel14.ms', spw='0:60~63,1:60~63')
         ret = th.verifyMS('combcvel14.ms', 1, 68, 0)
         self.assertTrue(ret[0],ret[1])
 
     def test_regrid1_3(self):
-        '''mstransform: Default regridms with spw selection using input MMS'''
+        """mstransform: Default regridms with spw selection using input MMS"""
         # same as test_regrid1_1
         mmsfile = 'testmms13.mms'
         # Create input MMS
@@ -328,7 +311,7 @@ class test_mms_transformations(test_base):
 
     @unittest.skip('As reported in CAS-7377 now there is a custom tile shape for hypercube and data type')
     def test_shape3(self):
-        '''mstransform: DATA and FLAG tileshapes should be the same'''
+        """mstransform: DATA and FLAG tileshapes should be the same"""
         self.outputms = "shape3.ms"
         inptsh = [4,10,1024]
         mstransform(vis=self.vis, outputvis=self.outputms, createmms=True, tileshape=inptsh)
@@ -347,7 +330,7 @@ class test_mms_transformations(test_base):
         self.assertTrue((outtsh==flagtsh).all(), 'Tile shapes are different')
 
     def test_channels_mms1(self):
-        '''mstransform: create MMS with spw separation and channel selections'''
+        """mstransform: create MMS with spw separation and channel selections"""
         self.outputms = "testmms1.mms"
         mstransform(vis=self.vis, outputvis=self.outputms, spw='0~4,5:1~10',createmms=True,
                     separationaxis='spw',disableparallel=True)
@@ -364,7 +347,7 @@ class test_mms_transformations(test_base):
         self.assertEqual(sepaxis, 'spw', 'AxisType is not correctly written to output MMS')
 
     def test_channels_mms2(self):
-        '''mstransform: create MMS with spw/scan separation and channel selections'''
+        """mstransform: create MMS with spw/scan separation and channel selections"""
         self.outputms = "testmms2.mms"
         mstransform(vis=self.vis, outputvis=self.outputms, spw='0:0~10,1:60~63',createmms=True,
                     separationaxis='auto', disableparallel=True)
@@ -389,7 +372,7 @@ class test_mms_transformations(test_base):
         self.assertEqual(sepaxis, 'scan,spw', 'AxisType is not correctly written to output MMS')
 
     def test_channels_mms3(self):
-        '''mstransform: create MMS with scan separation and channel selections'''
+        """mstransform: create MMS with scan separation and channel selections"""
         self.outputms = "testmms3.mms"
         mstransform(vis=self.vis, outputvis=self.outputms, spw='0:0~10,1:60~63',createmms=True,
                     separationaxis='scan', disableparallel=True)
@@ -407,7 +390,7 @@ class test_mms_transformations(test_base):
         self.assertEqual(sepaxis, 'scan', 'AxisType is not correctly written to output MMS')
 
     def test_channels_mms4(self):
-        '''mstransform: verify spw sub-table consolidation in sequential'''
+        """mstransform: verify spw sub-table consolidation in sequential"""
         self.outputms = "testmms4.mms"
         mstransform(vis=self.vis, outputvis=self.outputms, spw='3,5:10~20,7,11,13',createmms=True,
                     separationaxis='spw', disableparallel=True)
@@ -417,7 +400,7 @@ class test_mms_transformations(test_base):
         ret = th.verifyMS(self.outputms, 7, 10, 1, ignoreflags=True)
 
     def test_CAS6206(self):
-        '''mstransform: verify that all columns are re-indexed in SPW sub-table'''
+        """mstransform: verify that all columns are re-indexed in SPW sub-table"""
         self.outputmms='test.mms'
         self.outputms='assoc.ms'
         self.setUp_CAS_5013()
@@ -438,16 +421,16 @@ class test_mms_transformations(test_base):
 
 
 class test_mms_freqavg(test_base):
-    '''Tests for frequency averaging'''
+    """Tests for frequency averaging"""
     def setUp(self):
         self.setUp_g19()
 
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
-        os.system('rm -rf '+ self.outputms)
+        os.system('rm -rf ' + self.vis)
+        os.system('rm -rf ' + self.outputms)
 
     def test_freqavg6(self):
-        '''mstransform: Average all channels of one spw, save as an MMS'''
+        """mstransform: Average all channels of one spw, save as an MMS"""
         # same as test_freqavg3
         self.outputms = "favg6.ms"
         mstransform(vis=self.vis, outputvis=self.outputms, spw='23', chanaverage=True, chanbin=128,
@@ -455,10 +438,10 @@ class test_mms_freqavg(test_base):
 
         self.assertTrue(os.path.exists(self.outputms))
         ret = th.verifyMS(self.outputms, 1, 1, 0)
-        self.assertTrue(ret[0],ret[1])
+        self.assertTrue(ret[0], ret[1])
 
     def test_freqavg7(self):
-        '''mstransform: Average using different bins for several spws, output MMS'''
+        """mstransform: Average using different bins for several spws, output MMS"""
         # same as test_freqavg4
         self.outputms = "favg7.ms"
         mstransform(vis=self.vis, outputvis=self.outputms, spw='10,12,20', chanaverage=True,
@@ -485,7 +468,7 @@ class test_mms_freqavg(test_base):
         self.assertEqual(spw_col['r3'][0], 2,'Error re-indexing DATA_DESCRIPTION table')
 
     def test_freqavg8(self):
-        '''mstransform: Average using different bins for several spws, output MMS'''
+        """mstransform: Average using different bins for several spws, output MMS"""
         # same as test_freqavg4
         self.outputms = "favg8.ms"
         mstransform(vis=self.vis, outputvis=self.outputms, spw='10,12,20', chanaverage=True,
@@ -506,7 +489,7 @@ class test_mms_freqavg(test_base):
         self.assertTrue(ret[0],ret[1])
 
     def test_freqavg9(self):
-        '''mstransform: Average using different bins and a channel selection, output MMS'''
+        """mstransform: Average using different bins and a channel selection, output MMS"""
         self.outputms = "favg9.ms"
         mstransform(vis=self.vis, outputvis=self.outputms, createmms=True,
                     spw='2,12,10:1~10', chanaverage=True, chanbin=[32,128,5],
@@ -533,7 +516,7 @@ class test_mms_freqavg(test_base):
         self.assertEqual(spw_col['r3'][0], 2,'Error re-indexing DATA_DESCRIPTION table')
 
     def test_freqavg10(self):
-        '''mstransform: Average using different bins, channel selection, both axes, output MMS'''
+        """mstransform: Average using different bins, channel selection, both axes, output MMS"""
         self.outputms = "favg10.ms"
         mstransform(vis=self.vis, outputvis=self.outputms, spw='2,12,10:1~10', chanaverage=True,
                     chanbin=[32,128,5], createmms=True, separationaxis='auto', numsubms=6)
@@ -541,7 +524,6 @@ class test_mms_freqavg(test_base):
         self.assertTrue(os.path.exists(self.outputms))
 
         # Should create 6 subMSs
-        # mslocal = mstool()
         mslocal.open(thems=self.outputms)
         sublist = mslocal.getreferencedtables()
         mslocal.close()
@@ -567,16 +549,16 @@ class test_mms_freqavg(test_base):
 
 
 class test_mms_parallel(test_base):
-    '''Run some of the same tests in parallel'''
+    """Run some of the same tests in parallel"""
     def setUp(self):
         self.setUp_4ants()
 
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
-        os.system('rm -rf '+ self.outputms)
+        os.system('rm -rf ' + self.vis)
+        os.system('rm -rf ' + self.outputms)
 
     def test_parallel1(self):
-        '''mstransform: create MMS with spw separation and channel selections in parallel'''
+        """mstransform: create MMS with spw separation and channel selections in parallel"""
         self.outputms = "parallel1.mms"
         mstransform(vis=self.vis, outputvis=self.outputms, spw='0~4,5:1~10',createmms=True,
                     separationaxis='spw')
@@ -589,7 +571,7 @@ class test_mms_parallel(test_base):
         self.assertTrue(ret[0],ret[1])
 
     def test_parallel2(self):
-        '''mstransform: create MMS with spw/scan separation and channel selections in parallel'''
+        """mstransform: create MMS with spw/scan separation and channel selections in parallel"""
         self.outputms = "parallel2.mms"
         mstransform(vis=self.vis, outputvis=self.outputms, spw='0:0~10,1:60~63',createmms=True,
                     separationaxis='auto')
@@ -610,7 +592,7 @@ class test_mms_parallel(test_base):
         self.assertEqual(out_feed_spw['r5'], 1)
 
     def test_parallel3(self):
-        '''mstransform: create MMS with scan separation and channel selections in parallel'''
+        """mstransform: create MMS with scan separation and channel selections in parallel"""
         self.outputms = "parallel3.mms"
         mstransform(vis=self.vis, outputvis=self.outputms, spw='0:0~10,1:60~63',createmms=True,
                     separationaxis='scan')
@@ -624,7 +606,7 @@ class test_mms_parallel(test_base):
         self.assertTrue(ret[0],ret[1])
 
     def test_parallel4(self):
-        '''mstransform: verify spw sub-table consolidation in sequential'''
+        """mstransform: verify spw sub-table consolidation in sequential"""
         self.outputms = "parallel4.mms"
         mstransform(vis=self.vis, outputvis=self.outputms, spw='3,5:10~20,7,9,15',createmms=True,
                     separationaxis='spw', numsubms=5)
@@ -643,7 +625,7 @@ class test_mms_parallel(test_base):
         self.assertEqual(out_feed_spw['r17'], 4)
 
     def test_parallel5(self):
-        '''mstransform: Do not combine spws and create MMS with axis scan in parallel.'''
+        """mstransform: Do not combine spws and create MMS with axis scan in parallel."""
         self.setUp_jupiter()
         self.outputms = 'parallel5.mms'
         mstransform(vis=self.vis, outputvis=self.outputms, combinespws=False, spw='0,1',field = '12',
@@ -652,7 +634,6 @@ class test_mms_parallel(test_base):
         self.assertTrue(os.path.exists(self.outputms))
 
         # Should create 6 subMSs
-        # mslocal = mstool()
         mslocal.open(thems=self.outputms)
         sublist = mslocal.getreferencedtables()
         mslocal.close()
@@ -663,24 +644,23 @@ class test_mms_parallel(test_base):
 
 #@unittest.skip('Skip until support for this data is included in getPartitionMap() is fixed')
 class test_mms_spw_poln(test_base):
-    '''tests for spw with different correlation shapes'''
+    """tests for spw with different correlation shapes"""
 
     def setUp(self):
         self.setUp_3c84()
 
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
-        os.system('rm -rf '+ self.outputms)
+        os.system('rm -rf ' + self.vis)
+        os.system('rm -rf ' + self.outputms)
         os.system('rm -rf list.obs')
 
     def test_mms_spw_selection(self):
-        '''mstransform: Create MMS and select two spws with different polarization shapes'''
+        """mstransform: Create MMS and select two spws with different polarization shapes"""
         self.outputms = '3cspw12.mms'
         mstransform(vis=self.vis, outputvis=self.outputms, datacolumn='data', spw='1,2',
                     createmms=True, separationaxis='spw')
 
         # Verify the input versus the output
-        # myms = mstool()
         mslocal.open(self.vis)
         mslocal.msselect({'spw':'1,2'})
         inp_nrow = mslocal.nrow(True)
@@ -710,14 +690,13 @@ class test_mms_spw_poln(test_base):
         self.assertEqual(len(out_feed_spw.keys()), 52)
 
     def test_mms_spw_selection2(self):
-        '''mstransform: Create MMS and select two spws with different polarization shapes'''
+        """mstransform: Create MMS and select two spws with different polarization shapes"""
         self.outputms = '3cspw01.mms'
         # spw=0 contains two DD in DATA_DESCRIPTION table
         mstransform(vis=self.vis, outputvis=self.outputms, datacolumn='data', spw='0,1',
                     createmms=True, separationaxis='spw')
 
         # Verify the input versus the output
-        # myms = mstool()
         mslocal.open(self.vis)
         mslocal.msselect({'spw':'0,1'})
         inp_nrow = mslocal.nrow(True)
@@ -749,13 +728,12 @@ class test_mms_spw_poln(test_base):
         self.assertEqual(len(out_feed_spw.keys()), 52)
 
     def test_mms_spw_selection3(self):
-        '''mstransform: Create MMS and select three spws with numsubms=2'''
+        """mstransform: Create MMS and select three spws with numsubms=2"""
         self.outputms = '3cspw012.mms'
         mstransform(vis=self.vis, outputvis=self.outputms, datacolumn='data', spw='0,1,2',
                     createmms=True, separationaxis='spw', numsubms=2)
 
         # Verify the input versus the output
-        # msmdt = msmdtool()
         msmdt.open(self.outputms)
         out_dds = msmdt.datadescids()
         out_nrow = msmdt.nrows()
@@ -781,13 +759,12 @@ class test_mms_spw_poln(test_base):
         th.compTables(self.vis+'/FEED', self.outputms+'/FEED', ['FOCUS_LENGTH'])
 
     def test_mms_scan_spw_partition(self):
-        '''mstransform: Create MMS and part by scan/spw'''
+        """mstransform: Create MMS and part by scan/spw"""
         self.outputms = '3cscanspw02.mms'
         mstransform(vis=self.vis, outputvis=self.outputms, datacolumn='data', spw='0,2',
                     createmms=True, disableparallel=True, separationaxis='auto')
 
         # Verify the input versus the output
-        # msmdt = msmdtool()
         msmdt.open(self.outputms)
         out_dds = msmdt.datadescids()
         msmdt.done()
@@ -813,7 +790,7 @@ class test_mms_spw_poln(test_base):
         self.assertEqual(len(out_feed_spw.keys()), 52)
 
     def test_mms_XXYY_selection(self):
-        '''mstransform: correlation='RR,LL' should select and re-index properly'''
+        """mstransform: correlation='RR,LL' should select and re-index properly"""
         self.outputms = '3cRRLL.mms'
         # spw 0 should not be processed. The selection should happen before the MMS work
         mstransform(vis=self.vis, outputvis=self.outputms, datacolumn='data', correlation='RR,LL',
@@ -851,7 +828,7 @@ class test_mms_spw_poln(test_base):
 
 
 class test_mms_input(test_base):
-    '''Tests when vis is an MMS'''
+    """Tests when vis is an MMS"""
 
     def setUp(self):
         self.setUp_4ants()
@@ -861,7 +838,7 @@ class test_mms_input(test_base):
         os.system('rm -rf '+ self.outputms)
 
     def test_MMS1(self):
-        '''mstransform: input MMS should be the same as output MMS'''
+        """mstransform: input MMS should be the same as output MMS"""
 
         # Create an MMS in the setup
         self.createMMS(self.vis, axis='scan', spws='0,1')
@@ -873,8 +850,6 @@ class test_mms_input(test_base):
         self.assertTrue(ParallelDataHelper.isParallelMS(self.outputms),'Output is not an MMS')
 
         # Sort the MSs so that they can be compared
-        # myms = mstool()
-
         mslocal.open(self.testmms)
         mslocal.sort('input_sorted.ms',['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME'])
         mslocal.done()
@@ -896,7 +871,7 @@ class test_mms_input(test_base):
         self.assertEqual(in_sepaxis, out_sepaxis, 'AxisTypes from input and output MMS do not match')
 
     def test_split_MMS(self):
-        '''mstransform: Split MMS in parallel'''
+        """mstransform: Split MMS in parallel"""
         # Create an MMS in the setup. It creates self.testmms
         self.createMMS(self.vis, axis='scan', spws='0,1')
 
@@ -905,13 +880,11 @@ class test_mms_input(test_base):
 
         self.assertTrue(ParallelTaskHelper.isParallelMS(self.outputms),'Output is not an MMS')
 
-        # mslocal = mstool()
         mslocal.open(self.outputms)
         sublist = mslocal.getreferencedtables()
         self.assertEqual(len(sublist), 1)
 
         # Test DD table
-        # msmdt = msmdtool()
         msmdt.open(self.outputms)
         out_dds = msmdt.datadescids()
         msmdt.done()
@@ -926,7 +899,7 @@ class test_mms_input(test_base):
         self.assertEqual(in_sepaxis, out_sepaxis, 'AxisTypes from input and output MMS do not match')
 
     def test_MMS_as_monolithicMS(self):
-        '''mstransform: MMS should be processed as a monolithic MS'''
+        """mstransform: MMS should be processed as a monolithic MS"""
         # Create an MMS in the setup. It creates self.testmms
         self.createMMS(self.vis, axis='spw', spws='2,4,6')
 
@@ -947,7 +920,7 @@ class test_mms_input(test_base):
         self.assertTrue(os.path.exists('list1.obs'), 'Probable error in sub-table re-indexing')
 
     def test_monolithic_combspw1_1(self):
-        '''mstransform: Combine four spws into one using a monolithic-MMS'''
+        """mstransform: Combine four spws into one using a monolithic-MMS"""
         self.createMMS(self.vis, axis='spw',spws='0~3')
 
         self.outputms = "monocombspw11.ms"
@@ -961,7 +934,7 @@ class test_mms_input(test_base):
         self.assertTrue(os.path.exists('list2.obs'), 'Probable error in sub-table re-indexing')
 
     def test_timespan_scan_axis(self):
-        '''mstransform: timeaverage=True, timespan=scan, separationaxis=scan'''
+        """mstransform: timeaverage=True, timespan=scan, separationaxis=scan"""
         self.createMMS(self.vis, axis='scan',spws='10')
         self.outputms = "spanscan_scan.mms"
         # subMSs do not have all scans (30,31). Treat MMS as a monolithic MS
@@ -970,7 +943,6 @@ class test_mms_input(test_base):
         self.assertTrue(ParallelDataHelper.isParallelMS(self.outputms),'Output should be an MMS')
         self.assertEqual(ph.axisType(self.outputms),'spw')
 
-        # mymsmd = msmdtool()
         msmdt.open(self.outputms)
         t30 = msmdt.exposuretime(30)['value']
         t31 = msmdt.exposuretime(31)['value']
@@ -979,7 +951,7 @@ class test_mms_input(test_base):
         self.assertEqual(t31, 79)
 
     def test_timespan_spw_axis(self):
-        '''mstransform: timeaverage=True, timespan=scan, separationaxis=spw'''
+        """mstransform: timeaverage=True, timespan=scan, separationaxis=spw"""
         self.createMMS(self.vis, axis='spw',spws='1,3')
         self.outputms = "spanscan_spw.mms"
         mstransform(vis=self.testmms, outputvis=self.outputms, datacolumn='data',timeaverage=True,
@@ -987,7 +959,6 @@ class test_mms_input(test_base):
         self.assertTrue(ParallelDataHelper.isParallelMS(self.outputms),'Output should be an MMS')
         self.assertEqual(ph.axisType(self.outputms),'spw')
 
-        # mymsmd = msmdtool()
         msmdt.open(self.outputms)
         t30 = msmdt.exposuretime(30)['value']
         t31 = msmdt.exposuretime(31)['value']
@@ -996,7 +967,7 @@ class test_mms_input(test_base):
         self.assertEqual(t31, 79)
 
     def test_timespan_scan_sel(self):
-        '''mstransform: using scan selection, timeaverage=True, timespan=scan. CAS-13646'''
+        """mstransform: using scan selection, timeaverage=True, timespan=scan. CAS-13646"""
         self.createMMS(self.vis, axis='spw', spws='7,9,11,13')
         self.outputms = "mstransform_scan_sel_timeavg_timespanscan.mms"
         mstransform(vis=self.testmms, outputvis=self.outputms, datacolumn='data',
@@ -1006,7 +977,6 @@ class test_mms_input(test_base):
                         'Output should be an MMS')
         self.assertEqual(ph.axisType(self.outputms),'spw')
 
-        # msmdt = msmetadata()
         try:
             msmdt.open(self.outputms)
             t30 = msmdt.exposuretime(30)['value']
@@ -1017,21 +987,20 @@ class test_mms_input(test_base):
         self.assertEqual(t31, 59)
 
     def test_combspws_timespan_error(self):
-        '''mstransform: combinespws=True, timespan=scan axis=auto timebin=40s'''
+        """mstransform: combinespws=True, timespan=scan axis=auto timebin=40s"""
         self.createMMS(self.vis, axis='auto',spws='1,3', numms=4)
         self.outputms = "spanscan_comb.mms"
         # combinespws is not possible. It should create an MS
         mstransform(vis=self.testmms, outputvis=self.outputms, datacolumn='data',
                     combinespws=True, timeaverage=True, timebin='40s',timespan='scan')
         self.assertFalse(ParallelDataHelper.isParallelMS(self.outputms),'Output should be an MS')
-        # mymsmd = msmdtool()
         msmdt.open(self.outputms)
         nspw = msmdt.nspw()
         msmdt.close()
         self.assertEqual(nspw,1)
 
     def test_combspws_timespan(self):
-        '''mstransform: combinespws=True, timespan=scan axis=auto'''
+        """mstransform: combinespws=True, timespan=scan axis=auto"""
         self.createMMS(self.vis, axis='auto',spws='3')
         self.outputms = "2transformations.mms"
         # This should work.
@@ -1040,14 +1009,13 @@ class test_mms_input(test_base):
         self.assertFalse(ParallelDataHelper.isParallelMS(self.outputms),'Output should be an MS')
 
     def test_combspws_timespan_fail(self):
-        '''mstransform: combinespws=True, timespan=scan axis=auto timebin=200s'''
+        """mstransform: combinespws=True, timespan=scan axis=auto timebin=200s"""
         self.createMMS(self.vis, axis='auto',spws='3')
         self.outputms = "errormms.mms"
         # Scans are shorter than timebin. Create an MS
         mstransform(vis=self.testmms, outputvis=self.outputms, datacolumn='data',
                     combinespws=True, timeaverage=True, timebin='200s',timespan='scan')
         self.assertFalse(ParallelDataHelper.isParallelMS(self.outputms),'Output should be an MS')
-        # mymsmd = msmdtool()
         msmdt.open(self.outputms)
         nscan = msmdt.nscans()
         exposure = msmdt.exposuretime(30)['value']
@@ -1056,7 +1024,7 @@ class test_mms_input(test_base):
         self.assertEqual(exposure, 179)
 
     def test_combspws_timespan_spw_axis(self):
-        '''mstransform: combinespws=True, timespan=scan axis=spw'''
+        """mstransform: combinespws=True, timespan=scan axis=spw"""
         self.createMMS(self.vis, axis='spw',scans='30',spws='10')
         self.outputms = "spwaxisok.mms"
         # This should work
@@ -1069,21 +1037,20 @@ class test_mms_input(test_base):
             print ('This error should have not happened %s'%instance)
 
     def test_combspws_timespan_spw_axis_error(self):
-        '''mstransform: combinespws=True, timespan=scan axis=spw'''
+        """mstransform: combinespws=True, timespan=scan axis=spw"""
         self.createMMS(self.vis, axis='spw',scans='30',spws='10,11')
         self.outputms = "spwaxiserror.mms"
         # subMSs do not have all spws. Create an MS
         mstransform(vis=self.testmms, outputvis=self.outputms, datacolumn='data',
                     combinespws=True, timeaverage=True, timebin='20s',timespan='scan')
         self.assertFalse(ParallelDataHelper.isParallelMS(self.outputms),'Output should be an MS')
-        # mymsmd = msmdtool()
         msmdt.open(self.outputms)
         nspw = msmdt.nspw()
         msmdt.close()
         self.assertEqual(nspw,1)
 
     def test_combspws_timespan_scan_axis(self):
-        '''mstransform: combinespws=True, timespan=scan axis=scan'''
+        """mstransform: combinespws=True, timespan=scan axis=scan"""
         self.createMMS(self.vis, axis='scan',spws='0')
         self.outputms = "scanaxiserror.mms"
         # subMSs do not have all scans. Create an MS.
@@ -1097,7 +1064,7 @@ class test_mms_input(test_base):
 
 #    @unittest.skip('Skip until CAS-6946 is fixed')
     def test_split_MMS_weight_corr_sel(self):
-        '''mstransform: Split MMS in parallel. Check WEIGHT shape when selecting correlation'''
+        """mstransform: Split MMS in parallel. Check WEIGHT shape when selecting correlation"""
         # Create an MMS in the setup. It creates self.testmms
         self.createMMS(self.vis, axis='scan', spws='0,1')
 
@@ -1106,13 +1073,11 @@ class test_mms_input(test_base):
 
         self.assertTrue(ParallelTaskHelper.isParallelMS(self.outputms),'Output is not an MMS')
 
-        # mslocal = mstool()
         mslocal.open(self.outputms)
         sublist = mslocal.getreferencedtables()
         self.assertEqual(len(sublist), 2)
 
         # Test DD table
-        # msmdt = msmdtool()
         msmdt.open(self.outputms)
         out_dds = msmdt.datadescids()
         msmdt.done()
@@ -1134,7 +1099,7 @@ class test_mms_input(test_base):
 
 
 class test_mms_output(test_base):
-    '''Tests for outputMMS and transformations'''
+    """Tests for outputMMS and transformations"""
 
     def setUp(self):
         self.setUp_4ants()
@@ -1144,7 +1109,7 @@ class test_mms_output(test_base):
         os.system('rm -rf '+ self.outputms)
 
     def test_output_mms1(self):
-        '''mstransform: combinespws=True, output axis=auto. Expect error.'''
+        """mstransform: combinespws=True, output axis=auto. Expect error."""
         self.outputms = 'outmms1.mms'
         try:
             mstransform(self.vis, outputvis=self.outputms, datacolumn='corrected', createmms=True, combinespws=True, spw='12,13', scan='31')
@@ -1152,7 +1117,7 @@ class test_mms_output(test_base):
             print ('Expected error: %s'%instance)
 
     def test_output_mms2(self):
-        '''mstransform: combinespws=True, output axis=spw. Expect error.'''
+        """mstransform: combinespws=True, output axis=spw. Expect error."""
         self.outputms = 'outmms2.mms'
         try:
             mstransform(self.vis, outputvis=self.outputms, datacolumn='corrected', createmms=True, combinespws=True, spw='12,13',
@@ -1161,7 +1126,7 @@ class test_mms_output(test_base):
             print ('Expected error: %s'%instance)
 
     def test_output_mms3(self):
-        '''mstransform: timeaverage=True, timespan=scan, output axis=auto.'''
+        """mstransform: timeaverage=True, timespan=scan, output axis=auto."""
         self.outputms = 'outmms3.mms'
         # Just give a WARNING
         mstransform(self.vis, outputvis=self.outputms, datacolumn='data', createmms=True, timeaverage=True, spw='1,3',
@@ -1169,7 +1134,7 @@ class test_mms_output(test_base):
         self.assertTrue(ParallelDataHelper.isParallelMS(self.outputms),'Output should be an MMS')
 
     def test_output_mms4(self):
-        '''mstransform: timeaverage=True, output axis=scan, timespan=scan'''
+        """mstransform: timeaverage=True, output axis=scan, timespan=scan"""
         self.outputms = 'outmms4.mms'
         # Just give a WARNING
         mstransform(self.vis, outputvis=self.outputms, datacolumn='corrected', createmms=True, timeaverage=True, spw='12,13',
@@ -1178,7 +1143,7 @@ class test_mms_output(test_base):
 
 
 class test_vla_mixed_polarizations_mms(test_base):
-    '''Test behaviour of mstransform in split mode when the input MMS contains mixed VLA correlations XY/LR'''
+    """Test behaviour of mstransform in split mode when the input MMS contains mixed VLA correlations XY/LR"""
 
     def setUp(self):
 
@@ -1197,12 +1162,10 @@ class test_vla_mixed_polarizations_mms(test_base):
                     separationaxis='spw',spw='16~18')
 
         # Check that DDI sub-table is consistent with POLARIZATION sub-table
-        # mytb = tbtool()
         tblocal.open(self.outputms + '/POLARIZATION')
         npols = tblocal.nrows()
         tblocal.close()
 
-        # mytb = tbtool()
         tblocal.open(self.outputms + '/DATA_DESCRIPTION')
         polIds = tblocal.getcol('POLARIZATION_ID')
         spwIds = tblocal.getcol('SPECTRAL_WINDOW_ID')
@@ -1229,12 +1192,10 @@ class test_vla_mixed_polarizations_mms(test_base):
                     separationaxis='spw',spw='16~18',correlation='XX')
 
         # Check that DDI sub-table is consistent with POLARIZATION sub-table
-        # mytb = tbtool()
         tblocal.open(self.outputms + '/POLARIZATION')
         npols = tblocal.nrows()
         tblocal.close()
 
-        # tblocal = tbtool()
         tblocal.open(self.outputms + '/DATA_DESCRIPTION')
         polIds = tblocal.getcol('POLARIZATION_ID')
         tblocal.close()
@@ -1250,7 +1211,7 @@ class test_vla_mixed_polarizations_mms(test_base):
 
 
 class test_alma_wvr_correlation_products_mms(test_base):
-    '''Test behaviour of mstransform in split mode when the input MS contains ALMA WVR correlation products'''
+    """Test behaviour of mstransform in split mode when the input MS contains ALMA WVR correlation products"""
 
     def setUp(self):
 
@@ -1267,7 +1228,6 @@ class test_alma_wvr_correlation_products_mms(test_base):
         mstransform(vis=self.vis,outputvis=self.outputms,spw='0,1,2',datacolumn='DATA',createmms=True)
 
         # Check that POLARIZATION sub-table is properly sorted
-        # mytb = tbtool()
         tblocal.open(self.outputms + '/POLARIZATION')
         numCorr = tblocal.getcol('NUM_CORR')
         tblocal.close()
@@ -1281,7 +1241,7 @@ class test_alma_wvr_correlation_products_mms(test_base):
 
 
 class test_otf_calibration(test_base_compare):
-    '''Check that corrected data produce otf by mstransform is the same as produced otf by applycal'''
+    """Check that corrected data produce otf by mstransform is the same as produced otf by applycal"""
 
     def setUp(self):
 
@@ -1341,7 +1301,7 @@ class test_otf_calibration(test_base_compare):
 
 
 class test_no_reindexing(test_base):
-    '''Test using no-reindexing feature'''
+    """Test using no-reindexing feature"""
 
     def setUp(self):
 
@@ -1354,12 +1314,12 @@ class test_no_reindexing(test_base):
         self.outvis = 'test_no_reindexing_noreidnex.mms'
 
         # First part ms
-        partition(vis=self.previs,outputvis=self.vis)
+        partition(vis=self.previs, outputvis=self.vis)
 
     def tearDown(self):
-        os.system('rm -rf '+ self.previs)
-        os.system('rm -rf '+ self.vis)
-        os.system('rm -rf '+ self.outvis)
+        os.system('rm -rf ' + self.previs)
+        os.system('rm -rf ' + self.vis)
+        os.system('rm -rf ' + self.outvis)
 
     def test_regrid_SPWs_separately_with_no_reindexing(self):
 
@@ -1387,7 +1347,7 @@ class Cleanup(test_base):
         os.system('rm -rf 3c84scan1*ms* test.mms')
 
     def test_runTest(self):
-        '''mstransform: Cleanup'''
+        """mstransform: Cleanup"""
         pass
 
 
@@ -1404,7 +1364,6 @@ def suite():
             test_otf_calibration,
             test_no_reindexing,
             Cleanup]
-
 
 if __name__ == '__main__':
     unittest.main()
