@@ -3,6 +3,7 @@ import csv
 import json
 import os
 import re
+from socket import timeout as socket_timeout
 import ssl
 import string
 from time import sleep
@@ -499,6 +500,12 @@ class JyPerKDatabaseClient():
                 + 'Error Message: URLError(Reason="{0}")\n'.format(e.reason)
             casalog.post(msg)
             return {'status': 'URLError', 'err_msg': msg}
+        except socket_timeout as e:  # not connect
+            msg = 'Failed to load URL: {0}\n'.format(url) \
+                + 'Error Message: URLError(Reason="{0}")\n'.format(e)
+            casalog.post(msg)
+            return {'status': 'URLError', 'err_msg': msg}
+
 
     def _try_to_get_response(self, url):
         casalog.post(f'Accessing Jy/K DB: request URL is "{url}"')
