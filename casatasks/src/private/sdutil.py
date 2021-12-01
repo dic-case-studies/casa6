@@ -146,7 +146,8 @@ def callable_sdtask_decorator(func):
     This is a decorator function for sd tasks.
     Currently the decorator does:
 
-       1) set origin to the logger
+       1) if it get the parameter '__taskcaller', read it and set origin to the logger.
+        otherwise it reads the function name and set origin to the logger.
        2) handle exception
 
     So, you don't need to set origin in the task any more.
