@@ -74,7 +74,7 @@ class ProcessingFileStack:
 
     def push(self, file: AbstractEraseable=None):
         if isinstance(file, AbstractEraseable) and os.path.exists(file.path):
-            casalog.post(f'push f{file.path} into the stack type[{self.type}]', 'DEBUG2')
+            casalog.post(f'push f{file.path} into the stack typed {self.type}', 'DEBUG2')
             self.stack.append(file)
         else:
             raise ValueError('cannot append it to erase queue')
@@ -83,7 +83,7 @@ class ProcessingFileStack:
         """Return the top of the stack.
         """
         if self.height() <= 1:
-            raise RuntimeError(f'the stack type[{self.type}] cannot pop')
+            raise RuntimeError(f'the stack typed {self.type} cannot pop')
         return self.stack.pop()
 
     def peak(self) -> AbstractEraseable:
@@ -93,30 +93,30 @@ class ProcessingFileStack:
         """
         if len(self.stack) > 0:
             picked = self.stack[len(self.stack) - 1]
-            casalog.post(f'pick from the stack type[{self.type}]: {picked.path}', 'DEBUG2')
+            casalog.post(f'pick from the stack typed {self.type}: {picked.path}', 'DEBUG2')
             return self.stack[len(self.stack) - 1]
         else:
-            raise ValueError("the stack type[{self.type}] is empty")
+            raise RuntimeError(f"the stack typed {self.type} is empty")
 
     def subpeak(self) -> AbstractEraseable:
         """Return a pointer of a next of the top of the stack.
         """
         if len(self.stack) > 1:
             picked = self.stack[len(self.stack) - 2]
-            casalog.post(f'pick from sub peak of the stack type[{self.type}]: {picked.path}', 'DEBUG2')
+            casalog.post(f'pick from sub peak of the stack typed {self.type}: {picked.path}', 'DEBUG2')
             return self.stack[len(self.stack) - 2]
         else:
-            raise ValueError("the stack type[{self.type}] has only one stuff")
+            raise RuntimeError(f"the stack typed {self.type} has only one stuff")
 
     def bottom(self) -> AbstractEraseable:
         """Return a pointer of the bottom of the stack.
         """
         if len(self.stack) > 0:
             picked = self.stack[0]
-            casalog.post(f'pick from bottom of the stack type[{self.type}]: {picked.path}', 'DEBUG2')
+            casalog.post(f'pick from bottom of the stack typed {self.type}: {picked.path}', 'DEBUG2')
             return self.stack[0]
         else:
-            raise ValueError("the stack type[{self.type}] has not have enough stuff")
+            raise RuntimeError(f"the stack typed {self.type} has not have enough stuff")
 
     def clear(self, dry_run: bool=True):
         """Do erase method of all of the stack and clear the stack."""
@@ -149,6 +149,16 @@ class ImageShape(Validable):
     im_nrow = None
     im_nchan = None
     im_npol = None
+
+    def __init__(self, im_shape: np.ndarray=None, axis_dir: np.ndarray=None, axis_sp: int=None, axis_pol: int=None):
+        self.im_shape = im_shape
+        self.axis_dir = axis_dir
+        self.axis_sp = axis_sp
+        self.axis_pol = axis_pol
+        self.dir_shape = self.im_shape[self.axis_dir]
+        self.im_nrow = np.prod(self.dir_shape)
+        self.im_nchan = self.im_shape[self.axis_sp] if self.axis_sp > 0 else 1
+        self.im_npol = self.im_shape[self.axis_pol] if self.axis_pol > 0 else 1
 
     def validate(self):
         if not len(self.axis_dir):
@@ -512,22 +522,19 @@ def __get_axis_position(val: array=None) -> int:
 
 
 def get_image_shape(stack: ProcessingFileStack) -> ImageShape:
-    shape = ImageShape()
+    shape = None
     with tool_manager(stack.peak().path, image) as _ia:
         try:
             cs = _ia.coordsys()
-            shape.im_shape = _ia.shape()
-            shape.axis_dir = cs.findcoordinate('direction')['world']
-            shape.axis_sp = __get_axis_position(cs.findcoordinate('spectral')['world'])  # 3 or 2 or -1
-            shape.axis_pol = __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
+            shape = ImageShape(_ia.shape(),
+                               cs.findcoordinate('direction')['world'],
+                               __get_axis_position(cs.findcoordinate('spectral')['world']),  # 3 or 2 or -1
+                               __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
+                               )
         finally:
             cs.done()
 
-    shape.dir_shape = shape.im_shape[shape.axis_dir]
-    shape.im_nrow = np.prod(shape.dir_shape)
-    shape.im_nchan = shape.im_shape[shape.axis_sp] if shape.axis_sp > 0 else 1
-    shape.im_npol = shape.im_shape[shape.axis_pol] if shape.axis_pol > 0 else 1
-
+    shape.validate()
     casalog.post(f'image shape is {shape.im_shape}, direciton {shape.dir_shape} ({shape.im_nrow} pixels), '
                  f'npol {shape.im_npol}, nchan {shape.im_nchan}', 'DEBUG2')
 
