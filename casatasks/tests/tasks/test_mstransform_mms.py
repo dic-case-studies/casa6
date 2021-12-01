@@ -1258,8 +1258,6 @@ class test_otf_calibration(test_base_compare):
         self.refvis_sorted = 'mst_otf_calibration_sorted.ms'
         self.auxfile = 'mstransform_reference/ngc5921_callib.txt'
 
-        default(mstransform)
-
         if has_mpi and MPIEnvironment.is_mpi_enabled:
 
             # Change current working directory
