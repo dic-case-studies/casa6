@@ -1,0 +1,335 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+
+<tool module="logsink" name="logsink">
+<code>
+<include>logsink_forward.h</include>
+<private>
+	<include>logsink_private.h</include>
+</private>
+</code>
+
+<shortdescription>tool for logsink</shortdescription>
+
+<description/>
+
+<method name="logsink" type="constructor">
+  <shortdescription>Construct a logsink tool</shortdescription>
+  <description/>
+  <input>
+    <param name="filename" type="string">
+      <description>logfile name</description>
+      <value>casa.log</value>
+    </param>
+	<param name="enable_telemetry" type="bool">
+      <description>Allow telemetry data to be written.</description>
+      <value>false</value>
+    </param>
+	<param name="telemetry_logfile" type="string">
+      <description>Logfile for telemetry data.</description>
+      <value>false</value>
+    </param>
+  </input>
+  <example/>
+</method>
+
+<method name="origin" type="function">
+	<shortdescription>Set the origin of the message</shortdescription>
+	<description>Sets the origin of messages to be displayed</description>
+	<input>
+		<param direction="in" name="fromwhere" type="string">
+			<description> The origin of a log messages</description>
+		</param>
+	</input>
+  <returns type="bool"/>
+</method>
+
+<method name="processorOrigin" type="function">
+	<shortdescription>Set the CASA processor origin</shortdescription>
+	<description>Sets the CASA processor origin which is shown at the end of each log origin</description>
+	<input>
+		<param direction="in" name="fromwhere" type="string">
+			<description>Input CASA processor origin name</description>
+		</param>
+	</input>
+  <returns type="bool"/>
+</method>
+
+<method name="filter" type="function">
+	<shortdescription>Set the filter level</shortdescription>
+	<description>Set the filter level of logging messages to be displayed.
+	This will determine what log messages go into the log file. The logger itself
+        can adjust what gets displayed so you could set INFO5 and then filter in the
+        logger everything above INFO1.</description>
+	<input>
+		<param name="level" direction="in" type="string">
+			<description> Level of messages to display to the console/log file</description>
+			<value>ERROR</value>
+			<value>WARN</value>
+			<value>INFO</value>
+			<value>INFO1</value>
+			<value>INFO2</value>
+			<value>INFO3</value>
+			<value>INFO4</value>
+			<value>INFO5</value>
+			<value>DEBUG</value>
+			<value>DEBUG1</value>
+			<value>DEBUG2</value>
+			<choice>INFO</choice>
+		</param>
+	</input>
+
+  <returns type="bool"/>
+</method>
+
+<method name="filterMsg" type="function">
+	<shortdescription>Add messages to the filter out list</shortdescription>
+	<description>Add messages to the filter out list</description>
+	<input>
+     	<param name="msgList" type="stringVec">
+     		<description>Array of strings identifying messages to filter out</description>
+     		<value/>
+     	</param>
+	</input>
+  	<returns type="void"/>
+</method>
+
+<method name="clearFilterMsgList" type="function">
+	<shortdescription>Clear list of messages to be filter out</shortdescription>
+	<description>Clear list of messages to be filter out</description>
+  	<returns type="void"/>
+</method>
+
+<method name="post" direction="in" type="function">
+  <shortdescription>Post a message</shortdescription>
+  <description>If the message passes the filter, write it (same as postLocally)</description>
+  <input>
+    <param name="message" direction="in" type="string">
+    <description>Message to be posted</description>
+    </param>
+    <param name="priority" direction="in" type="string">
+    <description>Priority of message to be posted</description>
+    <value>INFO</value>
+    </param>
+    <param name="origin" direction="in" type="string">
+    <description>Origin of message to be posted</description>
+    <value/>
+    </param>
+  </input>
+  <returns type="bool"/>
+</method>
+
+  <method name="poststat" direction="in" type="function">
+    <shortdescription>Post a message</shortdescription>
+    <description>Write telemetry data</description>
+    <input>
+      <param name="message" direction="in" type="string">
+      <description>Message to be posted</description>
+      </param>
+      <param name="origin" direction="in" type="string">
+      <description>Origin of message to be posted</description>
+      <value/>
+      </param>
+    </input>
+
+  <returns type="bool"/>
+</method>
+<method name="postLocally" type="function">
+
+  <shortdescription>Post locally</shortdescription>
+
+  <description>If the message passes the filter, write it</description>
+
+  <input>
+    <param name="message" direction="in" type="string">
+    <description>Message to be posted</description>
+    </param>
+    <param name="priority" direction="in" type="string">
+    <description>Priority of message to be posted</description>
+    <value>INFO</value>
+    </param>
+    <param name="origin" direction="in" type="string">
+    <description>Origin of message to be posted</description>
+    <value/>
+    </param>
+  </input>
+
+  <returns type="bool"/>
+
+  <example/>
+
+</method>
+
+<method name="localId" type="function">
+  <shortdescription>Get local ID</shortdescription>
+  <description>Returns the id for this class</description>
+  <input>
+  </input>
+  <returns type="string"/>
+  <example/>
+</method>
+
+<method name="version" type="function">
+	<shortdescription>version of CASA</shortdescription>
+	<description>Returns the version of CASA as well as sending it to the log</description>
+  <input>
+  </input>
+  <returns type="string"/>
+  <example>casalog.version()</example>
+</method>
+
+<method name="getstatslogfile" type="function">
+	<shortdescription>String representation of statistics logfile path </shortdescription>
+	<description>String representation of statistics logfile path</description>
+  <input>
+  </input>
+  <returns type="string"/>
+  <example>casalog.getstatslogfile()</example>
+</method>
+
+<method name="id" type="function">
+
+  <shortdescription>Get ID</shortdescription>
+
+  <description>Returns the ID of the LogSink in use</description>
+
+  <input>
+
+  </input>
+
+  <returns type="string"/>
+
+  <example/>
+
+</method>
+<method name="setglobal" type="function">
+	<shortdescription>Set this logger to be the global logger</shortdescription>
+	<input>
+		<param name="isglobal" type="bool">
+			<description>Use as global logger</description>
+			<value>true</value>
+	        </param>
+        </input>
+	<returns type="bool"/>
+</method>
+<method name="setlogfile" type="function">
+	<shortdescription>Set the name of file for logger output</shortdescription>
+	<input>
+		<param name="filename" direction="in" type="string">
+			<description>filename for logger</description>
+			<value>casapy.log</value>
+	        </param>
+        </input>
+	<returns type="bool"/>
+</method>
+<method name="setstatslogfile" type="function">
+	<shortdescription>Set the name of file for logger output</shortdescription>
+	<input>
+		<param name="filename" direction="in" type="string">
+			<description>filename for logger</description>
+			<value>casapy.log</value>
+	        </param>
+        </input>
+	<returns type="bool"/>
+</method>
+<method name="showconsole" type="function">
+	<shortdescription>Choose to send messages to the console/terminal</shortdescription>
+	<input>
+		<param name="onconsole" type="bool">
+			<description>All messages to the console as well as log file</description>
+			<value>false</value>
+	        </param>
+        </input>
+	<returns type="bool"/>
+</method>
+<method name="logfile" type="function">
+  <shortdescription>Returns the full path of the log file</shortdescription>
+  <description>Returns the full path of the log file</description>
+  <input/>
+  <returns type="string"/>
+  <example>logfile = casalog.logfile()</example>
+
+</method>
+
+<method name="ompNumThreadsTest" type="function">
+  <shortdescription>Determines the number of OpenMP threads in the current parallel region using an OpenMP reduction pragma</shortdescription>
+  <input/>
+  <returns type="int"/>
+  <example>omp_num_thread = casalog.ompNumThreadsTest()</example>
+</method>
+
+<method name="ompGetNumThreads" type="function">
+  <shortdescription>Returns the number of OpenMP threads in the current parallel region</shortdescription>
+  <returns type="int"/>
+  <example>omp_num_thread = casalog.ompNumThreadsTest()</example>
+</method>
+
+<method name="ompSetNumThreads" type="function">
+  <shortdescription>Specifies the number of OpenMP threads used by default in subsequent parallel regions</shortdescription>
+  <input>
+  	<param name="numThreads" direction="in" type="int">
+  		<value>1</value>
+  	</param>
+  </input>
+  <returns type="bool"/>
+  <example>casalog.ompSetNumThreads(2)</example>
+</method>
+
+<method name="setMemoryTotal" type="function">
+  <shortdescription>Sets the memory total value to be returned by HostInfo</shortdescription>
+  <input>
+  	<param name="memory" direction="in" type="int">
+  		<value>0</value>
+  	</param>
+  </input>
+  <returns type="int"/>
+  <example>casalog.setMemoryTotal(4*1024)</example>
+</method>
+
+<method name="setMemoryFraction" type="function">
+  <shortdescription>Sets the memory fraction value to be returned by HostInfo</shortdescription>
+  <input>
+  	<param name="memfrac" direction="in" type="int">
+  		<value>0</value>
+  	</param>
+  </input>
+  <returns type="int"/>
+  <example>casalog.setMemoryFraction(50)</example>
+</method>
+
+<method name="setNumCPUs" type="function">
+  <shortdescription>Sets the number of CPUs to be returned by HostInfo</shortdescription>
+  <input>
+  	<param name="cores" direction="in" type="int">
+  		<value>0</value>
+  	</param>
+  </input>
+  <returns type="int"/>
+  <example>casalog.setNumCPUs(4)</example>
+</method>
+
+<method name="getMemoryTotal" type="function">
+  <shortdescription>Returns the memory total value from HostInfo</shortdescription>
+  <input>
+  	<param name="use_aipsrc" direction="in" type="bool">
+  		<value>true</value>
+  	</param>
+  </input>
+  <returns type="int"/>
+  <example>casalog.getMemoryTotal(true)</example>
+</method>
+
+<method name="getNumCPUs" type="function">
+  <shortdescription>Returns the number of CPUs from HostInfo</shortdescription>
+  <input>
+  	<param name="use_aipsrc" direction="in" type="bool">
+  		<value>true</value>
+  	</param>
+  </input>
+  <returns type="int"/>
+  <example>casalog.getNumCPUs(true)</example>
+</method>
+
+</tool>
+
+</casaxml>
