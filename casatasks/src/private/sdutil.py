@@ -1,7 +1,6 @@
 import abc
 import contextlib
 import functools
-import inspect
 import os
 import re
 import traceback
