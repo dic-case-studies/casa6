@@ -7,7 +7,7 @@ import traceback
 
 def callabletask_decorator(func):
     """
-    This is a decorator function for sd tasks.
+    This is a decorator function for a task calls other tasks.
     Currently the decorator does:
 
        1) if it get the parameter '__taskcaller', read it and set origin to the logger.
