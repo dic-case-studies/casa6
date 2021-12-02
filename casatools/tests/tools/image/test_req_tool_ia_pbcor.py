@@ -18,42 +18,14 @@
 #
 ##########################################################################
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import unittest
 
-is_CASA6 = False
-try:
-    from casatools import ctsys, image, table
-    _ia = image()
-    _tb = table()
-    datapath = ctsys.resolve('unittest/ia_pbcor/')
-    is_CASA6 = True
-except ImportError:
-    import casac
-    from tasks import *
-    from taskinit import *
-    from __main__ import *
-    image = iatool
-    _ia = iatool()
-    _tb = tbtool()
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ia_pbcor/'
-    is_CASA6 = False
-
-im1 = "pbtest1_im.fits"
-pb1 = "pbtest1_pb.fits"
-co1_1 = "pbtest1_co1.fits"
-co1_2 = "pbtest1_co2.im"
-
-im2 = "pb2_im.fits"
-pb2 = "pb2_pb.fits"  
-co2 = "pb2_co.im"  
-
-pb4 = "CAS_5096template.im"
-
-data = [im1, pb1, co1_1, co1_2, im2, pb2, co2, pb4]
+from casatools import ctsys, image, table
+_ia = image()
+_tb = table()
+datapath = ctsys.resolve('unittest/ia_pbcor/')
 
 def run_pbcor(
     imagename, pbimage, outfile, overwrite, region, box, chans,
@@ -73,6 +45,22 @@ def run_pbcor(
 class ia_pbcor_test(unittest.TestCase):
     
     def setUp(self):
+        self.im1 = "pbtest1_im.fits"
+        self.pb1 = "pbtest1_pb.fits"
+        self.co1_1 = "pbtest1_co1.fits"
+        self.co1_2 = "pbtest1_co2.im"
+
+        self.im2 = "pb2_im.fits"
+        self.pb2 = "pb2_pb.fits"  
+        self.co2 = "pb2_co.im"  
+
+        self.pb4 = "CAS_5096template.im"
+        self.outfile = ''
+        self.mymask = ''
+        self.imagename = ''
+        self.pbimage = ''
+        self.newpb = ''
+        data = [self.im1, self.pb1, self.co1_1, self.co1_2, self.im2, self.pb2, self.co2, self.pb4]
         for f in data:
             resolved = os.path.join(datapath, f)
             if os.path.isdir(resolved):
@@ -81,20 +69,15 @@ class ia_pbcor_test(unittest.TestCase):
                 shutil.copy(resolved,f)
     
     def tearDown(self):
+        data = [self.im1, self.pb1, self.co1_1, self.co1_2, self.im2, self.pb2, self.co2, self.pb4, self.outfile, self.mymask, self.imagename, self.pbimage, self.newpb]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
         self.assertTrue(len(_tb.showcache()) == 0)
-        # make sure directory is clean as per verification test requirement
-        cwd = os.getcwd()
-        for filename in os.listdir(cwd):
-            file_path = os.path.join(cwd, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+
 
     def checkImage(self, gotImage, expectedName, epsilon):
         expected = image()                                
@@ -141,56 +124,56 @@ class ia_pbcor_test(unittest.TestCase):
                        
         # no image name given
         testit(
-            imagename="", pbimage=pb1, outfile="",
+            imagename="", pbimage=self.pb1, outfile="",
             overwrite=False, region="", box="",
             chans="", stokes="", mask="", mode="d", cutoff=-1.0,
             wantreturn=True
         )
         # bad image name given
         testit(
-            imagename="totally_bogus", pbimage=pb1, outfile="jj.im",
+            imagename="totally_bogus", pbimage=self.pb1, outfile="jj.im",
             overwrite=False, region="", box="",
             chans="", stokes="", mask="", mode="d", cutoff=-1.0,
             wantreturn=True
         )
         # no pbimage name given
         testit(
-            imagename=im1, pbimage="", outfile="mm.im",
+            imagename=self.im1, pbimage="", outfile="mm.im",
             overwrite=False, region="", box="",
             chans="", stokes="", mask="", mode="d", cutoff=-1.0,
             wantreturn=True
         )
         # bad pbimage name given
         testit(
-            imagename=im1, pbimage="totally_bogus2", outfile="pp.im",
+            imagename=self.im1, pbimage="totally_bogus2", outfile="pp.im",
             overwrite=False, region="", box="",
             chans="", stokes="", mask="", mode="d", cutoff=-1.0,
             wantreturn=True
         )
-        # unwritable outfile
+        # unwritable self.outfile
         testit(
-            imagename=im1, pbimage=pb1, outfile="/bogusplace/bogusimage",
+            imagename=self.im1, pbimage=self.pb1, outfile="/bogusplace/bogusimage",
             overwrite=False, region="", box="",
             chans="", stokes="", mask="", mode="d", cutoff=-1.0,
             wantreturn=True
         )
         # bogus region
         testit(
-            imagename=im1, pbimage=pb1, outfile="qq.im",
+            imagename=self.im1, pbimage=self.pb1, outfile="qq.im",
             overwrite=False, region="bogus_region", box="",
             chans="", stokes="", mask="", mode="d", cutoff=-1.0,
             wantreturn=True
         )
         # bad mode
         testit(
-            imagename=im1, pbimage=pb1, outfile="rr.im",
+            imagename=self.im1, pbimage=self.pb1, outfile="rr.im",
             overwrite=False, region="", box="",
             chans="", stokes="", mask="", mode="zz", cutoff=-1.0,
             wantreturn=True
         )
         # incompatible image and pb
         testit(
-            imagename=im1, pbimage=pb2, outfile="ss.im",
+            imagename=self.im1, pbimage=self.pb2, outfile="ss.im",
             overwrite=False, region="", box="",
             chans="", stokes="", mask="", mode="d", cutoff=-1.0,
             wantreturn=True
@@ -206,26 +189,26 @@ class ia_pbcor_test(unittest.TestCase):
         myia.done()
         del myia
         for j in [0, 1]:
-            outfile = "mypb.im"
+            self.outfile = "mypb.im"
             if j == 1:
                 pbimage = pbpix
-            outfile = outfile
+            self.outfile = self.outfile
             res = run_pbcor(
                 imagename=imagename, pbimage=pbimage,
-                outfile=outfile, overwrite=overwrite,
+                outfile=self.outfile, overwrite=overwrite,
                 region=region, box=box, chans=chans,
                 stokes=stokes, mask=mask, mode=mode,
                 cutoff=cutoff
             )
             self.assertTrue(res)
             res.done()
-            self.checkImage(outfile, expected, epsilon)
-            shutil.rmtree(outfile)
+            self.checkImage(self.outfile, expected, epsilon)
+            shutil.rmtree(self.outfile)
 
     def test_full_image_divide(self):
         """ia.pbcor: Test full image divide"""
         self._testit(
-            expected=co1_1, imagename=im1, pbimage=pb1,
+            expected=self.co1_1, imagename=self.im1, pbimage=self.pb1,
             overwrite=False, region="", box="",
             chans="", stokes="", mask="", mode="d",
             cutoff=-1.0
@@ -234,7 +217,7 @@ class ia_pbcor_test(unittest.TestCase):
     def test_full_image_using_cutoff(self):
         """ia.pbcor: Test full image divide with cutoff"""
         self._testit(
-            expected=co1_2, imagename=im1, pbimage=pb1,
+            expected=self.co1_2, imagename=self.im1, pbimage=self.pb1,
             overwrite=False, region="", box="",
             chans="", stokes="", mask="", mode="d",
             cutoff=0.001
@@ -243,7 +226,7 @@ class ia_pbcor_test(unittest.TestCase):
     def test_4d_image_with_2d_pb(self):
         """ia.pbcor: Test full image divide with cutoff. Primary beam is 2 D, image is 4 D"""
         self._testit(
-            expected=co2, imagename=im2, pbimage=pb2,
+            expected=self.co2, imagename=self.im2, pbimage=self.pb2,
             overwrite=False, region="", box="",
             chans="", stokes="", mask="", mode="d",
             cutoff=0.001
@@ -252,16 +235,16 @@ class ia_pbcor_test(unittest.TestCase):
     def test_multiply(self):
         """ia.pbcor: Test full image multiply with cutoff. Primary beam is 2 D, image is 4 D"""
         myia = image()
-        myia.open(pb2)
+        myia.open(self.pb2)
         pixels = myia.getchunk()
         csys = myia.coordsys().torecord()
         myia.done()
         pixels = 1/pixels
-        newpb = 'mult_pb.im'
-        myia.fromarray(newpb, pixels, csys=csys)
+        self.newpb = 'mult_pb.im'
+        myia.fromarray(self.newpb, pixels, csys=csys)
         myia.done()
         self._testit(
-            expected=co2, imagename=im2, pbimage=newpb,
+            expected=self.co2, imagename=self.im2, pbimage=self.newpb,
             overwrite=False, region="", box="",
             chans="", stokes="", mask="", mode="m",
             cutoff=1000, epsilon=2e-7
@@ -270,20 +253,21 @@ class ia_pbcor_test(unittest.TestCase):
     def test_stretch(self):
         """ ia.pbcor(): Test stretch parameter"""
         yy = image()
-        mymask = "maskim"
+        self.mymask = "maskim"
         yy.fromshape("", [113, 76, 1, 1])
         yy.addnoise()
-        xx = yy.transpose(mymask, "0132")
+        xx = yy.transpose(self.mymask, "0132")
         yy.done()
         xx.done()
-        yy.open(im2)
+        yy.open(self.im2)
         self.assertRaises(
-            RuntimeError, yy.pbcor, pbimage=pb2,
-            mask=mymask + ">0", stretch=False, outfile="garbage"
+            RuntimeError, yy.pbcor, pbimage=self.pb2,
+            mask=self.mymask + ">0", stretch=False, outfile="garbage"
         )
-        yy.open(im2)
+        yy.open(self.im2)
+        self.outfile = "blahblah"
         zz = yy.pbcor(
-            pbimage=pb2, outfile="blahblah", mask=mymask + ">0", stretch=True
+            pbimage=self.pb2, outfile=self.outfile, mask=self.mymask + ">0", stretch=True
         )
         yy.done()
         self.assertTrue(zz)
@@ -292,29 +276,29 @@ class ia_pbcor_test(unittest.TestCase):
     def test_diff_spectral_coordinate(self):
         """Verify fix that a different spectral coordinates in target and template don't matter, CAS-5096"""
         imagename = os.path.join(datapath, "CAS_5096target.im")
-        template = pb4
-        outfile = "mypb.im"
+        template = self.pb4
+        self.outfile = "mypb.im"
         myia = image()
         myia.open(imagename)
         yy = myia.pbcor(
             pbimage=template,
-            outfile=outfile, mask='"' + template + '">0.21'
+            outfile=self.outfile, mask='"' + template + '">0.21'
         )
         myia.done()
         yy.done()
-        self.assertTrue(os.path.exists(outfile))
+        self.assertTrue(os.path.exists(self.outfile))
 
     def test_history(self):
         """Test history records are written"""
         myia = image()
-        imagename = "zz.im"
-        myia.fromshape(imagename, [20,20])
+        self.imagename = "zz.im"
+        myia.fromshape(self.imagename, [20,20])
         gg = myia.getchunk()
         gg[:] = 1
         myia.done()
-        outfile = "pb_out.im"
-        myia.open(imagename)
-        yy = myia.pbcor(pbimage=gg, outfile=outfile)
+        self.outfile = "pb_out.im"
+        myia.open(self.imagename)
+        yy = myia.pbcor(pbimage=gg, outfile=self.outfile)
         myia.done()
         msgs = yy.history()
         yy.done()
@@ -325,23 +309,20 @@ class ia_pbcor_test(unittest.TestCase):
     def test_empty_region_and_stokes(self):
         """Test specifying stokes with empty region works (CAS-11708)"""
         myia = image()
-        imagename = "t_in.im"
-        pbimage = "t_pb_in.im"
+        self.imagename = "t_in.im"
+        self.pbimage = "t_pb_in.im"
         shape = [20, 20, 4, 20]
-        for im in [imagename, pbimage]:
+        for im in [self.imagename, self.pbimage]:
             myia.fromshape(im, shape)
             myia.addnoise()
             myia.done()
-        outfile = "t_out.im"
-        myia.open(imagename)
-        yy = myia.pbcor(pbimage, outfile=outfile, region="", stokes="I")
+        self.outfile = "t_out.im"
+        myia.open(self.imagename)
+        yy = myia.pbcor(self.pbimage, outfile=self.outfile, region="", stokes="I")
         myia.done()
         self.assertTrue((yy.shape() == [20,20,1,20]).all(), "Incorrect shape")
         yy.done()
 
-def suite():
-    return [ia_pbcor_test]
 
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
