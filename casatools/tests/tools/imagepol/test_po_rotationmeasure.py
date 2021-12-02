@@ -24,9 +24,9 @@ class po_rotationmeasure_test(unittest.TestCase):
         shutil.rmtree('hh',ignore_errors=True)
         shutil.rmtree('rm_input.im',ignore_errors=True)
         shutil.rmtree('pa0.im',ignore_errors=True)        
-        tb = table( )
-        self.assertTrue(len(tb.showcache()) == 0)
-        tb.done( )
+#        tb = table( )
+#        self.assertTrue(len(tb.showcache()) == 0)
+#        tb.done( )
     
     def test_multibeam(self):
         """Test multibeam images for correct behavior"""
