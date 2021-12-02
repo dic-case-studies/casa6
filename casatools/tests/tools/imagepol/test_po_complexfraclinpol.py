@@ -75,7 +75,9 @@ class po_complexfraclinpol_test(unittest.TestCase):
     
     def tearDown(self):
         self.mypo.done()
-    
+        shutil.rmtree('g')
+        shutil.rmtree('hh')
+
     def test_multibeam(self):
         """Test multibeam images for correct behavior"""
         mypo = self.mypo

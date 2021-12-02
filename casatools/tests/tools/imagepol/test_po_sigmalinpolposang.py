@@ -83,6 +83,7 @@ class po_sigmalinpolposang_test(unittest.TestCase):
     
     def tearDown(self):
         self.mypo.done()
+        shutil.rmtree('g')
     
     def test_multibeam(self):
         """Test multibeam images for correct behavior"""

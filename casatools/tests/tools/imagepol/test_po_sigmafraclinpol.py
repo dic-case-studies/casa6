@@ -70,7 +70,7 @@ import shutil
 import unittest
 
 from casatools import imagepol as potool
-from casatools import ctsys
+from casatools import ctsys, table
 ctsys_resolve = ctsys.resolve
 
 datapath = ctsys_resolve('unittest/imagepol/')
@@ -84,6 +84,7 @@ class po_sigmafraclinpol_test(unittest.TestCase):
     
     def tearDown(self):
         self.mypo.done()
+        shutil.rmtree('g')
     
     def test_multibeam(self):
         """Test multibeam images for correct behavior"""
