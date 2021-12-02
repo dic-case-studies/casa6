@@ -22,6 +22,8 @@
 # google drive:
 # https://drive.google.com/drive/u/1/folders/1ttYI8Xcgfa-e1Dk0f8kzrv1bz7fIqylm
 #
+# See also requirements as listed here:
+# https://open-confluence.nrao.edu/display/CASA/uvcontsub2021
 ##########################################################################
 import numpy as np
 import os
@@ -42,7 +44,7 @@ datapath_alma = ctsys.resolve(os.path.join('measurementset', 'alma', ms_alma))
 
 
 class uvcontsub2021_test(unittest.TestCase):
-
+    """ Main verification test for uvcontsub2021 """
     @classmethod
     def setUpClass(cls):
         shutil.copytree(datapath_simple, ms_simple)
@@ -465,14 +467,172 @@ class uvcontsub2021_test(unittest.TestCase):
             self._check_rows(self.output, 'MODEL_DATA', 340)
 
 
-class uvcontsub2021_numerical_verification_test(unittest.TestCase):
-    """ To be defined - CAS-13632 """
+class uvcontsub2021_numerical_sim_test(unittest.TestCase):
+    """ Tests of numerical behavior based on simulated datasets.
+    To be refined - CAS-13632 """
 
-    def test_sim_single_source_snr_better(self):
-        pass
+    @classmethod
+    def setUpClass(cls):
+        cls.ms_cont_nonoise_order_0 = 'sim_alma_nonoise_cont_poly_order_0.ms'
+        cls.ms_cont_order_0 = 'sim_alma_noise_cont_poly_order_0.ms'
+        cls.ms_cont_nonoise_order_1 = 'sim_alma_nonoise_cont_poly_order_1.ms'
+        cls.ms_cont_noise_order_1 = 'sim_alma_noise_cont_poly_order_1.ms'
+        cls.sim_mss = [cls.ms_cont_nonoise_order_0, cls.ms_cont_order_0,
+                       cls.ms_cont_nonoise_order_1, cls.ms_cont_noise_order_1]
 
-    def test_sim_single_source_snr_worse(self):
-        pass
+        for sim in cls.sim_mss:
+            datapath_sim = ctsys.resolve(sim)
+            shutil.copytree(datapath_sim, sim)
+
+    @classmethod
+    def tearDownClass(cls):
+        for sim in cls.sim_mss:
+            shutil.rmtree(sim)
+
+    def setUp(self):
+        # Input MS is always strictly read-only, one copy in setUpClass is enough
+        # Default output name for simple tests
+        self.output = 'test_numerical_uvcs_output.ms'
+        # fitspw to exclude a simulated spectral line, as added in the simulation notebook
+        self.fitspw = '0:0~59;86~127'
+
+    def tearDown(self):
+        if os.path.exists(self.output):
+            shutil.rmtree(self.output)
+
+    def _check_numerical(self, vis, outputvis, exp_cont):
+        """
+        Compare numerical differences between input visibilities and
+        (output visibilities + expected_continuum), where the expected
+        continuum is known from simulations.
+        """
+        tbt = table()
+        try:
+            col_name = 'DATA'
+            tbt.open(vis)
+            col_in = tbt.getcol(col_name)
+
+            tbt.close()
+            tbt.open(outputvis)
+            col_sub = tbt.getcol(col_name)
+
+            nans = np.isnan(np.sum(col_sub))
+            self.assertFalse(nans)
+
+            if not np.isscalar(exp_cont):
+                # broadcast to pol/time
+                broadcast_exp_cont = exp_cont.reshape(1, len(exp_cont), 1)
+            else:
+                broadcast_exp_cont = exp_cont
+            diff = (col_in) - (col_sub + broadcast_exp_cont)
+            dmax = np.max(diff)
+            dmin = np.min(diff)
+            dmedian = np.median(diff)
+            print(f'Diff median: {dmedian}, min: {dmin}, max: {dmax}')
+
+            def pc_relative_diff(diff, ref):
+                return 100.0 * np.absolute(diff / ref)
+
+            # Differences in absolute val of visibilities
+            diff_abs = np.absolute(diff)
+            amedian = np.median(diff_abs)
+            amin = np.min(diff_abs)
+            amax = np.max(diff_abs)
+            # ramedian = pc_relative_diff(amedian, np.absolute(exp_cont))
+            # ramin = pc_relative_diff(amin, np.absolute(exp_cont))
+            # ramax = pc_relative_diff(amax, np.absolute(exp_cont))
+            rdiff_abs = pc_relative_diff(diff_abs, np.absolute(broadcast_exp_cont))
+            ramedian = np.median(rdiff_abs)
+            ramin = np.min(rdiff_abs)
+            ramax = np.max(rdiff_abs)
+            print(f' Diff in absolute values. Median: {amedian}, min: {amin}, max: {amax}.'
+                  f'\n   Relative to cont, median: {ramedian} %, min: {ramin} %, '
+                  f'max: {ramax} %')
+
+            diff_real = np.absolute(diff.real)
+            rmedian = np.median(diff_real)
+            rmin = np.min(diff_real)
+            rmax = np.max(diff_real)
+            # rrmedian = pc_relative_diff(rmedian, exp_cont.real)
+            # rrmin = pc_relative_diff(rmin, exp_cont.real)
+            # rrmax = pc_relative_diff(rmax, exp_cont.real)
+            rdiff_real = pc_relative_diff(diff.real, broadcast_exp_cont.real)
+            rrmedian = np.median(rdiff_real)
+            rrmin = np.min(rdiff_real)
+            rrmax = np.max(rdiff_real)
+            print(f' Diff in real part. Median: {rmedian}, min: {rmin}, max: {rmax}'
+                  f'\n   Relative to cont, median: {rrmedian} %, min: {rrmin} %, '
+                  f'max: {rrmax} %')
+
+            diff_imag = np.absolute(diff.imag)
+            imedian = np.median(diff_imag)
+            imin = np.min(diff_imag)
+            imax = np.max(diff_imag)
+            # rimedian = pc_relative_diff(imedian, exp_cont.imag)
+            # rimin = pc_relative_diff(imin, exp_cont.imag)
+            # rimax = pc_relative_diff(imax, exp_cont.imag)
+            rdiff_imag = pc_relative_diff(diff.imag, broadcast_exp_cont.imag)
+            rimedian = np.median(rdiff_imag)
+            rimin = np.min(rdiff_imag)
+            rimax = np.max(rdiff_imag)
+            print(f' Diff in imag part. Median: {imedian}, min: {imin}, max: {imax}'
+                  f'\n    Relative to cont, median: {rimedian} %, min: {rimin} %, '
+                  f'max: {rimax} %')
+
+        finally:
+            tbt.done()
+
+    def test_sim_specline_nonoise_pol_0(self):
+        """ Check fitting of continuum as polynomial order 0"""
+        # (2.5+2.5j) cont is added to each visibility
+        exp_cont = (2.5+2.5j)
+        uvcontsub2021(vis=self.ms_cont_nonoise_order_0, outputvis=self.output, fitorder=0,
+                      fitspw=self.fitspw)
+
+        print('Checking numerical differences for MS {self.ms_cont_order_0}')
+        self._check_numerical(vis=self.ms_cont_nonoise_order_0, outputvis=self.output,
+                              exp_cont=exp_cont)
+
+    def test_sim_specline_noise_pol_0(self):
+        """ Check fitting of continuum as polynomial order 0"""
+        # (2.5+2.5j) cont is added to each visibility
+        exp_cont = (2.5+2.5j)
+        uvcontsub2021(vis=self.ms_cont_order_0, outputvis=self.output, fitorder=0,
+                      fitspw=self.fitspw)
+
+        print('Checking numerical differences for MS {self.ms_cont_order_0}')
+        self._check_numerical(vis=self.ms_cont_order_0, outputvis=self.output,
+                              exp_cont=exp_cont)
+
+    def test_sim_specline_nonoise_pol_1(self):
+        """ Check fitting of continuum as polynomial order 1"""
+        # Values added to visibilities as a polynomial on channels
+        pol_coeffs = [0.1, 0.45]
+        nchan = 128
+        x = np.linspace(0, 1, nchan)
+        exp_cont = 5 * (1+1j) * np.polyval(pol_coeffs, x)
+
+        uvcontsub2021(vis=self.ms_cont_nonoise_order_1, outputvis=self.output, fitorder=1,
+                      fitspw=self.fitspw)
+
+        print('Checking numerical differences for MS {self.ms_cont_order_0}')
+        self._check_numerical(vis=self.ms_cont_nonoise_order_1, outputvis=self.output,
+                              exp_cont=exp_cont)
+
+    def test_sim_specline_noise_pol_1(self):
+        """ Check fitting of continuum as polynomial order 1. Gaussian noise included"""
+        # Values added to visibilities as a polynomial on channels
+        pol_coeffs = [0.1, 0.45]
+        nchan = 128
+        x = np.linspace(0, 1, nchan)
+        exp_cont = 5 * (1+1j) * np.polyval(pol_coeffs, x)
+
+        uvcontsub2021(vis=self.ms_cont_noise_order_1, outputvis=self.output, fitorder=1,
+                      fitspw=self.fitspw)
+
+        print('Checking numerical differences for MS {self.ms_cont_order_0}')
+        self._check_numerical(vis=self.ms_cont_nonoise_order_1, outputvis=self.output,
+                              exp_cont=exp_cont)
 
 
 def suite():
