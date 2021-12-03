@@ -137,7 +137,7 @@ bool imagepol::complexlinpol(const std::string& outfile) {
 	            << LogIO::POST;
             return false;
         }
-        return itsImPol->complexlinpol(String(outfile));
+        return itsImPol->complexlinpol(outfile);
     }
     catch (const AipsError& x) {
         *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
