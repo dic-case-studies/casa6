@@ -190,6 +190,8 @@ class regression_alma_m100_test(unittest.TestCase):
         os.system("rm -rf test-X220*")
         os.system("rm -rf X54*")
         os.system("rm -rf X220*")
+        os.system("rm -rf plotants-X54*")
+        os.system("rm -rf plotants-X220*")
         os.unlink("uid___A002_X2a5c2f_X54")
         os.unlink("uid___A002_X2a5c2f_X220")
 
