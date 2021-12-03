@@ -83,7 +83,7 @@ if [[ "${ac_success}" = "no" ]]; then
 fi
 
 if [[ ! -e "${CXX}" ]]; then
-    CXX=`which ${CXX}`
+    CXX=`type -p ${CXX}`
 fi
 if [[ -x "${CXX}" ]]; then
     AC_MSG_NOTICE([C++11 compiler ${CXX}])
