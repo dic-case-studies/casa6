@@ -42,8 +42,50 @@ datapath_simple = ctsys.resolve(os.path.join(datadir, ms_simple))
 ms_alma = 'uid___X02_X3d737_X1_01_small.ms'
 datapath_alma = ctsys.resolve(os.path.join('measurementset', 'alma', ms_alma))
 
+class uvcontsub2021_test_base(unittest.TestCase):
+    """
+    Base class to share utility funcitons between the test classes below.
+    """
+    def _check_return(self, res, fields=None):
+        """
+        Checks consistency of the uvcontsub task return dictionary
 
-class uvcontsub2021_test(unittest.TestCase):
+        :param fields: results are expected for these fields
+        """
+
+        import pprint
+        verbose = False
+        if verbose:
+            pprint.pprint(res)
+
+        self.assertTrue('description' in res)
+        self.assertTrue('goodness_of_fit' in res)
+        self.assertTrue('field' in res['goodness_of_fit'])
+        gof_field = res['goodness_of_fit']['field']
+        if fields:
+            for fid in fields:
+                self.assertTrue(str(fid) in gof_field)
+
+        for fid in gof_field:
+            self.assertTrue('scan' in gof_field[fid])
+            scans = gof_field[fid]['scan']
+            for sid in scans:
+                self.assertTrue('spw' in scans[sid])
+                spws = scans[sid]['spw']
+                for spw_id in spws:
+                    self.assertTrue('polarization' in spws[spw_id])
+                    pols = spws[spw_id]['polarization']
+                    for pid in pols:
+                        self.assertTrue('chi_squared') in pols[pid]
+                        stats = pols[pid]['chi_squared']
+                        for metric in ['average', 'min', 'max']:
+                            self.assertTrue(metric in stats)
+                            self.assertEqual(stats[metric].keys(), {'real', 'imag'})
+                            self.assertGreaterEqual(stats[metric]['real'], 0)
+                            self.assertGreaterEqual(stats[metric]['imag'], 0)
+
+
+class uvcontsub2021_test(uvcontsub2021_test_base):
     """ Main verification test for uvcontsub2021 """
     @classmethod
     def setUpClass(cls):
@@ -88,38 +130,6 @@ class uvcontsub2021_test(unittest.TestCase):
                                 format(col_name, expected_val, col))
         finally:
             tbt.done()
-
-    def _check_return(self, res, fields=None):
-        import pprint
-        verbose = False
-        if verbose:
-            pprint.pprint(res)
-
-        self.assertTrue('description' in res)
-        self.assertTrue('goodness_of_fit' in res)
-        self.assertTrue('field' in res['goodness_of_fit'])
-        gof_field = res['goodness_of_fit']['field']
-        if fields:
-            for fid in fields:
-                self.assertTrue(str(fid) in gof_field)
-
-        for fid in gof_field:
-            self.assertTrue('scan' in gof_field[fid])
-            scans = gof_field[fid]['scan']
-            for sid in scans:
-                self.assertTrue('spw' in scans[sid])
-                spws = scans[sid]['spw']
-                for spw_id in spws:
-                    self.assertTrue('polarization' in spws[spw_id])
-                    pols = spws[spw_id]['polarization']
-                    for pid in pols:
-                        self.assertTrue('chi_squared') in pols[pid]
-                        stats = pols[pid]['chi_squared']
-                        for metric in ['average', 'min', 'max']:
-                            self.assertTrue(metric in stats)
-                            self.assertEqual(stats[metric].keys(), {'real', 'imag'})
-                            self.assertGreaterEqual(stats[metric]['real'], 0)
-                            self.assertGreaterEqual(stats[metric]['imag'], 0)
 
     def _check_data_stats(self, vis, exp_mean, exp_median, exp_min, exp_max,
                           col_name='DATA', places=5):
@@ -481,7 +491,7 @@ class uvcontsub2021_test(unittest.TestCase):
 
 @unittest.skipIf(True ,"Skipping in automated bamboo builds until the input MSs are added "
                  "to casatestdata")
-class uvcontsub2021_numerical_sim_test(unittest.TestCase):
+class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
     """ Tests of numerical behavior based on simulated datasets.
     To be refined - CAS-13632 """
 
@@ -608,8 +618,9 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
     def test_sim_specline_nonoise_pol_0(self):
         """ Check fitting of continuum as polynomial order 0"""
         exp_cont = self.exp_cont_order_0
-        uvcontsub2021(vis=self.ms_cont_nonoise_order_0, outputvis=self.output, fitorder=0,
-                      fitspw=self.fitspw)
+        res = uvcontsub2021(vis=self.ms_cont_nonoise_order_0, outputvis=self.output,
+                            fitorder=0, fitspw=self.fitspw)
+        self._check_return(res, fields=[0])
 
         print(f'Checking numerical differences for MS {self.ms_cont_nonoise_order_0}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_0,
@@ -622,8 +633,9 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
     def test_sim_specline_noise_pol_0(self):
         """ Check fitting of continuum as polynomial order 0"""
         exp_cont = self.exp_cont_order_0
-        uvcontsub2021(vis=self.ms_cont_noise_order_0, outputvis=self.output, fitorder=0,
-                      fitspw=self.fitspw)
+        res = uvcontsub2021(vis=self.ms_cont_noise_order_0, outputvis=self.output,
+                            fitorder=0, fitspw=self.fitspw)
+        self._check_return(res, fields=[0])
 
         print(f'Checking numerical differences for MS {self.ms_cont_noise_order_0}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_noise_order_0,
@@ -639,8 +651,9 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
         x = np.linspace(0, 1, self.nchan)
         exp_cont = 5 * (1+1j) * np.polyval(self.pol_coeffs_order_1, x)
 
-        uvcontsub2021(vis=self.ms_cont_nonoise_order_1, outputvis=self.output, fitorder=1,
-                      fitspw=self.fitspw)
+        res = uvcontsub2021(vis=self.ms_cont_nonoise_order_1, outputvis=self.output,
+                            fitorder=1, fitspw=self.fitspw)
+        self._check_return(res, fields=[0])
 
         print(f'Checking numerical differences for MS {self.ms_cont_nonoise_order_1}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_1,
@@ -656,8 +669,9 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
         x = np.linspace(0, 1, self.nchan)
         exp_cont = 5 * (1+1j) * np.polyval(self.pol_coeffs_order_1, x)
 
-        uvcontsub2021(vis=self.ms_cont_noise_order_1, outputvis=self.output, fitorder=1,
-                      fitspw=self.fitspw)
+        res = uvcontsub2021(vis=self.ms_cont_noise_order_1, outputvis=self.output,
+                            fitorder=1, fitspw=self.fitspw)
+        self._check_return(res, fields=[0])
 
         print(f'Checking numerical differences for MS {self.ms_cont_noise_order_1}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_1,
