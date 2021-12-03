@@ -75,9 +75,7 @@ class uvcontsub2021_test(unittest.TestCase):
         :param expected_vals: for simple cases where the same value is expected in every row,
                               ensure all rows have this value
         """
-        # TODO: add simple checks of data column values (mean or similar). Overlaps partially
-        # with numerical tests. Like a parameter 'expected_mean=None' to compare approx.
-        # Perhaps a different function specific to data column checks
+
         tbt = table()
         try:
             tbt.open(vis)
@@ -126,7 +124,21 @@ class uvcontsub2021_test(unittest.TestCase):
     def _check_data_stats(self, vis, exp_mean, exp_median, exp_min, exp_max,
                           col_name='DATA', places=5):
         """
-        WIP - check basic stats of data column, for now just to prevent uninteded changes
+        WIP - check basic stats of data column, for now just to prevent uninteded changes.
+
+        This implements simple checks of expected values for the mean,
+        median, min and max across all visibilities (all polarization,
+        channels, baselins and times).  Overlaps partially with
+        numerical tests (class below) and could be relaxed to apply
+        less strict asserts.
+
+        :param vis: MS to check
+        :param exp_mean: expected mean value, across all visibilities
+        :param exp_median: expected median value, across all visibilities
+        :param exp_min: expected minimum value, across all visibilities
+        :param exp_max: expected maximum value, across all visibilities
+        :param col_name: name of data column with visibilities
+        :param places: places/digits to check for "almost" equality
         """
         tbt = table()
         try:
@@ -467,6 +479,8 @@ class uvcontsub2021_test(unittest.TestCase):
             self._check_rows(self.output, 'MODEL_DATA', 340)
 
 
+@unittest.skipIf(True ,"Skipping in automated bamboo builds until the input MSs are added "
+                 "to casatestdata")
 class uvcontsub2021_numerical_sim_test(unittest.TestCase):
     """ Tests of numerical behavior based on simulated datasets.
     To be refined - CAS-13632 """
@@ -474,10 +488,10 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.ms_cont_nonoise_order_0 = 'sim_alma_nonoise_cont_poly_order_0.ms'
-        cls.ms_cont_order_0 = 'sim_alma_noise_cont_poly_order_0.ms'
+        cls.ms_cont_noise_order_0 = 'sim_alma_noise_cont_poly_order_0.ms'
         cls.ms_cont_nonoise_order_1 = 'sim_alma_nonoise_cont_poly_order_1.ms'
         cls.ms_cont_noise_order_1 = 'sim_alma_noise_cont_poly_order_1.ms'
-        cls.sim_mss = [cls.ms_cont_nonoise_order_0, cls.ms_cont_order_0,
+        cls.sim_mss = [cls.ms_cont_nonoise_order_0, cls.ms_cont_noise_order_0,
                        cls.ms_cont_nonoise_order_1, cls.ms_cont_noise_order_1]
 
         for sim in cls.sim_mss:
@@ -493,8 +507,14 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
         # Input MS is always strictly read-only, one copy in setUpClass is enough
         # Default output name for simple tests
         self.output = 'test_numerical_uvcs_output.ms'
+        # A few parameters shared by different simulated MSs
         # fitspw to exclude a simulated spectral line, as added in the simulation notebook
         self.fitspw = '0:0~59;86~127'
+        # For order 0 cont, (2.5+2.5j) cont is added to each visibility
+        self.exp_cont_order_0 = (2.5+2.5j)
+        # For order 1 cont, polynomial coefficients (on x=chan_number)
+        self.pol_coeffs_order_1 = [0.1, 0.45]
+        self.nchan = 128
 
     def tearDown(self):
         if os.path.exists(self.output):
@@ -510,10 +530,10 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
         :param outputvis: output, cont subtracted MS to compare against (input MS - exp_cont)
         :param exp_cont: expected continuum values (known from simulation parameters)
 
-        :returns: a tuple with the 25th, median, and 75th percentiles of the differences
+        :returns: a tuple with the 25th, 50th/median, and 75th percentiles of the differences
         in absolute values of the visibilities across all channels, for all polarizations,
-        baselines, and times. The difference is calculated as a percentage relative to the
-        expected continuum value at each channel.
+        baselines, and times. The difference (in absolute visibility values) is calculated
+        as a percentage relative to the expected continuum value at each channel.
         """
         tbt = table()
         try:
@@ -587,12 +607,11 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
 
     def test_sim_specline_nonoise_pol_0(self):
         """ Check fitting of continuum as polynomial order 0"""
-        # (2.5+2.5j) cont is added to each visibility
-        exp_cont = (2.5+2.5j)
+        exp_cont = self.exp_cont_order_0
         uvcontsub2021(vis=self.ms_cont_nonoise_order_0, outputvis=self.output, fitorder=0,
                       fitspw=self.fitspw)
 
-        print('Checking numerical differences for MS {self.ms_cont_order_0}')
+        print(f'Checking numerical differences for MS {self.ms_cont_nonoise_order_0}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_0,
                                                    outputvis=self.output,
                                                    exp_cont=exp_cont)
@@ -602,13 +621,12 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
 
     def test_sim_specline_noise_pol_0(self):
         """ Check fitting of continuum as polynomial order 0"""
-        # (2.5+2.5j) cont is added to each visibility
-        exp_cont = (2.5+2.5j)
-        uvcontsub2021(vis=self.ms_cont_order_0, outputvis=self.output, fitorder=0,
+        exp_cont = self.exp_cont_order_0
+        uvcontsub2021(vis=self.ms_cont_noise_order_0, outputvis=self.output, fitorder=0,
                       fitspw=self.fitspw)
 
-        print('Checking numerical differences for MS {self.ms_cont_order_0}')
-        diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_order_0,
+        print(f'Checking numerical differences for MS {self.ms_cont_noise_order_0}')
+        diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_noise_order_0,
                                                    outputvis=self.output,
                                                    exp_cont=exp_cont)
         self.assertLessEqual(diff25, 0.7)
@@ -618,15 +636,13 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
     def test_sim_specline_nonoise_pol_1(self):
         """ Check fitting of continuum as polynomial order 1"""
         # Values added to visibilities as a polynomial on channels
-        pol_coeffs = [0.1, 0.45]
-        nchan = 128
-        x = np.linspace(0, 1, nchan)
-        exp_cont = 5 * (1+1j) * np.polyval(pol_coeffs, x)
+        x = np.linspace(0, 1, self.nchan)
+        exp_cont = 5 * (1+1j) * np.polyval(self.pol_coeffs_order_1, x)
 
         uvcontsub2021(vis=self.ms_cont_nonoise_order_1, outputvis=self.output, fitorder=1,
                       fitspw=self.fitspw)
 
-        print('Checking numerical differences for MS {self.ms_cont_order_0}')
+        print(f'Checking numerical differences for MS {self.ms_cont_nonoise_order_1}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_1,
                                                    outputvis=self.output,
                                                    exp_cont=exp_cont)
@@ -637,15 +653,13 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
     def test_sim_specline_noise_pol_1(self):
         """ Check fitting of continuum as polynomial order 1. Gaussian noise included"""
         # Values added to visibilities as a polynomial on channels
-        pol_coeffs = [0.1, 0.45]
-        nchan = 128
-        x = np.linspace(0, 1, nchan)
-        exp_cont = 5 * (1+1j) * np.polyval(pol_coeffs, x)
+        x = np.linspace(0, 1, self.nchan)
+        exp_cont = 5 * (1+1j) * np.polyval(self.pol_coeffs_order_1, x)
 
         uvcontsub2021(vis=self.ms_cont_noise_order_1, outputvis=self.output, fitorder=1,
                       fitspw=self.fitspw)
 
-        print('Checking numerical differences for MS {self.ms_cont_order_0}')
+        print(f'Checking numerical differences for MS {self.ms_cont_noise_order_1}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_1,
                                                    outputvis=self.output,
                                                    exp_cont=exp_cont)
