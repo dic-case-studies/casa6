@@ -2,7 +2,6 @@
 
 use POSIX;
 use File::Basename;
-use File::Which;
 use Cwd qw(abs_path getcwd);
 
 $name = basename($0);
