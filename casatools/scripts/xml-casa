@@ -7,7 +7,7 @@ use Cwd qw(abs_path getcwd);
 $name = basename($0);
 $exe = abs_path($0);
 $path = abs_path(dirname($exe));
-chop($java=`type -p java`);
+chop($java=`which java`);
 $jarfile_name = "xml-casa-assembly-1.66.jar";
 
 ### install path

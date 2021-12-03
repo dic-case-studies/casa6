@@ -83,7 +83,7 @@ if [[ "${ac_success}" = "no" ]]; then
 fi
 
 if [[ ! -e "${CXX}" ]]; then
-    CXX=`type -p ${CXX}`
+    CXX=`which ${CXX}`
 fi
 if [[ -x "${CXX}" ]]; then
     AC_MSG_NOTICE([C++11 compiler ${CXX}])
@@ -181,14 +181,14 @@ if [[ $? -ne 0 ]] ; then
    exit 1
 fi
 cd $temporary_script_dir
-ln -s `type -p sed`
-ln -s `type -p rm`
-ln -s `type -p dirname`
-ln -s `type -p basename`
-ln -s `type -p grep`
-ln -s `type -p sort`
-ln -s `type -p printf`
-ln -s `type -p cat`
+ln -s `which sed`
+ln -s `which rm`
+ln -s `which dirname`
+ln -s `which basename`
+ln -s `which grep`
+ln -s `which sort`
+ln -s `which printf`
+ln -s `which cat`
 cd $current_directory
 
 PATH=$(dirname ${CXX}):/bin:$temporary_script_dir
@@ -281,13 +281,13 @@ if [[ "${SYSTEM_GRPC}" == "1" ]]; then
                        if test "$PROTOC" = "/usr/bin/false"; then
                            AC_MSG_FAILURE([grpc requested but protoc not found.])
                        else
-                           PROTOC=`type -p protoc`
+                           PROTOC=`which protoc`
                        fi
                        AC_CHECK_PROGS([GRPC_CPP_PLUGIN], [grpc_cpp_plugin], [/usr/bin/false])
                        if test "$GRPC_CPP_PLUGIN" = "/usr/bin/false"; then
                            AC_MSG_FAILURE([grpc requested but grpc plugin for C++ not found.])
 		       else
-		           GRPC_CPP_PLUGIN=`type -p grpc_cpp_plugin`
+		           GRPC_CPP_PLUGIN=`which grpc_cpp_plugin`
                        fi ] )
     GRPC_DO_BUILD=0
 else
