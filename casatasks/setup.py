@@ -152,271 +152,8 @@ casatasks_version = '%d.%d.%d.%d%s' % (casatasks_major,casatasks_minor,casatasks
 if devbranchversion !="":
     casatasks_version = '%d.%d.%d.%da%s.dev%s%s' % (casatasks_major,casatasks_minor,casatasks_patch,casatasks_feature,devbranchversion,devbranchrevision,dirty)
 
-public_scripts = [ 'src/scripts/config.py', 'src/scripts/LICENSE.txt', 'src/scripts/__main__.py' ]
-
-private_scripts = [ 'src/scripts/userconfig.py',
-                    'src/scripts/casa_transition.py',
-                    'src/scripts/ialib.py',
-                    'src/scripts/cvt.py',
-                    'src/scripts/callibrary.py',
-                    'src/scripts/flaghelper.py',
-                    'src/scripts/partitionhelper.py',
-                    'src/tasks/task_imhead.py',
-                    'src/tasks/task_immoments.py',
-                    'src/tasks/task_imhistory.py',
-                    'src/tasks/task_applycal.py',
-                    'src/tasks/task_bandpass.py',
-                    'src/tasks/task_blcal.py',
-                    'src/tasks/task_calstat.py',
-                    'src/tasks/task_concat.py',
-                    'src/scripts/concatephem.py',
-                    'src/tasks/task_split.py',
-                    'src/tasks/task_listobs.py',
-                    'src/tasks/task_flagdata.py',
-                    'src/tasks/task_flagcmd.py',
-                    'src/tasks/task_setjy.py',
-                    'src/scripts/setjy_helper.py',
-                    'src/scripts/solar_system_setjy.py',
-                    'src/scripts/mstools.py',
-                    'src/scripts/update_spw.py',
-                    'src/tasks/task_cvel.py',
-                    'src/tasks/task_cvel2.py',
-                    'src/tasks/task_importuvfits.py',
-                    'src/tasks/task_importfits.py',
-                    'src/tasks/task_exportfits.py',
-                    'src/tasks/task_exportuvfits.py',
-                    'src/tasks/task_partition.py',
-                    'src/tasks/task_listpartition.py',
-                    'src/tasks/task_flagmanager.py',
-                    'src/tasks/task_mstransform.py',
-                    'src/tasks/task_tclean.py',
-                    'src/tasks/task_immath.py',
-                    'src/tasks/task_vishead.py',
-                    'src/scripts/vishead_util.py',
-                    'src/tasks/task_uvsub.py',
-                    'src/tasks/task_spxfit.py',
-                    'src/tasks/task_splattotable.py',
-                    'src/tasks/task_specsmooth.py',
-                    'src/tasks/task_specflux.py',
-                    'src/tasks/task_smoothcal.py',
-                    'src/tasks/task_specfit.py',
-                    'src/tasks/task_imstat.py',
-                    'src/tasks/task_slsearch.py',
-                    'src/tasks/task_delmod.py',
-                    'src/tasks/task_imsubimage.py',
-                    'src/tasks/task_accor.py',
-                    'src/tasks/task_asdmsummary.py',
-                    'src/tasks/task_clearcal.py',
-                    'src/tasks/task_conjugatevis.py',
-                    'src/tasks/task_exportasdm.py',
-                    'src/tasks/task_importasdm.py',
-                    'src/scripts/convertephem.py',
-                    'src/tasks/task_clearstat.py',
-                    'src/tasks/task_fixplanets.py',
-                    'src/scripts/JPLephem_reader2.py',
-                    'src/tasks/task_fixvis.py',
-                    'src/tasks/task_fluxscale.py',
-                    'src/tasks/task_ft.py',
-                    'src/tasks/task_gaincal.py',
-                    'src/tasks/task_gencal.py',
-                    'src/tasks/task_uvcontsub3.py',
-                    'src/tasks/task_testconcat.py',
-                    'src/tasks/task_apparentsens.py',
-                    'src/scripts/correct_ant_posns.py',
-                    'src/scripts/correct_ant_posns_alma.py',
-                    'src/scripts/correct_ant_posns_evla.py',
-                    'src/tasks/task_hanningsmooth.py',
-                    'src/tasks/task_imcollapse.py',
-                    'src/tasks/task_imcontsub.py',
-                    'src/tasks/task_imdev.py',
-                    'src/tasks/task_imfit.py',
-                    'src/tasks/task_impbcor.py',
-                    'src/tasks/task_importasap.py',
-                    'src/tasks/task_importatca.py',
-                    'src/tasks/task_importfitsidi.py',
-                    'src/tasks/task_importgmrt.py',
-                    'src/tasks/task_importnro.py',
-                    'src/tasks/task_importvla.py',
-                    'src/tasks/task_impv.py',
-                    'src/tasks/task_imrebin.py',
-                    'src/tasks/task_imreframe.py',
-                    'src/tasks/task_imregrid.py',
-                    'src/tasks/task_imsmooth.py',
-                    'src/tasks/task_imtrans.py',
-                    'src/tasks/task_imval.py',
-                    'src/tasks/task_initweights.py',
-                    'src/tasks/task_listcal.py',
-                    'src/tasks/task_listfits.py',
-                    'src/tasks/task_listhistory.py',
-                    'src/tasks/task_listsdm.py',
-                    'src/tasks/task_listvis.py',
-                    'src/tasks/task_makemask.py',
-                    'src/scripts/imtools.py',
-                    'src/tasks/task_polcal.py',
-                    'src/tasks/task_polfromgain.py',
-                    'src/tasks/task_predictcomp.py',
-                    'src/tasks/task_rerefant.py',
-                    'src/tasks/task_rmfit.py',
-                    'src/tasks/task_rmtables.py',
-                    'src/scripts/sdutil.py',
-                    'src/tasks/task_sdatmcor.py',
-                    'src/tasks/task_sdbaseline.py',
-                    'src/tasks/task_sdcal.py',
-                    'src/tasks/task_sdfit.py',
-                    'src/tasks/task_sdfixscan.py',
-                    'src/tasks/task_sdgaincal.py',
-                    'src/tasks/task_sdimaging.py',
-                    'src/scripts/sdbeamutil.py',
-                    'src/scripts/cleanhelper.py',
-                    'src/tasks/task_sdimaging.py',
-                    'src/tasks/task_sdsmooth.py',
-                    'src/tasks/task_tsdimaging.py',
-                    'src/tasks/task_nrobeamaverage.py',
-                    'src/tasks/task_sdtimeaverage.py',
-                    'src/tasks/task_sdpolaverage.py',
-                    'src/tasks/task_sdsidebandsplit.py',
-                    'src/tasks/task_plotprofilemap.py',
-                    'src/scripts/simutil.py',
-                    'src/tasks/task_simalma.py',
-                    'src/tasks/task_simobserve.py',
-                    'src/tasks/task_simanalyze.py',
-                    'src/tasks/task_feather.py',
-                    'src/tasks/task_statwt.py',
-                    'src/tasks/task_virtualconcat.py',
-                    'src/tasks/task_uvcontsub.py',
-                    'src/tasks/task_uvmodelfit.py',
-                    'src/tasks/task_visstat.py',
-                    'src/tasks/task_widebandpbcor.py',
-                    'src/tasks/task_importmiriad.py',
-                    'src/tasks/task_plotweather.py',
-                    'src/tasks/task_plotants.py',
-                    'src/tasks/task_fringefit.py',
-                    'src/tasks/task_plotbandpass.py',
-                    'src/scripts/predictcomp_helper.py',
-                    'src/scripts/task_logging.py',
-                    'src/tasks/task_sdintimaging.py',
-                    'src/scripts/sdint_helper.py',
-                    'src/scripts/tec_maps.py',
-]
 
 private_modules = [ 'src/modules/parallel', 'src/modules/imagerhelpers' ]
-
-xml_xlate = { 'casa-source/gcwrap/tasks/imhead.xml': 'xml/imhead.xml',
-              'casa-source/gcwrap/tasks/immoments.xml': 'xml/immoments.xml',
-              'casa-source/gcwrap/tasks/imhistory.xml': 'xml/imhistory.xml',
-              'casa-source/gcwrap/tasks/applycal.xml': 'xml/applycal.xml',
-              'casa-source/gcwrap/tasks/bandpass.xml': 'xml/bandpass.xml',
-              'casa-source/gcwrap/tasks/blcal.xml': 'xml/blcal.xml',
-              'casa-source/gcwrap/tasks/calstat.xml': 'xml/calstat.xml',
-              'casa-source/gcwrap/tasks/concat.xml': 'xml/concat.xml',
-              'casa-source/gcwrap/tasks/split.xml': 'xml/split.xml',
-              'casa-source/gcwrap/tasks/listobs.xml': 'xml/listobs.xml',
-              'casa-source/gcwrap/tasks/flagdata.xml': 'xml/flagdata.xml',
-              'casa-source/gcwrap/tasks/flagcmd.xml': 'xml/flagcmd.xml',
-              'casa-source/gcwrap/tasks/setjy.xml': 'xml/setjy.xml',
-              'casa-source/gcwrap/tasks/cvel.xml': 'xml/cvel.xml',
-              'casa-source/gcwrap/tasks/cvel2.xml': 'xml/cvel2.xml',
-              'casa-source/gcwrap/tasks/importuvfits.xml': 'xml/importuvfits.xml',
-              'casa-source/gcwrap/tasks/importfits.xml': 'xml/importfits.xml',
-              'casa-source/gcwrap/tasks/exportfits.xml': 'xml/exportfits.xml',
-              'casa-source/gcwrap/tasks/exportuvfits.xml': 'xml/exportuvfits.xml',
-              'casa-source/gcwrap/tasks/partition.xml': 'xml/partition.xml',
-              'casa-source/gcwrap/tasks/listpartition.xml': 'xml/listpartition.xml',
-              'casa-source/gcwrap/tasks/flagmanager.xml': 'xml/flagmanager.xml',
-              'casa-source/gcwrap/tasks/mstransform.xml': 'xml/mstransform.xml',
-              'casa-source/gcwrap/tasks/tclean.xml': 'xml/tclean.xml',
-              'casa-source/gcwrap/tasks/immath.xml': 'xml/immath.xml',
-              'casa-source/gcwrap/tasks/vishead.xml': 'xml/vishead.xml',
-              'casa-source/gcwrap/tasks/uvsub.xml': 'xml/uvsub.xml',
-              'casa-source/gcwrap/tasks/spxfit.xml': 'xml/spxfit.xml',
-              'casa-source/gcwrap/tasks/splattotable.xml': 'xml/splattotable.xml',
-              'casa-source/gcwrap/tasks/specsmooth.xml': 'xml/specsmooth.xml',
-              'casa-source/gcwrap/tasks/specflux.xml': 'xml/specflux.xml',
-              'casa-source/gcwrap/tasks/smoothcal.xml': 'xml/smoothcal.xml',
-              'casa-source/gcwrap/tasks/specfit.xml': 'xml/specfit.xml',
-              'casa-source/gcwrap/tasks/imstat.xml': 'xml/imstat.xml',
-              'casa-source/gcwrap/tasks/slsearch.xml': 'xml/slsearch.xml',
-              'casa-source/gcwrap/tasks/delmod.xml': 'xml/delmod.xml',
-              'casa-source/gcwrap/tasks/imsubimage.xml': 'xml/imsubimage.xml',
-              'casa-source/gcwrap/tasks/accor.xml': 'xml/accor.xml',
-              'casa-source/gcwrap/tasks/asdmsummary.xml': 'xml/asdmsummary.xml',
-              'casa-source/gcwrap/tasks/clearcal.xml': 'xml/clearcal.xml',
-              'casa-source/gcwrap/tasks/conjugatevis.xml': 'xml/conjugatevis.xml',
-              'casa-source/gcwrap/tasks/exportasdm.xml': 'xml/exportasdm.xml',
-              'casa-source/gcwrap/tasks/importasdm.xml': 'xml/importasdm.xml',
-              'casa-source/gcwrap/tasks/clearstat.xml': 'xml/clearstat.xml',
-              'casa-source/gcwrap/tasks/fixplanets.xml': 'xml/fixplanets.xml',
-              'casa-source/gcwrap/tasks/fixvis.xml': 'xml/fixvis.xml',
-              'casa-source/gcwrap/tasks/fluxscale.xml': 'xml/fluxscale.xml',
-              'casa-source/gcwrap/tasks/ft.xml': 'xml/ft.xml',
-              'casa-source/gcwrap/tasks/gaincal.xml': 'xml/gaincal.xml',
-              'casa-source/gcwrap/tasks/gencal.xml': 'xml/gencal.xml',
-              'casa-source/gcwrap/tasks/uvcontsub3.xml': 'xml/uvcontsub3.xml',
-              'casa-source/gcwrap/tasks/testconcat.xml': 'xml/testconcat.xml',
-              'casa-source/gcwrap/tasks/apparentsens.xml': 'xml/apparentsens.xml',
-              'casa-source/gcwrap/tasks/hanningsmooth.xml': 'xml/hanningsmooth.xml',
-              'casa-source/gcwrap/tasks/imcollapse.xml': 'xml/imcollapse.xml',
-              'casa-source/gcwrap/tasks/imcontsub.xml': 'xml/imcontsub.xml',
-              'casa-source/gcwrap/tasks/imdev.xml': 'xml/imdev.xml',
-              'casa-source/gcwrap/tasks/imfit.xml': 'xml/imfit.xml',
-              'casa-source/gcwrap/tasks/impbcor.xml': 'xml/impbcor.xml',
-              'casa-source/gcwrap/tasks/importasap.xml': 'xml/importasap.xml',
-              'casa-source/gcwrap/tasks/importatca.xml': 'xml/importatca.xml',
-              'casa-source/gcwrap/tasks/importfitsidi.xml': 'xml/importfitsidi.xml',
-              'casa-source/gcwrap/tasks/importgmrt.xml': 'xml/importgmrt.xml',
-              'casa-source/gcwrap/tasks/importnro.xml': 'xml/importnro.xml',
-              'casa-source/gcwrap/tasks/importvla.xml': 'xml/importvla.xml',
-              'casa-source/gcwrap/tasks/impv.xml': 'xml/impv.xml',
-              'casa-source/gcwrap/tasks/imrebin.xml': 'xml/imrebin.xml',
-              'casa-source/gcwrap/tasks/imreframe.xml': 'xml/imreframe.xml',
-              'casa-source/gcwrap/tasks/imregrid.xml': 'xml/imregrid.xml',
-              'casa-source/gcwrap/tasks/imsmooth.xml': 'xml/imsmooth.xml',
-              'casa-source/gcwrap/tasks/imtrans.xml': 'xml/imtrans.xml',
-              'casa-source/gcwrap/tasks/imval.xml': 'xml/imval.xml',
-              'casa-source/gcwrap/tasks/initweights.xml': 'xml/initweights.xml',
-              'casa-source/gcwrap/tasks/listcal.xml': 'xml/listcal.xml',
-              'casa-source/gcwrap/tasks/listfits.xml': 'xml/listfits.xml',
-              'casa-source/gcwrap/tasks/listhistory.xml': 'xml/listhistory.xml',
-              'casa-source/gcwrap/tasks/listsdm.xml': 'xml/listsdm.xml',
-              'casa-source/gcwrap/tasks/listvis.xml': 'xml/listvis.xml',
-              'casa-source/gcwrap/tasks/makemask.xml': 'xml/makemask.xml',
-              'casa-source/gcwrap/tasks/polcal.xml': 'xml/polcal.xml',
-              'casa-source/gcwrap/tasks/polfromgain.xml': 'xml/polfromgain.xml',
-              'casa-source/gcwrap/tasks/predictcomp.xml': 'xml/predictcomp.xml',
-              'casa-source/gcwrap/tasks/rerefant.xml': 'xml/rerefant.xml',
-              'casa-source/gcwrap/tasks/rmfit.xml': 'xml/rmfit.xml',
-              'casa-source/gcwrap/tasks/rmtables.xml': 'xml/rmtables.xml',
-              'casa-source/gcwrap/tasks/sdatmcor.xml': 'xml/sdatmcor.xml',
-              'casa-source/gcwrap/tasks/sdbaseline.xml': 'xml/sdbaseline.xml',
-              'casa-source/gcwrap/tasks/sdcal.xml': 'xml/sdcal.xml',
-              'casa-source/gcwrap/tasks/sdfit.xml': 'xml/sdfit.xml',
-              'casa-source/gcwrap/tasks/sdfixscan.xml': 'xml/sdfixscan.xml',
-              'casa-source/gcwrap/tasks/sdgaincal.xml': 'xml/sdgaincal.xml',
-              'casa-source/gcwrap/tasks/sdimaging.xml': 'xml/sdimaging.xml',
-              'casa-source/gcwrap/tasks/sdsmooth.xml': 'xml/sdsmooth.xml',
-              'casa-source/gcwrap/tasks/tsdimaging.xml': 'xml/tsdimaging.xml',
-              'casa-source/gcwrap/tasks/nrobeamaverage.xml': 'xml/nrobeamaverage.xml',
-              'casa-source/gcwrap/tasks/sdtimeaverage.xml': 'xml/sdtimeaverage.xml',
-              'casa-source/gcwrap/tasks/simalma.xml': 'xml/simalma.xml',
-              'casa-source/gcwrap/tasks/simobserve.xml': 'xml/simobserve.xml',
-              'casa-source/gcwrap/tasks/simanalyze.xml': 'xml/simanalyze.xml',
-              'casa-source/gcwrap/tasks/feather.xml': 'xml/feather.xml',
-              'casa-source/gcwrap/tasks/statwt.xml': 'xml/statwt.xml',
-              'casa-source/gcwrap/tasks/virtualconcat.xml': 'xml/virtualconcat.xml',
-              'casa-source/gcwrap/tasks/uvcontsub.xml': 'xml/uvcontsub.xml',
-              'casa-source/gcwrap/tasks/uvmodelfit.xml': 'xml/uvmodelfit.xml',
-              'casa-source/gcwrap/tasks/visstat.xml': 'xml/visstat.xml',
-              'casa-source/gcwrap/tasks/widebandpbcor.xml': 'xml/widebandpbcor.xml',
-              'casa-source/gcwrap/tasks/importmiriad.xml': 'xml/importmiriad.xml',
-              'casa-source/gcwrap/tasks/plotweather.xml': 'xml/plotweather.xml',
-              'casa-source/gcwrap/tasks/plotants.xml': 'xml/plotants.xml',
-              'casa-source/gcwrap/tasks/fringefit.xml': 'xml/fringefit.xml',
-              'casa-source/gcwrap/tasks/plotbandpass.xml': 'xml/plotbandpass.xml',
-              'casa-source/gcwrap/tasks/sdintimaging.xml': 'xml/sdintimaging.xml',
-              'casa-source/gcwrap/tasks/sdpolaverage.xml': 'xml/sdpolaverage.xml',
-              'casa-source/gcwrap/tasks/sdsidebandsplit.xml': 'xml/sdsidebandsplit.xml',
-              'casa-source/gcwrap/tasks/plotprofilemap.xml': 'xml/plotprofilemap.xml',
-}
 
 xml_files = [ 'xml/imhead.xml',
               'xml/immoments.xml',
@@ -464,6 +201,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/clearstat.xml',
               'xml/fixplanets.xml',
               'xml/fixvis.xml',
+              'xml/phaseshift.xml',
               'xml/fluxscale.xml',
               'xml/ft.xml',
               'xml/gaincal.xml',
@@ -576,34 +314,6 @@ def mkpath(path):
             pass
         else:
             raise
-
-def upgrade_xml( conversions ):
-    mkpath("xml")
-    for k in conversions.keys( ):
-        if not os.path.exists(conversions[k]) or os.path.getmtime(conversions[k]) < os.path.getmtime(k):
-
-            print("upgrading %s" % k)
-
-            proc = Popen( [tools_config['build.compiler.xml-casa'], "-upgrade", k],
-                          stdout=subprocess.PIPE )
-
-            (output, error) = pipe_decode(proc.communicate( ))
-
-            exit_code = proc.wait( )
-            if exit_code != 0:
-                sys.exit('upgrading %s failed' % conversions[k])
-
-            if k.endswith("/imval.xml"):
-                print("fixing %s" % k)
-                ## one test case test_imval.py is fundamentally broken, and fixing this through
-                ## a commit causes the test case to proceed past the broken spot... so here
-                ## we revert to patching at build time...
-                output = output.replace('<output>','<bogus_output>')
-                output = output.replace('</output>','</bogus_output>')
-
-            xmlfd = open(conversions[k], 'w')
-            xmlfd.write(output)
-            xmlfd.close( )
 
 def generate_pyinit(moduledir,tasks):
     """Generate __init__.py for the module
@@ -741,14 +451,13 @@ class BuildCasa(build):
         build.finalize_options(self)
 
     def run(self):
-        upgrade_xml(xml_xlate)
-        #scripts/xml-casa output-task=/tmp/debug/task -task taskxml/imhead.xml > /Users/drs/develop/casa/casatools/build/lib.macosx-10.12-x86_64-3.6/casatasks/imhead.py
+
         libdir = os.path.join("build",distutils_dir_name('lib'))
         moduledir = os.path.join(libdir,"casatasks")
-        privatedir = os.path.join(moduledir,"private")
         xmldir = os.path.join(moduledir,"__xml__")
 
-        mkpath(privatedir)
+        copy_tree('src',moduledir)
+
         print("generating task python files...")
         proc = Popen( [tools_config['build.compiler.xml-casa'], "output-task=%s" % moduledir, "-task"] + xml_files,
                       stdout=subprocess.PIPE )
@@ -762,16 +471,6 @@ class BuildCasa(build):
 
         tasks = output.split( )
         generate_pyinit(moduledir,tasks)
-
-        for f in public_scripts:
-            copy2(f,moduledir)
-
-        for f in private_scripts:
-            copy2(f,privatedir)
-
-        for m in private_modules:
-            tgt = os.path.join(privatedir,os.path.basename(m))
-            copy_tree(m,tgt)
 
         mkpath(xmldir)
         for x in xml_files:

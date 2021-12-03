@@ -1,0 +1,190 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+
+ 
+        <tool module="synthesisdeconvolver" name="synthesisdeconvolver">
+        <shortdescription>tool for synthesis imaging</shortdescription>
+       
+<description>
+synthesisdeconvolver is an tool that accomplishes synthesis processing.
+A {\tt synthesisdeconvolver} must be constructed for each MeasurementSet for which one
+wishes to do processing. Multiple copies of {\tt synthesisdeconvolver} may
+be made at any time (provide they are given different names).
+</description>
+
+<code>
+	<include>synthesisdeconvolver_forward.h</include>
+<private>
+	<include>synthesisdeconvolver_private.h</include>
+</private>
+
+</code>
+
+
+
+ 
+   <method name="synthesisdeconvolver" type="constructor">
+   <shortdescription>Construct an synthesisdeconvolver tool</shortdescription>
+   
+<description>
+This is used to construct {\tt synthesisdeconvolver} tool. 
+
+</description>
+<input>
+
+</input>
+<returns type="synthesisdeconvolver"/>
+<example>
+
+
+</example>
+</method>
+
+
+
+
+   <method name="setupdeconvolution" type="function">
+   <shortdescription>Set parameters to control minor cycle algorithms</shortdescription>
+
+<description>
+</description>
+<input>
+
+     <param name="decpars" type="record">
+     <description>All parameters for deconvolution (minor cycle)</description>
+     <value type="record"/>
+     </param>
+
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="initminorcycle" type="function">
+   <shortdescription>Find peak residual</shortdescription>
+
+<description>
+</description>
+<input/>
+
+<returns type="record"/>
+</method>
+
+
+
+   <method name="setupmask" type="function">
+   <shortdescription>Create an input or auto mask</shortdescription>
+
+<description>
+</description>
+<input>
+</input>
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="interactivegui" type="function">
+   <shortdescription>Run interactive GUI</shortdescription>
+
+<description>
+</description>
+
+<input>
+     <param name="iterbotrecord" type="record">
+     <description>All parameters that control iterations</description>
+     <value type="record"/>
+     </param>
+</input>
+
+<returns type="record"/>
+</method>
+
+
+
+   <method name="estimatememory" type="function">
+   <shortdescription>Get an estimate in kilobytes of memory that will be needed</shortdescription>
+
+<description>
+  This function returns an estimate of the memory (RAM) to be used by synthesisdeconvolver tool. Need to be run after functions setdata and defineimage are done
+</description>
+<input>
+<param name="imsize" type="intVec">
+     <description>Image size that will be deconvolved (vector of int)</description>
+     <value/>
+     </param>
+</input>
+<returns type="any"><any type="variant"/></returns>
+</method>
+
+   <method name="executeminorcycle" type="function">
+   <shortdescription>Run a minor cycle</shortdescription>
+
+<description>
+</description>
+<input>
+     <param name="iterbotrecord" type="record">
+     <description>All parameters that control minor cycle</description>
+     <value type="record"/>
+     </param>
+</input>
+
+<returns type="record"/>
+</method>
+
+
+
+
+   <method name="restore" type="function">
+   <shortdescription>Restore images</shortdescription>
+
+<description>
+</description>
+<input>
+</input>
+
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="pbcor" type="function">
+   <shortdescription>Apply primary beam correction</shortdescription>
+
+<description>
+</description>
+<input>
+</input>
+
+<returns type="bool"/>
+</method>
+
+
+   <method name="checkrestoringbeam" type="function">
+   <shortdescription>check restoring beam.</shortdescription>
+
+<description>
+</description>
+<input>
+</input>
+
+<returns type="bool"/>
+</method>
+
+
+
+   <method name="done" type="function">
+   <shortdescription>Close the tool</shortdescription>
+
+<description>
+</description>
+<input>
+
+</input>
+<returns type="bool"/>
+</method>
+
+</tool>
+
+</casaxml>
