@@ -500,11 +500,20 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
         if os.path.exists(self.output):
             shutil.rmtree(self.output)
 
-    def _check_numerical(self, vis, outputvis, exp_cont):
+    def _check_diffs(self, vis, outputvis, exp_cont):
         """
         Compare numerical differences between input visibilities and
         (output visibilities + expected_continuum), where the expected
         continuum is known from simulations.
+
+        :param vis: input MS
+        :param outputvis: output, cont subtracted MS to compare against (input MS - exp_cont)
+        :param exp_cont: expected continuum values (known from simulation parameters)
+
+        :returns: a tuple with the 25th, median, and 75th percentiles of the differences
+        in absolute values of the visibilities across all channels, for all polarizations,
+        baselines, and times. The difference is calculated as a percentage relative to the
+        expected continuum value at each channel.
         """
         tbt = table()
         try:
@@ -533,52 +542,46 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
             def pc_relative_diff(diff, ref):
                 return 100.0 * np.absolute(diff / ref)
 
+            # Print these percentiles
+            pc_levels = [25, 50, 75]
             # Differences in absolute val of visibilities
             diff_abs = np.absolute(diff)
             amedian = np.median(diff_abs)
             amin = np.min(diff_abs)
             amax = np.max(diff_abs)
-            # ramedian = pc_relative_diff(amedian, np.absolute(exp_cont))
-            # ramin = pc_relative_diff(amin, np.absolute(exp_cont))
-            # ramax = pc_relative_diff(amax, np.absolute(exp_cont))
             rdiff_abs = pc_relative_diff(diff_abs, np.absolute(broadcast_exp_cont))
-            ramedian = np.median(rdiff_abs)
+            ra25, ramedian, ra75 = np.percentile(rdiff_abs, pc_levels)
             ramin = np.min(rdiff_abs)
             ramax = np.max(rdiff_abs)
             print(f' Diff in absolute values. Median: {amedian}, min: {amin}, max: {amax}.'
-                  f'\n   Relative to cont, median: {ramedian} %, min: {ramin} %, '
-                  f'max: {ramax} %')
+                  f'\n   Relative to cont, 25pc: {ra25}, median: {ramedian} %, 75pc: {ra75} '
+                  f'min: {ramin} %, max: {ramax} %')
 
             diff_real = np.absolute(diff.real)
             rmedian = np.median(diff_real)
             rmin = np.min(diff_real)
             rmax = np.max(diff_real)
-            # rrmedian = pc_relative_diff(rmedian, exp_cont.real)
-            # rrmin = pc_relative_diff(rmin, exp_cont.real)
-            # rrmax = pc_relative_diff(rmax, exp_cont.real)
             rdiff_real = pc_relative_diff(diff.real, broadcast_exp_cont.real)
-            rrmedian = np.median(rdiff_real)
+            rr25, rrmedian, rr75 = np.percentile(rdiff_real, pc_levels)
             rrmin = np.min(rdiff_real)
             rrmax = np.max(rdiff_real)
             print(f' Diff in real part. Median: {rmedian}, min: {rmin}, max: {rmax}'
-                  f'\n   Relative to cont, median: {rrmedian} %, min: {rrmin} %, '
-                  f'max: {rrmax} %')
+                  f'\n   Relative to cont, 25pc: {rr25}, median: {rrmedian} %, 75pc: {rr75} '
+                  f'min: {rrmin} %, max: {rrmax} %')
 
             diff_imag = np.absolute(diff.imag)
             imedian = np.median(diff_imag)
             imin = np.min(diff_imag)
             imax = np.max(diff_imag)
-            # rimedian = pc_relative_diff(imedian, exp_cont.imag)
-            # rimin = pc_relative_diff(imin, exp_cont.imag)
-            # rimax = pc_relative_diff(imax, exp_cont.imag)
             rdiff_imag = pc_relative_diff(diff.imag, broadcast_exp_cont.imag)
-            rimedian = np.median(rdiff_imag)
+            ri25, rimedian, ri75 = np.percentile(rdiff_imag, pc_levels)
             rimin = np.min(rdiff_imag)
             rimax = np.max(rdiff_imag)
             print(f' Diff in imag part. Median: {imedian}, min: {imin}, max: {imax}'
-                  f'\n    Relative to cont, median: {rimedian} %, min: {rimin} %, '
-                  f'max: {rimax} %')
+                  f'\n   Relative to cont, 25pc: {ri25}, median: {rimedian} %, 75pc: {ri75} '
+                  f'min: {rimin} %, max: {rimax} %')
 
+            return ra25, ramedian, ra75
         finally:
             tbt.done()
 
@@ -590,8 +593,12 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
                       fitspw=self.fitspw)
 
         print('Checking numerical differences for MS {self.ms_cont_order_0}')
-        self._check_numerical(vis=self.ms_cont_nonoise_order_0, outputvis=self.output,
-                              exp_cont=exp_cont)
+        diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_0,
+                                                   outputvis=self.output,
+                                                   exp_cont=exp_cont)
+        self.assertLessEqual(diff25, 2e-4)
+        self.assertLessEqual(diff50, 2e-4)
+        self.assertLessEqual(diff50, 2e-4)
 
     def test_sim_specline_noise_pol_0(self):
         """ Check fitting of continuum as polynomial order 0"""
@@ -601,8 +608,12 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
                       fitspw=self.fitspw)
 
         print('Checking numerical differences for MS {self.ms_cont_order_0}')
-        self._check_numerical(vis=self.ms_cont_order_0, outputvis=self.output,
-                              exp_cont=exp_cont)
+        diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_order_0,
+                                                   outputvis=self.output,
+                                                   exp_cont=exp_cont)
+        self.assertLessEqual(diff25, 0.7)
+        self.assertLessEqual(diff50, 0.8)
+        self.assertLessEqual(diff50, 1)
 
     def test_sim_specline_nonoise_pol_1(self):
         """ Check fitting of continuum as polynomial order 1"""
@@ -616,8 +627,12 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
                       fitspw=self.fitspw)
 
         print('Checking numerical differences for MS {self.ms_cont_order_0}')
-        self._check_numerical(vis=self.ms_cont_nonoise_order_1, outputvis=self.output,
-                              exp_cont=exp_cont)
+        diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_1,
+                                                   outputvis=self.output,
+                                                   exp_cont=exp_cont)
+        self.assertLessEqual(diff25, 2e-4)
+        self.assertLessEqual(diff50, 2e-4)
+        self.assertLessEqual(diff50, 2.2e-4)
 
     def test_sim_specline_noise_pol_1(self):
         """ Check fitting of continuum as polynomial order 1. Gaussian noise included"""
@@ -631,8 +646,12 @@ class uvcontsub2021_numerical_sim_test(unittest.TestCase):
                       fitspw=self.fitspw)
 
         print('Checking numerical differences for MS {self.ms_cont_order_0}')
-        self._check_numerical(vis=self.ms_cont_nonoise_order_1, outputvis=self.output,
-                              exp_cont=exp_cont)
+        diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_1,
+                                                   outputvis=self.output,
+                                                   exp_cont=exp_cont)
+        self.assertLessEqual(diff25, 3)
+        self.assertLessEqual(diff50, 4)
+        self.assertLessEqual(diff75, 5)
 
 
 def suite():
