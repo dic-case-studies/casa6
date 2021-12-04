@@ -3561,6 +3561,44 @@ def get_func_params(func, loc_vars):
     params = [(name, loc_vars[name]) for name in param_names]
     return params
 
+def write_task_history(images, tname, params, clog):
+    """
+    Update image/logtable with the taskname, CASA version and all task parameters
+    CASR-571. Replicates the same format as mstools.write_history.
+
+    :param images: list of images to write the history to
+    :param tname: task name to use as origin of the history
+    :param params: list of task parameters as a tuple (name, value)
+    :param clog: casa log object
+    """
+    iat = iatool()
+
+    history = ['taskname={0}'.format(tname)]
+    history.append(_casa_version_string())
+    # Add all task arguments.
+    for name, val in params:
+        msg = "%-11s = " % name
+        if type(val) == str:
+            msg += '"'
+        msg += str(val)
+        if type(val) == str:
+            msg += '"'
+        history.append(msg)
+
+    for img in images:
+        iat_open = False
+        try:
+            iat.open(img)
+            iat_open = True
+            iat.sethistory(origin=tname, history=history)
+        except RuntimeError:
+            clog.post('Could not open this directory as an image to write history: {}'.
+                      format(img), 'DEBUG')
+        finally:
+            if iat_open:
+                iat.close()
+    iat.done()
+
 def write_tclean_history(imagename, tname, params, clog):
         """
         Update image/logtable with the taskname, CASA version and all task parameters
@@ -3587,7 +3625,7 @@ def write_tclean_history(imagename, tname, params, clog):
             :returns: list of image names after filtering out undesired ones
             """
             accept = []
-            regex = re.compile(imagename + '[0-9]*_?[0-9]*\..+')
+            regex = re.compile('^' + re.escape(imagename) + '[0-9]*_?[0-9]*\..+')
             for img in img_exts:
                 if img.endswith(('.cf', '.cfcache', '.workdirectory', '.work.temp', '.txt')):
                     continue
@@ -3598,34 +3636,29 @@ def write_tclean_history(imagename, tname, params, clog):
                     accept.append(img)
             return accept
 
-        iat = iatool()
+        def filter_obvious_nonimages(img_exts):
+            """
+            Try to filter out files that are not images but have been placed in the same
+            directory and share the same prefix name as the images.
+            For example, images have to be directories. All non-dir files can be filtered
+            out. It also checks for a logtable subdirectory with a table.info file, which
+            is expected in CASA images.
+
+            This is to not even try to open them (with the iatool or similar).
+            See CAS-13464 for additional complications around tclean output image names.
+
+            :param img_exts: list of image names (different extensions)
+            :returns: list of image names after filtering out the ones that do not seem
+            to be images.
+            """
+            path_check = ['logtable', 'table.info']
+            accept = [img for img in img_exts if
+                      os.path.isdir(img) and os.path.isfile(os.path.join(img, *path_check))]
+            return accept
 
         img_exts = glob.glob(imagename + '*.*')
         img_exts = filter_img_names(img_exts)
-        clog.post("Writing history into these images: {}".format(img_exts))
-
-        history = ['taskname={0}'.format(tname)]
-        history.append(_casa_version_string())
-        # Add all task arguments.
-        for name, val in params:#range(len(param_names)):
-            msg = "%-11s = " % name
-            if type(val) == str:
-                msg += '"'
-            msg += str(val)
-            if type(val) == str:
-                msg += '"'
-            history.append(msg)
-
-        for img in img_exts:
-            iat_open = False
-            try:
-                iat.open(img)
-                iat_open = True
-                iat.sethistory(origin=tname, history=history)
-            except RuntimeError:
-                clog.post('Could not open this directory as an image to write history: {}'.
-                          format(img), 'DEBUG')
-            finally:
-                if iat_open:
-                    iat.close()
-        iat.done()
+        img_exts = filter_obvious_nonimages(img_exts)
+        clog.post("Searching for images with prefix '{}'... Found these, writing history "
+                  "into them: {}".format(imagename, img_exts))
+        write_task_history(img_exts, tname, params, clog)

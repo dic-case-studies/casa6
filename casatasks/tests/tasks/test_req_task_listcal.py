@@ -47,11 +47,32 @@ else:
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
     validator_exc_type = RuntimeError
 
+def searchInFile(filename, searched):
+    """
+    Search for a substring in a file
+    """
+    with open(filename) as searched_file:
+        for line in searched_file:
+            if searched in line:
+                return True
+        return False
+
+
+def getLine(filename, lineNum):
+
+    counter = 0
+    with open(filename) as fout:
+        for line in fout:
+            if counter == lineNum:
+                return line
+            else:
+                counter += 1
+
 
 class test_listcal_minimal(unittest.TestCase):
     """
     Most basic ways of calling listcal, with an existing small dataset from the
-    'regression/unittest' input data that is used in the bandpass and gaincal tests.
+    'unittest' input data that is used in the bandpass and gaincal tests.
     This is just a start, to have some tests for the task listcal.
     """
 
@@ -131,8 +152,106 @@ class test_listcal_minimal(unittest.TestCase):
         self.assertFalse(os.path.isfile(self._listfile))
 
 
+class listcal_test(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        if not CASA6:
+            default(listcal)
+
+        vis_name = 'ngc5921.ms'
+        caltable_name = 'ngc5921.ref1a.gcal'
+        reffile_name = 'reflistcal.txt'
+
+        gainvis_name = 'gaincaltest2.ms'
+        gaincaltable_name = 'gaincaltest2.ms.G0'
+        shutil.copytree(os.path.join(datapath,vis_name),vis_name)
+        shutil.copytree(os.path.join(datapath,caltable_name),caltable_name)
+        shutil.copytree(os.path.join(datapath, gainvis_name), gainvis_name)
+        shutil.copytree(os.path.join(datapath, gaincaltable_name), gaincaltable_name)
+        shutil.copyfile(os.path.join(datapath, reffile_name), reffile_name)
+        cls._vis = vis_name
+        cls._caltable = caltable_name
+        cls._gainvis = gainvis_name
+        cls._gaincaltable = gaincaltable_name
+        cls._listfile = 'listcal_listfile.txt'
+        cls._reffile = reffile_name
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls._vis)
+        shutil.rmtree(cls._caltable)
+        shutil.rmtree(cls._gainvis)
+        shutil.rmtree(cls._gaincaltable)
+        os.remove(cls._reffile)
+
+    def tearDown(self):
+        if os.path.isfile(self._listfile):
+            os.remove(self._listfile)
+
+    def test_fieldSelection(self):
+        """ Checks that specific fields can be selected """
+        listcal(vis=self._vis, caltable=self._caltable, field='N5921_2', listfile=self._listfile)
+
+        self.assertFalse(searchInFile(self._listfile, '1331+30500002_0'), msg='Found fields that are not selected')
+        self.assertTrue(searchInFile(self._listfile, 'N5921_2'), msg='did not find selected field')
+
+    def test_antennaSelection(self):
+        """ Checks that specific antenna can be selected """
+        listcal(vis=self._vis, caltable=self._caltable, antenna='VA01', listfile=self._listfile)
+
+        self.assertFalse(searchInFile(self._listfile, 'VA02'), msg='Found anntennas that were not selected')
+        self.assertTrue(searchInFile(self._listfile, 'VA01'), msg='The selected antenna was not found')
+
+    def test_spwSelection(self):
+        """ Check that specific spectral windows can be selected """
+        listcal(vis=self._gainvis, caltable=self._gaincaltable, spw='1', listfile=self._listfile)
+
+        self.assertFalse(searchInFile(self._listfile, 'SpwID = 0'), msg='Found spw that was not selected')
+        self.assertTrue(searchInFile(self._listfile, 'SpwID = 1'), msg='Did not find the selected spw')
+
+    def test_headerLayout(self):
+        """ Check that the header is layed out in the form described in the documentation """
+        listcal(vis=self._gainvis, caltable=self._gaincaltable, listfile=self._listfile)
+
+        header = getLine(self._listfile, 0)
+
+        self.assertTrue("SpwID" in header)
+        self.assertTrue("Date" in header)
+        self.assertTrue("CalTable" in header)
+        self.assertTrue("MS name" in header)
+
+    def test_spectralWindowHeader(self):
+        """ Check that there is spectral window, date, caltable name, and ms name in the header """
+        listcal(vis=self._gainvis, caltable=self._gaincaltable, listfile=self._listfile)
+
+        header = getLine(self._listfile, 14)
+
+        self.assertTrue("SpwID" in header)
+        self.assertTrue("Date" in header)
+        self.assertTrue("CalTable" in header)
+        self.assertTrue("MS name" in header)
+
+    def test_headerColumnLabels(self):
+        """ Check that the data columns are labeled as described """
+        listcal(vis=self._gainvis, caltable=self._gaincaltable, listfile=self._listfile)
+
+        header = getLine(self._listfile, 3)
+        self.assertTrue(header.startswith("Time       Field      Chn| Amp    Phs  F  Amp    Phs  F| Amp    Phs  F  Amp    Phs  F| Amp    Phs  F  Amp    Phs  F| Amp    Phs  F  Amp    Phs  F|"))
+
+    def test_compareValues(self):
+        """ Compare the values in the output to a reference output for the same table """
+        listcal(vis=self._gainvis, caltable=self._gaincaltable, listfile=self._listfile)
+
+        with open(self._listfile) as file1:
+            with open(self._reffile) as file2:
+                diff = set(file1).difference(file2)
+
+        # There are differences in the file path when running the command
+        self.assertTrue(len(diff) == 4)
+
 def suite():
-    return [test_listcal_minimal]
+    return [test_listcal_minimal, listcal_test]
 
 if __name__ == '__main__':
     unittest.main()
