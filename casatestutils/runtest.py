@@ -748,7 +748,7 @@ def run(testnames):
 #######################################            Run Bamboo Option            ########################################
 ########################################################################################################################
 
-def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None, test_paths = [], test_config_path=None, ncores=2, verbosity=False, pmode=None):
+def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None, test_paths = [], test_config_path=None, ncores=2, verbosity=False, pmode=None, tests_to_ignore=None):
 
     if test_list is not None:
         test_list = [x.strip() for x in test_list.split(',')]
@@ -758,6 +758,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     # Unpack the distribution
     print ("Test list: " + str (test_list))
     print ("Test group: " + str (test_group))
+
     if pkg is None:
         raise Exception("Missing pkg")
     if work_dir is None:
@@ -790,7 +791,6 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     # Get the actual tests as list
     test_config_elems = test_config['testlist']
 
-    #print(test_config_elems)
     print("Test Paths: ", test_paths)
 
     # Match the test names provided in the JSON file to the actual test locations.
@@ -856,7 +856,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     if test_group is not None and len(test_group)>0:
         print("Jira component list provided. Filtering tests.")
         tmp_tests_to_run = []
-        #print(test_group)
+        print(test_group)
         for jira_component in test_group:
             found = False
             for t1 in tests_to_run:
@@ -886,6 +886,15 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
 
     # Run tests
     print("")
+
+    if tests_to_ignore is not None:
+        print("\nTests to Ignore: ",tests_to_ignore )
+        indices = []
+        for i, t in enumerate(tests_to_run):
+            if t.name in tests_to_ignore:
+                indices.append(i)
+        tests_to_run = [v for i,v in enumerate(tests_to_run) if i not in indices]
+
     for test in tests_to_run:
         r = ShellRunner()
         xunit = Xunit()
@@ -1022,6 +1031,8 @@ if __name__ == "__main__":
     parser.add_argument('--bamboo', help='Set Bamboo Flag to True',default=False,action='store_true', required=False)
     parser.add_argument('-r','--rcdir',  help='Casa rcdir', required=False)
 
+    parser.add_argument('--ignore_list',  help='map file of tests to ignore', required=False)
+
     if not IS_CASA6:
         if "-c" in sys.argv:
             i = sys.argv.index("-c")
@@ -1032,6 +1043,14 @@ if __name__ == "__main__":
     print(args)
     print("")
 
+    
+    if args.ignore_list is not None:
+        if args.ignore_list.endswith(".json"):
+            ignore_test_map = json.load(open(args.ignore_list))
+            tests_to_ignore = [x["testScript"].strip() for x in ignore_test_map["testlist"]]
+        else:
+            tests_to_ignore = [x.strip() for x in args.ignore_list.split(",")]
+
     print("Operating system: " +  platform.system())
     print("")
     rcdir=""
@@ -1041,7 +1060,7 @@ if __name__ == "__main__":
 
     if args.test_group is not None:
         components = args.test_group
-        components = components.split(",")
+        components = [x.strip() for x in components.split(",")]
         print("Testing Components" + str(components))
         print("")
         
@@ -1055,7 +1074,7 @@ if __name__ == "__main__":
                         component_to_test_map = json.load(ctt)
                 except:
                     print("No JSON file to Map")
-            
+
             for c in components:
                 _isComponent = False
                 component = c.strip()
@@ -1111,7 +1130,10 @@ if __name__ == "__main__":
         else:
 
             if arg.startswith("test") and not RUN_ALL:
-                testnames.append(arg)
+                if len([x.strip() for x in arg.split(",")]) > 1:
+                    testnames.extend([x.strip() for x in arg.split(",")])
+                else:
+                    testnames.append(arg)
             # local Path file
             #elif arg.startswith("./") and arg.endswith(".py") and not RUN_ALL:
             elif arg.startswith("./") and ".py" in arg and not RUN_ALL:
@@ -1143,7 +1165,7 @@ if __name__ == "__main__":
             if args.pmode not in pmodes:
                 raise Exception("Invalid pmode: '{}'. Valid modes: '{}'".format(args.pmode ,str(pmodes)))
 
-            run_bamboo(args.pkg, args.work_dir, args.branch, args.test_group, args.test_list, test_paths, args.test_config, args.ncores, args.verbose, args.pmode)
+            run_bamboo(args.pkg, args.work_dir, args.branch, args.test_group, args.test_list, test_paths, args.test_config, args.ncores, args.verbose, args.pmode, tests_to_ignore)
 
         else:
             #If no tests are given, no subet tag or --all option
@@ -1171,6 +1193,14 @@ if __name__ == "__main__":
                 testnames = tests
 
             print("Testnames: {}".format(testnames))
+            if tests_to_ignore is not None:
+                print("\nTests to Ignore: ",tests_to_ignore )
+                indices = []
+                for i, t in enumerate(testnames):
+                     if t.split("/")[-1].replace(".py","") in tests_to_ignore:
+                        indices.append(i)
+                testnames = [v for i,v in enumerate(testnames) if i not in indices]
+
             if testnames == [] or len(testnames) == 0:
                 print("List of tests is empty")
                 parser.print_help(sys.stderr)
