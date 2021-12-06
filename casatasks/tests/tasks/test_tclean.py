@@ -3838,15 +3838,26 @@ class test_hetarray_imaging(testref_base):
      Type 1 :  Antennas of different shapes and/or sizes :  gridder='mosaic'.  
      Type 2 :  Antennas have different pointing offsets (groups of antennas and time-dependence ) :  gridder='awproject'. [ Later, via CAS-11191, for 'mosaic' too ]
 
+     #############################
      Current Test list : 
+     #############################
+     
+     ####### Added for CASA 6.1, for gridder='awproject'
      test_het_pointing_offsets_awproject_cube :  With CAS-12617  :  Test antenna-dependent and time-dependent pointing offset corrections
      test_het_pointing_offsets_awproject_mtmfs :  With CAS-12617 :  Test antenna-dependent and time-dependent pointing offset correct
 
-     Tests to add later : 
+     #######  Added for CASA 6.4, for gridder='mosaic' : Four different ways of specifying primary beam models.
+     # (1) Canned beam models. Use known observatory name. 
+     -- test_het_antenna_mosaic_cube_alma :   With CAS-13010 : Test ALMA 7m+12m dataset with and without cross-baselines.  
+     # (2) Calculate Airy Disks from the ANT_DIA column of the MS ANTENNA subtable. Use unknown observatory name. 
+     -- test_het_antenna_mosaic_cube_ngvla :  With CAS-13010 (also CAS-11464) : Test model prediction for a generic het array with dish diameter modified in the ANTENNA subtable. 
+     # (3,4) Specify primary beams for different antenna subsets, using a VPTable.  Test for float and complex vptables (different paths through mosaic gridder). 
+     -- test_het_antenna_mosaic_cube_vptable_float 
+     -- test_het_antenna_mosaic_cube_vptable_complex
+
+     ######### Tests to add later : 
      test_het_pointing_offsets_mosaic_cube :   With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
      test_het_pointing_offsets_mosaic_mtmfs :    With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
-     test_het_antenna_mosaic :   Test ALMA 7m+12m dataset with and without cross-baselines.  
-     test_het_antenna_mosaic_simulate :  With CAS-11464 : Test model prediction for a generic het array with dish diameter modified in the ANTENNA subtable. 
      '''     
 #     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test till awproject works with CAS-9386")
@@ -4031,6 +4042,320 @@ class test_hetarray_imaging(testref_base):
           self.assertTrue(self.check_final(report1+report2))
 
      ###########################
+
+
+     def test_het_antenna_mosaic_cube_alma(self):
+          '''
+          This dataset has two groups of antennas (12m and 7m) with cross baselines. 
+          This test exercises the mosaic gridder for joint imaging of 12m, 7m and cross baseline data.
+          It images 12m, 7m, cross baselines separately and together and matches expected flux with the measured fluxes. 
+          It tests the use of canned ALMA primary beam models in heterogeneous array imaging mode.
+          The simulated dataset consists of one 1Jy source. Therefore, the PB at the location of the source should match the intensity value. 
+          '''
+          self.prepData('refim_sim_hetarray_alma.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/refim_sim_hetarray_alma.ms'
+
+          imsize=1024
+          cell='0.4arcsec'
+          spw='0:0~2'
+          niter=100
+
+          # Truth values are derived in the notebook associated with CAS-13010. 
+          int_12m = 0.785
+          int_7m = 0.93
+          int_cross = np.sqrt( int_12m * int_7m )
+          int_all = 0.80 
+          int_mos = 0.977
+          
+          ### ALMA : 12m only, one field
+          tclean(vis=msname,   antenna='A*&', field='0', spw=spw,  imagename=self.img+'.12m.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s -40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report1=self.th.checkall(imgval=[
+                                          (self.img+'.12m.single.image' ,int_12m,[512,512,0,0]), 
+                                          (self.img+'.12m.single.pb' ,int_12m,[512,512,0,0]) ] )
+
+          
+          ### ALMA : 7m only, one field
+          tclean(vis=msname,   antenna='J*,N*&', field='0', spw=spw,   imagename=self.img+'.7m.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s -40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report2=self.th.checkall(imgval=[
+                                          (self.img+'.7m.single.image' ,int_7m,[512,512,0,0]), 
+                                          (self.img+'.7m.single.pb' ,int_7m,[512,512,0,0]) ] )
+
+          
+          ### ALMA : Cross baselines only, one field
+          tclean(vis=msname,   antenna='A* && J*,N*', field='0', spw=spw,   imagename=self.img+'.cross.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s -40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report3=self.th.checkall(imgval=[
+                                          (self.img+'.cross.single.image' ,int_cross,[512,512,0,0]), 
+                                          (self.img+'.cross.single.pb' ,int_cross,[512,512,0,0]) ] )
+
+          
+          ### ALMA : All baselines, one field
+          tclean(vis=msname,   antenna='*', field='0', spw=spw,   imagename=self.img+'.all.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s -40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report4=self.th.checkall(imgval=[
+                                          (self.img+'.all.single.image' ,int_all,[512,512,0,0]), 
+                                          (self.img+'.all.single.pb' ,int_all,[512,512,0,0]) ] )
+
+        
+          ### ALMA : All baselines, two pointing mosaic
+          tclean(vis=msname,   antenna='*', field='0,1', spw=spw,   imagename=self.img+'.all.mosaic',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s -40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report5=self.th.checkall(imgval=[
+                                          (self.img+'.all.mosaic.image' ,int_mos,[512,512,0,0]), 
+                                          (self.img+'.all.mosaic.pb' ,int_mos,[512,512,0,0]) ] )
+
+        
+          self.assertTrue(self.check_final(pstr=report1+report2+report3+report4+report5))
+
+###########################
+
+
+     def test_het_antenna_mosaic_cube_ngvla(self):
+          '''
+          This dataset has two groups of antennas (18m and 6m) with cross baselines. 
+          This test exercises the mosaic gridder for joint imaging of 18m, 6m and cross baseline data.
+          This test uses default Airy Disk primary beam models generated purely from the ANTENNA table's diameter column. 
+          This test has a non-standard (unknown) observatory name and represents the use case of an arbitrary telescope
+                  for which primary beam models are unknown and whose size is guided only by the ANTENNA subtable. 
+          The simulated dataset consists of one 1Jy source. Therefore, the PB at the location of the source should match the intensity value. 
+          '''
+          self.prepData('refim_sim_hetarray_ngvla.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/refim_sim_hetarray_ngvla.ms'
+
+          imsize=1024
+          cell='1.0arcsec'
+          spw='0:0~2'
+          niter=100
+
+          # Truth values are derived in the notebook associated with CAS-13010. 
+          int_single = 0.602
+          int_mos = 0.747
+        
+          ### NGVLA : All baselines, one field
+          tclean(vis=msname,   antenna='*', field='0', spw=spw,   imagename=self.img+'ng.all.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report1=self.th.checkall(imgval=[
+                                          (self.img+'ng.all.single.image' ,int_single,[512,512,0,0]), 
+                                          (self.img+'ng.all.single.pb' ,int_single,[512,512,0,0]) ] )
+
+        
+          ### NGVLA : All baselines, two pointing mosaic
+          tclean(vis=msname,   antenna='*', field='0,1', spw=spw,   imagename=self.img+'ng.all.mosaic',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report2=self.th.checkall(imgval=[
+                                          (self.img+'ng.all.mosaic.image' ,int_mos,[512,512,0,0]), 
+                                          (self.img+'ng.all.mosaic.pb' ,int_mos,[512,512,0,0]) ] )
+
+        
+          self.assertTrue(self.check_final(pstr=report1+report2))
+
+
+     def test_het_antenna_mosaic_cube_vptable_float(self):
+          '''
+          This dataset has two groups of antennas (18m and 6m) with cross baselines. 
+          This test exercises the mosaic gridder for joint imaging of 18m, 6m and cross baseline data.
+          This test uses user-specified primary beam images via a VPTable - with float-valued planes.
+          The simulated dataset consists of one 1Jy source. Therefore, the PB at the location of the source should match the intensity value. 
+          '''
+          self.prepData('refim_sim_hetarray_vp_ngvla.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/refim_sim_hetarray_vp_ngvla.ms'
+
+         ## PB models
+          #pbA = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/sim_vp_KSA_float_A.im'
+          #pbB = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/sim_vp_KSA_float_B.im'
+          self.prepData('sim_vp_KSA_float_A.im')
+          self.prepData('sim_vp_KSA_float_B.im')
+          pbA = 'sim_vp_KSA_float_A.im'
+          pbB = 'sim_vp_KSA_float_B.im'
+
+          imsize=1024
+          cell='1.0arcsec'
+          spw='0:0~2'
+          niter=100
+
+          # Truth values are derived in the notebook associated with CAS-13010. 
+          int_typeA = 0.862   ## from a 20m dish
+          int_typeB = 0.961   ## from a 10m dish
+          int_all = 0.87  ## 
+        
+
+          ### First, make the vptable from the PB models from the data repo. 
+          vptabname = 'vptab_float.vp'
+          antlist = ['m153','m155','m140','m142', 'm130', 'm122','m151', 's012','s006', 's013','s008', 's009']
+          _vp.reset()
+          _vp.setpbimage(telescope='NGVLA1', realimage=pbA, antnames=antlist[0:7])
+          _vp.setpbimage(telescope='NGVLA1', realimage=pbB, antnames=antlist[7:12])
+          _vp.saveastable(vptabname)
+          
+
+          ### NGVLA : Type A baselines, one field
+          tclean(vis=msname,   antenna='m*&', field='0', spw=spw,   imagename=self.img+'ng.typeAf.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 vptable=vptabname,
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report1=self.th.checkall(imgval=[
+                                          (self.img+'ng.typeAf.single.image' ,int_typeA,[512,512,0,0]), 
+                                          (self.img+'ng.typeAf.single.pb' ,int_typeA,[512,512,0,0]) ] )
+
+          ### NGVLA : Type B baselines, one field
+          tclean(vis=msname,   antenna='s*&', field='0', spw=spw,   imagename=self.img+'ng.typeBf.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 vptable=vptabname,
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report2=self.th.checkall(imgval=[
+                                          (self.img+'ng.typeBf.single.image' ,int_typeB,[512,512,0,0]), 
+                                          (self.img+'ng.typeBf.single.pb' ,int_typeB,[512,512,0,0]) ] )
+
+        
+          ### NGVLA : All baselines, one field 
+          tclean(vis=msname,   antenna='*', field='0', spw=spw,   imagename=self.img+'ng.allf.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 vptable=vptabname,
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report3=self.th.checkall(imgval=[
+                                          (self.img+'ng.allf.single.image' ,int_all,[512,512,0,0]), 
+                                          (self.img+'ng.allf.single.pb' ,int_all,[512,512,0,0]) ] )
+
+        
+          self.assertTrue(self.check_final(pstr=report1+report2+report3))
+
+
+
+     def test_het_antenna_mosaic_cube_vptable_complex(self):
+          '''
+          This dataset has two groups of antennas (18m and 6m) with cross baselines. 
+          This test exercises the mosaic gridder for joint imaging of 18m, 6m and cross baseline data.
+          This test uses user-specified primary beam images via a VPTable - with complex-valued planes.
+          The simulated dataset consists of one 1Jy source. Therefore, the PB at the location of the source should match the intensity value. 
+          '''
+          self.prepData('refim_sim_hetarray_vp_ngvla.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/refim_sim_hetarray_vp_ngvla.ms'
+
+          ## PB models
+          #pbA = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/sim_vp_KSA_complex_A.im'
+          #pbB = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/sim_vp_KSA_complex_B.im'
+          self.prepData('sim_vp_KSA_complex_A.im')
+          self.prepData('sim_vp_KSA_complex_B.im')
+          pbA = 'sim_vp_KSA_complex_A.im'
+          pbB = 'sim_vp_KSA_complex_B.im'
+
+          imsize=1024
+          cell='1.0arcsec'
+          spw='0:0~2'
+          niter=100
+
+          # Truth values are derived in the notebook associated with CAS-13010. 
+          int_typeA = 0.862   ## from a 20m dish
+          int_typeB = 0.961   ## from a 10m dish
+          int_all = 0.87  ## 
+        
+
+          ### First, make the vptable from the PB models from the data repo. 
+          vptabname = 'vptab_complex.vp'
+          antlist = ['m153','m155','m140','m142', 'm130', 'm122','m151', 's012','s006', 's013','s008', 's009']
+          _vp.reset()
+          _vp.setpbimage(telescope='NGVLA1', compleximage=pbA, antnames=antlist[0:7])
+          _vp.setpbimage(telescope='NGVLA1', compleximage=pbB, antnames=antlist[7:12])
+          _vp.saveastable(vptabname)
+          
+
+          ### NGVLA : Type A baselines, one field
+          tclean(vis=msname,   antenna='m*&', field='0', spw=spw,   imagename=self.img+'ng.typeAc.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 vptable=vptabname,
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report1=self.th.checkall(imgval=[
+                                          (self.img+'ng.typeAc.single.image' ,int_typeA,[512,512,0,0]), 
+                                          (self.img+'ng.typeAc.single.pb' ,int_typeA,[512,512,0,0]) ] )
+
+          ### NGVLA : Type B baselines, one field
+          tclean(vis=msname,   antenna='s*&', field='0', spw=spw,   imagename=self.img+'ng.typeBc.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 vptable=vptabname,
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report2=self.th.checkall(imgval=[
+                                          (self.img+'ng.typeBc.single.image' ,int_typeB,[512,512,0,0]), 
+                                          (self.img+'ng.typeBc.single.pb' ,int_typeB,[512,512,0,0]) ] )
+
+        
+          ### NGVLA : All baselines, one field 
+          tclean(vis=msname,   antenna='*', field='0', spw=spw,   imagename=self.img+'ng.allc.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 vptable=vptabname,
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report3=self.th.checkall(imgval=[
+                                          (self.img+'ng.allc.single.image' ,int_all,[512,512,0,0]), 
+                                          (self.img+'ng.allc.single.pb' ,int_all,[512,512,0,0]) ] )
+
+        
+          self.assertTrue(self.check_final(pstr=report1+report2+report3))
+
+
 
 #####################################################
 #####################################################
