@@ -363,9 +363,15 @@ int casac::pyarray_check(PyObject *obj) {
     } else { \
 	    if (PyNumber_Check(ele)){ \
 		    if(!strncmp(ele->ob_type->tp_name, "numpy.int", 9)){ \
-		       VECTOR[INDEX] = INTCVT(PyLong_AsLong(PyNumber_Long(ele)));  		\
+			   PyObject *long_obj = PyNumber_Long(ele);    \
+			   long long_value = PyLong_AsLong(long_obj);    \
+			   Py_DECREF(long_obj);    \
+		       VECTOR[INDEX] = INTCVT(long_value);  		\
 		    }else if(!strncmp(ele->ob_type->tp_name, "numpy.float", 11)){ \
-		       VECTOR[INDEX] = DOUBLECVT(PyFloat_AsDouble(PyNumber_Float(ele)));  		\
+			   PyObject *float_obj = PyNumber_Float(ele);    \
+			   double double_value = PyFloat_AsDouble(float_obj);    \
+			   Py_DECREF(float_obj);    \
+		       VECTOR[INDEX] = DOUBLECVT(double_value);  		\
 		    } \
             }										\
     }										\
@@ -489,7 +495,7 @@ PyObject *convert_idl_complex_to_python_complex(const casac::complex &from) {
 	const std::string &key = (*iter).first;										\
 	const variant &val = (*iter).second;										\
 	PyObject *v = variant2pyobj( val );										\
-	PyDict_SetItem(result, PyString_FromString(key.c_str()), v);							\
+	PyDict_SetItemString(result, key.c_str(), v);							\
 	Py_DECREF(v);													\
     }															\
 															\
@@ -541,9 +547,15 @@ PyObject *record2pydict(const record &rec) {
 	VARIANT.place(std::complex<double>(c.real, c.imag),INDEX);		\
     } else if ( PyNumber_Check(ele)) {						\
 	if(!strncmp(ele->ob_type->tp_name, "numpy.int", 9)){ \
-	   VARIANT.place(PyLong_AsLong(PyNumber_Long(ele)),INDEX);  		\
+	   PyObject *long_obj = PyNumber_Long(ele);    \
+	   long long_value = PyLong_AsLong(long_obj);    \
+	   Py_DECREF(long_obj);    \
+	   VARIANT.place(long_value,INDEX);  		\
 	}else if(!strncmp(ele->ob_type->tp_name, "numpy.float", 11)){ \
-	   VARIANT.place(double(PyFloat_AsDouble(PyNumber_Float(ele))),INDEX);  		\
+	   PyObject *float_obj = PyNumber_Float(ele);    \
+	   double double_value = PyFloat_AsDouble(float_obj);    \
+	   Py_DECREF(float_obj);   \
+	   VARIANT.place(double_value,INDEX);  		\
 	} \
     } else if (PyString_Check(ele)) {						\
 	VARIANT.place(std::string(PyString_AsString(ele)),INDEX);		\
@@ -772,7 +784,7 @@ static int unmap_array_pylist( PyObject *array, std::vector<ssize_t> &shape, cas
 		list_elements = true;
 		if ( number_elements < 0 )
 		    number_elements = element_size;
-                // to allow irregular shaped python list 
+                // to allow irregular shaped python list
                 // (e.g. [[1,2,3],[4]]
 		//if ( element_size != number_elements )
 		//    return 0;
@@ -878,9 +890,15 @@ static int unmap_array_pylist( PyObject *array, std::vector<ssize_t> &shape, cas
     }											\
     else if (PyNumber_Check(obj)) {					\
 	if(!strncmp(obj->ob_type->tp_name, "numpy.int", 9)){ \
-	   SINGLETON(PyLong_AsLong(PyNumber_Long(obj)));  		\
+	   PyObject *long_obj = PyNumber_Long(obj);    \
+	   long long_value = PyLong_AsLong(long_obj);    \
+	   Py_DECREF(long_obj);    \
+	   SINGLETON(long_value);  		\
 	}else if(!strncmp(obj->ob_type->tp_name, "numpy.float", 11)){ \
-	   SINGLETON(double(PyFloat_AsDouble(PyNumber_Float(obj))));  		\
+	   PyObject *float_obj = PyNumber_Float(obj);    \
+	   double double_value = PyFloat_AsDouble(float_obj);    \
+	   Py_DECREF(float_obj);    \
+	   SINGLETON(double_value);  		\
 	} \
     } \
 											\
@@ -949,9 +967,15 @@ static int unmap_array_pylist( PyObject *array, std::vector<ssize_t> &shape, cas
 		    result.push(std::string(PyString_AsString(ele)));			\
 		} else if (PyNumber_Check(ele)) {					\
 		    if(!strncmp(ele->ob_type->tp_name, "numpy.int", 9)){ \
-		       result.push(PyLong_AsLong(PyNumber_Long(ele)));  		\
+			   PyObject *long_obj = PyNumber_Long(ele);    \
+			   long long_value = PyLong_AsLong(long_obj);    \
+			   Py_DECREF(long_obj);    \
+		       result.push(long_value);  		\
 		    }else if(!strncmp(ele->ob_type->tp_name, "numpy.float", 11)){ \
-		       result.push(double(PyFloat_AsDouble(PyNumber_Float(ele))));  		\
+			   PyObject *float_obj = PyNumber_Float(ele);    \
+			   double double_value = PyFloat_AsDouble(float_obj);    \
+			   Py_DECREF(float_obj);    \
+		       result.push(double_value);  		\
 		    } \
 		} else if (PyList_Check(ele) || PyTuple_Check(ele)) {			\
 		    pyobj2variant(ele,result);						\
