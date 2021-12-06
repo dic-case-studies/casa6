@@ -856,7 +856,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     if test_group is not None and len(test_group)>0:
         print("Jira component list provided. Filtering tests.")
         tmp_tests_to_run = []
-        print(test_group)
+        #print(test_group)
         for jira_component in test_group:
             found = False
             for t1 in tests_to_run:
@@ -1043,7 +1043,7 @@ if __name__ == "__main__":
     print(args)
     print("")
 
-    
+    tests_to_ignore = None
     if args.ignore_list is not None:
         if args.ignore_list.endswith(".json"):
             ignore_test_map = json.load(open(args.ignore_list))
