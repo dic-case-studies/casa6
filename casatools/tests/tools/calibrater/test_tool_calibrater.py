@@ -77,6 +77,8 @@ class calibrater_test(unittest.TestCase):
             shutil.rmtree('bpoly')
         if os.path.exists('gainspline'):
             shutil.rmtree('gainspline')
+        if os.path.exists('output.ms'):
+            shutil.rmtree('output.ms')
 
         cb.close()
         cb.setvi(old=False)
