@@ -55,8 +55,6 @@ def importasdm(
     flagbackup=None,
     verbose=None,
     overwrite=None,
-    showversion=None,
-    useversion=None,
     bdfflags=None,
     with_pointing_correction=None,
     convert_ephem2geo=None,
@@ -165,11 +163,6 @@ def importasdm(
 
        overwrite -- Over write an existing MS.
 
-       showversion -- Deprecated: report the version of the asdm2MS being used.
-
-       useversion -- Deprecated: Selects the version of asdm2MS to be used (presently only \'v3\' is available).
-                     default: deprecated
-                     
        bdfflags -- Set the MS FLAG column according to the ASDM _binary_ flags
                    default: false
 
@@ -196,11 +189,6 @@ def importasdm(
     # make local sdm tool - CASA6 only, CASA5 uses asdm2MS executable
     if is_CASA6:
         sdmlocal = sdm(asdm)
-        if showversion:
-            casalog.post("Deprecated: showversion is deprecated and will be removed in a future release. The version string is no longer relevant.", 'WARN')
-            casalog.post("You set option \'showversion\' to True. Will just output the version information and then return.", 'WARN')
-            casalog.post("Current SDM version " + sdmlocal.sdmversion( ))
-            return
 
     # make agentflagger tool local
     aflocal = agentflagger()
@@ -221,12 +209,6 @@ def importasdm(
         viso = asdm.rstrip("/") + '.ms'
         visoc = asdm.rstrip("/") + '-wvr-corrected.ms'
         vis = asdm.rstrip("/")
-
-    if useversion is not 'deprecated':
-        # log deprecation warning
-        casalog.post("Deprecated: useversion is deprecated and will be removed in a future release. The value is no longer relevant and is ignored.", 'WARN')
-
-    useversion = 'deprecated'
 
     # Compression
     if compression:
@@ -299,13 +281,12 @@ def importasdm(
             execute_string = execute_string + ' --scans ' + scans
         if ignore_time:
             execute_string = execute_string + ' --ignore-time'
-        if useversion == 'v3' or useversion == 'deprecated':
-            if not process_syspower:
-                execute_string = execute_string + ' --no-syspower'
-            if not process_caldevice:
-                execute_string = execute_string + ' --no-caldevice'
-            if not process_pointing:
-                execute_string = execute_string + ' --no-pointing'
+        if not process_syspower:
+            execute_string = execute_string + ' --no-syspower'
+        if not process_caldevice:
+            execute_string = execute_string + ' --no-caldevice'
+        if not process_pointing:
+            execute_string = execute_string + ' --no-pointing'
 
         if compression:
             execute_string = execute_string + ' --compression'
@@ -316,12 +297,6 @@ def importasdm(
             execute_string = execute_string + ' --verbose'
 
         execute_string = execute_string + ' ' + asdm + ' ' + viso
-
-        # showversion for CASA6 already handled
-        if showversion:
-            casalog.post("You set option \'showversion\' to True. Will just output the version information and then terminate."
-                     , 'WARN')
-            execute_string = theexecutable + ' --revision'
 
         if with_pointing_correction:
             execute_string = execute_string + ' --with-pointing-correction'
@@ -341,7 +316,7 @@ def importasdm(
                                   ocorr_mode, compression, lazy, asis, wvr_corrected_data, scans,
                                   ignore_time, process_syspower, process_caldevice, process_pointing,
                                   process_flags, tbuff, applyflags, savecmds, outfile, flagbackup,
-                                  verbose, overwrite, showversion, useversion, bdfflags,
+                                  verbose, overwrite, bdfflags,
                                   with_pointing_correction, convert_ephem2geo,
                                   polyephem_tabtimestep )
 
@@ -356,15 +331,11 @@ def importasdm(
         exitcode = os.system(execute_string)
 
         if exitcode != 0:
-            if not showversion:
-                casalog.post(theexecutable
-                             + ' terminated with exit code '
-                             + str(exitcode), 'SEVERE')
-                raise Exception('ASDM conversion error. Please check if it is a valid ASDM and that data/alma/asdm is up to date.')
+            casalog.post(theexecutable
+                         + ' terminated with exit code '
+                         + str(exitcode), 'SEVERE')
+            raise Exception('ASDM conversion error. Please check if it is a valid ASDM and that data/alma/asdm is up to date.')
 
-        # showversion and return case for CASA6 handled earlier
-        if showversion:
-            return
 
     #
     # Possibly remove the name of the measurement set expected to contain the corrected data from the list of of produced measurement

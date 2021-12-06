@@ -368,8 +368,7 @@ class asdm_import1(test_base):
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
         mysdm = sdm(myasdm_dataset_name)
-        ## useversion is deprecated, a message to that effect should be in the log (not checked here)
-        self.res = mysdm.toms(useversion='v3')
+        self.res = mysdm.toms()
         self.assertTrue(self.res)
         print( "%s: Success! Now checking output ..." % myname)
         mscomponents = set(["table.dat",

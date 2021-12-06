@@ -18,7 +18,7 @@ else:
 
 def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=None,
                subscanduration=None, sbduration=None, apcorrected=None,
-               verbose=None, showversion=None, useversion=None):
+               verbose=None):
         """ Convert a CASA visibility file (MS) into an ALMA or EVLA Science Data Model.
                                           
         Keyword arguments:
@@ -49,12 +49,6 @@ def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=Non
 
         verbose     -- produce log output, default: True
 
-        showversion -- Deprecated: report the version of the ASDM class set, 
-                 default: False
-
-        useversion -- Deprecated: Selects the version of MS2asdm to be used (presently only \'v3\' is available)
-              default: deprecated
-
         """
         #Python script
 
@@ -64,8 +58,6 @@ def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=Non
         parsummary = 'archiveid=\"'+str(archiveid)+'\", rangeid=\"'+str(rangeid)+'\", subscanduration=\"'+str(subscanduration)+'\",'
         casalog.post(parsummary)
         parsummary = 'sbduration=\"'+str(sbduration)+'\", apcorrected='+str(apcorrected)+', verbose='+str(verbose)+','
-        casalog.post(parsummary)
-        parsummary = 'showversion='+str(showversion)+', useversion=\"'+str(useversion)+'\"'
         casalog.post(parsummary)
 
         if not (type(vis)==str) or not (os.path.exists(vis)):
@@ -189,10 +181,6 @@ def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=Non
         if is_CASA6:
                 # sdm tool
                 _sdm = sdm(asdm)
-                if showversion:
-                        casalog.post('Deprecated: showversion is deprecated and will be removed in a future release. showversion has been ignored for all CASA 6 releases.', 'WARN')
-                if useversion is not 'deprecated':
-                        casalog.post('Deprecated: useversion is deprecated and will be removed in a future release. The value is no longer relevant.', 'WARN')
                 rval = _sdm.fromms(tsortvis, datacolumn, archiveid, rangeid, ssdur_secs, sbdur_secs, apcorrected, verbose)
                 # this line is independent of CASA version, but is here so that the CASA5 version can do additional error reporting after cleaning up this temporary MS
                 os.system('rm -rf '+tsortvis)
@@ -210,12 +198,8 @@ def exportasdm(vis=None, asdm=None, datacolumn=None, archiveid=None, rangeid=Non
                         execute_string+= ' --apuncorrected'
                 if(verbose):
                         execute_string+= ' --verbose'
-                if(showversion):
-                        execute_string+= ' --revision'
 
                 theexecutable = 'MS2asdm'
-                if (useversion == 'v3' or useversion == 'deprecated'):
-                        theexecutable = 'MS2asdm'
 
                 execute_string += ' ' + tsortvis + ' ' + asdm
 
