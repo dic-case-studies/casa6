@@ -181,7 +181,7 @@
         different from the spw parameter, which selects the data that
         is included in the output.
         </description>
-        <type>string</type><type>stringVec</type>
+        <type>string</type><type>any</type>
         <value type="string"/>
       </param>
 

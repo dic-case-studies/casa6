@@ -22,6 +22,8 @@
 # google drive:
 # https://drive.google.com/drive/u/1/folders/1ttYI8Xcgfa-e1Dk0f8kzrv1bz7fIqylm
 #
+# See also requirements as listed here:
+# https://open-confluence.nrao.edu/display/CASA/uvcontsub2021
 ##########################################################################
 import numpy as np
 import os
@@ -36,12 +38,55 @@ datadir = os.path.join('unittest', 'uvcontsub')
 ms_simple = 'known0.ms'
 datapath_simple = ctsys.resolve(os.path.join(datadir, ms_simple))
 
+# SPW 1 of this dataset has 1 channel
 ms_alma = 'uid___X02_X3d737_X1_01_small.ms'
 datapath_alma = ctsys.resolve(os.path.join('measurementset', 'alma', ms_alma))
 
+class uvcontsub2021_test_base(unittest.TestCase):
+    """
+    Base class to share utility funcitons between the test classes below.
+    """
+    def _check_return(self, res, fields=None):
+        """
+        Checks consistency of the uvcontsub task return dictionary
 
-class uvcontsub2021_test(unittest.TestCase):
+        :param fields: results are expected for these fields
+        """
 
+        import pprint
+        verbose = False
+        if verbose:
+            pprint.pprint(res)
+
+        self.assertTrue('description' in res)
+        self.assertTrue('goodness_of_fit' in res)
+        self.assertTrue('field' in res['goodness_of_fit'])
+        gof_field = res['goodness_of_fit']['field']
+        if fields:
+            for fid in fields:
+                self.assertTrue(str(fid) in gof_field)
+
+        for fid in gof_field:
+            self.assertTrue('scan' in gof_field[fid])
+            scans = gof_field[fid]['scan']
+            for sid in scans:
+                self.assertTrue('spw' in scans[sid])
+                spws = scans[sid]['spw']
+                for spw_id in spws:
+                    self.assertTrue('polarization' in spws[spw_id])
+                    pols = spws[spw_id]['polarization']
+                    for pid in pols:
+                        self.assertTrue('chi_squared') in pols[pid]
+                        stats = pols[pid]['chi_squared']
+                        for metric in ['average', 'min', 'max']:
+                            self.assertTrue(metric in stats)
+                            self.assertEqual(stats[metric].keys(), {'real', 'imag'})
+                            self.assertGreaterEqual(stats[metric]['real'], 0)
+                            self.assertGreaterEqual(stats[metric]['imag'], 0)
+
+
+class uvcontsub2021_test(uvcontsub2021_test_base):
+    """ Main verification test for uvcontsub2021 """
     @classmethod
     def setUpClass(cls):
         shutil.copytree(datapath_simple, ms_simple)
@@ -72,9 +117,7 @@ class uvcontsub2021_test(unittest.TestCase):
         :param expected_vals: for simple cases where the same value is expected in every row,
                               ensure all rows have this value
         """
-        # TODO: add simple checks of data column values (mean or similar). Overlaps partially
-        # with numerical tests. Like a parameter 'expected_mean=None' to compare approx.
-        # Perhaps a different function specific to data column checks
+
         tbt = table()
         try:
             tbt.open(vis)
@@ -88,8 +131,53 @@ class uvcontsub2021_test(unittest.TestCase):
         finally:
             tbt.done()
 
-    def _check_return(self, res):
-        self.assertEqual(res, {})
+    def _check_data_stats(self, vis, exp_mean, exp_median, exp_min, exp_max,
+                          col_name='DATA', places=5):
+        """
+        WIP - check basic stats of data column, for now just to prevent uninteded changes.
+
+        This implements simple checks of expected values for the mean,
+        median, min and max across all visibilities (all polarization,
+        channels, baselins and times).  Overlaps partially with
+        numerical tests (class below) and could be relaxed to apply
+        less strict asserts.
+
+        :param vis: MS to check
+        :param exp_mean: expected mean value, across all visibilities
+        :param exp_median: expected median value, across all visibilities
+        :param exp_min: expected minimum value, across all visibilities
+        :param exp_max: expected maximum value, across all visibilities
+        :param col_name: name of data column with visibilities
+        :param places: places/digits to check for "almost" equality
+        """
+        tbt = table()
+        try:
+            tbt.open(vis)
+            col = tbt.getcol(col_name)
+
+            nans = np.isnan(np.sum(col))
+            self.assertFalse(nans)
+            # ALMA test datasets have large numbers of 0s
+            # zeros_count = np.count_nonzero(col==0)
+            # self.assertEqual(0, zeros_count)
+            if exp_mean is not None:
+                dmean = np.mean(col)
+                self.assertAlmostEqual(dmean, exp_mean, places=places)
+            if exp_median is not None:
+                dmedian = np.median(col)
+                self.assertAlmostEqual(dmedian, exp_median, places=places)
+            if exp_min is not None:
+                dmin = col.min()
+                self.assertAlmostEqual(dmin, exp_min, places=places)
+            if exp_max is not None:
+                dmax = col.max()
+                self.assertAlmostEqual(dmax, exp_max, places=places)
+
+            verbose = False
+            if verbose:
+                print(f'Mean, median, min, max: {dmean} {dmedian} {dmin} {dmax}')
+        finally:
+            tbt.done()
 
     def test_makes_output_ms_data(self):
         """
@@ -98,9 +186,10 @@ class uvcontsub2021_test(unittest.TestCase):
         """
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output)
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self.assertTrue(os.path.exists(self.output))
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
         # check also no-overwrite of existing MS
         with self.assertRaises(ValueError):
@@ -110,42 +199,42 @@ class uvcontsub2021_test(unittest.TestCase):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='2')
-        self._check_return(res)
+        self._check_return(res, fields=[2])
         self._check_rows(self.output, 'FIELD_ID', 120, 2)
 
     def test_select_spw(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, spw='1')
-        self._check_return(res)
+        self._check_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'DATA_DESC_ID', 810, 1)
 
     def test_select_scan(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, scan='2')
-        self._check_return(res)
+        self._check_return(res, fields=[1])
         self._check_rows(self.output, 'SCAN_NUMBER', 360, 2)
 
     def test_select_intent(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, intent='*AMPLI*')
-        self._check_return(res)
+        self._check_return(res, fields=[1])  # fields 0,2 excluded by intent selection
         self._check_rows(self.output, 'SCAN_NUMBER', 360, 2)
 
     def test_select_array(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, array='0')
-        self._check_return(res)
+        self._check_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'ARRAY_ID', 1080, 0)
 
     def test_select_observation(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, observation='0')
-        self._check_return(res)
+        self._check_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'OBSERVATION_ID', 1080, 0)
 
     def test_datacolumn(self):
@@ -162,53 +251,156 @@ class uvcontsub2021_test(unittest.TestCase):
             res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='bogus')
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='DATA')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
         # TODO need a 'datacolumn' test using CORRECTED - use another ms_alma or someth else
 
     def test_fitspw_empty(self):
         """Check that fitspw works. When empty, fit all channels in all SPWs"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         # TODO: better checks and most likely a better input ms (prob ~pl-unittest)
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
     def test_fitspw_spws(self):
         """Check that fitspw works. When selecting some SPWs, fit all channels
         in those SPWs"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='0')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
-    def test_fitswp_channels(self):
+    def test_fitspw_spw_one_chan(self):
+        """Check fitspw when selecting one spw with 1 channel (perfect fit if order 0)"""
+
+        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='0', fitspw='1')
+        self._check_return(res, fields=[0])
+        self._check_rows(self.output, 'DATA', 600)
+        self._check_data_stats(self.output, (0.115759703+7.48776972e-08j), 0j,
+                               (-0.00129960873+0.000193971457j), (1.41059673+0j))
+
+    def test_fitspw_channels(self):
         """Check that fitspw works. When selecting some channels in some SPWs,
         fit those channels in those SPWs (like example 2 from task page)"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='0:5~19')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, (-18.5249996-7.05000019j),
+                               (-19.7999992-13j), (-68-17.6000004j), (28+26.3999996j))
 
     def test_fitspw_multifield(self):
         """Check that fitspw works. Different fitspw strings for different fields
         (like example 4 from task page)"""
 
-        with self.assertRaises(RuntimeError):
-            # TODO: support this properly
-            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspw=['2', '0:100~500;600~910;1215~1678;1810~1903'])
-            self._check_return(res)
-            self._check_rows(self.output, 'DATA', 1080)
+        res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                            fitspw=[
+                                ['0', '0:100~500;600~910;1215~1678;1810~1903'],
+                                ['1', 'NONE'],
+                                ['2', '0:100~1903']
+                            ])
+        self._check_return(res, fields=[0, 2])
+        self._check_rows(self.output, 'DATA', 1080)
+        self._check_data_stats(self.output, (0.0286860488-2.65735951e-06j), 0j,
+                               (-0.655080259+0j), (2.09603309+0j))
+
+    def test_fitspw_multifield_blocks(self):
+        """Check that fitspw works. Different fitspw strings for different fields
+        but giving list of fields for a same fitspw"""
+
+        # Give some fields grouped
+        res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                            fitspw=[
+                                ['0, 1', '0:100~500;600~900;1200~1900'],
+                                ['2', '0:100~1903']
+                            ])
+        self._check_return(res, fields=[0, 1, 2])
+        self._check_rows(self.output, 'DATA', 1080)
+        expected_vals = [(-0.0125788084-5.98476360e-06j), 0j,
+                         (-0.664994299+0j), (2.09603309+0j)]
+        self._check_data_stats(self.output, *expected_vals)
+
+        # Giving the fields one at a time should be equivalent
+        shutil.rmtree(self.output)
+        res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                            fitspw=[
+                                ['0', '0:100~500;600~900;1200~1900'],
+                                ['1', '0:100~500;600~900;1200~1900'],
+                                ['2', '0:100~1903']
+                            ])
+        self._check_return(res, fields=[0, 1, 2])
+        self._check_rows(self.output, 'DATA', 1080)
+        self._check_data_stats(self.output, *expected_vals)
 
     def test_fitspw_multifield_wrong_field(self):
         """Check that wrong fitspw lists produce an exception"""
 
         with self.assertRaises(RuntimeError):
-            # TODO: support this properly
             res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
-                                fitspw=['99', '0:100~500;600~910;1215~1678;1810~1903'])
+                                fitspw=[
+                                    ['99', '0:100~500;600~910;1215~1678;1810~1903']
+                                ])
             self._check_return(res)
+
+        shutil.rmtree(self.output)
+        with self.assertRaises(RuntimeError):
+            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                                fitspw=[
+                                    ['-2', '0:100~500']
+                                ])
+            self._check_return(res)
+
+        shutil.rmtree(self.output)
+        with self.assertRaises(RuntimeError):
+            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                                fitspw=[
+                                    ['4', '0,1']
+                                ])
+            self._check_return(res)
+
+    def test_fitspw_multifield_wrong_format(self):
+        """Check that fitspw works. Different fitspw strings for different fields
+        (like example 4 from task page)"""
+
+        with self.assertRaises(RuntimeError):
+            # Wrong number of elements (not a list of pairs) - in third line
+            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                                fitspw=[
+                                    ['1', 'NONE'],
+                                    ['2', '0:100~500;600~910;1215~1678;1810~1903'],
+                                    ['3', '4', '0:100~1903']
+                                ])
+
+            self._check_return(res)
+            self._check_rows(self.output, 'DATA', 1080)
+
+        shutil.rmtree(self.output)
+        with self.assertRaises(RuntimeError):
+            # Wrong field
+            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                                fitspw=[
+                                    ['1', 'NONE'],
+                                    ['bla_fail', '0:600~910;1215~1678'],
+                                    ['3', '0:100~1903']
+                                ])
+
+            self._check_return(res)
+            self._check_rows(self.output, 'DATA', 1080)
+
+        shutil.rmtree(self.output)
+        with self.assertRaises(RuntimeError):
+            # Repeated indices
+            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                                fitspw=[
+                                    ['1, 2', 'NONE'],
+                                    ['2', '0:100~500;600~910;1215~1678;1810~1903'],
+                                ])
+            self._check_return(res)
+            self._check_rows(self.output, 'DATA', 1080)
 
     def test_fitspw_separate_fields(self):
         """Check that fitspw works. Different fitspw strings for different
@@ -217,21 +409,26 @@ class uvcontsub2021_test(unittest.TestCase):
 
         res_f1 = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='1',
                                fitspw='0:100~500;600~910;1215~1678;1810~1903')
-        self._check_return(res_f1)
+        self._check_return(res_f1, fields=[1])
         self._check_rows(self.output, 'DATA', 360)
+        self._check_data_stats(self.output, (-0.013026415-2.0328553e-05j),
+                               0j, (-0.633247495+0j), (2.01062560+0j))
 
         shutil.rmtree(self.output)
         res_f2 = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='2',
                                fitspw='0:100~1303')
-        self._check_return(res_f2)
+        self._check_return(res_f2, fields=[2])
         self._check_rows(self.output, 'DATA', 120)
+        self._check_data_stats(self.output, (-0.0140258259+5.83529241e-06j),
+                               0j, (-0.588652134+0j), (1.83768487+0j))
 
     def test_fitspw_spws_sel(self):
         """Check the use of spw selection and fitspw together"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, spw='0', fitspw='0')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
     def test_fitspw_spws_sel_wrong(self):
         """Check that if the spw selection and fitspw are not compatible, an exception
@@ -245,53 +442,244 @@ class uvcontsub2021_test(unittest.TestCase):
         """Check that methods work - gsl"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitmethod='gsl')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         # TODO: better checks / but overlaps with numerical tests
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
     def test_fitmethod_casacore(self):
         """Check that methods work - casacore"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitmethod='casacore')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         # TODO: better checks / but overlaps with numerical tests
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
     def test_fitorder1(self):
         """ Check different fit orders (0, 1, 2) work (like example 1 from task page)"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=1,
                             fitspw='0:2~20')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, (-8.56096448-3.18684196j),
+                               (-4.05263185-2.67017555j), (-60.7157898-9.26315689j),
+                               (45.24561309+28.1754398j))
 
     def test_fitorder2(self):
         """ Check different fit orders (0, 1, 2) work"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=2,
                             fitspw='0:2~20')
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, (8.891941398+3.44454119j),
+                               (2.90232849+1.83334923j), (-42.0941238-14.0698833j),
+                               (92.6959686+31.4091110j))
 
     def test_writemodel(self):
         """ Check the model column is added to the output MS and its values match
         (like example 5 from task page)"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, writemodel=True)
-        self._check_return(res)
+        self._check_return(res, fields=[0])
         # TODO: get model column, check input/DATA ~= output/DATA+MODEL
         with self.assertRaises(RuntimeError):
             self._check_rows(self.output, 'MODEL_DATA', 340)
 
 
-class uvcontsub2021_numerical_verification_test(unittest.TestCase):
-    """ To be defined - CAS-13632 """
+@unittest.skipIf(True ,"Skipping in automated bamboo builds until the input MSs are added "
+                 "to casatestdata")
+class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
+    """ Tests of numerical behavior based on simulated datasets.
+    To be refined - CAS-13632 """
 
-    def test_sim_single_source_snr_better(self):
-        pass
+    @classmethod
+    def setUpClass(cls):
+        cls.ms_cont_nonoise_order_0 = 'sim_alma_nonoise_cont_poly_order_0.ms'
+        cls.ms_cont_noise_order_0 = 'sim_alma_noise_cont_poly_order_0.ms'
+        cls.ms_cont_nonoise_order_1 = 'sim_alma_nonoise_cont_poly_order_1.ms'
+        cls.ms_cont_noise_order_1 = 'sim_alma_noise_cont_poly_order_1.ms'
+        cls.sim_mss = [cls.ms_cont_nonoise_order_0, cls.ms_cont_noise_order_0,
+                       cls.ms_cont_nonoise_order_1, cls.ms_cont_noise_order_1]
 
-    def test_sim_single_source_snr_worse(self):
-        pass
+        for sim in cls.sim_mss:
+            datapath_sim = ctsys.resolve(sim)
+            shutil.copytree(datapath_sim, sim)
+
+    @classmethod
+    def tearDownClass(cls):
+        for sim in cls.sim_mss:
+            shutil.rmtree(sim)
+
+    def setUp(self):
+        # Input MS is always strictly read-only, one copy in setUpClass is enough
+        # Default output name for simple tests
+        self.output = 'test_numerical_uvcs_output.ms'
+        # A few parameters shared by different simulated MSs
+        # fitspw to exclude a simulated spectral line, as added in the simulation notebook
+        self.fitspw = '0:0~59;86~127'
+        # For order 0 cont, (2.5+2.5j) cont is added to each visibility
+        self.exp_cont_order_0 = (2.5+2.5j)
+        # For order 1 cont, polynomial coefficients (on x=chan_number)
+        self.pol_coeffs_order_1 = [0.1, 0.45]
+        self.nchan = 128
+
+    def tearDown(self):
+        if os.path.exists(self.output):
+            shutil.rmtree(self.output)
+
+    def _check_diffs(self, vis, outputvis, exp_cont):
+        """
+        Compare numerical differences between input visibilities and
+        (output visibilities + expected_continuum), where the expected
+        continuum is known from simulations.
+
+        :param vis: input MS
+        :param outputvis: output, cont subtracted MS to compare against (input MS - exp_cont)
+        :param exp_cont: expected continuum values (known from simulation parameters)
+
+        :returns: a tuple with the 25th, 50th/median, and 75th percentiles of the differences
+        in absolute values of the visibilities across all channels, for all polarizations,
+        baselines, and times. The difference (in absolute visibility values) is calculated
+        as a percentage relative to the expected continuum value at each channel.
+        """
+        tbt = table()
+        try:
+            col_name = 'DATA'
+            tbt.open(vis)
+            col_in = tbt.getcol(col_name)
+
+            tbt.close()
+            tbt.open(outputvis)
+            col_sub = tbt.getcol(col_name)
+
+            nans = np.isnan(np.sum(col_sub))
+            self.assertFalse(nans)
+
+            if not np.isscalar(exp_cont):
+                # broadcast to pol/time
+                broadcast_exp_cont = exp_cont.reshape(1, len(exp_cont), 1)
+            else:
+                broadcast_exp_cont = exp_cont
+            diff = (col_in) - (col_sub + broadcast_exp_cont)
+            dmax = np.max(diff)
+            dmin = np.min(diff)
+            dmedian = np.median(diff)
+            print(f'Diff median: {dmedian}, min: {dmin}, max: {dmax}')
+
+            def pc_relative_diff(diff, ref):
+                return 100.0 * np.absolute(diff / ref)
+
+            # Print these percentiles
+            pc_levels = [25, 50, 75]
+            # Differences in absolute val of visibilities
+            diff_abs = np.absolute(diff)
+            amedian = np.median(diff_abs)
+            amin = np.min(diff_abs)
+            amax = np.max(diff_abs)
+            rdiff_abs = pc_relative_diff(diff_abs, np.absolute(broadcast_exp_cont))
+            ra25, ramedian, ra75 = np.percentile(rdiff_abs, pc_levels)
+            ramin = np.min(rdiff_abs)
+            ramax = np.max(rdiff_abs)
+            print(f' Diff in absolute values. Median: {amedian}, min: {amin}, max: {amax}.'
+                  f'\n   Relative to cont, 25pc: {ra25}, median: {ramedian} %, 75pc: {ra75} '
+                  f'min: {ramin} %, max: {ramax} %')
+
+            diff_real = np.absolute(diff.real)
+            rmedian = np.median(diff_real)
+            rmin = np.min(diff_real)
+            rmax = np.max(diff_real)
+            rdiff_real = pc_relative_diff(diff.real, broadcast_exp_cont.real)
+            rr25, rrmedian, rr75 = np.percentile(rdiff_real, pc_levels)
+            rrmin = np.min(rdiff_real)
+            rrmax = np.max(rdiff_real)
+            print(f' Diff in real part. Median: {rmedian}, min: {rmin}, max: {rmax}'
+                  f'\n   Relative to cont, 25pc: {rr25}, median: {rrmedian} %, 75pc: {rr75} '
+                  f'min: {rrmin} %, max: {rrmax} %')
+
+            diff_imag = np.absolute(diff.imag)
+            imedian = np.median(diff_imag)
+            imin = np.min(diff_imag)
+            imax = np.max(diff_imag)
+            rdiff_imag = pc_relative_diff(diff.imag, broadcast_exp_cont.imag)
+            ri25, rimedian, ri75 = np.percentile(rdiff_imag, pc_levels)
+            rimin = np.min(rdiff_imag)
+            rimax = np.max(rdiff_imag)
+            print(f' Diff in imag part. Median: {imedian}, min: {imin}, max: {imax}'
+                  f'\n   Relative to cont, 25pc: {ri25}, median: {rimedian} %, 75pc: {ri75} '
+                  f'min: {rimin} %, max: {rimax} %')
+
+            return ra25, ramedian, ra75
+        finally:
+            tbt.done()
+
+    def test_sim_specline_nonoise_pol_0(self):
+        """ Check fitting of continuum as polynomial order 0"""
+        exp_cont = self.exp_cont_order_0
+        res = uvcontsub2021(vis=self.ms_cont_nonoise_order_0, outputvis=self.output,
+                            fitorder=0, fitspw=self.fitspw)
+        self._check_return(res, fields=[0])
+
+        print(f'Checking numerical differences for MS {self.ms_cont_nonoise_order_0}')
+        diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_0,
+                                                   outputvis=self.output,
+                                                   exp_cont=exp_cont)
+        self.assertLessEqual(diff25, 2e-4)
+        self.assertLessEqual(diff50, 2e-4)
+        self.assertLessEqual(diff50, 2e-4)
+
+    def test_sim_specline_noise_pol_0(self):
+        """ Check fitting of continuum as polynomial order 0"""
+        exp_cont = self.exp_cont_order_0
+        res = uvcontsub2021(vis=self.ms_cont_noise_order_0, outputvis=self.output,
+                            fitorder=0, fitspw=self.fitspw)
+        self._check_return(res, fields=[0])
+
+        print(f'Checking numerical differences for MS {self.ms_cont_noise_order_0}')
+        diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_noise_order_0,
+                                                   outputvis=self.output,
+                                                   exp_cont=exp_cont)
+        self.assertLessEqual(diff25, 0.7)
+        self.assertLessEqual(diff50, 0.8)
+        self.assertLessEqual(diff50, 1)
+
+    def test_sim_specline_nonoise_pol_1(self):
+        """ Check fitting of continuum as polynomial order 1"""
+        # Values added to visibilities as a polynomial on channels
+        x = np.linspace(0, 1, self.nchan)
+        exp_cont = 5 * (1+1j) * np.polyval(self.pol_coeffs_order_1, x)
+
+        res = uvcontsub2021(vis=self.ms_cont_nonoise_order_1, outputvis=self.output,
+                            fitorder=1, fitspw=self.fitspw)
+        self._check_return(res, fields=[0])
+
+        print(f'Checking numerical differences for MS {self.ms_cont_nonoise_order_1}')
+        diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_1,
+                                                   outputvis=self.output,
+                                                   exp_cont=exp_cont)
+        self.assertLessEqual(diff25, 2e-4)
+        self.assertLessEqual(diff50, 2e-4)
+        self.assertLessEqual(diff50, 2.2e-4)
+
+    def test_sim_specline_noise_pol_1(self):
+        """ Check fitting of continuum as polynomial order 1. Gaussian noise included"""
+        # Values added to visibilities as a polynomial on channels
+        x = np.linspace(0, 1, self.nchan)
+        exp_cont = 5 * (1+1j) * np.polyval(self.pol_coeffs_order_1, x)
+
+        res = uvcontsub2021(vis=self.ms_cont_noise_order_1, outputvis=self.output,
+                            fitorder=1, fitspw=self.fitspw)
+        self._check_return(res, fields=[0])
+
+        print(f'Checking numerical differences for MS {self.ms_cont_noise_order_1}')
+        diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_1,
+                                                   outputvis=self.output,
+                                                   exp_cont=exp_cont)
+        self.assertLessEqual(diff25, 3)
+        self.assertLessEqual(diff50, 4)
+        self.assertLessEqual(diff75, 5)
 
 
 def suite():
