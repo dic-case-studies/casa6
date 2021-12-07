@@ -638,10 +638,7 @@ visibilities for flagging
                      average (WEIGHT_SPECTRUM for CORRECTED_DATA and
                      SIGMA_SPECTRUM for DATA).
 
-                     NOTE 1: Pre-average across channels is not
-                     supported in list mode.
-
-                     NOTE 2: Pre-average across channels is not
+                     NOTE: Pre-average across channels is not
                      supported for calibration tables 
 </description>
                 <type>bool</type><type>boolVec</type>
@@ -657,9 +654,9 @@ visibilities for flagging
                      Bin width for channel average in number of input
                      channels. If a list is given, each bin applies to
                      one of the selected SPWs. When chanbin is set to
-                     1 all input channels are used considered for the
-                     average to produce a single output channel, this
-                     behaviour aims to be preserve backwards
+                     1 all input channels are used for the average
+                     to produce a single output channel, this
+                     behaviour aims to preserve backwards
                      compatibility with the previous pre-averaging
                      feature of clip mode.
 </description>
@@ -686,10 +683,7 @@ visibilities for flagging.
                      are used to average together data from different
                      integrations.
 
-                     NOTE 1: Pre-average across time is not
-                     supported in list mode.
-
-                     NOTE 2: Pre-average across time is not
+                     NOTE: Pre-average across time is not
                      supported for calibration tables 
 </description>
                 <type>bool</type><type>boolVec</type>
@@ -1851,8 +1845,8 @@ save to FLAG_CMD
 <returns type="void"/>
 <example>
 
-FOR MORE INFORMATION, SEE THE TASK PAGES OF FLAGDATA IN CASA DOCS:
-https://casa.nrao.edu/casadocs/
+For more information, see the task pages of flagdata in CASA Docs:
+https://casadocs.readthedocs.io
 
 </example>
 
