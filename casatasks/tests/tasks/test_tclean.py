@@ -162,7 +162,7 @@ class testref_base(unittest.TestCase):
 
      def tearDown(self):
           """ don't delete it all """
-#          self.delData()
+          self.delData()
 
      # Separate functions here, for special-case tests that need their own MS.
      def prepData(self,msname=""):
