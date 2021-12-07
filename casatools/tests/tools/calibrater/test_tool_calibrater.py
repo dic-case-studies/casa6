@@ -19,7 +19,6 @@
 
 
 import casatools
-from casatasks import casalog
 cb = casatools.calibrater()
 tb = casatools.table()
 
@@ -200,60 +199,24 @@ class calibrater_test(unittest.TestCase):
     def test_resetSolveApply(self):
         """ Check that the reset function can clear set apply and solves """
 
-        # Save the logpath so we can return to the regular logger
-        logpath = casalog.logfile()
         # Use setapply and setsolve that will be cleared later
         cb.open(self._vis)
         cb.setapply(table=self._cal)
         cb.setsolve(table=self._cal)
+        cb.reset(solve=True, apply=True)
 
-        # Save the state to a test log file
-        casalog.setlogfile('testlog.log')
-        cb.state()
-        casalog.setlogfile(logpath)
+        # Both solve and correct should now fail due to the set apply and solve being reset
+        try:
+            cb.solve()
+            self.fail()
+        except RuntimeError:
+            self.assertTrue(True)
+        try:
+            cb.correct()
+            self.fail()
+        except:
+            self.assertTrue(True)
 
-        # Check that the apply and solve state show from the state command
-        counter = 0
-        applyset = False
-        solveset = False
-
-        with open('testlog.log') as logout:
-            for line in logout:
-                if counter == 1 and "(None)" not in line:
-                    applyset = True
-                if counter == 3 and "(None)" not in line:
-                    solveset = True
-                counter += 1
-
-        self.assertTrue(applyset)
-        self.assertTrue(solveset)
-        # ===============================
-
-        # Remove the temp log and reset the state
-        os.remove('testlog.log')
-        cb.reset(apply=True, solve=True)
-        casalog.setlogfile('testlog.log')
-        cb.state()
-        casalog.setlogfile(logpath)
-
-        # Check a new temp log file and make sure the states were cleared
-        counter = 0
-        applyset = False
-        solveset = False
-
-        with open('testlog.log') as logout:
-            for line in logout:
-                if counter == 1 and "(None)" not in line:
-                    applyset = True
-                if counter == 3 and "(None)" not in line:
-                    solveset = True
-                counter += 1
-
-        # Check that after the reset apply and solve are cleared
-        self.assertFalse(applyset)
-        self.assertFalse(solveset)
-
-        cb.close()
 
     # =============== SELECTION PARAMETERS =================
 
