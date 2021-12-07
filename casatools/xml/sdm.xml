@@ -30,20 +30,6 @@
 
     </method>
 
-    <method name="sdmversion" type="function">
-
-      <shortdescription>Returns SDM version number on which this tool operates</shortdescription>
-
-      <description/>
-
-      <input/>
-
-      <returns type="string"/>
-
-      <example/>
-
-    </method>    
-
     <method name="summarystr" type="function">
 
       
@@ -113,17 +99,6 @@
         <param name="verbose" type="bool">
           <description>produce log output</description>
           <value>true</value>
-        </param>
-        <param name="useversion" type="string">
-          <description>
-            DEPRECATED, will be eliminated in a future release. Selects the version of MS2asdm to be used (no longer relevant)
-          </description>
-              <value>deprecated</value>
-              <allowed kind="enum">
-                <value>deprecated</value>
-                <value>v3</value>
-                <value/>
-              </allowed>
         </param>
       </input>
 
@@ -280,11 +255,6 @@
               <value>false</value>
         </param>
 
-        <param name="showversion" type="bool">
-              <description>DEPRECATED, will be eliminated in a future reelase. Report the version of asdm2MS being used</description>
-              <value>false</value>
-        </param>
-
         <constraints>
           <when param="createmms">
             <equals value="false" type="bool"/>
@@ -303,16 +273,6 @@
             <equals value="false" type="bool"/>
           </when>
         </constraints>
-
-        <param name="useversion" type="string">
-              <description>DEPRECATED, will be eliminated in a future release. Version of asdm2MS to be used (no longer relevant)</description>
-              <value>deprecated</value>
-              <allowed kind="enum">
-                <value>deprecated</value>
-                <value>v3</value>
-                <value/>
-              </allowed>
-        </param>
 
         <param name="bdfflags" type="bool">
               <description>Set the MS FLAG column according to the ASDM _binary_ flags</description>
