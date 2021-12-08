@@ -159,13 +159,8 @@ def callable_sdtask_decorator(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
 
-        caller = func.__name__
-        if '__taskcaller' in kwargs:
-            caller = kwargs['__taskcaller']
-            casalog.origin(kwargs['__taskcaller'])
-            del(kwargs['__taskcaller'])
-        else:
-            casalog.origin(caller)
+        caller = kwargs.pop('__taskcaller', func.__name__)
+        casalog.origin(caller)
 
         retval = None
         # Any errors are handled outside the task.
