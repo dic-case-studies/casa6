@@ -114,10 +114,8 @@ def sdtask_decorator(func):
        2) handle exception
 
     So, you don't need to set origin in the task any more.
-    Also, you don't need to write anything about error
-    handling in the task. If you have something to do
-    at the end of the task execution, those should be
-    written in finally block in the task class.
+    Also, you don't need to write anything about error handling in the task. If you have something to do at the end of
+    the task execution, those should be written in finally block in the task class.
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -150,10 +148,8 @@ def callable_sdtask_decorator(func):
        2) handle exception
 
     So, you don't need to set origin in the task any more.
-    Also, you don't need to write anything about error
-    handling in the task. If you have something to do
-    at the end of the task execution, those should be
-    written in finally block in the task class.
+    Also, you don't need to write anything about error handling in the task. If you have something to do at the end of
+    the task execution, those should be written in finally block in the task class.
 
     Usage:
 
