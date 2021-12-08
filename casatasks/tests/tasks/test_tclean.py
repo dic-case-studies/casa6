@@ -4044,7 +4044,7 @@ class test_hetarray_imaging(testref_base):
      ###########################
 
 
-     @unittest.skipIf(is_CASA6, "Skip temporarily - to debug test failures in CAS-13530")
+     ##@unittest.skipIf(is_CASA6, "Skip temporarily - to debug test failures in CAS-13530")
      def test_het_antenna_mosaic_cube_alma(self):
           '''
           This dataset has two groups of antennas (12m and 7m) with cross baselines. 
@@ -4139,7 +4139,7 @@ class test_hetarray_imaging(testref_base):
 ###########################
 
 
-     @unittest.skipIf(is_CASA6, "Skip temporarily - to debug test failures in CAS-13530")
+     ##@unittest.skipIf(is_CASA6, "Skip temporarily - to debug test failures in CAS-13530")
      def test_het_antenna_mosaic_cube_ngvla(self):
           '''
           This dataset has two groups of antennas (18m and 6m) with cross baselines. 
