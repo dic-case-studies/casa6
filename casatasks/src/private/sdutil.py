@@ -117,8 +117,7 @@ def sdtask_decorator(func):
     Also, you don't need to write anything about error
     handling in the task. If you have something to do
     at the end of the task execution, those should be
-    written in the destructor of worker class, not in
-    the 'finally' block.
+    written in finally block in the task class.
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -140,6 +139,7 @@ def sdtask_decorator(func):
         return retval
     return wrapper
 
+
 def callable_sdtask_decorator(func):
     """
     This is a decorator function for sd tasks.
@@ -153,8 +153,7 @@ def callable_sdtask_decorator(func):
     Also, you don't need to write anything about error
     handling in the task. If you have something to do
     at the end of the task execution, those should be
-    written in the destructor of worker class, not in
-    the 'finally' block.
+    written in finally block in the task class.
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
