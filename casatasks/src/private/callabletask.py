@@ -9,6 +9,16 @@ def callabletask_decorator(func):
     if it get the parameter '__taskcaller', read it and set origin to the casalog.
     otherwise it reads the function name and set origin to the logger.
     So you don't need to set origin in the task any more.
+
+    Usage:
+
+    @callabletask_decorator
+    def sometask(..)
+        pass
+
+    def othertask(..)
+        kwargs['__taskcaller'] = 'othertask'
+        sometask(*args, **kwargs)  # logged "othertask::..."
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):

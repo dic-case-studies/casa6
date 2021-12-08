@@ -154,6 +154,16 @@ def callable_sdtask_decorator(func):
     handling in the task. If you have something to do
     at the end of the task execution, those should be
     written in finally block in the task class.
+
+    Usage:
+
+    @callable_sdtask_decorator
+    def sometask(..)
+        pass
+
+    def othertask(..)
+        kwargs['__taskcaller'] = 'othertask'
+        sometask(*args, **kwargs)  # logged "othertask::..."
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
