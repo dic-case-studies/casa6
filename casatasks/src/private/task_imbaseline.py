@@ -138,7 +138,7 @@ class Validable:
 class ImageShape(Validable):
     """Shape parameters of input image.
 
-    These parameters are getting in Image2MS, using in MS2Image.
+    These parameters are been getting in Image2MS, using in MS2Image.
     """
 
     im_shape = None
@@ -168,10 +168,10 @@ class ImageShape(Validable):
         if self.im_nchan < 10:
             raise ValueError(f'nchan {self.im_nchan} is too few to perform baseline subtraction')
 
-        if len(self.im_shape) < 2:
+        if len(self.im_shape) < 3:
             raise ValueError(f'invalid value: im_shape {self.im_shape}')
 
-        if not len(self.dir_shape):
+        if len(self.dir_shape) < 2:
             raise ValueError(f'invalid value: dir_shape {self.dir_shape}')
 
 
@@ -393,10 +393,10 @@ class ImsmoothParams(Validable):
     def __call__(self) -> Union[List[Any], Dict[str, str]]:
         """Convert the class into arguments of imsmooth().
 
-        __taskcaller is for callabletask.callabletask_decorator"""
+        __logorigin is for callabletask.logorigin_setter"""
         return [self.infile, self.kernel, self.major, self.minor, self.pa, self.TARGETRES, self.kimage, self.scale,
                 self.REGION, self.BOX, self.CHANS, self.STOKES, self.MASK, self.outfile, self.STRETCH, self.OVERWRITE,
-                self.BEAM], dict(__taskcaller="imbaseline")
+                self.BEAM], dict(__logorigin="imbaseline")
 
 
 class SdsmoothParams(Validable):
@@ -425,11 +425,11 @@ class SdsmoothParams(Validable):
     def __call__(self) -> Dict[str, Any]:
         """Convert the class into arguments of sdsmooth().
 
-        __taskcaller is for sdutil.callabletask_decorator"""
+        __logorigin is for sdutil.callabletask_decorator"""
         return dict(infile=self.infile, datacolumn=self.datacolumn, antenna=self.ANTENNA, field=self.FIELD, spw=self.SPW,
                     timerange=self.TIMERANGE, scan=self.SCAN, pol=self.POL, intent=self.INTENT, reindex=self.REINDEX,
                     kernel=self.kernel, kwidth=self.kwidth, outfile=self.outfile, overwrite=self.OVERWRITE,
-                    __taskcaller="imbaseline")
+                    __logorigin="imbaseline")
 
 
 class SdbaselineParams(Validable):
@@ -503,7 +503,7 @@ class SdbaselineParams(Validable):
     def __call__(self) -> Dict[str, Any]:
         """Convert the class into arguments of sdbaseline().
 
-        __taskcaller is for sdutil.callabletask_decorator"""
+        __logorigin is for sdutil.callabletask_decorator"""
         return dict(infile=self.infile, datacolumn=self.datacolumn, antenna=self.ANTENNA, field=self.FIELD, spw=self.SPW,
                     timerange=self.TIMERANGE, scan=self.SCAN, pol=self.POL, intent=self.INTENT, reindex=self.REINDEX,
                     maskmode=self.maskmode, thresh=self.thresh, avg_limit=self.avg_limit, minwidth=self.minwidth, edge=self.edge,
@@ -512,7 +512,7 @@ class SdbaselineParams(Validable):
                     fftthresh=self.fftthresh, addwn=self.addwn, rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter,
                     blparam=self.blparam, verbose=self.VERBOSE, updateweight=self.UPDATEWEIGHT, sigmavalue=self.SIGMAVALUE,
                     showprogress=self.SHOWPROGRESS, minnrow=self.MINNROW, outfile=self.outfile, overwrite=self.OVERWRITE,
-                    __taskcaller="imbaseline")
+                    __logorigin="imbaseline")
 
 
 def __get_axis_position(val: array=None) -> int:
@@ -2254,12 +2254,13 @@ if os.path.exists('working'):
 os.mkdir("working")
 os.chdir("working")
 
+casalog.filter('DEBUG2')
 _imagefile = "/remote/home/kazuhiko.shimada/test/ref_multipix.signalband"
 #_imagefile = "/remote/home/kazuhiko.shimada/test/pv_mask_test.im"
 #_imagefile = "/remote/home/kazuhiko.shimada/test/m100.image"
 #_imagefile = "/remote/home/kazuhiko.shimada/test/uid___A001_X1354_X12.NGC4945_sci.spw19.cube.I.sd.fits"
+_imagefile = "/remote/home/kazuhiko.shimada/test/test.fits.im"
 
-imbaseline(imagename=_imagefile, linefile="output", dirkernel="gaussian", spkernel='gaussian', kwidth=50, major='20arcsec',
-           minor='10arcsec', pa="0deg", blfunc='sinusoid', output_cont=True)
-
+imbaseline(imagename=_imagefile, linefile="/remote/home/kazuhiko.shimada/test/test.fits.testA", dirkernel="gaussian", spkernel='none', kwidth=50, major='40arcsec',
+           minor='40arcsec', pa="0deg", blfunc='poly', output_cont=False, maskmode="auto", order=3)
 os.chdir("..")

@@ -91,10 +91,10 @@ else:
     # not a local tool
     _qa = qa
 
-from casatasks.private.callabletask import callabletask_decorator
+from casatasks.private.callabletask import logorigin_setter
 
 
-@callabletask_decorator
+@logorigin_setter
 def imsmooth(
     imagename, kernel, major, minor, pa, targetres, kimage, scale, region,
     box, chans, stokes, mask, outfile, stretch, overwrite, beam
