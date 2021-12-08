@@ -145,7 +145,7 @@ def callable_sdtask_decorator(func):
     This is a decorator function for sd tasks.
     Currently the decorator does:
 
-       1) if it get the parameter '__taskcaller', read it and set origin to the logger.
+       1) if it get the parameter '__logorigin', read it and set origin to the logger.
         otherwise it reads the function name and set origin to the logger.
        2) handle exception
 
@@ -162,13 +162,13 @@ def callable_sdtask_decorator(func):
         pass
 
     def othertask(..)
-        kwargs['__taskcaller'] = 'othertask'
+        kwargs['__logorigin'] = 'othertask'
         sometask(*args, **kwargs)  # logged "othertask::..."
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
 
-        caller = kwargs.pop('__taskcaller', func.__name__)
+        caller = kwargs.pop('__logorigin', func.__name__)
         casalog.origin(caller)
 
         retval = None
@@ -184,7 +184,7 @@ def callable_sdtask_decorator(func):
             casalog.post(str(e), 'ERROR')
             raise
         if caller != func.__name__:
-            kwargs['__taskcaller'] = caller
+            kwargs['__logorigin'] = caller
         return retval
     return wrapper
 
