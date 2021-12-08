@@ -179,9 +179,8 @@ def callable_sdtask_decorator(func):
             casalog.post(traceback_info, 'SEVERE')
             casalog.post(str(e), 'ERROR')
             raise
-        finally:
-            if caller != func.__name__:
-                kwargs['__taskcaller'] = caller
+        if caller != func.__name__:
+            kwargs['__taskcaller'] = caller
         return retval
     return wrapper
 
