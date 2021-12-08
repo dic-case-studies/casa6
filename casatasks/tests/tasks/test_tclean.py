@@ -162,7 +162,7 @@ class testref_base(unittest.TestCase):
 
      def tearDown(self):
           """ don't delete it all """
-          self.delData()
+          #self.delData()
 
      # Separate functions here, for special-case tests that need their own MS.
      def prepData(self,msname=""):
@@ -4203,10 +4203,14 @@ class test_hetarray_imaging(testref_base):
          ## PB models
           #pbA = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/sim_vp_KSA_float_A.im'
           #pbB = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/sim_vp_KSA_float_B.im'
-          self.prepData('sim_vp_KSA_float_A.im')
-          self.prepData('sim_vp_KSA_float_B.im')
-          pbA = 'sim_vp_KSA_float_A.im'
-          pbB = 'sim_vp_KSA_float_B.im'
+          #self.prepData('sim_vp_KSA_float_A.im')
+          #self.prepData('sim_vp_KSA_float_B.im')
+
+          ## Copy into a name that starts with self.img so that it will get deleted later when delData() or prepData() are called before the next test...
+          shutil.copytree(os.path.join(refdatapath,'sim_vp_KSA_float_A.im'), self.img+'_'+'sim_vp_KSA_float_A.im')
+          shutil.copytree(os.path.join(refdatapath,'sim_vp_KSA_float_B.im'), self.img+'_'+'sim_vp_KSA_float_B.im')
+          pbA = self.img+'_'+'sim_vp_KSA_float_A.im'
+          pbB = self.img+'_'+'sim_vp_KSA_float_B.im'
 
           imsize=1024
           cell='1.0arcsec'
@@ -4220,7 +4224,7 @@ class test_hetarray_imaging(testref_base):
         
 
           ### First, make the vptable from the PB models from the data repo. 
-          vptabname = 'vptab_float.vp'
+          vptabname = self.img+'_vptab_float.vp'
           antlist = ['m153','m155','m140','m142', 'm130', 'm122','m151', 's012','s006', 's013','s008', 's009']
           _vp.reset()
           _vp.setpbimage(telescope='NGVLA1', realimage=pbA, antnames=antlist[0:7])
@@ -4287,10 +4291,14 @@ class test_hetarray_imaging(testref_base):
           ## PB models
           #pbA = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/sim_vp_KSA_complex_A.im'
           #pbB = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/sim_vp_KSA_complex_B.im'
-          self.prepData('sim_vp_KSA_complex_A.im')
-          self.prepData('sim_vp_KSA_complex_B.im')
-          pbA = 'sim_vp_KSA_complex_A.im'
-          pbB = 'sim_vp_KSA_complex_B.im'
+          #self.prepData('sim_vp_KSA_complex_A.im')
+          #self.prepData('sim_vp_KSA_complex_B.im')
+
+          ## Copy into a name that starts with self.img so that it will get deleted later when delData() or prepData() are called before the next test...
+          shutil.copytree(os.path.join(refdatapath,'sim_vp_KSA_complex_A.im'), self.img+'_'+'sim_vp_KSA_complex_A.im')
+          shutil.copytree(os.path.join(refdatapath,'sim_vp_KSA_complex_B.im'), self.img+'_'+'sim_vp_KSA_complex_B.im')
+          pbA = self.img+'_'+'sim_vp_KSA_complex_A.im'
+          pbB = self.img+'_'+'sim_vp_KSA_complex_B.im'
 
           imsize=1024
           cell='1.0arcsec'
@@ -4304,7 +4312,7 @@ class test_hetarray_imaging(testref_base):
         
 
           ### First, make the vptable from the PB models from the data repo. 
-          vptabname = 'vptab_complex.vp'
+          vptabname = self.img+'_vptab_complex.vp'
           antlist = ['m153','m155','m140','m142', 'm130', 'm122','m151', 's012','s006', 's013','s008', 's009']
           _vp.reset()
           _vp.setpbimage(telescope='NGVLA1', compleximage=pbA, antnames=antlist[0:7])
