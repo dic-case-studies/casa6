@@ -48,36 +48,6 @@ casa::SIImageStore* synthesisimstore::getImStore()
   return itsImStore;
 }
 
-std::string synthesisimstore::getImageName(const std::string& imageId, long taylorTerm)
-{
-    if (imageId == "MASK") {
-        return itsImStore->mask((casacore::uInt)taylorTerm)->name();
-    } else if (imageId == "PSF") {
-        return itsImStore->psf((casacore::uInt)taylorTerm)->name();
-    } else if (imageId == "MODEL") {
-        return itsImStore->model((casacore::uInt)taylorTerm)->name();
-    } else if (imageId == "RESIDUAL") {
-        return itsImStore->residual((casacore::uInt)taylorTerm)->name();
-    } else if (imageId == "WEIGHT") {
-        return itsImStore->weight((casacore::uInt)taylorTerm)->name();
-    } else if (imageId == "IMAGE") {
-        return itsImStore->image((casacore::uInt)taylorTerm)->name();
-    } else if (imageId == "SUMWT") {
-        return itsImStore->sumwt((casacore::uInt)taylorTerm)->name();
-    } else if (imageId == "GRIDWT") {
-        throw AipsError("Retrieval of gridwt image name not supported at this time.");
-    } else if (imageId == "PB") {
-        return itsImStore->pb((casacore::uInt)taylorTerm)->name();
-    } else if (imageId == "FORWARDGRID") {
-        return itsImStore->forwardGrid((casacore::uInt)taylorTerm)->name();
-    } else if (imageId == "BACKWARDGRID") {
-        return itsImStore->backwardGrid((casacore::uInt)taylorTerm)->name();
-    } else if (imageId == "IMAGEPBCOR") {
-        return itsImStore->imagepbcor((casacore::uInt)taylorTerm)->name();
-    } else {
-        throw AipsError("Image id \""+imageId+"\" not recognized.");
-    }
-}
 
 synthesisimstore::~synthesisimstore()
 {

@@ -444,7 +444,7 @@ class PySynthesisImager:
         """Checks for common problem cases in the .pb image"""
         import numpy as np
         facetIdx = 0 # TODO iterate over facets
-        imagename = self.SItool.getimstore(facetIdx).getImageName("PB");
+        imagename = self.SItool.getImageName(facetIdx, "PB")
         _ia.open(imagename)
         # Case 1: non-zeroes on edge of .pb
         pixelVals = _ia.getregion().copy()
