@@ -509,12 +509,14 @@ def run(testnames, branch=None):
             gittest = True
             if branch ==None:
                 branch = 'master'
-            testpaths = fetch_tests(workdir, branch)
-            os.makedirs(workdir + "tests/")
-            for path in testpaths:
-                gather_all_tests(path, workdir + "tests/")
-            print(workdir + "tests/")
-            #sys.exit()
+            # Only Checkout When Needed
+            if any([False if ".py" in x else True for x in testnames ]):
+                testpaths = fetch_tests(workdir, branch)
+                os.makedirs(workdir + "tests/")
+                for path in testpaths:
+                    gather_all_tests(path, workdir + "tests/")
+                print(workdir + "tests/")
+
             for testname in testnames:
                 cmd = []
 
@@ -581,8 +583,14 @@ def run(testnames, branch=None):
                             write_conftest_osx(conf_name)
                         else:
                             write_conftest_linux(conf_name)
-                        #pytest.main(cmd)
-                        subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
+                        try: 
+                            from casampi.MPIEnvironment import MPIEnvironment
+                            if MPIEnvironment.is_mpi_enabled:
+                                pytest.main(cmd)
+                            else:
+                                subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
+                        except:
+                            subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
                         os.remove(conf_name)
                         os.chdir(myworkdir)
 
@@ -641,8 +649,14 @@ def run(testnames, branch=None):
                             write_conftest_osx(conf_name)
                         else:
                             write_conftest_linux(conf_name)
-                        #pytest.main(cmd)
-                        subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
+                        try: 
+                            from casampi.MPIEnvironment import MPIEnvironment
+                            if MPIEnvironment.is_mpi_enabled:
+                                pytest.main(cmd)
+                            else:
+                                subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
+                        except:
+                            subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
                         os.remove(conf_name)
                         os.chdir(myworkdir)
             os.chdir(cwd)
