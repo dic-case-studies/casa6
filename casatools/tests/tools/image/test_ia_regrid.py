@@ -11,27 +11,12 @@ import glob
 import struct
 import unittest
 
-try:
-    from casatools import ctsys, image, regionmanager, table, coordsys
-    _ia = image()
-    _rg = regionmanager()
-    _cs = coordsys()
-    _tb = table()
-    ctsys_resolve = ctsys.resolve
-except:
-    import casac
-    from tasks import *
-    from taskinit import *
-    _ia = iatool()
-    _rg = rgtool()
-    _cs = cstool()
-    _tb = tbtool()
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0], 'casatestdata/')
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+from casatools import ctsys, image, regionmanager, table, coordsys
+_ia = image()
+_rg = regionmanager()
+_cs = coordsys()
+_tb = table()
+ctsys_resolve = ctsys.resolve
 
 sep = os.sep
 datapath = ctsys_resolve(os.path.join('unittest','imregrid'))
@@ -75,22 +60,6 @@ def alleqnum(x,num,tolerance=0):
         stop('unhandled array shape in alleq')
     return True
 
-def test_start(msg):
-    global total, current_test
-    total += 1
-    print()
-    print(stars + " Test " + msg + " start " + stars)
-    current_test = msg
-    
-def test_end(condition, error_msg):
-    global total, fail
-    status = "OK"
-    if not condition:
-        print(error_msg, file=sys.stderr)
-        fail += 1
-        status = "FAIL"
-    print(stars + " Test " + current_test + " " + status + " " + stars)
-        
 out1 = 'regridded'
 out2 = 'bigger_image'
 out3 = 'shifted_image'
@@ -111,6 +80,7 @@ mymask = "maskim"
 mou = 'moulou1'
 sixth = 'sixth'
 third = 'third'
+
 class ia_regrid_test(unittest.TestCase):
 
     @classmethod
@@ -430,10 +400,6 @@ class ia_regrid_test(unittest.TestCase):
         bb.done()
         myia.done()
 
-def suite():
-    return [ia_regrid_test]
-   
 if __name__ == '__main__':
      unittest.main()
 
- 

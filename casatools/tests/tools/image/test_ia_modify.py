@@ -70,20 +70,14 @@ import unittest
 import numpy
 import os
 
-try:
-    from casatools import image as iatool
-    from casatools import componentlist as cltool
-    from casatools import quanta as qatool
-    from casatools import measures as metool
-    from casatools import ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+
+from casatools import image as iatool
+from casatools import componentlist as cltool
+from casatools import quanta as qatool
+from casatools import measures as metool
+from casatools import ctsys
+ctsys_resolve = ctsys.resolve
+
 
 datapath = ctsys_resolve('unittest/ia_modify/')
 
@@ -92,11 +86,18 @@ class ia_modify_test(unittest.TestCase):
     def setUp(self):
         self.qa = qatool( )
         self.me = metool( )
-        pass
+        self.mymask = ''
     
     def tearDown(self):
         self.qa.done( )
         self.me.done( )
+        data = ["CAS5688_1.im", "CAS5688_2.im", self.mymask]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
         pass
     
     def test_stretch(self):
@@ -104,8 +105,8 @@ class ia_modify_test(unittest.TestCase):
         mycl = cltool()
         mycl.addcomponent(flux=1, dir=['J2000', '00:00:00.00', '00.00.00.0'])
         yy = iatool()
-        mymask = "maskim"
-        yy.fromshape(mymask, [200, 200, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200,200,1,20]
@@ -114,10 +115,10 @@ class ia_modify_test(unittest.TestCase):
         self.assertRaises(
             Exception,
             yy.modify, model=mycl.torecord(),
-            mask=mymask + ">0", stretch=False
+            mask=self.mymask + ">0", stretch=False
         )
         zz = yy.modify(
-            model=mycl.torecord(), mask=mymask + ">0", stretch=True
+            model=mycl.torecord(), mask=self.mymask + ">0", stretch=True
         )
         self.assertTrue(zz and type(zz) == type(True))
         yy.done()

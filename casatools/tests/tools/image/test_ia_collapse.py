@@ -63,23 +63,13 @@ import numpy
 import os
 from math import sqrt
 
-try:
-    from casatools import image as iatool
-    from casatools import regionmanager
-    from casatools import table
-    from casatools import quanta
-    from casatools import ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    quanta = qatool
-    regionmanager = rgtool
-    table = tbtool
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+from casatools import image as iatool
+from casatools import regionmanager
+from casatools import table
+from casatools import quanta
+from casatools import ctsys
+ctsys_resolve = ctsys.resolve
+
 
 good_image = "collapse_in.fits"
 masked_image = "im_w_mask.im"
@@ -112,8 +102,25 @@ class ia_collapse_test(unittest.TestCase):
         self.qa.done( )
         self.rg.done( )
         os.remove(good_image)
+        data = ["collapse_avg_0_1.fits","collapse_avg_0.fits",
+                "collapse_avg_2.fits","collapse_in.im",
+                "collapse_sum_1.fits","flux_test.im","median.im",
+                "test_1_0.im","test_1_right.im","test_1_r.im",
+                "test_2_2.im","test_2_f.im","test_2_freq.im",
+                "test_3.im","test_8_0mean","test_8_0median","test_8_1mean",
+                "test_8_1median","test_8_2mean","test_8_2median","ymask"
+            ]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
+
+
         tb = table( )
         self.assertTrue(len(tb.showcache()) == 0)
+        tb.done()
 
     def checkImage(self, gotImage, expectedName):
         expected = iatool()                                
@@ -559,9 +566,6 @@ class ia_collapse_test(unittest.TestCase):
         msgs = bb.history()
         bb.done()
         self.assertTrue("ia.collapse" in msgs[-1])
-
-def suite():
-    return [ia_collapse_test]
 
 if __name__ == '__main__':
     unittest.main()

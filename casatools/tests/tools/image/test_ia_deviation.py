@@ -29,22 +29,13 @@ import math
 import numpy
 import numbers
 
-try:
-    from casatools import image as iatool
-    from casatools import regionmanager as rgtool
-    from casatools import table, ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
 
+from casatools import image as iatool
+from casatools import regionmanager as rgtool
+from casatools import table, ctsys
+ctsys_resolve = ctsys.resolve
 
 _rg = rgtool( )
-
 
 datapath = ctsys_resolve('unittest/ia_deviation/')
 
@@ -98,9 +89,15 @@ class ia_deviation_test(unittest.TestCase):
     def setUp(self):
         self.res = None
         self._myia = iatool()
+        self.imagename = ''
     
     def tearDown(self):
         self._myia.done()
+        if self.imagename:
+            if os.path.isfile(self.imagename):
+                os.unlink(self.imagename)
+            else:
+                shutil.rmtree(self.imagename)
         tb = table( )
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done( )
@@ -267,8 +264,8 @@ class ia_deviation_test(unittest.TestCase):
     def test_circle(self):
         """test circles work correctly CAS-10296"""
         myia = self._myia
-        imagename = "mycirc.im"
-        myia.fromshape(imagename, [100, 100])
+        self.imagename = "mycirc.im"
+        myia.fromshape(self.imagename, [100, 100])
         bb = myia.getchunk()
         bb[:] = 1
         myia.putchunk(bb)

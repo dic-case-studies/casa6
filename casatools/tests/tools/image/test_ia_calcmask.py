@@ -60,31 +60,37 @@
 ###########################################################################
 import shutil
 import unittest
-
+import os
 from casatools import image as iatool
 from casatools import table
 
 class ia_calcmask_test(unittest.TestCase):
     
     def setUp(self):
-       pass
+        self.im1 = ''
     def tearDown(self):
         tb = table( )
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done( )
 
+        data = ["hist.im","mycomplexmask.im","myfloatmask.im",
+                "mycomplex.im","myfloat.im"  ]
+        for f in data:
+            if os.path.exists(f) and os.path.isdir(f):
+                shutil.rmtree(f)
+
     def test_basic(self):
         """Test basic functionality of ia.calcmask()"""
         myia = iatool()
-        im1 = "myfloatmask.im"
-        myia.fromshape(im1, [2, 2], type='f')
+        self.im1 = "myfloatmask.im"
+        myia.fromshape(self.im1, [2, 2], type='f')
         bb = myia.getchunk()
         bb[0, 0] = 1
         myia.putchunk(bb)
         myia.done()
-        im2 = "myfloat.im"
-        myia.fromshape(im2, [2, 2], type='f')
-        myia.calcmask(im1 + "<= 0")
+        self.im2 = "myfloat.im"
+        myia.fromshape(self.im2, [2, 2], type='f')
+        myia.calcmask(self.im1 + "<= 0")
         mask = myia.getchunk(getmask = True)
         myia.done()
         for i in [0, 1]:
@@ -94,15 +100,15 @@ class ia_calcmask_test(unittest.TestCase):
                 else:
                     self.assertTrue(mask[i, j])
                     
-        im1 = "mycomplexmask.im"
-        myia.fromshape(im1, [2, 2], type='c')
+        self.im1 = "mycomplexmask.im"
+        myia.fromshape(self.im1, [2, 2], type='c')
         bb = myia.getchunk()
         bb[0, 0] = 1 + 1j
         myia.putchunk(bb)
         myia.done()
-        im2 = "mycomplex.im"
-        myia.fromshape(im2, [2, 2], type='c')
-        myia.calcmask("real(" + im1 + ") <= 0")
+        self.im2 = "mycomplex.im"
+        myia.fromshape(self.im2, [2, 2], type='c')
+        myia.calcmask("real(" + self.im1 + ") <= 0")
         mask = myia.getchunk(getmask = True)
         myia.done()
         for i in [0, 1]:
@@ -115,16 +121,14 @@ class ia_calcmask_test(unittest.TestCase):
     def test_history(self):
         """Test history is written"""
         myia = iatool()
-        name = "hist.im"
-        myia.fromshape(name,[20,20])
-        myia.calcmask(name + "== 0")
+        self.name = "hist.im"
+        myia.fromshape(self.name,[20,20])
+        myia.calcmask(self.name + "== 0")
         msgs = myia.history()
         myia.done()
         self.assertTrue("ia.calcmask" in msgs[-2])
         self.assertTrue("ia.calcmask" in msgs[-1])
 
-def suite():
-    return [ia_calcmask_test]
 if __name__ == '__main__':
     unittest.main()
 
