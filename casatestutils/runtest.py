@@ -581,7 +581,8 @@ def run(testnames, branch=None):
                             write_conftest_osx(conf_name)
                         else:
                             write_conftest_linux(conf_name)
-                        pytest.main(cmd)
+                        #pytest.main(cmd)
+                        subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
                         os.remove(conf_name)
                         os.chdir(myworkdir)
 
@@ -640,7 +641,8 @@ def run(testnames, branch=None):
                             write_conftest_osx(conf_name)
                         else:
                             write_conftest_linux(conf_name)
-                        pytest.main(cmd)
+                        #pytest.main(cmd)
+                        subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
                         os.remove(conf_name)
                         os.chdir(myworkdir)
             os.chdir(cwd)
