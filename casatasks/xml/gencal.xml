@@ -132,6 +132,8 @@ Current antenna-based gencal options (caltype) are:
                      Subparameter of caltype='jyperk'
                      Default: 'asdm'
                      Options: 'asdm', 'model-fit', 'interpolation'
+
+                     The 'interpolation' option may not work for the data after 2019.
       </description>
       <value>asdm</value>
    </param>
