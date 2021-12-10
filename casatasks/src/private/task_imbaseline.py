@@ -393,10 +393,10 @@ class ImsmoothParams(Validable):
     def __call__(self) -> Union[List[Any], Dict[str, str]]:
         """Convert the class into arguments of imsmooth().
 
-        __logorigin is for callabletask.logorigin_setter"""
+        __log_origin is for callabletask.logorigin_setter"""
         return [self.infile, self.kernel, self.major, self.minor, self.pa, self.TARGETRES, self.kimage, self.scale,
                 self.REGION, self.BOX, self.CHANS, self.STOKES, self.MASK, self.outfile, self.STRETCH, self.OVERWRITE,
-                self.BEAM], dict(__logorigin="imbaseline")
+                self.BEAM], dict(__log_origin="imbaseline")
 
 
 class SdsmoothParams(Validable):
@@ -425,11 +425,11 @@ class SdsmoothParams(Validable):
     def __call__(self) -> Dict[str, Any]:
         """Convert the class into arguments of sdsmooth().
 
-        __logorigin is for sdutil.callabletask_decorator"""
+        __log_origin is for sdutil.callabletask_decorator"""
         return dict(infile=self.infile, datacolumn=self.datacolumn, antenna=self.ANTENNA, field=self.FIELD, spw=self.SPW,
                     timerange=self.TIMERANGE, scan=self.SCAN, pol=self.POL, intent=self.INTENT, reindex=self.REINDEX,
                     kernel=self.kernel, kwidth=self.kwidth, outfile=self.outfile, overwrite=self.OVERWRITE,
-                    __logorigin="imbaseline")
+                    __log_origin="imbaseline")
 
 
 class SdbaselineParams(Validable):
@@ -503,7 +503,7 @@ class SdbaselineParams(Validable):
     def __call__(self) -> Dict[str, Any]:
         """Convert the class into arguments of sdbaseline().
 
-        __logorigin is for sdutil.callabletask_decorator"""
+        __log_origin is for sdutil.callabletask_decorator"""
         return dict(infile=self.infile, datacolumn=self.datacolumn, antenna=self.ANTENNA, field=self.FIELD, spw=self.SPW,
                     timerange=self.TIMERANGE, scan=self.SCAN, pol=self.POL, intent=self.INTENT, reindex=self.REINDEX,
                     maskmode=self.maskmode, thresh=self.thresh, avg_limit=self.avg_limit, minwidth=self.minwidth, edge=self.edge,
@@ -512,7 +512,7 @@ class SdbaselineParams(Validable):
                     fftthresh=self.fftthresh, addwn=self.addwn, rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter,
                     blparam=self.blparam, verbose=self.VERBOSE, updateweight=self.UPDATEWEIGHT, sigmavalue=self.SIGMAVALUE,
                     showprogress=self.SHOWPROGRESS, minnrow=self.MINNROW, outfile=self.outfile, overwrite=self.OVERWRITE,
-                    __logorigin="imbaseline")
+                    __log_origin="imbaseline")
 
 
 def __get_axis_position(val: array=None) -> int:
