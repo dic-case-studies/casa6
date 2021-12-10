@@ -3753,6 +3753,7 @@ class test_pbcor(testref_base):
 
           _vp.setpbpoly(telescope='EVLA', coeff=[1.0, -1.529e-3, 8.69e-7, -1.88e-10]) 
           _vp.saveastable('evlavp.tab')
+          _vp.reset()
 
      def test_pbcor_mfs(self):
           """ [pbcor] Test pbcor with mfs"""
@@ -4044,7 +4045,6 @@ class test_hetarray_imaging(testref_base):
      ###########################
 
 
-     ##@unittest.skipIf(is_CASA6, "Skip temporarily - to debug test failures in CAS-13530")
      def test_het_antenna_mosaic_cube_alma(self):
           '''
           This dataset has two groups of antennas (12m and 7m) with cross baselines. 
@@ -4139,7 +4139,6 @@ class test_hetarray_imaging(testref_base):
 ###########################
 
 
-     ##@unittest.skipIf(is_CASA6, "Skip temporarily - to debug test failures in CAS-13530")
      def test_het_antenna_mosaic_cube_ngvla(self):
           '''
           This dataset has two groups of antennas (18m and 6m) with cross baselines. 
@@ -4191,7 +4190,6 @@ class test_hetarray_imaging(testref_base):
           self.assertTrue(self.check_final(pstr=report1+report2))
 
 
-     #@unittest.skipIf(is_CASA6, "Skip temporarily - to debug test failures in CAS-13530")
      def test_het_antenna_mosaic_cube_vptable_float(self):
           '''
           This dataset has two groups of antennas (18m and 6m) with cross baselines. 
@@ -4233,7 +4231,7 @@ class test_hetarray_imaging(testref_base):
           _vp.setpbimage(telescope='NGVLA1', realimage=pbA, antnames=antlist[0:7])
           _vp.setpbimage(telescope='NGVLA1', realimage=pbB, antnames=antlist[7:12])
           _vp.saveastable(vptabname)
-          
+          _vp.reset()
 
           ### NGVLA : Type A baselines, one field
           tclean(vis=msname,   antenna='m*&', field='0', spw=spw,   imagename=self.img+'ng.typeAf.single',
@@ -4280,7 +4278,7 @@ class test_hetarray_imaging(testref_base):
 
 
 
-     @unittest.skipIf(is_CASA6, "Skip temporarily - to debug test failures in CAS-13530")
+     ##@unittest.skipIf(is_CASA6, "Skip temporarily - to debug test failures in CAS-13530")
      def test_het_antenna_mosaic_cube_vptable_complex(self):
           '''
           This dataset has two groups of antennas (18m and 6m) with cross baselines. 
@@ -4322,7 +4320,7 @@ class test_hetarray_imaging(testref_base):
           _vp.setpbimage(telescope='NGVLA1', compleximage=pbA, antnames=antlist[0:7])
           _vp.setpbimage(telescope='NGVLA1', compleximage=pbB, antnames=antlist[7:12])
           _vp.saveastable(vptabname)
-          
+          _vp.reset()
 
           ### NGVLA : Type A baselines, one field
           tclean(vis=msname,   antenna='m*&', field='0', spw=spw,   imagename=self.img+'ng.typeAc.single',
