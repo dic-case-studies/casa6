@@ -193,7 +193,6 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         finally:
             tbt.done()
 
-
     def _check_input_output_model(self, vis, outputvis, in_col_name):
         """
         Checks (with unittest assert) that INPUT/colname = OUTPUT/DATA + OUTPUT/MODEL_DATA
@@ -221,7 +220,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                         f'Output DATA: {data_sub}\n'
                         f'Output MODEL_DATA: {model_sub}\n'
                         f'Input {in_col_name}: {data_orig}\n'
-        )
+                        )
 
     def test_makes_output_ms_data(self):
         """
