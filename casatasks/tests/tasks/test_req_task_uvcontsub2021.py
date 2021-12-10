@@ -43,8 +43,13 @@ ms_alma = 'uid___X02_X3d737_X1_01_small.ms'
 datapath_alma = ctsys.resolve(os.path.join('measurementset', 'alma', ms_alma))
 
 # MS for tests that use CORRECTED_DATA
+# Beware: this is all flagged!
 ms_corr = 'uid___A002_X71a45c_X1d24.ms.split'
 datapath_corr = ctsys.resolve(os.path.join('measurementset', 'alma', ms_corr))
+
+# Another MS for tests that use CORRECTED_DATA
+ms_papersky = 'papersky_standard.ms'
+datapath_papersky = ctsys.resolve(os.path.join('measurementset', 'evla', ms_papersky))
 
 
 class uvcontsub2021_test_base(unittest.TestCase):
@@ -97,12 +102,14 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         shutil.copytree(datapath_simple, ms_simple)
         shutil.copytree(datapath_alma, ms_alma)
         shutil.copytree(datapath_corr, ms_corr)
+        shutil.copytree(datapath_papersky, ms_papersky)
 
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(ms_simple)
         shutil.rmtree(ms_alma)
         shutil.rmtree(ms_corr)
+        shutil.rmtree(ms_papersky)
 
     def setUp(self):
         # Input MS is always strictly read-only, one copy in setUpClass is enough
@@ -209,7 +216,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         finally:
             tbt.close()
 
-        self.assertTrue(np.all(data_orig == data_sub+model_sub),
+        self.assertTrue(np.allclose(data_orig, data_sub+model_sub, rtol=1e-6),
                         f'Output DATA and MODEL_DATA do not add up to input data column, '
                         f'Output DATA: {data_sub}\n'
                         f'Output MODEL_DATA: {model_sub}\n'
@@ -548,9 +555,37 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def test_writemodel_from_corrected(self):
         """ Check the model column, like test_writemodel, but taking input from
         CORRECTED_DATA"""
+        res = uvcontsub2021(vis=ms_papersky, outputvis=self.output, datacolumn='CORRECTED',
+                            writemodel=True)
+        self._check_return(res, fields=[0])
+        self._check_rows(self.output, 'DATA', 6318)
+        self._check_rows(self.output, 'MODEL_DATA', 6318)
+        self._check_data_stats(ms_papersky, (-0.162619720-0.0525208352j),
+                               (-0.0567376502-0.756820410j), (-47.9221878-9.60179615j),
+                               (8.73174095-5.35791397j),
+                               col_name='CORRECTED_DATA')
+        self._check_data_stats(ms_papersky, (-0.162619720-0.0525208352j),
+                               (-0.0567376502-0.756820410j), (-47.9221878-9.60179615j),
+                               (8.73174095-5.35791397j),
+                               col_name='DATA')
+        self._check_data_stats(self.output, (-2.19514804e-10+7.80831479e-11j),
+                               (-0.00495260954-0.259171128j), (-30.7899017-11.9215565j),
+                               (18.17750740-0.306599379j),
+                               col_name='DATA')
+        self._check_data_stats(self.output, (-0.162619720-0.0525208355j),
+                               (-0.0806645453-0.0697010457j), (-17.1322861+2.31976032j),
+                               (3.02633667+0.301503152j),
+                               col_name='MODEL_DATA')
+
+        self._check_input_output_model(ms_papersky, self.output,
+                                       in_col_name='CORRECTED_DATA')
+
+    def test_writemodel_from_corrected_all_flagged(self):
+        """ Check the model column, like test_writemodel, but taking input from
+        CORRECTED_DATA, with all data points flagged (fit doesn't iterate, model=0)"""
         res = uvcontsub2021(vis=ms_corr, outputvis=self.output, datacolumn='CORRECTED',
                             writemodel=True)
-        print(f'This is res: {res}')
+        # perhaps TODO: check all chisq == inf, and all count == 1
         self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 2)
         self._check_rows(self.output, 'MODEL_DATA', 2)
@@ -565,6 +600,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                (1400.83813+1.36621107e-12j), (357.430084+0j),
                                (4006.86426+0.000186866833j),
                                col_name='DATA')
+        # This MS is all flagged -> fits produce chisq inf and null fit
         self._check_data_stats(self.output, 0, 0, 0, 0,
                                col_name='MODEL_DATA')
 
