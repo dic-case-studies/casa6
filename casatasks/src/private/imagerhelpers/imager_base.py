@@ -555,7 +555,7 @@ class PySynthesisImager:
 
                 # casalog.post('.... iterdone for ', immod, ' : ' , exrec['iterdone'])
                 retval= retval or exrec['iterdone'] > 0
-                self.IBtool.mergeexecrecord( exrec )
+                self.IBtool.mergeexecrecord( exrec, immod )
                 if alwaysSaveIntermediateImages or ('SAVE_ALL_AUTOMASKS' in os.environ and os.environ['SAVE_ALL_AUTOMASKS']=="true"):
                     maskname = self.allimpars[str(immod)]['imagename']+'.mask'
                     tempmaskname = self.allimpars[str(immod)]['imagename']+'.autothresh'+str(self.ncycle)

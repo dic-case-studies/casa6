@@ -278,20 +278,40 @@ class TestHelpers:
         """ Exists """
         return os.path.exists(imname)
 
-    def get_peak_res(self, summ):
-        """Get Peak Res"""
-        # AW:  This can be reduced down for readability but putting in a fix for CAS-13182
-        peakres = None
-        if is_CASA6:
-            if 'summaryminor' in summ:
-                reslist = summ['summaryminor'][1,:]
-                peakres = reslist[ len(reslist)-1 ]
-
+    def get_peak_res_idx(self, summ):
+        """Finds the last possible index in the returned "summaryminor" from tclean that has a value.
+        We do this to maintain the same value as was previously returned, so that we don't need to update all the values in the tests.
+        It could be that in the future we just want to return the index [chan/pol with the largest peakres, last cycle]."""
+        if 'summaryminor' in summ:
+            sm = summ['summaryminor']
+            uss = sm.useSmallSummaryminor() # Temporary CAS-13683 workaround
+            ret = (sm.chan0, sm.pol0, 0)
+            peakres = -1e9
+            prev_chan = None
+            for chan in sorted(sm.keys()):
+                for pol in sorted(sm[chan].keys()):
+                    for cycle in range(sm.nCycles):
+                        tmp_iterdone = sm[chan][pol]['iterDone'][cycle]
+                        if uss and (prev_chan != None):
+                            # horible hackaround of CAS-13683 to deal with not have access to 'startIterDone'
+                            # get the number of iterations done for just this channel
+                            prev_iterdone = sm[prev_chan][pol]['iterDone'][cycle]
+                            if (prev_iterdone <= tmp_iterdone):
+                                tmp_iterdone -= prev_iterdone
+                        if (tmp_iterdone > 0):
+                            peakres = sm[chan][pol]['peakRes'][cycle]
+                            ret = (chan, pol, cycle)
+                prev_chan = chan
+            return ret
         else:
-            if summ.has_key('summaryminor'):
-                reslist = summ['summaryminor'][1,:]
-                peakres = reslist[ len(reslist)-1 ]
-                
+            return None
+
+    def get_peak_res(self, summ):
+        """Get the peak residual, for one major cycle, for the last channel that actually did iterations"""
+        peakres = None
+        if 'summaryminor' in summ:
+            idx = self.get_peak_res_idx(summ)
+            peakres = summ['summaryminor'][idx[0]][idx[1]]['peakRes'][idx[2]]
         return peakres
 
     def check_peak_res(self, summ,correctres, epsilon=0.05):
@@ -311,17 +331,12 @@ class TestHelpers:
         return out,peakres
 
     def get_mod_flux(self, summ):
+        """Get the modflux + startmodflux, for one major cycle, for the last channel that actually did iterations"""
         """Get Mod Flux"""
-        # AW: This can be reduced down for readability but putting in a fix for CAS-13182
         modflux = None
-        if is_CASA6:
-            if 'summaryminor' in summ:
-                modlist = summ['summaryminor'][2,:]
-                modflux = modlist[ len(modlist)-1 ]
-        else:
-            if summ.has_key('summaryminor'):
-                modlist = summ['summaryminor'][2,:]
-                modflux = modlist[ len(modlist)-1 ]
+        if 'summaryminor' in summ:
+            idx = self.get_peak_res_idx(summ)
+            modflux = summ['summaryminor'][idx[0]][idx[1]]['modelFlux'][idx[2]]
         return modflux
 
     def check_mod_flux(self, summ,correctmod, epsilon=0.05):
@@ -1119,38 +1134,19 @@ class TestHelpers:
                         retNmajordone = max(ret[inode][int(inode.strip('node'))]['nmajordone'],retNmajordone)
                     mergedret['nmajordone']=retNmajordone
                 if parlist.count('peakres'):
-                    #retPeakres = 0
-                    #for inode in nodenames:
-                        #tempreslist = ret[inode][int(inode.strip('node'))]['summaryminor'][1,:]
-                        #if len(tempreslist)>0:
-                        #    tempresval = tempreslist[len(tempreslist)-1]
-                        #else:
-                        #    tempresval=0.0
-                        #retPeakres = max(tempresval,retPeakres)
-                    #mergedret['summaryminor']=ret['node1'][1]['summaryminor']
                     if 'summaryminor' not in mergedret:
                         for inode in nodenames:
                             nodeid = int(inode.strip('node'))
-                            if ret[inode][nodeid]['summaryminor'].size!=0:
+                            if len(ret[inode][nodeid]['summaryminor'])!=0:
                                 lastnode = inode
                                 lastid = nodeid
                            
                         mergedret['summaryminor']=ret[lastnode][lastid]['summaryminor']
                 if parlist.count('modflux'):
-                    #retModflux = 0
-                    #for inode in nodenames:
-                    #    tempmodlist = ret[inode][int(inode.strip('node'))]['summaryminor'][2,:]
-                    #    print "tempmodlist for ",inode,"=",tempmodlist
-                    #    if len(tempmodlist)>0:
-                    #         tempmodval=tempmodlist[len(tempmodlist)-1]
-                    #    else:
-                    #         tempmodval=0.0
-                    #    retModflux += tempmodval
-                    #mergedret['modflux']=retModflux
                     if 'summaryminor' not in mergedret:
                         for inode in nodenames:
                             nodeid = int(inode.strip('node'))
-                            if ret[inode][nodeid]['summaryminor'].size!=0:
+                            if len(ret[inode][nodeid]['summaryminor'])!=0:
                                 lastnode = inode
                                 lastid = nodeid
                            
