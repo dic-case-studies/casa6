@@ -42,6 +42,11 @@ datapath_simple = ctsys.resolve(os.path.join(datadir, ms_simple))
 ms_alma = 'uid___X02_X3d737_X1_01_small.ms'
 datapath_alma = ctsys.resolve(os.path.join('measurementset', 'alma', ms_alma))
 
+# MS for tests that use CORRECTED_DATA
+ms_corr = 'uid___A002_X71a45c_X1d24.ms.split'
+datapath_corr = ctsys.resolve(os.path.join('measurementset', 'alma', ms_corr))
+
+
 class uvcontsub2021_test_base(unittest.TestCase):
     """
     Base class to share utility funcitons between the test classes below.
@@ -91,11 +96,13 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
     def setUpClass(cls):
         shutil.copytree(datapath_simple, ms_simple)
         shutil.copytree(datapath_alma, ms_alma)
+        shutil.copytree(datapath_corr, ms_corr)
 
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(ms_simple)
         shutil.rmtree(ms_alma)
+        shutil.rmtree(ms_corr)
 
     def setUp(self):
         # Input MS is always strictly read-only, one copy in setUpClass is enough
@@ -250,11 +257,20 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         with self.assertRaises(AssertionError):
             res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='bogus')
 
+        # 'datacolumn' test using DATA:
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='DATA')
         self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
-        # TODO need a 'datacolumn' test using CORRECTED - use another ms_alma or someth else
+
+        # 'datacolumn' test using CORRECTED:
+        shutil.rmtree(self.output)
+        res = uvcontsub2021(vis=ms_corr, outputvis=self.output, datacolumn='CORRECTED')
+        self._check_return(res, fields=[0])
+        self._check_rows(self.output, 'DATA', 2)
+        self._check_data_stats(self.output, (1419.16761+3.06690944e-06j),
+                               (1400.83813+1.36621107e-12j), (357.430084+0j),
+                               (4006.86426+0.000186866833j))
 
     def test_fitspw_empty(self):
         """Check that fitspw works. When empty, fit all channels in all SPWs"""
@@ -478,18 +494,49 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                (2.90232849+1.83334923j), (-42.0941238-14.0698833j),
                                (92.6959686+31.4091110j))
 
+    def _check_input_output_model(self, vis, outputvis, in_col_name):
+        """
+        Checks (with unittest assert) that INPUT/colname = OUTPUT/DATA + OUTPUT/MODEL_DATA
+
+        :param col_name: name of data column to compare (DATA or CORRECTED_DATA)
+        :param outputvis: name of output vis with DATA and MODEL_DATA
+        """
+        tbt = table()
+        try:
+            tbt.open(vis)
+            data_orig = tbt.getcol(in_col_name)
+        finally:
+            tbt.close()
+
+        try:
+            tbt.open(outputvis)
+            data_sub = tbt.getcol('DATA')
+            model_sub = tbt.getcol('MODEL_DATA')
+        finally:
+            tbt.close()
+
+        self.assertTrue(np.all(data_orig == data_sub+model_sub))
+
     def test_writemodel(self):
         """ Check the model column is added to the output MS and its values match
         (like example 5 from task page)"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, writemodel=True)
         self._check_return(res, fields=[0])
-        # TODO: get model column, check input/DATA ~= output/DATA+MODEL
-        with self.assertRaises(RuntimeError):
-            self._check_rows(self.output, 'MODEL_DATA', 340)
+        self._check_rows(self.output, 'DATA', 340)
+        self._check_rows(self.output, 'MODEL_DATA', 340)
+        self._check_data_stats(ms_simple, (33.875+15.75j), (15+12j), (2+3j), (98+47j),
+                               col_name='DATA')
+        self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j),
+                               col_name='DATA')
+        self._check_data_stats(self.output, (33.875+15.75j), (33.875+15.75j), (23.25+17.5j),
+                               (44.5+14j),
+                               col_name='MODEL_DATA')
+        # Besides checks on columns one at a time, check input/DATA == output/DATA+MODEL
+        self._check_input_output_model(ms_simple, self.output, 'DATA')
 
 
-@unittest.skipIf(True ,"Skipping in automated bamboo builds until the input MSs are added "
+@unittest.skipIf(True, "Skipping in automated bamboo builds until the input MSs are added "
                  "to casatestdata")
 class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
     """ Tests of numerical behavior based on simulated datasets.
