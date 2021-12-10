@@ -186,6 +186,36 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         finally:
             tbt.done()
 
+
+    def _check_input_output_model(self, vis, outputvis, in_col_name):
+        """
+        Checks (with unittest assert) that INPUT/colname = OUTPUT/DATA + OUTPUT/MODEL_DATA
+
+        :param outputvis: name of input MS with DATA or CORRECTED_DATA
+        :param outputvis: name of output with DATA and MODEL_DATA
+        :param in_col_name: name of input data column to compare (DATA or CORRECTED_DATA)
+        """
+        tbt = table()
+        try:
+            tbt.open(vis)
+            data_orig = tbt.getcol(in_col_name)
+        finally:
+            tbt.close()
+
+        try:
+            tbt.open(outputvis)
+            data_sub = tbt.getcol('DATA')
+            model_sub = tbt.getcol('MODEL_DATA')
+        finally:
+            tbt.close()
+
+        self.assertTrue(np.all(data_orig == data_sub+model_sub),
+                        f'Output DATA and MODEL_DATA do not add up to input data column, '
+                        f'Output DATA: {data_sub}\n'
+                        f'Output MODEL_DATA: {model_sub}\n'
+                        f'Input {in_col_name}: {data_orig}\n'
+        )
+
     def test_makes_output_ms_data(self):
         """
         Check that in a simple command the input MS is taken and an output MS
@@ -268,6 +298,9 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         res = uvcontsub2021(vis=ms_corr, outputvis=self.output, datacolumn='CORRECTED')
         self._check_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 2)
+        self._check_data_stats(ms_corr, (1419.16761+3.06690944e-06j),
+                               (1400.83813+1.36621107e-12j), (357.430084+0j),
+                               (4006.86426+0.000186866833j), col_name='CORRECTED_DATA')
         self._check_data_stats(self.output, (1419.16761+3.06690944e-06j),
                                (1400.83813+1.36621107e-12j), (357.430084+0j),
                                (4006.86426+0.000186866833j))
@@ -494,29 +527,6 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                (2.90232849+1.83334923j), (-42.0941238-14.0698833j),
                                (92.6959686+31.4091110j))
 
-    def _check_input_output_model(self, vis, outputvis, in_col_name):
-        """
-        Checks (with unittest assert) that INPUT/colname = OUTPUT/DATA + OUTPUT/MODEL_DATA
-
-        :param col_name: name of data column to compare (DATA or CORRECTED_DATA)
-        :param outputvis: name of output vis with DATA and MODEL_DATA
-        """
-        tbt = table()
-        try:
-            tbt.open(vis)
-            data_orig = tbt.getcol(in_col_name)
-        finally:
-            tbt.close()
-
-        try:
-            tbt.open(outputvis)
-            data_sub = tbt.getcol('DATA')
-            model_sub = tbt.getcol('MODEL_DATA')
-        finally:
-            tbt.close()
-
-        self.assertTrue(np.all(data_orig == data_sub+model_sub))
-
     def test_writemodel(self):
         """ Check the model column is added to the output MS and its values match
         (like example 5 from task page)"""
@@ -533,7 +543,32 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                (44.5+14j),
                                col_name='MODEL_DATA')
         # Besides checks on columns one at a time, check input/DATA == output/DATA+MODEL
-        self._check_input_output_model(ms_simple, self.output, 'DATA')
+        self._check_input_output_model(ms_simple, self.output, in_col_name='DATA')
+
+    def test_writemodel_from_corrected(self):
+        """ Check the model column, like test_writemodel, but taking input from
+        CORRECTED_DATA"""
+        res = uvcontsub2021(vis=ms_corr, outputvis=self.output, datacolumn='CORRECTED',
+                            writemodel=True)
+        print(f'This is res: {res}')
+        self._check_return(res, fields=[0])
+        self._check_rows(self.output, 'DATA', 2)
+        self._check_rows(self.output, 'MODEL_DATA', 2)
+        self._check_data_stats(ms_corr, (1419.16761+3.06690944e-06j),
+                               (1400.83813+1.36621107e-12j), (357.430084+0j),
+                               (4006.86426+0.000186866833j),
+                               col_name='CORRECTED_DATA')
+        self._check_data_stats(ms_corr, (58.7170534+8.56816769e-08j), (58.2515029+0j),
+                               (14.4238396+0j), (163.592163+7.62939453e-06j),
+                               col_name='DATA')
+        self._check_data_stats(self.output, (1419.16761+3.06690944e-06j),
+                               (1400.83813+1.36621107e-12j), (357.430084+0j),
+                               (4006.86426+0.000186866833j),
+                               col_name='DATA')
+        self._check_data_stats(self.output, 0, 0, 0, 0,
+                               col_name='MODEL_DATA')
+
+        self._check_input_output_model(ms_corr, self.output, in_col_name='CORRECTED_DATA')
 
 
 @unittest.skipIf(True, "Skipping in automated bamboo builds until the input MSs are added "
