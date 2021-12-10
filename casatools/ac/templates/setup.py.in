@@ -999,7 +999,7 @@ else:
     mpi_cxx_flags = []
 
 module_cflags = { 'casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', \
-                                 '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
+                                 '-DHAVE_DYSCO', '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
                                  '-DUSE_THREADS', '-DUseCasacoreNamespace', '-DWCSLIB_VERSION_MAJOR=5', \
                                  '-DWCSLIB_VERSION_MINOR=15', '-fsigned-char', '-DWITHOUT_BOOST', \
                                  '-DCASATOOLS', '-Dcasacore=casa6core', '-DCASADATA=\'"%CASAROOT%/data"\'', \
