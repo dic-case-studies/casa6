@@ -51,6 +51,10 @@ datapath_corr = ctsys.resolve(os.path.join('measurementset', 'alma', ms_corr))
 ms_papersky = 'papersky_standard.ms'
 datapath_papersky = ctsys.resolve(os.path.join('measurementset', 'evla', ms_papersky))
 
+# Mixed polarizations, from CAS-12283. This MS has ~60 SPWs with very mixed pols
+ms_mixed_pols = 'split_ddid_mixedpol_CAS-12283.ms'
+datapath_mixed_pols = ctsys.resolve(os.path.join('measurementset', 'evla', ms_mixed_pols))
+
 
 class uvcontsub2021_test_base(unittest.TestCase):
     """
@@ -209,6 +213,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         shutil.copytree(datapath_alma, ms_alma)
         shutil.copytree(datapath_corr, ms_corr)
         shutil.copytree(datapath_papersky, ms_papersky)
+        shutil.copytree(datapath_mixed_pols, ms_mixed_pols)
 
     @classmethod
     def tearDownClass(cls):
@@ -216,6 +221,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         shutil.rmtree(ms_alma)
         shutil.rmtree(ms_corr)
         shutil.rmtree(ms_papersky)
+        shutil.rmtree(ms_mixed_pols)
 
     def setUp(self):
         # Input MS is always strictly read-only, one copy in setUpClass is enough
@@ -606,8 +612,22 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
 
         self._check_input_output_model(ms_corr, self.output, in_col_name='CORRECTED_DATA')
 
+    def test_mixed_pols(self):
+        """ Check normal functioning with an MS with mixed polarizations in its (many)
+        SPWs"""
+        res = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output)
 
-@unittest.skipIf(False, "Skipping in automated bamboo builds until the input MSs are added "
+        # Check all SPWs have been taken.
+        def count_entries(d):
+            return sum([count_entries(v) if isinstance(v, dict) else 1 for v in d.values()])
+        self.assertEqual(count_entries(res), 1331)
+        self._check_task_return(res, fields=[0])
+        self._check_rows(self.output, 'DATA', 1550)
+        self._check_data_stats(self.output, (-0.000782105923+0.000300504051j),
+                               0j, (-66.9297485+55.1413803j), (57.7461967+16.6702766j))
+
+
+@unittest.skipIf(True, "Skipping in automated bamboo builds until the input MSs are added "
                  "to casatestdata")
 class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
     """
