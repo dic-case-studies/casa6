@@ -54,96 +54,8 @@ datapath_papersky = ctsys.resolve(os.path.join('measurementset', 'evla', ms_pape
 
 class uvcontsub2021_test_base(unittest.TestCase):
     """
-    Base class to share utility funcitons between the test classes below.
+    Base class to share utility functions between the test classes below.
     """
-    def _check_return(self, res, fields=None):
-        """
-        Checks consistency of the uvcontsub task return dictionary
-
-        :param fields: results are expected for these fields
-        """
-
-        import pprint
-        verbose = False
-        if verbose:
-            pprint.pprint(res)
-
-        self.assertTrue('description' in res)
-        self.assertTrue('goodness_of_fit' in res)
-        self.assertTrue('field' in res['goodness_of_fit'])
-        gof_field = res['goodness_of_fit']['field']
-        if fields:
-            for fid in fields:
-                self.assertTrue(str(fid) in gof_field)
-
-        for fid in gof_field:
-            self.assertTrue('scan' in gof_field[fid])
-            scans = gof_field[fid]['scan']
-            for sid in scans:
-                self.assertTrue('spw' in scans[sid])
-                spws = scans[sid]['spw']
-                for spw_id in spws:
-                    self.assertTrue('polarization' in spws[spw_id])
-                    pols = spws[spw_id]['polarization']
-                    for pid in pols:
-                        self.assertTrue('chi_squared') in pols[pid]
-                        stats = pols[pid]['chi_squared']
-                        for metric in ['average', 'min', 'max']:
-                            self.assertTrue(metric in stats)
-                            self.assertEqual(stats[metric].keys(), {'real', 'imag'})
-                            self.assertGreaterEqual(stats[metric]['real'], 0)
-                            self.assertGreaterEqual(stats[metric]['imag'], 0)
-
-
-class uvcontsub2021_test(uvcontsub2021_test_base):
-    """ Main verification test for uvcontsub2021 """
-    @classmethod
-    def setUpClass(cls):
-        shutil.copytree(datapath_simple, ms_simple)
-        shutil.copytree(datapath_alma, ms_alma)
-        shutil.copytree(datapath_corr, ms_corr)
-        shutil.copytree(datapath_papersky, ms_papersky)
-
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(ms_simple)
-        shutil.rmtree(ms_alma)
-        shutil.rmtree(ms_corr)
-        shutil.rmtree(ms_papersky)
-
-    def setUp(self):
-        # Input MS is always strictly read-only, one copy in setUpClass is enough
-        # Default output name for simple tests
-        self.output = 'test_uvcs_output.ms'
-
-    def tearDown(self):
-        if os.path.exists(self.output):
-            shutil.rmtree(self.output)
-
-    def _check_rows(self, vis, col_name, expected_rows, expected_val=None):
-        """
-        Meant to check rows of a column from an output MS produced by
-        uvcontsub2021. Uses unittest asserts to verify conditions.
-
-        :param vis: MS to check
-        :param col_name: name of column to check (MODEL_DATA, FIELD, etc.)
-        :param expected_rows: number of rows the column must have
-        :param expected_vals: for simple cases where the same value is expected in every row,
-                              ensure all rows have this value
-        """
-
-        tbt = table()
-        try:
-            tbt.open(vis)
-            col = tbt.getcol(col_name)
-            nrows = tbt.nrows()  # or col.shape[-1]
-            self.assertEqual(nrows, expected_rows, 'Number of rows different from expected')
-            if expected_val:
-                self.assertTrue(np.all(col == expected_val), "Column '{}' values different "
-                                "from expected. Expected: {}. Column values: {}".
-                                format(col_name, expected_val, col))
-        finally:
-            tbt.done()
 
     def _check_data_stats(self, vis, exp_mean, exp_median, exp_min, exp_max,
                           col_name='DATA', places=5):
@@ -193,6 +105,69 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         finally:
             tbt.done()
 
+    def _check_rows(self, vis, col_name, expected_rows, expected_val=None):
+        """
+        Meant to check rows of a column from an output MS produced by
+        uvcontsub2021. Uses unittest asserts to verify conditions.
+
+        :param vis: MS to check
+        :param col_name: name of column to check (MODEL_DATA, FIELD, etc.)
+        :param expected_rows: number of rows the column must have
+        :param expected_vals: for simple cases where the same value is expected in every
+                              row, ensure all rows have this value
+        """
+
+        tbt = table()
+        try:
+            tbt.open(vis)
+            col = tbt.getcol(col_name)
+            nrows = tbt.nrows()  # or col.shape[-1]
+            self.assertEqual(nrows, expected_rows, 'Number of rows different from expected')
+            if expected_val:
+                self.assertTrue(np.all(col == expected_val), "Column '{}' values different "
+                                "from expected. Expected: {}. Column values: {}".
+                                format(col_name, expected_val, col))
+        finally:
+            tbt.done()
+
+    def _check_task_return(self, res, fields=None):
+        """
+        Checks consistency of the uvcontsub task return dictionary
+
+        :param fields: results are expected for these fields
+        """
+
+        import pprint
+        verbose = False
+        if verbose:
+            pprint.pprint(res)
+
+        self.assertTrue('description' in res)
+        self.assertTrue('goodness_of_fit' in res)
+        self.assertTrue('field' in res['goodness_of_fit'])
+        gof_field = res['goodness_of_fit']['field']
+        if fields:
+            for fid in fields:
+                self.assertTrue(str(fid) in gof_field)
+
+        for fid in gof_field:
+            self.assertTrue('scan' in gof_field[fid])
+            scans = gof_field[fid]['scan']
+            for sid in scans:
+                self.assertTrue('spw' in scans[sid])
+                spws = scans[sid]['spw']
+                for spw_id in spws:
+                    self.assertTrue('polarization' in spws[spw_id])
+                    pols = spws[spw_id]['polarization']
+                    for pid in pols:
+                        self.assertTrue('chi_squared') in pols[pid]
+                        stats = pols[pid]['chi_squared']
+                        for metric in ['average', 'min', 'max']:
+                            self.assertTrue(metric in stats)
+                            self.assertEqual(stats[metric].keys(), {'real', 'imag'})
+                            self.assertGreaterEqual(stats[metric]['real'], 0)
+                            self.assertGreaterEqual(stats[metric]['imag'], 0)
+
     def _check_input_output_model(self, vis, outputvis, in_col_name):
         """
         Checks (with unittest assert) that INPUT/colname = OUTPUT/DATA + OUTPUT/MODEL_DATA
@@ -222,6 +197,35 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                         f'Input {in_col_name}: {data_orig}\n'
                         )
 
+
+class uvcontsub2021_test(uvcontsub2021_test_base):
+    """
+    Main verification test for uvcontsub2021
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        shutil.copytree(datapath_simple, ms_simple)
+        shutil.copytree(datapath_alma, ms_alma)
+        shutil.copytree(datapath_corr, ms_corr)
+        shutil.copytree(datapath_papersky, ms_papersky)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(ms_simple)
+        shutil.rmtree(ms_alma)
+        shutil.rmtree(ms_corr)
+        shutil.rmtree(ms_papersky)
+
+    def setUp(self):
+        # Input MS is always strictly read-only, one copy in setUpClass is enough
+        # Default output name for simple tests
+        self.output = 'test_uvcs_output.ms'
+
+    def tearDown(self):
+        if os.path.exists(self.output):
+            shutil.rmtree(self.output)
+
     def test_makes_output_ms_data(self):
         """
         Check that in a simple command the input MS is taken and an output MS
@@ -229,7 +233,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output)
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
         self.assertTrue(os.path.exists(self.output))
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
@@ -242,42 +246,42 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='2')
-        self._check_return(res, fields=[2])
+        self._check_task_return(res, fields=[2])
         self._check_rows(self.output, 'FIELD_ID', 120, 2)
 
     def test_select_spw(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, spw='1')
-        self._check_return(res, fields=[0, 1, 2])
+        self._check_task_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'DATA_DESC_ID', 810, 1)
 
     def test_select_scan(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, scan='2')
-        self._check_return(res, fields=[1])
+        self._check_task_return(res, fields=[1])
         self._check_rows(self.output, 'SCAN_NUMBER', 360, 2)
 
     def test_select_intent(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, intent='*AMPLI*')
-        self._check_return(res, fields=[1])  # fields 0,2 excluded by intent selection
+        self._check_task_return(res, fields=[1])  # fields 0,2 excluded by intent selection
         self._check_rows(self.output, 'SCAN_NUMBER', 360, 2)
 
     def test_select_array(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, array='0')
-        self._check_return(res, fields=[0, 1, 2])
+        self._check_task_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'ARRAY_ID', 1080, 0)
 
     def test_select_observation(self):
         """ Check field selection works"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, observation='0')
-        self._check_return(res, fields=[0, 1, 2])
+        self._check_task_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'OBSERVATION_ID', 1080, 0)
 
     def test_datacolumn(self):
@@ -295,14 +299,14 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
 
         # 'datacolumn' test using DATA:
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, datacolumn='DATA')
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
         # 'datacolumn' test using CORRECTED:
         shutil.rmtree(self.output)
         res = uvcontsub2021(vis=ms_corr, outputvis=self.output, datacolumn='CORRECTED')
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 2)
         self._check_data_stats(ms_corr, (1419.16761+3.06690944e-06j),
                                (1400.83813+1.36621107e-12j), (357.430084+0j),
@@ -315,8 +319,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """Check that fitspw works. When empty, fit all channels in all SPWs"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='')
-        self._check_return(res, fields=[0])
-        # TODO: better checks and most likely a better input ms (prob ~pl-unittest)
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
@@ -325,7 +328,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         in those SPWs"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='0')
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
@@ -333,7 +336,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """Check fitspw when selecting one spw with 1 channel (perfect fit if order 0)"""
 
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='0', fitspw='1')
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 600)
         self._check_data_stats(self.output, (0.115759703+7.48776972e-08j), 0j,
                                (-0.00129960873+0.000193971457j), (1.41059673+0j))
@@ -343,7 +346,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         fit those channels in those SPWs (like example 2 from task page)"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitspw='0:5~19')
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, (-18.5249996-7.05000019j),
                                (-19.7999992-13j), (-68-17.6000004j), (28+26.3999996j))
@@ -358,7 +361,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                 ['1', 'NONE'],
                                 ['2', '0:100~1903']
                             ])
-        self._check_return(res, fields=[0, 2])
+        self._check_task_return(res, fields=[0, 2])
         self._check_rows(self.output, 'DATA', 1080)
         self._check_data_stats(self.output, (0.0286860488-2.65735951e-06j), 0j,
                                (-0.655080259+0j), (2.09603309+0j))
@@ -373,7 +376,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                 ['0, 1', '0:100~500;600~900;1200~1900'],
                                 ['2', '0:100~1903']
                             ])
-        self._check_return(res, fields=[0, 1, 2])
+        self._check_task_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'DATA', 1080)
         expected_vals = [(-0.0125788084-5.98476360e-06j), 0j,
                          (-0.664994299+0j), (2.09603309+0j)]
@@ -387,7 +390,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                 ['1', '0:100~500;600~900;1200~1900'],
                                 ['2', '0:100~1903']
                             ])
-        self._check_return(res, fields=[0, 1, 2])
+        self._check_task_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'DATA', 1080)
         self._check_data_stats(self.output, *expected_vals)
 
@@ -399,7 +402,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                 fitspw=[
                                     ['99', '0:100~500;600~910;1215~1678;1810~1903']
                                 ])
-            self._check_return(res)
+            self._check_task_return(res)
 
         shutil.rmtree(self.output)
         with self.assertRaises(RuntimeError):
@@ -407,7 +410,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                 fitspw=[
                                     ['-2', '0:100~500']
                                 ])
-            self._check_return(res)
+            self._check_task_return(res)
 
         shutil.rmtree(self.output)
         with self.assertRaises(RuntimeError):
@@ -415,7 +418,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                 fitspw=[
                                     ['4', '0,1']
                                 ])
-            self._check_return(res)
+            self._check_task_return(res)
 
     def test_fitspw_multifield_wrong_format(self):
         """Check that fitspw works. Different fitspw strings for different fields
@@ -430,7 +433,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                     ['3', '4', '0:100~1903']
                                 ])
 
-            self._check_return(res)
+            self._check_task_return(res)
             self._check_rows(self.output, 'DATA', 1080)
 
         shutil.rmtree(self.output)
@@ -443,7 +446,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                     ['3', '0:100~1903']
                                 ])
 
-            self._check_return(res)
+            self._check_task_return(res)
             self._check_rows(self.output, 'DATA', 1080)
 
         shutil.rmtree(self.output)
@@ -454,7 +457,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                     ['1, 2', 'NONE'],
                                     ['2', '0:100~500;600~910;1215~1678;1810~1903'],
                                 ])
-            self._check_return(res)
+            self._check_task_return(res)
             self._check_rows(self.output, 'DATA', 1080)
 
     def test_fitspw_separate_fields(self):
@@ -464,7 +467,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
 
         res_f1 = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='1',
                                fitspw='0:100~500;600~910;1215~1678;1810~1903')
-        self._check_return(res_f1, fields=[1])
+        self._check_task_return(res_f1, fields=[1])
         self._check_rows(self.output, 'DATA', 360)
         self._check_data_stats(self.output, (-0.013026415-2.0328553e-05j),
                                0j, (-0.633247495+0j), (2.01062560+0j))
@@ -472,7 +475,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         shutil.rmtree(self.output)
         res_f2 = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='2',
                                fitspw='0:100~1303')
-        self._check_return(res_f2, fields=[2])
+        self._check_task_return(res_f2, fields=[2])
         self._check_rows(self.output, 'DATA', 120)
         self._check_data_stats(self.output, (-0.0140258259+5.83529241e-06j),
                                0j, (-0.588652134+0j), (1.83768487+0j))
@@ -481,7 +484,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """Check the use of spw selection and fitspw together"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, spw='0', fitspw='0')
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
@@ -491,14 +494,13 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
 
         with self.assertRaises(RuntimeError):
             res = uvcontsub2021(vis=ms_simple, outputvis=self.output, spw='3', fitspw='0')
-            self._check_return(res)
+            self._check_task_return(res)
 
     def test_fitmethod_gsl(self):
         """Check that methods work - gsl"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitmethod='gsl')
-        self._check_return(res, fields=[0])
-        # TODO: better checks / but overlaps with numerical tests
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
@@ -506,8 +508,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         """Check that methods work - casacore"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitmethod='casacore')
-        self._check_return(res, fields=[0])
-        # TODO: better checks / but overlaps with numerical tests
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, 0j, (-8.25-5.5j), (-42.5-11j), (53.5+33j))
 
@@ -516,7 +517,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=1,
                             fitspw='0:2~20')
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, (-8.56096448-3.18684196j),
                                (-4.05263185-2.67017555j), (-60.7157898-9.26315689j),
@@ -527,7 +528,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=2,
                             fitspw='0:2~20')
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_data_stats(self.output, (8.891941398+3.44454119j),
                                (2.90232849+1.83334923j), (-42.0941238-14.0698833j),
@@ -538,7 +539,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         (like example 5 from task page)"""
 
         res = uvcontsub2021(vis=ms_simple, outputvis=self.output, writemodel=True)
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 340)
         self._check_rows(self.output, 'MODEL_DATA', 340)
         self._check_data_stats(ms_simple, (33.875+15.75j), (15+12j), (2+3j), (98+47j),
@@ -556,7 +557,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         CORRECTED_DATA"""
         res = uvcontsub2021(vis=ms_papersky, outputvis=self.output, datacolumn='CORRECTED',
                             writemodel=True)
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 6318)
         self._check_rows(self.output, 'MODEL_DATA', 6318)
         self._check_data_stats(ms_papersky, (-0.162619720-0.0525208352j),
@@ -581,11 +582,11 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
 
     def test_writemodel_from_corrected_all_flagged(self):
         """ Check the model column, like test_writemodel, but taking input from
-        CORRECTED_DATA, with all data points flagged (fit doesn't iterate, model=0)"""
+        CORRECTED_DATA, with all data points flagged (fit doesn't iterate, model=0) """
         res = uvcontsub2021(vis=ms_corr, outputvis=self.output, datacolumn='CORRECTED',
                             writemodel=True)
         # perhaps TODO: check all chisq == inf, and all count == 1
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 2)
         self._check_rows(self.output, 'MODEL_DATA', 2)
         self._check_data_stats(ms_corr, (1419.16761+3.06690944e-06j),
@@ -606,11 +607,12 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_input_output_model(ms_corr, self.output, in_col_name='CORRECTED_DATA')
 
 
-@unittest.skipIf(True, "Skipping in automated bamboo builds until the input MSs are added "
+@unittest.skipIf(False, "Skipping in automated bamboo builds until the input MSs are added "
                  "to casatestdata")
 class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
-    """ Tests of numerical behavior based on simulated datasets.
-    To be refined - CAS-13632 """
+    """
+    Tests of numerical behavior based on simulated datasets. To be refined - CAS-13632
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -737,7 +739,7 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
         exp_cont = self.exp_cont_order_0
         res = uvcontsub2021(vis=self.ms_cont_nonoise_order_0, outputvis=self.output,
                             fitorder=0, fitspw=self.fitspw)
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
 
         print(f'Checking numerical differences for MS {self.ms_cont_nonoise_order_0}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_0,
@@ -752,7 +754,7 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
         exp_cont = self.exp_cont_order_0
         res = uvcontsub2021(vis=self.ms_cont_noise_order_0, outputvis=self.output,
                             fitorder=0, fitspw=self.fitspw)
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
 
         print(f'Checking numerical differences for MS {self.ms_cont_noise_order_0}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_noise_order_0,
@@ -770,7 +772,7 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
 
         res = uvcontsub2021(vis=self.ms_cont_nonoise_order_1, outputvis=self.output,
                             fitorder=1, fitspw=self.fitspw)
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
 
         print(f'Checking numerical differences for MS {self.ms_cont_nonoise_order_1}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_1,
@@ -788,7 +790,7 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
 
         res = uvcontsub2021(vis=self.ms_cont_noise_order_1, outputvis=self.output,
                             fitorder=1, fitspw=self.fitspw)
-        self._check_return(res, fields=[0])
+        self._check_task_return(res, fields=[0])
 
         print(f'Checking numerical differences for MS {self.ms_cont_noise_order_1}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_1,
