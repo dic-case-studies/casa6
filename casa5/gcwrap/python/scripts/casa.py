@@ -269,7 +269,6 @@ from statwt import  statwt
 from tclean import  tclean
 from testconcat import  testconcat
 from uvcontsub import  uvcontsub
-from uvcontsub2021 import uvcontsub2021
 from uvcontsub3 import  uvcontsub3
 from uvmodelfit import  uvmodelfit
 from uvsub import  uvsub

@@ -236,7 +236,6 @@ casa_add_python( tools tools_tests_python lib/python${PYTHONV}/tests
   test_req_task_polcal.py
   test_req_task_blcal.py
   test_req_task_ft.py
-  test_req_task_uvcontsub2021.py
 
   ### stakeholders
   test_stk_alma_pipeline_imaging.py
