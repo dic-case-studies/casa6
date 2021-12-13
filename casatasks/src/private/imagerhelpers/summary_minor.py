@@ -3,7 +3,6 @@ import numpy as np
 import os
 
 from casatasks.private.casa_transition import is_CASA6
-from casampi.MPIEnvironment import MPIEnvironment
 if is_CASA6:
     from casatasks import casalog
 else:
@@ -199,17 +198,22 @@ class SummaryMinor(dict):
         ncycles = 0
         if len(chans) > 0 and len(pols) > 0:
             ncycles = int( ncols / (len(chans)*len(pols)) )
-            if uss and MPIEnvironment.is_mpi_enabled:
-                # This is necessary because we may have an odd number of "channels" due to each process getting only a subchunk.
-                # Example:
-                #     Process 1 gets polarities 0-1, process 2 gets polarity 2
-                #     Each of them assigns channel id = chan + pol * nsubpols
-                #     Process 1 assigns channel ids [0,2], Process 2 assigns channel id 0.
-                # This hack is not needed when not using a small summary minor because we have the extra knowledge of the polarities, instead of mapping polarities + channels onto chunks.
-                chanslist = matrix[oldChanIdx].tolist()
-                for chan in chans:
-                    singlechan_occurances = list(filter(lambda x: x == chan, chanslist))
-                    ncycles = max(ncycles, len(singlechan_occurances))
+            if uss:
+                try:
+                    from casampi.MPIEnvironment import MPIEnvironment
+                    if MPIEnvironment.is_mpi_enabled:
+                        # This is necessary because we may have an odd number of "channels" due to each process getting only a subchunk.
+                        # Example:
+                        #     Process 1 gets polarities 0-1, process 2 gets polarity 2
+                        #     Each of them assigns channel id = chan + pol * nsubpols
+                        #     Process 1 assigns channel ids [0,2], Process 2 assigns channel id 0.
+                        # This hack is not needed when not using a small summary minor because we have the extra knowledge of the polarities, instead of mapping polarities + channels onto chunks.
+                        chanslist = matrix[oldChanIdx].tolist()
+                        for chan in chans:
+                            singlechan_occurances = list(filter(lambda x: x == chan, chanslist))
+                            ncycles = max(ncycles, len(singlechan_occurances))
+                except ModuleNotFoundError as e:
+                    raise
 
         # ret is the return dictionary[chans][pols][rows][cycles]
         # cummulativeCnt counts how many cols we've read for each channel/polarity/row
