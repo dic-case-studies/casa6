@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_phaseshift.py
+# test_task_uvcontsub2021.py
 #
 # Copyright (C) 2021 European Southern Obervatory, ALMA partnership
 # Copyright (C) 2021 Associated Universities, Inc. Washington DC, USA.

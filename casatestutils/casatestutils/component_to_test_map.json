@@ -2181,7 +2181,7 @@
             "comment":""
         },
         {
-            "testScript":"test_req_task_uvcontsub2021",
+            "testScript":"test_task_uvcontsub2021",
             "testType":"casatasks",
             "maintainer":"Federico Montesino",
             "maintainerEmail":"fpouzols@eso.org",
