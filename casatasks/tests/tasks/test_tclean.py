@@ -4227,11 +4227,13 @@ class test_hetarray_imaging(testref_base):
           ### First, make the vptable from the PB models from the data repo. 
           vptabname = self.img+'_vptab_float.vp'
           antlist = ['m153','m155','m140','m142', 'm130', 'm122','m151', 's012','s006', 's013','s008', 's009']
-          _vp.reset()
-          _vp.setpbimage(telescope='NGVLA1', realimage=pbA, antnames=antlist[0:7])
-          _vp.setpbimage(telescope='NGVLA1', realimage=pbB, antnames=antlist[7:12])
-          _vp.saveastable(vptabname)
-          _vp.reset()
+          local_vp = vpmanager()
+          local_vp.reset()
+          local_vp.setpbimage(telescope='NGVLA1', realimage=pbA, antnames=antlist[0:7])
+          local_vp.setpbimage(telescope='NGVLA1', realimage=pbB, antnames=antlist[7:12])
+          local_vp.saveastable(vptabname)
+          local_vp.reset()
+          del local_vp
 
           ### NGVLA : Type A baselines, one field
           tclean(vis=msname,   antenna='m*&', field='0', spw=spw,   imagename=self.img+'ng.typeAf.single',
@@ -4316,11 +4318,14 @@ class test_hetarray_imaging(testref_base):
           ### First, make the vptable from the PB models from the data repo. 
           vptabname = self.img+'_vptab_complex.vp'
           antlist = ['m153','m155','m140','m142', 'm130', 'm122','m151', 's012','s006', 's013','s008', 's009']
-          _vp.reset()
-          _vp.setpbimage(telescope='NGVLA1', compleximage=pbA, antnames=antlist[0:7])
-          _vp.setpbimage(telescope='NGVLA1', compleximage=pbB, antnames=antlist[7:12])
-          _vp.saveastable(vptabname)
-          _vp.reset()
+
+          local_vp = vpmanager()
+          local_vp.reset()
+          local_vp.setpbimage(telescope='NGVLA1', compleximage=pbA, antnames=antlist[0:7])
+          local_vp.setpbimage(telescope='NGVLA1', compleximage=pbB, antnames=antlist[7:12])
+          local_vp.saveastable(vptabname)
+          local_vp.reset()
+          del local_vp
 
           ### NGVLA : Type A baselines, one field
           tclean(vis=msname,   antenna='m*&', field='0', spw=spw,   imagename=self.img+'ng.typeAc.single',
