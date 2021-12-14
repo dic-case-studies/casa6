@@ -442,6 +442,10 @@ class PySynthesisImager:
 #############################################
     def checkPB(self):
         """Checks for common problem cases in the .pb image"""
+        if self.SItool is None:
+            # Seems to be None for specmode='mfs', parallel=True
+            return
+
         import numpy as np
         facetIdx = 0 # TODO iterate over facets
         imagename = self.SItool.getImageName(facetIdx, "PB")
