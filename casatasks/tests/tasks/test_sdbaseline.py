@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 import glob
-import sys
+#import sys
 import shutil
 import numpy
 import unittest
-from numpy import array
+#from numpy import array
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
@@ -606,6 +606,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
     test050 --- existing file as outfile with overwrite=False (raises an exception)
     test051 --- no data after selection (raises an exception)
     test060 --- blparam file (infile+'_blparam.txt') should be removed if it exists
+    test070 --- no output MS when dosubtract=False
+    test071 --- dosubtract=False and blformat is empty (raises an exception)
 
     Note: The input data 'OrionS_rawACSmod_calave.ms' is generated
           from a single dish regression data 'OrionS_rawACSmod' as follows:
@@ -900,6 +902,36 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
             sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
         except Exception as e:
             raise e
+
+    def test070(self):
+        """Basic Test 070: no output MS when dosubtract=False"""
+        tid = '070'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        dosubtract = False
+
+        remove_single_file_dir(outfile)
+        self.assertFalse(os.path.exists(outfile), f"{outfile} must be deleted before testing.")
+
+        sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile, dosubtract=dosubtract)
+        self.assertFalse(os.path.exists(outfile), f"{outfile} is created.")
+
+    def test071(self):
+        """Basic Test 071: dosubtract=False and blformat is empty (raises an exception)"""
+        tid = '071'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        dosubtract = False
+        blformats = ['', [], ['', '', '']]
+
+        for blformat in blformats:
+            print(f"Testing blformat='{blformat}'...")
+            try:
+                sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile, dosubtract=dosubtract, blformat=blformat)
+            except Exception as e:
+                self.assertIn("blformat must be specified when dosubtract is False", str(e))
 
 
 class sdbaseline_maskTest(sdbaseline_unittest_base):
@@ -2039,7 +2071,6 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
     Tests for outputting baseline table
 
     List of tests
-    test300 --- blmode='fit', bloutput='', dosubtract=False (no baselining, no bltable output)
     test301 --- blmode='fit', bloutput!='', dosubtract=True, blfunc='poly'/'chebyshev'/'cspline'
                 (poly/chebyshev/cspline fit in MS, bltable is written)
     test302 --- blmode='fit', bloutput!='', dosubtract=True, blfunc='variable'
@@ -2166,39 +2197,6 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 rel = abs(out - ref)
             self.assertTrue((rel < tol), msg='the output ('+str(out)+') differs from reference ('+str(ref)+')')
 
-
-    def test300(self):
-        """test300: no baselining, no bltable output"""
-        self.tid='300'
-        infile = self.infile
-        outfile = self.outroot+self.tid+'.ms'
-        datacolumn='float_data'
-        blmode='fit'
-        bloutput=''
-        dosubtract=False
-
-        result = sdbaseline(infile=infile,datacolumn=datacolumn,
-                             blmode=blmode,bloutput=bloutput,dosubtract=dosubtract,
-                             outfile=outfile)
-        self.assertEqual(result,None,
-                         msg="The task returned '"+str(result)+"' instead of None")
-
-        spec_in = []
-        tb.open(infile)
-        for i in range(tb.nrows()):
-            spec_in.append(tb.getcell('FLOAT_DATA', i))
-        tb.close()
-        spec_out = []
-        tb.open(outfile)
-        for i in range(tb.nrows()):
-            spec_out.append(tb.getcell('FLOAT_DATA', i))
-        tb.close()
-        for irow in range(len(spec_in)):
-            for ipol in range(len(spec_in[0])):
-                for ichan in range(len(spec_in[0][0])):
-                    self.assertEqual(spec_in[irow][ipol][ichan], spec_out[irow][ipol][ichan],
-                                     msg="output spectrum modified at row="+str(irow)+
-                                     ",pol="+str(ipol)+",chan="+str(ichan))
 
     def test301(self):
         """test301: poly/chebyshev/cspline baselining, output bltable"""
