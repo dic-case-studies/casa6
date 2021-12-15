@@ -19,26 +19,15 @@
 import time
 import shutil
 import unittest
-CASA6 = False
 
-try:
-    import casatools
-    from casatasks import flagdata, casalog, mstransform
-    CASA6 = True
-except:
-    from tasks import *
-    from taskinit import *
+import casatools
+from casatasks import flagdata, casalog, mstransform
 
 
-# TODO: Data, Need to ask where this data should go
-# this is a placeholder location
-if CASA6:
-    casapath = ''
-    datapath_four_ants = casatools.ctsys.resolve("regression/flagdata/Four_ants_3C286.ms/")
-    datapath_3ctst = casatools.ctsys.resolve("regression/flagdata/3ctst.ms")
-else:
-    casapath = os.environ['CASAPATH'].split()[0]
-    datapath = ''
+
+casapath = ''
+datapath_four_ants = casatools.ctsys.resolve("unittest/flagdata/Four_ants_3C286.ms/")
+datapath_3ctst = casatools.ctsys.resolve("unittest/flagdata/3ctst.ms")
 
 if 'datasets' not in (locals()):
     myname = 'time_average_and_rflag :'
@@ -156,12 +145,9 @@ class regression_time_average_rflag(unittest.TestCase):
 
     def setUp(self):
 
-        if not CASA6:
-            default(flagdata)
-
-        shutil.copytree(my_dataset_name, ms1)
-        shutil.copytree(my_dataset_name, ms2)
-        shutil.copytree(ms3ctst, ms3ctst_copy)
+        shutil.copytree(datapath_four_ants, ms1)
+        shutil.copytree(datapath_four_ants, ms2)
+        shutil.copytree(datapath_3ctst, ms3ctst_copy)
 
     def tearDown(self):
 
@@ -297,12 +283,12 @@ class regression_time_average_rflag(unittest.TestCase):
             self.assertTrue(False)
 
         shutil.rmtree(ms3ctst_copy)
-        shutil.copytree(ms3ctst, ms3ctst_copy)
+        shutil.copytree(datapath_3ctst, ms3ctst_copy)
 
         mstransform_flag_step(step_name='1', timebin='2min', scale=7)
 
         shutil.rmtree(ms3ctst_copy)
-        shutil.copytree(ms3ctst, ms3ctst_copy)
+        shutil.copytree(datapath_3ctst, ms3ctst_copy)
 
         mstransform_flag_step(step_name='2', timebin='6min', scale=7)
 
