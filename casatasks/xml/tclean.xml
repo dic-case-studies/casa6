@@ -276,6 +276,7 @@
       <type>int</type><type>intVec</type>
       <value type="intVec"><value>100</value></value>
     </param>
+
     <param type="any" name="cell"> 
      <shortdescription>Cell size</shortdescription>
 <description>Cell size
@@ -357,7 +358,6 @@
       <value type="string">SIN</value>
     </param>
 
-
     <param type="any" name="startmodel"> 
      <shortdescription>Name of starting model image</shortdescription>
 <description>Name of starting model image
@@ -427,6 +427,7 @@
                                                            data display options window.)
 
 
+                                               
 
                         mode='cubedata' : Spectral line imaging with one or more channels
                                                         There is no internal software Doppler tracking so
@@ -665,6 +666,7 @@
                          to use perchanweightdensity=True to avoid
                          surprisingly varying sensitivity and psfs
                          across the concatenated cube.
+             
 </description>
       <value type="bool">True</value>
     </param>
@@ -987,7 +989,6 @@
            <shortdescription>Use conjugate frequency for wideband A-terms</shortdescription>
 <description>Use conjugate frequency for wideband A-terms
 
-
                        While gridding data from one frequency channel, choose a convolution 
                        function from a 'conjugate' frequency such that the resulting baseline 
                        primary beam is approximately constant across frequency. For a system in 
@@ -1019,7 +1020,6 @@
                        psterm and aterm settings is frozen-in in the cfcache. Using an existing cfcache
                        made with a different setting of these parameters will not reflect the current
                        settings.
-
 
                        In a parallel execution, the construction of the cfcache is also parallelized 
                        and the time to compute scales close to linearly with the number of compute 
@@ -1088,8 +1088,6 @@ to use the correct direction in which the antenna is pointing with respect to th
                          the pointing offset must be computed separately.  The second 
                          number controls how much a pointing change across time can 
                          be ignored and after which an antenna rebinning is required.   
-    
-    
 
 
                         Note : The default value of this parameter is [], due a programmatic constraint.
@@ -1100,7 +1098,6 @@ to use the correct direction in which the antenna is pointing with respect to th
 	                Note : This option is available only for gridder='awproject' and usepointing=True and
                                    and has been validated primarily with VLASS on-the-fly mosaic data
                                    where POINTING subtables have been modified after the data are recorded.
-
 
 
 		        Examples of parameter usage : 
@@ -1207,7 +1204,6 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 
-
     <param type="string" name="deconvolver">
       <shortdescription>Minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes,asp)</shortdescription>
 <description>Name of minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes,asp)
@@ -1274,7 +1270,9 @@ to use the correct direction in which the antenna is pointing with respect to th
 
                                          (Note : This MEM implementation is not very robust.
                                                       Improvements will be made in the future.)
-                       asp : ASP Clean [Bhatnagar and Cornwell 2004]
+
+                       asp : ASP Clean [Bhatnagar and Cornwell, 2004]
+
 
 
 </description>
@@ -1289,6 +1287,7 @@ to use the correct direction in which the antenna is pointing with respect to th
               <value>mtmfs</value>
               <value>mem</value>
               <value>asp</value>
+
       </allowed>
     </param>
 
@@ -1381,7 +1380,6 @@ to use the correct direction in which the antenna is pointing with respect to th
       <value type="double">0.0</value>
     </param>
 
-
     <param type="double" name="fusedthreshold" subparam="true">
      <shortdescription>Threshold for triggering Hogbom Clean </shortdescription>
      <description> Threshold for triggering Hogbom Clean (number in units of Jy)
@@ -1404,7 +1402,6 @@ to use the correct direction in which the antenna is pointing with respect to th
       </description>
       <value type="double">0.0</value>
     </param>
-
 
     <param type="int" name="largestscale" subparam="true">
      <shortdescription>Largest scale allowed for the Asp Clean deconvolver</shortdescription>
@@ -1670,7 +1667,6 @@ to use the correct direction in which the antenna is pointing with respect to th
     </param>
     
     <param type="int" name="npixels" subparam="true">
-
            <shortdescription>Number of pixels to determine uv-cell size </shortdescription>
 <description>Number of pixels to determine uv-cell size for super-uniform weighting
                       (0 defaults to -/+ 3 pixels)
@@ -1795,6 +1791,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                        multiscale clean with an appropriate set of scale sizes will tolerate
                        a higher loop gain than Clark clean (for example).
 
+                       
 
 </description>
       <value type="double">0.1</value>
@@ -1847,7 +1844,6 @@ to use the correct direction in which the antenna is pointing with respect to th
                        the N-sigma threshold and cyclethreshold, is used to trigger a major cycle
                        (see also the descreption under 'threshold').
                        Set nsigma=0.0 to preserve the previous tclean behavior without this feature.
-
                        The top level parameter, fastnoise is relevant for the rms noise calculation which is used 
                        to determine the threshold. 
 
@@ -1985,6 +1981,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 
+    
 
     <param type="string" name="usemask">
            <shortdescription>Type of mask(s) for deconvolution:  user, pb, or auto-multithresh</shortdescription>
@@ -2010,6 +2007,8 @@ to use the correct direction in which the antenna is pointing with respect to th
                           if pbmask is &gt;0.0, the region outside the specified pb gain level is excluded from
                           image statistics in determination of the threshold.
 
+                      
+                       
 
                        Note: By default the intermediate mask generated by automask at each deconvolution cycle
                              is over-written in the next cycle but one can save them by setting
@@ -2026,7 +2025,6 @@ to use the correct direction in which the antenna is pointing with respect to th
               <value>auto-multithresh</value>
       </allowed>
     </param>
-
 
     
     <param type="any" name="mask" subparam="true">
@@ -2068,6 +2066,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                        mask=['xxx.mask','xxx.crtf', 'circle[[40pix,40pix],10pix]']  : a list of masks
 
 
+              
 
 
                        Note : Mask images for deconvolution must contain 1 or 0 in each pixel.
@@ -2318,7 +2317,6 @@ to use the correct direction in which the antenna is pointing with respect to th
                                       as well as a model_data column, but under normal operation,
                                       the last used mode will get triggered.  Use the delmod task to
                                       clear out existing models from an MS if confusion arises.
-
                        Note 3:    when parallel=True, use savemodel='none'; Other options are not yet ready 
                                   for use in parallel. If model visibilities need to be saved (virtual or modelcolumn):
                                   please run tclean in serial mode with niter=0; after the parallel run
@@ -2571,6 +2569,7 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="pointingoffsetsigdev"><value type="doubleVec"/></default>
 	 <default param="wbawp"><value>True</value></default>
 	 <default param="mosweight"><value>False</value></default>
+	 
 	 <default param="pblimit"><value>0.2</value></default>
 	 <default param="conjbeams"><value>False</value></default>
 	 <default param="mosweight"><value>False</value></default>
@@ -2631,11 +2630,11 @@ to use the correct direction in which the antenna is pointing with respect to th
        <equals type="string" value="mtmfs">
          <default param="scales"><value type="intVec"/></default>
          <default param="nterms"><value>2</value></default>
-	 <default param="smallscalebias"><value>0.0</value></default>
+	       <default param="smallscalebias"><value>0.0</value></default>
        </equals>
        <equals type="string" value="asp">
          <default param="fusedthreshold"><value>0.0</value></default>
-         <default param="largestscale"><value>-1.0</value></default>
+         <default param="smallestscale"><value>-1</value></default>
        </equals>
      </when>
 

@@ -1,7 +1,6 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
 
-
 <task category="imaging" name="sdintimaging" type="function">
 
 
@@ -53,7 +52,6 @@ to evaluate 2D Gaussians.
 
 In the future, we will provide an option to auto-generate Airy disk beams derived from 
 the specified dish diameter. 
-
 </description>
       <type>string</type><type>double</type>
       <value type="string"/>
@@ -724,8 +722,8 @@ A factor or gain to adjust single dish flux scale (to use in feather stage)
                          to use perchanweightdensity=True to avoid
                          surprisingly varying sensitivity and psfs
                          across the concatenated cube.
-
-	   </description>
+             
+</description>
       <value type="bool">True</value>
     </param>
 
@@ -898,7 +896,6 @@ A factor or gain to adjust single dish flux scale (to use in feather stage)
       <value type="int">1</value>
     </param>
 
-
 <param subparam="true" name="psfphasecenter" type="any"> 
      <shortdescription>optional direction to calculate psf for mosaic (default is image phasecenter)</shortdescription>
      <description>For mosaic use psf centered on this
@@ -1043,25 +1040,6 @@ A factor or gain to adjust single dish flux scale (to use in feather stage)
       <value type="bool">True</value>
     </param>
 
-<!--
-    <param type="bool" name="conjbeams" subparam="true">
-           <shortdescription>Use conjugate frequency for wideband A-terms</shortdescription>
-<description>Use conjugate frequency for wideband A-terms
-
-                       While gridding data from one frequency channel, choose a convolution
-                       function from a 'conjugate' frequency such that the resulting baseline
-                       primary beam is approximately constant across frequency. For a system in
-                       which the primary beam scales with frequency, this step will eliminate
-                       instrumental spectral structure from the measured data and leave only the
-                       sky spectrum for the minor cycle to model and reconstruct [Bhatnagar et al., ApJ, 2013].
-
-                       As a rough guideline for when this is relevant, a source at the half power
-                       point of the PB at the center frequency will see an artificial spectral
-                       index of -1.4 due to the frequency dependence of the PB [Sault and Wieringa, 1994].
-                       If left uncorrected during gridding, this spectral structure must be modeled
-                       in the minor cycle (using the mtmfs algorithm) to avoid dynamic range limits
-                       (of a few hundred for a 2:1 bandwidth).
-                       This works for specmode='mfs' and its value is ignored for cubes
 
     <param subparam="true" name="cfcache" type="string">
            <shortdescription>Convolution function cache directory name</shortdescription>
@@ -1114,7 +1092,6 @@ to use the correct direction in which the antenna is pointing with respect to th
 
     <param subparam="true" name="rotatepastep" type="double">
      <shortdescription>Parallactic angle interval after which the nearest AIF is rotated (deg) </shortdescription>
-
 <description>Parallactic angle interval after which the nearest AIF is rotated (deg) 
 
                        Instead of recomputing the AIF for every timestep's parallactic angle,
@@ -1154,7 +1131,6 @@ to use the correct direction in which the antenna is pointing with respect to th
 	                Note : This option is available only for gridder='awproject' and usepointing=True and
                                    and has been validated primarily with VLASS on-the-fly mosaic data
                                    where POINTING subtables have been modified after the data are recorded.
-
 
 
 		        Examples of parameter usage : 
@@ -1229,26 +1205,9 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
 
-
     <param name="deconvolver" type="string">
       <shortdescription>Minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes,asp)</shortdescription>
-<description>Name of minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes, asp)
-</description>
-      <value type="string">flatnoise</value>
-    </param>
-
--->
-
-<!--============================================== -->
-<!--                            Deconvolution Parameters                                            -->
-<!--============================================== -->
-
-
-    <param type="string" name="deconvolver">
-      <shortdescription>Minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes,asp)</shortdescription>
 <description>Name of minor cycle algorithm (hogbom,clark,multiscale,mtmfs,mem,clarkstokes,asp)
->>>>>>>> master:casa5/gcwrap/tasks/sdintimaging.xml
->>>>>>> master
 
                        Each of the following algorithms operate on residual images and psfs
                        from the gridder and produce output model and restored images.
@@ -1312,7 +1271,8 @@ to use the correct direction in which the antenna is pointing with respect to th
 
                                          (Note : This MEM implementation is not very robust.
                                                       Improvements will be made in the future.)
-                       asp : ASP Clean [Bhatnagar and Cornwell 2004]
+
+                       asp : ASP Clean [Bhatnagar and Cornwell, 2004] 
 
 
 </description>
@@ -1327,6 +1287,7 @@ to use the correct direction in which the antenna is pointing with respect to th
               <value>mtmfs</value>
               <value>mem</value>
               <value>asp</value>
+
       </allowed>
     </param>
 
@@ -1608,6 +1569,7 @@ to use the correct direction in which the antenna is pointing with respect to th
       <any type="variant"/>
       <value type="string">1.0Jy</value>
     </param>
+    
     <param subparam="true" name="npixels" type="int">
            <shortdescription>Number of pixels to determine uv-cell size </shortdescription>
 <description>Number of pixels to determine uv-cell size for super-uniform weighting
@@ -2042,46 +2004,6 @@ to use the correct direction in which the antenna is pointing with respect to th
     
     
     <param subparam="true" name="sidelobethreshold" type="double">
-    <!--- auto-thresh and auto-thresh sub param
-    <param type="any" name="maskthreshold" subparam="true">
-     <shortdescription>threshold for automasking (string with unit, e.g. "1.0mJy", sigma,  or fraction of peak ,e.g. 0.1)</shortdescription>
-<description>Sub-parameter for "auto-thresh" and "auto-thresh2": threshold for automasking
-                       Threshold value in a string with a unit, sigma (e.g. 3.0)  or fraction of peak (e.g, 0.05)
-                       For a float value, if it is &gt;= 1.0, it is interpreted as sigma (i.e. sigma*rms for threshold). If it is &lt; 1.0, it is interpreted as
-                       the fraction of peak.
-
-                       Examples : threshold = '1.0mJy'
-                                  threshold = 0.05  (threshold used is 0.05 * peak)
-                                  threshold = 5.0 ( threshold used is 5.0 * rms )
-                                  threshold = '' (default, use 3.0 * rms )
-</description>
-      <value type="string"></value>
-    </param>
-     -->
-    <!-- auto-thresh and auto-thresh sub param
-    <param type="any" name="maskresolution" subparam="true">
-     <shortdescription>resolution for automasking (string, e.g. "10arcsec", or a float value as multiplicative factor of the beam)</shortdescription>
-<description>Sub-parameter for "auto-thresh" and "auto-thresh2": resolution for automasking
-                       The residual image is binned (npix x npix), where npix is maskresolution converted in the number of pixels
-                       Examples : maskresolution='10arcsec'
-                                  maskresolution=2.0 (2 x bmaj)
-                                  maskresolution=''  (default, use a restoring beam major axis)
-</description>
-      <value type="string"></value>
-    </param>
-    -->
-    <!-- auto-thresh and auto-thresh sub param
-    <param type="int" name="nmask" subparam="true">
-     <shortdescription>the maximum number of masks to be added by automasking</shortdescription>
-<description>Sub-parameter for "auto-thresh" and "auto-thresh2": Maximum number of mask regions to be added by automasking at the beginning each minor cycles run
-                       Examples : nmask=2
-                                  nmask=0  (default, set no limit on the number of mask regions to be added)
-</description>
-      <value type="int">0</value>
-    </param>
-    -->
-    <!-- Amanda's code -->
-    <param type="double" name="sidelobethreshold" subparam="true">
            <shortdescription>sidelobethreshold *  the max sidelobe level * peak residual</shortdescription>
            <value type="double">3.0</value>
 <description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on sidelobe levels:  sidelobethreshold * max_sidelobe_level * peak residual
@@ -2345,16 +2267,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
        </equals>
 
-       <equals type="string" value="cubedata">
-         <default param="nchan"><value>-1</value></default>
-         <default param="start"><value>""</value></default>
-         <default param="width"><value>""</value></default>
-         <default param="veltype"><value>"radio"</value></default>
-         <default param="restfreq"><value>[]</value></default>
-         <default param="interpolation"><value>"linear"</value></default>
-         <default param="chanchunks"><value>1</value></default>
-         <default param="perchanweightdensity"><value>False</value></default>
-       </equals>-->
+
      </when>
 
      <when param="gridder">
@@ -2379,6 +2292,7 @@ to use the correct direction in which the antenna is pointing with respect to th
          <default param="pblimit"><value>0.2</value></default>
        </equals>
        <equals value="mosaic" type="string">
+
          <default param="vptable"><value>&quot;&quot;</value></default>
          <default param="usepointing"><value>False</value></default> 
          <default param="mosweight"><value>True</value></default>
