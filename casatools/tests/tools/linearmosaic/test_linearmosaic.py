@@ -48,10 +48,6 @@
 # The two individual pointing images were made with tclean 
 #  and the same values except field='0' or field='1'.
 #
-# The jointmos image is not (yet?) used here so it has not been saved
-# in the casatestdata repository. The individual pointing images and
-# associated pb and pbcor images are found there and used here.
-#
 # Not tested here: 
 #   independent x and y axis sizes (ny parameter)
 #   independent x and y axis cell size (celly parameter)
@@ -95,6 +91,10 @@ class test_linearmosaic(unittest.TestCase):
         # phasecenter of joint image / combined images
         cls.phasecenter ='J2000 19h59m28.5 +40d40m01.5'
 
+        # joint moisaic produced by tclean - image and pbcor
+        cls.jointmos_im = os.path.join(datapath,'jointmos_test_lmtool.image')
+        cls.jointmos_im_pbcor = os.path.join(datapath,'jointmos_test_lmtool.image.pbcor')
+
         # the individual pointing image and pb to be used during combination
         # use at their location in the datapath, no need for a copy here
         # pointing 0
@@ -137,13 +137,15 @@ class test_linearmosaic(unittest.TestCase):
         
         # center pixel values from each image
 
+        jointmos_im_pbcor_val = self.readpix(self.jointmos_im_pbcor)
         fn_image_val = self.readpix('linmos.fn.image')
         fn_weight_val = self.readpix('linmos.fn.image.weight')
         sw_image_val = self.readpix('linmos.fn.sault.image')
 
-        # fn_image_val / fn_image_weight is not within a few % of 1, as it probably should be
-        # For now, check against expected values in channel 1 at center pixel
-        self.assertAlmostEqual(fn_image_val, 0.9902307)
+        # center pixel value in channel 1 is < 0.5% of center pixel value in the pbcor image of the joint mosaic produced by tclean
+        self.assertTrue(0.005 > abs((fn_image_val-jointmos_im_pbcor_val)/jointmos_im_pbcor_val))
+
+        # this is just a constistency check that the center pixel value in the weight image is what it has been
         self.assertAlmostEqual(fn_weight_val, 1.3866229)
 
         # the sault image value should be the same as the image value
@@ -164,19 +166,21 @@ class test_linearmosaic(unittest.TestCase):
         lm.saultweightimage(outputimage='linmos.fn2.sault.image',fracpeak=0.3)
         del lm
         
-        fn_image_val = self.readpix('linmos.fn2.image')
-        fn_weight_val = self.readpix('linmos.fn2.image.weight')
+        jointmos_im_pbcor_val = self.readpix(self.jointmos_im_pbcor)
+        fn2_image_val = self.readpix('linmos.fn2.image')
+        fn2_weight_val = self.readpix('linmos.fn2.image.weight')
         sw_image_val = self.readpix('linmos.fn2.sault.image')
 
-        # fn_image_val / fn_image_weight is not within a few % of 1, as it probably should be
-        # For now, check against expected values in channel 1 at center pixel
-        self.assertAlmostEqual(fn_image_val, 0.9902307)
-        self.assertAlmostEqual(fn_weight_val, 1.3866229)
+        # center pixel value in channel 1 is < 0.5% of center pixel value in the pbcor image of the joint mosaic produced by tclean
+        self.assertTrue(0.005 > abs((fn2_image_val-jointmos_im_pbcor_val)/jointmos_im_pbcor_val))
+
+        # this is just a consistency check that the center pixel value in the weight image is what it has been
+        self.assertAlmostEqual(fn2_weight_val, 1.3866229)
 
         # the sault image value should be the same as the image value
         # possibly AlmostEqual should be used here eventually, but at the
         # moment they are identical.
-        self.assertEqual(fn_image_val, sw_image_val)
+        self.assertEqual(fn2_image_val, sw_image_val)
 
     def test_flat_sky(self):
         '''test_flat_sky (flat sky type with flat noise input'''
@@ -190,20 +194,21 @@ class test_linearmosaic(unittest.TestCase):
         lm.saultweightimage(outputimage='linmos.fs.sault.image',fracpeak=0.3)
         del lm
         
-        fn_image_val = self.readpix('linmos.fs.image')
-        fn_weight_val = self.readpix('linmos.fs.image.weight')
+        jointmos_im_pbcor_val = self.readpix(self.jointmos_im_pbcor)
+        fs_image_val = self.readpix('linmos.fs.image')
+        fs_weight_val = self.readpix('linmos.fs.image.weight')
         sw_image_val = self.readpix('linmos.fs.sault.image')
 
-        # check against expected values in channel 1 at center pixel
-        self.assertAlmostEqual(fn_image_val, 0.9899020)
-        self.assertAlmostEqual(fn_weight_val, 1.0370520)
-        # check that the ratio of these values is as expected (within 5% of 1.0)
-        self.assertTrue(abs(1.0-fn_image_val/fn_weight_val) < 0.05)
+        # center pixel value in channel 1 is < 0.5% of center pixel value in the pbcor image of the joint mosaic produced by tclean
+        self.assertTrue(0.005 > abs((fs_image_val-jointmos_im_pbcor_val)/jointmos_im_pbcor_val))
+
+        # this is just a consistency check that the center pixel value in the weight image is what it has been
+        self.assertAlmostEqual(fs_weight_val, 1.0370520)
 
         # the sault image value should be the same as the image value
         # possibly AlmostEqual should be used here eventually, but at the
         # moment they are identical.
-        self.assertEqual(fn_image_val, sw_image_val)
+        self.assertEqual(fs_image_val, sw_image_val)
  
     def test_flat_sky_flat_sky_input(self):
         '''test_flat_sky_flat_sky_input (flat sky type with flat sky inputs)'''
@@ -218,52 +223,56 @@ class test_linearmosaic(unittest.TestCase):
         lm.saultweightimage(outputimage='linmos.fs2.sault.image',fracpeak=0.3)
         del lm
         
-        fn_image_val = self.readpix('linmos.fs2.image')
-        fn_weight_val = self.readpix('linmos.fs2.image.weight')
+        jointmos_im_pbcor_val = self.readpix(self.jointmos_im_pbcor)
+        fs2_image_val = self.readpix('linmos.fs2.image')
+        fs2_weight_val = self.readpix('linmos.fs2.image.weight')
         sw_image_val = self.readpix('linmos.fs2.sault.image')
 
-        # check against expected values in channel 1 at center pixel
-        self.assertAlmostEqual(fn_image_val, 0.9899020)
-        self.assertAlmostEqual(fn_weight_val, 1.0370520)
-        # check that the ratio of these values is as expected (within 5% of 1.0)
-        self.assertTrue(abs(1.0-fn_image_val/fn_weight_val) < 0.05)
+        # center pixel value in channel 1 is < 0.5% of center pixel value in the pbcor image of the joint mosaic produced by tclean
+        self.assertTrue(0.005 > abs((fs2_image_val-jointmos_im_pbcor_val)/jointmos_im_pbcor_val))
+
+        # this is just a consistency check that the center pixel value in the weight image is what it has been
+        self.assertAlmostEqual(fs2_weight_val, 1.0370520)
 
         # the sault image value should be the same as the image value
         # possibly AlmostEqual should be used here eventually, but at the
         # moment they are identical.
-        self.assertEqual(fn_image_val, sw_image_val)
+        self.assertEqual(fs2_image_val, sw_image_val)
  
-    def test_flat_sky_existing_image(self):
-        '''test_flat_sky_existing image (flat sky type onto an existing image)'''
+    def test_flat_noise_existing_image(self):
+        '''test_flat_noise_existing image (flat noise type onto an existing image)'''
 
         self.output_list = ['linmos.step.image','linmos.step.pb','linmos.step.sault.image']
 
-        # copy pbcorr image and pb for pnt0 to be used as starting output image and weight
-        shutil.copytree(self.pnt0_im_pbcor, 'linmos.step.image')
+        # copy image and pb for pnt0 to be used as starting output image and weight
+        shutil.copytree(self.pnt0_im, 'linmos.step.image')
         shutil.copytree(self.pnt0_pb, 'linmos.step.pb')
  
         lm = linearmosaic()
         lm.setoutputimage(outputimage='linmos.step.image', outputweight='linmos.step.pb',imageweighttype=1,weighttype=1)
-        lm.setlinmostype(linmostype='optimal') ## flat sky
-        # second image is NOT the pbcor image, pb is used as weight
-        lm.makemosaic(images=[self.pnt1_im], weightimages=[self.pnt1_pb], imageweighttype=0, weighttype=1)
+        lm.setlinmostype(linmostype='pbweight') ## flat sky
+        # Add the second image and weight
+        lm.makemosaic(images=[self.pnt1_im], weightimages=[self.pnt1_pb], imageweighttype=1, weighttype=1)
         lm.saultweightimage(outputimage='linmos.step.sault.image',fracpeak=0.3)
         del lm
         
-        fn_image_val = self.readpix('linmos.step.image')
-        fn_weight_val = self.readpix('linmos.step.pb')
+        jointmos_im_pbcor_val = self.readpix(self.jointmos_im_pbcor)
+        fne_image_val = self.readpix('linmos.step.image')
+        fne_weight_val = self.readpix('linmos.step.pb')
         sw_image_val = self.readpix('linmos.step.sault.image')
 
-        # check against expected values in channel 1 at center pixel
-        self.assertAlmostEqual(fn_image_val, 1.1447070)
-        self.assertAlmostEqual(fn_weight_val, 1.0370520)
+        # center pixel value in channel 1 is < 0.5% of center pixel value in the pbcor image of the joint mosaic produced by tclean
+        self.assertTrue(0.005 > abs((fne_image_val-jointmos_im_pbcor_val)/jointmos_im_pbcor_val))
+
+        # this is just a consistency check that the center pixel value in the weight image is what it has been
+        self.assertAlmostEqual(fne_weight_val, 1.3866229)
 
         # the ratio of these values is > 10% away from 1.0, do not check that ratio
 
         # the sault image value should be the same as the image value
         # possibly AlmostEqual should be used here eventually, but at the
         # moment they are identical.
-        self.assertEqual(fn_image_val, sw_image_val)
+        self.assertEqual(fne_image_val, sw_image_val)
  
 ####    Suite: Required for CASA5     ####
 def suite():
