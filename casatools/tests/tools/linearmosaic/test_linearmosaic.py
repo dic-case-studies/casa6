@@ -91,8 +91,7 @@ class test_linearmosaic(unittest.TestCase):
         # phasecenter of joint image / combined images
         cls.phasecenter ='J2000 19h59m28.5 +40d40m01.5'
 
-        # joint moisaic produced by tclean - image and pbcor
-        cls.jointmos_im = os.path.join(datapath,'jointmos_test_lmtool.image')
+        # the joint mosaic pbcor image produced by tclean
         cls.jointmos_im_pbcor = os.path.join(datapath,'jointmos_test_lmtool.image.pbcor')
 
         # the individual pointing image and pb to be used during combination
