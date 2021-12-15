@@ -9,7 +9,7 @@ from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatasks import sdatmcor
     import casatasks.private.task_sdatmcor as sdatmcor_impl
-    import casatasks.private.sdutil as sdutil
+    from casatasks.private.sdutil import convert_antenna_spec_autocorr, get_antenna_selection_include_autocorr, table_manager
     # default isn't used in casatasks
 
     def default(atask):
@@ -36,7 +36,7 @@ else:
     from taskinit import cbtool as calibrater
     from taskinit import mstool
     from taskinit import qatool as quanta
-    import sdutil
+    from sdutil import convert_antenna_spec_autocorr, get_antenna_selection_include_autocorr, tbmanager as table_manager
 
     def ctsys_resolve(apath):
         dataPath = os.path.join(os.environ['CASAPATH'].split()[0], 'casatestdata/')
@@ -71,7 +71,7 @@ def read_table(name, spw, cols=['STATE_ID', 'DATA']):
     ms = mstool()
     idx = ms.msseltoindex(name, spw=[int(spw)])
     ddid = idx['dd']
-    with sdutil.tbmanager(name) as tb:
+    with table_manager(name) as tb:
         tsel = tb.query('DATA_DESC_ID IN [{}]'.format(','.join([str(i) for i in ddid])))
         try:
             result_dict = dict((k, tsel.getcol(k)) for k in cols if k in tb.colnames())
@@ -84,7 +84,7 @@ def apply_gainfactor(name, spw, factor):
     ms = mstool()
     idx = ms.msseltoindex(name, spw=[int(spw)])
     ddid = idx['dd'][0]
-    with sdutil.tbmanager(name, nomodify=False) as tb:
+    with table_manager(name, nomodify=False) as tb:
         colnames = tb.colnames()
         tsel = tb.query('DATA_DESC_ID=={}'.format(ddid))
         try:
@@ -414,7 +414,7 @@ class test_sdatmcor(unittest.TestCase):
             ('0&&&;1', '0&&&;1&&&')
         ]
         for antenna, expected in test_cases0 + test_cases1:
-            actual = sdutil.convert_antenna_spec_autocorr(antenna)
+            actual = convert_antenna_spec_autocorr(antenna)
             self.assertEqual(actual, expected)
         # specific to get_antenna_selection_include_autocorr
         test_cases2 = [
@@ -422,7 +422,7 @@ class test_sdatmcor(unittest.TestCase):
             ('0&&&;1', '0&&&;1'),
         ]
         for antenna, expected in test_cases0 + test_cases2:
-            actual = sdutil.get_antenna_selection_include_autocorr(self.infile, antenna)
+            actual = get_antenna_selection_include_autocorr(self.infile, antenna)
             self.assertEqual(actual, expected)
 
     def test_get_default_antenna(self):
@@ -447,7 +447,7 @@ class test_sdatmcor(unittest.TestCase):
     def test_default_antenna_with_selection(self):
         """Test default antenna determination with data selection excluding the best one"""
         # check if the "best" antenna is not in the MAIN table
-        with sdutil.tbmanager(os.path.join(self.infile, 'ANTENNA'), nomodify=False) as tb:
+        with table_manager(os.path.join(self.infile, 'ANTENNA'), nomodify=False) as tb:
             # replace antenna name to simulate the data selection excluding PM02
             # PM01 <-> PM02
             tb.putcell('NAME', 0, 'PM02')
@@ -458,7 +458,7 @@ class test_sdatmcor(unittest.TestCase):
     def test_default_antenna_with_no_flag_commands(self):
         """Test default antenna determination for empty FLAG_CMD table"""
         # check if the task can handle empty FLAG_CMD table
-        with sdutil.tbmanager(os.path.join(self.infile, 'FLAG_CMD'), nomodify=False) as tb:
+        with table_manager(os.path.join(self.infile, 'FLAG_CMD'), nomodify=False) as tb:
             for i in range(tb.nrows()):
                 tb.putcell('REASON', i, 'NO_REASON')
             tb.flush()

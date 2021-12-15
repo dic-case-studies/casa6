@@ -429,8 +429,9 @@ def tclean(
                 t0=time.time();
                 isit = imager.hasConverged()
                 imager.updateMask()
-                if((type(usemask)==str) and ('auto' in usemask)):  
-                    isit = imager.hasConverged()
+                #if((type(usemask)==str) and ('auto' in usemask)):  
+                #    isit = imager.hasConverged()
+                isit = imager.hasConverged()
                 t1=time.time();
                 casalog.post("***Time to update mask: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
                 while ( not isit ):
@@ -454,6 +455,14 @@ def tclean(
                 ## Get summary from iterbot
                 if type(interactive) != bool:
                     retrec=imager.getSummary();
+                
+                if savemodel!='none' and (interactive==True or usemask=='auto-multithresh' or nsigma>0.0):
+                    paramList.resetParameters()
+                    if parallel and specmode=='mfs':
+                        # For parallel mfs, also needs to reset the parameters for each node
+                        imager.resetSaveModelParams(paramList)
+                    imager.initializeImagers()
+                    imager.predictModel()
 
             ## Restore images.
             if restoration==True:  

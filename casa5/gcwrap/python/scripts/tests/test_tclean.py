@@ -205,12 +205,16 @@ class testref_base(unittest.TestCase):
 
 ##Task level tests : one field, 2chan.
 class test_onefield(testref_base):
-     
+
      def test_onefield_defaults(self):
           """ [onefield] Test_Onefield_defaults : Defaults """
           self.prepData('refim_twochan.ms')
-          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',interactive=0,parallel=self.parallel)
-          report=self.th.checkall(imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'], imgval=[(self.img+'.psf', 1.0, [50,50,0,0])])
+          # use a more tricky imagename to exercise some special characters (see CAS-13464)
+          tricky_imagename = self.img + '_J2253+1608_ra_7h54m8_dec_-16:24:25.1'
+          ret = tclean(vis=self.msfile, imagename=tricky_imagename, imsize=100, cell='8.0arcsec',
+                       interactive=0, parallel=self.parallel)
+          exist_list = [tricky_imagename + ext for ext in ['.psf', '.residual', '.image', '.model', '.pb', '.sumwt']]
+          report = self.th.checkall(imgexist=exist_list, imgval=[(tricky_imagename+'.psf', 1.0, [50,50,0,0])])
           self.assertTrue(self.check_final(pstr=report))
 
      def test_onefield_clark(self):
@@ -225,8 +229,10 @@ class test_onefield(testref_base):
      def test_onefield_hogbom(self):
           """ [onefield] Test_Onefield_hogbom : mfs with hogbom minor cycle """
           self.prepData('refim_twochan.ms')
-          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,parallel=self.parallel)#,phasecenter='J2000 19h59m57.5s +40d49m00.077s')
-          report=self.th.checkall(ret=ret, peakres=0.35, modflux=0.77, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[50,50,0,0])]  , tfmask=[(self.img+'.image',['mask0']), (self.img+'.pb',['mask0'])] )
+          tricky_imagename = self.img + '_uid___A001_X1234a_X56cb.s19_0.J2253+1608_bp.more-dash.virtspw19.mfs.I.iter0.hoghbom'
+          ret = tclean(vis=self.msfile,imagename=tricky_imagename,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,parallel=self.parallel)#,phasecenter='J2000 19h59m57.5s +40d49m00.077s')
+          exist_list = [tricky_imagename + ext for ext in ['.psf', '.residual', '.image', '.model', '.pb', '.sumwt']]
+          report = self.th.checkall(ret=ret, peakres=0.35, modflux=0.77, iterdone=10, imgexist=exist_list, imgval=[(tricky_imagename+'.psf',1.0,[50,50,0,0])], tfmask=[(tricky_imagename+'.image',['mask0']), (tricky_imagename+'.pb',['mask0'])] )
           self.assertTrue(self.check_final(pstr=report))
 
      def test_onefield_mem(self):
@@ -832,24 +838,13 @@ class test_iterbot(testref_base):
 
           self.assertTrue(self.check_final(report))
 
-     def test_iterbot_cube_4(self): 
-          """ [iterbot] Test_Iterbot_cube_4 : Large niter, and low threshold - catch if diverges (verification of CAS-8584 fix) """
-          self.prepData('refim_point_withline.ms')
-          retpar = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1000000,threshold='0.0000001Jy',gain=0.5,interactive=0,parallel=self.parallel)
-          ret={}
-          if self.parallel:
-            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone'])
-          else:
-            ret=retpar 
-
-
-          report=self.th.checkall(ret=ret,iterdone=1749,nmajordone=8,imgexist=[self.img+'.psf', self.img+'.residual'])
-
      def test_iterbot_divergence(self): 
           """ [iterbot] Test_Iterbot_divergence : Use negative loop gain to make it diverge (verification of CAS-9244 fix) """
           self.prepData('refim_point.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec', niter=50,cycleniter=5, gain=-0.2,interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret,iterdone=10,nmajordone=3,imgexist=[self.img+'.psf', self.img+'.image'])
+
+          self.assertTrue(self.check_final(report))
 
      def test_iterbot_mfs_deconvolvers(self):
           """ [iterbot] : test_iterbot_deconvolvers : Do all minor cycle algorithms respond in the same way to iteration controls ? Now they do. """
@@ -893,11 +888,13 @@ class test_iterbot(testref_base):
            
           ret={}
           if self.parallel:
-            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone'])
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'stopcode'])
           else:
             ret=retpar 
 
-          report=self.th.checkall(ret=ret,iterdone=158,nmajordone=4,imgexist=[self.img+'.psf', self.img+'.residual'])
+          report=self.th.checkall(ret=ret,iterdone=151,nmajordone=4,stopcode=2,imgexist=[self.img+'.psf', self.img+'.residual'])
+
+          self.assertTrue(self.check_final(report))
 
 
      def test_iterbot_cube_nsigma(self): 
@@ -911,6 +908,8 @@ class test_iterbot(testref_base):
             ret=retpar 
 
           report=self.th.checkall(ret=ret,iterdone=407,nmajordone=11,stopcode=8,imgexist=[self.img+'.psf', self.img+'.residual'])
+
+          self.assertTrue(self.check_final(report))
 
 
 ##############################################
@@ -2465,7 +2464,7 @@ class test_mask(testref_base):
           self.assertTrue(self.check_final(report))
 
      def test_mask_autobox_multithresh_newnoise(self):
-          """ [mask] test_mask__autobox_multithresh :  multi-threshold Autobox invoking the new noise calc."""
+          """ [mask] test_mask__autobox_multithresh_newnoise :  multi-threshold Autobox invoking the new noise calc."""
           self.prepData('refim_twochan.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,usemask='auto-multithresh', fastnoise=False)
           report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',0.0,[50,85,0,0])])
@@ -2519,12 +2518,18 @@ class test_mask(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='mfs',interpolation='nearest',usemask="auto-multithresh", verbose=True, parallel=self.parallel)
           report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[40,60,0,0]),(self.img+'.mask',0.0,[65,50,0,0]), (self.img+'.mask', 1.0,[40,60,3,0])])
           self.assertTrue(self.check_final(report))
-      
+     
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "MPI and serial results for the .mask images vary widely. To be fixed in CAS-13582.")
      def test_mask_autobox_multithresh_cube_IQUV(self):
           """ [mask] test_mask__autobox_multithresh_cube_IQUV :  multi-threshold Autobox (minbeamfrac=0.05) with cube full polarizaiton (IQUV) imaging """
           self.prepData('refim_point_linXY.ms')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='cube',interpolation='nearest',usemask="auto-multithresh", minbeamfrac=0.05,  verbose=True, parallel=self.parallel)
+          # test values that pass for serial runs:
           report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[35,75,0,0]),(self.img+'.mask',0.0,[32,80,1,1]), (self.img+'.mask',1.0,[35,60,1,1]), (self.img+'.mask',1.0,[60,30,3,0])])
+          # test values that pass for mpi runs:
+          #report=self.th.checkall(imgexist=[self.img+'.mask'], imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[35,75,0,0]),(self.img+'.mask',0.0,[36,74,1,1]), (self.img+'.mask',1.0,[41,67,1,1]), (self.img+'.mask',1.0,[60,30,3,0])])
+
+          self.assertTrue(self.check_final(report))
 
 #     def test_mask_outregion(self):
 #          """ [mask] test_mask_outregion : Input mask has region that goes outside the image """
@@ -2585,7 +2590,9 @@ class test_mask(testref_base):
           niter=10,interactive=0,interpolation='nearest', usemask='user',
           mask=self.maskname+"_dropdeg")
           report=self.th.checkall(ret=ret, imgexist=[self.img+'.mask'],
-          imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[50,50,0,1]),(self.img+'.mask',1.0,[50,50,0,2]), (self.img+'.mask',0.0,[65,65,0,1])])
+                                  imgval=[(self.img+'.mask',1.0,[50,50,0,0]),(self.img+'.mask',1.0,[50,50,0,1]),(self.img+'.mask',1.0,[50,50,0,2]), (self.img+'.mask',0.0,[65,65,0,1])])
+
+          self.assertTrue(self.check_final(report))
 
         
      def test_mask_expand_contstokesImask_to_IQUV(self):
@@ -3257,6 +3264,172 @@ class test_modelvis(testref_base):
           ## cannot check anything here....  just that it runs without error
 
           
+     def test_modelvis_12(self):
+          """ [modelpredict] Test_modelvis_12 : (CAS-12618) mfs with automask and save model column (single tclean call, internally a separate predit model step)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='modelcolumn',usemask='auto-multithresh', parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_13(self):
+          """ [modelpredict] Test_modelvis_13 : (CAS-12618) mfs with automask and save virtual model (saving model via a separate predict model step)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='virtual',usemask='auto-multithresh', parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_14(self):
+          """ [modelpredict] Test_modelvis_14 : (cas-12618) mfs with nsigma and save model column (saving model via a separate predict model step)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='modelcolumn',nsigma=1.0, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_15(self):
+          """ [modelpredict] Test_modelvis_15 : (CAS-12618) mfs with nsigma and save model column (saving model via a separate predict model step)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='virtual',nsigma=1.0, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_16(self):
+          """ [modelpredict] Test_modelvis_16 : (CAS-12618) cube with  and save  model column for auto-multithresh"""
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       usemask='auto-multithresh', savemodel='modelcolumn',parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_17(self):
+          """ [modelpredict] Test_modelvis_17 : (CAS-12618) cube with  and save virtual model for auto-multithreseh"""
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       usemask='auto-multithresh', savemodel='virtual',parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_18(self):
+          """ [modelpredict] Test_modelvis_18 : (CAS-12618) cube with  and save model column for nsgima >0.0"""
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       nsigma=1.0, savemodel='modelcolumn',parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_19(self):
+          """ [modelpredict] Test_modelvis_19 : (CAS-12618) cube with  and save virtual model for nsima >0.0"""
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       nsigma=1.0, savemodel='virtual',parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_20(self):
+          """ [modelpredict] Test_modelvis_20 : (CAS-13615) mfs with automask and save model column (saving model via a separate niter=0 tclean call)"""
+          # should give the identical result as test_modelvis_12
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',usemask='auto-multithresh', parallel=self.parallel)
+          # leaving usemask='auto-multithresh' intentionally to make sure the bug is fixed
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='modelcolumn',usemask='auto-multithresh', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_21(self):
+          """ [modelpredict] Test_modelvis_21 : (CAS-13615) mfs with automask and save virtual model (saving model via a separate niter=0 tclean call)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',usemask='auto-multithresh', parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='virtual',usemask='auto-multithresh', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_22(self):
+          """ [modelpredict] Test_modelvis_22 : (cas-13615) mfs with nsigma and save model column (saving model via a separate niter=0 tclean call)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',nsigma=1.0, parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='modelcolumn',nsigma=1.0, restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_23(self):
+          """ [modelpredict] Test_modelvis_23 : (CAS-13615) mfs with nsigma and save model column (saving model via a separate niterpredict model step)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',nsigma=1.0, parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='virtual',nsigma=1.0, restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_24(self):
+          """ [modelpredict] Test_modelvis_24 : (CAS-13615) cube with  and save  model column for auto-multithresh (in two steps)"""
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       usemask='auto-multithresh', savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       usemask='auto-multithresh', savemodel='modelcolumn', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_25(self):
+          """ [modelpredict] Test_modelvis_25: (CAS-13615) cube with and save virtual model for auto-multithreseh (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       usemask='auto-multithresh', savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       usemask='auto-multithresh', savemodel='virtual', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_26(self):
+          """ [modelpredict] Test_modelvis_26 : (CAS-13615) cube with and save model column for nsgima >0.0 (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       nsigma=1.0, savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       nsigma=1.0, savemodel='modelcolumn',restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_27(self):
+          """ [modelpredict] Test_modelvis_27: (CAS-13615) cube with and save virtual model for nsima >0.0 (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       nsigma=1.0, savemodel='none',parallel=self.parallel)
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       nsigma=1.0, savemodel='virtual', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
 class test_startmodel(testref_base):
      def test_startmodel_regrid_mfs(self):
           """ [modelpredict] Test_startmodel_regrid_mfs : Regrid input model onto new image grid : mfs (ra/dec) """
@@ -4157,7 +4330,9 @@ class test_mosaic_mtmfs(testref_base):
           phasecenter ='J2000 19h59m28.5 +40d40m01.5' # pointing center of field0
           field='0,1'
           tclean(vis=self.msfile, imagename=self.img,niter=5,specmode='mfs',spw='*',imsize=1024, phasecenter=phasecenter,cell='10.0arcsec',gridder='mosaic',field=field, conjbeams=False, wbawp=True, psterm=False,pblimit=0.1,deconvolver='mtmfs',nterms=2,reffreq='1.5GHz',pbcor=False,parallel=self.parallel,mosweight=False,weighting='briggs')
-          report1=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.9794,[512,596,0,0]),(self.img+'.pb.tt0', 0.9817,[512,596,0,0]),(self.img+'.alpha', -0.797,[512,596,0,0])])
+          report=self.th.checkall(imgval=[(self.img+'.image.tt0', 0.9794,[512,596,0,0]),(self.img+'.pb.tt0', 0.9817,[512,596,0,0]),(self.img+'.alpha', -0.797,[512,596,0,0])])
+
+          self.assertTrue(self.check_final(report))
           
 ###########################################################
 ###########################################################

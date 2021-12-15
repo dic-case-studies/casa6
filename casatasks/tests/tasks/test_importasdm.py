@@ -1,8 +1,7 @@
 #############################################################################
-# $Id:$
 # Test Name:                                                                #
-#    Regression Test Script for ASDM version 1.2, 1.3 import to MS          #
-#    and the "inverse filler" task exportasdm 
+#    Regression Test Script for ASDM import to MS                           #
+#    and the "inverse filler" task exportasdm                               #
 #                                                                           #
 # Rationale for Inclusion:                                                  #
 #    The conversion of ASDM to MS and back needs to be verified.            #
@@ -296,10 +295,10 @@ class asdm_import1(test_base):
             shutil.rmtree(thisdir,ignore_errors=True)
                 
     def test1(self):
-        '''Asdm-import: Test good v1.2 input with filler v3 and inverse filler v3 '''
+        '''Asdm-import: Test good v1.2 input with filler and inverse filler'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
 
-        self.res = importasdm(myasdm_dataset_name, useversion='v3')
+        self.res = importasdm(myasdm_dataset_name)
         self.assertEqual(self.res, None)
         print( "%s: Success! Now checking output ..." % myname)
         mscomponents = set(["table.dat",
@@ -426,15 +425,14 @@ class asdm_import1(test_base):
         os.system('cp -R ' + myvis + ' myinput.ms')
         default('exportasdm')
         try:
-            print("\n>>>> Test of exportasdm v3: input MS is %s" % myvis)
+            print("\n>>>> Test of exportasdm: input MS is %s" % myvis)
             print("(a simulated input MS with pointing table)")
             try:
                 exportasdm(
                     vis = 'myinput.ms',
                     asdm = 'exportasdm-output.asdm',
                     archiveid="S002",
-                    apcorrected=False,
-                    useversion='v3'
+                    apcorrected=False
                 )
             except Exception as exc:
                 self.fail('Unexpected exception: {}'.format(exc))
@@ -446,8 +444,8 @@ class asdm_import1(test_base):
             raise
             
         try:
-            print("Reimporting the created ASDM (v3)....")
-            importasdm(asdm=asdmname, vis=reimp_msname, wvr_corrected_data='no', useversion='v3')
+            print("Reimporting the created ASDM ....")
+            importasdm(asdm=asdmname, vis=reimp_msname, wvr_corrected_data='no')
             print("Testing existence of reimported MS ....")
             if(not os.path.exists(reimp_msname)):
                 print("MS %s doesn't exist." % reimp_msname)
@@ -482,10 +480,10 @@ class asdm_import2(test_base):
             shutil.rmtree(thisdir,ignore_errors=True)
                 
     def test_import2(self):
-        '''Asdm-import: Test good v1.2 input with filler v3 and inverse filler v3 '''
+        '''Asdm-import: Test good v1.2 input with filler and inverse filler '''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
 
-        self.res = importasdm(myasdm_dataset_name, useversion='v3')
+        self.res = importasdm(myasdm_dataset_name)
         self.assertEqual(self.res, None)
         print("%s: Success! Now checking output ..." % myname)
         mscomponents = set(["table.dat",
@@ -612,15 +610,14 @@ class asdm_import2(test_base):
         os.system('cp -R ' + myvis + ' myinput.ms')
         default('exportasdm')
         try:
-            print("\n>>>> Test of exportasdm v3: input MS  is %s" % myvis)
+            print("\n>>>> Test of exportasdm: input MS  is %s" % myvis)
             print("(a simulated input MS with pointing table)")
             try:
                 exportasdm(
                     vis = 'myinput.ms',
                     asdm = 'exportasdm-output.asdm',
                     archiveid="S002",
-                    apcorrected=False,
-                    useversion='v3'
+                    apcorrected=False
                 )
             except Exception as exc:
                 self.fail('Unexpected exception: {}'.format(exc))
@@ -632,8 +629,8 @@ class asdm_import2(test_base):
             raise
             
         try:
-            print("Reimporting the created ASDM (v3)....")
-            importasdm(asdm=asdmname, vis=reimp_msname, wvr_corrected_data='no', useversion='v3')
+            print("Reimporting the created ASDM ....")
+            importasdm(asdm=asdmname, vis=reimp_msname, wvr_corrected_data='no')
             print("Testing existence of reimported MS ....")
             if(not os.path.exists(reimp_msname)):
                 print("MS %s doesn't exist." % reimp_msname)
