@@ -103,6 +103,7 @@ nep = os.path.join(datapath,'nep2-shrunk.ms')
 msfile1 = 'ngc5921_ut.ms'
 msfile2 = 'uid___X02_X3d737_X1_01_small.ms'
 msfile3 = os.path.join(datapath, 'CAS-6733.ms')
+msfile4 = os.path.join(datapath, 'lofar_small_dysco.ms')
 
 
 outvis = 'genmms.mms'
@@ -1026,6 +1027,15 @@ class test_listobs(listobs_test_base):
     def test_listunflTimeAvgMMS(self):
         '''Listobs test: Check that the list unflagged column shows up in a time-averaged MMS'''
         self.unfcheck(timeavg_ms)
+
+    # Test Dysco storage manager
+
+    def test_lofarDysco(self):
+        '''Verify that we can read a compressed MS that uses the Dysco storage manager'''
+        try:
+            listobs(vis=msfile4)
+        except Exception:
+            self.fail()
 
     # Start of merged cases from test_listobs
 
