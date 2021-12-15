@@ -23,6 +23,7 @@ else:
     from taskinit import casalog, gentools
     ms, sdms, tb, msmd = gentools(['ms', 'sdms', 'tb', 'msmd'])
 
+
 @sdutil.sdtask_decorator
 def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                spw=None, timerange=None, scan=None, pol=None, intent=None,
@@ -31,9 +32,9 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                blformat=None, bloutput=None, bltable=None, blfunc=None,
                order=None, npiece=None, applyfft=None, fftmethod=None,
                fftthresh=None, addwn=None, rejwn=None, clipthresh=None,
-               clipniter=None, blparam=None, verbose=None, 
+               clipniter=None, blparam=None, verbose=None,
                updateweight=None, sigmavalue=None,
-               showprogress=None, minnrow=None, 
+               showprogress=None, minnrow=None,
                outfile=None, overwrite=None):
 
     try:
@@ -48,21 +49,22 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         if not os.path.exists(infile):
             raise Exception("infile='" + str(infile) + "' does not exist.")
         if (outfile == '') or not isinstance(outfile, str):
-            #casalog.post("type=%s, value=%s" % (type(outfile), str(outfile)))
-            #raise ValueError, "outfile name is empty."
             outfile = infile.rstrip('/') + '_bs'
             casalog.post("outfile is empty or non-string. set to '" + outfile + "'")
         if os.path.exists(outfile) and not overwrite:
             raise Exception("outfile='%s' exists, and cannot overwrite it." % (outfile))
         if (maskmode == 'interact'):
             raise ValueError("maskmode='%s' is not supported yet" % maskmode)
+        if (is_all_blank(blformat) and not dosubtract):
+            raise ValueError("blformat must be specified when dosubtract is False")
         if (blfunc == 'variable' and not os.path.exists(blparam)):
             raise ValueError("input file '%s' does not exists" % blparam)
         blparam_file = infile + '_blparam.txt'
         if os.path.exists(blparam_file):
             remove_data(blparam_file)  # CAS-11781
-        
-        if (spw == ''): spw = '*'
+
+        if (spw == ''):
+            spw = '*'
 
         if (blmode == 'apply'):
             if not os.path.exists(bltable):
@@ -73,12 +75,12 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             if overwrite and os.path.exists(outfile) and (infile != outfile):
                 os.system('rm -rf %s' % outfile)
 
-            selection = ms.msseltoindex(vis=infile, spw=spw, field=field, 
-                                        baseline=antenna, time=timerange, 
+            selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
+                                        baseline=antenna, time=timerange,
                                         scan=scan)
             sdms.open(infile)
-            sdms.set_selection(spw=sdutil.get_spwids(selection), field=field, 
-                               antenna=antenna, timerange=timerange, 
+            sdms.set_selection(spw=sdutil.get_spwids(selection), field=field,
+                               antenna=antenna, timerange=timerange,
                                scan=scan, polarization=pol, intent=intent,
                                reindex=reindex)
             sdms.apply_baseline_table(bltable=bltable,
@@ -88,9 +90,9 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                                       sigmavalue=sigmavalue,
                                       outfile=outfile)
             sdms.close()
-            
+
             restore_sorted_table_keyword(infile, sorttab_info)
-            
+
         elif (blmode == 'fit'):
 
             if(blfunc == 'sinusoid'):
@@ -103,15 +105,15 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             output_bloutput_text_header(blformat, bloutput,
                                         blfunc, maskmode,
                                         infile, outfile)
-            
+
             if (blfunc == 'variable'):
                 sorttab_info = remove_sorted_table_keyword(infile)
-        
+
             if overwrite and os.path.exists(outfile) and (infile != outfile):
                 os.system('rm -rf %s' % outfile)
 
-            selection = ms.msseltoindex(vis=infile, spw=spw, field=field, 
-                                        baseline=antenna, time=timerange, 
+            selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
+                                        baseline=antenna, time=timerange,
                                         scan=scan)
             sdms.open(infile)
             sdms.set_selection(spw=sdutil.get_spwids(selection),
@@ -126,7 +128,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                                                   dosubtract=dosubtract,
                                                   spw=spw,
                                                   pol=pol,
-                                                  linefinding=(maskmode=='auto'),
+                                                  linefinding=(maskmode == 'auto'),
                                                   threshold=thresh,
                                                   avg_limit=avg_limit,
                                                   minwidth=minwidth,
@@ -146,7 +148,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                                                   sigmavalue=sigmavalue)
             func(**params)
             sdms.close()
-            
+
             if (blfunc == 'variable'):
                 restore_sorted_table_keyword(infile, sorttab_info)
 
@@ -161,22 +163,26 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                     mytb.removecols(' '.join(cols_remove))
 
         # Write history to outfile
-        param_names = sdbaseline.__code__.co_varnames[:sdbaseline.__code__.co_argcount]
-        if is_python3:
-            vars = locals()
-            param_vals = [vars[p] for p in param_names]
-        else:
-            param_vals = [eval(p) for p in param_names]
-        write_history(ms, outfile, 'sdbaseline', param_names,
-                      param_vals, casalog)
+        if dosubtract:
+            param_names = sdbaseline.__code__.co_varnames[:sdbaseline.__code__.co_argcount]
+            if is_python3:
+                vars = locals()
+                param_vals = [vars[p] for p in param_names]
+            else:
+                param_vals = [eval(p) for p in param_names]
+            write_history(ms, outfile, 'sdbaseline', param_names,
+                          param_vals, casalog)
 
+        # Remove (skeleton) outfile
+        if not dosubtract and (infile != outfile):
+            remove_data(outfile)
 
     except Exception:
         raise
 
 
 blformat_item = ['csv', 'text', 'table']
-blformat_ext  = ['csv', 'txt',  'bltable']
+blformat_ext = ['csv', 'txt',  'bltable']
 
 
 def remove_data(filename):
@@ -189,13 +195,29 @@ def remove_data(filename):
             # could be a symlink
             os.remove(filename)
 
+
+def is_all_blank(blformat):
+    res = True
+
+    if blformat is not None:
+        if isinstance(blformat, str) and len(blformat) > 0:
+            res = False
+        elif isinstance(blformat, list) and len(blformat) > 0:
+            for i in range(len(blformat)):
+                if len(blformat[i]) > 0:
+                    res = False
+                    break
+
+    return res
+
+
 def check_fftthresh(fftthresh):
     has_valid_type = isinstance(fftthresh, float) or isinstance(fftthresh, int) or isinstance(fftthresh, str)
     if not has_valid_type:
         raise ValueError('fftthresh must be float or integer or string.')
 
     not_positive_mesg = 'threshold given to fftthresh must be positive.'
-    
+
     if isinstance(fftthresh, str):
         try:
             val_not_positive = False
@@ -211,7 +233,7 @@ def check_fftthresh(fftthresh):
                 val_sigma = float(fftthresh)
                 if (val_sigma <= 0.0):
                     val_not_positive = True
-            
+
             if val_not_positive:
                 raise ValueError(not_positive_mesg)
         except Exception as e:
@@ -224,14 +246,16 @@ def check_fftthresh(fftthresh):
         if (fftthresh <= 0.0):
             raise ValueError(not_positive_mesg)
 
+
 def prepare_for_blformat_bloutput(infile, blformat, bloutput, overwrite):
     # force to string list
     blformat = force_to_string_list(blformat, 'blformat')
     bloutput = force_to_string_list(bloutput, 'bloutput')
 
-    # the default bloutput value '' is expanded to a list 
+    # the default bloutput value '' is expanded to a list
     # with length of blformat, and with '' throughout.
-    if (bloutput == ['']): bloutput *= len(blformat)
+    if (bloutput == ['']):
+        bloutput *= len(blformat)
 
     # check length
     if (len(blformat) != len(bloutput)):
@@ -249,9 +273,11 @@ def prepare_for_blformat_bloutput(infile, blformat, bloutput, overwrite):
 
     return blformat, bloutput
 
+
 def force_to_string_list(s, name):
     mesg = '%s must be string or list of string.' % name
-    if isinstance(s, str): s = [s]
+    if isinstance(s, str):
+        s = [s]
     elif isinstance(s, list):
         for i in range(len(s)):
             if not isinstance(s[i], str):
@@ -260,16 +286,17 @@ def force_to_string_list(s, name):
         raise ValueError(mesg)
     return s
 
+
 def has_duplicate_nonnull_element(in_list):
-    #return True if in_list has duplicated elements other than ''
+    # return True if in_list has duplicated elements other than ''
     duplicates = [key for key, val in Counter(in_list).items() if val > 1]
     len_duplicates = len(duplicates)
-    
+
     if (len_duplicates >= 2):
         return True
     elif (len_duplicates == 1):
         return (duplicates[0] != '')
-    else: #len_duplicates == 0
+    else:  # len_duplicates == 0
         return False
 
 
@@ -281,9 +308,10 @@ def has_duplicate_nonnull_element_ex(lst, base):
     #     is not ''.
     # (2) check if the list made in (1) has duplicated
     #     elements other than ''.
-    
+
     return has_duplicate_nonnull_element(
         [lst[i] for i in range(len(lst)) if base[i] != ''])
+
 
 def normalise_bloutput(infile, blformat, bloutput, overwrite):
     normalised_bloutput = []
@@ -291,6 +319,7 @@ def normalise_bloutput(infile, blformat, bloutput, overwrite):
         normalised_bloutput.append(
             get_normalised_name(infile, blformat, bloutput, item[0], item[1], overwrite))
     return normalised_bloutput
+
 
 def get_normalised_name(infile, blformat, bloutput, name, ext, overwrite):
     fname = ''
@@ -306,10 +335,12 @@ def get_normalised_name(infile, blformat, bloutput, name, ext, overwrite):
             raise Exception(fname + ' exists.')
     return fname
 
+
 def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, outfile):
     fname = bloutput[blformat_item.index('text')]
-    if (fname == ''): return
-    
+    if (fname == ''):
+        return
+
     f = open(fname, 'w')
 
     blf = blfunc.lower()
@@ -319,20 +350,19 @@ def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, ou
         ftitles = ['Fit order']
     elif (blf == 'cspline'):
         ftitles = ['nPiece']
-    elif (blf=='sinusoid'):
+    elif (blf == 'sinusoid'):
         ftitles = ['applyFFT', 'fftMethod', 'fftThresh', 'addWaveN', 'rejWaveN']
-    elif (blf=='variable'):
+    elif (blf == 'variable'):
         ftitles = []
     else:
         raise ValueError("Unsupported blfunc = %s" % blfunc)
-        
 
     mm = maskmode.lower()
     if (mm == 'auto'):
         mtitles = ['Threshold', 'avg_limit', 'Edge']
     elif (mm == 'list'):
         mtitles = []
-    else: # interact
+    else:  # interact
         mtitles = []
 
     ctitles = ['clipThresh', 'clipNIter']
@@ -342,7 +372,7 @@ def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, ou
             ['Mask mode', maskmode]]
 
     separator = '#' * 60 + '\n'
-    
+
     f.write(separator)
     for i in range(len(info)):
         f.write('%12s: %s\n' % tuple(info[i]))
@@ -350,19 +380,20 @@ def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, ou
     f.write('\n')
     f.close()
 
+
 def prepare_for_baselining(**keywords):
     params = {}
     funcname = 'subtract_baseline'
 
     blfunc = keywords['blfunc']
-    keys = ['datacolumn', 'outfile', 'bloutput', 'dosubtract', 'spw', 
+    keys = ['datacolumn', 'outfile', 'bloutput', 'dosubtract', 'spw',
             'updateweight', 'sigmavalue']
     if blfunc in ['poly', 'chebyshev']:
         keys += ['blfunc', 'order']
     elif blfunc == 'cspline':
         keys += ['npiece']
         funcname += ('_' + blfunc)
-    elif blfunc =='sinusoid':
+    elif blfunc == 'sinusoid':
         keys += ['applyfft', 'fftmethod', 'fftthresh', 'addwn', 'rejwn']
         funcname += ('_' + blfunc)
     elif blfunc == 'variable':
@@ -370,16 +401,17 @@ def prepare_for_baselining(**keywords):
         funcname += ('_' + blfunc)
     else:
         raise ValueError("Unsupported blfunc = %s" % blfunc)
-    if blfunc!= 'variable':
+    if blfunc != 'variable':
         keys += ['clip_threshold_sigma', 'num_fitting_max']
         keys += ['linefinding', 'threshold', 'avg_limit', 'minwidth', 'edge']
-    for key in keys: params[key] = keywords[key]
+    for key in keys:
+        params[key] = keywords[key]
 
     baseline_func = getattr(sdms, funcname)
 
     return params, baseline_func
-    
-    
+
+
 def remove_sorted_table_keyword(infile):
     res = {'is_sorttab': False, 'sorttab_keywd': '', 'sorttab_name': ''}
     with sdutil.table_manager(infile, nomodify=False) as tb:
@@ -394,6 +426,7 @@ def remove_sorted_table_keyword(infile):
             raise
 
     return res
+
 
 def restore_sorted_table_keyword(infile, sorttab_info):
     if sorttab_info['is_sorttab'] and (sorttab_info['sorttab_name'] != ''):

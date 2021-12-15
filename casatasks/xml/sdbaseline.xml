@@ -433,10 +433,9 @@ blmode -- baselining mode.
                  spectrum. 
     &gt;&gt;&gt; blmode expandable parameters
         dosubtract -- execute baseline subtraction in addition to fitting.
-                      Note that dosubtract=False will be ignored if 
-                      bloutput is given, that is, baseline subtraction 
-                      will be always executed for the input MS in case 
-                      bloutput is not specified.
+                      Note that MS is not output when dosubtract=False.
+                      Also, sdbaseline will abort when dosubtract=False
+                      and blformat=''.
                 options: (bool) True, False
                 default: True
         blformat -- format(s) of file(s) in which best-fit parameters are 
