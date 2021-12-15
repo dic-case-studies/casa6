@@ -17,7 +17,6 @@ from casatasks.private.task_imsmooth import imsmooth
 from casatasks.private.task_sdsmooth import sdsmooth
 from casatasks.private.task_sdbaseline import sdbaseline
 
-_ia = image()
 
 DATACOLUMN = 'DATA'
 OVERWRITE = True
@@ -210,8 +209,6 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
     __validate_imagename(imagename)
     linefile = __prepare_linefile(linefile, imagename)
 
-    prepare()
-
     with CasaImageStack(Unerasable(imagename)) as image_stack,\
          MeasurementSetStack() as ms_stack:
         input_image_shape = get_image_shape(image_stack)
@@ -236,7 +233,7 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
         if output_cont:
             get_continuum_image(image_stack)
 
-    __write_image_history()
+    do_post_processing(linefile)
 
 
 def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None, kimage: str=None, scale: float=None,
@@ -332,6 +329,10 @@ def get_continuum_image(image_stack: ProcessingFileStack=None):
     __image_subtraction(output_image, subtract_image)
 
 
+def do_post_processing(outfile):
+    __write_image_history(outfile)
+
+
 def __image_subtraction(operand_a: str=None, operand_b: str=None):
     """image chunk subtraction"""
     image_array = None
@@ -390,10 +391,6 @@ def __confirm_sdsmooth_execution(spkernel: str=None):
     if valid:
         return True
     return False
-
-
-def prepare():
-    _ia.dohistory(False)
 
 
 class ImsmoothParams(Validable):
@@ -923,9 +920,13 @@ def __copy_image_file(infile: str=None, outfile: str=None):
     if not os.path.exists(infile):
         raise Exception(f'Image files not found, infile:{infile}')
 
-    ok = _ia.fromimage(infile=infile, outfile=outfile)
-    if not ok:
-        raise Exception(f'Some error occured, infile:{infile}, outfile:{outfile}')
+    ia = image()
+    try:
+        ok = ia.fromimage(infile=infile, outfile=outfile)
+        if not ok:
+            raise Exception(f'Some error occured, infile:{infile}, outfile:{outfile}')
+    finally:
+        ia.done()
 
 def __make_image_array(input_image_shape: ImageShape=None, infile: str=None, datacolumn: str=None) -> np.array:
     nx, ny = input_image_shape.dir_shape
@@ -946,14 +947,15 @@ def __output_image(outfile: str=None, image_array: np.array=None):
         ia.putchunk(pixels=image_array, locking=True)
 
 
-def __write_image_history():
-    try:
-        param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
-        vars = locals()
-        param_vals = [vars[p] for p in param_names]
-        write_image_history(_ia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
-    except Exception as instance:
-        casalog.post(f"*** Error '{instance}' updating HISTORY", 'WARN')
+def __write_image_history(outfile):
+    with tool_manager(outfile, image) as outia:
+        try:
+            param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
+            vars = locals()
+            param_vals = [vars[p] for p in param_names]
+            write_image_history(outia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
+        except Exception as instance:
+            casalog.post(f"*** Error '{instance}' updating HISTORY", 'WARN')
 
 
 class EmptyMSBaseInformation:
