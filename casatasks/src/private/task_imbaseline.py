@@ -1,22 +1,22 @@
 # image-based line finding and baseline subtraction.
 
-from abc import abstractmethod
 import os
-import sys
 import shutil
-from typing import Any, Dict, List, Tuple, Union
-import numpy as np
-from numpy import array, uint64
+import sys
 import uuid
+from abc import abstractmethod
+from typing import Any, Dict, List, Tuple, Union
 
-from casatools import image, table
+import numpy as np
 from casatasks import casalog
-from casatasks.private.sdutil import table_manager, tool_manager, sdtask_decorator
 from casatasks.private.ialib import write_image_history
+from casatasks.private.sdutil import (sdtask_decorator, table_manager,
+                                      tool_manager)
 from casatasks.private.task_imsmooth import imsmooth
-from casatasks.private.task_sdsmooth import sdsmooth
 from casatasks.private.task_sdbaseline import sdbaseline
-
+from casatasks.private.task_sdsmooth import sdsmooth
+from casatools import image, table
+from numpy import array, uint64
 
 DATACOLUMN = 'DATA'
 OVERWRITE = True
