@@ -186,14 +186,14 @@ def callable_sdtask_decorator(func):
 
 def __format_trace(s):
     wexists = True
-    regex = '.*sdutil\.py.*in wrapper.*'
+    regex = r'.*sdutil\.py.*in wrapper.*'
     retval = s
     while wexists:
         ss = retval.split('\n')
         wexists = False
         for i in range(len(ss)):
             if re.match(regex, ss[i]):
-                ss = ss[:i] + ss[i+2:]
+                ss = ss[:i] + ss[i + 2:]
                 wexists = True
                 break
         retval = '\n'.join(ss)
