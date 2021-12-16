@@ -73,7 +73,7 @@ bool gen_ms( const std::string &vis, bool createmms, const std::string &separati
              const std::string &wvr_corrected_data, const std::string &scans, bool ignore_time,
              bool process_syspower, bool process_caldevice, bool process_pointing, bool process_flags,
              double tbuff, bool applyflags, bool savecmds, const ::casac::variant& outfile, bool flagbackup,
-             bool verbose, bool overwrite, bool showversion, const std::string &useversion, bool bdfflags,
+             bool verbose, bool overwrite, bool bdfflags,
              bool with_pointing_correction, bool convert_ephem2geo, double polyephem_tabtimestep );
 bool bd_flagger( const std::string &ms, const std::string &ocm, const std::string &scansOptionValue, bool lazy, bool processUncorrectedData );
 void loadBDFlags( std::map<string, unsigned int>& abbrev2bitpos );
