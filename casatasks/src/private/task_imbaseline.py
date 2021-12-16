@@ -20,10 +20,9 @@ from casatasks.private.task_sdbaseline import sdbaseline
 
 DATACOLUMN = 'DATA'
 OVERWRITE = True
-debug = False
 
 
-class AbstractEraseable:
+class AbstractFolder:
     """Abstract class has Image/MeasurementSet file path.
 
     This class and child classes are wrapper of Image/MeasurementSet file.
@@ -38,7 +37,7 @@ class AbstractEraseable:
         raise RuntimeError('Not implemented')
 
 
-class Erasable(AbstractEraseable):
+class ErasableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is permitted to erase.
     """
 
@@ -49,7 +48,7 @@ class Erasable(AbstractEraseable):
                 shutil.rmtree(self.path)
 
 
-class Unerasable(AbstractEraseable):
+class UnerasableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is NOT permitted to erase.
     """
 
@@ -57,16 +56,16 @@ class Unerasable(AbstractEraseable):
         casalog.post(f"un-erase file:{self.path}", "DEBUG2")
 
 
-class ProcessingFileStack:
+class AbstractFileStack:
     """CasaImage/MeasurementSet file path stack to be processed by tasks in imbaseline.
 
-        The paths of CasaImage or MeasurementSet are wrapped by AbstractEraseable class.
+        The paths of CasaImage or MeasurementSet are wrapped by AbstractFolder class.
         Implementation classes of AvbstractEraseable are Eraseable/Uneraseable, the Eraseable class
         should be erased the path when execution of cleaning process, and the Uneraseable class
         should not be erased.
         If this class is used to stack a path of CasaImage, the bottom of it must be the input image(arg "imagename").
     """
-    def __init__(self, type: str=None, top: AbstractEraseable=None):
+    def __init__(self, type: str=None, top: AbstractFolder=None):
         self.stack = []
         self.type = type
         if not type:
@@ -77,21 +76,21 @@ class ProcessingFileStack:
     def __enter__(self):
         return self
 
-    def push(self, file: AbstractEraseable=None):
-        if isinstance(file, AbstractEraseable) and os.path.exists(file.path):
+    def push(self, file: AbstractFolder=None):
+        if isinstance(file, AbstractFolder) and os.path.exists(file.path):
             casalog.post(f'push f{file.path} into the stack typed {self.type}', 'DEBUG2')
             self.stack.append(file)
         else:
             raise ValueError('cannot append it to erase queue')
 
-    def pop(self) -> AbstractEraseable:
+    def pop(self) -> AbstractFolder:
         """Return the top of the stack.
         """
         if self.height() <= 1:
             raise RuntimeError(f'the stack typed {self.type} cannot pop')
         return self.stack.pop()
 
-    def peak(self) -> AbstractEraseable:
+    def peak(self) -> AbstractFolder:
         """Return a pointer of the top of the stack.
 
         The element returns is removed from the stack.
@@ -103,7 +102,7 @@ class ProcessingFileStack:
         else:
             raise RuntimeError(f"the stack typed {self.type} is empty")
 
-    def subpeak(self) -> AbstractEraseable:
+    def subpeak(self) -> AbstractFolder:
         """Return a pointer of a next of the top of the stack.
         """
         if len(self.stack) > 1:
@@ -113,7 +112,7 @@ class ProcessingFileStack:
         else:
             raise RuntimeError(f"the stack typed {self.type} has only one stuff")
 
-    def bottom(self) -> AbstractEraseable:
+    def bottom(self) -> AbstractFolder:
         """Return a pointer of the bottom of the stack.
         """
         if len(self.stack) > 0:
@@ -136,14 +135,20 @@ class ProcessingFileStack:
         self.clear(False)
 
 
-class CasaImageStack(ProcessingFileStack):
+class CasaImageStack(AbstractFileStack):
+    """FileStack for CasaImage"""
+
     TYPE = "im"
-    def __init__(self, top: AbstractEraseable=None):
+
+    def __init__(self, top: AbstractFolder=None):
         super().__init__(type=self.TYPE, top=top)
 
 
-class MeasurementSetStack(ProcessingFileStack):
+class MeasurementSetStack(AbstractFileStack):
+    """FileStack for MeasurementSet"""
+
     TYPE = "ms"
+
     def __init__(self):
         super().__init__(type=self.TYPE)
 
@@ -209,9 +214,9 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
     __validate_imagename(imagename)
     linefile = __prepare_linefile(linefile, imagename)
 
-    with CasaImageStack(Unerasable(imagename)) as image_stack,\
+    with CasaImageStack(UnerasableFolder(imagename)) as image_stack,\
          MeasurementSetStack() as ms_stack:
-        input_image_shape = get_image_shape(image_stack)
+        input_image_shape = get_image_shape(image_stack.peak().path)
 
         # do direction plane smoothing
         execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, image_stack)
@@ -237,8 +242,9 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
 
 
 def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None, kimage: str=None, scale: float=None,
-                     stack: ProcessingFileStack=None):
-    """Call imsmooth task if dirkernel is not none."""
+                     stack: AbstractFileStack=None):
+    """Call casatasks::imsmooth task if dirkernel is specified.
+    """
     if __confirm_imsmooth_execution(dirkernel) is False:
         casalog.post("omit image smoothing", "INFO")
         return
@@ -248,20 +254,23 @@ def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: 
     outfile = __generate_temporary_filename("dirsmooth-", "im")
     args, kargs = ImsmoothParams(infile, outfile, dirkernel, major, minor, pa, kimage, scale)()
     imsmooth(*args, **kargs)
-    stack.push(Erasable(outfile))
+    stack.push(ErasableFolder(outfile))
 
 
-def execute_image2ms(datacolumn: str=None, input_image_shape: ImageShape=None, image_stack: ProcessingFileStack=None,
-                     ms_stack: ProcessingFileStack=None):
+def execute_image2ms(datacolumn: str=None, input_image_shape: ImageShape=None, image_stack: AbstractFileStack=None,
+                     ms_stack: AbstractFileStack=None):
+    """Convert a casaimage to a MeasurementSet."""
     casalog.post("convert casaimage to MeasurementSet", "INFO")
     infile = image_stack.peak().path
     outfile = __generate_temporary_filename("img2ms-", "ms")
     image2ms(Image2MSParams(infile, outfile, datacolumn, input_image_shape))
-    ms_stack.push(Erasable(outfile))
+    ms_stack.push(ErasableFolder(outfile))
 
 
-def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None, image_stack: ProcessingFileStack=None,
-                     ms_stack: ProcessingFileStack=None, image_shape: ImageShape=None):
+def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None, image_stack: AbstractFileStack=None,
+                     ms_stack: AbstractFileStack=None, image_shape: ImageShape=None):
+    """Call casatasks::sdsmooth task if spkernel is specified.
+    """
     if __confirm_sdsmooth_execution(spkernel) is False:
         casalog.post("omit spectral smoothing", "INFO")
         return
@@ -272,31 +281,33 @@ def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None,
     output_ms = __generate_temporary_filename("spsmooth-", "ms")
     base_image = image_stack.bottom().path
     sdsmooth(**SdsmoothParams(input_ms, output_ms, datacolumn.lower(), spkernel, kwidth)())
-    ms_stack.push(Erasable(output_ms))
+    ms_stack.push(ErasableFolder(output_ms))
     output_image = __convert_ms_to_image(base_image, output_ms, image_shape, datacolumn)
-    image_stack.push(Erasable(output_image))
+    image_stack.push(ErasableFolder(output_image))
 
 
 def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=None, chans: str=None, thresh: float=None,
                        avg_limit: int=None, minwidth: int=None, edge: List[int]=None, blfunc: str=None, order: int=None,
                        npiece: int=None, applyfft: bool=None, fftthresh: float=None, addwn: List[int]=None, rejwn: List[int]=None,
                        blparam: str=None, clipniter: int=None, clipthresh: float=None,
-                       image_stack: ProcessingFileStack=None, ms_stack: ProcessingFileStack=None, image_shape: ImageShape=None):
+                       image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None, image_shape: ImageShape=None):
+    """Call casatasks::sdbaseline task.
+    """
     casalog.post("execute spectral baselining", "INFO")
     input_ms = ms_stack.peak().path
     output_ms = __generate_temporary_filename("baseline-", "ms")
     base_image = image_stack.bottom().path
     sdbaseline(**SdbaselineParams(input_ms, output_ms, datacolumn.lower(), bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh)())
-    ms_stack.push(Erasable(output_ms))
+    ms_stack.push(ErasableFolder(output_ms))
     output_image = __convert_ms_to_image(base_image, output_ms, image_shape, datacolumn)
-    image_stack.push(Erasable(output_image))
+    image_stack.push(ErasableFolder(output_image))
     blparam_name = input_ms + '_blparam.' + SdbaselineParams.BLFORMAT
     if os.path.exists(blparam_name):
         __rename_blparam_filename(blparam_name, base_image)
 
 
-def execute_image_subtraction(linefile: str=None, image_stack: ProcessingFileStack=None):
+def execute_image_subtraction(linefile: str=None, image_stack: AbstractFileStack=None):
     """
     Execute image subtraction.
 
@@ -309,7 +320,7 @@ def execute_image_subtraction(linefile: str=None, image_stack: ProcessingFileSta
     if image_stack.height() <= 2:  # any smoothing were not executed
         output_image = image_stack.pop().path
         os.rename(output_image, linefile)
-        image_stack.push(Unerasable(linefile))
+        image_stack.push(UnerasableFolder(linefile))
     else:
         smoothed_image = image_stack.subpeak().path
         subtracted_image = image_stack.peak().path
@@ -319,7 +330,7 @@ def execute_image_subtraction(linefile: str=None, image_stack: ProcessingFileSta
         __image_subtraction(linefile, smoothed_image)
 
 
-def get_continuum_image(image_stack: ProcessingFileStack=None):
+def get_continuum_image(image_stack: AbstractFileStack=None):
     """compute input_image - output_image"""
     base_image = image_stack.bottom().path
     output_image = os.path.basename(base_image) + '.cont'
@@ -330,6 +341,7 @@ def get_continuum_image(image_stack: ProcessingFileStack=None):
 
 
 def do_post_processing(outfile):
+    """execute some post-processes of imbaseline"""
     __write_image_history(outfile)
 
 
@@ -394,6 +406,7 @@ def __confirm_sdsmooth_execution(spkernel: str=None):
 
 
 class ImsmoothParams(Validable):
+    """Parameter manipulation class for execution of casatasks::imsmooth"""
 
     TARGETRES = False
     MASK = ''
@@ -441,6 +454,7 @@ class ImsmoothParams(Validable):
 
 
 class SdsmoothParams(Validable):
+    """Parameter manipulation class for execution of casatasks::sdsmooth"""
 
     SPW = ''
     FIELD = ''
@@ -480,6 +494,7 @@ class SdsmoothParams(Validable):
 
 
 class SdbaselineParams(Validable):
+    """Parameter manipulation class for execution of casatasks::sdbaseline"""
 
     ANTENNA = ''
     FIELD = ''
@@ -566,9 +581,9 @@ def __get_axis_position(val: array=None) -> int:
     return -1
 
 
-def get_image_shape(stack: ProcessingFileStack) -> ImageShape:
+def get_image_shape(imagepath: str) -> ImageShape:
     shape = None
-    with tool_manager(stack.peak().path, image) as ia:
+    with tool_manager(imagepath, image) as ia:
         try:
             cs = ia.coordsys()
             shape = ImageShape(ia.shape(),
@@ -587,6 +602,7 @@ def get_image_shape(stack: ProcessingFileStack) -> ImageShape:
 
 
 class Image2MSParams(Validable):
+    """Parameter manipulation class for executing image2ms()"""
 
     def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA', input_image_shape: ImageShape=None):
         self.infile = infile
@@ -611,6 +627,7 @@ class Image2MSParams(Validable):
 
 
 def image2ms(params: Image2MSParams=None):
+    """Convert CasaImage into MeasurementSet."""
     __create_empty_ms(params)
     __copy_image_array_to_ms(params)
 
@@ -860,6 +877,7 @@ def __put_image_data_into_ms(params: Image2MSParams, image_array: np.array, mask
 
 
 class MS2ImageParams(Validable):
+    """Parameter manipulation class for executing ms2image()"""
 
     def __init__(self, infile: str=None, linefile: str='', imagefile: str='', datacolumn: str='DATA', output_cont: bool=False,
                  output_cont_file: str='', i2ms_params: Image2MSParams=None):
@@ -927,6 +945,7 @@ def __copy_image_file(infile: str=None, outfile: str=None):
             raise Exception(f'Some error occured, infile:{infile}, outfile:{outfile}')
     finally:
         ia.done()
+
 
 def __make_image_array(input_image_shape: ImageShape=None, infile: str=None, datacolumn: str=None) -> np.array:
     nx, ny = input_image_shape.dir_shape
