@@ -163,7 +163,6 @@ def callable_sdtask_decorator(func):
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-
         caller = kwargs.pop('__log_origin', func.__name__)
         casalog.origin(caller)
 
