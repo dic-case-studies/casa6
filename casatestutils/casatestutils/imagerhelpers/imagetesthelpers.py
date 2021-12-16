@@ -284,12 +284,22 @@ class TestHelpers:
         It could be that in the future we just want to return the index [chan/pol with the largest peakres, last cycle]."""
         if 'summaryminor' in summ:
             sm = summ['summaryminor']
+            uss = sm.useSmallSummaryminor() # Temporary CAS-13683 workaround
             ret = (sm.chan0, sm.pol0, 0)
+            prev_chan = None
             for chan in sorted(sm.keys()):
                 for pol in sorted(sm[chan].keys()):
                     for cycle in range(sm.nCycles):
-                        if (sm[chan][pol]['iterDone'][cycle] > 0):
+                        tmp_iterdone = sm[chan][pol]['iterDone'][cycle]
+                        if uss and (prev_chan != None):
+                            # horible hackaround of CAS-13683 to deal with not have access to 'startIterDone'
+                            # get the number of iterations done for just this channel
+                            prev_iterdone = sm[prev_chan][pol]['iterDone'][cycle]
+                            if (prev_iterdone <= tmp_iterdone):
+                                tmp_iterdone -= prev_iterdone
+                        if (tmp_iterdone > 0):
                             ret = (chan, pol, cycle)
+                prev_chan = chan
             return ret
         else:
             return None
@@ -298,11 +308,21 @@ class TestHelpers:
         """Finds the first possible channel/polarity index in the returned "summaryminor" from tclean that has a value."""
         if 'summaryminor' in summ:
             sm = summ['summaryminor']
+            uss = sm.useSmallSummaryminor() # Temporary CAS-13683 workaround
             ret = (sm.chan0, sm.pol0)
+            prev_chan = None
             for chan in sorted(sm.keys()):
                 for pol in sorted(sm[chan].keys()):
-                    if (sm[chan][pol]['iterDone'][0] > 0):
+                    tmp_iterdone = sm[chan][pol]['iterDone'][0]
+                    if uss and (prev_chan != None):
+                        # horible hackaround of CAS-13683 to deal with not have access to 'startIterDone'
+                        # get the number of iterations done for just this channel
+                        prev_iterdone = sm[prev_chan][pol]['iterDone'][0]
+                        if (prev_iterdone <= tmp_iterdone):
+                            tmp_iterdone -= prev_iterdone
+                    if (tmp_iterdone > 0):
                         return (chan, pol)
+                prev_chan = chan
             return ret
         else:
             return None
