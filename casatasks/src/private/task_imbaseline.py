@@ -25,8 +25,8 @@ OVERWRITE = True
 class AbstractFolder:
     """Abstract class has Image/MeasurementSet file path.
 
-    This class and child classes are wrapper of Image/MeasurementSet file.
-    The wrapped path can decide to erase by which child classes are implemented.
+    This class and child classes are wrapper of CasaImage/MeasurementSet file.
+    The wrapped path could be decided to erase by which child classes are implemented.
     """
 
     def __init__(self, file: str=None):
@@ -59,11 +59,10 @@ class UnerasableFolder(AbstractFolder):
 class AbstractFileStack:
     """CasaImage/MeasurementSet file path stack to be processed by tasks in imbaseline.
 
-        The paths of CasaImage or MeasurementSet are wrapped by AbstractFolder class.
-        Implementation classes of AvbstractEraseable are Eraseable/Uneraseable, the Eraseable class
-        should be erased the path when execution of cleaning process, and the Uneraseable class
-        should not be erased.
-        If this class is used to stack a path of CasaImage, the bottom of it must be the input image(arg "imagename").
+    The paths of CasaImage or MeasurementSet are wrapped by AbstractFolder class.
+    Implementation classes of AbstractFileStack are EraseableFolder/UneraseableFolder, the EraseableFolder class erases the path
+    holden by a property 'path' when execute cleaning process, and the UneraseableFolder class doesn't erase it.
+    If this class is used to stack a path of CasaImage, the bottom of it must be the input image(an argument "imagename").
     """
     def __init__(self, type: str=None, top: AbstractFolder=None):
         self.stack = []
