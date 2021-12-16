@@ -286,7 +286,6 @@ class TestHelpers:
             sm = summ['summaryminor']
             uss = sm.useSmallSummaryminor() # Temporary CAS-13683 workaround
             ret = (sm.chan0, sm.pol0, 0)
-            peakres = -1e9
             prev_chan = None
             for chan in sorted(sm.keys()):
                 for pol in sorted(sm[chan].keys()):
@@ -299,8 +298,30 @@ class TestHelpers:
                             if (prev_iterdone <= tmp_iterdone):
                                 tmp_iterdone -= prev_iterdone
                         if (tmp_iterdone > 0):
-                            peakres = sm[chan][pol]['peakRes'][cycle]
                             ret = (chan, pol, cycle)
+                prev_chan = chan
+            return ret
+        else:
+            return None
+
+    def get_chanpol_withiters_cycle0(self, summ):
+        """Finds the first possible channel/polarity index in the returned "summaryminor" from tclean that has a value."""
+        if 'summaryminor' in summ:
+            sm = summ['summaryminor']
+            uss = sm.useSmallSummaryminor() # Temporary CAS-13683 workaround
+            ret = (sm.chan0, sm.pol0)
+            prev_chan = None
+            for chan in sorted(sm.keys()):
+                for pol in sorted(sm[chan].keys()):
+                    tmp_iterdone = sm[chan][pol]['iterDone'][0]
+                    if uss and (prev_chan != None):
+                        # horible hackaround of CAS-13683 to deal with not have access to 'startIterDone'
+                        # get the number of iterations done for just this channel
+                        prev_iterdone = sm[prev_chan][pol]['iterDone'][0]
+                        if (prev_iterdone <= tmp_iterdone):
+                            tmp_iterdone -= prev_iterdone
+                    if (tmp_iterdone > 0):
+                        return (chan, pol)
                 prev_chan = chan
             return ret
         else:
@@ -354,6 +375,14 @@ class TestHelpers:
                 out=False
                 return out,modflux
         return out,modflux
+
+    def get_first_cycle_thresh(self, summ):
+        """Get the theshold, for the first minor cycle, for the first channel that actually did iterations"""
+        cycleThresh = None
+        if 'summaryminor' in summ:
+            idx = self.get_chanpol_withiters_cycle0(summ)
+            cycleThresh = summ['summaryminor'][idx[0]][idx[1]]['cycleThresh'][0]
+        return cycleThresh
 
     def check_chanvals(self,msname,vallist, epsilon = 0.05): # list of tuples of (channumber, relation, value) e.g. (10,">",1.0)
         testname = "check_chanvals"
@@ -1066,7 +1095,7 @@ class TestHelpers:
                     out, message = TestHelpers().check_val(val=ret['nmajordone'], correctval=nmajordone, valname="nmajordone", exact=True)
                     pstr = pstr + message
                 if firstcyclethresh != None:
-                    out, message = TestHelpers().check_val(val=ret['summaryminor'][3][0], correctval=firstcyclethresh, valname='initial cyclethreshold', epsilon=epsilon)
+                    out, message = TestHelpers().check_val(val=TestHelpers().get_first_cycle_thresh(ret), correctval=firstcyclethresh, valname='initial cyclethreshold', epsilon=epsilon)
                     pstr = pstr + message
             except Exception as e:
                 logging.info(ret)
