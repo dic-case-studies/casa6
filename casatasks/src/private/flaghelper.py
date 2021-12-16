@@ -1359,7 +1359,9 @@ def parseRFlagOutputFromSummary(mode,summary_stats_list, flagcmd):
           accepts inline : e.g.  timedev=[[1,10,0.1],[1,11,0.07]] . This way, the user
           need not keep track of threshold text files if they use 'savepars' with action='apply'.
     """
-    if type(summary_stats_list) is dict:
+    # The careful checks are especially for MMS which can produce empty selections/results from
+    # individual sub-MSs.
+    if summary_stats_list and type(summary_stats_list) is dict and 'nreport' in summary_stats_list:
         nreps = summary_stats_list['nreport']
         for rep in range(0,nreps):
             repname = 'report'+str(rep)

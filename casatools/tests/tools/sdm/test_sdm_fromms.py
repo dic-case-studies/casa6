@@ -146,14 +146,12 @@ class exportasdm_test(unittest.TestCase):
         self.assertTrue(self.rval)
 
     def test2(self):
-        '''Test 2: small input MS, default output, v3'''
+        '''Test 2: small input MS, default output'''
         myvis = self.vis_b
         os.system('rm -rf myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
         mysdm = sdm(self.out)
-        ## useversion is deprecated, leave it in this test to verify visually that the deprecated message is
-        ## in the logs when it's used and remove it from other tests.
-        self.rval = mysdm.fromms('myinput.ms', archiveid="S1", verbose=True, apcorrected=False, useversion='v3')
+        self.rval = mysdm.fromms('myinput.ms', archiveid="S1", verbose=True, apcorrected=False)
 
         self.assertNotEqual(self.rval,False)
         omsname = "test"+str(2)+self.out
@@ -243,7 +241,7 @@ class exportasdm_test(unittest.TestCase):
 
     @unittest.skip("test disabled")
     def test10(self):
-        '''Test 10: v3, ALMA input MS with pointing table and various shortcomings, default output'''
+        '''Test 10: ALMA input MS with pointing table and various shortcomings, default output'''
         myvis = self.vis_c
 ##        os.system('rm -rf myinput.ms')
 ##        os.system('cp -R ' + myvis + ' myinput.ms')
@@ -252,7 +250,6 @@ class exportasdm_test(unittest.TestCase):
 ##             asdm = self.out,
 ##             archiveid="S002",
 ##             apcorrected=False,
-##             useversion='v3'
 ##             )
         self.assertNotEqual(self.rval,False)
 ##        omsname = "test"+str(10)+self.out
@@ -260,7 +257,7 @@ class exportasdm_test(unittest.TestCase):
 ##        self.verify_asdm(omsname, True)
 
     def test11(self):
-        '''Test 11: v3, EVLA MS from X_osro_013.55979.93803716435 scan 2, full pol!'''
+        '''Test 11: EVLA MS from X_osro_013.55979.93803716435 scan 2, full pol!'''
         myvis = self.vis_h
         os.system('rm -rf xosro2ref-reimp.ms xosro2asdm')
         mysdm = sdm('xosro2asdm')
@@ -279,7 +276,7 @@ class exportasdm_test(unittest.TestCase):
     # in this tool test and so it is skipped here.
     @unittest.skip("This is a task test, not appropriate for the sdm tool alone.")
     def test12(self):
-        '''Test 12: v3, ALMA MS from uid___A002_X72bc38_X000 scan 2, only XX and YY'''
+        '''Test 12: ALMA MS from uid___A002_X72bc38_X000 scan 2, only XX and YY'''
         myvis = self.vis_i
         os.system('rm -rf asdmasdm asdm-reimp.ms')
         mysdm = sdm('asdmasdm')

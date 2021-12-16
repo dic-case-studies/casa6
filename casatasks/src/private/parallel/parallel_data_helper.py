@@ -346,7 +346,7 @@ class ParallelDataHelper(ParallelTaskHelper):
         Keyword arguments:
         msfile    -- MS or MMS name
         scansel   -- scan selection
-        
+
         Returns a list of the scan IDs (list of strings) or [] in case of failure.
         """
         scanlist = []
@@ -358,16 +358,17 @@ class ParallelDataHelper(ParallelTaskHelper):
             mymsmd.close()
             scanlist = map(str,scans)
         else:
-            try:            
+            myms = ms()
+            try:
                 myms.open(msfile)
                 myms.msselect({'scan':scansel})
                 scans = myms.msselectedindices()['scan']
                 scanlist = map(str,scans)
-                myms.close()
             except:
-                myms.close()
                 scanlist = []
-            
+            finally:
+                myms.close()
+
         return scanlist
 
     def __isScanContained(self, subms, scanlist, tbin):
