@@ -437,7 +437,8 @@ class ImsmoothParams(Validable):
     def __call__(self) -> Union[List[Any], Dict[str, str]]:
         """Convert the class into arguments of imsmooth().
 
-        __log_origin is for callabletask.log_origin_setter"""
+        __log_origin is for callabletask.log_origin_setter
+        """
         return [self.infile, self.kernel, self.major, self.minor, self.pa, self.TARGETRES, self.kimage, self.scale,
                 self.REGION, self.BOX, self.CHANS, self.STOKES, self.MASK, self.outfile, self.STRETCH, self.OVERWRITE,
                 self.BEAM], dict(__log_origin='imbaseline')
@@ -476,7 +477,8 @@ class SdsmoothParams(Validable):
     def __call__(self) -> Dict[str, Any]:
         """Convert the class into arguments of sdsmooth().
 
-        __log_origin is for sdutil.callabletask_decorator"""
+        __log_origin is for sdutil.callabletask_decorator.
+        """
         return dict(infile=self.infile, datacolumn=self.datacolumn, antenna=self.ANTENNA, field=self.FIELD, spw=self.SPW,
                     timerange=self.TIMERANGE, scan=self.SCAN, pol=self.POL, intent=self.INTENT, reindex=self.REINDEX,
                     kernel=self.kernel, kwidth=self.kwidth, outfile=self.outfile, overwrite=self.OVERWRITE,
@@ -553,7 +555,8 @@ class SdbaselineParams(Validable):
     def __call__(self) -> Dict[str, Any]:
         """Convert the class into arguments of sdbaseline().
 
-        __log_origin is for sdutil.callabletask_decorator"""
+        __log_origin is for sdutil.callabletask_decorator.
+        """
         return dict(infile=self.infile, datacolumn=self.datacolumn, antenna=self.ANTENNA, field=self.FIELD, spw=self.SPW,
                     timerange=self.TIMERANGE, scan=self.SCAN, pol=self.POL, intent=self.INTENT, reindex=self.REINDEX,
                     maskmode=self.maskmode, thresh=self.thresh, avg_limit=self.avg_limit, minwidth=self.minwidth, edge=self.edge,
