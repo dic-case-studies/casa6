@@ -200,8 +200,7 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
                avg_limit=None, minwidth=None, edge=None, blfunc=None, order=None, npiece=None, applyfft=None, fftthresh=None,
                addwn=None, rejwn=None, blparam=None, clipniter=None, clipthresh=None, dirkernel=None, major=None, minor=None,
                pa=None, kimage=None, scale=None, spkernel=None, kwidth=None) -> None:
-    """
-    THE MAIN METHOD OF IMBASELINE.
+    """THE MAIN METHOD OF IMBASELINE.
 
     All specifications of arguments are defined in:
     https://open-jira.nrao.edu/browse/CAS-13520
@@ -300,8 +299,7 @@ def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=N
 
 
 def execute_image_subtraction(linefile: str=None, image_stack: AbstractFileStack=None) -> None:
-    """
-    Execute image subtraction.
+    """Execute image subtraction.
 
     Processing of the output file(linefile) is different which executed direction/spectral smoothing or not.
     - smoothing was executed:
