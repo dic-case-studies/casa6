@@ -1,13 +1,15 @@
 # image-based line finding and baseline subtraction.
 
+from abc import abstractmethod
 import os
 import shutil
 import sys
-import uuid
-from abc import abstractmethod
 from typing import Any, Dict, List, Tuple, Union
+import uuid
 
 import numpy as np
+from numpy import array, uint64
+
 from casatasks import casalog
 from casatasks.private.ialib import write_image_history
 from casatasks.private.sdutil import (sdtask_decorator, table_manager,
@@ -16,7 +18,6 @@ from casatasks.private.task_imsmooth import imsmooth
 from casatasks.private.task_sdbaseline import sdbaseline
 from casatasks.private.task_sdsmooth import sdsmooth
 from casatools import image, table
-from numpy import array, uint64
 
 DATACOLUMN = 'DATA'
 OVERWRITE = True
@@ -37,7 +38,7 @@ class AbstractFolder:
         raise RuntimeError('Not implemented')
 
 
-class ErasableFolder(AbstractFolder):
+class EraseableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is permitted to erase.
     """
 
@@ -253,7 +254,7 @@ def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: 
     outfile = __generate_temporary_filename("dirsmooth-", "im")
     args, kargs = ImsmoothParams(infile, outfile, dirkernel, major, minor, pa, kimage, scale)()
     imsmooth(*args, **kargs)
-    stack.push(ErasableFolder(outfile))
+    stack.push(EraseableFolder(outfile))
 
 
 def execute_image2ms(datacolumn: str=None, input_image_shape: ImageShape=None, image_stack: AbstractFileStack=None,
@@ -263,7 +264,7 @@ def execute_image2ms(datacolumn: str=None, input_image_shape: ImageShape=None, i
     infile = image_stack.peak().path
     outfile = __generate_temporary_filename("img2ms-", "ms")
     image2ms(Image2MSParams(infile, outfile, datacolumn, input_image_shape))
-    ms_stack.push(ErasableFolder(outfile))
+    ms_stack.push(EraseableFolder(outfile))
 
 
 def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None, image_stack: AbstractFileStack=None,
@@ -280,9 +281,9 @@ def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None,
     output_ms = __generate_temporary_filename("spsmooth-", "ms")
     base_image = image_stack.bottom().path
     sdsmooth(**SdsmoothParams(input_ms, output_ms, datacolumn.lower(), spkernel, kwidth)())
-    ms_stack.push(ErasableFolder(output_ms))
+    ms_stack.push(EraseableFolder(output_ms))
     output_image = __convert_ms_to_image(base_image, output_ms, image_shape, datacolumn)
-    image_stack.push(ErasableFolder(output_image))
+    image_stack.push(EraseableFolder(output_image))
 
 
 def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=None, chans: str=None, thresh: float=None,
@@ -298,9 +299,9 @@ def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=N
     base_image = image_stack.bottom().path
     sdbaseline(**SdbaselineParams(input_ms, output_ms, datacolumn.lower(), bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh)())
-    ms_stack.push(ErasableFolder(output_ms))
+    ms_stack.push(EraseableFolder(output_ms))
     output_image = __convert_ms_to_image(base_image, output_ms, image_shape, datacolumn)
-    image_stack.push(ErasableFolder(output_image))
+    image_stack.push(EraseableFolder(output_image))
     blparam_name = input_ms + '_blparam.' + SdbaselineParams.BLFORMAT
     if os.path.exists(blparam_name):
         __rename_blparam_filename(blparam_name, base_image)
