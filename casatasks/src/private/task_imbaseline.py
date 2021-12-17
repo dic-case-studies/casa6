@@ -121,7 +121,7 @@ class AbstractFileStack:
     def clear(self, dry_run: bool=True) -> None:
         """Do erase method of all of the stack and clear the stack."""
         for file in self.stack:
-            file.erase(dry_run)
+            file.erase(dry_run=dry_run)
         self.stack.clear()
 
     def height(self) -> int:
