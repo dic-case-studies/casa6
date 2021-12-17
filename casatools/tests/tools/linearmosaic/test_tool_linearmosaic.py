@@ -1,5 +1,5 @@
 ##########################################################################
-# test_linearmosaic.py
+# test_tool_linearmosaic.py
 #
 # Copyright (C) 2021
 # Associated Universities, Inc. Washington DC, USA.
@@ -66,7 +66,7 @@ from casatools import linearmosaic
 from casatools import ctsys
 
 ####    Tests     ####
-class test_linearmosaic(unittest.TestCase):
+class test_tool_linearmosaic(unittest.TestCase):
 
     def readpix(self, imname=''):
         '''get the center pixel value from the named image'''
@@ -273,10 +273,6 @@ class test_linearmosaic(unittest.TestCase):
         # moment they are identical.
         self.assertEqual(fne_image_val, sw_image_val)
  
-####    Suite: Required for CASA5     ####
-def suite():
-    return[linear_mosaic]
-  
 ####    Imports     ####
 if __name__ == '__main__':
     unittest.main()
