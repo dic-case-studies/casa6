@@ -42,7 +42,9 @@ class EraseableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is permitted to erase."""
 
     def erase(self, dry_run: bool=True) -> None:
-        if not dry_run:
+        if dry_run:
+            casalog.post(f'[DRY RUN] erase file:{self.path}', 'DEBUG2')
+        else:
             casalog.post(f'erase file:{self.path}', 'DEBUG2')
             if os.path.exists(self.path):
                 shutil.rmtree(self.path)
