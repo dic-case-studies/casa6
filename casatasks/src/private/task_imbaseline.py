@@ -67,7 +67,7 @@ class AbstractFileStack:
     """
     def __init__(self, top: AbstractFolder=None) -> None:
         self.stack = []
-        if top is not None:
+        if isinstance(top, AbstractFolder):
             self.push(top)
 
     def __enter__(self) -> None:
@@ -83,7 +83,7 @@ class AbstractFileStack:
     def pop(self) -> AbstractFolder:
         """Return the top of the stack."""
         if self.height() <= 1:
-            raise RuntimeError(f'the stack cannot pop')
+            raise RuntimeError('the stack cannot pop')
         return self.stack.pop()
 
     def peak(self) -> AbstractFolder:
@@ -96,7 +96,7 @@ class AbstractFileStack:
             casalog.post(f'pick from the stack: {picked.path}', 'DEBUG2')
             return self.stack[len(self.stack) - 1]
         else:
-            raise RuntimeError(f'the stack is empty')
+            raise RuntimeError('the stack is empty')
 
     def subpeak(self) -> AbstractFolder:
         """Return a pointer of a next of the top of the stack."""
@@ -105,7 +105,7 @@ class AbstractFileStack:
             casalog.post(f'pick from sub peak of the stack: {picked.path}', 'DEBUG2')
             return self.stack[len(self.stack) - 2]
         else:
-            raise RuntimeError(f'the stack has only one stuff')
+            raise RuntimeError('the stack has only one stuff')
 
     def bottom(self) -> AbstractFolder:
         """Return a pointer of the bottom of the stack."""
@@ -114,7 +114,7 @@ class AbstractFileStack:
             casalog.post(f'pick from bottom of the stack: {picked.path}', 'DEBUG2')
             return self.stack[0]
         else:
-            raise RuntimeError(f'the stack has not have enough stuff')
+            raise RuntimeError('the stack has not have enough stuff')
 
     def clear(self, dry_run: bool=True) -> None:
         """Do erase method of all of the stack and clear the stack."""
