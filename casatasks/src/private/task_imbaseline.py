@@ -131,7 +131,7 @@ class AbstractFileStack:
 
 
 class CasaImageStack(AbstractFileStack):
-    """FileStack for CasaImage"""
+    """FileStack for CasaImage."""
 
     TYPE = 'im'
 
@@ -140,7 +140,7 @@ class CasaImageStack(AbstractFileStack):
 
 
 class MeasurementSetStack(AbstractFileStack):
-    """FileStack for MeasurementSet"""
+    """FileStack for MeasurementSet."""
 
     TYPE = 'ms'
 
@@ -323,7 +323,7 @@ def execute_image_subtraction(linefile: str=None, image_stack: AbstractFileStack
 
 
 def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
-    """compute input_image - output_image"""
+    """Compute 'input_image - output_image'."""
     base_image = image_stack.bottom().path
     output_image = os.path.basename(base_image) + '.cont'
     __copy_image_file(base_image, output_image)
@@ -333,12 +333,12 @@ def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
 
 
 def do_post_processing(outfile) -> None:
-    """execute some post-processes of imbaseline"""
+    """Execute some post-processes of imbaseline."""
     __write_image_history(outfile)
 
 
 def __image_subtraction(operand_a: str=None, operand_b: str=None) -> None:
-    """image chunk subtraction"""
+    """Subtract image chunk."""
     image_array = None
     with tool_manager(operand_b, image) as ia:
         image_array = ia.getchunk()
@@ -398,7 +398,7 @@ def __confirm_sdsmooth_execution(spkernel: str=None) -> None:
 
 
 class ImsmoothParams(Validable):
-    """Parameter manipulation class for execution of casatasks::imsmooth"""
+    """Parameter manipulation class for execution of casatasks::imsmooth."""
 
     TARGETRES = False
     MASK = ''
@@ -446,7 +446,7 @@ class ImsmoothParams(Validable):
 
 
 class SdsmoothParams(Validable):
-    """Parameter manipulation class for execution of casatasks::sdsmooth"""
+    """Parameter manipulation class for execution of casatasks::sdsmooth."""
 
     SPW = ''
     FIELD = ''
@@ -486,7 +486,7 @@ class SdsmoothParams(Validable):
 
 
 class SdbaselineParams(Validable):
-    """Parameter manipulation class for execution of casatasks::sdbaseline"""
+    """Parameter manipulation class for execution of casatasks::sdbaseline."""
 
     ANTENNA = ''
     FIELD = ''
@@ -594,7 +594,7 @@ def get_image_shape(imagepath: str) -> ImageShape:
 
 
 class Image2MSParams(Validable):
-    """Parameter manipulation class for executing image2ms()"""
+    """Parameter manipulation class for executing image2ms()."""
 
     def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA', input_image_shape: ImageShape=None) -> None:
         self.infile = infile
@@ -869,7 +869,7 @@ def __put_image_data_into_ms(params: Image2MSParams, image_array: np.array, mask
 
 
 class MS2ImageParams(Validable):
-    """Parameter manipulation class for executing ms2image()"""
+    """Parameter manipulation class for executing ms2image()."""
 
     def __init__(self, infile: str=None, linefile: str='', imagefile: str='', datacolumn: str='DATA', output_cont: bool=False,
                  output_cont_file: str='', i2ms_params: Image2MSParams=None) -> None:
