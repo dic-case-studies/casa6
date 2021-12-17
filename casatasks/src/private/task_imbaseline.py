@@ -74,11 +74,13 @@ class AbstractFileStack:
         return self
 
     def push(self, file: AbstractFolder=None) -> None:
-        if isinstance(file, AbstractFolder) and os.path.exists(file.path):
+        if not isinstance(file, AbstractFolder):
+            raise ValueError('this object could not be appended to erase queue')
+        elif not os.path.exists(file.path):
+            raise ValueError('file path is not found')
+        else:
             casalog.post(f'push f{file.path} into the stack', 'DEBUG2')
             self.stack.append(file)
-        else:
-            raise ValueError('cannot append it to erase queue')
 
     def pop(self) -> AbstractFolder:
         """Return the top of the stack."""
