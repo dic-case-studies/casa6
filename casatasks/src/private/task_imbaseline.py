@@ -43,9 +43,9 @@ class EraseableFolder(AbstractFolder):
 
     def erase(self, dry_run: bool=True) -> None:
         if dry_run:
-            casalog.post(f'[DRY RUN] erase file:{self.path}', 'DEBUG2')
+            casalog.post(f'[DRY RUN] erase file: {self.path}', 'DEBUG2')
         else:
-            casalog.post(f'erase file:{self.path}', 'DEBUG2')
+            casalog.post(f'erase file: {self.path}', 'DEBUG2')
             if os.path.exists(self.path):
                 shutil.rmtree(self.path)
 
@@ -54,7 +54,7 @@ class UnerasableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is NOT permitted to erase."""
 
     def erase(self, dry_run: bool=True) -> None:
-        casalog.post(f'un-erase file:{self.path}', 'DEBUG2')
+        casalog.post(f'un-erase file: {self.path}', 'DEBUG2')
 
 
 class AbstractFileStack:
@@ -618,7 +618,7 @@ class Image2MSParams(Validable):
 
     def __validate_outfile(self) -> None:
         if os.path.exists(self.outfile):
-            raise ValueError(f'Folder exists:{self.outfile}')
+            raise ValueError(f'Folder exists: {self.outfile}')
 
 
 def image2ms(params: Image2MSParams=None) -> None:
@@ -931,13 +931,13 @@ def __convert_ms_to_image(base_image: str=None, input_ms: str=None, input_image_
 
 def __copy_image_file(infile: str=None, outfile: str=None) -> None:
     if not os.path.exists(infile):
-        raise Exception(f'Image files not found, infile:{infile}')
+        raise Exception(f'Image files not found, infile: {infile}')
 
     ia = image()
     try:
         ok = ia.fromimage(infile=infile, outfile=outfile)
         if not ok:
-            raise Exception(f'Some error occured, infile:{infile}, outfile:{outfile}')
+            raise Exception(f'Some error occured, infile: {infile}, outfile: {outfile}')
     finally:
         ia.done()
 
