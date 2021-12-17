@@ -145,14 +145,14 @@ class MeasurementSetStack(AbstractFileStack):
         super().__init__()
 
 
-class Validable:
+class AbstractValidable:
 
     @abstractmethod
     def validate(self) -> None:
         raise RuntimeError('Not implemented')
 
 
-class ImageShape(Validable):
+class ImageShape(AbstractValidable):
     """Shape parameters of input image.
 
     These parameters are been getting in Image2MS, using in MS2Image.
@@ -392,7 +392,7 @@ def __confirm_sdsmooth_execution(spkernel: str=None) -> None:
     return False
 
 
-class ImsmoothParams(Validable):
+class ImsmoothParams(AbstractValidable):
     """Parameter manipulation class for execution of casatasks::imsmooth."""
 
     TARGETRES = False
@@ -441,7 +441,7 @@ class ImsmoothParams(Validable):
                 self.BEAM], dict(__log_origin='imbaseline')
 
 
-class SdsmoothParams(Validable):
+class SdsmoothParams(AbstractValidable):
     """Parameter manipulation class for execution of casatasks::sdsmooth."""
 
     SPW = ''
@@ -482,7 +482,7 @@ class SdsmoothParams(Validable):
                     __log_origin='imbaseline')
 
 
-class SdbaselineParams(Validable):
+class SdbaselineParams(AbstractValidable):
     """Parameter manipulation class for execution of casatasks::sdbaseline."""
 
     ANTENNA = ''
@@ -591,7 +591,7 @@ def get_image_shape(imagepath: str) -> ImageShape:
     return shape
 
 
-class Image2MSParams(Validable):
+class Image2MSParams(AbstractValidable):
     """Parameter manipulation class for executing image2ms()."""
 
     def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA', input_image_shape: ImageShape=None) -> None:
@@ -866,7 +866,7 @@ def __put_image_data_into_ms(params: Image2MSParams, image_array: np.array, mask
                     irow += 1
 
 
-class MS2ImageParams(Validable):
+class MS2ImageParams(AbstractValidable):
     """Parameter manipulation class for executing ms2image()."""
 
     def __init__(self, infile: str=None, linefile: str='', imagefile: str='', datacolumn: str='DATA', output_cont: bool=False,
