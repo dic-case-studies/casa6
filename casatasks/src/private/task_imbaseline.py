@@ -128,7 +128,7 @@ class AbstractFileStack:
         return len(self.stack)
 
     def __exit__(self, exception_type, exception_value, traceback) -> None:
-        self.clear(False)
+        self.clear(dry_run=False)
 
 
 class CasaImageStack(AbstractFileStack):
