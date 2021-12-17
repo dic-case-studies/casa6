@@ -39,8 +39,7 @@ class AbstractFolder:
 
 
 class EraseableFolder(AbstractFolder):
-    """Image/MeasurementSet file path class. The file path is permitted to erase.
-    """
+    """Image/MeasurementSet file path class. The file path is permitted to erase."""
 
     def erase(self, dry_run: bool=True) -> None:
         if not dry_run:
@@ -50,8 +49,7 @@ class EraseableFolder(AbstractFolder):
 
 
 class UnerasableFolder(AbstractFolder):
-    """Image/MeasurementSet file path class. The file path is NOT permitted to erase.
-    """
+    """Image/MeasurementSet file path class. The file path is NOT permitted to erase."""
 
     def erase(self, dry_run: bool=True) -> None:
         casalog.post(f"un-erase file:{self.path}", "DEBUG2")
@@ -84,8 +82,7 @@ class AbstractFileStack:
             raise ValueError('cannot append it to erase queue')
 
     def pop(self) -> AbstractFolder:
-        """Return the top of the stack.
-        """
+        """Return the top of the stack."""
         if self.height() <= 1:
             raise RuntimeError(f'the stack typed {self.type} cannot pop')
         return self.stack.pop()
@@ -103,8 +100,7 @@ class AbstractFileStack:
             raise RuntimeError(f"the stack typed {self.type} is empty")
 
     def subpeak(self) -> AbstractFolder:
-        """Return a pointer of a next of the top of the stack.
-        """
+        """Return a pointer of a next of the top of the stack."""
         if len(self.stack) > 1:
             picked = self.stack[len(self.stack) - 2]
             casalog.post(f'pick from sub peak of the stack typed {self.type}: {picked.path}', 'DEBUG2')
@@ -113,8 +109,7 @@ class AbstractFileStack:
             raise RuntimeError(f"the stack typed {self.type} has only one stuff")
 
     def bottom(self) -> AbstractFolder:
-        """Return a pointer of the bottom of the stack.
-        """
+        """Return a pointer of the bottom of the stack."""
         if len(self.stack) > 0:
             picked = self.stack[0]
             casalog.post(f'pick from bottom of the stack typed {self.type}: {picked.path}', 'DEBUG2')
@@ -243,8 +238,7 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
 
 def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None, kimage: str=None, scale: float=None,
                      stack: AbstractFileStack=None) -> None:
-    """Call casatasks::imsmooth task if dirkernel is specified.
-    """
+    """Call casatasks::imsmooth task if dirkernel is specified."""
     if __confirm_imsmooth_execution(dirkernel) is False:
         casalog.post("omit image smoothing", "INFO")
         return
@@ -269,8 +263,7 @@ def execute_image2ms(datacolumn: str=None, input_image_shape: ImageShape=None, i
 
 def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None, image_stack: AbstractFileStack=None,
                      ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
-    """Call casatasks::sdsmooth task if spkernel is specified.
-    """
+    """Call casatasks::sdsmooth task if spkernel is specified."""
     if __confirm_sdsmooth_execution(spkernel) is False:
         casalog.post("omit spectral smoothing", "INFO")
         return
@@ -291,8 +284,7 @@ def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=N
                        npiece: int=None, applyfft: bool=None, fftthresh: float=None, addwn: List[int]=None, rejwn: List[int]=None,
                        blparam: str=None, clipniter: int=None, clipthresh: float=None,
                        image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
-    """Call casatasks::sdbaseline task.
-    """
+    """Call casatasks::sdbaseline task."""
     casalog.post("execute spectral baselining", "INFO")
     input_ms = ms_stack.peak().path
     output_ms = __generate_temporary_filename("baseline-", "ms")
