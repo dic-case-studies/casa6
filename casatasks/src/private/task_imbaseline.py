@@ -65,11 +65,8 @@ class AbstractFileStack:
     holden by a property 'path' when execute cleaning process, and the UneraseableFolder class doesn't erase it.
     If this class is used to stack a path of CasaImage, the bottom of it must be the input image(an argument 'imagename').
     """
-    def __init__(self, type: str=None, top: AbstractFolder=None) -> None:
+    def __init__(self, top: AbstractFolder=None) -> None:
         self.stack = []
-        self.type = type
-        if not type:
-            raise RuntimeError('type of processing stack is not defined')
         if top is not None:
             self.push(top)
 
@@ -78,7 +75,7 @@ class AbstractFileStack:
 
     def push(self, file: AbstractFolder=None) -> None:
         if isinstance(file, AbstractFolder) and os.path.exists(file.path):
-            casalog.post(f'push f{file.path} into the stack typed {self.type}', 'DEBUG2')
+            casalog.post(f'push f{file.path} into the stack', 'DEBUG2')
             self.stack.append(file)
         else:
             raise ValueError('cannot append it to erase queue')
@@ -86,7 +83,7 @@ class AbstractFileStack:
     def pop(self) -> AbstractFolder:
         """Return the top of the stack."""
         if self.height() <= 1:
-            raise RuntimeError(f'the stack typed {self.type} cannot pop')
+            raise RuntimeError(f'the stack cannot pop')
         return self.stack.pop()
 
     def peak(self) -> AbstractFolder:
@@ -96,28 +93,28 @@ class AbstractFileStack:
         """
         if len(self.stack) > 0:
             picked = self.stack[len(self.stack) - 1]
-            casalog.post(f'pick from the stack typed {self.type}: {picked.path}', 'DEBUG2')
+            casalog.post(f'pick from the stack: {picked.path}', 'DEBUG2')
             return self.stack[len(self.stack) - 1]
         else:
-            raise RuntimeError(f'the stack typed {self.type} is empty')
+            raise RuntimeError(f'the stack is empty')
 
     def subpeak(self) -> AbstractFolder:
         """Return a pointer of a next of the top of the stack."""
         if len(self.stack) > 1:
             picked = self.stack[len(self.stack) - 2]
-            casalog.post(f'pick from sub peak of the stack typed {self.type}: {picked.path}', 'DEBUG2')
+            casalog.post(f'pick from sub peak of the stack: {picked.path}', 'DEBUG2')
             return self.stack[len(self.stack) - 2]
         else:
-            raise RuntimeError(f'the stack typed {self.type} has only one stuff')
+            raise RuntimeError(f'the stack has only one stuff')
 
     def bottom(self) -> AbstractFolder:
         """Return a pointer of the bottom of the stack."""
         if len(self.stack) > 0:
             picked = self.stack[0]
-            casalog.post(f'pick from bottom of the stack typed {self.type}: {picked.path}', 'DEBUG2')
+            casalog.post(f'pick from bottom of the stack: {picked.path}', 'DEBUG2')
             return self.stack[0]
         else:
-            raise RuntimeError(f'the stack typed {self.type} has not have enough stuff')
+            raise RuntimeError(f'the stack has not have enough stuff')
 
     def clear(self, dry_run: bool=True) -> None:
         """Do erase method of all of the stack and clear the stack."""
@@ -135,19 +132,15 @@ class AbstractFileStack:
 class CasaImageStack(AbstractFileStack):
     """FileStack for CasaImage."""
 
-    TYPE = 'im'
-
     def __init__(self, top: AbstractFolder=None) -> None:
-        super().__init__(type=self.TYPE, top=top)
+        super().__init__(top=top)
 
 
 class MeasurementSetStack(AbstractFileStack):
     """FileStack for MeasurementSet."""
 
-    TYPE = 'ms'
-
     def __init__(self) -> None:
-        super().__init__(type=self.TYPE)
+        super().__init__()
 
 
 class Validable:
