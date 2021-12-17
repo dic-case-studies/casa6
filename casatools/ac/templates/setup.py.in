@@ -183,26 +183,7 @@ def compute_version( ):
         (major, minor, patch, feature) = args.version.split(".")
         return(int(major), int(minor), int(patch), int(feature),"","","")
     else:
-        # 'scripts/version' script must be run inside the git repository.
-        # When building outside of casatools source tree directory,
-        # the working directory of setup.py is no longer in the git repository.
-        # So we run 'scripts/version' inside casatools/scripts directory
-        # to make sure we are inside the git repository.
-        #
-        # We assume here that before starting an out-of-source-tree build,
-        # symbolic links to casatools/* have been created under the build directory,
-        # e.g. as follows:
-        # casatools-build-root
-        #   |_ casatools-src -> /path/to/casatools
-        #   |_ scripts -> casatools-src/scripts
-        # ... and so on for anything directly under a pristine casatools directory
-        # - i.e. excluding any untracked or in-source-tree-build-generated resource -
-        # strictly required by the build system.
-        # As of 2021/03/19 this means:
-        # ac, casacore, casa-source, cerberus, configure.ac, fortran-source, grpc-source, include, scripts, src, tests
-        version_script_path = os.path.join(os.getcwd(),"scripts/version")
-        version_script_dir = os.path.dirname(version_script_path)
-        proc = Popen( [ version_script_path ], cwd=version_script_dir, stdout=PIPE, stderr=PIPE )
+        proc = Popen( [ "scripts/version" ], stdout=PIPE, stderr=PIPE )
         out,err = pipe_decode(proc.communicate( ))
         print(out)
         devbranchtag = out.split(" ")[0].strip()
