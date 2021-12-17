@@ -43,7 +43,7 @@ class EraseableFolder(AbstractFolder):
 
     def erase(self, dry_run: bool=True) -> None:
         if not dry_run:
-            casalog.post(f"erase file:{self.path}", "DEBUG2")
+            casalog.post(f'erase file:{self.path}', 'DEBUG2')
             if os.path.exists(self.path):
                 shutil.rmtree(self.path)
 
@@ -52,7 +52,7 @@ class UnerasableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is NOT permitted to erase."""
 
     def erase(self, dry_run: bool=True) -> None:
-        casalog.post(f"un-erase file:{self.path}", "DEBUG2")
+        casalog.post(f'un-erase file:{self.path}', 'DEBUG2')
 
 
 class AbstractFileStack:
@@ -61,7 +61,7 @@ class AbstractFileStack:
     The paths of CasaImage or MeasurementSet are wrapped by AbstractFolder class.
     Implementation classes of AbstractFileStack are EraseableFolder/UneraseableFolder, the EraseableFolder class erases the path
     holden by a property 'path' when execute cleaning process, and the UneraseableFolder class doesn't erase it.
-    If this class is used to stack a path of CasaImage, the bottom of it must be the input image(an argument "imagename").
+    If this class is used to stack a path of CasaImage, the bottom of it must be the input image(an argument 'imagename').
     """
     def __init__(self, type: str=None, top: AbstractFolder=None) -> None:
         self.stack = []
@@ -97,7 +97,7 @@ class AbstractFileStack:
             casalog.post(f'pick from the stack typed {self.type}: {picked.path}', 'DEBUG2')
             return self.stack[len(self.stack) - 1]
         else:
-            raise RuntimeError(f"the stack typed {self.type} is empty")
+            raise RuntimeError(f'the stack typed {self.type} is empty')
 
     def subpeak(self) -> AbstractFolder:
         """Return a pointer of a next of the top of the stack."""
@@ -106,7 +106,7 @@ class AbstractFileStack:
             casalog.post(f'pick from sub peak of the stack typed {self.type}: {picked.path}', 'DEBUG2')
             return self.stack[len(self.stack) - 2]
         else:
-            raise RuntimeError(f"the stack typed {self.type} has only one stuff")
+            raise RuntimeError(f'the stack typed {self.type} has only one stuff')
 
     def bottom(self) -> AbstractFolder:
         """Return a pointer of the bottom of the stack."""
@@ -115,7 +115,7 @@ class AbstractFileStack:
             casalog.post(f'pick from bottom of the stack typed {self.type}: {picked.path}', 'DEBUG2')
             return self.stack[0]
         else:
-            raise RuntimeError(f"the stack typed {self.type} has not have enough stuff")
+            raise RuntimeError(f'the stack typed {self.type} has not have enough stuff')
 
     def clear(self, dry_run: bool=True) -> None:
         """Do erase method of all of the stack and clear the stack."""
@@ -133,7 +133,7 @@ class AbstractFileStack:
 class CasaImageStack(AbstractFileStack):
     """FileStack for CasaImage"""
 
-    TYPE = "im"
+    TYPE = 'im'
 
     def __init__(self, top: AbstractFolder=None) -> None:
         super().__init__(type=self.TYPE, top=top)
@@ -142,7 +142,7 @@ class CasaImageStack(AbstractFileStack):
 class MeasurementSetStack(AbstractFileStack):
     """FileStack for MeasurementSet"""
 
-    TYPE = "ms"
+    TYPE = 'ms'
 
     def __init__(self) -> None:
         super().__init__(type=self.TYPE)
@@ -240,12 +240,12 @@ def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: 
                      stack: AbstractFileStack=None) -> None:
     """Call casatasks::imsmooth task if dirkernel is specified."""
     if __confirm_imsmooth_execution(dirkernel) is False:
-        casalog.post("omit image smoothing", "INFO")
+        casalog.post('omit image smoothing', 'INFO')
         return
 
-    casalog.post("execute image smoothing", "INFO")
+    casalog.post('execute image smoothing', 'INFO')
     infile = stack.peak().path
-    outfile = __generate_temporary_filename("dirsmooth-", "im")
+    outfile = __generate_temporary_filename('dirsmooth-', 'im')
     args, kargs = ImsmoothParams(infile, outfile, dirkernel, major, minor, pa, kimage, scale)()
     imsmooth(*args, **kargs)
     stack.push(EraseableFolder(outfile))
@@ -254,9 +254,9 @@ def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: 
 def execute_image2ms(datacolumn: str=None, input_image_shape: ImageShape=None, image_stack: AbstractFileStack=None,
                      ms_stack: AbstractFileStack=None) -> None:
     """Convert a casaimage to a MeasurementSet."""
-    casalog.post("convert casaimage to MeasurementSet", "INFO")
+    casalog.post('convert casaimage to MeasurementSet', 'INFO')
     infile = image_stack.peak().path
-    outfile = __generate_temporary_filename("img2ms-", "ms")
+    outfile = __generate_temporary_filename('img2ms-', 'ms')
     image2ms(Image2MSParams(infile, outfile, datacolumn, input_image_shape))
     ms_stack.push(EraseableFolder(outfile))
 
@@ -265,13 +265,13 @@ def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None,
                      ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
     """Call casatasks::sdsmooth task if spkernel is specified."""
     if __confirm_sdsmooth_execution(spkernel) is False:
-        casalog.post("omit spectral smoothing", "INFO")
+        casalog.post('omit spectral smoothing', 'INFO')
         return
 
-    casalog.post("execute spectral smoothing", "INFO")
+    casalog.post('execute spectral smoothing', 'INFO')
 
     input_ms = ms_stack.peak().path
-    output_ms = __generate_temporary_filename("spsmooth-", "ms")
+    output_ms = __generate_temporary_filename('spsmooth-', 'ms')
     base_image = image_stack.bottom().path
     sdsmooth(**SdsmoothParams(input_ms, output_ms, datacolumn.lower(), spkernel, kwidth)())
     ms_stack.push(EraseableFolder(output_ms))
@@ -285,9 +285,9 @@ def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=N
                        blparam: str=None, clipniter: int=None, clipthresh: float=None,
                        image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
     """Call casatasks::sdbaseline task."""
-    casalog.post("execute spectral baselining", "INFO")
+    casalog.post('execute spectral baselining', 'INFO')
     input_ms = ms_stack.peak().path
-    output_ms = __generate_temporary_filename("baseline-", "ms")
+    output_ms = __generate_temporary_filename('baseline-', 'ms')
     base_image = image_stack.bottom().path
     sdbaseline(**SdbaselineParams(input_ms, output_ms, datacolumn.lower(), bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh)())
@@ -442,7 +442,7 @@ class ImsmoothParams(Validable):
         __log_origin is for callabletask.log_origin_setter"""
         return [self.infile, self.kernel, self.major, self.minor, self.pa, self.TARGETRES, self.kimage, self.scale,
                 self.REGION, self.BOX, self.CHANS, self.STOKES, self.MASK, self.outfile, self.STRETCH, self.OVERWRITE,
-                self.BEAM], dict(__log_origin="imbaseline")
+                self.BEAM], dict(__log_origin='imbaseline')
 
 
 class SdsmoothParams(Validable):
@@ -482,7 +482,7 @@ class SdsmoothParams(Validable):
         return dict(infile=self.infile, datacolumn=self.datacolumn, antenna=self.ANTENNA, field=self.FIELD, spw=self.SPW,
                     timerange=self.TIMERANGE, scan=self.SCAN, pol=self.POL, intent=self.INTENT, reindex=self.REINDEX,
                     kernel=self.kernel, kwidth=self.kwidth, outfile=self.outfile, overwrite=self.OVERWRITE,
-                    __log_origin="imbaseline")
+                    __log_origin='imbaseline')
 
 
 class SdbaselineParams(Validable):
@@ -550,7 +550,7 @@ class SdbaselineParams(Validable):
             raise ValueError(f'Unsupported blfunc, {self.blfunc}', 'SEVERE')
 
         if self.blfunc == 'variable' and not os.path.exists(self.blparam):
-            raise ValueError(f"input file '{self.blparam}' does not exists", 'SEVERE')
+            raise ValueError(f'input file "{self.blparam}" does not exists', 'SEVERE')
 
     def __call__(self) -> Dict[str, Any]:
         """Convert the class into arguments of sdbaseline().
@@ -564,7 +564,7 @@ class SdbaselineParams(Validable):
                     fftthresh=self.fftthresh, addwn=self.addwn, rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter,
                     blparam=self.blparam, verbose=self.VERBOSE, updateweight=self.UPDATEWEIGHT, sigmavalue=self.SIGMAVALUE,
                     showprogress=self.SHOWPROGRESS, minnrow=self.MINNROW, outfile=self.outfile, overwrite=self.OVERWRITE,
-                    __log_origin="imbaseline")
+                    __log_origin='imbaseline')
 
 
 def __get_axis_position(val: array=None) -> int:
@@ -615,7 +615,7 @@ class Image2MSParams(Validable):
 
     def __validate_outfile(self) -> None:
         if os.path.exists(self.outfile):
-            raise ValueError(f"Folder exists:{self.outfile}")
+            raise ValueError(f'Folder exists:{self.outfile}')
 
 
 def image2ms(params: Image2MSParams=None) -> None:
@@ -646,7 +646,7 @@ def __create_maintable(params: Image2MSParams=None) -> None:
     tb = table()
     try:
         tb.create(params.outfile, EmptyMSBaseInformation.ms_desc, dminfo=EmptyMSBaseInformation.ms_dminfo)
-        tb.putkeyword(keyword="MS_VERSION", value=2)
+        tb.putkeyword(keyword='MS_VERSION', value=2)
         nrow = tb.nrows()
         nrow_req = params.im_nrow * params.im_npol
         nrow = tb.nrows()
@@ -670,7 +670,7 @@ def __create_maintable(params: Image2MSParams=None) -> None:
 
 def __create_antenna_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "ANTENNA",
+                      'ANTENNA',
                       EmptyMSBaseInformation.antenna_desc,
                       EmptyMSBaseInformation.antenna_dminfo)
     with table_manager(os.path.join(params.outfile, 'ANTENNA'), nomodify=False) as tb:
@@ -679,7 +679,7 @@ def __create_antenna_table(params: Image2MSParams=None) -> None:
 
 def __create_data_description_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "DATA_DESCRIPTION",
+                      'DATA_DESCRIPTION',
                       EmptyMSBaseInformation.data_description_desc,
                       EmptyMSBaseInformation.data_description_dminfo)
     with table_manager(os.path.join(params.outfile, 'DATA_DESCRIPTION'), nomodify=False) as tb:
@@ -690,7 +690,7 @@ def __create_data_description_table(params: Image2MSParams=None) -> None:
 
 def __create_feed_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "FEED",
+                      'FEED',
                       EmptyMSBaseInformation.feed_desc,
                       EmptyMSBaseInformation.feed_dminfo)
     with table_manager(os.path.join(params.outfile, 'FEED'), nomodify=False) as tb:
@@ -699,7 +699,7 @@ def __create_feed_table(params: Image2MSParams=None) -> None:
 
 def __create_field_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "FIELD",
+                      'FIELD',
                       EmptyMSBaseInformation.field_desc,
                       EmptyMSBaseInformation.field_dminfo)
     with table_manager(os.path.join(params.outfile, 'FIELD'), nomodify=False) as tb:
@@ -711,21 +711,21 @@ def __create_field_table(params: Image2MSParams=None) -> None:
 
 def __create_flag_cmd_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "FLAG_CMD",
+                      'FLAG_CMD',
                       EmptyMSBaseInformation.flag_cmd_desc,
                       EmptyMSBaseInformation.flag_cmd_dminfo)
 
 
 def __create_history_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "HISTORY",
+                      'HISTORY',
                       EmptyMSBaseInformation.history_desc,
                       EmptyMSBaseInformation.history_dminfo)
 
 
 def __create_observation_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "OBSERVATION",
+                      'OBSERVATION',
                       EmptyMSBaseInformation.observation_desc,
                       EmptyMSBaseInformation.observation_dminfo)
     with table_manager(os.path.join(params.outfile, 'OBSERVATION'), nomodify=False) as tb:
@@ -734,14 +734,14 @@ def __create_observation_table(params: Image2MSParams=None) -> None:
 
 def __create_pointing_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "POINTING",
+                      'POINTING',
                       EmptyMSBaseInformation.pointing_desc,
                       EmptyMSBaseInformation.pointing_dminfo)
 
 
 def __create_polarization_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "POLARIZATION",
+                      'POLARIZATION',
                       EmptyMSBaseInformation.polarization_desc,
                       EmptyMSBaseInformation.polarization_dminfo)
     with table_manager(os.path.join(params.outfile, 'POLARIZATION'), nomodify=False) as tb:
@@ -756,21 +756,21 @@ def __create_polarization_table(params: Image2MSParams=None) -> None:
 
 def __create_processor_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "PROCESSOR",
+                      'PROCESSOR',
                       EmptyMSBaseInformation.processor_desc,
                       EmptyMSBaseInformation.processor_dminfo)
 
 
 def __create_source_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "SOURCE",
+                      'SOURCE',
                       EmptyMSBaseInformation.source_desc,
                       EmptyMSBaseInformation.source_dminfo)
 
 
 def __create_special_window_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "SPECTRAL_WINDOW",
+                      'SPECTRAL_WINDOW',
                       EmptyMSBaseInformation.special_window_desc,
                       EmptyMSBaseInformation.special_window_dminfo)
     with table_manager(os.path.join(params.outfile, 'SPECTRAL_WINDOW'), nomodify=False) as tb:
@@ -789,7 +789,7 @@ def __create_special_window_table(params: Image2MSParams=None) -> None:
 
 def __create_state_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
-                      "STATE",
+                      'STATE',
                       EmptyMSBaseInformation.state_desc,
                       EmptyMSBaseInformation.state_dminfo)
     with table_manager(os.path.join(params.outfile, 'STATE'), nomodify=False) as tb:
@@ -808,11 +808,11 @@ def __check_ms_path(params, overWrite: bool=True) -> None:
 def __create_subtable(outfile: str=None, subtable: str=None, desc: str=None, dminfo: str=None) -> None:
     tb = table()
     try:
-        tb.create(f"{outfile}/{subtable}", desc, dminfo=dminfo)
+        tb.create(f'{outfile}/{subtable}', desc, dminfo=dminfo)
     finally:
         tb.close()
     with table_manager(outfile, nomodify=False) as tb:
-        tb.putkeyword(subtable, f"Table: {outfile}/{subtable}")
+        tb.putkeyword(subtable, f'Table: {outfile}/{subtable}')
 
 
 def __copy_image_array_to_ms(params: Image2MSParams=None) -> None:
@@ -966,7 +966,7 @@ def __write_image_history(outfile) -> None:
             param_vals = [vars[p] for p in param_names]
             write_image_history(outia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
         except Exception as instance:
-            casalog.post(f"*** Error '{instance}' updating HISTORY", 'WARN')
+            casalog.post(f'*** Error "{instance}" updating HISTORY', 'WARN')
 
 
 class EmptyMSBaseInformation:
