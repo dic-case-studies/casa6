@@ -30,11 +30,11 @@ class AbstractFolder:
     The wrapped path could be decided to erase by which child classes are implemented.
     """
 
-    def __init__(self, file: str=None):
+    def __init__(self, file: str=None) -> None:
         self.path = file
 
     @abstractmethod
-    def erase(self):
+    def erase(self) -> None:
         raise RuntimeError('Not implemented')
 
 
@@ -42,7 +42,7 @@ class EraseableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is permitted to erase.
     """
 
-    def erase(self, dry_run: bool=True):
+    def erase(self, dry_run: bool=True) -> None:
         if not dry_run:
             casalog.post(f"erase file:{self.path}", "DEBUG2")
             if os.path.exists(self.path):
@@ -53,7 +53,7 @@ class UnerasableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is NOT permitted to erase.
     """
 
-    def erase(self, dry_run: bool=True):
+    def erase(self, dry_run: bool=True) -> None:
         casalog.post(f"un-erase file:{self.path}", "DEBUG2")
 
 
@@ -65,7 +65,7 @@ class AbstractFileStack:
     holden by a property 'path' when execute cleaning process, and the UneraseableFolder class doesn't erase it.
     If this class is used to stack a path of CasaImage, the bottom of it must be the input image(an argument "imagename").
     """
-    def __init__(self, type: str=None, top: AbstractFolder=None):
+    def __init__(self, type: str=None, top: AbstractFolder=None) -> None:
         self.stack = []
         self.type = type
         if not type:
@@ -73,10 +73,10 @@ class AbstractFileStack:
         if top is not None:
             self.push(top)
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         return self
 
-    def push(self, file: AbstractFolder=None):
+    def push(self, file: AbstractFolder=None) -> None:
         if isinstance(file, AbstractFolder) and os.path.exists(file.path):
             casalog.post(f'push f{file.path} into the stack typed {self.type}', 'DEBUG2')
             self.stack.append(file)
@@ -122,7 +122,7 @@ class AbstractFileStack:
         else:
             raise RuntimeError(f"the stack typed {self.type} has not have enough stuff")
 
-    def clear(self, dry_run: bool=True):
+    def clear(self, dry_run: bool=True) -> None:
         """Do erase method of all of the stack and clear the stack."""
         for file in self.stack:
             file.erase(dry_run)
@@ -131,7 +131,7 @@ class AbstractFileStack:
     def height(self) -> int:
         return len(self.stack)
 
-    def __exit__(self, exception_type, exception_value, traceback):
+    def __exit__(self, exception_type, exception_value, traceback) -> None:
         self.clear(False)
 
 
@@ -140,7 +140,7 @@ class CasaImageStack(AbstractFileStack):
 
     TYPE = "im"
 
-    def __init__(self, top: AbstractFolder=None):
+    def __init__(self, top: AbstractFolder=None) -> None:
         super().__init__(type=self.TYPE, top=top)
 
 
@@ -149,14 +149,14 @@ class MeasurementSetStack(AbstractFileStack):
 
     TYPE = "ms"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(type=self.TYPE)
 
 
 class Validable:
 
     @abstractmethod
-    def validate(self):
+    def validate(self) -> None:
         raise RuntimeError('Not implemented')
 
 
@@ -175,7 +175,7 @@ class ImageShape(Validable):
     im_nchan = None
     im_npol = None
 
-    def __init__(self, im_shape: np.ndarray=None, axis_dir: np.ndarray=None, axis_sp: int=None, axis_pol: int=None):
+    def __init__(self, im_shape: np.ndarray=None, axis_dir: np.ndarray=None, axis_sp: int=None, axis_pol: int=None) -> None:
         self.im_shape = im_shape
         self.axis_dir = axis_dir
         self.axis_sp = axis_sp
@@ -185,7 +185,7 @@ class ImageShape(Validable):
         self.im_nchan = self.im_shape[self.axis_sp] if self.axis_sp > 0 else 1
         self.im_npol = self.im_shape[self.axis_pol] if self.axis_pol > 0 else 1
 
-    def validate(self):
+    def validate(self) -> None:
         if not len(self.axis_dir):
             raise ValueError(f'invalid value: axis_dir {self.axis_dir}')
 
@@ -204,7 +204,7 @@ class ImageShape(Validable):
 def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, maskmode=None, chans=None, thresh=None,
                avg_limit=None, minwidth=None, edge=None, blfunc=None, order=None, npiece=None, applyfft=None, fftthresh=None,
                addwn=None, rejwn=None, blparam=None, clipniter=None, clipthresh=None, dirkernel=None, major=None, minor=None,
-               pa=None, kimage=None, scale=None, spkernel=None, kwidth=None):
+               pa=None, kimage=None, scale=None, spkernel=None, kwidth=None) -> None:
     """
     THE MAIN METHOD OF IMBASELINE.
 
@@ -242,7 +242,7 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
 
 
 def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None, kimage: str=None, scale: float=None,
-                     stack: AbstractFileStack=None):
+                     stack: AbstractFileStack=None) -> None:
     """Call casatasks::imsmooth task if dirkernel is specified.
     """
     if __confirm_imsmooth_execution(dirkernel) is False:
@@ -258,7 +258,7 @@ def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: 
 
 
 def execute_image2ms(datacolumn: str=None, input_image_shape: ImageShape=None, image_stack: AbstractFileStack=None,
-                     ms_stack: AbstractFileStack=None):
+                     ms_stack: AbstractFileStack=None) -> None:
     """Convert a casaimage to a MeasurementSet."""
     casalog.post("convert casaimage to MeasurementSet", "INFO")
     infile = image_stack.peak().path
@@ -268,7 +268,7 @@ def execute_image2ms(datacolumn: str=None, input_image_shape: ImageShape=None, i
 
 
 def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None, image_stack: AbstractFileStack=None,
-                     ms_stack: AbstractFileStack=None, image_shape: ImageShape=None):
+                     ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
     """Call casatasks::sdsmooth task if spkernel is specified.
     """
     if __confirm_sdsmooth_execution(spkernel) is False:
@@ -290,7 +290,7 @@ def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=N
                        avg_limit: int=None, minwidth: int=None, edge: List[int]=None, blfunc: str=None, order: int=None,
                        npiece: int=None, applyfft: bool=None, fftthresh: float=None, addwn: List[int]=None, rejwn: List[int]=None,
                        blparam: str=None, clipniter: int=None, clipthresh: float=None,
-                       image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None, image_shape: ImageShape=None):
+                       image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
     """Call casatasks::sdbaseline task.
     """
     casalog.post("execute spectral baselining", "INFO")
@@ -307,7 +307,7 @@ def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=N
         __rename_blparam_filename(blparam_name, base_image)
 
 
-def execute_image_subtraction(linefile: str=None, image_stack: AbstractFileStack=None):
+def execute_image_subtraction(linefile: str=None, image_stack: AbstractFileStack=None) -> None:
     """
     Execute image subtraction.
 
@@ -330,7 +330,7 @@ def execute_image_subtraction(linefile: str=None, image_stack: AbstractFileStack
         __image_subtraction(linefile, smoothed_image)
 
 
-def get_continuum_image(image_stack: AbstractFileStack=None):
+def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
     """compute input_image - output_image"""
     base_image = image_stack.bottom().path
     output_image = os.path.basename(base_image) + '.cont'
@@ -340,12 +340,12 @@ def get_continuum_image(image_stack: AbstractFileStack=None):
     __image_subtraction(output_image, subtract_image)
 
 
-def do_post_processing(outfile):
+def do_post_processing(outfile) -> None:
     """execute some post-processes of imbaseline"""
     __write_image_history(outfile)
 
 
-def __image_subtraction(operand_a: str=None, operand_b: str=None):
+def __image_subtraction(operand_a: str=None, operand_b: str=None) -> None:
     """image chunk subtraction"""
     image_array = None
     with tool_manager(operand_b, image) as ia:
@@ -355,7 +355,7 @@ def __image_subtraction(operand_a: str=None, operand_b: str=None):
         ia.putchunk(pixels=ia.getchunk() - image_array, locking=True)
 
 
-def __validate_imagename(imagename: str=None):
+def __validate_imagename(imagename: str=None) -> None:
     if not os.path.exists(imagename):
         raise ValueError(f'Error: file {imagename} is not found.', 'SEVERE')
 
@@ -377,8 +377,8 @@ def __generate_temporary_filename(prefix: str='', ext: str='') -> str:
             return filename
 
 
-def __confirm_imsmooth_execution(dirkernel: str=None):
-    def is_valid_kernel(kernel):
+def __confirm_imsmooth_execution(dirkernel: str=None) -> None:
+    def is_valid_kernel(kernel) -> None:
         return kernel == 'none', kernel == 'image' or kernel == 'boxcar' or kernel == 'gaussian'
 
     if not dirkernel:
@@ -391,8 +391,8 @@ def __confirm_imsmooth_execution(dirkernel: str=None):
     return False
 
 
-def __confirm_sdsmooth_execution(spkernel: str=None):
-    def is_valid_kernel(kernel):
+def __confirm_sdsmooth_execution(spkernel: str=None) -> None:
+    def is_valid_kernel(kernel) -> None:
         return kernel == 'none', kernel == 'boxcar' or kernel == 'gaussian'
 
     if not spkernel:
@@ -419,7 +419,7 @@ class ImsmoothParams(Validable):
     OVERWRITE = True
 
     def __init__(self, infile: str=None, outfile: str=None, dirkernel: str='none', major: str='', minor: str='', pa: str='',
-                 kimage: str='', scale: int=-1.0):
+                 kimage: str='', scale: int=-1.0) -> None:
         self.infile = infile
         self.outfile = outfile
         self.kernel = dirkernel if dirkernel is not None else 'none'       # none(default)/gaussian/boxcar/image
@@ -430,10 +430,10 @@ class ImsmoothParams(Validable):
         self.scale = scale if scale is not None else -1.0                  # dirkernel = image
         self.validate()
 
-    def validate(self):
+    def validate(self) -> None:
         self.__validate_dirkernel()
 
-    def __validate_dirkernel(self):
+    def __validate_dirkernel(self) -> None:
         if self.kernel == 'image':
             self.major = self.minor = self.pa = ''
             if self.kimage != '' and not os.path.exists(self.kimage):
@@ -466,7 +466,7 @@ class SdsmoothParams(Validable):
     REINDEX = True
     OVERWRITE = True
 
-    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, spkernel: str='none', kwidth: int=5):
+    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, spkernel: str='none', kwidth: int=5) -> None:
         self.infile = infile
         self.outfile = outfile
         self.datacolumn = datacolumn
@@ -474,10 +474,10 @@ class SdsmoothParams(Validable):
         self.kwidth = kwidth if kwidth is not None else 5            # gaussian/boxcar
         self.validate()
 
-    def validate(self):
+    def validate(self) -> None:
         self.__validate_spkernel()
 
-    def __validate_spkernel(self):
+    def __validate_spkernel(self) -> None:
         if self.kernel == 'none':
             self.kwidth = 5
         elif not (self.kernel == 'gaussian' or self.kernel == 'boxcar'):
@@ -519,7 +519,7 @@ class SdbaselineParams(Validable):
     def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, bloutput: str='', maskmode: str='list',
                  chans: str='', thresh: float=5.0, avg_limit: int=4, minwidth: int=4, edge: List[int]=[0, 0], blfunc: str='poly',
                  order: int=5, npiece: int=3, applyfft: bool=True, fftthresh: float=3.0, addwn: List=[0], rejwn: List=[],
-                 blparam: str='', clipniter: int=0, clipthresh: float=3.0):
+                 blparam: str='', clipniter: int=0, clipthresh: float=3.0) -> None:
         self.infile = infile
         self.outfile = outfile
         self.datacolumn = datacolumn
@@ -541,16 +541,16 @@ class SdbaselineParams(Validable):
         self.clipniter = clipniter if clipniter is not None else 0
         self.clipthresh = clipthresh if clipthresh is not None else 3.0
 
-    def validate(self):
+    def validate(self) -> None:
         self.__validate_maskmode()
         self.__validate_blfunc()
 
-    def __validate_maskmode(self):
+    def __validate_maskmode(self) -> None:
         if not (self.maskmode == 'list' or self.maskmode == 'auto'):
             raise ValueError(f'Unsupported maskmode, {self.maskmode}', 'SEVERE')
 
-    def __validate_blfunc(self):
-        def is_valid_blfunc(self):
+    def __validate_blfunc(self) -> None:
+        def is_valid_blfunc(self) -> None:
             return self.blfunc == 'poly' or self.blfunc == 'chebyshev' or self.blfunc == 'cspline' or self.blfunc == 'sinusoid' \
                 or self.blfunc == 'variable'
 
@@ -604,7 +604,7 @@ def get_image_shape(imagepath: str) -> ImageShape:
 class Image2MSParams(Validable):
     """Parameter manipulation class for executing image2ms()"""
 
-    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA', input_image_shape: ImageShape=None):
+    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA', input_image_shape: ImageShape=None) -> None:
         self.infile = infile
         self.outfile = outfile
         self.datacolumn = datacolumn
@@ -618,21 +618,21 @@ class Image2MSParams(Validable):
         self.im_npol = input_image_shape.im_npol
         self.validate()
 
-    def validate(self):
+    def validate(self) -> None:
         self.__validate_outfile()
 
-    def __validate_outfile(self):
+    def __validate_outfile(self) -> None:
         if os.path.exists(self.outfile):
             raise ValueError(f"Folder exists:{self.outfile}")
 
 
-def image2ms(params: Image2MSParams=None):
+def image2ms(params: Image2MSParams=None) -> None:
     """Convert CasaImage into MeasurementSet."""
     __create_empty_ms(params)
     __copy_image_array_to_ms(params)
 
 
-def __create_empty_ms(params: Image2MSParams=None):
+def __create_empty_ms(params: Image2MSParams=None) -> None:
     __check_ms_path(params)
     __create_maintable(params)
     __create_antenna_table(params)
@@ -650,7 +650,7 @@ def __create_empty_ms(params: Image2MSParams=None):
     __create_state_table(params)
 
 
-def __create_maintable(params: Image2MSParams=None):
+def __create_maintable(params: Image2MSParams=None) -> None:
     tb = table()
     try:
         tb.create(params.outfile, EmptyMSBaseInformation.ms_desc, dminfo=EmptyMSBaseInformation.ms_dminfo)
@@ -676,7 +676,7 @@ def __create_maintable(params: Image2MSParams=None):
         tb.close()
 
 
-def __create_antenna_table(params: Image2MSParams=None):
+def __create_antenna_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "ANTENNA",
                       EmptyMSBaseInformation.antenna_desc,
@@ -685,7 +685,7 @@ def __create_antenna_table(params: Image2MSParams=None):
         tb.addrows(1)
 
 
-def __create_data_description_table(params: Image2MSParams=None):
+def __create_data_description_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "DATA_DESCRIPTION",
                       EmptyMSBaseInformation.data_description_desc,
@@ -696,7 +696,7 @@ def __create_data_description_table(params: Image2MSParams=None):
         tb.putcell('POLARIZATION_ID', 0, 0)
 
 
-def __create_feed_table(params: Image2MSParams=None):
+def __create_feed_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "FEED",
                       EmptyMSBaseInformation.feed_desc,
@@ -705,7 +705,7 @@ def __create_feed_table(params: Image2MSParams=None):
         tb.addrows(1)
 
 
-def __create_field_table(params: Image2MSParams=None):
+def __create_field_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "FIELD",
                       EmptyMSBaseInformation.field_desc,
@@ -717,21 +717,21 @@ def __create_field_table(params: Image2MSParams=None):
         tb.putcell('REFERENCE_DIR', 0, np.zeros((2, 1)))
 
 
-def __create_flag_cmd_table(params: Image2MSParams=None):
+def __create_flag_cmd_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "FLAG_CMD",
                       EmptyMSBaseInformation.flag_cmd_desc,
                       EmptyMSBaseInformation.flag_cmd_dminfo)
 
 
-def __create_history_table(params: Image2MSParams=None):
+def __create_history_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "HISTORY",
                       EmptyMSBaseInformation.history_desc,
                       EmptyMSBaseInformation.history_dminfo)
 
 
-def __create_observation_table(params: Image2MSParams=None):
+def __create_observation_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "OBSERVATION",
                       EmptyMSBaseInformation.observation_desc,
@@ -740,14 +740,14 @@ def __create_observation_table(params: Image2MSParams=None):
         tb.addrows(1)
 
 
-def __create_pointing_table(params: Image2MSParams=None):
+def __create_pointing_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "POINTING",
                       EmptyMSBaseInformation.pointing_desc,
                       EmptyMSBaseInformation.pointing_dminfo)
 
 
-def __create_polarization_table(params: Image2MSParams=None):
+def __create_polarization_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "POLARIZATION",
                       EmptyMSBaseInformation.polarization_desc,
@@ -762,21 +762,21 @@ def __create_polarization_table(params: Image2MSParams=None):
         tb.putcell('CORR_PRODUCT', 0, corr_product)
 
 
-def __create_processor_table(params: Image2MSParams=None):
+def __create_processor_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "PROCESSOR",
                       EmptyMSBaseInformation.processor_desc,
                       EmptyMSBaseInformation.processor_dminfo)
 
 
-def __create_source_table(params: Image2MSParams=None):
+def __create_source_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "SOURCE",
                       EmptyMSBaseInformation.source_desc,
                       EmptyMSBaseInformation.source_dminfo)
 
 
-def __create_special_window_table(params: Image2MSParams=None):
+def __create_special_window_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "SPECTRAL_WINDOW",
                       EmptyMSBaseInformation.special_window_desc,
@@ -795,7 +795,7 @@ def __create_special_window_table(params: Image2MSParams=None):
         tb.putcell('TOTAL_BANDWIDTH', 0, cw.sum())
 
 
-def __create_state_table(params: Image2MSParams=None):
+def __create_state_table(params: Image2MSParams=None) -> None:
     __create_subtable(params.outfile,
                       "STATE",
                       EmptyMSBaseInformation.state_desc,
@@ -806,14 +806,14 @@ def __create_state_table(params: Image2MSParams=None):
         tb.putcell('OBS_MODE', 0, 'OBSERVE_TARGET#ON_SOURCE_IMAGE_DOMAIN')
 
 
-def __check_ms_path(params, overWrite: bool=True):
+def __check_ms_path(params, overWrite: bool=True) -> None:
     exists = os.path.exists(params.outfile)
     if overWrite and exists:
         shutil.rmtree(params.outfile)
     return exists
 
 
-def __create_subtable(outfile: str=None, subtable: str=None, desc: str=None, dminfo: str=None):
+def __create_subtable(outfile: str=None, subtable: str=None, desc: str=None, dminfo: str=None) -> None:
     tb = table()
     try:
         tb.create(f"{outfile}/{subtable}", desc, dminfo=dminfo)
@@ -823,7 +823,7 @@ def __create_subtable(outfile: str=None, subtable: str=None, desc: str=None, dmi
         tb.putkeyword(subtable, f"Table: {outfile}/{subtable}")
 
 
-def __copy_image_array_to_ms(params: Image2MSParams=None):
+def __copy_image_array_to_ms(params: Image2MSParams=None) -> None:
     __put_image_data_into_ms(params, *__get_image_value(params))
 
 
@@ -848,7 +848,7 @@ def __get_image_value(params: Image2MSParams=None) -> Tuple[np.array, int]:
 
 
 def __put_image_data_into_ms(params: Image2MSParams, image_array: np.array, mask_array: np.array, axis_x: int, axis_y: int,
-                             axis_sp: int, axis_pol: int):
+                             axis_sp: int, axis_pol: int) -> None:
     # which data column to use
     with table_manager(params.outfile, nomodify=False) as tb:
         # also set FLAG, SIGMA, WEIGHT, and UVW
@@ -880,7 +880,7 @@ class MS2ImageParams(Validable):
     """Parameter manipulation class for executing ms2image()"""
 
     def __init__(self, infile: str=None, linefile: str='', imagefile: str='', datacolumn: str='DATA', output_cont: bool=False,
-                 output_cont_file: str='', i2ms_params: Image2MSParams=None):
+                 output_cont_file: str='', i2ms_params: Image2MSParams=None) -> None:
         self.infile = infile
         self.linefile = linefile
         self.imagename = imagefile
@@ -890,7 +890,7 @@ class MS2ImageParams(Validable):
         self.i2ms = i2ms_params
         self.validate()
 
-    def validate(self):
+    def validate(self) -> None:
         pass
 
 
@@ -924,7 +924,7 @@ def __rename_blparam_filename(filename: str=None, basename: str=None) -> str:
     return newname
 
 
-def __convert_ms_to_image(base_image: str=None, input_ms: str=None, input_image_shape: ImageShape=None, datacolumn: str=None):
+def __convert_ms_to_image(base_image: str=None, input_ms: str=None, input_image_shape: ImageShape=None, datacolumn: str=None) -> None:
     output_image = __change_file_extension(input_ms, 'im')
     __copy_image_file(base_image, output_image)  # mask data is also copied in this method
 
@@ -934,7 +934,7 @@ def __convert_ms_to_image(base_image: str=None, input_ms: str=None, input_image_
     return output_image
 
 
-def __copy_image_file(infile: str=None, outfile: str=None):
+def __copy_image_file(infile: str=None, outfile: str=None) -> None:
     if not os.path.exists(infile):
         raise Exception(f'Image files not found, infile:{infile}')
 
@@ -961,12 +961,12 @@ def __make_image_array(input_image_shape: ImageShape=None, infile: str=None, dat
     return image_array
 
 
-def __output_image(outfile: str=None, image_array: np.array=None):
+def __output_image(outfile: str=None, image_array: np.array=None) -> None:
     with tool_manager(outfile, image) as ia:
         ia.putchunk(pixels=image_array, locking=True)
 
 
-def __write_image_history(outfile):
+def __write_image_history(outfile) -> None:
     with tool_manager(outfile, image) as outia:
         try:
             param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
