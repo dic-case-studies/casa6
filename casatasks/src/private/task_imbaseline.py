@@ -247,8 +247,7 @@ def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: 
     casalog.post('execute image smoothing', 'INFO')
     infile = stack.peak().path
     outfile = __generate_temporary_filename('dirsmooth', 'im')
-    args, kargs = ImsmoothParams(infile, outfile, dirkernel, major, minor, pa, kimage, scale)()
-    imsmooth(*args, **kargs)
+    imsmooth(**ImsmoothParams(infile, outfile, dirkernel, major, minor, pa, kimage, scale)())
     stack.push(EraseableFolder(outfile))
 
 
@@ -443,10 +442,10 @@ class ImsmoothParams(AbstractValidatable):
 
         __log_origin is for callabletask.log_origin_setter
         """
-        return [self.infile, self.kernel, self.major, self.minor, self.pa, self.TARGETRES, self.kimage, self.scale,
-                self.REGION, self.BOX, self.CHANS, self.STOKES, self.MASK, self.outfile, self.STRETCH, self.OVERWRITE,
-                self.BEAM], dict(__log_origin='imbaseline')
-
+        return dict(imagename=self.infile, kernel=self.kernel, major=self.major, minor=self.minor, pa=self.pa, targetres=self.TARGETRES,
+                    kimage=self.kimage, scale=self.scale, region=self.REGION, box=self.BOX, chans=self.CHANS, stokes=self.STOKES,
+                    mask=self.MASK, outfile=self.outfile, stretch=self.STRETCH, overwrite=self.OVERWRITE, beam=self.BEAM,
+                    __log_origin='imbaseline')
 
 class SdsmoothParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks::sdsmooth."""
