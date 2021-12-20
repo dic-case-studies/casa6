@@ -2,19 +2,11 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy
-from casatasks.private.casa_transition import is_CASA6
 
-if is_CASA6:
-    from casatasks import casalog
-    from casatools import image, quanta
+from casatasks import casalog
+from casatools import image, quanta
 
-    from . import sdutil
-
-else:
-    import sdutil
-    from taskinit import casalog
-    from taskinit import iatool as image
-    from taskinit import qatool as quanta
+from . import sdutil
 
 qa = quanta()
 
