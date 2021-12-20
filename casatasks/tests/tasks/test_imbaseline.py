@@ -121,7 +121,7 @@ class AbstractFileStack_test(test_base):
         stack = CasaImageStack(UnerasableFolder(self.dummy_folder1))
         self.assertTrue(stack.height() == 1)
 
-    @test_base.exception_case(ValueError, 'cannot append it to erase queue')
+    @test_base.exception_case(ValueError, 'file path unexists is not found')
     def test_1_2(self):
         CasaImageStack(UnerasableFolder(self.unexist_folder))
 
@@ -130,7 +130,7 @@ class AbstractFileStack_test(test_base):
         stack.push(UnerasableFolder(self.dummy_folder1))
         self.assertTrue(stack.height() == 1)
 
-    @test_base.exception_case(ValueError, 'cannot append it to erase queue')
+    @test_base.exception_case(ValueError, 'file path unexists is not found')
     def test_1_4(self):
         stack = CasaImageStack()
         stack.push(UnerasableFolder(self.unexist_folder))
@@ -377,7 +377,7 @@ class imsmooth_test(test_base):
     #   7-2. simple failure case
     ####################################################################
 
-class ImbaselineTest(test_base):
+class imbaseline_test(test_base):
 
     datapath = ctsys_resolve('unittest/imsmooth/')
     targetres_im = "imsmooth_targetres.fits"
@@ -444,9 +444,5 @@ class ImbaselineTest(test_base):
 
 
 def suite():
-    return [imsmooth_test]
+    return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test]
 
-
-if __name__ == '__main__':
-    os.chdir("/work/dev/shimada/casa6.13520.new/tmp")
-    unittest.main()
