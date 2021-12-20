@@ -618,7 +618,7 @@ class Image2MSParams(AbstractValidable):
 def image2ms(params: Image2MSParams=None) -> None:
     """Convert CasaImage into MeasurementSet."""
     __create_empty_ms(params)
-    __copy_image_array_to_ms(params)
+    __copy_image_parametes_into_ms(params)
 
 
 def __create_empty_ms(params: Image2MSParams=None) -> None:
@@ -812,11 +812,11 @@ def __create_subtable(outfile: str=None, subtable: str=None, desc: str=None, dmi
         tb.putkeyword(subtable, f'Table: {outfile}/{subtable}')
 
 
-def __copy_image_array_to_ms(params: Image2MSParams=None) -> None:
-    __put_image_data_into_ms(params, *__get_image_value(params))
+def __copy_image_parametes_into_ms(params: Image2MSParams=None) -> None:
+    __put_image_parameters_into_ms(params, *__get_image_parameters(params))
 
 
-def __get_image_value(params: Image2MSParams=None) -> Tuple[np.array, int]:
+def __get_image_parameters(params: Image2MSParams=None) -> Tuple[np.array, int]:
     # get image array and mask from the image
     with tool_manager(params.infile, image) as ia:
         arr = ia.getchunk()
@@ -836,7 +836,7 @@ def __get_image_value(params: Image2MSParams=None) -> Tuple[np.array, int]:
     return arr, msk, xax, yax, spax, polax
 
 
-def __put_image_data_into_ms(params: Image2MSParams, image_array: np.array, mask_array: np.array, axis_x: int, axis_y: int,
+def __put_image_parameters_into_ms(params: Image2MSParams, image_array: np.array, mask_array: np.array, axis_x: int, axis_y: int,
                              axis_sp: int, axis_pol: int) -> None:
     # which data column to use
     with table_manager(params.outfile, nomodify=False) as tb:
