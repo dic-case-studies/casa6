@@ -1,7 +1,7 @@
 import os
 
+import matplotlib.pyplot as plt
 import numpy
-import pylab as pl
 from casatasks.private.casa_transition import is_CASA6
 
 if is_CASA6:
@@ -139,7 +139,7 @@ class ProfileMapAxesManager(object):
         self.nv = nv
         self.ticksize = ticksize
         self.brightnessunit = brightnessunit
-        self.numeric_formatter = pl.FormatStrFormatter('%.2f')
+        self.numeric_formatter = plt.FormatStrFormatter('%.2f')
         self.direction_label = direction_label
         self.direction_reference = direction_reference
         self.separatepanel = separatepanel
@@ -157,15 +157,15 @@ class ProfileMapAxesManager(object):
         self._axes_spmap = None
 
         # to resize matplotlib window to specified size
-        pl.figure(self.MATPLOTLIB_FIGURE_ID)
-        pl.close()
+        plt.figure(self.MATPLOTLIB_FIGURE_ID)
+        plt.close()
 
         if self.figsize is None:
-            pl.figure(self.MATPLOTLIB_FIGURE_ID)
+            plt.figure(self.MATPLOTLIB_FIGURE_ID)
         else:
-            pl.figure(self.MATPLOTLIB_FIGURE_ID, figsize=self.figsize)
+            plt.figure(self.MATPLOTLIB_FIGURE_ID, figsize=self.figsize)
         if clearpanel:
-            pl.clf()
+            plt.clf()
 
     @property
     def MATPLOTLIB_FIGURE_ID(self):
@@ -255,7 +255,7 @@ class ProfileMapAxesManager(object):
                 h = self.vertical_subplot_size
                 l = 1.0 - self.right_margin - w * (x + 1) + 0.5 * self.horizontal_space
                 b = self.bottom_margin + self.ylabel_area + h * y + 0.5 * self.vertical_space
-                axes = pl.axes([l, b, w - self.horizontal_space, h - self.vertical_space])
+                axes = plt.axes([l, b, w - self.horizontal_space, h - self.vertical_space])
                 axes.cla()
                 if self.showaxislabel and y == 0 and x == self.nh - 1:
                     casalog.post('label "{label}" unit "{unit}"'.format(label=self.spectral_label, unit=self.spectral_unit), priority='DEBUG')
@@ -276,26 +276,26 @@ class ProfileMapAxesManager(object):
                     axes.xaxis.tick_bottom()
                     axes.yaxis.tick_left()
                     if self.showticklabel:
-                        xlocator = pl.AutoLocator()
+                        xlocator = plt.AutoLocator()
                         xlocator.set_params(nbins=6, prune='upper')
                         axes.xaxis.set_major_locator(xlocator)
-                        ylocator = pl.AutoLocator()
+                        ylocator = plt.AutoLocator()
                         ylocator.set_params(nbins=4)
                         axes.yaxis.set_major_locator(ylocator)
-                        xformatter = pl.ScalarFormatter(useOffset=False)
+                        xformatter = plt.ScalarFormatter(useOffset=False)
                         axes.xaxis.set_major_formatter(xformatter)
                         axes.xaxis.set_tick_params(labelsize=max(self.ticksize - 1, 1))
                         axes.yaxis.set_tick_params(labelsize=max(self.ticksize - 1, 1))
                         if y != 0 or x != self.nh - 1:
-                            axes.xaxis.set_major_formatter(pl.NullFormatter())
-                            axes.yaxis.set_major_formatter(pl.NullFormatter())
+                            axes.xaxis.set_major_formatter(plt.NullFormatter())
+                            axes.yaxis.set_major_formatter(plt.NullFormatter())
                     else:
-                        axes.xaxis.set_major_formatter(pl.NullFormatter())
-                        axes.yaxis.set_major_formatter(pl.NullFormatter())
+                        axes.xaxis.set_major_formatter(plt.NullFormatter())
+                        axes.yaxis.set_major_formatter(plt.NullFormatter())
 
                 else:
-                    axes.yaxis.set_major_locator(pl.NullLocator())
-                    axes.xaxis.set_major_locator(pl.NullLocator())
+                    axes.yaxis.set_major_locator(plt.NullLocator())
+                    axes.xaxis.set_major_locator(plt.NullLocator())
 
                 yield axes
 
@@ -305,11 +305,11 @@ class ProfileMapAxesManager(object):
             l = 1.0 - self.right_margin - w * (x + 1)
             h = self.bottom_margin * 0.5
             b = self.bottom_margin - h
-            a1 = pl.axes([l, b, w, h])
+            a1 = plt.axes([l, b, w, h])
             a1.set_axis_off()
             if len(a1.texts) == 0:
-                pl.text(0.5, 0.2, HHMMSSss((label_ra[x][0] + label_ra[x][1]) / 2.0, 0),
-                        horizontalalignment='center', verticalalignment='center', size=self.ticksize)
+                plt.text(0.5, 0.2, HHMMSSss((label_ra[x][0] + label_ra[x][1]) / 2.0, 0),
+                         horizontalalignment='center', verticalalignment='center', size=self.ticksize)
             else:
                 a1.texts[0].set_text(HHMMSSss((label_ra[x][0] + label_ra[x][1]) / 2.0, 0))
         for y in range(self.nv):
@@ -317,11 +317,11 @@ class ProfileMapAxesManager(object):
             w = self.horizontal_subplot_size
             h = self.vertical_subplot_size
             b = self.bottom_margin + y * h
-            a1 = pl.axes([l, b, w, h])
+            a1 = plt.axes([l, b, w, h])
             a1.set_axis_off()
             if len(a1.texts) == 0:
-                pl.text(0.5, 0.5, DDMMSSs((label_dec[y][0] + label_dec[y][1]) / 2.0, 0),
-                        horizontalalignment='center', verticalalignment='center', size=self.ticksize)
+                plt.text(0.5, 0.5, DDMMSSs((label_dec[y][0] + label_dec[y][1]) / 2.0, 0),
+                         horizontalalignment='center', verticalalignment='center', size=self.ticksize)
             else:
                 a1.texts[0].set_text(DDMMSSs((label_dec[y][0] + label_dec[y][1]) / 2.0, 0))
 
@@ -330,24 +330,24 @@ class ProfileMapAxesManager(object):
         h = self.bottom_margin * 0.5
         b = 0.
         w = 1.0 - l - self.right_margin
-        a1 = pl.axes([l, b, w, h])
+        a1 = plt.axes([l, b, w, h])
         a1.set_axis_off()
         xpos = (1.0 + 0.5 * self.nh) / self.ncolumn
         casalog.post('xpos=%s' % (xpos), priority='DEBUG')
-        pl.text(xpos, 0.5, '%s (%s)' % (self.direction_label[0], self.direction_reference),
-                horizontalalignment='center', verticalalignment='center',
-                size=(self.ticksize + 2))
+        plt.text(xpos, 0.5, '%s (%s)' % (self.direction_label[0], self.direction_reference),
+                 horizontalalignment='center', verticalalignment='center',
+                 size=(self.ticksize + 2))
 
         # latitude label
         l = 0.0
         w = self.left_margin
         h = self.vertical_subplot_size
         b = self.bottom_margin + 0.5 * (h * self.nrow - self.vertical_subplot_size)
-        a1 = pl.axes([l, b, w, h])
+        a1 = plt.axes([l, b, w, h])
         a1.set_axis_off()
-        pl.text(1.0, 0.5, '%s (%s)' % (self.direction_label[1], self.direction_reference),
-                horizontalalignment='right', verticalalignment='center',
-                rotation='vertical', size=(self.ticksize + 2))
+        plt.text(1.0, 0.5, '%s (%s)' % (self.direction_label[1], self.direction_reference),
+                 horizontalalignment='right', verticalalignment='center',
+                 rotation='vertical', size=(self.ticksize + 2))
 
         # title
         if self.title_area > 0.:
@@ -355,12 +355,12 @@ class ProfileMapAxesManager(object):
             bottom = 1.0 - self.title_area - self.top_margin
             width = 1.0 - left - self.right_margin
             height = self.title_area
-            a1 = pl.axes([left, bottom, width, height])
+            a1 = plt.axes([left, bottom, width, height])
             a1.set_axis_off()
             xpos = (1.0 + 0.5 * self.nh) / self.ncolumn
-            pl.text(xpos, 0.1, self.title,
-                    horizontalalignment='center', verticalalignment='bottom',
-                    size=self.ticksize + 4)
+            plt.text(xpos, 0.1, self.title,
+                     horizontalalignment='center', verticalalignment='bottom',
+                     size=self.ticksize + 4)
 
 
 def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=None,
@@ -660,7 +660,7 @@ class SDProfileMapPlotter(object):
 
         casalog.post('global_ymin=%s, global_ymax=%s' % (global_ymin, global_ymax))
 
-        pl.ioff()
+        plt.ioff()
 
         no_data = numpy.zeros(len(frequency), dtype=numpy.float32)
         for x in range(self.nh):
@@ -683,21 +683,21 @@ class SDProfileMapPlotter(object):
                         ymin = global_ymin
                         ymax = global_ymax
                     casalog.post('Per panel scaling turned on: ymin=%s, ymax=%s (global ymin=%s, ymax=%s)' % (ymin, ymax, global_ymin, global_ymax))
-                pl.gcf().sca(self.axes.axes_spmap[y + (self.nh - x - 1) * self.nv])
+                plt.gcf().sca(self.axes.axes_spmap[y + (self.nh - x - 1) * self.nv])
                 if map_data[x][y].min() > NoDataThreshold:
-                    pl.plot(frequency, map_data[x][y], color=linecolor, linestyle=linestyle,
-                            linewidth=linewidth)
+                    plt.plot(frequency, map_data[x][y], color=linecolor, linestyle=linestyle,
+                             linewidth=linewidth)
                 else:
                     if plotmasked == 'empty':
                         pass
                     elif plotmasked == 'text':
-                        pl.text((xmin + xmax) / 2.0, (ymin + ymax) / 2.0, 'NO DATA', ha='center', va='center',
-                                size=(self.TickSize + 1))
+                        plt.text((xmin + xmax) / 2.0, (ymin + ymax) / 2.0, 'NO DATA', ha='center', va='center',
+                                 size=(self.TickSize + 1))
                     elif plotmasked == 'zero':
-                        pl.plot(frequency, no_data,
-                                color=maskedcolor, linestyle=linestyle, linewidth=linewidth)
+                        plt.plot(frequency, no_data,
+                                 color=maskedcolor, linestyle=linestyle, linewidth=linewidth)
                     elif plotmasked == 'none':
-                        a = pl.gcf().gca()
+                        a = plt.gcf().gca()
                         if self.axes.xlabel_area > 0. and y == 0 and x == 0:
                             pass
                         else:
@@ -705,24 +705,24 @@ class SDProfileMapPlotter(object):
                     elif plotmasked == 'plot':
                         m = map_data[x][y] == NoDataThreshold
                         if not all(m):
-                            ma = pl.ma.masked_array(map_data[x][y], m)
-                            pl.plot(frequency, ma,
-                                    color=maskedcolor, linestyle=linestyle, linewidth=linewidth)
+                            ma = numpy.ma.masked_array(map_data[x][y], m)
+                            plt.plot(frequency, ma,
+                                     color=maskedcolor, linestyle=linestyle, linewidth=linewidth)
 
-                pl.axis((xmin, xmax, ymin, ymax))
+                plt.axis((xmin, xmax, ymin, ymax))
 
-        pl.ion()
-        pl.draw()
+        plt.ion()
+        plt.draw()
 
         casalog.post('figfile=\'%s\'' % (figfile), priority='DEBUG')
         if figfile is not None and len(figfile) > 0:
             casalog.post('Output profile map to %s' % (figfile))
-            pl.savefig(figfile, format='png', dpi=DPIDetail, transparent=transparent)
+            plt.savefig(figfile, format='png', dpi=DPIDetail, transparent=transparent)
 
         return True
 
     def done(self):
-        #pl.close()
+        #plt.close()
         del self.axes
 
 
