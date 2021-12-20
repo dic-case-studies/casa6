@@ -166,15 +166,6 @@ class ImageShape(AbstractValidatable):
     These parameters are been getting in Image2MS, using in MS2Image.
     """
 
-    im_shape = None
-    axis_dir = None
-    axis_sp = None
-    axis_pol = None
-    dir_shape = None
-    im_nrow = None
-    im_nchan = None
-    im_npol = None
-
     def __init__(self, im_shape: np.ndarray=None, axis_dir: np.ndarray=None, axis_sp: int=None, axis_pol: int=None) -> None:
         self.im_shape = im_shape
         self.axis_dir = axis_dir
