@@ -89,10 +89,7 @@ class AbstractFileStack:
         return self.stack.pop()
 
     def peak(self) -> AbstractFolder:
-        """Return a pointer of the top of the stack.
-
-        The element returns is removed from the stack.
-        """
+        """Return a pointer of the top of the stack."""
         if len(self.stack) > 0:
             picked = self.stack[len(self.stack) - 1]
             casalog.post(f'pick from the stack: {picked.path}', 'DEBUG2')
