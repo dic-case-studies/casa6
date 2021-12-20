@@ -294,10 +294,10 @@ def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=N
 def execute_image_subtraction(linefile: str=None, image_stack: AbstractFileStack=None) -> None:
     """Execute image subtraction.
 
-    Processing of the output file(linefile) is different which executed direction/spectral smoothing or not.
-    - smoothing was executed:
+    The output image is computed as follows:
+    - in case any smoothing (along direction and/or frequency) is executed
         output_image = input_image - (smoothed_image - smoothed_and_subtracted_image)
-    - smoothing was not executed:
+    - in case no smoothing is executed
         output_image = subtracted_image
     """
     if image_stack.height() <= 2:  # any smoothing were not executed
