@@ -240,7 +240,7 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
 def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None, kimage: str=None, scale: float=None,
                      stack: AbstractFileStack=None) -> None:
     """Call casatasks::imsmooth task if dirkernel is specified."""
-    if __confirm_imsmooth_execution(dirkernel) is False:
+    if not __require_imsmooth(dirkernel):
         casalog.post('omit image smoothing', 'INFO')
         return
 
@@ -264,7 +264,7 @@ def execute_image2ms(datacolumn: str=None, input_image_shape: ImageShape=None, i
 def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None, image_stack: AbstractFileStack=None,
                      ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
     """Call casatasks::sdsmooth task if spkernel is specified."""
-    if __confirm_sdsmooth_execution(spkernel) is False:
+    if not __require_sdsmooth(spkernel):
         casalog.post('omit spectral smoothing', 'INFO')
         return
 
@@ -370,7 +370,7 @@ def __generate_temporary_filename(prefix: str='', ext: str='') -> str:
             return filename
 
 
-def __confirm_imsmooth_execution(dirkernel: str=None) -> None:
+def __require_imsmooth(dirkernel: str=None) -> None:
     def is_valid_kernel(kernel) -> None:
         return kernel == 'none', kernel == 'image' or kernel == 'boxcar' or kernel == 'gaussian'
 
@@ -384,7 +384,7 @@ def __confirm_imsmooth_execution(dirkernel: str=None) -> None:
     return False
 
 
-def __confirm_sdsmooth_execution(spkernel: str=None) -> None:
+def __require_sdsmooth(spkernel: str=None) -> None:
     def is_valid_kernel(kernel) -> None:
         return kernel == 'none', kernel == 'boxcar' or kernel == 'gaussian'
 
