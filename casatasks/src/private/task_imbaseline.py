@@ -250,7 +250,7 @@ def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: 
 
     casalog.post('execute image smoothing', 'INFO')
     infile = stack.peak().path
-    outfile = __generate_temporary_filename('dirsmooth-', 'im')
+    outfile = __generate_temporary_filename('dirsmooth', 'im')
     args, kargs = ImsmoothParams(infile, outfile, dirkernel, major, minor, pa, kimage, scale)()
     imsmooth(*args, **kargs)
     stack.push(EraseableFolder(outfile))
@@ -261,7 +261,7 @@ def execute_image2ms(datacolumn: str=None, input_image_shape: ImageShape=None, i
     """Convert a casaimage to a MeasurementSet."""
     casalog.post('convert casaimage to MeasurementSet', 'INFO')
     infile = image_stack.peak().path
-    outfile = __generate_temporary_filename('img2ms-', 'ms')
+    outfile = __generate_temporary_filename('img2ms', 'ms')
     image2ms(Image2MSParams(infile, outfile, datacolumn, input_image_shape))
     ms_stack.push(EraseableFolder(outfile))
 
@@ -276,7 +276,7 @@ def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None,
     casalog.post('execute spectral smoothing', 'INFO')
 
     input_ms = ms_stack.peak().path
-    output_ms = __generate_temporary_filename('spsmooth-', 'ms')
+    output_ms = __generate_temporary_filename('spsmooth', 'ms')
     base_image = image_stack.bottom().path
     sdsmooth(**SdsmoothParams(input_ms, output_ms, datacolumn.lower(), spkernel, kwidth)())
     ms_stack.push(EraseableFolder(output_ms))
@@ -292,7 +292,7 @@ def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=N
     """Call casatasks::sdbaseline task."""
     casalog.post('execute spectral baselining', 'INFO')
     input_ms = ms_stack.peak().path
-    output_ms = __generate_temporary_filename('baseline-', 'ms')
+    output_ms = __generate_temporary_filename('baseline', 'ms')
     base_image = image_stack.bottom().path
     sdbaseline(**SdbaselineParams(input_ms, output_ms, datacolumn.lower(), bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh)())
@@ -365,6 +365,8 @@ def __prepare_linefile(linefile: str=None, imagename: str=None) -> str:
 
 
 def __generate_temporary_filename(prefix: str='', ext: str='') -> str:
+    if prefix != '' and prefix[-1] != '-':
+        prefix = prefix + '-'
     if ext != '':
         ext = '.' + ext
     while True:
