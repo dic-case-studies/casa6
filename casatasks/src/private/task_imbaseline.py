@@ -447,6 +447,7 @@ class ImsmoothParams(AbstractValidatable):
                     mask=self.MASK, outfile=self.outfile, stretch=self.STRETCH, overwrite=self.OVERWRITE, beam=self.BEAM,
                     __log_origin='imbaseline')
 
+
 class SdsmoothParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks::sdsmooth."""
 
@@ -844,7 +845,7 @@ def __get_image_parameters(params: Image2MSParams=None) -> Tuple[np.array, int]:
 
 
 def __put_image_parameters_into_ms(params: Image2MSParams, image_array: np.array, mask_array: np.array, axis_x: int, axis_y: int,
-                             axis_sp: int, axis_pol: int) -> None:
+                                   axis_sp: int, axis_pol: int) -> None:
     # which data column to use
     with table_manager(params.outfile, nomodify=False) as tb:
         # also set FLAG, SIGMA, WEIGHT, and UVW
@@ -2344,16 +2345,3 @@ class EmptyMSBaseInformation:
                         'MaxCacheSize': 2,
                         'PERSCACHESIZE': 2},
                'TYPE': 'StandardStMan'}}
-
-
-if os.path.exists("working"):
-    shutil.rmtree("working")
-os.mkdir("working")
-os.chdir("working")
-
-imagefile = "/nfsstore/casa_share/casatestdata/image/ref_multipix.signalband"
-# imagefile = "/nfsstore/casa_share/casatestdata/image/expected.im"
-
-imbaseline(imagename=imagefile, linefile="output", dirkernel="gaussian", spkernel="gaussian", major='20arcsec', minor='10arcsec', pa="0deg", blfunc='sinusoid', output_cont=True)
-
-os.chdir("..")
