@@ -1,6 +1,7 @@
 # image-based line finding and baseline subtraction.
 
 from abc import abstractmethod
+import contextlib
 import os
 import shutil
 import sys
@@ -74,9 +75,6 @@ class AbstractFileStack:
         if isinstance(top, AbstractFolder):
             self.push(top)
 
-    def __enter__(self) -> None:
-        return self
-
     def push(self, file: AbstractFolder=None) -> None:
         if not isinstance(file, AbstractFolder):
             raise ValueError('this object could not be appended to erase queue')
@@ -130,9 +128,6 @@ class AbstractFileStack:
     def height(self) -> int:
         return len(self.stack)
 
-    def __exit__(self, exception_type, exception_value, traceback) -> None:
-        self.clear(dry_run=False)
-
 
 class CasaImageStack(AbstractFileStack):
     """FileStack for CasaImage."""
@@ -146,6 +141,17 @@ class MeasurementSetStack(AbstractFileStack):
 
     def __init__(self) -> None:
         super().__init__(max_height=MS_STACK_MAX_HEIGHT)
+
+
+@contextlib.contextmanager
+def stack_manager(initial_image=None):
+    image_stack = CasaImageStack(top=UnerasableFolder(initial_image))
+    ms_stack = MeasurementSetStack()
+    try:
+        yield image_stack, ms_stack
+    finally:
+        image_stack.clear()
+        ms_stack.clear()
 
 
 class AbstractValidatable:
@@ -214,8 +220,7 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
     __validate_imagename(imagename)
     linefile = __prepare_linefile(linefile, imagename)
 
-    with CasaImageStack(UnerasableFolder(imagename)) as image_stack,\
-         MeasurementSetStack() as ms_stack:
+    with stack_manager(imagename) as (image_stack, ms_stack):
         input_image_shape = get_image_shape(image_stack.peak().path)
 
         # do direction plane smoothing
@@ -365,7 +370,7 @@ def __prepare_linefile(linefile: str=None, imagename: str=None) -> str:
 
 
 def __generate_temporary_filename(prefix: str='', ext: str='') -> str:
-    if prefix != '' and prefix[-1] != '-':
+    if prefix and prefix[-1] != '-':
         prefix = prefix + '-'
     if ext != '':
         ext = '.' + ext
