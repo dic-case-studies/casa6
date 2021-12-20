@@ -146,7 +146,6 @@ class MeasurementSetStack(AbstractFileStack):
 
 
 class AbstractValidable:
-
     @abstractmethod
     def validate(self) -> None:
         raise RuntimeError('Not implemented')
@@ -623,7 +622,7 @@ def image2ms(params: Image2MSParams=None) -> None:
 
 
 def __create_empty_ms(params: Image2MSParams=None) -> None:
-    __check_ms_path(params)
+    __cleanup_ms_path(params)
     __create_maintable(params)
     __create_antenna_table(params)
     __create_data_description_table(params)
@@ -796,9 +795,9 @@ def __create_state_table(params: Image2MSParams=None) -> None:
         tb.putcell('OBS_MODE', 0, 'OBSERVE_TARGET#ON_SOURCE_IMAGE_DOMAIN')
 
 
-def __check_ms_path(params, overWrite: bool=True) -> None:
+def __cleanup_ms_path(params, overwrite: bool=True) -> None:
     exists = os.path.exists(params.outfile)
-    if overWrite and exists:
+    if overwrite and exists:
         shutil.rmtree(params.outfile)
     return exists
 
