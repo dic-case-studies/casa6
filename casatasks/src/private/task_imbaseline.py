@@ -197,6 +197,13 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
 
     All specifications of arguments are defined in:
     https://open-jira.nrao.edu/browse/CAS-13520
+
+    The task executes several processes as follows:
+    (1) do direction plane smoothing of input casa image (execute imsmooth)
+    (2) convert casa image into MeasurementSet (a pixel of image corresponds to a line of MS)
+    (3) do spectral smoothing of MS (execute sdsmooth)
+    (4) do baselining (execute sdbaseline)
+    (5) convert MS into casa image, and subtract results
     """
     __validate_imagename(imagename)
     linefile = __prepare_linefile(linefile, imagename)
