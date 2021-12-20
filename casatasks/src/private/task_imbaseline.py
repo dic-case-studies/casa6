@@ -77,13 +77,13 @@ class AbstractFileStack:
 
     def push(self, file: AbstractFolder=None) -> None:
         if not isinstance(file, AbstractFolder):
-            raise ValueError('this object could not be appended to erase queue')
+            raise ValueError(f'cannot append {file.path}')
         elif not os.path.exists(file.path):
-            raise ValueError('file path is not found')
+            raise ValueError(f'file path {file.path} is not found')
         elif self.height() == self.max_height:
             raise RuntimeError('stack is full')
         else:
-            casalog.post(f'push f{file.path} into the stack', 'DEBUG2')
+            casalog.post(f'push {file.path} into the stack', 'DEBUG2')
             self.stack.append(file)
 
     def pop(self) -> AbstractFolder:
