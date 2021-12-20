@@ -22,6 +22,9 @@ from casatools import image, table
 DATACOLUMN = 'DATA'
 OVERWRITE = True
 
+IMAGE_STACK_MAX_HEIGHT = 4
+MS_STACK_MAX_HEIGHT = 3
+
 
 class AbstractFolder:
     """Abstract class has Image/MeasurementSet file path.
@@ -65,8 +68,9 @@ class AbstractFileStack:
     holden by a property 'path' when execute cleaning process, and the UneraseableFolder class doesn't erase it.
     If this class is used to stack a path of CasaImage, the bottom of it must be the input image(an argument 'imagename').
     """
-    def __init__(self, top: AbstractFolder=None) -> None:
+    def __init__(self, top: AbstractFolder=None, max_height=None) -> None:
         self.stack = []
+        self.max_height = max_height
         if isinstance(top, AbstractFolder):
             self.push(top)
 
@@ -78,6 +82,8 @@ class AbstractFileStack:
             raise ValueError('this object could not be appended to erase queue')
         elif not os.path.exists(file.path):
             raise ValueError('file path is not found')
+        elif self.height() == self.max_height:
+            raise RuntimeError('stack is full')
         else:
             casalog.post(f'push f{file.path} into the stack', 'DEBUG2')
             self.stack.append(file)
@@ -132,14 +138,14 @@ class CasaImageStack(AbstractFileStack):
     """FileStack for CasaImage."""
 
     def __init__(self, top: AbstractFolder=None) -> None:
-        super().__init__(top=top)
+        super().__init__(top=top, max_height=IMAGE_STACK_MAX_HEIGHT)
 
 
 class MeasurementSetStack(AbstractFileStack):
     """FileStack for MeasurementSet."""
 
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(max_height=MS_STACK_MAX_HEIGHT)
 
 
 class AbstractValidatable:
@@ -2341,3 +2347,16 @@ class EmptyMSBaseInformation:
                         'MaxCacheSize': 2,
                         'PERSCACHESIZE': 2},
                'TYPE': 'StandardStMan'}}
+
+
+if os.path.exists("working"):
+    shutil.rmtree("working")
+os.mkdir("working")
+os.chdir("working")
+
+imagefile = "/nfsstore/casa_share/casatestdata/image/ref_multipix.signalband"
+# imagefile = "/nfsstore/casa_share/casatestdata/image/expected.im"
+
+imbaseline(imagename=imagefile, linefile="output", dirkernel="gaussian", spkernel="gaussian", major='20arcsec', minor='10arcsec', pa="0deg", blfunc='sinusoid', output_cont=True)
+
+os.chdir("..")

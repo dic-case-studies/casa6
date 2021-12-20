@@ -445,3 +445,8 @@ class ImbaselineTest(test_base):
 
 def suite():
     return [imsmooth_test]
+
+
+if __name__ == '__main__':
+    os.chdir("/work/dev/shimada/casa6.13520.new/tmp")
+    unittest.main()
