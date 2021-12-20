@@ -142,13 +142,13 @@ class MeasurementSetStack(AbstractFileStack):
         super().__init__()
 
 
-class AbstractValidable:
+class AbstractValidatable:
     @abstractmethod
     def validate(self) -> None:
         raise RuntimeError('Not implemented')
 
 
-class ImageShape(AbstractValidable):
+class ImageShape(AbstractValidatable):
     """Shape parameters of input image.
 
     These parameters are been getting in Image2MS, using in MS2Image.
@@ -388,7 +388,7 @@ def __confirm_sdsmooth_execution(spkernel: str=None) -> None:
     return False
 
 
-class ImsmoothParams(AbstractValidable):
+class ImsmoothParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks::imsmooth."""
 
     TARGETRES = False
@@ -437,7 +437,7 @@ class ImsmoothParams(AbstractValidable):
                 self.BEAM], dict(__log_origin='imbaseline')
 
 
-class SdsmoothParams(AbstractValidable):
+class SdsmoothParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks::sdsmooth."""
 
     SPW = ''
@@ -478,7 +478,7 @@ class SdsmoothParams(AbstractValidable):
                     __log_origin='imbaseline')
 
 
-class SdbaselineParams(AbstractValidable):
+class SdbaselineParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks::sdbaseline."""
 
     ANTENNA = ''
@@ -587,7 +587,7 @@ def get_image_shape(imagepath: str) -> ImageShape:
     return shape
 
 
-class Image2MSParams(AbstractValidable):
+class Image2MSParams(AbstractValidatable):
     """Parameter manipulation class for executing image2ms()."""
 
     def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA', input_image_shape: ImageShape=None) -> None:
@@ -862,7 +862,7 @@ def __put_image_parameters_into_ms(params: Image2MSParams, image_array: np.array
                     irow += 1
 
 
-class MS2ImageParams(AbstractValidable):
+class MS2ImageParams(AbstractValidatable):
     """Parameter manipulation class for executing ms2image()."""
 
     def __init__(self, infile: str=None, linefile: str='', imagefile: str='', datacolumn: str='DATA', output_cont: bool=False,
