@@ -11,6 +11,7 @@ import os
 import shutil
 import numpy
 import copy
+import filecmp
 import time
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
@@ -45,6 +46,39 @@ try:
 except ImportError:
     mpi_available = False
 
+def backupoldfile(thefile=''):
+    import copy
+    import shutil
+    if(thefile=='' or (not os.path.exists(thefile))):
+        return 
+    outpathdir = os.path.realpath(os.path.dirname(thefile))
+    outpathfile = outpathdir + os.path.sep + os.path.basename(thefile)
+    k=0
+    backupfile=outpathfile+'.'+str(k)
+    prevfile='--------'
+    while (os.path.exists(backupfile)):
+        k=k+1
+        prevfile=copy.copy(backupfile)
+        if(os.path.exists(prevfile)  and filecmp.cmp(outpathfile, prevfile)):
+        ##avoid making multiple copies of the same file
+            return
+        backupfile=outpathfile+'.'+str(k)
+    shutil.copy2(outpathfile, backupfile)
+
+def saveinputs(params={}, outfile='tclean.last'):
+    backupoldfile(outfile)
+    with open(outfile,'w') as _f:
+        byIndex=list(params)
+        ###for some reason the dictionary is in reverse
+        byIndex.reverse()
+        for _i in range(len(byIndex)):
+            _f.write("%-20s = %s\n" % (byIndex[_i],repr(params[byIndex[_i]])))
+        _f.write("#tclean( ")
+        for _i in range(len(byIndex)):
+            _f.write("%s=%s" % (byIndex[_i],repr(params[byIndex[_i]])))
+            if _i < len(params)-1: _f.write(",")
+        _f.write(" )\n")
+    
 def tclean(
     ####### Data Selection
     vis,#='', 
@@ -181,6 +215,7 @@ def tclean(
     
     ### Move these checks elsewhere ? 
     inpparams=locals().copy()
+    saveinputs(inpparams)
     ###now deal with parameters which are not the same name 
     inpparams['msname']= inpparams.pop('vis')
     inpparams['timestr']= inpparams.pop('timerange')
