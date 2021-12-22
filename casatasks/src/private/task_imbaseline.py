@@ -323,8 +323,8 @@ def execute_image_subtraction(linefile: str=None, image_stack: AbstractFileStack
         subtracted_image = image_stack.peak().path
         base_image = image_stack.bottom().path
         __copy_image_file(base_image, linefile)
-        __image_subtraction(smoothed_image, subtracted_image)
-        __image_subtraction(linefile, smoothed_image)
+        __subtract_image(smoothed_image, subtracted_image)
+        __subtract_image(linefile, smoothed_image)
 
 
 def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
@@ -334,7 +334,7 @@ def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
     __copy_image_file(base_image, output_image)
 
     subtract_image = image_stack.peak().path
-    __image_subtraction(output_image, subtract_image)
+    __subtract_image(output_image, subtract_image)
 
 
 def do_post_processing(outfile) -> None:
@@ -342,7 +342,7 @@ def do_post_processing(outfile) -> None:
     __write_image_history(outfile)
 
 
-def __image_subtraction(operand_a: str=None, operand_b: str=None) -> None:
+def __subtract_image(operand_a: str=None, operand_b: str=None) -> None:
     """Subtract image chunk."""
     image_array = None
     with tool_manager(operand_b, image) as ia:
