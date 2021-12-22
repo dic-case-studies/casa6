@@ -33,9 +33,13 @@ class AbstractFolder:
     This class and child classes are wrapper of CasaImage/MeasurementSet file.
     The wrapped path could be decided to erase by which child classes are implemented.
     """
+    has_file = False
 
     def __init__(self, file: str=None) -> None:
+        if not os.path.exists(file):
+            raise ValueError(f'file {file} is not found')
         self.path = file
+        self.has_file = True
 
     @abstractmethod
     def erase(self) -> None:
@@ -50,8 +54,12 @@ class EraseableFolder(AbstractFolder):
             casalog.post(f'[DRY RUN] erase file: {self.path}', 'DEBUG2')
         else:
             casalog.post(f'erase file: {self.path}', 'DEBUG2')
-            if os.path.exists(self.path):
+            if self.has_file and os.path.exists(self.path):
                 shutil.rmtree(self.path)
+                if not os.path.exists(self.path):
+                    self.has_file = False
+            else:
+                casalog.post(f'not found the file to erase: {self.path}', 'WARN')
 
 
 class UnerasableFolder(AbstractFolder):
@@ -78,8 +86,6 @@ class AbstractFileStack:
     def push(self, file: AbstractFolder=None) -> None:
         if not isinstance(file, AbstractFolder):
             raise ValueError(f'cannot append {file.path}')
-        elif not os.path.exists(file.path):
-            raise ValueError(f'file path {file.path} is not found')
         elif self.height() == self.max_height:
             raise RuntimeError('stack is full')
         else:
