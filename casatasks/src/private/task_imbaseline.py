@@ -403,15 +403,17 @@ def __require_sdsmooth(spkernel: str='none') -> None:
 class ImsmoothParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks.imsmooth."""
 
-    TARGETRES = False
-    MASK = ''
-    BEAM = {}
-    REGION = ''
-    BOX = ''
-    CHANS = ''
-    STOKES = ''
-    STRETCH = False
-    OVERWRITE = True
+    FIXED_PARAM = dict(
+        TARGETRES=False,
+        MASK='',
+        BEAM={},
+        REGION='',
+        BOX='',
+        CHANS='',
+        STOKES='',
+        STRETCH=False,
+        OVERWRITE=True
+    )
 
     def __init__(self, infile: str=None, outfile: str=None, dirkernel: str='none', major: str='', minor: str='', pa: str='',
                  kimage: str='', scale: int=-1.0) -> None:
@@ -444,24 +446,24 @@ class ImsmoothParams(AbstractValidatable):
 
         __log_origin is for callabletask.log_origin_setter
         """
-        return dict(imagename=self.infile, kernel=self.kernel, major=self.major, minor=self.minor, pa=self.pa, targetres=self.TARGETRES,
-                    kimage=self.kimage, scale=self.scale, region=self.REGION, box=self.BOX, chans=self.CHANS, stokes=self.STOKES,
-                    mask=self.MASK, outfile=self.outfile, stretch=self.STRETCH, overwrite=self.OVERWRITE, beam=self.BEAM,
-                    __log_origin='imbaseline')
+        return dict(self.FIXED_PARAM, imagename=self.infile, kernel=self.kernel, major=self.major, minor=self.minor, pa=self.pa,
+                    kimage=self.kimage, scale=self.scale, outfile=self.outfile, __log_origin='imbaseline')
 
 
 class SdsmoothParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks.sdsmooth."""
 
-    SPW = ''
-    FIELD = ''
-    ANTENNA = ''
-    TIMERANGE = ''
-    SCAN = ''
-    POL = ''
-    INTENT = ''
-    REINDEX = True
-    OVERWRITE = True
+    FIXED_PARAM = dict(
+        SPW='',
+        FIELD='',
+        ANTENNA='',
+        TIMERANGE='',
+        SCAN='',
+        POL='',
+        INTENT='',
+        REINDEX=True,
+        OVERWRITE=True
+    )
 
     def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, spkernel: str='none', kwidth: int=5) -> None:
         self.infile = infile
@@ -485,34 +487,33 @@ class SdsmoothParams(AbstractValidatable):
 
         __log_origin is for sdutil.callabletask_decorator.
         """
-        return dict(infile=self.infile, datacolumn=self.datacolumn, antenna=self.ANTENNA, field=self.FIELD, spw=self.SPW,
-                    timerange=self.TIMERANGE, scan=self.SCAN, pol=self.POL, intent=self.INTENT, reindex=self.REINDEX,
-                    kernel=self.kernel, kwidth=self.kwidth, outfile=self.outfile, overwrite=self.OVERWRITE,
-                    __log_origin='imbaseline')
+        return dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn, kernel=self.kernel, kwidth=self.kwidth,
+                    outfile=self.outfile, __log_origin='imbaseline')
 
 
 class SdbaselineParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks.sdbaseline."""
-
-    ANTENNA = ''
-    FIELD = ''
-    SPW = ''
-    TIMERANGE = ''
-    SCAN = ''
-    POL = ''
-    INTENT = ''
-    REINDEX = True
-    BLMODE = 'fit'
-    DOSUBTRACT = True
-    BLFORMAT = 'csv'
-    BLTABLE = ''
-    UPDATEWEIGHT = False
-    SIGMAVALUE = 'stddev'
-    SHOWPROGRESS = False
-    MINNROW = 1000
-    FFTMETHOD = 'fft'
-    VERBOSE = False
-    OVERWRITE = True
+    FIXED_PARAM = dict(
+        ANTENNA='',
+        FIELD='',
+        SPW='',
+        TIMERANGE='',
+        SCAN='',
+        POL='',
+        INTENT='',
+        REINDEX=True,
+        BLMODE='fit',
+        DOSUBTRACT=True,
+        BLFORMAT='csv',
+        BLTABLE='',
+        UPDATEWEIGHT=False,
+        SIGMAVALUE='stddev',
+        SHOWPROGRESS=False,
+        MINNROW=1000,
+        FFTMETHOD='fft',
+        VERBOSE=False,
+        OVERWRITE=True
+    )
 
     def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, bloutput: str='', maskmode: str='list',
                  chans: str='', thresh: float=5.0, avg_limit: int=4, minwidth: int=4, edge: List[int]=[0, 0], blfunc: str='poly',
@@ -563,14 +564,10 @@ class SdbaselineParams(AbstractValidatable):
 
         __log_origin is for sdutil.callabletask_decorator.
         """
-        return dict(infile=self.infile, datacolumn=self.datacolumn, antenna=self.ANTENNA, field=self.FIELD, spw=self.SPW,
-                    timerange=self.TIMERANGE, scan=self.SCAN, pol=self.POL, intent=self.INTENT, reindex=self.REINDEX,
-                    maskmode=self.maskmode, thresh=self.thresh, avg_limit=self.avg_limit, minwidth=self.minwidth, edge=self.edge,
-                    blmode=self.BLMODE, dosubtract=self.DOSUBTRACT, blformat=self.BLFORMAT, bloutput=self.bloutput, bltable=self.BLTABLE,
-                    blfunc=self.blfunc, order=self.order, npiece=self.npiece, applyfft=self.applyfft, fftmethod=self.FFTMETHOD,
-                    fftthresh=self.fftthresh, addwn=self.addwn, rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter,
-                    blparam=self.blparam, verbose=self.VERBOSE, updateweight=self.UPDATEWEIGHT, sigmavalue=self.SIGMAVALUE,
-                    showprogress=self.SHOWPROGRESS, minnrow=self.MINNROW, outfile=self.outfile, overwrite=self.OVERWRITE,
+        return dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn, maskmode=self.maskmode, thresh=self.thresh,
+                    avg_limit=self.avg_limit, minwidth=self.minwidth, edge=self.edge, bloutput=self.bloutput, blfunc=self.blfunc,
+                    order=self.order, npiece=self.npiece, applyfft=self.applyfft, fftthresh=self.fftthresh, addwn=self.addwn,
+                    rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter, blparam=self.blparam,outfile=self.outfile,
                     __log_origin='imbaseline')
 
 
