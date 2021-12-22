@@ -167,6 +167,11 @@ def stack_manager(initial_image=None):
 
 
 class AbstractValidatable:
+    """Abstract class to enforce implementing validation method.
+
+    A class that inherits this class is that require parameter validation of it.
+    """
+
     @abstractmethod
     def validate(self) -> None:
         raise RuntimeError('Not implemented')
