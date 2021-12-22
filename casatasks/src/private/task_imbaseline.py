@@ -378,32 +378,26 @@ def __generate_temporary_filename(prefix: str='', ext: str='') -> str:
             return filename
 
 
-def __require_imsmooth(dirkernel: str=None) -> None:
-    def is_valid_kernel(kernel) -> None:
-        return kernel == 'none', kernel == 'image' or kernel == 'boxcar' or kernel == 'gaussian'
-
+def __require_imsmooth(dirkernel: str='none') -> None:
     if not dirkernel:
         dirkernel = 'none'
-    none, valid = is_valid_kernel(dirkernel)
-    if not none and not valid:
-        raise ValueError(f'Unsupported direction smoothing kernel, {dirkernel}', 'SEVERE')
-    if valid:
+    if dirkernel == 'none':
+        return False
+    elif dirkernel in ['image', 'boxcar', 'gaussian']:
         return True
-    return False
+    else:
+        raise ValueError(f'Unsupported direction smoothing kernel, {dirkernel}', 'SEVERE')
 
 
-def __require_sdsmooth(spkernel: str=None) -> None:
-    def is_valid_kernel(kernel) -> None:
-        return kernel == 'none', kernel == 'boxcar' or kernel == 'gaussian'
-
+def __require_sdsmooth(spkernel: str='none') -> None:
     if not spkernel:
         spkernel = 'none'
-    none, valid = is_valid_kernel(spkernel)
-    if not none and not valid:
-        raise ValueError(f'Unsupported spectral smoothing kernel, {spkernel}', 'SEVERE')
-    if valid:
+    if spkernel == 'none':
+        return False
+    elif spkernel in ['boxcar', 'gaussian']:
         return True
-    return False
+    else:
+        raise ValueError(f'Unsupported spectral smoothing kernel, {spkernel}', 'SEVERE')
 
 
 class ImsmoothParams(AbstractValidatable):
