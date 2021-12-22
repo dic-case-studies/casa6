@@ -95,7 +95,11 @@ class AbstractFileStack:
             self.stack.append(file)
 
     def pop(self) -> AbstractFolder:
-        """Return the top of the stack."""
+        """Return the top of the stack.
+
+        The stack object should have input CasaImage or converted MeasurementSet at bottom,
+        so if pop() is called when stack height is zero, then it raises RuntimeError.
+        """
         if self.height() <= 1:
             raise RuntimeError('the stack cannot pop')
         return self.stack.pop()
