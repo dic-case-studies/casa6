@@ -245,7 +245,7 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
 
 def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None, kimage: str=None, scale: float=None,
                      stack: AbstractFileStack=None) -> None:
-    """Call casatasks::imsmooth task if dirkernel is specified."""
+    """Call casatasks.imsmooth task if dirkernel is specified."""
     if not __require_imsmooth(dirkernel):
         casalog.post('omit image smoothing', 'INFO')
         return
@@ -269,7 +269,7 @@ def execute_image2ms(datacolumn: str=None, input_image_shape: ImageShape=None, i
 
 def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None, image_stack: AbstractFileStack=None,
                      ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
-    """Call casatasks::sdsmooth task if spkernel is specified."""
+    """Call casatasks.sdsmooth task if spkernel is specified."""
     if not __require_sdsmooth(spkernel):
         casalog.post('omit spectral smoothing', 'INFO')
         return
@@ -290,7 +290,7 @@ def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=N
                        npiece: int=None, applyfft: bool=None, fftthresh: float=None, addwn: List[int]=None, rejwn: List[int]=None,
                        blparam: str=None, clipniter: int=None, clipthresh: float=None,
                        image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
-    """Call casatasks::sdbaseline task."""
+    """Call casatasks.sdbaseline task."""
     casalog.post('execute spectral baselining', 'INFO')
     input_ms = ms_stack.peak().path
     output_ms = __generate_temporary_filename('baseline', 'ms')
@@ -405,7 +405,7 @@ def __require_sdsmooth(spkernel: str=None) -> None:
 
 
 class ImsmoothParams(AbstractValidatable):
-    """Parameter manipulation class for execution of casatasks::imsmooth."""
+    """Parameter manipulation class for execution of casatasks.imsmooth."""
 
     TARGETRES = False
     MASK = ''
@@ -455,7 +455,7 @@ class ImsmoothParams(AbstractValidatable):
 
 
 class SdsmoothParams(AbstractValidatable):
-    """Parameter manipulation class for execution of casatasks::sdsmooth."""
+    """Parameter manipulation class for execution of casatasks.sdsmooth."""
 
     SPW = ''
     FIELD = ''
@@ -496,7 +496,7 @@ class SdsmoothParams(AbstractValidatable):
 
 
 class SdbaselineParams(AbstractValidatable):
-    """Parameter manipulation class for execution of casatasks::sdbaseline."""
+    """Parameter manipulation class for execution of casatasks.sdbaseline."""
 
     ANTENNA = ''
     FIELD = ''
