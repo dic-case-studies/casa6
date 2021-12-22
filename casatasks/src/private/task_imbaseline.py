@@ -18,13 +18,15 @@ from casatasks.private.sdutil import (sdtask_decorator, table_manager,
 from casatasks.private.task_imsmooth import imsmooth
 from casatasks.private.task_sdbaseline import sdbaseline
 from casatasks.private.task_sdsmooth import sdsmooth
-from casatools import image, table
+from casatools import image, table, quanta
 
 DATACOLUMN = 'DATA'
 OVERWRITE = True
 
 IMAGE_STACK_MAX_HEIGHT = 4
 MS_STACK_MAX_HEIGHT = 3
+
+qa = quanta()
 
 
 class AbstractFolder:
@@ -653,6 +655,12 @@ def __create_empty_ms(params: Image2MSParams=None) -> None:
     __create_state_table(params)
 
 
+def __generate_time_list(nrow_req: int) -> np.ndarray:
+    mjd_sec = qa.convert(qa.quantity('1995-04-13T09:19:00'), 's')['value']
+    interval = 30.0
+    return mjd_sec + np.arange(nrow_req) * interval
+
+
 def __create_maintable(params: Image2MSParams=None) -> None:
     tb = table()
     try:
@@ -670,7 +678,7 @@ def __create_maintable(params: Image2MSParams=None) -> None:
         tb.putcol('ANTENNA1', dummy)
         tb.putcol('ANTENNA2', dummy)
         tb.putcol('STATE_ID', dummy)
-        time_list = 4304481539.999771 + np.arange(nrow_req) * 30.0
+        time_list = __generate_time_list(nrow_req)
         tb.putcol('TIME', time_list)
         casalog.post(f'number of rows {nrow}, number of image pixels {params.im_nrow}, '
                      f'number of pols {params.im_npol}, '
