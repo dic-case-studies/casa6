@@ -636,7 +636,7 @@ class Image2MSParams(AbstractValidatable):
 def image2ms(params: Image2MSParams=None) -> None:
     """Convert CasaImage into MeasurementSet."""
     __create_empty_ms(params)
-    __copy_image_parametes_into_ms(params)
+    __put_parametes_from_image_to_ms(params)
 
 
 def __create_empty_ms(params: Image2MSParams=None) -> None:
@@ -836,7 +836,7 @@ def __create_subtable(outfile: str=None, subtable: str=None, desc: str=None, dmi
         tb.putkeyword(subtable, f'Table: {outfile}/{subtable}')
 
 
-def __copy_image_parametes_into_ms(params: Image2MSParams=None) -> None:
+def __put_parametes_from_image_to_ms(params: Image2MSParams=None) -> None:
     __put_image_parameters_into_ms(params, *__get_image_parameters(params))
 
 
