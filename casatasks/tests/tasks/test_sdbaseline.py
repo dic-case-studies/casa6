@@ -1,10 +1,8 @@
-import os
 import glob
-#import sys
-import shutil
 import numpy as np
+import os
+import shutil
 import unittest
-#from numpy import array
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
