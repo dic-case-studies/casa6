@@ -173,12 +173,13 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             write_history(ms, outfile, 'sdbaseline', param_names,
                           param_vals, casalog)
 
+    except Exception:
+        raise
+
+    finally:
         # Remove (skeleton) outfile
         if (not dosubtract) and (infile != outfile):
             remove_data(outfile)
-
-    except Exception:
-        raise
 
 
 blformat_item = ['csv', 'text', 'table']
