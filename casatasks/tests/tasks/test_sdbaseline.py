@@ -183,7 +183,6 @@ def remove_files_dirs(filename):
     elif filename == '':
         raise Exception("The parameter 'filename' must not be a null string.")
     
-    import glob
     filenames = glob.glob('{}*'.format(filename.rstrip('/')))
 
     for filename in filenames:
@@ -907,12 +906,16 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         outfile = self.outroot + tid + '.ms'
         datacolumn = 'float_data'
         dosubtract = False
+        blformats = ['text', 'csv', 'bltable', ['text', 'bltable'], ['text', 'csv', 'bltable']]
 
-        remove_single_file_dir(outfile)
-        self.assertFalse(os.path.exists(outfile), f"{outfile} must be deleted before testing.")
+        for blformat in blformats:
+            print(f"Testing blformat='{blformat}'...")
+            remove_files_dirs(infile+'_blparam.')
+            remove_single_file_dir(outfile)
+            self.assertFalse(os.path.exists(outfile), f"{outfile} must be deleted before testing.")
 
-        sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile, dosubtract=dosubtract)
-        self.assertFalse(os.path.exists(outfile), f"{outfile} is created.")
+            sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile, dosubtract=dosubtract, blformat=blformat)
+            self.assertFalse(os.path.exists(outfile), f"{outfile} is created.")
 
     def test071(self):
         """Basic Test 071: dosubtract=False and blformat is empty (raises an exception)"""
