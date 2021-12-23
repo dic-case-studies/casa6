@@ -2,7 +2,7 @@ import os
 import glob
 #import sys
 import shutil
-import numpy
+import numpy as np
 import unittest
 #from numpy import array
 
@@ -360,7 +360,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
         for i in range(len(mask)):
             for j in range(mask[i][0], mask[i][1]):
                 res.append(spec[j])
-        return numpy.array(res)
+        return np.array(res)
 
     def _getStats(self, filename=None, spw=None, pol=None, colname=None, mask=None):
         """
@@ -418,14 +418,14 @@ class sdbaseline_unittest_base(unittest.TestCase):
         if mask is not None:
             spec = self._getEffective(data, mask)
         else:
-            spec = numpy.array(data)
+            spec = np.array(data)
         res_elem = {}
-        res_elem['rms'] = numpy.sqrt(numpy.var(spec))
-        res_elem['min'] = numpy.min(spec)
-        res_elem['max'] = numpy.max(spec)
-        spec_mea = numpy.mean(spec)
-        res_elem['median'] = numpy.median(spec)
-        res_elem['stddev'] = numpy.std(spec)
+        res_elem['rms'] = np.sqrt(np.var(spec))
+        res_elem['min'] = np.min(spec)
+        res_elem['max'] = np.max(spec)
+        spec_mea = np.mean(spec)
+        res_elem['median'] = np.median(spec)
+        res_elem['stddev'] = np.std(spec)
         return res_elem
         
 
@@ -515,8 +515,8 @@ class sdbaseline_unittest_base(unittest.TestCase):
                                         msg="%s[%d] differs: %s (expected: %s) " % \
                                         (key, i, str(currval[i]), str(refval[i])))
             else:
-                # numpy.allclose handles almost zero case more properly.
-                self.assertTrue(numpy.allclose(currval, refval, rtol=rtol, atol=atol),
+                # np.allclose handles almost zero case more properly.
+                self.assertTrue(np.allclose(currval, refval, rtol=rtol, atol=atol),
                                 msg="%s differs: %s" % (key, str(currval)))
             del currval, refval
 
@@ -544,8 +544,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
         Convert input to a list
         If input is None, this method simply returns None.
         """
-        import numpy
-        listtypes = (list, tuple, numpy.ndarray)
+        listtypes = (list, tuple, np.ndarray)
         if input == None:
             return None
         elif type(input) in listtypes:
@@ -827,15 +826,15 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
 
         # open the original MS
         tb.open(infile)
-        orig_pol1_value = numpy.array(tb.getcell('FLOAT_DATA', int(spw))[in_pol,:])
+        orig_pol1_value = np.array(tb.getcell('FLOAT_DATA', int(spw))[in_pol,:])
         tb.close()
-        variance_orig_pol1 = numpy.var(orig_pol1_value)
+        variance_orig_pol1 = np.var(orig_pol1_value)
         
         # open the MS after sdbaseline
         tb.open(outfile)
-        pol1_value = numpy.array(tb.getcell('FLOAT_DATA', 0)[out_pol,:])
+        pol1_value = np.array(tb.getcell('FLOAT_DATA', 0)[out_pol,:])
         tb.close()
-        variance_pol1 = numpy.var(pol1_value)
+        variance_pol1 = np.var(pol1_value)
 
         # assert pol1_value < orig_pol1_value
         self.assertTrue((pol1_value<orig_pol1_value).all())
@@ -4854,7 +4853,7 @@ class sdbaseline_selection(unittest.TestCase):
 
     def _get_reference(self, nchan, irow, ipol, datacol):
         line_chan, line_amp = self.line_data[datacol][('r%d' % irow)][ipol]
-        reference = numpy.zeros(nchan)
+        reference = np.zeros(nchan)
         reference[line_chan] = line_amp
         if self.verbose: print("reference=%s" % str(reference))
         return reference
@@ -4898,7 +4897,7 @@ class sdbaseline_selection(unittest.TestCase):
             if not applymode: # normal fit
                 self.assertEqual(tb.nrows(), len(rowids), "Row number is wrong %d (expected: %d)" % (tb.nrows(), len(rowids)))
             else: # in case of apply, rownumber does not change from input MS
-                self.assertGreaterEqual(tb.nrows(), numpy.array(rowids).max(),
+                self.assertGreaterEqual(tb.nrows(), np.array(rowids).max(),
                                         'Reference row number is larger than table size.')
             for out_row in range(len(rowids)):
                 in_row = rowids[out_row]
@@ -4911,7 +4910,7 @@ class sdbaseline_selection(unittest.TestCase):
                     in_pol = polids[out_pol]
                     reference = self._get_reference(nchan, in_row, in_pol, dcol)
                     if self.verbose: print("data=%s" % str(sp[out_pol]))
-                    self.assertTrue(numpy.allclose(sp[out_pol], reference,
+                    self.assertTrue(np.allclose(sp[out_pol], reference,
                                                    atol=atol, rtol=rtol),
                                     "Baselined spectrum differs in row=%d, pol=%d" % (out_row, out_pol))
         finally:
@@ -5112,7 +5111,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
             wgt_in = tb.getcol('WEIGHT')
         with table_manager(self.outfile) as tb:
             wgt_out = tb.getcol('WEIGHT')
-        self.assertTrue(numpy.array_equal(wgt_in, wgt_out),
+        self.assertTrue(np.array_equal(wgt_in, wgt_out),
                         msg='WEIGHT column is unexpectedly updated!')
 
     def _check_weight_values(self, sigmavalue='stddev'):
@@ -5136,17 +5135,17 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
             if 'spw' in self.params.keys():
                 flag[:, 4500:6500, :] = True
 
-        mdata = numpy.ma.masked_array(data, mask=flag)
+        mdata = np.ma.masked_array(data, mask=flag)
         if sigmavalue == 'stddev':
-            mwgt_ref = 1.0 / numpy.var(mdata, axis=1)
+            mwgt_ref = 1.0 / np.var(mdata, axis=1)
         elif sigmavalue == 'rms':
-            mwgt_ref = 1.0 / numpy.mean(numpy.square(mdata), axis=1)
+            mwgt_ref = 1.0 / np.mean(np.square(mdata), axis=1)
         else:
             raise ValueError("Illegal argument: sigmavalue={}: must be \
                              'stddev' or 'rms'".format(sigmavalue))
-        wgt_ref = numpy.ma.filled(mwgt_ref, fill_value=0.0)
+        wgt_ref = np.ma.filled(mwgt_ref, fill_value=0.0)
 
-        self.assertTrue(numpy.allclose(wgt, wgt_ref, rtol=1.0e-2, atol=1.0e-5))
+        self.assertTrue(np.allclose(wgt, wgt_ref, rtol=1.0e-2, atol=1.0e-5))
 
     def run_test(self):
         sdbaseline(**self.params)
