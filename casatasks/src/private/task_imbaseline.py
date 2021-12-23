@@ -34,6 +34,7 @@ class AbstractFolder:
     This class and child classes are wrapper of CasaImage/MeasurementSet file.
     The wrapped path could be decided to erase by which child classes are implemented.
     """
+
     has_file = False
 
     def __init__(self, file: str=None) -> None:
@@ -78,6 +79,7 @@ class AbstractFileStack:
     holden by a property 'path' when execute cleaning process, and the UneraseableFolder class doesn't erase it.
     If this class is used to stack a path of CasaImage, the bottom of it must be the input image(an argument 'imagename').
     """
+
     def __init__(self, top: AbstractFolder=None, max_height=None) -> None:
         self.stack = []
         self.max_height = max_height
@@ -501,6 +503,7 @@ class SdsmoothParams(AbstractValidatable):
 
 class SdbaselineParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks.sdbaseline."""
+
     FIXED_PARAM = dict(
         ANTENNA='',
         FIELD='',
@@ -575,7 +578,7 @@ class SdbaselineParams(AbstractValidatable):
         return dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn, maskmode=self.maskmode, thresh=self.thresh,
                     avg_limit=self.avg_limit, minwidth=self.minwidth, edge=self.edge, bloutput=self.bloutput, blfunc=self.blfunc,
                     order=self.order, npiece=self.npiece, applyfft=self.applyfft, fftthresh=self.fftthresh, addwn=self.addwn,
-                    rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter, blparam=self.blparam,outfile=self.outfile,
+                    rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter, blparam=self.blparam, outfile=self.outfile,
                     __log_origin='imbaseline')
 
 
