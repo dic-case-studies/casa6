@@ -73,7 +73,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             sorttab_info = remove_sorted_table_keyword(infile)
 
             if overwrite and os.path.exists(outfile) and (infile != outfile):
-                os.system('rm -rf %s' % outfile)
+                remove_data(outfile)
 
             selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
                                         baseline=antenna, time=timerange,
@@ -110,7 +110,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                 sorttab_info = remove_sorted_table_keyword(infile)
 
             if overwrite and os.path.exists(outfile) and (infile != outfile):
-                os.system('rm -rf %s' % outfile)
+                remove_data(outfile)
 
             selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
                                         baseline=antenna, time=timerange,
@@ -330,7 +330,7 @@ def get_normalised_name(infile, blformat, bloutput, name, ext, overwrite):
             fname = infile + '_blparam.' + ext
     if os.path.exists(fname):
         if overwrite:
-            os.system('rm -rf %s' % fname)
+            remove_data(fname)
         else:
             raise Exception(fname + ' exists.')
     return fname
