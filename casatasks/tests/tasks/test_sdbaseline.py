@@ -925,10 +925,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
 
         for blformat in blformats:
             print(f"Testing blformat='{blformat}'...")
-            try:
+            with self.assertRaises(ValueError, msg="blformat must be specified when dosubtract is False"):
                 sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile, dosubtract=dosubtract, blformat=blformat)
-            except Exception as e:
-                self.assertIn("blformat must be specified when dosubtract is False", str(e))
 
 
 class sdbaseline_maskTest(sdbaseline_unittest_base):
