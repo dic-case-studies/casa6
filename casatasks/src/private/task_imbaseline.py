@@ -13,8 +13,7 @@ from numpy import array, uint64
 
 from casatasks import casalog
 from casatasks.private.ialib import write_image_history
-from casatasks.private.sdutil import (sdtask_decorator, table_manager,
-                                      tool_manager)
+from casatasks.private.sdutil import sdtask_decorator, table_manager, tool_manager
 from casatasks.private.task_imsmooth import imsmooth
 from casatasks.private.task_sdbaseline import sdbaseline
 from casatasks.private.task_sdsmooth import sdsmooth
