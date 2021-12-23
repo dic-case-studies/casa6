@@ -197,16 +197,17 @@ def remove_data(filename):
 
 
 def is_all_blank(blformat):
-    res = True
+    if blformat is None:
+        return True
 
-    if blformat is not None:
-        if isinstance(blformat, str) and len(blformat) > 0:
-            res = False
-        elif isinstance(blformat, list) and len(blformat) > 0:
-            for i in range(len(blformat)):
-                if len(blformat[i]) > 0:
-                    res = False
-                    break
+    res = True
+    if isinstance(blformat, str) and len(blformat) > 0:
+        res = False
+    elif isinstance(blformat, list) and len(blformat) > 0:
+        for i in range(len(blformat)):
+            if len(blformat[i]) > 0:
+                res = False
+                break
 
     return res
 
