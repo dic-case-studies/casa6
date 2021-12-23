@@ -174,7 +174,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                           param_vals, casalog)
 
         # Remove (skeleton) outfile
-        if not dosubtract and (infile != outfile):
+        if (not dosubtract) and (infile != outfile):
             remove_data(outfile)
 
     except Exception:
