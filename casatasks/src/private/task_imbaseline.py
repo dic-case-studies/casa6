@@ -341,7 +341,7 @@ def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=N
     ms_stack.push(EraseableFolder(output_ms))
     output_image = __convert_ms_to_image(base_image, output_ms, image_shape, datacolumn)
     image_stack.push(EraseableFolder(output_image))
-    blparam_name = input_ms + '_blparam.' + SdbaselineParams.BLFORMAT
+    blparam_name = input_ms + '_blparam.' + SdbaselineParams.FIXED_PARAM['blformat']
     if os.path.exists(blparam_name):
         __rename_blparam_filename(blparam_name, base_image)
 
@@ -956,7 +956,7 @@ def __change_file_extension(path: str=None, ext: str=None) -> str:
 def __rename_blparam_filename(filename: str=None, basename: str=None) -> str:
     if not os.path.exists(filename):
         return None
-    newname = os.path.basename(basename) + '.ms_blparam.' + SdbaselineParams.BLFORMAT
+    newname = os.path.basename(basename) + '.ms_blparam.' + SdbaselineParams.FIXED_PARAM['blformat']
     if os.path.exists(newname):
         return filename
     try:
