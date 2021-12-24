@@ -52,16 +52,17 @@ class EraseableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is permitted to erase."""
 
     def erase(self, dry_run: bool=True) -> None:
-        if dry_run:
-            casalog.post(f'[DRY RUN] erase file: {self.path}', 'DEBUG2')
-        else:
-            casalog.post(f'erase file: {self.path}', 'DEBUG2')
-            if self.has_file and os.path.exists(self.path):
-                shutil.rmtree(self.path)
-                if not os.path.exists(self.path):
-                    self.has_file = False
+        if self.has_file:
+            if dry_run:
+                casalog.post(f'[DRY RUN] erase file: {self.path}', 'DEBUG2')
             else:
-                casalog.post(f'not found the file to erase: {self.path}', 'WARN')
+                casalog.post(f'erase file: {self.path}', 'DEBUG2')
+                if os.path.exists(self.path):
+                    shutil.rmtree(self.path)
+                    if not os.path.exists(self.path):
+                        self.has_file = False
+        else:
+            casalog.post(f'not found the file to erase: {self.path}', 'WARN')
 
 
 class UnerasableFolder(AbstractFolder):
@@ -658,7 +659,7 @@ def __create_empty_ms(params: Image2MSParams=None) -> None:
 
 
 def __generate_time_list(nrow_req: int) -> np.ndarray:
-    mjd_sec = qa.convert(qa.quantity('1995-04-13T09:19:00'), 's')['value']
+    mjd_sec = qa.convert(qa.quantity('1995-04-13T09:19:00'), 's')['value']  # dummy timestamp
     interval = 30.0
     return mjd_sec + np.arange(nrow_req) * interval
 
