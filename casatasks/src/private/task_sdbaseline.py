@@ -165,11 +165,8 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         # Write history to outfile
         if dosubtract:
             param_names = sdbaseline.__code__.co_varnames[:sdbaseline.__code__.co_argcount]
-            if is_python3:
-                vars = locals()
-                param_vals = [vars[p] for p in param_names]
-            else:
-                param_vals = [eval(p) for p in param_names]
+            vars = locals()
+            param_vals = [vars[p] for p in param_names]
             write_history(ms, outfile, 'sdbaseline', param_names,
                           param_vals, casalog)
 
