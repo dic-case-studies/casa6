@@ -51,6 +51,10 @@ class AbstractFolder:
 class EraseableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is permitted to erase."""
 
+    def __init__(self, file: str=None) -> None:
+        super().__init__(file)
+        eraseable_folder_register.register(self)
+
     def erase(self, dry_run: bool=True) -> None:
         if self.has_file:
             if dry_run:
@@ -70,6 +74,30 @@ class UnerasableFolder(AbstractFolder):
 
     def erase(self, dry_run: bool=True) -> None:
         casalog.post(f'un-erase file: {self.path}', 'DEBUG2')
+
+
+class EraseableFolderRegister():
+    """Class of the register of folders that need to be erased."""
+
+    _register = []
+
+    def register(self, folder: EraseableFolder):
+        if isinstance(folder, EraseableFolder):
+            self._register.append(folder)
+        else:
+            raise ValueError('Irregal folder would be appended', 'SEVERE')
+
+    def clear(self, dry_run: bool=True):
+        for folder in self._register:
+            if not folder.has_file:
+                raise RuntimeError('Invalid code execution state', 'SEVERE')
+            elif not os.path.exists(folder.path):
+                raise RuntimeError(f'File not found: {folder.path}', 'SEVERE')
+            else:
+                folder.erase(dry_run)
+
+
+eraseable_folder_register = EraseableFolderRegister()
 
 
 class AbstractFileStack:
@@ -135,8 +163,8 @@ class AbstractFileStack:
 
     def clear(self, dry_run: bool=True) -> None:
         """Do erase method of all of the stack and clear the stack."""
-        for file in self.stack:
-            file.erase(dry_run=dry_run)
+        # for file in self.stack:
+        #     file.erase(dry_run=dry_run)
         self.stack.clear()
 
     def height(self) -> int:
@@ -352,6 +380,7 @@ def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
 
 def do_post_processing(outfile) -> None:
     """Execute some post-processes of imbaseline."""
+    eraseable_folder_register.clear(dry_run=False)
     __write_image_history(outfile)
 
 
