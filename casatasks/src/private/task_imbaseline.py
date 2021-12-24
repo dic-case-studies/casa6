@@ -414,15 +414,15 @@ class ImsmoothParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks.imsmooth."""
 
     FIXED_PARAM = dict(
-        TARGETRES=False,
-        MASK='',
-        BEAM={},
-        REGION='',
-        BOX='',
-        CHANS='',
-        STOKES='',
-        STRETCH=False,
-        OVERWRITE=True
+        targetres=False,
+        mask='',
+        beam={},
+        region='',
+        box='',
+        chans='',
+        stokes='',
+        stretch=False,
+        overwrite=True
     )
 
     def __init__(self, infile: str=None, outfile: str=None, dirkernel: str='none', major: str='', minor: str='', pa: str='',
@@ -464,15 +464,15 @@ class SdsmoothParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks.sdsmooth."""
 
     FIXED_PARAM = dict(
-        SPW='',
-        FIELD='',
-        ANTENNA='',
-        TIMERANGE='',
-        SCAN='',
-        POL='',
-        INTENT='',
-        REINDEX=True,
-        OVERWRITE=True
+        spw='',
+        field='',
+        antenna='',
+        timerange='',
+        scan='',
+        pol='',
+        intent='',
+        reindex=True,
+        overwrite=True
     )
 
     def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, spkernel: str='none', kwidth: int=5) -> None:
@@ -505,25 +505,25 @@ class SdbaselineParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks.sdbaseline."""
 
     FIXED_PARAM = dict(
-        ANTENNA='',
-        FIELD='',
-        SPW='',
-        TIMERANGE='',
-        SCAN='',
-        POL='',
-        INTENT='',
-        REINDEX=True,
-        BLMODE='fit',
-        DOSUBTRACT=True,
-        BLFORMAT='csv',
-        BLTABLE='',
-        UPDATEWEIGHT=False,
-        SIGMAVALUE='stddev',
-        SHOWPROGRESS=False,
-        MINNROW=1000,
-        FFTMETHOD='fft',
-        VERBOSE=False,
-        OVERWRITE=True
+        antenna='',
+        field='',
+        spw='',
+        timerange='',
+        scan='',
+        pol='',
+        intent='',
+        reindex=True,
+        blmode='fit',
+        dosubtract=True,
+        blformat='csv',
+        bltable='',
+        updateweight=False,
+        sigmavalue='stddev',
+        showprogress=False,
+        minnrow=1000,
+        fftmethod='fft',
+        verbose=False,
+        overwrite=True
     )
 
     def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, bloutput: str='', maskmode: str='list',
