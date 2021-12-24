@@ -904,7 +904,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         outfile = self.outroot + tid + '.ms'
         datacolumn = 'float_data'
         dosubtract = False
-        blformats = ['text', 'csv', 'bltable', ['text', 'bltable'], ['text', 'csv', 'bltable']]
+        blformats = ['text', 'csv', 'table', ['text', 'table'], ['text', ''], ['text', 'csv', 'table']]
 
         for blformat in blformats:
             print(f"Testing blformat='{blformat}'...")
