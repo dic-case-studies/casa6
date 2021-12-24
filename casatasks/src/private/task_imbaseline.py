@@ -259,29 +259,30 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
     linefile = __prepare_linefile(linefile, imagename)
 
     with stack_manager(imagename) as (image_stack, ms_stack):
-        input_image_shape = get_image_shape(image_stack.peak().path)
+        try:
+            input_image_shape = get_image_shape(image_stack.peak().path)
 
-        # do direction plane smoothing
-        execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, image_stack)
+            # do direction plane smoothing
+            execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, image_stack)
 
-        # convert casaimage into MeasurementSet
-        execute_image2ms(DATACOLUMN, input_image_shape, image_stack, ms_stack)
+            # convert casaimage into MeasurementSet
+            execute_image2ms(DATACOLUMN, input_image_shape, image_stack, ms_stack)
 
-        # do spectral smoothing
-        execute_sdsmooth(DATACOLUMN, spkernel, kwidth, image_stack, ms_stack, input_image_shape)
+            # do spectral smoothing
+            execute_sdsmooth(DATACOLUMN, spkernel, kwidth, image_stack, ms_stack, input_image_shape)
 
-        # do baselining
-        execute_sdbaseline(DATACOLUMN, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
-                           edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
-                           clipniter, clipthresh, image_stack, ms_stack, input_image_shape)
+            # do baselining
+            execute_sdbaseline(DATACOLUMN, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
+                               edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
+                               clipniter, clipthresh, image_stack, ms_stack, input_image_shape)
 
-        # convert MeasurementSet into image and subtract results
-        execute_image_subtraction(linefile, image_stack)
+            # convert MeasurementSet into image and subtract results
+            execute_image_subtraction(linefile, image_stack)
 
-        if output_cont:
-            get_continuum_image(image_stack)
-
-    do_post_processing(linefile)
+            if output_cont:
+                get_continuum_image(image_stack)
+        finally:
+            do_post_processing(linefile)
 
 
 def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None, kimage: str=None, scale: float=None,
