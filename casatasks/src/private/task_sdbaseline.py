@@ -332,20 +332,6 @@ def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, ou
 
     f = open(fname, 'w')
 
-    blf = blfunc.lower()
-    if (blf == 'poly'):
-        ftitles = ['Fit order']
-    elif (blf == 'chebyshev'):
-        ftitles = ['Fit order']
-    elif (blf == 'cspline'):
-        ftitles = ['nPiece']
-    elif (blf == 'sinusoid'):
-        ftitles = ['applyFFT', 'fftMethod', 'fftThresh', 'addWaveN', 'rejWaveN']
-    elif (blf == 'variable'):
-        ftitles = []
-    else:
-        raise ValueError("Unsupported blfunc = %s" % blfunc)
-
     mm = maskmode.lower()
     if (mm == 'auto'):
         mtitles = ['Threshold', 'avg_limit', 'Edge']
