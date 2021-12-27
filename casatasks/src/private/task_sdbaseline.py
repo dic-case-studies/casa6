@@ -174,14 +174,16 @@ blformat_ext = ['csv', 'txt',  'bltable']
 
 
 def remove_data(filename):
-    if os.path.exists(filename):
-        if os.path.isdir(filename):
-            shutil.rmtree(filename)
-        elif os.path.isfile(filename):
-            os.remove(filename)
-        else:
-            # could be a symlink
-            os.remove(filename)
+    if not os.path.exists(filename):
+        return
+
+    if os.path.isdir(filename):
+        shutil.rmtree(filename)
+    elif os.path.isfile(filename):
+        os.remove(filename)
+    else:
+        # could be a symlink
+        os.remove(filename)
 
 
 def is_all_blank(blformat):
