@@ -187,19 +187,14 @@ def remove_data(filename):
 
 
 def is_all_blank(blformat):
-    if blformat is None:
-        return True
+    """
+    returns True if blformat is None, '', [] and
+    a string list containing only '' (i.e., ['', '', ..., ''])
+    """
+    if isinstance(blformat, list):
+        return all(map(is_all_blank, blformat))
 
-    res = True
-    if isinstance(blformat, str) and len(blformat) > 0:
-        res = False
-    elif isinstance(blformat, list) and len(blformat) > 0:
-        for i in range(len(blformat)):
-            if len(blformat[i]) > 0:
-                res = False
-                break
-
-    return res
+    return not blformat
 
 
 def check_fftthresh(fftthresh):
