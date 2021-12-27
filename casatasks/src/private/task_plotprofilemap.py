@@ -461,8 +461,6 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
     masked_data = image.data * image.mask
     masked_data[numpy.logical_not(numpy.isfinite(masked_data))] = 0.0
 
-    plot_list = []
-
     refpix = [0, 0]
     refval = [0, 0]
     increment = [0, 0]
