@@ -243,11 +243,11 @@ class ProfileMapAxesManager(object):
     def __axes_spmap(self):
         for x in range(self.nh):
             for y in range(self.nv):
-                w = self.horizontal_subplot_size
-                h = self.vertical_subplot_size
-                l = 1.0 - self.right_margin - w * (x + 1) + 0.5 * self.horizontal_space
-                b = self.bottom_margin + self.ylabel_area + h * y + 0.5 * self.vertical_space
-                axes = plt.axes([l, b, w - self.horizontal_space, h - self.vertical_space])
+                width = self.horizontal_subplot_size
+                height = self.vertical_subplot_size
+                left = 1.0 - self.right_margin - width * (x + 1) + 0.5 * self.horizontal_space
+                bottom = self.bottom_margin + self.ylabel_area + height * y + 0.5 * self.vertical_space
+                axes = plt.axes([left, bottom, width - self.horizontal_space, height - self.vertical_space])
                 axes.cla()
                 if self.showaxislabel and y == 0 and x == self.nh - 1:
                     casalog.post('label "{label}" unit "{unit}"'.format(label=self.spectral_label, unit=self.spectral_unit), priority='DEBUG')
@@ -293,11 +293,11 @@ class ProfileMapAxesManager(object):
 
     def setup_labels(self, label_ra, label_dec):
         for x in range(self.nh):
-            w = self.horizontal_subplot_size
-            l = 1.0 - self.right_margin - w * (x + 1)
-            h = self.bottom_margin * 0.5
-            b = self.bottom_margin - h
-            a1 = plt.axes([l, b, w, h])
+            width = self.horizontal_subplot_size
+            left = 1.0 - self.right_margin - width * (x + 1)
+            height = self.bottom_margin * 0.5
+            bottom = self.bottom_margin - height
+            a1 = plt.axes([left, bottom, width, height])
             a1.set_axis_off()
             if len(a1.texts) == 0:
                 plt.text(0.5, 0.2, HHMMSSss((label_ra[x][0] + label_ra[x][1]) / 2.0, 0),
@@ -305,11 +305,11 @@ class ProfileMapAxesManager(object):
             else:
                 a1.texts[0].set_text(HHMMSSss((label_ra[x][0] + label_ra[x][1]) / 2.0, 0))
         for y in range(self.nv):
-            l = self.left_margin
-            w = self.horizontal_subplot_size
-            h = self.vertical_subplot_size
-            b = self.bottom_margin + y * h
-            a1 = plt.axes([l, b, w, h])
+            left = self.left_margin
+            width = self.horizontal_subplot_size
+            height = self.vertical_subplot_size
+            bottom = self.bottom_margin + y * height
+            a1 = plt.axes([left, bottom, width, height])
             a1.set_axis_off()
             if len(a1.texts) == 0:
                 plt.text(0.5, 0.5, DDMMSSs((label_dec[y][0] + label_dec[y][1]) / 2.0, 0),
@@ -318,11 +318,11 @@ class ProfileMapAxesManager(object):
                 a1.texts[0].set_text(DDMMSSs((label_dec[y][0] + label_dec[y][1]) / 2.0, 0))
 
         # longitude label
-        l = self.left_margin + self.xlabel_area
-        h = self.bottom_margin * 0.5
-        b = 0.
-        w = 1.0 - l - self.right_margin
-        a1 = plt.axes([l, b, w, h])
+        left = self.left_margin + self.xlabel_area
+        height = self.bottom_margin * 0.5
+        bottom = 0.
+        width = 1.0 - left - self.right_margin
+        a1 = plt.axes([left, bottom, width, height])
         a1.set_axis_off()
         xpos = (1.0 + 0.5 * self.nh) / self.ncolumn
         casalog.post('xpos=%s' % (xpos), priority='DEBUG')
@@ -331,11 +331,11 @@ class ProfileMapAxesManager(object):
                  size=(self.ticksize + 2))
 
         # latitude label
-        l = 0.0
-        w = self.left_margin
-        h = self.vertical_subplot_size
-        b = self.bottom_margin + 0.5 * (h * self.nrow - self.vertical_subplot_size)
-        a1 = plt.axes([l, b, w, h])
+        left = 0.0
+        width = self.left_margin
+        height = self.vertical_subplot_size
+        bottom = self.bottom_margin + 0.5 * (height * self.nrow - self.vertical_subplot_size)
+        a1 = plt.axes([left, bottom, width, height])
         a1.set_axis_off()
         plt.text(1.0, 0.5, '%s (%s)' % (self.direction_label[1], self.direction_reference),
                  horizontalalignment='right', verticalalignment='center',
