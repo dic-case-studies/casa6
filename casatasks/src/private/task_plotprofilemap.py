@@ -1,7 +1,7 @@
 import os
 
 import matplotlib.pyplot as plt
-import numpy
+import numpy as np
 
 from casatasks import casalog
 from casatools import image, quanta
@@ -260,7 +260,7 @@ class ProfileMapAxesManager(object):
                     if self.normalization_factor < 100 and self.normalization_factor > 0.01:
                         label_text = 'Intensity [%s]' % self.brightnessunit
                     else:
-                        label_text = 'Intensity [1e%d x %s]' % (int(numpy.log10(self.normalization_factor)),
+                        label_text = 'Intensity [1e%d x %s]' % (int(np.log10(self.normalization_factor)),
                                                                 self.brightnessunit)
                     axes.yaxis.set_label_text(label_text,
                                               size=self.ticksize, rotation='vertical')
@@ -442,24 +442,24 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
     elif spectralaxis == 'channel':
         spectral_label = 'Channel'
         spectral_unit = ''
-        spectral_data = numpy.arange(chan0, chan1, dtype=numpy.int32)
+        spectral_data = np.arange(chan0, chan1, dtype=np.int32)
     else:
         spectral_label = spectralaxis.capitalize()
         if spectralaxis == 'frequency':
             spectral_unit = 'GHz'
-            spectral_data = numpy.fromiter((image.to_frequency(v, freq_unit='GHz')
-                                            for v in default_spectral_data), dtype=numpy.float64)
+            spectral_data = np.fromiter((image.to_frequency(v, freq_unit='GHz')
+                                            for v in default_spectral_data), dtype=np.float64)
         elif spectralaxis == 'velocity':
             if restfreq is not None:
                 casalog.post('User-specified rest frequency %s' % (restfreq))
             else:
                 casalog.post('Default rest frequency from input image %s' % (image.coordsys.restfrequency()))
             spectral_unit = 'km/s'
-            spectral_data = numpy.fromiter((image.to_velocity(f, freq_unit='GHz', restfreq=restfreq)
-                                            for f in default_spectral_data), dtype=numpy.float64)
+            spectral_data = np.fromiter((image.to_velocity(f, freq_unit='GHz', restfreq=restfreq)
+                                            for f in default_spectral_data), dtype=np.float64)
 
     masked_data = image.data * image.mask
-    masked_data[numpy.logical_not(numpy.isfinite(masked_data))] = 0.0
+    masked_data[np.logical_not(np.isfinite(masked_data))] = 0.0
 
     refpix = [0, 0]
     refval = [0, 0]
@@ -471,9 +471,9 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
     casalog.post('Generate profile map for pol {stokes}'.format(stokes=stokes))
     casalog.post('masked_data.shape=%s id_stokes=%s' % (list(masked_data.shape), image.id_stokes), priority='DEBUG')
     masked_data_p = masked_data.take([pol], axis=image.id_stokes).squeeze(axis=image.id_stokes)
-    Plot = numpy.zeros((NH, NV, (chan1 - chan0)), numpy.float32) + NoData
+    Plot = np.zeros((NH, NV, (chan1 - chan0)), np.float32) + NoData
     mask_p = image.mask.take([pol], axis=image.id_stokes).squeeze(axis=image.id_stokes)
-    isvalid = numpy.any(mask_p, axis=2)
+    isvalid = np.any(mask_p, axis=2)
     Nsp = sum(isvalid.flatten())
     casalog.post('Nsp=%s' % (Nsp))
 
@@ -492,10 +492,10 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
                 Plot[x][y] = valid_sp.mean(axis=0)
 
     # normalize plot data
-    plot_mask = numpy.logical_and(numpy.isfinite(Plot), Plot != NoData)
-    max_data = numpy.abs(Plot[plot_mask]).max()
+    plot_mask = np.logical_and(np.isfinite(Plot), Plot != NoData)
+    max_data = np.abs(Plot[plot_mask]).max()
     casalog.post('max_data = %s' % (max_data), priority='DEBUG')
-    normalization_factor = numpy.power(10.0, int(numpy.log10(max_data)))
+    normalization_factor = np.power(10.0, int(np.log10(max_data)))
     if normalization_factor < 1.0:
         normalization_factor /= 10.
     casalog.post('normalization_factor = %s' % (normalization_factor), priority='DEBUG')
@@ -573,8 +573,8 @@ class SDProfileMapPlotter(object):
         return self.axes.ticksize
 
     def setup_labels(self, refpix_list, refval_list, increment_list):
-        LabelRA = numpy.zeros((self.nh, 2), numpy.float32) + NoData
-        LabelDEC = numpy.zeros((self.nv, 2), numpy.float32) + NoData
+        LabelRA = np.zeros((self.nh, 2), np.float32) + NoData
+        LabelDEC = np.zeros((self.nv, 2), np.float32) + NoData
         refpix = refpix_list[0]
         refval = refval_list[0]
         increment = increment_list[0]
@@ -636,7 +636,7 @@ class SDProfileMapPlotter(object):
         # Auto scaling
         # to eliminate max/min value due to bad pixel or bad fitting,
         #  1/10-th value from max and min are used instead
-        valid_index = numpy.where(map_data.min(axis=2) > NoDataThreshold)
+        valid_index = np.where(map_data.min(axis=2) > NoDataThreshold)
         valid_data = map_data[valid_index[0], valid_index[1], :]
         ListMax = valid_data.max(axis=1)
         ListMin = valid_data.min(axis=1)
@@ -644,8 +644,8 @@ class SDProfileMapPlotter(object):
         casalog.post('ListMin=%s' % (list(ListMin)))
         if len(ListMax) == 0:
             return False
-        global_ymax = numpy.sort(ListMax)[len(ListMax) - len(ListMax) // 10 - 1]
-        global_ymin = numpy.sort(ListMin)[len(ListMin) // 10]
+        global_ymax = np.sort(ListMax)[len(ListMax) - len(ListMax) // 10 - 1]
+        global_ymin = np.sort(ListMin)[len(ListMin) // 10]
         global_ymax = global_ymax + (global_ymax - global_ymin) * 0.2
         global_ymin = global_ymin - (global_ymax - global_ymin) * 0.1
         del ListMax, ListMin
@@ -654,7 +654,7 @@ class SDProfileMapPlotter(object):
 
         plt.ioff()
 
-        no_data = numpy.zeros(len(frequency), dtype=numpy.float32)
+        no_data = np.zeros(len(frequency), dtype=np.float32)
         for x in range(self.nh):
             for y in range(self.nv):
                 if self.global_scaling is True:
@@ -666,8 +666,8 @@ class SDProfileMapPlotter(object):
                     xmin = global_xmin
                     xmax = global_xmax
                     if map_data[x][y].min() > NoDataThreshold:
-                        median = numpy.median(map_data[x][y])
-                        mad = numpy.median(map_data[x][y] - median)
+                        median = np.median(map_data[x][y])
+                        mad = np.median(map_data[x][y] - median)
                         sigma = map_data[x][y].std()
                         ymin = median - 2.0 * sigma
                         ymax = median + 5.0 * sigma
@@ -697,7 +697,7 @@ class SDProfileMapPlotter(object):
                     elif plotmasked == 'plot':
                         m = map_data[x][y] == NoDataThreshold
                         if not all(m):
-                            ma = numpy.ma.masked_array(map_data[x][y], m)
+                            ma = np.ma.masked_array(map_data[x][y], m)
                             plt.plot(frequency, ma,
                                      color=maskedcolor, linestyle=linestyle, linewidth=linewidth)
 
@@ -750,12 +750,12 @@ class SpectralImage(object):
             self.mask = ia.getchunk(getmask=True)
             if not stokes_axis_exists:
                 # put degenerate Stokes axis at the end
-                self.data = numpy.expand_dims(self.data, axis=-1)
-                self.mask = numpy.expand_dims(self.mask, axis=-1)
+                self.data = np.expand_dims(self.data, axis=-1)
+                self.mask = np.expand_dims(self.mask, axis=-1)
                 casalog.post('add dummy Stokes axis to data and mask since input image doesn\'t have it.')
                 casalog.post('data.shape={}'.format(self.data.shape), priority='DEBUG')
                 casalog.post('mask.shape={}'.format(self.mask.shape), priority='DEBUG')
-            bottom = ia.toworld(numpy.zeros(len(self.image_shape), dtype=int), 'q')['quantity']
+            bottom = ia.toworld(np.zeros(len(self.image_shape), dtype=int), 'q')['quantity']
             top = ia.toworld(self.image_shape - 1, 'q')['quantity']
             key = lambda x: '*%s' % (x + 1)
             ra_min = bottom[key(self.id_direction[0])]
@@ -769,10 +769,10 @@ class SpectralImage(object):
             self._brightnessunit = ia.brightnessunit()
             if self.spectral_label == 'Frequency':
                 refpix, refval, increment = self.spectral_axis(unit='GHz')
-                self.spectral_data = numpy.array([refval + increment * (i - refpix) for i in range(self.nchan)])
+                self.spectral_data = np.array([refval + increment * (i - refpix) for i in range(self.nchan)])
             elif self.spectral_label == 'Velocity':
                 refpix, refval, increment = self.spectral_axis(unit='km/s')
-                self.spectral_data = numpy.array([refval + increment * (i - refpix) for i in range(self.nchan)])
+                self.spectral_data = np.array([refval + increment * (i - refpix) for i in range(self.nchan)])
             if stokes_axis_exists:
                 self.stokes = self.coordsys.stokes()
             else:
@@ -846,5 +846,5 @@ class SpectralImage(object):
         if _unit != unit:
             refval = qa.convert(qa.quantity(refval, _unit), unit)['value']
             increment = qa.convert(qa.quantity(increment, _unit), unit)['value']
-        #return numpy.array([refval+increment*(i-refpix) for i in range(self.nchan)])
+        #return np.array([refval+increment*(i-refpix) for i in range(self.nchan)])
         return (refpix, refval, increment)
