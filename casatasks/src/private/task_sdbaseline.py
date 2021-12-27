@@ -332,16 +332,6 @@ def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, ou
 
     f = open(fname, 'w')
 
-    mm = maskmode.lower()
-    if (mm == 'auto'):
-        mtitles = ['Threshold', 'avg_limit', 'Edge']
-    elif (mm == 'list'):
-        mtitles = []
-    else:  # interact
-        mtitles = []
-
-    ctitles = ['clipThresh', 'clipNIter']
-
     info = [['Source Table', infile],
             ['Output File', outfile if (outfile != '') else infile],
             ['Mask mode', maskmode]]
