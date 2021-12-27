@@ -22,16 +22,16 @@ def plotprofilemap(imagename=None, figfile=None, overwrite=None, transparent=Non
     if len(figfile) > 0 and os.path.exists(figfile) and not overwrite:
         raise RuntimeError('overwrite is False and output file exists: \'%s\''%(figfile))
 
-    image = SpectralImage(imagename)
-    npol = len(image.stokes)
+    image_data = SpectralImage(imagename)
+    npol = len(image_data.stokes)
     if pol < 0 or pol > npol - 1:
-        raise RuntimeError('pol {pol} is out of range (Stokes axis {stokes})'.format(pol=pol,stokes=image.stokes))
+        raise RuntimeError('pol {pol} is out of range (Stokes axis {stokes})'.format(pol=pol,stokes=image_data.stokes))
 
     parsed_size = parse_figsize(figsize)
     nx, ny = parse_numpanels(numpanels)
     if (not isinstance(restfreq, str)) or len(restfreq) == 0:
         restfreq = None
-    plot_profile_map(image, figfile, pol, spectralaxis, restfreq, title, linecolor, linestyle, linewidth,
+    plot_profile_map(image_data, figfile, pol, spectralaxis, restfreq, title, linecolor, linestyle, linewidth,
                      separatepanel, plotmasked, maskedcolor,
                      showaxislabel, showtick, showticklabel, parsed_size,
                      nx, ny, transparent, plotrange)
@@ -355,13 +355,13 @@ class ProfileMapAxesManager(object):
                      size=self.ticksize + 4)
 
 
-def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=None,
+def plot_profile_map(image_data, figfile, pol, spectralaxis='', restfreq=None, title=None,
                      linecolor='b', linestyle='-', linewidth=0.2,
                      separatepanel=True, plotmasked=None, maskedcolor=None,
                      showaxislabel=False, showtick=False, showticklabel=False,
                      figsize=None, nx=-1, ny=-1, transparent=False, user_xlim=None):
     """
-    image
+    image_data
     figfile
     linecolor
     linestyle
@@ -404,9 +404,9 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
         if len(user_range[1]) > 0:
             user_xmax = float(user_range[1])
 
-    x_max = image.nx - 1
+    x_max = image_data.nx - 1
     x_min = 0
-    y_max = image.ny - 1
+    y_max = image_data.ny - 1
     y_min = 0
     MaxPanel = 8
     num_panel = min(max(x_max - x_min + 1, y_max - y_min + 1), MaxPanel)
@@ -418,23 +418,23 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
 
     if nx > 0:
         NH = nx
-        xSTEP = image.nx // NH + (1 if image.nx % NH > 0 else 0)
+        xSTEP = image_data.nx // NH + (1 if image_data.nx % NH > 0 else 0)
     if ny > 0:
         NV = ny
-        ySTEP = image.ny // NV + (1 if image.ny % NV > 0 else 0)
+        ySTEP = image_data.ny // NV + (1 if image_data.ny % NV > 0 else 0)
 
     casalog.post('num_panel=%s, xSTEP=%s, ySTEP=%s, NH=%s, NV=%s' % (num_panel, xSTEP, ySTEP, NH, NV))
 
     chan0 = 0
-    chan1 = image.nchan
+    chan1 = image_data.nchan
 
-    direction_label = image.direction_label
-    direction_reference = image.direction_reference
-    default_spectral_label = image.spectral_label
-    default_spectral_unit = image.spectral_unit
+    direction_label = image_data.direction_label
+    direction_reference = image_data.direction_reference
+    default_spectral_label = image_data.spectral_label
+    default_spectral_unit = image_data.spectral_unit
     if default_spectral_label == 'Frequency':
         default_spectral_unit = 'GHz'
-    default_spectral_data = image.spectral_data[chan0:chan1]
+    default_spectral_data = image_data.spectral_data[chan0:chan1]
     if spectralaxis is None or spectralaxis == '' or spectralaxis == default_spectral_label.lower():
         spectral_label = default_spectral_label
         spectral_unit = default_spectral_unit
@@ -447,32 +447,32 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
         spectral_label = spectralaxis.capitalize()
         if spectralaxis == 'frequency':
             spectral_unit = 'GHz'
-            spectral_data = np.fromiter((image.to_frequency(v, freq_unit='GHz')
+            spectral_data = np.fromiter((image_data.to_frequency(v, freq_unit='GHz')
                                             for v in default_spectral_data), dtype=np.float64)
         elif spectralaxis == 'velocity':
             if restfreq is not None:
                 casalog.post('User-specified rest frequency %s' % (restfreq))
             else:
-                casalog.post('Default rest frequency from input image %s' % (image.coordsys.restfrequency()))
+                casalog.post('Default rest frequency from input image %s' % (image_data.coordsys.restfrequency()))
             spectral_unit = 'km/s'
-            spectral_data = np.fromiter((image.to_velocity(f, freq_unit='GHz', restfreq=restfreq)
+            spectral_data = np.fromiter((image_data.to_velocity(f, freq_unit='GHz', restfreq=restfreq)
                                             for f in default_spectral_data), dtype=np.float64)
 
-    masked_data = image.data * image.mask
+    masked_data = image_data.data * image_data.mask
     masked_data[np.logical_not(np.isfinite(masked_data))] = 0.0
 
     refpix = [0, 0]
     refval = [0, 0]
     increment = [0, 0]
-    refpix[0], refval[0], increment[0] = image.direction_axis(0, unit='deg')
-    refpix[1], refval[1], increment[1] = image.direction_axis(1, unit='deg')
+    refpix[0], refval[0], increment[0] = image_data.direction_axis(0, unit='deg')
+    refpix[1], refval[1], increment[1] = image_data.direction_axis(1, unit='deg')
 
-    stokes = image.stokes[pol]
+    stokes = image_data.stokes[pol]
     casalog.post('Generate profile map for pol {stokes}'.format(stokes=stokes))
-    casalog.post('masked_data.shape=%s id_stokes=%s' % (list(masked_data.shape), image.id_stokes), priority='DEBUG')
-    masked_data_p = masked_data.take([pol], axis=image.id_stokes).squeeze(axis=image.id_stokes)
+    casalog.post('masked_data.shape=%s id_stokes=%s' % (list(masked_data.shape), image_data.id_stokes), priority='DEBUG')
+    masked_data_p = masked_data.take([pol], axis=image_data.id_stokes).squeeze(axis=image_data.id_stokes)
     Plot = np.zeros((NH, NV, (chan1 - chan0)), np.float32) + NoData
-    mask_p = image.mask.take([pol], axis=image.id_stokes).squeeze(axis=image.id_stokes)
+    mask_p = image_data.mask.take([pol], axis=image_data.id_stokes).squeeze(axis=image_data.id_stokes)
     isvalid = np.any(mask_p, axis=2)
     Nsp = sum(isvalid.flatten())
     casalog.post('Nsp=%s' % (Nsp))
@@ -502,7 +502,7 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
 
     Plot[plot_mask] /= normalization_factor
 
-    plotter = SDProfileMapPlotter(NH, NV, xSTEP, ySTEP, image.brightnessunit,
+    plotter = SDProfileMapPlotter(NH, NV, xSTEP, ySTEP, image_data.brightnessunit,
                                   direction_label, direction_reference,
                                   spectral_label, spectral_unit,
                                   title=title,
