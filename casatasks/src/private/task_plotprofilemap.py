@@ -458,17 +458,6 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
             spectral_data = numpy.fromiter((image.to_velocity(f, freq_unit='GHz', restfreq=restfreq)
                                             for f in default_spectral_data), dtype=numpy.float64)
 
-    plotter = SDProfileMapPlotter(NH, NV, xSTEP, ySTEP, image.brightnessunit,
-                                  direction_label, direction_reference,
-                                  spectral_label, spectral_unit,
-                                  title=title,
-                                  separatepanel=separatepanel,
-                                  showaxislabel=showaxislabel,
-                                  showtick=showtick,
-                                  showticklabel=showticklabel,
-                                  figsize=figsize,
-                                  clearpanel=True)
-
     masked_data = image.data * image.mask
     masked_data[numpy.logical_not(numpy.isfinite(masked_data))] = 0.0
 
@@ -480,45 +469,55 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
     refpix[0], refval[0], increment[0] = image.direction_axis(0, unit='deg')
     refpix[1], refval[1], increment[1] = image.direction_axis(1, unit='deg')
 
+    stokes = image.stokes[pol]
+    casalog.post('Generate profile map for pol {stokes}'.format(stokes=stokes))
+    casalog.post('masked_data.shape=%s id_stokes=%s' % (list(masked_data.shape), image.id_stokes), priority='DEBUG')
+    masked_data_p = masked_data.take([pol], axis=image.id_stokes).squeeze(axis=image.id_stokes)
+    Plot = numpy.zeros((NH, NV, (chan1 - chan0)), numpy.float32) + NoData
+    mask_p = image.mask.take([pol], axis=image.id_stokes).squeeze(axis=image.id_stokes)
+    isvalid = numpy.any(mask_p, axis=2)
+    Nsp = sum(isvalid.flatten())
+    casalog.post('Nsp=%s' % (Nsp))
+
+    for x in range(NH):
+        x0 = x * xSTEP
+        x1 = (x + 1) * xSTEP
+        for y in range(NV):
+            y0 = y * ySTEP
+            y1 = (y + 1) * ySTEP
+            valid_index = isvalid[x0:x1, y0:y1].nonzero()
+            chunk = masked_data_p[x0:x1, y0:y1]
+            valid_sp = chunk[valid_index[0], valid_index[1], :]
+            if len(valid_sp) == 0:
+                Plot[x][y] = NoData
+            else:
+                Plot[x][y] = valid_sp.mean(axis=0)
+
+    # normalize plot data
+    plot_mask = numpy.logical_and(numpy.isfinite(Plot), Plot != NoData)
+    max_data = numpy.abs(Plot[plot_mask]).max()
+    casalog.post('max_data = %s' % (max_data), priority='DEBUG')
+    normalization_factor = numpy.power(10.0, int(numpy.log10(max_data)))
+    if normalization_factor < 1.0:
+        normalization_factor /= 10.
+    casalog.post('normalization_factor = %s' % (normalization_factor), priority='DEBUG')
+
+    Plot[plot_mask] /= normalization_factor
+
+    plotter = SDProfileMapPlotter(NH, NV, xSTEP, ySTEP, image.brightnessunit,
+                                  direction_label, direction_reference,
+                                  spectral_label, spectral_unit,
+                                  title=title,
+                                  separatepanel=separatepanel,
+                                  showaxislabel=showaxislabel,
+                                  showtick=showtick,
+                                  showticklabel=showticklabel,
+                                  figsize=figsize,
+                                  clearpanel=True)
+
     try:
         plotter.setup_labels(refpix, refval, increment)
-
-        stokes = image.stokes[pol]
-        casalog.post('Generate profile map for pol {stokes}'.format(stokes=stokes))
-        casalog.post('masked_data.shape=%s id_stokes=%s' % (list(masked_data.shape), image.id_stokes), priority='DEBUG')
-        masked_data_p = masked_data.take([pol], axis=image.id_stokes).squeeze(axis=image.id_stokes)
-        Plot = numpy.zeros((NH, NV, (chan1 - chan0)), numpy.float32) + NoData
-        mask_p = image.mask.take([pol], axis=image.id_stokes).squeeze(axis=image.id_stokes)
-        isvalid = numpy.any(mask_p, axis=2)
-        Nsp = sum(isvalid.flatten())
-        casalog.post('Nsp=%s' % (Nsp))
-
-        for x in range(NH):
-            x0 = x * xSTEP
-            x1 = (x + 1) * xSTEP
-            for y in range(NV):
-                y0 = y * ySTEP
-                y1 = (y + 1) * ySTEP
-                valid_index = isvalid[x0:x1, y0:y1].nonzero()
-                chunk = masked_data_p[x0:x1, y0:y1]
-                valid_sp = chunk[valid_index[0], valid_index[1], :]
-                if len(valid_sp) == 0:
-                    Plot[x][y] = NoData
-                else:
-                    Plot[x][y] = valid_sp.mean(axis=0)
-
-        # normalize plot data
-        plot_mask = numpy.logical_and(numpy.isfinite(Plot), Plot != NoData)
-        max_data = numpy.abs(Plot[plot_mask]).max()
-        casalog.post('max_data = %s' % (max_data), priority='DEBUG')
-        normalization_factor = numpy.power(10.0, int(numpy.log10(max_data)))
-        if normalization_factor < 1.0:
-            normalization_factor /= 10.
-        casalog.post('normalization_factor = %s' % (normalization_factor), priority='DEBUG')
         plotter.set_normalization_factor(normalization_factor)
-
-        Plot[plot_mask] /= normalization_factor
-
         status = plotter.plot(figfile, Plot,
                               spectral_data,
                               linecolor=linecolor,
