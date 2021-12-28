@@ -145,10 +145,8 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         # Remove {WEIGHT|SIGMA}_SPECTRUM columns if updateweight=True (CAS-13161)
         if updateweight:
             with sdutil.table_manager(outfile, nomodify=False) as mytb:
-                cols_remove = []
-                for col in ['WEIGHT_SPECTRUM', 'SIGMA_SPECTRUM']:
-                    if col in mytb.colnames():
-                        cols_remove.append(col)
+                cols_spectrum = ['WEIGHT_SPECTRUM', 'SIGMA_SPECTRUM']
+                cols_remove = [col for col in cols_spectrum if col in mytb.colnames()]
                 if len(cols_remove) > 0:
                     mytb.removecols(' '.join(cols_remove))
 
@@ -253,11 +251,8 @@ def has_duplicate_nonnull_element_ex(lst, base):
 
 
 def normalise_bloutput(infile, blformat, bloutput, overwrite):
-    normalised_bloutput = []
-    for item in zip(blformat_item, blformat_ext):
-        normalised_bloutput.append(
-            get_normalised_name(infile, blformat, bloutput, item[0], item[1], overwrite))
-    return normalised_bloutput
+    return [get_normalised_name(infile, blformat, bloutput, item[0], item[1], overwrite) \
+            for item in zip(blformat_item, blformat_ext)]
 
 
 def get_normalised_name(infile, blformat, bloutput, name, ext, overwrite):
