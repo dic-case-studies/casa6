@@ -126,10 +126,7 @@ class BlparamFileParser(FileReader):
 
 def parseCoeff(txt):
     clist = txt.rstrip('\n').split(',')
-    ret = []
-    for c in clist:
-        ret.append(float(c.split('=')[1]))
-    return ret
+    return [float(c.split('=')[1]) for c in clist]
 
 
 def parseRms(txt):
@@ -297,9 +294,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
         """
         if isinstance(val, str):
             val_split = val.split(',')
-            val_sel = []
-            for j in range(len(val_split)):
-                val_sel.append(int(val_split[j]))
+            val_sel = [int(val_split[j]) for j in range(len(val_split))]
         elif isinstance(val, int):
             val_sel = [val]
         elif isinstance(val, list) or isinstance(val, tuple):
@@ -320,11 +315,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
         data_list : a list to test and get IDs from
         sel_list  : a list of values to look for existance in data_list
         """
-        res = []
-        for i in range(len(data_list)):
-            if data_list[i] in sel_list:
-                #idx = sel_list.index(data_list[i])
-                res.append(i)
+        res = [i for i in range(len(data_list)) if data_list[i] in sel_list]
         return self._getUniqList(res)
     
     def _getEffective(self, spec, mask):
@@ -336,10 +327,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
         mask : a mask list of the channel ranges to use. The format is
                [[start_idx0, end_idx0], [start_idx1, end_idx1], ...]
         """
-        res = []
-        for i in range(len(mask)):
-            for j in range(mask[i][0], mask[i][1]):
-                res.append(spec[j])
+        res = [spec[j] for i in range(len(mask)) for j in range(mask[i][0], mask[i][1])]
         return np.array(res)
 
     def _getStats(self, filename=None, spw=None, pol=None, colname=None, mask=None):
@@ -421,13 +409,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
         (row0, pol0), (row0, pol1), (row1, pol0), ....
         """
         #if len(stat_list)==0: raise Exception, "No row selected in MS"
-        keys=stat_list[0].keys()
-        stat_dict={}
-        for key in keys:
-            stat_dict[key] = []
-        for stat in stat_list:
-            for key in keys:
-                stat_dict[key].append(stat[key])
+        stat_dict = {key: [stat[key] for stat in stat_list] for key in stat_list[0].keys()}
         return stat_dict
 
     def _compareStats(self, currstat, refstat, rtol=1.0e-2, atol=1.0e-5, complist=None):
@@ -2931,13 +2913,8 @@ Basic unit tests for task sdbaseline. No interactive testing.
 
     def check_bloutputparam_csv(self,bloutputfile, ref_all):
         with open(bloutputfile,'r') as file:
-            dataReader=csv.reader(file)     
-            list_all=[]
-            for row in dataReader:
-                list_all.append(row)
- 
+            list_all = [row for row in csv.reader(file)]
             self.assertEqual(ref_all, list_all, msg='parameter values of the output csv file are not equivalent to referece values!')
-
 
 
     def test000(self):
