@@ -484,7 +484,7 @@ def parse_wavenumber_param(wn):
     msg = 'wrong value given for addwn/rejwn'
 
     if isinstance(wn, bool):
-        raise RuntimeError(msg)
+        raise ValueError(msg)
     elif isinstance(wn, list):
         __check_positive_or_zero(wn)
         wn_uniq = list(set(wn))
@@ -500,7 +500,7 @@ def parse_wavenumber_param(wn):
         return str(wn)
     elif isinstance(wn, str):
         if '.' in wn:                            # case of float value as string
-            raise RuntimeError(msg)
+            raise ValueError(msg)
         elif ',' in wn:                          # cases 'a,b,c,...'
             val0 = wn.split(',')
             __check_positive_or_zero(val0)
@@ -573,7 +573,7 @@ def parse_wavenumber_param(wn):
         # return res
         return ','.join(__get_strlist(res))
     else:
-        raise RuntimeError(msg)
+        raise ValueError(msg)
 
 
 def check_fftthresh(fftthresh):
@@ -625,9 +625,9 @@ def __check_positive_or_zero(param, allowzero=True):
         elif isinstance(param, str):
             __do_check_positive_or_zero(int(param), allowzero)
         else:
-            raise RuntimeError(msg)
+            raise ValueError(msg)
     except:
-        raise RuntimeError(msg)
+        raise ValueError(msg)
 
 
 def __get_strlist(param):
@@ -640,7 +640,7 @@ def __get_strlist(param):
 def __do_check_positive_or_zero(param, allowzero):
     msg = 'wrong value given for addwn/rejwn'
     if (param < 0) or ((param == 0) and not allowzero):
-        raise RuntimeError(msg)
+        raise ValueError(msg)
 
 
 def __is_sequence_or_number(param, ptype=int):

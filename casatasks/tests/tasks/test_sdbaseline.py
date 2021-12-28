@@ -4,41 +4,21 @@ import os
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, table
-    from casatasks import sdbaseline
-    from casatasks.private.sdutil import table_manager
-    from casatasks.private.sdutil import is_empty
-    from casatasks.private.sdutil import parse_wavenumber_param
-    from casatasks.private.sdutil import check_fftthresh
+from casatools import ctsys, table
+from casatasks import sdbaseline
+from casatasks.private.sdutil import table_manager
+from casatasks.private.sdutil import is_empty
+from casatasks.private.sdutil import parse_wavenumber_param
+from casatasks.private.sdutil import check_fftthresh
+from casatestutils import selection_syntax
 
-    ### for selection_syntax import
-    from casatestutils import selection_syntax
 
-    tb = table( )
+tb = table()
+ctsys_resolve = ctsys.resolve
 
-    ctsys_resolve = ctsys.resolve
-
-    # default is not necessary in CASA6
-    def default(atask):
-        pass
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from sdbaseline import sdbaseline
-    from sdutil import tbmanager as table_manager
-    # the global tb tool is used here as is
-
-    try:
-        from casatestutils import selection_syntax
-    except:
-        import tests.selection_syntax as selection_syntax
-
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+# default is necessary in CASA6
+def default(atask):
+    pass
 
 
 ### Utilities for reading blparam file
@@ -5354,7 +5334,7 @@ class sdbaseline_helperTest(sdbaseline_unittest_base):
         for (wn, answer) in test_cases:
             print(f"    wn='{wn}'...")
             if answer == 'ERROR':
-                with self.assertRaises(RuntimeError, msg="wrong value given for addwn/rejwn"):
+                with self.assertRaises(ValueError, msg="wrong value given for addwn/rejwn"):
                     parse_wavenumber_param(wn)
             else:
                 self.assertEqual(answer, parse_wavenumber_param(wn))
@@ -5401,6 +5381,6 @@ def suite():
             sdbaseline_helperTest
             ]
 
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+
+if __name__ == '__main__':
+    unittest.main()
