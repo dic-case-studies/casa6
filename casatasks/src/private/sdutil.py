@@ -452,6 +452,17 @@ def get_subtable_name(v):
     return v.replace('Table:', '').strip()
 
 
+def is_empty(blformat):
+    """
+    returns True if blformat is None, '', [] and
+    a string list containing only '' (i.e., ['', '', ..., ''])
+    """
+    if isinstance(blformat, list):
+        return all(map(is_empty, blformat))
+
+    return not blformat
+
+
 def get_spwids(selection, infile=None):
     # return a comma-separated string of spw IDs.
     # selection should be an output of ms.msseltoindex()
@@ -470,20 +481,27 @@ def get_spwids(selection, infile=None):
 
 
 def parse_wavenumber_param(wn):
-    if isinstance(wn, list):
+    msg = 'wrong value given for addwn/rejwn'
+
+    if isinstance(wn, bool):
+        raise RuntimeError(msg)
+    elif isinstance(wn, list):
         __check_positive_or_zero(wn)
-        wn.sort()
-        return ','.join(__get_strlist(wn))
+        wn_uniq = list(set(wn))
+        wn_uniq.sort()
+        return ','.join(__get_strlist(wn_uniq))
     elif isinstance(wn, tuple):
         __check_positive_or_zero(wn)
-        wn_list = list(wn)
-        wn_list.sort()
-        return ','.join(__get_strlist(wn_list))
+        wn_uniq = list(set(wn))
+        wn_uniq.sort()
+        return ','.join(__get_strlist(wn_uniq))
     elif isinstance(wn, int):
         __check_positive_or_zero(wn)
         return str(wn)
     elif isinstance(wn, str):
-        if ',' in wn:                            # cases 'a,b,c,...'
+        if '.' in wn:                            # case of float value as string
+            raise RuntimeError(msg)
+        elif ',' in wn:                          # cases 'a,b,c,...'
             val0 = wn.split(',')
             __check_positive_or_zero(val0)
             val = []
@@ -548,15 +566,52 @@ def parse_wavenumber_param(wn):
             val = int(val0)+1
             __check_positive_or_zero(val)
             res = [val, -999]
-        else:
+        else:                                    # case 'a'
             __check_positive_or_zero(wn)
             res = [int(wn)]
 
         # return res
         return ','.join(__get_strlist(res))
     else:
-        msg = 'wrong value given for addwn/rejwn'
         raise RuntimeError(msg)
+
+
+def check_fftthresh(fftthresh):
+    has_valid_type = isinstance(fftthresh, float) or isinstance(fftthresh, int) or isinstance(fftthresh, str)
+    if isinstance(fftthresh, bool):
+        has_valid_type = False
+    if not has_valid_type:
+        raise ValueError('fftthresh must be float or integer or string.')
+
+    not_positive_mesg = 'threshold given to fftthresh must be positive.'
+
+    if isinstance(fftthresh, str):
+        try:
+            val_not_positive = False
+            if (3 < len(fftthresh)) and (fftthresh[:3] == 'top'):
+                val_top = int(fftthresh[3:])
+                if (val_top <= 0):
+                    val_not_positive = True
+            elif (5 < len(fftthresh)) and (fftthresh[-5:] == 'sigma'):
+                val_sigma = float(fftthresh[:-5])
+                if (val_sigma <= 0.0):
+                    val_not_positive = True
+            else:
+                val_sigma = float(fftthresh)
+                if (val_sigma <= 0.0):
+                    val_not_positive = True
+
+            if val_not_positive:
+                raise ValueError(not_positive_mesg)
+        except Exception as e:
+            if (str(e) == not_positive_mesg):
+                raise
+            else:
+                raise ValueError('fftthresh has a wrong format.')
+
+    else:
+        if (fftthresh <= 0.0):
+            raise ValueError(not_positive_mesg)
 
 
 def __check_positive_or_zero(param, allowzero=True):

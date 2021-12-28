@@ -9,6 +9,9 @@ if is_CASA6:
     from casatools import ctsys, table
     from casatasks import sdbaseline
     from casatasks.private.sdutil import table_manager
+    from casatasks.private.sdutil import is_empty
+    from casatasks.private.sdutil import parse_wavenumber_param
+    from casatasks.private.sdutil import check_fftthresh
 
     ### for selection_syntax import
     from casatestutils import selection_syntax
@@ -5280,6 +5283,109 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.run_apply_test()
 
 
+class sdbaseline_helperTest(sdbaseline_unittest_base):
+    """
+    Tests for helper functions
+
+    test000 --- tests for sdutil.is_empty()
+    test010 --- tests for sdutil.parse_wavenumber_param()
+    test020 --- tests for sdutil.check_fftthresh()
+    """
+
+    def test000(self):
+        print("Testing a helper function is_empty() with")
+
+        # right cases
+        blformats = [None, '', [], ['', '', '']]
+        for blformat in blformats:
+            print(f"    blformat='{blformat}'...")
+            self.assertTrue(is_empty(blformat))
+
+        # wrong cases
+        blformats = ['text', 'csv', 'table',
+                     ['text'], ['csv'], ['table'],
+                     ['text', ''], ['', 'table'],
+                     ['text', 'csv'], ['text', 'table'], ['csv', 'table'],
+                     ['text', 'csv', ''], ['text', '', 'table'], ['', 'csv', 'table'],
+                     ['text', 'csv', 'table'],
+                     ['text', 'csv', 'table', ''], ['', 'text', 'csv', 'table']]
+        for blformat in blformats:
+            print(f"    blformat='{blformat}'...")
+            self.assertFalse(is_empty(blformat))
+
+    def test010(self):
+        test_cases = [([1, 2, 3], '1,2,3'),
+                      ([1, 3, 2], '1,2,3'),
+                      ([3, 2, 1], '1,2,3'),
+                      ([3, 1, 3], '1,3'),
+                      ([-5, 1, 2], 'ERROR'),
+                      ((3, 2, 1), '1,2,3'),
+                      ((4, 1, 4), '1,4'),
+                      ((-5, 1, 2), 'ERROR'),
+                      (5, '5'),
+                      (0, '0'),
+                      (-6, 'ERROR'),
+                      (7.0, 'ERROR'),
+                      (True, 'ERROR'),
+                      ('5', '5'),
+                      ('0', '0'),
+                      ('-6', 'ERROR'),
+                      ('7.0', 'ERROR'),
+                      ('1, 2, 3', '1,2,3'),
+                      ('3, 2, 1', '1,2,3'),
+                      ('3, 1, 3', '1,3'),
+                      ('-5, 1, 2', 'ERROR'),
+                      ('2-5', '2,3,4,5'),
+                      ('3~6', '3,4,5,6'),
+                      ('<=3', '0,1,2,3'),
+                      ('=<4', '0,1,2,3,4'),
+                      ('5>=', '0,1,2,3,4,5'),
+                      ('6=>', '0,1,2,3,4,5,6'),
+                      ('<3', '0,1,2'),
+                      ('4>', '0,1,2,3'),
+                      ('>=3', '3,-999'),
+                      ('=>4', '4,-999'),
+                      ('5<=', '5,-999'),
+                      ('6=<', '6,-999'),
+                      ('>3', '4,-999'),
+                      ('4<', '5,-999')]
+
+        print("Testing a helper function parse_wavenumber_param() with")
+        for (wn, answer) in test_cases:
+            print(f"    wn='{wn}'...")
+            if answer == 'ERROR':
+                with self.assertRaises(RuntimeError, msg="wrong value given for addwn/rejwn"):
+                    parse_wavenumber_param(wn)
+            else:
+                self.assertEqual(answer, parse_wavenumber_param(wn))
+
+    def test020(self):
+        print("Testing a helper function check_fftthresh() with")
+
+        # right cases
+        test_cases = [3, 3.0, 'top4', '5sigma', '5.0sigma']
+        for fftthresh in test_cases:
+            print(f"    fftthresh='{fftthresh}'...")
+            try:
+                check_fftthresh(fftthresh)
+            except Exception as e:
+                print("Unexpected error!")
+                raise e
+
+        # wrong cases
+        test_cases = [{'fftthresh':[0, 0.0, -3, -3.0, 'top-4', '-5sigma', '-5.0sigma'],
+                       'errmsg':"threshold given to fftthresh must be positive."},
+                      {'fftthresh':['fivesigma'],
+                       'errmsg':"fftthresh has a wrong format."},
+                      {'fftthresh':[None, True, ['3.0'], ('top4',)],
+                       'errmsg':"fftthresh must be float or integer or string."}]
+        for test_case in test_cases:
+            for fftthresh in test_case['fftthresh']:
+                print(f"    fftthresh='{fftthresh}'...")
+                with self.assertRaises(ValueError, msg=test_case['errmsg']):
+                    check_fftthresh(fftthresh)
+
+
 def suite():
     return [sdbaseline_basicTest, 
             sdbaseline_maskTest,
@@ -5291,7 +5397,8 @@ def suite():
             sdbaseline_autoTest,
             sdbaseline_selection,
             sdbaseline_updateweightTest,
-            sdbaseline_updateweightTest2
+            sdbaseline_updateweightTest2,
+            sdbaseline_helperTest
             ]
 
 if is_CASA6:
