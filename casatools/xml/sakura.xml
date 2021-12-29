@@ -1,0 +1,76 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+
+   <tool module="sakura" name="sakura">
+   <shortdescription>New single dish tool interface using sakura</shortdescription>
+
+
+<code>
+	<include>sakura_forward.h</include>
+<private>
+	<include>sakura_private.h</include>
+</private>
+</code>
+ 
+   <method name="sakura" type="constructor">
+   <shortdescription>Construct an sakura tool</shortdescription>
+   
+<description>
+This is used to construct an {\tt sakura} tool.
+</description>
+<input>
+</input>
+<returns type="sakura"/>
+<example>
+Manual tool construction is done this way:
+
+ssd = casac.sakura()
+
+</example>
+</method>
+
+<method name="initialize_sakura" type="function">
+   <shortdescription>initializer of sakura with sakura module
+   </shortdescription>
+<description>
+This function returns True/False based on an result of initialize
+</description>
+<input>
+     <param name="level" direction="in" type="string">
+     <description>Log level.
+       </description>
+     <value>WARN</value>
+           <allowed kind="enum">
+                    <value>WARN</value>
+                    <value>ERROR</value>
+                    <value>INFO</value>
+                    <value>DEBUG</value>
+           </allowed>
+     </param>
+</input>
+   <returns type="bool">
+   </returns>
+<example>
+
+ssd.initialize_sakura(&quot;WARN&quot;)
+
+</example>
+</method>
+
+<method name="cleanup_sakura" type="function">
+   <shortdescription>finalizer of sakura with sakura module
+   </shortdescription>
+<description>
+This function returns True/False based on an result of finalize
+</description>
+   <returns type="void">
+   </returns>
+<example>
+
+ssd.cleanup_sakura()
+
+</example>
+</method>
+</tool>
+
+</casaxml>

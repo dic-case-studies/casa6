@@ -67,9 +67,211 @@ public:
 
 };
 
+
+
+class FreqMetaDataTest : public ::testing::Test {
+
+public:
+  
+  FreqMetaDataTest() :
+    nSpw(12),
+    msfreq(12),
+    mswidth(12),
+    nofanin(12,-1),
+    faninSC(12,-1),
+    faninCONT(12,-1),
+    faninSPEC(12,-1),
+    faninHETSPW(12,-1)
+  {
+
+    // Four single-channel spws
+    msfreq(0).resize(1); msfreq(0)(0)=80.0e9; //msfreq(0)(0)+=1.000001;
+    msfreq(1).resize(1); msfreq(1)(0)=81.0e9; //msfreq(1)(0)+=1.001;
+    msfreq(2).resize(1); msfreq(2)(0)=83.0e9; //msfreq(2)(0)+=1.001;
+    msfreq(3).resize(1); msfreq(3)(0)=84.0e9; //msfreq(3)(0)+=1.001;
+    mswidth(0).resize(1); mswidth(0)(0)=1.024e9;
+    mswidth(1).resize(1); mswidth(1)(0)=1.024e9;
+    mswidth(2).resize(1); mswidth(2)(0)=1.024e9;
+    mswidth(3).resize(1); mswidth(3)(0)=1.024e9;
+
+    // Four eight-channel "continuum" spws
+    msfreq(4).resize(8); indgen(msfreq(4)); msfreq(4)-=3.5; msfreq(4)*=128e6; msfreq(4)+=90.0e9;
+    msfreq(5).resize(8); indgen(msfreq(5)); msfreq(5)-=3.5; msfreq(5)*=128e6; msfreq(5)+=91.0e9;
+    msfreq(6).resize(8); indgen(msfreq(6)); msfreq(6)-=3.5; msfreq(6)*=128e6; msfreq(6)+=93.0e9;
+    msfreq(7).resize(8); indgen(msfreq(7)); msfreq(7)-=3.5; msfreq(7)*=128e6; msfreq(7)+=94.0e9;
+    mswidth(4).resize(8); mswidth(4)=128e6;
+    mswidth(5).resize(8); mswidth(5)=128e6;
+    mswidth(6).resize(8); mswidth(6)=128e6;
+    mswidth(7).resize(8); mswidth(7)=128e6;
+
+    // Four 32-channel "specline" spws
+    msfreq(8).resize(32);  indgen(msfreq(8));  msfreq(8)-=15.5;  msfreq(8)*=2e6;  msfreq(8)+=100.0e9;
+    msfreq(9).resize(32);  indgen(msfreq(9));  msfreq(9)-=15.5;  msfreq(9)*=2e6;  msfreq(9)+=101.0e9;
+    msfreq(10).resize(32); indgen(msfreq(10)); msfreq(10)-=15.5; msfreq(10)*=2e6; msfreq(10)+=103.0e9;
+    msfreq(11).resize(32); indgen(msfreq(11)); msfreq(11)-=15.5; msfreq(11)*=2e6; msfreq(11)+=104.0e9;
+    mswidth(8).resize(32);  mswidth(8)=2e6;
+    mswidth(9).resize(32);  mswidth(9)=2e6;
+    mswidth(10).resize(32); mswidth(10)=2e6;
+    mswidth(11).resize(32); mswidth(11)=2e6;
+
+    faninSC(Slice(0,4,1))=0;
+    faninCONT(Slice(4,4,1))=4;
+    faninSPEC(Slice(8,4,1))=8;
+
+    faninHETSPW(0)=0;
+    faninHETSPW(4)=0;
+    faninHETSPW(8)=0;
+    faninHETSPW(11)=0;
+
+  }
+
+  Int nSpw;
+  Vector< Vector<Double> > msfreq, mswidth;
+  Vector<Int> nofanin,faninSC,faninCONT,faninSPEC,faninHETSPW;
+
+};
+
+
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
+}
+
+
+
+TEST_F(FreqMetaDataTest, SingleChannelTests) {
+
+  //  cout << endl << endl << "Doing SingleChannelTests..." << endl;
+  cout.precision(18);
+
+  Vector<uInt> selspw(4); indgen(selspw);
+  //  cout << "selspw = " << selspw << endl;
+  //  cout << "faninSC = " << faninSC << endl;
+
+  FreqMetaData fmd;
+  
+
+  fmd.calcFreqMeta(msfreq,mswidth,selspw,false,true,faninSC);
+  ASSERT_TRUE(fmd.ok());
+
+  
+  for (uInt i=0;i<selspw.nelements();++i) {
+    Int ispw=selspw(i);
+    ASSERT_EQ(82.0e9,fmd.freq(ispw)[0]);
+    ASSERT_EQ(1.024e9,fmd.width(ispw)[0]);
+    ASSERT_EQ(4.096e9,fmd.effBW(ispw)[0]);
+    /*
+    cout << "spw=" << ispw
+	 << " freq=" << fmd.freq(ispw) 
+	 << " width=" << fmd.width(ispw) 
+	 << " effBW=" << fmd.effBW(ispw) 
+	 << endl;
+    */
+  }
+}
+
+
+TEST_F(FreqMetaDataTest, ContinuumTests) {
+
+  //  cout << endl << endl << "Doing ContinuumTests..." << endl;
+
+  Vector<Int> selspwI(4); indgen(selspwI); selspwI+=4;
+  Vector<uInt> selspw(4);
+  convertArray(selspw,selspwI);
+  //  cout << "selspw = " << selspw << endl;
+  //  cout << "faninCONT = " << faninCONT << endl;
+
+
+  FreqMetaData fmd;
+
+  fmd.calcFreqMeta(msfreq,mswidth,selspw,false,true,faninCONT);
+  ASSERT_TRUE(fmd.ok());
+
+  
+  for (uInt i=0;i<selspw.nelements();++i) {
+    Int ispw=selspw(i);
+    ASSERT_EQ(92.0e9,fmd.freq(ispw)[0]);
+    ASSERT_EQ(1.024e9,fmd.width(ispw)[0]);
+    ASSERT_EQ(4.096e9,fmd.effBW(ispw)[0]);
+    /*
+    cout << "spw=" << ispw
+	 << " freq=" << fmd.freq(ispw) 
+	 << " width=" << fmd.width(ispw) 
+	 << " effBW=" << fmd.effBW(ispw) 
+	 << endl;
+    */
+  }
+
+}
+
+
+TEST_F(FreqMetaDataTest, SpecLineTests) {
+
+  //  cout << endl << endl << "Doing SpecLineTests..." << endl;
+
+
+  Vector<Int> selspwI(4); indgen(selspwI); selspwI+=8;
+  Vector<uInt> selspw(4);
+  convertArray(selspw,selspwI);
+  //  cout << "selspw = " << selspw << endl;
+  //  cout << "faninSPEC = " << faninSPEC << endl;
+
+  FreqMetaData fmd;
+  
+  fmd.calcFreqMeta(msfreq,mswidth,selspw,true,true,faninSPEC);
+  ASSERT_TRUE(fmd.ok());
+
+  
+  for (uInt i=0;i<selspw.nelements();++i) {
+    Int ispw=selspw(i);
+    ASSERT_EQ(101.993e9,fmd.freq(ispw)[12]);
+    ASSERT_EQ(2.0e6,fmd.width(ispw)[12]);
+    ASSERT_EQ(8.0e6,fmd.effBW(ispw)[12]);
+    /*
+    cout << "spw=" << ispw
+	 << " freq=" << fmd.freq(ispw)[12] 
+	 << " width=" << fmd.width(ispw)[12] 
+	 << " effBW=" << fmd.effBW(ispw)[12] 
+	 << endl;
+    */
+  }
+
+}
+
+
+TEST_F(FreqMetaDataTest, HeteroSpwTests) {
+
+  //  cout << endl << endl << "Doing HeteroSpwTests..." << endl;
+
+  Vector<uInt> selspw(4);
+  selspw(0)=0;
+  selspw(1)=4;
+  selspw(2)=8;
+  selspw(3)=11;
+  //cout << "selspw = " << selspw << endl;
+  //cout << "faninHET = " << faninHETSPW << endl;
+
+  FreqMetaData fmd;
+  
+  fmd.calcFreqMeta(msfreq,mswidth,selspw,false,true,faninHETSPW);
+  ASSERT_TRUE(fmd.ok());
+
+  
+  for (uInt i=0;i<selspw.nelements();++i) {
+    Int ispw=selspw(i);
+    ASSERT_EQ(86.0e9,fmd.freq(ispw)[0]);
+    ASSERT_NEAR(967529411.764705896,fmd.width(ispw)[0],1e-6);  // 1uHz
+    ASSERT_EQ(2.1760e9,fmd.effBW(ispw)[0]);
+    /*
+    cout << "spw=" << ispw
+	 << " freq=" << fmd.freq(ispw) 
+	 << " width=" << fmd.width(ispw) 
+	 << " effBW=" << fmd.effBW(ispw) 
+	 << endl;
+    */
+  }
+
 }
 
 
@@ -436,6 +638,65 @@ TEST_F(VisCalTest, KJonesSolveState) {
 
   delete K;
 }
+
+
+TEST_F(VisCalTest, JJonesApplyState) {
+
+  VisCal *J = new JJones(msmc);
+  J->setApply();
+
+  J->setMeta(0,0,0.0,
+	     0,ss.freqs(0),
+	     0);
+  J->sizeApplyParCurrSpw(ss.nChan_(0));
+  J->setDefApplyParCurrSpw(true,true);  // sync, w/ doInv=T
+
+  if (SHOWSTATE)
+    J->state();
+
+  ASSERT_EQ(VisCalEnum::JONES,J->matrixType());
+  ASSERT_EQ(VisCal::J,J->type());
+  ASSERT_EQ(String("J Jones"),J->typeName());
+  ASSERT_EQ(4,J->nPar());
+  ASSERT_FALSE(J->freqDepPar());
+  ASSERT_FALSE(J->freqDepMat());
+  ASSERT_FALSE(J->freqDepCalWt());
+  ASSERT_FALSE(J->timeDepMat());
+  ASSERT_TRUE(J->isApplied());
+  ASSERT_TRUE(J->isSolvable());
+
+  delete J;
+}
+
+
+TEST_F(VisCalTest, JfJonesApplyState) {
+
+  VisCal *J = new JfJones(msmc);
+  J->setApply();
+
+  J->setMeta(0,0,0.0,
+	     0,ss.freqs(0),
+	     0);
+  J->sizeApplyParCurrSpw(ss.nChan_(0));
+  J->setDefApplyParCurrSpw(true,true);  // sync, w/ doInv=T
+
+  if (SHOWSTATE)
+    J->state();
+
+  ASSERT_EQ(VisCalEnum::JONES,J->matrixType());
+  ASSERT_EQ(VisCal::J,J->type());
+  ASSERT_EQ(String("Jf Jones"),J->typeName());
+  ASSERT_EQ(4,J->nPar());
+  ASSERT_TRUE(J->freqDepPar());
+  ASSERT_TRUE(J->freqDepMat());
+  ASSERT_FALSE(J->freqDepCalWt());
+  ASSERT_FALSE(J->timeDepMat());
+  ASSERT_TRUE(J->isApplied());
+  ASSERT_TRUE(J->isSolvable());
+
+  delete J;
+}
+
 
 /*
 TEST(MISC, MISC0) {

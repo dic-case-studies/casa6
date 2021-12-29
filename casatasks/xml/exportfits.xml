@@ -1,0 +1,132 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+<task category="import/export" name="exportfits" type="function">
+<shortdescription>Convert a CASA image to a FITS file</shortdescription>
+<description>
+CASA-produced images can be exported as FITS files for transporting to
+other software packages or publication.  
+No subimaging of the fits image can be made with this task.
+The spectral reference frame can be changed prior to export using the
+task imreframe.
+</description>
+<input>
+    <param mustexist="true" name="imagename" type="path">
+<shortdescription>Name of input CASA image</shortdescription>
+<description>Name of input CASA image
+                     Default: none
+
+                        Example: fitsimage='3C273XC1.image'
+</description>
+        <value/>
+    </param>
+
+    <param name="fitsimage" type="string">
+<shortdescription>Name of output image FITS file</shortdescription>
+<description>Name of output image FITS file
+                     Default: none
+
+                        Example: fitsimage='3C273XC1.fits'
+</description>
+        <value/>
+    </param>
+
+    <param name="velocity" type="bool">
+<shortdescription>Use velocity (rather than frequency) as spectral axis</shortdescription>
+<description>Use velocity (rather than frequency) as spectral axis
+                     Default: False
+                     Options: False|True
+</description>
+        <value>False</value>
+    </param>
+
+    <param name="optical" type="bool">
+<shortdescription>Use the optical (rather than radio) velocity convention</shortdescription>
+<description>Use the optical (rather than radio) velocity convention
+                     Default: False
+                     Options: False|True
+</description>
+        <value>False</value>
+    </param>
+
+    <param name="bitpix" type="int">
+<shortdescription>Bits per pixel</shortdescription>
+<description>Bits per pixel
+                     Default: -32
+
+                        Example: bitpix=16
+</description>
+        <value>-32</value>
+        <allowed kind="enum">
+            <value>-32</value>
+            <value>16</value>
+        </allowed>
+    </param>
+
+    <param name="minpix" type="any">
+<shortdescription>Minimum pixel value (if minpix &gt; maxpix, value is automatically determined)</shortdescription>
+<description>Minimum pixel value (if minpix &gt; maxpix, value is automatically determined)</description>
+        <type>int</type><type>double</type>
+        <value type="int">0</value>
+    </param>
+
+    <param name="maxpix" type="any">
+        <type>int</type><type>double</type>
+<shortdescription>Maximum pixel value (if minpix &gt; maxpix, value is automatically determined)</shortdescription>
+<description>Maximum pixel value (if minpix &gt; maxpix, value is
+automatically determined)
+                     Default: -1
+</description>
+        <value type="int">-1</value>
+    </param>
+
+    <param name="overwrite" type="bool">
+<shortdescription>Overwrite output file if it exists?</shortdescription>
+ <description>Overwrite output file if it exists?
+                     Default: False
+                     Options: False|True
+</description>
+        <value>False</value>
+    </param>
+
+    <param name="dropstokes" type="bool">
+<shortdescription>Drop the Stokes axis?</shortdescription>
+<description>Drop the Stokes axis?</description>
+                     Default: False
+                     Options: False|True
+        <value>False</value>
+    </param>
+
+    <param name="stokeslast" type="bool">
+<shortdescription>Put Stokes axis last in header?</shortdescription>
+<description>Put Stokes axis last in header?
+                     Default: True
+                     Options: True|False
+</description>
+        <value>True</value>
+    </param>
+    <param name="history" type="bool">
+<shortdescription>Write history to the FITS image?</shortdescription>
+<description>Write history to the FITS image?
+                     Default: True
+                     Options: True|False
+</description>
+        <value>True</value>
+    </param>
+
+    <param name="dropdeg" type="bool">
+<shortdescription>Drop all degenerate axes (e.g. Stokes and/or Frequency)?</shortdescription>
+<description>Drop all degenerate axes (e.g. Stokes and/or Frequency)?
+                     Default: False
+                     Options: False|True
+</description>
+        <value>False</value>
+    </param>
+
+</input>
+<example>
+FOR MORE INFORMATION, SEE THE TASK PAGES OF EXPORTFITS IN CASA DOCS:
+https://casa.nrao.edu/casadocs/
+</example> 
+
+<returns>void</returns></task>
+</casaxml>

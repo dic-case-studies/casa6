@@ -7,7 +7,6 @@ bandpass.xml
 blcal.xml
 browsetable.xml
 calstat.xml
-clean.xml
 clearcal.xml
 clearstat.xml
 concat.xml
@@ -31,6 +30,7 @@ ft.xml
 gaincal.xml
 gencal.xml
 hanningsmooth.xml
+phaseshift.xml
 imcollapse.xml
 imcontsub.xml
 imdev.xml
