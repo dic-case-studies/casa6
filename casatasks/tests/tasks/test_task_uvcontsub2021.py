@@ -40,20 +40,20 @@ datapath_simple = ctsys.resolve(os.path.join(datadir, ms_simple))
 
 # SPW 1 of this dataset has 1 channel
 ms_alma = 'uid___X02_X3d737_X1_01_small.ms'
-datapath_alma = ctsys.resolve(os.path.join('measurementset', 'alma', ms_alma))
+datapath_alma = ctsys.resolve(os.path.join(datadir, ms_alma))
 
 # MS for tests that use CORRECTED_DATA
 # Beware: this is all flagged!
 ms_corr = 'uid___A002_X71a45c_X1d24.ms.split'
-datapath_corr = ctsys.resolve(os.path.join('measurementset', 'alma', ms_corr))
+datapath_corr = ctsys.resolve(os.path.join(datadir, ms_corr))
 
 # Another MS for tests that use CORRECTED_DATA
 ms_papersky = 'papersky_standard.ms'
-datapath_papersky = ctsys.resolve(os.path.join('measurementset', 'evla', ms_papersky))
+datapath_papersky = ctsys.resolve(os.path.join(datadir, ms_papersky))
 
 # Mixed polarizations, from CAS-12283. This MS has ~60 SPWs with very mixed pols
 ms_mixed_pols = 'split_ddid_mixedpol_CAS-12283.ms'
-datapath_mixed_pols = ctsys.resolve(os.path.join('measurementset', 'evla', ms_mixed_pols))
+datapath_mixed_pols = ctsys.resolve(os.path.join(datadir, ms_mixed_pols))
 
 
 class uvcontsub2021_test_base(unittest.TestCase):
