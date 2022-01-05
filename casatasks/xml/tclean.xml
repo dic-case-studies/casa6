@@ -1164,6 +1164,12 @@ to use the correct direction in which the antenna is pointing with respect to th
                                  have this T/F mask in the .residual and .image but only pblimit set
                                  to a negative value, will remove this mask after the next major cycle.
 
+                      Note : An existing internal T/F mask may be removed from an image as 
+                                 follows (without needing to re-run tclean itself). 
+                                       ia.open('test.image');
+                                       ia.maskhandler(op='set', name='');
+                                       ia.done()
+
   </description>
       <value type="double">0.2</value>
     </param>

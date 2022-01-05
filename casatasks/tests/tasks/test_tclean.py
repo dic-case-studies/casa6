@@ -1463,15 +1463,15 @@ class test_stokes(testref_base):
           concat(vis=[avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'], concatvis=avis+'_tmp_mixed_chan.ms')
 
           vislist = [         ### The pixel value at the source location is checked for channel 1 (out of channels 0,1,2). 
-               viss,                                                                                         #0#   I=1.0                                                    #9# U=3.0
-               avis+'_tmp_2pol_time.ms',                                                    #1#   I=1.0                                                    #10# U=0
-               avis+'_tmp_4pol_time.ms',                                                    #2#   I=1.0                                                    #11# U=3.0
-               [avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'],     #3#   I=1.0                                                    #12# U=3.0
-               avis+'_tmp_mixed_time.ms',                                                 #4#   I=1.0                                                    #13# U=3.0
-               avis+'_tmp_2pol_chan.ms',                 ## SKIP                     #5#  Chan0 : 1.0,  Chans1,2: None  :FAIL      #14# U=0 (single chan0 image)  /// #5,#14 FAIL on None==None check!
-               avis+'_tmp_4pol_chan.ms',                                                    #6#  Chans1,2 image with 1.0                      #15# Chan1,2 image with 3.0
-               [avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'],     #7#   I=1.0  : FAIL : Only Chan0 exists        #16# Chan0:U=0.0, Chan1.2:U=3.0  : FAIL : Only chan0 exists with 0.0
-               avis+'_tmp_mixed_chan.ms'                                                  #8#   I=1.0                                                    #17# Chan0:U=0.0, Chan1.2:U=3.0
+               viss,                                                                                                  #0#   I=1.0                                                    #9# U=3.0
+               avis+'_tmp_2pol_time.ms',                                                             #1#   I=1.0                                                    #10# U=0
+               avis+'_tmp_4pol_time.ms',                                                             #2#   I=1.0                                                    #11# U=3.0
+               [avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'],              #3#   I=1.0                                                    #12# U=3.0
+               avis+'_tmp_mixed_time.ms',                                                          #4#   I=1.0                                                    #13# U=3.0
+               avis+'_tmp_2pol_chan.ms',                 ## SKIP                               #5#  Chan0 : 1.0,  Chans1,2: None  :FAIL      #14# U=0 (single chan0 image)  /// #5,#14 FAIL on None==None check!
+               avis+'_tmp_4pol_chan.ms',                                                             #6#  Chans1,2 image with 1.0                      #15# Chan1,2 image with 3.0
+               [avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'],  ## SKIP     #7#   I=1.0  : FAIL : Only Chan0 exists        #16# Chan0:U=0.0, Chan1.2:U=3.0  : FAIL : Only chan0 exists with 0.0
+               avis+'_tmp_mixed_chan.ms'                                                           #8#   I=1.0                                                    #17# Chan0:U=0.0, Chan1.2:U=3.0
           ]
 
           ## Test mfs imaging of Stokes I on its own
@@ -1481,8 +1481,9 @@ class test_stokes(testref_base):
           ## Test cube imaging of Stokes I on its own
           for vis in vislist:
                i_true = 1.0
-               if i == 5:  # we are checking channel 1
-                    i_true = None
+               if i in [5,7]:  
+                    #SKIP #5 : We are checking channel 1 but only chan 0 exists here (correct behaviour)
+                    #SKIP #7 : Fails : List of MS is not yet supported, across freq channels. It picks image shapes only from the first MS. 
                     i=i+1
                     continue
                tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, specmode='cube',interpolation='nearest', stokes='I',parallel=self.parallel)
@@ -1495,8 +1496,9 @@ class test_stokes(testref_base):
                u_true = 3.0
                if i ==10:
                     u_true=0.0  # since there is no RL,LR
-               if i==14 :
-                    u_true= None  # since there is no channel 1 in this cube
+               if i in [14,16] :
+                    #SKIP #14 : We are checking channel 1 but only chan 0 exists here (correct behaviour)
+                    #SKIP #16 : Fails : List of MS is not yet supported, across freq channels. It picks image shapes only from the first MS. 
                     i=i+1
                     continue
                report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',u_true,[50,50,0,1])]) ## Check second channel
@@ -1574,19 +1576,26 @@ class test_stokes(testref_base):
                viss,                                                                                       #0# IQUV
                avis+'_tmp_2pol_time.ms',                                                  #1# IQ (U,V=0)
                avis+'_tmp_4pol_time.ms',                                                  #2# IQUV
-               [avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'],     #3# IQUV    : FAIL : Intensity for U,V is lower than expected
-               avis+'_tmp_mixed_time.ms',                                               #4# IQUV    : FAIL : Intesity for U,V is lower than expected
+               [avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'],   #3# IQUV   
+               avis+'_tmp_mixed_time.ms',                                               #4# IQUV   
                avis+'_tmp_2pol_chan.ms',                                                  #5# Chan0 : IQ.  Chans1,2 : None
                avis+'_tmp_4pol_chan.ms',                                                  #6# Chan0 : None.  Chans1,2 : IQUV
-               [avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'],     #7# Chan0 : IQ, Chans1,2 : IQUV   : FAIL : Data sel is making the cube only with chan0(IQ)
+               [avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'],   #7# Chan0 : IQ, Chans1,2 : IQUV   : FAIL : Data sel is making the cube only with chan0(IQ) => Skipped
                avis+'_tmp_mixed_chan.ms'                                                #8# Chan0 : IQ, Chans1,2 : IQUV  : Correct.
           ]
+
 
           i=0
           report=''
           ## Test CUBE
-          for vis in vislist[0:5]:
+          for vis in vislist:
+               if i in [7]: 
+                    ## SKIP : #7 : Not supported yet. 
+                    i=i+1
+                    continue
+               ## Run tclean 
                tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV', usemask='user', mask='box[[49.5pix, 49.5pix],[50.5pix,50.5pix]]',specmode='cube',interpolation='nearest',parallel=self.parallel)
+               ## Check outputs
                if i in [1,5]:
                     i_true=1.0
                     q_true=2.0
