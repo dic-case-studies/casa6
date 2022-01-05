@@ -744,7 +744,6 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     http://casaguides.nrao.edu/index.php?title=Plotbandpass
     -- Todd Hunter
     """
-
     axes = dict() # keep track of already created axes
     def safe_pb_subplot(xframe):
         """
@@ -1523,7 +1522,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                     print("WARNING: spw %d is a WVR spw." % (myspw))
                     return
     spwsToPlot = keepSpwsToPlot[:]
-    if (spwsToPlot == []):
+    if (len(spwsToPlot) == 0):
         print("FATAL: no spws to plot")
         return
     originalSpwsToPlot = computeOriginalSpwsToPlot(spwsToPlot, originalSpw, tableFormat, debug)
@@ -2756,7 +2755,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     spwsToPlotInBaseband = []
     frequencyRangeToPlotInBaseband = []
     if (debug): print("up to basebands")
-    if (basebands == []):
+    if (len(basebands) == 0):
         # MS is too old to have BBC_NO
         if (debug): print("MS is too old to have BBC_NO")
         spwsToPlotInBaseband = [spwsToPlot]
@@ -6616,7 +6615,7 @@ def getLOs(inputMs, verbose=True):
     -Todd Hunter
     """
     if (os.path.exists(inputMs)):
-        mytb = createCasaTool(tbtool)
+        mytb = createCasaTool(tbtool) # casatools.table
         if (os.path.exists("%s/ASDM_RECEIVER" % inputMs)):
             try:
                 mytb.open("%s/ASDM_RECEIVER" % inputMs)
@@ -7156,7 +7155,7 @@ def getWeather(vis='', scan='', antenna='0',verbose=False, mymsmd=None):
           conditions['temperature'] = np.mean(temperature[selectedValues])
           conditions['humidity'] = np.mean(relativeHumidity[selectedValues])
           if dewPoint is not None:
-              conditions['dewpoint'] = np.mean(dewPoint[selectedValues])
+              conditions['dewpoint'] = np.nanmean(dewPoint[selectedValues])
           conditions['windspeed'] = np.mean(windSpeed[selectedValues])
           conditions['winddirection'] = (180./math.pi)*np.arctan2(np.mean(sinWindDirection[selectedValues]),np.mean(cosWindDirection[selectedValues]))
           if (conditions['winddirection'] < 0):
@@ -7271,12 +7270,12 @@ def interpretLOs(vis, parentms='', showWVR=False,
                 sawWVR = True
         else:
             indices.append(i)
-    LOs = np.array(LOs)[indices]
-    bands = np.array(bands)[indices]
-    spws = list(np.array(spws)[indices])
-    names = np.array(names)[indices]
-    sidebands = np.array(sidebands)[indices]
-    receiverIds = np.array(receiverIds)[indices]
+    LOs = np.array(LOs, dtype=object)[indices]
+    bands = np.array(bands, dtype=object)[indices]
+    spws = list(np.array(spws, dtype=object)[indices])
+    names = np.array(names, dtype=object)[indices]
+    sidebands = np.array(sidebands, dtype=object)[indices]
+    receiverIds = np.array(receiverIds, dtype=object)[indices]
     index = list(range(len(spws)))
     mytb = createCasaTool(tbtool)
     mytb.open(vis+'/SPECTRAL_WINDOW')
@@ -7560,17 +7559,25 @@ def angularSeparation(ra0,dec0,ra1,dec1, returnComponents=False):
 
 def ComputeDewPointCFromRHAndTempC(relativeHumidity, temperature):
     """
-    inputs:  relativeHumidity in percentage, temperature in C
+    inputs: relativeHumidity in percentage, temperature in C
     output: in degrees C
     Uses formula from http://en.wikipedia.org/wiki/Dew_point#Calculating_the_dew_point
     Todd Hunter
     """
-    temperature = np.array(temperature)            # protect against it being a list
+    temperature = np.array(temperature)  # protect against it being a list
     relativeHumidity = np.array(relativeHumidity)  # protect against it being a list
-    es = 6.112*np.exp(17.67*temperature/(temperature+243.5))
-    E = relativeHumidity*0.01*es
-    dewPoint = 243.5*np.log(E/6.112)/(17.67-np.log(E/6.112))
-    return(dewPoint)
+    es = 6.112 * np.exp(17.67 * temperature / (temperature + 243.5))
+    E = relativeHumidity * 0.01 * es
+    # patch problematic cases where relativy humiditiy is -1
+    # requires changing numpy.mean to numpy.nanmean downstream the code to avoid bad averages of the dewpoint
+    dewPoint = np.zeros(len(E))
+    for i in range(len(E)):
+        if E[i] <= 0:
+            dewPoint[i] = None
+        else:
+            dewPoint[i] = 243.5 * np.log(E[i] / 6.112) / (17.67 - np.log(E[i] / 6.112))
+
+    return dewPoint
 
 def ComputeLST(mjdsec, longitude):
     """

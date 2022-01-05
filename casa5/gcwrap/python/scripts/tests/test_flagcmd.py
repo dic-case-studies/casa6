@@ -37,7 +37,7 @@ else:
 # Test of flagcmd task. It uses flagdata to unflag and summary
 #
 
-def test_eq(result, total, flagged):
+def check_eq(result, total, flagged):
 
     print("%s of %s data was flagged, expected %s of %s" % \
           (result['flagged'], result['total'], flagged, total))
@@ -203,7 +203,7 @@ class test_manual(test_base):
         
         flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False,
                 flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary'), 2882778, 28500)
+        check_eq(flagdata(vis=self.vis, mode='summary'), 2882778, 28500)
 
     def test_compatibility(self):
         myinput = "observation='1' mode='manualflag'"
@@ -211,7 +211,7 @@ class test_manual(test_base):
         
         flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False,
                 flagbackup=False)
-        test_eq(flagdata(vis=self.vis, mode='summary'), 2882778, 28500)
+        check_eq(flagdata(vis=self.vis, mode='summary'), 2882778, 28500)
         
     def test_autocorr(self):
         '''flagcmd: autocorr=True'''
@@ -238,7 +238,7 @@ class test_alma(test_base):
         # flag POINTING CALIBRATION scans and ignore comment line
         flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False,
                 flagbackup=False)
-#         test_eq(flagdata(vis=self.vis,mode='summary', antenna='2'), 377280, 26200)
+#         check_eq(flagdata(vis=self.vis,mode='summary', antenna='2'), 377280, 26200)
         res = flagdata(vis=self.vis,mode='summary')
 #         self.assertEqual(res['scan']['1']['flagged'], 80184, 'Only scan 1 should be flagged')
 #         self.assertEqual(res['scan']['4']['flagged'], 0, 'Scan 4 should not be flagged')

@@ -3339,7 +3339,7 @@ class test_modelvis(testref_base):
 
           
      def test_modelvis_12(self):
-          """ [modelpredict] Test_modelvis_12 : (CAS-12618) mfs with automask and save model column (saving model via a separate predict model step)"""
+          """ [modelpredict] Test_modelvis_12 : (CAS-12618) mfs with automask and save model column (single tclean call, internally a separate predit model step)"""
           self.prepData("refim_twochan.ms")
 
           ## Save model after deconvolution
@@ -3411,6 +3411,96 @@ class test_modelvis(testref_base):
           delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
                        nsigma=1.0, savemodel='virtual',parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_20(self):
+          """ [modelpredict] Test_modelvis_20 : (CAS-13615) mfs with automask and save model column (saving model via a separate niter=0 tclean call)"""
+          # should give the identical result as test_modelvis_12
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',usemask='auto-multithresh', parallel=self.parallel)
+          # leaving usemask='auto-multithresh' intentionally to make sure the bug is fixed
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='modelcolumn',usemask='auto-multithresh', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_21(self):
+          """ [modelpredict] Test_modelvis_21 : (CAS-13615) mfs with automask and save virtual model (saving model via a separate niter=0 tclean call)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',usemask='auto-multithresh', parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='virtual',usemask='auto-multithresh', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_22(self):
+          """ [modelpredict] Test_modelvis_22 : (cas-13615) mfs with nsigma and save model column (saving model via a separate niter=0 tclean call)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',nsigma=1.0, parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='modelcolumn',nsigma=1.0, restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_23(self):
+          """ [modelpredict] Test_modelvis_23 : (CAS-13615) mfs with nsigma and save model column (saving model via a separate niterpredict model step)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',nsigma=1.0, parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='virtual',nsigma=1.0, restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_24(self):
+          """ [modelpredict] Test_modelvis_24 : (CAS-13615) cube with  and save  model column for auto-multithresh (in two steps)"""
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       usemask='auto-multithresh', savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       usemask='auto-multithresh', savemodel='modelcolumn', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_25(self):
+          """ [modelpredict] Test_modelvis_25: (CAS-13615) cube with and save virtual model for auto-multithreseh (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       usemask='auto-multithresh', savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       usemask='auto-multithresh', savemodel='virtual', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_26(self):
+          """ [modelpredict] Test_modelvis_26 : (CAS-13615) cube with and save model column for nsgima >0.0 (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       nsigma=1.0, savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       nsigma=1.0, savemodel='modelcolumn',restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_27(self):
+          """ [modelpredict] Test_modelvis_27: (CAS-13615) cube with and save virtual model for nsima >0.0 (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       nsigma=1.0, savemodel='none',parallel=self.parallel)
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       nsigma=1.0, savemodel='virtual', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
           hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==True )
 
