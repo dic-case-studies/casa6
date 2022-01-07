@@ -41,13 +41,13 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         if (outfile == '') or not isinstance(outfile, str):
             outfile = infile.rstrip('/') + '_bs'
             casalog.post("outfile is empty or non-string. set to '" + outfile + "'")
-        if os.path.exists(outfile) and not overwrite:
+        if (not overwrite) and os.path.exists(outfile):
             raise Exception("outfile='%s' exists, and cannot overwrite it." % (outfile))
         if (maskmode == 'interact'):
             raise ValueError("maskmode='%s' is not supported yet" % maskmode)
-        if (sdutil.is_empty(blformat) and not dosubtract):
+        if (not dosubtract) and sdutil.is_empty(blformat):
             raise ValueError("blformat must be specified when dosubtract is False")
-        if (blfunc == 'variable' and not os.path.exists(blparam)):
+        if (blfunc == 'variable') and not os.path.exists(blparam):
             raise ValueError("input file '%s' does not exists" % blparam)
         blparam_file = infile + '_blparam.txt'
         if os.path.exists(blparam_file):
@@ -62,7 +62,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
 
             sorttab_info = remove_sorted_table_keyword(infile)
 
-            if overwrite and os.path.exists(outfile) and (infile != outfile):
+            if overwrite and (infile != outfile) and os.path.exists(outfile):
                 remove_data(outfile)
 
             selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
@@ -99,7 +99,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             if (blfunc == 'variable'):
                 sorttab_info = remove_sorted_table_keyword(infile)
 
-            if overwrite and os.path.exists(outfile) and (infile != outfile):
+            if overwrite and (infile != outfile) and os.path.exists(outfile):
                 remove_data(outfile)
 
             selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
