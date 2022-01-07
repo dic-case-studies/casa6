@@ -53,6 +53,7 @@ Operating System :: POSIX
 """
 
 from setuptools import setup
+from distutils.util import strtobool
 from distutils.ccompiler import new_compiler, CCompiler
 from distutils.sysconfig import customize_compiler
 from distutils.core import Extension, Distribution
@@ -127,12 +128,13 @@ if "--stripsyms" in sys.argv:
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.65.jar'
+xml_jar_file = 'xml-casa-assembly-1.66.jar'
 xml_jar_path = os.path.join( 'scripts', 'java', xml_jar_file)
 xml_jar_url = 'http://casa.nrao.edu/download/devel/xml-casa/java/%s' % xml_jar_file
 
 real_gnu = None
 gxx_version_number = 0
+gfortran_version_number = 0
 gfortran_flag_additions = [ ]
 
 if pyversion < 3:
@@ -348,7 +350,7 @@ def sakura_fetch( ):
         tf = tarfile.open(fileobj=s, mode="r|gz")
         tf.extractall( )
         os.rename('libsakura','sakura-source')
-        
+
 
 def sakura_files( ):
     return [ 'sakura-source/src/baseline.cc', 'sakura-source/src/bit_operation.cc',
@@ -391,6 +393,26 @@ def load_properties(filepath, sep='=', comment_char='#'):
     """
     Read the file passed as parameter as a properties file.
     """
+    def compiler_version( compiler ):
+        real_gnu = False
+        gnu_version = 0
+        proc = Popen([ compiler, "-v" ], stdout=PIPE, stderr=PIPE)
+        out,err = pipe_decode(proc.communicate( ))
+        gcc_versions = [s for s in (out + err).split('\n') if s.startswith("gcc version ")]
+        if len(gcc_versions) > 0 :
+            ###
+            ### get gcc version number because turning warnings into errors
+            ### causes problems for grpc with gcc 8...
+            match_ver = re.compile('\d+\.\d+\.\d+')
+            for v in gcc_versions:
+                nums = match_ver.findall(v)
+                if len(nums) > 0:
+                    elements = nums[0].split('.')
+                    if len(elements) == 3:
+                        gnu_version = int(elements[0])
+            real_gnu = True
+        return gnu_version, real_gnu
+
     props = {}
     with open(filepath, "rt") as f:
         for line in f:
@@ -401,30 +423,24 @@ def load_properties(filepath, sep='=', comment_char='#'):
                 value = sep.join(key_value[1:]).strip().strip('"')
                 props[key] = value.split(' ') if key.startswith('build.flags') else value
 
+    if 'option.build_grpc' in props:
+        props['option.build_grpc'] = strtobool(props['option.build_grpc'])
+
     global real_gnu
     global gxx_version_number
+    global gfortran_version_number
+    global gfortran_flag_additions
     real_gnu = False
-    proc = Popen([ props['build.compiler.cxx'], "-v" ], stdout=PIPE, stderr=PIPE)
-    out,err = pipe_decode(proc.communicate( ))
-    gcc_versions = [s for s in (out + err).split('\n') if s.startswith("gcc version ")]
-    if len(gcc_versions) > 0 :
-        ###
-        ### get gcc version number because turning warnings into errors
-        ### causes problems for grpc with gcc 8...
-        match_ver = re.compile('\d+\.\d+\.\d+')
-        for v in gcc_versions:
-            nums = match_ver.findall(v)
-            if len(nums) > 0:
-                elements = nums[1].split('.')
-                if len(elements) == 3:
-                    gxx_version_number = int(elements[0])
-                    if gxx_version_number >= 10:
-                        print('adding gfortran flags for modern gfortran versions')
-                        gfortran_flag_additions.append('-fallow-argument-mismatch')
+    gxx_version_number, real_gnu = compiler_version( props['build.compiler.cxx'] )
+    gfortran_version_number, dummy = compiler_version( props['build.compiler.fortran'] )
+    print("     gxx version: %s" % gxx_version_number)
+    print("gfortran version: %s" % gfortran_version_number)
+    if gfortran_version_number >= 10:
+        print('adding gfortran flags for modern gfortran versions')
+        gfortran_flag_additions.append('-fallow-argument-mismatch')
 
-        if sys.platform == 'darwin':
-            print('using real GNU compiler on OSX...')
-        real_gnu = True
+    if real_gnu and sys.platform == 'darwin':
+        print('using real GNU compiler on OSX...')
 
     return props
 
@@ -448,8 +464,12 @@ def get_grpc_srcdir():
     return os.path.join('build', distutils_dir_name('binding'),'grpc')
 
 def generate_grpc(protos):
-    protoc = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "protoc")
-    grpc_plugin = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "grpc_cpp_plugin")
+    if props['option.build_grpc']:
+        protoc = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "protoc")
+        grpc_plugin = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "bin", "grpc_cpp_plugin")
+    else:
+        protoc = props['build.compiler.protoc']
+        grpc_plugin = props['bulld.compiler.grpc_cpp']
     proto_export_dir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "proto")
     assert os.path.exists(grpc_plugin), 'gRPC plugin not found'
     #outdir=os.path.join('build', distutils_dir_name('binding'),'grpc')
@@ -469,6 +489,8 @@ def generate_grpc(protos):
         run_process( genrpc, err='could not generate protobuf bindings for %s' % p )
         todir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', "include")
         name, extension = os.path.splitext(os.path.basename(p))
+        if not os.path.exists(todir):
+            mkpath(todir)
         if os.path.isfile("%s/%s.pb.h" % (todir,name)):
             os.remove("%s/%s.pb.h" % (todir,name))
         move( "%s.pb.h" % os.path.join(outdir,name), todir )
@@ -595,7 +617,7 @@ def generate_pyinit(moduledir,tools):
                        raise ImportError('measures data is not available, visit http://go.nrao.edu/casadata-info for more information')
                    if len(ctsys.rundata( )) == 0:
                        ctsys.setrundata(__resolved_iers[:-21])
-                                                                                                               
+
                from .coercetype import coerce as __coerce
 
                __coerce.set_ctsys(ctsys)         ## used to locate files from a partial path
@@ -794,7 +816,7 @@ def build_grpc( prefix, srcdir, collectdir ):
                   'ORIGIN': '$ORIGIN',
                   'LDFLAGS': '-Wl,-rpath,@loader_path' if sys.platform == 'darwin' else '-Wl,-rpath,${DOLLAR}ORIGIN:${DOLLAR}ORIGIN/lib' }
 
-    if os.path.isdir("grpc-source"):
+    if props['option.build_grpc'] and os.path.isdir("grpc-source"):
 
         if not os.path.isdir(srcdir):
             print("copying the grpc source directory...")
@@ -893,7 +915,7 @@ def build_protobuf( prefix, srcdir, collectdir ):
     """
     if os.path.isdir("grpc-source"):
 
-        if not os.path.isdir(srcdir):
+        if props['option.build_grpc'] and not os.path.isdir(srcdir):
             print("copying the source directory...")
             run_process( ["rsync","-aq","grpc-source/third_party/protobuf/",srcdir], err='could not copy the protobuf source tree' )
             ## here we would really like to patch protobuf's Makefile.am to create libraries as we would like right off the
@@ -977,19 +999,19 @@ else:
     mpi_cxx_flags = []
 
 module_cflags = { 'casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_MINOR=370', \
-                                 '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
+                                 '-DHAVE_DYSCO', '-DHAVE_FFTW3', '-DHAVE_FFTW3_THREADS', '-DHAVE_READLINE', \
                                  '-DUSE_THREADS', '-DUseCasacoreNamespace', '-DWCSLIB_VERSION_MAJOR=5', \
-                                 '-DWCSLIB_VERSION_MINOR=15', '-fsigned-char', '-DWITHOUT_BOOST',
+                                 '-DWCSLIB_VERSION_MINOR=15', '-fsigned-char', '-DWITHOUT_BOOST', \
                                  '-DCASATOOLS', '-Dcasacore=casa6core', '-DCASADATA=\'"%CASAROOT%/data"\'', \
-                                 '-fPIC' ] + platform_cflags[sys.platform],
+                                  '-DYYERROR_IS_DECLARED', '-fPIC' ] + platform_cflags[sys.platform],
                        '/code/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', \
                                       '-DAIPS_HAS_QWT', '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', \
                                       '-DAIPS_STDLIB', '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', \
                                       '-DQWT6', '-DUseCasacoreNamespace', \
                                       '-D_FILE_OFFSET_BITS=64', '-D_LARGEFILE_SOURCE', '-DNO_CRASH_REPORTER', \
                                       '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
-                                      '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-fPIC' ] \
-                                      + mpi_cxx_flags + platform_cflags[sys.platform],
+                                      '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-DYYERROR_IS_DECLARED', \
+                                      '-fPIC' ] + mpi_cxx_flags + platform_cflags[sys.platform],
                        'binding/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
                                         '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
                                         '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DQWT6', \
@@ -1033,7 +1055,7 @@ def get_optimization_flags():
         return ['-g']
     elif relwithdebinfo_build():
         return ['-g', '-O2']
-    else:    
+    else:
         return ['-O2']
 
 def get_new_cxx_compiler_flags():
@@ -1064,8 +1086,8 @@ def get_fortran_compiler_flags(ext):
         cc_args = ["-O3", "-fPIC", "-c", "-fno-automatic", "-ffixed-line-length-none"] + gfortran_flag_additions
         if relwithdebinfo_build():
             cc_args.insert(0, "-g")
-   
-    
+
+
     if real_gnu and len(props['build.flags.compile.openmp']) > 0:
         ### we'll assume our fortran compiler is gfortran and set the openmp
         ### flags for gfortran if our main C++ compiler is really GNU and the
@@ -1144,6 +1166,31 @@ def customize_compiler(self):
               export_symbols=None, debug=0, extra_preargs=None,
               extra_postargs=None, build_temp=None, target_lang=None):
         fn = os.path.basename(output_filename)
+        if fn.startswith('_') and fn.endswith('.so') or \
+           fn.startswith('lib') and fn.endswith('.so') and \
+           reduce( lambda acc,v: acc or v.endswith('_wrap.o'), objects, False ):
+            ## the latest python innovation is removing unused symbols, the macos flavor is '-Wl,-dead_strip_dylibs'
+            ## and the linux flavor is '-Wl,--as-needed'. However, when the swig wrappers are linked into a library
+            ## removing the dynamic loading initialization function causes dynamic loading to fail. An example of
+            ## such a library is libcomponentlistcoordsysimage.cpython-38-darwin.dylib, and removing unused symbls
+            ## results in an error like:
+            ## -------- -------- ------- -------- -------- ------- -------- -------- ------- -------- -------- -------
+            ## Traceback (most recent call last):
+            ##  File "build/lib.macosx-10.9-x86_64-3.8/casatools/__casac__/coordsys.py", line 14, in swig_import_helper
+            ##    return importlib.import_module(mname)
+            ##  File "/Users/dschiebel/anaconda3/envs/casa6/lib/python3.8/importlib/__init__.py", line 127, in import_module
+            ##    return _bootstrap._gcd_import(name[level:], package, level)
+            ##  File "<frozen importlib._bootstrap>", line 1014, in _gcd_import
+            ##  File "<frozen importlib._bootstrap>", line 991, in _find_and_load
+            ##  File "<frozen importlib._bootstrap>", line 975, in _find_and_load_unlocked
+            ##  File "<frozen importlib._bootstrap>", line 657, in _load_unlocked
+            ##  File "<frozen importlib._bootstrap>", line 556, in module_from_spec
+            ##  File "<frozen importlib._bootstrap_external>", line 1166, in create_module
+            ##  File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
+            ##  ImportError: dynamic module does not define module export function (PyInit__coordsys)
+            ## -------- -------- ------- -------- -------- ------- -------- -------- ------- -------- -------- -------
+            self.linker_so = [ v for v in self.linker_so if v != '-Wl,-dead_strip_dylibs' and v != '-Wl,--as-needed' ]
+
         if fn.startswith('lib') and fn.endswith(".so"):
             print("linking shared library...")
             self.linker_so = list(map(lambda f: "-dynamiclib" if f == "-bundle" else f,self.linker_so))
@@ -1385,14 +1432,14 @@ class casa_build_ext(build_ext):
             print("Fixing rpaths")
             result = subprocess.run(['perl', 'scripts/fixrpath.pl'], stdout=subprocess.PIPE)
             print(result.stdout.decode('utf-8'))
-        
+
         if relwithdebinfo_build() and stripsyms_build():
             print("Extracting debug symbols")
             if not os.path.exists('./debugsymbols'):
                 os.makedirs('./debugsymbols')
             result = subprocess.run(['perl', 'scripts/extract_symbols.pl', 'ws=./debugsymbols', 'binaries=./build', 'version='+casatools_version ], stdout=subprocess.PIPE)
             print(result.stdout.decode('utf-8'))
-        
+
 
 
 class casa_test(Command):
@@ -2600,7 +2647,7 @@ if __name__ == '__main__':
 
     generate_casacore_version_header()
 
-    if not os.path.exists(os.path.join('build','.built.grpc')):
+    if props['option.build_grpc'] and not os.path.exists(os.path.join('build','.built.grpc')):
         build_grpc( os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__'),
                     os.path.join('build', distutils_dir_name('grpc')),
                     os.path.join('build', distutils_dir_name('grpc-install')) )
@@ -2609,19 +2656,24 @@ if __name__ == '__main__':
                         os.path.join('build', distutils_dir_name('grpc-install')) )
         mkpath('build')
         open(os.path.join('build',".built.grpc"),'a').close( )
-    else:
+    elif props['option.build_grpc']:
         print(' * Note: not building grpc because I found build/.built.grpc')
+    else:
+        print(' * Note: using system grpc instead of building grpc')
 
     # grpc_incdir = os.path.join('build', distutils_dir_name('lib'), module_name, '__casac__', 'include')
-    grpc_incdir = get_grpc_incdir()
     grpc_srcdir = generate_grpc( [ os.path.join('src','protos','registrar.proto'),
                                    os.path.join('src','protos','shutdown.proto'),
                                    os.path.join('src','protos','ping.proto'),
                                    os.path.join('src','protos','img.proto'),
                                    os.path.join('src','protos','plotserver.proto'),
                                    os.path.join('src','protos','plotserver_events.proto')
-                               ] )
+                                 ] )
     GRPC_SRC = ['%s/%s' % (grpc_srcdir,f) for f in listdir(grpc_srcdir) if f.endswith(".cc")] if len(grpc_srcdir) != 0 else [ ]
+    grpc_srcdir = [ grpc_srcdir ] if len(grpc_srcdir) != 0 else [ ]
+    grpc_incdir = get_grpc_incdir()
+    grpc_incdir = [ grpc_incdir ] if len(grpc_incdir) != 0 else [ ]
+
     BINDING_SRC = ['binding/source/%s' % f for f in listdir('binding/source') if f.endswith(".cc")] + GRPC_SRC
     CODE_SRC = source_files("src/code",file_suffix_filter=".cc",subdir_filter=['tests','test','apps','display','plotms','guitools','display3d','demo','casaqt','convert','Filling','ImagerObjects2'],file_filter=['MeasurementComponents/rGridFT.cc'],
                             path_filter=['MeasurementComponents/WOnlyConvFunc.cc','TransformMachines2/EVLAConvFunc.cc','TransformMachines2/AWConvFuncEPJones.cc'])
@@ -2651,7 +2703,7 @@ if __name__ == '__main__':
     # grpc_libs = get_grpc_libs()
     # ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['binding',grpc_srcdir,grpc_incdir], extra_link_args=ldflags+rpath+archflags, libraries=prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + archlibs ) ]
     tp_libs = get_tp_libs()
-    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['src',grpc_srcdir,grpc_incdir], extra_link_args=gldflags+rpath+archflags, libraries=gprop_libs + tp_libs + archlibs ) ]
+    ext = [ Extension( module_name + ".__casac__.lib.lib" + module_name, language='c++', sources=BINDING_SRC + CODE_SRC + CORE_SRC + MIR_SRC + SAKURA_SRC + CODE_ATM + CODE_F77 + CORE_F77, include_dirs=['src'] + grpc_incdir + grpc_srcdir, extra_link_args=gldflags+rpath+archflags, libraries=gprop_libs + tp_libs + archlibs ) ]
 
     # casacdir = os.path.join(moduledir, '__casac__')
     casacdir = get_casac_dir()
@@ -2691,7 +2743,7 @@ if __name__ == '__main__':
         if sys.platform == 'darwin':
             rpath = [ '-Wl,-rpath,@loader_path/lib','-Wl,-rpath,@loader_path' ]
         # ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['binding'] + inc, extra_link_args=ldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + prop_libs + ['sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f','fftw3_threads','fftw3','lapack','wcs','cfitsio','rpfits','blas','blas'] + grpc_libs + ['readline', 'gfortran', 'dl'] + lib + archlibs + closure_libraries ))
-        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['src',grpc_incdir] + inc, extra_link_args=gldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + gprop_libs + tp_libs + lib + archlibs + closure_libraries ))
+        ext.append(Extension( module_name + ".__casac__._%s" % t, language='c++', sources=src, include_dirs=['src'] + grpc_incdir + inc, extra_link_args=gldflags + ['-L'+libdir] + rpath + archflags + closure_ldflags, swig_opts=swig_opt, libraries=[module_name] + gprop_libs + tp_libs + lib + archlibs + closure_libraries ))
 
     setup( name="casatools",version=casatools_version,
            maintainer="Darrell Schiebel",
