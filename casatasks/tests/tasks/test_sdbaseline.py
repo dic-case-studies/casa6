@@ -7,9 +7,7 @@ import unittest
 from casatools import ctsys, table
 from casatasks import sdbaseline
 from casatasks.private.sdutil import table_manager
-from casatasks.private.sdutil import is_empty
-from casatasks.private.sdutil import parse_wavenumber_param
-from casatasks.private.sdutil import check_fftthresh
+from casatasks.private.task_sdbaseline import check_fftthresh, is_empty, parse_wavenumber_param
 from casatestutils import selection_syntax
 
 
@@ -5244,9 +5242,9 @@ class sdbaseline_helperTest(sdbaseline_unittest_base):
     """
     Tests for helper functions
 
-    test000 --- tests for sdutil.is_empty()
-    test010 --- tests for sdutil.parse_wavenumber_param()
-    test020 --- tests for sdutil.check_fftthresh()
+    test000 --- tests for is_empty()
+    test010 --- tests for parse_wavenumber_param()
+    test020 --- tests for check_fftthresh()
     """
 
     def test000(self):
