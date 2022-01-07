@@ -37,12 +37,12 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             fftthresh = fftthresh.lower()
 
         if not os.path.exists(infile):
-            raise Exception("infile='" + str(infile) + "' does not exist.")
+            raise ValueError("infile='" + str(infile) + "' does not exist.")
         if (outfile == '') or not isinstance(outfile, str):
             outfile = infile.rstrip('/') + '_bs'
             casalog.post("outfile is empty or non-string. set to '" + outfile + "'")
         if (not overwrite) and os.path.exists(outfile):
-            raise Exception("outfile='%s' exists, and cannot overwrite it." % (outfile))
+            raise ValueError("outfile='%s' exists, and cannot overwrite it." % (outfile))
         if (maskmode == 'interact'):
             raise ValueError("maskmode='%s' is not supported yet" % maskmode)
         if (not dosubtract) and sdutil.is_empty(blformat):
@@ -158,9 +158,6 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             write_history(ms, outfile, 'sdbaseline', param_names,
                           param_vals, casalog)
 
-    except Exception:
-        raise
-
     finally:
         # Remove (skeleton) outfile
         if (not dosubtract) and (infile != outfile):
@@ -266,7 +263,7 @@ def get_normalised_name(infile, blformat, bloutput, name, ext, overwrite):
         if overwrite:
             remove_data(fname)
         else:
-            raise Exception(fname + ' exists.')
+            raise ValueError(fname + ' exists.')
     return fname
 
 
