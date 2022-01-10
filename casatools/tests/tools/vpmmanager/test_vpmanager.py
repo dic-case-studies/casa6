@@ -1,6 +1,5 @@
 ##########################################################################
 # test_vpmanager.py
-#
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
@@ -14,42 +13,31 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/latest/api/casatools.html
 #
-#
+# Unit tests for the vpmanager tool. Tested methods:
+#         reset()
+#         summarizevps()
+#         getvp()
+#         numvps()
+#         setpbairy()
+#         setpbantresptable()
+#         createantresp()
+#         getrespimagename()
+#         setuserdefault()
+#         getuserdefault()
+#         saveastable()
+#         loadfromtable()
 ##########################################################################
-'''
-Unit tests for the vpmanager tool. Tested methods:
-        reset()
-        summarizevps()
-        getvp()
-        numvps()
-        setpbairy()
-        setpbantresptable()
-        createantresp()
-        getrespimagename()
-        setuserdefault()
-        getuserdefault()
-        saveastable()
-        loadfromtable()
-'''
-
 
 import os
-import sys
 import shutil
 import unittest
 
-try:
-    from casatools import table, ctsys
-    from casatools import vpmanager as vptool
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
-        return os.path.join(dataPath,apath)
+from casatools import table, ctsys
+from casatools import vpmanager as vptool
+ctsys_resolve = ctsys.resolve
     
 _vp = vptool( )
 
@@ -78,9 +66,18 @@ class vpmanager_test(unittest.TestCase):
         self.res = None
         self.antresp_alma = ctsys_resolve('alma/responses/AntennaResponses-ALMA')
         self.antresp_alma_rt = ctsys_resolve('alma/responses/AntennaResponses-ALMA-RT')
-    
+
     def tearDown(self):
         os.system('rm -rf ' + self.inputdir)
+
+    @classmethod
+    def tearDownClass(cls):
+        os.system('rm -rf BeamCalcTmpImage_*')
+        shutil.rmtree('aperture_pol9.im')
+        shutil.rmtree('imaperture_pol9.im')
+        shutil.rmtree('mydefs.tab')
+        os.unlink('AntennaResponsesDesc.tabdsc')
+        shutil.rmtree('reaperture_pol9.im')
 
     def test0(self):
         '''Test 0: reset'''
@@ -443,10 +440,6 @@ class vpmanager_test(unittest.TestCase):
 ##                              dopb=True)
 ##         self.res = _vp.getrespimagename("ALMA","2011/01/01/10:00","100GHz","INTERNAL","CM","0deg","0deg","",0)
 ##         self.assertTrue(self.res)
-
-
-def suite():
-    return [vpmanager_test]
 
 if __name__ == '__main__':
     unittest.main()
