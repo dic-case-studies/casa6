@@ -58,14 +58,14 @@ def uvsub(vis=None,reverse=False):
             param_names = uvsub.__code__.co_varnames[:uvsub.__code__.co_argcount]
             if is_python3:
                 vars = locals( )
-                param_vals = [eval(p) for p in param_names]
+                param_vals = [vars[p] for p in param_names]
             else:
                 param_vals = [eval(p) for p in param_names]
             write_history(mstool(), vis, 'uvsub', param_names,
                           param_vals, casalog)
         except Exception as instance:
             casalog.post("*** Error \'%s\' updating HISTORY" % (instance),
-                         'WARN')            
+                         'WARN')
 
     finally:
         _ms.close()
