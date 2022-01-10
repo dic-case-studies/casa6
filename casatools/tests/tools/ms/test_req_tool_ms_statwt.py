@@ -1,31 +1,35 @@
-from __future__ import print_function
+##########################################################################
+# test_tool_ms_statwt.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.ms.html#casatools.ms.ms.statwt
+#
+#
+##########################################################################
+
 import os
-import sys
 import shutil
 import unittest
-import math
 import numpy as np
 import numpy.ma as ma
-import numbers
-
-#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-#import testhelper as th
-#from casatestutils import testhelper as th
 
 subdir = 'unittest/statwt/'
-is_casa6 = False
-try:
-    from casatools import ctsys, table, ms
-    datadir = ctsys.resolve(subdir)
-    myms = ms()
-    mytb = table()
-    is_casa6 = True
-
-except ImportError:
-    from taskinit import *
-    myms = mstool()
-    mytb = tbtool()
-    datadir = os.environ.get('CASAPATH').split()[0] + '/casatestdata/' + subdir
+from casatools import ctsys, table, ms
+datadir = ctsys.resolve(subdir)
+myms = ms()
+mytb = table()
 
 src = datadir + 'ngc5921_small.statwt.ms'
 vlass = os.path.join(datadir, 'test_vlass_subset.ms')
@@ -279,13 +283,7 @@ class statwt_test(unittest.TestCase):
         for combine in ["", "corr"]:
             c = 0
             for fitspw in ["0:0~9;21~62", "", "0:10~20"]:
-                if is_casa6:
-                    self.assertTrue(
-                        shutil.copytree(src, dst),
-                        "Unable to copy " + src + " to " + dst
-                    )
-                else:
-                    shutil.copytree(src, dst)
+                shutil.copytree(src, dst)
                 excludechans = c == 2
                 myms.open(dst, nomodify=False)
                 myms.statwt(
@@ -928,10 +926,6 @@ class statwt_test(unittest.TestCase):
             ref = 'test_vlass_timebin' + str(tb) + '.ms'
             self.compare(dst, ref)
             shutil.rmtree(dst)
-
-
-def suite():
-    return [statwt_test]
 
 if __name__ == '__main__':
     unittest.main()
