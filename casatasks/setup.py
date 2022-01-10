@@ -658,5 +658,5 @@ setup( name=module_name,version=casatasks_version,
        cmdclass=cmd_setup,
        package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
        package_data={'': ['*.xml','*.txt']},
-       install_requires=[ 'casatools==%s' % casatools.version_string( ), 'matplotlib', 'scipy' ]
+       install_requires=[ 'casatools==%s' % casatools.version_string( ), 'matplotlib', 'scipy', 'certifi' ]
 )
