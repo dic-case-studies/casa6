@@ -14,32 +14,19 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.measures.html
+# Unit tests for the measures tool.
 #
-#
+# Features tested:
+#  1. me.cometdist
+#  2. me.cometangdiam
 ##########################################################################
-
-'''
-Unit tests for the measures tool.
-
-Features tested:
-  1. me.cometdist
-  2. me.cometangdiam
-'''
 
 import unittest
 
-try:
-    # CASA 6
-    from casatools import  ctsys, measures
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from tests.test_split import check_eq, datapath
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
-        return os.path.join(dataPath,apath)
+from casatools import  ctsys, measures
+ctsys_resolve = ctsys.resolve
 
 def check_eq(val, expval, tol=None):
     """Checks that val matches expval within tol."""
@@ -90,9 +77,6 @@ class me_test_cometangdiam(Ganymede):
         """Is Ganymede's angular diameter correct?"""
         check_eq(self.me.cometangdiam(), {'unit': 'rad', 'value': 6.868e-06},
                  1.0e-9)
-
-def suite():
-    return [me_test_cometdist, me_test_cometangdiam]
 
 if __name__ == '__main__':
     unittest.main()

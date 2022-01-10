@@ -1,3 +1,23 @@
+##########################################################################
+# test_me_shift.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.measures.html
+#
+##########################################################################
+
 import unittest
 import copy
 import math
@@ -31,9 +51,6 @@ class me_shift_test(unittest.TestCase):
         self.assertTrue(got['m0']['value'] == v['m0']['value'])
         expec = self.qa.sub(v['m1'], '20arcmin')
         self.assertTrue(abs(got['m1']['value']/expec['value'] - 1) < 1e-7)
-        
-def suite():
-    return [me_shift_test]
 
 if __name__ == '__main__':
     unittest.main()

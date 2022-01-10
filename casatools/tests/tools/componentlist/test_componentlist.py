@@ -1,7 +1,6 @@
 ##########################################################################
-# imfit_test.py
-#
-# Copyright (C) 2008, 2009
+# test_componentlist.py
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
 # This script is free software; you can redistribute it and/or modify it
@@ -14,73 +13,15 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.componentlist.html
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
 #
-# <author>
-# Dave Mehringer
-# </author>
-#
-# <summary>
-# Test suite for the CASA imfit Task
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-#   <li> <linkto class="imfit.py:description">imfit</linkto> 
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# imfit_test stands for imfit test
-# </etymology>
-#
-# <synopsis>
-# imfit_test.py is a Python script that tests the correctness
-# of the ia.fitcomponents tool method and the imfit task in CASA.
-# </synopsis> 
-#
-# <example>
-# # This test was designed to run in the automated CASA test system.
-# # This example shows who to run it manually from within casapy.
-# casapy -c runUnitTest test_imcontsub
-#
-# or
-#
-# # This example shows who to run it manually from with casapy.
-# runUnitTest.main(['imcontsub_test'])
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard to the imfit task to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
+##########################################################################
 
-###########################################################################
 import unittest
 
-is_CASA6 = False
-try:
-    from casatools import componentlist as cltool
-    is_CASA6 = True
-except:
-    from tasks import *
-    from taskinit import *
-    from __main__ import *
-
+from casatools import componentlist as cltool
 
 class componentlist_test(unittest.TestCase):
     
@@ -112,9 +53,6 @@ class componentlist_test(unittest.TestCase):
         mycl.setflux(0, value=mycl.getfluxvalue(0), error=ferror)
         got = mycl.getfluxerror(0)
         self.assertTrue((got == ferror).all())
-        
-def suite():
-    return [componentlist_test]
 
 if __name__ == '__main__':
     unittest.main()
