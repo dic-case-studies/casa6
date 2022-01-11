@@ -491,12 +491,14 @@
                        velocity (string with a unit),  or frequency (string with a unit).
                        Default:''; The first channel is automatically determined based on
                        the 'spw' channel selection and 'width'.
-                       When the channel number is used along with the channel selection
-                        in 'spw' (e.g. spw='0:6~100'),
-                       'start' channel number is RELATIVE (zero-based) to the selected
-                       channels in 'spw'. So for the above example,
-                       start=1 means that the first image channel is the second selected
-                       data channel, which is channel 7.
+                       channels in 'spw'. 
+                       Since the integer number in 'start' represents the data channel number,
+                       when the channel number is used along with the spectral window id selection
+                       in 'spw', 'start' specified as an integer should be carefully set otherwise
+                       it may result in the blank image channels if the 'start' channel (i.e. absolute 
+                       channel number) is outside of the channel range specified in 'spw'.
+                       In such a case, 'start' can be left as a default (='') to ensure
+                       matching with the data spectral channel selection.
                        For specmode='cube', when velocity or frequency is used it is
                        interpreted with the frame defined in outframe. [The parameters of
                        the desired output cube can be estimated by using the 'transform'
