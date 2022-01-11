@@ -142,13 +142,15 @@
 
       
       <param type="any" name="fitspw">
-        <shortdescription>Spectral window:channel selections for fitting the continuum</shortdescription>
-        <description>Spectral window:channel selections for fitting,
-        per field. The continuum will be fitted using as input the
-        selected channels, which can be considered the line-free
-        channels.  Must be a list with up to as many elements as
-        fields have been selected from the input MS. Each element of
-        the list specifies a pair [field-ID(s), spw:channel-selection].
+        <shortdescription>Spectral window:channel specifications for fitting the continuum</shortdescription>
+        <description>Spectral window:channel specification for
+        fitting, per field. The continuum will be fitted using as
+        input the channels given, which can be considered the
+        line-free channels.  It can be a simple string, in which case
+        the same spw:channel specification is used for all fields, or
+        a list. The list can have up to as many elements as fields
+        have been selected from the input MS. Each element of the list
+        specifies a pair [field-ID(s), spw:channel-selection].
 
         If a field or SPW is not included, the default (all channels)
         is assumed.
@@ -173,13 +175,13 @@
         should be fitted in any SPW, the spw:channels string can be
         set to 'NONE'.
 
-        This selection of SPWs and channels uses a syntax similar to
-        the spw parameter. But here the SPWs and channels are used as
-        a mask applied on the input data only for fitting
-        purposes. The channels that are not selected are masked out
-        and not used as input by the fitting algorithm. This is
-        different from the spw parameter, which selects the data that
-        is included in the output.
+        This specification of SPWs and channels uses a syntax similar
+        to the spw parameter. But here the SPWs and channels are used
+        as a mask applied on the input data only for fitting
+        purposes. The channels that are not included in the
+        specification are masked out and not used as input by the
+        fitting algorithm. This is different from the spw parameter,
+        which selects the data that will be included in the output.
         </description>
         <type>string</type><type>any</type>
         <value type="string"/>
