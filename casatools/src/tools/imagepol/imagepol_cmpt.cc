@@ -129,23 +129,21 @@ imagepol::close() {
   return rstat;
 }
 
-bool
-imagepol::complexlinpol(const std::string& outfile)
-{
-  bool rstat(false);
-  try{
-    *itsLog << LogOrigin("imagepol", __func__);
-    if(itsImPol==0){
-      *itsLog << LogIO::SEVERE <<"No attached image, please use open " 
-	      << LogIO::POST;
-      return rstat;
+bool imagepol::complexlinpol(const std::string& outfile) {
+    try {
+        *itsLog << LogOrigin("imagepol", __FUNCTION__);
+        if (! itsImPol) {
+            *itsLog << LogIO::SEVERE <<"No attached image, please use open " 
+	            << LogIO::POST;
+            return false;
+        }
+        return itsImPol->complexlinpol(outfile);
     }
-    rstat = itsImPol->complexlinpol(String(outfile));
-  } catch (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
-    RETHROW(x);
-  }
-  return rstat;
+    catch (const AipsError& x) {
+        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
+            << LogIO::POST;
+        RETHROW(x);
+    }
 }
 
 bool
