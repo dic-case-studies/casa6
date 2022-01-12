@@ -1409,8 +1409,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
                      largestscale = 100
 
-                     Default is to use a conservative calculation performed internally based on 
-                     the shortest baseline. 
+                     The default initial scale sizes used by Asp Clean is [0, w, 2w, 4w, 8w], where `w` is the PSF width. The default `largestscale` is -1 which indicates users accept these initial scales. If `largestscale` is set, the initial scales would be [0, w, ... up to the `largestscale`]. It is recommended not to set `largestscale` unless Asp Clean picks a large scale that has no constraints from the data (the UV hole issue). 
 
 
       </description>
