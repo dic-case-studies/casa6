@@ -9,10 +9,7 @@ import unittest
 import numpy as np
 from casatasks import casalog
 from casatasks.private.sdutil import calibrater_manager, table_manager
-from casatasks.private.task_imbaseline import (AbstractFileStack, CasaImageStack,
-                                               EraseableFolder, ImageShape,
-                                               UnerasableFolder,
-                                               execute_imsmooth, imbaseline)
+from casatasks.private.task_imbaseline import *
 from casatools import (componentlist, ctsys, image, ms, quanta, regionmanager,
                        table)
 from scipy import signal
@@ -65,6 +62,33 @@ class test_base(unittest.TestCase):
             return _wrapper
         return wrapper
 
+    def tearDown(self):
+        eraseable_folder_register.clear()
+        self.assertTrue(len(_tb.showcache()) == 0)
+        # make sure directory is clean as per verification test requirement
+        cwd = os.getcwd()
+        for filename in os.listdir(cwd):
+            file_path = os.path.join(cwd, filename)
+            try:
+                if os.path.isfile(file_path) or os.path.islink(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    # CASA 5 tests need this directory
+                    if filename != 'xml':
+                        shutil.rmtree(file_path)
+            except Exception as e:
+                print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+    def _copy_test_files(self, basename, filename):
+        _base = ctsys_resolve(basename)
+        copy_from = os.path.join(_base, filename)
+        if not os.path.exists(copy_from) or copy_from == os.path.join(os.getcwd(), filename):
+            raise RuntimeError(f"Error is occured or existed on a path {copy_from} or {filename}")
+
+        if os.path.exists(filename):
+            shutil.rmtree(filename)
+        os.system('cp -RH ' + os.path.join(_base, filename) + ' ' + filename)
+
 
 def _near(got, expected, tol):
     return _qa.le(
@@ -111,17 +135,11 @@ class AbstractFileStack_test(test_base):
         if os.path.exists(self.unexist_folder):
             shutil.rmtree(self.unexist_folder)
 
-    def tearDown(self):
-        if os.path.exists(self.dummy_folder1):
-            shutil.rmtree(self.dummy_folder1)
-        if os.path.exists(self.dummy_folder2):
-            shutil.rmtree(self.dummy_folder2)
-
     def test_1_1(self):
         stack = CasaImageStack(UnerasableFolder(self.dummy_folder1))
         self.assertTrue(stack.height() == 1)
 
-    @test_base.exception_case(ValueError, 'file path unexists is not found')
+    @test_base.exception_case(ValueError, 'file unexists is not found')
     def test_1_2(self):
         CasaImageStack(UnerasableFolder(self.unexist_folder))
 
@@ -130,7 +148,7 @@ class AbstractFileStack_test(test_base):
         stack.push(UnerasableFolder(self.dummy_folder1))
         self.assertTrue(stack.height() == 1)
 
-    @test_base.exception_case(ValueError, 'file path unexists is not found')
+    @test_base.exception_case(ValueError, 'file unexists is not found')
     def test_1_4(self):
         stack = CasaImageStack()
         stack.push(UnerasableFolder(self.unexist_folder))
@@ -182,9 +200,10 @@ class AbstractFileStack_test(test_base):
         stack.bottom()
 
     def test_1_13(self):
-        stack = CasaImageStack(EraseableFolder(self.dummy_folder1))
+        file = EraseableFolder(self.dummy_folder1)
+        stack = CasaImageStack(file)
         stack.clear(False)
-        self.assertFalse(os.path.exists(self.dummy_folder1))
+        self.assertTrue(os.path.exists(self.dummy_folder1))
         self.assertEqual(stack.height(), 0)
 
     def test_1_14(self):
@@ -196,6 +215,7 @@ class AbstractFileStack_test(test_base):
     def test_1_15(self):
         file = EraseableFolder(self.dummy_folder1)
         file.erase(False)
+        eraseable_folder_register.pop(self.dummy_folder1)
         self.assertFalse(os.path.exists(self.dummy_folder1))
 
     def test_1_16(self):
@@ -238,95 +258,19 @@ class ImageShape_test(test_base):
 class imsmooth_test(test_base):
     """imsmooth test
 
+    Tests of imsmooth rely on test_imsmooth basically, so we have minimal tests in imbaseline.
+
     3-1. simple successful case
     3-2. simple failure case
     """
 
     datapath = ctsys_resolve('unittest/imsmooth/')
-    targetres_im = "imsmooth_targetres.fits"
     tiny = "tiny.im"
-    tiny_dummy = tiny + ".dummy"
-    image_names = ['g192_a2.image', 'g192_a2.image-2.rgn']
 
     def setUp(self):
-        if(os.path.exists(self.image_names[0])):
-            for file in self.image_names:
-                os.system('rm -rf ' + file)
+        self._copy_test_files(self.datapath, self.tiny)
 
-        for file in self.image_names:
-            os.system('cp -RH ' + os.path.join(self.datapath, file) + ' ' + file)
-        self.ia = image()
-        for f in [self.targetres_im, self.tiny]:
-            if(os.path.exists(f)):
-                os.system('rm -rf ' + f)
-            os.system('cp -RH ' + os.path.join(self.datapath, f) + ' ' + f)
-        self._create_dummy()
-
-    def tearDown(self):
-        self.assertTrue(len(_tb.showcache()) == 0)
-        # make sure directory is clean as per verification test requirement
-        cwd = os.getcwd()
-        for filename in os.listdir(cwd):
-            file_path = os.path.join(cwd, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
-
-    def _create_dummy(self):
-        if os.path.exists(self.tiny_dummy):
-            os.system('rm -rf ' + self.tiny_dummy)
-        os.system('cp -RH ' + os.path.join(self.datapath, self.tiny) + ' ' + self.tiny_dummy)
-
-    ####################################################################
-    # Incorrect inputs to parameters.  The parameters are:
-    #    imagename
-    #    outfile
-    #    kernel
-    #    major
-    #    minor
-    #    mask
-    #    region
-    #    box
-    #    chans
-    #    stokes
-    #
-    # Returns True if successful, and False if it has failed.
-    ####################################################################
-
-    def _compare_beams(self, beam1, beam2):
-        self.assertTrue(_near(beam1["major"], beam2["major"], 2e-5))
-        self.assertTrue(_near(beam1["minor"], beam2["minor"], 2e-5))
-        pa = []
-        for b in [beam1, beam2]:
-            if "positionangle" in b:
-                pa.append(b["positionangle"])
-            else:
-                pa.append(b["pa"])
-
-        diff = abs(
-            _qa.sub(
-                _qa.quantity(pa[0]),
-                _qa.quantity(pa[1])
-            )["value"]
-        )
-        self.assertTrue(diff < 1e-5)
-
-    def test_input(self):
-        '''Imsmooth: Testing INPUT/OUTPUT tests'''
-        casalog.post("Starting imsmooth INPUT/OUTPUT tests.", 'NORMAL2')
-
-        #######################################################################
-        # Testing the imagename parameter.
-        #    1. Bad file name should throw and exception
-        #    2. Good file name, a file should be
-        #######################################################################
-        casalog.post("The IMAGENAME parameter tests will cause errors to occur, do not be alarmed", 'WARN')
+    def test_3_1(self):
         major = "2.5arcsec"
         minor = "2arcsec"
         pa = "0deg"
@@ -350,18 +294,142 @@ class imsmooth_test(test_base):
             pass
         self.assertFalse(_stack.height() > 0)
 
+    @test_base.exception_case(ValueError, 'Unsupported direction smoothing kernel, foobar')
+    def test_3_2(self):
+        major = "2.5arcsec"
+        minor = "2arcsec"
+        pa = "0deg"
+        dirkernel = "foobar"
+        kimage = ''
+        scale = -1
 
-    ####################################################################
-    # image2ms test
-    #   4-1. simple successful case
-    ####################################################################
+        _stack = CasaImageStack(top=UnerasableFolder(self.tiny))
+
+        execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, _stack)
 
 
-    ####################################################################
-    # sdsmooth test
-    #   5-1. simple successful case
-    #   5-2. simple failure case
-    ####################################################################
+class image2ms_test(test_base):
+    """image2ms test
+
+    4-1. simple successful case
+    4-2. invalid datacolumn
+    4-3. invalid image
+    4-4. set empty stack
+    """
+
+    datapath = ctsys_resolve('unittest/imbaseline/')
+    expected = "expected.im"
+    dummy_folder1 = "dummy1"
+    datacolumn = DATACOLUMN
+
+    def setUp(self):
+        self._copy_test_files(self.datapath, self.expected)
+        self.image_shape = get_image_shape(os.path.join(self.datapath, self.expected))
+        if os.path.exists(self.dummy_folder1):
+            shutil.rmtree(self.dummy_folder1)
+        os.system(f'mkdir {self.dummy_folder1}')
+
+    def test_4_1(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.expected))
+        ms_stack = MeasurementSetStack()
+        execute_image2ms(self.datacolumn, self.image_shape, image_stack, ms_stack)
+        self.assertEqual(ms_stack.height(), 1)
+        ms_path = ms_stack.peak().path
+        self.assertTrue(os.path.exists(ms_path))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'table.dat')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'ANTENNA')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'DATA_DESCRIPTION')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'FEED')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'FIELD')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'FLAG_CMD')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'HISTORY')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'OBSERVATION')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'POINTING')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'POLARIZATION')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'PROCESSOR')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'SOURCE')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'SPECTRAL_WINDOW')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'STATE')))
+
+    @test_base.exception_case(RuntimeError, 'column INVALID does not exist')
+    def test_4_2(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.expected))
+        ms_stack = MeasurementSetStack()
+        execute_image2ms('INVALID', self.image_shape, image_stack, ms_stack)
+
+    @test_base.exception_case(RuntimeError, 'Unable to open image dummy1.')
+    def test_4_3(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.dummy_folder1))
+        ms_stack = MeasurementSetStack()
+        execute_image2ms(self.datacolumn, self.image_shape, image_stack, ms_stack)
+
+    @test_base.exception_case(RuntimeError, 'the stack is empty')
+    def test_4_4(self):
+        image_stack = CasaImageStack()
+        ms_stack = MeasurementSetStack()
+        execute_image2ms(self.datacolumn, self.image_shape, image_stack, ms_stack)
+
+
+class sdsmooth_test(test_base):
+    """sdsmooth test
+
+    Tests of sdsmooth rely on test_sdsmooth basically, so we have minimal tests in imbaseline.
+
+    5-1. simple successful case
+    5-2. invalid ms stack
+    5-3. invalid image stack
+    """
+    datapath = ctsys_resolve('unittest/imbaseline/')
+    expected_im = "expected.im"
+    expected_ms = "expected.ms"
+    dummy_folder1 = "dummy1"
+    datacolumn = DATACOLUMN
+    spkenel = "gaussian"
+    kwidth = 5
+
+    def setUp(self):
+        self._copy_test_files(self.datapath, self.expected_im)
+        self._copy_test_files(self.datapath, self.expected_ms)
+        self.image_shape = get_image_shape(os.path.join(self.datapath, self.expected_im))
+
+    def test_5_1(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
+        ms_stack = MeasurementSetStack()
+        ms_stack.push(EraseableFolder(self.expected_ms))
+        execute_sdsmooth(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
+        self.assertEqual(image_stack.height(), 2)
+        self.assertEqual(ms_stack.height(), 2)
+        self.assertTrue(os.path.exists(os.path.join(image_stack.peak().path, 'table.dat')))
+
+        ms_path = ms_stack.peak().path
+        self.assertTrue(os.path.exists(ms_path))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'table.dat')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'ANTENNA')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'DATA_DESCRIPTION')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'FEED')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'FIELD')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'FLAG_CMD')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'HISTORY')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'OBSERVATION')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'POINTING')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'POLARIZATION')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'PROCESSOR')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'SOURCE')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'SPECTRAL_WINDOW')))
+        self.assertTrue(os.path.exists(os.path.join(ms_path, 'STATE')))
+
+    @test_base.exception_case(RuntimeError, 'the stack is empty')
+    def test_5_2(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
+        ms_stack = MeasurementSetStack()
+        execute_sdsmooth(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
+
+    @test_base.exception_case(RuntimeError, 'the stack has not have enough stuff')
+    def test_5_3(self):
+        image_stack = CasaImageStack()
+        ms_stack = MeasurementSetStack()
+        ms_stack.push(EraseableFolder(self.expected_ms))
+        execute_sdsmooth(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
 
 
     ####################################################################
@@ -379,49 +447,15 @@ class imsmooth_test(test_base):
 
 class imbaseline_test(test_base):
 
-    datapath = ctsys_resolve('unittest/imsmooth/')
-    targetres_im = "imsmooth_targetres.fits"
-    tiny = "tiny.im"
-    tiny_dummy = tiny + ".dummy"
-    image_names = ['g192_a2.image', 'g192_a2.image-2.rgn']
+    datapath = ctsys_resolve('unittest/imbaseline/')
+    expected = "expected.im"
 
     def setUp(self):
-        if(os.path.exists(self.image_names[0])):
-            for file in self.image_names:
-                os.system('rm -rf ' + file)
-
-        for file in self.image_names:
-            os.system('cp -RH ' + os.path.join(self.datapath, file) + ' ' + file)
         self.ia = image()
-        for f in [self.targetres_im, self.tiny]:
-            if(os.path.exists(f)):
-                os.system('rm -rf ' + f)
-            os.system('cp -RH ' + os.path.join(self.datapath, f) + ' ' + f)
-        self._create_dummy()
-
-    def tearDown(self):
-        self.assertTrue(len(_tb.showcache()) == 0)
-        # make sure directory is clean as per verification test requirement
-        cwd = os.getcwd()
-        for filename in os.listdir(cwd):
-            file_path = os.path.join(cwd, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
-
-    def _create_dummy(self):
-        if os.path.exists(self.tiny_dummy):
-            os.system('rm -rf ' + self.tiny_dummy)
-        os.system('cp -RH ' + os.path.join(self.datapath, self.tiny) + ' ' + self.tiny_dummy)
+        self._copy_test_files(self.datapath, self.expected)
 
     def test_7_1(self):
-        imagefile = self.image_names[0]
+        imagefile = self.expected
         linefile = 'output_7_1'
         dirkernel = 'gaussian'
         spkernel = 'gaussian'
@@ -444,5 +478,4 @@ class imbaseline_test(test_base):
 
 
 def suite():
-    return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test]
-
+    return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test, image2ms_test]

@@ -79,22 +79,26 @@ class UnerasableFolder(AbstractFolder):
 class EraseableFolderRegister():
     """Class of the register of folders that need to be erased."""
 
-    _register = []
+    _register = dict()
 
     def register(self, folder: EraseableFolder):
-        if isinstance(folder, EraseableFolder):
-            self._register.append(folder)
+        if isinstance(folder, EraseableFolder) and folder.path not in self._register.keys():
+            self._register[folder.path] = folder
         else:
             raise ValueError('Irregal folder would be appended', 'SEVERE')
 
     def clear(self, dry_run: bool=True):
-        for folder in self._register:
+        for path, folder in self._register.items():
             if not folder.has_file:
                 raise RuntimeError('Invalid code execution state', 'SEVERE')
-            elif not os.path.exists(folder.path):
-                raise RuntimeError(f'File not found: {folder.path}', 'SEVERE')
+            elif not os.path.exists(path):
+                raise RuntimeError(f'File not found: {path}', 'SEVERE')
             else:
                 folder.erase(dry_run)
+        self._register.clear()
+
+    def pop(self, key: str) -> EraseableFolder:
+        return self._register.pop(key)
 
 
 eraseable_folder_register = EraseableFolderRegister()
@@ -163,8 +167,6 @@ class AbstractFileStack:
 
     def clear(self, dry_run: bool=True) -> None:
         """Do erase method of all of the stack and clear the stack."""
-        # for file in self.stack:
-        #     file.erase(dry_run=dry_run)
         self.stack.clear()
 
     def height(self) -> int:
