@@ -11,7 +11,7 @@
         <description>Name of input visibility file.
                      Default: '', must be specified
 
-                        Example: vis='ngc5921.ms'
+                     Example: vis='ngc5921.ms'
         </description>
         <value/>
       </param>
@@ -30,10 +30,6 @@
         <value/>
       </param>
 
-      
-      
-
-          
       <param type="string" name="field">
         <shortdescription>Select field using field id(s) or field name(s)</shortdescription>
         <description>Select field using field id(s) or field name(s)
@@ -44,13 +40,13 @@
                      it is assumed a field index,  otherwise, it is
                      assumed a field name.
 
-                        Examples:
-                        field='0~2'; field ids 0,1,2
-                        field='0,4,5~7'; field ids 0,4,5,6,7
-                        field='3C286,3C295'; field named 3C286 and
-                        3C295
-                        field = '3,4C*'; field id 3, all names
-                        starting with 4C
+                     Examples:
+                     field='0~2'; field ids 0,1,2
+                     field='0,4,5~7'; field ids 0,4,5,6,7
+                     field='3C286,3C295'; field named 3C286 and
+                           3C295
+                     field = '3,4C*'; field id 3, all names
+                     starting with 4C
         </description>
         <value/>
       </param>
@@ -60,16 +56,16 @@
         <description>Select spectral window/channels
                      Default: '' (meaning all spectral windows and channels)
            
-                        Examples:
-                        spw='0~2,4'; spectral windows 0,1,2,4 (all channels)
-                        spw='&lt;2';  spectral windows less than 2 (i.e. 0,1)
-                        spw='0:5~61'; spw 0, channels 5 to 61
-                        spw='0,10,3:3~45'; spw 0,10 all channels, spw
-                        3 - chans 3 to 45.
-                        spw='0~2:2~6'; spw 0,1,2 with channels 2
-                        through 6 in each.
-                        spw = '*:3~64'  channels 3 through 64 for all sp id's
-                        spw = ' :3~64' will NOT work.
+                     Examples:
+                     spw='0~2,4'; spectral windows 0,1,2,4 (all channels)
+                     spw='&lt;2';  spectral windows less than 2 (i.e. 0,1)
+                     spw='0:5~61'; spw 0, channels 5 to 61
+                     spw='0,10,3:3~45'; spw 0,10 all channels, spw
+                         3 - chans 3 to 45.
+                     spw='0~2:2~6'; spw 0,1,2 with channels 2
+                         through 6 in each.
+                     spw = '*:3~64'  channels 3 through 64 for all sp id's
+                     spw = ' :3~64' will NOT work.
         </description>
         <value/>
       </param>
@@ -109,20 +105,16 @@
       <param type="string" name="observation">
         <shortdescription>Select by observation ID(s)</shortdescription>
         <description>Select by observation ID(s)
-                     Subparameter of selectdata=True
                      Default: '' = all
 
-                         Example: observation='0~2,4'
+                     Example: observation='0~2,4'
         </description>
         <value/>
       </param>
 
-      
-
-      
       <param ignorecase="True" type="string" name="datacolumn">
-        <shortdescription>Which data column(s) to process</shortdescription>
-        <description>Which data column(s) to use for processing
+        <shortdescription>Which data column to process</shortdescription>
+        <description>Which data column to use for processing
                      (case-insensitive).
                      Default: 'data'
                      Options: 'data', 'model', 'corrected',
@@ -139,7 +131,6 @@
           <value>lag_data</value>
         </allowed>
       </param>
-
       
       <param type="any" name="fitspw">
         <shortdescription>Spectral window:channel specifications for fitting the continuum</shortdescription>
@@ -204,7 +195,9 @@
 
       <param type="int" name="fitorder">
         <shortdescription>Polynomial order for the fits</shortdescription>
-        <description>Polynomial order for the fits</description>
+        <description>Polynomial order for the fits
+                     Default: 0
+        </description>
         <value>0</value>
       </param>
     
