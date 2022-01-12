@@ -1147,6 +1147,29 @@ polynomial bandpasses are determined using the default parameters.
 </method>
 
 
+<method name="returndict" type="function">
+   <shortdescription>Return a dictionary describing the current calibrater state</shortdescription>
+   
+<returns type="record"/>
+
+<description>
+
+Return a dictionary containing information about the current calibrater tool state.
+* Incomplete * this will contain the information that is present in the dict
+  
+</description>
+
+<example>
+  
+  cb.open('ngc5921.m');
+  cb.setapply('P', 5.0);
+  cb.returndict();
+  
+</example>
+</method>
+
+
+
  
 <method name="state" type="function">
    <shortdescription>Request the apply/solve state of the calibrater tool</shortdescription>
