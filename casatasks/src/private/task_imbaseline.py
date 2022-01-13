@@ -26,7 +26,7 @@ IMAGE_STACK_MAX_HEIGHT = 4
 MS_STACK_MAX_HEIGHT = 3
 
 qa = quanta()
-do_not_erase_temporary_files = True
+do_not_erase_temporary_files = False
 
 
 class AbstractFolder:
