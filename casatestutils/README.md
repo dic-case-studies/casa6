@@ -98,11 +98,11 @@ test_tclean.py::test_onefield::test_onefield_clark
 [onefield] Test_Onefield_clark : mfs with clark minor cycle  
 ...
 ```
-#### run a test using the CASA executable
+#### Run a test using the CASA executable
 ```
 ./casa.6.4.0.16/bin/casa -c ./runtest.py <path-to>/test_tclean.py
 ```
-#### run a test inside a casashell
+#### Run a test inside a casashell
 ```
 python3 -m casashell
 > from casatestutils import runtest
@@ -110,7 +110,7 @@ python3 -m casashell
 > runtest.run(['/path-to/test_flagdata.py'])  # run a local test script
 > runtest.run(['test_tclean[test_onefield_clark]'])  # pull test script from git trunk
 ```
-#### run a test similar ot bamboo setup
+#### Run a test similar to Bamboo setup
 Experimental for Developers, Mainly for Test Infrastructure Team use
 
 ```
@@ -123,9 +123,15 @@ Required Flags
 
 Optional Flags
 -n, --ncores    : Number of Cores to Use for MPI Tests ( Default to 2)
-
+-r, --rcdir     : Casa rcdir 
 ##### Examples
 python3 runtest.py --bamboo -n 4 -p casa-6.4.3-3-py3.6.tar.xz -m serial -j asdmsummary -w /path/to/working/directory
 python3 runtest.py --bamboo -p casa-6.4.3-3-py3.6.tar.xz -m serial  -w /path/to/working/directory --test_list test_coordsys,test_tclean,
 
 ```
+
+#### Additional Notes
+
+--ignore_list option is used to ignore a test from a test suite when using -j option. Parameter can be a list of comma separated tests or a JSON file in the same structure as component_to_test_map
+
+--bamboo option requires [testrunner module] (https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casatestutils/testrunner). 
