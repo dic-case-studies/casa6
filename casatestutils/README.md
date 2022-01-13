@@ -14,7 +14,8 @@ The script uses unittest and pytest and has the following command line options.
 usage: runtest.py [-h] [-i] [-v] [-x] [-s test [test ...]] [-f [FILE]]
                   [-e [MAPFILE]] [-b BRANCH] [-p PKG] [-w WORK_DIR]
                   [-n NCORES] [-t TEST_PATHS] [-l TEST_LIST] [-c TEST_CONFIG]
-                  [-j TEST_GROUP] [-m PMODE] [--bamboo]
+                  [-j TEST_GROUP] [-m PMODE] [--bamboo] [-r RCDIR]
+                  [--ignore_list IGNORE_LIST]
 ```
 Execute it with a casalith tarball or python
 ```
@@ -105,7 +106,26 @@ test_tclean.py::test_onefield::test_onefield_clark
 ```
 python3 -m casashell
 > from casatestutils import runtest
-> runtest.run['test_tclean']  # pull test script from git trunk
-> runtest.run['/path-to/test_flagdata.py']  # run a local test script
-> runtest.run['test_tclean[test_onefield_clark]']  # pull test script from git trunk
+> runtest.run(['test_tclean'])  # pull test script from git trunk
+> runtest.run(['/path-to/test_flagdata.py'])  # run a local test script
+> runtest.run(['test_tclean[test_onefield_clark]'])  # pull test script from git trunk
+```
+#### run a test similar ot bamboo setup
+Experimental for Developers, Mainly for Test Infrastructure Team use
+
+```
+Required Flags
+-m, --pmode     : Parallelization mode: serial, parallel, both
+-w, --work_dir  : Path to Working Directory to Unpack Tar/Dmg and run tests
+-p, --pkg       : Tarball / Dmg to be tested
+--bamboo        : Flag to Tell runtest similar to Bamboo
+-j / --test_group  or -l / --test_list : A test group ( Component) or test list must be passed 
+
+Optional Flags
+-n, --ncores    : Number of Cores to Use for MPI Tests ( Default to 2)
+
+##### Examples
+python3 runtest.py --bamboo -n 4 -p casa-6.4.3-3-py3.6.tar.xz -m serial -j asdmsummary -w /path/to/working/directory
+python3 runtest.py --bamboo -p casa-6.4.3-3-py3.6.tar.xz -m serial  -w /path/to/working/directory --test_list test_coordsys,test_tclean,
+
 ```
