@@ -1271,7 +1271,17 @@ to use the correct direction in which the antenna is pointing with respect to th
                                          (Note : This MEM implementation is not very robust.
                                                       Improvements will be made in the future.)
 
-                       asp : ASP Clean [Bhatnagar and Cornwell, 2004]
+                       asp : Adaptive Scale Pixel algorithm [Bhatnagar and Cornwell, 2004]
+                                       - Define a set of initial scales defined as 0, W, 2W 4W and 8W 
+                                         where W is a 2D Gaussian fitting width to the PSF 
+                                       - Smooth the residual image by a Gaussian beam at initial scales
+                                       - Search for the global peak (F) among these smoothed residual images
+                                       - form an active Aspen set: amplitude(F), amplitude location(x,y)
+                                       - Optimize the Aspen set by minimizing the objective function RI-Aspen*PSF, 
+                                         where RI is the residual image and * is the convulition operation. 
+                                       - Compute the model image and update the residual image
+                                       - Repeat from step 2
+
 
 
 

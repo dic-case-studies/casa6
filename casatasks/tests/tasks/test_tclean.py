@@ -248,8 +248,43 @@ class test_onefield(testref_base):
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',niter=10,deconvolver='multiscale',scales=[0,20,40,100],interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, peakres=0.823, modflux=3.816, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[100,100,0,0])])
           self.assertTrue(self.check_final(pstr=report))
+          
+     ## Add tests for CAS-940 here, for asp using refim_eptwochan.ms as Hombon, multscale test cases.  
+     '''
+     def test_onefield_asp(self):
+          """ [onefield] Test_Onefield_asp : mfs with asp minor cycle """
+          self.prepData('refim_eptwochan.ms')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=200,cell='8.0arcsec',niter=10,deconvolver='asp',largestscale=3,fusedthreshold=0.05,scales=[0,20,40,100],interactive=0,parallel=self.parallel)
+          report=self.th.checkall(ret=ret, peakres=0.940, modflux=3.53, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[100,100,0,0])])
+          self.assertTrue(self.check_final(pstr=report))
+     ''' 
+   
+     ## Add tests for CAS-940 here, for asp using sim_data_VLA_jet.ms which contains 5 chans.
+     def test_onefield_asp(self):
+          """ [onefield] Test_Onefield_asp : mfs with asp minor cycle """
+          #import pdb
+          #pdb.set_trace()
+          #self.prepData('sim_data_VLA_jet.ms'
+          self.msfile=ctsys.resolve('sim_data_VLA_jet.ms')
+          ## defaul case
+          ret1 = tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='12.0arcsec',specmode='cube',interpolation='nearest',nchan=5,start='1.0GHz',width='0.2GHz',pblimit=-1e-05,niter=100,deconvolver='asp',gain=0.8,mask='circle[[256pix,256pix],150pix]',interactive=0,parallel=self.parallel)
+          report1=self.th.checkall(ret=ret, peakres=4.429, modflux=17.06, iterdone=100, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[256,256,0,0])])
+          
+          ## using fusedthreshold to trigger the switch to hogbom
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='12.0arcsec',specmode='cube',interpolation='nearest',nchan=5,start='1.0GHz',width='0.2GHz',pblimit=-1e-05,niter=100,deconvolver='asp',fusedthreshold=0.05,gain=0.8,mask='circle[[256pix,256pix],150pix]',interactive=0,parallel=self.parallel)
+          report2=self.th.checkall(ret=ret, peakres=4.429, modflux=17.06, iterdone=100, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[256,256,0,0])])
+  
+          ## using the largestscale limit
+          ret3 = tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='12.0arcsec',specmode='cube',interpolation='nearest',nchan=5,start='1.0GHz',width='0.2GHz',pblimit=-1e-05,niter=100,deconvolver='asp',largestsclae=10,gain=0.8,mask='circle[[256pix,256pix],150pix]',interactive=0,parallel=self.parallel)
+          report3=self.th.checkall(ret=ret, peakres=4.429, modflux=17.06, iterdone=100, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[256,256,0,0])])
+  
+          ## using both the fusedthreshold and largestscale
+          ret4 = tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='12.0arcsec',specmode='cube',interpolation='nearest',nchan=5,start='1.0GHz',width='0.2GHz',pblimit=-1e-05,niter=100,deconvolver='asp',fusedthreshold=0.05,largestsclae=10,gain=0.8,mask='circle[[256pix,256pix],150pix]',interactive=0,parallel=self.parallel)
+          report4=self.th.checkall(ret=ret3, peakres=0.3922, modflux=0.7327, iterdone=10, nmajordone=2,imgexist=[self.img+'3.psf', self.img+'3.residual', self.img+'3.image'])
+     
 
-     ## Add tests for CAS-940 here, for asp. 
+          self.assertTrue(self.check_final(report1+report2+report3))
+
 
      def test_onefield_mtmfs(self):
           """ [onefield] Test_Onefield_mtmfs : mt-mfs with minor cycle iterations """
