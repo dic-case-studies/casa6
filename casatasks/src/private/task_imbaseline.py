@@ -26,6 +26,7 @@ IMAGE_STACK_MAX_HEIGHT = 4
 MS_STACK_MAX_HEIGHT = 3
 
 qa = quanta()
+do_not_erase_temporary_files = True
 
 
 class AbstractFolder:
@@ -360,6 +361,7 @@ def execute_image_subtraction(linefile: str=None, image_stack: AbstractFileStack
     """
     if image_stack.height() <= 2:  # any smoothing were not executed
         output_image = image_stack.pop().path
+        eraseable_folder_register.pop(output_image)
         os.rename(output_image, linefile)
         image_stack.push(UnerasableFolder(linefile))
     else:
@@ -383,7 +385,7 @@ def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
 
 def do_post_processing(outfile) -> None:
     """Execute some post-processes of imbaseline."""
-    eraseable_folder_register.clear(dry_run=False)
+    eraseable_folder_register.clear(dry_run=do_not_erase_temporary_files)
     __write_image_history(outfile)
 
 
