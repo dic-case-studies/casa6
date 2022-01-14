@@ -1,7 +1,7 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd                              file:///opt/casa/code/xmlcasa/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
   <task category="manipulation" name="uvcontsub2021" type="function">
-    <shortdescription>continuum subtraction in the uv plane</shortdescription>
+    <shortdescription>continuum subtraction in the uv domain</shortdescription>
     <description/>
 
     
