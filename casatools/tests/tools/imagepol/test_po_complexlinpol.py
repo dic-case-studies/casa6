@@ -68,21 +68,12 @@
 import shutil
 import unittest
 
-try:
-    from casatools import imagepol as potool
-    from casatools import ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+from casatools import imagepol as potool, table, ctsys
+import os, shutil
 
-datapath = ctsys_resolve('unittest/imagepol/')
-eq_beams = datapath + "pol_eq_beams.fits"
-neq_beams = datapath + "pol_neq_beams.fits"
+datapath = ctsys.resolve('unittest/imagepol/')
+eq_beams = "pol_eq_beams.fits"
+neq_beams = "pol_neq_beams.fits"
 
 class po_complexlinpol_test(unittest.TestCase):
     
@@ -91,14 +82,24 @@ class po_complexlinpol_test(unittest.TestCase):
     
     def tearDown(self):
         self.mypo.done()
-    
+        tb = table()
+        self.assertEqual(len(tb.showcache()), 0)
+
     def test_multibeam(self):
         """Test multibeam images for correct behavior"""
+        shutil.copy(datapath + eq_beams, eq_beams)
+        shutil.copy(datapath + neq_beams, neq_beams)
         mypo = self.mypo
         mypo.open(eq_beams)
-        self.assertTrue(mypo.complexlinpol("g"))
+        self.assertTrue(mypo.complexlinpol('g'))
+        mypo.done()
+        os.remove(eq_beams)
+        shutil.rmtree('g')
         mypo.open(neq_beams)
-        self.assertRaises(Exception, mypo.complexlinpol, "hh")
+        self.assertRaises(Exception, mypo.complexlinpol, 'hh')
+        mypo.done()
+        os.remove(neq_beams)
+        shutil.rmtree('hh')
         
 def suite():
     return [po_complexlinpol_test]
