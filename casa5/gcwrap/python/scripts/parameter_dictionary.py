@@ -1804,7 +1804,7 @@ class par(str):
 	def msselect():
 		""" Optional subset of data to select: 
 
-		See: http://aips2.nrao.edu/docs/notes/199/199.htlm
+		See: https://casacore.github.io/casacore-notes/199.html
 
 		"""
 
