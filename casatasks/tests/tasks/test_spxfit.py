@@ -93,7 +93,6 @@ class spxfit_test(unittest.TestCase):
 
     def tearDown(self):
         myia.done()
-        self.assertTrue(len(self._tb.showcache()) == 0)
         files = glob.glob('cubeApF.*')
         files.extend(glob.glob('test_sol.im_*'))
         files.extend(glob.glob('concat*.im'))
@@ -417,9 +416,6 @@ class spxfit_test(unittest.TestCase):
             got = res2['direction'][0,0,0,0]
             expec = res['direction'][pixel[0],pixel[1],0,0]
             self.assertTrue(got == expec)
-
-def suite():
-    return [spxfit_test]
 
 if __name__ == '__main__':
     unittest.main()
