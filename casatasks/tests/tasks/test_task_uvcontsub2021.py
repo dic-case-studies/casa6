@@ -691,8 +691,8 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
                                                                        x_pol_1)
 
         # Thesholds on fit chi-squres for the simulations without / with noise
-        self.chi_square_thresholds_order_0 = {'nonoise': {'real': 6.2e-29,
-                                                          'imag': 1.8e-31},
+        self.chi_square_thresholds_order_0 = {'nonoise': {'real': 1.0e-28,
+                                                          'imag': 1.0e-30},
                                               'noise': {'0': {'real': 0.98,
                                                               'imag': 1.07},
                                                         '1': {'real': 1.06,
