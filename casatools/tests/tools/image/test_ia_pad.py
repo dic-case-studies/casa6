@@ -67,6 +67,7 @@
 import shutil
 import unittest
 import numpy
+import os
 
 from casatools import image as iatool
 
@@ -74,9 +75,17 @@ class ia_pad_test(unittest.TestCase):
     
     def setUp(self):
         self.ia = iatool()
-    
+        self.mymask = ''
+        self.imagename = ''
+
     def tearDown(self):
-        pass
+        data = [self.mymask, self.imagename]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
     
     def test_pad(self):
         """ ia.pad(): Test pad()"""
@@ -148,8 +157,8 @@ class ia_pad_test(unittest.TestCase):
     def test_stretch(self):
         """ ia.pad(): Test stretch parameter"""
         yy = iatool()
-        mymask = "maskim"
-        yy.fromshape(mymask, [200, 200, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200,200,1,20]
@@ -158,10 +167,10 @@ class ia_pad_test(unittest.TestCase):
         self.assertRaises(
             Exception,
             yy.pad, npixels=1,
-            mask=mymask + ">0", stretch=False
+            mask=self.mymask + ">0", stretch=False
         )
         zz = yy.pad(
-            npixels=1, mask=mymask + ">0", stretch=True
+            npixels=1, mask=self.mymask + ">0", stretch=True
         )
         self.assertTrue(zz and type(zz) == type(yy))
         yy.done()
@@ -186,9 +195,9 @@ class ia_pad_test(unittest.TestCase):
         
         
         myia = iatool()
-        imagename = "xyz.im"
+        self.imagename = "xyz.im"
         n = 20
-        myia.fromshape(imagename, [n, n])
+        myia.fromshape(self.imagename, [n, n])
         myia.addnoise()
         np = 1
         padsize = n + 2*np
@@ -196,18 +205,18 @@ class ia_pad_test(unittest.TestCase):
         expec = myia.getchunk(getmask=True)
         _check()
 
-        pad = myia.pad(npixels=np, mask=imagename + ">0")
+        pad = myia.pad(npixels=np, mask=self.imagename + ">0")
         expec = myia.getchunk() > 0
         _check()
 
         # give the image a pixel mask
-        myia.calcmask(imagename + "<0")
+        myia.calcmask(self.imagename + "<0")
         pad = myia.pad(npixels=np)
         expec = myia.getchunk(getmask=True)
         _check()
 
         # pixel mask + region defined by using an OTF mask
-        pad = myia.pad(npixels=np, mask=imagename + "<0.5")
+        pad = myia.pad(npixels=np, mask=self.imagename + "<0.5")
         expec = numpy.logical_and(myia.getchunk(getmask=True), myia.getchunk() < 0.5)
         _check()
 

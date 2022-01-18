@@ -67,22 +67,31 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 
 class ia_twopointcorrelation_test(unittest.TestCase):
     
     def setUp(self):
-        pass
+        self.mymask = ''
+        self.imname = ''
+        self.outfile = ''
     
     def tearDown(self):
-        pass
+        data = [ self.mymask, self.imname, self.outfile ]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
     
     def test_stretch(self):
         """ ia.twopointcorrelation(): Test stretch parameter"""
         yy = iatool()
-        mymask = "maskim"
-        yy.fromshape(mymask, [20, 20, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [20, 20, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [20,20,1,20]
@@ -91,10 +100,10 @@ class ia_twopointcorrelation_test(unittest.TestCase):
         self.assertRaises(
             Exception,
             yy.twopointcorrelation,
-            mask=mymask + ">0", stretch=False
+            mask=self.mymask + ">0", stretch=False
         )
         zz = yy.twopointcorrelation(
-            mask=mymask + ">0", stretch=True
+            mask=self.mymask + ">0", stretch=True
         )
         self.assertTrue(zz and type(zz) == type(True))
         yy.done()
@@ -102,11 +111,12 @@ class ia_twopointcorrelation_test(unittest.TestCase):
     def test_history(self):
         """verify history writing"""
         myia = iatool()
-        myia.fromshape("zz",[20, 20])
-        outfile = "xyz.im"
+        self.imname = "zz"
+        myia.fromshape(self.imname,[20, 20])
+        self.outfile = "xyz.im"
         # does not return an ia tool, just a bool
-        self.assertTrue(myia.twopointcorrelation(outfile))
-        myia.open(outfile)
+        self.assertTrue(myia.twopointcorrelation(self.outfile))
+        myia.open(self.outfile)
         msgs = myia.history()
         myia.done()       
         self.assertTrue("ia.twopointcorrelation" in msgs[-2])

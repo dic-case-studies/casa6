@@ -68,36 +68,44 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 
 class ia_convolve_test(unittest.TestCase):
     
     def setUp(self):
-        pass
+        self.mymask = ''
+        self.kernel = ''
     
     def tearDown(self):
-        pass
+        data = [self.kernel, self.mymask]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
     
     def test_stretch(self):
         """ ia.convolve(): Test stretch parameter"""
         yy = iatool()
-        mymask = "maskim"
-        yy.fromshape(mymask, [200, 200, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
-        kernel = "kernel"
+        self.kernel = "kernel"
         shape = [200,200,1,20]
-        yy.fromshape(kernel, shape)
+        yy.fromshape(self.kernel, shape)
         yy.fromshape("", shape)
         yy.addnoise()
         yy.done()
         yy.fromshape("", shape)
         self.assertRaises(
             Exception,
-            yy.convolve, "", mymask, mask=mymask + ">0", stretch=False
+            yy.convolve, "", self.mymask, mask=self.mymask + ">0", stretch=False
         )
-        zz = yy.convolve("", mymask, mask=mymask + ">0", stretch=True)
+        zz = yy.convolve("", self.mymask, mask=self.mymask + ">0", stretch=True)
         self.assertTrue(type(zz) == type(yy))
         yy.done()
         zz.done()
@@ -105,14 +113,14 @@ class ia_convolve_test(unittest.TestCase):
     def test_history(self):
         """Test history writing"""
         yy = iatool()
-        kernel = "khistory"
+        self.kernel = "khistory"
         shape = [200,200,1,20]
-        yy.fromshape(kernel, shape)
+        yy.fromshape(self.kernel, shape)
         yy.fromshape("", shape)
         yy.addnoise()
         yy.done()
         yy.fromshape("", shape)
-        zz = yy.convolve("", kernel)
+        zz = yy.convolve("", self.kernel)
         yy.done()
         msgs = zz.history()
         zz.done()
