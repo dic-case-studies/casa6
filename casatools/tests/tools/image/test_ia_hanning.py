@@ -67,6 +67,7 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 from casatools import table
@@ -76,10 +77,20 @@ class ia_hanning_test(unittest.TestCase):
     
     def setUp(self):
         self.ia = iatool()
-        pass
+        self.mymask = ''
+        self.imname = ''
+        self.imagename = ''
+        self.hanname = ''
     
     def tearDown(self):
         self.ia.done( )
+        data = [self.mymask, self.imname, self.imagename, self.hanname]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
         tb = table( )
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done( )
@@ -87,8 +98,8 @@ class ia_hanning_test(unittest.TestCase):
     def test_stretch(self):
         """ ia.hanning(): Test stretch parameter"""
         yy = iatool()
-        mymask = "maskim"
-        yy.fromshape(mymask, [200, 200, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200,200,1,20]
@@ -96,10 +107,10 @@ class ia_hanning_test(unittest.TestCase):
         yy.addnoise()
         self.assertRaises(
             Exception,
-            yy.hanning, mask=mymask + ">0", stretch=False
+            yy.hanning, mask=self.mymask + ">0", stretch=False
         )
         zz = yy.hanning(
-            mask=mymask + ">0", stretch=True
+            mask=self.mymask + ">0", stretch=True
         )
         self.assertTrue(type(zz) == type(yy))
         yy.done()
@@ -108,9 +119,9 @@ class ia_hanning_test(unittest.TestCase):
     def test_regression(self):
         """Tests moved from imagetest regression"""
         # Make image
-        imname = 'ia.fromshape.image'
+        self.imname = 'ia.fromshape.image'
         imshape = [10,20]
-        myim = self.ia.newimagefromshape(outfile=imname, shape=imshape)
+        myim = self.ia.newimagefromshape(outfile=self.imname, shape=imshape)
         self.assertTrue(myim)
         pixels = myim.getchunk()
         self.assertTrue(len(pixels) > 0)
@@ -120,14 +131,14 @@ class ia_hanning_test(unittest.TestCase):
                     pixels[i][j]=1
         self.assertTrue(myim.putchunk(pixels))
         self.assertRaises(Exception, myim.hanning, axis=19)
-        hanname = 'hanning.image'
-        myim2 = myim.hanning(outfile=hanname, axis=0, drop=False)
+        self.hanname = 'hanning.image'
+        myim2 = myim.hanning(outfile=self.hanname, axis=0, drop=False)
         self.assertTrue(myim2)
         pixels2 = myim2.getchunk()
         self.assertFalse(len(pixels2)==0)
         self.assertTrue((pixels2 == 1).all())
         self.assertTrue(myim2.remove(done=True))
-        myim2 = myim.hanning(outfile=hanname, axis=0, drop=True)
+        myim2 = myim.hanning(outfile=self.hanname, axis=0, drop=True)
         self.assertTrue(myim2)
         shape2 = [myim.shape()[0]/2-1,myim.shape()[1]]
         self.assertTrue((myim2.shape() == shape2).all())
@@ -142,7 +153,7 @@ class ia_hanning_test(unittest.TestCase):
         mask[2,0] = False
         mask[3,0] = False
         self.assertTrue(myim.putregion(pixelmask=mask))
-        myim2 = myim.hanning(outfile=hanname, axis=0, drop=False)
+        myim2 = myim.hanning(outfile=self.hanname, axis=0, drop=False)
         self.assertTrue(myim2)
         pixels2 = myim2.getregion()
         mask2 = myim2.getregion(getmask=True)
@@ -161,8 +172,8 @@ class ia_hanning_test(unittest.TestCase):
         """Test general behavior"""
         myia = iatool()
         length = 6
-        imagename = "test_gen.im"
-        myia.fromshape(imagename, [1, 1, length])
+        self.imagename = "test_gen.im"
+        myia.fromshape(self.imagename, [1, 1, length])
         bb = myia.getchunk()
         for i in range(length):
             bb[0, 0, i] = i*i + 1
@@ -223,8 +234,8 @@ class ia_hanning_test(unittest.TestCase):
     def test_history(self):
         """Test history records are written"""
         myia = iatool()
-        imagename = "zz.im"
-        myia.fromshape(imagename, [20,20,20])
+        self.imagename = "zz.im"
+        myia.fromshape(self.imagename, [20,20,20])
         bb = myia.hanning()
         myia.done()
         msgs = bb.history()

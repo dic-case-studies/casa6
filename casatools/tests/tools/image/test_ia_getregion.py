@@ -67,22 +67,27 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 
 class ia_getregion_test(unittest.TestCase):
     
     def setUp(self):
-        pass
+        self.mymask = ''
     
     def tearDown(self):
-        pass
+        if self.mymask:
+            if os.path.isfile(self.mymask):
+                os.unlink(self.mymask)
+            else:
+                shutil.rmtree(self.mymask)
     
     def test_stretch(self):
         """ ia.getregion(): Test stretch parameter"""
         yy = iatool()
-        mymask = "maskim"
-        yy.fromshape(mymask, [200, 200, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200,200,1,20]
@@ -90,10 +95,10 @@ class ia_getregion_test(unittest.TestCase):
         yy.addnoise()
         self.assertRaises(
             Exception,
-            yy.getregion, mask=mymask + ">0", stretch=False
+            yy.getregion, mask=self.mymask + ">0", stretch=False
         )
         zz = yy.getregion(
-            mask=mymask + ">0", stretch=True
+            mask=self.mymask + ">0", stretch=True
         )
         self.assertTrue(type(zz) == type(yy.getchunk()))
         yy.done()

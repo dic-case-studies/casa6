@@ -68,6 +68,7 @@
 import shutil
 import unittest
 import numpy
+import os
 
 from casatools import image as iatool
 from casatools import table
@@ -76,9 +77,15 @@ class ia_fromfits_test(unittest.TestCase):
     
     def setUp(self):
         self._myia = iatool()
+        self.fits = ''
     
     def tearDown(self):
         self._myia.done()
+        if self.fits:
+            if os.path.isfile(self.fits):
+                os.unlink(self.fits)
+            else:
+                shutil.rmtree(self.fits)
         tb = table( )
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done( )
@@ -88,16 +95,14 @@ class ia_fromfits_test(unittest.TestCase):
         myia = self._myia
         ar1 = numpy.zeros([2, 3], numpy.float64)
         myia.fromarray("", ar1)
-        fits = "myim.fits"
-        myia.tofits(fits)
+        self.fits = "myim.fits"
+        myia.tofits(self.fits)
         myia.done()
-        myia.fromfits("", fits)
+        myia.fromfits("", self.fits)
         msgs = myia.history()
         self.assertTrue("ia.fromfits" in msgs[-2])
         self.assertTrue("ia.fromfits" in msgs[-1])
-        
-def suite():
-    return [ia_fromfits_test]
+
 
 if __name__ == '__main__':
     unittest.main()

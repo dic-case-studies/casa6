@@ -47,7 +47,7 @@
 import shutil
 import unittest
 import numpy as np
-
+import os
 from casatools import image as iatool
 from casatools import table
 
@@ -55,24 +55,29 @@ class ia_constructors_test(unittest.TestCase):
     
     def setUp(self):
         self.tb = table( )
-        pass
+        self.outfile = ''
     
     def tearDown(self):
         self.tb.done( )
-        pass
+        if self.outfile:
+            if os.path.isfile(self.outfile):
+                os.unlink(self.outfile)
+            else:
+                shutil.rmtree(self.outfile)
     
     def test_newimagefromarray(self):
         """ test repeated call of newimagefromarray doesn't segfault, CAS-5646"""
         my_image = np.zeros([128,128,16])
         myia = iatool()
+        self.outfile = "mynewimage.image"
         zz = myia.newimagefromarray(
-            outfile="mynewimage.image", pixels=my_image,
+            outfile=self.outfile , pixels=my_image,
             overwrite=True
         )
-        myia.open("mynewimage.image")
+        myia.open(self.outfile )
         self.assertRaises(
             Exception, myia.newimagefromarray,
-            outfile="mynewimage.image",
+            outfile=self.outfile ,
             pixels=my_image,
             overwrite=True
         )
@@ -83,7 +88,8 @@ class ia_constructors_test(unittest.TestCase):
     def test_history(self):
         """verify history writing"""
         myia = iatool()
-        myia.fromshape("zz",[20, 20])
+        self.outfile = "zz"
+        myia.fromshape(self.outfile ,[20, 20])
         csys = myia.coordsys()
         ary = myia.getchunk()
         myia = myia.newimagefromarray(pixels=ary, csys=csys.torecord())
