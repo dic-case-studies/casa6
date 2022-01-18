@@ -67,6 +67,7 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 
@@ -74,15 +75,20 @@ class ia_newimagefromimage_test(unittest.TestCase):
     
     def setUp(self):
         self._myia = iatool()
-    
+        self.mymask = ''
     def tearDown(self):
         self._myia.done()
-    
+        if self.mymask:
+            if os.path.isfile(self.mymask):
+                os.unlink(self.mymask)
+            else:
+                shutil.rmtree(self.mymask)
     def test_history(self):
         """verify history writing"""
         myia = self._myia
-        myia.fromshape("zz",[20, 20])
-        myia = myia.newimagefromimage("zz")
+        self.mymask = "zz"
+        myia.fromshape(self.mymask,[20, 20])
+        myia = myia.newimagefromimage(self.mymask)
         msgs = myia.history()
         myia.done()       
         self.assertTrue("ia.newimagefromimage" in msgs[-2])

@@ -67,6 +67,7 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 from casatools import table
@@ -76,18 +77,25 @@ from casatools import regionmanager
 class ia_boxcar_test(unittest.TestCase):
     
     def setUp(self):
-        pass
-    
+        self.mymask = ''
+        self.imagename = ''
     def tearDown(self):
         tb = table( )
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done( )
+        data = [ self.mymask, self.imagename]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
     
     def test_stretch(self):
         """ ia.boxcar(): Test stretch parameter"""
         yy = iatool()
-        mymask = "maskim"
-        yy.fromshape(mymask, [200, 200, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200,200,1,20]
@@ -95,10 +103,10 @@ class ia_boxcar_test(unittest.TestCase):
         yy.addnoise()
         self.assertRaises(
             Exception,
-            yy.boxcar, mask=mymask + ">0", stretch=False
+            yy.boxcar, mask=self.mymask + ">0", stretch=False
         )
         zz = yy.boxcar(
-            mask=mymask + ">0", stretch=True
+            mask=self.mymask + ">0", stretch=True
         )
         self.assertTrue(type(zz) == type(yy))
         yy.done()
@@ -108,8 +116,8 @@ class ia_boxcar_test(unittest.TestCase):
         """Test general behavior"""
         myia = iatool()
         length = 13
-        imagename = "test_gen.im"
-        myia.fromshape(imagename, [1, 1, length])
+        self.imagename = "test_gen.im"
+        myia.fromshape(self.imagename, [1, 1, length])
         bb = myia.getchunk()
         for i in range(length):
             bb[0, 0, i] = i*i + 1
