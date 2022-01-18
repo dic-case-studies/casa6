@@ -194,7 +194,7 @@ class PySynthesisImager:
         if ('stopcode' in summ):
             summ['stopDescription'] = self.getStopDescription(summ['stopcode'])
         if ('summaryminor' in summ):
-            summ['summaryminor'] = SummaryMinor(summ['summaryminor'])
+            summ['summaryminor'] = SummaryMinor.convertMatrix(summ['summaryminor'])
         #self.plotReport( summ, fignum )
         return summ
 
