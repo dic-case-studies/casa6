@@ -67,6 +67,7 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 from casatools import table
@@ -78,6 +79,13 @@ class ia_fromshape_test(unittest.TestCase):
     
     def tearDown(self):
         self._myia.done()
+        data = ["ttc","ttf"]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
         tb = table( )
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done( )
