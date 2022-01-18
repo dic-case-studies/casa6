@@ -67,19 +67,11 @@
 ###########################################################################
 import shutil
 import unittest
-
-try:
-    from casatools import image as iatool
-    from casatools import regionmanager as rgtool
-    from casatools import table, ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+import os
+from casatools import image as iatool
+from casatools import regionmanager as rgtool
+from casatools import table, ctsys
+ctsys_resolve = ctsys.resolve
 
 datapath = ctsys_resolve('unittest/ia_fft/')
 
@@ -93,6 +85,22 @@ class ia_fft_test(unittest.TestCase):
         pass
     
     def tearDown(self):
+        data = [
+            "amp.imc", "amp.imf", "amp_reg",
+            "complex.imc", "complex.imf",
+            "imag.imc", "imag.imf", "imag_reg",
+            "maskim", "myamp.im", "mycomplex.im",
+            "myimag.im", "myphase.im", "myreal.im",
+            "phase.imc", "phase.imf", "phase_reg",
+            "real2.im", "real.imc", "real.imf", "real_reg" ]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
+
+
         self.assertTrue(len(self.tb.showcache()) == 0)
         self.tb.done( )
     
