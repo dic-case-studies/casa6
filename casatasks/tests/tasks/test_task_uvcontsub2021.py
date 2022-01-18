@@ -400,6 +400,19 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_rows(self.output, 'DATA', 1080)
         self._check_data_stats(self.output, *expected_vals)
 
+    def test_fitspw_multifield_fields_sel(self):
+        """Check the use of field selection (multiple) and fitspw (multiple/ per field
+        list) together"""
+        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='1,2',
+                            fitspw=[
+                                ['1', '0:100~500;600~900'],
+                                ['2', '0:100~1903']
+                            ])
+        self._check_task_return(res, fields=[1, 2])
+        self._check_rows(self.output, 'DATA', 480)
+        self._check_data_stats(self.output, (-0.0165902558-1.55947462e-05j),
+                               0j, (-0.702126324+0j), (2.01062560+0j))
+
     def test_fitspw_multifield_wrong_field(self):
         """Check that wrong fitspw lists produce an exception"""
 
