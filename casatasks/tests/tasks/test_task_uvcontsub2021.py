@@ -640,8 +640,6 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                0j, (-66.9297485+55.1413803j), (57.7461967+16.6702766j))
 
 
-@unittest.skipIf(True, "Skipping in automated bamboo builds until the input MSs are added "
-                 "to casatestdata")
 class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
     """
     Tests of numerical behavior based on simulated datasets. To be refined - CAS-13632
@@ -649,15 +647,15 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
 
     @classmethod
     def setUpClass(cls):
-        cls.ms_cont_nonoise_order_0 = 'sim_alma_nonoise_cont_poly_order_0.ms'
-        cls.ms_cont_noise_order_0 = 'sim_alma_noise_cont_poly_order_0.ms'
-        cls.ms_cont_nonoise_order_1 = 'sim_alma_nonoise_cont_poly_order_1.ms'
-        cls.ms_cont_noise_order_1 = 'sim_alma_noise_cont_poly_order_1.ms'
+        cls.ms_cont_nonoise_order_0 = 'sim_alma_cont_poly_order_0_nonoise.ms'
+        cls.ms_cont_noise_order_0 = 'sim_alma_cont_poly_order_0_noise.ms'
+        cls.ms_cont_nonoise_order_1 = 'sim_alma_cont_poly_order_1_nonoise.ms'
+        cls.ms_cont_noise_order_1 = 'sim_alma_cont_poly_order_1_noise.ms'
         cls.sim_mss = [cls.ms_cont_nonoise_order_0, cls.ms_cont_noise_order_0,
                        cls.ms_cont_nonoise_order_1, cls.ms_cont_noise_order_1]
 
         for sim in cls.sim_mss:
-            datapath_sim = ctsys.resolve(sim)
+            datapath_sim = ctsys.resolve(os.path.join(datadir, sim))
             shutil.copytree(datapath_sim, sim)
 
     @classmethod
@@ -669,14 +667,46 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
         # Input MS is always strictly read-only, one copy in setUpClass is enough
         # Default output name for simple tests
         self.output = 'test_numerical_uvcs_output.ms'
-        # A few parameters shared by different simulated MSs
+
+        # A few parameters shared by different simulated MSs. These should match
+        # the parameters (channels, polynomial coefficients, etc.) used in the notebook
+        # that produced the simulated datasets.
         # fitspw to exclude a simulated spectral line, as added in the simulation notebook
         self.fitspw = '0:0~59;86~127'
-        # For order 0 cont, (2.5+2.5j) cont is added to each visibility
-        self.exp_cont_order_0 = (2.5+2.5j)
+
+        # For order 0 cont, this constant cont is added to each visibility
+        pol_coeffs_order_0 = 0.025
         # For order 1 cont, polynomial coefficients (on x=chan_number)
-        self.pol_coeffs_order_1 = [0.1, 0.45]
-        self.nchan = 128
+        pol_coeffs_order_1 = [-0.1, 0.75]
+        nchan = 128
+
+        # Constant flux of a component added to the simulated datasets
+        source_comp_flux = 0.5+0j
+
+        # Synthetic polynomial continuum from the simulations
+        # (the simulations used here add the polynomial to both real and imaginary parts)
+        self.exp_cont_order_0 = source_comp_flux + (1+1j) * pol_coeffs_order_0
+        x_pol_1 = np.linspace(0, 1, nchan)
+        self.exp_cont_order_1 = source_comp_flux + (1+1j) * np.polyval(pol_coeffs_order_1,
+                                                                       x_pol_1)
+
+        # Thesholds on fit chi-squres for the simulations without / with noise
+        self.chi_square_thresholds_order_0 = {'nonoise': {'real': 6.2e-29,
+                                                          'imag': 1.8e-31},
+                                              'noise': {'0': {'real': 0.98,
+                                                              'imag': 1.07},
+                                                        '1': {'real': 1.06,
+                                                              'imag': 1.07}
+                                                        }
+                                              }
+        self.chi_square_thresholds_order_1 = {'nonoise': {'real': 1.3e-13,
+                                                          'imag': 3e-14},
+                                              'noise': {'0': {'real': 0.97,
+                                                              'imag': 1.06},
+                                                        '1': {'real': 1.05,
+                                                              'imag': 1.04}
+                                                        }
+                                              }
 
     def tearDown(self):
         if os.path.exists(self.output):
@@ -736,8 +766,8 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
             ramin = np.min(rdiff_abs)
             ramax = np.max(rdiff_abs)
             print(f' Diff in absolute values. Median: {amedian}, min: {amin}, max: {amax}.'
-                  f'\n   Relative to cont, 25pc: {ra25}, median: {ramedian} %, 75pc: {ra75} '
-                  f'min: {ramin} %, max: {ramax} %')
+                  f'\n   Relative to cont, 25pc: {ra25}, median: {ramedian} %, 75pc: {ra75},'
+                  f' min: {ramin} %, max: {ramax} %')
 
             diff_real = np.absolute(diff.real)
             rmedian = np.median(diff_real)
@@ -748,8 +778,8 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
             rrmin = np.min(rdiff_real)
             rrmax = np.max(rdiff_real)
             print(f' Diff in real part. Median: {rmedian}, min: {rmin}, max: {rmax}'
-                  f'\n   Relative to cont, 25pc: {rr25}, median: {rrmedian} %, 75pc: {rr75} '
-                  f'min: {rrmin} %, max: {rrmax} %')
+                  f'\n   Relative to cont, 25pc: {rr25}, median: {rrmedian} %, 75pc: {rr75},'
+                  f' min: {rrmin} %, max: {rrmax} %')
 
             diff_imag = np.absolute(diff.imag)
             imedian = np.median(diff_imag)
@@ -760,78 +790,131 @@ class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
             rimin = np.min(rdiff_imag)
             rimax = np.max(rdiff_imag)
             print(f' Diff in imag part. Median: {imedian}, min: {imin}, max: {imax}'
-                  f'\n   Relative to cont, 25pc: {ri25}, median: {rimedian} %, 75pc: {ri75} '
-                  f'min: {rimin} %, max: {rimax} %')
+                  f'\n   Relative to cont, 25pc: {ri25}, median: {rimedian} %, 75pc: {ri75},'
+                  f' min: {rimin} %, max: {rimax} %')
 
             return ra25, ramedian, ra75
         finally:
             tbt.done()
 
+    def _assert_chi_sq_values_nonoise(self, res, chi_sq_thresholds):
+        """
+        Compare and enforce assert on chi_squared thresholds, for MSs
+        without noise. In these MSs, avg/min/max chi_sq values are the same,
+        and both polarizations are also the same.
+
+        :param res: result dictionary from uvcontsub2021
+        :param chi_sq_thresholds: thresholds to compare (resuls should be same or
+                                  better==smaller chi_sq)
+
+        """
+        chi_sq_imag = chi_sq_thresholds['nonoise']['imag']
+        chi_sq_real = chi_sq_thresholds['nonoise']['real']
+        for agg in ['average', 'max', 'min']:
+            for pol in ['0', '1']:
+                self.assertLessEqual(res['goodness_of_fit']['field']['0']['scan']['1']['spw']
+                                     ['0']['polarization'][pol]['chi_squared'][agg]['imag'],
+                                     chi_sq_imag)
+                self.assertLessEqual(res['goodness_of_fit']['field']['0']['scan']['1']['spw']
+                                     ['0']['polarization'][pol]['chi_squared'][agg]['real'],
+                                     chi_sq_real)
+
+    def _assert_chi_sq_values_with_noise(self, res, chi_sq_thresholds):
+        """
+        Compare and enforce assert on chi_squared thresholds, for MSs
+        with noise. For simplicity uses only average chi_sq per polarization.
+
+        :param res: result dictionary from uvcontsub2021
+        :param chi_sq_thresholds: thresholds on avg chi_sq to compare (resuls should
+                                  be same or better==smaller chi_sq)
+        """
+        for pol in ['0', '1']:
+            chi_sq_real = self.chi_square_thresholds_order_0['noise'][pol]['real']
+            chi_sq_imag = self.chi_square_thresholds_order_0['noise'][pol]['imag']
+
+            self.assertLessEqual(res['goodness_of_fit']['field']['0']['scan']['1']['spw']
+                                 ['0']['polarization'][pol]['chi_squared']['average']
+                                 ['real'],
+                                 chi_sq_real)
+            self.assertLessEqual(res['goodness_of_fit']['field']['0']['scan']['1']['spw']
+                                 ['0']['polarization'][pol]['chi_squared']['average']
+                                 ['imag'],
+                                 chi_sq_imag)
+
     def test_sim_specline_nonoise_pol_0(self):
         """ Check fitting of continuum as polynomial order 0"""
-        exp_cont = self.exp_cont_order_0
         res = uvcontsub2021(vis=self.ms_cont_nonoise_order_0, outputvis=self.output,
                             fitorder=0, fitspw=self.fitspw)
         self._check_task_return(res, fields=[0])
 
+        # Expected cont form simulations. Added to visibilities as a polynomial on channels
+        exp_cont = self.exp_cont_order_0
         print(f'Checking numerical differences for MS {self.ms_cont_nonoise_order_0}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_0,
                                                    outputvis=self.output,
                                                    exp_cont=exp_cont)
-        self.assertLessEqual(diff25, 2e-4)
-        self.assertLessEqual(diff50, 2e-4)
-        self.assertLessEqual(diff50, 2e-4)
+        # These percentiles are ~4.5e-6
+        self.assertLessEqual(diff25, 1e-5)
+        self.assertLessEqual(diff50, 1e-5)
+        self.assertLessEqual(diff50, 1e-5)
+
+        # Check also residuals from the viewpoint of the returned dict (chi_squared)
+        self._assert_chi_sq_values_nonoise(res, self.chi_square_thresholds_order_0)
 
     def test_sim_specline_noise_pol_0(self):
         """ Check fitting of continuum as polynomial order 0"""
-        exp_cont = self.exp_cont_order_0
         res = uvcontsub2021(vis=self.ms_cont_noise_order_0, outputvis=self.output,
                             fitorder=0, fitspw=self.fitspw)
         self._check_task_return(res, fields=[0])
 
+        exp_cont = self.exp_cont_order_0
         print(f'Checking numerical differences for MS {self.ms_cont_noise_order_0}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_noise_order_0,
                                                    outputvis=self.output,
                                                    exp_cont=exp_cont)
-        self.assertLessEqual(diff25, 0.7)
-        self.assertLessEqual(diff50, 0.8)
-        self.assertLessEqual(diff50, 1)
+        # Values from sim dataset + small (<0.05%) tolerance
+        self.assertLessEqual(diff25, 1.45)
+        self.assertLessEqual(diff50, 2.25)
+        self.assertLessEqual(diff50, 3.2)
+
+        self._assert_chi_sq_values_with_noise(res, self.chi_square_thresholds_order_0)
 
     def test_sim_specline_nonoise_pol_1(self):
         """ Check fitting of continuum as polynomial order 1"""
-        # Values added to visibilities as a polynomial on channels
-        x = np.linspace(0, 1, self.nchan)
-        exp_cont = 5 * (1+1j) * np.polyval(self.pol_coeffs_order_1, x)
-
         res = uvcontsub2021(vis=self.ms_cont_nonoise_order_1, outputvis=self.output,
                             fitorder=1, fitspw=self.fitspw)
         self._check_task_return(res, fields=[0])
 
+        # Values added to visibilities as a polynomial on channels
+        exp_cont = self.exp_cont_order_1
         print(f'Checking numerical differences for MS {self.ms_cont_nonoise_order_1}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_1,
                                                    outputvis=self.output,
                                                    exp_cont=exp_cont)
-        self.assertLessEqual(diff25, 2e-4)
-        self.assertLessEqual(diff50, 2e-4)
-        self.assertLessEqual(diff50, 2.2e-4)
+        # These percentiles are ~[2, 6]e-6
+        self.assertLessEqual(diff25, 1e-5)
+        self.assertLessEqual(diff50, 1e-5)
+        self.assertLessEqual(diff50, 1e-5)
+
+        self._assert_chi_sq_values_nonoise(res, self.chi_square_thresholds_order_1)
 
     def test_sim_specline_noise_pol_1(self):
         """ Check fitting of continuum as polynomial order 1. Gaussian noise included"""
-        # Values added to visibilities as a polynomial on channels
-        x = np.linspace(0, 1, self.nchan)
-        exp_cont = 5 * (1+1j) * np.polyval(self.pol_coeffs_order_1, x)
-
         res = uvcontsub2021(vis=self.ms_cont_noise_order_1, outputvis=self.output,
                             fitorder=1, fitspw=self.fitspw)
         self._check_task_return(res, fields=[0])
 
+        exp_cont = self.exp_cont_order_1
         print(f'Checking numerical differences for MS {self.ms_cont_noise_order_1}')
         diff25, diff50, diff75 = self._check_diffs(vis=self.ms_cont_nonoise_order_1,
                                                    outputvis=self.output,
                                                    exp_cont=exp_cont)
-        self.assertLessEqual(diff25, 3)
-        self.assertLessEqual(diff50, 4)
-        self.assertLessEqual(diff75, 5)
+        # Values from sim dataset + small (<0.05%) tolerance
+        self.assertLessEqual(diff25, 5.47)
+        self.assertLessEqual(diff50, 8.47)
+        self.assertLessEqual(diff75, 11.97)
+
+        self._assert_chi_sq_values_with_noise(res, self.chi_square_thresholds_order_1)
 
 
 def suite():
