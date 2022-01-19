@@ -43,6 +43,7 @@ class SummaryMinor:
     """
     #                           0           1          2            3              4          5       6      7                  8                9               10                11 "No Mask"      12           13         14           15         16         17              18
     rowDescriptionsOldOrder = ["iterDone", "peakRes", "modelFlux", "cycleThresh", "deconId", "chan", "pol", "cycleStartIters", "startIterDone", "startPeakRes", "startModelFlux", "startPeakResNM", "peakResNM", "masksum", "mpiServer", "peakMem", "runtime", "multifieldId", "stopCode"]
+    rowDescriptions13683    = ["iterDone", "peakRes", "modelFlux", "cycleThresh", "deconId", "chan"]
     rowDescriptions         = ["startIterDone", "iterDone", "startPeakRes", "peakRes", "startModelFlux", "modelFlux", "startPeakResNM", "peakResNM", "cycleThresh", "deconId", "cycleStartIters", "masksum", "mpiServer", "peakMem", "runtime", "multifieldId", "stopCode", "chan", "pol"]
     rowStartDescs           = ["startIterDone",             "startPeakRes",            "startModelFlux",              "startPeakResNM"]
 
@@ -132,14 +133,47 @@ class SummaryMinor:
 
         return matrixOut
 
-    def getRowDescriptionsOldOrder():
+    def useSmallSummaryminor(ignored_parameter=None):
+        """Temporary CAS-13683 workaround"""
+        if ('USE_SMALL_SUMMARYMINOR' in os.environ):
+            uss = os.environ['USE_SMALL_SUMMARYMINOR'].lower()
+            if (uss == "true"):
+                return True
+        return False
+
+    def _getRowDescriptionsOldOrder(useSmallSummaryminor):
+        """Temporary CAS-13683 workaround"""
+        if (useSmallSummaryminor):
+            return SummaryMinor.rowDescriptions13683
         return SummaryMinor.rowDescriptionsOldOrder
 
+    def getRowDescriptionsOldOrder():
+        """ Retrieves brief descriptions of the available minor cycle summary rows, in the old (matrix) order. """
+        return SummaryMinor._getRowDescriptionsOldOrder(SummaryMinor.useSmallSummaryminor())
+
+    def _getRowDescriptions(useSmallSummaryminor):
+        """Temporary CAS-13683 workaround"""
+        ret = SummaryMinor.rowDescriptions
+        availRows = SummaryMinor._getRowDescriptionsOldOrder(useSmallSummaryminor)
+        ret = list(filter(lambda x: x in availRows, ret))
+        return ret
+
     def getRowDescriptions():
-        return SummaryMinor.rowDescriptions
+        """ Retrieves brief descriptions of the available minor cycle summary rows """
+        return SummaryMinor._getRowDescriptions(SummaryMinor.useSmallSummaryminor())
+
+    def _getRowStartDescs(useSmallSummaryminor):
+        """Temporary CAS-13683 workaround"""
+        ret = SummaryMinor.rowStartDescs
+        availRows = SummaryMinor._getRowDescriptionsOldOrder(useSmallSummaryminor)
+        ret = list(filter(lambda x: x in availRows, ret))
+        return ret
 
     def getRowStartDescs():
-        return SummaryMinor.rowStartDescs
+        """ Retrieves abreviated names of the available minor cycle summary "start" rows.
+
+        These are the rows that catalog the values at the beggining of a minor cycle (pre-deconvolution). """
+        return SummaryMinor._getRowStartDescs(SummaryMinor.useSmallSummaryminor())
 
     def indexMinorCycleSummaryBySubimage(matrix):
         """ Re-indexes matrix from [row,column] to [channel,polarity,row,cycle]. 
@@ -149,18 +183,39 @@ class SummaryMinor:
         # get some properties of the summary_minor matrix
         nrows = matrix.shape[0]
         ncols = matrix.shape[1]
+        uss = SummaryMinor.useSmallSummaryminor() # Temporary CAS-13683 workaround
         import sys
         oldChanIdx = SummaryMinor.getRowDescriptionsOldOrder().index("chan")
         newChanIdx = SummaryMinor.getRowDescriptions().index("chan")
-        oldPolIdx  = SummaryMinor.getRowDescriptionsOldOrder().index("pol")
-        newPolIdx  = SummaryMinor.getRowDescriptions().index("pol")
+        if not uss:
+            oldPolIdx  = SummaryMinor.getRowDescriptionsOldOrder().index("pol")
+            newPolIdx  = SummaryMinor.getRowDescriptions().index("pol")
         chans = list(np.sort(np.unique(matrix[oldChanIdx])))
         chans = [int(x) for x in chans]
-        pols = list(np.sort(np.unique(matrix[oldPolIdx])))
-        pols = [int(x) for x in pols]
+        if uss:
+            pols = [0]
+        else:
+            pols = list(np.sort(np.unique(matrix[oldPolIdx])))
+            pols = [int(x) for x in pols]
         ncycles = 0
         if len(chans) > 0 and len(pols) > 0:
             ncycles = int( ncols / (len(chans)*len(pols)) )
+            if uss:
+                try:
+                    from casampi.MPIEnvironment import MPIEnvironment
+                    if MPIEnvironment.is_mpi_enabled:
+                        # This is necessary because we may have an odd number of "channels" due to each process getting only a subchunk.
+                        # Example:
+                        #     Process 1 gets polarities 0-1, process 2 gets polarity 2
+                        #     Each of them assigns channel id = chan + pol * nsubpols
+                        #     Process 1 assigns channel ids [0,2], Process 2 assigns channel id 0.
+                        # This hack is not needed when not using a small summary minor because we have the extra knowledge of the polarities, instead of mapping polarities + channels onto chunks.
+                        chanslist = matrix[oldChanIdx].tolist()
+                        for chan in chans:
+                            singlechan_occurances = list(filter(lambda x: x == chan, chanslist))
+                            ncycles = max(ncycles, len(singlechan_occurances))
+                except ModuleNotFoundError as e:
+                    raise
 
         # ret is the return dictionary[chans][pols][rows][cycles]
         # cummulativeCnt counts how many cols we've read for each channel/polarity/row
@@ -181,7 +236,10 @@ class SummaryMinor:
             oldRowIdx = SummaryMinor.getRowDescriptionsOldOrder().index(desc)
             for colIdx in range(ncols):
                 chan = int(matrix[oldChanIdx][colIdx])
-                pol = int(matrix[oldPolIdx][colIdx])
+                if uss:
+                    pol = 0
+                else:
+                    pol = int(matrix[oldPolIdx][colIdx])
                 val = matrix[oldRowIdx][colIdx]
                 cummulativeCol = int(cummulativeCnt[chan][pol][desc][0]) # const 0: cummulativeCnt doesn't make use of 'cycle' index from copied ret structure
                 ret[chan][pol][desc][cummulativeCol] = val
