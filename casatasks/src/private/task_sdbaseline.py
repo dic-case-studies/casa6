@@ -41,17 +41,21 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         if (outfile == '') or not isinstance(outfile, str):
             outfile = infile.rstrip('/') + '_bs'
             casalog.post("outfile is empty or non-string. set to '" + outfile + "'")
-        if (not overwrite) and os.path.exists(outfile):
+
+        #if (not overwrite) and os.path.exists(outfile):
+        #    raise ValueError("outfile='%s' exists, and cannot overwrite it." % (outfile))
+        if (not overwrite) and dosubtract and os.path.exists(outfile):
             raise ValueError("outfile='%s' exists, and cannot overwrite it." % (outfile))
+
         if (maskmode == 'interact'):
             raise ValueError("maskmode='%s' is not supported yet" % maskmode)
         if (not dosubtract) and is_empty(blformat):
             raise ValueError("blformat must be specified when dosubtract is False")
         if (blfunc == 'variable') and not os.path.exists(blparam):
             raise ValueError("input file '%s' does not exists" % blparam)
-        blparam_file = infile + '_blparam.txt'
-        if os.path.exists(blparam_file):
-            remove_data(blparam_file)  # CAS-11781
+        #blparam_file = infile + '_blparam.txt'
+        #if os.path.exists(blparam_file):
+        #    remove_data(blparam_file)  # CAS-11781
 
         if (spw == ''):
             spw = '*'
@@ -101,6 +105,17 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
 
             if overwrite and (infile != outfile) and os.path.exists(outfile):
                 remove_data(outfile)
+            # ***** TO BE EDITED *****
+            """
+            if overwrite and os.path.exists(outfile):
+                if dosubtract:
+                    if (infile != outfile):
+                        remove_data(outfile)
+                else:
+                    outfile_origname = outfile
+                    outfile = get_temporary_outfile_name()
+            """
+            # ***** (END) TO BE EDITED *****
 
             selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
                                         baseline=antenna, time=timerange,
@@ -159,7 +174,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                           param_vals, casalog)
 
     finally:
-        # Remove (skeleton) outfile
+        # Remove (skeleton) outfile  ****TO BE EDITED****
         if (not dosubtract) and (infile != outfile):
             remove_data(outfile)
 

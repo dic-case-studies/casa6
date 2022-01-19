@@ -562,7 +562,9 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
     test004 --- sinusoidal baselining with no mask (maskmode = 'list'). spw and pol specified.
     test050 --- existing file as outfile with overwrite=False (raises an exception)
     test051 --- no data after selection (raises an exception)
-    test060 --- blparam file (infile+'_blparam.txt') should be removed if it exists
+    test060 --- blparam files should be overwritten when overwrite=True in fit mode
+    test061 --- blparam files should not exist when overwrite=False in fit mode
+    test062 --- blparam files should not be removed in apply mode
     test070 --- no output MS when dosubtract=False
     test071 --- dosubtract=False and blformat is empty (raises an exception)
 
@@ -834,7 +836,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
             self.assertIn('Spw Expression: No match found for 10,', str(e))
 
     def test060(self):
-        """Basic Test 060: blparam file (infile+'_blparam.txt') should be removed if it exists"""
+        """Basic Test 060: blparam file(s) should be overwritten when overwrite=True in fit mode"""
         tid = '060'
         infile = self.infile
         outfile = self.outroot+tid+'.ms'
@@ -854,11 +856,75 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         blparamfile = infile + '_blparam.txt'
         self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
 
-        # Second run, which must be successful
+        # Second run (in fit mode, overwrite=True), which must be successful
         try:
+            overwrite = True
             sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
         except Exception as e:
             raise e
+
+    def test061(self):
+        """Basic Test 061: blparam file(s) should not exist when overwrite=False in fit mode """
+        tid = '061'
+        infile = self.infile
+        outfile = self.outroot+tid+'.ms'
+        overwrite = False
+        datacolumn = 'float_data'
+
+        # First run
+        try:
+            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
+        except Exception as e:
+            print('first run failed')
+            raise e
+
+        # Keep blparam.txt, and remove outfile only
+        shutil.rmtree(outfile)
+        self.assertFalse(os.path.exists(outfile), msg='{} should not exist'.format(outfile))
+        blparamfile = infile + '_blparam.txt'
+        self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
+
+        # Second run (in fit mode, overwrite=False), which must emit ValueError
+        with self.assertRaises(ValueError, msg='{}_blparam.txt exists.'.format(infile)):
+            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
+
+    def test062(self):
+        """Basic Test 062: blparam file(s) should not be removed in apply mode"""
+        tid = '062'
+        infile = self.infile
+        outfile = self.outroot+tid+'.ms'
+        overwrite = False
+        datacolumn = 'float_data'
+        blmode = 'fit'
+        blformat = ['text', 'table']
+
+        # First run
+        try:
+            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn, blmode=blmode, blformat=blformat)
+        except Exception as e:
+            print('first run failed')
+            raise e
+
+        # Keep blparam files, and remove outfile only
+        shutil.rmtree(outfile)
+        self.assertFalse(os.path.exists(outfile), msg='{} should not exist'.format(outfile))
+        for ext in ['txt', 'bltable']:
+            blparamfile = infile + '_blparam.' + ext
+            self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
+
+        # Second run (in apply mode), which must be successful
+        try:
+            blmode = 'apply'
+            bltable = infile + '_blparam.bltable'
+            overwrite = True
+            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn, blmode=blmode, bltable=bltable)
+        except Exception as e:
+            raise e
+
+        # Param files created in the first run should be kept
+        for ext in ['txt', 'bltable']:
+            blparamfile = infile + '_blparam.' + ext
+            self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
 
     def test070(self):
         """Basic Test 070: no output MS when dosubtract=False"""
