@@ -49,13 +49,8 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
 
         if (maskmode == 'interact'):
             raise ValueError("maskmode='%s' is not supported yet" % maskmode)
-        if (not dosubtract) and is_empty(blformat):
-            raise ValueError("blformat must be specified when dosubtract is False")
         if (blfunc == 'variable') and not os.path.exists(blparam):
             raise ValueError("input file '%s' does not exists" % blparam)
-        #blparam_file = infile + '_blparam.txt'
-        #if os.path.exists(blparam_file):
-        #    remove_data(blparam_file)  # CAS-11781
 
         if (spw == ''):
             spw = '*'
@@ -88,6 +83,9 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             restore_sorted_table_keyword(infile, sorttab_info)
 
         elif (blmode == 'fit'):
+
+            if (not dosubtract) and is_empty(blformat):
+                raise ValueError("blformat must be specified when dosubtract is False")
 
             if(blfunc == 'sinusoid'):
                 addwn = parse_wavenumber_param(addwn)
