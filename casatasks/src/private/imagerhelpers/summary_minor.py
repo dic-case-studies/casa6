@@ -2,7 +2,7 @@ import copy
 import numpy as np
 import os
 
-# from casatasks import casalog
+from casatasks import casalog
 
 class SummaryMinor:
     """Gathers the information together from the tclean return value in a way that makes it easier to query for exactly what you want.
@@ -43,11 +43,22 @@ class SummaryMinor:
     """
     #                           0           1          2            3              4          5       6      7                  8                9               10                11 "No Mask"      12           13         14           15         16         17              18
     rowDescriptionsOldOrder = ["iterDone", "peakRes", "modelFlux", "cycleThresh", "deconId", "chan", "pol", "cycleStartIters", "startIterDone", "startPeakRes", "startModelFlux", "startPeakResNM", "peakResNM", "masksum", "mpiServer", "peakMem", "runtime", "multifieldId", "stopCode"]
+    rowDescriptions13683    = ["iterDone", "peakRes", "modelFlux", "cycleThresh", "deconId", "chan"]
     rowDescriptions         = ["startIterDone", "iterDone", "startPeakRes", "peakRes", "startModelFlux", "modelFlux", "startPeakResNM", "peakResNM", "cycleThresh", "deconId", "cycleStartIters", "masksum", "mpiServer", "peakMem", "runtime", "multifieldId", "stopCode", "chan", "pol"]
     rowStartDescs           = ["startIterDone",             "startPeakRes",            "startModelFlux",              "startPeakResNM"]
 
     def convertMatrix(summaryminor_matrix, calc_iterdone_deltas=None, keep_startvals=None):
         ret = {}
+
+        # edge case: no iterations
+        if summaryminor_matrix.shape[1] == 0:
+            return { 0: {
+                'chans': [],
+                'pols': [],
+                'ncycs': 0
+            }}
+
+        # get individual dictionaries for each field id
         field_ids = SummaryMinor._getFieldIds(summaryminor_matrix)
         if len(field_ids) > 1:
             for fieldId in field_ids:
@@ -56,8 +67,10 @@ class SummaryMinor:
         elif len(field_ids) == 1:
             ret[field_ids[0]] = SummaryMinor._convertSingleFieldMatrix(summaryminor_matrix, calc_iterdone_deltas, keep_startvals)
         else:
-            raise RuntimeError("Failed to parse summary minor matrix from tclean. No multifield ids were found.")
+            casalog.post("Failed to parse summary minor matrix from tclean. No multifield ids were found.", "SEVERE")
+            return summaryminor_matrix
 
+        # insert convenience information
         for field_id in field_ids:
             chan_ids = list( ret[field_id].keys() )
             pol_ids  = []
@@ -170,18 +183,39 @@ class SummaryMinor:
         # get some properties of the summary_minor matrix
         nrows = matrix.shape[0]
         ncols = matrix.shape[1]
+        uss = SummaryMinor.useSmallSummaryminor() # Temporary CAS-13683 workaround
         import sys
         oldChanIdx = SummaryMinor.getRowDescriptionsOldOrder().index("chan")
         newChanIdx = SummaryMinor.getRowDescriptions().index("chan")
-        oldPolIdx  = SummaryMinor.getRowDescriptionsOldOrder().index("pol")
-        newPolIdx  = SummaryMinor.getRowDescriptions().index("pol")
+        if not uss:
+            oldPolIdx  = SummaryMinor.getRowDescriptionsOldOrder().index("pol")
+            newPolIdx  = SummaryMinor.getRowDescriptions().index("pol")
         chans = list(np.sort(np.unique(matrix[oldChanIdx])))
         chans = [int(x) for x in chans]
-        pols = list(np.sort(np.unique(matrix[oldPolIdx])))
-        pols = [int(x) for x in pols]
+        if uss:
+            pols = [0]
+        else:
+            pols = list(np.sort(np.unique(matrix[oldPolIdx])))
+            pols = [int(x) for x in pols]
         ncycles = 0
         if len(chans) > 0 and len(pols) > 0:
             ncycles = int( ncols / (len(chans)*len(pols)) )
+            if uss:
+                try:
+                    from casampi.MPIEnvironment import MPIEnvironment
+                    if MPIEnvironment.is_mpi_enabled:
+                        # This is necessary because we may have an odd number of "channels" due to each process getting only a subchunk.
+                        # Example:
+                        #     Process 1 gets polarities 0-1, process 2 gets polarity 2
+                        #     Each of them assigns channel id = chan + pol * nsubpols
+                        #     Process 1 assigns channel ids [0,2], Process 2 assigns channel id 0.
+                        # This hack is not needed when not using a small summary minor because we have the extra knowledge of the polarities, instead of mapping polarities + channels onto chunks.
+                        chanslist = matrix[oldChanIdx].tolist()
+                        for chan in chans:
+                            singlechan_occurances = list(filter(lambda x: x == chan, chanslist))
+                            ncycles = max(ncycles, len(singlechan_occurances))
+                except ModuleNotFoundError as e:
+                    raise
 
         # ret is the return dictionary[chans][pols][rows][cycles]
         # cummulativeCnt counts how many cols we've read for each channel/polarity/row
@@ -202,7 +236,10 @@ class SummaryMinor:
             oldRowIdx = SummaryMinor.getRowDescriptionsOldOrder().index(desc)
             for colIdx in range(ncols):
                 chan = int(matrix[oldChanIdx][colIdx])
-                pol = int(matrix[oldPolIdx][colIdx])
+                if uss:
+                    pol = 0
+                else:
+                    pol = int(matrix[oldPolIdx][colIdx])
                 val = matrix[oldRowIdx][colIdx]
                 cummulativeCol = int(cummulativeCnt[chan][pol][desc][0]) # const 0: cummulativeCnt doesn't make use of 'cycle' index from copied ret structure
                 ret[chan][pol][desc][cummulativeCol] = val

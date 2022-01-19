@@ -34,6 +34,7 @@ if is_CASA6:
     _ia  = casatools.image()
     _cb = casatools.calibrater()
     from casatasks import casalog
+    from casatasks.private.imagerhelpers.summary_minor import SummaryMinor
 
     casampi_imported = False
     import importlib
@@ -283,13 +284,13 @@ class TestHelpers:
         We do this to maintain the same value as was previously returned, so that we don't need to update all the values in the tests.
         It could be that in the future we just want to return the index [chan/pol with the largest peakres, last cycle]."""
         if 'summaryminor' in summ:
-            sm = summ['summaryminor']
-            uss = sm.useSmallSummaryminor() # Temporary CAS-13683 workaround
-            ret = (sm.chan0, sm.pol0, 0)
+            sm = summ['summaryminor'][0] # 0: just look at the first field of the multifield images
+            uss = SummaryMinor.useSmallSummaryminor() # Temporary CAS-13683 workaround
+            ret = (sm['chans'][0], sm['pols'][0], 0)
             prev_chan = None
-            for chan in sorted(sm.keys()):
-                for pol in sorted(sm[chan].keys()):
-                    for cycle in range(sm.nCycles):
+            for chan in sorted(sm['chans']):
+                for pol in sorted(sm['pols']):
+                    for cycle in range(sm['ncycs']):
                         tmp_iterdone = sm[chan][pol]['iterDone'][cycle]
                         if uss and (prev_chan != None):
                             # horible hackaround of CAS-13683 to deal with not have access to 'startIterDone'
@@ -307,12 +308,12 @@ class TestHelpers:
     def get_chanpol_withiters_cycle0(self, summ):
         """Finds the first possible channel/polarity index in the returned "summaryminor" from tclean that has a value."""
         if 'summaryminor' in summ:
-            sm = summ['summaryminor']
-            uss = sm.useSmallSummaryminor() # Temporary CAS-13683 workaround
-            ret = (sm.chan0, sm.pol0)
+            sm = summ['summaryminor'][0] # 0: just look at the first field of the multifield images
+            uss = SummaryMinor.useSmallSummaryminor() # Temporary CAS-13683 workaround
+            ret = (sm['chans'][0], sm['pols'][0])
             prev_chan = None
-            for chan in sorted(sm.keys()):
-                for pol in sorted(sm[chan].keys()):
+            for chan in sorted(sm['chans']):
+                for pol in sorted(sm['pols']):
                     tmp_iterdone = sm[chan][pol]['iterDone'][0]
                     if uss and (prev_chan != None):
                         # horible hackaround of CAS-13683 to deal with not have access to 'startIterDone'
@@ -332,7 +333,7 @@ class TestHelpers:
         peakres = None
         if 'summaryminor' in summ:
             idx = self.get_peak_res_idx(summ)
-            peakres = summ['summaryminor'][idx[0]][idx[1]]['peakRes'][idx[2]]
+            peakres = summ['summaryminor'][0][idx[0]][idx[1]]['peakRes'][idx[2]]
         return peakres
 
     def check_peak_res(self, summ,correctres, epsilon=0.05):
@@ -357,7 +358,7 @@ class TestHelpers:
         modflux = None
         if 'summaryminor' in summ:
             idx = self.get_peak_res_idx(summ)
-            modflux = summ['summaryminor'][idx[0]][idx[1]]['modelFlux'][idx[2]]
+            modflux = summ['summaryminor'][0][idx[0]][idx[1]]['modelFlux'][idx[2]]
         return modflux
 
     def check_mod_flux(self, summ,correctmod, epsilon=0.05):
@@ -381,7 +382,7 @@ class TestHelpers:
         cycleThresh = None
         if 'summaryminor' in summ:
             idx = self.get_chanpol_withiters_cycle0(summ)
-            cycleThresh = summ['summaryminor'][idx[0]][idx[1]]['cycleThresh'][0]
+            cycleThresh = summ['summaryminor'][0][idx[0]][idx[1]]['cycleThresh'][0]
         return cycleThresh
 
     def check_chanvals(self,msname,vallist, epsilon = 0.05): # list of tuples of (channumber, relation, value) e.g. (10,">",1.0)
