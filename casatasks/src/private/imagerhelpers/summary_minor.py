@@ -74,6 +74,8 @@ class SummaryMinor:
             ret[field_id]['pols']  = pol_ids
             ret[field_id]['ncycs'] = nCycles
 
+        return ret
+
     def _convertSingleFieldMatrix(single_field_matrix, calc_iterdone_deltas=None, keep_startvals=None):
         summaryminor_dict = SummaryMinor.indexMinorCycleSummaryBySubimage(single_field_matrix)
         percycleiters_dict = SummaryMinor._getPerCycleDict(copy.deepcopy(summaryminor_dict), calc_iterdone_deltas, keep_startvals)
@@ -88,6 +90,7 @@ class SummaryMinor:
         nrows = matrix.shape[0]
         ncols = matrix.shape[1]
         fieldIds = sorted(np.unique(matrix[multifieldIdx,:]).tolist())
+        fieldIds = list(map(lambda x: int(x), fieldIds))
         return fieldIds
 
     def _getSingleFieldMatrix(matrixIn, fieldId):
@@ -159,7 +162,7 @@ class SummaryMinor:
         These are the rows that catalog the values at the beggining of a minor cycle (pre-deconvolution). """
         return SummaryMinor._getRowStartDescs(SummaryMinor.useSmallSummaryminor())
 
-    def indexMinorCycleSummaryBySubimage(self, matrix):
+    def indexMinorCycleSummaryBySubimage(matrix):
         """ Re-indexes matrix from [row,column] to [channel,polarity,row,cycle]. 
 
         Param matrix: the original matrix to convert.
