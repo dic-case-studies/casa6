@@ -72,13 +72,13 @@ class SummaryMinor:
 
         # insert convenience information
         for field_id in field_ids:
-            chan_ids = list( ret[field_id].keys() )
+            chan_ids = sorted(list( ret[field_id].keys() ))
             pol_ids  = []
             nCycles = 0
 
             if len(chan_ids) > 0:
                 chan0  = chan_ids[0]
-                pol_ids = list( ret[field_id][chan0].keys() )
+                pol_ids = sorted(list( ret[field_id][chan0].keys() ))
                 if len(pol_ids) > 0:
                     pol0    = pol_ids[0]
                     nCycles = len( ret[field_id][chan0][pol0]['iterDone'] )
