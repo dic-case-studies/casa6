@@ -1,18 +1,13 @@
-import math
 import os
-import random
 import re
 import shutil
-import sys
 import unittest
 
 import numpy as np
 from casatasks import casalog
 from casatasks.private.sdutil import calibrater_manager, table_manager
 from casatasks.private.task_imbaseline import *
-from casatools import (componentlist, ctsys, image, ms, quanta, regionmanager,
-                       table)
-from scipy import signal
+from casatools import ctsys, image, quanta, regionmanager, table
 
 _ia = image()
 _rg = regionmanager()
@@ -432,20 +427,107 @@ class sdsmooth_test(test_base):
         execute_sdsmooth(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
 
 
-    ####################################################################
-    # ms2image test
-    #   6-1. simple successful case
-    #   6-2. simple failure case
-    ####################################################################
+class sdbaseline_test(test_base):
+    """sdbaseline test
+
+    Tests of sdbaseline rely on test_sdbaselinebasically, so we have minimal tests in imbaseline.
+
+    6-1. simple successful case
+    6-2. invalid ms stack
+    6-3. invalid image stack
+    """
+
+    datapath = ctsys_resolve('unittest/imbaseline/')
+    expected_im = "expected.im"
+    expected_ms = "expected.ms"
+    bloutput = "test.csv"
+    maskmode = "auto"
+    chans = ""
+    thresh = 5.0
+    avg_limit = 4
+    minwidth = 4
+    edge = [0, 0]
+    blfunc = "cspline"
+    order = 5
+    npiece = 1
+    applyfft = True
+    fftthresh = 3.0
+    addwn = [0]
+    rejwn = []
+    blparam = ''
+    clipniter = 10
+    clipthresh = 2.0
+    datacolumn = DATACOLUMN
+
+    def setUp(self):
+        self._copy_test_files(self.datapath, self.expected_im)
+        self._copy_test_files(self.datapath, self.expected_ms)
+        self.image_shape = get_image_shape(os.path.join(self.datapath, self.expected_im))
+
+    def test_6_1(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
+        ms_stack = MeasurementSetStack()
+        ms_stack.push(EraseableFolder(self.expected_ms))
+        execute_sdbaseline(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit, self.minwidth,
+                           self.edge, self.blfunc, self.order, self.npiece, self.applyfft, self.fftthresh, self.addwn, self.rejwn, self.blparam,
+                           self.clipniter, self.clipthresh, image_stack, ms_stack, self.image_shape)
+        self.assertTrue(os.path.exists(ms_stack.peak().path))
+        self.assertTrue(os.path.exists(self.bloutput))
+        self.assertTrue(os.path.exists(image_stack.peak().path))
+
+    @test_base.exception_case(RuntimeError, 'the stack is empty')
+    def test_6_2(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
+        ms_stack = MeasurementSetStack()
+        execute_sdbaseline(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit, self.minwidth,
+                           self.edge, self.blfunc, self.order, self.npiece, self.applyfft, self.fftthresh, self.addwn, self.rejwn, self.blparam,
+                           self.clipniter, self.clipthresh, image_stack, ms_stack, self.image_shape)
+
+    @test_base.exception_case(RuntimeError, 'the stack has not have enough stuff')
+    def test_6_3(self):
+        image_stack = CasaImageStack()
+        ms_stack = MeasurementSetStack()
+        ms_stack.push(EraseableFolder(self.expected_ms))
+        execute_sdbaseline(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit, self.minwidth,
+                           self.edge, self.blfunc, self.order, self.npiece, self.applyfft, self.fftthresh, self.addwn, self.rejwn, self.blparam,
+                           self.clipniter, self.clipthresh, image_stack, ms_stack, self.image_shape)
 
 
-    ####################################################################
-    # full test
-    #   7-1. simple successful case
-    #   7-2. simple failure case
-    ####################################################################
+class image_subtraction_test(test_base):
+    """Image subtraction test
+    """
+
+    datapath = ctsys_resolve('unittest/imbaseline/')
+    expected_im = "expected.im"
+    expected_imsmoothed = "expected.imsmooth.im"
+    expected_bl = "expected.bl.im"
+
+    def setUp(self):
+        self._copy_test_files(self.datapath, self.expected_im)
+        self._copy_test_files(self.datapath, self.expected_imsmoothed)
+        self._copy_test_files(self.datapath, self.expected_bl)
+
+    def test_7_1(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
+        image_stack.push(EraseableFolder(self.expected_imsmoothed))
+        image_stack.push(EraseableFolder(self.expected_bl))
+        output = "output_7_1.im"
+        execute_image_subtraction(output, image_stack)
+        self.assertTrue(os.path.exists(output))
+
+    def test_7_2(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
+        image_stack.push(EraseableFolder(self.expected_bl))
+        output = "output_7_2.im"
+        execute_image_subtraction(output, image_stack)
+        self.assertTrue(os.path.exists(output))
+
 
 class imbaseline_test(test_base):
+    """Full test.
+
+    x-1. simple successful case
+    """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
     expected = "expected.im"
@@ -454,7 +536,7 @@ class imbaseline_test(test_base):
         self.ia = image()
         self._copy_test_files(self.datapath, self.expected)
 
-    def test_7_1(self):
+    def test_x_1(self):
         imagefile = self.expected
         linefile = 'output_7_1'
         dirkernel = 'gaussian'
@@ -478,4 +560,5 @@ class imbaseline_test(test_base):
 
 
 def suite():
-    return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test, image2ms_test]
+    return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test, image2ms_test, sdbaseline_test, image_subtraction_test]
+
