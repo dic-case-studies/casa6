@@ -1,3 +1,4 @@
+import datetime
 import os
 import shutil
 from collections import Counter
@@ -41,9 +42,6 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         if (outfile == '') or not isinstance(outfile, str):
             outfile = infile.rstrip('/') + '_bs'
             casalog.post("outfile is empty or non-string. set to '" + outfile + "'")
-
-        #if (not overwrite) and os.path.exists(outfile):
-        #    raise ValueError("outfile='%s' exists, and cannot overwrite it." % (outfile))
         if (not overwrite) and dosubtract and os.path.exists(outfile):
             raise ValueError("outfile='%s' exists, and cannot overwrite it." % (outfile))
 
@@ -59,11 +57,13 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             if not os.path.exists(bltable):
                 raise ValueError("file specified in bltable '%s' does not exist." % bltable)
 
-            sorttab_info = remove_sorted_table_keyword(infile)
-
+            # Note: the condition "infile != outfile" in the following line is for safety
+            # to prevent from accidentally removing infile by setting outfile=infile.
+            # Don't remove it.
             if overwrite and (infile != outfile) and os.path.exists(outfile):
                 remove_data(outfile)
 
+            sorttab_info = remove_sorted_table_keyword(infile)
             selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
                                         baseline=antenna, time=timerange,
                                         scan=scan)
@@ -87,33 +87,30 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             if (not dosubtract) and is_empty(blformat):
                 raise ValueError("blformat must be specified when dosubtract is False")
 
-            if(blfunc == 'sinusoid'):
-                addwn = parse_wavenumber_param(addwn)
-                rejwn = parse_wavenumber_param(rejwn)
-                check_fftthresh(fftthresh)
-
             blformat, bloutput = prepare_for_blformat_bloutput(infile, blformat, bloutput, overwrite)
 
             output_bloutput_text_header(blformat, bloutput,
                                         blfunc, maskmode,
                                         infile, outfile)
 
+            # Set temporary name for output MS if dosubtract is False and outfile exists
+            # for not removing/overwriting outfile that already exists
+            if os.path.exists(outfile):
+                # Note: the condition "infile != outfile" in the following line is for safety
+                # to prevent from accidentally removing infile by setting outfile=infile
+                # Don't remove it.
+                if dosubtract and overwrite and (infile != outfile):
+                    remove_data(outfile)
+                elif (not dosubtract):
+                    outfile = get_temporary_file_name(infile)
+
+            if (blfunc == 'sinusoid'):
+                addwn = parse_wavenumber_param(addwn)
+                rejwn = parse_wavenumber_param(rejwn)
+                check_fftthresh(fftthresh)
+
             if (blfunc == 'variable'):
                 sorttab_info = remove_sorted_table_keyword(infile)
-
-            if overwrite and (infile != outfile) and os.path.exists(outfile):
-                remove_data(outfile)
-            # ***** TO BE EDITED *****
-            """
-            if overwrite and os.path.exists(outfile):
-                if dosubtract:
-                    if (infile != outfile):
-                        remove_data(outfile)
-                else:
-                    outfile_origname = outfile
-                    outfile = get_temporary_outfile_name()
-            """
-            # ***** (END) TO BE EDITED *****
 
             selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
                                         baseline=antenna, time=timerange,
@@ -172,8 +169,8 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                           param_vals, casalog)
 
     finally:
-        # Remove (skeleton) outfile  ****TO BE EDITED****
-        if (not dosubtract) and (infile != outfile):
+        if (not dosubtract):
+            # Remove (skeleton) outfile
             remove_data(outfile)
 
 
@@ -310,6 +307,12 @@ def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, ou
     f.write(separator)
     f.write('\n')
     f.close()
+
+
+def get_temporary_file_name(basename):
+    name = basename + '_sdbaseline_pid' + str(os.getpid()) + '_' \
+           + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
+    return name
 
 
 def parse_wavenumber_param(wn):

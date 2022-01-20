@@ -567,6 +567,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
     test062 --- blparam files should not be removed in apply mode
     test070 --- no output MS when dosubtract=False
     test071 --- dosubtract=False and blformat is empty (raises an exception)
+    test080 --- existent outfile is not overwritten if dosubtract=False
 
     Note: The input data 'OrionS_rawACSmod_calave.ms' is generated
           from a single dish regression data 'OrionS_rawACSmod' as follows:
@@ -806,8 +807,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
 
         #print '1sigma before cspline (pol1)', variance_orig_pol1**0.5 
         #print '1sigma after cspline (pol1)',  variance_pol1**0.5 
-        
-    
+
     def test050(self):
         """Basic Test 050: failure case: existing file as outfile with overwrite=False"""
         infile = self.infile
@@ -957,6 +957,34 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
             print(f"Testing blformat='{blformat}'...")
             with self.assertRaises(ValueError, msg="blformat must be specified when dosubtract is False"):
                 sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile, dosubtract=dosubtract, blformat=blformat)
+
+    def test080(self):
+        """Basic Test 080: existent outfile is not overwritten if dosubtract=False"""
+        tid = '080'
+        infile = self.infile
+        outfile = self.outroot+tid+'.ms'
+        dosubtract = False
+        overwrite = False
+        datacolumn = 'float_data'
+
+        # Copy infile to outfile so that outfile does exist prior to sdbaseline, and also
+        # outfile is identical to non-baselined data (infile)
+        shutil.copytree(infile, outfile)
+
+        # Run sdbaseline with dosubtract=False
+        try:
+            sdbaseline(infile=infile, outfile=outfile, dosubtract=dosubtract, overwrite=overwrite, datacolumn=datacolumn)
+        except Exception as e:
+            print('unexpected failure!')
+            raise e
+
+        # Confirm outfile data unchanged, i.e., identical to infile
+        for sta_in, sta_out in zip(self._getStats(infile, ''), self._getStats(outfile, '')):
+            for k in sta_in.keys():
+               if k in ['row', 'pol']:
+                   self.assertEqual(sta_in[k], sta_out[k])
+               else:
+                   self.assertAlmostEqual(sta_in[k], sta_out[k])
 
 
 class sdbaseline_maskTest(sdbaseline_unittest_base):
@@ -1180,7 +1208,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             shutil.rmtree(self.infile+ '_blparam.btable')
 
     def tearDown(self):
-        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.infile)
         remove_files_dirs(self.outroot)
 
     def test000(self):
