@@ -15,13 +15,22 @@
 #  test_modelvis                # saving models (column/otf), using starting models, predict-only (setjy)
 #  test_ephemeris                # ephemeris tests for gridder standard and mosaic, mode mfs and cubesource
 #
-# To run from within casa 5:  
+#  To run the tests with python3 or casa in the command line
 #
-#  runUnitTest.main(['test_tclean'])                                              # Run all tests
-#  runUnitTest.main(['test_tclean[test_onefield]'])                               # Run tests from test_onefield
-#  runUnitTest.main(['test_tclean[test_onefield_mtmfs]'])                         # Run one specific test
-#  runUnitTest.main(['test_tclean[test_onefield_mtmfs,test_onefield_hogbom]'])    # Multiple specific tests
+#  ./casa -c ./test_tclean.py
+#  ./python3 ./test_tclean.py
+#  ./casa -c ./casa6/casatestutils/runtest.py -h                                   # to see all options
+#  ./casa -c ./casa6/casatestutils/runtest.py ./test_tclean.py                     # run the local test script
+#  ./casa -c ./casa6/casatestutils/runtest.py ./test_tclean.py
+
+# To run from within a casa 6 session:
 #
+#  from casatestutils import runtest
+#  runtest.run(['test_tclean'])                                                 # pull test script from git trunk
+#  runtest.run(['/path-to-test/test_tclean.py'])                                # run a local test script
+#  runtest.run(['test_tclean[test_onefield_clark,test_onefield_hogbom]'])       # pull multiple test cases from git trunk
+#  runtest.run(['test_tclean.py[test_onefield_clark,test_onefield_hogbom]'])    # run multiple test cases from local test script
+#  See documentation for runtest.py in README.md of casatestutils
 # To see the full list of tests :   grep "\"\"\" \[" test_tclean.py
 #
 #  These tests need data stored in casatestdata/unittest/tclean
@@ -31,7 +40,7 @@
 #  For a developer build, to get the datasets locally 
 #
 #  --- Get the test data repo :  svn co https://svn.cv.nrao.edu/svn/casatestdata casatestdata
-#  --- Add a link to casatestdata inside $CASAPATH
+#  --- Use ~/.casa/config.py to point to the casatestdata
 # ########################################################################
 # SKIPPED TESTS 
 # More tests were added to skip (as of 2019,04,26)
@@ -66,7 +75,7 @@
 #     test_startmodel_with_mask_mfs(possible race conditions)
 #     test_startmodel_with_mask_mtmfs(possible race conditions)
 
-#Ressurected from skipping after some fixes
+# Ressurected from skipping after some fixes
 #     test_mask_5
 #     test_iterbot_cube_2
 #     test_multifield_both_cube
@@ -84,10 +93,13 @@
 #  refim_point_linRL.ms : I=1, Q=2, U=3, V=4  in circular pol basis.
 #  venus_ephem_test.ms : 7-point mosaic of Venus (ephemeris), Band 6, 1 spw, averaged to 1 chan
 #
+# List of test classes
+#
+# [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield,
+# test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures]
+#
 ##########################################################################
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import sys
 import shutil
@@ -96,50 +108,23 @@ import inspect
 import numpy as np
 import operator
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-     from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
-     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata, makemask
-     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-     from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-     from casatasks import impbcor
+from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
+from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata, makemask
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+from casatasks import impbcor
+from casaplotms import plotms
 
-     from casatestutils.imagerhelpers import TestHelpers
-
-     _ia = image( )
-     _vp = vpmanager( )
-     _cb = calibrater( )
-     _qa = quanta( )
-     _me = measures( )
-     
-     refdatapath = ctsys.resolve('unittest/tclean/')
-     #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
-     #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
-else:
-     from __main__ import default
-     from tasks import *
-     from taskinit import *
-     from parallel.parallel_task_helper import ParallelTaskHelper
-     from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-     #from imagerhelpers.testhelper_imager import TestHelpers
-
-     _ia = iatool( )
-     _vp = vptool( )
-     _cb = cbtool( )
-     # not local tools
-     _qa = qa
-     _me = me
-
-     refdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/tclean/'
-     #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
-     #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
- 
 from casatestutils.imagerhelpers import TestHelpers
 
-## List to be run
-def suite():
-     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures]
- 
+_ia = image( )
+_vp = vpmanager( )
+_cb = calibrater( )
+_qa = quanta( )
+_me = measures( )
+
+refdatapath = ctsys.resolve('unittest/tclean/')
+
 ## Base Test class with Utility functions
 class testref_base(unittest.TestCase):
 
@@ -1019,7 +1004,7 @@ class test_multifield(testref_base):
      def test_multifield_both_mfs(self):
           """ [multifield] Test_Multifield_both_mfs : Two fields, both mfs """
           self.prepData("refim_twopoints_twochan.ms")
-          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled():
+          if not ParallelTaskHelper.isMPIEnabled():
                logstart = self.th.get_log_length()
           self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nnchan=1\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:40.895 +40.55.58.543\nusemask=user\nmask=circle[[40pix,40pix],10pix]')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",outlierfile=self.img+'.out.txt',niter=10,deconvolver='hogbom',interactive=0,parallel=self.parallel)
@@ -1031,7 +1016,7 @@ class test_multifield(testref_base):
                                (self.img+'1.image',5.590,[40,40,0,0]),
                                (self.img+'.residual',0.04,[30,18,0,0])])
 
-          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
+          if not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
                report += self.th.check_logs(logstart, expected=[r"::deconvolve[\t ]+\[tst\] iters=", r"::deconvolve[\t ]+\[tst1\] iters="])
 
           self.assertTrue(self.check_final(report))
@@ -1055,7 +1040,7 @@ class test_multifield(testref_base):
      def test_multifield_both_cube(self):
           """ [multifield] Test_Multifield_both_cube : Two fields, both cube"""
           self.prepData("refim_twopoints_twochan.ms")
-          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled():
+          if not ParallelTaskHelper.isMPIEnabled():
                logstart = self.th.get_log_length()
           #self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:40.895 +40.55.58.543\n')
           self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:40.895 +40.55.58.543\nimagename='+self.img+'2\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:48.895 +40.55.58.543\n')
@@ -1084,7 +1069,7 @@ class test_multifield(testref_base):
 
           prefix = r"::deconvolve::MPIServer-[0-9]+" if self.parallel else "::deconvolve"
           # the channel output is a questionmark, because the iterators could give each MPI process a single channel (which is also why we can't count on there being a ":C1")
-          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
+          if not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
                report += self.th.check_logs(logstart, expected=[r"Processing channels in range \[[0-9]+, [0-9]+\]",
                                                                 prefix+r"[\t ]+\[tst(:C0)?\] iters=",# prefix+r"[\t ]+\[tst(:C1)?\] iters=",
                                                                 prefix+r"[\t ]+\[tst1(:C0)?\] iters=",# prefix+r"[\t ]+\[tst1(:C1)?\] iters=",
@@ -2148,7 +2133,7 @@ class test_cube(testref_base):
 #          ret = tclean(vis=self.msfile,field='1',spw='0:105~135',specmode='cubesrc',nchan=30,start=105,width=1,veltype='radio',imagename=self.img,imsize=256,cell='0.01arcmin',phasecenter=1,deconvolver='hogbom',niter=10)
 #          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
 
-     @unittest.skipIf(is_CASA6, "Skip because plotms is not available in casatasks")
+     #@unittest.skipIf(is_CASA6, "Skip because plotms is not available in casatasks")
      def test_cube_continuum_subtract_uvsub(self):
           """ [cube] Test_Cube_continuum_subtract :  Using uvsub """
           self.prepData('refim_point_withline.ms')
@@ -2340,7 +2325,7 @@ class test_cube(testref_base):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
           # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in hogbom.
           self.prepData('refim_twochan.ms')
-          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled():
+          if not ParallelTaskHelper.isMPIEnabled():
                logstart = self.th.get_log_length()
           flagdata(self.msfile, spw='*:0')
           ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
@@ -2350,7 +2335,7 @@ class test_cube(testref_base):
 
           prefix = r"::deconvolve::MPIServer-[0-9]+" if self.parallel else "::deconvolve"
           # the channel output is a questionmark, because the iterators could give each MPI process a single channel (which is also why we can't count on there being a ":C1")
-          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
+          if not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
                report += self.th.check_logs(logstart, expected=[r"Processing channels in range \[[0-9]+, [0-9]+\]", prefix+r"[\t ]+\[tst(:C0)?\] iters="])#, prefix+r"[\t ]+\[tst(:C1)?\] iters="])
 
           self.assertTrue(self.check_final(pstr=report))
@@ -3220,7 +3205,7 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==False )
 
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled() or is_CASA6, "Skip the test temporarily, plotms unavailable in casatasks")
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test temporarily, plotms unavailable in casatasks")
      def test_modelvis_5(self):
           """ [modelpredict] Test_modelvis_5 : mt-mfs with save model column """
           self.prepData("refim_twochan.ms")
@@ -5527,6 +5512,5 @@ class test_errors_failures(testref_base):
                             parallel=self.parallel)
 
 
-if is_CASA6:
-     if __name__ == '__main__':
-          unittest.main()
+if __name__ == '__main__':
+     unittest.main()
