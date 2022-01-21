@@ -4106,6 +4106,11 @@ For the other output images,
    images will have either units of Jy/beam or Jy/pixel, depending on if the
    input image has a beam or not.   
 
+For some transformations (e.g., UV domain to image domain transforms), it is 
+not possible to automatically generate an expected coordinate system for
+the output image(s); only the FFT numerics are performed and the coordinate
+system is generated using generic conventions.
+
 </description>
 
 <example>
