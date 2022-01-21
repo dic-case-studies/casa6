@@ -72,7 +72,7 @@ collected 88 items
 ================================================== 7 warnings in 10.65s ==========================================
 ```
 ### Run a test script
-Run from a local test script, from git trunk or from a JIRA branch
+Run from a local test script, from git trunk or from a JIRA branch.
 
 #### from a local test script
 ```
@@ -102,16 +102,32 @@ test_tclean.py::test_onefield::test_onefield_clark
 ```
 ./casa.6.4.0.16/bin/casa -c ./runtest.py <path-to>/test_tclean.py
 ```
+#### Run specific test cases from a local script
+This is useful when knowing a priori the name of the test case or class to run.
+```
+./python3 -c ./runtest.py <path-to>/test_tclean.py[test_onefield_clark,test_onefield_mem]
+```
+
 #### Run a test inside a casashell
 ```
 python3 -m casashell
 > from casatestutils import runtest
-> runtest.run(['test_tclean'])  # pull test script from git trunk
-> runtest.run(['/path-to/test_flagdata.py'])  # run a local test script
+> runtest.run(['test_tclean'])                       # pull test script from git trunk
+> runtest.run(['/path-to/test_flagdata.py'])         # run a local test script
 > runtest.run(['test_tclean[test_onefield_clark]'])  # pull test script from git trunk
 ```
+
+#### Run tests from a JIRA component and ignore some tests (`runtest.py -j <component> --ignore_list`)
+This option is used to ignore a test from a test suite when using the -j option.
+The parameter can be a list of comma separated tests or a JSON file in the same structure as component_to_test_map.py.
+In this example, the component Flagging will pull 3 test scripts for flagcmd, flagdata and flagmanager.
+and the parameters are asking to ignore test_flagdata and test_flagcmd. Only test_flagmanager.py will run in this example.
+```
+./python3 ./runtest.py -j Flagging --ignore_list [test_flagdata,test_flagcmd]
+```
+
 #### Run a test similar to Bamboo setup
-Experimental for Developers, Mainly for Test Infrastructure Team use
+Experimental for Developers, Mainly for Test Infrastructure Team use.
 
 ```
 Required Flags
@@ -132,6 +148,5 @@ python3 runtest.py --bamboo -p casa-6.4.3-3-py3.6.tar.xz -m serial  -w /path/to/
 
 #### Additional Notes
 
---ignore_list option is used to ignore a test from a test suite when using -j option. Parameter can be a list of comma separated tests or a JSON file in the same structure as component_to_test_map
-
 --bamboo option requires [testrunner module] (https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casatestutils/testrunner). 
+
