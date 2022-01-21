@@ -5,14 +5,11 @@ from collections import Counter
 
 from casatasks import casalog
 from casatools import ms as mstool
-from casatools import msmetadata, singledishms, table
+from casatools import singledishms
 from . import sdutil
 from .mstools import write_history
 
 ms = mstool()
-msmd = msmetadata()
-sdms = singledishms()
-tb = table()
 
 
 @sdutil.sdtask_decorator
@@ -64,21 +61,21 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                 remove_data(outfile)
 
             sorttab_info = remove_sorted_table_keyword(infile)
-            selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
-                                        baseline=antenna, time=timerange,
-                                        scan=scan)
-            sdms.open(infile)
-            sdms.set_selection(spw=sdutil.get_spwids(selection), field=field,
-                               antenna=antenna, timerange=timerange,
-                               scan=scan, polarization=pol, intent=intent,
-                               reindex=reindex)
-            sdms.apply_baseline_table(bltable=bltable,
-                                      datacolumn=datacolumn,
-                                      spw=spw,
-                                      updateweight=updateweight,
-                                      sigmavalue=sigmavalue,
-                                      outfile=outfile)
-            sdms.close()
+
+            with sdutil.tool_manager(infile, singledishms) as mysdms:
+                selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
+                                            baseline=antenna, time=timerange,
+                                            scan=scan)
+                mysdms.set_selection(spw=sdutil.get_spwids(selection), field=field,
+                                     antenna=antenna, timerange=timerange,
+                                     scan=scan, polarization=pol, intent=intent,
+                                     reindex=reindex)
+                mysdms.apply_baseline_table(bltable=bltable,
+                                            datacolumn=datacolumn,
+                                            spw=spw,
+                                            updateweight=updateweight,
+                                            sigmavalue=sigmavalue,
+                                            outfile=outfile)
 
             restore_sorted_table_keyword(infile, sorttab_info)
 
@@ -112,42 +109,42 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             if (blfunc == 'variable'):
                 sorttab_info = remove_sorted_table_keyword(infile)
 
-            selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
-                                        baseline=antenna, time=timerange,
-                                        scan=scan)
-            sdms.open(infile)
-            sdms.set_selection(spw=sdutil.get_spwids(selection),
-                               field=field, antenna=antenna,
-                               timerange=timerange, scan=scan,
-                               polarization=pol, intent=intent,
-                               reindex=reindex)
-            params, func = prepare_for_baselining(blfunc=blfunc,
-                                                  datacolumn=datacolumn,
-                                                  outfile=outfile,
-                                                  bloutput=','.join(bloutput),
-                                                  dosubtract=dosubtract,
-                                                  spw=spw,
-                                                  pol=pol,
-                                                  linefinding=(maskmode == 'auto'),
-                                                  threshold=thresh,
-                                                  avg_limit=avg_limit,
-                                                  minwidth=minwidth,
-                                                  edge=edge,
-                                                  order=order,
-                                                  npiece=npiece,
-                                                  applyfft=applyfft,
-                                                  fftmethod=fftmethod,
-                                                  fftthresh=fftthresh,
-                                                  addwn=addwn,
-                                                  rejwn=rejwn,
-                                                  clip_threshold_sigma=clipthresh,
-                                                  num_fitting_max=clipniter+1,
-                                                  blparam=blparam,
-                                                  verbose=verbose,
-                                                  updateweight=updateweight,
-                                                  sigmavalue=sigmavalue)
-            func(**params)
-            sdms.close()
+            with sdutil.tool_manager(infile, singledishms) as mysdms:
+                selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
+                                            baseline=antenna, time=timerange,
+                                            scan=scan)
+                mysdms.set_selection(spw=sdutil.get_spwids(selection),
+                                     field=field, antenna=antenna,
+                                     timerange=timerange, scan=scan,
+                                     polarization=pol, intent=intent,
+                                     reindex=reindex)
+                params, func = prepare_for_baselining(sdms=mysdms,
+                                                      blfunc=blfunc,
+                                                      datacolumn=datacolumn,
+                                                      outfile=outfile,
+                                                      bloutput=','.join(bloutput),
+                                                      dosubtract=dosubtract,
+                                                      spw=spw,
+                                                      pol=pol,
+                                                      linefinding=(maskmode == 'auto'),
+                                                      threshold=thresh,
+                                                      avg_limit=avg_limit,
+                                                      minwidth=minwidth,
+                                                      edge=edge,
+                                                      order=order,
+                                                      npiece=npiece,
+                                                      applyfft=applyfft,
+                                                      fftmethod=fftmethod,
+                                                      fftthresh=fftthresh,
+                                                      addwn=addwn,
+                                                      rejwn=rejwn,
+                                                      clip_threshold_sigma=clipthresh,
+                                                      num_fitting_max=clipniter+1,
+                                                      blparam=blparam,
+                                                      verbose=verbose,
+                                                      updateweight=updateweight,
+                                                      sigmavalue=sigmavalue)
+                func(**params)
 
             if (blfunc == 'variable'):
                 restore_sorted_table_keyword(infile, sorttab_info)
@@ -176,6 +173,8 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
 
 blformat_item = ['csv', 'text', 'table']
 blformat_ext = ['csv', 'txt',  'bltable']
+
+mesg_invalid_wavenumber = 'wrong value given for addwn/rejwn'
 
 
 def remove_data(filename):
@@ -293,20 +292,18 @@ def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, ou
     if (fname == ''):
         return
 
-    f = open(fname, 'w')
+    with open(fname, 'w') as f:
+        info = [['Source Table', infile],
+                ['Output File', outfile if (outfile != '') else infile],
+                ['Mask mode', maskmode]]
 
-    info = [['Source Table', infile],
-            ['Output File', outfile if (outfile != '') else infile],
-            ['Mask mode', maskmode]]
+        separator = '#' * 60 + '\n'
 
-    separator = '#' * 60 + '\n'
-
-    f.write(separator)
-    for i in range(len(info)):
-        f.write('%12s: %s\n' % tuple(info[i]))
-    f.write(separator)
-    f.write('\n')
-    f.close()
+        f.write(separator)
+        for i in range(len(info)):
+            f.write('%12s: %s\n' % tuple(info[i]))
+        f.write(separator)
+        f.write('\n')
 
 
 def get_temporary_file_name(basename):
@@ -316,10 +313,8 @@ def get_temporary_file_name(basename):
 
 
 def parse_wavenumber_param(wn):
-    msg = 'wrong value given for addwn/rejwn'
-
     if isinstance(wn, bool):
-        raise ValueError(msg)
+        raise ValueError(mesg_invalid_wavenumber)
     elif isinstance(wn, list):
         __check_positive_or_zero(wn)
         wn_uniq = list(set(wn))
@@ -335,7 +330,7 @@ def parse_wavenumber_param(wn):
         return str(wn)
     elif isinstance(wn, str):
         if '.' in wn:                            # case of float value as string
-            raise ValueError(msg)
+            raise ValueError(mesg_invalid_wavenumber)
         elif ',' in wn:                          # cases 'a,b,c,...'
             val0 = wn.split(',')
             __check_positive_or_zero(val0)
@@ -408,74 +403,67 @@ def parse_wavenumber_param(wn):
         # return res
         return ','.join(__get_strlist(res))
     else:
-        raise ValueError(msg)
-
-
-def check_fftthresh(fftthresh):
-    has_valid_type = isinstance(fftthresh, float) or isinstance(fftthresh, int) or isinstance(fftthresh, str)
-    if isinstance(fftthresh, bool):
-        has_valid_type = False
-    if not has_valid_type:
-        raise ValueError('fftthresh must be float or integer or string.')
-
-    not_positive_mesg = 'threshold given to fftthresh must be positive.'
-
-    if isinstance(fftthresh, str):
-        try:
-            val_not_positive = False
-            if (3 < len(fftthresh)) and (fftthresh[:3] == 'top'):
-                val_top = int(fftthresh[3:])
-                if (val_top <= 0):
-                    val_not_positive = True
-            elif (5 < len(fftthresh)) and (fftthresh[-5:] == 'sigma'):
-                val_sigma = float(fftthresh[:-5])
-                if (val_sigma <= 0.0):
-                    val_not_positive = True
-            else:
-                val_sigma = float(fftthresh)
-                if (val_sigma <= 0.0):
-                    val_not_positive = True
-
-            if val_not_positive:
-                raise ValueError(not_positive_mesg)
-        except Exception as e:
-            if (str(e) == not_positive_mesg):
-                raise
-            else:
-                raise ValueError('fftthresh has a wrong format.')
-
-    else:
-        if (fftthresh <= 0.0):
-            raise ValueError(not_positive_mesg)
-
-
-def __check_positive_or_zero(param, allowzero=True):
-    msg = 'wrong value given for addwn/rejwn'
-    try:
-        if isinstance(param, list) or isinstance(param, tuple):
-            for i in range(len(param)):
-                __do_check_positive_or_zero(int(param[i]), allowzero)
-        elif isinstance(param, int):
-            __do_check_positive_or_zero(param, allowzero)
-        elif isinstance(param, str):
-            __do_check_positive_or_zero(int(param), allowzero)
-        else:
-            raise ValueError(msg)
-    except:
-        raise ValueError(msg)
+        raise ValueError(mesg_invalid_wavenumber)
 
 
 def __get_strlist(param):
-    res = []
-    for i in range(len(param)):
-        res.append(str(param[i]))
-    return res
+    return [str(p) for p in param]
+
+
+def check_fftthresh(fftthresh):
+    """
+    The fftthresh must be one of the following:
+    (1) positive value (float, integer or string)
+    (2) 'top' + positive integer value
+    (3) positive float value + 'sigma'
+    """
+
+    has_invalid_type = False
+    val_not_positive = False
+
+    if isinstance(fftthresh, bool):
+        # Checking for bool must precede checking for integer
+        has_invalid_type = True
+    elif isinstance(fftthresh, int) or isinstance(fftthresh, float):
+        if (fftthresh <= 0.0):
+            val_not_positive = True
+    elif isinstance(fftthresh, str):
+        try:
+            if (3 < len(fftthresh)) and (fftthresh[:3] == 'top'):
+                if (int(fftthresh[3:]) <= 0):
+                    val_not_positive = True
+            elif (5 < len(fftthresh)) and (fftthresh[-5:] == 'sigma'):
+                if (float(fftthresh[:-5]) <= 0.0):
+                    val_not_positive = True
+            else:
+                if (float(fftthresh) <= 0.0):
+                    val_not_positive = True
+        except:
+            raise ValueError('fftthresh has a wrong format.')
+    else:
+        has_invalid_type = True
+
+    if has_invalid_type:
+        raise ValueError('fftthresh must be float or integer or string.')
+    if val_not_positive:
+        raise ValueError('threshold given to fftthresh must be positive.')
+
+
+def __check_positive_or_zero(param, allowzero=True):
+    if isinstance(param, list) or isinstance(param, tuple):
+        for i in range(len(param)):
+            __do_check_positive_or_zero(int(param[i]), allowzero)
+    elif isinstance(param, int):
+        __do_check_positive_or_zero(param, allowzero)
+    elif isinstance(param, str):
+        __do_check_positive_or_zero(int(param), allowzero)
+    else:
+        raise ValueError(mesg_invalid_wavenumber)
 
 
 def __do_check_positive_or_zero(param, allowzero):
-    msg = 'wrong value given for addwn/rejwn'
     if (param < 0) or ((param == 0) and not allowzero):
-        raise ValueError(msg)
+        raise ValueError(mesg_invalid_wavenumber)
 
 
 def prepare_for_baselining(**keywords):
@@ -504,23 +492,21 @@ def prepare_for_baselining(**keywords):
     for key in keys:
         params[key] = keywords[key]
 
-    baseline_func = getattr(sdms, funcname)
+    baseline_func = getattr(keywords['sdms'], funcname)
 
     return params, baseline_func
 
 
 def remove_sorted_table_keyword(infile):
     res = {'is_sorttab': False, 'sorttab_keywd': '', 'sorttab_name': ''}
+
     with sdutil.table_manager(infile, nomodify=False) as tb:
-        try:
-            sorttab_keywd = 'SORTED_TABLE'
-            if sorttab_keywd in tb.keywordnames():
-                res['is_sorttab'] = True
-                res['sorttab_keywd'] = sorttab_keywd
-                res['sorttab_name'] = tb.getkeyword(sorttab_keywd)
-                tb.removekeyword(sorttab_keywd)
-        except Exception:
-            raise
+        sorttab_keywd = 'SORTED_TABLE'
+        if sorttab_keywd in tb.keywordnames():
+            res['is_sorttab'] = True
+            res['sorttab_keywd'] = sorttab_keywd
+            res['sorttab_name'] = tb.getkeyword(sorttab_keywd)
+            tb.removekeyword(sorttab_keywd)
 
     return res
 
@@ -528,8 +514,4 @@ def remove_sorted_table_keyword(infile):
 def restore_sorted_table_keyword(infile, sorttab_info):
     if sorttab_info['is_sorttab'] and (sorttab_info['sorttab_name'] != ''):
         with sdutil.table_manager(infile, nomodify=False) as tb:
-            try:
-                tb.putkeyword(sorttab_info['sorttab_keywd'],
-                              sorttab_info['sorttab_name'])
-            except Exception:
-                raise
+            tb.putkeyword(sorttab_info['sorttab_keywd'], sorttab_info['sorttab_name'])

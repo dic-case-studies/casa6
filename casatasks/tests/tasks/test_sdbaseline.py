@@ -1,3 +1,5 @@
+import contextlib
+import filecmp
 import glob
 import numpy as np
 import os
@@ -163,6 +165,36 @@ def remove_files_dirs(filename):
 
     for filename in filenames:
         remove_single_file_dir(filename)
+
+
+def compare_dir(dir1, dir2):
+    # Write dircmp() result to a text file, then read the result as a list
+    compare_result = 'compare_' + dir1 + '_' + dir2
+    with open(compare_result, 'w') as o:
+        with contextlib.redirect_stdout(o):
+            filecmp.dircmp(dir1, dir2, ignore=['table.lock']).report_full_closure()
+    with open(compare_result) as f:
+        lines = f.readlines()
+    remove_single_file_dir(compare_result)
+
+    # Added/deleted files
+    n_only = _get_num_files_by_keyword(lines, 'Only in ')
+    # Modified files
+    n_diff = _get_num_files_by_keyword(lines, 'Differing ')
+
+    mesg = ''
+    if n_only > 0:
+        mesg += '{} added or deleted'.format(n_only)
+    if n_diff > 0:
+        if n_only > 0:
+            mesg += ', '
+        mesg += '{} modified'.format(n_diff)
+
+    return mesg
+
+
+def _get_num_files_by_keyword(cmpresult, keyword):
+    return len(sum([eval(s[s.index(':')+1:]) for s in cmpresult if s.startswith(keyword)], []))
 
 
 class sdbaseline_unittest_base(unittest.TestCase):
@@ -817,7 +849,6 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         try:
             result = sdbaseline(infile=infile, outfile=outfile, overwrite=False, maskmode=mode)
         except Exception as e:
-            #pos = str(e).find(outfile+' exists.')
             pos = str(e).find("outfile='" + outfile + "' exists, and cannot overwrite it.")
             self.assertNotEqual(pos, -1, msg='Unexpected exception was thrown: %s'%(str(e)))
         finally:
@@ -844,11 +875,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         datacolumn = 'float_data'
 
         # First run
-        try:
-            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
-        except Exception as e:
-            print('first run failed')
-            raise e
+        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
 
         # Keep blparam.txt, and remove outfile only
         shutil.rmtree(outfile)
@@ -857,11 +884,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
 
         # Second run (in fit mode, overwrite=True), which must be successful
-        try:
-            overwrite = True
-            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
-        except Exception as e:
-            raise e
+        overwrite = True
+        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
 
     def test061(self):
         """Basic Test 061: blparam file(s) should not exist when overwrite=False in fit mode """
@@ -872,11 +896,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         datacolumn = 'float_data'
 
         # First run
-        try:
-            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
-        except Exception as e:
-            print('first run failed')
-            raise e
+        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
 
         # Keep blparam.txt, and remove outfile only
         shutil.rmtree(outfile)
@@ -899,11 +919,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         blformat = ['text', 'table']
 
         # First run
-        try:
-            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn, blmode=blmode, blformat=blformat)
-        except Exception as e:
-            print('first run failed')
-            raise e
+        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn, blmode=blmode, blformat=blformat)
 
         # Keep blparam files, and remove outfile only
         shutil.rmtree(outfile)
@@ -911,20 +927,30 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         for ext in ['txt', 'bltable']:
             blparamfile = infile + '_blparam.' + ext
             self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
+            # Backup blparam file for comparison
+            blparamfile_backup = blparamfile + '.backup'
+            if ext == 'txt':
+                shutil.copy(blparamfile, blparamfile_backup)
+            elif ext == 'bltable':
+                shutil.copytree(blparamfile, blparamfile_backup)
 
         # Second run (in apply mode), which must be successful
-        try:
-            blmode = 'apply'
-            bltable = infile + '_blparam.bltable'
-            overwrite = True
-            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn, blmode=blmode, bltable=bltable)
-        except Exception as e:
-            raise e
+        blmode = 'apply'
+        bltable = infile + '_blparam.bltable'
+        overwrite = True
+        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn, blmode=blmode, bltable=bltable)
 
         # Param files created in the first run should be kept
         for ext in ['txt', 'bltable']:
             blparamfile = infile + '_blparam.' + ext
             self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
+            blparamfile_backup = blparamfile + '.backup'
+            if ext == 'txt':
+                self.assertTrue(filecmp.cmp(blparamfile, blparamfile_backup), msg='{} changed'.format(blparamfile))
+            elif ext == 'bltable':
+                res = compare_dir(blparamfile, blparamfile_backup)
+                self.assertEqual(res, '', msg='{0} changed: {1}'.format(blparamfile, res))
+
 
     def test070(self):
         """Basic Test 070: no output MS when dosubtract=False"""
