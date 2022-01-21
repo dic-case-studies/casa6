@@ -70,7 +70,6 @@ from casatools import regionmanager
 from casatools import table, ctsys
 datapath = ctsys.resolve('unittest/ia_fft/')
 
-
 class ia_fft_test(unittest.TestCase):
     
     def setUp(self):
@@ -78,6 +77,22 @@ class ia_fft_test(unittest.TestCase):
         pass
     
     def tearDown(self):
+        data = [
+            "amp.imc", "amp.imf", "amp_reg",
+            "complex.imc", "complex.imf",
+            "imag.imc", "imag.imf", "imag_reg",
+            "maskim", "myamp.im", "mycomplex.im",
+            "myimag.im", "myphase.im", "myreal.im",
+            "phase.imc", "phase.imf", "phase_reg",
+            "real2.im", "real.imc", "real.imf", "real_reg" ]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
+
+
         self.assertTrue(len(self.tb.showcache()) == 0)
         self.tb.done( )
     

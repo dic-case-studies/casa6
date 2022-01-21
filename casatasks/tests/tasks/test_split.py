@@ -31,7 +31,8 @@ import unittest
 from casatasks.private.casa_transition import *
 if is_CASA6:
     ### for testhelper import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__))) # May be needed for recipes.listshapes
+    #sys.path.append(os.path.abspath(os.path.dirname(__file__))) # May be needed for recipes.listshapes
+    #from casarecipes.listshapes import listshapes
     from recipes.listshapes import listshapes
     #import testhelper as th
     from casatasks import cvel, flagcmd, flagdata, importasdm, listobs, partition, split

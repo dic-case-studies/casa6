@@ -64,51 +64,68 @@
 ###########################################################################
 from __future__ import absolute_import
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import image
-    from casatasks import casalog
-else:
-    from taskinit import *
-    from taskinit import iatool as image
+from casatools import image
+from casatasks import casalog
+
+from .ialib import write_image_history, get_created_images
+import sys
+import time
 
 def spxfit(
-        imagename, box, region, chans,
-        stokes, axis, mask, minpts, multifit, spxtype, spxest,
-        spxfix, div, spxsol, spxerr,
-        model, residual, wantreturn,
-        stretch, logresults, logfile, append,
-        sigma, outsigma
+    imagename, box, region, chans, stokes,
+    axis, mask, minpts, multifit, spxtype,
+    spxest, spxfix, div, spxsol, spxerr,
+    model, residual, wantreturn,
+    stretch, logresults, logfile, append,
+    sigma, outsigma
 ):
     casalog.origin('spxfit')
     myia = image()
+    myia.dohistory(False)
     retval = None
     try:
         if type(imagename) == list and len(imagename) > 1:
-                myia = myia.imageconcat(outfile="", infiles=imagename, axis=axis, relax=True)
+            myia = myia.imageconcat(outfile="", infiles=imagename, axis=axis, relax=True)
         else:
-                if type(imagename) == list and len(imagename) == 1:
-                        imagename = imagename[0]
-                if (not myia.open(imagename)):
-                        raise RuntimeError("Cannot create image analysis tool using " + str(imagename))
+            if type(imagename) == list and len(imagename) == 1:
+                imagename = imagename[0]
+            if (not myia.open(imagename)):
+                raise Exception("Cannot create image analysis tool using " + str(imagename))
         sigmacopy = sigma
         if type(sigma) == list and type(sigma) == str:
-                if len(sigma) == 1:
-                        sigmacopy = sigma[0]
-                else:
-                        sigia = myia.imageconcat(outfile="", infiles=sigma, axis=axis, relax=True)
-                        sigmacopy = sigia.getchunk()
+            if len(sigma) == 1:
+                sigmacopy = sigma[0]
+            else:
+                sigia = myia.imageconcat(outfile="", infiles=sigma, axis=axis, relax=True)
+                sigmacopy = sigia.getchunk()
+                sigia.done()
+        target_time = time.time()
         retval = myia.fitprofile(
             box=box, region=region, chans=chans,
             stokes=stokes, axis=axis, mask=mask,
             minpts=minpts, ngauss=0, multifit=multifit,
             spxtype=spxtype, spxest=spxest, spxfix=spxfix,
-            div=div,  model=model, residual=residual,
+            div=div,  model=model, residual=residual, 
             stretch=stretch, logresults=logresults,
             spxsol=spxsol, spxerr=spxerr, logfile=logfile,
-            append=append,
+            append=append, 
             sigma=sigmacopy, outsigma=outsigma
         )
+        try:
+            param_names = spxfit.__code__.co_varnames[:spxfit.__code__.co_argcount]
+            vars = locals( )
+            param_vals = [vars[p] for p in param_names]
+            ims = [model, residual]
+            for x in [spxsol, spxerr]:
+                if x:
+                    ims.extend(get_created_images(x, target_time))
+            for im in ims:
+                write_image_history(
+                    im, sys._getframe().f_code.co_name,
+                    param_names, param_vals, casalog
+                )
+        except Exception as instance:
+            casalog.post("*** Error \'%s\' updating HISTORY" % (instance), 'WARN')
     finally:
         myia.done()
         if (wantreturn):

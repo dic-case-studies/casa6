@@ -67,6 +67,7 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 from casatools import table
@@ -75,9 +76,15 @@ class ia_fromimage_test(unittest.TestCase):
     
     def setUp(self):
         self._myia = iatool()
+        self.name = ''
     
     def tearDown(self):
         self._myia.done()
+        if self.name:
+            if os.path.isfile(self.name):
+                os.unlink(self.name)
+            else:
+                shutil.rmtree(self.name)
         tb = table( )
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done( )
@@ -85,10 +92,10 @@ class ia_fromimage_test(unittest.TestCase):
     def test_history(self):
         """test writing of history"""
         myia = self._myia
-        name = "myim.im"
-        myia.fromshape(name, [20,20])
+        self.name = "myim.im"
+        myia.fromshape(self.name, [20,20])
         myia.done()
-        myia.fromimage("",name)
+        myia.fromimage("",self.name)
         msgs = myia.history()
         myia.done()
         self.assertTrue("ia.fromimage" in msgs[-2])
