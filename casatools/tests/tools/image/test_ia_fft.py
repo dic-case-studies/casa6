@@ -42,7 +42,7 @@
 # </prerequisite>
 #
 # <etymology>
-# Test for the ia.fft tool method
+# Test for the ia.fft() tool method
 # </etymology>
 #
 # <synopsis>
@@ -50,33 +50,26 @@
 # </synopsis> 
 #
 # <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_ia_fft[test1,test2,...]
-#
+# This test can be run via
+# PYTHONPATH=<my python path> python casatools/tests/tools/image/test_ia_fft.py
 # </example>
 #
 # <motivation>
-# To provide a test standard for the ia.fft tool method to ensure
+# To provide a test standard for the ia.fft() tool method to ensure
 # coding changes do not break the associated bits 
 # </motivation>
 #
 
 ###########################################################################
+import numpy as np
+import os
 import shutil
 import unittest
-import os
-from casatools import image as iatool
-from casatools import regionmanager as rgtool
+
+from casatools import image 
+from casatools import regionmanager
 from casatools import table, ctsys
-ctsys_resolve = ctsys.resolve
-
-datapath = ctsys_resolve('unittest/ia_fft/')
-
-from casatools import image as iatool
-from casatools import table
+datapath = ctsys.resolve('unittest/ia_fft/')
 
 class ia_fft_test(unittest.TestCase):
     
@@ -106,7 +99,7 @@ class ia_fft_test(unittest.TestCase):
     
     def test_stretch(self):
         """ ia.fft(): Test stretch parameter"""
-        yy = iatool()
+        yy = image()
         mymask = "maskim"
         yy.fromshape(mymask, [20, 20, 1, 1])
         yy.addnoise()
@@ -124,10 +117,12 @@ class ia_fft_test(unittest.TestCase):
         )
         self.assertTrue(type(zz) == type(False))
         yy.done()
+        shutil.rmtree('real2.im')
+        shutil.rmtree(mymask)
         
     def test_delta(self):
         """Test fft of delta function"""
-        myia = iatool()
+        myia = image()
         for t in ['f', 'c']:
             myia.fromshape("", [100, 100], type=t)
             bb = myia.getchunk()
@@ -137,31 +132,30 @@ class ia_fft_test(unittest.TestCase):
             imag = "imag.im" + t
             amp = "amp.im" + t
             phase = "phase.im" + t
-            complex = "complex.im" + t
+            _complex = "complex.im" + t
             myia.fft(
                 real=real, imag=imag, amp=amp,
-                phase=phase, complex=complex
+                phase=phase, complex=_complex
             )
-            for im in [real, imag, amp, phase, complex]:
+            for im in [real, imag, amp, phase, _complex]:
                 expec = 1
                 if im == imag or im == phase:
                     expec = 0
-                elif im == complex:
+                elif im == _complex:
                     expec = 1 + 0j
                 myia.open(im)
                 got = myia.getchunk()
-                myia.done()
+                myia.done(remove=True)
                 self.assertTrue((got == expec).all())
-                
                 
     def test_regression(self):
         """Was regression test in imagetest"""
 
         # Open test image (has sky coordinates)
         testname = 'unittest/ia_fft/test_image.im'
-        myia = iatool()
-        testim = iatool()
-        testim.open(ctsys_resolve(testname))
+        myia = image()
+        testim = image()
+        testim.open(ctsys.resolve(testname))
         self.assertTrue(testim)
         testshape = testim.shape()
         self.assertTrue(len(testshape) == 3)
@@ -224,12 +218,16 @@ class ia_fft_test(unittest.TestCase):
         b2 = c.imag
         b3 = abs(c)
        
-        ok = testim.done() and im1.done() and im2.done() and im3.done() and im4.done()
+        ok = (
+                testim.done() and im1.done(remove=True)
+                and im2.done(remove=True) and im3.done(remove=True)
+                and im4.done(remove=True)
+            )
         self.assertTrue(ok)
 
     def test_history(self):
         """verify history writing"""
-        myia = iatool()
+        myia = image()
         (real, imag, amp, phase, complx) = ("myreal.im", "myimag.im", "myamp.im", "myphase.im", "mycomplex.im")
         myia.fromshape("", [20,20])
         myia.fft(real=real, imag=imag, amp=amp, phase=phase, complex=complx)
@@ -237,10 +235,26 @@ class ia_fft_test(unittest.TestCase):
         for im in (real, imag, amp, phase, complx):
             myia.open(im)
             msgs = myia.history()
-            myia.done()
+            myia.done(remove=True)
             self.assertTrue("ia.fft" in msgs[-2])
             self.assertTrue("ia.fft" in msgs[-1])
-        
+    
+    def test_new_inc(self):
+        """verify CAS-13629 ouput cellsize fix"""
+        myia = image()
+        npix = 200
+        myia.fromshape("", [npix, npix])
+        myia.fft(real='real.im')
+        myia.open('real.im')
+        csys = myia.coordsys()
+        myia.done(remove=True)
+        cdelt = csys.increment()['numeric']
+        csys.done()
+        mye = 1/(npix/60*np.pi/180)
+        expec = np.array([-mye, mye])
+        print((cdelt - expec)/expec)
+        self.assertTrue(np.allclose(cdelt, expec))
+
 def suite():
     return [ia_fft_test]
 
