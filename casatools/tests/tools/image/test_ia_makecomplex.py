@@ -66,7 +66,7 @@
 ###########################################################################
 import shutil
 import unittest
-
+import os
 from casatools import image as iatool
 from casatools import table
 
@@ -74,26 +74,35 @@ class ia_makecomplex_test(unittest.TestCase):
     
     def setUp(self):
         self.ia = iatool()
-    
+        self.image = ''
+        self.imag = ''
     def tearDown(self):
+        data = [self.imag, self.image]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
         tb = table( )
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done( )
+
     
     def test_history(self):
         """Verify ia.makecomplex() writes history to image"""
         myia = self.ia
-        imag = "hist_zxye.im"
+        self.imag = "hist_zxye.im"
         shape = [20, 20]
-        myia.fromshape(imag, shape)
+        myia.fromshape(self.imag, shape)
         myia.set(10)
         myia.done()
         myia.fromshape("", shape)
         myia.set(20)
-        image = "myc.im"
-        self.assertTrue(myia.makecomplex(image, imag=imag))
+        self.image = "myc.im"
+        self.assertTrue(myia.makecomplex(self.image, imag=self.imag))
         myia.done()
-        myia.open(image)
+        myia.open(self.image)
         msgs = myia.history()
         myia.done()
         self.assertTrue("ia.makecomplex" in msgs[-2]) 

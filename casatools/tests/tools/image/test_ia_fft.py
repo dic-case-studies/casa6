@@ -42,41 +42,33 @@
 # </prerequisite>
 #
 # <etymology>
-# Test for the ia.fft tool method
+# Test for the ia.fft() tool method
 # </etymology>
 #
 # <synopsis>
 # Test the ia.fft() method.
 # </synopsis> 
 #
+# <example>
+# This test can be run via
+# PYTHONPATH=<my python path> python casatools/tests/tools/image/test_ia_fft.py
+# </example>
+#
 # <motivation>
-# To provide a test standard for the ia.fft tool method to ensure
+# To provide a test standard for the ia.fft() tool method to ensure
 # coding changes do not break the associated bits 
 # </motivation>
 #
 
 ###########################################################################
+import numpy as np
+import os
 import shutil
 import unittest
 
-try:
-    from casatools import image as iatool
-    from casatools import regionmanager as rgtool
-    from casatools import table, ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
-
-datapath = ctsys_resolve('unittest/ia_fft/')
-
-from casatools import image as iatool
-from casatools import quanta as qatool
-from casatools import table
+from casatools import image, quanta 
+from casatools import table, ctsys
+datapath = ctsys.resolve('unittest/ia_fft/')
 
 class ia_fft_test(unittest.TestCase):
     
@@ -85,12 +77,28 @@ class ia_fft_test(unittest.TestCase):
         pass
     
     def tearDown(self):
+        data = [
+            "amp.imc", "amp.imf", "amp_reg",
+            "complex.imc", "complex.imf",
+            "imag.imc", "imag.imf", "imag_reg",
+            "maskim", "myamp.im", "mycomplex.im",
+            "myimag.im", "myphase.im", "myreal.im",
+            "phase.imc", "phase.imf", "phase_reg",
+            "real2.im", "real.imc", "real.imf", "real_reg" ]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
+
+
         self.assertTrue(len(self.tb.showcache()) == 0)
         self.tb.done( )
     
     def test_stretch(self):
         """ ia.fft(): Test stretch parameter"""
-        yy = iatool()
+        yy = image()
         mymask = "maskim"
         yy.fromshape(mymask, [20, 20, 1, 1])
         yy.addnoise()
@@ -114,7 +122,7 @@ class ia_fft_test(unittest.TestCase):
         
     def test_delta(self):
         """Test fft of delta function"""
-        myia = iatool()
+        myia = image()
         for t in ['f', 'c']:
             myia.fromshape("", [100, 100], type=t)
             bb = myia.getchunk()
@@ -137,18 +145,17 @@ class ia_fft_test(unittest.TestCase):
                     expec = 1 + 0j
                 myia.open(im)
                 got = myia.getchunk()
-                myia.done()
+                myia.done(remove=True)
                 self.assertTrue((got == expec).all())
-                shutil.rmtree(im)
 
     def test_regression(self):
         """Was regression test in imagetest"""
 
         # Open test image (has sky coordinates)
         testname = 'unittest/ia_fft/test_image.im'
-        myia = iatool()
-        testim = iatool()
-        testim.open(ctsys_resolve(testname))
+        myia = image()
+        testim = image()
+        testim.open(ctsys.resolve(testname))
         self.assertTrue(testim)
         testshape = testim.shape()
         self.assertTrue(len(testshape) == 3)
@@ -219,7 +226,7 @@ class ia_fft_test(unittest.TestCase):
 
     def test_history(self):
         """verify history writing"""
-        myia = iatool()
+        myia = image()
         (real, imag, amp, phase, complx) = ("myreal.im", "myimag.im", "myamp.im", "myphase.im", "mycomplex.im")
         myia.fromshape("", [20,20])
         myia.fft(real=real, imag=imag, amp=amp, phase=phase, complex=complx)
@@ -227,10 +234,9 @@ class ia_fft_test(unittest.TestCase):
         for im in (real, imag, amp, phase, complx):
             myia.open(im)
             msgs = myia.history()
-            myia.done()
+            myia.done(remove=True)
             self.assertTrue("ia.fft" in msgs[-2])
             self.assertTrue("ia.fft" in msgs[-1])
-            shutil.rmtree(im)
 
     def test_units(self):
         """
@@ -244,11 +250,11 @@ class ia_fft_test(unittest.TestCase):
         output (image plane) images should be Jy/beam or Jy/pixel, depending on if the
         input image has a beam or not.
         """
-        qa = qatool()
+        qa = quanta()
         bmaj = qa.quantity('4arcmin')
         bmin = qa.quantity('3arcmin')
         bpa = qa.quantity('60deg')
-        _ia = iatool()
+        _ia = image()
         for bu in ('Jy/beam', 'Jy/pixel'):
             # create image-domain image
             _ia.fromshape("", [20, 20])
@@ -317,6 +323,22 @@ class ia_fft_test(unittest.TestCase):
                     self.assertTrue(beam['minor'] == bmin, 'Incorrect restoring beam')
                     self.assertTrue(beam['positionangle'] == bpa, 'Incorrect restoring beam')
 
+
+    def test_new_inc(self):
+        """verify CAS-13629 ouput cellsize fix"""
+        myia = image()
+        npix = 200
+        myia.fromshape("", [npix, npix])
+        myia.fft(real='real.im')
+        myia.open('real.im')
+        csys = myia.coordsys()
+        myia.done(remove=True)
+        cdelt = csys.increment()['numeric']
+        csys.done()
+        mye = 1/(npix/60*np.pi/180)
+        expec = np.array([-mye, mye])
+        print((cdelt - expec)/expec)
+        self.assertTrue(np.allclose(cdelt, expec))
 
 def suite():
     return [ia_fft_test]

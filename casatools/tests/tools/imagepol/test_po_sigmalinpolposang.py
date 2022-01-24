@@ -68,17 +68,9 @@
 import shutil
 import unittest
 
-try:
-    from casatools import imagepol as potool
-    from casatools import ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+from casatools import imagepol as potool
+from casatools import ctsys
+ctsys_resolve = ctsys.resolve
 
 datapath = ctsys_resolve('unittest/imagepol/')
 eq_beams = datapath + "pol_eq_beams.fits"
@@ -91,6 +83,7 @@ class po_sigmalinpolposang_test(unittest.TestCase):
     
     def tearDown(self):
         self.mypo.done()
+        shutil.rmtree('g')
     
     def test_multibeam(self):
         """Test multibeam images for correct behavior"""
