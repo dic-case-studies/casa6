@@ -275,11 +275,11 @@ class imsmooth_test(test_base):
 
         _stack = CasaImageStack(top=UnerasableFolder(self.tiny))
 
-        execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, _stack)
+        ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, _stack)
         self.assertTrue(os.path.exists(_stack.peak().path))
 
         _stack.pop()
-        execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, _stack)
+        ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, _stack)
         self.assertTrue(os.path.exists(_stack.peak().path))
 
         _stack.clear()
@@ -300,7 +300,7 @@ class imsmooth_test(test_base):
 
         _stack = CasaImageStack(top=UnerasableFolder(self.tiny))
 
-        execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, _stack)
+        ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, _stack)
 
 
 class image2ms_test(test_base):
@@ -327,7 +327,7 @@ class image2ms_test(test_base):
     def test_4_1(self):
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected))
         ms_stack = MeasurementSetStack()
-        execute_image2ms(self.datacolumn, self.image_shape, image_stack, ms_stack)
+        Image2MSMethods.execute(self.datacolumn, self.image_shape, image_stack, ms_stack)
         self.assertEqual(ms_stack.height(), 1)
         ms_path = ms_stack.peak().path
         self.assertTrue(os.path.exists(ms_path))
@@ -350,19 +350,19 @@ class image2ms_test(test_base):
     def test_4_2(self):
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected))
         ms_stack = MeasurementSetStack()
-        execute_image2ms('INVALID', self.image_shape, image_stack, ms_stack)
+        Image2MSMethods.execute('INVALID', self.image_shape, image_stack, ms_stack)
 
     @test_base.exception_case(RuntimeError, 'Unable to open image dummy1.')
     def test_4_3(self):
         image_stack = CasaImageStack(top=UnerasableFolder(self.dummy_folder1))
         ms_stack = MeasurementSetStack()
-        execute_image2ms(self.datacolumn, self.image_shape, image_stack, ms_stack)
+        Image2MSMethods.execute(self.datacolumn, self.image_shape, image_stack, ms_stack)
 
     @test_base.exception_case(RuntimeError, 'the stack is empty')
     def test_4_4(self):
         image_stack = CasaImageStack()
         ms_stack = MeasurementSetStack()
-        execute_image2ms(self.datacolumn, self.image_shape, image_stack, ms_stack)
+        Image2MSMethods.execute(self.datacolumn, self.image_shape, image_stack, ms_stack)
 
 
 class sdsmooth_test(test_base):
@@ -391,7 +391,7 @@ class sdsmooth_test(test_base):
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
         ms_stack = MeasurementSetStack()
         ms_stack.push(EraseableFolder(self.expected_ms))
-        execute_sdsmooth(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
+        SdsmoothMethods.execute(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
         self.assertEqual(image_stack.height(), 2)
         self.assertEqual(ms_stack.height(), 2)
         self.assertTrue(os.path.exists(os.path.join(image_stack.peak().path, 'table.dat')))
@@ -417,14 +417,14 @@ class sdsmooth_test(test_base):
     def test_5_2(self):
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
         ms_stack = MeasurementSetStack()
-        execute_sdsmooth(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
+        SdsmoothMethods.execute(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
 
     @test_base.exception_case(RuntimeError, 'the stack has not have enough stuff')
     def test_5_3(self):
         image_stack = CasaImageStack()
         ms_stack = MeasurementSetStack()
         ms_stack.push(EraseableFolder(self.expected_ms))
-        execute_sdsmooth(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
+        SdsmoothMethods.execute(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
 
 
 class sdbaseline_test(test_base):
@@ -468,9 +468,9 @@ class sdbaseline_test(test_base):
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
         ms_stack = MeasurementSetStack()
         ms_stack.push(EraseableFolder(self.expected_ms))
-        execute_sdbaseline(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit, self.minwidth,
-                           self.edge, self.blfunc, self.order, self.npiece, self.applyfft, self.fftthresh, self.addwn, self.rejwn, self.blparam,
-                           self.clipniter, self.clipthresh, image_stack, ms_stack, self.image_shape)
+        SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit, self.minwidth,
+                                  self.edge, self.blfunc, self.order, self.npiece, self.applyfft, self.fftthresh, self.addwn, self.rejwn, self.blparam,
+                                  self.clipniter, self.clipthresh, image_stack, ms_stack, self.image_shape)
         self.assertTrue(os.path.exists(ms_stack.peak().path))
         self.assertTrue(os.path.exists(self.bloutput))
         self.assertTrue(os.path.exists(image_stack.peak().path))
@@ -479,18 +479,18 @@ class sdbaseline_test(test_base):
     def test_6_2(self):
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
         ms_stack = MeasurementSetStack()
-        execute_sdbaseline(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit, self.minwidth,
-                           self.edge, self.blfunc, self.order, self.npiece, self.applyfft, self.fftthresh, self.addwn, self.rejwn, self.blparam,
-                           self.clipniter, self.clipthresh, image_stack, ms_stack, self.image_shape)
+        SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit, self.minwidth,
+                                  self.edge, self.blfunc, self.order, self.npiece, self.applyfft, self.fftthresh, self.addwn, self.rejwn, self.blparam,
+                                  self.clipniter, self.clipthresh, image_stack, ms_stack, self.image_shape)
 
     @test_base.exception_case(RuntimeError, 'the stack has not have enough stuff')
     def test_6_3(self):
         image_stack = CasaImageStack()
         ms_stack = MeasurementSetStack()
         ms_stack.push(EraseableFolder(self.expected_ms))
-        execute_sdbaseline(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit, self.minwidth,
-                           self.edge, self.blfunc, self.order, self.npiece, self.applyfft, self.fftthresh, self.addwn, self.rejwn, self.blparam,
-                           self.clipniter, self.clipthresh, image_stack, ms_stack, self.image_shape)
+        SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit, self.minwidth,
+                                  self.edge, self.blfunc, self.order, self.npiece, self.applyfft, self.fftthresh, self.addwn, self.rejwn, self.blparam,
+                                  self.clipniter, self.clipthresh, image_stack, ms_stack, self.image_shape)
 
 
 class image_subtraction_test(test_base):
@@ -512,14 +512,14 @@ class image_subtraction_test(test_base):
         image_stack.push(EraseableFolder(self.expected_imsmoothed))
         image_stack.push(EraseableFolder(self.expected_bl))
         output = "output_7_1.im"
-        execute_image_subtraction(output, image_stack)
+        ImageSubtractionMethods.execute(output, image_stack)
         self.assertTrue(os.path.exists(output))
 
     def test_7_2(self):
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
         image_stack.push(EraseableFolder(self.expected_bl))
         output = "output_7_2.im"
-        execute_image_subtraction(output, image_stack)
+        ImageSubtractionMethods.execute(output, image_stack)
         self.assertTrue(os.path.exists(output))
 
 

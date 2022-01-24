@@ -241,6 +241,32 @@ class ImageShape(AbstractValidatable):
             raise ValueError(f'invalid value: dir_shape {self.dir_shape}')
 
 
+def get_image_shape(imagepath: str) -> ImageShape:
+    shape = None
+    with tool_manager(imagepath, image) as ia:
+        try:
+            cs = ia.coordsys()
+            shape = ImageShape(ia.shape(),
+                               cs.findcoordinate('direction')['world'],
+                               __get_axis_position(cs.findcoordinate('spectral')['world']),  # 3 or 2 or -1
+                               __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
+                               )
+        finally:
+            cs.done()
+
+    shape.validate()
+    casalog.post(f'image shape is {shape.im_shape}, direciton {shape.dir_shape} ({shape.im_nrow} pixels), '
+                 f'npol {shape.im_npol}, nchan {shape.im_nchan}', 'DEBUG2')
+
+    return shape
+
+
+def __get_axis_position(val: array=None) -> int:
+    if val is not None and len(val) > 0:
+        return val[0].item()
+    return -1
+
+
 @sdtask_decorator
 def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, maskmode=None, chans=None, thresh=None,
                avg_limit=None, minwidth=None, edge=None, blfunc=None, order=None, npiece=None, applyfft=None, fftthresh=None,
@@ -258,153 +284,42 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
     (4) do baselining (execute sdbaseline)
     (5) convert MS into casa image, and subtract results
     """
-    __validate_imagename(imagename)
-    linefile = __prepare_linefile(linefile, imagename)
+    validate_imagename(imagename)
+    linefile = prepare_linefile(linefile, imagename)
 
     with stack_manager(imagename) as (image_stack, ms_stack):
         try:
             input_image_shape = get_image_shape(image_stack.peak().path)
 
             # do direction plane smoothing
-            execute_imsmooth(dirkernel, major, minor, pa, kimage, scale, image_stack)
+            ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, image_stack)
 
             # convert casaimage into MeasurementSet
-            execute_image2ms(DATACOLUMN, input_image_shape, image_stack, ms_stack)
+            Image2MSMethods.execute(DATACOLUMN, input_image_shape, image_stack, ms_stack)
 
             # do spectral smoothing
-            execute_sdsmooth(DATACOLUMN, spkernel, kwidth, image_stack, ms_stack, input_image_shape)
+            SdsmoothMethods.execute(DATACOLUMN, spkernel, kwidth, image_stack, ms_stack, input_image_shape)
 
             # do baselining
-            execute_sdbaseline(DATACOLUMN, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
-                               edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
-                               clipniter, clipthresh, image_stack, ms_stack, input_image_shape)
+            SdbaselineMethods.execute(DATACOLUMN, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
+                                      edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
+                                      clipniter, clipthresh, image_stack, ms_stack, input_image_shape)
 
             # convert MeasurementSet into image and subtract results
-            execute_image_subtraction(linefile, image_stack)
+            ImageSubtractionMethods.execute(linefile, image_stack)
 
             if output_cont:
-                get_continuum_image(image_stack)
+                ImageSubtractionMethods.get_continuum_image(image_stack)
         finally:
             do_post_processing(linefile)
 
 
-def execute_imsmooth(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None, kimage: str=None, scale: float=None,
-                     stack: AbstractFileStack=None) -> None:
-    """Call casatasks.imsmooth task if dirkernel is specified."""
-    if not __require_imsmooth(dirkernel):
-        casalog.post('omit image smoothing', 'INFO')
-        return
-
-    casalog.post('execute image smoothing', 'INFO')
-    infile = stack.peak().path
-    outfile = __generate_temporary_filename('dirsmooth', 'im')
-    imsmooth(**ImsmoothParams(infile, outfile, dirkernel, major, minor, pa, kimage, scale)())
-    stack.push(EraseableFolder(outfile))
-
-
-def execute_image2ms(datacolumn: str=None, input_image_shape: ImageShape=None, image_stack: AbstractFileStack=None,
-                     ms_stack: AbstractFileStack=None) -> None:
-    """Convert a casaimage to a MeasurementSet."""
-    casalog.post('convert casaimage to MeasurementSet', 'INFO')
-    infile = image_stack.peak().path
-    outfile = __generate_temporary_filename('img2ms', 'ms')
-    image2ms(Image2MSParams(infile, outfile, datacolumn, input_image_shape))
-    ms_stack.push(EraseableFolder(outfile))
-
-
-def execute_sdsmooth(datacolumn: str=None, spkernel: str=None, kwidth: int=None, image_stack: AbstractFileStack=None,
-                     ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
-    """Call casatasks.sdsmooth task if spkernel is specified."""
-    if not __require_sdsmooth(spkernel):
-        casalog.post('omit spectral smoothing', 'INFO')
-        return
-
-    casalog.post('execute spectral smoothing', 'INFO')
-
-    input_ms = ms_stack.peak().path
-    output_ms = __generate_temporary_filename('spsmooth', 'ms')
-    base_image = image_stack.bottom().path
-    sdsmooth(**SdsmoothParams(input_ms, output_ms, datacolumn.lower(), spkernel, kwidth)())
-    ms_stack.push(EraseableFolder(output_ms))
-    output_image = __convert_ms_to_image(base_image, output_ms, image_shape, datacolumn)
-    image_stack.push(EraseableFolder(output_image))
-
-
-def execute_sdbaseline(datacolumn: str=None, bloutput: str=None, maskmode: str=None, chans: str=None, thresh: float=None,
-                       avg_limit: int=None, minwidth: int=None, edge: List[int]=None, blfunc: str=None, order: int=None,
-                       npiece: int=None, applyfft: bool=None, fftthresh: float=None, addwn: List[int]=None, rejwn: List[int]=None,
-                       blparam: str=None, clipniter: int=None, clipthresh: float=None,
-                       image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
-    """Call casatasks.sdbaseline task."""
-    casalog.post('execute spectral baselining', 'INFO')
-    input_ms = ms_stack.peak().path
-    output_ms = __generate_temporary_filename('baseline', 'ms')
-    base_image = image_stack.bottom().path
-    sdbaseline(**SdbaselineParams(input_ms, output_ms, datacolumn.lower(), bloutput, maskmode, chans, thresh, avg_limit, minwidth,
-               edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh)())
-    ms_stack.push(EraseableFolder(output_ms))
-    output_image = __convert_ms_to_image(base_image, output_ms, image_shape, datacolumn)
-    image_stack.push(EraseableFolder(output_image))
-    blparam_name = input_ms + '_blparam.' + SdbaselineParams.FIXED_PARAM['blformat']
-    if os.path.exists(blparam_name):
-        __rename_blparam_filename(blparam_name, base_image)
-
-
-def execute_image_subtraction(linefile: str=None, image_stack: AbstractFileStack=None) -> None:
-    """Execute image subtraction.
-
-    The output image is computed as follows:
-    - in case any smoothing (along direction and/or frequency) is executed
-        output_image = input_image - (smoothed_image - smoothed_and_subtracted_image)
-    - in case no smoothing is executed
-        output_image = subtracted_image
-    """
-    if image_stack.height() <= 2:  # any smoothing were not executed
-        output_image = image_stack.pop().path
-        eraseable_folder_register.pop(output_image)
-        os.rename(output_image, linefile)
-        image_stack.push(UnerasableFolder(linefile))
-    else:
-        smoothed_image = image_stack.subpeak().path
-        subtracted_image = image_stack.peak().path
-        base_image = image_stack.bottom().path
-        __copy_image_file(base_image, linefile)
-        __subtract_image(smoothed_image, subtracted_image)
-        __subtract_image(linefile, smoothed_image)
-
-
-def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
-    """Compute 'input_image - output_image'."""
-    base_image = image_stack.bottom().path
-    output_image = os.path.basename(base_image) + '.cont'
-    __copy_image_file(base_image, output_image)
-
-    subtract_image = image_stack.peak().path
-    __subtract_image(output_image, subtract_image)
-
-
-def do_post_processing(outfile) -> None:
-    """Execute some post-processes of imbaseline."""
-    eraseable_folder_register.clear(dry_run=do_not_erase_temporary_files)
-    __write_image_history(outfile)
-
-
-def __subtract_image(operand_a: str=None, operand_b: str=None) -> None:
-    """Subtract image chunk."""
-    image_array = None
-    with tool_manager(operand_b, image) as ia:
-        image_array = ia.getchunk()
-
-    with tool_manager(operand_a, image) as ia:
-        ia.putchunk(pixels=ia.getchunk() - image_array, locking=True)
-
-
-def __validate_imagename(imagename: str=None) -> None:
+def validate_imagename(imagename: str=None) -> None:
     if not os.path.exists(imagename):
         raise ValueError(f'Error: file {imagename} is not found.', 'SEVERE')
 
 
-def __prepare_linefile(linefile: str=None, imagename: str=None) -> str:
+def prepare_linefile(linefile: str=None, imagename: str=None) -> str:
     if linefile == '' or linefile is None:
         linefile = os.path.basename(imagename).rstrip('/') + '_bs'
     if not OVERWRITE and os.path.exists(linefile):
@@ -412,7 +327,7 @@ def __prepare_linefile(linefile: str=None, imagename: str=None) -> str:
     return linefile
 
 
-def __generate_temporary_filename(prefix: str='', ext: str='') -> str:
+def generate_temporary_filename(prefix: str='', ext: str='') -> str:
     if prefix and prefix[-1] != '-':
         prefix = prefix + '-'
     if ext != '':
@@ -423,26 +338,181 @@ def __generate_temporary_filename(prefix: str='', ext: str='') -> str:
             return filename
 
 
-def __require_imsmooth(dirkernel: str='none') -> None:
-    if not dirkernel:
-        dirkernel = 'none'
-    if dirkernel == 'none':
-        return False
-    elif dirkernel in ['image', 'boxcar', 'gaussian']:
-        return True
-    else:
-        raise ValueError(f'Unsupported direction smoothing kernel, {dirkernel}', 'SEVERE')
+def copy_image_file(infile: str=None, outfile: str=None) -> None:
+    if not os.path.exists(infile):
+        raise Exception(f'Image files not found, infile: {infile}')
+
+    ia = image()
+    try:
+        ok = ia.fromimage(infile=infile, outfile=outfile)
+        if not ok:
+            raise Exception(f'Some error occured, infile: {infile}, outfile: {outfile}')
+    finally:
+        ia.done()
 
 
-def __require_sdsmooth(spkernel: str='none') -> None:
-    if not spkernel:
-        spkernel = 'none'
-    if spkernel == 'none':
-        return False
-    elif spkernel in ['boxcar', 'gaussian']:
-        return True
-    else:
-        raise ValueError(f'Unsupported spectral smoothing kernel, {spkernel}', 'SEVERE')
+def do_post_processing(outfile) -> None:
+    """Execute some post-processes of imbaseline."""
+    eraseable_folder_register.clear(dry_run=do_not_erase_temporary_files)
+    __write_image_history(outfile)
+
+
+def __write_image_history(outfile) -> None:
+    with tool_manager(outfile, image) as outia:
+        try:
+            param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
+            vars = locals()
+            param_vals = [vars[p] for p in param_names]
+            write_image_history(outia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
+        except Exception as instance:
+            casalog.post(f'*** Error "{instance}" updating HISTORY', 'WARN')
+
+
+class ImageSubtractionMethods():
+
+    @staticmethod
+    def execute(linefile: str=None, image_stack: AbstractFileStack=None) -> None:
+        """Execute image subtraction.
+
+        The output image is computed as follows:
+        - in case any smoothing (along direction and/or frequency) is executed
+            output_image = input_image - (smoothed_image - smoothed_and_subtracted_image)
+        - in case no smoothing is executed
+            output_image = subtracted_image
+        """
+        if image_stack.height() <= 2:  # any smoothing were not executed
+            output_image = image_stack.pop().path
+            eraseable_folder_register.pop(output_image)
+            os.rename(output_image, linefile)
+            image_stack.push(UnerasableFolder(linefile))
+        else:
+            smoothed_image = image_stack.subpeak().path
+            subtracted_image = image_stack.peak().path
+            base_image = image_stack.bottom().path
+            copy_image_file(base_image, linefile)
+            ImageSubtractionMethods._subtract_image(smoothed_image, subtracted_image)
+            ImageSubtractionMethods._subtract_image(linefile, smoothed_image)
+
+    @staticmethod
+    def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
+        """Compute 'input_image - output_image'."""
+        base_image = image_stack.bottom().path
+        output_image = os.path.basename(base_image) + '.cont'
+        copy_image_file(base_image, output_image)
+
+        subtract_image = image_stack.peak().path
+        ImageSubtractionMethods._subtract_image(output_image, subtract_image)
+
+    @staticmethod
+    def _subtract_image(operand_a: str=None, operand_b: str=None) -> None:
+        """Subtract image chunk."""
+        image_array = None
+        with tool_manager(operand_b, image) as ia:
+            image_array = ia.getchunk()
+
+        with tool_manager(operand_a, image) as ia:
+            ia.putchunk(pixels=ia.getchunk() - image_array, locking=True)
+
+
+class ImsmoothMethods():
+    """Methoods for Imsmooth execution."""
+
+    @staticmethod
+    def execute(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None, kimage: str=None, scale: float=None,
+                stack: AbstractFileStack=None) -> None:
+        """Call casatasks.imsmooth task if dirkernel is specified."""
+        if not ImsmoothMethods.require(dirkernel):
+            casalog.post('omit image smoothing', 'INFO')
+            return
+
+        casalog.post('execute image smoothing', 'INFO')
+        infile = stack.peak().path
+        outfile = generate_temporary_filename('dirsmooth', 'im')
+        imsmooth(**ImsmoothParams(infile, outfile, dirkernel, major, minor, pa, kimage, scale)())
+        stack.push(EraseableFolder(outfile))
+
+    @staticmethod
+    def require(dirkernel: str='none') -> None:
+        if not dirkernel:
+            dirkernel = 'none'
+        if dirkernel == 'none':
+            return False
+        elif dirkernel in ['image', 'boxcar', 'gaussian']:
+            return True
+        else:
+            raise ValueError(f'Unsupported direction smoothing kernel, {dirkernel}', 'SEVERE')
+
+
+class SdsmoothMethods():
+    """Methoods for Sdsmooth execution."""
+
+    @staticmethod
+    def execute(datacolumn: str=None, spkernel: str=None, kwidth: int=None, image_stack: AbstractFileStack=None,
+                ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
+        """Call casatasks.sdsmooth task if spkernel is specified."""
+        if not SdsmoothMethods.require(spkernel):
+            casalog.post('omit spectral smoothing', 'INFO')
+            return
+
+        casalog.post('execute spectral smoothing', 'INFO')
+
+        input_ms = ms_stack.peak().path
+        output_ms = generate_temporary_filename('spsmooth', 'ms')
+        base_image = image_stack.bottom().path
+        sdsmooth(**SdsmoothParams(input_ms, output_ms, datacolumn.lower(), spkernel, kwidth)())
+        ms_stack.push(EraseableFolder(output_ms))
+        output_image = MS2ImageMethods.convert(base_image, output_ms, image_shape, datacolumn)
+        image_stack.push(EraseableFolder(output_image))
+
+    @staticmethod
+    def require(spkernel: str='none') -> None:
+        if not spkernel:
+            spkernel = 'none'
+        if spkernel == 'none':
+            return False
+        elif spkernel in ['boxcar', 'gaussian']:
+            return True
+        else:
+            raise ValueError(f'Unsupported spectral smoothing kernel, {spkernel}', 'SEVERE')
+
+
+class SdbaselineMethods():
+    """Methoods for Sdbaseline execution."""
+
+    @staticmethod
+    def execute(datacolumn: str=None, bloutput: str=None, maskmode: str=None, chans: str=None, thresh: float=None,
+                avg_limit: int=None, minwidth: int=None, edge: List[int]=None, blfunc: str=None, order: int=None,
+                npiece: int=None, applyfft: bool=None, fftthresh: float=None, addwn: List[int]=None, rejwn: List[int]=None,
+                blparam: str=None, clipniter: int=None, clipthresh: float=None,
+                image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
+        """Call casatasks.sdbaseline task."""
+        casalog.post('execute spectral baselining', 'INFO')
+        input_ms = ms_stack.peak().path
+        output_ms = generate_temporary_filename('baseline', 'ms')
+        base_image = image_stack.bottom().path
+        sdbaseline(**SdbaselineParams(input_ms, output_ms, datacolumn.lower(), bloutput, maskmode, chans, thresh,
+                                      avg_limit, minwidth, edge, blfunc, order, npiece, applyfft, fftthresh, addwn,
+                                      rejwn, blparam, clipniter, clipthresh)())
+        ms_stack.push(EraseableFolder(output_ms))
+        output_image = MS2ImageMethods.convert(base_image, output_ms, image_shape, datacolumn)
+        image_stack.push(EraseableFolder(output_image))
+        blparam_name = input_ms + '_blparam.' + SdbaselineParams.FIXED_PARAM['blformat']
+        if os.path.exists(blparam_name):
+            SdbaselineMethods._rename_blparam_filename(blparam_name, base_image)
+
+    @staticmethod
+    def _rename_blparam_filename(filename: str=None, basename: str=None) -> str:
+        if not os.path.exists(filename):
+            return None
+        newname = os.path.basename(basename) + '.ms_blparam.' + SdbaselineParams.FIXED_PARAM['blformat']
+        if os.path.exists(newname):
+            return filename
+        try:
+            os.rename(filename, newname)
+        except Exception:
+            casalog.post(f'rename failure:from {filename} to {newname}', 'SEVERE')
+            return filename
+        return newname
 
 
 class ImsmoothParams(AbstractValidatable):
@@ -613,34 +683,9 @@ class SdbaselineParams(AbstractValidatable):
         return dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn, maskmode=self.maskmode, thresh=self.thresh,
                     avg_limit=self.avg_limit, minwidth=self.minwidth, edge=self.edge, bloutput=self.bloutput, blfunc=self.blfunc,
                     order=self.order, npiece=self.npiece, applyfft=self.applyfft, fftthresh=self.fftthresh, addwn=self.addwn,
-                    rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter, blparam=self.blparam, outfile=self.outfile,
+                    rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter, blparam=self.blparam,
+                    outfile=self.outfile,
                     __log_origin='imbaseline')
-
-
-def __get_axis_position(val: array=None) -> int:
-    if val is not None and len(val) > 0:
-        return val[0].item()
-    return -1
-
-
-def get_image_shape(imagepath: str) -> ImageShape:
-    shape = None
-    with tool_manager(imagepath, image) as ia:
-        try:
-            cs = ia.coordsys()
-            shape = ImageShape(ia.shape(),
-                               cs.findcoordinate('direction')['world'],
-                               __get_axis_position(cs.findcoordinate('spectral')['world']),  # 3 or 2 or -1
-                               __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
-                               )
-        finally:
-            cs.done()
-
-    shape.validate()
-    casalog.post(f'image shape is {shape.im_shape}, direciton {shape.dir_shape} ({shape.im_nrow} pixels), '
-                 f'npol {shape.im_npol}, nchan {shape.im_nchan}', 'DEBUG2')
-
-    return shape
 
 
 class Image2MSParams(AbstractValidatable):
@@ -668,260 +713,274 @@ class Image2MSParams(AbstractValidatable):
             raise ValueError(f'Folder exists: {self.outfile}')
 
 
-def image2ms(params: Image2MSParams=None) -> None:
-    """Convert CasaImage into MeasurementSet."""
-    __create_empty_ms(params)
-    __put_parametes_from_image_to_ms(params)
+class Image2MSMethods():
+    """Methods for converting image to MeasurementSet."""
 
+    @staticmethod
+    def execute(datacolumn: str=None, input_image_shape: ImageShape=None, image_stack: AbstractFileStack=None,
+                ms_stack: AbstractFileStack=None) -> None:
+        """Convert a casaimage to a MeasurementSet."""
+        casalog.post('convert casaimage to MeasurementSet', 'INFO')
+        infile = image_stack.peak().path
+        outfile = generate_temporary_filename('img2ms', 'ms')
+        Image2MSMethods._image2ms(Image2MSParams(infile, outfile, datacolumn, input_image_shape))
+        ms_stack.push(EraseableFolder(outfile))
 
-def __create_empty_ms(params: Image2MSParams=None) -> None:
-    __cleanup_ms_path(params)
-    __create_maintable(params)
-    __create_antenna_table(params)
-    __create_data_description_table(params)
-    __create_feed_table(params)
-    __create_field_table(params)
-    __create_flag_cmd_table(params)
-    __create_history_table(params)
-    __create_observation_table(params)
-    __create_pointing_table(params)
-    __create_polarization_table(params)
-    __create_processor_table(params)
-    __create_source_table(params)
-    __create_special_window_table(params)
-    __create_state_table(params)
+    @staticmethod
+    def _image2ms(params: Image2MSParams=None) -> None:
+        """Convert CasaImage into MeasurementSet."""
+        Image2MSMethods.__create_empty_ms(params)
+        Image2MSMethods.__put_parametes_from_image_to_ms(params)
 
+    @staticmethod
+    def __create_empty_ms(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__cleanup_ms_path(params)
+        Image2MSMethods.__create_maintable(params)
+        Image2MSMethods.__create_antenna_table(params)
+        Image2MSMethods.__create_data_description_table(params)
+        Image2MSMethods.__create_feed_table(params)
+        Image2MSMethods.__create_field_table(params)
+        Image2MSMethods.__create_flag_cmd_table(params)
+        Image2MSMethods.__create_history_table(params)
+        Image2MSMethods.__create_observation_table(params)
+        Image2MSMethods.__create_pointing_table(params)
+        Image2MSMethods.__create_polarization_table(params)
+        Image2MSMethods.__create_processor_table(params)
+        Image2MSMethods.__create_source_table(params)
+        Image2MSMethods.__create_special_window_table(params)
+        Image2MSMethods.__create_state_table(params)
 
-def __generate_time_list(nrow_req: int) -> np.ndarray:
-    mjd_sec = qa.convert(qa.quantity('1995-04-13T09:19:00'), 's')['value']  # dummy timestamp
-    interval = 30.0
-    return mjd_sec + np.arange(nrow_req) * interval
+    @staticmethod
+    def __generate_time_list(nrow_req: int) -> np.ndarray:
+        mjd_sec = qa.convert(qa.quantity('1995-04-13T09:19:00'), 's')['value']  # dummy timestamp
+        interval = 30.0
+        return mjd_sec + np.arange(nrow_req) * interval
 
+    @staticmethod
+    def __create_maintable(params: Image2MSParams=None) -> None:
+        tb = table()
+        try:
+            tb.create(params.outfile, EmptyMSBaseInformation.ms_desc, dminfo=EmptyMSBaseInformation.ms_dminfo)
+            tb.putkeyword(keyword='MS_VERSION', value=2)
+            nrow = tb.nrows()
+            nrow_req = params.im_nrow * params.im_npol
+            nrow = tb.nrows()
+            if nrow != nrow_req:
+                tb.addrows(nrow_req)
+            ddid = tb.getcol('DATA_DESC_ID')
+            ddid[:] = 0
+            tb.putcol('DATA_DESC_ID', ddid)
+            dummy = np.zeros(nrow_req, dtype=int)
+            tb.putcol('ANTENNA1', dummy)
+            tb.putcol('ANTENNA2', dummy)
+            tb.putcol('STATE_ID', dummy)
+            time_list = Image2MSMethods.__generate_time_list(nrow_req)
+            tb.putcol('TIME', time_list)
+            casalog.post(f'number of rows {nrow}, number of image pixels {params.im_nrow}, '
+                         f'number of pols {params.im_npol}, '
+                         f'required rows {nrow_req}', 'DEBUG2')
+        finally:
+            tb.close()
 
-def __create_maintable(params: Image2MSParams=None) -> None:
-    tb = table()
-    try:
-        tb.create(params.outfile, EmptyMSBaseInformation.ms_desc, dminfo=EmptyMSBaseInformation.ms_dminfo)
-        tb.putkeyword(keyword='MS_VERSION', value=2)
-        nrow = tb.nrows()
-        nrow_req = params.im_nrow * params.im_npol
-        nrow = tb.nrows()
-        if nrow != nrow_req:
-            tb.addrows(nrow_req)
-        ddid = tb.getcol('DATA_DESC_ID')
-        ddid[:] = 0
-        tb.putcol('DATA_DESC_ID', ddid)
-        dummy = np.zeros(nrow_req, dtype=int)
-        tb.putcol('ANTENNA1', dummy)
-        tb.putcol('ANTENNA2', dummy)
-        tb.putcol('STATE_ID', dummy)
-        time_list = __generate_time_list(nrow_req)
-        tb.putcol('TIME', time_list)
-        casalog.post(f'number of rows {nrow}, number of image pixels {params.im_nrow}, '
-                     f'number of pols {params.im_npol}, '
-                     f'required rows {nrow_req}', 'DEBUG2')
-    finally:
-        tb.close()
-
-
-def __create_antenna_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'ANTENNA',
-                      EmptyMSBaseInformation.antenna_desc,
-                      EmptyMSBaseInformation.antenna_dminfo)
-    with table_manager(os.path.join(params.outfile, 'ANTENNA'), nomodify=False) as tb:
-        tb.addrows(1)
-
-
-def __create_data_description_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'DATA_DESCRIPTION',
-                      EmptyMSBaseInformation.data_description_desc,
-                      EmptyMSBaseInformation.data_description_dminfo)
-    with table_manager(os.path.join(params.outfile, 'DATA_DESCRIPTION'), nomodify=False) as tb:
-        tb.addrows(1)
-        tb.putcell('SPECTRAL_WINDOW_ID', 0, 0)
-        tb.putcell('POLARIZATION_ID', 0, 0)
-
-
-def __create_feed_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'FEED',
-                      EmptyMSBaseInformation.feed_desc,
-                      EmptyMSBaseInformation.feed_dminfo)
-    with table_manager(os.path.join(params.outfile, 'FEED'), nomodify=False) as tb:
-        tb.addrows(1)
-
-
-def __create_field_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'FIELD',
-                      EmptyMSBaseInformation.field_desc,
-                      EmptyMSBaseInformation.field_dminfo)
-    with table_manager(os.path.join(params.outfile, 'FIELD'), nomodify=False) as tb:
-        tb.addrows(1)
-        tb.putcell('DELAY_DIR', 0, np.zeros((2, 1)))
-        tb.putcell('PHASE_DIR', 0, np.zeros((2, 1)))
-        tb.putcell('REFERENCE_DIR', 0, np.zeros((2, 1)))
-
-
-def __create_flag_cmd_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'FLAG_CMD',
-                      EmptyMSBaseInformation.flag_cmd_desc,
-                      EmptyMSBaseInformation.flag_cmd_dminfo)
-
-
-def __create_history_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'HISTORY',
-                      EmptyMSBaseInformation.history_desc,
-                      EmptyMSBaseInformation.history_dminfo)
-
-
-def __create_observation_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'OBSERVATION',
-                      EmptyMSBaseInformation.observation_desc,
-                      EmptyMSBaseInformation.observation_dminfo)
-    with table_manager(os.path.join(params.outfile, 'OBSERVATION'), nomodify=False) as tb:
-        tb.addrows(1)
-
-
-def __create_pointing_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'POINTING',
-                      EmptyMSBaseInformation.pointing_desc,
-                      EmptyMSBaseInformation.pointing_dminfo)
-
-
-def __create_polarization_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'POLARIZATION',
-                      EmptyMSBaseInformation.polarization_desc,
-                      EmptyMSBaseInformation.polarization_dminfo)
-    with table_manager(os.path.join(params.outfile, 'POLARIZATION'), nomodify=False) as tb:
-        corr_type = np.ones(1, dtype=int)
-        corr_product = np.ones(2, dtype=int).reshape((2, 1))
-        if tb.nrows() == 0:
+    @staticmethod
+    def __create_antenna_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'ANTENNA',
+                                          EmptyMSBaseInformation.antenna_desc,
+                                          EmptyMSBaseInformation.antenna_dminfo)
+        with table_manager(os.path.join(params.outfile, 'ANTENNA'), nomodify=False) as tb:
             tb.addrows(1)
-        tb.putcell('NUM_CORR', 0, 1)
-        tb.putcell('CORR_TYPE', 0, corr_type)
-        tb.putcell('CORR_PRODUCT', 0, corr_product)
 
-
-def __create_processor_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'PROCESSOR',
-                      EmptyMSBaseInformation.processor_desc,
-                      EmptyMSBaseInformation.processor_dminfo)
-
-
-def __create_source_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'SOURCE',
-                      EmptyMSBaseInformation.source_desc,
-                      EmptyMSBaseInformation.source_dminfo)
-
-
-def __create_special_window_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'SPECTRAL_WINDOW',
-                      EmptyMSBaseInformation.special_window_desc,
-                      EmptyMSBaseInformation.special_window_dminfo)
-    with table_manager(os.path.join(params.outfile, 'SPECTRAL_WINDOW'), nomodify=False) as tb:
-        cw = np.ones(params.im_nchan, dtype=float) * 1e6
-        cf = 1e9 + np.arange(params.im_nchan, dtype=float) * 1e6
-
-        if tb.nrows() == 0:
+    @staticmethod
+    def __create_data_description_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'DATA_DESCRIPTION',
+                                          EmptyMSBaseInformation.data_description_desc,
+                                          EmptyMSBaseInformation.data_description_dminfo)
+        with table_manager(os.path.join(params.outfile, 'DATA_DESCRIPTION'), nomodify=False) as tb:
             tb.addrows(1)
-        tb.putcell('NUM_CHAN', 0, params.im_nchan)
-        tb.putcell('CHAN_FREQ', 0, cf)
-        tb.putcell('CHAN_WIDTH', 0, cw)
-        tb.putcell('RESOLUTION', 0, cw)
-        tb.putcell('EFFECTIVE_BW', 0, cw)
-        tb.putcell('TOTAL_BANDWIDTH', 0, cw.sum())
+            tb.putcell('SPECTRAL_WINDOW_ID', 0, 0)
+            tb.putcell('POLARIZATION_ID', 0, 0)
 
-
-def __create_state_table(params: Image2MSParams=None) -> None:
-    __create_subtable(params.outfile,
-                      'STATE',
-                      EmptyMSBaseInformation.state_desc,
-                      EmptyMSBaseInformation.state_dminfo)
-    with table_manager(os.path.join(params.outfile, 'STATE'), nomodify=False) as tb:
-        if tb.nrows() == 0:
+    @staticmethod
+    def __create_feed_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'FEED',
+                                          EmptyMSBaseInformation.feed_desc,
+                                          EmptyMSBaseInformation.feed_dminfo)
+        with table_manager(os.path.join(params.outfile, 'FEED'), nomodify=False) as tb:
             tb.addrows(1)
-        tb.putcell('OBS_MODE', 0, 'OBSERVE_TARGET#ON_SOURCE_IMAGE_DOMAIN')
 
+    @staticmethod
+    def __create_field_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'FIELD',
+                                          EmptyMSBaseInformation.field_desc,
+                                          EmptyMSBaseInformation.field_dminfo)
+        with table_manager(os.path.join(params.outfile, 'FIELD'), nomodify=False) as tb:
+            tb.addrows(1)
+            tb.putcell('DELAY_DIR', 0, np.zeros((2, 1)))
+            tb.putcell('PHASE_DIR', 0, np.zeros((2, 1)))
+            tb.putcell('REFERENCE_DIR', 0, np.zeros((2, 1)))
 
-def __cleanup_ms_path(params, overwrite: bool=True) -> None:
-    exists = os.path.exists(params.outfile)
-    if overwrite and exists:
-        shutil.rmtree(params.outfile)
-    return exists
+    @staticmethod
+    def __create_flag_cmd_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'FLAG_CMD',
+                                          EmptyMSBaseInformation.flag_cmd_desc,
+                                          EmptyMSBaseInformation.flag_cmd_dminfo)
 
+    @staticmethod
+    def __create_history_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'HISTORY',
+                                          EmptyMSBaseInformation.history_desc,
+                                          EmptyMSBaseInformation.history_dminfo)
 
-def __create_subtable(outfile: str=None, subtable: str=None, desc: str=None, dminfo: str=None) -> None:
-    tb = table()
-    try:
-        tb.create(f'{outfile}/{subtable}', desc, dminfo=dminfo)
-    finally:
-        tb.close()
-    with table_manager(outfile, nomodify=False) as tb:
-        tb.putkeyword(subtable, f'Table: {outfile}/{subtable}')
+    @staticmethod
+    def __create_observation_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'OBSERVATION',
+                                          EmptyMSBaseInformation.observation_desc,
+                                          EmptyMSBaseInformation.observation_dminfo)
+        with table_manager(os.path.join(params.outfile, 'OBSERVATION'), nomodify=False) as tb:
+            tb.addrows(1)
 
+    @staticmethod
+    def __create_pointing_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'POINTING',
+                                          EmptyMSBaseInformation.pointing_desc,
+                                          EmptyMSBaseInformation.pointing_dminfo)
 
-def __put_parametes_from_image_to_ms(params: Image2MSParams=None) -> None:
-    __put_image_parameters_into_ms(params, *__get_image_parameters(params))
+    @staticmethod
+    def __create_polarization_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'POLARIZATION',
+                                          EmptyMSBaseInformation.polarization_desc,
+                                          EmptyMSBaseInformation.polarization_dminfo)
+        with table_manager(os.path.join(params.outfile, 'POLARIZATION'), nomodify=False) as tb:
+            corr_type = np.ones(1, dtype=int)
+            corr_product = np.ones(2, dtype=int).reshape((2, 1))
+            if tb.nrows() == 0:
+                tb.addrows(1)
+            tb.putcell('NUM_CORR', 0, 1)
+            tb.putcell('CORR_TYPE', 0, corr_type)
+            tb.putcell('CORR_PRODUCT', 0, corr_product)
 
+    @staticmethod
+    def __create_processor_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'PROCESSOR',
+                                          EmptyMSBaseInformation.processor_desc,
+                                          EmptyMSBaseInformation.processor_dminfo)
 
-def __get_image_parameters(params: Image2MSParams=None) -> Tuple[np.array, int]:
-    # get image array and mask from the image
-    with tool_manager(params.infile, image) as ia:
-        arr = ia.getchunk()
-        msk = ia.getchunk(getmask=True)
+    @staticmethod
+    def __create_source_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'SOURCE',
+                                          EmptyMSBaseInformation.source_desc,
+                                          EmptyMSBaseInformation.source_dminfo)
 
-    # put image array slices to MS DATA column
-    # axis indices for spatial, spectral and polarization axes
-    xax, yax = params.axis_dir
-    spax = params.axis_sp
-    if params.axis_pol > 0:
-        polax = params.axis_pol
-    else:
-        arr = np.expand_dims(arr, axis=3)
-        msk = np.expand_dims(msk, axis=3)
-        polax = 3
-    casalog.post(f'axis index: {xax} {yax} {polax} {spax}', 'DEBUG2')
-    return arr, msk, xax, yax, spax, polax
+    @staticmethod
+    def __create_special_window_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'SPECTRAL_WINDOW',
+                                          EmptyMSBaseInformation.special_window_desc,
+                                          EmptyMSBaseInformation.special_window_dminfo)
+        with table_manager(os.path.join(params.outfile, 'SPECTRAL_WINDOW'), nomodify=False) as tb:
+            cw = np.ones(params.im_nchan, dtype=float) * 1e6
+            cf = 1e9 + np.arange(params.im_nchan, dtype=float) * 1e6
 
+            if tb.nrows() == 0:
+                tb.addrows(1)
+            tb.putcell('NUM_CHAN', 0, params.im_nchan)
+            tb.putcell('CHAN_FREQ', 0, cf)
+            tb.putcell('CHAN_WIDTH', 0, cw)
+            tb.putcell('RESOLUTION', 0, cw)
+            tb.putcell('EFFECTIVE_BW', 0, cw)
+            tb.putcell('TOTAL_BANDWIDTH', 0, cw.sum())
 
-def __put_image_parameters_into_ms(params: Image2MSParams, image_array: np.array, mask_array: np.array, axis_x: int, axis_y: int,
-                                   axis_sp: int, axis_pol: int) -> None:
-    # which data column to use
-    with table_manager(params.outfile, nomodify=False) as tb:
-        # also set FLAG, SIGMA, WEIGHT, and UVW
-        index_list = [0, 0, 0, 0]
-        index_list[axis_sp] = np.arange(params.im_nchan)
-        nx, ny = params.dir_shape
-        irow = 0
-        wgt = np.ones(1, dtype=float)
-        uvw = np.zeros(3, dtype=float)
-        for ix in range(nx):
-            index_list[axis_x] = ix
-            for iy in range(ny):
-                index_list[axis_y] = iy
-                for ip in range(params.im_npol):
-                    index_list[axis_pol] = ip
-                    slice = tuple(index_list)
-                    cell = image_array[slice]
-                    mask = np.logical_not(mask_array[slice])
-                    casalog.post(f'slice={slice}, cell={cell}', 'DEBUG2')
-                    tb.putcell(params.datacolumn, irow, np.expand_dims(cell, axis=0))
-                    tb.putcell('FLAG', irow, np.expand_dims(mask, axis=0))
-                    tb.putcell('SIGMA', irow, wgt)
-                    tb.putcell('WEIGHT', irow, wgt)
-                    tb.putcell('UVW', irow, uvw)
-                    irow += 1
+    @staticmethod
+    def __create_state_table(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__create_subtable(params.outfile,
+                                          'STATE',
+                                          EmptyMSBaseInformation.state_desc,
+                                          EmptyMSBaseInformation.state_dminfo)
+        with table_manager(os.path.join(params.outfile, 'STATE'), nomodify=False) as tb:
+            if tb.nrows() == 0:
+                tb.addrows(1)
+            tb.putcell('OBS_MODE', 0, 'OBSERVE_TARGET#ON_SOURCE_IMAGE_DOMAIN')
+
+    @staticmethod
+    def __cleanup_ms_path(params, overwrite: bool=True) -> None:
+        exists = os.path.exists(params.outfile)
+        if overwrite and exists:
+            shutil.rmtree(params.outfile)
+        return exists
+
+    @staticmethod
+    def __create_subtable(outfile: str=None, subtable: str=None, desc: str=None, dminfo: str=None) -> None:
+        tb = table()
+        try:
+            tb.create(f'{outfile}/{subtable}', desc, dminfo=dminfo)
+        finally:
+            tb.close()
+        with table_manager(outfile, nomodify=False) as tb:
+            tb.putkeyword(subtable, f'Table: {outfile}/{subtable}')
+
+    @staticmethod
+    def __put_parametes_from_image_to_ms(params: Image2MSParams=None) -> None:
+        Image2MSMethods.__put_image_parameters_into_ms(params, *Image2MSMethods.__get_image_parameters(params))
+
+    @staticmethod
+    def __get_image_parameters(params: Image2MSParams=None) -> Tuple[np.array, int]:
+        # get image array and mask from the image
+        with tool_manager(params.infile, image) as ia:
+            arr = ia.getchunk()
+            msk = ia.getchunk(getmask=True)
+
+        # put image array slices to MS DATA column
+        # axis indices for spatial, spectral and polarization axes
+        xax, yax = params.axis_dir
+        spax = params.axis_sp
+        if params.axis_pol > 0:
+            polax = params.axis_pol
+        else:
+            arr = np.expand_dims(arr, axis=3)
+            msk = np.expand_dims(msk, axis=3)
+            polax = 3
+        casalog.post(f'axis index: {xax} {yax} {polax} {spax}', 'DEBUG2')
+        return arr, msk, xax, yax, spax, polax
+
+    @staticmethod
+    def __put_image_parameters_into_ms(params: Image2MSParams, image_array: np.array, mask_array: np.array, axis_x: int,
+                                       axis_y: int, axis_sp: int, axis_pol: int) -> None:
+        # which data column to use
+        with table_manager(params.outfile, nomodify=False) as tb:
+            # also set FLAG, SIGMA, WEIGHT, and UVW
+            index_list = [0, 0, 0, 0]
+            index_list[axis_sp] = np.arange(params.im_nchan)
+            nx, ny = params.dir_shape
+            irow = 0
+            wgt = np.ones(1, dtype=float)
+            uvw = np.zeros(3, dtype=float)
+            for ix in range(nx):
+                index_list[axis_x] = ix
+                for iy in range(ny):
+                    index_list[axis_y] = iy
+                    for ip in range(params.im_npol):
+                        index_list[axis_pol] = ip
+                        slice = tuple(index_list)
+                        cell = image_array[slice]
+                        mask = np.logical_not(mask_array[slice])
+                        casalog.post(f'slice={slice}, cell={cell}', 'DEBUG2')
+                        tb.putcell(params.datacolumn, irow, np.expand_dims(cell, axis=0))
+                        tb.putcell('FLAG', irow, np.expand_dims(mask, axis=0))
+                        tb.putcell('SIGMA', irow, wgt)
+                        tb.putcell('WEIGHT', irow, wgt)
+                        tb.putcell('UVW', irow, uvw)
+                        irow += 1
 
 
 class MS2ImageParams(AbstractValidatable):
@@ -942,87 +1001,52 @@ class MS2ImageParams(AbstractValidatable):
         pass
 
 
-def __change_file_extension(path: str=None, ext: str=None) -> str:
-    if not os.path.exists(path):
-        RuntimeError(f'cannot find path: {path}')
-    base, oldext = os.path.splitext(path)
-    new_path = base_path = f'{base}.{ext}'
-    i = 0
-    while True:
-        if not os.path.exists(new_path):
-            break
-        new_path = base_path + f'.{i}'
-        i += 1
-        if i > 10:
-            raise RuntimeError('some file system error occured')
-    return new_path
+class MS2ImageMethods():
 
+    @staticmethod
+    def convert(base_image: str=None, input_ms: str=None, input_image_shape: ImageShape=None, datacolumn: str=None) -> None:
+        output_image = MS2ImageMethods._change_file_extension(input_ms, 'im')
+        copy_image_file(base_image, output_image)  # mask data is also copied in this method
 
-def __rename_blparam_filename(filename: str=None, basename: str=None) -> str:
-    if not os.path.exists(filename):
-        return None
-    newname = os.path.basename(basename) + '.ms_blparam.' + SdbaselineParams.FIXED_PARAM['blformat']
-    if os.path.exists(newname):
-        return filename
-    try:
-        os.rename(filename, newname)
-    except Exception:
-        casalog.post(f'rename failure:from {filename} to {newname}', 'SEVERE')
-        return filename
-    return newname
+        image_array = MS2ImageMethods._make_image_array(input_image_shape, input_ms, datacolumn)
+        MS2ImageMethods._output_image(output_image, image_array)
 
+        return output_image
 
-def __convert_ms_to_image(base_image: str=None, input_ms: str=None, input_image_shape: ImageShape=None, datacolumn: str=None) -> None:
-    output_image = __change_file_extension(input_ms, 'im')
-    __copy_image_file(base_image, output_image)  # mask data is also copied in this method
+    @staticmethod
+    def _change_file_extension(path: str=None, ext: str=None) -> str:
+        if not os.path.exists(path):
+            RuntimeError(f'cannot find path: {path}')
+        base, oldext = os.path.splitext(path)
+        new_path = base_path = f'{base}.{ext}'
+        i = 0
+        while True:
+            if not os.path.exists(new_path):
+                break
+            new_path = base_path + f'.{i}'
+            i += 1
+            if i > 10:
+                raise RuntimeError('some file system error occured')
+        return new_path
 
-    image_array = __make_image_array(input_image_shape, input_ms, datacolumn)
-    __output_image(output_image, image_array)
+    @staticmethod
+    def _make_image_array(input_image_shape: ImageShape=None, infile: str=None, datacolumn: str=None) -> np.array:
+        nx, ny = input_image_shape.dir_shape
+        image_array = np.empty((nx, ny, input_image_shape.im_nchan))
+        pos = 0
+        with table_manager(infile) as tb:
+            for i in range(nx):
+                for j in range(ny):
+                    image_array[i][j] = tb.getcell(datacolumn, pos)[0].real
+                    pos += 1
+        if input_image_shape.axis_pol > 0:
+            image_array = np.expand_dims(image_array, input_image_shape.axis_pol)
+        return image_array
 
-    return output_image
-
-
-def __copy_image_file(infile: str=None, outfile: str=None) -> None:
-    if not os.path.exists(infile):
-        raise Exception(f'Image files not found, infile: {infile}')
-
-    ia = image()
-    try:
-        ok = ia.fromimage(infile=infile, outfile=outfile)
-        if not ok:
-            raise Exception(f'Some error occured, infile: {infile}, outfile: {outfile}')
-    finally:
-        ia.done()
-
-
-def __make_image_array(input_image_shape: ImageShape=None, infile: str=None, datacolumn: str=None) -> np.array:
-    nx, ny = input_image_shape.dir_shape
-    image_array = np.empty((nx, ny, input_image_shape.im_nchan))
-    pos = 0
-    with table_manager(infile) as tb:
-        for i in range(nx):
-            for j in range(ny):
-                image_array[i][j] = tb.getcell(datacolumn, pos)[0].real
-                pos += 1
-    if input_image_shape.axis_pol > 0:
-        image_array = np.expand_dims(image_array, input_image_shape.axis_pol)
-    return image_array
-
-
-def __output_image(outfile: str=None, image_array: np.array=None) -> None:
-    with tool_manager(outfile, image) as ia:
-        ia.putchunk(pixels=image_array, locking=True)
-
-
-def __write_image_history(outfile) -> None:
-    with tool_manager(outfile, image) as outia:
-        try:
-            param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
-            vars = locals()
-            param_vals = [vars[p] for p in param_names]
-            write_image_history(outia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
-        except Exception as instance:
-            casalog.post(f'*** Error "{instance}" updating HISTORY', 'WARN')
+    @staticmethod
+    def _output_image(outfile: str=None, image_array: np.array=None) -> None:
+        with tool_manager(outfile, image) as ia:
+            ia.putchunk(pixels=image_array, locking=True)
 
 
 class EmptyMSBaseInformation:
