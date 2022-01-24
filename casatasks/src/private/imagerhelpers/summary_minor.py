@@ -10,9 +10,6 @@ class SummaryMinor:
     The structure for this nested dictionary is:
         {
             multi-field id: {
-                "chans": [chan0, chan1, ...],
-                "stoks": [stok0, stok1, ...],
-                "ncycs": number of major/minor cycles
                 channel id: {
                     stokes id: {
                         summary key: {
@@ -20,26 +17,27 @@ class SummaryMinor:
                         }
                     }
                 }
-            },
-            "matrix": original numpy ndarray matrix returned from the cpp code
+            }
         }
 
     Examples:
     
-        1. To get the number of iterations done on the first field, fifth channel, first stokes plane, during the middle minor cycle:
-            field0 = summ_min[0]
-            chan   = field0['chans'][5] # channel index doesn't necessarily start at 0
-            stok   = field0['stoks'][0] # stokes index doesn't necessarily start at 0
-            cycle  = field0['ncycs']/2
-            chan5iters = field0[field][chan][stok]['iterDone'][cycle]
+        1. To get the number of available channels, and the ids of those channels:
+            nchans = len(summ_min[0].keys())
+            avail_chans = summ_min[0].keys()
     
-        2. To get the number of available channels, and the ids of those channels:
-            nchans = len(summ_min[0]["chans"])
-            avail_chans = summ_min[0]["chans"]
+        2. To get the number of iterations done on the main field, fifth channel, first stokes plane, during the middle minor cycle:
+            field0 = summ_min[0] # field 0 is the main field
+            chan = field0.keys()[5] # channel index doesn't necessarily start at 0
+            stoke = field0[chan].keys()[0] # stokes index doesn't necessarily start at 0
+            ncycles = len(field0[chan][stoke]['iterDone'])
+            itersDone = field0[chan][stoke]['iterDone'][ncycles/2]
 
         3. To get the available minor cycle summary statistics:
             field0 = summ_min[0]
-            summaryKeys = field0[field0['chans'][0]][field0['stoks'][0]].keys()
+            chan0 = field0.keys()[0]
+            stoke0 = field0[chan0].keys()[0]
+            availSummStats = field0[field0][stoke0].keys()
     """
     #                           0           1          2            3              4          5       6      7                  8                9               10                11 "No Mask"      12           13         14           15         16         17              18
     rowDescriptionsOldOrder = ["iterDone", "peakRes", "modelFlux", "cycleThresh", "deconId", "chan", "stok", "cycleStartIters", "startIterDone", "startPeakRes", "startModelFlux", "startPeakResNM", "peakResNM", "masksum", "mpiServer", "peakMem", "runtime", "multifieldId", "stopCode"]
@@ -53,11 +51,7 @@ class SummaryMinor:
 
         # edge case: no iterations
         if summaryminor_matrix.shape[1] == 0:
-            return { 0: {
-                'chans': [],
-                'stoks': [],
-                'ncycs': 0
-            }}
+            return { 0: {} }
 
         # get individual dictionaries for each field id
         field_ids = SummaryMinor._getFieldIds(summaryminor_matrix)
@@ -70,35 +64,25 @@ class SummaryMinor:
         else:
             raise RuntimeError("No multifield ids were found. Failed to parse summary minor matrix after tclean finished running.")
 
-        # insert convenience information
-        for field_id in field_ids:
-            chan_ids = sorted(list( ret[field_id].keys() ))
-            stok_ids  = []
-            nCycles = 0
-
-            if len(chan_ids) > 0:
-                chan0  = chan_ids[0]
-                stok_ids = sorted(list( ret[field_id][chan0].keys() ))
-                if len(stok_ids) > 0:
-                    stok0    = stok_ids[0]
-                    nCycles = len( ret[field_id][chan0][stok0]['iterDone'] )
-
-            ret[field_id]['chans'] = chan_ids
-            ret[field_id]['stoks'] = stok_ids
-            ret[field_id]['ncycs'] = nCycles
-
         return ret
 
     def _convertSingleFieldMatrix(single_field_matrix, calc_iterdone_deltas=None, keep_startvals=None):
+        # edge case: no iterations were done (eg threshold < model flux)
+        if single_field_matrix.shape[1] == 0:
+            return {}
+
         summaryminor_dict = SummaryMinor.indexMinorCycleSummaryBySubimage(single_field_matrix)
         percycleiters_dict = SummaryMinor._getPerCycleDict(copy.deepcopy(summaryminor_dict), calc_iterdone_deltas, keep_startvals)
         return percycleiters_dict
 
     def _getFieldIds(matrix):
         """ Get a sorted list of available outlier field ids in the given matrix """
+
+        # edge case: running with MPI and CAS-13683 hasn't been fixed yet
         availRows = SummaryMinor.getRowDescriptionsOldOrder()
         if not "multifieldId" in availRows:
-            return [0]
+            return [0] # can't differentiate multiple fields from available data, assume one field
+
         multifieldIdx = availRows.index("multifieldId")
         nrows = matrix.shape[0]
         ncols = matrix.shape[1]
