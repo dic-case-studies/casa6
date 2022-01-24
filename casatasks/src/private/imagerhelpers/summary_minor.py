@@ -40,16 +40,16 @@ class SummaryMinor:
             availSummStats = field0[field0][stoke0].keys()
     """
     #                           0           1          2            3              4          5       6      7                  8                9               10                11 "No Mask"      12           13         14           15         16         17              18
-    rowDescriptionsOldOrder = ["iterDone", "peakRes", "modelFlux", "cycleThresh", "deconId", "chan", "stok", "cycleStartIters", "startIterDone", "startPeakRes", "startModelFlux", "startPeakResNM", "peakResNM", "masksum", "mpiServer", "peakMem", "runtime", "multifieldId", "stopCode"]
+    rowDescriptionsOldOrder = ["iterDone", "peakRes", "modelFlux", "cycleThresh", "deconId", "chan", "stoke", "cycleStartIters", "startIterDone", "startPeakRes", "startModelFlux", "startPeakResNM", "peakResNM", "masksum", "mpiServer", "peakMem", "runtime", "multifieldId", "stopCode"]
     rowDescriptions13683    = ["iterDone", "peakRes", "modelFlux", "cycleThresh", "deconId", "chan"]
-    # rowDescriptions does not include {"multifieldId", "chan", "stok", "deconId"}, and so the returned dictionary will not include those values in the summary keys
+    # rowDescriptions does not include {"multifieldId", "chan", "stoke", "deconId"}, and so the returned dictionary will not include those values in the summary keys
     rowDescriptions         = ["startIterDone", "iterDone", "startPeakRes", "peakRes", "startModelFlux", "modelFlux", "startPeakResNM", "peakResNM", "cycleThresh", "cycleStartIters", "masksum", "mpiServer", "peakMem", "runtime", "stopCode"]
     rowStartDescs           = ["startIterDone",             "startPeakRes",            "startModelFlux",              "startPeakResNM"]
 
     def convertMatrix(summaryminor_matrix, calc_iterdone_deltas=None, keep_startvals=None):
         ret = {}
 
-        # edge case: no iterations
+        # edge case: no iterations were done (eg threshold < model flux)
         if summaryminor_matrix.shape[1] == 0:
             return { 0: {} }
 
@@ -171,17 +171,17 @@ class SummaryMinor:
         import sys
         oldChanIdx = SummaryMinor.getRowDescriptionsOldOrder().index("chan")
         if not uss:
-            oldStokIdx  = SummaryMinor.getRowDescriptionsOldOrder().index("stok")
+            oldStokeIdx  = SummaryMinor.getRowDescriptionsOldOrder().index("stoke")
         chans = list(np.sort(np.unique(matrix[oldChanIdx])))
         chans = [int(x) for x in chans]
         if uss:
-            stoks = [0]
+            stokes = [0]
         else:
-            stoks = list(np.sort(np.unique(matrix[oldStokIdx])))
-            stoks = [int(x) for x in stoks]
+            stokes = list(np.sort(np.unique(matrix[oldStokeIdx])))
+            stokes = [int(x) for x in stokes]
         ncycles = 0
-        if len(chans) > 0 and len(stoks) > 0:
-            ncycles = int( ncols / (len(chans)*len(stoks)) )
+        if len(chans) > 0 and len(stokes) > 0:
+            ncycles = int( ncols / (len(chans)*len(stokes)) )
             if uss:
                 try:
                     from casampi.MPIEnvironment import MPIEnvironment
@@ -189,7 +189,7 @@ class SummaryMinor:
                         # This is necessary because we may have an odd number of "channels" due to each process getting only a subchunk.
                         # Example:
                         #     Process 1 gets stokes 0-1, process 2 gets stokes 2
-                        #     Each of them assigns channel id = chan + stok * nsubstoks
+                        #     Each of them assigns channel id = chan + stoke * nsubstokes
                         #     Process 1 assigns channel ids [0,2], Process 2 assigns channel id 0.
                         # This hack is not needed when not using a small summary minor because we have the extra knowledge of the stokes, instead of mapping stokes + channels onto chunks.
                         chanslist = matrix[oldChanIdx].tolist()
@@ -199,26 +199,26 @@ class SummaryMinor:
                 except ModuleNotFoundError as e:
                     raise
 
-        # ret is the return dictionary[chans][stoks][rows][cycles]
+        # ret is the return dictionary[chans][stokes][rows][cycles]
         # cummulativeCnt counts how many cols we've read for each channel/stokes/row
         ret = {desc:[0]*ncycles for desc in SummaryMinor.getRowDescriptions()}
-        ret = {stok:copy.deepcopy(ret) for stok in stoks}
+        ret = {stoke:copy.deepcopy(ret) for stoke in stokes}
         ret = {chan:copy.deepcopy(ret) for chan in chans}
         cummulativeCnt = copy.deepcopy(ret) # copy ret's structure
 
-        # reindex based on subimage index (aka chan/stok index)
+        # reindex based on subimage index (aka chan/stoke index)
         for desc in SummaryMinor.getRowDescriptions():
             oldRowIdx = SummaryMinor.getRowDescriptionsOldOrder().index(desc)
             for colIdx in range(ncols):
                 chan = int(matrix[oldChanIdx][colIdx])
                 if uss:
-                    stok = 0
+                    stoke = 0
                 else:
-                    stok = int(matrix[oldStokIdx][colIdx])
+                    stoke = int(matrix[oldStokeIdx][colIdx])
                 val = matrix[oldRowIdx][colIdx]
-                cummulativeCol = int(cummulativeCnt[chan][stok][desc][0]) # const 0: cummulativeCnt doesn't make use of 'cycle' index from copied ret structure
-                ret[chan][stok][desc][cummulativeCol] = val
-                cummulativeCnt[chan][stok][desc][0] += 1
+                cummulativeCol = int(cummulativeCnt[chan][stoke][desc][0]) # const 0: cummulativeCnt doesn't make use of 'cycle' index from copied ret structure
+                ret[chan][stoke][desc][cummulativeCol] = val
+                cummulativeCnt[chan][stoke][desc][0] += 1
 
         return ret
 
@@ -230,13 +230,14 @@ class SummaryMinor:
 
         if (calc_iterdone_deltas) and ("startIterDone" in availRows):
             for chan in ret:
-                for stok in ret[chan]:
-                    for cyc in range(len(ret[chan][stok]["startIterDone"])):
-                        ret[chan][stok]["iterDone"][cyc] -= ret[chan][stok]["startIterDone"][cyc]
+                for stoke in ret[chan]:
+                    for cyc in range(len(ret[chan][stoke]["startIterDone"])):
+                        ret[chan][stoke]["iterDone"][cyc] -= ret[chan][stoke]["startIterDone"][cyc]
         if not keep_startvals:
             for chan in ret:
-                for stok in ret[chan]:
+                for stoke in ret[chan]:
                     for desc in SummaryMinor.getRowStartDescs():
-                        del ret[chan][stok][desc]
+                        del ret[chan][stoke][desc]
 
         return ret
+
