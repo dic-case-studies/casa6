@@ -99,10 +99,10 @@ import operator
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
      from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
-     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata
+     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata, makemask
      from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
      from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-     from casatasks import impbcor
+     from casatasks import impbcor,split,concat
 
      from casatestutils.imagerhelpers import TestHelpers
 
@@ -912,6 +912,103 @@ class test_iterbot(testref_base):
           self.assertTrue(self.check_final(report))
 
 
+     def test_iterbot_mfs_restart_updatedmask(self): 
+          """ [iterbot] Test_mfs_restart_updatedmask : restart mfs with an updated mask (CAS-13508 fix verification) """
+          self.prepData('refim_twopoints_twochan.ms')
+          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='mfs',deconvolver='hogbom',niter=2,parallel=self.parallel)
+          os.system('rm -rf '+self.img+'.mask')
+
+          # Create a new mask around the 1Jy source only. 
+          mask_around_dim_source='circle[[256pix,256pix],30pix]'
+          makemask(inpimage=self.img+'.residual', inpmask=mask_around_dim_source, output=self.img+'.mask.dim.source',overwrite=True,mode='copy')
+          mask_around_dim_source=self.img+'.mask.dim.source'
+
+          # 2nd clean with the updated mask
+          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='mfs',niter=1,calcres=False, calcpsf=False, restart=True, mask=mask_around_dim_source, interactive=0,parallel=self.parallel)
+
+          ret={}
+          if self.parallel:
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'stopcode'])
+          else:
+            ret=retpar 
+          
+          # check initial cyclethreshold
+          # true value: 0.14600408
+          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.200,[256,256,0,0])], firstcyclethresh=0.14600408)
+          #report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.200,[256,256,0,0])], firstcyclethresh=0.55600408)
+          self.assertTrue(self.check_final(report))
+
+     def test_iterbot_cube_restart_updatedmask(self): 
+          """ [iterbot] Test_cube_restart_updatedmask : restart cube with an updated mask (CAS-13508 fix verification) """
+          self.prepData('refim_twopoints_twochan.ms')
+          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=4,interpolation='nearest', parallel=self.parallel)
+          os.system('rm -rf '+self.img+'.mask')
+
+          # Create a new mask around the 1Jy source only. 
+          mask_around_dim_source='circle[[256pix,256pix],30pix]'
+          makemask(inpimage=self.img+'.residual', inpmask=mask_around_dim_source, output=self.img+'.mask.dim.source',overwrite=True,mode='copy')
+          mask_around_dim_source=self.img+'.mask.dim.source'
+
+          # 2nd clean with the updated mask
+          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',niter=10,calcres=False, calcpsf=False, restart=True, mask=mask_around_dim_source, interactive=0,interpolation='nearest', parallel=self.parallel)
+
+          ret={}
+          if self.parallel:
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'stopcode'])
+          else:
+            ret=retpar 
+          
+          # check initial cyclethreshold
+          # true value: 
+          # 0.1988602
+          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.94,[256,256,0,0]),(self.img+'.model', 0.53, [256,256,0,1])], firstcyclethresh=0.1988602)
+
+          self.assertTrue(self.check_final(report))
+
+
+     def test_iterbot_mfs_restart_pbmask(self): 
+          """ [iterbot] Test_mfs_restart_updatedmask : restart mfs with pbmask (CAS-13508 fix verification) """
+          self.prepData('refim_twopoints_twochan.ms')
+          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='mfs',deconvolver='hogbom',niter=2,parallel=self.parallel)
+          os.system('rm -rf '+self.img+'.mask')
+
+          # 2nd clean with pbmask 
+          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='mfs',niter=1,calcres=False, calcpsf=False, restart=True, usemask='pb', pbmask=0.8, interactive=0,parallel=self.parallel)
+
+          ret={}
+          if self.parallel:
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'stopcode'])
+          else:
+            ret=retpar 
+          
+          # check initial cyclethreshold
+          # true value: 0.14600408
+          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.20,[256,256,0,0])], firstcyclethresh=0.1460498)
+
+          self.assertTrue(self.check_final(report))
+
+     def test_iterbot_cube_restart_pbmask(self): 
+          """ [iterbot] Test_cube_restart_updatedmask : restart cube with pbmask (CAS-13508 fix verification) """
+          self.prepData('refim_twopoints_twochan.ms')
+          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=0,interpolation='nearest', parallel=self.parallel)
+          os.system('rm -rf '+self.img+'.mask')
+
+          # 2nd clean with pbmask 
+          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',niter=10,calcres=False, calcpsf=False, restart=True, usemask='pb', pbmask=0.8, interactive=0, interpolation='nearest', parallel=self.parallel)
+
+          ret={}
+          if self.parallel:
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'stopcode'])
+          else:
+            ret=retpar 
+          
+          # check initial cyclethreshold
+          # true value:0.186613 
+          #report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.37,[256,256,0,0]),(self.img+'.model', 0.15, [256,256,0,1])],firstcyclethresh=0.68944335)
+          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.74,[256,256,0,0]),(self.img+'.model', 0.54, [256,256,0,1])],firstcyclethresh=0.18661306)
+
+          self.assertTrue(self.check_final(report))
+##############################################
 ##############################################
 ##############################################
 
@@ -1303,6 +1400,270 @@ class test_stokes(testref_base):
 #          self.prepData('refim_point_linXY.ms')
 #          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='cube')
 #          report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.0,[50,50,0,1]),(self.img+'.image',2.0,[50,50,1,1]), (self.img+'.image',3.0,[50,50,2,1]),(self.img+'.image',4.0,[50,50,4,1]) ])
+
+     def test_stokes_mixed_mfs_I_and_U(self):  # CAS-13618
+          """ [stokes] Test_Stokes_I_and_U_mixed_mfs mfs with Circular Pol dataset"""
+          self.prepData('refim_point_linRL.ms')
+          viss = self.msfile
+          avis = self.img+'.'+viss
+          ## Split across time
+          split(vis=viss, correlation='RR,LL', timerange='18:57:30~22:00:00',outputvis=avis+'_tmp_2pol_time.ms')
+          split(vis=viss, timerange='>22:00:00',outputvis=avis+'_tmp_4pol_time.ms')
+          concat(vis=[avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'], concatvis=avis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=viss, correlation='RR,LL', spw='0:0',outputvis=avis+'_tmp_2pol_chan.ms')
+          split(vis=viss, spw='0:1~2',outputvis=avis+'_tmp_4pol_chan.ms')
+          concat(vis=[avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'], concatvis=avis+'_tmp_mixed_chan.ms')
+
+          vislist = [
+               viss,
+               avis+'_tmp_2pol_time.ms',
+               avis+'_tmp_4pol_time.ms',
+               [avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'],
+               avis+'_tmp_mixed_time.ms',
+               avis+'_tmp_2pol_chan.ms',
+               avis+'_tmp_4pol_chan.ms',
+               [avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'],
+               avis+'_tmp_mixed_chan.ms'
+          ]
+
+          ## Test mfs imaging of Stokes I on its own
+          i=0
+          report=''
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='I',parallel=self.parallel)
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0])])
+               i = i+1
+
+          ## Test mfs imaging of Stokes U on its own
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='U',parallel=self.parallel)
+               if i in [10,14]:
+                    u_true=0.0
+               else:
+                    u_true=3.0
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',u_true,[50,50,0,0])])
+               i = i+1
+    
+          self.assertTrue(self.check_final(report))
+
+     #@unittest.skipIf(is_CASA6, "Skip because cube tests fail and must be fixed.")
+     def test_stokes_mixed_cube_I_and_U(self):  # CAS-13618
+          """ [stokes] Test_Stokes_I_and_U_mixed_mfs mfs with Circular Pol dataset"""
+          self.prepData('refim_point_linRL.ms')
+          viss = self.msfile
+          avis = self.img+'.'+viss
+          ## Split across time
+          split(vis=viss, correlation='RR,LL', timerange='18:57:30~22:00:00',outputvis=avis+'_tmp_2pol_time.ms')
+          split(vis=viss, timerange='>22:00:00',outputvis=avis+'_tmp_4pol_time.ms')
+          concat(vis=[avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'], concatvis=avis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=viss, correlation='RR,LL', spw='0:0',outputvis=avis+'_tmp_2pol_chan.ms')
+          split(vis=viss, spw='0:1~2',outputvis=avis+'_tmp_4pol_chan.ms')
+          concat(vis=[avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'], concatvis=avis+'_tmp_mixed_chan.ms')
+
+          vislist = [         ### The pixel value at the source location is checked for channel 1 (out of channels 0,1,2). 
+               viss,                                                                                                  #0#   I=1.0                                                    #9# U=3.0
+               avis+'_tmp_2pol_time.ms',                                                             #1#   I=1.0                                                    #10# U=0
+               avis+'_tmp_4pol_time.ms',                                                             #2#   I=1.0                                                    #11# U=3.0
+               [avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'],              #3#   I=1.0                                                    #12# U=3.0
+               avis+'_tmp_mixed_time.ms',                                                          #4#   I=1.0                                                    #13# U=3.0
+               avis+'_tmp_2pol_chan.ms',                 ## SKIP                               #5#  Chan0 : 1.0,  Chans1,2: None  :FAIL      #14# U=0 (single chan0 image)  /// #5,#14 FAIL on None==None check!
+               avis+'_tmp_4pol_chan.ms',                                                             #6#  Chans1,2 image with 1.0                      #15# Chan1,2 image with 3.0
+               [avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'],  ## SKIP     #7#   I=1.0  : FAIL : Only Chan0 exists        #16# Chan0:U=0.0, Chan1.2:U=3.0  : FAIL : Only chan0 exists with 0.0
+               avis+'_tmp_mixed_chan.ms'                                                           #8#   I=1.0                                                    #17# Chan0:U=0.0, Chan1.2:U=3.0
+          ]
+
+          ## Test mfs imaging of Stokes I on its own
+          i=0
+          report=''
+  
+          ## Test cube imaging of Stokes I on its own
+          for vis in vislist:
+               i_true = 1.0
+               if i in [5,7]:  
+                    #SKIP #5 : We are checking channel 1 but only chan 0 exists here (correct behaviour)
+                    #SKIP #7 : Fails : List of MS is not yet supported, across freq channels. It picks image shapes only from the first MS. 
+                    i=i+1
+                    continue
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, specmode='cube',interpolation='nearest', stokes='I',parallel=self.parallel)
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',i_true,[50,50,0,1])])  ## Check second channel
+               i = i+1
+
+          ## Test cube imaging of Stokes U on its own
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, specmode='cube',interpolation='nearest', stokes='U',parallel=self.parallel)
+               u_true = 3.0
+               if i ==10:
+                    u_true=0.0  # since there is no RL,LR
+               if i in [14,16] :
+                    #SKIP #14 : We are checking channel 1 but only chan 0 exists here (correct behaviour)
+                    #SKIP #16 : Fails : List of MS is not yet supported, across freq channels. It picks image shapes only from the first MS. 
+                    i=i+1
+                    continue
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',u_true,[50,50,0,1])]) ## Check second channel
+               i = i+1
+
+     
+          self.assertTrue(self.check_final(report))
+
+     def test_stokes_mixed_mfs_IQUV(self):  # CAS-13618
+          """ [stokes] Test_Stokes_IQUV_mixed_mfs with Linear Pol dataset and Stokes U"""
+          self.prepData('refim_point_linXY.ms')
+          viss = self.msfile
+          avis = self.img+'.'+viss
+          ## Split across time
+          split(vis=viss, correlation='XX,YY', timerange='18:57:30~22:00:00',outputvis=avis+'_tmp_2pol_time.ms')
+          split(vis=viss, timerange='>22:00:00',outputvis=avis+'_tmp_4pol_time.ms')
+          concat(vis=[avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'], concatvis=avis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=viss, correlation='XX,YY', spw='0:0',outputvis=avis+'_tmp_2pol_chan.ms')
+          split(vis=viss, spw='0:1~2',outputvis=avis+'_tmp_4pol_chan.ms')
+          concat(vis=[avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'], concatvis=avis+'_tmp_mixed_chan.ms')
+
+          vislist = [
+               viss,
+               avis+'_tmp_2pol_time.ms',
+               avis+'_tmp_4pol_time.ms',
+               [avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'],
+               avis+'_tmp_mixed_time.ms',
+               avis+'_tmp_2pol_chan.ms',
+               avis+'_tmp_4pol_chan.ms',
+               [avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'],
+               avis+'_tmp_mixed_chan.ms'
+          ]
+
+          i=0
+          report=''
+          ## Test MFS
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',parallel=self.parallel)
+               if i in [1,5]:
+                    i_true=1.0
+                    q_true=2.0
+                    u_true=0.0    # for a dataset with X,Y feeds, parallel hands give only I,Q
+                    v_true=0.0    # for a dataset with X,Y feeds, parallel hands give only I,Q
+               else:
+                    i_true=1.0
+                    q_true=2.0
+                    u_true=3.0
+                    v_true=4.0
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],
+                                              imgval=[(self.img+'_'+str(i)+'.image',i_true,[50,50,0,0]) ,
+                                                      (self.img+'_'+str(i)+'.image',q_true,[50,50,1,0]),
+                                                      (self.img+'_'+str(i)+'.image',u_true,[50,50,2,0]),
+                                                      (self.img+'_'+str(i)+'.image',v_true,[50,50,3,0])   ])
+               i = i+1
+     
+          self.assertTrue(self.check_final(report))
+
+     #@unittest.skipIf(is_CASA6, "Skip because cube tests fail and must be fixed.")
+     def test_stokes_mixed_cube_IQUV(self):  # CAS-13618
+          """ [stokes] Test_Stokes_IQUV_mixed_mfs with Linear Pol dataset and Stokes U"""
+          self.prepData('refim_point_linXY.ms')
+          viss = self.msfile
+          avis = self.img+'.'+viss
+          ## Split across time
+          split(vis=viss, correlation='XX,YY', timerange='18:57:30~22:00:00',outputvis=avis+'_tmp_2pol_time.ms')
+          split(vis=viss, timerange='>22:00:00',outputvis=avis+'_tmp_4pol_time.ms')
+          concat(vis=[avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'], concatvis=avis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=viss, correlation='XX,YY', spw='0:0',outputvis=avis+'_tmp_2pol_chan.ms')
+          split(vis=viss, spw='0:1~2',outputvis=avis+'_tmp_4pol_chan.ms')
+          concat(vis=[avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'], concatvis=avis+'_tmp_mixed_chan.ms')
+
+          vislist = [
+               viss,                                                                                       #0# IQUV
+               avis+'_tmp_2pol_time.ms',                                                  #1# IQ (U,V=0)
+               avis+'_tmp_4pol_time.ms',                                                  #2# IQUV
+               [avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'],   #3# IQUV   
+               avis+'_tmp_mixed_time.ms',                                               #4# IQUV   
+               avis+'_tmp_2pol_chan.ms',                                                  #5# Chan0 : IQ.  Chans1,2 : None
+               avis+'_tmp_4pol_chan.ms',                                                  #6# Chan0 : None.  Chans1,2 : IQUV
+               [avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'],   #7# Chan0 : IQ, Chans1,2 : IQUV   : FAIL : Data sel is making the cube only with chan0(IQ) => Skipped
+               avis+'_tmp_mixed_chan.ms'                                                #8# Chan0 : IQ, Chans1,2 : IQUV  : Correct.
+          ]
+
+
+          i=0
+          report=''
+          ## Test CUBE
+          for vis in vislist:
+               if i in [7]: 
+                    ## SKIP : #7 : Not supported yet. 
+                    i=i+1
+                    continue
+               ## Run tclean 
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV', usemask='user', mask='box[[49.5pix, 49.5pix],[50.5pix,50.5pix]]',specmode='cube',interpolation='nearest',parallel=self.parallel)
+               ## Check outputs
+               if i in [1,5]:
+                    i_true=1.0
+                    q_true=2.0
+                    u_true=0.0    # for a dataset with X,Y feeds, parallel hands give only I,Q
+                    v_true=0.0    # for a dataset with X,Y feeds, parallel hands give only I,Q
+               else:
+                    i_true=1.0
+                    q_true=2.0
+                    u_true=3.0
+                    v_true=4.0
+                    report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],             
+                                              imgval=[(self.img+'_'+str(i)+'.image',i_true,[50,50,0,1]) ,     # Check channel 1
+                                                      (self.img+'_'+str(i)+'.image',q_true,[50,50,1,1]),
+                                                      (self.img+'_'+str(i)+'.image',u_true,[50,50,2,1]),
+                                                      (self.img+'_'+str(i)+'.image',v_true,[50,50,3,1])   ])
+               #print('i=', i, 'report ', report)
+               i = i+1
+
+          #5# Chan0 : IQ.  Chans1,2 : None. It makes a single channel image.               
+          i=5
+          tclean(vis=vislist[i],imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV', specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],             
+                                         imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0]) ,     # Check channel 0 since only that is made
+                                                 (self.img+'_'+str(i)+'.image',2.0,[50,50,1,0]),
+                                                 (self.img+'_'+str(i)+'.image',0.0,[50,50,2,0]),
+                                                 (self.img+'_'+str(i)+'.image',0.0,[50,50,3,0])   ])
+          
+          #6# Chan0 : None.  Chans1,2 : IQUV. Makes a 2-chan cube. 
+          i=6
+          tclean(vis=vislist[i],imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV', specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],             
+                                         imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0]) ,     # Check channel 0 (channel 1 in freq)
+                                                 (self.img+'_'+str(i)+'.image',2.0,[50,50,1,0]),
+                                                 (self.img+'_'+str(i)+'.image',3.0,[50,50,2,0]),
+                                                 (self.img+'_'+str(i)+'.image',4.0,[50,50,3,0])   ])
+          
+          #7# Chan0 : IQ, Chans1,2 : IQUV : Failing because it's creating a single channel cube from the first MS in the list.
+          # Failing to make a cube with the default params should be in another ticket
+          i=7
+          tclean(vis=vislist[i],imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV', specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],             
+                                         imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0]) ,     
+                                                 (self.img+'_'+str(i)+'.image',2.0,[50,50,1,0]),
+                                                 (self.img+'_'+str(i)+'.image',0.0,[50,50,2,0]),
+                                                 (self.img+'_'+str(i)+'.image',0.0,[50,50,3,0]) ])
+                                                 #####################,
+                                                 #(self.img+'_'+str(i)+'.image',1.0,[50,50,2,1]),
+                                                 #(self.img+'_'+str(i)+'.image',2.0,[50,50,2,1]),
+                                                 #(self.img+'_'+str(i)+'.image',3.0,[50,50,2,1]),
+                                                 #(self.img+'_'+str(i)+'.image',4.0,[50,50,3,1])   ])
+          
+          #8# Chan0 : IQ, Chans1,2 : IQUV  : Correct
+          i=8
+          tclean(vis=vislist[i],imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV', specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],             
+                                         imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0]) ,     
+                                                 (self.img+'_'+str(i)+'.image',2.0,[50,50,1,0]),
+                                                 (self.img+'_'+str(i)+'.image',0.0,[50,50,2,0]),
+                                                 (self.img+'_'+str(i)+'.image',0.0,[50,50,3,0]),
+                                                 #####################
+                                                 (self.img+'_'+str(i)+'.image',1.0,[50,50,0,1]),
+                                                 (self.img+'_'+str(i)+'.image',2.0,[50,50,1,1]),
+                                                 (self.img+'_'+str(i)+'.image',3.0,[50,50,2,1]),
+                                                 (self.img+'_'+str(i)+'.image',4.0,[50,50,3,1])   ])                 
+          
+     
+          self.assertTrue(self.check_final(report))
+
 
 ##############################################
 ##############################################
@@ -3265,7 +3626,7 @@ class test_modelvis(testref_base):
 
           
      def test_modelvis_12(self):
-          """ [modelpredict] Test_modelvis_12 : (CAS-12618) mfs with automask and save model column (saving model via a separate predict model step)"""
+          """ [modelpredict] Test_modelvis_12 : (CAS-12618) mfs with automask and save model column (single tclean call, internally a separate predit model step)"""
           self.prepData("refim_twochan.ms")
 
           ## Save model after deconvolution
@@ -3337,6 +3698,96 @@ class test_modelvis(testref_base):
           delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
                        nsigma=1.0, savemodel='virtual',parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_20(self):
+          """ [modelpredict] Test_modelvis_20 : (CAS-13615) mfs with automask and save model column (saving model via a separate niter=0 tclean call)"""
+          # should give the identical result as test_modelvis_12
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',usemask='auto-multithresh', parallel=self.parallel)
+          # leaving usemask='auto-multithresh' intentionally to make sure the bug is fixed
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='modelcolumn',usemask='auto-multithresh', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_21(self):
+          """ [modelpredict] Test_modelvis_21 : (CAS-13615) mfs with automask and save virtual model (saving model via a separate niter=0 tclean call)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',usemask='auto-multithresh', parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='virtual',usemask='auto-multithresh', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_22(self):
+          """ [modelpredict] Test_modelvis_22 : (cas-13615) mfs with nsigma and save model column (saving model via a separate niter=0 tclean call)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',nsigma=1.0, parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='modelcolumn',nsigma=1.0, restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_23(self):
+          """ [modelpredict] Test_modelvis_23 : (CAS-13615) mfs with nsigma and save model column (saving model via a separate niterpredict model step)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',nsigma=1.0, parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='virtual',nsigma=1.0, restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_24(self):
+          """ [modelpredict] Test_modelvis_24 : (CAS-13615) cube with  and save  model column for auto-multithresh (in two steps)"""
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       usemask='auto-multithresh', savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       usemask='auto-multithresh', savemodel='modelcolumn', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_25(self):
+          """ [modelpredict] Test_modelvis_25: (CAS-13615) cube with and save virtual model for auto-multithreseh (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       usemask='auto-multithresh', savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       usemask='auto-multithresh', savemodel='virtual', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_26(self):
+          """ [modelpredict] Test_modelvis_26 : (CAS-13615) cube with and save model column for nsgima >0.0 (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       nsigma=1.0, savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       nsigma=1.0, savemodel='modelcolumn',restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_27(self):
+          """ [modelpredict] Test_modelvis_27: (CAS-13615) cube with and save virtual model for nsima >0.0 (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       nsigma=1.0, savemodel='none',parallel=self.parallel)
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       nsigma=1.0, savemodel='virtual', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
           hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==True )
 

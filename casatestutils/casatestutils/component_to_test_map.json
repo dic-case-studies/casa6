@@ -2161,6 +2161,16 @@
             "comment":""
         },
         {
+            "testScript":"test_tool_linearmosaic",
+            "testType":"casatools",
+            "maintainer":"Bob Garwood",
+            "maintainerEmail":"bgarwood@nrao.edu",
+            "testOptions":[],
+            "testGroup":["default","casatools","Imaging","linearmosaic"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_tsdimaging",
             "testType":"casatasks",
             "maintainer":"Takeshi Nakazato",
@@ -2229,27 +2239,6 @@
             "testGroup":["wvrgcal"],
             "timeout":0,
             "comment":""
-        },
-        {
-            "testScript":"test_asdmsummary_fail",
-            "testType":"casatasks",
-            "maintainer":"Akeem Wells",
-            "maintainerEmail":"awells@nrao.edu",
-            "testOptions":[],
-            "testGroup":["asdmsummary"],
-            "timeout":0,
-            "comment":"For Bamboo Testing"
-        },
-        {
-            "testScript":"test_bandpass_fail",
-            "testType":"casatasks",
-            "maintainer":"Akeem Wells",
-            "maintainerEmail":"awells@nrao.edu",
-            "testOptions":[],
-            "testGroup":["bandpass"],
-            "timeout":0,
-            "comment":"For Bamboo Testing"
         }
-
     ]
 }
