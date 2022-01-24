@@ -67,22 +67,27 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 
 class ia_decompose_test(unittest.TestCase):
     
     def setUp(self):
-        pass
+        self.mymask = ''
     
     def tearDown(self):
-        pass
+        if self.mymask:
+            if os.path.isfile(self.mymask):
+                os.unlink(self.mymask)
+            else:
+                shutil.rmtree(self.mymask)
     
     def test_stretch(self):
         """ ia.decompose(): Test stretch parameter"""
         yy = iatool()
-        mymask = "maskim"
-        yy.fromshape(mymask, [20, 20, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [20, 20, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [20,20,1,5]
@@ -90,11 +95,11 @@ class ia_decompose_test(unittest.TestCase):
         #yy.addnoise()
         self.assertRaises(
             Exception,
-            yy.decompose, threshold=0.001, mask=mymask + ">0",
+            yy.decompose, threshold=0.001, mask=self.mymask + ">0",
             stretch=False
         )
         zz = yy.decompose(
-            threshold=0.001, mask=mymask + ">0", stretch=True
+            threshold=0.001, mask=self.mymask + ">0", stretch=True
         )
         self.assertTrue(type(zz) == type({}))
         yy.done()

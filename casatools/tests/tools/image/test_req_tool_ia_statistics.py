@@ -22,8 +22,6 @@
 #
 ##########################################################################
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import unittest
@@ -31,27 +29,13 @@ import math
 import numpy as np
 import numbers
 
-try:
-    from casatools import ctsys, image, table, quanta, regionmanager
-    _tb = table()
-    _qa = quanta()
-    _rg = regionmanager()
-    ctsys_resolve = ctsys.resolve
-    is_CASA6 = True
-except ImportError:
-    from tasks import *
-    from taskinit import *
-    import casac
-    from __main__ import *
-    # not a local tool
-    _tb = tbtool()
-    _qa = qatool()
-    _rg = rgtool()
-    image = iatool
-    is_CASA6 = False
-    data_root = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
-    def ctsys_resolve(apath):
-        return os.path.join(data_root, apath)
+
+from casatools import ctsys, image, table, quanta, regionmanager
+_tb = table()
+_qa = quanta()
+_rg = regionmanager()
+ctsys_resolve = ctsys.resolve
+
 
 datapath = 'unittest/ia_statistics/'
 
@@ -60,17 +44,6 @@ Unit tests for tool method ia.statistics().
 '''
 class ia_statistics_test(unittest.TestCase):
     
-    # Input and output names
-    moment = 'moment_map.im'
-    s150 = '150arcsec_pix.im'
-    s15 = '15arcsec_pix.im'
-    s0_015 = '0.015arcsec_pix.im'
-    s0_0015 = '0.0015arcsec_pix.im'
-    s0_00015 = '0.00015arcsec_pix.im'
-    linear_coords = 'linearCoords.fits'
-    fourdim = '4dim.im'
-    kimage = "ktest.im"
-    res = None
 
     def _compare(self, resold, resnew, helpstr):
         mytype = type(resold)
@@ -111,23 +84,31 @@ class ia_statistics_test(unittest.TestCase):
         self.res = None
         self._myia = image()
         self.datapath = ctsys_resolve(datapath)
-    
+        # Input and output names
+        self.moment = 'moment_map.im'
+        #s150 = '150arcsec_pix.im'
+        #s15 = '15arcsec_pix.im'
+        #s0_015 = '0.015arcsec_pix.im'
+        #s0_0015 = '0.0015arcsec_pix.im'
+        #s0_00015 = '0.00015arcsec_pix.im'
+        self.linear_coords = 'linearCoords.fits'
+        self.fourdim = '4dim.im'
+        #kimage = "ktest.im" 
+        self.mymask = ''
+        self.imagename = ''
+        self.logfile = ''
+
     def tearDown(self):
         self._myia.done()
+        data = [self.moment,self.fourdim,self.linear_coords, self.imagename, self.mymask, self.logfile]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
         self.assertTrue(len(_tb.showcache()) == 0)
-        # make sure directory is clean as per verification test requirement
-        cwd = os.getcwd()
-        for filename in os.listdir(cwd):
-            file_path = os.path.join(cwd, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+
 
     def test_moment_map_flux(self):
         """Test 1: verify moment maps can have flux densities computed in statistics"""
@@ -224,32 +205,32 @@ class ia_statistics_test(unittest.TestCase):
     def test_stretch(self):
         """Test stretch parameter"""
         yy = image()
-        mymask = "maskim"
-        yy.fromshape(mymask, [200, 200, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200,200,1,20]
-        imagename = "tmp.im"
-        yy.fromshape(imagename, shape)
+        self.imagename = "tmp.im"
+        yy.fromshape(self.imagename, shape)
         yy.addnoise()
         yy.done()
-        self.assertTrue(yy.open(imagename), "Failed to open image")
+        self.assertTrue(yy.open(self.imagename), "Failed to open image")
         exception_thrown = False
         try:
-            zz = yy.statistics(mask=mymask + ">0", stretch=False)
+            zz = yy.statistics(mask=self.mymask + ">0", stretch=False)
         except:
             exception_thrown = True
         finally:
             yy.done()
         self.assertTrue(exception_thrown)
-        self.assertTrue(yy.open(imagename), "Failed to open image")
-        zz = yy.statistics(mask=mymask + ">0", stretch=True)
+        self.assertTrue(yy.open(self.imagename), "Failed to open image")
+        zz = yy.statistics(mask=self.mymask + ">0", stretch=True)
         yy.done()
         self.assertTrue(type(zz) == type({}) and (not zz == {}))
    
     def test_logfile_param(self):
         """test logfile """
-        logfile = "ia_statistics.log"
+        self.logfile = "ia_statistics.log"
         myim = self.fourdim
         shutil.copytree(os.path.join(self.datapath,myim), myim)
         i = 1
@@ -257,10 +238,10 @@ class ia_statistics_test(unittest.TestCase):
         for append in [False, True]:
             self.assertTrue(myia.open(myim), "Failed to open image")
             stats = myia.statistics(
-                robust=True, axes=[0], logfile=logfile, append=append
+                robust=True, axes=[0], logfile=self.logfile, append=append
             )
             myia.done()
-            size = os.path.getsize(logfile)
+            size = os.path.getsize(self.logfile)
             # appending, second time through size should double
             print("i",i)
             self.assertTrue(size > 1.1e4*i and size < 1.2e4*i )
@@ -270,7 +251,8 @@ class ia_statistics_test(unittest.TestCase):
         """ test multiple region support"""
         shape = [10, 10, 10]
         myia = self._myia
-        myia.fromshape("test011.im", shape)
+        self.imagename = "test011.im"
+        myia.fromshape(self.imagename, shape)
         box = "0, 0, 2, 2, 4, 4, 6, 6"
         chans = "0~4, 6, >8"
         reg = _rg.frombcs(
@@ -285,8 +267,8 @@ class ia_statistics_test(unittest.TestCase):
         """Test hinges-fences algorithm"""
         data = list(range(100))
         myia = self._myia
-        imagename = "hftest.im"
-        myia.fromarray(imagename, data)
+        self.imagename = "hftest.im"
+        myia.fromarray(self.imagename, data)
         classic = myia.statistics(algorithm="cl")
         hfall = myia.statistics(algorithm="h")
         hf0 = myia.statistics(robust=True, algorithm="h", fence=0)
@@ -308,12 +290,12 @@ class ia_statistics_test(unittest.TestCase):
         data = np.array(range(100))
         data = data*data
         myia = self._myia
-        imagename = "fhtest.im"
-        myia.fromarray(imagename, data)
+        self.imagename = "fhtest.im"
+        myia.fromarray(self.imagename, data)
         myia.done()
         for center in ["mean", "median", "zero"]:
             for lside in [True, False]:
-                self.assertTrue(myia.open(imagename), "Failed to open image")
+                self.assertTrue(myia.open(self.imagename), "Failed to open image")
                 res = myia.statistics(
                     robust=True, algorithm="f", center=center, lside=lside
                 )
@@ -391,12 +373,12 @@ class ia_statistics_test(unittest.TestCase):
                 3.5, 4, 5, 6, 7, 8, 1000000
             ]
         myia = self._myia
-        imagename = "chauvtest.im"
-        myia.fromarray(imagename, data)
+        self.imagename = "chauvtest.im"
+        myia.fromarray(self.imagename, data)
         myia.done()
         for zscore in [3.5, -1]:
             for maxiter in [0, 1, -1]:
-                self.assertTrue(myia.open(imagename), "Failed to open image")
+                self.assertTrue(myia.open(self.imagename), "Failed to open image")
                 stats = myia.statistics(
                     algorithm="ch", zscore=zscore, maxiter=maxiter
                 )
@@ -426,8 +408,8 @@ class ia_statistics_test(unittest.TestCase):
     def test_internal_region_exclusion(self):
         """Verify data not returned for internally excluded regions"""
         myia = image()
-        imagename = "internally_excluded_region.im"
-        myia.fromshape(imagename, [100, 200, 110, 4])
+        self.imagename = "internally_excluded_region.im"
+        myia.fromshape(self.imagename, [100, 200, 110, 4])
         myia.addnoise()
         reg = _rg.frombcs(
             csys=myia.coordsys().torecord(), shape=myia.shape(),
@@ -459,8 +441,6 @@ class ia_statistics_test(unittest.TestCase):
                 self.assertAlmostEqual(res['sigma'][0], 1.02031194)
                 self.assertAlmostEqual(res['mean'][0], 0.00284497)
 
-def suite():
-    return [ia_statistics_test]
     
 if __name__ == '__main__':
     unittest.main()

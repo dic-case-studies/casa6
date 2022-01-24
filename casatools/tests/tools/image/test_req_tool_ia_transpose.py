@@ -22,33 +22,17 @@
 #
 ##########################################################################
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import unittest
 
-try:
-    from casatools import ctsys, image, table
-    _tb = table( )
-    ctsys_resolve = ctsys.resolve
-    is_CASA6 = True
-except ImportError:
-    from tasks import *
-    from taskinit import *
-    import casac
-    from __main__ import *
-    image = iatool
-    # not a local tool
-    _tb = tb
-    is_CASA6 = False
-    data_root = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
-    def ctsys_resolve(apath):
-        return os.path.join(data_root, apath)
+from casatools import ctsys, image, table
+_tb = table( )
+ctsys_resolve = ctsys.resolve
+
 
 datapath = 'unittest/ia_transpose/'
-good_image = "reorder_in.fits"
-cas_2364im = "CAS-2364.im"
+
 
 def run_transpose(imagename, outfile, order):
     myia = image()
@@ -63,23 +47,21 @@ def run_imtrans(imagename, outfile, order):
 class ia_transpose_test(unittest.TestCase):
     
     def setUp(self):
-        shutil.copy(ctsys_resolve(os.path.join(datapath, good_image)), good_image)
+        self.out1 = ''
+        self.good_image = "reorder_in.fits"
+        self.cas_2364im = "CAS-2364.im"
+        shutil.copy(ctsys_resolve(os.path.join(datapath, self.good_image)), self.good_image)
     
     def tearDown(self):
+        data = [self.out1, self.cas_2364im, self.good_image] + ["straight_copy_{}".format(x) for x in range(4)]+ ["transpose_{}".format(x) for x in range(4)]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
         self.assertTrue(len(_tb.showcache()) == 0)
-        # make sure directory is clean as per verification test requirement
-        cwd = os.getcwd()
-        for filename in os.listdir(cwd):
-            file_path = os.path.join(cwd, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+
 
     def test_exceptions(self):
         """imtrans: Test various exception cases"""
@@ -90,24 +72,24 @@ class ia_transpose_test(unittest.TestCase):
         self.assertRaises(Exception, run_transpose, "", "blah", "012")
         
         # not enough specified axes
-        self.assertRaises(Exception, run_transpose, good_image, "blah", "01")
-        self.assertRaises(Exception, run_transpose, good_image, "blah", 10)
-        self.assertRaises(Exception, run_transpose, good_image, "blah", ["r", "d"])
+        self.assertRaises(Exception, run_transpose, self.good_image, "blah", "01")
+        self.assertRaises(Exception, run_transpose, self.good_image, "blah", 10)
+        self.assertRaises(Exception, run_transpose, self.good_image, "blah", ["r", "d"])
         
         # too many specified axes
-        self.assertRaises(Exception, run_transpose, good_image, "blah", "0123")
-        self.assertRaises(Exception, run_transpose, good_image, "blah", 1230)
-        self.assertRaises(Exception, run_transpose, good_image, "blah", ["r", "d", "f", "s"])
+        self.assertRaises(Exception, run_transpose, self.good_image, "blah", "0123")
+        self.assertRaises(Exception, run_transpose, self.good_image, "blah", 1230)
+        self.assertRaises(Exception, run_transpose, self.good_image, "blah", ["r", "d", "f", "s"])
 
         # Bogus axes specification
-        self.assertRaises(Exception, run_transpose, good_image, "blah", "123")
-        self.assertRaises(Exception, run_transpose, good_image, "blah", ["r", "d", "s"])
-        self.assertRaises(Exception, run_transpose, good_image, "blah", ["r", "d", "r"])
-        self.assertRaises(Exception, run_transpose, good_image, "blah", 103)
+        self.assertRaises(Exception, run_transpose, self.good_image, "blah", "123")
+        self.assertRaises(Exception, run_transpose, self.good_image, "blah", ["r", "d", "s"])
+        self.assertRaises(Exception, run_transpose, self.good_image, "blah", ["r", "d", "r"])
+        self.assertRaises(Exception, run_transpose, self.good_image, "blah", 103)
         
     def test_straight_copy(self):
         """No actual transposing"""
-        imagename = good_image
+        imagename = self.good_image
         myia = image()
         myia.open(imagename)
         expecteddata = myia.getchunk()
@@ -126,7 +108,7 @@ class ia_transpose_test(unittest.TestCase):
 
     def test_transpose(self):
         """Test transposing"""
-        imagename = good_image
+        imagename = self.good_image
         myia = image()
         myia.open(imagename)
         expecteddata = myia.getchunk()
@@ -151,17 +133,17 @@ class ia_transpose_test(unittest.TestCase):
 
     def test_cas_2364(self):
         "test CAS-2364 fix"
-        shutil.copytree(ctsys_resolve(os.path.join(datapath, cas_2364im)), cas_2364im)
+        shutil.copytree(ctsys_resolve(os.path.join(datapath, self.cas_2364im)), self.cas_2364im)
         order = "0132"
-        out1 = "blahxx.im"
+        self.out1 = "blahxx.im"
         myia = image()
-        myia.open(cas_2364im)
-        trans = myia.transpose(out1, order)
+        myia.open(self.cas_2364im)
+        trans = myia.transpose(self.out1, order)
         myia.done()
         trans.done()
         self.assertTrue(len(_tb.showcache()) == 0)
         # to verify fix, just open the image. bug was that exception was thrown when opening output from reorder
-        myia.open(out1)
+        myia.open(self.out1)
         self.assertTrue(myia)
         myia.done()
 
@@ -194,9 +176,5 @@ class ia_transpose_test(unittest.TestCase):
         )
         kk.done()
 
-def suite():
-    return [ia_transpose_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
