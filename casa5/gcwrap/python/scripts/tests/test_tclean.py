@@ -102,7 +102,7 @@ if is_CASA6:
      from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata
      from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
      from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-     from casatasks import impbcor
+     from casatasks import impbcor,split,concat
 
      from casatestutils.imagerhelpers import TestHelpers
 
@@ -1303,6 +1303,80 @@ class test_stokes(testref_base):
 #          self.prepData('refim_point_linXY.ms')
 #          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='cube')
 #          report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.0,[50,50,0,1]),(self.img+'.image',2.0,[50,50,1,1]), (self.img+'.image',3.0,[50,50,2,1]),(self.img+'.image',4.0,[50,50,4,1]) ])
+
+     def test_stokes_mixed_mfs_I(self):  # CAS-13618
+          """ [stokes] Test_Stokes_I_mixed_mfs mfs with Circular Pol dataset"""
+          self.prepData('refim_point_linRL.ms')
+          vis = self.msfile
+          ## Split across time
+          split(vis=vis, correlation='RR,LL', timerange='18:57:30~22:00:00',outputvis=vis+'_tmp_2pol_time.ms')
+          split(vis=vis, timerange='>22:00:00',outputvis=vis+'_tmp_4pol_time.ms')
+          concat(vis=[vis+'_tmp_2pol_time.ms',vis+'_tmp_4pol_time.ms'], concatvis=vis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=vis, correlation='RR,LL', spw='0:0',outputvis=vis+'_tmp_2pol_chan.ms')
+          split(vis=vis, spw='0:1~2',outputvis=vis+'_tmp_4pol_chan.ms')
+          concat(vis=[vis+'_tmp_2pol_chan.ms',vis+'_tmp_4pol_chan.ms'], concatvis=vis+'_tmp_mixed_chan.ms')
+
+          vislist = [
+               vis,
+               vis+'_tmp_2pol_time.ms',
+               vis+'_tmp_4pol_time.ms',
+               [vis+'_tmp_2pol_time.ms',vis+'_tmp_4pol_time.ms'],
+               vis+'_tmp_mixed_time.ms',
+               vis+'_tmp_2pol_chan.ms',
+               vis+'_tmp_4pol_chan.ms',
+               [vis+'_tmp_2pol_chan.ms',vis+'_tmp_4pol_chan.ms'],
+               vis+'_tmp_mixed_chan.ms'
+          ]
+
+          i=0
+          report=''
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='I',parallel=self.parallel)
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0])])
+               i = i+1
+     
+          self.assertTrue(self.check_final(report))
+
+     def test_stokes_mixed_mfs_IQUV(self):  # CAS-13618
+          """ [stokes] Test_Stokes_IQUV_mixed_mfs with Linear Pol dataset and Stokes U"""
+          self.prepData('refim_point_linXY.ms')
+          vis = self.msfile
+          ## Split across time
+          split(vis=vis, correlation='XX,YY', timerange='18:57:30~22:00:00',outputvis=vis+'_tmp_2pol_time.ms')
+          split(vis=vis, timerange='>22:00:00',outputvis=vis+'_tmp_4pol_time.ms')
+          concat(vis=[vis+'_tmp_2pol_time.ms',vis+'_tmp_4pol_time.ms'], concatvis=vis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=vis, correlation='XX,YY', spw='0:0',outputvis=vis+'_tmp_2pol_chan.ms')
+          split(vis=vis, spw='0:1~2',outputvis=vis+'_tmp_4pol_chan.ms')
+          concat(vis=[vis+'_tmp_2pol_chan.ms',vis+'_tmp_4pol_chan.ms'], concatvis=vis+'_tmp_mixed_chan.ms')
+
+          vislist = [
+               vis,
+               vis+'_tmp_2pol_time.ms',
+               vis+'_tmp_4pol_time.ms',
+               [vis+'_tmp_2pol_time.ms',vis+'_tmp_4pol_time.ms'],
+               vis+'_tmp_mixed_time.ms',
+               vis+'_tmp_2pol_chan.ms',
+               vis+'_tmp_4pol_chan.ms',
+               [vis+'_tmp_2pol_chan.ms',vis+'_tmp_4pol_chan.ms'],
+               vis+'_tmp_mixed_chan.ms'
+          ]
+
+          i=0
+          report=''
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',parallel=self.parallel)
+               ## To be added later when Stokes IQUV is fully enabled for mixed pols...
+               #if i in [1,5]:
+               #     u_true=0.0
+               #else:
+               #     u_true=3.0
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0]) ]) #,(self.img+'_'+str(i)+'.image',u_true,[50,50,2,0])])
+               i = i+1
+     
+          self.assertTrue(self.check_final(report))
+
 
 ##############################################
 ##############################################
