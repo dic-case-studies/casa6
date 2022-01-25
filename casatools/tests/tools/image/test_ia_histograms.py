@@ -70,18 +70,10 @@ import unittest
 import numpy
 import os
 
-try:
-    from casatools import image as iatool
-    from casatools import regionmanager
-    from casatools import ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+from casatools import image as iatool
+from casatools import regionmanager
+from casatools import ctsys
+ctsys_resolve = ctsys.resolve
 
 def alleqnum(x,num,tolerance=0):
     if len(x.shape)==1:
@@ -120,9 +112,18 @@ class ia_histograms_test(unittest.TestCase):
     
     def setUp(self):
         self._myia = iatool()
+        self.imname = ''
+        self.mymask = ''
     
     def tearDown(self):
         self._myia.done()
+        data = [self.mymask, self.imname]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
     
     def test_general(self):
         """general tests"""
@@ -132,8 +133,8 @@ class ia_histograms_test(unittest.TestCase):
         pixels = myia.makearray(0.0, imshape)
         pixels[0,0] = -100
         pixels[imshape[0]-1,imshape[1]-1] = 100
-        imname = 'ia.fromarray.image'
-        myim = myia.newimagefromarray(outfile=imname, pixels=pixels)
+        self.imname = 'ia.fromarray.image'
+        myim = myia.newimagefromarray(outfile=self.imname, pixels=pixels)
         self.assertTrue(myim)
         try:
             ok = myim.histograms(axes=[9,19])
@@ -205,8 +206,8 @@ class ia_histograms_test(unittest.TestCase):
     def test_stretch(self):
         """ ia.histogram(): Test stretch parameter"""
         yy = iatool()
-        mymask = "maskim"
-        yy.fromshape(mymask, [200, 200, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200,200,1,20]
@@ -214,10 +215,10 @@ class ia_histograms_test(unittest.TestCase):
         yy.addnoise()
         self.assertRaises(
             Exception,
-            yy.histograms, mask=mymask + ">0", stretch=False
+            yy.histograms, mask=self.mymask + ">0", stretch=False
         )
         zz = yy.histograms(
-            mask=mymask + ">0", stretch=True
+            mask=self.mymask + ">0", stretch=True
         )
         self.assertTrue(zz and type(zz) == type({}))
         yy.done()
