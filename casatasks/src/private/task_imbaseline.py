@@ -390,8 +390,8 @@ class ImageSubtractionMethods():
             subtracted_image = image_stack.peak().path
             base_image = image_stack.bottom().path
             copy_image_file(base_image, linefile)
-            ImageSubtractionMethods._subtract_image(smoothed_image, subtracted_image)
-            ImageSubtractionMethods._subtract_image(linefile, smoothed_image)
+            ImageSubtractionMethods.__subtract_image(smoothed_image, subtracted_image)
+            ImageSubtractionMethods.__subtract_image(linefile, smoothed_image)
 
     @staticmethod
     def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
@@ -401,10 +401,10 @@ class ImageSubtractionMethods():
         copy_image_file(base_image, output_image)
 
         subtract_image = image_stack.peak().path
-        ImageSubtractionMethods._subtract_image(output_image, subtract_image)
+        ImageSubtractionMethods.__subtract_image(output_image, subtract_image)
 
     @staticmethod
-    def _subtract_image(operand_a: str=None, operand_b: str=None) -> None:
+    def __subtract_image(operand_a: str=None, operand_b: str=None) -> None:
         """Subtract image chunk."""
         image_array = None
         with tool_manager(operand_b, image) as ia:
@@ -498,10 +498,10 @@ class SdbaselineMethods():
         image_stack.push(EraseableFolder(output_image))
         blparam_name = input_ms + '_blparam.' + SdbaselineParams.FIXED_PARAM['blformat']
         if os.path.exists(blparam_name):
-            SdbaselineMethods._rename_blparam_filename(blparam_name, base_image)
+            SdbaselineMethods.__rename_blparam_filename(blparam_name, base_image)
 
     @staticmethod
-    def _rename_blparam_filename(filename: str=None, basename: str=None) -> str:
+    def __rename_blparam_filename(filename: str=None, basename: str=None) -> str:
         if not os.path.exists(filename):
             return None
         newname = os.path.basename(basename) + '.ms_blparam.' + SdbaselineParams.FIXED_PARAM['blformat']
@@ -723,11 +723,11 @@ class Image2MSMethods():
         casalog.post('convert casaimage to MeasurementSet', 'INFO')
         infile = image_stack.peak().path
         outfile = generate_temporary_filename('img2ms', 'ms')
-        Image2MSMethods._image2ms(Image2MSParams(infile, outfile, datacolumn, input_image_shape))
+        Image2MSMethods.__image2ms(Image2MSParams(infile, outfile, datacolumn, input_image_shape))
         ms_stack.push(EraseableFolder(outfile))
 
     @staticmethod
-    def _image2ms(params: Image2MSParams=None) -> None:
+    def __image2ms(params: Image2MSParams=None) -> None:
         """Convert CasaImage into MeasurementSet."""
         Image2MSMethods.__create_empty_ms(params)
         Image2MSMethods.__put_parametes_from_image_to_ms(params)
@@ -1005,16 +1005,16 @@ class MS2ImageMethods():
 
     @staticmethod
     def convert(base_image: str=None, input_ms: str=None, input_image_shape: ImageShape=None, datacolumn: str=None) -> None:
-        output_image = MS2ImageMethods._change_file_extension(input_ms, 'im')
+        output_image = MS2ImageMethods.__change_file_extension(input_ms, 'im')
         copy_image_file(base_image, output_image)  # mask data is also copied in this method
 
-        image_array = MS2ImageMethods._make_image_array(input_image_shape, input_ms, datacolumn)
-        MS2ImageMethods._output_image(output_image, image_array)
+        image_array = MS2ImageMethods.__make_image_array(input_image_shape, input_ms, datacolumn)
+        MS2ImageMethods.__output_image(output_image, image_array)
 
         return output_image
 
     @staticmethod
-    def _change_file_extension(path: str=None, ext: str=None) -> str:
+    def __change_file_extension(path: str=None, ext: str=None) -> str:
         if not os.path.exists(path):
             RuntimeError(f'cannot find path: {path}')
         base, oldext = os.path.splitext(path)
@@ -1030,7 +1030,7 @@ class MS2ImageMethods():
         return new_path
 
     @staticmethod
-    def _make_image_array(input_image_shape: ImageShape=None, infile: str=None, datacolumn: str=None) -> np.array:
+    def __make_image_array(input_image_shape: ImageShape=None, infile: str=None, datacolumn: str=None) -> np.array:
         nx, ny = input_image_shape.dir_shape
         image_array = np.empty((nx, ny, input_image_shape.im_nchan))
         pos = 0
@@ -1044,7 +1044,7 @@ class MS2ImageMethods():
         return image_array
 
     @staticmethod
-    def _output_image(outfile: str=None, image_array: np.array=None) -> None:
+    def __output_image(outfile: str=None, image_array: np.array=None) -> None:
         with tool_manager(outfile, image) as ia:
             ia.putchunk(pixels=image_array, locking=True)
 
