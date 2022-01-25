@@ -1,5 +1,5 @@
 ##########################################################################
-# imfit_test.py
+# test_ia_fft.py
 #
 # Copyright (C) 2008, 2009
 # Associated Universities, Inc. Washington DC, USA.
@@ -66,8 +66,7 @@ import os
 import shutil
 import unittest
 
-from casatools import image 
-from casatools import regionmanager
+from casatools import image, quanta 
 from casatools import table, ctsys
 datapath = ctsys.resolve('unittest/ia_fft/')
 
@@ -112,13 +111,14 @@ class ia_fft_test(unittest.TestCase):
             yy.fft, real="real1.im", mask=mymask + ">0",
             stretch=False
         )
+        real = 'real2.im'
         zz = yy.fft(
-            real="real2.im", mask=mymask + ">0", stretch=True
+            real=real, mask=mymask + ">0", stretch=True
         )
+        shutil.rmtree(mymask)
+        shutil.rmtree(real)
         self.assertTrue(type(zz) == type(False))
         yy.done()
-        shutil.rmtree('real2.im')
-        shutil.rmtree(mymask)
         
     def test_delta(self):
         """Test fft of delta function"""
@@ -147,7 +147,7 @@ class ia_fft_test(unittest.TestCase):
                 got = myia.getchunk()
                 myia.done(remove=True)
                 self.assertTrue((got == expec).all())
-                
+
     def test_regression(self):
         """Was regression test in imagetest"""
 
@@ -218,12 +218,11 @@ class ia_fft_test(unittest.TestCase):
         b2 = c.imag
         b3 = abs(c)
        
-        ok = (
-                testim.done() and im1.done(remove=True)
-                and im2.done(remove=True) and im3.done(remove=True)
-                and im4.done(remove=True)
-            )
-        self.assertTrue(ok)
+        self.assertTrue(
+            testim.done() and im1.done(remove=True)
+            and im2.done(remove=True) and im3.done(remove=True)
+            and im4.done(remove=True)
+        )
 
     def test_history(self):
         """verify history writing"""
@@ -238,7 +237,93 @@ class ia_fft_test(unittest.TestCase):
             myia.done(remove=True)
             self.assertTrue("ia.fft" in msgs[-2])
             self.assertTrue("ia.fft" in msgs[-1])
-    
+
+    def test_units(self):
+        """
+        CAS-13489: test output units
+
+        The output phase image should have units of radians
+        If the input image represents the image plane and has units of Jy/beam or Jy/pixel,
+        then the ouptut (uv-plane) images should have units of Jy. If the input image has
+        a beam, the beam should be copied to the output images.
+        If the input image represents the uv-plane, then the brightness unit of the
+        output (image plane) images should be Jy/beam or Jy/pixel, depending on if the
+        input image has a beam or not.
+        """
+        qa = quanta()
+        bmaj = qa.quantity('4arcmin')
+        bmin = qa.quantity('3arcmin')
+        bpa = qa.quantity('60deg')
+        _ia = image()
+        for bu in ('Jy/beam', 'Jy/pixel'):
+            # create image-domain image
+            _ia.fromshape("", [20, 20])
+            self.assertTrue(_ia.setbrightnessunit('Jy/pixel'), 'Failed to set brightness unit')
+            if bu == 'Jy/beam':
+                self.assertTrue(
+                    _ia.setrestoringbeam(major=bmaj, minor=bmin, pa=bpa),
+                    'Failed to set restoring beam'
+                )
+            real = "real.im"
+            imag = "imag.im"
+            amp = "amp.im"
+            phase = "phase.im"
+            _complex = "complex.im"
+            self.assertTrue(
+                _ia.fft(
+                    real=real, imag=imag, amp=amp,
+                    phase=phase, complex=_complex
+                ), 'ia.fft() failed'
+            )
+            _ia.done()
+            for im in (real, imag, amp, phase, _complex):
+                _ia.open(im)
+                bunit = _ia.brightnessunit()
+                beam = _ia.restoringbeam()
+                _ia.done(remove=(im != real))
+                expec = 'Jy'
+                if im == phase:
+                    expec = 'rad'
+                self.assertTrue(
+                    bunit == expec, 'image ' + im + ' has unit ' + bunit
+                    + ' but should be ' + expec
+                )
+                if bu == 'Jy/pixel':
+                    self.assertTrue(beam == {}, 'this image should have no restoring beam')
+                elif bu == 'Jy/beam':
+                    self.assertTrue(beam['major'] == bmaj, 'Incorrect restoring beam')
+                    self.assertTrue(beam['minor'] == bmin, 'Incorrect restoring beam')
+                    self.assertTrue(beam['positionangle'] == bpa, 'Incorrect restoring beam')
+            # transform from uv to image plane
+            real1 = 'real1.im'
+            _ia.open(real)
+            self.assertTrue(
+                _ia.fft(
+                    real=real1, imag=imag, amp=amp,
+                    phase=phase, complex=_complex, axes=[0, 1],
+                ), 'ia.fft() failed'
+            )
+            _ia.done(remove=True)
+            for im in (real1, imag, amp, phase, _complex):
+                _ia.open(im)
+                bunit = _ia.brightnessunit()
+                beam = _ia.restoringbeam()
+                _ia.done(remove=True)
+                expec = bu
+                if im == phase:
+                    expec = 'rad'
+                self.assertTrue(
+                    bunit == expec, 'image ' + im + ' has unit ' + bunit
+                    + ' but should be ' + expec
+                )
+                if bu == 'Jy/pixel':
+                    self.assertTrue(beam == {}, 'this image should have no restoring beam')
+                elif bu == 'Jy/beam':
+                    self.assertTrue(beam['major'] == bmaj, 'Incorrect restoring beam')
+                    self.assertTrue(beam['minor'] == bmin, 'Incorrect restoring beam')
+                    self.assertTrue(beam['positionangle'] == bpa, 'Incorrect restoring beam')
+
+
     def test_new_inc(self):
         """verify CAS-13629 ouput cellsize fix"""
         myia = image()
