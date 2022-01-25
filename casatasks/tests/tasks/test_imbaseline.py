@@ -468,9 +468,10 @@ class sdbaseline_test(test_base):
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
         ms_stack = MeasurementSetStack()
         ms_stack.push(EraseableFolder(self.expected_ms))
-        SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit, self.minwidth,
-                                  self.edge, self.blfunc, self.order, self.npiece, self.applyfft, self.fftthresh, self.addwn, self.rejwn, self.blparam,
-                                  self.clipniter, self.clipthresh, image_stack, ms_stack, self.image_shape)
+        SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit,
+                                  self.minwidth, self.edge, self.blfunc, self.order, self.npiece, self.applyfft,
+                                  self.fftthresh, self.addwn, self.rejwn, self.blparam, self.clipniter, self.clipthresh,
+                                  image_stack, ms_stack, self.image_shape)
         self.assertTrue(os.path.exists(ms_stack.peak().path))
         self.assertTrue(os.path.exists(self.bloutput))
         self.assertTrue(os.path.exists(image_stack.peak().path))
@@ -479,33 +480,56 @@ class sdbaseline_test(test_base):
     def test_6_2(self):
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
         ms_stack = MeasurementSetStack()
-        SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit, self.minwidth,
-                                  self.edge, self.blfunc, self.order, self.npiece, self.applyfft, self.fftthresh, self.addwn, self.rejwn, self.blparam,
-                                  self.clipniter, self.clipthresh, image_stack, ms_stack, self.image_shape)
+        SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit,
+                                  self.minwidth, self.edge, self.blfunc, self.order, self.npiece, self.applyfft,
+                                  self.fftthresh, self.addwn, self.rejwn, self.blparam, self.clipniter, self.clipthresh,
+                                  image_stack, ms_stack, self.image_shape)
 
     @test_base.exception_case(RuntimeError, 'the stack has not have enough stuff')
     def test_6_3(self):
         image_stack = CasaImageStack()
         ms_stack = MeasurementSetStack()
         ms_stack.push(EraseableFolder(self.expected_ms))
-        SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit, self.minwidth,
-                                  self.edge, self.blfunc, self.order, self.npiece, self.applyfft, self.fftthresh, self.addwn, self.rejwn, self.blparam,
-                                  self.clipniter, self.clipthresh, image_stack, ms_stack, self.image_shape)
+        SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit,
+                                  self.minwidth, self.edge, self.blfunc, self.order, self.npiece, self.applyfft,
+                                  self.fftthresh, self.addwn, self.rejwn, self.blparam, self.clipniter, self.clipthresh,
+                                  image_stack, ms_stack, self.image_shape)
 
 
 class image_subtraction_test(test_base):
-    """Image subtraction test
+    """Image subtraction test.
+
+    7-1. successful test: input_image - (smoothed_image - smoothed_and_subtracted_image)
+    7-2. successful test: input_image - baseline_image
+    7-3. unmatch shape
+    7-4. unmatch shape(exception is not thrown)
+    7-5. three arrays subtraction test
+    7-5. two arrays subtraction test
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
     expected_im = "expected.im"
     expected_imsmoothed = "expected.imsmooth.im"
     expected_bl = "expected.bl.im"
+    testdata_01 = ("testdata_01.im", 1.5, [64, 64, 4, 128])
+    testdata_02 = ("testdata_02.im", 2.0, [64, 64, 4, 128])
+    testdata_03 = ("testdata_03.im", 2.5, [64, 64, 4, 128])
+    testdata_err = ("testdata_err.im", 1, [65, 64, 4, 128])
 
     def setUp(self):
         self._copy_test_files(self.datapath, self.expected_im)
         self._copy_test_files(self.datapath, self.expected_imsmoothed)
         self._copy_test_files(self.datapath, self.expected_bl)
+        self.create_image(self.testdata_01[0], self.testdata_01[1], self.testdata_01[2])
+        self.create_image(self.testdata_02[0], self.testdata_02[1], self.testdata_02[2])
+        self.create_image(self.testdata_03[0], self.testdata_03[1], self.testdata_03[2])
+        self.create_image(self.testdata_err[0], self.testdata_err[1], self.testdata_err[2])
+
+    def create_image(self, datapath, val=1, shape=[0, 0, 0, 0]):
+        _ia = image()
+        ary = _ia.makearray(v=val, shape=shape)
+        _ia.fromarray(outfile=datapath, pixels=ary, overwrite=True)
+        _ia.done()
 
     def test_7_1(self):
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
@@ -521,6 +545,41 @@ class image_subtraction_test(test_base):
         output = "output_7_2.im"
         ImageSubtractionMethods.execute(output, image_stack)
         self.assertTrue(os.path.exists(output))
+
+    @test_base.exception_case(ValueError, 'operands could not be broadcast together with shapes')
+    def test_7_3(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.testdata_01[0]))
+        image_stack.push(EraseableFolder(self.testdata_02[0]))
+        image_stack.push(EraseableFolder(self.testdata_err[0]))
+        output = "output_7_3.im"
+        ImageSubtractionMethods.execute(output, image_stack)
+
+    def test_7_4(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.testdata_01[0]))
+        image_stack.push(EraseableFolder(self.testdata_err[0]))
+        output = "output_7_4.im"
+        ImageSubtractionMethods.execute(output, image_stack)
+        self.assertTrue(os.path.exists(output))
+        self.assertFalse(os.path.exists(self.testdata_err[0]))
+
+    def test_7_5(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.testdata_01[0]))
+        image_stack.push(EraseableFolder(self.testdata_02[0]))
+        image_stack.push(EraseableFolder(self.testdata_03[0]))
+        output = "output_7_5.im"
+        ImageSubtractionMethods.execute(output, image_stack)
+        with tool_manager(output, image) as ia:
+            arr = ia.getchunk()
+            self.assertTrue(np.array_equal(arr, np.full((64, 64, 4, 128), 2.0)))
+
+    def test_7_6(self):
+        image_stack = CasaImageStack(top=UnerasableFolder(self.testdata_01[0]))
+        image_stack.push(EraseableFolder(self.testdata_02[0]))
+        output = "output_7_6.im"
+        ImageSubtractionMethods.execute(output, image_stack)
+        with tool_manager(output, image) as ia:
+            arr = ia.getchunk()
+            self.assertTrue(np.array_equal(arr, np.full((64, 64, 4, 128), 2.0)))
 
 
 class imbaseline_test(test_base):
@@ -561,4 +620,3 @@ class imbaseline_test(test_base):
 
 def suite():
     return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test, image2ms_test, sdbaseline_test, image_subtraction_test]
-
