@@ -1155,15 +1155,21 @@ polynomial bandpasses are determined using the default parameters.
 <description>
 
 Return a dictionary containing information about the current calibrater tool state.
-* Incomplete * this will contain the information that is present in the dict
+This dictionary contains the following keys: 'antennas', 'apply tables', 'field', 'intents', 'observation', 'scan', 'solve table', 'spw'.
+
+Each of these keys will show which values for each of these paramters are selected. By default all of the MS is selected when opened by the calibrater tool.
+
+The values of each of these keys is an array of either strings or integers.
   
 </description>
 
 <example>
+  import casatools
+  cb = casatools.calibrater()
   
-  cb.open('ngc5921.m');
-  cb.setapply('P', 5.0);
-  cb.returndict();
+  cb.open('ngc5921.m')
+  cb.selectvis(field='1', spw='0')
+  cb.returndict()
   
 </example>
 </method>
