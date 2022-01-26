@@ -47,6 +47,7 @@ class SummaryMinor:
     rowStartDescs           = ["startIterDone",             "startPeakRes",            "startModelFlux",              "startPeakResNM"]
 
     def convertMatrix(summaryminor_matrix, calc_iterdone_deltas=None, keep_startvals=None):
+        # casalog.post(summaryminor_matrix, "SEVERE")
         ret = {}
 
         # edge case: no iterations were done (eg threshold < model flux)
@@ -57,7 +58,7 @@ class SummaryMinor:
         field_ids = SummaryMinor._getFieldIds(summaryminor_matrix)
         if len(field_ids) > 1:
             for fieldId in field_ids:
-                singleFieldMatrix = SummaryMinor._getSingleFieldMatrix(summaryminor_matrix, field_ids[0])
+                singleFieldMatrix = SummaryMinor._getSingleFieldMatrix(summaryminor_matrix, field_ids[fieldId])
                 ret[fieldId] = SummaryMinor._convertSingleFieldMatrix(singleFieldMatrix, calc_iterdone_deltas, keep_startvals)
         elif len(field_ids) == 1:
             ret[field_ids[0]] = SummaryMinor._convertSingleFieldMatrix(summaryminor_matrix, calc_iterdone_deltas, keep_startvals)
