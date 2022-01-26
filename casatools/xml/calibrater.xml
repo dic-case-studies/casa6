@@ -1164,13 +1164,13 @@ The values of each of these keys is an array of either strings or integers.
 </description>
 
 <example>
-  import casatools
-  cb = casatools.calibrater()
   
-  cb.open('ngc5921.m')
-  cb.selectvis(field='1', spw='0')
-  cb.returndict()
-  
+import casatools;
+cb = casatools.calibrater();
+
+cb.open('ngc5921.ms');
+cb.selectvis(field='1', spw='0');
+cb.returndict();
 </example>
 </method>
 
