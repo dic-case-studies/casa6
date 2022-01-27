@@ -129,11 +129,12 @@ def setjy(vis=None, field=None, spw=None,
         retval = helper.go()
 
         # Remove the subMS names from the returned dictionary. Pick the first dictionary from
-        # the list os subMS dictionaries
+        # the list of subMS dictionaries
         if (any(isinstance(v, dict) for v in retval.values())):
             for subMS in retval:
                 dict_i = retval[subMS]
-                if isinstance(dict_i,dict):
+                # Take the first *non-empty dict* (CAS-13645)
+                if isinstance(dict_i,dict) and dict_i:
                     retval = dict_i
                     break
         else:

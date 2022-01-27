@@ -66,6 +66,7 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 from casatools import table
@@ -74,8 +75,14 @@ class ia_maskhandler_test(unittest.TestCase):
     
     def setUp(self):
         self.ia = iatool()
+        self.imag = ''
     
     def tearDown(self):
+        if self.imag:
+            if os.path.isfile(self.imag):
+                os.unlink(self.imag)
+            else:
+                shutil.rmtree(self.imag)
         tb = table( )
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done( )
@@ -83,10 +90,10 @@ class ia_maskhandler_test(unittest.TestCase):
     def test_history(self):
         """Verify ia.insert writes history to image"""
         myia = self.ia
-        imag = "hist_zxye.im"
+        self.imag = "hist_zxye.im"
         shape = [20, 20]
-        myia.fromshape(imag, shape)
-        myia.calcmask(imag + ">0")
+        myia.fromshape(self.imag, shape)
+        myia.calcmask(self.imag + ">0")
         myia.maskhandler("rename", ["mask0", "blahmask"])
         msgs = myia.history()
         myia.done()

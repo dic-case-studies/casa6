@@ -69,19 +69,13 @@ import os
 import shutil
 import numpy
 import unittest
+import os
 
-try:
-    from casatools import image as iatool
-    from casatools import quanta
-    from casatools import table, ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+from casatools import image as iatool
+from casatools import quanta
+from casatools import table, ctsys
+ctsys_resolve = ctsys.resolve
+
 
 _tb = table( )
 
@@ -109,7 +103,18 @@ class ia_pv_test(unittest.TestCase):
         self.ia = iatool()
     
     def tearDown(self):
-        #pass
+        data = [
+            "kk", "maskim","zxye.im", "zz.fits","zz.im",
+            "test_pv_0", "test_pv_1","test_pv_2","test_pv_3",
+            "test_pv_4", "test_pv_5", "test_pv_6",
+            "test_pv_1_0", "test_pv_1_1", "test_pv_1_2", "test_pv_1_3", "test_pv_1_4"
+            ]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
         self.assertTrue(len(_tb.showcache()) == 0)
     
     def test_pv(self):

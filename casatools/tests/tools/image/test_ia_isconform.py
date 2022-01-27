@@ -70,57 +70,50 @@ import shutil
 import unittest
 import os
 
-is_CASA6 = False
-try:
-    from casatools import image as iatool
-    from casatools import ctsys
-    is_CASA6 = True
-    datapath = ctsys.resolve('unittest/ia_isconform/')
-except:
-    from tasks import *
-    from taskinit import *
-    from __main__ import *
-    datapath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/unittest/ia_isconform/')
-
-
-fits = "jj.fits"
-
+from casatools import image as iatool
+from casatools import ctsys
+datapath = ctsys.resolve('unittest/ia_isconform/')
 
 class ia_isconform_test(unittest.TestCase):
 
     def setUp(self):
-        shutil.copy(datapath + fits, fits)
+        self.fits = "jj.fits"
+        shutil.copy(datapath + self.fits, self.fits)
         self._myia = iatool( )
         self._myia.maketestimage( )
 
-    
     def tearDown(self):
         self._myia.done()
         del self._myia
+        if self.fits:
+            if os.path.isfile(self.fits):
+                os.unlink(self.fits)
+            else:
+                shutil.rmtree(self.fits)
 
     def test_unattached(self):
         self._myia.done()
         self.assertRaises(Exception, self._myia.isconform("x"))
         
     def test_trueness(self):
-        self.assertTrue(self._myia.isconform(fits))
+        self.assertTrue(self._myia.isconform(self.fits))
         
     def test_diffaxes(self):
         _newia = self._myia.adddegaxes(spectral=True)
-        self.assertFalse(_newia.isconform(fits))
+        self.assertFalse(_newia.isconform(self.fits))
       
     def test_diffaxes_cs(self):
         _cs = self._myia.coordsys()
         names = _cs.names()
         _cs.setnames([names[1], names[0]])
         self._myia.setcoordsys(_cs.torecord())
-        self.assertFalse(self._myia.isconform(fits))
+        self.assertFalse(self._myia.isconform(self.fits))
       
     def test_diffincrements(self):
         _cs = self._myia.coordsys()
         _cs.setincrement([0.1,0.1])
         self._myia.setcoordsys(_cs.torecord())
-        self.assertFalse(self._myia.isconform(fits))
+        self.assertFalse(self._myia.isconform(self.fits))
         
 def suite():
     return [ia_isconform_test]
