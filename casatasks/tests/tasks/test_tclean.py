@@ -138,7 +138,7 @@ from casatestutils.imagerhelpers import TestHelpers
 
 ## List to be run
 def suite():
-     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures]
+     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures, test_gclean]
  
 ## Base Test class with Utility functions
 class testref_base(unittest.TestCase):
@@ -5449,6 +5449,27 @@ class test_errors_failures(testref_base):
                             veltype='radio', outframe='LSRK',
                             parallel=self.parallel)
 
+###########################################################
+###########################################################
+###########################################################
+class test_gclean(testref_base):
+     """ gclean(...) is a class used by the vis team.
+     These tests are here to ensure that any changes to tclean don't break gclean.
+     """
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "glcean doesn't work with mpi")
+     def test_gclean_threeiter(self):
+          """test_gclean_threeiter: test the the gclean generator runs for at least three iterations"""
+          from casatasks.private.imagerhelpers._gclean import gclean
+          self.prepData('refim_point.ms')
+          cnt = 0
+          for rec in gclean( vis='refim_point.ms', imagename='test', imsize=100, cell='8.0arcsec',
+                             specmode='cube', interpolation='nearest', nchan=1, start='1.0GHz', width='0.2GHz',
+                             pblimit=-1e-05, deconvolver='hogbom', niter=500, cyclefactor=3, scales=[0, 3, 10] ):
+               cnt += 1
+               if cnt == 3:
+                    break
+          # as long as we've gotten this far, then the test has passed
+          pass
 
 if is_CASA6:
      if __name__ == '__main__':
