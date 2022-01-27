@@ -1162,11 +1162,8 @@ The values of each of these keys is an array of either strings or integers.
 </description>
 
 <input>
-  <param name="test" direction="in" type="bool">
-  <description>This is test parameter to see if the xml needs them to create examples</description>
-  <value>true</value>
-  </param>
 </input>
+
 <returns type="record"/>
 
 <example>
