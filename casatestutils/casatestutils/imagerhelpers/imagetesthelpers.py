@@ -286,25 +286,16 @@ class TestHelpers:
         return chans, stokes, ncycles
 
     def _get_chanstoke_withiters_cycle0(self, summ):
-        """Finds the first possible channel/polarity index in the returned "summaryminor" from tclean that has a value."""
+        """Finds the first possible channel/stokes index in the returned "summaryminor" from tclean that has a value."""
         if 'summaryminor' in summ:
             sm = summ['summaryminor'][0] # 0: just look at the first field of the multifield images
+
             chans, stokes, ncycles = self._get_summary_minor_keys(sm)
-            uss = SummaryMinor.useSmallSummaryminor() # Temporary CAS-13683 workaround
             ret = (chans[0], stokes[0])
-            prev_chan = None
             for chan in chans:
                 for stoke in stokes:
-                    tmp_iterdone = sm[chan][stoke]['iterDone'][0]
-                    if uss and (prev_chan != None):
-                        # horible hackaround of CAS-13683 to deal with not have access to 'startIterDone'
-                        # get the number of iterations done for just this channel
-                        prev_iterdone = sm[prev_chan][stoke]['iterDone'][0]
-                        if (prev_iterdone <= tmp_iterdone):
-                            tmp_iterdone -= prev_iterdone
-                    if (tmp_iterdone > 0):
+                    if (sm[chan][stoke]['iterDone'][0] > 0):
                         return (chan, stoke)
-                prev_chan = chan
             return ret
         else:
             return None
@@ -312,26 +303,16 @@ class TestHelpers:
     def _get_chanstoke_withiters_cycleN(self, summ):
         """Finds the last possible index in the returned "summaryminor" from tclean that has a value.
         We do this to maintain the same value as was previously returned, so that we don't need to update all the values in the tests.
-        It could be that in the future we just want to return the index [chan/pol with the largest peakres, last cycle]."""
+        It could be that in the future we just want to return the index [chan/stoke with the largest peakres, last cycle]."""
         if 'summaryminor' in summ:
             sm = summ['summaryminor'][0] # 0: just look at the first field of the multifield images
             chans, stokes, ncycles = self._get_summary_minor_keys(sm)
-            uss = SummaryMinor.useSmallSummaryminor() # Temporary CAS-13683 workaround
             ret = (chans[0], stokes[0], 0) # 0: cycle 0
-            prev_chan = None
             for chan in chans:
                 for stoke in stokes:
                     for cycle in range(ncycles):
-                        tmp_iterdone = sm[chan][stoke]['iterDone'][cycle]
-                        if uss and (prev_chan != None):
-                            # horible hackaround of CAS-13683 to deal with not have access to 'startIterDone'
-                            # get the number of iterations done for just this channel
-                            prev_iterdone = sm[prev_chan][stoke]['iterDone'][cycle]
-                            if (prev_iterdone <= tmp_iterdone):
-                                tmp_iterdone -= prev_iterdone
-                        if (tmp_iterdone > 0):
+                        if (sm[chan][stoke]['iterDone'][cycle] > 0):
                             ret = (chan, stoke, cycle)
-                prev_chan = chan
             return ret
         else:
             return None
