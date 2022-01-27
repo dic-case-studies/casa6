@@ -92,10 +92,6 @@ class po_fourierrotationmeasure_test(unittest.TestCase):
         self.assertRaises(Exception, mypo.fourierrotationmeasure, amp="mm")
         mypo.open(neq_beams)
         self.assertRaises(Exception, mypo.fourierrotationmeasure, amp="hh")
-        
-        
-def suite():
-    return [po_fourierrotationmeasure_test]
 
 if __name__ == '__main__':
     unittest.main()

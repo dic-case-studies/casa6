@@ -100,9 +100,6 @@ class po_complexlinpol_test(unittest.TestCase):
         mypo.done()
         os.remove(neq_beams)
         shutil.rmtree('hh')
-        
-def suite():
-    return [po_complexlinpol_test]
 
 if __name__ == '__main__':
     unittest.main()

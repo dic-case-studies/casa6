@@ -92,9 +92,6 @@ class po_sigmadepolratio_test(unittest.TestCase):
         self.assertTrue(mypo.sigmadepolratio(eq_beams))
         mypo.open(neq_beams)
         self.assertRaises(Exception, mypo.sigmadepolratio, eq_beams)
-        
-def suite():
-    return [po_sigmadepolratio_test]
 
 if __name__ == '__main__':
     unittest.main()
