@@ -5,20 +5,9 @@ import sys
 import shutil
 import unittest
 
-try:
-    from casatools import ctsys, sdm, ms
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)    
+from casatools import ctsys, sdm, ms
+ctsys_resolve = ctsys.resolve
 
-### for testhelper import
-#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-#import testhelper as th
 from casatestutils import testhelper as th
 
 datapath = ctsys_resolve('unittest/sdmtool/')
@@ -319,9 +308,6 @@ class exportasdm_test2(unittest.TestCase):
     def test1a(self):
         '''Exportasdm: Cleanup'''
         pass
-
-def suite():
-    return [exportasdm_test,exportasdm_test2]
 
 if __name__ == '__main__':
     unittest.main()

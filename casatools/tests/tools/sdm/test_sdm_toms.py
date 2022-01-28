@@ -2409,10 +2409,5 @@ class asdm_import8(test_base):
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
-def suite():
-    ### asdm_import4 exists in the importasdm test, it involves flagging - which is largely
-    ### only implemented in the task, not this tool
-    return [asdm_import1, asdm_import2, asdm_import3, asdm_import5, asdm_import6, asdm_import7, asdm_import8]
-
 if __name__ == '__main__':
     unittest.main()

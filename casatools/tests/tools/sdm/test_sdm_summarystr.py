@@ -58,8 +58,5 @@ class sdm_summarystr_test(unittest.TestCase):
             passes = True
         self.assertTrue(passes,"non-existent file fails to throw an exception")
 
-def suite():
-    return [sdm_summarystr_test]
-
 if __name__ == '__main__':
     unittest.main()
