@@ -25,6 +25,8 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
                showprogress=None, minnrow=None,
                outfile=None, overwrite=None):
 
+    temp_outfile = ''
+
     try:
         # CAS-12985 requests the following params be given case insensitively,
         # so they need to be converted to lowercase here (2021/1/28 WK)
@@ -50,104 +52,16 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         if (spw == ''):
             spw = '*'
 
-        if (blmode == 'apply'):
-            if not os.path.exists(bltable):
-                raise ValueError("file specified in bltable '%s' does not exist." % bltable)
-
-            # Note: the condition "infile != outfile" in the following line is for safety
-            # to prevent from accidentally removing infile by setting outfile=infile.
-            # Don't remove it.
-            if overwrite and (infile != outfile) and os.path.exists(outfile):
-                remove_data(outfile)
-
-            sorttab_info = remove_sorted_table_keyword(infile)
-
-            with sdutil.tool_manager(infile, singledishms) as mysdms:
-                selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
-                                            baseline=antenna, time=timerange,
-                                            scan=scan)
-                mysdms.set_selection(spw=sdutil.get_spwids(selection), field=field,
-                                     antenna=antenna, timerange=timerange,
-                                     scan=scan, polarization=pol, intent=intent,
-                                     reindex=reindex)
-                mysdms.apply_baseline_table(bltable=bltable,
-                                            datacolumn=datacolumn,
-                                            spw=spw,
-                                            updateweight=updateweight,
-                                            sigmavalue=sigmavalue,
-                                            outfile=outfile)
-
-            restore_sorted_table_keyword(infile, sorttab_info)
-
-        elif (blmode == 'fit'):
-
-            if (not dosubtract) and is_empty(blformat):
-                raise ValueError("blformat must be specified when dosubtract is False")
-
-            blformat, bloutput = prepare_for_blformat_bloutput(infile, blformat, bloutput, overwrite)
-
-            output_bloutput_text_header(blformat, bloutput,
-                                        blfunc, maskmode,
-                                        infile, outfile)
-
-            # Set temporary name for output MS if dosubtract is False and outfile exists
-            # for not removing/overwriting outfile that already exists
-            if os.path.exists(outfile):
-                # Note: the condition "infile != outfile" in the following line is for safety
-                # to prevent from accidentally removing infile by setting outfile=infile
-                # Don't remove it.
-                if dosubtract and overwrite and (infile != outfile):
-                    remove_data(outfile)
-                elif (not dosubtract):
-                    outfile = get_temporary_file_name(infile)
-
-            if (blfunc == 'sinusoid'):
-                addwn = parse_wavenumber_param(addwn)
-                rejwn = parse_wavenumber_param(rejwn)
-                check_fftthresh(fftthresh)
-
-            if (blfunc == 'variable'):
-                sorttab_info = remove_sorted_table_keyword(infile)
-
-            with sdutil.tool_manager(infile, singledishms) as mysdms:
-                selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
-                                            baseline=antenna, time=timerange,
-                                            scan=scan)
-                mysdms.set_selection(spw=sdutil.get_spwids(selection),
-                                     field=field, antenna=antenna,
-                                     timerange=timerange, scan=scan,
-                                     polarization=pol, intent=intent,
-                                     reindex=reindex)
-                params, func = prepare_for_baselining(sdms=mysdms,
-                                                      blfunc=blfunc,
-                                                      datacolumn=datacolumn,
-                                                      outfile=outfile,
-                                                      bloutput=','.join(bloutput),
-                                                      dosubtract=dosubtract,
-                                                      spw=spw,
-                                                      pol=pol,
-                                                      linefinding=(maskmode == 'auto'),
-                                                      threshold=thresh,
-                                                      avg_limit=avg_limit,
-                                                      minwidth=minwidth,
-                                                      edge=edge,
-                                                      order=order,
-                                                      npiece=npiece,
-                                                      applyfft=applyfft,
-                                                      fftmethod=fftmethod,
-                                                      fftthresh=fftthresh,
-                                                      addwn=addwn,
-                                                      rejwn=rejwn,
-                                                      clip_threshold_sigma=clipthresh,
-                                                      num_fitting_max=clipniter+1,
-                                                      blparam=blparam,
-                                                      verbose=verbose,
-                                                      updateweight=updateweight,
-                                                      sigmavalue=sigmavalue)
-                func(**params)
-
-            if (blfunc == 'variable'):
-                restore_sorted_table_keyword(infile, sorttab_info)
+        if (blmode == 'fit'):
+            temp_outfile = do_fit(infile, datacolumn, antenna, field, spw, timerange, scan,
+                                  pol, intent, reindex, maskmode, thresh, avg_limit, minwidth,
+                                  edge, dosubtract, blformat, bloutput, blfunc, order, npiece,
+                                  applyfft, fftmethod, fftthresh, addwn, rejwn, clipthresh,
+                                  clipniter, blparam, verbose, updateweight, sigmavalue,
+                                  outfile, overwrite)
+        elif (blmode == 'apply'):
+            do_apply(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
+                     reindex, bltable, updateweight, sigmavalue, outfile, overwrite)
 
         # Remove {WEIGHT|SIGMA}_SPECTRUM columns if updateweight=True (CAS-13161)
         if updateweight:
@@ -168,6 +82,8 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
     finally:
         if (not dosubtract):
             # Remove (skeleton) outfile
+            if temp_outfile != '':
+                outfile = temp_outfile
             remove_data(outfile)
 
 
@@ -515,3 +431,108 @@ def restore_sorted_table_keyword(infile, sorttab_info):
     if sorttab_info['is_sorttab'] and (sorttab_info['sorttab_name'] != ''):
         with sdutil.table_manager(infile, nomodify=False) as tb:
             tb.putkeyword(sorttab_info['sorttab_keywd'], sorttab_info['sorttab_name'])
+
+
+def do_apply(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
+             reindex, bltable, updateweight, sigmavalue, outfile, overwrite):
+    if not os.path.exists(bltable):
+        raise ValueError("file specified in bltable '%s' does not exist." % bltable)
+
+    # Note: the condition "infile != outfile" in the following line is for safety
+    # to prevent from accidentally removing infile by setting outfile=infile.
+    # Don't remove it.
+    if overwrite and (infile != outfile) and os.path.exists(outfile):
+        remove_data(outfile)
+
+    sorttab_info = remove_sorted_table_keyword(infile)
+
+    with sdutil.tool_manager(infile, singledishms) as mysdms:
+        selection = ms.msseltoindex(vis=infile, spw=spw, field=field,
+                                    baseline=antenna, time=timerange,
+                                    scan=scan)
+        mysdms.set_selection(spw=sdutil.get_spwids(selection), field=field,
+                             antenna=antenna, timerange=timerange,
+                             scan=scan, polarization=pol, intent=intent,
+                             reindex=reindex)
+        mysdms.apply_baseline_table(bltable=bltable,
+                                    datacolumn=datacolumn,
+                                    spw=spw,
+                                    updateweight=updateweight,
+                                    sigmavalue=sigmavalue,
+                                    outfile=outfile)
+
+    restore_sorted_table_keyword(infile, sorttab_info)
+
+
+def do_fit(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
+           reindex, maskmode, thresh, avg_limit, minwidth, edge, dosubtract, blformat,
+           bloutput, blfunc, order, npiece, applyfft, fftmethod, fftthresh, addwn,
+           rejwn, clipthresh, clipniter, blparam, verbose, updateweight, sigmavalue,
+           outfile, overwrite):
+
+    temp_outfile = ''
+
+    if (not dosubtract) and is_empty(blformat):
+        raise ValueError("blformat must be specified when dosubtract is False")
+
+    blformat, bloutput = prepare_for_blformat_bloutput(infile, blformat, bloutput, overwrite)
+
+    output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, outfile)
+
+    # Set temporary name for output MS if dosubtract is False and outfile exists
+    # for not removing/overwriting outfile that already exists
+    if os.path.exists(outfile):
+        # Note: the condition "infile != outfile" in the following line is for safety
+        # to prevent from accidentally removing infile by setting outfile=infile
+        # Don't remove it.
+        if dosubtract and overwrite and (infile != outfile):
+            remove_data(outfile)
+        elif (not dosubtract):
+            outfile = get_temporary_file_name(infile)
+            temp_outfile = outfile
+
+    if (blfunc == 'variable'):
+        sorttab_info = remove_sorted_table_keyword(infile)
+    elif (blfunc == 'sinusoid'):
+        addwn = parse_wavenumber_param(addwn)
+        rejwn = parse_wavenumber_param(rejwn)
+        check_fftthresh(fftthresh)
+
+    with sdutil.tool_manager(infile, singledishms) as mysdms:
+        selection = ms.msseltoindex(vis=infile, spw=spw, field=field, baseline=antenna,
+                                    time=timerange, scan=scan)
+        mysdms.set_selection(spw=sdutil.get_spwids(selection), field=field, antenna=antenna,
+                             timerange=timerange, scan=scan, polarization=pol, intent=intent,
+                             reindex=reindex)
+        params, func = prepare_for_baselining(sdms=mysdms,
+                                              blfunc=blfunc,
+                                              datacolumn=datacolumn,
+                                              outfile=outfile,
+                                              bloutput=','.join(bloutput),
+                                              dosubtract=dosubtract,
+                                              spw=spw,
+                                              pol=pol,
+                                              linefinding=(maskmode == 'auto'),
+                                              threshold=thresh,
+                                              avg_limit=avg_limit,
+                                              minwidth=minwidth,
+                                              edge=edge,
+                                              order=order,
+                                              npiece=npiece,
+                                              applyfft=applyfft,
+                                              fftmethod=fftmethod,
+                                              fftthresh=fftthresh,
+                                              addwn=addwn,
+                                              rejwn=rejwn,
+                                              clip_threshold_sigma=clipthresh,
+                                              num_fitting_max=clipniter+1,
+                                              blparam=blparam,
+                                              verbose=verbose,
+                                              updateweight=updateweight,
+                                              sigmavalue=sigmavalue)
+        func(**params)
+
+    if (blfunc == 'variable'):
+        restore_sorted_table_keyword(infile, sorttab_info)
+
+    return temp_outfile
