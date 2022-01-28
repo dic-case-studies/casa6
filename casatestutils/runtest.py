@@ -61,7 +61,6 @@ IS_CASA6 = False
 CASA6 = False
 verbose = False
 DRY_RUN = False
-RUN_ALL = False
 
 # JIRA BRANCH TO CHECKOUT
 JIRA_BRANCH = None
@@ -997,7 +996,7 @@ if __name__ == "__main__":
                         component_to_test_map = json.load(ctt)
                 except:
                     print("No JSON file to Map")
-
+            no_test_components = []
             for c in components:
                 _isComponent = False
                 component = c.strip()
@@ -1007,12 +1006,15 @@ if __name__ == "__main__":
                         _isComponent = True
                         testnames.append(myDict["testScript"])
                 if not _isComponent:
-                    print("No Tests for Component: {}. Using Component 'default'".format(component))
-                    component = 'default'
-                    for myDict in component_to_test_map["testlist"]:
-                        if component in myDict["testGroup"]:
-                            _isComponent = True
-                            testnames.append(myDict["testScript"])
+                    print("No Tests for Component: {}".format(component))
+                    no_test_components.append(component)
+            if (len(no_test_components) > 0) and (len(testnames)==0):
+                print("No Test Suite for Component(s): {} Using Component 'default'".format(no_test_components))
+                component = 'default'
+                for myDict in component_to_test_map["testlist"]:
+                    if component in myDict["testGroup"]:
+                        _isComponent = True
+                        testnames.append(myDict["testScript"])
 
     if args.verbose:
         verbose = True
@@ -1054,27 +1056,13 @@ if __name__ == "__main__":
         if arg.startswith(("-", "--")):
             raise ValueError('unrecognized argument: %s'%(arg))
             sys.exit()
-
         else:
-
-            if arg.startswith("test") and not RUN_ALL:
-                if len([x.strip() for x in arg.split(",")]) > 1:
-                    testnames.extend([x.strip() for x in arg.split(",")])
-                else:
-                    testnames.append(arg)
-            # local Path file
-            #elif arg.startswith("./") and arg.endswith(".py") and not RUN_ALL:
-            elif arg.startswith("./") and ".py" in arg and not RUN_ALL:
-
+            tests = [x.strip() for x in arg.split(",")]
+            for test in tests:
                 try:
-                    real_path = os.path.realpath(arg[2:])
-                    testnames.append(real_path)
-                except:
-                    traceback.print_exc()
-
-            elif (arg.startswith("../") or arg.startswith("/"))  and ".py" in arg and not RUN_ALL:
-                try:
-                    real_path = os.path.realpath(arg)
+                    real_path = os.path.realpath(test)
+                    if ("test_" not in real_path) or  ("test_" not in real_path):
+                        print("{} is not a Test File".format(test))
                     testnames.append(real_path)
                 except:
                     traceback.print_exc()
@@ -1120,6 +1108,10 @@ if __name__ == "__main__":
                                         tests.append(os.path.join(root, file))
                 testnames = tests
 
+            for test in [x for x in testnames if not os.path.exists(x)]:
+                print("File Does not exist: {}".format(test))
+
+            testnames = [x for x in testnames if os.path.exists(x)]
             print("Testnames: {}".format(testnames))
             if tests_to_ignore is not None:
                 print("\nTests to Ignore: ",tests_to_ignore )
