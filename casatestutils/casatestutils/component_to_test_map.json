@@ -40,7 +40,17 @@
             "timeout":0,
             "comment":""
         },
-         {
+        {
+            "testScript":"test_tool_calibrater",
+            "testType":"casatools",
+            "maintainer":"Neal Schweighart",
+            "maintainerEmail":"nschweig@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools","default"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_casampi",
             "testType":"casampi",
             "maintainer":"Federico Montesino",
