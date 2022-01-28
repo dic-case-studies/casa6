@@ -40,9 +40,9 @@ def check_eq(val, expval, tol=None):
 class uvfits_test(unittest.TestCase):
     # 06/13/2010: This seemed to be the only MS in the regression repo
     # that is a good test of padwithflag.
-    inpms = 'cvel/input/ANTEN_sort_hann_for_cvel_reg.ms'
+#    inpms = 'cvel/input/ANTEN_sort_hann_for_cvel_reg.ms'
 
-    origms = 'start.ms'               # Just a copy of inpms
+#    origms = 'start.ms'               # Just a copy of inpms
     fitsfile = 'hanningsmoothed.UVF'
     msfromfits = 'end.ms'
     
