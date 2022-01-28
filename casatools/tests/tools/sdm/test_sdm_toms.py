@@ -1,11 +1,31 @@
+#########################################################################
+# test_tool_sdm_toms.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.calibrater.html
+#
+# Testing of method sdm.toms
+#
+##########################################################################
 import os
 import sys
 import shutil
 import numpy
 from casatools import ctsys, sdm, ms, table, quanta, measures, calibrater
-### for testhelper import
-#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-#import testhelper as th
+
 #from xmlhelper import readXML
 from casatestutils import testhelper as th
 from casatestutils.xmlhelper import readXML
