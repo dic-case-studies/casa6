@@ -1239,21 +1239,5 @@ class mstool_test_fits(mstool_test_base):
         self.ms.open(self.testms) # for teardown
         print
 
-# ------------------------------------------------------------------------------
-
-def suite():
-    return [mstool_test_ms,
-            mstool_test_concat,
-            mstool_test_summary,
-            mstool_test_select,
-            mstool_test_getdata,
-            mstool_test_transform,
-            mstool_test_dataIO,
-            mstool_test_iter,
-            mstool_test_sort,
-            mstool_test_subms,
-            mstool_test_fits
-            ]
-
 if __name__ == '__main__':
     unittest.main()
