@@ -67,6 +67,7 @@
 import shutil
 import numpy
 import unittest
+import os
 
 from casatools import image
 from casatools import regionmanager
@@ -110,31 +111,42 @@ class ia_rebin_test(unittest.TestCase):
     
     def setUp(self):
         self._myia = image()
+        self.imagename = ''
+        self.mymask = ''
     
     def tearDown(self):
         self._myia.done()
+        data = [
+            self.imagename, self.mymask]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
         self.assertTrue(len(_tb.showcache()) == 0)
+
     
     def test_stretch(self):
         """ ia.rebin(): Test stretch parameter"""
         yy = image()
-        mymask = "maskim"
-        yy.fromshape(mymask, [200, 200, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200,200,1,10]
-        imagename = "aa.im"
-        yy.fromshape(imagename, shape)
+        self.imagename = "aa.im"
+        yy.fromshape(self.imagename, shape)
         yy.addnoise()
         self.assertRaises(
             Exception,
             yy.rebin, outfile="", bin=[2,2,1,1],
-            mask=mymask + ">0", stretch=False
+            mask=self.mymask + ">0", stretch=False
         )
         
         zz = yy.rebin(
             outfile="", bin=[2,2,1,1],
-            mask=mymask + ">0", stretch=True
+            mask=self.mymask + ">0", stretch=True
         )
         self.assertTrue(type(zz) == type(yy))
         yy.done()
@@ -147,8 +159,8 @@ class ia_rebin_test(unittest.TestCase):
         myia = self._myia
         shp2 = [20,40]
         d2 = myia.makearray(1.0, [shp2[0], shp2[1]])
-        imagename = "st.im"
-        myim2 = myia.newimagefromarray(outfile=imagename, pixels=d2)
+        self.imagename = "st.im"
+        myim2 = myia.newimagefromarray(outfile=self.imagename, pixels=d2)
         self.assertTrue(myim2)
         
         outfile = "gk.im"
@@ -164,8 +176,8 @@ class ia_rebin_test(unittest.TestCase):
     def test_multibeam(self):
         """Test multiple beams"""
         myia = self._myia
-        imagename = "gd.im"
-        myia.fromshape(imagename, [10, 10, 10])
+        self.imagename = "gd.im"
+        myia.fromshape(self.imagename, [10, 10, 10])
         myia.setrestoringbeam(
             major="4arcsec", minor="2arcsec", pa="0deg",
             channel=0, polarization=0
@@ -181,8 +193,8 @@ class ia_rebin_test(unittest.TestCase):
     def test_crop(self):
         """Test crop parameter"""
         myia = self._myia
-        imagename = "xxyy.im"
-        myia.fromshape(imagename, [20, 20, 20])
+        self.imagename = "xxyy.im"
+        myia.fromshape(self.imagename, [20, 20, 20])
         factor = [3,3,3]
         zz = myia.rebin("", bin=factor, crop=True)
         self.assertTrue((zz.shape() == [6,6,6]).all())
@@ -194,8 +206,8 @@ class ia_rebin_test(unittest.TestCase):
     def test_dropdeg(self):
         """Test dropdeg parameter"""
         myia = self._myia
-        imagename = "kjfasd.im"
-        myia.fromshape(imagename, [20, 20, 1])
+        self.imagename = "kjfasd.im"
+        myia.fromshape(self.imagename, [20, 20, 1])
         factor = [5,5]
         zz = myia.rebin("", bin=factor, dropdeg=True)
         myia.done()
@@ -205,8 +217,8 @@ class ia_rebin_test(unittest.TestCase):
     def test_box(self):
         """Test use of box"""
         myia = self._myia
-        imagename = "erzvd.im"
-        myia.fromshape(imagename, [30, 30, 1])
+        self.imagename = "erzvd.im"
+        myia.fromshape(self.imagename, [30, 30, 1])
         factor = [5,5]
         zz = myia.rebin("", bin=factor, region=_rg.box([5,5,0],[25,25,0]),crop=True)
         myia.done()
@@ -216,8 +228,8 @@ class ia_rebin_test(unittest.TestCase):
     def test_dropdeg2(self):
         """ axes that become degenerate when regridded are dropped if dropdeg=True: CAS-5836"""
         myia = self._myia
-        imagename = "kbesd.im"
-        myia.fromshape(imagename, [20, 20, 20])
+        self.imagename = "kbesd.im"
+        myia.fromshape(self.imagename, [20, 20, 20])
         factor = [1, 1, 20]
         zz = myia.rebin("", bin=factor, dropdeg=True)
         myia.done()
@@ -227,9 +239,9 @@ class ia_rebin_test(unittest.TestCase):
     def test_history(self):
         """Test history writing"""
         myia = self._myia
-        imagename = "zz.im"
+        self.imagename = "zz.im"
         factor = [1, 1, 20]
-        myia.fromshape(imagename,[20,20,20])
+        myia.fromshape(self.imagename,[20,20,20])
         bb = myia.rebin("", bin=factor)
         myia.done()
         msgs = bb.history()

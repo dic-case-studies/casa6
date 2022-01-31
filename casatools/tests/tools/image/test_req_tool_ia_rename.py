@@ -22,94 +22,72 @@
 #
 ##########################################################################
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import unittest
 
-try:
-    from casatools import ctsys, image, table
-    ctsys_resolve = ctsys.resolve
-    myia = image()
-    _tb = table()
-    is_CASA6 = True
-except ImportError:
-    from tasks import *
-    from taskinit import *
-    import casac
-    from __main__ import *
-    image = iatool
-    myia = iatool()
-    _tb = tbtool()
-    is_CASA6 = False
-    data_root = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
-    def ctsys_resolve(apath):
-        return os.path.join(data_root, apath)
+
+from casatools import ctsys, image, table
+ctsys_resolve = ctsys.resolve
+myia = image()
+_tb = table()
+
+
 
 class ia_rename_test(unittest.TestCase):
     
     def setUp(self):
-        pass
+        self.newname = ''
     
     def tearDown(self):
+        if self.newname:
+            if os.path.isfile(self.newname):
+                os.unlink(self.newname)
+            else:
+                shutil.rmtree(self.newname)
         self.assertTrue(len(_tb.showcache()) == 0)
-        # make sure directory is clean as per verification test requirement
-        cwd = os.getcwd()
-        for filename in os.listdir(cwd):
-            file_path = os.path.join(cwd, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
 
     def test_rename(self):
         """verify history writing"""
         myia.fromshape("zz",[20, 20])
-        newname = "xx.im"
-        self.assertTrue(myia.rename(newname), "rename unsuccessful")
+        self.newname = "xx.im"
+        self.assertTrue(myia.rename(self.newname), "rename unsuccessful")
         got = myia.name(strippath=True)
         self.assertTrue(
-            got == newname,
-            "wrong name " + got + " should be " + newname
+            got == self.newname,
+            "wrong name " + got + " should be " + self.newname
         )
         myia.done()
 
     def test_overwrite(self):
-        newname = "kfe.im"
-        myia.fromshape(newname, [20, 20])
+        self.newname = "kfe.im"
+        myia.fromshape(self.newname, [20, 20])
         myia.done()
         name = "jfjd.im"
         myia.fromshape(name, [5, 5])
         try:
-            myia.rename(newname, overwrite=False)
+            myia.rename(self.newname, overwrite=False)
             thrown = False
         except:
             thrown = True
         self.assertTrue(thrown, "overwrite=False exception not thrown")
         myia.open(name)
-        res = myia.rename(newname, overwrite=True)
+        res = myia.rename(self.newname, overwrite=True)
         print("res", res)
-        self.assertTrue(myia.rename(newname, overwrite=True), "overwrite=True unsuccessful")
-        self.assertTrue(myia.name(strippath=True) == newname, "wrong name")
+        self.assertTrue(myia.rename(self.newname, overwrite=True), "overwrite=True unsuccessful")
+        self.assertTrue(myia.name(strippath=True) == self.newname, "wrong name")
         myia.done()
 
     def test_history(self):
         """verify history writing"""
         myia.fromshape("zz",[20, 20])
-        myia.rename("zy.im")
+        self.newname = "zy.im"
+        myia.rename(self.newname)
         msgs = myia.history()
         myia.done()
         self.assertTrue("ia.rename" in msgs[-3], "wrong history")
         self.assertTrue("ia.rename" in msgs[-2], "wrong history")
-        
-def suite():
-    return [ia_rename_test]
+
 
 if __name__ == '__main__':
     unittest.main()
