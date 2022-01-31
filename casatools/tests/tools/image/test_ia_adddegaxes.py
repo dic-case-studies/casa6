@@ -67,7 +67,7 @@
 ###########################################################################
 import shutil
 import unittest
-
+import os
 is_CASA6 = False
 try:
     from casatools import image as iatool
@@ -86,9 +86,15 @@ class ia_adddegaxes_test(unittest.TestCase):
     
     def setUp(self):
         self._myia = iatool()
+        self.imname = ''
     
     def tearDown(self):
         self._myia.done()
+        data = ["ia.fromshape2.image_c" , "ia.fromshape.image_c",
+                "ia.fromshape2.image_f" , "ia.fromshape.image_f" ]
+        for f in data:
+            if os.path.exists(f) and os.path.isdir(f):
+                shutil.rmtree(f)
 
     def test_general(self):
         """general tests"""
@@ -97,9 +103,9 @@ class ia_adddegaxes_test(unittest.TestCase):
         
         for t in ('f', 'c'):
             # Make RA/DEC image
-            imname = 'ia.fromshape.image_' + t
+            self.imname = 'ia.fromshape.image_' + t
             imshape = [10,10]
-            myim.fromshape(imname, imshape, type=t)
+            myim.fromshape(self.imname, imshape, type=t)
             self.assertTrue(myim)
             self.assertRaises(Exception, myim.adddegaxes, direction=True)
             myim2 = myim.adddegaxes(spectral=True)
