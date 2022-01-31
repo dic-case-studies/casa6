@@ -1,7 +1,7 @@
 {
     "testlist": [
         {
-            "testScript":"test_agentflagger",
+            "testScript":"test_tool_agentflagger",
             "testType":"casatools",
             "maintainer":"Sandra Castro",
             "maintainerEmail":"scastro@eso.org",
@@ -31,7 +31,7 @@
             "comment":""
         },
         {
-            "testScript":"test_calanalysis",
+            "testScript":"test_tool_calanalysis",
             "testType":"casatools",
             "maintainer":"George Moellenbrock",
             "maintainerEmail":"gmoellen@nrao.edu",
@@ -71,7 +71,7 @@
             "comment":""
         },
         {
-            "testScript":"test_componentlist",
+            "testScript":"test_tool_componentlist",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
@@ -91,7 +91,7 @@
             "comment":"DEFAULT"
         },
         {
-            "testScript":"test_coordsys",
+            "testScript":"test_tool_coordsys",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
@@ -1021,7 +1021,7 @@
             "comment":""
         },
         {
-            "testScript":"test_measures",
+            "testScript":"test_tool_measures",
             "testType":"casatools",
             "maintainer":"Takahiro Tsutsumi",
             "maintainerEmail":"ttsutsum@nrao.edu",
@@ -1031,7 +1031,7 @@
             "comment":""
         },
         {
-            "testScript":"test_msmetadata",
+            "testScript":"test_tool_msmetadata",
             "testType":"casatools",
             "maintainer":"Dave Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
@@ -1327,6 +1327,16 @@
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
             "testGroup":["casatools","default"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_tool_imagepol",
+            "testType":"casatools",
+            "maintainer":"David Mehringer",
+            "maintainerEmail":"dmehring@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools","default","imagepol"],
             "timeout":0,
             "comment":""
         },
@@ -1861,7 +1871,17 @@
             "comment":""
         },
         {
-            "testScript":"test_req_tool_ms_statwt",
+            "testScript":"test_tool_regionmanager",
+            "testType":"casatools",
+            "maintainer":"David Mehringer",
+            "maintainerEmail":"dmehring@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools","region manager","default"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_tool_ms_statwt",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
@@ -1971,6 +1991,16 @@
             "comment":""
         },
         {
+            "testScript":"test_tool_sdm",
+            "testType":"casatools",
+            "maintainer":"Bob Garwood",
+            "maintainerEmail":"bgarwood@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools","default"],
+            "timeout":0,
+            "comment":"DEFAULT"
+        },
+        {
             "testScript":"test_sdm_fromms",
             "testType":"casatools",
             "maintainer":"Bob Garwood",
@@ -1991,7 +2021,7 @@
             "comment":"DEFAULT"
         },
         {
-            "testScript":"test_sdm_toms",
+            "testScript":"test_tool_sdm_toms",
             "testType":"casatools",
             "maintainer":"Bob Garwood",
             "maintainerEmail":"bgarwood@nrao.edu",
@@ -2201,7 +2231,7 @@
             "comment":""
         },
         {
-            "testScript":"test_uvfits",
+            "testScript":"test_tool_ms_uvfits",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
@@ -2231,7 +2261,7 @@
             "comment":"DEFAULT"
         },
         {
-            "testScript":"test_vpmanager",
+            "testScript":"test_tool_vpmanager",
             "testType":"casatools",
             "maintainer":"Dirk Petry",
             "maintainerEmail":"dpetry@eso.org",
