@@ -53,15 +53,15 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             spw = '*'
 
         if (blmode == 'fit'):
-            temp_outfile = do_fit(infile, datacolumn, antenna, field, spw, timerange, scan,
-                                  pol, intent, reindex, maskmode, thresh, avg_limit, minwidth,
-                                  edge, dosubtract, blformat, bloutput, blfunc, order, npiece,
-                                  applyfft, fftmethod, fftthresh, addwn, rejwn, clipthresh,
-                                  clipniter, blparam, verbose, updateweight, sigmavalue,
-                                  outfile, overwrite)
+            temp_outfile = _do_fit(infile, datacolumn, antenna, field, spw, timerange, scan,
+                                   pol, intent, reindex, maskmode, thresh, avg_limit, minwidth,
+                                   edge, dosubtract, blformat, bloutput, blfunc, order, npiece,
+                                   applyfft, fftmethod, fftthresh, addwn, rejwn, clipthresh,
+                                   clipniter, blparam, verbose, updateweight, sigmavalue,
+                                   outfile, overwrite)
         elif (blmode == 'apply'):
-            do_apply(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
-                     reindex, bltable, updateweight, sigmavalue, outfile, overwrite)
+            _do_apply(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
+                      reindex, bltable, updateweight, sigmavalue, outfile, overwrite)
 
         # Remove {WEIGHT|SIGMA}_SPECTRUM columns if updateweight=True (CAS-13161)
         if updateweight:
@@ -433,7 +433,7 @@ def restore_sorted_table_keyword(infile, sorttab_info):
             tb.putkeyword(sorttab_info['sorttab_keywd'], sorttab_info['sorttab_name'])
 
 
-def do_apply(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
+def _do_apply(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
              reindex, bltable, updateweight, sigmavalue, outfile, overwrite):
     if not os.path.exists(bltable):
         raise ValueError("file specified in bltable '%s' does not exist." % bltable)
@@ -464,7 +464,7 @@ def do_apply(infile, datacolumn, antenna, field, spw, timerange, scan, pol, inte
     restore_sorted_table_keyword(infile, sorttab_info)
 
 
-def do_fit(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
+def _do_fit(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
            reindex, maskmode, thresh, avg_limit, minwidth, edge, dosubtract, blformat,
            bloutput, blfunc, order, npiece, applyfft, fftmethod, fftthresh, addwn,
            rejwn, clipthresh, clipniter, blparam, verbose, updateweight, sigmavalue,
