@@ -612,7 +612,6 @@ class SdbaselineParams(AbstractValidatable):
     FIXED_PARAM = dict(
         antenna='',
         field='',
-        spw='',
         timerange='',
         scan='',
         pol='',
@@ -640,8 +639,8 @@ class SdbaselineParams(AbstractValidatable):
         self.datacolumn = datacolumn
         self.bloutput = bloutput if bloutput is not None else ''
         self.maskmode = maskmode.lower() if maskmode is not None else 'list'  # list(default)/auto
-        self.chans = chans if chans is not None else ''                       # maskmode = list
-        self.thresh = thresh if thresh is not None else 5.0                  # maskmode = auto
+        self.spw = self.__chans2spw(chans, self.maskmode)                     # maskmode = list
+        self.thresh = thresh if thresh is not None else 5.0                   # maskmode = auto
         self.avg_limit = avg_limit if avg_limit is not None else 4            # maskmode = auto
         self.minwidth = minwidth if minwidth is not None else 4               # maskmode = auto
         self.edge = edge if edge is not None else [0, 0]                      # maskmode = auto
@@ -656,6 +655,11 @@ class SdbaselineParams(AbstractValidatable):
         self.clipniter = clipniter if clipniter is not None else 0
         self.clipthresh = clipthresh if clipthresh is not None else 3.0
 
+    def __chans2spw(self, chans: str, maskmode) -> str:
+        if not chans or maskmode != 'list':
+            return ''
+        return chans
+
     def validate(self) -> None:
         self.__validate_maskmode()
         self.__validate_blfunc()
@@ -669,11 +673,11 @@ class SdbaselineParams(AbstractValidatable):
             return self.blfunc == 'poly' or self.blfunc == 'chebyshev' or self.blfunc == 'cspline' or self.blfunc == 'sinusoid' \
                 or self.blfunc == 'variable'
 
-        if not is_valid_blfunc():
+        if not is_valid_blfunc(self):
             raise ValueError(f'Unsupported blfunc, {self.blfunc}', 'SEVERE')
 
         if self.blfunc == 'variable' and not os.path.exists(self.blparam):
-            raise ValueError(f'input file "{self.blparam}" does not exists', 'SEVERE')
+            raise ValueError(f'input file {self.blparam} does not exists', 'SEVERE')
 
     def __call__(self) -> Dict[str, Any]:
         """Convert the class into arguments of sdbaseline().
@@ -684,8 +688,7 @@ class SdbaselineParams(AbstractValidatable):
                     avg_limit=self.avg_limit, minwidth=self.minwidth, edge=self.edge, bloutput=self.bloutput, blfunc=self.blfunc,
                     order=self.order, npiece=self.npiece, applyfft=self.applyfft, fftthresh=self.fftthresh, addwn=self.addwn,
                     rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter, blparam=self.blparam,
-                    outfile=self.outfile,
-                    __log_origin='imbaseline')
+                    outfile=self.outfile, spw=self.spw, __log_origin='imbaseline')
 
 
 class Image2MSParams(AbstractValidatable):

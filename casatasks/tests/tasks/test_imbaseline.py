@@ -1,6 +1,8 @@
+from audioop import avg
 import os
 import re
 import shutil
+from ssl import match_hostname
 import unittest
 
 import numpy as np
@@ -238,6 +240,7 @@ class ImageShape_test(test_base):
         shape.validate()
         shape = ImageShape(im_shape=np.array([100, 100, 100, 1]), axis_dir=np.array([0, 1]), axis_sp=2, axis_pol=3)
         shape.validate()
+        # any exceptions are not thrown, its OK
 
     @test_base.exception_case(ValueError, 'nchan \d is too few to perform baseline subtraction')
     def test_2_2(self):
@@ -257,6 +260,7 @@ class imsmooth_test(test_base):
 
     3-1. simple successful case
     3-2. simple failure case
+    3-3. check parameters of ImsmoothParams
     """
 
     datapath = ctsys_resolve('unittest/imsmooth/')
@@ -301,6 +305,59 @@ class imsmooth_test(test_base):
         _stack = CasaImageStack(top=UnerasableFolder(self.tiny))
 
         ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, _stack)
+
+    def test_3_3(self):
+        targetres = stretch = False
+        mask = region = box = chans = stokes = ''
+        beam = {}
+        overwrite=True
+        infile = 'infile'
+        outfile = 'outfile'
+        kernel = ('none', 'image', 'gaussian', 'boxcar')
+        major = "2.5arcsec"
+        minor = "2arcsec"
+        pa = "0deg"
+        kimage = self.tiny
+        scale = -2.0
+        logorigin = 'imbaseline'
+
+        # none
+        valid_param = dict(targetres=targetres, mask=mask, beam=beam, region=region, box=box, chans=chans, stokes=stokes,
+                           stretch=stretch, overwrite=True, imagename=infile, outfile=outfile, kernel=kernel[0], major=major,
+                           minor=minor, pa=pa, kimage=kimage, scale=scale, __log_origin=logorigin)
+        param = ImsmoothParams(infile, outfile, kernel[0], major, minor, pa, kimage, scale)
+        param.validate()
+        self.assertEqual(param(), valid_param)
+
+        # image
+        minor = major = pa = ''
+        valid_param = dict(targetres=targetres, mask=mask, beam=beam, region=region, box=box, chans=chans, stokes=stokes,
+                           stretch=stretch, overwrite=True, imagename=infile, outfile=outfile, kernel=kernel[1], major=major,
+                           minor=minor, pa=pa, kimage=kimage, scale=scale, __log_origin=logorigin)
+        param = ImsmoothParams(infile, outfile, kernel[1], major, minor, pa, kimage, scale)
+        param.validate()
+        self.assertEqual(param(), valid_param)
+
+        # gaussian
+        major = "2.5arcsec"
+        minor = "2arcsec"
+        pa = "0deg"
+        kimage = ''
+        scale = -1.0
+        valid_param = dict(targetres=targetres, mask=mask, beam=beam, region=region, box=box, chans=chans, stokes=stokes,
+                           stretch=stretch, overwrite=True, imagename=infile, outfile=outfile, kernel=kernel[2], major=major,
+                           minor=minor, pa=pa, kimage=kimage, scale=scale, __log_origin=logorigin)
+        param = ImsmoothParams(infile, outfile, kernel[2], major, minor, pa, kimage, scale)
+        param.validate()
+        self.assertEqual(param(), valid_param)
+
+        # boxcar
+        valid_param = dict(targetres=targetres, mask=mask, beam=beam, region=region, box=box, chans=chans, stokes=stokes,
+                           stretch=stretch, overwrite=True, imagename=infile, outfile=outfile, kernel=kernel[3], major=major,
+                           minor=minor, pa=pa, kimage=kimage, scale=scale, __log_origin=logorigin)
+        param = ImsmoothParams(infile, outfile, kernel[3], major, minor, pa, kimage, scale)
+        param.validate()
+        self.assertEqual(param(), valid_param)
 
 
 class image2ms_test(test_base):
@@ -373,6 +430,7 @@ class sdsmooth_test(test_base):
     5-1. simple successful case
     5-2. invalid ms stack
     5-3. invalid image stack
+    5-4. check SdsmoothParams
     """
     datapath = ctsys_resolve('unittest/imbaseline/')
     expected_im = "expected.im"
@@ -426,15 +484,36 @@ class sdsmooth_test(test_base):
         ms_stack.push(EraseableFolder(self.expected_ms))
         SdsmoothMethods.execute(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
 
+    def test_5_4(self):
+        spw = field = antenna = timerange = scan = pol = intent = ''
+        reindex = overwrite = True
+        infile = 'infile'
+        outfile = 'outfile'
+        datacolumn = DATACOLUMN
+        kernel = ('none', 'gaussian', 'boxcar')
+        kwidth = 5
+        logorigin = 'imbaseline'
+
+        def compare_params(_kernel):
+            valid_params = dict(spw=spw, field=field, antenna=antenna, timerange=timerange, scan=scan, pol=pol, intent=intent,
+                                reindex=reindex, overwrite=overwrite, infile=infile, datacolumn=datacolumn, kernel=_kernel,
+                                kwidth=kwidth, outfile=outfile, __log_origin=logorigin)
+            params = SdsmoothParams(infile=infile, outfile=outfile, datacolumn=datacolumn, spkernel=_kernel, kwidth=kwidth)
+            params.validate()
+            self.assertEqual(params(), valid_params)
+
+        [compare_params(_kernel) for _kernel in kernel]
+
 
 class sdbaseline_test(test_base):
     """sdbaseline test
 
-    Tests of sdbaseline rely on test_sdbaselinebasically, so we have minimal tests in imbaseline.
+    Tests of sdbaseline rely on test_sdbaseline basically, so we have minimal tests in imbaseline.
 
     6-1. simple successful case
     6-2. invalid ms stack
     6-3. invalid image stack
+    6-4. check SdbaselineParams
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -442,6 +521,7 @@ class sdbaseline_test(test_base):
     expected_ms = "expected.ms"
     bloutput = "test.csv"
     maskmode = "auto"
+    blparam = 'analytic_variable_blparam.txt'
     chans = ""
     thresh = 5.0
     avg_limit = 4
@@ -454,7 +534,6 @@ class sdbaseline_test(test_base):
     fftthresh = 3.0
     addwn = [0]
     rejwn = []
-    blparam = ''
     clipniter = 10
     clipthresh = 2.0
     datacolumn = DATACOLUMN
@@ -462,6 +541,7 @@ class sdbaseline_test(test_base):
     def setUp(self):
         self._copy_test_files(self.datapath, self.expected_im)
         self._copy_test_files(self.datapath, self.expected_ms)
+        self._copy_test_files(self.datapath, self.blparam)
         self.image_shape = get_image_shape(os.path.join(self.datapath, self.expected_im))
 
     def test_6_1(self):
@@ -495,6 +575,57 @@ class sdbaseline_test(test_base):
                                   self.fftthresh, self.addwn, self.rejwn, self.blparam, self.clipniter, self.clipthresh,
                                   image_stack, ms_stack, self.image_shape)
 
+    def test_6_4(self):
+        antenna = field = timerange = scan = pol = intent = bltable = ''
+        reindex = dosubtract = overwrite = True
+        updateweight = showprogress = verbose = False
+        blmode = 'fit'
+        blformat = 'csv'
+        sigmavalue = 'stddev'
+        minnrow = 1000
+        fftmethod = 'fft'
+
+        infile = 'infile'
+        outfile = 'outfile'
+        datacolumn = 'DATA'
+        bloutput = 'bloutput'
+        maskmode = ('list', 'auto')
+        chans = ''
+        thresh = 6.0
+        avg_limit = 5
+        minwidth = 5
+        edge = [1, 1]
+        blfunc = ('poly', 'chebyshev', 'cspline', 'sinusoid', 'variable')
+        order = 6
+        npiece = 2
+        applyfft = False
+        fftthresh = 4.0
+        addwn = [1]
+        rejwn = [1]
+        blparam = self.blparam
+        clipniter = 11
+        clipthresh = 3.0
+        logorigin = 'imbaseline'
+
+        def compare_params(_maskmode, _blfunc):
+            valid_param = dict(antenna=antenna, field=field, spw=chans, timerange=timerange, scan=scan, pol=pol, intent=intent,
+                               reindex=reindex, blmode=blmode, dosubtract=dosubtract, blformat=blformat, bltable=bltable,
+                               updateweight=updateweight, sigmavalue=sigmavalue, showprogress=showprogress, minnrow=minnrow,
+                               fftmethod=fftmethod, verbose=verbose, overwrite=overwrite, infile=infile, datacolumn=datacolumn,
+                               maskmode=_maskmode, thresh=thresh, avg_limit=avg_limit, minwidth=minwidth, edge=edge,
+                               bloutput=bloutput, blfunc=_blfunc, order=order, npiece=npiece, applyfft=applyfft,
+                               fftthresh=fftthresh, addwn=addwn, rejwn=rejwn, clipthresh=clipthresh, clipniter=clipniter,
+                               blparam=blparam, outfile=outfile, __log_origin=logorigin)
+            params = SdbaselineParams(infile=infile, outfile=outfile, datacolumn=datacolumn, bloutput=bloutput,
+                                      maskmode=_maskmode, chans=chans, thresh=thresh, avg_limit=avg_limit, minwidth=minwidth,
+                                      edge=edge, blfunc=_blfunc, order=order, npiece=npiece, applyfft=applyfft,
+                                      fftthresh=fftthresh, addwn=addwn, rejwn=rejwn, blparam=blparam, clipniter=clipniter,
+                                      clipthresh=clipthresh)
+            params.validate()
+            self.assertEqual(params(), valid_param)
+
+        [compare_params(_maskmode, _blfunc) for _maskmode in maskmode for _blfunc in blfunc]
+
 
 class image_subtraction_test(test_base):
     """Image subtraction test.
@@ -503,8 +634,8 @@ class image_subtraction_test(test_base):
     7-2. successful test: input_image - baseline_image
     7-3. unmatch shape
     7-4. unmatch shape(exception is not thrown)
-    7-5. three arrays subtraction test
-    7-5. two arrays subtraction test
+    7-5. three images subtraction test
+    7-6. two images subtraction test
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -585,7 +716,10 @@ class image_subtraction_test(test_base):
 class imbaseline_test(test_base):
     """Full test.
 
-    x-1. simple successful case
+    F-1. simple successful case
+    F-2. imagefile is None
+    F-3. output_cont is False
+    F-4. bloutput is specified
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -595,9 +729,9 @@ class imbaseline_test(test_base):
         self.ia = image()
         self._copy_test_files(self.datapath, self.expected)
 
-    def test_x_1(self):
+    def test_f_1(self):
         imagefile = self.expected
-        linefile = 'output_7_1'
+        linefile = 'output_f_1'
         dirkernel = 'gaussian'
         spkernel = 'gaussian'
         major = '20arcsec'
@@ -617,6 +751,75 @@ class imbaseline_test(test_base):
                    output_cont=output_cont)
         self.assertTrue(os.path.exists(linefile))
 
+    @test_base.exception_case(ValueError, 'file  is not found.')
+    def test_f_2(self):
+        imagefile = ''
+        linefile = 'output_f_2'
+        dirkernel = 'gaussian'
+        spkernel = 'gaussian'
+        major = '20arcsec'
+        minor = '10arcsec'
+        pa = '0deg'
+        blfunc = 'sinusoid'
+        output_cont = True
+
+        imbaseline(imagename=imagefile,
+                   linefile=linefile,
+                   dirkernel=dirkernel,
+                   spkernel=spkernel,
+                   major=major,
+                   minor=minor,
+                   pa=pa,
+                   blfunc=blfunc,
+                   output_cont=output_cont)
+
+    def test_f_3(self):
+        imagefile = self.expected
+        linefile = 'output_f_3'
+        dirkernel = 'gaussian'
+        spkernel = 'gaussian'
+        major = '20arcsec'
+        minor = '10arcsec'
+        pa = '0deg'
+        blfunc = 'sinusoid'
+        output_cont = False
+
+        imbaseline(imagename=imagefile,
+                   linefile=linefile,
+                   dirkernel=dirkernel,
+                   spkernel=spkernel,
+                   major=major,
+                   minor=minor,
+                   pa=pa,
+                   blfunc=blfunc,
+                   output_cont=output_cont)
+        self.assertFalse(os.path.exists(linefile + '.cont'))
+
+    def test_f_4(self):
+        imagefile = self.expected
+        linefile = 'output_f_4'
+        dirkernel = 'gaussian'
+        spkernel = 'gaussian'
+        major = '20arcsec'
+        minor = '10arcsec'
+        pa = '0deg'
+        blfunc = 'sinusoid'
+        output_cont = True
+        bloutput = self.expected + 'bloutput'
+
+        imbaseline(imagename=imagefile,
+                   linefile=linefile,
+                   dirkernel=dirkernel,
+                   spkernel=spkernel,
+                   major=major,
+                   minor=minor,
+                   pa=pa,
+                   blfunc=blfunc,
+                   output_cont=output_cont,
+                   bloutput=bloutput)
+        self.assertTrue(os.path.exists(bloutput))
+
 
 def suite():
-    return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test, image2ms_test, sdbaseline_test, image_subtraction_test]
+    return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test, image2ms_test, sdbaseline_test,
+            image_subtraction_test]
