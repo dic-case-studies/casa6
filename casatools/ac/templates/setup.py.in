@@ -101,12 +101,14 @@ build_config_file = "build.json"
 parser=argparse.ArgumentParser()
 
 parser.add_argument('--version', help='version')
+parser.add_argument('--tests', help="Test name prefix(es) to search for. For use with 'test'. Default '--tests=test_'.", default='test_', dest='TESTS')
 parser.add_argument('--debug', help='debug', action='store_true')
 parser.add_argument('--relwithdebinfo', help='Release build with debug and optimization flags', action='store_true')
 parser.add_argument('--stripsyms', help='Strip debug info out of the executable files from --relwithdebinfo. Used with release builds.', action='store_true')
 parser.add_argument('bdist_wheel', help='bdist_wheel')
 
 args=parser.parse_args()
+_tests_ = args.TESTS
 _debug_build_ = args.debug
 _rel_with_deb_info_ = args.relwithdebinfo
 _strip_syms_ = args.stripsyms
@@ -115,6 +117,9 @@ print("_rel_with_deb_info_: " + str(_rel_with_deb_info_))
 print("_strip_syms_: " + str(_strip_syms_))
 
 # Remove the "non-standard" arguments from sys.argv so as not to confuse dist_tools
+argv_to_remove = list(filter(lambda x: x.startswith("--tests="), sys.argv))
+for v in argv_to_remove:
+    sys.argv.remove(v)
 if "--version" in sys.argv:
     sys.argv.remove("--version")
 if "--debug" in sys.argv:
@@ -1513,9 +1518,11 @@ class casa_test(Command):
 
     def __collect_tests(self, testdir):
         tests = [ ]
+        prefixes = _tests_.split(",")
         for dir, subdirs, files in os.walk(testdir):
             for f in files:
-                if f.endswith(".py") and f.startswith("test_"):
+                matching_prefixes = list(filter(lambda x: f.startswith(x), prefixes))
+                if f.endswith(".py") and len(matching_prefixes) > 0:
                     workingdir = "%s/%s" % (self.__test_dir,f[:-3])
                     mkpath(workingdir)
                     tests.append((os.path.abspath("%s/%s" % (dir,f)),workingdir))
