@@ -1,6 +1,7 @@
 import shutil
 import unittest
 import numpy
+import os
 
 from casatools import image
 from casatools import quanta
@@ -15,11 +16,23 @@ class ia_subimage_test(unittest.TestCase):
     
     def setUp(self):
         self.myia = image()
+        self.mask1 = ''
+        self.mask2 = ''
+        self.mask3 = ''
+        self.imname = ''
+        self.imagename = ''
     
     def tearDown(self):
         self.myia.done()
         # FIXME need to figure out why this table is left open when test_stretch throws
         # reasonable exception (CAS-4890)
+        data = ["mask1.im", "mask2.im", "mask3.im", self.imagename, self.imname]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
         self.assertTrue(len(_tb.showcache()) == 0)
 
     def test_stretch(self):
@@ -30,25 +43,25 @@ class ia_subimage_test(unittest.TestCase):
         myia.fromshape("mask3.im", [20, 30, 4, 2])
         myia.done()
 
-        imname = "xx.im"
-        myia.fromshape(imname, [20,30,4,10])
-        mask1 = "mask1.im > 10"
-        mm = myia.subimage("", mask=mask1)
+        self.imname = "xx.im"
+        myia.fromshape(self.imname, [20,30,4,10])
+        self.mask1 = "mask1.im > 10"
+        mm = myia.subimage("", mask=self.mask1)
         self.assertTrue(mm)
         mm.done()
         myia.done()
         self.assertTrue(len(_tb.showcache()) == 0)
-        mask2 = "mask2.im > 10"
-        self.assertRaises(Exception, myia.subimage, "", mask=mask2, stretch=False)
-        myia.open(imname)
-        mm = myia.subimage("", mask=mask2, stretch=True)
+        self.mask2 = "mask2.im > 10"
+        self.assertRaises(Exception, myia.subimage, "", mask=self.mask2, stretch=False)
+        myia.open(self.imname)
+        mm = myia.subimage("", mask=self.mask2, stretch=True)
         myia.done()
         mm.done()
         self.assertTrue(len(_tb.showcache()) == 0)
-        mask3 = "mask3.im > 10"
+        self.mask3 = "mask3.im > 10"
         zz = None
-        myia.open(imname)
-        self.assertRaises(Exception, myia.subimage, "", mask=mask3, stretch=True)
+        myia.open(self.imname)
+        self.assertRaises(Exception, myia.subimage, "", mask=self.mask3, stretch=True)
         myia.done()
 
     def test_beams(self):
@@ -131,8 +144,8 @@ class ia_subimage_test(unittest.TestCase):
         zz = myia.subimage("", dropdeg=True, keepaxes=[0])
         self.assertTrue((zz.shape() == [10, 20, 30]).all())
         
-        imagename = "keep.im"
-        myia.fromshape(imagename, [10, 20, 1, 1])
+        self.imagename = "keep.im"
+        myia.fromshape(self.imagename, [10, 20, 1, 1])
         zz = myia.subimage("", dropdeg=False)
         self.assertTrue((zz.shape() == [10, 20, 1, 1]).all())
         zz = myia.subimage("", dropdeg=True)
@@ -151,8 +164,8 @@ class ia_subimage_test(unittest.TestCase):
     def test_history(self):
         """verify history writing"""
         myia = self.myia
-        imagename = "zz.im"
-        myia.fromshape(imagename, [20, 20])
+        self.imagename = "zz.im"
+        myia.fromshape(self.imagename, [20, 20])
         myia = myia.subimage()
         msgs = myia.history()
         myia.done()
@@ -162,7 +175,8 @@ class ia_subimage_test(unittest.TestCase):
         # verify no history written if dohistory set to False
         ia2 = image()
         ia2.dohistory(False)
-        ia2.fromshape("gg",[20, 20])
+        self.imname = "gg"
+        ia2.fromshape(self.imname,[20, 20])
         msgs = ia2.history()
         ia2 = ia2.subimage()
         ia2.done()

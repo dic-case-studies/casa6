@@ -4095,6 +4095,22 @@ output mask is the result of ANDing the default input pixel mask (if any) and
 the OTF mask.  Any other input pixel masks will not be copied.  The method
 maskhandler() can be used if there is a need to copy other masks.
 
+The following rules are used to set the brightness units of the output images.
+1. The phase image always has units of radians.
+For the other output images,
+2. if the input image has units of Jy/beam or Jy/pixel
+   (ie it is an image-plane image), the output (uv-plane) images will have units
+   of Jy. In the case of the input image having a synthesized beam, the beam
+   will be copied to the output images (which is important for transforming back).
+3. If the input image has units of Jy (ie is a uv-plane image), the output
+   images will have either units of Jy/beam or Jy/pixel, depending on if the
+   input image has a beam or not.   
+
+For some transformations (e.g., UV domain to image domain transforms), it is 
+not possible to automatically generate an expected coordinate system for
+the output image(s); only the FFT numerics are performed and the coordinate
+system is generated using generic conventions.
+
 </description>
 
 <example>

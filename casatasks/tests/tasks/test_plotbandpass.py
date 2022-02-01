@@ -19,24 +19,17 @@
 #
 ##########################################################################
 
-import sys
 import os
-import unittest
-import shutil
-import numpy as np
-from filecmp import dircmp
 import struct
+import unittest
 
-CASA6 = False
-try:
-    import casatools
-    from casatasks import plotbandpass
-    CASA6 = True
-except ImportError:
-    from __main__ import *
-    from tasks import *
-    from taskinit import *
+from casatasks import plotbandpass
+from casatools import ctsys
 
+datapath = ctsys.resolve('unittest/plotbandpass/')
+figdir= os.getcwd() + '/'
+# Set to False to Leave PNGs and PDFs
+delete_artifacts = True
 
 def pngWidthHeight(filename):
     """
@@ -50,32 +43,14 @@ def pngWidthHeight(filename):
     f = open(filename, 'rb')
     data = f.read()
     f.close()
-    if CASA6:
-        if (data[12:16].decode("utf-8") == 'IHDR'):
-            w, h = struct.unpack('>LL', data[16:24])
-            width = int(w)
-            height = int(h)
-    else:
-        if (data[:8] == '\211PNG\r\n\032\n'and (data[12:16] == 'IHDR')):
-            w, h = struct.unpack('>LL', data[16:24])
-            width = int(w)
-            height = int(h)
-    #else:
-    #    raise Exception('not a png image')
-    
+
+    if (data[12:16].decode("utf-8") == 'IHDR'):
+        w, h = struct.unpack('>LL', data[16:24])
+        width = int(w)
+        height = int(h)
+
     return width, height
     
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/plotbandpass/')
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/plotbandpass/'
-
-
-
-figdir= os.getcwd() + '/'
-
-# Set to False to Leave PNGs and PDFs
-delete_artifacts = True
 
 class plotbandpass_1_test(unittest.TestCase):
 
@@ -84,8 +59,6 @@ class plotbandpass_1_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'Band7multi_april22.ms', os.getcwd() + '/Band7multi_april22.ms')
         os.symlink(datapath+'bandpass.bcal', os.getcwd() + '/bandpass.bcal')
             
@@ -282,8 +255,6 @@ class plotbandpass_2_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'X3c1.ms', os.getcwd() + '/X3c1.ms')
             
     def tearDown(self):
@@ -333,8 +304,6 @@ class plotbandpass_X3c1_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'X3c1.ms', os.getcwd() + '/X3c1.ms')
             
     def tearDown(self):
@@ -408,8 +377,6 @@ class plotbandpass_smooth_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'Band7multi_april22.ms', os.getcwd() + '/Band7multi_april22.ms')
             
     def tearDown(self):
@@ -488,8 +455,6 @@ class plotbandpass_X3c1_2_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'X3c1.ms', os.getcwd() + '/X3c1.ms')
             
     def tearDown(self):
@@ -615,8 +580,6 @@ class plotbandpass_multi_field_bandpass_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'Band7multi_april22.ms', os.getcwd() + '/Band7multi_april22.ms')
             
     def tearDown(self):
@@ -661,10 +624,7 @@ class plotbandpass_multi_field_Tsys_solution_overlay_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'2011.0.00150.S/uid___A002_X54d35d_X761.ms.tsys', os.getcwd() + '/uid___A002_X54d35d_X761.ms.tsys')
-
         os.symlink(datapath+'2011.0.00150.S/uid___A002_X54d35d_X761.ms', os.getcwd() + '/uid___A002_X54d35d_X761.ms')
             
     def tearDown(self):
@@ -757,10 +717,7 @@ class plotbandpass_ALMA_1_pol_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'singlePol/uid___A002_X494155_X23a.ms.split.bandpass', os.getcwd() + '/uid___A002_X494155_X23a.ms.split.bandpass')
-
         os.symlink(datapath+'singlePol/uid___A002_X494155_X23a.ms.tsys', os.getcwd() + '/uid___A002_X494155_X23a.ms.tsys')
             
     def tearDown(self):
@@ -796,10 +753,7 @@ class plotbandpass_ALMA_multi_regions_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'diah/uid___A002_X50bcb3_X3b.ms', os.getcwd() + '/uid___A002_X50bcb3_X3b.ms')
-
         os.symlink(datapath+'diah/uid___A002_X50bcb3_X3b.ms.tsys', os.getcwd() + '/uid___A002_X50bcb3_X3b.ms.tsys')
             
     def tearDown(self):
@@ -834,8 +788,6 @@ class plotbandpass_EVLA_dual_pol_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'evla/10C-186/K_BnA_cont/bandpass_4.1.0.bcal', os.getcwd() + '/bandpass_4.1.0.bcal')
         os.symlink(datapath+'evla/10C-186/K_BnA_cont/bandpasspcal.bcal', os.getcwd() + '/bandpasspcal.bcal')
         os.symlink(datapath+'evla/10C-186/K_BnA_cont/K_BnA_cont_multi.ms', os.getcwd() + '/K_BnA_cont_multi.ms')
@@ -952,8 +904,6 @@ class plotbandpass_EVLA_single_pol_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'evla/AB1346/g19.36/bandpass.bcal', os.getcwd() + '/bandpass.bcal')
         os.symlink(datapath+'evla/AB1346/g19.36/g19.36_I_3sD_multi.ms', os.getcwd() + '/g19.36_I_3sD_multi.ms')
 
@@ -1014,8 +964,6 @@ class plotbandpass_SMA_ngc6334_SM2_filler_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'sma/ngc6334_SM2_filler/sm2_rx0.usb.if2.tsys.ms', os.getcwd() + '/sm2_rx0.usb.if2.tsys.ms')
         os.symlink(datapath+'sma/ngc6334_SM2_filler/sm2_rx0.usb.if2.tsys.ms.bandpass.bcal', os.getcwd() + '/sm2_rx0.usb.if2.tsys.ms.bandpass.bcal')
 
@@ -1058,8 +1006,6 @@ class plotbandpass_3_test(unittest.TestCase):
         pass
 
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'uid___A002_X61d35c_X4f.ms', os.getcwd() + '/uid___A002_X61d35c_X4f.ms')
         os.symlink(datapath+'uid___A002_X61d35c_X4f.ms.tsys', os.getcwd() + '/uid___A002_X61d35c_X4f.ms.tsys')
 
@@ -1145,10 +1091,9 @@ class plotbandpass_3_test(unittest.TestCase):
 
 class plotbandpass_CAS_6147_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'uid___A002_X71a45c_X1d24.ms.split', os.getcwd() + '/uid___A002_X71a45c_X1d24.ms.split')
         os.symlink(datapath+'uid___A002_X71a45c_X1d24.ms.split.bandpass', os.getcwd() + '/uid___A002_X71a45c_X1d24.ms.split.bandpass')
+    
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X71a45c_X1d24.ms.split')
         os.unlink(os.getcwd() + '/uid___A002_X71a45c_X1d24.ms.split.bandpass')
@@ -1167,10 +1112,9 @@ class plotbandpass_CAS_6147_test(unittest.TestCase):
 
 class plotbandpass_CAS_6111_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'uid___A002_X5e971a_X124.ms', os.getcwd() + '/uid___A002_X5e971a_X124.ms')
         os.symlink(datapath+'uid___A002_X5e971a_X124.ms.hifa_tsyscal.s5_2.tsyscal.tbl', os.getcwd() + '/uid___A002_X5e971a_X124.ms.hifa_tsyscal.s5_2.tsyscal.tbl')
+    
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X5e971a_X124.ms')
         os.unlink(os.getcwd() + '/uid___A002_X5e971a_X124.ms.hifa_tsyscal.s5_2.tsyscal.tbl')
@@ -1189,10 +1133,9 @@ class plotbandpass_CAS_6111_test(unittest.TestCase):
 
 class plotbandpass_CAS_6356_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'uid___A002_X7b13df_X68f.ms', os.getcwd() + '/uid___A002_X7b13df_X68f.ms')
         os.symlink(datapath+'uid___A002_X7b13df_X68f.ms.tsys', os.getcwd() + '/uid___A002_X7b13df_X68f.ms.tsys')
+    
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X7b13df_X68f.ms')
         os.unlink(os.getcwd() + '/uid___A002_X7b13df_X68f.ms.tsys')
@@ -1210,8 +1153,6 @@ class plotbandpass_CAS_6356_test(unittest.TestCase):
 
 class plotbandpass_CAS_7368_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'finalBPcal.b', os.getcwd() + '/finalBPcal.b')
 
     def tearDown(self):
@@ -1245,9 +1186,8 @@ class plotbandpass_CAS_7368_test(unittest.TestCase):
 
 class plotbandpass_CAS_7965_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'uid___A002_X99c183_X25b6.ms.split.bandpass', os.getcwd() + '/uid___A002_X99c183_X25b6.ms.split.bandpass')
+    
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X99c183_X25b6.ms.split.bandpass')
         if delete_artifacts:
@@ -1265,8 +1205,6 @@ class plotbandpass_CAS_7965_test(unittest.TestCase):
 
 class plotbandpass_CAS_7715_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'uid___A002_Xa1f062_X37e3.ms', os.getcwd() + '/uid___A002_Xa1f062_X37e3.ms')
         os.symlink(datapath+'uid___A002_Xa1f062_X37e3.ms.tsys', os.getcwd() + '/uid___A002_Xa1f062_X37e3.ms.tsys')
         os.symlink(datapath+'uid___A002_Xa2ce2e_X54b.ms', os.getcwd() + '/uid___A002_Xa2ce2e_X54b.ms')
@@ -1300,10 +1238,9 @@ class plotbandpass_CAS_7715_test(unittest.TestCase):
 
 class plotbandpass_CAS_8261_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'uid___A002_Xaf2188_X213a.ms', os.getcwd() + '/uid___A002_Xaf2188_X213a.ms')
         os.symlink(datapath+'uid___A002_Xaf2188_X213a.ms.hifa_tsyscal.s6_3.tsyscal.tbl', os.getcwd() + '/uid___A002_Xaf2188_X213a.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
+    
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_Xaf2188_X213a.ms')
         os.unlink(os.getcwd() + '/uid___A002_Xaf2188_X213a.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
@@ -1323,10 +1260,9 @@ class plotbandpass_CAS_8261_test(unittest.TestCase):
 
 class plotbandpass_CAS_8489_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'uid___A002_X85c183_X60b.skycal.spw23.tbl', os.getcwd() + '/uid___A002_X85c183_X60b.skycal.spw23.tbl')
         os.symlink(datapath+'uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl', os.getcwd() + '/uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl')
+    
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X85c183_X60b.skycal.spw23.tbl')
         os.unlink(os.getcwd() + '/uid___A002_Xb0dfe8_Xcc8.orion_sio.skycal.tbl')
@@ -1361,9 +1297,8 @@ class plotbandpass_CAS_8489_test(unittest.TestCase):
 
 class plotbandpass_CAS_8655_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'uid___A002_X960614_X1379.ms.hifa_tsyscal.s6_3.tsyscal.tbl', os.getcwd() + '/uid___A002_X960614_X1379.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
+    
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_X960614_X1379.ms.hifa_tsyscal.s6_3.tsyscal.tbl')
         if delete_artifacts:
@@ -1389,12 +1324,10 @@ class plotbandpass_CAS_8655_test(unittest.TestCase):
 
 
 class plotbandpass_CAS_9474_test(unittest.TestCase):
-
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal.b', os.getcwd() + '/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal.b')
         os.symlink(datapath+'16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal_sm.b', os.getcwd() + '/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal_sm.b')
+    
     def tearDown(self):
         os.unlink(os.getcwd() + '/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal.b')
         os.unlink(os.getcwd() + '/16B-402.sb32888048.eb33072402.57733.81140140047.ms.finalBPcal_sm.b')
@@ -1413,10 +1346,9 @@ class plotbandpass_CAS_9474_test(unittest.TestCase):
 
 class plotbandpass_SCOPS_4877_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'uid___A002_Xbf792a_X26ec.ms', os.getcwd() + '/uid___A002_Xbf792a_X26ec.ms')
         os.symlink(datapath+'uid___A002_Xbf792a_X26ec.ms.tsys', os.getcwd() + '/uid___A002_Xbf792a_X26ec.ms.tsys')
+    
     def tearDown(self):
         os.unlink(os.getcwd() + '/uid___A002_Xbf792a_X26ec.ms')
         os.unlink(os.getcwd() + '/uid___A002_Xbf792a_X26ec.ms.tsys')
@@ -1434,8 +1366,6 @@ class plotbandpass_SCOPS_4877_test(unittest.TestCase):
 
 class plotbandpass_tsysFlagged_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'tsysFlagged/uid___A002_Xa018c4_X2537.ms', os.getcwd() + '/uid___A002_Xa018c4_X2537.ms')
         os.symlink(datapath+'tsysFlagged/uid___A002_Xa018c4_X2537.ms.tsys', os.getcwd() + '/uid___A002_Xa018c4_X2537.ms.tsys')
 
@@ -1458,8 +1388,6 @@ class plotbandpass_tsysFlagged_test(unittest.TestCase):
 
 class plotbandpass_mislabeling_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'mislabeling/uid___A002_Xa6a120_X1d3d.ms', os.getcwd() + '/uid___A002_Xa6a120_X1d3d.ms')
         os.symlink(datapath+'mislabeling/uid___A002_Xa6a120_X1d3d.ms.hifa_tsyscal.s6_1.tsyscal.tbl', os.getcwd() + '/uid___A002_Xa6a120_X1d3d.ms.hifa_tsyscal.s6_1.tsyscal.tbl')
 
@@ -1483,8 +1411,6 @@ class plotbandpass_mislabeling_test(unittest.TestCase):
 
 class plotbandpass_badAntennaFilename_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'badAntennaFilename/uid___A002_Xabe765_X5bd.ms', os.getcwd() + '/uid___A002_Xabe765_X5bd.ms')
         os.symlink(datapath+'badAntennaFilename/uid___A002_Xabe765_X5bd.ms.bcal', os.getcwd() + '/uid___A002_Xabe765_X5bd.ms.bcal')
 
@@ -1506,8 +1432,6 @@ class plotbandpass_badAntennaFilename_test(unittest.TestCase):
 
 class plotbandpass_badSpwFilename_test(unittest.TestCase):
     def setUp(self):
-        if not CASA6:
-            default(plotbandpass)
         os.symlink(datapath+'badSpwFilename/uid___A002_Xa2ce2e_X7bd.ms', os.getcwd() + '/uid___A002_Xa2ce2e_X7bd.ms')
         os.symlink(datapath+'badSpwFilename/uid___A002_Xa2ce2e_X7bd.ms.tsys', os.getcwd() + '/uid___A002_Xa2ce2e_X7bd.ms.tsys')
 
@@ -1545,5 +1469,3 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main()
-
-

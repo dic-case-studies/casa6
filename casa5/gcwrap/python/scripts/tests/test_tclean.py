@@ -102,7 +102,7 @@ if is_CASA6:
      from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata
      from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
      from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-     from casatasks import impbcor
+     from casatasks import impbcor,split,concat
 
      from casatestutils.imagerhelpers import TestHelpers
 
@@ -1303,6 +1303,80 @@ class test_stokes(testref_base):
 #          self.prepData('refim_point_linXY.ms')
 #          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='cube')
 #          report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.0,[50,50,0,1]),(self.img+'.image',2.0,[50,50,1,1]), (self.img+'.image',3.0,[50,50,2,1]),(self.img+'.image',4.0,[50,50,4,1]) ])
+
+     def test_stokes_mixed_mfs_I(self):  # CAS-13618
+          """ [stokes] Test_Stokes_I_mixed_mfs mfs with Circular Pol dataset"""
+          self.prepData('refim_point_linRL.ms')
+          vis = self.msfile
+          ## Split across time
+          split(vis=vis, correlation='RR,LL', timerange='18:57:30~22:00:00',outputvis=vis+'_tmp_2pol_time.ms')
+          split(vis=vis, timerange='>22:00:00',outputvis=vis+'_tmp_4pol_time.ms')
+          concat(vis=[vis+'_tmp_2pol_time.ms',vis+'_tmp_4pol_time.ms'], concatvis=vis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=vis, correlation='RR,LL', spw='0:0',outputvis=vis+'_tmp_2pol_chan.ms')
+          split(vis=vis, spw='0:1~2',outputvis=vis+'_tmp_4pol_chan.ms')
+          concat(vis=[vis+'_tmp_2pol_chan.ms',vis+'_tmp_4pol_chan.ms'], concatvis=vis+'_tmp_mixed_chan.ms')
+
+          vislist = [
+               vis,
+               vis+'_tmp_2pol_time.ms',
+               vis+'_tmp_4pol_time.ms',
+               [vis+'_tmp_2pol_time.ms',vis+'_tmp_4pol_time.ms'],
+               vis+'_tmp_mixed_time.ms',
+               vis+'_tmp_2pol_chan.ms',
+               vis+'_tmp_4pol_chan.ms',
+               [vis+'_tmp_2pol_chan.ms',vis+'_tmp_4pol_chan.ms'],
+               vis+'_tmp_mixed_chan.ms'
+          ]
+
+          i=0
+          report=''
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='I',parallel=self.parallel)
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0])])
+               i = i+1
+     
+          self.assertTrue(self.check_final(report))
+
+     def test_stokes_mixed_mfs_IQUV(self):  # CAS-13618
+          """ [stokes] Test_Stokes_IQUV_mixed_mfs with Linear Pol dataset and Stokes U"""
+          self.prepData('refim_point_linXY.ms')
+          vis = self.msfile
+          ## Split across time
+          split(vis=vis, correlation='XX,YY', timerange='18:57:30~22:00:00',outputvis=vis+'_tmp_2pol_time.ms')
+          split(vis=vis, timerange='>22:00:00',outputvis=vis+'_tmp_4pol_time.ms')
+          concat(vis=[vis+'_tmp_2pol_time.ms',vis+'_tmp_4pol_time.ms'], concatvis=vis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=vis, correlation='XX,YY', spw='0:0',outputvis=vis+'_tmp_2pol_chan.ms')
+          split(vis=vis, spw='0:1~2',outputvis=vis+'_tmp_4pol_chan.ms')
+          concat(vis=[vis+'_tmp_2pol_chan.ms',vis+'_tmp_4pol_chan.ms'], concatvis=vis+'_tmp_mixed_chan.ms')
+
+          vislist = [
+               vis,
+               vis+'_tmp_2pol_time.ms',
+               vis+'_tmp_4pol_time.ms',
+               [vis+'_tmp_2pol_time.ms',vis+'_tmp_4pol_time.ms'],
+               vis+'_tmp_mixed_time.ms',
+               vis+'_tmp_2pol_chan.ms',
+               vis+'_tmp_4pol_chan.ms',
+               [vis+'_tmp_2pol_chan.ms',vis+'_tmp_4pol_chan.ms'],
+               vis+'_tmp_mixed_chan.ms'
+          ]
+
+          i=0
+          report=''
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',parallel=self.parallel)
+               ## To be added later when Stokes IQUV is fully enabled for mixed pols...
+               #if i in [1,5]:
+               #     u_true=0.0
+               #else:
+               #     u_true=3.0
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0]) ]) #,(self.img+'_'+str(i)+'.image',u_true,[50,50,2,0])])
+               i = i+1
+     
+          self.assertTrue(self.check_final(report))
+
 
 ##############################################
 ##############################################
@@ -3265,7 +3339,7 @@ class test_modelvis(testref_base):
 
           
      def test_modelvis_12(self):
-          """ [modelpredict] Test_modelvis_12 : (CAS-12618) mfs with automask and save model column (saving model via a separate predict model step)"""
+          """ [modelpredict] Test_modelvis_12 : (CAS-12618) mfs with automask and save model column (single tclean call, internally a separate predit model step)"""
           self.prepData("refim_twochan.ms")
 
           ## Save model after deconvolution
@@ -3337,6 +3411,96 @@ class test_modelvis(testref_base):
           delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
                        nsigma=1.0, savemodel='virtual',parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_20(self):
+          """ [modelpredict] Test_modelvis_20 : (CAS-13615) mfs with automask and save model column (saving model via a separate niter=0 tclean call)"""
+          # should give the identical result as test_modelvis_12
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',usemask='auto-multithresh', parallel=self.parallel)
+          # leaving usemask='auto-multithresh' intentionally to make sure the bug is fixed
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='modelcolumn',usemask='auto-multithresh', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_21(self):
+          """ [modelpredict] Test_modelvis_21 : (CAS-13615) mfs with automask and save virtual model (saving model via a separate niter=0 tclean call)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',usemask='auto-multithresh', parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='virtual',usemask='auto-multithresh', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_22(self):
+          """ [modelpredict] Test_modelvis_22 : (cas-13615) mfs with nsigma and save model column (saving model via a separate niter=0 tclean call)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',nsigma=1.0, parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='modelcolumn',nsigma=1.0, restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_23(self):
+          """ [modelpredict] Test_modelvis_23 : (CAS-13615) mfs with nsigma and save model column (saving model via a separate niterpredict model step)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',nsigma=1.0, parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='virtual',nsigma=1.0, restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_24(self):
+          """ [modelpredict] Test_modelvis_24 : (CAS-13615) cube with  and save  model column for auto-multithresh (in two steps)"""
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       usemask='auto-multithresh', savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       usemask='auto-multithresh', savemodel='modelcolumn', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_25(self):
+          """ [modelpredict] Test_modelvis_25: (CAS-13615) cube with and save virtual model for auto-multithreseh (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       usemask='auto-multithresh', savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       usemask='auto-multithresh', savemodel='virtual', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_26(self):
+          """ [modelpredict] Test_modelvis_26 : (CAS-13615) cube with and save model column for nsgima >0.0 (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       nsigma=1.0, savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       nsigma=1.0, savemodel='modelcolumn',restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_27(self):
+          """ [modelpredict] Test_modelvis_27: (CAS-13615) cube with and save virtual model for nsima >0.0 (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       nsigma=1.0, savemodel='none',parallel=self.parallel)
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       nsigma=1.0, savemodel='virtual', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
           hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==True )
 
