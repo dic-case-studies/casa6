@@ -91,9 +91,6 @@ class po_totpolint_test(unittest.TestCase):
         self.assertTrue(mypo.totpolint(True))
         mypo.open(neq_beams)
         self.assertRaises(Exception, mypo.totpolint, "hh")
-        
-def suite():
-    return [po_totpolint_test]
 
 if __name__ == '__main__':
     unittest.main()

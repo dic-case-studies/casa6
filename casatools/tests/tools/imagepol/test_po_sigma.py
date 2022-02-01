@@ -92,9 +92,6 @@ class po_sigma_test(unittest.TestCase):
         self.assertTrue(mypo.sigma( ))
         mypo.open(neq_beams)
         self.assertTrue(mypo.sigma( ))
-        
-def suite():
-    return [po_sigma_test]
 
 if __name__ == '__main__':
     unittest.main()
