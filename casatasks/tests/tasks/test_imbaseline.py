@@ -1,20 +1,14 @@
-from audioop import avg
 import os
 import re
 import shutil
-from ssl import match_hostname
 import unittest
 
+import functools
 import numpy as np
-from casatasks import casalog
-from casatasks.private.sdutil import calibrater_manager, table_manager
 from casatasks.private.task_imbaseline import *
-from casatools import ctsys, image, quanta, regionmanager, table
+from casatools import ctsys, image, table
 
-_ia = image()
-_rg = regionmanager()
 _tb = table()
-_qa = quanta()
 ctsys_resolve = ctsys.resolve
 
 
@@ -22,12 +16,7 @@ class test_base(unittest.TestCase):
 
     @staticmethod
     def invalid_argument_case(func):
-        """
-        Decorator for the test case that is intended to fail
-        due to invalid argument.
-        """
-        import functools
-
+        """Decorator for the test case that is intended to fail due to invalid argument."""
         @functools.wraps(func)
         def wrapper(self):
             func(self)
@@ -36,17 +25,13 @@ class test_base(unittest.TestCase):
 
     @staticmethod
     def exception_case(exception_type, exception_pattern):
-        """
-        Decorator for the test case that is intended to throw
-        exception.
+        """Decorator for the test case that is intended to throw exception.
 
             exception_type: type of exception
             exception_pattern: regex for inspecting exception message
                                using re.search
         """
         def wrapper(func):
-            import functools
-
             @functools.wraps(func)
             def _wrapper(self):
                 self.assertTrue(len(exception_pattern) > 0, msg='Internal Error')
@@ -55,7 +40,8 @@ class test_base(unittest.TestCase):
                     self.fail(msg='The task must throw exception')
                 the_exception = ctx.exception
                 message = str(the_exception)
-                self.assertIsNotNone(re.search(exception_pattern, message), msg='error message \'%s\' is not expected.' % (message))
+                self.assertIsNotNone(re.search(exception_pattern, message),
+                                     msg='error message \'%s\' is not expected.' % (message))
             return _wrapper
         return wrapper
 
@@ -77,6 +63,7 @@ class test_base(unittest.TestCase):
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
 
     def _copy_test_files(self, basename, filename):
+        """Copy files for testing into current path."""
         _base = ctsys_resolve(basename)
         copy_from = os.path.join(_base, filename)
         if not os.path.exists(copy_from) or copy_from == os.path.join(os.getcwd(), filename):
@@ -87,18 +74,8 @@ class test_base(unittest.TestCase):
         os.system('cp -RH ' + os.path.join(_base, filename) + ' ' + filename)
 
 
-def _near(got, expected, tol):
-    return _qa.le(
-        _qa.div(
-            _qa.abs(_qa.sub(got, expected)),
-            expected
-        ),
-        tol
-    )
-
-
 class AbstractFileStack_test(test_base):
-    """AbstractFileStack / (Un)EraseableFolder test
+    """Test AbstractFileStack / (Un)EraseableFolder.
 
     1-1. Create Stack with exist file
     1-2. Create Stack with unexist file
@@ -222,7 +199,7 @@ class AbstractFileStack_test(test_base):
 
 
 class ImageShape_test(test_base):
-    """ImageShape test
+    """Test ImageShape.
 
     2-1. successful case
     2-2. invalid im_nchan
@@ -249,12 +226,12 @@ class ImageShape_test(test_base):
 
     @test_base.exception_case(ValueError, 'invalid value: dir_shape \[\d+\]')
     def test_2_3(self):
-        shape = ImageShape(np.array([100, 100, 1, 100]), np.array([0]), 3, 2)
+        shape = ImageShape(np.array([100, 100, 1, 100]), axis_dir=np.array([0]), axis_sp=3, axis_pol=2)
         shape.validate()
 
 
 class imsmooth_test(test_base):
-    """imsmooth test
+    """Test imsmooth.
 
     Tests of imsmooth rely on test_imsmooth basically, so we have minimal tests in imbaseline.
 
@@ -310,7 +287,6 @@ class imsmooth_test(test_base):
         targetres = stretch = False
         mask = region = box = chans = stokes = ''
         beam = {}
-        overwrite=True
         infile = 'infile'
         outfile = 'outfile'
         kernel = ('none', 'image', 'gaussian', 'boxcar')
@@ -361,12 +337,13 @@ class imsmooth_test(test_base):
 
 
 class image2ms_test(test_base):
-    """image2ms test
+    """Test image2ms.
 
     4-1. simple successful case
     4-2. invalid datacolumn
     4-3. invalid image
     4-4. set empty stack
+    4-5. check Image2MSParams
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -421,9 +398,24 @@ class image2ms_test(test_base):
         ms_stack = MeasurementSetStack()
         Image2MSMethods.execute(self.datacolumn, self.image_shape, image_stack, ms_stack)
 
+    def test_4_5(self):
+        outfile = "output_4_5.ms"
+        params = Image2MSParams(self.expected, outfile, self.datacolumn, self.image_shape)
+        params.validate()
+        self.assertEqual(params.infile, self.expected)
+        self.assertEqual(params.outfile, outfile)
+        self.assertTrue(np.all(params.im_shape == self.image_shape.im_shape))
+        self.assertTrue(np.all(params.axis_dir == self.image_shape.axis_dir))
+        self.assertTrue(np.all(params.dir_shape == self.image_shape.dir_shape))
+        self.assertEqual(params.axis_sp, self.image_shape.axis_sp)
+        self.assertEqual(params.axis_pol, self.image_shape.axis_pol)
+        self.assertEqual(params.im_nrow, self.image_shape.im_nrow)
+        self.assertEqual(params.im_nchan, self.image_shape.im_nchan)
+        self.assertEqual(params.im_npol, self.image_shape.im_npol)
+
 
 class sdsmooth_test(test_base):
-    """sdsmooth test
+    """Test sdsmooth.
 
     Tests of sdsmooth rely on test_sdsmooth basically, so we have minimal tests in imbaseline.
 
@@ -506,7 +498,7 @@ class sdsmooth_test(test_base):
 
 
 class sdbaseline_test(test_base):
-    """sdbaseline test
+    """Test sdbaseline.
 
     Tests of sdbaseline rely on test_sdbaseline basically, so we have minimal tests in imbaseline.
 
@@ -628,7 +620,7 @@ class sdbaseline_test(test_base):
 
 
 class image_subtraction_test(test_base):
-    """Image subtraction test.
+    """Test image subtractions.
 
     7-1. successful test: input_image - (smoothed_image - smoothed_and_subtracted_image)
     7-2. successful test: input_image - baseline_image
@@ -714,7 +706,7 @@ class image_subtraction_test(test_base):
 
 
 class imbaseline_test(test_base):
-    """Full test.
+    """Test full of imbaseline.
 
     F-1. simple successful case
     F-2. imagefile is None
