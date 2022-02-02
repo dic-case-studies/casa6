@@ -433,9 +433,7 @@ blmode -- baselining mode.
                  spectrum. 
     &gt;&gt;&gt; blmode expandable parameters
         dosubtract -- execute baseline subtraction in addition to fitting.
-                      Note that the task behaviour when dosubtract=False 
-                      has changed; in case outfile does already exist, it
-                      will be kept as it is and not overwritten.
+                      Note that MS is not output when dosubtract=False.
                       Also, sdbaseline will abort when dosubtract=False
                       and blformat=''.
                 options: (bool) True, False
