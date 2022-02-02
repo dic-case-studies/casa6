@@ -230,6 +230,9 @@ class ImageShape(AbstractValidatable):
         if not len(self.axis_dir):
             raise ValueError(f'invalid value: axis_dir {self.axis_dir}')
 
+        if not (self.axis_sp in [-1, 2, 3] and self.axis_pol in [-1, 2, 3] and self.axis_sp != self.axis_pol):
+            raise ValueError(f'invalid value: sp:{self.axis_sp} or pol:{self.axis_pol}')
+
         # if im_nchan is too few, say, <10, sdbaseline should abort
         if self.im_nchan < 10:
             raise ValueError(f'nchan {self.im_nchan} is too few to perform baseline subtraction')
@@ -242,6 +245,9 @@ class ImageShape(AbstractValidatable):
 
 
 def get_image_shape(imagepath: str) -> ImageShape:
+    if not os.path.exists(imagepath):
+        raise ValueError(f"path '{imagepath}' is not found")
+
     shape = None
     with tool_manager(imagepath, image) as ia:
         try:
@@ -253,6 +259,9 @@ def get_image_shape(imagepath: str) -> ImageShape:
                                )
         finally:
             cs.done()
+
+    if shape.im_shape.shape[0] < 3:
+        raise ValueError(f"image '{imagepath}' is invalid")
 
     shape.validate()
     casalog.post(f'image shape is {shape.im_shape}, direciton {shape.dir_shape} ({shape.im_nrow} pixels), '
@@ -984,24 +993,6 @@ class Image2MSMethods():
                         tb.putcell('WEIGHT', irow, wgt)
                         tb.putcell('UVW', irow, uvw)
                         irow += 1
-
-
-class MS2ImageParams(AbstractValidatable):
-    """Parameter manipulation class for executing ms2image()."""
-
-    def __init__(self, infile: str=None, linefile: str='', imagefile: str='', datacolumn: str='DATA', output_cont: bool=False,
-                 output_cont_file: str='', i2ms_params: Image2MSParams=None) -> None:
-        self.infile = infile
-        self.linefile = linefile
-        self.imagename = imagefile
-        self.datacolumn = datacolumn
-        self.output_cont = output_cont
-        self.output_cont_file = output_cont_file
-        self.i2ms = i2ms_params
-        self.validate()
-
-    def validate(self) -> None:
-        pass
 
 
 class MS2ImageMethods():
