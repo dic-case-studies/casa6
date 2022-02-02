@@ -1,10 +1,7 @@
 """
-Unittests for imbaseline.
-
-This module contains tests of classes of imbaseline. Since the main feature of imbaseline is
-made up of a combination of several tasks imsmooth/sdsmooth/sdbaseline, so unittests for this
-feature consist of a simple test for these tasks and white tests for the unique feature of
-imbaseline such as image subtraction.
+This module contains tests for the classes of imbaseline. Since the main feature of the task is
+made up of a combination of imsmooth/sdsmooth/sdbaseline, so tests consist of simple tests for
+these tasks and white tests for the unique classes of imbaseline such as image subtraction.
 """
 
 import os
