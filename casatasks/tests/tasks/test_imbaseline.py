@@ -1,3 +1,12 @@
+"""
+Unittests for imbaseline.
+
+This module contains tests of classes of imbaseline. Since the main feature of imbaseline is
+made up of a combination of several tasks imsmooth/sdsmooth/sdbaseline, so unittests for this
+feature consist of a simple test for these tasks and white tests for the unique feature of
+imbaseline such as image subtraction.
+"""
+
 import os
 import re
 import shutil
@@ -936,3 +945,8 @@ class imbaseline_test(test_base):
 def suite():
     return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test, image2ms_test, sdbaseline_test,
             image_subtraction_test, misc_test]
+
+
+if __name__ == '__main__':
+    os.chdir('tmp')
+    unittest.main()
