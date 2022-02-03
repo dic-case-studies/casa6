@@ -68,6 +68,7 @@
 import shutil
 import unittest
 import numpy
+import os
 
 from casatools import image as iatool
 from casatools import table
@@ -81,6 +82,13 @@ class ia_decimate_test(unittest.TestCase):
     
     def tearDown(self):
         self.rg.done( )
+        data = [ "maskim", "mregions.im", "myim_0.im", "myim_1.im", "xx2.im"]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
         tb = table( )
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done( )

@@ -73,6 +73,8 @@ import unittest
 import numpy
 import math
 import os
+import glob
+import shutil
 
 from casatools import ctsys, image, functional, table
 from casatasks import spxfit
@@ -91,7 +93,15 @@ class spxfit_test(unittest.TestCase):
 
     def tearDown(self):
         myia.done()
-        self.assertTrue(len(self._tb.showcache()) == 0)
+        files = glob.glob('cubeApF.*')
+        files.extend(glob.glob('test_sol.im_*'))
+        files.extend(glob.glob('concat*.im'))
+        files.extend(['spxfit.im', 'spxfit.log', 'model.im'])
+        for f in files:
+            if os.path.islink(f) or os.path.isfile(f):
+                os.remove(f)
+            elif os.path.isdir(f):
+                shutil.rmtree(f)
 
     def checkArray(self, gotArray, expectedArray):
         mytype = type(gotArray.ravel()[0])
@@ -165,8 +175,6 @@ class spxfit_test(unittest.TestCase):
         plpestoff = [0.4, 3]
         rec = spxfit(imagename=imagename, spxtype="plp", spxest=plpestoff)
         sols = rec['plp']['solution'].ravel()
-        print("*** i " + str(i))
-        print("** max ", sols/plpest)
         self.assertTrue((abs(1 - sols/plpest) < 4e-2).all())
         plpsol = "plpsol.im"
         plperr = "plperr.im"
@@ -211,13 +219,11 @@ class spxfit_test(unittest.TestCase):
         ltpest[:] = plpest
         ltpest[0] = math.log(plpest[0])
         rec = spxfit(imagename=imagename, spxtype="ltp", spxest=ltpest)
-        print(str(rec))
         sols = rec['ltp']['solution'].ravel()
         self.assertTrue((abs(1 - sols/ltpest) < 0.1e-7).all())
         rec = spxfit(imagename=imagename, spxtype="ltp", spxest=[0.4, 3])
         sols = rec['ltp']['solution'].ravel()
         self.assertTrue((abs(1 - sols/ltpest) < 0.1e-7).all())
-        print('*** xUnit ' + rec['xUnit'])
         self.assertTrue(rec['xUnit'] == "Hz")
 
         myia.addnoise(pars=[0, 0.001])
@@ -255,7 +261,6 @@ class spxfit_test(unittest.TestCase):
     def test_multi_image(self):
         """Test multi image support"""
         imagename1 = "concat1.im"
-        global myia
         myia.fromshape(imagename1,[2, 2, 100])
         csys = myia.coordsys()
         inc = csys.increment()['numeric']
@@ -337,7 +342,6 @@ class spxfit_test(unittest.TestCase):
             spxest=[1e-3,-3],spxtype='ltp',div='100GHz',spxsol=outfile
         )
         self.assertTrue(res)
-        global myia
         for i in (0, 1):
             myia.open(outfile + "_" + str(i))
             mask = myia.getchunk(getmask=True)
@@ -368,7 +372,14 @@ class spxfit_test(unittest.TestCase):
         ):
             print("checking image product " + im)
             self.checkImage(im, os.path.join(datapath,im))
-        global myia
+            # check history
+            myia.open(im)
+            msgs = myia.history()
+            teststr = "version"
+            self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")
+            teststr = "spxfit"
+            self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
+            myia.done()
         for im in (sol, err):
             key = 'solution'
             if (im == err):
@@ -405,9 +416,6 @@ class spxfit_test(unittest.TestCase):
             got = res2['direction'][0,0,0,0]
             expec = res['direction'][pixel[0],pixel[1],0,0]
             self.assertTrue(got == expec)
-
-def suite():
-    return [spxfit_test]
 
 if __name__ == '__main__':
     unittest.main()

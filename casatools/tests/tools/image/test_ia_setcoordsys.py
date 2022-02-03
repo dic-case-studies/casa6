@@ -67,6 +67,7 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 
@@ -74,14 +75,20 @@ class ia_setcoordsys_test(unittest.TestCase):
     
     def setUp(self):
         self._myia = iatool()
-    
+        self.imname = ''
     def tearDown(self):
         self._myia.done()
+        if self.imname:
+            if os.path.isfile(self.imname):
+                os.unlink(self.imname)
+            else:
+                shutil.rmtree(self.imname)
     
     def test_history(self):
         """verify history writing"""
         myia = self._myia
-        myia.fromshape("zz",[20, 20])
+        self.imname = "zz"
+        myia.fromshape(self.imname,[20, 20])
         csys = myia.coordsys()
         myia.setcoordsys(csys.torecord())
         msgs = myia.history()

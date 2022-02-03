@@ -73,21 +73,13 @@ import numpy
 import os
 from numpy import isnan
 
-try:
-    from casatools import functional
-    from casatools import regionmanager
-    from casatools import image as iatool
-    from casatools import table
-    from casatools import ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
-    
+
+from casatools import functional
+from casatools import regionmanager
+from casatools import image as iatool
+from casatools import table
+from casatools import ctsys
+ctsys_resolve = ctsys.resolve
 
 twogauss = "specfit_multipix_2gauss.fits"
 polyim = "specfit_multipix_poly_2gauss.fits"
@@ -151,6 +143,42 @@ class ia_fitprofile_test(unittest.TestCase):
     def tearDown(self):
         os.remove(twogauss)
         os.remove(polyim)
+        data = [
+            "amp_0","amp_1","ampErr_0","ampErr_1",
+            "ampErr_gm_0","ampErr_gm_1","ampErr_gm_2",
+            "ampErr_ls_0","ampErr_ls_1",
+            "amp_gm_0","amp_gm_1","amp_gm_2",
+            "amp_ls_0","amp_ls_1",
+            "bad.im","CAS6134_in.im",
+            "center_0","center_1",
+            "centerErr_0","centerErr_1",
+            "centerErr_gm_0","centerErr_gm_1","centerErr_gm_2",
+            "centerErr_ls_0","centerErr_ls_1",
+            "center_gm_0","center_gm_1","center_gm_2",
+            "center_ls_0","center_ls_1",
+            "fwhm_0","fwhm_1",
+            "fwhmErr_0","fwhmErr_1",
+            "fwhmErr_gm_0","fwhmErr_gm_1","fwhmErr_gm_2",
+            "fwhmErr_ls_0","fwhmErr_ls_1",
+            "fwhm_gm_0","fwhm_gm_1","fwhm_gm_2",
+            "fwhm_ls_0","fwhm_ls_1",
+            "good1.im","good2.im","good3.im",
+            "ia.fromshape.fit","ia.fromshape.resid",
+            "integral_0","integral_1",
+            "integralErr_0","integralErr_1",
+            "integralErr_gm_0","integralErr_gm_1","integralErr_gm_2",
+            "integralErr_ls_0","integralErr_ls_1",
+            "integral_gm_0","integral_gm_1","integral_gm_2",
+            "integral_ls_0","integral_ls_1",
+            "ltpfit.im","maskim","mylog.txt","sigma.im",
+            "spxfit.im","tg_poly.im","two_lorentzian_fit.log"
+]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
         #tb = table( )
         #self.assertTrue(len(tb.showcache()) == 0)
         #tb.done( )
