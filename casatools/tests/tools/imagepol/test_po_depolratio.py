@@ -68,17 +68,9 @@
 import shutil
 import unittest
 
-try:
-    from casatools import imagepol as potool
-    from casatools import ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+from casatools import imagepol as potool
+from casatools import ctsys
+ctsys_resolve = ctsys.resolve
 
 datapath = ctsys_resolve('unittest/imagepol/')
 eq_beams = datapath + "pol_eq_beams.fits"
@@ -101,10 +93,6 @@ class po_depolratio_test(unittest.TestCase):
         mypo.open(neq_beams)
         self.assertRaises(Exception, mypo.depolratio, neq_beams)
         self.assertRaises(Exception, mypo.depolratio, eq_beams)
-
-        
-def suite():
-    return [po_depolratio_test]
 
 if __name__ == '__main__':
     unittest.main()
