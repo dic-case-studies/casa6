@@ -93,9 +93,6 @@ class po_sigmafraclinpol_test(unittest.TestCase):
         self.assertTrue(mypo.sigmafraclinpol(outfile="g"))
         mypo.open(neq_beams)
         self.assertRaises(Exception, mypo.sigmafraclinpol, "hh")
-        
-def suite():
-    return [po_sigmafraclinpol_test]
 
 if __name__ == '__main__':
     unittest.main()
