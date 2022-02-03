@@ -92,9 +92,6 @@ class po_sigmafractotpol_test(unittest.TestCase):
         self.assertTrue(mypo.sigmafractotpol(outfile="g"))
         mypo.open(neq_beams)
         self.assertRaises(Exception, mypo.sigmafractotpol, "hh")
-        
-def suite():
-    return [po_sigmafractotpol_test]
 
 if __name__ == '__main__':
     unittest.main()
