@@ -69,7 +69,6 @@ class test_base(unittest.TestCase):
                 if os.path.isfile(file_path) or os.path.islink(file_path):
                     os.unlink(file_path)
                 elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
                     if filename != 'xml':
                         shutil.rmtree(file_path)
             except Exception as e:
