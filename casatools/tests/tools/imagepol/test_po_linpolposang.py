@@ -93,10 +93,7 @@ class po_linpolposang_test(unittest.TestCase):
         self.assertTrue(mypo.linpolposang("g"))
         mypo.open(neq_beams)
         self.assertRaises(Exception, mypo.linpolposang, "hh")
-        
-        
-def suite():
-    return [po_linpolposang_test]
+
 
 if __name__ == '__main__':
     unittest.main()
