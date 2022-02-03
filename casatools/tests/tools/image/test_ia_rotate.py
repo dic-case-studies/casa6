@@ -59,34 +59,31 @@
 import shutil
 import unittest
 import numpy
+import os
 
-try:
-    from casatools import image as iatool
-    from casatools import ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+from casatools import image as iatool
+from casatools import ctsys
+ctsys_resolve = ctsys.resolve
 
 datapath = ctsys_resolve('unittest/ia_rotate/')
 
 class ia_rotate_test(unittest.TestCase):
     
     def setUp(self):
-        pass
+        self.mymask = ''
     
     def tearDown(self):
-        pass
+        if self.mymask:
+            if os.path.isfile(self.mymask):
+                os.unlink(self.mymask)
+            else:
+                shutil.rmtree(self.mymask)
     
     def test_stretch(self):
         """ ia.rotate(): Test stretch parameter"""
         yy = iatool()
-        mymask = "maskim"
-        yy.fromshape(mymask, [200, 200, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200,200,1,20]
@@ -95,10 +92,10 @@ class ia_rotate_test(unittest.TestCase):
         self.assertRaises(
             Exception,
             yy.rotate,
-            mask=mymask + ">0", stretch=False
+            mask=self.mymask + ">0", stretch=False
         )
         zz = yy.rotate(
-            mask=mymask + ">0", stretch=True
+            mask=self.mymask + ">0", stretch=True
         )
         self.assertTrue(zz and type(zz) == type(yy))
         yy.done()

@@ -1,20 +1,12 @@
 import os
 
-import numpy
-import pylab as pl
-from casatasks.private.casa_transition import is_CASA6
+import matplotlib.pyplot as plt
+import numpy as np
 
-if is_CASA6:
-    from casatasks import casalog
-    from casatools import image, quanta
+from casatasks import casalog
+from casatools import image, quanta
 
-    from . import sdutil
-
-else:
-    import sdutil
-    from taskinit import casalog
-    from taskinit import iatool as image
-    from taskinit import qatool as quanta
+from . import sdutil
 
 qa = quanta()
 
@@ -30,16 +22,16 @@ def plotprofilemap(imagename=None, figfile=None, overwrite=None, transparent=Non
     if len(figfile) > 0 and os.path.exists(figfile) and not overwrite:
         raise RuntimeError('overwrite is False and output file exists: \'%s\''%(figfile))
 
-    image = SpectralImage(imagename)
-    npol = len(image.stokes)
+    image_data = SpectralImage(imagename)
+    npol = len(image_data.stokes)
     if pol < 0 or pol > npol - 1:
-        raise RuntimeError('pol {pol} is out of range (Stokes axis {stokes})'.format(pol=pol,stokes=image.stokes))
+        raise RuntimeError('pol {pol} is out of range (Stokes axis {stokes})'.format(pol=pol,stokes=image_data.stokes))
 
     parsed_size = parse_figsize(figsize)
     nx, ny = parse_numpanels(numpanels)
     if (not isinstance(restfreq, str)) or len(restfreq) == 0:
         restfreq = None
-    plot_profile_map(image, figfile, pol, spectralaxis, restfreq, title, linecolor, linestyle, linewidth,
+    plot_profile_map(image_data, figfile, pol, spectralaxis, restfreq, title, linecolor, linestyle, linewidth,
                      separatepanel, plotmasked, maskedcolor,
                      showaxislabel, showtick, showticklabel, parsed_size,
                      nx, ny, transparent, plotrange)
@@ -139,7 +131,7 @@ class ProfileMapAxesManager(object):
         self.nv = nv
         self.ticksize = ticksize
         self.brightnessunit = brightnessunit
-        self.numeric_formatter = pl.FormatStrFormatter('%.2f')
+        self.numeric_formatter = plt.FormatStrFormatter('%.2f')
         self.direction_label = direction_label
         self.direction_reference = direction_reference
         self.separatepanel = separatepanel
@@ -157,15 +149,15 @@ class ProfileMapAxesManager(object):
         self._axes_spmap = None
 
         # to resize matplotlib window to specified size
-        pl.figure(self.MATPLOTLIB_FIGURE_ID)
-        pl.close()
+        plt.figure(self.MATPLOTLIB_FIGURE_ID)
+        plt.close()
 
         if self.figsize is None:
-            pl.figure(self.MATPLOTLIB_FIGURE_ID)
+            plt.figure(self.MATPLOTLIB_FIGURE_ID)
         else:
-            pl.figure(self.MATPLOTLIB_FIGURE_ID, figsize=self.figsize)
+            plt.figure(self.MATPLOTLIB_FIGURE_ID, figsize=self.figsize)
         if clearpanel:
-            pl.clf()
+            plt.clf()
 
     @property
     def MATPLOTLIB_FIGURE_ID(self):
@@ -251,11 +243,11 @@ class ProfileMapAxesManager(object):
     def __axes_spmap(self):
         for x in range(self.nh):
             for y in range(self.nv):
-                w = self.horizontal_subplot_size
-                h = self.vertical_subplot_size
-                l = 1.0 - self.right_margin - w * (x + 1) + 0.5 * self.horizontal_space
-                b = self.bottom_margin + self.ylabel_area + h * y + 0.5 * self.vertical_space
-                axes = pl.axes([l, b, w - self.horizontal_space, h - self.vertical_space])
+                width = self.horizontal_subplot_size
+                height = self.vertical_subplot_size
+                left = 1.0 - self.right_margin - width * (x + 1) + 0.5 * self.horizontal_space
+                bottom = self.bottom_margin + self.ylabel_area + height * y + 0.5 * self.vertical_space
+                axes = plt.axes([left, bottom, width - self.horizontal_space, height - self.vertical_space])
                 axes.cla()
                 if self.showaxislabel and y == 0 and x == self.nh - 1:
                     casalog.post('label "{label}" unit "{unit}"'.format(label=self.spectral_label, unit=self.spectral_unit), priority='DEBUG')
@@ -268,7 +260,7 @@ class ProfileMapAxesManager(object):
                     if self.normalization_factor < 100 and self.normalization_factor > 0.01:
                         label_text = 'Intensity [%s]' % self.brightnessunit
                     else:
-                        label_text = 'Intensity [1e%d x %s]' % (int(numpy.log10(self.normalization_factor)),
+                        label_text = 'Intensity [1e%d x %s]' % (int(np.log10(self.normalization_factor)),
                                                                 self.brightnessunit)
                     axes.yaxis.set_label_text(label_text,
                                               size=self.ticksize, rotation='vertical')
@@ -276,78 +268,78 @@ class ProfileMapAxesManager(object):
                     axes.xaxis.tick_bottom()
                     axes.yaxis.tick_left()
                     if self.showticklabel:
-                        xlocator = pl.AutoLocator()
+                        xlocator = plt.AutoLocator()
                         xlocator.set_params(nbins=6, prune='upper')
                         axes.xaxis.set_major_locator(xlocator)
-                        ylocator = pl.AutoLocator()
+                        ylocator = plt.AutoLocator()
                         ylocator.set_params(nbins=4)
                         axes.yaxis.set_major_locator(ylocator)
-                        xformatter = pl.ScalarFormatter(useOffset=False)
+                        xformatter = plt.ScalarFormatter(useOffset=False)
                         axes.xaxis.set_major_formatter(xformatter)
                         axes.xaxis.set_tick_params(labelsize=max(self.ticksize - 1, 1))
                         axes.yaxis.set_tick_params(labelsize=max(self.ticksize - 1, 1))
                         if y != 0 or x != self.nh - 1:
-                            axes.xaxis.set_major_formatter(pl.NullFormatter())
-                            axes.yaxis.set_major_formatter(pl.NullFormatter())
+                            axes.xaxis.set_major_formatter(plt.NullFormatter())
+                            axes.yaxis.set_major_formatter(plt.NullFormatter())
                     else:
-                        axes.xaxis.set_major_formatter(pl.NullFormatter())
-                        axes.yaxis.set_major_formatter(pl.NullFormatter())
+                        axes.xaxis.set_major_formatter(plt.NullFormatter())
+                        axes.yaxis.set_major_formatter(plt.NullFormatter())
 
                 else:
-                    axes.yaxis.set_major_locator(pl.NullLocator())
-                    axes.xaxis.set_major_locator(pl.NullLocator())
+                    axes.yaxis.set_major_locator(plt.NullLocator())
+                    axes.xaxis.set_major_locator(plt.NullLocator())
 
                 yield axes
 
     def setup_labels(self, label_ra, label_dec):
         for x in range(self.nh):
-            w = self.horizontal_subplot_size
-            l = 1.0 - self.right_margin - w * (x + 1)
-            h = self.bottom_margin * 0.5
-            b = self.bottom_margin - h
-            a1 = pl.axes([l, b, w, h])
+            width = self.horizontal_subplot_size
+            left = 1.0 - self.right_margin - width * (x + 1)
+            height = self.bottom_margin * 0.5
+            bottom = self.bottom_margin - height
+            a1 = plt.axes([left, bottom, width, height])
             a1.set_axis_off()
             if len(a1.texts) == 0:
-                pl.text(0.5, 0.2, HHMMSSss((label_ra[x][0] + label_ra[x][1]) / 2.0, 0),
-                        horizontalalignment='center', verticalalignment='center', size=self.ticksize)
+                plt.text(0.5, 0.2, HHMMSSss((label_ra[x][0] + label_ra[x][1]) / 2.0, 0),
+                         horizontalalignment='center', verticalalignment='center', size=self.ticksize)
             else:
                 a1.texts[0].set_text(HHMMSSss((label_ra[x][0] + label_ra[x][1]) / 2.0, 0))
         for y in range(self.nv):
-            l = self.left_margin
-            w = self.horizontal_subplot_size
-            h = self.vertical_subplot_size
-            b = self.bottom_margin + y * h
-            a1 = pl.axes([l, b, w, h])
+            left = self.left_margin
+            width = self.horizontal_subplot_size
+            height = self.vertical_subplot_size
+            bottom = self.bottom_margin + y * height
+            a1 = plt.axes([left, bottom, width, height])
             a1.set_axis_off()
             if len(a1.texts) == 0:
-                pl.text(0.5, 0.5, DDMMSSs((label_dec[y][0] + label_dec[y][1]) / 2.0, 0),
-                        horizontalalignment='center', verticalalignment='center', size=self.ticksize)
+                plt.text(0.5, 0.5, DDMMSSs((label_dec[y][0] + label_dec[y][1]) / 2.0, 0),
+                         horizontalalignment='center', verticalalignment='center', size=self.ticksize)
             else:
                 a1.texts[0].set_text(DDMMSSs((label_dec[y][0] + label_dec[y][1]) / 2.0, 0))
 
         # longitude label
-        l = self.left_margin + self.xlabel_area
-        h = self.bottom_margin * 0.5
-        b = 0.
-        w = 1.0 - l - self.right_margin
-        a1 = pl.axes([l, b, w, h])
+        left = self.left_margin + self.xlabel_area
+        height = self.bottom_margin * 0.5
+        bottom = 0.
+        width = 1.0 - left - self.right_margin
+        a1 = plt.axes([left, bottom, width, height])
         a1.set_axis_off()
         xpos = (1.0 + 0.5 * self.nh) / self.ncolumn
         casalog.post('xpos=%s' % (xpos), priority='DEBUG')
-        pl.text(xpos, 0.5, '%s (%s)' % (self.direction_label[0], self.direction_reference),
-                horizontalalignment='center', verticalalignment='center',
-                size=(self.ticksize + 2))
+        plt.text(xpos, 0.5, '%s (%s)' % (self.direction_label[0], self.direction_reference),
+                 horizontalalignment='center', verticalalignment='center',
+                 size=(self.ticksize + 2))
 
         # latitude label
-        l = 0.0
-        w = self.left_margin
-        h = self.vertical_subplot_size
-        b = self.bottom_margin + 0.5 * (h * self.nrow - self.vertical_subplot_size)
-        a1 = pl.axes([l, b, w, h])
+        left = 0.0
+        width = self.left_margin
+        height = self.vertical_subplot_size
+        bottom = self.bottom_margin + 0.5 * (height * self.nrow - self.vertical_subplot_size)
+        a1 = plt.axes([left, bottom, width, height])
         a1.set_axis_off()
-        pl.text(1.0, 0.5, '%s (%s)' % (self.direction_label[1], self.direction_reference),
-                horizontalalignment='right', verticalalignment='center',
-                rotation='vertical', size=(self.ticksize + 2))
+        plt.text(1.0, 0.5, '%s (%s)' % (self.direction_label[1], self.direction_reference),
+                 horizontalalignment='right', verticalalignment='center',
+                 rotation='vertical', size=(self.ticksize + 2))
 
         # title
         if self.title_area > 0.:
@@ -355,21 +347,21 @@ class ProfileMapAxesManager(object):
             bottom = 1.0 - self.title_area - self.top_margin
             width = 1.0 - left - self.right_margin
             height = self.title_area
-            a1 = pl.axes([left, bottom, width, height])
+            a1 = plt.axes([left, bottom, width, height])
             a1.set_axis_off()
             xpos = (1.0 + 0.5 * self.nh) / self.ncolumn
-            pl.text(xpos, 0.1, self.title,
-                    horizontalalignment='center', verticalalignment='bottom',
-                    size=self.ticksize + 4)
+            plt.text(xpos, 0.1, self.title,
+                     horizontalalignment='center', verticalalignment='bottom',
+                     size=self.ticksize + 4)
 
 
-def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=None,
+def plot_profile_map(image_data, figfile, pol, spectralaxis='', restfreq=None, title=None,
                      linecolor='b', linestyle='-', linewidth=0.2,
                      separatepanel=True, plotmasked=None, maskedcolor=None,
                      showaxislabel=False, showtick=False, showticklabel=False,
                      figsize=None, nx=-1, ny=-1, transparent=False, user_xlim=None):
     """
-    image
+    image_data
     figfile
     linecolor
     linestyle
@@ -412,9 +404,9 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
         if len(user_range[1]) > 0:
             user_xmax = float(user_range[1])
 
-    x_max = image.nx - 1
+    x_max = image_data.nx - 1
     x_min = 0
-    y_max = image.ny - 1
+    y_max = image_data.ny - 1
     y_min = 0
     MaxPanel = 8
     num_panel = min(max(x_max - x_min + 1, y_max - y_min + 1), MaxPanel)
@@ -426,23 +418,23 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
 
     if nx > 0:
         NH = nx
-        xSTEP = image.nx // NH + (1 if image.nx % NH > 0 else 0)
+        xSTEP = image_data.nx // NH + (1 if image_data.nx % NH > 0 else 0)
     if ny > 0:
         NV = ny
-        ySTEP = image.ny // NV + (1 if image.ny % NV > 0 else 0)
+        ySTEP = image_data.ny // NV + (1 if image_data.ny % NV > 0 else 0)
 
     casalog.post('num_panel=%s, xSTEP=%s, ySTEP=%s, NH=%s, NV=%s' % (num_panel, xSTEP, ySTEP, NH, NV))
 
     chan0 = 0
-    chan1 = image.nchan
+    chan1 = image_data.nchan
 
-    direction_label = image.direction_label
-    direction_reference = image.direction_reference
-    default_spectral_label = image.spectral_label
-    default_spectral_unit = image.spectral_unit
+    direction_label = image_data.direction_label
+    direction_reference = image_data.direction_reference
+    default_spectral_label = image_data.spectral_label
+    default_spectral_unit = image_data.spectral_unit
     if default_spectral_label == 'Frequency':
         default_spectral_unit = 'GHz'
-    default_spectral_data = image.spectral_data[chan0:chan1]
+    default_spectral_data = image_data.spectral_data[chan0:chan1]
     if spectralaxis is None or spectralaxis == '' or spectralaxis == default_spectral_label.lower():
         spectral_label = default_spectral_label
         spectral_unit = default_spectral_unit
@@ -450,52 +442,38 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
     elif spectralaxis == 'channel':
         spectral_label = 'Channel'
         spectral_unit = ''
-        spectral_data = numpy.arange(chan0, chan1, dtype=numpy.int32)
+        spectral_data = np.arange(chan0, chan1, dtype=np.int32)
     else:
         spectral_label = spectralaxis.capitalize()
         if spectralaxis == 'frequency':
             spectral_unit = 'GHz'
-            spectral_data = numpy.fromiter((image.to_frequency(v, freq_unit='GHz')
-                                            for v in default_spectral_data), dtype=numpy.float64)
+            spectral_data = np.fromiter((image_data.to_frequency(v, freq_unit='GHz')
+                                            for v in default_spectral_data), dtype=np.float64)
         elif spectralaxis == 'velocity':
             if restfreq is not None:
                 casalog.post('User-specified rest frequency %s' % (restfreq))
             else:
-                casalog.post('Default rest frequency from input image %s' % (image.coordsys.restfrequency()))
+                casalog.post('Default rest frequency from input image %s' % (image_data.coordsys.restfrequency()))
             spectral_unit = 'km/s'
-            spectral_data = numpy.fromiter((image.to_velocity(f, freq_unit='GHz', restfreq=restfreq)
-                                            for f in default_spectral_data), dtype=numpy.float64)
+            spectral_data = np.fromiter((image_data.to_velocity(f, freq_unit='GHz', restfreq=restfreq)
+                                            for f in default_spectral_data), dtype=np.float64)
 
-    plotter = SDProfileMapPlotter(NH, NV, xSTEP, ySTEP, image.brightnessunit,
-                                  direction_label, direction_reference,
-                                  spectral_label, spectral_unit,
-                                  title=title,
-                                  separatepanel=separatepanel,
-                                  showaxislabel=showaxislabel,
-                                  showtick=showtick,
-                                  showticklabel=showticklabel,
-                                  figsize=figsize,
-                                  clearpanel=True)
-
-    masked_data = image.data * image.mask
-    masked_data[numpy.logical_not(numpy.isfinite(masked_data))] = 0.0
-
-    plot_list = []
+    masked_data = image_data.data * image_data.mask
+    masked_data[np.logical_not(np.isfinite(masked_data))] = 0.0
 
     refpix = [0, 0]
     refval = [0, 0]
     increment = [0, 0]
-    refpix[0], refval[0], increment[0] = image.direction_axis(0, unit='deg')
-    refpix[1], refval[1], increment[1] = image.direction_axis(1, unit='deg')
-    plotter.setup_labels(refpix, refval, increment)
+    refpix[0], refval[0], increment[0] = image_data.direction_axis(0, unit='deg')
+    refpix[1], refval[1], increment[1] = image_data.direction_axis(1, unit='deg')
 
-    stokes = image.stokes[pol]
+    stokes = image_data.stokes[pol]
     casalog.post('Generate profile map for pol {stokes}'.format(stokes=stokes))
-    casalog.post('masked_data.shape=%s id_stokes=%s' % (list(masked_data.shape), image.id_stokes), priority='DEBUG')
-    masked_data_p = masked_data.take([pol], axis=image.id_stokes).squeeze(axis=image.id_stokes)
-    Plot = numpy.zeros((NH, NV, (chan1 - chan0)), numpy.float32) + NoData
-    mask_p = image.mask.take([pol], axis=image.id_stokes).squeeze(axis=image.id_stokes)
-    isvalid = numpy.any(mask_p, axis=2)
+    casalog.post('masked_data.shape=%s id_stokes=%s' % (list(masked_data.shape), image_data.id_stokes), priority='DEBUG')
+    masked_data_p = masked_data.take([pol], axis=image_data.id_stokes).squeeze(axis=image_data.id_stokes)
+    Plot = np.zeros((NH, NV, (chan1 - chan0)), np.float32) + NoData
+    mask_p = image_data.mask.take([pol], axis=image_data.id_stokes).squeeze(axis=image_data.id_stokes)
+    isvalid = np.any(mask_p, axis=2)
     Nsp = sum(isvalid.flatten())
     casalog.post('Nsp=%s' % (Nsp))
 
@@ -514,29 +492,43 @@ def plot_profile_map(image, figfile, pol, spectralaxis='', restfreq=None, title=
                 Plot[x][y] = valid_sp.mean(axis=0)
 
     # normalize plot data
-    plot_mask = numpy.logical_and(numpy.isfinite(Plot), Plot != NoData)
-    max_data = numpy.abs(Plot[plot_mask]).max()
+    plot_mask = np.logical_and(np.isfinite(Plot), Plot != NoData)
+    max_data = np.abs(Plot[plot_mask]).max()
     casalog.post('max_data = %s' % (max_data), priority='DEBUG')
-    normalization_factor = numpy.power(10.0, int(numpy.log10(max_data)))
+    normalization_factor = np.power(10.0, int(np.log10(max_data)))
     if normalization_factor < 1.0:
         normalization_factor /= 10.
     casalog.post('normalization_factor = %s' % (normalization_factor), priority='DEBUG')
-    plotter.set_normalization_factor(normalization_factor)
 
     Plot[plot_mask] /= normalization_factor
 
-    status = plotter.plot(figfile, Plot,
-                          spectral_data,
-                          linecolor=linecolor,
-                          linestyle=linestyle,
-                          linewidth=linewidth,
-                          plotmasked=plotmasked,
-                          maskedcolor=maskedcolor,
-                          transparent=transparent,
-                          user_xmin=user_xmin,
-                          user_xmax=user_xmax)
+    plotter = SDProfileMapPlotter(NH, NV, xSTEP, ySTEP, image_data.brightnessunit,
+                                  direction_label, direction_reference,
+                                  spectral_label, spectral_unit,
+                                  title=title,
+                                  separatepanel=separatepanel,
+                                  showaxislabel=showaxislabel,
+                                  showtick=showtick,
+                                  showticklabel=showticklabel,
+                                  figsize=figsize,
+                                  clearpanel=True)
 
-    plotter.done()
+    try:
+        plotter.setup_labels(refpix, refval, increment)
+        plotter.set_normalization_factor(normalization_factor)
+        status = plotter.plot(figfile, Plot,
+                              spectral_data,
+                              linecolor=linecolor,
+                              linestyle=linestyle,
+                              linewidth=linewidth,
+                              plotmasked=plotmasked,
+                              maskedcolor=maskedcolor,
+                              transparent=transparent,
+                              user_xmin=user_xmin,
+                              user_xmax=user_xmax)
+
+    finally:
+        plotter.done()
 
 
 class SDProfileMapPlotter(object):
@@ -581,8 +573,8 @@ class SDProfileMapPlotter(object):
         return self.axes.ticksize
 
     def setup_labels(self, refpix_list, refval_list, increment_list):
-        LabelRA = numpy.zeros((self.nh, 2), numpy.float32) + NoData
-        LabelDEC = numpy.zeros((self.nv, 2), numpy.float32) + NoData
+        LabelRA = np.zeros((self.nh, 2), np.float32) + NoData
+        LabelDEC = np.zeros((self.nv, 2), np.float32) + NoData
         refpix = refpix_list[0]
         refval = refval_list[0]
         increment = increment_list[0]
@@ -644,7 +636,7 @@ class SDProfileMapPlotter(object):
         # Auto scaling
         # to eliminate max/min value due to bad pixel or bad fitting,
         #  1/10-th value from max and min are used instead
-        valid_index = numpy.where(map_data.min(axis=2) > NoDataThreshold)
+        valid_index = np.where(map_data.min(axis=2) > NoDataThreshold)
         valid_data = map_data[valid_index[0], valid_index[1], :]
         ListMax = valid_data.max(axis=1)
         ListMin = valid_data.min(axis=1)
@@ -652,17 +644,17 @@ class SDProfileMapPlotter(object):
         casalog.post('ListMin=%s' % (list(ListMin)))
         if len(ListMax) == 0:
             return False
-        global_ymax = numpy.sort(ListMax)[len(ListMax) - len(ListMax) // 10 - 1]
-        global_ymin = numpy.sort(ListMin)[len(ListMin) // 10]
+        global_ymax = np.sort(ListMax)[len(ListMax) - len(ListMax) // 10 - 1]
+        global_ymin = np.sort(ListMin)[len(ListMin) // 10]
         global_ymax = global_ymax + (global_ymax - global_ymin) * 0.2
         global_ymin = global_ymin - (global_ymax - global_ymin) * 0.1
         del ListMax, ListMin
 
         casalog.post('global_ymin=%s, global_ymax=%s' % (global_ymin, global_ymax))
 
-        pl.ioff()
+        plt.ioff()
 
-        no_data = numpy.zeros(len(frequency), dtype=numpy.float32)
+        no_data = np.zeros(len(frequency), dtype=np.float32)
         for x in range(self.nh):
             for y in range(self.nv):
                 if self.global_scaling is True:
@@ -674,8 +666,8 @@ class SDProfileMapPlotter(object):
                     xmin = global_xmin
                     xmax = global_xmax
                     if map_data[x][y].min() > NoDataThreshold:
-                        median = numpy.median(map_data[x][y])
-                        mad = numpy.median(map_data[x][y] - median)
+                        median = np.median(map_data[x][y])
+                        mad = np.median(map_data[x][y] - median)
                         sigma = map_data[x][y].std()
                         ymin = median - 2.0 * sigma
                         ymax = median + 5.0 * sigma
@@ -683,21 +675,21 @@ class SDProfileMapPlotter(object):
                         ymin = global_ymin
                         ymax = global_ymax
                     casalog.post('Per panel scaling turned on: ymin=%s, ymax=%s (global ymin=%s, ymax=%s)' % (ymin, ymax, global_ymin, global_ymax))
-                pl.gcf().sca(self.axes.axes_spmap[y + (self.nh - x - 1) * self.nv])
+                plt.gcf().sca(self.axes.axes_spmap[y + (self.nh - x - 1) * self.nv])
                 if map_data[x][y].min() > NoDataThreshold:
-                    pl.plot(frequency, map_data[x][y], color=linecolor, linestyle=linestyle,
-                            linewidth=linewidth)
+                    plt.plot(frequency, map_data[x][y], color=linecolor, linestyle=linestyle,
+                             linewidth=linewidth)
                 else:
                     if plotmasked == 'empty':
                         pass
                     elif plotmasked == 'text':
-                        pl.text((xmin + xmax) / 2.0, (ymin + ymax) / 2.0, 'NO DATA', ha='center', va='center',
-                                size=(self.TickSize + 1))
+                        plt.text((xmin + xmax) / 2.0, (ymin + ymax) / 2.0, 'NO DATA', ha='center', va='center',
+                                 size=(self.TickSize + 1))
                     elif plotmasked == 'zero':
-                        pl.plot(frequency, no_data,
-                                color=maskedcolor, linestyle=linestyle, linewidth=linewidth)
+                        plt.plot(frequency, no_data,
+                                 color=maskedcolor, linestyle=linestyle, linewidth=linewidth)
                     elif plotmasked == 'none':
-                        a = pl.gcf().gca()
+                        a = plt.gcf().gca()
                         if self.axes.xlabel_area > 0. and y == 0 and x == 0:
                             pass
                         else:
@@ -705,24 +697,24 @@ class SDProfileMapPlotter(object):
                     elif plotmasked == 'plot':
                         m = map_data[x][y] == NoDataThreshold
                         if not all(m):
-                            ma = pl.ma.masked_array(map_data[x][y], m)
-                            pl.plot(frequency, ma,
-                                    color=maskedcolor, linestyle=linestyle, linewidth=linewidth)
+                            ma = np.ma.masked_array(map_data[x][y], m)
+                            plt.plot(frequency, ma,
+                                     color=maskedcolor, linestyle=linestyle, linewidth=linewidth)
 
-                pl.axis((xmin, xmax, ymin, ymax))
+                plt.axis((xmin, xmax, ymin, ymax))
 
-        pl.ion()
-        pl.draw()
+        plt.ion()
+        plt.draw()
 
         casalog.post('figfile=\'%s\'' % (figfile), priority='DEBUG')
         if figfile is not None and len(figfile) > 0:
             casalog.post('Output profile map to %s' % (figfile))
-            pl.savefig(figfile, format='png', dpi=DPIDetail, transparent=transparent)
+            plt.savefig(figfile, format='png', dpi=DPIDetail, transparent=transparent)
 
         return True
 
     def done(self):
-        #pl.close()
+        #plt.close()
         del self.axes
 
 
@@ -758,12 +750,12 @@ class SpectralImage(object):
             self.mask = ia.getchunk(getmask=True)
             if not stokes_axis_exists:
                 # put degenerate Stokes axis at the end
-                self.data = numpy.expand_dims(self.data, axis=-1)
-                self.mask = numpy.expand_dims(self.mask, axis=-1)
+                self.data = np.expand_dims(self.data, axis=-1)
+                self.mask = np.expand_dims(self.mask, axis=-1)
                 casalog.post('add dummy Stokes axis to data and mask since input image doesn\'t have it.')
                 casalog.post('data.shape={}'.format(self.data.shape), priority='DEBUG')
                 casalog.post('mask.shape={}'.format(self.mask.shape), priority='DEBUG')
-            bottom = ia.toworld(numpy.zeros(len(self.image_shape), dtype=int), 'q')['quantity']
+            bottom = ia.toworld(np.zeros(len(self.image_shape), dtype=int), 'q')['quantity']
             top = ia.toworld(self.image_shape - 1, 'q')['quantity']
             key = lambda x: '*%s' % (x + 1)
             ra_min = bottom[key(self.id_direction[0])]
@@ -777,10 +769,10 @@ class SpectralImage(object):
             self._brightnessunit = ia.brightnessunit()
             if self.spectral_label == 'Frequency':
                 refpix, refval, increment = self.spectral_axis(unit='GHz')
-                self.spectral_data = numpy.array([refval + increment * (i - refpix) for i in range(self.nchan)])
+                self.spectral_data = np.array([refval + increment * (i - refpix) for i in range(self.nchan)])
             elif self.spectral_label == 'Velocity':
                 refpix, refval, increment = self.spectral_axis(unit='km/s')
-                self.spectral_data = numpy.array([refval + increment * (i - refpix) for i in range(self.nchan)])
+                self.spectral_data = np.array([refval + increment * (i - refpix) for i in range(self.nchan)])
             if stokes_axis_exists:
                 self.stokes = self.coordsys.stokes()
             else:
@@ -854,5 +846,5 @@ class SpectralImage(object):
         if _unit != unit:
             refval = qa.convert(qa.quantity(refval, _unit), unit)['value']
             increment = qa.convert(qa.quantity(increment, _unit), unit)['value']
-        #return numpy.array([refval+increment*(i-refpix) for i in range(self.nchan)])
+        #return np.array([refval+increment*(i-refpix) for i in range(self.nchan)])
         return (refpix, refval, increment)
