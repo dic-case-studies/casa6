@@ -26,7 +26,7 @@
                 CasaBrowser is also accessible from within casapy by using the
                 browsetable() command.
             </item>
-           
+
         </group>
         <group name="Information">
             <item name="CASA Table Data Types">
@@ -67,7 +67,7 @@
                         http://aips2.nrao.edu/docs/tables/implement/Tables.html
                         </li>
                     <li>TaQL Documentation:
-                         http://aips2.nrao.edu/docs/notes/199/199.html</li>
+                        https://casacore.github.io/casacore-notes/199.html</li>
                 </ul><h3> </h3>
             </item>
         </group>
@@ -94,7 +94,7 @@
                 SELECT command.  If using the builder, be sure to click the
                 "Generate" button to generate the TaQL command before clicking
                 "Accept".
-                
+
                 <br /><br /><img src="images/23-taql.png" />
             </item><item name="Close Table(s)">
                 There are three ways to close a table: <b>File - Close Table
@@ -303,7 +303,7 @@
             </item>
         </group>
     </category>
-    
+
     <category name="Editing">
         <group name="Tasks">
             <item name="Edit Data">
@@ -352,7 +352,7 @@
             </item>
         </group>
     </category>
-    
+
     <category name="Plotting">
         <group name="2D Plotting: Tasks">
             <item name="Plot Field vs. Field">
@@ -413,7 +413,7 @@
                          be repeatedly clicked to move through the displayed rows.
                 </li><li>Clear: clears the selected region from the plot.
                 </li></ul><h3> </h3>
-                
+
                 Note that these actions are only available when the Select tool
                 is selected.  Also note that if another plot is added to the
                 canvas, the selected region is cleared.
@@ -425,7 +425,7 @@
             </item>
         </group>
     </category>
-    
+
     <category name="Other">
         <group name="Tasks">
             <item name="Export to VOTable">

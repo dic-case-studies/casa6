@@ -47,12 +47,12 @@
 #
 # <synopsis>
 # Test the po.complexfraclinpol() tool method
-# </synopsis> 
+# </synopsis>
 #
 #
 # <motivation>
 # To provide a test standard for the ia.tofits() tool method to ensure
-# coding changes do not break the associated bits 
+# coding changes do not break the associated bits
 # </motivation>
 #
 
@@ -86,10 +86,6 @@ class po_complexfraclinpol_test(unittest.TestCase):
         self.assertTrue(mypo.complexfraclinpol("g"))
         mypo.open(neq_beams)
         self.assertRaises(Exception, mypo.complexfraclinpol, "hh")
-        
-        
-def suite():
-    return [po_complexfraclinpol_test]
 
 if __name__ == '__main__':
     unittest.main()
