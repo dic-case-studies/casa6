@@ -11,6 +11,7 @@ import unittest
 
 import functools
 import numpy as np
+from casatasks import casalog
 from casatasks.private.sdutil import tool_manager
 from casatasks.private.task_imbaseline \
     import (CasaImageStack, EraseableFolder, Image2MSMethods, Image2MSParams, ImageShape, ImageSubtractionMethods,
@@ -23,6 +24,7 @@ from casatools import ctsys, image, table
 _tb = table()
 ctsys_resolve = ctsys.resolve
 DATACOLUMN = 'DATA'
+casalog.origin('imbaseline')
 
 
 class test_base(unittest.TestCase):
@@ -69,8 +71,7 @@ class test_base(unittest.TestCase):
                 if os.path.isfile(file_path) or os.path.islink(file_path):
                     os.unlink(file_path)
                 elif os.path.isdir(file_path):
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
+                    shutil.rmtree(file_path)
             except Exception as e:
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
 
@@ -82,7 +83,10 @@ class test_base(unittest.TestCase):
             raise RuntimeError(f'Error is occured or existed on a path {copy_from} or {filename}')
 
         if os.path.exists(filename):
-            shutil.rmtree(filename)
+            if os.path.isfile(filename) or os.path.islink(filename):
+                os.unlink(filename)
+            elif os.path.isdir(filename):
+                shutil.rmtree(filename)
         os.system('cp -RH ' + os.path.join(_base, filename) + ' ' + filename)
 
     def _create_image(self, datapath, val=1, shape=[0, 0, 0, 0]):
@@ -834,42 +838,82 @@ class misc_test(test_base):
 class imbaseline_test(test_base):
     """Test full of imbaseline.
 
-    F-1. simple successful case
+    F-1. maskmode/blfunc/dirkernel/spkernel combination test
     F-2. imagefile is None
     F-3. output_cont is False
-    F-4. bloutput is specified
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
-    expected = 'expected.im'
+    expected = 'ref_multipix.signalband'
+    blparam = 'analytic_variable_blparam_spw1.txt'
+    f_1_count = 1
 
     def setUp(self):
-        self.ia = image()
         self._copy_test_files(self.datapath, self.expected)
+        self._copy_test_files(self.datapath, self.blparam)
 
     def test_f_1(self):
-        imagefile = self.expected
+        imagename = self.expected
         linefile = 'output_f_1'
-        dirkernel = 'gaussian'
-        spkernel = 'gaussian'
+        output_cont = True
+        bloutput = self.expected + '.bloutput'
+        maskmode = ('auto', 'list')
+        chans = ''
+        thresh = 5.0
+        avg_limit = 5
+        minwidth = 5
+        edge = [0, 0]
+        blfunc = ('poly', 'chebyshev', 'cspline', 'sinusoid', 'variable')
+        order = 5
+        npiece = 3
+        applyfft = True
+        fftthresh = 3.0
+        addwn = [0]
+        rejwn = []
+        blparam = self.blparam
+        clipniter = 0
+        clipthresh = 3.0
+        dirkernel = ('none', 'gaussian', 'boxcar', 'image')
         major = '20arcsec'
         minor = '10arcsec'
         pa = '0deg'
-        blfunc = 'sinusoid'
-        output_cont = True
+        kimage = os.path.join(self.datapath, "bessel.im")
+        scale = -1.0
+        spkernel = ('none', 'gaussian', 'boxcar')
+        kwidth = 5
 
-        imbaseline(imagename=imagefile,
-                   linefile=linefile,
-                   dirkernel=dirkernel,
-                   spkernel=spkernel,
-                   major=major,
-                   minor=minor,
-                   pa=pa,
-                   blfunc=blfunc,
-                   output_cont=output_cont)
-        self.assertTrue(os.path.exists(linefile))
+        filenames_existance_check = [linefile, bloutput]
 
-    @test_base.exception_case(ValueError, 'file  is not found.')
+        [self._exec_imbaseline(imagename, linefile, output_cont, bloutput, _maskmode, chans, thresh, avg_limit,
+                               minwidth, edge, _blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
+                               clipniter, clipthresh, _dirkernel, major, minor, pa, kimage, scale, _spkernel,
+                               kwidth, filenames_existance_check)
+         for _maskmode in maskmode
+         for _blfunc in blfunc
+         for _dirkernel in dirkernel
+         for _spkernel in spkernel]
+
+    def _exec_imbaseline(self, imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
+                         edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh,
+                         dirkernel, major, minor, pa, kimage, scale, spkernel, kwidth, filenames_existance_check):
+        params = dict(imagename=imagename, linefile=linefile, output_cont=output_cont, bloutput=bloutput,
+                      maskmode=maskmode, chans=chans, thresh=thresh, avg_limit=avg_limit, minwidth=minwidth,
+                      edge=edge, blfunc=blfunc, order=order, npiece=npiece, applyfft=applyfft, fftthresh=fftthresh,
+                      addwn=addwn, rejwn=rejwn, blparam=blparam, clipniter=clipniter, clipthresh=clipthresh,
+                      dirkernel=dirkernel, major=major, minor=minor, pa=pa, kimage=kimage, scale=scale,
+                      spkernel=spkernel, kwidth=kwidth)
+        try:
+            casalog.post(f'test_F_1_{self.f_1_count:03} [maskmode={maskmode}, blfunc={blfunc}, '
+                         f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
+            imbaseline(**params)
+            for file in filenames_existance_check:
+                self.assertTrue(os.path.exists(file))
+        finally:
+            self.f_1_count += 1
+            self.tearDown()
+            self.setUp()
+
+    @test_base.exception_case(ValueError, 'Error: file  is not found.')
     def test_f_2(self):
         imagefile = ''
         linefile = 'output_f_2'
@@ -941,3 +985,8 @@ class imbaseline_test(test_base):
 def suite():
     return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test, image2ms_test, sdbaseline_test,
             image_subtraction_test, misc_test]
+
+
+if __name__ == '__main__':
+    os.chdir('tmp')
+    unittest.main()
