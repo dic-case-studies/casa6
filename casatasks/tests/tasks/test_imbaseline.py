@@ -985,8 +985,3 @@ class imbaseline_test(test_base):
 def suite():
     return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test, image2ms_test, sdbaseline_test,
             image_subtraction_test, misc_test]
-
-
-if __name__ == '__main__':
-    os.chdir('tmp')
-    unittest.main()
