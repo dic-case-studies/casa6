@@ -1161,11 +1161,6 @@ The values of each of these keys is an array of either strings or integers.
   
 </description>
 
-<input>
-  <description>No input parameters at the moment, some may be added in the future for only returning select keys</description>
-  <value>true</value>
-  </param>
-</input>
 <returns type="record"/>
 
 <example>
