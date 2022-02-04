@@ -1289,6 +1289,8 @@ to use the correct direction in which the antenna is pointing with respect to th
                                          where RI is the residual image and * is the convulition operation. 
                                        - Compute the model image and update the residual image
                                        - Repeat from step 2
+				       
+				       (Note : This is an experimental version of the ASP algorithm.)
 
 
 
@@ -1423,11 +1425,18 @@ to use the correct direction in which the antenna is pointing with respect to th
 
     <param type="int" name="largestscale" subparam="true">
      <shortdescription>Largest scale allowed for the Asp Clean deconvolver</shortdescription>
-     <description> Largest scale (in pixels) allowed for the Asp Clean deconvolver.
+     <description> Largest scale (in pixels) allowed for the initial guess for the Asp Clean deconvolver.
 
                      largestscale = 100
 
-                     The default initial scale sizes used by Asp Clean is [0, w, 2w, 4w, 8w], where `w` is the PSF width. The default `largestscale` is -1 which indicates users accept these initial scales. If `largestscale` is set, the initial scales would be [0, w, ... up to the `largestscale`]. It is recommended not to set `largestscale` unless Asp Clean picks a large scale that has no constraints from the data (the UV hole issue). 
+                     The default initial scale sizes used by Asp Clean is [0, w, 2w, 4w, 8w], 
+		     where `w` is the PSF width. The default `largestscale` is -1 which indicates 
+		     users accept these initial scales. If `largestscale` is set, the initial scales 
+		     would be [0, w, ... up to the `largestscale`]. This is only an initial guess,
+		     and actual fitted scale sizes may evolve from these initial values.
+
+		     It is recommended not to set `largestscale` unless Asp Clean picks a large 
+		     scale that has no constraints from the data (the UV hole issue). 
 
 
       </description>
@@ -2651,7 +2660,7 @@ to use the correct direction in which the antenna is pointing with respect to th
        </equals>
        <equals type="string" value="asp">
          <default param="fusedthreshold"><value>0.0</value></default>
-         <default param="smallestscale"><value>-1</value></default>
+         <default param="largestscale"><value>-1</value></default>
        </equals>
      </when>
 
