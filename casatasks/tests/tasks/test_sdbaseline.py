@@ -1,45 +1,24 @@
-from __future__ import absolute_import
-from __future__ import print_function
-import os
+import contextlib
+import filecmp
 import glob
-import sys
+import numpy as np
+import os
 import shutil
-import numpy
 import unittest
-from numpy import array
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, table
-    from casatasks import sdbaseline
-    from casatasks.private.sdutil import table_manager
+from casatools import ctsys, table
+from casatasks import sdbaseline
+from casatasks.private.sdutil import table_manager
+from casatasks.private.task_sdbaseline import check_fftthresh, is_empty, parse_wavenumber_param
+from casatestutils import selection_syntax
 
-    ### for selection_syntax import
-    from casatestutils import selection_syntax
 
-    tb = table( )
+tb = table()
+ctsys_resolve = ctsys.resolve
 
-    ctsys_resolve = ctsys.resolve
-
-    # default is not necessary in CASA6
-    def default(atask):
-        pass
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from sdbaseline import sdbaseline
-    from sdutil import tbmanager as table_manager
-    # the global tb tool is used here as is
-
-    try:
-        from casatestutils import selection_syntax
-    except:
-        import tests.selection_syntax as selection_syntax
-
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+# default is necessary in CASA6
+def default(atask):
+    pass
 
 
 ### Utilities for reading blparam file
@@ -147,10 +126,7 @@ class BlparamFileParser(FileReader):
 
 def parseCoeff(txt):
     clist = txt.rstrip('\n').split(',')
-    ret = []
-    for c in clist:
-        ret.append(float(c.split('=')[1]))
-    return ret
+    return [float(c.split('=')[1]) for c in clist]
 
 
 def parseRms(txt):
@@ -185,11 +161,40 @@ def remove_files_dirs(filename):
     elif filename == '':
         raise Exception("The parameter 'filename' must not be a null string.")
     
-    import glob
     filenames = glob.glob('{}*'.format(filename.rstrip('/')))
 
     for filename in filenames:
         remove_single_file_dir(filename)
+
+
+def compare_dir(dir1, dir2):
+    # Write dircmp() result to a text file, then read the result as a list
+    compare_result = 'compare_' + dir1 + '_' + dir2
+    with open(compare_result, 'w') as o:
+        with contextlib.redirect_stdout(o):
+            filecmp.dircmp(dir1, dir2, ignore=['table.lock']).report_full_closure()
+    with open(compare_result) as f:
+        lines = f.readlines()
+    remove_single_file_dir(compare_result)
+
+    # Added/deleted files
+    n_only = _get_num_files_by_keyword(lines, 'Only in ')
+    # Modified files
+    n_diff = _get_num_files_by_keyword(lines, 'Differing ')
+
+    mesg = ''
+    if n_only > 0:
+        mesg += '{} added or deleted'.format(n_only)
+    if n_diff > 0:
+        if n_only > 0:
+            mesg += ', '
+        mesg += '{} modified'.format(n_diff)
+
+    return mesg
+
+
+def _get_num_files_by_keyword(cmpresult, keyword):
+    return len(sum([eval(s[s.index(':')+1:]) for s in cmpresult if s.startswith(keyword)], []))
 
 
 class sdbaseline_unittest_base(unittest.TestCase):
@@ -319,9 +324,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
         """
         if isinstance(val, str):
             val_split = val.split(',')
-            val_sel = []
-            for j in range(len(val_split)):
-                val_sel.append(int(val_split[j]))
+            val_sel = [int(val_split[j]) for j in range(len(val_split))]
         elif isinstance(val, int):
             val_sel = [val]
         elif isinstance(val, list) or isinstance(val, tuple):
@@ -342,11 +345,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
         data_list : a list to test and get IDs from
         sel_list  : a list of values to look for existance in data_list
         """
-        res = []
-        for i in range(len(data_list)):
-            if data_list[i] in sel_list:
-                #idx = sel_list.index(data_list[i])
-                res.append(i)
+        res = [i for i in range(len(data_list)) if data_list[i] in sel_list]
         return self._getUniqList(res)
     
     def _getEffective(self, spec, mask):
@@ -358,11 +357,8 @@ class sdbaseline_unittest_base(unittest.TestCase):
         mask : a mask list of the channel ranges to use. The format is
                [[start_idx0, end_idx0], [start_idx1, end_idx1], ...]
         """
-        res = []
-        for i in range(len(mask)):
-            for j in range(mask[i][0], mask[i][1]):
-                res.append(spec[j])
-        return numpy.array(res)
+        res = [spec[j] for i in range(len(mask)) for j in range(mask[i][0], mask[i][1])]
+        return np.array(res)
 
     def _getStats(self, filename=None, spw=None, pol=None, colname=None, mask=None):
         """
@@ -420,14 +416,14 @@ class sdbaseline_unittest_base(unittest.TestCase):
         if mask is not None:
             spec = self._getEffective(data, mask)
         else:
-            spec = numpy.array(data)
+            spec = np.array(data)
         res_elem = {}
-        res_elem['rms'] = numpy.sqrt(numpy.var(spec))
-        res_elem['min'] = numpy.min(spec)
-        res_elem['max'] = numpy.max(spec)
-        spec_mea = numpy.mean(spec)
-        res_elem['median'] = numpy.median(spec)
-        res_elem['stddev'] = numpy.std(spec)
+        res_elem['rms'] = np.sqrt(np.var(spec))
+        res_elem['min'] = np.min(spec)
+        res_elem['max'] = np.max(spec)
+        spec_mea = np.mean(spec)
+        res_elem['median'] = np.median(spec)
+        res_elem['stddev'] = np.std(spec)
         return res_elem
         
 
@@ -443,13 +439,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
         (row0, pol0), (row0, pol1), (row1, pol0), ....
         """
         #if len(stat_list)==0: raise Exception, "No row selected in MS"
-        keys=stat_list[0].keys()
-        stat_dict={}
-        for key in keys:
-            stat_dict[key] = []
-        for stat in stat_list:
-            for key in keys:
-                stat_dict[key].append(stat[key])
+        stat_dict = {key: [stat[key] for stat in stat_list] for key in stat_list[0].keys()}
         return stat_dict
 
     def _compareStats(self, currstat, refstat, rtol=1.0e-2, atol=1.0e-5, complist=None):
@@ -517,8 +507,8 @@ class sdbaseline_unittest_base(unittest.TestCase):
                                         msg="%s[%d] differs: %s (expected: %s) " % \
                                         (key, i, str(currval[i]), str(refval[i])))
             else:
-                # numpy.allclose handles almost zero case more properly.
-                self.assertTrue(numpy.allclose(currval, refval, rtol=rtol, atol=atol),
+                # np.allclose handles almost zero case more properly.
+                self.assertTrue(np.allclose(currval, refval, rtol=rtol, atol=atol),
                                 msg="%s differs: %s" % (key, str(currval)))
             del currval, refval
 
@@ -546,8 +536,7 @@ class sdbaseline_unittest_base(unittest.TestCase):
         Convert input to a list
         If input is None, this method simply returns None.
         """
-        import numpy
-        listtypes = (list, tuple, numpy.ndarray)
+        listtypes = (list, tuple, np.ndarray)
         if input == None:
             return None
         elif type(input) in listtypes:
@@ -605,7 +594,12 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
     test004 --- sinusoidal baselining with no mask (maskmode = 'list'). spw and pol specified.
     test050 --- existing file as outfile with overwrite=False (raises an exception)
     test051 --- no data after selection (raises an exception)
-    test060 --- blparam file (infile+'_blparam.txt') should be removed if it exists
+    test060 --- blparam files should be overwritten when overwrite=True in fit mode
+    test061 --- blparam files should not exist when overwrite=False in fit mode
+    test062 --- blparam files should not be removed in apply mode
+    test070 --- no output MS when dosubtract=False
+    test071 --- dosubtract=False and blformat is empty (raises an exception)
+    test080 --- existent outfile is not overwritten if dosubtract=False
 
     Note: The input data 'OrionS_rawACSmod_calave.ms' is generated
           from a single dish regression data 'OrionS_rawACSmod' as follows:
@@ -827,15 +821,15 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
 
         # open the original MS
         tb.open(infile)
-        orig_pol1_value = numpy.array(tb.getcell('FLOAT_DATA', int(spw))[in_pol,:])
+        orig_pol1_value = np.array(tb.getcell('FLOAT_DATA', int(spw))[in_pol,:])
         tb.close()
-        variance_orig_pol1 = numpy.var(orig_pol1_value)
+        variance_orig_pol1 = np.var(orig_pol1_value)
         
         # open the MS after sdbaseline
         tb.open(outfile)
-        pol1_value = numpy.array(tb.getcell('FLOAT_DATA', 0)[out_pol,:])
+        pol1_value = np.array(tb.getcell('FLOAT_DATA', 0)[out_pol,:])
         tb.close()
-        variance_pol1 = numpy.var(pol1_value)
+        variance_pol1 = np.var(pol1_value)
 
         # assert pol1_value < orig_pol1_value
         self.assertTrue((pol1_value<orig_pol1_value).all())
@@ -845,8 +839,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
 
         #print '1sigma before cspline (pol1)', variance_orig_pol1**0.5 
         #print '1sigma after cspline (pol1)',  variance_pol1**0.5 
-        
-    
+
     def test050(self):
         """Basic Test 050: failure case: existing file as outfile with overwrite=False"""
         infile = self.infile
@@ -856,7 +849,6 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         try:
             result = sdbaseline(infile=infile, outfile=outfile, overwrite=False, maskmode=mode)
         except Exception as e:
-            #pos = str(e).find(outfile+' exists.')
             pos = str(e).find("outfile='" + outfile + "' exists, and cannot overwrite it.")
             self.assertNotEqual(pos, -1, msg='Unexpected exception was thrown: %s'%(str(e)))
         finally:
@@ -875,7 +867,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
             self.assertIn('Spw Expression: No match found for 10,', str(e))
 
     def test060(self):
-        """Basic Test 060: blparam file (infile+'_blparam.txt') should be removed if it exists"""
+        """Basic Test 060: blparam file(s) should be overwritten when overwrite=True in fit mode"""
         tid = '060'
         infile = self.infile
         outfile = self.outroot+tid+'.ms'
@@ -883,11 +875,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         datacolumn = 'float_data'
 
         # First run
-        try:
-            sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
-        except Exception as e:
-            print('first run failed')
-            raise e
+        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
 
         # Keep blparam.txt, and remove outfile only
         shutil.rmtree(outfile)
@@ -895,11 +883,134 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         blparamfile = infile + '_blparam.txt'
         self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
 
-        # Second run, which must be successful
-        try:
+        # Second run (in fit mode, overwrite=True), which must be successful
+        overwrite = True
+        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
+
+    def test061(self):
+        """Basic Test 061: blparam file(s) should not exist when overwrite=False in fit mode """
+        tid = '061'
+        infile = self.infile
+        outfile = self.outroot+tid+'.ms'
+        overwrite = False
+        datacolumn = 'float_data'
+
+        # First run
+        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
+
+        # Keep blparam.txt, and remove outfile only
+        shutil.rmtree(outfile)
+        self.assertFalse(os.path.exists(outfile), msg='{} should not exist'.format(outfile))
+        blparamfile = infile + '_blparam.txt'
+        self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
+
+        # Second run (in fit mode, overwrite=False), which must emit ValueError
+        with self.assertRaises(ValueError, msg='{}_blparam.txt exists.'.format(infile)):
             sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn)
+
+    def test062(self):
+        """Basic Test 062: blparam file(s) should not be removed in apply mode"""
+        tid = '062'
+        infile = self.infile
+        outfile = self.outroot+tid+'.ms'
+        overwrite = False
+        datacolumn = 'float_data'
+        blmode = 'fit'
+        blformat = ['text', 'table']
+
+        # First run
+        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn, blmode=blmode, blformat=blformat)
+
+        # Keep blparam files, and remove outfile only
+        shutil.rmtree(outfile)
+        self.assertFalse(os.path.exists(outfile), msg='{} should not exist'.format(outfile))
+        for ext in ['txt', 'bltable']:
+            blparamfile = infile + '_blparam.' + ext
+            self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
+            # Backup blparam file for comparison
+            blparamfile_backup = blparamfile + '.backup'
+            if ext == 'txt':
+                shutil.copy(blparamfile, blparamfile_backup)
+            elif ext == 'bltable':
+                shutil.copytree(blparamfile, blparamfile_backup)
+
+        # Second run (in apply mode), which must be successful
+        blmode = 'apply'
+        bltable = infile + '_blparam.bltable'
+        overwrite = True
+        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn, blmode=blmode, bltable=bltable)
+
+        # Param files created in the first run should be kept
+        for ext in ['txt', 'bltable']:
+            blparamfile = infile + '_blparam.' + ext
+            self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
+            blparamfile_backup = blparamfile + '.backup'
+            if ext == 'txt':
+                self.assertTrue(filecmp.cmp(blparamfile, blparamfile_backup), msg='{} changed'.format(blparamfile))
+            elif ext == 'bltable':
+                res = compare_dir(blparamfile, blparamfile_backup)
+                self.assertEqual(res, '', msg='{0} changed: {1}'.format(blparamfile, res))
+
+
+    def test070(self):
+        """Basic Test 070: no output MS when dosubtract=False"""
+        tid = '070'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        dosubtract = False
+        blformats = ['text', 'csv', 'table', ['text', 'table'], ['text', ''], ['text', 'csv', 'table']]
+
+        for blformat in blformats:
+            print(f"Testing blformat='{blformat}'...")
+            remove_files_dirs(infile+'_blparam.')
+            remove_single_file_dir(outfile)
+            self.assertFalse(os.path.exists(outfile), f"{outfile} must be deleted before testing.")
+
+            sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile, dosubtract=dosubtract, blformat=blformat)
+            self.assertFalse(os.path.exists(outfile), f"{outfile} is created.")
+
+    def test071(self):
+        """Basic Test 071: dosubtract=False and blformat is empty (raises an exception)"""
+        tid = '071'
+        infile = self.infile
+        outfile = self.outroot + tid + '.ms'
+        datacolumn = 'float_data'
+        dosubtract = False
+        blformats = ['', [], ['', '', '']]
+
+        for blformat in blformats:
+            print(f"Testing blformat='{blformat}'...")
+            with self.assertRaises(ValueError, msg="blformat must be specified when dosubtract is False"):
+                sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile, dosubtract=dosubtract, blformat=blformat)
+
+    def test080(self):
+        """Basic Test 080: existent outfile is not overwritten if dosubtract=False"""
+        tid = '080'
+        infile = self.infile
+        outfile = self.outroot+tid+'.ms'
+        dosubtract = False
+        overwrite = False
+        datacolumn = 'float_data'
+
+        # Copy infile to outfile so that outfile does exist prior to sdbaseline, and also
+        # outfile is identical to non-baselined data (infile)
+        shutil.copytree(infile, outfile)
+
+        # Run sdbaseline with dosubtract=False
+        try:
+            sdbaseline(infile=infile, outfile=outfile, dosubtract=dosubtract, overwrite=overwrite, datacolumn=datacolumn)
         except Exception as e:
+            print('unexpected failure!')
             raise e
+
+        # Confirm outfile data unchanged, i.e., identical to infile
+        for sta_in, sta_out in zip(self._getStats(infile, ''), self._getStats(outfile, '')):
+            for k in sta_in.keys():
+               if k in ['row', 'pol']:
+                   self.assertEqual(sta_in[k], sta_out[k])
+               else:
+                   self.assertAlmostEqual(sta_in[k], sta_out[k])
 
 
 class sdbaseline_maskTest(sdbaseline_unittest_base):
@@ -1123,7 +1234,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             shutil.rmtree(self.infile+ '_blparam.btable')
 
     def tearDown(self):
-        remove_single_file_dir(self.infile)
+        remove_files_dirs(self.infile)
         remove_files_dirs(self.outroot)
 
     def test000(self):
@@ -2039,7 +2150,6 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
     Tests for outputting baseline table
 
     List of tests
-    test300 --- blmode='fit', bloutput='', dosubtract=False (no baselining, no bltable output)
     test301 --- blmode='fit', bloutput!='', dosubtract=True, blfunc='poly'/'chebyshev'/'cspline'
                 (poly/chebyshev/cspline fit in MS, bltable is written)
     test302 --- blmode='fit', bloutput!='', dosubtract=True, blfunc='variable'
@@ -2166,39 +2276,6 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 rel = abs(out - ref)
             self.assertTrue((rel < tol), msg='the output ('+str(out)+') differs from reference ('+str(ref)+')')
 
-
-    def test300(self):
-        """test300: no baselining, no bltable output"""
-        self.tid='300'
-        infile = self.infile
-        outfile = self.outroot+self.tid+'.ms'
-        datacolumn='float_data'
-        blmode='fit'
-        bloutput=''
-        dosubtract=False
-
-        result = sdbaseline(infile=infile,datacolumn=datacolumn,
-                             blmode=blmode,bloutput=bloutput,dosubtract=dosubtract,
-                             outfile=outfile)
-        self.assertEqual(result,None,
-                         msg="The task returned '"+str(result)+"' instead of None")
-
-        spec_in = []
-        tb.open(infile)
-        for i in range(tb.nrows()):
-            spec_in.append(tb.getcell('FLOAT_DATA', i))
-        tb.close()
-        spec_out = []
-        tb.open(outfile)
-        for i in range(tb.nrows()):
-            spec_out.append(tb.getcell('FLOAT_DATA', i))
-        tb.close()
-        for irow in range(len(spec_in)):
-            for ipol in range(len(spec_in[0])):
-                for ichan in range(len(spec_in[0][0])):
-                    self.assertEqual(spec_in[irow][ipol][ichan], spec_out[irow][ipol][ichan],
-                                     msg="output spectrum modified at row="+str(irow)+
-                                     ",pol="+str(ipol)+",chan="+str(ichan))
 
     def test301(self):
         """test301: poly/chebyshev/cspline baselining, output bltable"""
@@ -2954,13 +3031,8 @@ Basic unit tests for task sdbaseline. No interactive testing.
 
     def check_bloutputparam_csv(self,bloutputfile, ref_all):
         with open(bloutputfile,'r') as file:
-            dataReader=csv.reader(file)     
-            list_all=[]
-            for row in dataReader:
-                list_all.append(row)
- 
+            list_all = [row for row in csv.reader(file)]
             self.assertEqual(ref_all, list_all, msg='parameter values of the output csv file are not equivalent to referece values!')
-
 
 
     def test000(self):
@@ -4858,7 +4930,7 @@ class sdbaseline_selection(unittest.TestCase):
 
     def _get_reference(self, nchan, irow, ipol, datacol):
         line_chan, line_amp = self.line_data[datacol][('r%d' % irow)][ipol]
-        reference = numpy.zeros(nchan)
+        reference = np.zeros(nchan)
         reference[line_chan] = line_amp
         if self.verbose: print("reference=%s" % str(reference))
         return reference
@@ -4902,7 +4974,7 @@ class sdbaseline_selection(unittest.TestCase):
             if not applymode: # normal fit
                 self.assertEqual(tb.nrows(), len(rowids), "Row number is wrong %d (expected: %d)" % (tb.nrows(), len(rowids)))
             else: # in case of apply, rownumber does not change from input MS
-                self.assertGreaterEqual(tb.nrows(), numpy.array(rowids).max(),
+                self.assertGreaterEqual(tb.nrows(), np.array(rowids).max(),
                                         'Reference row number is larger than table size.')
             for out_row in range(len(rowids)):
                 in_row = rowids[out_row]
@@ -4915,7 +4987,7 @@ class sdbaseline_selection(unittest.TestCase):
                     in_pol = polids[out_pol]
                     reference = self._get_reference(nchan, in_row, in_pol, dcol)
                     if self.verbose: print("data=%s" % str(sp[out_pol]))
-                    self.assertTrue(numpy.allclose(sp[out_pol], reference,
+                    self.assertTrue(np.allclose(sp[out_pol], reference,
                                                    atol=atol, rtol=rtol),
                                     "Baselined spectrum differs in row=%d, pol=%d" % (out_row, out_pol))
         finally:
@@ -5116,7 +5188,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
             wgt_in = tb.getcol('WEIGHT')
         with table_manager(self.outfile) as tb:
             wgt_out = tb.getcol('WEIGHT')
-        self.assertTrue(numpy.array_equal(wgt_in, wgt_out),
+        self.assertTrue(np.array_equal(wgt_in, wgt_out),
                         msg='WEIGHT column is unexpectedly updated!')
 
     def _check_weight_values(self, sigmavalue='stddev'):
@@ -5140,17 +5212,17 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
             if 'spw' in self.params.keys():
                 flag[:, 4500:6500, :] = True
 
-        mdata = numpy.ma.masked_array(data, mask=flag)
+        mdata = np.ma.masked_array(data, mask=flag)
         if sigmavalue == 'stddev':
-            mwgt_ref = 1.0 / numpy.var(mdata, axis=1)
+            mwgt_ref = 1.0 / np.var(mdata, axis=1)
         elif sigmavalue == 'rms':
-            mwgt_ref = 1.0 / numpy.mean(numpy.square(mdata), axis=1)
+            mwgt_ref = 1.0 / np.mean(np.square(mdata), axis=1)
         else:
             raise ValueError("Illegal argument: sigmavalue={}: must be \
                              'stddev' or 'rms'".format(sigmavalue))
-        wgt_ref = numpy.ma.filled(mwgt_ref, fill_value=0.0)
+        wgt_ref = np.ma.filled(mwgt_ref, fill_value=0.0)
 
-        self.assertTrue(numpy.allclose(wgt, wgt_ref, rtol=1.0e-2, atol=1.0e-5))
+        self.assertTrue(np.allclose(wgt, wgt_ref, rtol=1.0e-2, atol=1.0e-5))
 
     def run_test(self):
         sdbaseline(**self.params)
@@ -5286,6 +5358,109 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.run_apply_test()
 
 
+class sdbaseline_helperTest(sdbaseline_unittest_base):
+    """
+    Tests for helper functions
+
+    test000 --- tests for is_empty()
+    test010 --- tests for parse_wavenumber_param()
+    test020 --- tests for check_fftthresh()
+    """
+
+    def test000(self):
+        print("Testing a helper function is_empty() with")
+
+        # right cases
+        blformats = [None, '', [], ['', '', '']]
+        for blformat in blformats:
+            print(f"    blformat='{blformat}'...")
+            self.assertTrue(is_empty(blformat))
+
+        # wrong cases
+        blformats = ['text', 'csv', 'table',
+                     ['text'], ['csv'], ['table'],
+                     ['text', ''], ['', 'table'],
+                     ['text', 'csv'], ['text', 'table'], ['csv', 'table'],
+                     ['text', 'csv', ''], ['text', '', 'table'], ['', 'csv', 'table'],
+                     ['text', 'csv', 'table'],
+                     ['text', 'csv', 'table', ''], ['', 'text', 'csv', 'table']]
+        for blformat in blformats:
+            print(f"    blformat='{blformat}'...")
+            self.assertFalse(is_empty(blformat))
+
+    def test010(self):
+        test_cases = [([1, 2, 3], '1,2,3'),
+                      ([1, 3, 2], '1,2,3'),
+                      ([3, 2, 1], '1,2,3'),
+                      ([3, 1, 3], '1,3'),
+                      ([-5, 1, 2], 'ERROR'),
+                      ((3, 2, 1), '1,2,3'),
+                      ((4, 1, 4), '1,4'),
+                      ((-5, 1, 2), 'ERROR'),
+                      (5, '5'),
+                      (0, '0'),
+                      (-6, 'ERROR'),
+                      (7.0, 'ERROR'),
+                      (True, 'ERROR'),
+                      ('5', '5'),
+                      ('0', '0'),
+                      ('-6', 'ERROR'),
+                      ('7.0', 'ERROR'),
+                      ('1, 2, 3', '1,2,3'),
+                      ('3, 2, 1', '1,2,3'),
+                      ('3, 1, 3', '1,3'),
+                      ('-5, 1, 2', 'ERROR'),
+                      ('2-5', '2,3,4,5'),
+                      ('3~6', '3,4,5,6'),
+                      ('<=3', '0,1,2,3'),
+                      ('=<4', '0,1,2,3,4'),
+                      ('5>=', '0,1,2,3,4,5'),
+                      ('6=>', '0,1,2,3,4,5,6'),
+                      ('<3', '0,1,2'),
+                      ('4>', '0,1,2,3'),
+                      ('>=3', '3,-999'),
+                      ('=>4', '4,-999'),
+                      ('5<=', '5,-999'),
+                      ('6=<', '6,-999'),
+                      ('>3', '4,-999'),
+                      ('4<', '5,-999')]
+
+        print("Testing a helper function parse_wavenumber_param() with")
+        for (wn, answer) in test_cases:
+            print(f"    wn='{wn}'...")
+            if answer == 'ERROR':
+                with self.assertRaises(ValueError, msg="wrong value given for addwn/rejwn"):
+                    parse_wavenumber_param(wn)
+            else:
+                self.assertEqual(answer, parse_wavenumber_param(wn))
+
+    def test020(self):
+        print("Testing a helper function check_fftthresh() with")
+
+        # right cases
+        test_cases = [3, 3.0, 'top4', '5sigma', '5.0sigma']
+        for fftthresh in test_cases:
+            print(f"    fftthresh='{fftthresh}'...")
+            try:
+                check_fftthresh(fftthresh)
+            except Exception as e:
+                print("Unexpected error!")
+                raise e
+
+        # wrong cases
+        test_cases = [{'fftthresh':[0, 0.0, -3, -3.0, 'top-4', '-5sigma', '-5.0sigma'],
+                       'errmsg':"threshold given to fftthresh must be positive."},
+                      {'fftthresh':['fivesigma'],
+                       'errmsg':"fftthresh has a wrong format."},
+                      {'fftthresh':[None, True, ['3.0'], ('top4',)],
+                       'errmsg':"fftthresh must be float or integer or string."}]
+        for test_case in test_cases:
+            for fftthresh in test_case['fftthresh']:
+                print(f"    fftthresh='{fftthresh}'...")
+                with self.assertRaises(ValueError, msg=test_case['errmsg']):
+                    check_fftthresh(fftthresh)
+
+
 def suite():
     return [sdbaseline_basicTest, 
             sdbaseline_maskTest,
@@ -5297,9 +5472,10 @@ def suite():
             sdbaseline_autoTest,
             sdbaseline_selection,
             sdbaseline_updateweightTest,
-            sdbaseline_updateweightTest2
+            sdbaseline_updateweightTest2,
+            sdbaseline_helperTest
             ]
 
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+
+if __name__ == '__main__':
+    unittest.main()
