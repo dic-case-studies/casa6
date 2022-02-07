@@ -1,0 +1,57 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+
+ 
+        <tool module="synthesisimstore" name="synthesisimstore">
+        <shortdescription>tool for synthesis imaging</shortdescription>
+       
+<description>
+synthesisimstore is an tool that accomplishes gather/scatter for parallel major cycle runs
+</description>
+
+<code>
+	<include>synthesisimstore_forward.h</include>
+<private>
+	<include>synthesisimstore_private.h</include>
+</private>
+
+</code>
+
+
+
+ 
+   <method name="synthesisimstore" type="constructor">
+   <shortdescription>Construct an synthesisimstore tool</shortdescription>
+   
+<description>
+This is used to construct {\tt synthesisimstore} tool. 
+
+</description>
+<input>
+
+</input>
+<returns type="synthesisimstore"/>
+<example>
+
+
+</example>
+</method>
+
+
+
+
+
+   <method name="done" type="function">
+   <shortdescription>Close the tool</shortdescription>
+
+<description>
+</description>
+<input>
+
+</input>
+<returns type="bool"/>
+</method>
+
+</tool>
+
+</casaxml>

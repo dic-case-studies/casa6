@@ -83,21 +83,21 @@ def alleqnum(x,num,tolerance=0):
         stop('unhandled array shape in alleq')
     return True
 
-def test_start(msg):
-    global total, current_test
-    total += 1
-    print()
-    print(stars + " Test " + msg + " start " + stars)
-    current_test = msg
+#def test_start(msg):
+#    global total, current_test
+#    total += 1
+#    print()
+#    print(stars + " Test " + msg + " start " + stars)
+#    current_test = msg
     
-def test_end(condition, error_msg):
-    global total, fail
-    status = "OK"
-    if not condition:
-        print(error_msg, file=sys.stderr)
-        fail += 1
-        status = "FAIL"
-    print(stars + " Test " + current_test + " " + status + " " + stars)
+#def test_end(condition, error_msg):
+#    global total, fail
+#    status = "OK"
+#    if not condition:
+#        print(error_msg, file=sys.stderr)
+#        fail += 1
+#        status = "FAIL"
+#    print(stars + " Test " + current_test + " " + status + " " + stars)
         
 imagename_a = "aa.im"
 imagename_b = "ab.im"

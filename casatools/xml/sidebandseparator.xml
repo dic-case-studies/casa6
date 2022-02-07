@@ -1,0 +1,167 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd         file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+  
+  
+  
+  
+<tool module="sidebandseparator" name="sidebandseparator">
+  <shortdescription>Tool for sideband separation</shortdescription>
+  
+  <code>
+    <include>sidebandseparator_forward.h</include>
+    <private>
+      <include>sidebandseparator_private.h</include>
+    </private>
+  </code>
+  <description> 
+  </description>
+  
+ 
+<method name="sidebandseparator" type="constructor">
+  <shortdescription>Construct a sideband separator tool</shortdescription>
+  <description>
+    Create a sideband separator tool.
+  </description>
+  <returns type="sidebandseparatorobject">sideband separator tool</returns>
+  <example>
+    # create a sideband separator tool
+    separator = sbseptool();    
+  </example>
+</method>  
+
+<method name="open" type="function">
+  <shortdescription>Construct a sideband separator tool</shortdescription>
+  <description>
+  </description>
+  <input>    
+    <param name="imagename" type="stringVec">
+      <description>A list of image names</description>
+      <value/>
+    </param>
+  </input>
+  <returns type="bool">Boolean</returns>
+  <example>    
+  </example>
+</method>
+
+<method name="close" type="function">
+  <shortdescription>Close the sideband separator tool</shortdescription>
+  <description>
+    Close tools and write data to disk. This is a synonym for done.
+  </description>
+  <returns type="bool">Bool</returns>
+</method>
+
+
+<method name="done" type="function">
+  <shortdescription>Close the sideband separator tool</shortdescription>  
+  <description>
+    Close tools and write data to disk. This is a synonym for done.
+  </description>
+  <returns type="bool">Bool</returns>
+</method>
+
+<method name="setshift" type="function">
+  <shortdescription/>
+  <description>
+  </description>
+  <input>    
+    <param name="shift" type="doubleVec">
+      <description/>
+      <value/>
+    </param>
+    <param name="signal" type="bool">
+      <description/>
+      <value>true</value>
+    </param>
+  </input>
+  <returns type="bool">Boolean</returns>
+  <example>    
+  </example>
+</method>
+
+<method name="setlimit" type="function">
+  <shortdescription/>
+  <description>
+  </description>
+  <input>    
+    <param name="threshold" type="double">
+      <description/>
+      <value>0.2</value>
+    </param>
+  </input>
+  <returns type="bool">Boolean</returns>
+  <example>    
+  </example>
+</method>
+
+<method name="setboth" type="function">
+  <shortdescription/>
+  <description>
+  </description>
+  <input>    
+    <param name="getbothside" type="bool">
+      <description/>
+      <value>false</value>
+    </param>
+  </input>
+  <returns type="bool">Boolean</returns>
+  <example>    
+  </example>
+</method>
+
+<method name="set_imageband_frequency" type="function">
+  <shortdescription/>
+  <description>
+  </description>
+  <input>    
+    <param name="refpix" direction="in" type="double">
+      <description/>
+      <value>0.0</value>
+    </param>
+    <param units="Hz" name="refval" direction="in" type="double">
+      <description/>
+      <value>-1.0</value>
+    </param>
+  </input>
+  <returns type="bool">Boolean</returns>
+  <example>    
+  </example>
+</method>
+
+<method name="setsolveother" type="function">
+  <shortdescription/>
+  <description>
+  </description>
+  <input>    
+    <param name="subtract_from_other" type="bool">
+      <description/>
+      <value>false</value>
+    </param>
+  </input>
+  <returns type="bool">Boolean</returns>
+  <example>    
+  </example>
+</method>
+
+<method name="separate" type="function">
+  <shortdescription/>
+  <description>
+  </description>
+  <input>    
+    <param name="outfile" type="string">
+      <description/>
+      <value/>
+    </param>
+    <param name="overwrite" type="bool">
+      <description/>
+      <value>false</value>
+    </param>
+  </input>
+  <returns type="bool">Boolean</returns>
+  <example>    
+  </example>
+</method>
+
+</tool>
+
+</casaxml>

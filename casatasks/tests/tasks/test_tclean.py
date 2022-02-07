@@ -15,13 +15,22 @@
 #  test_modelvis                # saving models (column/otf), using starting models, predict-only (setjy)
 #  test_ephemeris                # ephemeris tests for gridder standard and mosaic, mode mfs and cubesource
 #
-# To run from within casa 5:  
+#  To run the tests with python3 or casa in the command line
 #
-#  runUnitTest.main(['test_tclean'])                                              # Run all tests
-#  runUnitTest.main(['test_tclean[test_onefield]'])                               # Run tests from test_onefield
-#  runUnitTest.main(['test_tclean[test_onefield_mtmfs]'])                         # Run one specific test
-#  runUnitTest.main(['test_tclean[test_onefield_mtmfs,test_onefield_hogbom]'])    # Multiple specific tests
+#  ./casa -c ./test_tclean.py
+#  ./python3 ./test_tclean.py
+#  ./casa -c ./casa6/casatestutils/runtest.py -h                                   # to see all options
+#  ./casa -c ./casa6/casatestutils/runtest.py ./test_tclean.py                     # run the local test script
+#  ./casa -c ./casa6/casatestutils/runtest.py ./test_tclean.py
+
+# To run from within a casa 6 session:
 #
+#  from casatestutils import runtest
+#  runtest.run(['test_tclean'])                                                 # pull test script from git trunk
+#  runtest.run(['/path-to-test/test_tclean.py'])                                # run a local test script
+#  runtest.run(['test_tclean[test_onefield_clark,test_onefield_hogbom]'])       # pull multiple test cases from git trunk
+#  runtest.run(['test_tclean.py[test_onefield_clark,test_onefield_hogbom]'])    # run multiple test cases from local test script
+#  See documentation for runtest.py in README.md of casatestutils
 # To see the full list of tests :   grep "\"\"\" \[" test_tclean.py
 #
 #  These tests need data stored in casatestdata/unittest/tclean
@@ -31,7 +40,7 @@
 #  For a developer build, to get the datasets locally 
 #
 #  --- Get the test data repo :  svn co https://svn.cv.nrao.edu/svn/casatestdata casatestdata
-#  --- Add a link to casatestdata inside $CASAPATH
+#  --- Use ~/.casa/config.py to point to the casatestdata
 # ########################################################################
 # SKIPPED TESTS 
 # More tests were added to skip (as of 2019,04,26)
@@ -66,7 +75,7 @@
 #     test_startmodel_with_mask_mfs(possible race conditions)
 #     test_startmodel_with_mask_mtmfs(possible race conditions)
 
-#Ressurected from skipping after some fixes
+# Ressurected from skipping after some fixes
 #     test_mask_5
 #     test_iterbot_cube_2
 #     test_multifield_both_cube
@@ -84,10 +93,13 @@
 #  refim_point_linRL.ms : I=1, Q=2, U=3, V=4  in circular pol basis.
 #  venus_ephem_test.ms : 7-point mosaic of Venus (ephemeris), Band 6, 1 spw, averaged to 1 chan
 #
+# List of test classes
+#
+# [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield,
+# test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures]
+#
 ##########################################################################
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import sys
 import shutil
@@ -96,50 +108,23 @@ import inspect
 import numpy as np
 import operator
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-     from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
-     from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata
-     from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-     from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-     from casatasks import impbcor
+from casatools import ctsys, quanta, measures, image, vpmanager, calibrater
+from casatasks import casalog, delmod, imsubimage, tclean, uvsub, imhead, imsmooth, immath, widebandpbcor, impbcor, flagdata, makemask
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+from casatasks import impbcor, split, concat
+#from casaplotms import plotms
 
-     from casatestutils.imagerhelpers import TestHelpers
-
-     _ia = image( )
-     _vp = vpmanager( )
-     _cb = calibrater( )
-     _qa = quanta( )
-     _me = measures( )
-     
-     refdatapath = ctsys.resolve('unittest/tclean/')
-     #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
-     #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
-else:
-     from __main__ import default
-     from tasks import *
-     from taskinit import *
-     from parallel.parallel_task_helper import ParallelTaskHelper
-     from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-     #from imagerhelpers.testhelper_imager import TestHelpers
-
-     _ia = iatool( )
-     _vp = vptool( )
-     _cb = cbtool( )
-     # not local tools
-     _qa = qa
-     _me = me
-
-     refdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/tclean/'
-     #refdatapath = "/export/home/riya/rurvashi/Work/ImagerRefactor/Runs/UnitData"
-     #refdatapath = "/home/vega/rurvashi/TestCASA/ImagerRefactor/Runs/WFtests"
- 
 from casatestutils.imagerhelpers import TestHelpers
 
-## List to be run
-def suite():
-     return [test_onefield, test_iterbot, test_multifield,test_stokes, test_modelvis, test_cube, test_mask, test_startmodel, test_widefield, test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures]
- 
+_ia = image( )
+_vp = vpmanager( )
+_cb = calibrater( )
+_qa = quanta( )
+_me = measures( )
+
+refdatapath = ctsys.resolve('unittest/tclean/')
+
 ## Base Test class with Utility functions
 class testref_base(unittest.TestCase):
 
@@ -162,7 +147,7 @@ class testref_base(unittest.TestCase):
 
      def tearDown(self):
           """ don't delete it all """
-#          self.delData()
+          #self.delData()
 
      # Separate functions here, for special-case tests that need their own MS.
      def prepData(self,msname=""):
@@ -205,12 +190,16 @@ class testref_base(unittest.TestCase):
 
 ##Task level tests : one field, 2chan.
 class test_onefield(testref_base):
-     
+
      def test_onefield_defaults(self):
           """ [onefield] Test_Onefield_defaults : Defaults """
           self.prepData('refim_twochan.ms')
-          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',interactive=0,parallel=self.parallel)
-          report=self.th.checkall(imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'], imgval=[(self.img+'.psf', 1.0, [50,50,0,0])])
+          # use a more tricky imagename to exercise some special characters (see CAS-13464)
+          tricky_imagename = self.img + '_J2253+1608_ra_7h54m8_dec_-16:24:25.1'
+          ret = tclean(vis=self.msfile, imagename=tricky_imagename, imsize=100, cell='8.0arcsec',
+                       interactive=0, parallel=self.parallel)
+          exist_list = [tricky_imagename + ext for ext in ['.psf', '.residual', '.image', '.model', '.pb', '.sumwt']]
+          report = self.th.checkall(imgexist=exist_list, imgval=[(tricky_imagename+'.psf', 1.0, [50,50,0,0])])
           self.assertTrue(self.check_final(pstr=report))
 
      def test_onefield_clark(self):
@@ -225,8 +214,10 @@ class test_onefield(testref_base):
      def test_onefield_hogbom(self):
           """ [onefield] Test_Onefield_hogbom : mfs with hogbom minor cycle """
           self.prepData('refim_twochan.ms')
-          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,parallel=self.parallel)#,phasecenter='J2000 19h59m57.5s +40d49m00.077s')
-          report=self.th.checkall(ret=ret, peakres=0.35, modflux=0.77, iterdone=10, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image',self.img+'.model'], imgval=[(self.img+'.psf',1.0,[50,50,0,0])]  , tfmask=[(self.img+'.image',['mask0']), (self.img+'.pb',['mask0'])] )
+          tricky_imagename = self.img + '_uid___A001_X1234a_X56cb.s19_0.J2253+1608_bp.more-dash.virtspw19.mfs.I.iter0.hoghbom'
+          ret = tclean(vis=self.msfile,imagename=tricky_imagename,imsize=100,cell='8.0arcsec',niter=10,deconvolver='hogbom',interactive=0,parallel=self.parallel)#,phasecenter='J2000 19h59m57.5s +40d49m00.077s')
+          exist_list = [tricky_imagename + ext for ext in ['.psf', '.residual', '.image', '.model', '.pb', '.sumwt']]
+          report = self.th.checkall(ret=ret, peakres=0.35, modflux=0.77, iterdone=10, imgexist=exist_list, imgval=[(tricky_imagename+'.psf',1.0,[50,50,0,0])], tfmask=[(tricky_imagename+'.image',['mask0']), (tricky_imagename+'.pb',['mask0'])] )
           self.assertTrue(self.check_final(pstr=report))
 
      def test_onefield_mem(self):
@@ -906,6 +897,103 @@ class test_iterbot(testref_base):
           self.assertTrue(self.check_final(report))
 
 
+     def test_iterbot_mfs_restart_updatedmask(self): 
+          """ [iterbot] Test_mfs_restart_updatedmask : restart mfs with an updated mask (CAS-13508 fix verification) """
+          self.prepData('refim_twopoints_twochan.ms')
+          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='mfs',deconvolver='hogbom',niter=2,parallel=self.parallel)
+          os.system('rm -rf '+self.img+'.mask')
+
+          # Create a new mask around the 1Jy source only. 
+          mask_around_dim_source='circle[[256pix,256pix],30pix]'
+          makemask(inpimage=self.img+'.residual', inpmask=mask_around_dim_source, output=self.img+'.mask.dim.source',overwrite=True,mode='copy')
+          mask_around_dim_source=self.img+'.mask.dim.source'
+
+          # 2nd clean with the updated mask
+          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='mfs',niter=1,calcres=False, calcpsf=False, restart=True, mask=mask_around_dim_source, interactive=0,parallel=self.parallel)
+
+          ret={}
+          if self.parallel:
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'stopcode'])
+          else:
+            ret=retpar 
+          
+          # check initial cyclethreshold
+          # true value: 0.14600408
+          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.200,[256,256,0,0])], firstcyclethresh=0.14600408)
+          #report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.200,[256,256,0,0])], firstcyclethresh=0.55600408)
+          self.assertTrue(self.check_final(report))
+
+     def test_iterbot_cube_restart_updatedmask(self): 
+          """ [iterbot] Test_cube_restart_updatedmask : restart cube with an updated mask (CAS-13508 fix verification) """
+          self.prepData('refim_twopoints_twochan.ms')
+          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=4,interpolation='nearest', parallel=self.parallel)
+          os.system('rm -rf '+self.img+'.mask')
+
+          # Create a new mask around the 1Jy source only. 
+          mask_around_dim_source='circle[[256pix,256pix],30pix]'
+          makemask(inpimage=self.img+'.residual', inpmask=mask_around_dim_source, output=self.img+'.mask.dim.source',overwrite=True,mode='copy')
+          mask_around_dim_source=self.img+'.mask.dim.source'
+
+          # 2nd clean with the updated mask
+          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',niter=10,calcres=False, calcpsf=False, restart=True, mask=mask_around_dim_source, interactive=0,interpolation='nearest', parallel=self.parallel)
+
+          ret={}
+          if self.parallel:
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'stopcode'])
+          else:
+            ret=retpar 
+          
+          # check initial cyclethreshold
+          # true value: 
+          # 0.1988602
+          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.94,[256,256,0,0]),(self.img+'.model', 0.53, [256,256,0,1])], firstcyclethresh=0.1988602)
+
+          self.assertTrue(self.check_final(report))
+
+
+     def test_iterbot_mfs_restart_pbmask(self): 
+          """ [iterbot] Test_mfs_restart_updatedmask : restart mfs with pbmask (CAS-13508 fix verification) """
+          self.prepData('refim_twopoints_twochan.ms')
+          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='mfs',deconvolver='hogbom',niter=2,parallel=self.parallel)
+          os.system('rm -rf '+self.img+'.mask')
+
+          # 2nd clean with pbmask 
+          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='mfs',niter=1,calcres=False, calcpsf=False, restart=True, usemask='pb', pbmask=0.8, interactive=0,parallel=self.parallel)
+
+          ret={}
+          if self.parallel:
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'stopcode'])
+          else:
+            ret=retpar 
+          
+          # check initial cyclethreshold
+          # true value: 0.14600408
+          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.20,[256,256,0,0])], firstcyclethresh=0.1460498)
+
+          self.assertTrue(self.check_final(report))
+
+     def test_iterbot_cube_restart_pbmask(self): 
+          """ [iterbot] Test_cube_restart_updatedmask : restart cube with pbmask (CAS-13508 fix verification) """
+          self.prepData('refim_twopoints_twochan.ms')
+          tclean(vis=self.msfile,imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=0,interpolation='nearest', parallel=self.parallel)
+          os.system('rm -rf '+self.img+'.mask')
+
+          # 2nd clean with pbmask 
+          retpar=tclean(vis=self.msfile, imagename=self.img,imsize=512,cell='8.0arcsec',specmode='cube',niter=10,calcres=False, calcpsf=False, restart=True, usemask='pb', pbmask=0.8, interactive=0, interpolation='nearest', parallel=self.parallel)
+
+          ret={}
+          if self.parallel:
+            ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'stopcode'])
+          else:
+            ret=retpar 
+          
+          # check initial cyclethreshold
+          # true value:0.186613 
+          #report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.37,[256,256,0,0]),(self.img+'.model', 0.15, [256,256,0,1])],firstcyclethresh=0.68944335)
+          report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.74,[256,256,0,0]),(self.img+'.model', 0.54, [256,256,0,1])],firstcyclethresh=0.18661306)
+
+          self.assertTrue(self.check_final(report))
+##############################################
 ##############################################
 ##############################################
 
@@ -916,7 +1004,7 @@ class test_multifield(testref_base):
      def test_multifield_both_mfs(self):
           """ [multifield] Test_Multifield_both_mfs : Two fields, both mfs """
           self.prepData("refim_twopoints_twochan.ms")
-          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled():
+          if not ParallelTaskHelper.isMPIEnabled():
                logstart = self.th.get_log_length()
           self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nnchan=1\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:40.895 +40.55.58.543\nusemask=user\nmask=circle[[40pix,40pix],10pix]')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",outlierfile=self.img+'.out.txt',niter=10,deconvolver='hogbom',interactive=0,parallel=self.parallel)
@@ -928,7 +1016,7 @@ class test_multifield(testref_base):
                                (self.img+'1.image',5.590,[40,40,0,0]),
                                (self.img+'.residual',0.04,[30,18,0,0])])
 
-          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
+          if not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
                report += self.th.check_logs(logstart, expected=[r"::deconvolve[\t ]+\[tst\] iters=", r"::deconvolve[\t ]+\[tst1\] iters="])
 
           self.assertTrue(self.check_final(report))
@@ -952,7 +1040,7 @@ class test_multifield(testref_base):
      def test_multifield_both_cube(self):
           """ [multifield] Test_Multifield_both_cube : Two fields, both cube"""
           self.prepData("refim_twopoints_twochan.ms")
-          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled():
+          if not ParallelTaskHelper.isMPIEnabled():
                logstart = self.th.get_log_length()
           #self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:40.895 +40.55.58.543\n')
           self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:40.895 +40.55.58.543\nimagename='+self.img+'2\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:48.895 +40.55.58.543\n')
@@ -981,7 +1069,7 @@ class test_multifield(testref_base):
 
           prefix = r"::deconvolve::MPIServer-[0-9]+" if self.parallel else "::deconvolve"
           # the channel output is a questionmark, because the iterators could give each MPI process a single channel (which is also why we can't count on there being a ":C1")
-          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
+          if not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
                report += self.th.check_logs(logstart, expected=[r"Processing channels in range \[[0-9]+, [0-9]+\]",
                                                                 prefix+r"[\t ]+\[tst(:C0)?\] iters=",# prefix+r"[\t ]+\[tst(:C1)?\] iters=",
                                                                 prefix+r"[\t ]+\[tst1(:C0)?\] iters=",# prefix+r"[\t ]+\[tst1(:C1)?\] iters=",
@@ -1297,6 +1385,270 @@ class test_stokes(testref_base):
 #          self.prepData('refim_point_linXY.ms')
 #          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',interactive=0,specmode='cube')
 #          report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',1.0,[50,50,0,1]),(self.img+'.image',2.0,[50,50,1,1]), (self.img+'.image',3.0,[50,50,2,1]),(self.img+'.image',4.0,[50,50,4,1]) ])
+
+     def test_stokes_mixed_mfs_I_and_U(self):  # CAS-13618
+          """ [stokes] Test_Stokes_I_and_U_mixed_mfs mfs with Circular Pol dataset"""
+          self.prepData('refim_point_linRL.ms')
+          viss = self.msfile
+          avis = self.img+'.'+viss
+          ## Split across time
+          split(vis=viss, correlation='RR,LL', timerange='18:57:30~22:00:00',outputvis=avis+'_tmp_2pol_time.ms')
+          split(vis=viss, timerange='>22:00:00',outputvis=avis+'_tmp_4pol_time.ms')
+          concat(vis=[avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'], concatvis=avis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=viss, correlation='RR,LL', spw='0:0',outputvis=avis+'_tmp_2pol_chan.ms')
+          split(vis=viss, spw='0:1~2',outputvis=avis+'_tmp_4pol_chan.ms')
+          concat(vis=[avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'], concatvis=avis+'_tmp_mixed_chan.ms')
+
+          vislist = [
+               viss,
+               avis+'_tmp_2pol_time.ms',
+               avis+'_tmp_4pol_time.ms',
+               [avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'],
+               avis+'_tmp_mixed_time.ms',
+               avis+'_tmp_2pol_chan.ms',
+               avis+'_tmp_4pol_chan.ms',
+               [avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'],
+               avis+'_tmp_mixed_chan.ms'
+          ]
+
+          ## Test mfs imaging of Stokes I on its own
+          i=0
+          report=''
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='I',parallel=self.parallel)
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0])])
+               i = i+1
+
+          ## Test mfs imaging of Stokes U on its own
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='U',parallel=self.parallel)
+               if i in [10,14]:
+                    u_true=0.0
+               else:
+                    u_true=3.0
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',u_true,[50,50,0,0])])
+               i = i+1
+    
+          self.assertTrue(self.check_final(report))
+
+     #@unittest.skipIf(is_CASA6, "Skip because cube tests fail and must be fixed.")
+     def test_stokes_mixed_cube_I_and_U(self):  # CAS-13618
+          """ [stokes] Test_Stokes_I_and_U_mixed_mfs mfs with Circular Pol dataset"""
+          self.prepData('refim_point_linRL.ms')
+          viss = self.msfile
+          avis = self.img+'.'+viss
+          ## Split across time
+          split(vis=viss, correlation='RR,LL', timerange='18:57:30~22:00:00',outputvis=avis+'_tmp_2pol_time.ms')
+          split(vis=viss, timerange='>22:00:00',outputvis=avis+'_tmp_4pol_time.ms')
+          concat(vis=[avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'], concatvis=avis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=viss, correlation='RR,LL', spw='0:0',outputvis=avis+'_tmp_2pol_chan.ms')
+          split(vis=viss, spw='0:1~2',outputvis=avis+'_tmp_4pol_chan.ms')
+          concat(vis=[avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'], concatvis=avis+'_tmp_mixed_chan.ms')
+
+          vislist = [         ### The pixel value at the source location is checked for channel 1 (out of channels 0,1,2). 
+               viss,                                                                                                  #0#   I=1.0                                                    #9# U=3.0
+               avis+'_tmp_2pol_time.ms',                                                             #1#   I=1.0                                                    #10# U=0
+               avis+'_tmp_4pol_time.ms',                                                             #2#   I=1.0                                                    #11# U=3.0
+               [avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'],              #3#   I=1.0                                                    #12# U=3.0
+               avis+'_tmp_mixed_time.ms',                                                          #4#   I=1.0                                                    #13# U=3.0
+               avis+'_tmp_2pol_chan.ms',                 ## SKIP                               #5#  Chan0 : 1.0,  Chans1,2: None  :FAIL      #14# U=0 (single chan0 image)  /// #5,#14 FAIL on None==None check!
+               avis+'_tmp_4pol_chan.ms',                                                             #6#  Chans1,2 image with 1.0                      #15# Chan1,2 image with 3.0
+               [avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'],  ## SKIP     #7#   I=1.0  : FAIL : Only Chan0 exists        #16# Chan0:U=0.0, Chan1.2:U=3.0  : FAIL : Only chan0 exists with 0.0
+               avis+'_tmp_mixed_chan.ms'                                                           #8#   I=1.0                                                    #17# Chan0:U=0.0, Chan1.2:U=3.0
+          ]
+
+          ## Test mfs imaging of Stokes I on its own
+          i=0
+          report=''
+  
+          ## Test cube imaging of Stokes I on its own
+          for vis in vislist:
+               i_true = 1.0
+               if i in [5,7]:  
+                    #SKIP #5 : We are checking channel 1 but only chan 0 exists here (correct behaviour)
+                    #SKIP #7 : Fails : List of MS is not yet supported, across freq channels. It picks image shapes only from the first MS. 
+                    i=i+1
+                    continue
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, specmode='cube',interpolation='nearest', stokes='I',parallel=self.parallel)
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',i_true,[50,50,0,1])])  ## Check second channel
+               i = i+1
+
+          ## Test cube imaging of Stokes U on its own
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, specmode='cube',interpolation='nearest', stokes='U',parallel=self.parallel)
+               u_true = 3.0
+               if i ==10:
+                    u_true=0.0  # since there is no RL,LR
+               if i in [14,16] :
+                    #SKIP #14 : We are checking channel 1 but only chan 0 exists here (correct behaviour)
+                    #SKIP #16 : Fails : List of MS is not yet supported, across freq channels. It picks image shapes only from the first MS. 
+                    i=i+1
+                    continue
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],imgval=[(self.img+'_'+str(i)+'.image',u_true,[50,50,0,1])]) ## Check second channel
+               i = i+1
+
+     
+          self.assertTrue(self.check_final(report))
+
+     def test_stokes_mixed_mfs_IQUV(self):  # CAS-13618
+          """ [stokes] Test_Stokes_IQUV_mixed_mfs with Linear Pol dataset and Stokes U"""
+          self.prepData('refim_point_linXY.ms')
+          viss = self.msfile
+          avis = self.img+'.'+viss
+          ## Split across time
+          split(vis=viss, correlation='XX,YY', timerange='18:57:30~22:00:00',outputvis=avis+'_tmp_2pol_time.ms')
+          split(vis=viss, timerange='>22:00:00',outputvis=avis+'_tmp_4pol_time.ms')
+          concat(vis=[avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'], concatvis=avis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=viss, correlation='XX,YY', spw='0:0',outputvis=avis+'_tmp_2pol_chan.ms')
+          split(vis=viss, spw='0:1~2',outputvis=avis+'_tmp_4pol_chan.ms')
+          concat(vis=[avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'], concatvis=avis+'_tmp_mixed_chan.ms')
+
+          vislist = [
+               viss,
+               avis+'_tmp_2pol_time.ms',
+               avis+'_tmp_4pol_time.ms',
+               [avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'],
+               avis+'_tmp_mixed_time.ms',
+               avis+'_tmp_2pol_chan.ms',
+               avis+'_tmp_4pol_chan.ms',
+               [avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'],
+               avis+'_tmp_mixed_chan.ms'
+          ]
+
+          i=0
+          report=''
+          ## Test MFS
+          for vis in vislist:
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV',parallel=self.parallel)
+               if i in [1,5]:
+                    i_true=1.0
+                    q_true=2.0
+                    u_true=0.0    # for a dataset with X,Y feeds, parallel hands give only I,Q
+                    v_true=0.0    # for a dataset with X,Y feeds, parallel hands give only I,Q
+               else:
+                    i_true=1.0
+                    q_true=2.0
+                    u_true=3.0
+                    v_true=4.0
+               report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],
+                                              imgval=[(self.img+'_'+str(i)+'.image',i_true,[50,50,0,0]) ,
+                                                      (self.img+'_'+str(i)+'.image',q_true,[50,50,1,0]),
+                                                      (self.img+'_'+str(i)+'.image',u_true,[50,50,2,0]),
+                                                      (self.img+'_'+str(i)+'.image',v_true,[50,50,3,0])   ])
+               i = i+1
+     
+          self.assertTrue(self.check_final(report))
+
+     #@unittest.skipIf(is_CASA6, "Skip because cube tests fail and must be fixed.")
+     def test_stokes_mixed_cube_IQUV(self):  # CAS-13618
+          """ [stokes] Test_Stokes_IQUV_mixed_mfs with Linear Pol dataset and Stokes U"""
+          self.prepData('refim_point_linXY.ms')
+          viss = self.msfile
+          avis = self.img+'.'+viss
+          ## Split across time
+          split(vis=viss, correlation='XX,YY', timerange='18:57:30~22:00:00',outputvis=avis+'_tmp_2pol_time.ms')
+          split(vis=viss, timerange='>22:00:00',outputvis=avis+'_tmp_4pol_time.ms')
+          concat(vis=[avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'], concatvis=avis+'_tmp_mixed_time.ms') 
+          ## Split across channel - into different SPWs
+          split(vis=viss, correlation='XX,YY', spw='0:0',outputvis=avis+'_tmp_2pol_chan.ms')
+          split(vis=viss, spw='0:1~2',outputvis=avis+'_tmp_4pol_chan.ms')
+          concat(vis=[avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'], concatvis=avis+'_tmp_mixed_chan.ms')
+
+          vislist = [
+               viss,                                                                                       #0# IQUV
+               avis+'_tmp_2pol_time.ms',                                                  #1# IQ (U,V=0)
+               avis+'_tmp_4pol_time.ms',                                                  #2# IQUV
+               [avis+'_tmp_2pol_time.ms',avis+'_tmp_4pol_time.ms'],   #3# IQUV   
+               avis+'_tmp_mixed_time.ms',                                               #4# IQUV   
+               avis+'_tmp_2pol_chan.ms',                                                  #5# Chan0 : IQ.  Chans1,2 : None
+               avis+'_tmp_4pol_chan.ms',                                                  #6# Chan0 : None.  Chans1,2 : IQUV
+               [avis+'_tmp_2pol_chan.ms',avis+'_tmp_4pol_chan.ms'],   #7# Chan0 : IQ, Chans1,2 : IQUV   : FAIL : Data sel is making the cube only with chan0(IQ) => Skipped
+               avis+'_tmp_mixed_chan.ms'                                                #8# Chan0 : IQ, Chans1,2 : IQUV  : Correct.
+          ]
+
+
+          i=0
+          report=''
+          ## Test CUBE
+          for vis in vislist:
+               if i in [7]: 
+                    ## SKIP : #7 : Not supported yet. 
+                    i=i+1
+                    continue
+               ## Run tclean 
+               tclean(vis=vis,imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV', usemask='user', mask='box[[49.5pix, 49.5pix],[50.5pix,50.5pix]]',specmode='cube',interpolation='nearest',parallel=self.parallel)
+               ## Check outputs
+               if i in [1,5]:
+                    i_true=1.0
+                    q_true=2.0
+                    u_true=0.0    # for a dataset with X,Y feeds, parallel hands give only I,Q
+                    v_true=0.0    # for a dataset with X,Y feeds, parallel hands give only I,Q
+               else:
+                    i_true=1.0
+                    q_true=2.0
+                    u_true=3.0
+                    v_true=4.0
+                    report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],             
+                                              imgval=[(self.img+'_'+str(i)+'.image',i_true,[50,50,0,1]) ,     # Check channel 1
+                                                      (self.img+'_'+str(i)+'.image',q_true,[50,50,1,1]),
+                                                      (self.img+'_'+str(i)+'.image',u_true,[50,50,2,1]),
+                                                      (self.img+'_'+str(i)+'.image',v_true,[50,50,3,1])   ])
+               #print('i=', i, 'report ', report)
+               i = i+1
+
+          #5# Chan0 : IQ.  Chans1,2 : None. It makes a single channel image.               
+          i=5
+          tclean(vis=vislist[i],imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV', specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],             
+                                         imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0]) ,     # Check channel 0 since only that is made
+                                                 (self.img+'_'+str(i)+'.image',2.0,[50,50,1,0]),
+                                                 (self.img+'_'+str(i)+'.image',0.0,[50,50,2,0]),
+                                                 (self.img+'_'+str(i)+'.image',0.0,[50,50,3,0])   ])
+          
+          #6# Chan0 : None.  Chans1,2 : IQUV. Makes a 2-chan cube. 
+          i=6
+          tclean(vis=vislist[i],imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV', specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],             
+                                         imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0]) ,     # Check channel 0 (channel 1 in freq)
+                                                 (self.img+'_'+str(i)+'.image',2.0,[50,50,1,0]),
+                                                 (self.img+'_'+str(i)+'.image',3.0,[50,50,2,0]),
+                                                 (self.img+'_'+str(i)+'.image',4.0,[50,50,3,0])   ])
+          
+          #7# Chan0 : IQ, Chans1,2 : IQUV : Failing because it's creating a single channel cube from the first MS in the list.
+          # Failing to make a cube with the default params should be in another ticket
+          i=7
+          tclean(vis=vislist[i],imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV', specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],             
+                                         imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0]) ,     
+                                                 (self.img+'_'+str(i)+'.image',2.0,[50,50,1,0]),
+                                                 (self.img+'_'+str(i)+'.image',0.0,[50,50,2,0]),
+                                                 (self.img+'_'+str(i)+'.image',0.0,[50,50,3,0]) ])
+                                                 #####################,
+                                                 #(self.img+'_'+str(i)+'.image',1.0,[50,50,2,1]),
+                                                 #(self.img+'_'+str(i)+'.image',2.0,[50,50,2,1]),
+                                                 #(self.img+'_'+str(i)+'.image',3.0,[50,50,2,1]),
+                                                 #(self.img+'_'+str(i)+'.image',4.0,[50,50,3,1])   ])
+          
+          #8# Chan0 : IQ, Chans1,2 : IQUV  : Correct
+          i=8
+          tclean(vis=vislist[i],imagename=self.img+'_'+str(i),imsize=100,cell='8.0arcsec',niter=10, stokes='IQUV', specmode='cube',interpolation='nearest',parallel=self.parallel)
+          report=report+self.th.checkall(imgexist=[self.img+'_'+str(i)+'.image'],             
+                                         imgval=[(self.img+'_'+str(i)+'.image',1.0,[50,50,0,0]) ,     
+                                                 (self.img+'_'+str(i)+'.image',2.0,[50,50,1,0]),
+                                                 (self.img+'_'+str(i)+'.image',0.0,[50,50,2,0]),
+                                                 (self.img+'_'+str(i)+'.image',0.0,[50,50,3,0]),
+                                                 #####################
+                                                 (self.img+'_'+str(i)+'.image',1.0,[50,50,0,1]),
+                                                 (self.img+'_'+str(i)+'.image',2.0,[50,50,1,1]),
+                                                 (self.img+'_'+str(i)+'.image',3.0,[50,50,2,1]),
+                                                 (self.img+'_'+str(i)+'.image',4.0,[50,50,3,1])   ])                 
+          
+     
+          self.assertTrue(self.check_final(report))
+
 
 ##############################################
 ##############################################
@@ -2045,13 +2397,13 @@ class test_cube(testref_base):
 #          ret = tclean(vis=self.msfile,field='1',spw='0:105~135',specmode='cubesrc',nchan=30,start=105,width=1,veltype='radio',imagename=self.img,imsize=256,cell='0.01arcmin',phasecenter=1,deconvolver='hogbom',niter=10)
 #          self.assertTrue(os.path.exists(self.img+'.psf') and os.path.exists(self.img+'.residual') )
 
-     @unittest.skipIf(is_CASA6, "Skip because plotms is not available in casatasks")
+     @unittest.skip("Skip until we can check why the model column is empty in all channels, after the tclean run. May need new ticket.")
      def test_cube_continuum_subtract_uvsub(self):
           """ [cube] Test_Cube_continuum_subtract :  Using uvsub """
           self.prepData('refim_point_withline.ms')
           delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='reset0')
-          plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='data',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.step0data.png',title="original data")
-          plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='model',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.step0model.png',title="empty model")
+          #plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='data',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.step0data.png',title="original data")
+          #plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='model',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.step0model.png',title="empty model")
 
           # Let's include a subdir in the output image name. This could cause failures, at
           # least in parallel mode (CAS-10937).
@@ -2061,7 +2413,7 @@ class test_cube(testref_base):
                        deconvolver='mtmfs',parallel=self.parallel)
 #          self.assertTrue(self.th.exists(self.img+'.model') )
 #          self.assertTrue( self.th.check_modelchan(self.msfile,10) == 0.0 and self.th.check_modelchan(self.msfile,3) > 0.0 )
-          plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='model',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.step1.png',title="model after partial mtmfs on some channels")
+          #plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='model',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.step1.png',title="model after partial mtmfs on some channels")
 
           delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='reset0')
 
@@ -2071,9 +2423,9 @@ class test_cube(testref_base):
                        spw='0',niter=0,savemodel='modelcolumn',deconvolver='mtmfs',parallel=self.parallel)
 
 #          self.assertTrue( self.th.check_modelchan(self.msfile,10) > 0.0 and self.th.check_modelchan(self.msfile,3) > 0.0 
-          plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='model',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.step2.png',title="model after mtmfs predict on full spw" )
+          #plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='model',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.step2.png',title="model after mtmfs predict on full spw" )
 
-          plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='data-model',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.step3data.png',title="data-model")
+          #plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='data-model',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.step3data.png',title="data-model")
           
 
 #     def test_cube_continuum_subtract_otf(self):
@@ -2237,7 +2589,7 @@ class test_cube(testref_base):
           """CAS-12957: 0-value channels aren't skipped with gridder=mosaic and initial channels are flagged"""
           # These tests are mainly here as regression test. The bug related to CAS-12957 was only known to affect multiscale clean, and here we test for similar bugs in hogbom.
           self.prepData('refim_twochan.ms')
-          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled():
+          if not ParallelTaskHelper.isMPIEnabled():
                logstart = self.th.get_log_length()
           flagdata(self.msfile, spw='*:0')
           ret = tclean(self.msfile, imagename=self.img, specmode='cube', imsize=20, cell='8.0arcsec', scales=[0,5,10], niter=10, cycleniter=10, threshold=0, nchan=2, spw='0', interactive=0, \
@@ -2247,7 +2599,7 @@ class test_cube(testref_base):
 
           prefix = r"::deconvolve::MPIServer-[0-9]+" if self.parallel else "::deconvolve"
           # the channel output is a questionmark, because the iterators could give each MPI process a single channel (which is also why we can't count on there being a ":C1")
-          if is_CASA6 or not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
+          if not ParallelTaskHelper.isMPIEnabled(): # the Casa 6 Casa5 Subtree Pull Request bamboo plan creates multiple log files -> this test doesn't work there
                report += self.th.check_logs(logstart, expected=[r"Processing channels in range \[[0-9]+, [0-9]+\]", prefix+r"[\t ]+\[tst(:C0)?\] iters="])#, prefix+r"[\t ]+\[tst(:C1)?\] iters="])
 
           self.assertTrue(self.check_final(pstr=report))
@@ -3117,15 +3469,15 @@ class test_modelvis(testref_base):
           hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==False )
 
-     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled() or is_CASA6, "Skip the test temporarily, plotms unavailable in casatasks")
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip the test in parallel, because model writes don't work then.")
      def test_modelvis_5(self):
           """ [modelpredict] Test_modelvis_5 : mt-mfs with save model column """
           self.prepData("refim_twochan.ms")
           delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,deconvolver='mtmfs',
                        savemodel='modelcolumn',parallel=self.parallel)
-          plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='data',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.data.png',title="original data")
-          plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='model',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.model.png',title="empty model")
+          #plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='data',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.data.png',title="original data")
+          #plotms(vis=self.msfile,xaxis='frequency',yaxis='amp',ydatacolumn='model',customsymbol=True,symbolshape='circle',symbolsize=5,showgui=False,plotfile=self.img+'.plot.model.png',title="empty model")
           hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
           self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
 
@@ -3259,7 +3611,7 @@ class test_modelvis(testref_base):
 
           
      def test_modelvis_12(self):
-          """ [modelpredict] Test_modelvis_12 : (CAS-12618) mfs with automask and save model column (saving model via a separate predict model step)"""
+          """ [modelpredict] Test_modelvis_12 : (CAS-12618) mfs with automask and save model column (single tclean call, internally a separate predit model step)"""
           self.prepData("refim_twochan.ms")
 
           ## Save model after deconvolution
@@ -3331,6 +3683,96 @@ class test_modelvis(testref_base):
           delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
                        nsigma=1.0, savemodel='virtual',parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_20(self):
+          """ [modelpredict] Test_modelvis_20 : (CAS-13615) mfs with automask and save model column (saving model via a separate niter=0 tclean call)"""
+          # should give the identical result as test_modelvis_12
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',usemask='auto-multithresh', parallel=self.parallel)
+          # leaving usemask='auto-multithresh' intentionally to make sure the bug is fixed
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='modelcolumn',usemask='auto-multithresh', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_21(self):
+          """ [modelpredict] Test_modelvis_21 : (CAS-13615) mfs with automask and save virtual model (saving model via a separate niter=0 tclean call)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',usemask='auto-multithresh', parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='virtual',usemask='auto-multithresh', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_22(self):
+          """ [modelpredict] Test_modelvis_22 : (cas-13615) mfs with nsigma and save model column (saving model via a separate niter=0 tclean call)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',nsigma=1.0, parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='modelcolumn',nsigma=1.0, restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_23(self):
+          """ [modelpredict] Test_modelvis_23 : (CAS-13615) mfs with nsigma and save model column (saving model via a separate niterpredict model step)"""
+          self.prepData("refim_twochan.ms")
+
+          ## Save model after deconvolution
+          delmod(self.msfile);self.th.delmodels(self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=10,savemodel='none',nsigma=1.0, parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',niter=0,savemodel='virtual',nsigma=1.0, restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_24(self):
+          """ [modelpredict] Test_modelvis_24 : (CAS-13615) cube with  and save  model column for auto-multithresh (in two steps)"""
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       usemask='auto-multithresh', savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       usemask='auto-multithresh', savemodel='modelcolumn', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_25(self):
+          """ [modelpredict] Test_modelvis_25: (CAS-13615) cube with and save virtual model for auto-multithreseh (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       usemask='auto-multithresh', savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       usemask='auto-multithresh', savemodel='virtual', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==False and hasvirmod==True )
+
+     def test_modelvis_26(self):
+          """ [modelpredict] Test_modelvis_26 : (CAS-13615) cube with and save model column for nsgima >0.0 (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       nsigma=1.0, savemodel='none',parallel=self.parallel)
+          ret2 = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       nsigma=1.0, savemodel='modelcolumn',restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
+          hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
+          self.assertTrue( hasmodcol==True and modsum>0.0 and hasvirmod==False )
+
+     def test_modelvis_27(self):
+          """ [modelpredict] Test_modelvis_27: (CAS-13615) cube with and save virtual model for nsima >0.0 (in two steps) """
+          self.prepData("refim_point.ms")
+          delmod(self.msfile);self.th.delmodels(msname=self.msfile,modcol='delete')
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=10,
+                       nsigma=1.0, savemodel='none',parallel=self.parallel)
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',specmode='cube',niter=0,
+                       nsigma=1.0, savemodel='virtual', restoration=False, calcres=False, calcpsf=False, parallel=self.parallel)
           hasmodcol, modsum, hasvirmod = self.th.check_model(self.msfile)
           self.assertTrue( hasmodcol==False and hasvirmod==True )
 
@@ -3657,6 +4099,7 @@ class test_pbcor(testref_base):
 
           _vp.setpbpoly(telescope='EVLA', coeff=[1.0, -1.529e-3, 8.69e-7, -1.88e-10]) 
           _vp.saveastable('evlavp.tab')
+          _vp.reset()
 
      def test_pbcor_mfs(self):
           """ [pbcor] Test pbcor with mfs"""
@@ -3742,15 +4185,26 @@ class test_hetarray_imaging(testref_base):
      Type 1 :  Antennas of different shapes and/or sizes :  gridder='mosaic'.  
      Type 2 :  Antennas have different pointing offsets (groups of antennas and time-dependence ) :  gridder='awproject'. [ Later, via CAS-11191, for 'mosaic' too ]
 
+     #############################
      Current Test list : 
+     #############################
+     
+     ####### Added for CASA 6.1, for gridder='awproject'
      test_het_pointing_offsets_awproject_cube :  With CAS-12617  :  Test antenna-dependent and time-dependent pointing offset corrections
      test_het_pointing_offsets_awproject_mtmfs :  With CAS-12617 :  Test antenna-dependent and time-dependent pointing offset correct
 
-     Tests to add later : 
+     #######  Added for CASA 6.4, for gridder='mosaic' : Four different ways of specifying primary beam models.
+     # (1) Canned beam models. Use known observatory name. 
+     -- test_het_antenna_mosaic_cube_alma :   With CAS-13010 : Test ALMA 7m+12m dataset with and without cross-baselines.  
+     # (2) Calculate Airy Disks from the ANT_DIA column of the MS ANTENNA subtable. Use unknown observatory name. 
+     -- test_het_antenna_mosaic_cube_ngvla :  With CAS-13010 (also CAS-11464) : Test model prediction for a generic het array with dish diameter modified in the ANTENNA subtable. 
+     # (3,4) Specify primary beams for different antenna subsets, using a VPTable.  Test for float and complex vptables (different paths through mosaic gridder). 
+     -- test_het_antenna_mosaic_cube_vptable_float 
+     -- test_het_antenna_mosaic_cube_vptable_complex
+
+     ######### Tests to add later : 
      test_het_pointing_offsets_mosaic_cube :   With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
      test_het_pointing_offsets_mosaic_mtmfs :    With CAS-11191  :  Test antenna-dependent and time-dependent pointing offset correct
-     test_het_antenna_mosaic :   Test ALMA 7m+12m dataset with and without cross-baselines.  
-     test_het_antenna_mosaic_simulate :  With CAS-11464 : Test model prediction for a generic het array with dish diameter modified in the ANTENNA subtable. 
      '''     
 #     @unittest.skipIf(True, "The awproject gridder does not currently work with specmode='cube'.")
      @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test till awproject works with CAS-9386")
@@ -3935,6 +4389,335 @@ class test_hetarray_imaging(testref_base):
           self.assertTrue(self.check_final(report1+report2))
 
      ###########################
+
+
+     def test_het_antenna_mosaic_cube_alma(self):
+          '''
+          This dataset has two groups of antennas (12m and 7m) with cross baselines. 
+          This test exercises the mosaic gridder for joint imaging of 12m, 7m and cross baseline data.
+          It images 12m, 7m, cross baselines separately and together and matches expected flux with the measured fluxes. 
+          It tests the use of canned ALMA primary beam models in heterogeneous array imaging mode.
+          The simulated dataset consists of one 1Jy source. Therefore, the PB at the location of the source should match the intensity value. 
+          '''
+          self.prepData('refim_sim_hetarray_alma.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/refim_sim_hetarray_alma.ms'
+
+          imsize=1024
+          cell='0.4arcsec'
+          spw='0:0~2'
+          niter=100
+
+          # Truth values are derived in the notebook associated with CAS-13010. 
+          int_12m = 0.785
+          int_7m = 0.93
+          int_cross = np.sqrt( int_12m * int_7m )
+          int_all = 0.80 
+          int_mos = 0.977
+          
+          ### ALMA : 12m only, one field
+          tclean(vis=msname,   antenna='A*&', field='0', spw=spw,  imagename=self.img+'.12m.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s -40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report1=self.th.checkall(imgval=[
+                                          (self.img+'.12m.single.image' ,int_12m,[512,512,0,0]), 
+                                          (self.img+'.12m.single.pb' ,int_12m,[512,512,0,0]) ] )
+
+          
+          ### ALMA : 7m only, one field
+          tclean(vis=msname,   antenna='J*,N*&', field='0', spw=spw,   imagename=self.img+'.7m.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s -40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report2=self.th.checkall(imgval=[
+                                          (self.img+'.7m.single.image' ,int_7m,[512,512,0,0]), 
+                                          (self.img+'.7m.single.pb' ,int_7m,[512,512,0,0]) ] )
+
+          
+          ### ALMA : Cross baselines only, one field
+          tclean(vis=msname,   antenna='A* && J*,N*', field='0', spw=spw,   imagename=self.img+'.cross.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s -40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report3=self.th.checkall(imgval=[
+                                          (self.img+'.cross.single.image' ,int_cross,[512,512,0,0]), 
+                                          (self.img+'.cross.single.pb' ,int_cross,[512,512,0,0]) ] )
+
+          
+          ### ALMA : All baselines, one field
+          tclean(vis=msname,   antenna='*', field='0', spw=spw,   imagename=self.img+'.all.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s -40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report4=self.th.checkall(imgval=[
+                                          (self.img+'.all.single.image' ,int_all,[512,512,0,0]), 
+                                          (self.img+'.all.single.pb' ,int_all,[512,512,0,0]) ] )
+
+        
+          ### ALMA : All baselines, two pointing mosaic
+          tclean(vis=msname,   antenna='*', field='0,1', spw=spw,   imagename=self.img+'.all.mosaic',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s -40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report5=self.th.checkall(imgval=[
+                                          (self.img+'.all.mosaic.image' ,int_mos,[512,512,0,0]), 
+                                          (self.img+'.all.mosaic.pb' ,int_mos,[512,512,0,0]) ] )
+
+        
+          self.assertTrue(self.check_final(pstr=report1+report2+report3+report4+report5))
+
+###########################
+
+
+     def test_het_antenna_mosaic_cube_ngvla(self):
+          '''
+          This dataset has two groups of antennas (18m and 6m) with cross baselines. 
+          This test exercises the mosaic gridder for joint imaging of 18m, 6m and cross baseline data.
+          This test uses default Airy Disk primary beam models generated purely from the ANTENNA table's diameter column. 
+          This test has a non-standard (unknown) observatory name and represents the use case of an arbitrary telescope
+                  for which primary beam models are unknown and whose size is guided only by the ANTENNA subtable. 
+          The simulated dataset consists of one 1Jy source. Therefore, the PB at the location of the source should match the intensity value. 
+          '''
+          self.prepData('refim_sim_hetarray_ngvla.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/refim_sim_hetarray_ngvla.ms'
+
+          imsize=1024
+          cell='1.0arcsec'
+          spw='0:0~2'
+          niter=100
+
+          # Truth values are derived in the notebook associated with CAS-13010. 
+          int_single = 0.602
+          int_mos = 0.747
+        
+          ### NGVLA : All baselines, one field
+          tclean(vis=msname,   antenna='*', field='0', spw=spw,   imagename=self.img+'ng.all.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report1=self.th.checkall(imgval=[
+                                          (self.img+'ng.all.single.image' ,int_single,[512,512,0,0]), 
+                                          (self.img+'ng.all.single.pb' ,int_single,[512,512,0,0]) ] )
+
+        
+          ### NGVLA : All baselines, two pointing mosaic
+          tclean(vis=msname,   antenna='*', field='0,1', spw=spw,   imagename=self.img+'ng.all.mosaic',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report2=self.th.checkall(imgval=[
+                                          (self.img+'ng.all.mosaic.image' ,int_mos,[512,512,0,0]), 
+                                          (self.img+'ng.all.mosaic.pb' ,int_mos,[512,512,0,0]) ] )
+
+        
+          self.assertTrue(self.check_final(pstr=report1+report2))
+
+
+     @unittest.skipIf(True, "Skip test due to unexplained bamboo errors. Manual tests run correctly. See CAS-13530 for history.")
+     def test_het_antenna_mosaic_cube_vptable_float(self):
+          '''
+          This dataset has two groups of antennas (18m and 6m) with cross baselines. 
+          This test exercises the mosaic gridder for joint imaging of 18m, 6m and cross baseline data.
+          This test uses user-specified primary beam images via a VPTable - with float-valued planes.
+          The simulated dataset consists of one 1Jy source. Therefore, the PB at the location of the source should match the intensity value. 
+          '''
+          self.prepData('refim_sim_hetarray_vp_ngvla.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/refim_sim_hetarray_vp_ngvla.ms'
+
+         ## PB models
+          #pbA = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/sim_vp_KSA_float_A.im'
+          #pbB = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/sim_vp_KSA_float_B.im'
+          #self.prepData('sim_vp_KSA_float_A.im')
+          #self.prepData('sim_vp_KSA_float_B.im')
+
+          ## Copy into a name that starts with self.img so that it will get deleted later when delData() or prepData() are called before the next test...
+          shutil.copytree(os.path.join(refdatapath,'sim_vp_KSA_float_A.im'), self.img+'_'+'sim_vp_KSA_float_A.im')
+          shutil.copytree(os.path.join(refdatapath,'sim_vp_KSA_float_B.im'), self.img+'_'+'sim_vp_KSA_float_B.im')
+          pbA = self.img+'_'+'sim_vp_KSA_float_A.im'
+          pbB = self.img+'_'+'sim_vp_KSA_float_B.im'
+
+          imsize=1024
+          cell='1.0arcsec'
+          spw='0:0~2'
+          niter=100
+
+          # Truth values are derived in the notebook associated with CAS-13010. 
+          int_typeA = 0.862   ## from a 20m dish
+          int_typeB = 0.961   ## from a 10m dish
+          int_all = 0.87  ## 
+        
+
+          ### First, make the vptable from the PB models from the data repo. 
+          vptabname = self.img+'_vptab_float.vp'
+          antlist = ['m153','m155','m140','m142', 'm130', 'm122','m151', 's012','s006', 's013','s008', 's009']
+          local_vp = vpmanager()
+          local_vp.reset()
+          local_vp.setpbimage(telescope='NGVLA1', realimage=pbA, antnames=antlist[0:7])
+          local_vp.setpbimage(telescope='NGVLA1', realimage=pbB, antnames=antlist[7:12])
+          local_vp.saveastable(vptabname)
+          local_vp.reset()
+          del local_vp
+
+          ### NGVLA : Type A baselines, one field
+          tclean(vis=msname,   antenna='m*&', field='0', spw=spw,   imagename=self.img+'ng.typeAf.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 vptable=vptabname,
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report1=self.th.checkall(imgval=[
+                                          (self.img+'ng.typeAf.single.image' ,int_typeA,[512,512,0,0]), 
+                                          (self.img+'ng.typeAf.single.pb' ,int_typeA,[512,512,0,0]) ] )
+
+          ### NGVLA : Type B baselines, one field
+          tclean(vis=msname,   antenna='s*&', field='0', spw=spw,   imagename=self.img+'ng.typeBf.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 vptable=vptabname,
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report2=self.th.checkall(imgval=[
+                                          (self.img+'ng.typeBf.single.image' ,int_typeB,[512,512,0,0]), 
+                                          (self.img+'ng.typeBf.single.pb' ,int_typeB,[512,512,0,0]) ] )
+
+        
+          ### NGVLA : All baselines, one field 
+          tclean(vis=msname,   antenna='*', field='0', spw=spw,   imagename=self.img+'ng.allf.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 vptable=vptabname,
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report3=self.th.checkall(imgval=[
+                                          (self.img+'ng.allf.single.image' ,int_all,[512,512,0,0]), 
+                                          (self.img+'ng.allf.single.pb' ,int_all,[512,512,0,0]) ] )
+
+        
+          self.assertTrue(self.check_final(pstr=report1+report2+report3))
+
+
+
+     @unittest.skipIf(True, "Skip test due to unexplained bamboo errors. Manual tests run correctly. See CAS-13530 for history.")
+     def test_het_antenna_mosaic_cube_vptable_complex(self):
+          '''
+          This dataset has two groups of antennas (18m and 6m) with cross baselines. 
+          This test exercises the mosaic gridder for joint imaging of 18m, 6m and cross baseline data.
+          This test uses user-specified primary beam images via a VPTable - with complex-valued planes.
+          The simulated dataset consists of one 1Jy source. Therefore, the PB at the location of the source should match the intensity value. 
+          '''
+          self.prepData('refim_sim_hetarray_vp_ngvla.ms')
+          msname = self.msfile
+          #msname = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/refim_sim_hetarray_vp_ngvla.ms'
+
+          ## PB models
+          #pbA = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/sim_vp_KSA_complex_A.im'
+          #pbB = '/home/vega/rurvashi/TestCASA/VerificationTests/HetArraySims/ForTest/sim_vp_KSA_complex_B.im'
+          #self.prepData('sim_vp_KSA_complex_A.im')
+          #self.prepData('sim_vp_KSA_complex_B.im')
+
+          ## Copy into a name that starts with self.img so that it will get deleted later when delData() or prepData() are called before the next test...
+          shutil.copytree(os.path.join(refdatapath,'sim_vp_KSA_complex_A.im'), self.img+'_'+'sim_vp_KSA_complex_A.im')
+          shutil.copytree(os.path.join(refdatapath,'sim_vp_KSA_complex_B.im'), self.img+'_'+'sim_vp_KSA_complex_B.im')
+          pbA = self.img+'_'+'sim_vp_KSA_complex_A.im'
+          pbB = self.img+'_'+'sim_vp_KSA_complex_B.im'
+
+          imsize=1024
+          cell='1.0arcsec'
+          spw='0:0~2'
+          niter=100
+
+          # Truth values are derived in the notebook associated with CAS-13010. 
+          int_typeA = 0.862   ## from a 20m dish
+          int_typeB = 0.961   ## from a 10m dish
+          int_all = 0.87  ## 
+        
+
+          ### First, make the vptable from the PB models from the data repo. 
+          vptabname = self.img+'_vptab_complex.vp'
+          antlist = ['m153','m155','m140','m142', 'm130', 'm122','m151', 's012','s006', 's013','s008', 's009']
+
+          local_vp = vpmanager()
+          local_vp.reset()
+          local_vp.setpbimage(telescope='NGVLA1', compleximage=pbA, antnames=antlist[0:7])
+          local_vp.setpbimage(telescope='NGVLA1', compleximage=pbB, antnames=antlist[7:12])
+          local_vp.saveastable(vptabname)
+          local_vp.reset()
+          del local_vp
+
+          ### NGVLA : Type A baselines, one field
+          tclean(vis=msname,   antenna='m*&', field='0', spw=spw,   imagename=self.img+'ng.typeAc.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 vptable=vptabname,
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report1=self.th.checkall(imgval=[
+                                          (self.img+'ng.typeAc.single.image' ,int_typeA,[512,512,0,0]), 
+                                          (self.img+'ng.typeAc.single.pb' ,int_typeA,[512,512,0,0]) ] )
+
+          ### NGVLA : Type B baselines, one field
+          tclean(vis=msname,   antenna='s*&', field='0', spw=spw,   imagename=self.img+'ng.typeBc.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 vptable=vptabname,
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report2=self.th.checkall(imgval=[
+                                          (self.img+'ng.typeBc.single.image' ,int_typeB,[512,512,0,0]), 
+                                          (self.img+'ng.typeBc.single.pb' ,int_typeB,[512,512,0,0]) ] )
+
+        
+          ### NGVLA : All baselines, one field 
+          tclean(vis=msname,   antenna='*', field='0', spw=spw,   imagename=self.img+'ng.allc.single',
+                 imsize=imsize,   cell=cell,  phasecenter='J2000 +19h59m28.5s +40d44m21.5s',
+                 specmode='cube',   interpolation='nearest',   nchan=3,
+                 gridder='mosaic',   normtype='flatnoise',    wbawp=True,  pblimit=0.05,    
+                 vptable=vptabname,
+                 conjbeams=False, niter=niter,  nsigma=3.0,  datacolumn='data', weighting='natural',parallel=self.parallel)
+  
+          ## Check that source intensity and PB are the same (to get accurate flux recovery)
+          report3=self.th.checkall(imgval=[
+                                          (self.img+'ng.allc.single.image' ,int_all,[512,512,0,0]), 
+                                          (self.img+'ng.allc.single.pb' ,int_all,[512,512,0,0]) ] )
+
+        
+          self.assertTrue(self.check_final(pstr=report1+report2+report3))
+
+
 
 #####################################################
 #####################################################
@@ -4993,6 +5776,5 @@ class test_errors_failures(testref_base):
                             parallel=self.parallel)
 
 
-if is_CASA6:
-     if __name__ == '__main__':
-          unittest.main()
+if __name__ == '__main__':
+     unittest.main()

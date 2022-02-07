@@ -72,33 +72,16 @@ import math
 import numpy as np
 import unittest
 
-CASA6 = False
-try:
-    import casatools
-    myia = casatools.image()
-    mycl = casatools.componentlist()
-    csys = casatools.coordsys()
-    myqa = casatools.quanta()
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    myia = iatool()
-    mycl = cltool()
-    csys = cstool()
-    myqa = qatool()
+import casatools
+myia = casatools.image()
+mycl = casatools.componentlist()
+csys = casatools.coordsys()
+myqa = casatools.quanta()
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/ia_fromcomplist/')
-    estimates_file = os.path.join(datapath,'2gauss_estimates.txt')
-    climage = os.path.join(datapath, 'simple_cl.im')
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ia_fromcomplist/'
-    estimates_file = os.path.join(datapath, '2gauss_estimates.txt')
-    climage = os.path.join(datapath, 'simple_cl.im')
+datapath = casatools.ctsys.resolve('unittest/ia_fromcomplist/')
+estimates_file = os.path.join(datapath,'2gauss_estimates.txt')
+climage = os.path.join(datapath, 'simple_cl.im')
 
 class ia_fromcomplist_test(unittest.TestCase):
     
@@ -109,6 +92,11 @@ class ia_fromcomplist_test(unittest.TestCase):
     def tearDown(self):
         self._myia.done()
         self._mycl.done()
+        data = ["1ptsource.im","jj.cl","jk.im",
+                "akd.im","simple_cl.im" ]
+        for f in data:
+            if os.path.exists(f) and os.path.isdir(f):
+                shutil.rmtree(f)
     
     def test_ia_fromcomplist(self):
         """Test ia.fromcomplist() functionality"""

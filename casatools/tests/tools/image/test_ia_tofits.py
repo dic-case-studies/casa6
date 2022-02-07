@@ -67,6 +67,7 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 from casatools import quanta
@@ -80,6 +81,13 @@ class ia_tofits_test(unittest.TestCase):
     def tearDown(self):
         self.myia.done( )
         self.qa.done( )
+        data = [ "blah2.fits", "maskim", "myfits.fits", "my.im"]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
     
     def test_stretch(self):
         """ ia.tofits(): Test stretch parameter"""
