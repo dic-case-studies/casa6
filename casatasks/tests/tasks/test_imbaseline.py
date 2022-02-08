@@ -202,9 +202,14 @@ class AbstractFileStack_test(test_base):
         stack.subpeak()
 
     def test_1_11(self):
-        obj = UnerasableFolder(DUMMY_FOLDERS[0])
-        stack = CasaImageStack(obj)
-        self.assertEqual(stack.bottom(), obj)
+        stack = CasaImageStack()
+        obj1 = UnerasableFolder(DUMMY_FOLDERS[0])
+        stack.push(obj1)
+        self.assertEqual(stack.bottom(), obj1)
+        obj2 = UnerasableFolder(DUMMY_FOLDERS[1])
+        stack.push(obj2)
+        self.assertEqual(stack.bottom(), obj1)
+        self.assertEqual(stack.peak(), obj2)
 
     @test_base.exception_case(RuntimeError, 'the stack has not have enough stuff')
     def test_1_12(self):
