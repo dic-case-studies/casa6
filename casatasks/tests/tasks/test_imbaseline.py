@@ -510,7 +510,7 @@ class TestImage2MS(test_base):
         self.assertEqual(params.im_npol, self.image_shape.im_npol)
 
 
-class sdsmooth_test(test_base):
+class TestSdsmooth(test_base):
     """Test sdsmooth execution.
 
     Tests of sdsmooth rely on ones of test_sdsmooth basically, so we have minimal tests in imbaseline.
@@ -811,7 +811,7 @@ class TestImageSubtraction(test_base):
             self.assertTrue(np.array_equal(arr, np.full((64, 64, 4, 128), 2.0)))
 
 
-class MS2Image_test(test_base):
+class TestMS2Image(test_base):
     """Test MS2Image.
 
     8-1. successful test
@@ -1083,4 +1083,4 @@ class TestImbaseline(test_base):
 
 def suite():
     return [TestImsmooth, TestAbstractFileStack, TestImageShape, TestImbaseline, TestImage2MS, TestSdbaseline,
-            TestImageSubtraction, TestGlobalMethods]
+            TestSdsmooth, TestMS2Image, TestImageSubtraction, TestGlobalMethods]
