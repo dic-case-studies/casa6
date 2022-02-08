@@ -24,6 +24,7 @@ from casatools import ctsys, image, table
 _tb = table()
 ctsys_resolve = ctsys.resolve
 DATACOLUMN = 'DATA'
+UNEXISTS = 'unexists'
 casalog.origin('imbaseline')
 
 
@@ -121,7 +122,6 @@ class AbstractFileStack_test(test_base):
 
     dummy_folder1 = 'dummy1'
     dummy_folder2 = 'dummy2'
-    unexist_folder = 'unexists'
 
     def setUp(self):
         if os.path.exists(self.dummy_folder1):
@@ -130,26 +130,26 @@ class AbstractFileStack_test(test_base):
         if os.path.exists(self.dummy_folder2):
             shutil.rmtree(self.dummy_folder2)
         os.mkdir(self.dummy_folder2)
-        if os.path.exists(self.unexist_folder):
-            shutil.rmtree(self.unexist_folder)
+        if os.path.exists(UNEXISTS):
+            shutil.rmtree(UNEXISTS)
 
     def test_1_1(self):
         stack = CasaImageStack(UnerasableFolder(self.dummy_folder1))
         self.assertTrue(stack.height() == 1)
 
-    @test_base.exception_case(ValueError, 'file unexists is not found')
+    @test_base.exception_case(ValueError, f'file {UNEXISTS} is not found')
     def test_1_2(self):
-        CasaImageStack(UnerasableFolder(self.unexist_folder))
+        CasaImageStack(UnerasableFolder(UNEXISTS))
 
     def test_1_3(self):
         stack = CasaImageStack()
         stack.push(UnerasableFolder(self.dummy_folder1))
         self.assertTrue(stack.height() == 1)
 
-    @test_base.exception_case(ValueError, 'file unexists is not found')
+    @test_base.exception_case(ValueError, f'file {UNEXISTS} is not found')
     def test_1_4(self):
         stack = CasaImageStack()
-        stack.push(UnerasableFolder(self.unexist_folder))
+        stack.push(UnerasableFolder(UNEXISTS))
 
     def test_1_5(self):
         stack = CasaImageStack()
@@ -986,4 +986,3 @@ class imbaseline_test(test_base):
 def suite():
     return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test, image2ms_test, sdbaseline_test,
             image_subtraction_test, misc_test]
-
