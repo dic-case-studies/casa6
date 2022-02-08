@@ -89,14 +89,16 @@ class EraseableFolderRegister():
             raise ValueError('Irregal folder would be appended', 'SEVERE')
 
     def clear(self, dry_run: bool=True):
-        for path, folder in self._register.items():
-            if not folder.has_file:
-                raise RuntimeError('Invalid code execution state', 'SEVERE')
-            elif not os.path.exists(path):
-                raise RuntimeError(f'File not found: {path}', 'SEVERE')
-            else:
-                folder.erase(dry_run)
+        if not dry_run:
+            for path, folder in self._register.items():
+                if not folder.has_file:
+                    raise RuntimeError('Invalid code execution state', 'SEVERE')
+                elif not os.path.exists(path):
+                    raise RuntimeError(f'File not found: {path}', 'SEVERE')
+                else:
+                    folder.erase(dry_run)
         self._register.clear()
+        casalog.post('cleaned up EraseableFolderRegister', 'DEBUG2')
 
     def pop(self, key: str) -> EraseableFolder:
         return self._register.pop(key)
