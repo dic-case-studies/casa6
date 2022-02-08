@@ -127,6 +127,8 @@ class AbstractFileStack_test(test_base):
     1-14. clear() exist UneraseableFolder file
     1-15. erase EraseableFolder file
     1-16. erase UneraseableFolder file
+    1-17. height() test
+    1-18. pop() when height is 1
     """
 
     def setUp(self):
@@ -238,6 +240,26 @@ class AbstractFileStack_test(test_base):
         file = UnerasableFolder(DUMMY_FOLDERS[0])
         file.erase(False)
         self.assertTrue(os.path.exists(DUMMY_FOLDERS[0]))
+
+    def test_1_17(self):
+        stack = CasaImageStack()
+        self.assertEqual(stack.height(), 0)
+        stack.push(UnerasableFolder(DUMMY_FOLDERS[0]))
+        self.assertEqual(stack.height(), 1)
+        stack.push(UnerasableFolder(DUMMY_FOLDERS[1]))
+        self.assertEqual(stack.height(), 2)
+        stack.push(UnerasableFolder(DUMMY_FOLDERS[2]))
+        self.assertEqual(stack.height(), 3)
+        stack.pop()
+        self.assertEqual(stack.height(), 2)
+        stack.pop()
+        self.assertEqual(stack.height(), 1)
+
+    @test_base.exception_case(RuntimeError, 'the stack cannot pop')
+    def test_1_18(self):
+        stack = CasaImageStack()
+        stack.push(UnerasableFolder(DUMMY_FOLDERS[0]))
+        stack.pop()
 
 
 class ImageShape_test(test_base):
