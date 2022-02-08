@@ -15,7 +15,7 @@
 # License for more details.
 #
 # Based on the requirements listed in casadocs found here:
-# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.regionmanager.html
+# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.html
 #
 # Methods from the image tool tested in this script
 # complexfraclinpol, complexlinpol, depolration, fourierrotationmeasure, fraclinpol
