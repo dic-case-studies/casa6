@@ -335,21 +335,10 @@ class imsmooth_test(test_base):
         kimage = ''
         scale = -1
 
-        _stack = CasaImageStack(top=UnerasableFolder(self.tiny))
+        stack = CasaImageStack(top=UnerasableFolder(self.tiny))
 
-        ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, _stack)
-        self.assertTrue(os.path.exists(_stack.peak().path))
-
-        _stack.pop()
-        ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, _stack)
-        self.assertTrue(os.path.exists(_stack.peak().path))
-
-        _stack.clear()
-        try:
-            _stack.push(UnerasableFolder('nonexists'))
-        except Exception:
-            pass
-        self.assertFalse(_stack.height() > 0)
+        ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, stack)
+        self.assertTrue(os.path.exists(stack.peak().path))
 
     @test_base.exception_case(ValueError, 'Unsupported direction smoothing kernel, foobar')
     def test_3_2(self):
@@ -360,9 +349,9 @@ class imsmooth_test(test_base):
         kimage = ''
         scale = -1
 
-        _stack = CasaImageStack(top=UnerasableFolder(self.tiny))
+        stack = CasaImageStack(top=UnerasableFolder(self.tiny))
 
-        ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, _stack)
+        ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, stack)
 
     def test_3_3(self):
         targetres = stretch = False
