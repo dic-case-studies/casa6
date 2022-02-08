@@ -125,7 +125,7 @@ class test_base(unittest.TestCase):
         _ia.done()
 
 
-class AbstractFileStack_test(test_base):
+class TestAbstractFileStack(test_base):
     """Test AbstractFileStack / (Un)EraseableFolder.
 
     1-1. Create Stack with exist file
@@ -297,7 +297,7 @@ class AbstractFileStack_test(test_base):
         stack.pop()
 
 
-class ImageShape_test(test_base):
+class TestImageShape(test_base):
     """Test ImageShape.
 
     2-1. successful case
@@ -332,7 +332,7 @@ class ImageShape_test(test_base):
         shape.validate()
 
 
-class imsmooth_test(test_base):
+class TestImsmooth(test_base):
     """Test imsmooth execution.
 
     Tests of imsmooth rely on ones of test_imsmooth basically, so we have minimal tests in imbaseline.
@@ -430,7 +430,7 @@ class imsmooth_test(test_base):
         self.assertEqual(param(), valid_param)
 
 
-class image2ms_test(test_base):
+class TestImage2MS(test_base):
     """Test image2ms.
 
     4-1. simple successful case
@@ -596,7 +596,7 @@ class sdsmooth_test(test_base):
         [compare_params(_kernel) for _kernel in kernel]
 
 
-class sdbaseline_test(test_base):
+class TestSdbaseline(test_base):
     """Test sdbaseline execution.
 
     Tests of sdbaseline rely on ones of test_sdbaseline basically, so we have minimal tests in imbaseline.
@@ -722,7 +722,7 @@ class sdbaseline_test(test_base):
         [compare_params(_maskmode, _blfunc) for _maskmode in maskmode for _blfunc in blfunc]
 
 
-class image_subtraction_test(test_base):
+class TestImageSubtraction(test_base):
     """Test image subtractions.
 
     7-1. successful test: output = input_image - (smoothed_image - smoothed_and_subtracted_image)
@@ -879,7 +879,7 @@ class MS2Image_test(test_base):
                                 datacolumn=DATACOLUMN)
 
 
-class misc_test(test_base):
+class TestMiscellaneous(test_base):
     """Test miscellaneous methods.
 
     9-1. get_image_shape: successful
@@ -929,7 +929,7 @@ class misc_test(test_base):
         get_image_shape(testimage)
 
 
-class imbaseline_test(test_base):
+class TestImbaseline(test_base):
     """Test full of imbaseline.
 
     F-1. maskmode/blfunc/dirkernel/spkernel combination test
@@ -1082,5 +1082,5 @@ class imbaseline_test(test_base):
 
 
 def suite():
-    return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test, image2ms_test, sdbaseline_test,
-            image_subtraction_test, misc_test]
+    return [TestImsmooth, TestAbstractFileStack, TestImageShape, TestImbaseline, TestImage2MS, TestSdbaseline,
+            TestImageSubtraction, TestMiscellaneous]
