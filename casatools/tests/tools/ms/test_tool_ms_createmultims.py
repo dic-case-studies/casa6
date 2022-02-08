@@ -450,9 +450,5 @@ class test_createmultims(unittest.TestCase):
         self.assertEqual(ldict[2]['MS'].split('/').pop(), 'part3.ms')
         self.assertEqual(ldict[3]['MS'].split('/').pop(), 'part4.ms')
 
-def suite():
-    return [test_createmultims]
-        
-
 if __name__ == '__main__':
     unittest.main()
