@@ -700,18 +700,19 @@ class image_subtraction_test(test_base):
     expected_im = 'expected.im'
     expected_imsmoothed = 'expected.imsmooth.im'
     expected_bl = 'expected.bl.im'
-    testdata_01 = ('testdata_01.im', 1.5, [64, 64, 4, 128])
-    testdata_02 = ('testdata_02.im', 2.0, [64, 64, 4, 128])
-    testdata_03 = ('testdata_03.im', 2.5, [64, 64, 4, 128])
+    input_image = ('input_image.im', 1.5, [64, 64, 4, 128])
+    smoothed_image = ('smoothed_image.im', 2.0, [64, 64, 4, 128])
+    smoothed_and_subtracted_image = ('smoothed_and_subtracted_image.im', 2.5, [64, 64, 4, 128])
     testdata_err = ('testdata_err.im', 1, [65, 64, 4, 128])
 
     def setUp(self):
         self._copy_test_files(self.datapath, self.expected_im)
         self._copy_test_files(self.datapath, self.expected_imsmoothed)
         self._copy_test_files(self.datapath, self.expected_bl)
-        self._create_image(self.testdata_01[0], self.testdata_01[1], self.testdata_01[2])
-        self._create_image(self.testdata_02[0], self.testdata_02[1], self.testdata_02[2])
-        self._create_image(self.testdata_03[0], self.testdata_03[1], self.testdata_03[2])
+        self._create_image(self.input_image[0], self.input_image[1], self.input_image[2])
+        self._create_image(self.smoothed_image[0], self.smoothed_image[1], self.smoothed_image[2])
+        self._create_image(self.smoothed_and_subtracted_image[0], self.smoothed_and_subtracted_image[1],
+                           self.smoothed_and_subtracted_image[2])
         self._create_image(self.testdata_err[0], self.testdata_err[1], self.testdata_err[2])
 
     def test_7_1(self):
@@ -731,14 +732,14 @@ class image_subtraction_test(test_base):
 
     @test_base.exception_case(ValueError, 'operands could not be broadcast together with shapes')
     def test_7_3(self):
-        image_stack = CasaImageStack(top=UnerasableFolder(self.testdata_01[0]))
-        image_stack.push(EraseableFolder(self.testdata_02[0]))
+        image_stack = CasaImageStack(top=UnerasableFolder(self.input_image[0]))
+        image_stack.push(EraseableFolder(self.smoothed_image[0]))
         image_stack.push(EraseableFolder(self.testdata_err[0]))
         output = 'output_7_3.im'
         ImageSubtractionMethods.execute(output, image_stack)
 
     def test_7_4(self):
-        image_stack = CasaImageStack(top=UnerasableFolder(self.testdata_01[0]))
+        image_stack = CasaImageStack(top=UnerasableFolder(self.input_image[0]))
         image_stack.push(EraseableFolder(self.testdata_err[0]))
         output = 'output_7_4.im'
         ImageSubtractionMethods.execute(output, image_stack)
@@ -746,10 +747,10 @@ class image_subtraction_test(test_base):
         self.assertFalse(os.path.exists(self.testdata_err[0]))
 
     def test_7_5(self):
-        # output = testdata_01 - (testdata_02 - testdata_03)
-        image_stack = CasaImageStack(top=UnerasableFolder(self.testdata_01[0]))
-        image_stack.push(EraseableFolder(self.testdata_02[0]))
-        image_stack.push(EraseableFolder(self.testdata_03[0]))
+        # output = input_image - (smoothed_image - smoothed_and_subtracted_image)
+        image_stack = CasaImageStack(top=UnerasableFolder(self.input_image[0]))
+        image_stack.push(EraseableFolder(self.smoothed_image[0]))
+        image_stack.push(EraseableFolder(self.smoothed_and_subtracted_image[0]))
         output = 'output_7_5.im'
         ImageSubtractionMethods.execute(output, image_stack)
         with tool_manager(output, image) as ia:
@@ -757,9 +758,9 @@ class image_subtraction_test(test_base):
             self.assertTrue(np.array_equal(arr, np.full((64, 64, 4, 128), 2.0)))
 
     def test_7_6(self):
-        # output = testdata_02
-        image_stack = CasaImageStack(top=UnerasableFolder(self.testdata_01[0]))
-        image_stack.push(EraseableFolder(self.testdata_02[0]))
+        # output = smoothed_image
+        image_stack = CasaImageStack(top=UnerasableFolder(self.input_image[0]))
+        image_stack.push(EraseableFolder(self.smoothed_image[0]))
         output = 'output_7_6.im'
         ImageSubtractionMethods.execute(output, image_stack)
         with tool_manager(output, image) as ia:
