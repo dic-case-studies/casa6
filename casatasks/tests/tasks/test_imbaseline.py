@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import unittest
+import uuid
 
 import functools
 import numpy as np
@@ -26,6 +27,7 @@ ctsys_resolve = ctsys.resolve
 DATACOLUMN = 'DATA'
 UNEXISTS = 'unexists'
 DUMMY_FOLDERS = ('dummy1', 'dummy2', 'dummy3')
+
 casalog.origin('imbaseline')
 
 
@@ -62,13 +64,22 @@ class test_base(unittest.TestCase):
             return _wrapper
         return wrapper
 
-    def setUp(self):
-        def _setup_folder(folder):
-            if os.path.exists(folder):
-                shutil.rmtree(folder)
-            os.mkdir(folder)
+    @classmethod
+    def setUpClass(cls):
+        prefix = os.getcwd() + '/'
+        while True:
+            cls.foldername = str(uuid.uuid4())
+            path = prefix + cls.foldername
+            if not os.path.exists(path):
+                os.mkdir(path)
+                os.chdir(path)
+                break
 
-        [_setup_folder(folder) for folder in DUMMY_FOLDERS]
+    @classmethod
+    def tearDownClass(cls):
+        os.chdir('..')
+        if os.path.exists(cls.foldername):
+            shutil.rmtree(cls.foldername)
 
     def tearDown(self):
         eraseable_folder_register.clear()
@@ -82,10 +93,16 @@ class test_base(unittest.TestCase):
                     os.unlink(file_path)
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
-                else:
-                    print(f'unerase: {file_path}')
             except Exception as e:
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+    def _create_dummy_folders(self):
+        def _setup_folder(folder):
+            if os.path.exists(folder):
+                shutil.rmtree(folder)
+            os.mkdir(folder)
+
+        [_setup_folder(folder) for folder in DUMMY_FOLDERS]
 
     def _copy_test_files(self, basename, filename):
         """Copy files for testing into current path."""
@@ -132,9 +149,9 @@ class AbstractFileStack_test(test_base):
     """
 
     def setUp(self):
+        self._create_dummy_folders()
         if os.path.exists(UNEXISTS):
             shutil.rmtree(UNEXISTS)
-        super().setUp()
 
     def test_1_1(self):
         stack = CasaImageStack(UnerasableFolder(DUMMY_FOLDERS[0]))
@@ -415,9 +432,9 @@ class image2ms_test(test_base):
     datacolumn = DATACOLUMN
 
     def setUp(self):
+        self._create_dummy_folders()
         self._copy_test_files(self.datapath, self.expected)
         self.image_shape = get_image_shape(os.path.join(self.datapath, self.expected))
-        super().setUp()
 
     def test_4_1(self):
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected))
