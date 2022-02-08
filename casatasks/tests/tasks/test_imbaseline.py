@@ -879,8 +879,8 @@ class MS2Image_test(test_base):
                                 datacolumn=DATACOLUMN)
 
 
-class TestMiscellaneous(test_base):
-    """Test miscellaneous methods.
+class TestGlobalMethods(test_base):
+    """Test global methods.
 
     9-1. get_image_shape: successful
     9-2. get_image_shape: failure
@@ -1083,4 +1083,4 @@ class TestImbaseline(test_base):
 
 def suite():
     return [TestImsmooth, TestAbstractFileStack, TestImageShape, TestImbaseline, TestImage2MS, TestSdbaseline,
-            TestImageSubtraction, TestMiscellaneous]
+            TestImageSubtraction, TestGlobalMethods]
