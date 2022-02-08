@@ -167,9 +167,13 @@ class AbstractFileStack_test(test_base):
 
     def test_1_7(self):
         stack = CasaImageStack()
-        obj = UnerasableFolder(self.dummy_folder1)
-        stack.push(obj)
-        self.assertEqual(stack.peak(), obj)
+        obj1 = UnerasableFolder(self.dummy_folder1)
+        stack.push(obj1)
+        obj2 = UnerasableFolder(self.dummy_folder2)
+        stack.push(obj2)
+        self.assertEqual(stack.peak(), obj2)
+        self.assertEqual(stack.subpeak(), obj1)
+        self.assertEqual(stack.bottom(), obj1)
 
     @test_base.exception_case(RuntimeError, 'the stack is empty')
     def test_1_8(self):
