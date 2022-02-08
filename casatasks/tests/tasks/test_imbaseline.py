@@ -25,6 +25,7 @@ _tb = table()
 ctsys_resolve = ctsys.resolve
 DATACOLUMN = 'DATA'
 UNEXISTS = 'unexists'
+DUMMY_FOLDERS = ('dummy1', 'dummy2', 'dummy3')
 casalog.origin('imbaseline')
 
 
@@ -60,6 +61,14 @@ class test_base(unittest.TestCase):
                                      msg='error message \'%s\' is not expected.' % (message))
             return _wrapper
         return wrapper
+
+    def setUp(self):
+        def _setup_folder(folder):
+            if os.path.exists(folder):
+                shutil.rmtree(folder)
+            os.mkdir(folder)
+
+        [_setup_folder(folder) for folder in DUMMY_FOLDERS]
 
     def tearDown(self):
         eraseable_folder_register.clear()
@@ -120,21 +129,13 @@ class AbstractFileStack_test(test_base):
     1-16. erase UneraseableFolder file
     """
 
-    dummy_folder1 = 'dummy1'
-    dummy_folder2 = 'dummy2'
-
     def setUp(self):
-        if os.path.exists(self.dummy_folder1):
-            shutil.rmtree(self.dummy_folder1)
-        os.mkdir(self.dummy_folder1)
-        if os.path.exists(self.dummy_folder2):
-            shutil.rmtree(self.dummy_folder2)
-        os.mkdir(self.dummy_folder2)
         if os.path.exists(UNEXISTS):
             shutil.rmtree(UNEXISTS)
+        super().setUp()
 
     def test_1_1(self):
-        stack = CasaImageStack(UnerasableFolder(self.dummy_folder1))
+        stack = CasaImageStack(UnerasableFolder(DUMMY_FOLDERS[0]))
         self.assertTrue(stack.height() == 1)
 
     @test_base.exception_case(ValueError, f'file {UNEXISTS} is not found')
@@ -143,7 +144,7 @@ class AbstractFileStack_test(test_base):
 
     def test_1_3(self):
         stack = CasaImageStack()
-        stack.push(UnerasableFolder(self.dummy_folder1))
+        stack.push(UnerasableFolder(DUMMY_FOLDERS[0]))
         self.assertTrue(stack.height() == 1)
 
     @test_base.exception_case(ValueError, f'file {UNEXISTS} is not found')
@@ -153,8 +154,8 @@ class AbstractFileStack_test(test_base):
 
     def test_1_5(self):
         stack = CasaImageStack()
-        stack.push(UnerasableFolder(self.dummy_folder1))
-        obj = UnerasableFolder(self.dummy_folder2)
+        stack.push(UnerasableFolder(DUMMY_FOLDERS[0]))
+        obj = UnerasableFolder(DUMMY_FOLDERS[1])
         stack.push(obj)
         tmp = stack.pop()
         self.assertEqual(obj, tmp)
@@ -167,12 +168,14 @@ class AbstractFileStack_test(test_base):
 
     def test_1_7(self):
         stack = CasaImageStack()
-        obj1 = UnerasableFolder(self.dummy_folder1)
+        obj1 = UnerasableFolder(DUMMY_FOLDERS[0])
         stack.push(obj1)
-        obj2 = UnerasableFolder(self.dummy_folder2)
+        obj2 = UnerasableFolder(DUMMY_FOLDERS[1])
         stack.push(obj2)
-        self.assertEqual(stack.peak(), obj2)
-        self.assertEqual(stack.subpeak(), obj1)
+        obj3 = UnerasableFolder(DUMMY_FOLDERS[2])
+        stack.push(obj3)
+        self.assertEqual(stack.peak(), obj3)
+        self.assertEqual(stack.subpeak(), obj2)
         self.assertEqual(stack.bottom(), obj1)
 
     @test_base.exception_case(RuntimeError, 'the stack is empty')
@@ -181,18 +184,25 @@ class AbstractFileStack_test(test_base):
         stack.peak()
 
     def test_1_9(self):
-        obj = UnerasableFolder(self.dummy_folder1)
-        stack = CasaImageStack(obj)
-        stack.push(UnerasableFolder(self.dummy_folder2))
-        self.assertEqual(stack.subpeak(), obj)
+        stack = CasaImageStack()
+        obj1 = UnerasableFolder(DUMMY_FOLDERS[0])
+        stack.push(obj1)
+        obj2 = UnerasableFolder(DUMMY_FOLDERS[1])
+        stack.push(obj2)
+        self.assertEqual(stack.subpeak(), obj1)
+        self.assertEqual(stack.bottom(), obj1)
+        obj3 = UnerasableFolder(DUMMY_FOLDERS[2])
+        stack.push(obj3)
+        self.assertEqual(stack.subpeak(), obj2)
+        self.assertEqual(stack.bottom(), obj1)
 
     @test_base.exception_case(RuntimeError, 'the stack has only one stuff')
     def test_1_10(self):
-        stack = CasaImageStack(UnerasableFolder(self.dummy_folder1))
+        stack = CasaImageStack(UnerasableFolder(DUMMY_FOLDERS[0]))
         stack.subpeak()
 
     def test_1_11(self):
-        obj = UnerasableFolder(self.dummy_folder1)
+        obj = UnerasableFolder(DUMMY_FOLDERS[0])
         stack = CasaImageStack(obj)
         self.assertEqual(stack.bottom(), obj)
 
@@ -202,27 +212,27 @@ class AbstractFileStack_test(test_base):
         stack.bottom()
 
     def test_1_13(self):
-        file = EraseableFolder(self.dummy_folder1)
+        file = EraseableFolder(DUMMY_FOLDERS[0])
         stack = CasaImageStack(file)
         stack.clear(False)
-        self.assertTrue(os.path.exists(self.dummy_folder1))
+        self.assertTrue(os.path.exists(DUMMY_FOLDERS[0]))
         self.assertEqual(stack.height(), 0)
 
     def test_1_14(self):
-        stack = CasaImageStack(UnerasableFolder(self.dummy_folder1))
+        stack = CasaImageStack(UnerasableFolder(DUMMY_FOLDERS[0]))
         stack.clear(False)
-        self.assertTrue(os.path.exists(self.dummy_folder1))
+        self.assertTrue(os.path.exists(DUMMY_FOLDERS[0]))
         self.assertEqual(stack.height(), 0)
 
     def test_1_15(self):
-        file = EraseableFolder(self.dummy_folder1)
+        file = EraseableFolder(DUMMY_FOLDERS[0])
         file.erase(False)
-        self.assertFalse(os.path.exists(self.dummy_folder1))
+        self.assertFalse(os.path.exists(DUMMY_FOLDERS[0]))
 
     def test_1_16(self):
-        file = UnerasableFolder(self.dummy_folder1)
+        file = UnerasableFolder(DUMMY_FOLDERS[0])
         file.erase(False)
-        self.assertTrue(os.path.exists(self.dummy_folder1))
+        self.assertTrue(os.path.exists(DUMMY_FOLDERS[0]))
 
 
 class ImageShape_test(test_base):
@@ -375,15 +385,12 @@ class image2ms_test(test_base):
 
     datapath = ctsys_resolve('unittest/imbaseline/')
     expected = 'expected.im'
-    dummy_folder1 = 'dummy1'
     datacolumn = DATACOLUMN
 
     def setUp(self):
         self._copy_test_files(self.datapath, self.expected)
         self.image_shape = get_image_shape(os.path.join(self.datapath, self.expected))
-        if os.path.exists(self.dummy_folder1):
-            shutil.rmtree(self.dummy_folder1)
-        os.system(f'mkdir {self.dummy_folder1}')
+        super().setUp()
 
     def test_4_1(self):
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected))
@@ -415,7 +422,7 @@ class image2ms_test(test_base):
 
     @test_base.exception_case(RuntimeError, 'Unable to open image dummy1.')
     def test_4_3(self):
-        image_stack = CasaImageStack(top=UnerasableFolder(self.dummy_folder1))
+        image_stack = CasaImageStack(top=UnerasableFolder(DUMMY_FOLDERS[0]))
         ms_stack = MeasurementSetStack()
         Image2MSMethods.execute(self.datacolumn, self.image_shape, image_stack, ms_stack)
 
@@ -454,7 +461,6 @@ class sdsmooth_test(test_base):
     datapath = ctsys_resolve('unittest/imbaseline/')
     expected_im = 'expected.im'
     expected_ms = 'expected.ms'
-    dummy_folder1 = 'dummy1'
     datacolumn = DATACOLUMN
     spkenel = 'gaussian'
     kwidth = 5
