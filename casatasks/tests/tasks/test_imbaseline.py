@@ -126,10 +126,10 @@ class AbstractFileStack_test(test_base):
     def setUp(self):
         if os.path.exists(self.dummy_folder1):
             shutil.rmtree(self.dummy_folder1)
+        os.mkdir(self.dummy_folder1)
         if os.path.exists(self.dummy_folder2):
             shutil.rmtree(self.dummy_folder2)
-        os.system(f'mkdir {self.dummy_folder1}')
-        os.system(f'mkdir {self.dummy_folder2}')
+        os.mkdir(self.dummy_folder2)
         if os.path.exists(self.unexist_folder):
             shutil.rmtree(self.unexist_folder)
 
@@ -986,3 +986,4 @@ class imbaseline_test(test_base):
 def suite():
     return [imsmooth_test, AbstractFileStack_test, ImageShape_test, imbaseline_test, image2ms_test, sdbaseline_test,
             image_subtraction_test, misc_test]
+
