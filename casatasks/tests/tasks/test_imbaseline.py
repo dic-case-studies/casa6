@@ -447,20 +447,9 @@ class TestImage2MS(test_base):
         self.assertEqual(ms_stack.height(), 1)
         ms_path = ms_stack.peak().path
         self.assertTrue(os.path.exists(ms_path))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'table.dat')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'ANTENNA')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'DATA_DESCRIPTION')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'FEED')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'FIELD')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'FLAG_CMD')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'HISTORY')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'OBSERVATION')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'POINTING')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'POLARIZATION')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'PROCESSOR')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'SOURCE')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'SPECTRAL_WINDOW')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'STATE')))
+        for table_name in ('table.dat', 'ANTENNA', 'DATA_DESCRIPTION', 'FEED', 'FIELD', 'FLAG_CMD', 'HISTORY', 'OBSERVATION',
+                           'POINTING', 'POLARIZATION', 'PROCESSOR', 'SOURCE', 'SPECTRAL_WINDOW', 'STATE'):
+            self.assertTrue(os.path.exists(os.path.join(ms_path, table_name)))
 
     @test_base.exception_case(RuntimeError, 'column INVALID does not exist')
     def test_4_2(self):
