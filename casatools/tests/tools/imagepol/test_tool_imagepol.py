@@ -17,7 +17,7 @@
 # Based on the requirements listed in casadocs found here:
 # https://casadocs.readthedocs.io/en/latest/api/tt/casatools.html
 #
-# Methods from the image tool tested in this script
+# Methods from the imagepol tool tested in this script
 # complexfraclinpol, complexlinpol, depolration, fourierrotationmeasure, fraclinpol
 # fractotpol, linpolint, linpolposang, rotationmeasure, sigma, sigmadepolratio,
 # sigmafraclinpol, sigmafractotpol, sigmalinpolint, sigmalinpolposang, totpolint
@@ -50,11 +50,11 @@ class Imagepol_base(unittest.TestCase):
         os.remove(eq_beams)
         os.remove(neq_beams)
 
-# Tests for imagepol.complexfraclinpol
-class po_complexfraclinpol_test(Imagepol_base):
-
     def setUp(self):
         self.mypo = potool()
+
+# Tests for imagepol.complexfraclinpol
+class po_complexfraclinpol_test(Imagepol_base):
 
     def tearDown(self):
         self.mypo.done()
@@ -72,9 +72,6 @@ class po_complexfraclinpol_test(Imagepol_base):
 
 # Tests for imagepol.complexlinpol
 class po_complexlinpol_test(Imagepol_base):
-
-    def setUp(self):
-        self.mypo = potool()
 
     def tearDown(self):
         self.mypo.done()
@@ -98,11 +95,6 @@ class po_complexlinpol_test(Imagepol_base):
 # Tests for imagepol.depolration
 class po_depolratio_test(Imagepol_base):
 
-    def setUp(self):
-        self.mypo = potool()
-#        shutil.copy(datapath + eq_beams, eq_beams)
-#        shutil.copy(datapath + neq_beams, neq_beams)
-
     def tearDown(self):
         self.mypo.done()
 #        os.remove(eq_beams)
@@ -121,9 +113,6 @@ class po_depolratio_test(Imagepol_base):
 # Tests for imagepol.fourierrotationmeasure
 class po_fourierrotationmeasure_test(Imagepol_base):
 
-    def setUp(self):
-        self.mypo = potool()
-
     def tearDown(self):
         self.mypo.done()
 
@@ -138,9 +127,6 @@ class po_fourierrotationmeasure_test(Imagepol_base):
 
 # Tests for imagepol.fraclinpol
 class po_fraclinpol_test(Imagepol_base):
-
-    def setUp(self):
-        self.mypo = potool()
 
     def tearDown(self):
         self.mypo.done()
@@ -157,9 +143,6 @@ class po_fraclinpol_test(Imagepol_base):
 # Tests for imagepol.fractotpol
 class po_fractotpol_test(Imagepol_base):
 
-    def setUp(self):
-        self.mypo = potool()
-
     def tearDown(self):
         self.mypo.done()
 
@@ -174,9 +157,6 @@ class po_fractotpol_test(Imagepol_base):
 
 # Tests for imagepol.linpolint
 class po_linpolint_test(Imagepol_base):
-
-    def setUp(self):
-        self.mypo = potool()
 
     def tearDown(self):
         self.mypo.done()
@@ -193,9 +173,6 @@ class po_linpolint_test(Imagepol_base):
 # Tests for imagepol.linpolposang
 class po_linpolposang_test(Imagepol_base):
 
-    def setUp(self):
-        self.mypo = potool()
-
     def tearDown(self):
         self.mypo.done()
         shutil.rmtree('g')
@@ -211,9 +188,6 @@ class po_linpolposang_test(Imagepol_base):
 
 # Tests for imagepol.rotationmeasure
 class po_rotationmeasure_test(Imagepol_base):
-
-    def setUp(self):
-        self.mypo = potool()
 
     def tearDown(self):
         self.mypo.done()
@@ -281,11 +255,6 @@ class po_rotationmeasure_test(Imagepol_base):
 
 # Tests for imagepol.sigma
 class po_sigma_test(Imagepol_base):
-    
-    def setUp(self):
-        self.mypo = potool()
-#        shutil.copy(datapath + eq_beams, eq_beams)
-#        shutil.copy(datapath + neq_beams, neq_beams)
 
     def tearDown(self):
         self.mypo.done()
@@ -304,9 +273,6 @@ class po_sigma_test(Imagepol_base):
 # Tests for imagepol.sigmadepolratio
 class po_sigmadepolratio_test(Imagepol_base):
 
-    def setUp(self):
-        self.mypo = potool()
-
     def tearDown(self):
         self.mypo.done()
 
@@ -320,9 +286,6 @@ class po_sigmadepolratio_test(Imagepol_base):
 
 # Tests for imagepol.sigmafraclinpol
 class po_sigmafraclinpol_test(Imagepol_base):
-
-    def setUp(self):
-        self.mypo = potool()
 
     def tearDown(self):
         self.mypo.done()
@@ -339,9 +302,6 @@ class po_sigmafraclinpol_test(Imagepol_base):
 # Tests for imagepol.sigmafractotpol
 class po_sigmafractotpol_test(Imagepol_base):
 
-    def setUp(self):
-        self.mypo = potool()
-
     def tearDown(self):
         self.mypo.done()
         shutil.rmtree("g")
@@ -357,9 +317,6 @@ class po_sigmafractotpol_test(Imagepol_base):
 # Tests for imagepol.sigmalinpolint
 class po_sigmalinpolint_test(Imagepol_base):
 
-    def setUp(self):
-        self.mypo = potool()
-
     def tearDown(self):
         self.mypo.done()
 
@@ -373,9 +330,6 @@ class po_sigmalinpolint_test(Imagepol_base):
 
 # Tests for imagepol.sigmalinpolposang
 class po_sigmalinpolposang_test(Imagepol_base):
-
-    def setUp(self):
-        self.mypo = potool()
 
     def tearDown(self):
         self.mypo.done()
@@ -391,9 +345,6 @@ class po_sigmalinpolposang_test(Imagepol_base):
 
 # Tests for imagepol.totpolint
 class po_totpolint_test(Imagepol_base):
-
-    def setUp(self):
-        self.mypo = potool()
 
     def tearDown(self):
         self.mypo.done()
