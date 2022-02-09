@@ -96,6 +96,21 @@ class ia_imageconcat_test(unittest.TestCase):
 
     def tearDown(self):
         self._myia.done()
+        data = [
+                "c0_cd.im", "c0_c.im", "c0_d.im", "c0_f.im",
+                "c1_cd.im", "c1_c.im", "c1_d.im", "c1_f.im",
+                "chan_2", "hist1.im", "hist2.im", "image1.im", "image2.im",
+                "loop1_c.im", "loop1_m.im", "loop1_n.im", "loop1_p.im",
+                "loop2_c.im", "loop2_m.im", "loop2_n.im", "loop2_p.im",
+                "loop3_c.im", "loop3_m.im", "loop3_n.im", "loop3_p.im",
+                "reorder_0", "reorder_1", "reorder_2", "reorder_3", "reorder_4"
+                ]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
 
 
     def test_multibeam(self):

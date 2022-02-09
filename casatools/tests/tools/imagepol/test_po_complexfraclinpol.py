@@ -47,12 +47,12 @@
 #
 # <synopsis>
 # Test the po.complexfraclinpol() tool method
-# </synopsis> 
+# </synopsis>
 #
 #
 # <motivation>
 # To provide a test standard for the ia.tofits() tool method to ensure
-# coding changes do not break the associated bits 
+# coding changes do not break the associated bits
 # </motivation>
 #
 
@@ -60,17 +60,9 @@
 import shutil
 import unittest
 
-try:
-    from casatools import imagepol as potool
-    from casatools import ctsys
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+from casatools import imagepol as potool
+from casatools import ctsys
+ctsys_resolve = ctsys.resolve
 
 datapath = ctsys_resolve('unittest/imagepol/')
 eq_beams = datapath + "pol_eq_beams.fits"
@@ -83,7 +75,9 @@ class po_complexfraclinpol_test(unittest.TestCase):
     
     def tearDown(self):
         self.mypo.done()
-    
+        shutil.rmtree('g')
+        shutil.rmtree('hh')
+
     def test_multibeam(self):
         """Test multibeam images for correct behavior"""
         mypo = self.mypo
@@ -92,10 +86,6 @@ class po_complexfraclinpol_test(unittest.TestCase):
         self.assertTrue(mypo.complexfraclinpol("g"))
         mypo.open(neq_beams)
         self.assertRaises(Exception, mypo.complexfraclinpol, "hh")
-        
-        
-def suite():
-    return [po_complexfraclinpol_test]
 
 if __name__ == '__main__':
     unittest.main()
