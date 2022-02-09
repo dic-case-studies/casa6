@@ -67,22 +67,27 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 
 class ia_replacemaskedpixels_test(unittest.TestCase):
     
     def setUp(self):
-        pass
+        self.mymask = ''
     
     def tearDown(self):
-        pass
+        if self.mymask:
+            if os.path.isfile(self.mymask):
+                os.unlink(self.mymask)
+            else:
+                shutil.rmtree(self.mymask)
     
     def test_stretch(self):
         """ ia.replacemaskedpixels(): Test stretch parameter"""
         yy = iatool()
-        mymask = "maskim"
-        yy.fromshape(mymask, [200, 200, 1, 1])
+        self.mymask = "maskim"
+        yy.fromshape(self.mymask, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200,200,1,20]
@@ -91,11 +96,11 @@ class ia_replacemaskedpixels_test(unittest.TestCase):
         self.assertRaises(
             Exception,
             yy.replacemaskedpixels, pixels=-255,
-            mask=mymask + ">0", stretch=False
+            mask=self.mymask + ">0", stretch=False
         )
         zz = yy.replacemaskedpixels(
             pixels=-255,
-            mask=mymask + ">0", stretch=True
+            mask=self.mymask + ">0", stretch=True
         )
         self.assertTrue(zz)
         yy.done()
@@ -103,10 +108,10 @@ class ia_replacemaskedpixels_test(unittest.TestCase):
     def test_history(self):
         """Verify history writing"""
         yy = iatool()
-        mymask = "history.im"
-        yy.fromshape(mymask, [20, 20])
+        self.mymask = "history.im"
+        yy.fromshape(self.mymask, [20, 20])
         yy.addnoise()
-        yy.replacemaskedpixels(pixels=-255, mask=mymask + ">0")
+        yy.replacemaskedpixels(pixels=-255, mask=self.mymask + ">0")
         msgs = yy.history()
         yy.done()
         self.assertTrue("ia.replacemaskedpixels" in msgs[-2])
