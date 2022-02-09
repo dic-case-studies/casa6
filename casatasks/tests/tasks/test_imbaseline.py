@@ -132,6 +132,13 @@ class test_base(unittest.TestCase):
         _ia.fromarray(outfile=datapath, pixels=ary, overwrite=True)
         _ia.done()
 
+    def _check_ms_tables(self, path):
+        self.assertTrue(os.path.exists(path))
+        for table_name in ('', 'ANTENNA', 'DATA_DESCRIPTION', 'FEED', 'FIELD', 'FLAG_CMD', 'HISTORY', 'OBSERVATION',
+                           'POINTING', 'POLARIZATION', 'PROCESSOR', 'SOURCE', 'SPECTRAL_WINDOW', 'STATE'):
+            table_path = os.path.join(path, table_name)
+            self.assertTrue(os.path.exists(os.path.join(table_path, 'table.dat')))
+
 
 class TestAbstractFileStack(test_base):
     """Test AbstractFileStack / (Un)EraseableFolder.
@@ -445,11 +452,7 @@ class TestImage2MS(test_base):
         ms_stack = MeasurementSetStack()
         Image2MSMethods.execute(self.datacolumn, self.image_shape, image_stack, ms_stack)
         self.assertEqual(ms_stack.height(), 1)
-        ms_path = ms_stack.peak().path
-        self.assertTrue(os.path.exists(ms_path))
-        for table_name in ('table.dat', 'ANTENNA', 'DATA_DESCRIPTION', 'FEED', 'FIELD', 'FLAG_CMD', 'HISTORY', 'OBSERVATION',
-                           'POINTING', 'POLARIZATION', 'PROCESSOR', 'SOURCE', 'SPECTRAL_WINDOW', 'STATE'):
-            self.assertTrue(os.path.exists(os.path.join(ms_path, table_name)))
+        self._check_ms_tables(ms_stack.peak().path)
 
     @test_base.exception_case(RuntimeError, 'column INVALID does not exist')
     def test_4_2(self):
@@ -516,23 +519,7 @@ class TestSdsmooth(test_base):
         self.assertEqual(image_stack.height(), 2)
         self.assertEqual(ms_stack.height(), 2)
         self.assertTrue(os.path.exists(os.path.join(image_stack.peak().path, 'table.dat')))
-
-        ms_path = ms_stack.peak().path
-        self.assertTrue(os.path.exists(ms_path))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'table.dat')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'ANTENNA')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'DATA_DESCRIPTION')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'FEED')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'FIELD')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'FLAG_CMD')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'HISTORY')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'OBSERVATION')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'POINTING')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'POLARIZATION')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'PROCESSOR')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'SOURCE')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'SPECTRAL_WINDOW')))
-        self.assertTrue(os.path.exists(os.path.join(ms_path, 'STATE')))
+        self._check_ms_tables(ms_stack.peak().path)
 
     @test_base.exception_case(RuntimeError, 'the stack is empty')
     def test_5_2(self):
