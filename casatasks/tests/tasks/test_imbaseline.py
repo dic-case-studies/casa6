@@ -897,7 +897,6 @@ class TestImbaseline(test_base):
     F-1. maskmode/blfunc/dirkernel/spkernel combination test
     F-2. imagefile is None
     F-3. output_cont is False
-    F-4. output_cont is True
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -1018,7 +1017,6 @@ class TestImbaseline(test_base):
         self.assertFalse(os.path.exists(linefile + '.cont'))
 
     def test_f_4(self):
-        """F-4. output_cont is True"""
         imagefile = self.expected
         linefile = 'output_f_4'
         dirkernel = 'gaussian'
