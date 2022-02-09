@@ -15,7 +15,7 @@
 #
 #
 # Based on the requirements listed in casadocs found here:
-# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.calibrater.html
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.sdm.html
 #
 # Testing of methods frommms and summarystr
 #
@@ -34,8 +34,8 @@ datapath = ctsys_resolve('unittest/sdmtool/')
 
 _ms = ms( )
 
-# Class of tests for sdm.summarystr
-class exportasdm_test(unittest.TestCase):
+# Class of tests for sdm.fromms
+class SdmFrommsTest(unittest.TestCase):
     
     vis_b = 'ngc4826_bima_7fields_7spw.ms'
     vis_c = 'M100-X220-shortened.ms'
@@ -314,7 +314,7 @@ class exportasdm_test(unittest.TestCase):
         os.system('rm -rf '+omsname+'; mv  asdm '+omsname)
 
 # Class of tests for sdm.summarystr
-class sdm_summarystr_test(unittest.TestCase):
+class SdmSummarystrTest(unittest.TestCase):
 
     def setUp(self):
         pass

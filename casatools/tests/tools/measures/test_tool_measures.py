@@ -1,5 +1,5 @@
 ##########################################################################
-# test_measures.py
+# test_tool_measures.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.

@@ -1,5 +1,5 @@
 ##########################################################################
-# test_msmetadata.py
+# test_tool_msmetadata.py
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #

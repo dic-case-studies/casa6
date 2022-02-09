@@ -1,3 +1,23 @@
+##########################################################################
+# test_tool_ms_uvfits.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Tests for the UVFITS I/O using the ms tool
+#
+#
+##########################################################################
 import os
 import numpy
 import sys
@@ -195,9 +215,6 @@ class uvfits_test(unittest.TestCase):
         self.assertFalse(scans[nrows-1]==2, "Last row has wrong scan number: "+str(scans[nrows-1]) )
         # the following verifies that _all_ scan numbers are correct (and lists unique values)
         self.assertTrue(sum(scans==1)==nrows, "Unexpected scan number found: "+str(np.unique(scans)) )
-
-def suite():
-    return [uvfits_test]        
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,5 @@
 ##########################################################################
-# test_vpmanager.py
+# test_tool_vpmanager.py
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #

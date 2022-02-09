@@ -15,7 +15,7 @@
 #
 #
 # Based on the requirements listed in casadocs found here:
-# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.calibrater.html
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.sdm.html#casatools.sdm.sdm.toms
 #
 # Testing of method sdm.toms
 #

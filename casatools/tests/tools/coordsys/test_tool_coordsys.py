@@ -1,5 +1,5 @@
 ##########################################################################
-# test_coordsys.py
+# test_tool_coordsys.py
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #

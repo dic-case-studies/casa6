@@ -1,10 +1,24 @@
-#############################################################################
-# $Id:$
-# Test Name:                                                                #
-#    Unit test script for the ms.createmultims method                       #
-#                                                                           #
-#                                                                           #
-#############################################################################
+##########################################################################
+# test_tool_ms_createmultims.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.ms.html#casatools.ms.ms.createmultims
+#
+#
+##########################################################################
 import os
 import sys
 import shutil

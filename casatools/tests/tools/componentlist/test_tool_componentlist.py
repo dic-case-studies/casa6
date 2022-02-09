@@ -1,5 +1,5 @@
 ##########################################################################
-# test_componentlist.py
+# test_tool_componentlist.py
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #

@@ -1,5 +1,5 @@
 ##########################################################################
-# test_agentflagger.py
+# test_tool_agentflagger.py
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
