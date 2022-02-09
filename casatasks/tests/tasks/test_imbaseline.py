@@ -479,14 +479,10 @@ class TestImage2MS(test_base):
         params.validate()
         self.assertEqual(params.infile, self.expected)
         self.assertEqual(params.outfile, outfile)
-        self.assertTrue(np.all(params.im_shape == self.image_shape.im_shape))
-        self.assertTrue(np.all(params.axis_dir == self.image_shape.axis_dir))
-        self.assertTrue(np.all(params.dir_shape == self.image_shape.dir_shape))
-        self.assertEqual(params.axis_sp, self.image_shape.axis_sp)
-        self.assertEqual(params.axis_pol, self.image_shape.axis_pol)
-        self.assertEqual(params.im_nrow, self.image_shape.im_nrow)
-        self.assertEqual(params.im_nchan, self.image_shape.im_nchan)
-        self.assertEqual(params.im_npol, self.image_shape.im_npol)
+        for attr in ('im_shape', 'axis_dir', 'dir_shape'):
+            self.assertTrue(np.all(getattr(params, attr) == getattr(self.image_shape, attr)))
+        for attr in ('axis_sp', 'axis_pol', 'im_nrow', 'im_nchan', 'im_npol'):
+            self.assertEqual(getattr(params, attr), getattr(self.image_shape, attr))
 
 
 class TestSdsmooth(test_base):
