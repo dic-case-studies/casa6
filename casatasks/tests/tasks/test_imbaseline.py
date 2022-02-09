@@ -4,22 +4,30 @@ made up of a combination of imsmooth/sdsmooth/sdbaseline, so tests consist of si
 these tasks and white tests for the unique classes of imbaseline such as image subtraction.
 """
 
+import functools
 import os
 import re
 import shutil
 import unittest
 import uuid
 
-import functools
 import numpy as np
+
 from casatasks import casalog
 from casatasks.private.sdutil import tool_manager
-from casatasks.private.task_imbaseline \
-    import (CasaImageStack, EraseableFolder, Image2MSMethods, Image2MSParams, ImageShape, ImageSubtractionMethods,
-            ImsmoothMethods, ImsmoothParams, MeasurementSetStack, MS2ImageMethods, SdbaselineMethods,
-            SdbaselineParams, SdsmoothMethods, SdsmoothParams, UnerasableFolder,
-            eraseable_folder_register, get_image_shape, imbaseline)
-
+from casatasks.private.task_imbaseline import (CasaImageStack, EraseableFolder,
+                                               Image2MSMethods, Image2MSParams,
+                                               ImageShape,
+                                               ImageSubtractionMethods,
+                                               ImsmoothMethods, ImsmoothParams,
+                                               MeasurementSetStack,
+                                               MS2ImageMethods,
+                                               SdbaselineMethods,
+                                               SdbaselineParams,
+                                               SdsmoothMethods, SdsmoothParams,
+                                               UnerasableFolder,
+                                               eraseable_folder_register,
+                                               get_image_shape, imbaseline)
 from casatools import ctsys, image, table
 
 _tb = table()
