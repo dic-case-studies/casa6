@@ -399,43 +399,25 @@ class TestImsmooth(test_base):
         scale = -2.0
         logorigin = 'imbaseline'
 
+        def compare_params(_kernel, _major=major, _minor=minor, _pa=pa, _kimage=kimage, _scale=scale):
+            valid_param = dict(targetres=targetres, mask=mask, beam=beam, region=region, box=box, chans=chans, stokes=stokes,
+                               stretch=stretch, overwrite=True, imagename=infile, outfile=outfile, kernel=_kernel,
+                               major=_major, minor=_minor, pa=_pa, kimage=_kimage, scale=_scale, __log_origin=logorigin)
+            param = ImsmoothParams(infile, outfile, _kernel, _major, _minor, _pa, _kimage, _scale)
+            param.validate()
+            self.assertEqual(param(), valid_param)
+
         # none
-        valid_param = dict(targetres=targetres, mask=mask, beam=beam, region=region, box=box, chans=chans, stokes=stokes,
-                           stretch=stretch, overwrite=True, imagename=infile, outfile=outfile, kernel=kernel[0], major=major,
-                           minor=minor, pa=pa, kimage=kimage, scale=scale, __log_origin=logorigin)
-        param = ImsmoothParams(infile, outfile, kernel[0], major, minor, pa, kimage, scale)
-        param.validate()
-        self.assertEqual(param(), valid_param)
+        compare_params(kernel[0])
 
         # image
-        minor = major = pa = ''
-        valid_param = dict(targetres=targetres, mask=mask, beam=beam, region=region, box=box, chans=chans, stokes=stokes,
-                           stretch=stretch, overwrite=True, imagename=infile, outfile=outfile, kernel=kernel[1], major=major,
-                           minor=minor, pa=pa, kimage=kimage, scale=scale, __log_origin=logorigin)
-        param = ImsmoothParams(infile, outfile, kernel[1], major, minor, pa, kimage, scale)
-        param.validate()
-        self.assertEqual(param(), valid_param)
+        compare_params(kernel[1], _major='', _minor='', _pa='')
 
         # gaussian
-        major = '2.5arcsec'
-        minor = '2arcsec'
-        pa = '0deg'
-        kimage = ''
-        scale = -1.0
-        valid_param = dict(targetres=targetres, mask=mask, beam=beam, region=region, box=box, chans=chans, stokes=stokes,
-                           stretch=stretch, overwrite=True, imagename=infile, outfile=outfile, kernel=kernel[2], major=major,
-                           minor=minor, pa=pa, kimage=kimage, scale=scale, __log_origin=logorigin)
-        param = ImsmoothParams(infile, outfile, kernel[2], major, minor, pa, kimage, scale)
-        param.validate()
-        self.assertEqual(param(), valid_param)
+        compare_params(kernel[2], _kimage='', _scale=-1.0)
 
         # boxcar
-        valid_param = dict(targetres=targetres, mask=mask, beam=beam, region=region, box=box, chans=chans, stokes=stokes,
-                           stretch=stretch, overwrite=True, imagename=infile, outfile=outfile, kernel=kernel[3], major=major,
-                           minor=minor, pa=pa, kimage=kimage, scale=scale, __log_origin=logorigin)
-        param = ImsmoothParams(infile, outfile, kernel[3], major, minor, pa, kimage, scale)
-        param.validate()
-        self.assertEqual(param(), valid_param)
+        compare_params(kernel[3], _kimage='', _scale=-1.0)
 
 
 class TestImage2MS(test_base):
