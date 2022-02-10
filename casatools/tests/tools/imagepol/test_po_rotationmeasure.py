@@ -81,8 +81,5 @@ class po_rotationmeasure_test(unittest.TestCase):
         self.assertTrue((abs(stats['max'][0] - pa0deg)) < 1e-4)
         myia.done(remove=True)
 
-def suite():
-    return [po_rotationmeasure_test]
-
 if __name__ == '__main__':
     unittest.main()
