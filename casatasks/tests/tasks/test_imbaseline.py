@@ -898,6 +898,7 @@ class TestImbaseline(test_base):
     F-2. imagefile is None
     F-3. output_cont is False
     F-4. specify bloutput path
+    F-5. simple output check
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -1042,6 +1043,50 @@ class TestImbaseline(test_base):
                    bloutput=bloutput)
         self.assertTrue(os.path.exists(bloutput))
 
+    def test_f_5(self):
+        """F-5. simple output check"""
+        self.image_shape = [128, 128, 1, 10]
+        self.expected_output_chunk = np.full(self.image_shape, 0.0)
+        self.expected_cont_chunk = np.full(self.image_shape, 2.0)
+
+        linefile = 'output_f_5'
+        output_cont = True
+        bloutput = linefile + '.bloutput'
+        blfunc = ('poly', 'chebyshev', 'cspline', 'sinusoid')
+        dirkernel = ('none', 'gaussian', 'boxcar')
+        spkernel = ('none', 'gaussian', 'boxcar')
+        self.f_5_count = 1
+
+        def _exec_imbaseline(linefile, output_cont, bloutput, blfunc, dirkernel, spkernel):
+            test_image = 'input_image.im'
+            major = '20arcsec'
+            minor = '10arcsec'
+            pa = '0deg'
+            self._create_image(test_image, 2.0, self.image_shape)
+            params = dict(imagename=test_image, linefile=linefile, output_cont=output_cont, bloutput=bloutput,
+                          blfunc=blfunc, dirkernel=dirkernel, spkernel=spkernel, major=major, minor=minor, pa=pa)
+            try:
+                casalog.post(f'test_F_5_{self.f_5_count:03} [maskmode=auto, blfunc={blfunc}, '
+                             f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
+                imbaseline(**params)
+                if os.path.exists(linefile):
+                    with tool_manager(linefile, image) as ia:
+                        self.assertTrue(np.allclose(ia.getchunk(), self.expected_output_chunk, atol=2.0))
+                if os.path.exists(test_image + '.cont'):
+                    with tool_manager(test_image + '.cont', image) as ia:
+                        self.assertTrue(np.allclose(ia.getchunk(), self.expected_cont_chunk, atol=1.0))
+            except Exception:
+                casalog.post(f'test_F_5_{self.f_5_count:03} FAULT: [maskmode=auto, blfunc={blfunc}, '
+                             f'dirkernel={dirkernel}, spkernel={spkernel}]', 'SEVERE')
+            finally:
+                self.f_5_count += 1
+                self.tearDown()
+                self.setUp()
+
+        [_exec_imbaseline(linefile, output_cont, bloutput, _blfunc, _dirkernel, _spkernel)
+         for _blfunc in blfunc
+         for _dirkernel in dirkernel
+         for _spkernel in spkernel]
 
 def suite():
     return [TestImsmooth, TestAbstractFileStack, TestImageShape, TestImbaseline, TestImage2MS, TestSdbaseline,
