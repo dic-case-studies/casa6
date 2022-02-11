@@ -5,6 +5,7 @@ import sys
 import shutil
 import unittest
 import itertools
+import numpy as np
 
 # For information about parameters that are unexpectedly zero, set
 # VERBOSE to true.  Currently there are none, so this is for developers
@@ -43,6 +44,7 @@ datapath = ctsys_resolve('unittest/fringefit/')
 class Fringefit_tests(unittest.TestCase):
     prefix = 'n08c1'
     msfile = prefix + '.ms'
+    uvfile = datapath + 'gaincaltest2.ms'
 
     def setUp(self):
         shutil.copytree(os.path.join(datapath, self.msfile), self.msfile)
@@ -52,6 +54,7 @@ class Fringefit_tests(unittest.TestCase):
         shutil.rmtree(self.prefix + '.sbdcal', True)
         shutil.rmtree(self.prefix + '-zerorates.sbdcal', True)
         shutil.rmtree(self.prefix + '.mbdcal', True)
+        shutil.rmtree('uvrange_with.cal', True)
 
     def test_sbd(self):
         sbdcal = self.prefix + '.sbdcal'
@@ -68,6 +71,26 @@ class Fringefit_tests(unittest.TestCase):
                    combine='spw', gaintable=[sbdcal], refant='EF')
         reference = os.path.join(datapath, mbdcal)
         self.assertTrue(th.compTables(mbdcal, reference, ['WEIGHT', 'SNR']))
+
+    def test_uvrange(self):
+        ''' Check that the uvrnage parameter excludes antennas '''
+        # create a caltable with uvrange selection
+        fringefit(self.uvfile, caltable='uvrange_with.cal', spw='2', refant='0', uvrange='<1160')
+
+        # get the subset of antennas that are used vs all
+        tblocal.open('uvrange_with.cal')
+        output = tblocal.getcol('FLAG')
+        antennas = tblocal.getcol('ANTENNA1')
+        tblocal.close()
+
+        flagged = set()
+        intended_flagged = {5,8}
+
+        for i in range(len(antennas)):
+            if np.all(output[:, :, i] == True):
+                flagged.add(antennas[i])
+
+        self.assertTrue(flagged == intended_flagged)
 
 
 class Fringefit_single_tests(unittest.TestCase):
