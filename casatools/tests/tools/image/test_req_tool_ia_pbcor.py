@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_tool_ia_pbcor.py
+# test_tool_image_pbcor.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -14,7 +14,8 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# https://open-jira.nrao.edu/browse/CAS-12986
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.image.html#casatools.image.image.pbcor
 #
 ##########################################################################
 
@@ -322,7 +323,6 @@ class ia_pbcor_test(unittest.TestCase):
         myia.done()
         self.assertTrue((yy.shape() == [20,20,1,20]).all(), "Incorrect shape")
         yy.done()
-
 
 if __name__ == '__main__':
     unittest.main()

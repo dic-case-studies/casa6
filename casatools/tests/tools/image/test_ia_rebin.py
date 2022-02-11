@@ -1,6 +1,7 @@
 ##########################################################################
+# test_tool_image_rebin.py
 #
-# Copyright (C) 2008, 2009
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
 # This script is free software; you can redistribute it and/or modify it
@@ -13,57 +14,10 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.image.html#casatools.image.image.rebin
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
-#
-# <author>
-# Dave Mehringer
-# </author>
-#
-# <summary>
-# Test suite for the CASA tool method ia.rebin()
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# Test for the ia.rebin() tool method
-# </etymology>
-#
-# <synopsis>
-# Test the ia.rebin() tool method
-# </synopsis> 
-#
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_ia_rebin[test1,test2,...]
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard for the ia.rebin() tool method to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
-
-###########################################################################
+##########################################################################
 import shutil
 import numpy
 import unittest
@@ -249,9 +203,6 @@ class ia_rebin_test(unittest.TestCase):
         teststr = "ia.rebin"
         self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")
         self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
- 
-def suite():
-    return [ia_rebin_test]
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,3 +1,23 @@
+##########################################################################
+# test_tool_image_subimage.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.image.html#casatools.image.image.subimage
+#
+##########################################################################
 import shutil
 import unittest
 import numpy
@@ -181,10 +201,7 @@ class ia_subimage_test(unittest.TestCase):
         ia2 = ia2.subimage()
         ia2.done()
         for m in msgs:
-            self.assertFalse(teststr in msgs, "History unexpectedly written")   
-        
-def suite():
-    return [ia_subimage_test]
+            self.assertFalse(teststr in msgs, "History unexpectedly written")
 
 if __name__ == '__main__':
     unittest.main()

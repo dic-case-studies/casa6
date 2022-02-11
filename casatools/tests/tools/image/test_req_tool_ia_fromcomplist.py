@@ -1,6 +1,7 @@
 ##########################################################################
+# test_tool_image_fromcomplist.py
 #
-# Copyright (C) 2008, 2009
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
 # This script is free software; you can redistribute it and/or modify it
@@ -13,58 +14,10 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.image.html#casatools.image.image.fromcomplist
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
-#
-# <author>
-# Dave Mehringer
-# </author>
-#
-# <summary>
-# Test suite for ia.fromcomplist
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# Test suite for ia.fromcomplist
-# </etymology>
-#
-# <synopsis>
-# Test suite for ia.fromcomplist
-# </synopsis> 
-#
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# ./casa --nologger --log2term -c ./casatools/tests/tools/image/test_req_tool_ia_fromcomplist.py
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard for ia.fromcomplist support to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
-
-###########################################################################
-
+##########################################################################
 import sys
 import os
 import shutil
@@ -76,7 +29,7 @@ myia = casatools.image()
 mycl = casatools.componentlist()
 csys = casatools.coordsys()
 myqa = casatools.quanta()
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+#sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 datapath = casatools.ctsys.resolve('unittest/ia_fromcomplist/')
 estimates_file = os.path.join(datapath,'2gauss_estimates.txt')
@@ -363,9 +316,6 @@ class ia_fromcomplist_test(unittest.TestCase):
         cc = myia.getchunk()
         myia.done()
         self.assertTrue((bb == cc).all())
-        
-def suite():
-    return [ia_fromcomplist_test]
 
 if __name__ == '__main__':
     unittest.main()

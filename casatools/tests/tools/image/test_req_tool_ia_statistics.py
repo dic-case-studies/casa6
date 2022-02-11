@@ -1,5 +1,5 @@
 ########################################################################
-# test_req_tool_ia_statistics.py
+# test_tool_image_statistics.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA
@@ -16,8 +16,8 @@
 #
 # CAS-12997
 #
-# Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_imstat/about
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.image.html#casatools.image.image.statistics
 #
 #
 ##########################################################################
@@ -29,13 +29,11 @@ import math
 import numpy as np
 import numbers
 
-
 from casatools import ctsys, image, table, quanta, regionmanager
 _tb = table()
 _qa = quanta()
 _rg = regionmanager()
 ctsys_resolve = ctsys.resolve
-
 
 datapath = 'unittest/ia_statistics/'
 

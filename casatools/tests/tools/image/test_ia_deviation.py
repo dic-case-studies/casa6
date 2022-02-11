@@ -1,5 +1,5 @@
 ##########################################################################
-# test_ia_deviation.py
+# test_tool_image_deviation.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -14,13 +14,10 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.image.html#casatools.image.image.deviation
 #
 ##########################################################################
-'''
-Unit tests for task ia.deviation().
-'''
-
 import os
 import sys
 import shutil
@@ -28,7 +25,6 @@ import unittest
 import math
 import numpy
 import numbers
-
 
 from casatools import image as iatool
 from casatools import regionmanager as rgtool
@@ -278,9 +274,6 @@ class ia_deviation_test(unittest.TestCase):
             "incorrect grid pixel value"
         )
         zz.done()
-
-def suite():
-    return [ia_deviation_test]
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,6 +1,7 @@
 ##########################################################################
+# test_tool_image_pv.py
 #
-# Copyright (C) 2008, 2009
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
 # This script is free software; you can redistribute it and/or modify it
@@ -13,57 +14,10 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.image.html#casatools.image.image.pv
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
-#
-# <author>
-# Dave Mehringer
-# </author>
-#
-# <summary>
-# Test suite for the CASA tool method ia.pv()
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# Test for the ia.pv() tool method
-# </etymology>
-#
-# <synopsis>
-# Test the ia.pv() tool method
-# </synopsis> 
-#
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_ia_pv[test1,test2,...]
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard for the ia.pv() tool method to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
-
-###########################################################################
+##########################################################################
 
 import os
 import shutil
@@ -75,7 +29,6 @@ from casatools import image as iatool
 from casatools import quanta
 from casatools import table, ctsys
 ctsys_resolve = ctsys.resolve
-
 
 _tb = table( )
 
@@ -364,9 +317,6 @@ class ia_pv_test(unittest.TestCase):
         myia.done()
         for i in range(14):
             self.assertTrue(numpy.isclose(ary[i, :], 22-i).all(), "incorrect values for pa=270 deg")
-
-def suite():
-    return [ia_pv_test]
 
 if __name__ == '__main__':
     unittest.main()

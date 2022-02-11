@@ -1,7 +1,7 @@
 ##########################################################################
-# imfit_test.py
+# test_tool_image_fitprofile.py
 #
-# Copyright (C) 2008, 2009
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
 # This script is free software; you can redistribute it and/or modify it
@@ -14,65 +14,16 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.image.html#casatools.image.image.fitprofile
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
-#
-# <author>
-# Dave Mehringer
-# </author>
-#
-# <summary>
-# Test suite for the CASA task specfit and tool method ia.fitprofile
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-#   <li> <linkto class="task_specfit.py:description">imcollapse</linkto> 
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# Test for the specfit task and ia.fitprofile() tool method.
-# </etymology>
-#
-# <synopsis>
-# Test the specfit task and the ia.fitprofile() method upon which it is built.
-# </synopsis> 
-#
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_specfit[test1,test2,...]
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard for the specfit task to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
-
-###########################################################################
+##########################################################################
 import shutil
 import unittest
 import math
 import numpy
 import os
 from numpy import isnan
-
 
 from casatools import functional
 from casatools import regionmanager
@@ -1152,9 +1103,6 @@ class ia_fitprofile_test(unittest.TestCase):
         res = myia.fitprofile(spxtype="ltp",spxest=[0, 3],div=f[0])
         myia.done()
         self.assertTrue(abs(res['ltp']['solution'][0][0][0][1] - 3) < 0.01 )
-
-def suite():
-    return [ia_fitprofile_test]
 
 if __name__ == '__main__':
     unittest.main()

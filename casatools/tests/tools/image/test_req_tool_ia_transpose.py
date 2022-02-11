@@ -1,5 +1,5 @@
 ########################################################################
-# test_req_tool_ia_transpose.py
+# test_tool_image_transpose.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA
@@ -16,9 +16,8 @@
 #
 # CAS-12700
 #
-# Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_imtrans/about
-#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.image.html#casatools.image.image.transpose
 #
 ##########################################################################
 
