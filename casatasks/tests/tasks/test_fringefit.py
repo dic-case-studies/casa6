@@ -44,16 +44,18 @@ datapath = ctsys_resolve('unittest/fringefit/')
 class Fringefit_tests(unittest.TestCase):
     prefix = 'n08c1'
     msfile = prefix + '.ms'
-    uvfile = datapath + 'gaincaltest2.ms'
+    uvfile = 'gaincaltest2copy.ms'
 
     def setUp(self):
         shutil.copytree(os.path.join(datapath, self.msfile), self.msfile)
+        shutil.copytree(os.path.join(datapath, 'gaincaltest2.ms'), self.uvfile)
 
     def tearDown(self):
         shutil.rmtree(self.msfile)
         shutil.rmtree(self.prefix + '.sbdcal', True)
         shutil.rmtree(self.prefix + '-zerorates.sbdcal', True)
         shutil.rmtree(self.prefix + '.mbdcal', True)
+        shutil.rmtree(self.uvfile, True)
         shutil.rmtree('uvrange_with.cal', True)
 
     def test_sbd(self):
@@ -75,7 +77,7 @@ class Fringefit_tests(unittest.TestCase):
     def test_uvrange(self):
         ''' Check that the uvrnage parameter excludes antennas '''
         # create a caltable with uvrange selection
-        fringefit(self.uvfile, caltable='uvrange_with.cal', spw='2', refant='0', uvrange='<1160')
+        fringefit(vis=self.uvfile, caltable='uvrange_with.cal', spw='2', refant='0', uvrange='<1160')
 
         # get the subset of antennas that are used vs all
         tblocal.open('uvrange_with.cal')
