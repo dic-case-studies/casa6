@@ -92,10 +92,6 @@ class po_fractotpol_test(unittest.TestCase):
         self.assertTrue(mypo.fractotpol(True))
         mypo.open(neq_beams)
         self.assertRaises(Exception, mypo.fractotpol, "hh")
-        
-        
-def suite():
-    return [po_fractotpol_test]
 
 if __name__ == '__main__':
     unittest.main()

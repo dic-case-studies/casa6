@@ -649,6 +649,23 @@ class calibrater_test(unittest.TestCase):
         # Check that the CORRECTED_DATA is unchanged
         np.array_equal(corData, data)
 
+    def test_returnDict(self):
+        """ Check that the returndict function gives a dictonary with the expected keys """
+        cb.open(self._vis)
+        expectedKeys =  ['antennas', 'apply tables', 'field', 'intents', 'observation', 'scan', 'solve table', 'spw']
+        res = cb.returndict()
+        beforeSpw = res['spw']
+        resKeys = res.keys()
+
+        cb.selectvis(spw='1')
+        res = cb.returndict()
+        afterSpw = res['spw']
+
+        for key in resKeys:
+            self.assertTrue(key in expectedKeys)
+        self.assertTrue(len(resKeys) == len(expectedKeys))
+        self.assertFalse(np.array_equal(beforeSpw, afterSpw))
+        self.assertTrue(np.array_equal(afterSpw, [1]))
 
 
 def suite():
