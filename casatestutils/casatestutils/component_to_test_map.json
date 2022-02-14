@@ -271,12 +271,12 @@
             "comment":""
         },
         {
-            "testScript":"test_ia_collapse",
+            "testScript":"test_tool_image_collapse",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","Image Analysis","default"],
+            "testGroup":["casatools","Image Analysis"],
             "timeout":0,
             "comment":""
         },
@@ -401,12 +401,12 @@
             "comment":""
         },
         {
-            "testScript":"test_ia_deviation",
+            "testScript":"test_tool_image_deviation",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default","Image Analysis"],
+            "testGroup":["casatools","Image Analysis"],
             "timeout":0,
             "comment":""
         },
@@ -431,12 +431,12 @@
             "comment":""
         },
         {
-            "testScript":"test_ia_fitprofile",
+            "testScript":"test_tool_image_fitprofile",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default","Image Analysis"],
+            "testGroup":["casatools","Image Analysis"],
             "timeout":0,
             "comment":""
         },
@@ -621,32 +621,32 @@
             "comment":""
         },
         {
-            "testScript":"test_ia_pv",
+            "testScript":"test_tool_image_pv",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default","Image Analysis"],
+            "testGroup":["casatools","Image Analysis"],
             "timeout":0,
             "comment":""
         },
         {
-            "testScript":"test_ia_rebin",
+            "testScript":"test_tool_image_rebin",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","Image Analysis","default"],
+            "testGroup":["casatools","Image Analysis"],
             "timeout":0,
             "comment":""
         },
         {
-            "testScript":"test_ia_regrid",
+            "testScript":"test_tool_image_regrid",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","Image Analysis","default"],
+            "testGroup":["casatools","Image Analysis"],
             "timeout":0,
             "comment":""
         },
@@ -731,12 +731,22 @@
             "comment":""
         },
         {
-            "testScript":"test_ia_subimage",
+            "testScript":"test_tool_image",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default","Image Analysis"],
+            "testGroup":["casatools","Image Analysis"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_tool_image_subimage",
+            "testType":"casatools",
+            "maintainer":"David Mehringer",
+            "maintainerEmail":"dmehring@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools","Image Analysis"],
             "timeout":0,
             "comment":""
         },
@@ -1046,7 +1056,7 @@
             "maintainer":"Enrique Garcia",
             "maintainerEmail":"cgarcia@eso.org",
             "testOptions":[],
-            "testGroup":["mstransform", "HPC"],
+            "testGroup":["mstransform", "HPC","default"],
             "timeout":0,
             "comment":""
         },
@@ -1801,22 +1811,22 @@
             "comment":"DEFAULT"
         },
         {
-            "testScript":"test_req_tool_ia_fromcomplist",
+            "testScript":"test_tool_image_fromcomplist",
             "testType":"casatools",
             "maintainer":"Dave Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools"],
             "timeout":0,
             "comment":"DEFAULT"
         },
         {
-            "testScript":"test_req_tool_ia_pbcor",
+            "testScript":"test_tool_image_pbcor",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools"],
             "timeout":0,
             "comment":""
         },
@@ -1831,22 +1841,22 @@
             "comment":""
         },
         {
-            "testScript":"test_req_tool_ia_statistics",
+            "testScript":"test_tool_image_statistics",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools"],
             "timeout":0,
             "comment":""
         },
         {
-            "testScript":"test_req_tool_ia_transpose",
+            "testScript":"test_tool_image_transpose",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools"],
             "timeout":0,
             "comment":""
         },
