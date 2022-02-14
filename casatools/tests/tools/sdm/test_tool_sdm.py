@@ -75,6 +75,8 @@ class SdmFrommsTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        os.unlink('X_osro_013.55979.93803716435')
+        os.unlink('uid___A002_X72bc38_X000')
         shutil.rmtree(cls.vis_c,ignore_errors=True)
         shutil.rmtree(cls.vis_b,ignore_errors=True)
         shutil.rmtree(cls.vis_d,ignore_errors=True)
@@ -84,6 +86,7 @@ class SdmFrommsTest(unittest.TestCase):
         shutil.rmtree(cls.vis_h,ignore_errors=True)
         shutil.rmtree(cls.vis_i,ignore_errors=True)
         os.system('rm -rf test*exportasdm*.asdm')
+        os.system('rm -rf xosro2ref*')
 
     def tearDown(self):
         os.system('rm -rf myinput.ms')
