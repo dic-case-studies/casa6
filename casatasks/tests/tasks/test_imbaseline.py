@@ -10,6 +10,7 @@ import re
 import shutil
 import unittest
 import uuid
+from matplotlib.cbook import ls_mapper
 
 import numpy as np
 
@@ -74,20 +75,13 @@ class test_base(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        prefix = os.getcwd() + '/'
-        while True:
-            cls.foldername = str(uuid.uuid4())
-            path = prefix + cls.foldername
-            if not os.path.exists(path):
-                os.mkdir(path)
-                os.chdir(path)
-                break
+        cls.workdir = Workdir.create()
+        cls.workdir.chdir()
 
     @classmethod
     def tearDownClass(cls):
         os.chdir('..')
-        if os.path.exists(cls.foldername):
-            shutil.rmtree(cls.foldername)
+        cls.workdir.clean()
 
     def tearDown(self):
         eraseable_folder_register.clear()
@@ -1087,6 +1081,53 @@ class TestImbaseline(test_base):
          for _blfunc in blfunc
          for _dirkernel in dirkernel
          for _spkernel in spkernel]
+
+
+class Workdir():
+
+    def __init__(self, path: str):
+        self.path = path
+
+    def clean(self, dry_run: bool=False):
+        if os.path.exists(self.path) and dry_run is False:
+            try:
+                shutil.rmtree(self.path)
+            except Exception:
+                casalog.post('Some errors occured when clearing work dir', 'SEVERE')
+                raise RuntimeError
+
+    def chdir(self):
+        if os.path.exists(self.path):
+            os.chdir(self.path)
+        else:
+            casalog.post('Some errors occured when chdir to work dir', 'SEVERE')
+            raise RuntimeError
+
+    @classmethod
+    def create(cls, parent_path: str=None) -> 'Workdir':
+        def is_valid_parent_path(path):
+            return \
+                os.path.exists(path) and \
+                os.path.isdir(path) and \
+                os.access(path, os.W_OK)
+
+        if not parent_path:
+            parent_path = os.getcwd()
+
+        if is_valid_parent_path(parent_path):
+            path = parent_path
+            while True:
+                path = os.path.join(parent_path, str(uuid.uuid4()))
+                if not os.path.exists(path):
+                    os.mkdir(path)
+                    casalog.post(f'created working directory: {path}', 'WARN')
+                    break
+            if path == parent_path:
+                raise RuntimeError('Some errors occured when creating work dir')
+            return Workdir(path)
+
+        raise RuntimeError('Some errors occured when creating work dir')
+
 
 def suite():
     return [TestImsmooth, TestAbstractFileStack, TestImageShape, TestImbaseline, TestImage2MS, TestSdbaseline,
