@@ -382,11 +382,12 @@ class advisechansel_test(sutest_base):
         # First, try it in the data frame 
         su = synthesisutils()
 
-        inputms = 'twhya.short.ms'
+        inputms ='twhya.short.ms'
         # start: Chan 500 of spw0, end: Chan 3840 of spw1
         fsttopo = '356.55897119140625GHz'
         fentopo = '358.2029418946312GHz'
-        res = su.advisechansel(freqstart=fsttopo,freqend=fentopo, freqframe='TOPO', fieldid=2, msname=inputms)   
+        cw = '122.070kHz'
+        res = su.advisechansel(freqstart=fsttopo,freqend=fentopo, freqstep=cw, freqframe='TOPO', fieldid=2, msname=inputms)   
         #print('res=',res)
         # res['nchan'] = [3340, 3840], res['spw'] = [0,1], res['start']=[500,0]
         refdict = {'nchan': numpy.array([3340, 3840]), 'spw': numpy.array([0, 1]), 'start': numpy.array([500,   0])}
@@ -406,12 +407,15 @@ class advisechansel_test(sutest_base):
         for f in listoffreqs:
             fval.append(f['m0']['value'])
         fenlsrk = str(_qa.convert(str(min(fval))+'Hz', 'GHz')['value'])+'GHz' 
-
+        #fstlsrk= 356.58364232412697GHz
+        #fenlsrk= 358.22772677745405GHz
+        # extra padding makes slightly larger chan range?
+        reflsrkdict = {'nchan': numpy.array([3341, 3840]), 'spw': numpy.array([0, 1]), 'start': numpy.array([499,   0])}
         # run advisechansel with LSRK 
-        reslsrk = su.advisechansel(freqstart=fstlsrk,freqend=fenlsrk, freqframe='LSRK', fieldid=2, msname=inputms)   
+        reslsrk = su.advisechansel(freqstart=fstlsrk,freqend=fenlsrk, freqstep=cw, freqframe='LSRK', fieldid=2, msname=inputms)   
         del su
 
-        (poflsrk, errmsglsrk) = self.checkdict(reslsrk,refdict,'LSRK test')
+        (poflsrk, errmsglsrk) = self.checkdict(reslsrk,reflsrkdict,'LSRK test')
         self.assertTrue(all([pof,poflsrk]))
 
     def test_advisechanelsel_datasel_ephem(self):
@@ -446,17 +450,34 @@ class advisechansel_test(sutest_base):
         self.assertTrue(all([pof,pofext,pofdef]))
         
 
-    def test_su_adivsechansel_getfreqrange
-        '''Test that frequency range for givne data selections returned correctly'''
+    def test_su_adivsechansel_getfreqrange(self):
+        '''Test that frequency range for given data selections returned correctly'''
         # to be filled
-        pass
+        refdict = {'freqend': {'unit': 'Hz', 'value': 358203002929.7875}, 'freqstart': {'unit': 'Hz', 'value': 356558910156.25}}
+        su = synthesisutils()
+        inputms ='twhya.short.ms'
+        res = su.advisechansel(freqframe='TOPO', getfreqrange=True,spwselection='0:500~3839,1',fieldid=2, msname=inputms)
+        
+        (pof, errmsg) = self.checkdict(res, refdict, 'TOPO test') 
+        #fstlsrk= '356.58364232412697GHz' fenlsrk= '358.22772677745405GHz'
+        # corresponding LSRK frequecies
+        reslsrk = su.advisechansel(freqframe='LSRK', getfreqrange=True,spwselection='0:500~3839,1', fieldid=2, msname=inputms)
+        reflsrkdict = {'freqend': {'unit': 'Hz', 'value': 358227726777.45405}, 'freqstart': {'unit': 'Hz', 'value': 356583642324.12697}}
+        diff_freqstart = reslsrk['freqstart']['value']-reflsrkdict['freqstart']['value']
+        diff_freqend = reslsrk['freqend']['value']-reflsrkdict['freqend']['value']
+        # half the channel width (122.07 kHz) 
+        tol = 122070.0 
+        print(diff_freqstart, diff_freqend)
+        self.assertTrue(abs(diff_freqstart) < tol)
+        self.assertTrue(abs(diff_freqend) < tol)
+        self.assertTrue(pof)
 
-    def test_su_advisechansel_getfreqrange_ephem
-        '''Test that frequency range for givne data selections for an ephemeris object returned correctly'''
+    def test_su_advisechansel_getfreqrange_ephem(self):
+        '''Test that frequency range for given data selections for an ephemeris object returned correctly'''
         # to be filled
         pass
         
-    def test_su_adivsechanel_defaults
+    def test_su_adivsechanel_defaults(self):
         '''Test non specified parameter case for proper error/warning message '''
         pass    
 
