@@ -486,6 +486,31 @@ bool calibrater::setsolvebandpoly(const std::string& table,
   return true;
 }
 
+::casac::record*
+calibrater::returndict()
+{
+  ::casac::record* rec = 0;
+  if (! itsMS) {
+    *itsLog << LogIO::SEVERE << "Must first open a MeasurementSet."
+        << endl << LogIO::POST;
+    return nullptr;
+  }
+
+  // Grab variables to arrange in the dictionary
+  // applycal table(s) vc_p
+  // solvecal calibration term svc_p
+  // selection parameters mssel_p, or ms_p
+  Record outres = itsCalibrater->returndict();
+  Record statrec;
+  statrec.define("to apply", 0);
+  statrec.define("to solve", 0);
+  statrec.define("selected spw", 0);
+  rec = fromRecord(outres);
+  //cout << "mssel_p component: " << itsCalibrater->mssel_p << endl;
+  //cout << "ms_p component: " << itsCalibrater->ms_p << endl;
+    
+  return rec;
+}
 
 bool
 calibrater::state()

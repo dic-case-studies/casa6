@@ -91,9 +91,6 @@ class po_sigmalinpolint_test(unittest.TestCase):
         self.assertTrue(mypo.sigmalinpolint(outfile="g"))
         mypo.open(neq_beams)
         self.assertRaises(Exception, mypo.sigmalinpolint, "hh")
-        
-def suite():
-    return [po_sigmalinpolint_test]
 
 if __name__ == '__main__':
     unittest.main()
