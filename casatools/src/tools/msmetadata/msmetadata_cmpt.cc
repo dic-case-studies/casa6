@@ -682,6 +682,20 @@ bool msmetadata::close() {
     return false;
 }
 
+variant* msmetadata::corrbit(long spw) {
+    _FUNC(
+        _checkSpwId(spw, false);
+        auto mymap = _msmd->getCorrBits();
+     if (spw >= 0) {
+            return new variant(string(mymap[spw]));
+        }
+        else {
+            return new variant(_vectorStringToStdVectorString(mymap));
+        }
+    )
+    return nullptr;
+}
+
 variant* msmetadata::corrprodsforpol(long polid) {
     _FUNC(
         _checkPolId(polid, true);
@@ -691,7 +705,7 @@ variant* msmetadata::corrprodsforpol(long polid) {
             vector<ssize_t>(prods.shape().begin(),prods.shape().end())
         );
     )
-    return NULL;
+    return nullptr;
 }
 
 vector<long> msmetadata::corrtypesforpol(long polid) {

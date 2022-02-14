@@ -67,34 +67,17 @@ import shutil
 import unittest
 import numpy
 
-is_CASA6 = False
-try:
-    import casac
-    from tasks import *
-    from taskinit import *
-    from __main__ import *
-    _md = msmdtool()
-    _tb = tbtool()
-    _me = metool()
-    _qa = qatool()
-    _ms = mstool()
-    datadir = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/msmetadata/'
-    fixture = datadir + 'MSMetaData.ms'
-    writeable = datadir + 'checker.ms'
-    tdm2fdm = datadir + 'uid___A002_Xd7be9d_X4838-spw16-18-20-22.ms'
-except ImportError:
-    import os
-    from casatools import msmetadata, table, ctsys, ms, measures, quanta, ms
-    _md = msmetadata()
-    _tb = table()
-    _me = measures()
-    _qa = quanta()
-    _ms = ms()
-    is_CASA6 = True
-    datadir = ctsys.resolve('unittest/msmetadata/')
-    fixture = os.path.join(datadir,'MSMetaData.ms')
-    writeable = os.path.join(datadir,'checker.ms')
-    tdm2fdm = os.path.join(datadir, 'uid___A002_Xd7be9d_X4838-spw16-18-20-22.ms')
+import os
+from casatools import msmetadata, table, ctsys, ms, measures, quanta, ms
+_md = msmetadata()
+_tb = table()
+_me = measures()
+_qa = quanta()
+_ms = ms()
+datadir = ctsys.resolve('unittest/msmetadata/')
+fixture = os.path.join(datadir,'MSMetaData.ms')
+writeable = os.path.join(datadir,'checker.ms')
+tdm2fdm = os.path.join(datadir, 'uid___A002_Xd7be9d_X4838-spw16-18-20-22.ms')
 
 def near(a, b, epsilon):
     return abs((a-b)/max(a,b)) <= epsilon
@@ -1146,6 +1129,14 @@ class msmetadata_test(unittest.TestCase):
         self.assertRaises(Exception, self.md.meanfreq, 1)
         self.assertRaises(Exception, self.md.sideband, 1)
         self.assertRaises(Exception, self.md.effexposuretime)
+
+    def test_corrbit(self):
+        """Test corrbit()"""
+        got = self.md.corrbit()
+        self.assertTrue((got == ['UNKNOWN']).all())
+        got = self.md.corrbit(0)
+        self.assertTrue(got == 'UNKNOWN')
+        self.assertRaises(Exception, self.md.corrbit, 100)
 
     def test_datadescids(self):
         """Test datadescids()"""

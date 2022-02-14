@@ -11,9 +11,6 @@
                 	<include>msmetadata_private.h</include>
                 </private>
         </code>
-
-
-
         <description>
 
   The msmd tool provides methods to retrieve metadata from measurement sets.
@@ -514,7 +511,33 @@ windows in the dataset and close the tool.
             </example>
         </method>
         
-        <method name="corrprodsforpol" type="function">
+        <method name="corrbit" type="function">
+            <shortdescription>Get the value of the SPECTRAL_WINDOW::SDM_CORR_BIT column for the specified spw.</shortdescription>
+            <input>
+                <param name="spw" direction="in" type="int">
+                    <description>Spectral window ID. Less than zero implies all.</description>
+                    <value>-1</value>
+                </param>
+            </input>
+            <returns type="any"/>
+            <any type="variant"/>
+            <description>
+               Get the value of SPECTRAL_WINDOW::SDM_CORR_BIT column for the specified spw.
+               If spw &gt;= 0 is specified, a string value is returned. If spw &lt;0, a list
+               of string values with length equal to the number of spectral windows is returned.
+               If the SPECTRAL_WINDOW::SDM_CORR_BIT column does not exist, either
+               &quot;UNKNOWN&quot; is is returned if spw&gt;=0, or a list with nspw entries of
+               &quot;"UNKNOWN"&quot; is returned if spw&lt;0. 
+            </description>
+            <example>
+                msmd.open(&quot;my.ms&quot;)
+                # get value of SPECTRAL_WINDOW::SDM_CORR_BIT column for spw=2.
+                cb = msmd.corrbit(spw=2)
+                msmd.done()
+            </example>
+        </method>
+
+         <method name="corrprodsforpol" type="function">
             <shortdescription>Get the correlation products associated with the specified polarization ID</shortdescription>
             <input>
                 <param name="pol" type="int">
