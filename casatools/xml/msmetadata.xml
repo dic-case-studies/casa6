@@ -527,7 +527,7 @@ windows in the dataset and close the tool.
                of string values with length equal to the number of spectral windows is returned.
                If the SPECTRAL_WINDOW::SDM_CORR_BIT column does not exist, either
                &quot;UNKNOWN&quot; is is returned if spw&gt;=0, or a list with nspw entries of
-               &quot;"UNKNOWN"&quot; is returned if spw&lt;0. 
+               &quot;UNKNOWN&quot; is returned if spw&lt;0. 
             </description>
             <example>
                 msmd.open(&quot;my.ms&quot;)
