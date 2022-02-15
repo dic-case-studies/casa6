@@ -102,15 +102,26 @@ class test_base(unittest.TestCase):
         _base = ctsys_resolve(basename)
         src = os.path.join(_base, filename)
         dst = os.path.join(os.getcwd(), filename)
-        if not os.path.exists(src) or src == dst:
-            raise RuntimeError(f'Error is occured or existed on a path {src} or {filename}')
 
-        if os.path.exists(filename):
-            if os.path.isfile(filename) or os.path.islink(filename):
-                os.unlink(filename)
-            elif os.path.isdir(filename):
-                shutil.rmtree(filename)
-        os.system('cp -RH ' + os.path.join(_base, filename) + ' ' + filename)
+        if os.path.exists(dst):
+            if os.path.isfile(dst) or os.path.islink(dst):
+                os.unlink(dst)
+            elif os.path.isdir(dst):
+                shutil.rmtree(dst)
+        self.__copytree(src, dst)
+
+    def __copytree(self, src, dst):
+        if not os.path.exists(src) or src == dst:
+            raise RuntimeError(f'Error is occured or existed on a path {src} or {dst}')
+        try:
+            if os.path.isfile(src):
+                shutil.copy(src, dst)
+            elif os.path.isdir(src):
+                shutil.copytree(src, dst)
+            elif os.path.islink(src):
+                self.__copytree(os.readlink(src), dst)
+        except Exception as e:
+            raise RuntimeError(f'Some errors occured on filesystem, errno:[{e.errno}]')
 
     def _create_image(self, datapath, val=1, shape=[0, 0, 0, 0]):
         _ia = image()
