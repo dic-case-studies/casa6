@@ -938,12 +938,12 @@ class TestImbaseline(test_base):
         spkernel = ('none', 'gaussian', 'boxcar')
         kwidth = 5
 
-        filenames_existance_check = [linefile, bloutput]
+        filenames_existence_check = [linefile, bloutput]
 
         [self._exec_imbaseline(imagename, linefile, output_cont, bloutput, _maskmode, chans, thresh, avg_limit,
                                minwidth, edge, _blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
                                clipniter, clipthresh, _dirkernel, major, minor, pa, kimage, scale, _spkernel,
-                               kwidth, filenames_existance_check)
+                               kwidth, filenames_existence_check)
          for _maskmode in maskmode
          for _blfunc in blfunc
          for _dirkernel in dirkernel
@@ -951,7 +951,7 @@ class TestImbaseline(test_base):
 
     def _exec_imbaseline(self, imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                          edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh,
-                         dirkernel, major, minor, pa, kimage, scale, spkernel, kwidth, filenames_existance_check):
+                         dirkernel, major, minor, pa, kimage, scale, spkernel, kwidth, filenames_existence_check):
         params = dict(imagename=imagename, linefile=linefile, output_cont=output_cont, bloutput=bloutput,
                       maskmode=maskmode, chans=chans, thresh=thresh, avg_limit=avg_limit, minwidth=minwidth,
                       edge=edge, blfunc=blfunc, order=order, npiece=npiece, applyfft=applyfft, fftthresh=fftthresh,
@@ -962,7 +962,7 @@ class TestImbaseline(test_base):
             casalog.post(f'test_F_1_{self.f_1_count:03} [maskmode={maskmode}, blfunc={blfunc}, '
                          f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
             imbaseline(**params)
-            for file in filenames_existance_check:
+            for file in filenames_existence_check:
                 self.assertTrue(os.path.exists(file))
         finally:
             self.f_1_count += 1
