@@ -10,7 +10,6 @@ import re
 import shutil
 import unittest
 import uuid
-from matplotlib.cbook import ls_mapper
 
 import numpy as np
 
