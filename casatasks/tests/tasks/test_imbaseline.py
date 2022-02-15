@@ -56,7 +56,7 @@ class test_base(unittest.TestCase):
                 self.assertTrue(len(exception_pattern) > 0, msg='Internal Error')
                 with self.assertRaises(exception_type) as ctx:
                     func(self)
-                    self.fail(msg='The task must throw exception')
+                    self.fail(msg='The task must throw an exception')
                 the_exception = ctx.exception
                 message = str(the_exception)
                 self.assertIsNotNone(re.search(exception_pattern, message),
