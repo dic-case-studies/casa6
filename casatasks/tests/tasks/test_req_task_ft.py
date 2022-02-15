@@ -40,7 +40,7 @@ except ImportError:
     from __main__ import default
     from tasks import *
     from taskinit import *
-    
+    cl = cltool() 
     from casa_stack_manip import stack_frame_find
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 import sys
@@ -64,11 +64,15 @@ if CASA6:
 
 
 else:
-    datapath = os.environ.get('CASAPATH').split()[0] + 'uid___X02_X3d737_X1_01_small.ms'
-    modelpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ft/uid___X02_X3d737_X1_01_small.model'
-    simdata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ft/ft_test_simulated.ms'
-    simcomplist = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ft/ft_test_simulated_complist.cl'
-    simmodel = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ft/ft_test_simulated_image.im'
+    dp = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ft/'
+    datapath = dp + 'uid___X02_X3d737_X1_01_small.ms'
+    modelpath = dp + 'uid___X02_X3d737_X1_01_small.model'
+    simdata = dp + 'ft_test_simulated.ms'
+    simcomplist = dp + 'ft_test_simulated_complist.cl'
+    simmodel = dp + 'ft_test_simulated_image.im'
+    multiterm0 = dp + 'ft_test_multiterm.model.tt0'
+    multiterm1 = dp + 'ft_test_multiterm.model.tt1'
+
 
 
 datacopy = 'ft_test_copy.ms'
@@ -258,6 +262,37 @@ class ft_test(unittest.TestCase):
         self.assertTrue(np.isclose(finalMean, (0.11119791666666667+0j)))
 
     # Test for nterms and reffreq, requires additional models
+
+    def test_plp_support(self):
+        ''' CAS-13439: Test that componentlist plp spectral model is supported '''
+        # Create the complist to use in the test
+        reffreq = 8.53057441e10
+        rf = str(reffreq) + 'Hz'
+        index = [-0.8, 99.9, 99.9]
+        cl.addcomponent(
+            shape='point', flux=1, fluxunit='Jy', spectrumtype='plp',
+            index=index, freq=rf, dir='J2000 12h33m45.3s -23d01m11.2s'
+        )
+        cl.rename(ftcomponentlist)
+        cl.close()
+        # Run the ft command
+        ft(vis=datacopy, complist=ftcomponentlist, usescratch=True)
+        
+        # Find the MODEL_DATA column
+        columns = getColList(datacopy)
+        # Check that the MODEL_DATA column exists
+        self.assertTrue('MODEL_DATA' in columns)
+
+        tb.open(datacopy)
+        data = np.real(tb.getcol('MODEL_DATA')[0, :, 0])
+        tb.done()
+        tb.open(datacopy + '/SPECTRAL_WINDOW')
+        freqs = tb.getcell('CHAN_FREQ', 0)
+        tb.done()
+        x = freqs/reffreq
+        lx = np.log(x)
+        expec = x**(index[0] + index[1]*lx + index[2]*lx*lx)
+        self.assertTrue(np.allclose(data, expec), 'Incorrect intensities')
 
 def suite():
     return[ft_test]
