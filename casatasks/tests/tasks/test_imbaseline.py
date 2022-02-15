@@ -44,7 +44,7 @@ class test_base(unittest.TestCase):
 
     @staticmethod
     def exception_case(exception_type, exception_pattern):
-        """Decorator for the test case that is intended to throw exception.
+        """Decorator for tests intended to throw a specific exception.
 
             exception_type: type of exception
             exception_pattern: regex for inspecting exception message
