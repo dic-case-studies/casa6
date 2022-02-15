@@ -496,22 +496,22 @@ class TestSdsmooth(test_base):
     5-4. check SdsmoothParams
     """
     datapath = ctsys_resolve('unittest/imbaseline/')
-    expected_im = 'expected.im'
-    expected_ms = 'expected.ms'
+    input_image = 'expected.im'
+    input_ms = 'expected.ms'
     datacolumn = DATACOLUMN
     spkenel = 'gaussian'
     kwidth = 5
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.expected_im)
-        self._copy_test_files(self.datapath, self.expected_ms)
-        self.image_shape = get_image_shape(os.path.join(self.datapath, self.expected_im))
+        self._copy_test_files(self.datapath, self.input_image)
+        self._copy_test_files(self.datapath, self.input_ms)
+        self.image_shape = get_image_shape(os.path.join(self.datapath, self.input_image))
 
     def test_5_1(self):
         """5-1. simple successful case"""
-        image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
+        image_stack = CasaImageStack(top=UnerasableFolder(self.input_image))
         ms_stack = MeasurementSetStack()
-        ms_stack.push(EraseableFolder(self.expected_ms))
+        ms_stack.push(EraseableFolder(self.input_ms))
         SdsmoothMethods.execute(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
         self.assertEqual(image_stack.height(), 2)
         self.assertEqual(ms_stack.height(), 2)
@@ -521,7 +521,7 @@ class TestSdsmooth(test_base):
     @test_base.exception_case(RuntimeError, 'the stack is empty')
     def test_5_2(self):
         """5-2. invalid ms stack"""
-        image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
+        image_stack = CasaImageStack(top=UnerasableFolder(self.input_image))
         ms_stack = MeasurementSetStack()
         SdsmoothMethods.execute(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
 
@@ -530,7 +530,7 @@ class TestSdsmooth(test_base):
         """5-3. invalid image stack"""
         image_stack = CasaImageStack()
         ms_stack = MeasurementSetStack()
-        ms_stack.push(EraseableFolder(self.expected_ms))
+        ms_stack.push(EraseableFolder(self.input_ms))
         SdsmoothMethods.execute(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
 
     def test_5_4(self):
@@ -567,8 +567,8 @@ class TestSdbaseline(test_base):
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
-    expected_im = 'expected.im'
-    expected_ms = 'expected.ms'
+    input_image = 'expected.im'
+    input_ms = 'expected.ms'
     bloutput = 'test.csv'
     maskmode = 'auto'
     blparam = 'analytic_variable_blparam.txt'
@@ -589,16 +589,16 @@ class TestSdbaseline(test_base):
     datacolumn = DATACOLUMN
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.expected_im)
-        self._copy_test_files(self.datapath, self.expected_ms)
+        self._copy_test_files(self.datapath, self.input_image)
+        self._copy_test_files(self.datapath, self.input_ms)
         self._copy_test_files(self.datapath, self.blparam)
-        self.image_shape = get_image_shape(os.path.join(self.datapath, self.expected_im))
+        self.image_shape = get_image_shape(os.path.join(self.datapath, self.input_image))
 
     def test_6_1(self):
         """6-1. simple successful case"""
-        image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
+        image_stack = CasaImageStack(top=UnerasableFolder(self.input_image))
         ms_stack = MeasurementSetStack()
-        ms_stack.push(EraseableFolder(self.expected_ms))
+        ms_stack.push(EraseableFolder(self.input_ms))
         SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit,
                                   self.minwidth, self.edge, self.blfunc, self.order, self.npiece, self.applyfft,
                                   self.fftthresh, self.addwn, self.rejwn, self.blparam, self.clipniter, self.clipthresh,
@@ -610,7 +610,7 @@ class TestSdbaseline(test_base):
     @test_base.exception_case(RuntimeError, 'the stack is empty')
     def test_6_2(self):
         """6-2. invalid ms stack"""
-        image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
+        image_stack = CasaImageStack(top=UnerasableFolder(self.input_image))
         ms_stack = MeasurementSetStack()
         SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit,
                                   self.minwidth, self.edge, self.blfunc, self.order, self.npiece, self.applyfft,
@@ -622,7 +622,7 @@ class TestSdbaseline(test_base):
         """6-3. invalid image stack"""
         image_stack = CasaImageStack()
         ms_stack = MeasurementSetStack()
-        ms_stack.push(EraseableFolder(self.expected_ms))
+        ms_stack.push(EraseableFolder(self.input_ms))
         SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit,
                                   self.minwidth, self.edge, self.blfunc, self.order, self.npiece, self.applyfft,
                                   self.fftthresh, self.addwn, self.rejwn, self.blparam, self.clipniter, self.clipthresh,
@@ -693,18 +693,18 @@ class TestImageSubtraction(test_base):
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
-    expected_im = 'expected.im'
-    expected_imsmoothed = 'expected.imsmooth.im'
-    expected_bl = 'expected.bl.im'
+    existing_image = 'expected.im'
+    existing_imsmoothed_image = 'expected.imsmooth.im'
+    existing_baselined_image = 'expected.bl.im'
     input_image = ('input_image.im', 1.5, [64, 64, 4, 128])
     smoothed_image = ('smoothed_image.im', 2.0, [64, 64, 4, 128])
     smoothed_and_subtracted_image = ('smoothed_and_subtracted_image.im', 2.5, [64, 64, 4, 128])
     testdata_err = ('testdata_err.im', 1, [65, 64, 4, 128])
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.expected_im)
-        self._copy_test_files(self.datapath, self.expected_imsmoothed)
-        self._copy_test_files(self.datapath, self.expected_bl)
+        self._copy_test_files(self.datapath, self.existing_image)
+        self._copy_test_files(self.datapath, self.existing_imsmoothed_image)
+        self._copy_test_files(self.datapath, self.existing_baselined_image)
         self._create_image(self.input_image[0], self.input_image[1], self.input_image[2])
         self._create_image(self.smoothed_image[0], self.smoothed_image[1], self.smoothed_image[2])
         self._create_image(self.smoothed_and_subtracted_image[0], self.smoothed_and_subtracted_image[1],
@@ -713,17 +713,17 @@ class TestImageSubtraction(test_base):
 
     def test_7_1(self):
         """7-1. successful test: output = input_image - (smoothed_image - smoothed_and_subtracted_image)"""
-        image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
-        image_stack.push(EraseableFolder(self.expected_imsmoothed))
-        image_stack.push(EraseableFolder(self.expected_bl))
+        image_stack = CasaImageStack(top=UnerasableFolder(self.existing_image))
+        image_stack.push(EraseableFolder(self.existing_imsmoothed_image))
+        image_stack.push(EraseableFolder(self.existing_baselined_image))
         output = 'output_7_1.im'
         ImageSubtractionMethods.execute(output, image_stack)
         self.assertTrue(os.path.exists(output))
 
     def test_7_2(self):
         """7-2. successful test: output = subtracted_image"""
-        image_stack = CasaImageStack(top=UnerasableFolder(self.expected_im))
-        image_stack.push(EraseableFolder(self.expected_bl))
+        image_stack = CasaImageStack(top=UnerasableFolder(self.existing_image))
+        image_stack.push(EraseableFolder(self.existing_baselined_image))
         output = 'output_7_2.im'
         ImageSubtractionMethods.execute(output, image_stack)
         self.assertTrue(os.path.exists(output))
@@ -779,33 +779,33 @@ class TestMS2Image(test_base):
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
-    expected_im = 'expected.im'
-    expected_orig_im = 'expected_orig.im'
-    expected_ms = 'expected.ms'
-    expected_bl_ms = 'expected.bl.ms'
+    input_image = 'expected.im'
+    original_image = 'expected_orig.im'
+    input_ms = 'expected.ms'
+    baselined_ms = 'expected.bl.ms'
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.expected_im)
-        self._copy_test_files(self.datapath, self.expected_ms)
-        self._copy_test_files(self.datapath, self.expected_bl_ms)
-        if os.path.exists(self.expected_im):
-            os.rename(self.expected_im, self.expected_orig_im)
+        self._copy_test_files(self.datapath, self.input_image)
+        self._copy_test_files(self.datapath, self.input_ms)
+        self._copy_test_files(self.datapath, self.baselined_ms)
+        if os.path.exists(self.input_image):
+            os.rename(self.input_image, self.original_image)
         else:
             raise RuntimeError('some errors occured in copying files')
-        if not os.path.exists(self.expected_orig_im):
+        if not os.path.exists(self.original_image):
             raise RuntimeError('some errors occured in copying files')
-        self.image_shape = get_image_shape(self.expected_orig_im)
+        self.image_shape = get_image_shape(self.original_image)
 
     def test_8_1(self):
         """8-1. successful test"""
-        MS2ImageMethods.convert(base_image=self.expected_orig_im,
-                                input_ms=self.expected_ms,
+        MS2ImageMethods.convert(base_image=self.original_image,
+                                input_ms=self.input_ms,
                                 input_image_shape=self.image_shape,
                                 datacolumn=DATACOLUMN)
-        self.assertTrue(os.path.exists(self.expected_im))
-        with tool_manager(self.expected_im, image) as ia:
+        self.assertTrue(os.path.exists(self.input_image))
+        with tool_manager(self.input_image, image) as ia:
             arr1 = ia.getchunk()
-        with tool_manager(self.expected_orig_im, image) as ia:
+        with tool_manager(self.original_image, image) as ia:
             arr2 = ia.getchunk()
         self.assertTrue(np.array_equal(arr1, arr2))
 
@@ -813,26 +813,26 @@ class TestMS2Image(test_base):
     def test_8_2(self):
         """8-2. base image error"""
         MS2ImageMethods.convert(base_image=None,
-                                input_ms=self.expected_ms,
+                                input_ms=self.input_ms,
                                 input_image_shape=self.image_shape,
                                 datacolumn=DATACOLUMN)
 
     @test_base.exception_case(TypeError, 'stat: path should be string, ')
     def test_8_3(self):
         """8-3. MS error"""
-        MS2ImageMethods.convert(base_image=self.expected_orig_im,
-                                input_ms=self.expected_bl_ms,
+        MS2ImageMethods.convert(base_image=self.original_image,
+                                input_ms=self.baselined_ms,
                                 input_image_shape=self.image_shape,
                                 datacolumn=DATACOLUMN)
         converted = 'expected.bl.im'
         self.assertTrue(os.path.exists(converted))
-        with tool_manager(self.expected_orig_im, image) as ia:
+        with tool_manager(self.original_image, image) as ia:
             arr1 = ia.getchunk()
         with tool_manager(converted, image) as ia:
             arr2 = ia.getchunk()
         self.assertFalse(np.array_equal(arr1, arr2))
 
-        MS2ImageMethods.convert(base_image=self.expected_orig_im,
+        MS2ImageMethods.convert(base_image=self.original_image,
                                 input_ms=None,
                                 input_image_shape=self.image_shape,
                                 datacolumn=DATACOLUMN)
@@ -846,16 +846,16 @@ class TestGlobalMethods(test_base):
     9-3. get_image_shape: failure
     """
     datapath = ctsys_resolve('unittest/imbaseline/')
-    expected_im = 'expected.im'
+    input_image = 'expected.im'
     g192_im = 'g192_a2.image'
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.expected_im)
+        self._copy_test_files(self.datapath, self.input_image)
         self._copy_test_files(self.datapath, self.g192_im)
 
     def test_9_1(self):
         """9-1. get_image_shape: successful"""
-        shape = get_image_shape(self.expected_im)
+        shape = get_image_shape(self.input_image)
         self.assertTrue(np.array_equal(shape.im_shape, [20, 20, 100]))
         self.assertTrue(np.array_equal(shape.axis_dir, [0, 1]))
         self.assertEqual(shape.axis_sp, 2)
@@ -899,20 +899,20 @@ class TestImbaseline(test_base):
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
-    expected = 'ref_multipix.signalband'
+    input_image = 'ref_multipix.signalband'
     blparam = 'analytic_variable_blparam_spw1.txt'
     f_1_count = 1
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.expected)
+        self._copy_test_files(self.datapath, self.input_image)
         self._copy_test_files(self.datapath, self.blparam)
 
     def test_f_1(self):
         """F-1. maskmode/blfunc/dirkernel/spkernel combination test"""
-        imagename = self.expected
+        imagename = self.input_image
         linefile = 'output_f_1'
         output_cont = True
-        bloutput = self.expected + '.bloutput'
+        bloutput = self.input_image + '.bloutput'
         maskmode = ('auto', 'list')
         chans = ''
         thresh = 5.0
@@ -994,7 +994,7 @@ class TestImbaseline(test_base):
 
     def test_f_3(self):
         """F-3. output_cont is False"""
-        imagefile = self.expected
+        imagefile = self.input_image
         linefile = 'output_f_3'
         dirkernel = 'gaussian'
         spkernel = 'gaussian'
@@ -1017,7 +1017,7 @@ class TestImbaseline(test_base):
 
     def test_f_4(self):
         """F-4. specify bloutput path"""
-        imagefile = self.expected
+        imagefile = self.input_image
         linefile = 'output_f_4'
         dirkernel = 'gaussian'
         spkernel = 'gaussian'
@@ -1026,7 +1026,7 @@ class TestImbaseline(test_base):
         pa = '0deg'
         blfunc = 'sinusoid'
         output_cont = True
-        bloutput = self.expected + 'bloutput'
+        bloutput = self.input_image + 'bloutput'
 
         imbaseline(imagename=imagefile,
                    linefile=linefile,
