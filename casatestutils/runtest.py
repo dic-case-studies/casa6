@@ -11,7 +11,7 @@ import unittest
 import json
 import datetime
 import platform
-import re
+
 ########################################################################################################################
 ######################################            Imports / Constants            #######################################
 ########################################################################################################################
@@ -61,7 +61,6 @@ IS_CASA6 = False
 CASA6 = False
 verbose = False
 DRY_RUN = False
-RUN_ALL = False
 
 # JIRA BRANCH TO CHECKOUT
 JIRA_BRANCH = None
@@ -454,8 +453,7 @@ def unpack_tarball(pkg, outputdir):
     print(cmd)
     r = ShellRunner()
     output = r.runshell(cmd, default_timeout, cwd=os.getcwd())
-    # Remove .tar.xz extension and py3.x extension as necessary
-    installpath = outputdir + "/" + re.sub(r'-py3\..?', '', os.path.basename(pkg).replace(".tar.xz",""))
+    installpath = outputdir + "/" + os.path.basename(pkg).replace(".tar.xz","")
     return installpath
 
 def get_casatestutils_exec_path(pkg_dir):
@@ -505,7 +503,19 @@ def run(testnames, branch=None):
             # Copy Tests to Working Directory
             os.makedirs(workdir)
 
-            print("Tests: {}".format(testnames))
+            # Remove Duplicates
+            # Since working directory is based on script name
+            # We need to remove multiple calls to the same script
+            setlist = []
+            for duplicate in list(set([ x.split("/")[-1] for x in testnames])):
+                inlist = True
+                for test in testnames:
+                    if duplicate in test:
+                        if inlist:
+                            setlist.append(test)
+                            inlist = False
+            testnames = setlist
+            print("Tests: {}".format(sorted(testnames)))
             gittest = True
             if branch ==None:
                 branch = 'master'
@@ -574,6 +584,7 @@ def run(testnames, branch=None):
                         print("No Tests to Run")
                         sys.exit()
                     else:
+                        
                         myworkdir = os.getcwd()
                         os.chdir("{}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
                         print("Test Directory: {}".format(os.getcwd()))
@@ -997,7 +1008,7 @@ if __name__ == "__main__":
                         component_to_test_map = json.load(ctt)
                 except:
                     print("No JSON file to Map")
-
+            no_test_components = []
             for c in components:
                 _isComponent = False
                 component = c.strip()
@@ -1005,14 +1016,17 @@ if __name__ == "__main__":
                     #print(component, myDict["testGroup"])
                     if component in myDict["testGroup"]:
                         _isComponent = True
-                        testnames.append(myDict["testScript"])
+                        if myDict["testScript"] not in testnames: testnames.append(myDict["testScript"])
                 if not _isComponent:
-                    print("No Tests for Component: {}. Using Component 'default'".format(component))
-                    component = 'default'
-                    for myDict in component_to_test_map["testlist"]:
-                        if component in myDict["testGroup"]:
-                            _isComponent = True
-                            testnames.append(myDict["testScript"])
+                    print("No Tests for Component: {}".format(component))
+                    no_test_components.append(component)
+            if (len(no_test_components) > 0) and (len(testnames)==0):
+                print("No Test Suite for Component(s): {} Using Component 'default'".format(no_test_components))
+                component = 'default'
+                for myDict in component_to_test_map["testlist"]:
+                    if component in myDict["testGroup"]:
+                        _isComponent = True
+                        testnames.append(myDict["testScript"])
 
     if args.verbose:
         verbose = True
@@ -1054,27 +1068,14 @@ if __name__ == "__main__":
         if arg.startswith(("-", "--")):
             raise ValueError('unrecognized argument: %s'%(arg))
             sys.exit()
-
         else:
-
-            if arg.startswith("test") and not RUN_ALL:
-                if len([x.strip() for x in arg.split(",")]) > 1:
-                    testnames.extend([x.strip() for x in arg.split(",")])
-                else:
-                    testnames.append(arg)
-            # local Path file
-            #elif arg.startswith("./") and arg.endswith(".py") and not RUN_ALL:
-            elif arg.startswith("./") and ".py" in arg and not RUN_ALL:
-
+            tests = [x.strip() for x in arg.split(",")]
+            for test in tests:
                 try:
-                    real_path = os.path.realpath(arg[2:])
-                    testnames.append(real_path)
-                except:
-                    traceback.print_exc()
-
-            elif (arg.startswith("../") or arg.startswith("/"))  and ".py" in arg and not RUN_ALL:
-                try:
-                    real_path = os.path.realpath(arg)
+                    real_path = os.path.realpath(test)
+                    if ("test_" not in real_path) or  ("test_" not in real_path) or ( os.path.exists(real_path) ==False):
+                        print("{} is not a Test File".format(test))
+                        continue
                     testnames.append(real_path)
                 except:
                     traceback.print_exc()
@@ -1120,7 +1121,6 @@ if __name__ == "__main__":
                                         tests.append(os.path.join(root, file))
                 testnames = tests
 
-            print("Testnames: {}".format(testnames))
             if tests_to_ignore is not None:
                 print("\nTests to Ignore: ",tests_to_ignore )
                 indices = []
