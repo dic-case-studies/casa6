@@ -889,7 +889,7 @@ class TestGlobalMethods(test_base):
 
 
 class TestImbaseline(test_base):
-    """Test full of imbaseline.
+    """imbaseline tests.
 
     F-1. maskmode/blfunc/dirkernel/spkernel combination test
     F-2. imagefile is None
