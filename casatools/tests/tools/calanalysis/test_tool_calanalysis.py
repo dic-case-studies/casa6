@@ -1,20 +1,31 @@
+##########################################################################
+# test_tool_calanalysis.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.calanalysis.html
+#
+#
+##########################################################################
 import os
 import unittest
 
 import numpy
 
-try:
-    # CASA 6
-    from casatools import calanalysis, ctsys
-    ca = calanalysis()
-    ca_datapath = ctsys.resolve('unittest/calanalysis/')
-except ImportError:
-    # CASA 5
-    import casac
-    ca = casac.casac.calanalysis()
-    ca_datapath = os.environ.get('CASAPATH').split()[0]
-    ca_datapath = os.path.join(ca_datapath, 'casatestdata/unittest/calanalysis/')
-
+from casatools import calanalysis, ctsys
+ca = calanalysis()
+ca_datapath = ctsys.resolve('unittest/calanalysis/')
 
 class calanalysis_tsys1_base(unittest.TestCase):
 
@@ -242,12 +253,6 @@ class calanalysis_tsys1_fit(calanalysis_tsys1_base):
         fit_len_field = 28
         self.assertEquals(len(fit_amp_field), fit_len_field)
         self._check_ca_fit(fit_amp_field)
-
-
-def suite():
-    return [calanalysis_tsys1_introspective,
-            calanalysis_tsys1_get,
-            calanalysis_tsys1_fit]
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,30 +1,41 @@
-# unit test for the exportasdm task
-
+#########################################################################
+# test_tool_sdm.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.sdm.html
+#
+# Testing of methods frommms and summarystr
+#
+##########################################################################
 import os
 import sys
 import shutil
 import unittest
 
-try:
-    from casatools import ctsys, sdm, ms
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)    
+from casatools import ctsys, sdm, ms
+ctsys_resolve = ctsys.resolve
 
-### for testhelper import
-#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-#import testhelper as th
 from casatestutils import testhelper as th
 
 datapath = ctsys_resolve('unittest/sdmtool/')
 
 _ms = ms( )
-class exportasdm_test(unittest.TestCase):
+
+# Class of tests for sdm.fromms
+class SdmFrommsTest(unittest.TestCase):
     
     vis_b = 'ngc4826_bima_7fields_7spw.ms'
     vis_c = 'M100-X220-shortened.ms'
@@ -61,6 +72,21 @@ class exportasdm_test(unittest.TestCase):
             os.system('ln -sf '+datapath+'uid___A002_X72bc38_X000'+' .')
             mysdm = sdm('uid___A002_X72bc38_X000')
             mysdm.toms('asdm.ms', scans='0:2')
+
+    @classmethod
+    def tearDownClass(cls):
+        os.unlink('X_osro_013.55979.93803716435')
+        os.unlink('uid___A002_X72bc38_X000')
+        shutil.rmtree(cls.vis_c,ignore_errors=True)
+        shutil.rmtree(cls.vis_b,ignore_errors=True)
+        shutil.rmtree(cls.vis_d,ignore_errors=True)
+        shutil.rmtree(cls.vis_e,ignore_errors=True)
+        shutil.rmtree(cls.vis_f,ignore_errors=True)
+        shutil.rmtree(cls.vis_g,ignore_errors=True)
+        shutil.rmtree(cls.vis_h,ignore_errors=True)
+        shutil.rmtree(cls.vis_i,ignore_errors=True)
+        os.system('rm -rf test*exportasdm*.asdm')
+        os.system('rm -rf xosro2ref*')
 
     def tearDown(self):
         os.system('rm -rf myinput.ms')
@@ -290,38 +316,54 @@ class exportasdm_test(unittest.TestCase):
         omsname = "test"+str(12)+self.out
         os.system('rm -rf '+omsname+'; mv  asdm '+omsname)
 
+# Class of tests for sdm.summarystr
+class SdmSummarystrTest(unittest.TestCase):
 
-class exportasdm_test2(unittest.TestCase):
-
-    vis_b = 'test.ms'
-    vis_c = 'M100-X220-shortened.ms'
-    vis_d = 'ngc4826.tutorial.ngc4826.ll.5.ms'
-    vis_e = 'g19_d2usb_targets_line-shortened.ms'
-    vis_f = 'Itziar.ms'
-    vis_g = 'M51.ms'
-    vis_h = 'xosro2ref.ms'
-    vis_i = 'asdm.ms'
-    
-    def setUp(self):  
+    def setUp(self):
         pass
 
     def tearDown(self):
-        shutil.rmtree(self.vis_c,ignore_errors=True)
-        shutil.rmtree(self.vis_b,ignore_errors=True)
-        shutil.rmtree(self.vis_d,ignore_errors=True)
-        shutil.rmtree(self.vis_e,ignore_errors=True)
-        shutil.rmtree(self.vis_f,ignore_errors=True)
-        shutil.rmtree(self.vis_g,ignore_errors=True)
-        shutil.rmtree(self.vis_h,ignore_errors=True)
-        shutil.rmtree(self.vis_i,ignore_errors=True)
-        os.system('rm -rf test*exportasdm*.asdm')
-    
-    def test1a(self):
-        '''Exportasdm: Cleanup'''
         pass
 
-def suite():
-    return [exportasdm_test,exportasdm_test2]
+    def test_alma_asdm(self):
+        ''' ALMA M51 data'''
+        # used in test_importasdm, test_importasdm_mms.
+        mysdm = sdm(datapath + 'uid___X5f_X18951_X1')
+        # self.doASDMSummary(asdmpath,174)
+        summary = mysdm.summarystr().splitlines()
+        self.assertTrue(len(summary) == 166, summary[0] if len(summary) == 1 else None)
+
+    def test_vla_asdm(self):
+        '''VLA data'''
+        # used in test_importevla, test_importasdm_mms, test_importasdm
+        mysdm = sdm(datapath + 'X_osro_013.55979.93803716435')
+        summary = mysdm.summarystr().splitlines()
+        self.assertTrue(len(summary) == 246, summary[0] if len(summary) == 1 else None)
+
+    def test_aca_asdm(self):
+        '''ACA with mixed pol/channelisation'''
+        # used in test_importasdm_mms, test_importasdm
+        mysdm = sdm(datapath + 'uid___A002_X72bc38_X000')
+        summary = mysdm.summarystr().splitlines()
+        self.assertTrue(len(summary) == 2513, summary[0] if len(summary) == 1 else None)
+
+    def test_12m_asdm(self):
+        ''' 12m with mixedl pol/channelisation'''
+        # used in test_importasdm_mms, test_importasdm
+        mysdm = sdm(datapath + 'uid___A002_X71e4ae_X317_short')
+        summary = mysdm.summarystr().splitlines()
+        self.assertTrue(len(summary) == 1017, summary[0] if len(summary) == 1 else None)
+
+    def test_bogus_file(self):
+        ''' 12m with mixedl pol/channelisation'''
+        # used in test_importasdm_mms, test_importasdm
+        passes = False
+        try:
+            mysdm = sdm('/tmp/some_nonexistent_directory_for_our_test')
+            summary = mysdm.summarystr()
+        except:
+            passes = True
+        self.assertTrue(passes, "non-existent file fails to throw an exception")
 
 if __name__ == '__main__':
     unittest.main()

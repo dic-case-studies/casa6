@@ -1,11 +1,31 @@
+#########################################################################
+# test_tool_sdm_toms.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.sdm.html#casatools.sdm.sdm.toms
+#
+# Testing of method sdm.toms
+#
+##########################################################################
 import os
 import sys
 import shutil
 import numpy
 from casatools import ctsys, sdm, ms, table, quanta, measures, calibrater
-### for testhelper import
-#sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-#import testhelper as th
+
 #from xmlhelper import readXML
 from casatestutils import testhelper as th
 from casatestutils.xmlhelper import readXML
@@ -2408,11 +2428,6 @@ class asdm_import8(test_base):
         retValue['error_msgs'] = res['error_msgs']
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
-
-def suite():
-    ### asdm_import4 exists in the importasdm test, it involves flagging - which is largely
-    ### only implemented in the task, not this tool
-    return [asdm_import1, asdm_import2, asdm_import3, asdm_import5, asdm_import6, asdm_import7, asdm_import8]
 
 if __name__ == '__main__':
     unittest.main()

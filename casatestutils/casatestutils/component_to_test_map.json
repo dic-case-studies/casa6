@@ -1,12 +1,12 @@
 {
     "testlist": [
         {
-            "testScript":"test_agentflagger",
+            "testScript":"test_tool_agentflagger",
             "testType":"casatools",
             "maintainer":"Sandra Castro",
             "maintainerEmail":"scastro@eso.org",
             "testOptions":[],
-            "testGroup":["agentflagger","casatools","default"],
+            "testGroup":["agentflagger","casatools"],
             "timeout":0,
             "comment":""
         },
@@ -31,16 +31,26 @@
             "comment":""
         },
         {
-            "testScript":"test_calanalysis",
+            "testScript":"test_tool_calanalysis",
             "testType":"casatools",
             "maintainer":"George Moellenbrock",
             "maintainerEmail":"gmoellen@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools","calanalysis"],
             "timeout":0,
             "comment":""
         },
-         {
+        {
+            "testScript":"test_tool_calibrater",
+            "testType":"casatools",
+            "maintainer":"Neal Schweighart",
+            "maintainerEmail":"nschweig@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools","Calibration"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_casampi",
             "testType":"casampi",
             "maintainer":"Federico Montesino",
@@ -61,12 +71,12 @@
             "comment":""
         },
         {
-            "testScript":"test_componentlist",
+            "testScript":"test_tool_componentlist",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools"],
             "timeout":0,
             "comment":""
         },
@@ -81,22 +91,22 @@
             "comment":"DEFAULT"
         },
         {
-            "testScript":"test_coordsys",
+            "testScript":"test_tool_coordsys",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools"],
             "timeout":0,
             "comment":""
         },
         {
-            "testScript":"test_createmultims",
+            "testScript":"test_tool_ms_createmultims",
             "testType":"casatools",
             "maintainer":"Sandra Castro",
             "maintainerEmail":"scastro@eso.org",
             "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools"],
             "timeout":0,
             "comment":""
         },
@@ -1011,42 +1021,32 @@
             "comment":"DEFAULT"
         },
         {
-            "testScript":"test_me_shift",
+            "testScript":"test_tool_measures",
             "testType":"casatools",
             "maintainer":"Takahiro Tsutsumi",
             "maintainerEmail":"ttsutsum@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default","default"],
+            "testGroup":["casatools","casacore"],
             "timeout":0,
             "comment":""
         },
         {
-            "testScript":"test_measures",
-            "testType":"casatools",
-            "maintainer":"Takahiro Tsutsumi",
-            "maintainerEmail":"ttsutsum@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_msmetadata",
+            "testScript":"test_tool_msmetadata",
             "testType":"casatools",
             "maintainer":"Dave Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","msmd","default"],
+            "testGroup":["casatools","msmd"],
             "timeout":0,
             "comment":""
         },
         {
-            "testScript":"test_mstool",
+            "testScript":"test_tool_ms",
             "testType":"casatools",
             "maintainer":"Sanjay Bhatnagar",
             "maintainerEmail":"sbhatnag@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools","casacore"],
             "timeout":0,
             "comment":"DEFAULT"
         },
@@ -1056,7 +1056,7 @@
             "maintainer":"Enrique Garcia",
             "maintainerEmail":"cgarcia@eso.org",
             "testOptions":[],
-            "testGroup":["mstransform", "HPC","default"],
+            "testGroup":["mstransform", "HPC","Visibility Manipulation","default"],
             "timeout":0,
             "comment":""
         },
@@ -1171,162 +1171,12 @@
             "comment":""
         },
         {
-            "testScript":"test_po_complexfraclinpol",
+            "testScript":"test_tool_imagepol",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_complexlinpol",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_depolratio",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_fourierrotationmeasure",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_fraclinpol",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_fractotpol",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_linpolint",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_linpolposang",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_rotationmeasure",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_sigma",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_sigmadepolratio",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_sigmafraclinpol",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_sigmafractotpol",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_sigmalinpolint",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_sigmalinpolposang",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_po_totpolint",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools","imagepol"],
             "timeout":0,
             "comment":""
         },
@@ -1861,44 +1711,24 @@
             "comment":""
         },
         {
-            "testScript":"test_req_tool_ms_statwt",
+            "testScript":"test_tool_regionmanager",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools","region manager"],
+            "timeout":0,
+            "comment":""
+        },
+        {
+            "testScript":"test_tool_ms_statwt",
+            "testType":"casatools",
+            "maintainer":"David Mehringer",
+            "maintainerEmail":"dmehring@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools","statwt"],
             "timeout":0,
             "comment":"DEFAULT"
-        },
-        {
-            "testScript":"test_rg_frombcs",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","region manager","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_rg_fromtextfile",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","region manager","default"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_rg_selectedchannels",
-            "testType":"casatools",
-            "maintainer":"David Mehringer",
-            "maintainerEmail":"dmehring@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","region manager","default"],
-            "timeout":0,
-            "comment":""
         },
         {
             "testScript":"test_sdatmcor",
@@ -1971,32 +1801,22 @@
             "comment":""
         },
         {
-            "testScript":"test_sdm_fromms",
+            "testScript":"test_tool_sdm",
             "testType":"casatools",
             "maintainer":"Bob Garwood",
             "maintainerEmail":"bgarwood@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools","sdm"],
             "timeout":0,
             "comment":"DEFAULT"
         },
         {
-            "testScript":"test_sdm_summarystr",
+            "testScript":"test_tool_sdm_toms",
             "testType":"casatools",
             "maintainer":"Bob Garwood",
             "maintainerEmail":"bgarwood@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
-            "timeout":0,
-            "comment":"DEFAULT"
-        },
-        {
-            "testScript":"test_sdm_toms",
-            "testType":"casatools",
-            "maintainer":"Bob Garwood",
-            "maintainerEmail":"bgarwood@nrao.edu",
-            "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools","sdm"],
             "timeout":0,
             "comment":"DEFAULT"
         },
@@ -2176,7 +1996,7 @@
             "maintainer":"Bob Garwood",
             "maintainerEmail":"bgarwood@nrao.edu",
             "testOptions":[],
-            "testGroup":["default","casatools","Imaging","linearmosaic"],
+            "testGroup":["casatools","Imaging","linearmosaic"],
             "timeout":0,
             "comment":""
         },
@@ -2201,12 +2021,12 @@
             "comment":""
         },
         {
-            "testScript":"test_uvfits",
+            "testScript":"test_tool_ms_uvfits",
             "testType":"casatools",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["casatools","default"],
+            "testGroup":["casatools"],
             "timeout":0,
             "comment":""
         },
@@ -2231,12 +2051,12 @@
             "comment":"DEFAULT"
         },
         {
-            "testScript":"test_vpmanager",
+            "testScript":"test_tool_vpmanager",
             "testType":"casatools",
             "maintainer":"Dirk Petry",
             "maintainerEmail":"dpetry@eso.org",
             "testOptions":[],
-            "testGroup":["casatools","default","vpmmanager"],
+            "testGroup":["casatools","vpmmanager"],
             "timeout":0,
             "comment":""
         },

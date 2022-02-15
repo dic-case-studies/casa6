@@ -1,5 +1,5 @@
 ##########################################################################
-# test_measures.py
+# test_tool_measures.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -14,32 +14,21 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.measures.html
+# Unit tests for the measures tool.
 #
-#
+# Features tested:
+#  1. me.cometdist
+#  2. me.cometangdiam
+#  3. me.shift
 ##########################################################################
 
-'''
-Unit tests for the measures tool.
-
-Features tested:
-  1. me.cometdist
-  2. me.cometangdiam
-'''
-
+import copy
 import unittest
 
-try:
-    # CASA 6
-    from casatools import  ctsys, measures
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from tests.test_split import check_eq, datapath
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'data')
-        return os.path.join(dataPath,apath)
+from casatools import  ctsys, measures, quanta
+ctsys_resolve = ctsys.resolve
 
 def check_eq(val, expval, tol=None):
     """Checks that val matches expval within tol."""
@@ -71,6 +60,7 @@ class Ganymede(unittest.TestCase):
     """
     def setUp(self):
         self.me = measures( )
+        self.qa = quanta()
         cometdir = ctsys_resolve("ephemerides/JPL-Horizons/")
         self.me.framecomet(cometdir + "Ganymede_55437-56293dUTC.tab")
         self.me.doframe(self.me.epoch("utc", "2011/01/03/17:00:00"))
@@ -91,8 +81,24 @@ class me_test_cometangdiam(Ganymede):
         check_eq(self.me.cometangdiam(), {'unit': 'rad', 'value': 6.868e-06},
                  1.0e-9)
 
-def suite():
-    return [me_test_cometdist, me_test_cometangdiam]
+class me_test_shift(Ganymede):
+
+    def test_shift(self):
+        """Test me.shift"""
+        v = self.me.direction("J2000", "4h20m30s", "+30.20.30")
+        got = self.me.shift(v, "20arcmin", "0deg")
+        expec = copy.deepcopy(v)
+        expec['m1'] = self.qa.add(expec['m1'], "20arcmin")
+        self.assertTrue(got == expec)
+        got = self.me.shift(v, "20arcmin", "90deg")
+        expec = 1.1433867531223854
+        self.assertTrue(abs(got['m0']['value'] / expec - 1) < 1e-7)
+        expec = 0.5295520783025025
+        self.assertTrue(abs(got['m1']['value'] / expec - 1) < 1e-7)
+        got = self.me.shift(v, "20arcmin", "180deg")
+        self.assertTrue(got['m0']['value'] == v['m0']['value'])
+        expec = self.qa.sub(v['m1'], '20arcmin')
+        self.assertTrue(abs(got['m1']['value'] / expec['value'] - 1) < 1e-7)
 
 if __name__ == '__main__':
     unittest.main()

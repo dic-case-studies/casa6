@@ -1,18 +1,30 @@
+##########################################################################
+# test_tool_agentflagger.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.agentflagger.html
+#
+#
+##########################################################################
+
 import shutil
 import unittest
 import os
-import filecmp
-import pprint
 
-try:
-    # CASA 6
-    from casatools import agentflagger, ctsys
-    ag_datapath = ctsys.resolve('unittest/agentflagger/')
-except ImportError:
-    # CASA 5
-    from taskinit import aftool as agentflagger
-    ag_datapath = os.environ.get('CASAPATH').split()[0]
-    ag_datapath = os.path.join(ag_datapath, 'casatestdata/unittest/agentflagger/')
+from casatools import agentflagger, ctsys
+ag_datapath = ctsys.resolve('unittest/agentflagger/')
 
 
 class test_base(unittest.TestCase):
@@ -126,6 +138,10 @@ class test_tsys(test_base):
     
     def setUp(self):
          self.setUp_tsys_case()
+
+    @classmethod
+    def tearDownClass(cls):
+        os.system('rm -rf X7ef.tsys*')
 
     def test_unsupported_elevation_tsys(self):
         '''AgentFlagger: Unsupported elevation mode'''
@@ -524,6 +540,10 @@ class test_bpass(test_base):
     def setUp(self):
         self.setUp_bpass_case()
 
+    @classmethod
+    def tearDownClass(cls):
+        os.system('rm -rf cal.fewscans.bpass*')
+
     def test_default_cparam_bpass(self):
         '''Flagdata: flag CPARAM data column'''
         aflocal = agentflagger()
@@ -751,6 +771,10 @@ class test_MS(test_base):
     def setUp(self):
         self.setUp_alma_ms()
 
+    @classmethod
+    def tearDownClass(cls):
+        os.system('rm -rf uid___A002_X30a93d_X43e_small.ms*')
+
     def test_null_intent_selection1(self):
         '''Agentflagger: handle unknown scan intent in list mode'''
         
@@ -816,6 +840,13 @@ class test_MS_datacols(test_base):
              
 class test_display(test_base):
     """AgentFlagger:: Automatic test to check basic behaviour of display GUI using pause=False option """
+
+    @classmethod
+    def tearDownClass(cls):
+        os.system('rm -rf Four_ants_3C286.ms*')
+        os.system('rm -rf cal.fewscans.bpass*')
+        os.system('rm -rf TwoSpw.ms*')
+        os.system('rm -rf SDFloatColumn.ms*')
 
     def test_display_data_single_channel_selection(self):
         """AgentFlagger:: Check nominal behaviour for single spw:chan selection """
@@ -910,29 +941,6 @@ class test_display(test_base):
         summary = aflocal.run(writeflags=True)
         aflocal.done()
         self.assertEqual(summary['report0']['flagged'], 2052)
-    
-
-# Dummy class which cleans up created files
-class cleanup(test_base):
-            
-    def tearDown(self):
-        os.system('rm -rf cal.fewscans.bpass*')
-        os.system('rm -rf X7ef.tsys*')
-        os.system('rm -rf Four_ants_3C286.ms*')
-        os.system('rm -rf TwoSpw.ms*')
-
-    def test1(self):
-        '''AgentFlagger: Cleanup'''
-        pass
-
-
-def suite():
-    return [test_tsys,
-            test_bpass,
-            test_display,
-            test_MS,
-            test_MS_datacols,
-            cleanup]
 
 if __name__ == '__main__':
     unittest.main()

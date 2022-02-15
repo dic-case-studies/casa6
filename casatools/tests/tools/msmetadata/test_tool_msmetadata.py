@@ -1,7 +1,6 @@
 ##########################################################################
-# imfit_test.py
-#
-# Copyright (C) 2008, 2009
+# test_tool_msmetadata.py
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
 # This script is free software; you can redistribute it and/or modify it
@@ -14,87 +13,26 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.msmetadata.html
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
-#
-# <author>
-# Dave Mehringer
-# </author>
-#
-# <summary>
-# Test suite for the CASA tool msmetadata
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-#   <li> <linkto class="msmd:description">msmd</linkto>
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# Test for the msmetadata tool
-# </etymology>
-#
-# <synopsis>
-# Test the msmetadata tool
-# </synopsis>
-#
-# <example>
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard for the msmetadata tool to ensure
-# coding changes do not break the associated bits
-# </motivation>
-#
-
-###########################################################################
-from __future__ import absolute_import
-from __future__ import print_function
+##########################################################################
 import shutil
 import unittest
 import numpy
 
-is_CASA6 = False
-try:
-    import casac
-    from tasks import *
-    from taskinit import *
-    from __main__ import *
-    _md = msmdtool()
-    _tb = tbtool()
-    _me = metool()
-    _qa = qatool()
-    _ms = mstool()
-    datadir = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/msmetadata/'
-    fixture = datadir + 'MSMetaData.ms'
-    writeable = datadir + 'checker.ms'
-    tdm2fdm = datadir + 'uid___A002_Xd7be9d_X4838-spw16-18-20-22.ms'
-except ImportError:
-    import os
-    from casatools import msmetadata, table, ctsys, ms, measures, quanta, ms
-    _md = msmetadata()
-    _tb = table()
-    _me = measures()
-    _qa = quanta()
-    _ms = ms()
-    is_CASA6 = True
-    datadir = ctsys.resolve('unittest/msmetadata/')
-    fixture = os.path.join(datadir,'MSMetaData.ms')
-    writeable = os.path.join(datadir,'checker.ms')
-    tdm2fdm = os.path.join(datadir, 'uid___A002_Xd7be9d_X4838-spw16-18-20-22.ms')
+import os
+from casatools import msmetadata, table, ctsys, ms, measures, quanta, ms
+_md = msmetadata()
+_tb = table()
+_me = measures()
+_qa = quanta()
+_ms = ms()
+is_CASA6 = True
+datadir = ctsys.resolve('unittest/msmetadata/')
+fixture = os.path.join(datadir,'MSMetaData.ms')
+writeable = os.path.join(datadir,'checker.ms')
+tdm2fdm = os.path.join(datadir, 'uid___A002_Xd7be9d_X4838-spw16-18-20-22.ms')
 
 def near(a, b, epsilon):
     return abs((a-b)/max(a,b)) <= epsilon
@@ -1877,9 +1815,6 @@ class msmetadata_test(unittest.TestCase):
             'Incorrect FDM windows'
         )
         self.md.done()
-
-def suite():
-    return [msmetadata_test]
 
 if __name__ == '__main__':
     unittest.main()
