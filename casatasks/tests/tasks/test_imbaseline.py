@@ -312,7 +312,7 @@ class TestAbstractFileStack(test_base):
 class TestImageShape(test_base):
     """Test ImageShape.
 
-    2-1. successful case
+    2-1. successful case: axis_sp = axis_pol = 2or3, axis_sp != axis_pol
     2-2. invalid im_nchan
     2-3. invalid dir_shape
     """
@@ -324,7 +324,7 @@ class TestImageShape(test_base):
         pass
 
     def test_2_1(self):
-        """2-1. successful case"""
+        """2-1. successful case: axis_sp = axis_pol = 2or3, axis_sp != axis_pol"""
         shape = ImageShape(im_shape=np.array([100, 100, 1, 100]), axis_dir=np.array([0, 1]), axis_sp=3, axis_pol=2)
         shape.validate()
         shape = ImageShape(im_shape=np.array([100, 100, 100, 1]), axis_dir=np.array([0, 1]), axis_sp=2, axis_pol=3)
