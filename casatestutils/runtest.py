@@ -11,7 +11,7 @@ import unittest
 import json
 import datetime
 import platform
-import re
+
 ########################################################################################################################
 ######################################            Imports / Constants            #######################################
 ########################################################################################################################
@@ -453,8 +453,7 @@ def unpack_tarball(pkg, outputdir):
     print(cmd)
     r = ShellRunner()
     output = r.runshell(cmd, default_timeout, cwd=os.getcwd())
-    # Remove .tar.xz extension and py3.x extension as necessary
-    installpath = outputdir + "/" + re.sub(r'-py3\..?', '', os.path.basename(pkg).replace(".tar.xz",""))
+    installpath = outputdir + "/" + os.path.basename(pkg).replace(".tar.xz","")
     return installpath
 
 def get_casatestutils_exec_path(pkg_dir):
