@@ -43,15 +43,6 @@ casalog.origin('imbaseline')
 class test_base(unittest.TestCase):
 
     @staticmethod
-    def invalid_argument_case(func):
-        """Decorator for the test case that is intended to fail due to invalid argument."""
-        @functools.wraps(func)
-        def wrapper(self):
-            func(self)
-            self.assertFalse(self.result, msg='The task must return False')
-        return wrapper
-
-    @staticmethod
     def exception_case(exception_type, exception_pattern):
         """Decorator for the test case that is intended to throw exception.
 
