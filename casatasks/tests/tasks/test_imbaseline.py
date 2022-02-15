@@ -100,9 +100,10 @@ class test_base(unittest.TestCase):
     def _copy_test_files(self, basename, filename):
         """Copy files for testing into current path."""
         _base = ctsys_resolve(basename)
-        copy_from = os.path.join(_base, filename)
-        if not os.path.exists(copy_from) or copy_from == os.path.join(os.getcwd(), filename):
-            raise RuntimeError(f'Error is occured or existed on a path {copy_from} or {filename}')
+        src = os.path.join(_base, filename)
+        dst = os.path.join(os.getcwd(), filename)
+        if not os.path.exists(src) or src == dst:
+            raise RuntimeError(f'Error is occured or existed on a path {src} or {filename}')
 
         if os.path.exists(filename):
             if os.path.isfile(filename) or os.path.islink(filename):
