@@ -60,7 +60,7 @@ class test_base(unittest.TestCase):
                 the_exception = ctx.exception
                 message = str(the_exception)
                 self.assertIsNotNone(re.search(exception_pattern, message),
-                                     msg='error message \'%s\' is not expected.' % (message))
+                                     msg=f'Expected: \'{exception_pattern}\', got: \'{message}\'')
             return _wrapper
         return wrapper
 
