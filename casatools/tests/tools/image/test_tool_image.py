@@ -2044,6 +2044,40 @@ class ia_fromcomplist_test(image_base):
         myia.done()
         self.assertTrue((bb == cc).all())
 
+    def test_plp(self):
+        """Test plp component"""
+        mycl = self.cl
+        myia = self._myia
+        flux0 = [1, 0, 0, 0]
+        dir0 = ['J2000', '00:00:00.00', '00.00.00.0']
+        pt = "point"
+        index = [1, 2, 3, 4]
+        mycl.addcomponent(
+            flux=flux0, dir=dir0,shape=pt, spectrumtype='plp', index=index
+        )
+        freq0 = mycl.getspectrum(0)['frequency']['m0']['value']
+        shape = [20, 20, 20]
+        imagename = "jm.im"
+        myia.fromcomplist(outfile=imagename, shape=shape, cl=mycl.torecord())
+        mycl.done()
+        csys = myia.coordsys()
+        inc = csys.increment()['numeric']
+        inc[2] *= 10000
+        csys.setincrement(inc)
+        myia.setcoordsys(csys.torecord())
+        pix = myia.getchunk()
+        for chan in range(shape[2]):
+            freq = myia.toworld([10, 10, chan])['numeric'][2]/1e9
+            y = freq/freq0
+            x = math.log(y)
+            exponent = index[0] + index[1]*x + index[2]*x*x + index[3]*x*x*x
+            expec = pow(y, exponent)
+            self.assertTrue(
+                numpy.isclose(pix[10, 10, chan], expec, 1e-7),
+                'Incorrect pixel value'
+            )
+        myia.done()
+
 # Tests for image.fromfits
 class ia_fromfits_test(image_base):
 
