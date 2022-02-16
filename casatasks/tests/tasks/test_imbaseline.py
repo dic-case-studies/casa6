@@ -848,8 +848,10 @@ class TestMS2Image(test_base):
                                 datacolumn=DATACOLUMN)
 
 
-class TestGlobalMethods(test_base):
+class TestGlobalMethodsOfImbaseline(test_base):
     """Test global methods.
+
+    The white tests of global methods of imbaseline module must be implemented in this class.
 
     9-1. get_image_shape: successful
     9-2. get_image_shape: failure
@@ -1182,4 +1184,4 @@ class Workdir():
 def suite():
     """Unittest suite definition."""
     return [TestImsmooth, TestAbstractFileStack, TestImageShape, TestImbaseline, TestImage2MS, TestSdbaseline,
-            TestSdsmooth, TestMS2Image, TestImageSubtraction, TestGlobalMethods]
+            TestSdsmooth, TestMS2Image, TestImageSubtraction, TestGlobalMethodsOfImbaseline]
