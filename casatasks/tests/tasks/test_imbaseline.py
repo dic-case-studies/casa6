@@ -900,15 +900,12 @@ class TestImbaseline(test_base):
     input_image = 'ref_multipix.signalband'
     blparam = 'analytic_variable_blparam_spw1.txt'
     f_1_count = 1
-    image_shape = [128, 128, 1, 10]
-    expected_output_chunk = np.full(image_shape, 0.0)
-    expected_cont_chunk = np.full(image_shape, 2.0)
 
     def setUp(self):
         self._copy_test_files(self.datapath, self.input_image)
         self._copy_test_files(self.datapath, self.blparam)
 
-    def _test_f_1(self):
+    def test_f_1(self):
         """F-1. maskmode/blfunc/dirkernel/spkernel combination test"""
         imagename = self.input_image
         linefile = 'output_f_1'
