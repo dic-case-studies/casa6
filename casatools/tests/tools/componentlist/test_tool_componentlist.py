@@ -54,5 +54,46 @@ class componentlist_test(unittest.TestCase):
         got = mycl.getfluxerror(0)
         self.assertTrue((got == ferror).all())
 
+    def test_plp(self):
+        """Test adding/updating plp spectral component"""
+        coeffs = [1, 2, 3]
+        mycl = cltool()
+        mycl.addcomponent(
+            [1,0,0,0],'Jy','Stokes', ['J2000', '10:30:00.00', '-20.00.00.0'],
+            'gaussian','4arcsec','2arcsec','30deg', spectrumtype='plp',
+            index=coeffs
+        )
+        x = mycl.getspectrum(0)
+        mycl.close()
+        self.assertTrue(
+            (x['coeffs'] == coeffs).all(), "Incorrect coefficients found"
+        )
+        self.assertTrue(
+            x['type'] == 'Power Logarithmic Polynomial',
+            'Incorrect spectral type'
+        )
+        mycl.addcomponent(
+            [1,0,0,0],'Jy','Stokes', ['J2000', '10:30:00.00', '-20.00.00.0'],
+           'gaussian','4arcsec','2arcsec','30deg'
+        )
+        self.assertTrue(
+            mycl.getspectrum(0)['type'] == 'Constant', 'Incorrect spectral type'
+        )
+        mycl.setspectrum(0, type='plp', index=coeffs)
+        mytype = mycl.spectrumtype(0)
+        x = mycl.getspectrum(0)
+        mycl.close()
+        self.assertTrue(
+            (x['coeffs'] == coeffs).all(), "Incorrect coefficients found"
+        )
+        self.assertTrue(
+            mytype == 'Power Logarithmic Polynomial',
+            'Incorrect spectral type'
+        )
+        self.assertTrue(
+            x['type'] == 'Power Logarithmic Polynomial',
+            'Incorrect spectral type'
+        )
+
 if __name__ == '__main__':
     unittest.main()

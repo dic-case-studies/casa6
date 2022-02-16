@@ -185,6 +185,13 @@ class testref_base(unittest.TestCase):
               os.system('rm -rf ' + self.maskname)
           shutil.copytree(os.path.join(refdatapath,self.maskname), self.maskname)
 
+     def prepInputTextFile(self, textfile=""):
+          if textfile!="":
+              self.textfile=textfile
+              shutil.copy(os.path.join(refdatapath,self.textfile), self.textfile)
+
+        
+
 ##############################################
 ##############################################
 
@@ -3145,6 +3152,35 @@ class test_mask(testref_base):
 
           self.assertTrue(self.check_final(report))
 
+     def test_mask_long_region_specification(self):
+          """ [mask] test_mask_long_region_specification : Test the fix for CAS-13624  """
+          # extending to all channels and preserving mask of each stokes 
+          self.prepData('refim_point_withline.ms') 
+          # copy input regin text
+          self.prepInputTextFile('poly.rgn')
+
+          with open(self.textfile, 'r') as f:
+              regtext = f.read()
+              regtext = regtext.rstrip()
+          logstart = self.th.get_log_length()
+          ret = tclean(vis=self.msfile,
+          imagename=self.img, specmode="cube", imsize=512, cell='12.0arcsec',
+          niter=10,interactive=0,interpolation='nearest',
+          usemask='user', mask=regtext)
+      
+          report=self.th.checkall(ret=ret, imgexist=[self.img+'.mask', self.img+'.image'],
+          imgval=[(self.img+'.mask', 1.0,[256,256,0,0]), 
+                 (self.img+'.mask',1.0,[255,253,0,3]), 
+                 (self.img+'.mask',0.0,[260,259,0,0])])
+   
+          # check to see there is no 'too long file name' warning (do negative pattern search)
+          checkwarning=self.th.check_logs(logstart, expected=[r'^((?!File::exists    lstat failed for poly).)*$'])
+          report+=checkwarning
+          print('report=',report)
+          self.assertTrue(self.check_final(report))
+
+##############################################
+##############################################
 ##############################################
 ##############################################
 
