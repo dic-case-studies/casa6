@@ -894,19 +894,21 @@ class TestImbaseline(test_base):
     F-2. imagefile is None
     F-3. output_cont is False
     F-4. specify bloutput path
-    F-5. simple output check
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
     input_image = 'ref_multipix.signalband'
     blparam = 'analytic_variable_blparam_spw1.txt'
     f_1_count = 1
+    image_shape = [128, 128, 1, 10]
+    expected_output_chunk = np.full(image_shape, 0.0)
+    expected_cont_chunk = np.full(image_shape, 2.0)
 
     def setUp(self):
         self._copy_test_files(self.datapath, self.input_image)
         self._copy_test_files(self.datapath, self.blparam)
 
-    def test_f_1(self):
+    def _test_f_1(self):
         """F-1. maskmode/blfunc/dirkernel/spkernel combination test"""
         imagename = self.input_image
         linefile = 'output_f_1'
@@ -1039,50 +1041,84 @@ class TestImbaseline(test_base):
                    bloutput=bloutput)
         self.assertTrue(os.path.exists(bloutput))
 
-    def test_f_5(self):
-        """F-5. simple output check"""
-        self.image_shape = [128, 128, 1, 10]
-        self.expected_output_chunk = np.full(self.image_shape, 0.0)
-        self.expected_cont_chunk = np.full(self.image_shape, 2.0)
 
-        linefile = 'output_f_5'
-        output_cont = True
-        bloutput = linefile + '.bloutput'
+class TestImbaselineOutputs(test_base):
+    """Imbaseline output testing.
+
+    This test class generate tests dynamically and register them with the class
+    while module initialisation.
+    """
+    datapath = ctsys_resolve('unittest/imbaseline/')
+    input_image = 'ref_multipix.signalband'
+    blparam = 'analytic_variable_blparam_spw1.txt'
+    TEST_IMAGE_SHAPE = [128, 128, 1, 10]
+    TEST_IMAGE_VALUE = 2.0
+    expected_output_chunk = np.full(TEST_IMAGE_SHAPE, 0.0)
+    expected_cont_chunk = np.full(TEST_IMAGE_SHAPE, TEST_IMAGE_VALUE)
+
+    test_name_prefix = 'test_imbaseline_outputs'
+    linefile = 'output.im'
+    output_cont = True
+    bloutput = linefile + '.bloutput'
+    test_image = 'input_image.im'
+    major = '20arcsec'
+    minor = '10arcsec'
+    pa = '0deg'
+
+    def setUp(self):
+        self._copy_test_files(self.datapath, self.input_image)
+        self._copy_test_files(self.datapath, self.blparam)
+
+    @staticmethod
+    def generate_tests():
         blfunc = ('poly', 'chebyshev', 'cspline', 'sinusoid')
         dirkernel = ('none', 'gaussian', 'boxcar')
         spkernel = ('none', 'gaussian', 'boxcar')
-        self.f_5_count = 1
 
-        def _exec_imbaseline(linefile, output_cont, bloutput, blfunc, dirkernel, spkernel):
-            test_image = 'input_image.im'
-            major = '20arcsec'
-            minor = '10arcsec'
-            pa = '0deg'
-            self._create_image(test_image, 2.0, self.image_shape)
-            params = dict(imagename=test_image, linefile=linefile, output_cont=output_cont, bloutput=bloutput,
-                          blfunc=blfunc, dirkernel=dirkernel, spkernel=spkernel, major=major, minor=minor, pa=pa)
-            try:
-                casalog.post(f'test_F_5_{self.f_5_count:03} [maskmode=auto, blfunc={blfunc}, '
-                             f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
-                imbaseline(**params)
-                if os.path.exists(linefile):
-                    with tool_manager(linefile, image) as ia:
-                        self.assertTrue(np.allclose(ia.getchunk(), self.expected_output_chunk, atol=2.0))
-                if os.path.exists(test_image + '.cont'):
-                    with tool_manager(test_image + '.cont', image) as ia:
-                        self.assertTrue(np.allclose(ia.getchunk(), self.expected_cont_chunk, atol=1.0))
-            except Exception:
-                casalog.post(f'test_F_5_{self.f_5_count:03} FAULT: [maskmode=auto, blfunc={blfunc}, '
-                             f'dirkernel={dirkernel}, spkernel={spkernel}]', 'SEVERE')
-            finally:
-                self.f_5_count += 1
-                self.tearDown()
-                self.setUp()
+        def __register_a_test_with_the_class(_class, blfunc, dirkernel, spkernel):
+            test_name = f'{_class.test_name_prefix}_{blfunc}_{dirkernel}_{spkernel}'
+            setattr(_class, test_name,
+                    _class._generate_a_test(blfunc, dirkernel, spkernel, test_name))
 
-        [_exec_imbaseline(linefile, output_cont, bloutput, _blfunc, _dirkernel, _spkernel)
+        [__register_a_test_with_the_class(__class__, _blfunc, _dirkernel, _spkernel)
          for _blfunc in blfunc
          for _dirkernel in dirkernel
          for _spkernel in spkernel]
+
+    @staticmethod
+    def _generate_a_test(blfunc, dirkernel, spkernel, test_name):
+        def test_method(self):
+            self._create_image(self.test_image, self.TEST_IMAGE_VALUE, self.image_shape)
+            params = dict(imagename=self.test_image, linefile=self.linefile, output_cont=self.output_cont,
+                          bloutput=self.bloutput, blfunc=blfunc, dirkernel=dirkernel, spkernel=spkernel,
+                          major=self.major, minor=self.minor, pa=self.pa)
+            try:
+                casalog.post(f'{test_name} [maskmode=auto, blfunc={blfunc}, '
+                             f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
+                imbaseline(**params)
+                if os.path.exists(self.linefile):
+                    with tool_manager(self.linefile, image) as ia:
+                        chunk = ia.getchunk()
+                        self._summary(False, test_name, chunk)
+                        self.assertTrue(np.allclose(chunk, self.expected_output_chunk, atol=2.0))
+                if os.path.exists(self.test_image + '.cont'):
+                    with tool_manager(self.test_image + '.cont', image) as ia:
+                        chunk = ia.getchunk()
+                        self._summary(True, test_name, chunk)
+                        self.assertTrue(np.allclose(chunk, self.expected_cont_chunk, atol=1.0))
+            except Exception:
+                casalog.post(f'{test_name} FAULT: [maskmode=auto, blfunc={blfunc}, '
+                             f'dirkernel={dirkernel}, spkernel={spkernel}]', 'SEVERE')
+        return test_method
+
+    def _summary(self, is_cont, test_name, chunk): # temporary method
+        m = re.match(r'test_imbaseline_outputs_([^_]+)_([^_]+)_([^_]+)', test_name)
+        prefix = 'cont' if is_cont else ' out'
+        print(f'{prefix} blfunc:{m[1]} dirkernel:{m[2]} spkernel:{m[3]}, {np.max(chunk)}, {np.min(chunk)}, {np.average(chunk)}, {np.median(chunk)}')
+
+
+# generate test of TestImbaselineOutputs
+TestImbaselineOutputs.generate_tests()
 
 
 class Workdir():
