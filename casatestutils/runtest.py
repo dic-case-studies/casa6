@@ -11,7 +11,7 @@ import unittest
 import json
 import datetime
 import platform
-
+print("HERE")
 ########################################################################################################################
 ######################################            Imports / Constants            #######################################
 ########################################################################################################################
@@ -60,7 +60,6 @@ except ImportError:
 IS_CASA6 = False
 CASA6 = False
 verbose = False
-DRY_RUN = False
 
 # JIRA BRANCH TO CHECKOUT
 JIRA_BRANCH = None
@@ -490,7 +489,7 @@ def unpack_pkg(pkg, work_dir, outputdir):
 ##############################################            Run            ###############################################
 ########################################################################################################################
 
-def run(testnames, branch=None):
+def run(testnames, branch=None, DRY_RUN=False):
 
     if IS_CASA6:
 
@@ -1072,14 +1071,37 @@ if __name__ == "__main__":
             tests = [x.strip() for x in arg.split(",")]
             for test in tests:
                 try:
-                    real_path = os.path.realpath(test)
-                    if ("test_" not in real_path) or  ("test_" not in real_path) or ( os.path.exists(real_path) ==False):
-                        print("{} is not a Test File".format(test))
-                        continue
-                    testnames.append(real_path)
+                    testcases = None
+                    # Check if testcases are provided
+                    if "[" in test:
+                        listarray = test.split("[")
+                        if not listarray[0].endswith(".py"):
+                            testnames.append(test)
+                        else:
+                            test = listarray[0]
+                            testcases = listarray[1]
+                            real_path = os.path.realpath(test)
+                            if ("test_" not in real_path) or  ("test_" not in real_path) or ( os.path.exists(real_path) ==False):
+                                print("{} is not a Test File".format(test))
+                                continue
+                            else:
+                                if testcases is not None: real_path = os.path.realpath(test) + "[" + testcases
+                                testnames.append(real_path)
+
+                    # Check if test is real path are provided
+                    elif test.endswith(".py"):
+                        real_path = os.path.realpath(test)
+                        if ("test_" not in real_path) or  ("test_" not in real_path) or ( os.path.exists(real_path) ==False):
+                            print("{} is not a Test File".format(test))
+                            continue
+                        else:
+                            testnames.append(real_path)
+
+                    # else Assume test exists in bitbucket
+                    else:
+                        testnames.append(test)
                 except:
                     traceback.print_exc()
-
     try:
         if args.bamboo:
             from testrunner.shell_runner import ShellRunner
@@ -1133,7 +1155,7 @@ if __name__ == "__main__":
                 print("List of tests is empty")
                 parser.print_help(sys.stderr)
                 sys.exit(1)
-            run(testnames, args.branch)
+            run(testnames, args.branch, DRY_RUN)
     except:
         traceback.print_exc()
 
