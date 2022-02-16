@@ -1114,7 +1114,7 @@ class TestImbaselineOutputs(test_base):
         print(f'{prefix} blfunc:{m[1]} dirkernel:{m[2]} spkernel:{m[3]}, {np.max(chunk)}, {np.min(chunk)}, {np.average(chunk)}, {np.median(chunk)}')
 
 
-# generate test of TestImbaselineOutputs
+# generate test methods of TestImbaselineOutputs dynamically
 TestImbaselineOutputs.generate_tests()
 
 
