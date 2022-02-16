@@ -251,6 +251,14 @@ class TestAbstractFileStack(test_base):
         stack.push(obj2)
         self.assertEqual(stack.bottom(), obj1)
         self.assertEqual(stack.peak(), obj2)
+        obj3 = UnerasableFolder(DUMMY_FOLDERS[2])
+        stack.push(obj3)
+        self.assertEqual(stack.bottom(), obj1)
+        self.assertEqual(stack.peak(), obj3)
+        self.assertEqual(stack.subpeak(), obj2)
+        stack.pop()
+        self.assertEqual(stack.peak(), obj2)
+        self.assertEqual(stack.bottom(), obj1)
 
     @test_base.exception_case(RuntimeError, 'the stack has not have enough stuff')
     def test_1_12(self):
