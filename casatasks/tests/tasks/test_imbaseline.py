@@ -109,15 +109,11 @@ class test_base(unittest.TestCase):
                 os.unlink(dst)
             elif os.path.isdir(dst):
                 shutil.rmtree(dst)
-        self.__copytree(src, dst)
 
-    def __copytree(self, src, dst):
         if os.path.isfile(src):
             shutil.copy(src, dst)
         elif os.path.isdir(src):
-            shutil.copytree(src, dst)
-        elif os.path.islink(src):
-            self.__copytree(os.readlink(src), dst)
+            shutil.copytree(src, dst, symlinks=False)
 
     def _create_image(self, datapath, val=1, shape=[0, 0, 0, 0]):
         _ia = image()
