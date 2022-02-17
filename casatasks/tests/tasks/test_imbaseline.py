@@ -890,7 +890,6 @@ class TestGlobalMethodsOfImbaseline(test_base):
 class TestImbaseline(test_base):
     """imbaseline tests.
 
-    F-1. successful case: execute imbaseline
     F-2. failure case: attempt to read imagefile set None, an exception raises
     F-3. successful case: execute imbaseline with output_cont set False, cont file does not generate
     F-4. successful case: execute imbaseline with bloutput set output path, bloutput generates
@@ -903,68 +902,6 @@ class TestImbaseline(test_base):
     def setUp(self):
         self._copy_test_files(self.input_image)
         self._copy_test_files(self.blparam)
-
-    def test_f_1(self):
-        """F-1. successful case: execute imbaseline."""
-        imagename = self.input_image
-        linefile = 'output_f_1'
-        output_cont = True
-        bloutput = self.input_image + '.bloutput'
-        maskmode = ('auto', 'list')
-        chans = ''
-        thresh = 5.0
-        avg_limit = 5
-        minwidth = 5
-        edge = [0, 0]
-        blfunc = ('poly', 'chebyshev', 'cspline', 'sinusoid', 'variable')
-        order = 5
-        npiece = 3
-        applyfft = True
-        fftthresh = 3.0
-        addwn = [0]
-        rejwn = []
-        blparam = self.blparam
-        clipniter = 0
-        clipthresh = 3.0
-        dirkernel = ('none', 'gaussian', 'boxcar', 'image')
-        major = '20arcsec'
-        minor = '10arcsec'
-        pa = '0deg'
-        kimage = os.path.join(DATAPATH, "bessel.im")
-        scale = -1.0
-        spkernel = ('none', 'gaussian', 'boxcar')
-        kwidth = 5
-
-        filenames_existence_check = [linefile, bloutput]
-
-        [self._exec_imbaseline(imagename, linefile, output_cont, bloutput, _maskmode, chans, thresh, avg_limit,
-                               minwidth, edge, _blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
-                               clipniter, clipthresh, _dirkernel, major, minor, pa, kimage, scale, _spkernel,
-                               kwidth, filenames_existence_check)
-         for _maskmode in maskmode
-         for _blfunc in blfunc
-         for _dirkernel in dirkernel
-         for _spkernel in spkernel]
-
-    def _exec_imbaseline(self, imagename, linefile, output_cont, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
-                         edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam, clipniter, clipthresh,
-                         dirkernel, major, minor, pa, kimage, scale, spkernel, kwidth, filenames_existence_check):
-        params = dict(imagename=imagename, linefile=linefile, output_cont=output_cont, bloutput=bloutput,
-                      maskmode=maskmode, chans=chans, thresh=thresh, avg_limit=avg_limit, minwidth=minwidth,
-                      edge=edge, blfunc=blfunc, order=order, npiece=npiece, applyfft=applyfft, fftthresh=fftthresh,
-                      addwn=addwn, rejwn=rejwn, blparam=blparam, clipniter=clipniter, clipthresh=clipthresh,
-                      dirkernel=dirkernel, major=major, minor=minor, pa=pa, kimage=kimage, scale=scale,
-                      spkernel=spkernel, kwidth=kwidth)
-        try:
-            casalog.post(f'test_F_1_{self.f_1_count:03} [maskmode={maskmode}, blfunc={blfunc}, '
-                         f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
-            imbaseline(**params)
-            for file in filenames_existence_check:
-                self.assertTrue(os.path.exists(file))
-        finally:
-            self.f_1_count += 1
-            self.tearDown()
-            self.setUp()
 
     @test_base.exception_case(ValueError, 'Error: file  is not found.')
     def test_f_2(self):
@@ -1036,6 +973,88 @@ class TestImbaseline(test_base):
                    output_cont=output_cont,
                    bloutput=bloutput)
         self.assertTrue(os.path.exists(bloutput))
+
+
+class TestImbaselineExecution(test_base):
+    """Imbaseline execution testing.
+
+    This test class generate tests dynamically and register them with the class
+    while module initialisation.
+    """
+
+    input_image = 'ref_multipix.signalband'
+    blparam = 'analytic_variable_blparam_spw1.txt'
+    test_name_prefix = 'test_imbaseline_execution'
+    linefile = 'output_f_1'
+    output_cont = True
+    bloutput = input_image + '.bloutput'
+    chans = ''
+    thresh = 5.0
+    avg_limit = 5
+    minwidth = 5
+    edge = [0, 0]
+    order = 5
+    npiece = 3
+    applyfft = True
+    fftthresh = 3.0
+    addwn = [0]
+    rejwn = []
+    clipniter = 0
+    clipthresh = 3.0
+    major = '20arcsec'
+    minor = '10arcsec'
+    pa = '0deg'
+    kimage = os.path.join(DATAPATH, "bessel.im")
+    scale = -1.0
+    kwidth = 5
+    filenames_existence_check = (linefile, bloutput)
+
+    def setUp(self):
+        self._copy_test_files(self.input_image)
+        self._copy_test_files(self.blparam)
+
+    @staticmethod
+    def generate_tests():
+        maskmode = ('auto', 'list')
+        blfunc = ('poly', 'chebyshev', 'cspline', 'sinusoid', 'variable')
+        dirkernel = ('none', 'gaussian', 'boxcar', 'image')
+        spkernel = ('none', 'gaussian', 'boxcar')
+
+        def __register_a_test_with_the_class(_class, maskmode, blfunc, dirkernel, spkernel):
+            test_name = f'{_class.test_name_prefix}_{maskmode}_{blfunc}_{dirkernel}_{spkernel}'
+            setattr(_class, test_name,
+                    _class._generate_a_test(maskmode, blfunc, dirkernel, spkernel, test_name))
+
+        [__register_a_test_with_the_class(__class__, _maskmode, _blfunc, _dirkernel, _spkernel)
+         for _maskmode in maskmode
+         for _blfunc in blfunc
+         for _dirkernel in dirkernel
+         for _spkernel in spkernel]
+
+    @staticmethod
+    def _generate_a_test(maskmode, blfunc, dirkernel, spkernel, test_name):
+        def test_method(self):
+            params = dict(imagename=self.input_image, linefile=self.linefile, output_cont=self.output_cont, bloutput=self.bloutput,
+                          maskmode=maskmode, chans=self.chans, thresh=self.thresh, avg_limit=self.avg_limit, minwidth=self.minwidth,
+                          edge=self.edge, blfunc=blfunc, order=self.order, npiece=self.npiece, applyfft=self.applyfft, fftthresh=self.fftthresh,
+                          addwn=self.addwn, rejwn=self.rejwn, blparam=self.blparam, clipniter=self.clipniter, clipthresh=self.clipthresh,
+                          dirkernel=dirkernel, major=self.major, minor=self.minor, pa=self.pa, kimage=self.kimage, scale=self.scale,
+                          spkernel=spkernel, kwidth=self.kwidth)
+            try:
+                casalog.post(f'{test_name} [maskmode={maskmode}, blfunc={blfunc}, '
+                             f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
+                imbaseline(**params)
+                for file in self.filenames_existence_check:
+                    self.assertTrue(os.path.exists(file))
+            except Exception:
+                casalog.post(f'Failure: {test_name} [maskmode={maskmode}, blfunc={blfunc}, '
+                             f'dirkernel={dirkernel}, spkernel={spkernel}]', 'SEVERE')
+
+        return test_method
+
+
+# generate test methods of TestImbaselineExecution dynamically
+TestImbaselineExecution.generate_tests()
 
 
 class TestImbaselineOutputs(test_base):
@@ -1168,4 +1187,5 @@ class Workdir():
 def suite():
     """Unittest suite definition."""
     return [TestImsmooth, TestAbstractFileStack, TestImageShape, TestImbaseline, TestImage2MS, TestSdbaseline,
-            TestSdsmooth, TestMS2Image, TestImageSubtraction, TestGlobalMethodsOfImbaseline]
+            TestSdsmooth, TestMS2Image, TestImageSubtraction, TestGlobalMethodsOfImbaseline, TestImbaselineExecution,
+            TestImbaselineOutputs]
