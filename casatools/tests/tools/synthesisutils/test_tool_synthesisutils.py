@@ -52,8 +52,7 @@ class sutest_base(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Location of input data
-        #datapath = ctsys.resolve('unittest/synthesisutils/')
-        cls.datapath = '/export/home/murasame/casasrc/cas13590dev/testdata/'
+        cls.datapath = ctsys.resolve('unittest/synthesisutils/')
         cls.ia = image()
         cls.tb = table()
         cls.msmd = msmetadata()
@@ -217,9 +216,6 @@ class fitpsfbeam_test(sutest_base):
         self.ia.open(psfim)
         newbeam = self.ia.restoringbeam()
         self.ia.done()
-        print("psfim=",psfim)
-        print("origbeam=",origbeam)
-        print("newbeam=",newbeam)     
 
         self.assertTrue(ret)
         # test against expected values
@@ -271,9 +267,6 @@ class fitpsfbeam_test(sutest_base):
         self.ia.open(psfim)
         newbeam = self.ia.restoringbeam()
         self.ia.done()
-        print("psfim=",psfim)
-        print("origbeam=",origbeam)
-        print("newbeam=",newbeam)     
 
         self.assertTrue(ret)
         # test against expected values
@@ -395,7 +388,6 @@ class advisechansel_test(sutest_base):
         (pof, errmsg) = self.checkdict(res,refdict, 'TOPO test')
 
         # calculate input frequencies in LSRK in the time range for a specific source
-        print("inputms=",inputms)
         listoffreqs = self.topof_to_outframef(inputms, fsttopo, 'LSRK', 2)
         fval = []
         for f in listoffreqs:
@@ -409,7 +401,7 @@ class advisechansel_test(sutest_base):
         fenlsrk = str(_qa.convert(str(min(fval))+'Hz', 'GHz')['value'])+'GHz' 
         #fstlsrk= 356.58364232412697GHz
         #fenlsrk= 358.22772677745405GHz
-        # extra padding makes slightly larger chan range?
+        # extra adding makes slightly larger chan range?
         reflsrkdict = {'nchan': numpy.array([3341, 3840]), 'spw': numpy.array([0, 1]), 'start': numpy.array([499,   0])}
         # run advisechansel with LSRK 
         reslsrk = su.advisechansel(freqstart=fstlsrk,freqend=fenlsrk, freqstep=cw, freqframe='LSRK', fieldid=2, msname=inputms)   
@@ -452,7 +444,6 @@ class advisechansel_test(sutest_base):
 
     def test_su_adivsechansel_getfreqrange(self):
         '''Test that frequency range for given data selections returned correctly'''
-        # to be filled
         refdict = {'freqend': {'unit': 'Hz', 'value': 358203002929.7875}, 'freqstart': {'unit': 'Hz', 'value': 356558910156.25}}
         su = synthesisutils()
         inputms ='twhya.short.ms'
@@ -462,24 +453,51 @@ class advisechansel_test(sutest_base):
         #fstlsrk= '356.58364232412697GHz' fenlsrk= '358.22772677745405GHz'
         # corresponding LSRK frequecies
         reslsrk = su.advisechansel(freqframe='LSRK', getfreqrange=True,spwselection='0:500~3839,1', fieldid=2, msname=inputms)
+
+        del su
+
         reflsrkdict = {'freqend': {'unit': 'Hz', 'value': 358227726777.45405}, 'freqstart': {'unit': 'Hz', 'value': 356583642324.12697}}
         diff_freqstart = reslsrk['freqstart']['value']-reflsrkdict['freqstart']['value']
         diff_freqend = reslsrk['freqend']['value']-reflsrkdict['freqend']['value']
-        # half the channel width (122.07 kHz) 
+        # there may be some padding added so allow difference of ~the channel width (122.07 kHz) 
         tol = 122070.0 
-        print(diff_freqstart, diff_freqend)
-        self.assertTrue(abs(diff_freqstart) < tol)
-        self.assertTrue(abs(diff_freqend) < tol)
+        self.assertTrue(abs(diff_freqstart) < tol and diff_freqstart < 0)
+        self.assertTrue(abs(diff_freqend) < tol and diff_freqend >0)
         self.assertTrue(pof)
 
     def test_su_advisechansel_getfreqrange_ephem(self):
         '''Test that frequency range for given data selections for an ephemeris object returned correctly'''
-        # to be filled
-        pass
-        
+        su = synthesisutils()
+        inputms ='alma_ephemobj_icrs.ms'
+        tol  = 122070.3125 # chan width in Hz
+        refdict = {'freqend': {'unit': 'Hz', 'value': 220344661518.86124}, 'freqstart': {'unit': 'Hz', 'value': 220295510184.3427}}
+        res = su.advisechansel(freqframe='SOURCE', fieldid=1, getfreqrange=True, spwselection='2:251~652', ephemtable='TRACKFIELD', msname=inputms)   
+        shutil.copytree(inputms+'/FIELD/EPHEM0_Uranus_57362.91000000.tab', 'external_EPHEM0_Uranus_57362.91000000.tab')
+        resext = su.advisechansel(freqframe='SOURCE', fieldid=1, getfreqrange=True, spwselection='2:251~652',  ephemtable='external_EPHEM0_Uranus_57362.91000000.tab', msname=inputms)   
+     
+        shutil.rmtree('external_EPHEM0_Uranus_57362.91000000.tab')
+
+        # res and resext should be indetical as it effectively uses the same ephem table
+        self.assertEqual(res['freqstart']['value'], refdict['freqstart']['value'])
+        self.assertEqual(res['freqend']['value'], refdict['freqend']['value'])
+        self.assertEqual(resext['freqstart']['value'], refdict['freqstart']['value'])
+        self.assertEqual(resext['freqend']['value'], refdict['freqend']['value'])
+
+        # or alternatively use the default table of the object known by CASA
+        resdef = su.advisechansel(freqframe='SOURCE', fieldid=1, getfreqrange=True, spwselection='2:251~652', ephemtable='Uranus', msname=inputms)   
+        del su
+
+        diff_freqstart_def = resdef['freqstart']['value'] - refdict['freqstart']['value']
+        diff_freqend_def = resdef['freqend']['value'] - refdict['freqend']['value']
+        self.assertTrue(abs(diff_freqstart_def) < tol )
+        self.assertTrue(abs(diff_freqend_def) < tol )
+
     def test_su_adivsechanel_defaults(self):
         '''Test non specified parameter case for proper error/warning message '''
-        pass    
+        su = synthesisutils()
+        #su.advisechansel(freqstart='356.5GHz',freqend='358.0GHz')
+        self.assertRaises(Exception, su.advisechansel())
+
 
 ####    Suite: Required for CASA5     ####
 #def suite():
