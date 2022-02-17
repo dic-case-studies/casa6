@@ -112,17 +112,12 @@ class test_base(unittest.TestCase):
         self.__copytree(src, dst)
 
     def __copytree(self, src, dst):
-        if not os.path.exists(src) or src == dst:
-            raise RuntimeError(f'Error is occured or existed on a path {src} or {dst}')
-        try:
-            if os.path.isfile(src):
-                shutil.copy(src, dst)
-            elif os.path.isdir(src):
-                shutil.copytree(src, dst)
-            elif os.path.islink(src):
-                self.__copytree(os.readlink(src), dst)
-        except Exception as e:
-            raise RuntimeError(f'Some errors occured on filesystem, errno:[{e.errno}]')
+        if os.path.isfile(src):
+            shutil.copy(src, dst)
+        elif os.path.isdir(src):
+            shutil.copytree(src, dst)
+        elif os.path.islink(src):
+            self.__copytree(os.readlink(src), dst)
 
     def _create_image(self, datapath, val=1, shape=[0, 0, 0, 0]):
         _ia = image()
