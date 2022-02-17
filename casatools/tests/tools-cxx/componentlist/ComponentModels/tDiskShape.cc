@@ -66,7 +66,7 @@ int main() {
       // Sample the Disk at the Maximum and a bit more ands a bit less than
       // half an arc-min on either side.
       const Double peak = square(pixelSize.radian())/
-	(C::pi*square(Quantity(1, "arcmin").getValue("rad")));
+	(C::pi_4*square(Quantity(1, "arcmin").getValue("rad")));
       {
 	MVDirection sampleDirVal(Quantity(0,"deg"), 
 				 Quantity(90, "deg") - Quantity(.5001, "'"));
@@ -78,7 +78,9 @@ int main() {
 	MVDirection sampleDirVal(Quantity(0,"deg"), 
 				 Quantity(90, "deg") - Quantity(.4999, "'"));
 	MDirection sampleDir(sampleDirVal, MDirection::J2000);
- 	AlwaysAssert(near(defDisk.sample(sampleDir,pixelSize,pixelSize), peak),
+    cout << "peak " << peak << endl;
+    cout << "sample " << defDisk.sample(sampleDir,pixelSize,pixelSize) << endl;
+    AlwaysAssert(near(defDisk.sample(sampleDir,pixelSize,pixelSize), peak),
  		     AipsError);
       }
       {
@@ -107,7 +109,7 @@ int main() {
       const Quantity pa(1, "deg");
       const MVAngle pixelSize(Quantity(1.0,"''"));
       const Double peak = square(pixelSize.radian())/
-	(C::pi*majorAxis.getValue("rad")*minorAxis.getValue("rad"));
+	(C::pi_4*majorAxis.getValue("rad")*minorAxis.getValue("rad"));
       DiskShape ds(dir, majorAxis, minorAxis, pa);
       Vector<MDirection::MVType> dirs(8);
       dirs(0) = MVDirection(Quantity(0,"deg"), Quantity(-2.001, "deg"));
