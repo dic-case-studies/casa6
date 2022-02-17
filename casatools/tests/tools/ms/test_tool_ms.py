@@ -1204,6 +1204,7 @@ class mstool_test_iter(mstool_test_base):
 # ------------------------------------------------------------------------------
 # Tests for ms.fromfits and ms.tofits
 class mstool_test_fits(mstool_test_base):
+    # Some of the test cases come from old test_uvfits.py
     datapath = 'unittest/uvfits/'
 
     def setUp(self):
