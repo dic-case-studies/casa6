@@ -495,14 +495,9 @@ class advisechansel_test(sutest_base):
     def test_su_adivsechanel_defaults(self):
         '''Test non specified parameter case for proper error/warning message '''
         su = synthesisutils()
-        #su.advisechansel(freqstart='356.5GHz',freqend='358.0GHz')
         self.assertRaises(Exception, su.advisechansel())
 
 
-####    Suite: Required for CASA5     ####
-#def suite():
-#    return[fitpsfbeam_test]
-  
 ####    Imports     ####
 if __name__ == '__main__':
     unittest.main()
