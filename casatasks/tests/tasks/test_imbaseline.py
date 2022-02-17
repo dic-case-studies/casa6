@@ -33,7 +33,10 @@ from casatasks.private.task_imbaseline import (CasaImageStack, EraseableFolder,
 from casatools import ctsys, image, table
 
 _tb = table()
-ctsys_resolve = ctsys.resolve
+
+# https://open-bitbucket.nrao.edu/projects/CASA/repos/casatestdata/browse/unittest
+DATAPATH = ctsys.resolve('unittest/imbaseline/')
+
 DATACOLUMN = 'DATA'
 UNEXISTS = 'unexists'
 DUMMY_FOLDERS = ('dummy1', 'dummy2', 'dummy3')
@@ -98,10 +101,9 @@ class test_base(unittest.TestCase):
 
         [_setup_folder(folder) for folder in DUMMY_FOLDERS]
 
-    def _copy_test_files(self, basename, filename):
+    def _copy_test_files(self, filename):
         """Copy files for testing into current path."""
-        _base = ctsys_resolve(basename)
-        src = os.path.join(_base, filename)
+        src = os.path.join(DATAPATH, filename)
         dst = os.path.join(os.getcwd(), filename)
 
         if os.path.exists(dst):
@@ -354,11 +356,10 @@ class TestImsmooth(test_base):
     3-3. set values for ImsmoothParams and do validate(), and compare properties of it to the correct values
     """
 
-    datapath = ctsys_resolve('unittest/imsmooth/')
     tiny = 'tiny.im'
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.tiny)
+        self._copy_test_files(self.tiny)
 
     def test_3_1(self):
         """3-1. successful case: call imsmooth with some parameters."""
@@ -434,14 +435,13 @@ class TestImage2MS(test_base):
     4-5. set values for Image2MSParams and do validate(), and compare properties of it to the correct values
     """
 
-    datapath = ctsys_resolve('unittest/imbaseline/')
     expected = 'expected.im'
     datacolumn = DATACOLUMN
 
     def setUp(self):
         self._create_dummy_folders()
-        self._copy_test_files(self.datapath, self.expected)
-        self.image_shape = get_image_shape(os.path.join(self.datapath, self.expected))
+        self._copy_test_files(self.expected)
+        self.image_shape = get_image_shape(self.expected)
 
     def test_4_1(self):
         """4-1. successful case: create MeasurementSet from a image."""
@@ -496,7 +496,6 @@ class TestSdsmooth(test_base):
     5-4. set values for SdsmoothParams and do validate(), and compare properties of it to the correct values
     """
 
-    datapath = ctsys_resolve('unittest/imbaseline/')
     input_image = 'expected.im'
     input_ms = 'expected.ms'
     datacolumn = DATACOLUMN
@@ -504,9 +503,9 @@ class TestSdsmooth(test_base):
     kwidth = 5
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.input_image)
-        self._copy_test_files(self.datapath, self.input_ms)
-        self.image_shape = get_image_shape(os.path.join(self.datapath, self.input_image))
+        self._copy_test_files(self.input_image)
+        self._copy_test_files(self.input_ms)
+        self.image_shape = get_image_shape(self.input_image)
 
     def test_5_1(self):
         """5-1. successful case: call sdsmooth with some parameters."""
@@ -567,7 +566,6 @@ class TestSdbaseline(test_base):
     6-4. set values for SdbaselineParams and do validate(), and compare properties of it to the correct values
     """
 
-    datapath = ctsys_resolve('unittest/imbaseline/')
     input_image = 'expected.im'
     input_ms = 'expected.ms'
     bloutput = 'test.csv'
@@ -590,10 +588,10 @@ class TestSdbaseline(test_base):
     datacolumn = DATACOLUMN
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.input_image)
-        self._copy_test_files(self.datapath, self.input_ms)
-        self._copy_test_files(self.datapath, self.blparam)
-        self.image_shape = get_image_shape(os.path.join(self.datapath, self.input_image))
+        self._copy_test_files(self.input_image)
+        self._copy_test_files(self.input_ms)
+        self._copy_test_files(self.blparam)
+        self.image_shape = get_image_shape(self.input_image)
 
     def test_6_1(self):
         """6-1. successful case: call sdbaseline with some parameters."""
@@ -693,7 +691,6 @@ class TestImageSubtraction(test_base):
     7-6. output data check: two images subtraction test
     """
 
-    datapath = ctsys_resolve('unittest/imbaseline/')
     existing_image = 'expected.im'
     existing_imsmoothed_image = 'expected.imsmooth.im'
     existing_baselined_image = 'expected.bl.im'
@@ -703,9 +700,9 @@ class TestImageSubtraction(test_base):
     testdata_err = ('testdata_err.im', 1, [65, 64, 4, 128])
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.existing_image)
-        self._copy_test_files(self.datapath, self.existing_imsmoothed_image)
-        self._copy_test_files(self.datapath, self.existing_baselined_image)
+        self._copy_test_files(self.existing_image)
+        self._copy_test_files(self.existing_imsmoothed_image)
+        self._copy_test_files(self.existing_baselined_image)
         self._create_image(self.input_image[0], self.input_image[1], self.input_image[2])
         self._create_image(self.smoothed_image[0], self.smoothed_image[1], self.smoothed_image[2])
         self._create_image(self.smoothed_and_subtracted_image[0], self.smoothed_and_subtracted_image[1],
@@ -779,16 +776,15 @@ class TestMS2Image(test_base):
     8-3. failure case: attempt to convert a MeasurementSet unexisted, an exception raises
     """
 
-    datapath = ctsys_resolve('unittest/imbaseline/')
     input_image = 'expected.im'
     original_image = 'expected_orig.im'
     input_ms = 'expected.ms'
     baselined_ms = 'expected.bl.ms'
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.input_image)
-        self._copy_test_files(self.datapath, self.input_ms)
-        self._copy_test_files(self.datapath, self.baselined_ms)
+        self._copy_test_files(self.input_image)
+        self._copy_test_files(self.input_ms)
+        self._copy_test_files(self.baselined_ms)
         if os.path.exists(self.input_image):
             os.rename(self.input_image, self.original_image)
         else:
@@ -849,13 +845,12 @@ class TestGlobalMethodsOfImbaseline(test_base):
     9-3. get_image_shape: failure case: attempt to read an image has invalid shape, an exception raises
     """
 
-    datapath = ctsys_resolve('unittest/imbaseline/')
     input_image = 'expected.im'
     g192_im = 'g192_a2.image'
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.input_image)
-        self._copy_test_files(self.datapath, self.g192_im)
+        self._copy_test_files(self.input_image)
+        self._copy_test_files(self.g192_im)
 
     def test_9_1(self):
         """9-1. get_image_shape: successful case: get an image shape and check properties of it."""
@@ -901,14 +896,13 @@ class TestImbaseline(test_base):
     F-4. successful case: execute imbaseline with bloutput set output path, bloutput generates
     """
 
-    datapath = ctsys_resolve('unittest/imbaseline/')
     input_image = 'ref_multipix.signalband'
     blparam = 'analytic_variable_blparam_spw1.txt'
     f_1_count = 1
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.input_image)
-        self._copy_test_files(self.datapath, self.blparam)
+        self._copy_test_files(self.input_image)
+        self._copy_test_files(self.blparam)
 
     def test_f_1(self):
         """F-1. successful case: execute imbaseline."""
@@ -936,7 +930,7 @@ class TestImbaseline(test_base):
         major = '20arcsec'
         minor = '10arcsec'
         pa = '0deg'
-        kimage = os.path.join(self.datapath, "bessel.im")
+        kimage = os.path.join(DATAPATH, "bessel.im")
         scale = -1.0
         spkernel = ('none', 'gaussian', 'boxcar')
         kwidth = 5
@@ -1051,7 +1045,6 @@ class TestImbaselineOutputs(test_base):
     while module initialisation.
     """
 
-    datapath = ctsys_resolve('unittest/imbaseline/')
     input_image = 'ref_multipix.signalband'
     blparam = 'analytic_variable_blparam_spw1.txt'
     TEST_IMAGE_SHAPE = [128, 128, 1, 10]
@@ -1069,8 +1062,8 @@ class TestImbaselineOutputs(test_base):
     pa = '0deg'
 
     def setUp(self):
-        self._copy_test_files(self.datapath, self.input_image)
-        self._copy_test_files(self.datapath, self.blparam)
+        self._copy_test_files(self.input_image)
+        self._copy_test_files(self.blparam)
 
     @staticmethod
     def generate_tests():
@@ -1091,7 +1084,7 @@ class TestImbaselineOutputs(test_base):
     @staticmethod
     def _generate_a_test(blfunc, dirkernel, spkernel, test_name):
         def test_method(self):
-            self._create_image(self.test_image, self.TEST_IMAGE_VALUE, self.image_shape)
+            self._create_image(self.test_image, self.TEST_IMAGE_VALUE, self.TEST_IMAGE_SHAPE)
             params = dict(imagename=self.test_image, linefile=self.linefile, output_cont=self.output_cont,
                           bloutput=self.bloutput, blfunc=blfunc, dirkernel=dirkernel, spkernel=spkernel,
                           major=self.major, minor=self.minor, pa=self.pa)
