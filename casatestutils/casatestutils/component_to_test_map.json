@@ -281,6 +281,16 @@
             "comment":""
         },
         {
+            "testScript":"test_tool_simulator",
+            "testType":"casatools",
+            "maintainer":"David Mehringer",
+            "maintainerEmail":"dmehring@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools","Simulaton"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_tool_vpmanager",
             "testType":"casatools",
             "maintainer":"Dirk Petry",
