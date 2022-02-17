@@ -136,24 +136,24 @@ class test_base(unittest.TestCase):
 class TestAbstractFileStack(test_base):
     """Test AbstractFileStack / (Un)EraseableFolder.
 
-    1-1. Create Stack with exist file
-    1-2. Create Stack with unexist file
-    1-3. push() exist file
-    1-4. push() unexist file
-    1-5. pop() exist stuff
-    1-6. pop() unexist stuff
-    1-7. peak() exist stuff
-    1-8. peak() unexist stuff
-    1-9. subpeak() exist stuff
-    1-10. subpeak() unexist stuff
-    1-11. bottom() exist stuff
-    1-12. bottom() unexist stuff
-    1-13. clear() exist EraseableFolder file
-    1-14. clear() exist UneraseableFolder file
-    1-15. erase EraseableFolder file
-    1-16. erase UneraseableFolder file
-    1-17. height() test
-    1-18. pop() when height is 1
+    1-1. successful case: Create Stack with exist file
+    1-2. failure case: Create Stack with unexist file, an exception raises
+    1-3. successful case: push() exist file into stack
+    1-4. failure case: push() unexist file into stack, an exception raises
+    1-5. successful case: pop() exist stuff into stack
+    1-6. failure case: pop() unexist stuff into stack, an exception raises
+    1-7. successful case: peak() exist stuff into stack
+    1-8. failure case: peak() unexist stuff into stack, an exception raises
+    1-9. successful case: subpeak() exist stuff into stack
+    1-10. failure case: subpeak() unexist stuff into stack, an exception raises
+    1-11. successful case: bottom() exist stuff into stack
+    1-12. failure case: bottom() unexist stuff into stack, an exception raises
+    1-13. successful case: do clear() of EraseableFolder contains a file
+    1-14. successful case: do clear() of UneraseableFolder contains a file
+    1-15. successful case: do erase() of EraseableFolder contains a file
+    1-16. successful case: do erase() UneraseableFolder contains a file
+    1-17. successful case: check height() of stack
+    1-18. failure case: pop() when height is 1, an exception raises
     """
 
     def setUp(self):
@@ -162,29 +162,29 @@ class TestAbstractFileStack(test_base):
             shutil.rmtree(UNEXISTS)
 
     def test_1_1(self):
-        """1-1. Create Stack with exist file."""
+        """1-1. successful case: Create Stack with exist file."""
         stack = CasaImageStack(UnerasableFolder(DUMMY_FOLDERS[0]))
         self.assertTrue(stack.height() == 1)
 
     @test_base.exception_case(ValueError, f'file {UNEXISTS} is not found')
     def test_1_2(self):
-        """1-2. Create Stack with unexist file."""
+        """1-2. failure case: Create Stack with unexist file, an exception raises."""
         CasaImageStack(UnerasableFolder(UNEXISTS))
 
     def test_1_3(self):
-        """1-3. push() exist file."""
+        """1-3. successful case: push() exist file into stack."""
         stack = CasaImageStack()
         stack.push(UnerasableFolder(DUMMY_FOLDERS[0]))
         self.assertTrue(stack.height() == 1)
 
     @test_base.exception_case(ValueError, f'file {UNEXISTS} is not found')
     def test_1_4(self):
-        """1-4. push() unexist file."""
+        """1-4. failure case: push() unexist file into stack, an exception raises."""
         stack = CasaImageStack()
         stack.push(UnerasableFolder(UNEXISTS))
 
     def test_1_5(self):
-        """1-5. pop() exist stuff."""
+        """1-5. successful case: pop() exist stuff into stack."""
         stack = CasaImageStack()
         stack.push(UnerasableFolder(DUMMY_FOLDERS[0]))
         obj = UnerasableFolder(DUMMY_FOLDERS[1])
@@ -195,12 +195,12 @@ class TestAbstractFileStack(test_base):
 
     @test_base.exception_case(RuntimeError, 'the stack cannot pop')
     def test_1_6(self):
-        """1-6. pop() unexist stuff."""
+        """1-6. failure case: pop() unexist stuff into stack, an exception raises."""
         stack = CasaImageStack()
         stack.pop()
 
     def test_1_7(self):
-        """1-7. peak() exist stuff."""
+        """1-7. successful case: peak() exist stuff into stack."""
         stack = CasaImageStack()
         obj1 = UnerasableFolder(DUMMY_FOLDERS[0])
         stack.push(obj1)
@@ -214,12 +214,12 @@ class TestAbstractFileStack(test_base):
 
     @test_base.exception_case(RuntimeError, 'the stack is empty')
     def test_1_8(self):
-        """1-8. peak() unexist stuff."""
+        """1-8. failure case: peak() unexist stuff into stack, an exception raises."""
         stack = CasaImageStack()
         stack.peak()
 
     def test_1_9(self):
-        """1-9. subpeak() exist stuff."""
+        """1-9. successful case: subpeak() exist stuff into stack."""
         stack = CasaImageStack()
         obj1 = UnerasableFolder(DUMMY_FOLDERS[0])
         stack.push(obj1)
@@ -234,12 +234,12 @@ class TestAbstractFileStack(test_base):
 
     @test_base.exception_case(RuntimeError, 'the stack has only one stuff')
     def test_1_10(self):
-        """1-10. subpeak() unexist stuff."""
+        """1-10. failure case: subpeak() unexist stuff into stack, an exception raises."""
         stack = CasaImageStack(UnerasableFolder(DUMMY_FOLDERS[0]))
         stack.subpeak()
 
     def test_1_11(self):
-        """1-11. bottom() exist stuff."""
+        """1-11. successful case: bottom() exist stuff into stack."""
         stack = CasaImageStack()
         obj1 = UnerasableFolder(DUMMY_FOLDERS[0])
         stack.push(obj1)
@@ -259,12 +259,12 @@ class TestAbstractFileStack(test_base):
 
     @test_base.exception_case(RuntimeError, 'the stack has not have enough stuff')
     def test_1_12(self):
-        """1-12. bottom() unexist stuff."""
+        """1-12. failure case: bottom() unexist stuff into stack, an exception raises."""
         stack = CasaImageStack()
         stack.bottom()
 
     def test_1_13(self):
-        """1-13. clear() exist EraseableFolder file."""
+        """1-13. successful case: do clear() of EraseableFolder contains a file."""
         file = EraseableFolder(DUMMY_FOLDERS[0])
         stack = CasaImageStack(file)
         stack.clear(False)
@@ -272,26 +272,26 @@ class TestAbstractFileStack(test_base):
         self.assertEqual(stack.height(), 0)
 
     def test_1_14(self):
-        """1-14. clear() exist UneraseableFolder file."""
+        """1-14. successful case: do clear() of UneraseableFolder contains a file."""
         stack = CasaImageStack(UnerasableFolder(DUMMY_FOLDERS[0]))
         stack.clear(False)
         self.assertTrue(os.path.exists(DUMMY_FOLDERS[0]))
         self.assertEqual(stack.height(), 0)
 
     def test_1_15(self):
-        """1-15. erase EraseableFolder file."""
+        """1-15. successful case: do erase() of EraseableFolder contains a file."""
         file = EraseableFolder(DUMMY_FOLDERS[0])
         file.erase(False)
         self.assertFalse(os.path.exists(DUMMY_FOLDERS[0]))
 
     def test_1_16(self):
-        """1-16. erase UneraseableFolder file."""
+        """1-16. successful case: do erase() UneraseableFolder contains a file."""
         file = UnerasableFolder(DUMMY_FOLDERS[0])
         file.erase(False)
         self.assertTrue(os.path.exists(DUMMY_FOLDERS[0]))
 
     def test_1_17(self):
-        """1-17. height() test."""
+        """1-17. successful case: check height() of stack."""
         stack = CasaImageStack()
         self.assertEqual(stack.height(), 0)
         stack.push(UnerasableFolder(DUMMY_FOLDERS[0]))
@@ -307,7 +307,7 @@ class TestAbstractFileStack(test_base):
 
     @test_base.exception_case(RuntimeError, 'the stack cannot pop')
     def test_1_18(self):
-        """1-18. pop() when height is 1."""
+        """1-18. failure case: pop() when height is 1, an exception raises."""
         stack = CasaImageStack()
         stack.push(UnerasableFolder(DUMMY_FOLDERS[0]))
         stack.pop()
@@ -317,8 +317,8 @@ class TestImageShape(test_base):
     """Test ImageShape.
 
     2-1. successful case: axis_sp = axis_pol = 2or3, axis_sp != axis_pol
-    2-2. invalid im_nchan
-    2-3. invalid dir_shape
+    2-2. failure case: invalid im_nchan, an exception raises
+    2-3. failure case: invalid dir_shape, an exception raises
     """
 
     def setUp(self):
@@ -337,13 +337,13 @@ class TestImageShape(test_base):
 
     @test_base.exception_case(ValueError, 'nchan \\d is too few to perform baseline subtraction')
     def test_2_2(self):
-        """2-2. invalid im_nchan."""
+        """2-2. failure case: invalid im_nchan, an exception raises."""
         shape = ImageShape(im_shape=np.array([100, 100, 1, 1]), axis_dir=np.array([0, 1]), axis_sp=3, axis_pol=2)
         shape.validate()
 
     @test_base.exception_case(ValueError, 'invalid value: dir_shape \\[\\d+\\]')
     def test_2_3(self):
-        """2-3. invalid dir_shape."""
+        """2-3. failure case: invalid dir_shape, an exception raises."""
         shape = ImageShape(np.array([100, 100, 1, 100]), axis_dir=np.array([0]), axis_sp=3, axis_pol=2)
         shape.validate()
 
@@ -353,9 +353,9 @@ class TestImsmooth(test_base):
 
     Tests of imsmooth rely on ones of test_imsmooth basically, so we have minimal tests in imbaseline.
 
-    3-1. simple successful case
-    3-2. simple failure case
-    3-3. check parameters of ImsmoothParams
+    3-1. successful case: call imsmooth with some parameters
+    3-2. failure case: invalid dirkernel, an exception raises
+    3-3. set values for ImsmoothParams and do validate(), and compare properties of it to the correct values
     """
 
     datapath = ctsys_resolve('unittest/imsmooth/')
@@ -365,7 +365,7 @@ class TestImsmooth(test_base):
         self._copy_test_files(self.datapath, self.tiny)
 
     def test_3_1(self):
-        """3-1. simple successful case."""
+        """3-1. successful case: call imsmooth with some parameters."""
         major = '2.5arcsec'
         minor = '2arcsec'
         pa = '0deg'
@@ -380,7 +380,7 @@ class TestImsmooth(test_base):
 
     @test_base.exception_case(ValueError, 'Unsupported direction smoothing kernel, foobar')
     def test_3_2(self):
-        """3-2. simple failure case."""
+        """3-2. failure case: invalid dirkernel, an exception raises."""
         major = '2.5arcsec'
         minor = '2arcsec'
         pa = '0deg'
@@ -393,7 +393,7 @@ class TestImsmooth(test_base):
         ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, stack)
 
     def test_3_3(self):
-        """3-3. check parameters of ImsmoothParams."""
+        """3-3. set values for ImsmoothParams and do validate(), and compare properties of it to the correct values."""
         targetres = stretch = False
         mask = region = box = chans = stokes = ''
         beam = {}
@@ -431,11 +431,11 @@ class TestImsmooth(test_base):
 class TestImage2MS(test_base):
     """Test image2ms.
 
-    4-1. simple successful case
-    4-2. invalid datacolumn
-    4-3. invalid image
-    4-4. set empty stack
-    4-5. check Image2MSParams
+    4-1. successful case: create MeasurementSet from a image
+    4-2. failure case: execute image2ms with invalid datacolumn parameter, an exception raises
+    4-3. failure case: execute image2ms with invalid image data, an exception raises
+    4-4. failure case: execute image2ms with empty stack, an exception raises
+    4-5. set values for Image2MSParams and do validate(), and compare properties of it to the correct values
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -448,7 +448,7 @@ class TestImage2MS(test_base):
         self.image_shape = get_image_shape(os.path.join(self.datapath, self.expected))
 
     def test_4_1(self):
-        """4-1. simple successful case."""
+        """4-1. successful case: create MeasurementSet from a image."""
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected))
         ms_stack = MeasurementSetStack()
         Image2MSMethods.execute(self.datacolumn, self.image_shape, image_stack, ms_stack)
@@ -457,27 +457,27 @@ class TestImage2MS(test_base):
 
     @test_base.exception_case(RuntimeError, 'column INVALID does not exist')
     def test_4_2(self):
-        """4-2. invalid datacolumn."""
+        """4-2. failure case: execute image2ms with invalid datacolumn parameter, an exception raises."""
         image_stack = CasaImageStack(top=UnerasableFolder(self.expected))
         ms_stack = MeasurementSetStack()
         Image2MSMethods.execute('INVALID', self.image_shape, image_stack, ms_stack)
 
     @test_base.exception_case(RuntimeError, 'Unable to open image dummy1.')
     def test_4_3(self):
-        """4-3. invalid image."""
+        """4-3. failure case: execute image2ms with invalid image data, an exception raises."""
         image_stack = CasaImageStack(top=UnerasableFolder(DUMMY_FOLDERS[0]))
         ms_stack = MeasurementSetStack()
         Image2MSMethods.execute(self.datacolumn, self.image_shape, image_stack, ms_stack)
 
     @test_base.exception_case(RuntimeError, 'the stack is empty')
     def test_4_4(self):
-        """4-4. set empty stack."""
+        """4-4. failure case: execute image2ms with empty stack, an exception raises."""
         image_stack = CasaImageStack()
         ms_stack = MeasurementSetStack()
         Image2MSMethods.execute(self.datacolumn, self.image_shape, image_stack, ms_stack)
 
     def test_4_5(self):
-        """4-5. check Image2MSParams."""
+        """4-5. set values for Image2MSParams and do validate(), and compare properties of it to the correct values."""
         outfile = 'output_4_5.ms'
         params = Image2MSParams(self.expected, outfile, self.datacolumn, self.image_shape)
         params.validate()
@@ -494,10 +494,10 @@ class TestSdsmooth(test_base):
 
     Tests of sdsmooth rely on ones of test_sdsmooth basically, so we have minimal tests in imbaseline.
 
-    5-1. simple successful case
-    5-2. invalid ms stack
-    5-3. invalid image stack
-    5-4. check SdsmoothParams
+    5-1. successful case: call sdsmooth with some parameters
+    5-2. failure case: call sdsmooth with invalid ms stack, an exception raises
+    5-3. failure case: call sdsmooth with invalid image stack, an exception raises
+    5-4. set values for SdsmoothParams and do validate(), and compare properties of it to the correct values
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -513,7 +513,7 @@ class TestSdsmooth(test_base):
         self.image_shape = get_image_shape(os.path.join(self.datapath, self.input_image))
 
     def test_5_1(self):
-        """5-1. simple successful case."""
+        """5-1. successful case: call sdsmooth with some parameters."""
         image_stack = CasaImageStack(top=UnerasableFolder(self.input_image))
         ms_stack = MeasurementSetStack()
         ms_stack.push(EraseableFolder(self.input_ms))
@@ -525,21 +525,21 @@ class TestSdsmooth(test_base):
 
     @test_base.exception_case(RuntimeError, 'the stack is empty')
     def test_5_2(self):
-        """5-2. invalid ms stack."""
+        """5-2. failure case: call sdsmooth with invalid ms stack, an exception raises."""
         image_stack = CasaImageStack(top=UnerasableFolder(self.input_image))
         ms_stack = MeasurementSetStack()
         SdsmoothMethods.execute(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
 
     @test_base.exception_case(RuntimeError, 'the stack has not have enough stuff')
     def test_5_3(self):
-        """5-3. invalid image stack."""
+        """5-3. failure case: call sdsmooth with invalid image stack, an exception raises."""
         image_stack = CasaImageStack()
         ms_stack = MeasurementSetStack()
         ms_stack.push(EraseableFolder(self.input_ms))
         SdsmoothMethods.execute(self.datacolumn, self.spkenel, self.kwidth, image_stack, ms_stack, self.image_shape)
 
     def test_5_4(self):
-        """5-4. check SdsmoothParams."""
+        """5-4. set values for SdsmoothParams and do validate(), and compare properties of it to the correct values."""
         spw = field = antenna = timerange = scan = pol = intent = ''
         reindex = overwrite = True
         infile = 'infile'
@@ -565,10 +565,10 @@ class TestSdbaseline(test_base):
 
     Tests of sdbaseline rely on ones of test_sdbaseline basically, so we have minimal tests in imbaseline.
 
-    6-1. simple successful case
-    6-2. invalid ms stack
-    6-3. invalid image stack
-    6-4. check SdbaselineParams
+    6-1. successful case: call sdbaseline with some parameters
+    6-2. failure case: call sdbaseline with invalid ms stack, an exception raises
+    6-3. failure case: call sdbaseline with invalid image stack, an exception raise
+    6-4. set values for SdbaselineParams and do validate(), and compare properties of it to the correct values
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -600,7 +600,7 @@ class TestSdbaseline(test_base):
         self.image_shape = get_image_shape(os.path.join(self.datapath, self.input_image))
 
     def test_6_1(self):
-        """6-1. simple successful case."""
+        """6-1. successful case: call sdbaseline with some parameters."""
         image_stack = CasaImageStack(top=UnerasableFolder(self.input_image))
         ms_stack = MeasurementSetStack()
         ms_stack.push(EraseableFolder(self.input_ms))
@@ -614,7 +614,7 @@ class TestSdbaseline(test_base):
 
     @test_base.exception_case(RuntimeError, 'the stack is empty')
     def test_6_2(self):
-        """6-2. invalid ms stack."""
+        """6-2. failure case: call sdbaseline with invalid ms stack, an exception raises."""
         image_stack = CasaImageStack(top=UnerasableFolder(self.input_image))
         ms_stack = MeasurementSetStack()
         SdbaselineMethods.execute(self.datacolumn, self.bloutput, self.maskmode, self.chans, self.thresh, self.avg_limit,
@@ -624,7 +624,7 @@ class TestSdbaseline(test_base):
 
     @test_base.exception_case(RuntimeError, 'the stack has not have enough stuff')
     def test_6_3(self):
-        """6-3. invalid image stack."""
+        """6-3. failure case: call sdbaseline with invalid image stack, an exception raise."""
         image_stack = CasaImageStack()
         ms_stack = MeasurementSetStack()
         ms_stack.push(EraseableFolder(self.input_ms))
@@ -634,7 +634,7 @@ class TestSdbaseline(test_base):
                                   image_stack, ms_stack, self.image_shape)
 
     def test_6_4(self):
-        """6-4. check SdbaselineParams."""
+        """6-4. set values for SdbaselineParams and do validate(), and compare properties of it to the correct values."""
         antenna = field = timerange = scan = pol = intent = bltable = ''
         reindex = dosubtract = overwrite = True
         updateweight = showprogress = verbose = False
@@ -689,12 +689,12 @@ class TestSdbaseline(test_base):
 class TestImageSubtraction(test_base):
     """Test image subtractions.
 
-    7-1. successful test: output = input_image - (smoothed_image - smoothed_and_subtracted_image)
-    7-2. successful test: output = subtracted_image
-    7-3. unmatch shape
-    7-4. unmatch shape(exception is not thrown)
-    7-5. three images subtraction test
-    7-6. two images subtraction test
+    7-1. successful test: subtracted output = input_image - (smoothed_image - smoothed_and_subtracted_image)
+    7-2. successful test: subtracted output = subtracted_image
+    7-3. failure case: subtract three images have unmatched shape, an exception raises
+    7-4. successful test: subtract two images have unmatched shape (any exceptions do not raise)
+    7-5. output data check: three images subtraction test
+    7-6. output data check: two images subtraction test
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -717,7 +717,7 @@ class TestImageSubtraction(test_base):
         self._create_image(self.testdata_err[0], self.testdata_err[1], self.testdata_err[2])
 
     def test_7_1(self):
-        """7-1. successful test: output = input_image - (smoothed_image - smoothed_and_subtracted_image)."""
+        """7-1. successful test: subtracted output = input_image - (smoothed_image - smoothed_and_subtracted_image)."""
         image_stack = CasaImageStack(top=UnerasableFolder(self.existing_image))
         image_stack.push(EraseableFolder(self.existing_imsmoothed_image))
         image_stack.push(EraseableFolder(self.existing_baselined_image))
@@ -726,7 +726,7 @@ class TestImageSubtraction(test_base):
         self.assertTrue(os.path.exists(output))
 
     def test_7_2(self):
-        """7-2. successful test: output = subtracted_image."""
+        """7-2. successful test: subtracted output = subtracted_image."""
         image_stack = CasaImageStack(top=UnerasableFolder(self.existing_image))
         image_stack.push(EraseableFolder(self.existing_baselined_image))
         output = 'output_7_2.im'
@@ -735,7 +735,7 @@ class TestImageSubtraction(test_base):
 
     @test_base.exception_case(ValueError, 'operands could not be broadcast together with shapes')
     def test_7_3(self):
-        """7-3. unmatch shape."""
+        """7-3. failure case: subtract three images have unmatched shape, an exception raises."""
         image_stack = CasaImageStack(top=UnerasableFolder(self.input_image[0]))
         image_stack.push(EraseableFolder(self.smoothed_image[0]))
         image_stack.push(EraseableFolder(self.testdata_err[0]))
@@ -743,7 +743,7 @@ class TestImageSubtraction(test_base):
         ImageSubtractionMethods.execute(output, image_stack)
 
     def test_7_4(self):
-        """7-4. unmatch shape(exception is not thrown)."""
+        """7-4. successful test: subtract two images have unmatched shape (any exceptions do not raise)."""
         image_stack = CasaImageStack(top=UnerasableFolder(self.input_image[0]))
         image_stack.push(EraseableFolder(self.testdata_err[0]))
         output = 'output_7_4.im'
@@ -752,7 +752,7 @@ class TestImageSubtraction(test_base):
         self.assertFalse(os.path.exists(self.testdata_err[0]))
 
     def test_7_5(self):
-        """7-5. three images subtraction test."""
+        """7-5. output data check: three images subtraction test."""
         # output = input_image - (smoothed_image - smoothed_and_subtracted_image)
         image_stack = CasaImageStack(top=UnerasableFolder(self.input_image[0]))
         image_stack.push(EraseableFolder(self.smoothed_image[0]))
@@ -764,7 +764,7 @@ class TestImageSubtraction(test_base):
             self.assertTrue(np.array_equal(arr, np.full((64, 64, 4, 128), 2.0)))
 
     def test_7_6(self):
-        """7-6. two images subtraction test."""
+        """7-6. output data check: two images subtraction test."""
         # output = smoothed_image
         image_stack = CasaImageStack(top=UnerasableFolder(self.input_image[0]))
         image_stack.push(EraseableFolder(self.smoothed_image[0]))
@@ -778,9 +778,9 @@ class TestImageSubtraction(test_base):
 class TestMS2Image(test_base):
     """Test MS2Image.
 
-    8-1. successful test
-    8-2. base image error
-    8-3. MS error
+    8-1. successful case: convert a MeasurementSet to image and compare it to the correct chunk
+    8-2. failure case: attempt to convert a MeasurementSet without base image, an exception raises
+    8-3. failure case: attempt to convert a MeasurementSet unexisted, an exception raises
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -802,7 +802,7 @@ class TestMS2Image(test_base):
         self.image_shape = get_image_shape(self.original_image)
 
     def test_8_1(self):
-        """8-1. successful test."""
+        """8-1. successful case: convert a MeasurementSet to image and compare it to the correct chunk."""
         MS2ImageMethods.convert(base_image=self.original_image,
                                 input_ms=self.input_ms,
                                 input_image_shape=self.image_shape,
@@ -816,7 +816,7 @@ class TestMS2Image(test_base):
 
     @test_base.exception_case(TypeError, 'stat: path should be string, ')
     def test_8_2(self):
-        """8-2. base image error."""
+        """8-2. failure case: attempt to convert a MeasurementSet without base image, an exception raises."""
         MS2ImageMethods.convert(base_image=None,
                                 input_ms=self.input_ms,
                                 input_image_shape=self.image_shape,
@@ -824,7 +824,7 @@ class TestMS2Image(test_base):
 
     @test_base.exception_case(TypeError, 'stat: path should be string, ')
     def test_8_3(self):
-        """8-3. MS error."""
+        """8-3. failure case: attempt to convert a MeasurementSet unexisted, an exception raises."""
         MS2ImageMethods.convert(base_image=self.original_image,
                                 input_ms=self.baselined_ms,
                                 input_image_shape=self.image_shape,
@@ -848,9 +848,9 @@ class TestGlobalMethodsOfImbaseline(test_base):
 
     The white tests of global methods of imbaseline module must be implemented in this class.
 
-    9-1. get_image_shape: successful
-    9-2. get_image_shape: failure
-    9-3. get_image_shape: failure
+    9-1. get_image_shape: successful case: get an image shape and check properties of it
+    9-2. get_image_shape: failure case: attempt to read an image unexisted, an exception raises
+    9-3. get_image_shape: failure case: attempt to read an image has invalid shape, an exception raises
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -862,7 +862,7 @@ class TestGlobalMethodsOfImbaseline(test_base):
         self._copy_test_files(self.datapath, self.g192_im)
 
     def test_9_1(self):
-        """9-1. get_image_shape: successful."""
+        """9-1. get_image_shape: successful case: get an image shape and check properties of it."""
         shape = get_image_shape(self.input_image)
         self.assertTrue(np.array_equal(shape.im_shape, [20, 20, 100]))
         self.assertTrue(np.array_equal(shape.axis_dir, [0, 1]))
@@ -885,12 +885,12 @@ class TestGlobalMethodsOfImbaseline(test_base):
 
     @test_base.exception_case(ValueError, 'path \'notexists\' is not found')
     def test_9_2(self):
-        """9-2. get_image_shape: failure."""
+        """9-2. get_image_shape: failure case: attempt to read an image unexisted, an exception raises."""
         get_image_shape('notexists')
 
     @test_base.exception_case(ValueError, 'image \'testdata_01.im\' is invalid')
     def test_9_3(self):
-        """9-3. get_image_shape: failure."""
+        """9-3. get_image_shape: failure case: attempt to read an image has invalid shape, an exception raises."""
         testimage = 'testdata_01.im'
         self._create_image(testimage, 1.0, [64, 64])
         get_image_shape(testimage)
@@ -899,10 +899,10 @@ class TestGlobalMethodsOfImbaseline(test_base):
 class TestImbaseline(test_base):
     """imbaseline tests.
 
-    F-1. maskmode/blfunc/dirkernel/spkernel combination test
-    F-2. imagefile is None
-    F-3. output_cont is False
-    F-4. specify bloutput path
+    F-1. successful case: execute imbaseline
+    F-2. failure case: attempt to read imagefile set None, an exception raises
+    F-3. successful case: execute imbaseline with output_cont set False, cont file does not generate
+    F-4. successful case: execute imbaseline with bloutput set output path, bloutput generates
     """
 
     datapath = ctsys_resolve('unittest/imbaseline/')
@@ -915,7 +915,7 @@ class TestImbaseline(test_base):
         self._copy_test_files(self.datapath, self.blparam)
 
     def test_f_1(self):
-        """F-1. maskmode/blfunc/dirkernel/spkernel combination test."""
+        """F-1. successful case: execute imbaseline."""
         imagename = self.input_image
         linefile = 'output_f_1'
         output_cont = True
@@ -978,7 +978,7 @@ class TestImbaseline(test_base):
 
     @test_base.exception_case(ValueError, 'Error: file  is not found.')
     def test_f_2(self):
-        """F-2. imagefile is None."""
+        """F-2. failure case: attempt to read imagefile set None, an exception raises."""
         imagefile = ''
         linefile = 'output_f_2'
         dirkernel = 'gaussian'
@@ -1000,7 +1000,7 @@ class TestImbaseline(test_base):
                    output_cont=output_cont)
 
     def test_f_3(self):
-        """F-3. output_cont is False."""
+        """F-3. successful case: execute imbaseline with output_cont set False, cont file does not generate."""
         imagefile = self.input_image
         linefile = 'output_f_3'
         dirkernel = 'gaussian'
@@ -1023,7 +1023,7 @@ class TestImbaseline(test_base):
         self.assertFalse(os.path.exists(linefile + '.cont'))
 
     def test_f_4(self):
-        """F-4. specify bloutput path."""
+        """F-4. successful case: execute imbaseline with bloutput set output path, bloutput generates."""
         imagefile = self.input_image
         linefile = 'output_f_4'
         dirkernel = 'gaussian'
