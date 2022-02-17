@@ -1,5 +1,5 @@
 ##########################################################################
-# test_simulator
+# test_tool_simulator
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -14,7 +14,8 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# [CAS-13439]
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatools.simulator.html
 #
 #
 ##########################################################################
@@ -28,34 +29,18 @@ import shutil
 import json
 import numpy
 import unittest
-  
-is_CASA6 = False
- 
-try:
-    from casatools import ctsys, simulator, componentlist, table, agentflagger, measures
 
-    is_CASA6 = True
-    _sm = simulator()
-    _cl = componentlist()
-    _tb = table()
-    _af = agentflagger()
-    _me = measures()
- 
-    # Location of input data
-    datapath = ctsys.resolve('unittest/simulator/')
-    refpath = ctsys.resolve('unittest/simulator/smtool_reference/')
-except ImportError:
-    from __main__ import default
-    from taskinit import * 
-    _sm = smtool()
-    _cl = cltool()
-    _tb = tbtool()
-    _af = agentflagger()
-    _me = measures()
-    
-    # Location of input data
-    datapath = os.path.join(os.environ['CASAPATH'].split()[0], 'casatestdata/unittest/simulator/')
-    refpath = datapath+'smtool_reference/'
+from casatools import ctsys, simulator, componentlist, table, agentflagger, measures
+
+_sm = simulator()
+_cl = componentlist()
+_tb = table()
+_af = agentflagger()
+_me = measures()
+
+# Location of input data
+datapath = ctsys.resolve('unittest/simulator/')
+refpath = ctsys.resolve('unittest/simulator/smtool_reference/')
 
 class sm_predict_test(unittest.TestCase):
     """
@@ -229,11 +214,7 @@ class sm_predict_test(unittest.TestCase):
             numpy.allclose(numpy.real(x), expec, rtol=5e-8),
             'Incorrect visibility amplitiudes'
         )
-        
-def suite():
-    return [sm_predict_test]
 
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
 
