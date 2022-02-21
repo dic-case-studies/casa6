@@ -1009,6 +1009,8 @@ class TestImbaselineExecution(test_base):
     kwidth = 5
     filenames_existence_check = (linefile, bloutput)
 
+    test_no = 1
+
     def setUp(self):
         self._copy_test_files(self.input_image)
         self._copy_test_files(self.blparam)
@@ -1034,22 +1036,20 @@ class TestImbaselineExecution(test_base):
     @staticmethod
     def _generate_a_test(maskmode, blfunc, dirkernel, spkernel, test_name):
         def test_method(self):
+            """TestImbaselineExecution method No."""
             params = dict(imagename=self.input_image, linefile=self.linefile, output_cont=self.output_cont, bloutput=self.bloutput,
                           maskmode=maskmode, chans=self.chans, thresh=self.thresh, avg_limit=self.avg_limit, minwidth=self.minwidth,
                           edge=self.edge, blfunc=blfunc, order=self.order, npiece=self.npiece, applyfft=self.applyfft, fftthresh=self.fftthresh,
                           addwn=self.addwn, rejwn=self.rejwn, blparam=self.blparam, clipniter=self.clipniter, clipthresh=self.clipthresh,
                           dirkernel=dirkernel, major=self.major, minor=self.minor, pa=self.pa, kimage=self.kimage, scale=self.scale,
                           spkernel=spkernel, kwidth=self.kwidth)
-            try:
-                casalog.post(f'{test_name} [maskmode={maskmode}, blfunc={blfunc}, '
-                             f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
-                imbaseline(**params)
-                for file in self.filenames_existence_check:
-                    self.assertTrue(os.path.exists(file))
-            except Exception:
-                casalog.post(f'Failure: {test_name} [maskmode={maskmode}, blfunc={blfunc}, '
-                             f'dirkernel={dirkernel}, spkernel={spkernel}]', 'SEVERE')
-
+            casalog.post(f'{test_name} [maskmode={maskmode}, blfunc={blfunc}, '
+                            f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
+            imbaseline(**params)
+            for file in self.filenames_existence_check:
+                self.assertTrue(os.path.exists(file))
+        test_method.__doc__ += f'{TestImbaselineExecution.test_no:03} [maskmode={maskmode}, blfunc={blfunc}, dirkernel={dirkernel}, spkernel={spkernel}]'
+        TestImbaselineExecution.test_no += 1
         return test_method
 
 
@@ -1080,6 +1080,8 @@ class TestImbaselineOutputs(test_base):
     minor = '10arcsec'
     pa = '0deg'
 
+    test_no = 1
+
     def setUp(self):
         self._copy_test_files(self.input_image)
         self._copy_test_files(self.blparam)
@@ -1103,27 +1105,27 @@ class TestImbaselineOutputs(test_base):
     @staticmethod
     def _generate_a_test(blfunc, dirkernel, spkernel, test_name):
         def test_method(self):
+            """TestImbaselineOutputs test."""
             self._create_image(self.test_image, self.TEST_IMAGE_VALUE, self.TEST_IMAGE_SHAPE)
             params = dict(imagename=self.test_image, linefile=self.linefile, output_cont=self.output_cont,
                           bloutput=self.bloutput, blfunc=blfunc, dirkernel=dirkernel, spkernel=spkernel,
                           major=self.major, minor=self.minor, pa=self.pa)
-            try:
-                casalog.post(f'{test_name} [maskmode=auto, blfunc={blfunc}, '
-                             f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
-                imbaseline(**params)
-                if os.path.exists(self.linefile):
-                    with tool_manager(self.linefile, image) as ia:
-                        chunk = ia.getchunk()
-                        self._summary(False, test_name, chunk)
-                        self.assertTrue(np.allclose(chunk, self.expected_output_chunk, atol=2.0))
-                if os.path.exists(self.test_image + '.cont'):
-                    with tool_manager(self.test_image + '.cont', image) as ia:
-                        chunk = ia.getchunk()
-                        self._summary(True, test_name, chunk)
-                        self.assertTrue(np.allclose(chunk, self.expected_cont_chunk, atol=1.0))
-            except Exception:
-                casalog.post(f'{test_name} FAULT: [maskmode=auto, blfunc={blfunc}, '
-                             f'dirkernel={dirkernel}, spkernel={spkernel}]', 'SEVERE')
+            casalog.post(f'{test_name} [maskmode=auto, blfunc={blfunc}, '
+                         f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
+            imbaseline(**params)
+            if os.path.exists(self.linefile):
+                with tool_manager(self.linefile, image) as ia:
+                    chunk = ia.getchunk()
+                    self._summary(False, test_name, chunk)
+                    self.assertTrue(np.allclose(chunk, self.expected_output_chunk, atol=2.0))
+            if os.path.exists(self.test_image + '.cont'):
+                with tool_manager(self.test_image + '.cont', image) as ia:
+                    chunk = ia.getchunk()
+                    self._summary(True, test_name, chunk)
+                    self.assertTrue(np.allclose(chunk, self.expected_cont_chunk, atol=1.0))
+
+        test_method.__doc__ += f' No.{TestImbaselineOutputs.test_no:03} [blfunc={blfunc}, dirkernel={dirkernel}, spkernel={spkernel}]'
+        TestImbaselineOutputs.test_no += 1
         return test_method
 
     def _summary(self, is_cont, test_name, chunk):  # temporary method
