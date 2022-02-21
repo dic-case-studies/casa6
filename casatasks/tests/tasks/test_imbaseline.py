@@ -1126,7 +1126,7 @@ class TestImbaselineOutputs(test_base):
                              f'dirkernel={dirkernel}, spkernel={spkernel}]', 'SEVERE')
         return test_method
 
-    def _summary(self, is_cont, test_name, chunk): # temporary method
+    def _summary(self, is_cont, test_name, chunk):  # temporary method
         m = re.match(r'test_imbaseline_outputs_([^_]+)_([^_]+)_([^_]+)', test_name)
         prefix = 'cont' if is_cont else ' out'
         print(f'{prefix} blfunc:{m[1]} dirkernel:{m[2]} spkernel:{m[3]}, {np.max(chunk)}, {np.min(chunk)}, {np.average(chunk)}, {np.median(chunk)}')
