@@ -1191,3 +1191,7 @@ def suite():
     return [TestImsmooth, TestAbstractFileStack, TestImageShape, TestImbaseline, TestImage2MS, TestSdbaseline,
             TestSdsmooth, TestMS2Image, TestImageSubtraction, TestGlobalMethodsOfImbaseline, TestImbaselineExecution,
             TestImbaselineOutputs]
+
+
+if __name__ == '__main__':
+    unittest.main()
