@@ -59,8 +59,8 @@ class gclean:
 
     def _tclean( self, *args, **kwargs ):
         from casatasks import tclean
-        arg_s = ', '.join(map( lambda a: repr(a), args ))
-        kw_s = ', '.join( map( lambda kv: "%s=%s" % (kv[0],repr(kv[1])), kwargs.items()) )
+        arg_s = ', '.join( map( lambda a: self._history_filter(len(self._exe_cmds), None, repr(a)), args ) )
+        kw_s = ', '.join( map( lambda kv: self._history_filter(len(self._exe_cmds), kv[0], "%s=%s" % (kv[0],repr(kv[1]))), kwargs.items()) )
         if len(arg_s) > 0 and len(ks_s) > 0:
             parameters = arg_s + ", " + kw_s
         else:
@@ -98,7 +98,8 @@ class gclean:
 
     def __init__( self, vis, imagename, imsize=[100], cell="1arcsec", specmode='cube', nchan=-1, start='',
                   width='', interpolation='linear', gridder='standard', pblimit=0.2, deconvolver='hogbom',
-                  niter=0, threshold='0.1Jy', cycleniter=-1, cyclefactor=1.0, scales=[] ):
+                  niter=0, threshold='0.1Jy', cycleniter=-1, cyclefactor=1.0, scales=[],
+                  history_filter=lambda index, arg, history_value: history_value ):
         self._vis = vis
         self._imagename = imagename
         self._imsize = imsize
@@ -118,6 +119,7 @@ class gclean:
         self._mask = ''
         self._scales = scales
         self._exe_cmds = [ ]
+        self._history_filter = history_filter
 
         if len(list(filter(lambda f: os.path.isdir(f) and f.startswith(self._imagename + '.'), os.listdir( os.curdir )))) > 0:
             raise RuntimeError("image files already exist")
