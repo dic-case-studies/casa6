@@ -31,7 +31,7 @@ from casatestutils import testhelper as th
 from casatestutils.xmlhelper import readXML
 import unittest
 
-myname = 'test_sdm_toms'
+myname = 'test_tool_sdm_toms'
 
 datapath=ctsys.resolve('unittest/sdmtool/')
 
