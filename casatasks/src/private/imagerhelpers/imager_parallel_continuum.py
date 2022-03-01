@@ -449,7 +449,7 @@ class PyParallelContSynthesisImager(PySynthesisImager):
         #casalog.post("-----------------------fillCFCache------------------------------------")
         # cflist=[f for f in os.listdir(self.allgridpars['cfcache']) if re.match(r'CFS*', f)];
         # partCFList = 
-        if(str(self.allgridpars['0']['gridder']).startswith("awp")):
+        if(not str(self.allgridpars['0']['gridder']).startswith("awp")):
             return
          
         allcflist = self.PH.partitionCFCacheList(self.allgridpars['0']);
