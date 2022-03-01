@@ -6,11 +6,11 @@ import os
 import shutil
 import unittest
 
-from casatools import ctsys, table
 from casatasks import sdbaseline
 from casatasks.private.sdutil import table_manager
 from casatasks.private.task_sdbaseline import check_fftthresh, is_empty, parse_wavenumber_param
 from casatestutils import selection_syntax
+from casatools import ctsys, table
 
 
 tb = table()
@@ -5358,6 +5358,118 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.run_apply_test()
 
 
+class sdbaseline_clipping(sdbaseline_unittest_base):
+    """
+    Tests for iterative sigma clipping
+
+    test000 --- blfunc='poly'
+    test001 --- blfunc='cspline'
+    test002 --- blfunc='sinusoid'
+    test003 --- blfunc='variable'
+    """
+
+    datapath = ctsys_resolve('unittest/sdbaseline/')
+    infile = 'analytic_order3_withoffset.ms'
+    outroot = sdbaseline_unittest_base.taskname + '_clippingtest'
+    outfile = outroot + '.ms'
+    blparamfile = outroot + '.blparam'
+    params = {'infile': infile, 'outfile': outfile,
+              'overwrite': True,
+              'intent': 'OBSERVE_TARGET#ON_SOURCE', 
+              'datacolumn': 'float_data',
+              'blmode': 'fit',
+              'order': 0, 'npiece': 1, 'addwn': 0,
+              'clipthresh': 3.0,
+              'blparam': blparamfile}
+    outdata = {}
+
+
+    def _setup_input_data(self):
+        with table_manager(self.infile, nomodify=False) as tb:
+            data = tb.getcell('FLOAT_DATA', 0)
+            for ipol in range(len(data)):
+                for ichan in range(len(data[0])):
+                    data[ipol][ichan] = 1.0 if ichan % 2 == 0 else -1.0
+                data[ipol][4000] = 100000.0
+            tb.putcell('FLOAT_DATA', 0, data)
+
+    def _set_params(self, blfunc, outbl, doclip):
+        self.params['blfunc'] = blfunc
+        self.params['blformat'] = 'csv' if outbl else ''
+        self.params['clipniter'] = 1 if doclip else 0
+
+    def _get_data_name(self, outbl, doclip):
+        name_bl = 'bl' if outbl else 'nobl'
+        name_cl = 'clip' if doclip else 'noclip'
+
+        return name_bl + '-' + name_cl
+
+    def _exec_sdbaseline(self, blfunc, outbl, doclip):
+        self._set_params(blfunc, outbl, doclip)
+
+        if blfunc == 'variable':
+            self._create_blparam_file(doclip)
+
+        sdbaseline(**self.params)
+        
+        with table_manager(self.outfile) as tb:
+            data_name = self._get_data_name(outbl, doclip)
+            # use data at row 0, pol 0 only
+            self.outdata[data_name] = tb.getcell('FLOAT_DATA', 0)[0]
+
+        remove_files_dirs(self.outroot)
+
+    def _result(self, outbl, doclip):
+        return self.outdata[self._get_data_name(outbl, doclip)]
+
+    def _create_blparam_file(self, doclip):
+        clipniter = str(1 if doclip else 0)
+
+        with open(self.blparamfile, 'w') as f:
+            f.write('0,0,,' + clipniter + ',3.,false,,,,,poly,0,,[]')
+            f.write('0,1,,' + clipniter + ',3.,false,,,,,chebyshev,0,,[]')
+            f.write('1,0,,' + clipniter + ',3.,false,,,,,cspline,,1,[]')
+            f.write('1,1,,' + clipniter + ',3.,false,,,,,cspline,,1,[]')
+
+    def run_test(self, blfunc):
+        bools = [False, True]
+        lst = [(outbl, doclip) for outbl in bools for doclip in bools]
+        for outbl, doclip in lst:
+            self._exec_sdbaseline(blfunc, outbl, doclip)
+
+        # if clipping is turned on, output of sdbaseline must be identical
+        # regardless of whether blformat is empty or not
+        self.assertTrue(np.array_equal(self._result(False, True), self._result(True, True)),
+                        msg='unexpected result; result differs with different blformat.')
+        # with iterative clipping, output of sdbaseline must be different from that
+        # without clipping, regardless of whether blformat is empty or not
+        for blout in bools:
+            self.assertFalse(np.array_equal(self._result(blout, True), self._result(blout, False)),
+                             msg='unexpected result; clipping is not working.')
+
+    def setUp(self):
+        remove_files_dirs(self.infile)
+        shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
+        self._setup_input_data()
+        default(sdbaseline)
+
+    def tearDown(self):
+        remove_files_dirs(self.infile)
+        remove_files_dirs(self.outroot)
+
+    def test000(self):
+        self.run_test('poly')
+
+    def test001(self):
+        self.run_test('cspline')
+
+    def test002(self):
+        self.run_test('sinusoid')
+
+    def test003(self):
+        self.run_test('variable')
+
+
 class sdbaseline_helperTest(sdbaseline_unittest_base):
     """
     Tests for helper functions
@@ -5473,6 +5585,7 @@ def suite():
             sdbaseline_selection,
             sdbaseline_updateweightTest,
             sdbaseline_updateweightTest2,
+            sdbaseline_clipping,
             sdbaseline_helperTest
             ]
 
