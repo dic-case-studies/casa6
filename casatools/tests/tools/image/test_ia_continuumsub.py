@@ -72,14 +72,25 @@ from casatools import image as iatool
 from casatools import regionmanager
 from casatools import functional
 from casatools import quanta
+import os
 
 class ia_continuumsub_test(unittest.TestCase):
     
     def setUp(self):
         self._myia = iatool()
+        self.outline = ''
+        self.outcont = ''
     
     def tearDown(self):
         self._myia.done()
+        data = [self.outline, self.outcont]
+        for f in data:
+            if os.path.exists(f):
+                if os.path.isfile(f) or os.path.islink(f):
+                    os.unlink(f)
+                else:
+                    shutil.rmtree(f)
+
         
     def test_beams(self):
         """test per plane beams get accounted for correctly"""
@@ -99,13 +110,13 @@ class ia_continuumsub_test(unittest.TestCase):
         rg = regionmanager( )
         reg = rg.box(blc=[2, 2, 3, 2], trc=[2, 2, 17, 2])
         rg.done( )
-        outcont = "line.im"
-        resid = myia.continuumsub(outcont=outcont, fitorder=1, region=reg)
+        self.outcont = "line.im"
+        resid = myia.continuumsub(outcont=self.outcont, fitorder=1, region=reg)
         for i in range(resid.shape()[2]):
             exp = qa.quantity(i+15, "arcsec")
             got = resid.restoringbeam(channel=i)["major"]
             self.assertTrue(got == exp)
-        myia.open(outcont)
+        myia.open(self.outcont)
         self.assertTrue(myia.restoringbeam() == resid.restoringbeam())
         qa.done( )
         resid.done()
@@ -121,12 +132,12 @@ class ia_continuumsub_test(unittest.TestCase):
         for i in range(50):
             bb[0,0,i] = g1d.f(i)
         myia.putchunk(bb)
-        outline = "outline"
-        outcont = "outcont"
-        xx = myia.continuumsub(outline=outline, outcont=outcont)
+        self.outline = "outline"
+        self.outcont = "outcont"
+        xx = myia.continuumsub(outline=self.outline, outcont=self.outcont)
         myia.done()
         xx.done()
-        for x in [outline, outcont]:
+        for x in [self.outline, self.outcont]:
             myia.open(x)
             msgs = myia.history()
             myia.done() 

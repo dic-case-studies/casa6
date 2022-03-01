@@ -91,8 +91,5 @@ class ia_addnoise_test(unittest.TestCase):
         self.assertTrue("addnoise" in msgs[-1])
         myia.done()
 
-def suite():
-    return [ia_addnoise_test]
-
 if __name__ == '__main__':
     unittest.main()
