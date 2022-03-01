@@ -31,7 +31,7 @@ _tb = table()
 ctsys_resolve = ctsys.resolve
 
 sep = os.sep
-datapath = ctsys_resolve(os.path.join('unittest','imregrid'))
+datapath = ctsys_resolve(os.path.join('unittest','ia_regrid'))
 
 IMAGE = 'image.im'
 gim = "gaussian_source.im"

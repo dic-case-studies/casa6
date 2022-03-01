@@ -692,7 +692,7 @@ class ia_convolve_test(image_base):
 class ia_convolve2d_test(unittest.TestCase):
 
     def setUp(self):
-        self.datapath = 'unittest/imsmooth/'
+        self.datapath = 'unittest/image/'
         self._qa = quanta()
         self._rg = regionmanager()
         self._tb = table()
@@ -1439,7 +1439,7 @@ class ia_deconvolvefrombeam_test(image_base):
 
 # Tests for image.fft
 class ia_fft_test(image_base):
-    datapath = ctsys.resolve('unittest/ia_fft/')
+    datapath = ctsys.resolve('unittest/image/')
 
     def tearDown(self):
         data = [
@@ -1764,7 +1764,7 @@ class ia_fromarray_test(image_base):
 
 # Tests for image.fromcomplist
 class ia_fromcomplist_test(image_base):
-    datapath = ctsys.resolve('unittest/ia_fromcomplist/')
+    datapath = ctsys.resolve('unittest/image/')
     estimates_file = os.path.join(datapath, '2gauss_estimates.txt')
     climage = os.path.join(datapath, 'simple_cl.im')
 
@@ -2405,7 +2405,7 @@ class ia_hanning_test(unittest.TestCase):
 
 # Tests for image.histograms
 class ia_histograms_test(image_base):
-    datapath = ctsys.resolve('unittest/ia_histograms/')
+    datapath = ctsys.resolve('unittest/image/')
 
     def tearDown(self):
         self._myia.done()
@@ -2939,7 +2939,7 @@ class ia_insert_test(image_base):
 
 # Tests for image.isconform
 class ia_isconform_test(unittest.TestCase):
-    datapath = ctsys.resolve('unittest/ia_isconform/')
+    datapath = ctsys.resolve('unittest/image/')
 
     def setUp(self):
         self.fits = "jj.fits"
@@ -3044,7 +3044,7 @@ class ia_maskhandler_test(image_base):
 
 # Tests for image.modify
 class ia_modify_test(image_base):
-    datapath = ctsys.resolve('unittest/ia_modify/')
+    datapath = ctsys.resolve('unittest/image/')
 
     def tearDown(self):
         self.qa.done()
