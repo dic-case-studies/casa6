@@ -1417,11 +1417,10 @@ class casa_build_ext(build_ext):
         if do_wheel_closure:
             module_path = os.path.join('build', distutils_dir_name('lib'), module_name)
 
-            if isexe("scripts/mod-closure") and not os.path.isfile(os.path.join("build",".created.closure")):
+            if isexe("scripts/mod-closure"):
                 print("generating module closure...")
                 if Proc([ "scripts/mod-closure", module_path ]) != 0:
                     sys.exit("\tclosure generation failed...")
-                open(os.path.join("build",".created.closure"),'a').close( )
                 if isexe("scripts/find-glibc-private"):
                     if Proc(["scripts/find-glibc-private", "--delete", module_path]) != 0:
                         sys.exit("\tGLIBC_PRIVATE cleanup failed...")
