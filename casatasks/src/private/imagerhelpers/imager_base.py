@@ -9,11 +9,12 @@ import copy
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
-    from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink, ctsys, table
+    from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink, ctsys, table, image
     from casatasks import casalog
 
     ctsys_hostinfo = ctsys.hostinfo
     _tb = table()
+    _ia = image()
 else:
     from taskinit import *
 
@@ -437,6 +438,28 @@ class PySynthesisImager:
 #############################################
     def makePBCore(self):
         self.SItool.makepb()
+
+#############################################
+    def checkPB(self):
+        """Checks for common problem cases in the .pb image"""
+        if self.SItool is None:
+            # Seems to be None for specmode='mfs', parallel=True
+            return
+
+        import numpy as np
+        facetIdx = 0 # TODO iterate over facets
+        imagename = self.SItool.getImageName(facetIdx, "PB")
+        _ia.open(imagename)
+        # Case 1: non-zeroes on edge of .pb
+        pixelVals = _ia.getregion().copy()
+        pixelVals[1:-2][1:-2] = 0 # zero out everything that isn't at the edge of 'right ascension' and 'declination' indexes
+        if pixelVals.max() > 0:
+            idx = np.unravel_index([pixelVals.argmax()], pixelVals.shape)
+            idx = [x[0] for x in idx]  # (array([296]), array([147]), array([0]), array([0])) --> [296, 147, 0, 0]
+            casalog.post(f"Warning! Non-zero values at the edge of the .pb image can cause unexpected aliasing effects! (found value {pixelVals.max()} at index {idx})", "WARN")
+        # release the image
+        _ia.close()
+        _ia.done()
 
 #############################################
     def makeSdImage(self):
