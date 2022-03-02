@@ -31,7 +31,7 @@ from casatools import table
 from casatools import ctsys
 from casatools.platform import bytes2str
 
-myname = 'test_createmultims'
+myname = 'test_tool_ms_createmultims'
 
 # name of the resulting MS
 msname = 'multims.ms'
@@ -369,9 +369,6 @@ def listpartition(vis=None, createdict=None, listfile=None):
     except Exception as instance:
 #        mslocal.close()
         print('*** Error *** %s' % instance)
-    
-
-           
 
 
 ###########################
