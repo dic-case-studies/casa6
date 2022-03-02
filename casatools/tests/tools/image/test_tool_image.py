@@ -38,7 +38,9 @@ from casatools import componentlist as cltool
 qa = quanta()
 cs = coordsys()
 
-class image_base(unittest.TestCase):
+class ImageBase(unittest.TestCase):
+    # Path to input test data
+    datapath = ctsys.resolve('unittest/image/')
 
     def setUp(self):
         self._myia = iatool()
@@ -57,7 +59,7 @@ class image_base(unittest.TestCase):
         self.outline = ''
 
 # Tests for image.adddegaxes
-class ia_adddegaxes_test(image_base):
+class ia_adddegaxes_test(ImageBase):
     
     def tearDown(self):
         self._myia.done()
@@ -179,12 +181,10 @@ class ia_adddegaxes_test(image_base):
         msgs = deg.history()
         deg.done()
         self.assertTrue("ia.adddegaxes" in msgs[-2])        
-        self.assertTrue("ia.adddegaxes" in msgs[-1])          
+        self.assertTrue("ia.adddegaxes" in msgs[-1])
 
 # Tests for image.addnoise
-
-# Tests for image.addnoise
-class ia_addnoise_test(image_base):
+class ia_addnoise_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -202,7 +202,7 @@ class ia_addnoise_test(image_base):
         myia.done()
 
 # Tests for image.boxcar
-class ia_boxcar_test(image_base):
+class ia_boxcar_test(ImageBase):
 
     def tearDown(self):
         tb = table()
@@ -363,7 +363,7 @@ class ia_boxcar_test(image_base):
         zz.done()
 
 # Tests for image.calcmask
-class ia_calcmask_test(image_base):
+class ia_calcmask_test(ImageBase):
 
     def tearDown(self):
         tb = table()
@@ -427,7 +427,7 @@ class ia_calcmask_test(image_base):
         self.assertTrue("ia.calcmask" in msgs[-1])
 
 # Tests for image.commonbeam
-class ia_commonbeam_test(image_base):
+class ia_commonbeam_test(ImageBase):
 
     def test_nobeam(self):
         """ test having no beam throws an exception"""
@@ -478,7 +478,7 @@ class ia_commonbeam_test(image_base):
         self._myia.done()
 
 # Tests for image.newimagefromarray and image.newimagefromshape
-class ia_constructors_test(image_base):
+class ia_constructors_test(ImageBase):
 
     def tearDown(self):
         self.tb.done()
@@ -531,7 +531,7 @@ class ia_constructors_test(image_base):
         self.assertTrue("ia.newimagefromshape" in msgs[-1])
 
 # Tests for image.continuumsub
-class ia_continuumsub_test(image_base):
+class ia_continuumsub_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -596,7 +596,7 @@ class ia_continuumsub_test(image_base):
             self.assertTrue("ia.continuumsub" in msgs[-7])
 
 # Tests for image.convertflux
-class ia_convertflux_test(image_base):
+class ia_convertflux_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -637,7 +637,7 @@ class ia_convertflux_test(image_base):
         qa.done()
 
 # Tests for image.convolve
-class ia_convolve_test(image_base):
+class ia_convolve_test(ImageBase):
 
     def tearDown(self):
         data = [self.kernel, self.mymask]
@@ -689,27 +689,21 @@ class ia_convolve_test(image_base):
         self.assertTrue("convolve" in msgs[-1])
 
 # Tests for image.convolve2d
-class ia_convolve2d_test(unittest.TestCase):
-
-    def setUp(self):
-        self.datapath = 'unittest/image/'
-        self._qa = quanta()
-        self._rg = regionmanager()
-        self._tb = table()
-        self.imname = ''
+#class ia_convolve2d_test(unittest.TestCase):
+class ia_convolve2d_test(ImageBase):
 
     def tearDown(self):
-        if self.imname:
-            if os.path.isfile(self.imname):
-                os.unlink(self.imname)
+        if self.imagename:
+            if os.path.isfile(self.imagename):
+                os.unlink(self.imagename)
             else:
-                shutil.rmtree(self.imname)
+                shutil.rmtree(self.imagename)
 
-        self.assertTrue(len(self._tb.showcache()) == 0, 'table cache is not empty')
+        self.assertTrue(len(self.tb.showcache()) == 0, 'table cache is not empty')
 
     def _near(self, got, expected, tol):
-        return self._qa.le(
-            self._qa.div(self._qa.abs(self._qa.sub(got, expected)), expected), tol
+        return self.qa.le(
+            self.qa.div(self.qa.abs(self.qa.sub(got, expected)), expected), tol
         )
 
     def make_gauss2d(self, shape, xfwhm, yfwhm):
@@ -750,9 +744,9 @@ class ia_convolve2d_test(unittest.TestCase):
                 pa.append(b["pa"])
 
         diff = abs(
-            self._qa.sub(
-                self._qa.quantity(pa[0]),
-                self._qa.quantity(pa[1])
+            self.qa.sub(
+                self.qa.quantity(pa[0]),
+                self.qa.quantity(pa[1])
             )["value"]
         )
         self.assertTrue(diff < 1e-5)
@@ -760,9 +754,9 @@ class ia_convolve2d_test(unittest.TestCase):
     def test_multibeam(self):
         """Test per plane beams"""
         myia = iatool()
-        self.imname = "test_image2dconvolver_multibeam.im"
-        shutil.copytree(ctsys.resolve(os.path.join(self.datapath, self.imname)), self.imname)
-        myia.open(self.imname)
+        self.imagename = "test_image2dconvolver_multibeam.im"
+        shutil.copytree(ctsys.resolve(os.path.join(self.datapath, self.imagename)), self.imagename)
+        myia.open(self.imagename)
         major = "10arcmin"
         minor = "8arcmin"
         pa = "80deg"
@@ -771,7 +765,7 @@ class ia_convolve2d_test(unittest.TestCase):
         for i in range(5):
             blc = [0, 0, i]
             trc = [shape[0] - 1, shape[1] - 1, i]
-            reg = self._rg.box(blc=blc, trc=trc)
+            reg = self.rg.box(blc=blc, trc=trc)
             xx = myia.subimage(region=reg)
             exp = xx.convolve2d(axes=[0, 1], major=major, minor=minor, pa=pa)
             expbeam = exp.restoringbeam()
@@ -787,8 +781,8 @@ class ia_convolve2d_test(unittest.TestCase):
     def test_targetres(self):
         """Test targetres parameter"""
         myia = iatool()
-        self.imname = "tres1.im"
-        myia.fromshape(self.imname, [100, 100])
+        self.imagename = "tres1.im"
+        myia.fromshape(self.imagename, [100, 100])
         csys = myia.coordsys()
         csys.setunits(["arcsec", "arcsec"])
         csys.setincrement([-1, 1])
@@ -799,11 +793,11 @@ class ia_convolve2d_test(unittest.TestCase):
         expected = self.make_gauss2d(shape, 5.0, 10.0)
         myia.putchunk(values)
         myia.done()
-        emaj = self._qa.quantity("10arcsec")
-        emin = self._qa.quantity("5arcsec")
-        epa = self._qa.quantity("0deg")
+        emaj = self.qa.quantity("10arcsec")
+        emin = self.qa.quantity("5arcsec")
+        epa = self.qa.quantity("0deg")
         for unit in ("Jy/beam", "K"):
-            myia.open(self.imname)
+            myia.open(self.imagename)
             myia.setbrightnessunit(unit)
             myia.done()
             expected = self.make_gauss2d(shape, 5.0, 10.0)
@@ -822,7 +816,7 @@ class ia_convolve2d_test(unittest.TestCase):
                     pa = "0deg"
                     outfile = "tres2" + unit[0]
                 self.run_convolve2d(
-                    imagename=self.imname, kernel="gaussian",
+                    imagename=self.imagename, kernel="gaussian",
                     major=major, minor=minor, pa=pa, targetres=targetres,
                     outfile=outfile
                 )
@@ -838,8 +832,8 @@ class ia_convolve2d_test(unittest.TestCase):
     def test_beam(self):
         """Test the beam parameter"""
         myia = iatool()
-        self.imname = "tbeam1.im"
-        myia.fromshape(self.imname, [100, 100])
+        self.imagename = "tbeam1.im"
+        myia.fromshape(self.imagename, [100, 100])
         csys = myia.coordsys()
         csys.setunits(["arcsec", "arcsec"])
         csys.setincrement([1, 1])
@@ -859,7 +853,7 @@ class ia_convolve2d_test(unittest.TestCase):
         ]:
             outfile = 'convolve2d'
             x = self.run_convolve2d(
-                imagename=self.imname, major="", minor="", pa="",
+                imagename=self.imagename, major="", minor="", pa="",
                 beam=beam, outfile=outfile, targetres=False,
                 overwrite=True
             )
@@ -874,8 +868,8 @@ class ia_convolve2d_test(unittest.TestCase):
     def test_history(self):
         """Test that history is written"""
         myia = iatool()
-        self.imname = "zz.im"
-        myia.fromshape(self.imname, [20, 20])
+        self.imagename = "zz.im"
+        myia.fromshape(self.imagename, [20, 20])
         major = "2arcmin"
         minor = "2arcmin"
         pa = "0deg"
@@ -890,8 +884,8 @@ class ia_convolve2d_test(unittest.TestCase):
     def test_stretch(self):
         """ ia.convolve2d(): Test stretch parameter"""
         yy = iatool()
-        self.imname = "maskim"
-        yy.fromshape(self.imname, [200, 200, 1, 1])
+        self.imagename = "maskim"
+        yy.fromshape(self.imagename, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200, 200, 1, 20]
@@ -900,11 +894,11 @@ class ia_convolve2d_test(unittest.TestCase):
         self.assertRaises(
             Exception,
             yy.convolve2d, "", [0, 1], "gaussian", "4arcmin",
-            "4arcmin", "0deg", mask=self.imname + ">0", stretch=False
+            "4arcmin", "0deg", mask=self.imagename + ">0", stretch=False
         )
         zz = yy.convolve2d(
             "", [0, 1], "gaussian", "4arcmin", "4arcmin", "0deg",
-            mask=self.imname + ">0", stretch=True
+            mask=self.imagename + ">0", stretch=True
         )
         self.assertTrue(type(zz) == type(yy))
         yy.done()
@@ -931,17 +925,17 @@ class ia_convolve2d_test(unittest.TestCase):
 
     def test_copying_of_input_mask(self):
         """CAS-12904: copy input mask to output image"""
-        self.imname = 'orig.im'
+        self.imagename = 'orig.im'
         yy = iatool()
-        yy.fromshape(self.imname, [100, 100, 3])
+        yy.fromshape(self.imagename, [100, 100, 3])
         pix = yy.getchunk()
         for i in range(3):
             pix[:, :, i] = i
         yy.putchunk(pix)
-        subi = yy.subimage("", mask=self.imname + '>0')
+        subi = yy.subimage("", mask=self.imagename + '>0')
         yy.done()
         for i in range(3):
-            reg = self._rg.box([0, 0, i], [99, 99, i])
+            reg = self.rg.box([0, 0, i], [99, 99, i])
             npts = subi.statistics(region=reg)['npts']
             expec = 0 if i == 0 else 1
             # shows mask was created correctly
@@ -949,11 +943,11 @@ class ia_convolve2d_test(unittest.TestCase):
             if i > 0:
                 self.assertEqual(npts[0], 10000, 'wrong number of pts')
         conv = subi.convolve2d(
-            major='4arcmin', minor='4arcmin', pa='0deg', mask=self.imname + '<2'
+            major='4arcmin', minor='4arcmin', pa='0deg', mask=self.imagename + '<2'
         )
         subi.done()
         for i in range(3):
-            reg = self._rg.box([0, 0, i], [99, 99, i])
+            reg = self.rg.box([0, 0, i], [99, 99, i])
             npts = conv.statistics(region=reg)['npts']
             expec = 1 if i == 1 else 0
             # shows mask was copied correctly
@@ -962,10 +956,8 @@ class ia_convolve2d_test(unittest.TestCase):
                 self.assertEqual(npts[0], 10000, 'wrong number of pts')
         conv.done()
 
-        # Tests for image.coordmeasures
-
 # Tests for image.coordmeasures
-class ia_coordmeasures_test(image_base):
+class ia_coordmeasures_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -1113,7 +1105,7 @@ class ia_coordmeasures_test(image_base):
         myia.done()
 
 # Tests for image.crop
-class ia_crop_test(image_base):
+class ia_crop_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -1165,7 +1157,7 @@ class ia_crop_test(image_base):
         self.assertTrue("ia.crop" in msgs[-3])
 
 # Tests for image.decimate
-class ia_decimate_test(image_base):
+class ia_decimate_test(ImageBase):
 
     def tearDown(self):
         self.rg.done()
@@ -1299,7 +1291,7 @@ class ia_decimate_test(image_base):
         self.assertTrue("ia.decimate" in msgs[-1])
 
 # Tests for image.decompose
-class ia_decompose_test(image_base):
+class ia_decompose_test(ImageBase):
 
     def tearDown(self):
         if self.mymask:
@@ -1330,7 +1322,7 @@ class ia_decompose_test(image_base):
         yy.done()
 
 # Tests for image.deconvolvecomponentlist
-class ia_deconvolvecomponentlist_test(image_base):
+class ia_deconvolvecomponentlist_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -1395,7 +1387,7 @@ class ia_deconvolvecomponentlist_test(image_base):
         mycl.done()
 
 # Tests for image.deconvolvefrombeam
-class ia_deconvolvefrombeam_test(image_base):
+class ia_deconvolvefrombeam_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -1438,8 +1430,7 @@ class ia_deconvolvefrombeam_test(image_base):
             self.assertTrue(self.__near(fit["pa"], epa[i], tol))
 
 # Tests for image.fft
-class ia_fft_test(image_base):
-    datapath = ctsys.resolve('unittest/image/')
+class ia_fft_test(ImageBase):
 
     def tearDown(self):
         data = [
@@ -1705,7 +1696,7 @@ class ia_fft_test(image_base):
         self.assertTrue(numpy.allclose(cdelt, expec))
 
 # Tests for image.findsources
-class ia_findsources_test(image_base):
+class ia_findsources_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -1724,7 +1715,7 @@ class ia_findsources_test(image_base):
         myia.done()
 
 # Tests for image.fromarray
-class ia_fromarray_test(image_base):
+class ia_fromarray_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -1763,15 +1754,15 @@ class ia_fromarray_test(image_base):
         self.assertTrue("ia.fromarray" in msgs[-1])
 
 # Tests for image.fromcomplist
-class ia_fromcomplist_test(image_base):
-    datapath = ctsys.resolve('unittest/image/')
-    estimates_file = os.path.join(datapath, '2gauss_estimates.txt')
-    climage = os.path.join(datapath, 'simple_cl.im')
+class ia_fromcomplist_test(ImageBase):
+    estimates_file = os.path.join(ImageBase.datapath, '2gauss_estimates.txt')
+    climage = os.path.join(ImageBase.datapath, 'simple_cl.im')
+    print(estimates_file)
 
     def tearDown(self):
         self._myia.done()
         self.cl.done()
-        data = ["1ptsource.im", "jj.cl", "jk.im",
+        data = ["1ptsource.im", "jj.cl", "jk.im", "jm.im",
                 "akd.im", "simple_cl.im"]
         for f in data:
             if os.path.exists(f) and os.path.isdir(f):
@@ -2079,7 +2070,7 @@ class ia_fromcomplist_test(image_base):
         myia.done()
 
 # Tests for image.fromfits
-class ia_fromfits_test(image_base):
+class ia_fromfits_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -2107,7 +2098,7 @@ class ia_fromfits_test(image_base):
         self.assertTrue("ia.fromfits" in msgs[-1])
 
 # Tests for image.fromimage
-class ia_fromimage_test(image_base):
+class ia_fromimage_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -2133,7 +2124,7 @@ class ia_fromimage_test(image_base):
         self.assertTrue("ia.fromimage" in msgs[-1])
 
 # Tests for image.fromrecord
-class ia_fromrecord_test(image_base):
+class ia_fromrecord_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -2160,7 +2151,7 @@ class ia_fromrecord_test(image_base):
         # Tests for image.
 
 # Tests for image.fromshape
-class ia_fromshape_test(image_base):
+class ia_fromshape_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -2202,7 +2193,7 @@ class ia_fromshape_test(image_base):
     # Tests for image.
 
 # Tests for image.getregion
-class ia_getregion_test(image_base):
+class ia_getregion_test(ImageBase):
 
     def tearDown(self):
         if self.mymask:
@@ -2232,18 +2223,16 @@ class ia_getregion_test(image_base):
         yy.done()
 
 # Tests for image.hanning
-class ia_hanning_test(unittest.TestCase):
-
+class ia_hanning_test(ImageBase):
     def setUp(self):
-        self.ia = iatool()
-        self.mymask = ''
-        self.imname = ''
-        self.imagename = ''
         self.hanname = ''
+        self._myia = iatool()
+        self.imagename = ''
+        self.mymask = ''
 
     def tearDown(self):
-        self.ia.done()
-        data = [self.mymask, self.imname, self.imagename, self.hanname]
+        self._myia.done()
+        data = [self.mymask, self.imagename, self.hanname]
         for f in data:
             if os.path.exists(f):
                 if os.path.isfile(f) or os.path.islink(f):
@@ -2278,9 +2267,10 @@ class ia_hanning_test(unittest.TestCase):
     def test_regression(self):
         """Tests moved from imagetest regression"""
         # Make image
-        self.imname = 'ia.fromshape.image'
+        self.imagename = 'ia.fromshape.image'
+        myia = self._myia
         imshape = [10, 20]
-        myim = self.ia.newimagefromshape(outfile=self.imname, shape=imshape)
+        myim = myia.newimagefromshape(outfile=self.imagename, shape=imshape)
         self.assertTrue(myim)
         pixels = myim.getchunk()
         self.assertTrue(len(pixels) > 0)
@@ -2404,8 +2394,7 @@ class ia_hanning_test(unittest.TestCase):
         self.assertTrue(teststr in msgs[-3], "'" + teststr + "' not found")
 
 # Tests for image.histograms
-class ia_histograms_test(image_base):
-    datapath = ctsys.resolve('unittest/image/')
+class ia_histograms_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -2564,7 +2553,7 @@ class ia_histograms_test(image_base):
         myia.done()
 
 # Tests for image.imageconcat
-class ia_imageconcat_test(image_base):
+class ia_imageconcat_test(ImageBase):
 
     def make_images(self):
         myia = self._myia
@@ -2889,7 +2878,7 @@ class ia_imageconcat_test(image_base):
         myia.done()
 
 # Tests for image.insert
-class ia_insert_test(image_base):
+class ia_insert_test(ImageBase):
 
     def tearDown(self):
         if self.insert:
@@ -2938,8 +2927,7 @@ class ia_insert_test(image_base):
         self.assertTrue("ia.insert" in msgs[-1])
 
 # Tests for image.isconform
-class ia_isconform_test(unittest.TestCase):
-    datapath = ctsys.resolve('unittest/image/')
+class ia_isconform_test(ImageBase):
 
     def setUp(self):
         self.fits = "jj.fits"
@@ -2981,7 +2969,7 @@ class ia_isconform_test(unittest.TestCase):
         self.assertFalse(self._myia.isconform(self.fits))
 
 # Tests for image.makecomplex
-class ia_makecomplex_test(image_base):
+class ia_makecomplex_test(ImageBase):
 
     def tearDown(self):
         data = [self.im2, self.im1]
@@ -3015,7 +3003,7 @@ class ia_makecomplex_test(image_base):
         self.assertTrue("ia.makecomplex" in msgs[-1])
 
 # Tests for image.maskhandler
-class ia_maskhandler_test(image_base):
+class ia_maskhandler_test(ImageBase):
 
     def tearDown(self):
         if self.im1:
@@ -3043,8 +3031,7 @@ class ia_maskhandler_test(image_base):
     # Tests for image.
 
 # Tests for image.modify
-class ia_modify_test(image_base):
-    datapath = ctsys.resolve('unittest/image/')
+class ia_modify_test(ImageBase):
 
     def tearDown(self):
         self.qa.done()
@@ -3145,7 +3132,7 @@ class ia_modify_test(image_base):
         myia.done()
 
 # Tests for image.newfromimage
-class ia_newimagefromimage_test(image_base):
+class ia_newimagefromimage_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -3167,7 +3154,7 @@ class ia_newimagefromimage_test(image_base):
         self.assertTrue("ia.newimagefromimage" in msgs[-1])
 
 # Tests for image.pad
-class ia_pad_test(image_base):
+class ia_pad_test(ImageBase):
 
     def tearDown(self):
         data = [self.mymask, self.imagename]
@@ -3325,7 +3312,7 @@ class ia_pad_test(image_base):
         self.assertTrue("ia.pad" in msgs[-3])
 
 # Tests for image.putchunk and image.getchunk
-class ia_putchunk_test(image_base):
+class ia_putchunk_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -3371,7 +3358,7 @@ class ia_putchunk_test(image_base):
         self.assertTrue("ia.putchunk" in msgs[-1])
 
 # Tests for image.putregion
-class ia_putregion_test(image_base):
+class ia_putregion_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -3392,7 +3379,7 @@ class ia_putregion_test(image_base):
         self.assertTrue("ia.putregion" in msgs[-1])
 
 # Tests for image.rename
-class ia_rename_test(image_base):
+class ia_rename_test(ImageBase):
 
     def tearDown(self):
         if self.newname:
@@ -3447,7 +3434,7 @@ class ia_rename_test(image_base):
         self.assertTrue("ia.rename" in msgs[-2], "wrong history")
 
 # Tests for image.replacemaskedpixels
-class ia_replacemaskedpixels_test(image_base):
+class ia_replacemaskedpixels_test(ImageBase):
 
     def tearDown(self):
         if self.mymask:
@@ -3491,7 +3478,7 @@ class ia_replacemaskedpixels_test(image_base):
         self.assertTrue("ia.replacemaskedpixels" in msgs[-1])
 
 # Tests for image.restoringbeam
-class ia_restoringbeam_test(image_base):
+class ia_restoringbeam_test(ImageBase):
 
     def tearDown(self):
         self.qa.done()
@@ -3809,8 +3796,7 @@ class ia_restoringbeam_test(image_base):
         )
 
 # Tests for image.rotate
-class ia_rotate_test(image_base):
-    datapath = ctsys.resolve('unittest/ia_rotate/')
+class ia_rotate_test(ImageBase):
 
     def tearDown(self):
         if self.mymask:
@@ -3866,7 +3852,7 @@ class ia_rotate_test(image_base):
         self.assertTrue("ia.rotate" in msgs[-1])
 
 # Tests for image.sepconvolve
-class ia_sepconvolve_test(image_base):
+class ia_sepconvolve_test(ImageBase):
 
     def tearDown(self):
         if self.mymask:
@@ -3909,7 +3895,7 @@ class ia_sepconvolve_test(image_base):
         self.assertTrue("ia.sepconvolve" in msgs[-1])
 
 # Tests for image.set
-class ia_set_test(image_base):
+class ia_set_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -3925,7 +3911,7 @@ class ia_set_test(image_base):
         self.assertTrue("ia.set" in msgs[-1])
 
 # Tests for image.setbrightnessunit
-class ia_setbrightnessunit_test(image_base):
+class ia_setbrightnessunit_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -3946,7 +3932,7 @@ class ia_setbrightnessunit_test(image_base):
         self.assertTrue("ia.setbrightnessunit" in msgs[-1])
 
 # Tests for image.setcoordsys
-class ia_setcoordsys_test(image_base):
+class ia_setcoordsys_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -3984,7 +3970,7 @@ class ia_setcoordsys_test(image_base):
         mycs.done()
 
 # Tests for image.setmiscinfo
-class ia_setmiscinfo_test(image_base):
+class ia_setmiscinfo_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -4006,7 +3992,7 @@ class ia_setmiscinfo_test(image_base):
         self.assertTrue("ia.setmiscinfo" in msgs[-1])
 
 # Tests for image.summary
-class ia_summary_test(image_base):
+class ia_summary_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -4048,7 +4034,7 @@ class ia_summary_test(image_base):
                         self.assertTrue(pa == bpa)
 
 # Tests for image.tofits
-class ia_tofits_test(image_base):
+class ia_tofits_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
@@ -4147,7 +4133,7 @@ class ia_tofits_test(image_base):
             myia.done()
 
 # Tests for image.twopointcorrelation
-class ia_twopointcorrelation_test(image_base):
+class ia_twopointcorrelation_test(ImageBase):
 
     def tearDown(self):
         self._myia.done()
