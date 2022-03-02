@@ -404,6 +404,7 @@ class ImageSubtractionMethods():
             copy_image_file(base_image, linefile)
             ImageSubtractionMethods.__subtract_image(smoothed_image, subtracted_image)
             ImageSubtractionMethods.__subtract_image(linefile, smoothed_image)
+            image_stack.push(UnerasableFolder(linefile))
 
     @staticmethod
     def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
@@ -412,8 +413,8 @@ class ImageSubtractionMethods():
         output_image = os.path.basename(base_image) + '.cont'
         copy_image_file(base_image, output_image)
 
-        subtract_image = image_stack.peak().path
-        ImageSubtractionMethods.__subtract_image(output_image, subtract_image)
+        linefile = image_stack.peak().path
+        ImageSubtractionMethods.__subtract_image(output_image, linefile)
 
     @staticmethod
     def __subtract_image(operand_a: str=None, operand_b: str=None) -> None:
