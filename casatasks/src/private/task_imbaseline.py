@@ -22,7 +22,7 @@ from casatools import image, table, quanta
 DATACOLUMN = 'DATA'
 OVERWRITE = True
 
-IMAGE_STACK_MAX_HEIGHT = 4
+IMAGE_STACK_MAX_HEIGHT = 5
 MS_STACK_MAX_HEIGHT = 3
 
 qa = quanta()
