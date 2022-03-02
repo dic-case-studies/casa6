@@ -486,9 +486,9 @@
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["imcollapse","default"],
+            "testGroup":["imcollapse"],
             "timeout":0,
-            "comment":"DEFAULT"
+            "comment":""
         },
         {
             "testScript":"test_imcontsub",
@@ -496,19 +496,9 @@
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["imcontsub"],
+            "testGroup":["imcontsub","default"],
             "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_imdev",
-            "testType":"casatasks",
-            "maintainer":"Neal Schweighart",
-            "maintainerEmail":"nschweig@nrao.edu",
-            "testOptions":[],
-            "testGroup":["imdev","Image Analysis"],
-            "timeout":0,
-            "comment":""
+            "comment":"DEFAULT"
         },
         {
             "testScript":"test_imfit",
@@ -996,9 +986,9 @@
             "maintainer":"Neal Schweighart",
             "maintainerEmail":"nschweig@nrao.edu",
             "testOptions":[],
-            "testGroup":["delmod","Calibration","default"],
+            "testGroup":["delmod","Calibration"],
             "timeout":0,
-            "comment":"DEFAULT"
+            "comment":""
         },
         {
             "testScript":"test_req_task_feather",
@@ -1076,9 +1066,9 @@
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["impbcor","default"],
+            "testGroup":["impbcor"],
             "timeout":0,
-            "comment":"DEFAULT"
+            "comment":""
         },
         {
             "testScript":"test_req_task_importuvfits",
@@ -1086,9 +1076,9 @@
             "maintainer":"Neal Schweighart",
             "maintainerEmail":"nschweig@nrao.edu",
             "testOptions":[],
-            "testGroup":["importuvfits","exportuvfits"],
+            "testGroup":["importuvfits","exportuvfits","default"],
             "timeout":0,
-            "comment":""
+            "comment":"DEFAULT"
         },
         {
             "testScript":"test_req_task_impv",
@@ -1186,9 +1176,9 @@
             "maintainer":"Dave Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
-            "testGroup":["phaseshift","fixvis"],
+            "testGroup":["phaseshift","fixvis","default"],
             "timeout":0,
-            "comment":""
+            "comment":"DEFAULT"
         },
         {
             "testScript":"test_req_task_polcal",
@@ -1283,8 +1273,8 @@
         {
             "testScript":"test_req_task_vishead",
             "testType":"casatasks",
-            "maintainer":"Neal Schweighart",
-            "maintainerEmail":"nschweig@nrao.edu",
+            "maintainer":"Enrique Garcia",
+            "maintainerEmail":"cgarcia@eso.org",
             "testOptions":[],
             "testGroup":["vishead","default"],
             "timeout":0,
@@ -1569,16 +1559,6 @@
             "testGroup":["virtualconcat","concat"],
             "timeout":0,
             "comment":""
-        },
-        {
-            "testScript":"test_vishead",
-            "testType":"casatasks",
-            "maintainer":"Enrique Garcia",
-            "maintainerEmail":"cgarcia@eso.org",
-            "testOptions":[],
-            "testGroup":["vishead","default"],
-            "timeout":0,
-            "comment":"DEFAULT"
         },
         {
             "testScript":"test_wvrgcal",
