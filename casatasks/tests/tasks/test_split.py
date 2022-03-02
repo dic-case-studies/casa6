@@ -1,25 +1,37 @@
-'''
-Unit tests for task split.
-
-Features tested:
-  1. Are the POLARIZATION, DATA_DESCRIPTION, and (to some extent) the
-     SPECTRAL_WINDOW tables correct with and without correlation selection?
-  2. Are the data shapes and values correct with and without correlation
-     selection?
-  3. Are the WEIGHT and SIGMA shapes and values correct with and without
-     correlation selection?
-  4. Is a SOURCE table with bogus entries properly handled?
-  5. Is the STATE table properly handled?
-  6. Are generic subtables copied over?
-  7. Are CHAN_WIDTH and RESOLUTION properly handled in SPECTRAL_WINDOW when
-     channels are being selected and/or averaged?
-  8. The finer points of spw:chan selection.
-
-Note: The time_then_chan_avg regression is a more "end-to-end" test of split.
-'''
-
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_split.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/latest/api.html
+#
+# Features tested:
+#   1. Are the POLARIZATION, DATA_DESCRIPTION, and (to some extent) the
+#      SPECTRAL_WINDOW tables correct with and without correlation selection?
+#   2. Are the data shapes and values correct with and without correlation
+#      selection?
+#   3. Are the WEIGHT and SIGMA shapes and values correct with and without
+#      correlation selection?
+#   4. Is a SOURCE table with bogus entries properly handled?
+#   5. Is the STATE table properly handled?
+#   6. Are generic subtables copied over?
+#   7. Are CHAN_WIDTH and RESOLUTION properly handled in SPECTRAL_WINDOW when
+#      channels are being selected and/or averaged?
+#   8. The finer points of spw:chan selection.
+#
+##########################################################################
 import os
 import numpy
 import re
@@ -28,60 +40,22 @@ import shutil
 import filecmp
 import unittest
 
-from casatasks.private.casa_transition import *
-if is_CASA6:
-    ### for testhelper import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__))) # May be needed for recipes.listshapes
-    from recipes.listshapes import listshapes
-    #import testhelper as th
-    from casatasks import cvel, flagcmd, flagdata, importasdm, listobs, partition, split
-    from casatools import ctsys, ms, msmetadata, table
-    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-
-    ctsys_resolve = ctsys.resolve
-
-    # default isn't part of CASA6
-    def default(atask):
-        pass
-else:
-    from __main__ import default
-    from recipes.listshapes import listshapes
-    #import testhelper as th
-    from tasks import cvel, flagcmd, flagdata, importasdm, listobs, partition, split
-    from taskinit import mstool as ms
-    from taskinit import msmdtool as msmetadata
-    from taskinit import tbtool as table
-    from parallel.parallel_task_helper import ParallelTaskHelper
-    from casa_stack_manip import stack_frame_find
-
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+from casatasks import cvel, flagcmd, flagdata, importasdm, listobs, partition, split
+from casatools import ctsys, ms, msmetadata, table
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
 from casatestutils import testhelper as th
 
-# common function to get a dictionary item iterator
-if is_python3:
-    def lociteritems(adict):
-        return adict.items()
-else:
-    def lociteritems(adict):
-        return adict.iteritems()
 
-datapath = ctsys_resolve('unittest/split/')
+def lociteritems(adict):
+    return adict.items()
 
-# Pick up alternative data directory to run tests on MMSs
-testmms = False
-if 'TEST_DATADIR' in os.environ:
-    testmms = True
-    DATADIR = str(os.environ.get('TEST_DATADIR'))
-    if os.path.isdir(DATADIR):
-        datapath = DATADIR+'/split/'
+datapath = ctsys.resolve('unittest/split/')
 
-print('split tests will use data from '+datapath)
-
-if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
-    ParallelTaskHelper.bypassParallelProcessing(1)
+# To run test_split with MMS, create MMS from the MSs used in these tests and save them
+# to a directory in your system that is called unittest/split/. The ctsys.resolve() used
+# in these tests will find the MMS there. Check the --rcdir option of casa to point to
+# a local config.py for this.
 
 '''
     Start of old tests, which are the same as test_split.
@@ -162,10 +136,13 @@ def compare_tables(tabname, exptabname, tol=None):
 
         # Check everything in the description except the data manager.
         for thingy in tabentry['desc']:
-            if thingy not in ('dataManagerGroup', 'dataManagerType'):
-                if tabentry['desc'][thingy] != exptabdict['cols'][col]['desc'][thingy]:
-                    raise ValueError(thingy + ' differs in the descriptions of ' + col + ' in ' + tabname + ' and ' + exptabname)
-                
+            if (
+                thingy not in ('dataManagerGroup', 'dataManagerType')
+                and tabentry['desc'][thingy]
+                != exptabdict['cols'][col]['desc'][thingy]
+            ):
+                raise ValueError(thingy + ' differs in the descriptions of ' + col + ' in ' + tabname + ' and ' + exptabname)
+
         check_eq(tabentry['data'], exptabdict['cols'][col]['data'])
 
 
@@ -197,34 +174,10 @@ class SplitChecker(unittest.TestCase):
         """
         Will only clean things up if all the splits have run.
         """
-        #print "self.n_tests_passed:", self.n_tests_passed
+        all_ran = all(self.records.get(corrsel) for corrsel in self.corrsels)
 
-        # Check that do_split() ran for all of the corrsels.
-        all_ran = True
-        for corrsel in self.corrsels:
-            if not self.records.get(corrsel):
-                all_ran = False
-
-        if all_ran:
-            #print "self.inpms:", self.inpms
-            # if inpms is local...
-            if self.inpms[0] != '/' and os.path.exists(self.inpms):
-                #print "rming", self.inpms
-                shutil.rmtree(self.inpms, ignore_errors=True)
-
-            # Counting the number of tests that have run so far seems to often
-            # work, but not always.  I think just keeping a class variable as a
-            # counter is not thread safe.  Fortunately the only kind of test
-            # that needs the output MS outside of do_split is
-            # check_subtables().  Therefore, have check_subtables() remove the
-            # output MS at its end.
-            ## if self.n_tests_passed == self.n_tests:
-            ##     # Remove any remaining output MSes.
-            ##     for corrsel in self.corrsels:
-            ##         oms = self.records.get(corrsel, {}).get('ms', '')
-            ##         if os.path.exists(oms):
-            ##             print "rming", oms
-            ##             #shutil.rmtree(oms)
+        if all_ran and self.inpms[0] != '/' and os.path.exists(self.inpms):
+            shutil.rmtree(self.inpms, ignore_errors=True)
     
     def initialize(self):
         # The realization that need_to_initialize needs to be
@@ -247,6 +200,109 @@ class SplitChecker(unittest.TestCase):
         for corrsel in self.corrsels:
             self.res = self.do_split(corrsel)
 
+    def checkMSes(self, holderdict, dir, files):
+        """
+        Updates holderdict['msdict'] with a list of (ncorr, nchan)s for
+        each MS in dir that matches holderdict['mspat'].
+        """
+        # Yup, ignore files.  It's just a os.path.walk()ism.
+        from glob import glob
+
+        mses = glob(os.path.join(dir, holderdict['mspat']))
+
+        # musthave = holderdict.get('musthave', set([]))
+        # use_and = holderdict.get('use_and', False)
+        # listall = holderdict.get('listall', False)
+
+        if not holderdict.get('msdict'):  # Initialize it so retval
+            holderdict['msdict'] = {}  # can be tied to it.
+        retval = holderdict['msdict']
+
+        # needed_items = holderdict.get('needed_items', {})
+
+        mytb = holderdict['mytb']
+        incl_ddid = holderdict['incl_ddid']
+
+        def myopen(mytb, whichtab):
+            """
+            A wrapper around (my)tb.open(whichtab) which is smarter about error
+            handling.  It will still throw an exception on an error, but it tries
+            to make the message less misleading.
+            """
+            retval = False
+            if not hasattr(mytb, 'open'):
+                raise ValueError('mytb is not a tb tool')
+            try:
+                mytb.open(whichtab)
+                retval = True
+            except Exception as e:
+                # Typically if we are here whichtab is too malformed for
+                # mytb to handle, and e is usually "whichtab does not exist",
+                # which is usually incorrect.
+                if str(e)[-15:] == " does not exist":
+                    print("tb could not open", whichtab)
+                else:
+                    print("Error", e, "from tb.open(", whichtab, ")")
+                mytb.close()  # Just in case.
+            return retval
+
+        for currms in mses:
+            if currms[:2] == './':  # strip off leading ./, if present.
+                currms = currms[2:]  # cosmetic.
+
+            if incl_ddid:
+                retval[currms] = {}
+            else:
+                retval[currms] = set([])
+
+            if not myopen(mytb, currms + '/POLARIZATION'):
+                break
+            num_corrs = mytb.getcol('NUM_CORR')
+            mytb.close()
+
+            if not myopen(mytb, currms + '/SPECTRAL_WINDOW'):
+                break
+            num_chans = mytb.getcol('NUM_CHAN')
+            mytb.close()
+
+            if not myopen(mytb, currms + '/DATA_DESCRIPTION'):
+                break
+
+            for row in range(mytb.nrows()):
+                if not mytb.getcell('FLAG_ROW', row):
+                    key = (num_corrs[mytb.getcell('POLARIZATION_ID', row)],
+                           num_chans[mytb.getcell('SPECTRAL_WINDOW_ID', row)])
+                    if incl_ddid:
+                        if key in retval[currms]:
+                            retval[currms][key].append(row)
+                        else:
+                            retval[currms][key] = [row]
+                    else:
+                        retval[currms].add(key)
+            mytb.close()
+
+    def listshapes(self, musthave=[], mspat="*[-_.][Mm][Ss]", combine='or',
+                   sortfirst=False, incl_ddid=False):
+        """
+        Lists the data shapes of the MSes matched by mspat.
+        """
+        if type(musthave) == str:
+            musthave = [s.replace(',', '') for s in musthave.split()]
+
+        holderdict = {'mytb': table()}
+        holderdict['incl_ddid'] = incl_ddid
+
+        splitatdoubleglob = mspat.split('**/')
+        if len(splitatdoubleglob) > 1:
+            if splitatdoubleglob[0] == '':
+                splitatdoubleglob[0] = '.'
+            holderdict['mspat'] = splitatdoubleglob[1]
+            os.path.walk(splitatdoubleglob[0], self.checkMSes, holderdict)
+        else:
+            holderdict['mspat'] = mspat
+            self.checkMSes(holderdict, '', [])
+        return holderdict['msdict']
+
     def check_subtables(self, corrsel, expected):
         """
         Compares the shapes of self.records[corrsel]['ms']'s subtables
@@ -256,7 +312,7 @@ class SplitChecker(unittest.TestCase):
         needs it, and this is the most reliable way to clean up.
         """
         oms = self.records[corrsel]['ms']
-        assert listshapes(mspat=oms)[oms] == set(expected)
+        assert self.listshapes(mspat=oms)[oms] == set(expected)
         shutil.rmtree(oms)
 
 @unittest.skip("split_test_tav is skipped")
@@ -672,6 +728,7 @@ class split_test_cdsp(SplitChecker):
                 for c in ('ANTENNA_ID', 'SPECTRAL_WINDOW_ID'):
                     record[st][c]   = tblocal.getcol(c)
                 tblocal.close()
+            shutil.rmtree(outms, ignore_errors=True)
         except Exception:
             print("Error channel averaging and reading", outms)
             raise
@@ -1965,11 +2022,10 @@ class test_base(unittest.TestCase):
         self.vis = "Four_ants_3C286.ms"
 
         if os.path.exists(self.vis):
-           self.cleanup()
+           os.system('rm -rf '+ self.vis + '*')
 
         os.system('cp -RH '+os.path.join(self.datapath,self.vis)+' '+ self.vis)
-        default(split)
-       
+
     def setUp_3c84(self):
         # MS is as follows (scan=1):
         #  SpwID   #Chans   Corrs
@@ -1980,11 +2036,10 @@ class test_base(unittest.TestCase):
 
         self.vis = '3c84scan1.ms'
         if os.path.exists(self.vis):
-           self.cleanup()
+           os.system('rm -rf '+ self.vis + '*')
 
         os.system('cp -RH '+os.path.join(self.datapath,self.vis)+' '+ self.vis)
-        default(split)
-        
+
     def setUp_mixedpol(self):
         # DD table is as follows:
         #  PolID SpwID   
@@ -1995,17 +2050,16 @@ class test_base(unittest.TestCase):
 
         self.vis = 'split_ddid_mixedpol_CAS-12283.ms'
         if os.path.exists(self.vis):
-           self.cleanup()
+           os.system('rm -rf '+ self.vis + '*')
 
         os.system('cp -RH '+os.path.join(self.datapath,self.vis)+' '+ self.vis)
-        default(split)
-        
+
     def setUp_flags(self):
         asdmname = 'test_uid___A002_X997a62_X8c-short' # Flag.xml is modified
         self.vis = asdmname+'.ms'
         self.flagfile = asdmname+'_cmd.txt'
 
-        asdmpath=ctsys_resolve('unittest/split/')
+        asdmpath=ctsys.resolve('unittest/split/')
         os.system('ln -sf '+os.path.join(asdmpath,asdmname))
         importasdm(asdmname, convert_ephem2geo=False, flagbackup=False, process_syspower=False, lazy=True, 
                    scans='1', savecmds=True)
@@ -2019,8 +2073,7 @@ class test_base(unittest.TestCase):
         
         # Create an MMS for the tests
         self.testmms = prefix + ".test.mms"
-        default(partition)
-        
+
         if os.path.exists(self.testmms):
             os.system("rm -rf " + self.testmms)
             os.system("rm -rf " + self.testmms +'.flagversions')
@@ -2033,15 +2086,12 @@ class splitTests(test_base):
     '''Test the keepflags parameter'''
     
     def setUp(self):
-        if testmms:
-            self.datapath = datapath
-        else:
-            self.datapath = ctsys_resolve('unittest/split/')
+        self.datapath = ctsys.resolve('unittest/split/')
         self.setUp_4ants()
         
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
-#        os.system('rm -rf '+ self.outputms)
+        os.system('rm -rf '+ self.vis + '*')
+        os.system('rm -rf '+ self.outputms + '*')
         
     def test_keepflags(self):
         '''split: keepflags=False'''
@@ -2067,9 +2117,11 @@ class splitTests(test_base):
         self.createMMS(self.vis, axis='scan', spws='0,2,3')
         self.outputms = "split_heur1.ms"
         try:
-            split(vis=self.testmms, outputvis=self.outputms, timebin='20s', combine='scan', datacolumn='data')        
+            split(vis=self.testmms, outputvis=self.outputms, timebin='20s', combine='scan', datacolumn='data')
+            os.system('rm -rf ' + self.testmms + '*')
         except Exception as instance:
             print('Expected Error: %s'%instance)
+            os.system('rm -rf ' + self.testmms + '*')
         
         print('Expected Error!')
         
@@ -2082,7 +2134,7 @@ class splitTests(test_base):
         # First, create a .flagversions file
         flagdata(vis=self.outputms, flagbackup=True, spw='0', mode='unflag')
         self.assertTrue(os.path.exists(self.outputms+'.flagversions'))
-        
+
         # Now, delete only the MS and leave the .flagversions in disk
         os.system('rm -rf '+self.outputms)
         with self.assertRaises(RuntimeError):
@@ -2117,7 +2169,8 @@ class splitTests(test_base):
         # This will cause MS NULL selections in some subMSs that have only spw=0
         split(vis=self.testmms, outputvis=self.outputms, spw='1', datacolumn='data',
               width=bin1)
-        
+
+        os.system('rm -rf ' + self.testmms + '*')
         ParallelTaskHelper.bypassParallelProcessing(0)
         self.assertTrue(ParallelTaskHelper.isParallelMS(self.outputms),'Output should be an MMS')
 
@@ -2138,6 +2191,7 @@ class splitTests(test_base):
             self.assertTrue(ParallelTaskHelper.isParallelMS(self.outputms),'Output should be an MMS')
         except Exception:
             print('Expected error!')
+            os.system('rm -rf ' + self.testmms + '*')
 
     def test_combinescan_ms(self):
         '''split: combine=scan with axis=scan, keepmms=false'''
@@ -2146,6 +2200,7 @@ class splitTests(test_base):
         self.outputms = "split_combscan_spw.ms"
         split(vis=self.testmms, outputvis=self.outputms, datacolumn='data',combine='scan',
                     timebin='100s', keepmms=False)
+        os.system('rm -rf ' + self.testmms + '*')
         self.assertFalse(ParallelTaskHelper.isParallelMS(self.outputms),'Output should be an MS')
             
     def test_combinescan_spw_mms(self):
@@ -2155,6 +2210,7 @@ class splitTests(test_base):
         self.outputms = "split_combscan.mms"
         split(vis=self.testmms, outputvis=self.outputms, datacolumn='data',combine='scan',
                     timebin='100s')
+        os.system('rm -rf ' + self.testmms + '*')
         self.assertTrue(ParallelTaskHelper.isParallelMS(self.outputms),'Output should be an MMS')
        
         
@@ -2164,10 +2220,7 @@ class splitSpwPoln(test_base):
     '''
 
     def setUp(self):
-        if testmms:
-            self.datapath = datapath
-        else:
-            self.datapath = ctsys_resolve('unittest/split/')
+        self.datapath = ctsys.resolve('unittest/split/')
         self.setUp_3c84()
 
     def tearDown(self):
@@ -2238,10 +2291,7 @@ class splitUnsortedPoln(test_base):
     '''
 
     def setUp(self):
-        if testmms:
-            self.datapath = datapath
-        else:
-            self.datapath = ctsys_resolve('unittest/split/')
+        self.datapath = ctsys.resolve('unittest/split/')
         self.setUp_mixedpol()
 
     def tearDown(self):
@@ -2302,34 +2352,5 @@ class splitUpdateFlagCmd(test_base):
         flagcmd(self.outputms, action='list', savepars=True, outfile='spwnames.txt', useapplied=True)
         self.assertTrue(filecmp.cmp(self.flagfile, 'spwnames.txt',1))
 
-# Note: this list of tests is only relevant for CASA5, skipped tests must be indicated by the
-# use of the @unittest.skip decorator as shown above in order for those tests to be skipped in CASA6
-def suite():
-    return [
-#            split_test_tav,
-            split_test_cav, 
-            split_test_cav5, 
-            split_test_cst,
-            split_test_state, 
-            split_test_optswc, 
-            split_test_cdsp,
-            split_test_singchan, 
-            split_test_unorderedpolspw, 
-            split_test_blankov,
-#            split_test_tav_then_cvel,
-            split_test_genericsubtables,
-            split_test_sw_and_fc, 
-            split_test_cavcd, 
-            split_test_almapol,
-            split_test_singlespw_severalchranges,
-            split_test_wttosig, 
-#            split_test_fc
-            splitTests,
-            splitSpwPoln,
-            splitUnsortedPoln,
-            splitUpdateFlagCmd
-            ]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

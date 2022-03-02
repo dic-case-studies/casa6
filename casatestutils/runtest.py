@@ -11,7 +11,7 @@ import unittest
 import json
 import datetime
 import platform
-import re
+
 ########################################################################################################################
 ######################################            Imports / Constants            #######################################
 ########################################################################################################################
@@ -60,8 +60,6 @@ except ImportError:
 IS_CASA6 = False
 CASA6 = False
 verbose = False
-DRY_RUN = False
-RUN_ALL = False
 
 # JIRA BRANCH TO CHECKOUT
 JIRA_BRANCH = None
@@ -270,13 +268,18 @@ class casa_test:
     def __hash__(self):
         return hash(('name', self.name,'path', self.path, 'options', self.options))
 
+def read_conf(conf):
+    with open(conf) as f:
+        lines = [line.rstrip() for line in f]
+    return dict(x.split('==') for x in lines)
+
 def fetch_tests(work_dir, branch):
 
     repo_path = "https://open-bitbucket.nrao.edu/scm/casa/"
     source_dir=work_dir + "/casasources"
     if not os.path.exists(source_dir):
         os.makedirs(source_dir)
-    repositories = ["casampi", "casaplotms", "almatasks", "casa6","casaviewer"]
+    repositories = ["casa6", "casampi", "casaplotms", "almatasks","casaviewer"]
     # All of the repositositories have their tests in different directories
     # so we need a mapping
     def get_repo_test_paths(x):
@@ -292,12 +295,40 @@ def fetch_tests(work_dir, branch):
     for repo in repositories:
         cmd = ("git clone " + repo_path + repo).split()
         print(cmd)
-        r = ShellRunner()
-        r.runshell(cmd, default_timeout, source_dir)
-        cmd = ("git checkout " + branch).split()
+        try:
+            r = ShellRunner()
+            r.runshell(cmd, default_timeout, source_dir)
+        except:
+            cwd = os.getcwd()
+            os.chdir(source_dir)
+            subprocess.call(cmd, stdout = subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            os.chdir(cwd)
+        if branch != 'master' and repo != 'casa6':
+            cmd = 'git ls-remote --heads {}{} {} | wc -l'.format(repo_path, repo, branch )
+            #print(cmd)
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell = True)
+            out = proc.stdout.read()
+            if int(out)== 0: 
+                if repo in ['casaplotserver', 'casaplotms','casaviewer','casampi','almatasks','casatelemetry']:
+                    branchtag = "tags/{}".format(read_conf(source_dir+"/casa6/build.conf")[repo])
+                cmd = ("git checkout " + branchtag).split()
+            else:
+                cmd = ("git checkout " + branch).split()
+        elif branch == 'master' and repo != 'casa6' and os.path.isfile(source_dir+"/casa6/build.conf"):
+            if repo in ['casaplotserver', 'casaplotms','casaviewer','casampi','almatasks','casatelemetry']:
+                branchtag = "tags/{}".format(read_conf(source_dir+"/casa6/build.conf")[repo])
+            cmd = ("git checkout " + branchtag).split()
+        else:
+            cmd = ("git checkout " + branch).split()
         print(cmd)
-        r = ShellRunner()
-        r.runshell(cmd, default_timeout, source_dir + "/" + repo)
+        try:
+            r = ShellRunner()
+            r.runshell(cmd, default_timeout, source_dir + "/" + repo)
+        except:
+            cwd = os.getcwd()
+            os.chdir(source_dir + "/" + repo)
+            subprocess.call(cmd, stdout = subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            os.chdir(cwd)
         for x in get_repo_test_paths(repo):
             test_paths.append(source_dir + "/" + x)
     return test_paths
@@ -328,9 +359,10 @@ def list_tests():
     if IS_CASA6:
         if os.path.isdir(os.getcwd() +"/testlist/"):
             shutil.rmtree(os.getcwd() +"/testlist/")
-        git_fetch_casa_tests(os.getcwd() +"/testlist/casa6")
-        gather_all_tests(os.getcwd() +"/testlist/casa6",os.getcwd() +"/testlist/")
-        gather_all_tests(os.getcwd() +"/testlist/casaplotms/", os.getcwd() + "/testlist/")
+        os.makedirs(os.getcwd() +"/testlist/")
+        testpaths = fetch_tests(os.getcwd() +"/testlist/", 'master')
+        for path in testpaths:
+            gather_all_tests(path, os.getcwd() +"/testlist/")
         tests = sorted(os.listdir(os.getcwd() +"/testlist/"))
         for test in tests:
             if test.startswith("test_"):
@@ -338,119 +370,6 @@ def list_tests():
     else:
         for t in readfile(LISTofTESTS):
             print(t)
-
-def git_fetch_casa_tests(path):
-
-    cwd = os.getcwd()
-    if os.path.exists(path):
-        try:
-            os.rmdir(path)
-        except:
-            shutil.rmtree(path)
-    os.makedirs(path)
-
-    os.chdir(path)
-    FNULL = open(os.devnull, 'w')
-
-    ## Main
-    subprocess.call(["git","init", "--quiet"])
-    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casa6.git"], stdout=FNULL, stderr=subprocess.STDOUT)
-    subprocess.call(["git","config","core.sparseCheckout","true"])
-
-    print("casatasks/tests/tasks", file=open(".git/info/sparse-checkout", "a"))
-    
-    print("casatools/tests/tools/agentflagger", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/calanalysis", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/componentlist", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/coordsys", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/image", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/imagepol", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/measures", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/ms", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/msmetadata", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/regionmanager", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/sdm", file=open(".git/info/sparse-checkout", "a"))
-    print("casatools/tests/tools/vpmmanager", file=open(".git/info/sparse-checkout", "a"))
-
-    print("casatests/benchmarks", file=open(".git/info/sparse-checkout", "a"))
-    print("casatests/regression", file=open(".git/info/sparse-checkout", "a"))
-    print("casatests/performance", file=open(".git/info/sparse-checkout", "a"))
-    print("casatests/pipeline", file=open(".git/info/sparse-checkout", "a"))
-    print("casatests/stakeholders", file=open(".git/info/sparse-checkout", "a"))
-
-    subprocess.call(["git","pull","--quiet","origin","master"])
-
-    ## Plotms
-    os.chdir(os.path.dirname(os.getcwd()))
-    os.makedirs("casaplotms")
-    os.chdir("casaplotms")
-    subprocess.call(["git","init", "--quiet"])
-    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casaplotms.git"], stdout=FNULL, stderr=subprocess.STDOUT)
-    subprocess.call(["git","config","core.sparseCheckout","true"])
-    print("tests/plotms", file=open(".git/info/sparse-checkout", "a"))
-    subprocess.call(['git','pull','--quiet','origin','master'])
-
-    ## Almatasks
-
-    os.chdir(os.path.dirname(os.getcwd()))
-    os.makedirs("almatasks")
-    os.chdir("almatasks")
-    subprocess.call(["git","init", "--quiet"])
-    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/almatasks.git"], stdout=FNULL, stderr=subprocess.STDOUT)
-    subprocess.call(["git","config","core.sparseCheckout","true"])
-    print("tests/tasks", file=open(".git/info/sparse-checkout", "a"))
-    subprocess.call(['git','pull','--quiet','origin','master'])
-
-    ## casaviewer
-
-    os.chdir(os.path.dirname(os.getcwd()))
-    os.makedirs("casaviewer")
-    os.chdir("casaviewer")
-    subprocess.call(["git","init", "--quiet"])
-    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casaviewer.git"], stdout=FNULL, stderr=subprocess.STDOUT)
-    subprocess.call(["git","config","core.sparseCheckout","true"])
-    print("tests/tasks", file=open(".git/info/sparse-checkout", "a"))
-    subprocess.call(['git','pull','--quiet','origin','master'])
-
-    ## casampi
-
-    os.chdir(os.path.dirname(os.getcwd()))
-    os.makedirs("casampi")
-    os.chdir("casampi")
-    subprocess.call(["git","init", "--quiet"])
-    subprocess.call(["git","remote","add","-f","origin", "https://open-bitbucket.nrao.edu/scm/casa/casampi.git"], stdout=FNULL, stderr=subprocess.STDOUT)
-    subprocess.call(["git","config","core.sparseCheckout","true"])
-    print("src/casampi/tests", file=open(".git/info/sparse-checkout", "a"))
-    subprocess.call(['git','pull','--quiet','origin','master'])
-
-    os.chdir(os.path.dirname(os.getcwd()))
-    os.chdir(cwd)
-
-def git_fetch_casa_tests_branch(path, branch):
-
-    cwd = os.getcwd()
-    if os.path.exists(path):
-        try:
-            os.rmdir(path)
-        except:
-            shutil.rmtree(path)
-    os.makedirs(path)
-
-    os.chdir(path)
-
-    FNULL = open(os.devnull, 'w')
-    print("CHECKING OUT BRANCH: {}".format(branch))
-    subprocess.call(["git","clone", "https://open-bitbucket.nrao.edu/scm/casa/casa6.git"], stdout=FNULL, stderr=subprocess.STDOUT)
-    os.chdir(path + 'casa6')
-    subprocess.call(["git","checkout","{}".format(branch)], stdout=FNULL, stderr=subprocess.STDOUT)
-    shutil.move(path + 'casa6/casatools', path + 'casatools')
-    shutil.move(path + 'casa6/casatasks', path + 'casatasks')
-    shutil.move(path + 'casa6/casatestutils', path + 'casatestutils')
-    shutil.move(path + 'casa6/casatests', path + 'casatests')
-    shutil.move(path + 'casa6/casa5', path + 'casa5')
-    shutil.rmtree(path + 'casa6')
-
-    os.chdir(cwd)
 
 def gather_all_tests(path, workpath):
 
@@ -533,8 +452,7 @@ def unpack_tarball(pkg, outputdir):
     print(cmd)
     r = ShellRunner()
     output = r.runshell(cmd, default_timeout, cwd=os.getcwd())
-    # Remove .tar.xz extension and py3.x extension as necessary
-    installpath = outputdir + "/" + re.sub(r'-py3\..?', '', os.path.basename(pkg).replace(".tar.xz",""))
+    installpath = outputdir + "/" + os.path.basename(pkg).replace(".tar.xz","")
     return installpath
 
 def get_casatestutils_exec_path(pkg_dir):
@@ -571,7 +489,7 @@ def unpack_pkg(pkg, work_dir, outputdir):
 ##############################################            Run            ###############################################
 ########################################################################################################################
 
-def run(testnames):
+def run(testnames, branch=None, DRY_RUN=False):
 
     if IS_CASA6:
 
@@ -584,8 +502,29 @@ def run(testnames):
             # Copy Tests to Working Directory
             os.makedirs(workdir)
 
-            print("Tests: {}".format(testnames))
+            # Remove Duplicates
+            # Since working directory is based on script name
+            # We need to remove multiple calls to the same script
+            setlist = []
+            for duplicate in list(set([ x.split("/")[-1] for x in testnames])):
+                inlist = True
+                for test in testnames:
+                    if duplicate in test:
+                        if inlist:
+                            setlist.append(test)
+                            inlist = False
+            testnames = setlist
+            print("Tests: {}".format(sorted(testnames)))
             gittest = True
+            if branch ==None:
+                branch = 'master'
+            # Only Checkout When Needed
+            if any([False if ".py" in x else True for x in testnames ]):
+                testpaths = fetch_tests(workdir, branch)
+                os.makedirs(workdir + "tests/")
+                for path in testpaths:
+                    gather_all_tests(path, workdir + "tests/")
+                print(workdir + "tests/")
 
             for testname in testnames:
                 cmd = []
@@ -614,27 +553,6 @@ def run(testnames):
                         os.makedirs(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]))
                         cmd = [ workdir + "{}/".format(test if not test.endswith(".py") else test[:-3]) ] + cmd
 
-                    # Check to see if tests need to be pulled from git. Only needs to be done once
-                    if not test.endswith(".py") and gittest == True:
-                        if JIRA_BRANCH is not None:
-                            git_fetch_casa_tests_branch(workpath + 'casa6/', JIRA_BRANCH)
-                            os.makedirs(workdir + "tests/")
-                            gather_all_tests(workpath +'casa6/', workdir + "tests/")
-                            # gather_all_tests(workpath +'casaplotms/', workdir + "tests/")
-                            # gather_all_tests(workpath +'almatasks/', workdir + "tests/")
-                            gittest = False
-
-                        else:
-                            print("Fetching Tests From Git Main Since No Local Test is Given")
-                            git_fetch_casa_tests( workpath + 'casa6/')
-                            os.makedirs(workdir + "tests/")
-                            gather_all_tests(workpath +'casa6/', workdir + "tests/")
-                            gather_all_tests(workpath +'casaplotms/', workdir + "tests/")
-                            gather_all_tests(workpath +'almatasks/', workdir + "tests/")
-                            gather_all_tests(workpath +'casaviewer/', workdir + "tests/")
-                            gather_all_tests(workpath +'casampi/', workdir + "tests/")
-                            gittest = False
-
                     if test.endswith(".py"):
                         try:
                             print("Copying: {} to {}".format(test, workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
@@ -651,7 +569,6 @@ def run(testnames):
                     # https://docs.pytest.org/en/stable/usage.html
                     
                     cmd = ["--verbose"] + ["-ra"] + ["--tb=short"] + cmd
-
                     if DRY_RUN:
                         cmd = ["--collect-only"] + cmd
                     
@@ -666,7 +583,7 @@ def run(testnames):
                         print("No Tests to Run")
                         sys.exit()
                     else:
-
+                        
                         myworkdir = os.getcwd()
                         os.chdir("{}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
                         print("Test Directory: {}".format(os.getcwd()))
@@ -676,7 +593,14 @@ def run(testnames):
                             write_conftest_osx(conf_name)
                         else:
                             write_conftest_linux(conf_name)
-                        pytest.main(cmd)
+                        try: 
+                            from casampi.MPIEnvironment import MPIEnvironment
+                            if MPIEnvironment.is_mpi_enabled:
+                                pytest.main(cmd)
+                            else:
+                                subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
+                        except:
+                            subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
                         os.remove(conf_name)
                         os.chdir(myworkdir)
 
@@ -735,20 +659,27 @@ def run(testnames):
                             write_conftest_osx(conf_name)
                         else:
                             write_conftest_linux(conf_name)
-                        pytest.main(cmd)
+                        try: 
+                            from casampi.MPIEnvironment import MPIEnvironment
+                            if MPIEnvironment.is_mpi_enabled:
+                                pytest.main(cmd)
+                            else:
+                                subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
+                        except:
+                            subprocess.run([sys.executable,"-m","pytest"] + cmd, env={**os.environ})
                         os.remove(conf_name)
                         os.chdir(myworkdir)
             os.chdir(cwd)
 
         if not HAVE_PYTEST:
-            print("Missing Pytest")
+            raise ImportError('No Module Named Pytest. Pytest is Required for runtest.py')
 
 
 ########################################################################################################################
 #######################################            Run Bamboo Option            ########################################
 ########################################################################################################################
 
-def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None, test_paths = [], test_config_path=None, ncores=2, verbosity=False, pmode=None):
+def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None, test_paths = [], test_config_path=None, ncores=2, verbosity=False, pmode=None, tests_to_ignore=None):
 
     if test_list is not None:
         test_list = [x.strip() for x in test_list.split(',')]
@@ -758,6 +689,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     # Unpack the distribution
     print ("Test list: " + str (test_list))
     print ("Test group: " + str (test_group))
+
     if pkg is None:
         raise Exception("Missing pkg")
     if work_dir is None:
@@ -790,7 +722,6 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     # Get the actual tests as list
     test_config_elems = test_config['testlist']
 
-    #print(test_config_elems)
     print("Test Paths: ", test_paths)
 
     # Match the test names provided in the JSON file to the actual test locations.
@@ -886,6 +817,15 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
 
     # Run tests
     print("")
+
+    if tests_to_ignore is not None:
+        print("\nTests to Ignore: ",tests_to_ignore )
+        indices = []
+        for i, t in enumerate(tests_to_run):
+            if t.name in tests_to_ignore:
+                indices.append(i)
+        tests_to_run = [v for i,v in enumerate(tests_to_run) if i not in indices]
+
     for test in tests_to_run:
         r = ShellRunner()
         xunit = Xunit()
@@ -997,6 +937,7 @@ if __name__ == "__main__":
 
     # List of tests to run
     testnames = []
+    test_paths = []
 
     parser = argparse.ArgumentParser(allow_abbrev=False)
 
@@ -1022,6 +963,8 @@ if __name__ == "__main__":
     parser.add_argument('--bamboo', help='Set Bamboo Flag to True',default=False,action='store_true', required=False)
     parser.add_argument('-r','--rcdir',  help='Casa rcdir', required=False)
 
+    parser.add_argument('--ignore_list',  help='map file of tests to ignore', required=False)
+
     if not IS_CASA6:
         if "-c" in sys.argv:
             i = sys.argv.index("-c")
@@ -1032,16 +975,25 @@ if __name__ == "__main__":
     print(args)
     print("")
 
+    tests_to_ignore = None
+    if args.ignore_list is not None:
+        if args.ignore_list.endswith(".json"):
+            ignore_test_map = json.load(open(args.ignore_list))
+            tests_to_ignore = [x["testScript"].strip() for x in ignore_test_map["testlist"]]
+        else:
+            tests_to_ignore = [x.strip() for x in args.ignore_list.split(",")]
+
     print("Operating system: " +  platform.system())
     print("")
     rcdir=""
+
     if args.rcdir is not None:
         rcdir="--rcdir=" + args.rcdir
     print("rcdir: " + rcdir)
 
     if args.test_group is not None:
         components = args.test_group
-        components = components.split(",")
+        components = [x.strip() for x in components.split(",")]
         print("Testing Components" + str(components))
         print("")
         
@@ -1055,7 +1007,7 @@ if __name__ == "__main__":
                         component_to_test_map = json.load(ctt)
                 except:
                     print("No JSON file to Map")
-            
+            no_test_components = []
             for c in components:
                 _isComponent = False
                 component = c.strip()
@@ -1063,9 +1015,17 @@ if __name__ == "__main__":
                     #print(component, myDict["testGroup"])
                     if component in myDict["testGroup"]:
                         _isComponent = True
-                        testnames.append(myDict["testScript"])
+                        if myDict["testScript"] not in testnames: testnames.append(myDict["testScript"])
                 if not _isComponent:
                     print("No Tests for Component: {}".format(component))
+                    no_test_components.append(component)
+            if (len(no_test_components) > 0) and (len(testnames)==0):
+                print("No Test Suite for Component(s): {} Using Component 'default'".format(no_test_components))
+                component = 'default'
+                for myDict in component_to_test_map["testlist"]:
+                    if component in myDict["testGroup"]:
+                        _isComponent = True
+                        testnames.append(myDict["testScript"])
 
     if args.verbose:
         verbose = True
@@ -1099,7 +1059,7 @@ if __name__ == "__main__":
     if args.branch is not None:
         JIRA_BRANCH = args.branch
 
-    test_paths = []
+
     if args.test_paths is not None:
         test_paths = [x.strip() for x in args.test_paths.split(',')]
 
@@ -1107,28 +1067,41 @@ if __name__ == "__main__":
         if arg.startswith(("-", "--")):
             raise ValueError('unrecognized argument: %s'%(arg))
             sys.exit()
-
         else:
-
-            if arg.startswith("test") and not RUN_ALL:
-                testnames.append(arg)
-            # local Path file
-            #elif arg.startswith("./") and arg.endswith(".py") and not RUN_ALL:
-            elif arg.startswith("./") and ".py" in arg and not RUN_ALL:
-
+            tests = [x.strip() for x in arg.split(",")]
+            for test in tests:
                 try:
-                    real_path = os.path.realpath(arg[2:])
-                    testnames.append(real_path)
+                    testcases = None
+                    # Check if testcases are provided
+                    if "[" in test:
+                        listarray = test.split("[")
+                        if not listarray[0].endswith(".py"):
+                            testnames.append(test)
+                        else:
+                            test = listarray[0]
+                            testcases = listarray[1]
+                            real_path = os.path.realpath(test)
+                            if ("test_" not in real_path) or  ("test_" not in real_path) or ( os.path.exists(real_path) ==False):
+                                print("{} is not a Test File".format(test))
+                                continue
+                            else:
+                                if testcases is not None: real_path = os.path.realpath(test) + "[" + testcases
+                                testnames.append(real_path)
+
+                    # Check if test is real path are provided
+                    elif test.endswith(".py"):
+                        real_path = os.path.realpath(test)
+                        if ("test_" not in real_path) or  ("test_" not in real_path) or ( os.path.exists(real_path) ==False):
+                            print("{} is not a Test File".format(test))
+                            continue
+                        else:
+                            testnames.append(real_path)
+
+                    # else Assume test exists in bitbucket
+                    else:
+                        testnames.append(test)
                 except:
                     traceback.print_exc()
-
-            elif (arg.startswith("../") or arg.startswith("/"))  and ".py" in arg and not RUN_ALL:
-                try:
-                    real_path = os.path.realpath(arg)
-                    testnames.append(real_path)
-                except:
-                    traceback.print_exc()
-
     try:
         if args.bamboo:
             from testrunner.shell_runner import ShellRunner
@@ -1143,7 +1116,7 @@ if __name__ == "__main__":
             if args.pmode not in pmodes:
                 raise Exception("Invalid pmode: '{}'. Valid modes: '{}'".format(args.pmode ,str(pmodes)))
 
-            run_bamboo(args.pkg, args.work_dir, args.branch, args.test_group, args.test_list, test_paths, args.test_config, args.ncores, args.verbose, args.pmode)
+            run_bamboo(args.pkg, args.work_dir, args.branch, args.test_group, args.test_list, test_paths, args.test_config, args.ncores, args.verbose, args.pmode, tests_to_ignore)
 
         else:
             #If no tests are given, no subet tag or --all option
@@ -1170,12 +1143,19 @@ if __name__ == "__main__":
                                         tests.append(os.path.join(root, file))
                 testnames = tests
 
-            print("Testnames: {}".format(testnames))
+            if tests_to_ignore is not None:
+                print("\nTests to Ignore: ",tests_to_ignore )
+                indices = []
+                for i, t in enumerate(testnames):
+                     if t.split("/")[-1].replace(".py","") in tests_to_ignore:
+                        indices.append(i)
+                testnames = [v for i,v in enumerate(testnames) if i not in indices]
+
             if testnames == [] or len(testnames) == 0:
                 print("List of tests is empty")
                 parser.print_help(sys.stderr)
                 sys.exit(1)
-            run(testnames)
+            run(testnames, args.branch, DRY_RUN)
     except:
         traceback.print_exc()
 

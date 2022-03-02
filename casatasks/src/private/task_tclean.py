@@ -11,6 +11,7 @@ import os
 import shutil
 import numpy
 import copy
+import filecmp
 import time
 # get is_CASA6 and is_python3
 from casatasks.private.casa_transition import *
@@ -18,6 +19,7 @@ if is_CASA6:
     from casatasks import casalog
 
     from casatasks.private.imagerhelpers.imager_base import PySynthesisImager
+    from casatasks.private.imagerhelpers.input_parameters import saveparams2last
     from casatasks.private.imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from casatasks.private.imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from casatasks.private.imagerhelpers.input_parameters import ImagerParameters
@@ -31,6 +33,7 @@ else:
     from imagerhelpers.imager_parallel_continuum import PyParallelContSynthesisImager
     from imagerhelpers.imager_parallel_cube import PyParallelCubeSynthesisImager
     from imagerhelpers.input_parameters import ImagerParameters
+    from imagerhelpers.input_parameters import saveparams2last
     from cleanhelper import write_tclean_history, get_func_params
     table=casac.table
     synthesisimager=casac.synthesisimager
@@ -45,6 +48,8 @@ try:
 except ImportError:
     mpi_available = False
 
+#if you want to save tclean.last.* from python call of tclean uncomment the decorator   
+#@saveparams2last(multibackup=True) 
 def tclean(
     ####### Data Selection
     vis,#='', 
@@ -181,6 +186,7 @@ def tclean(
     
     ### Move these checks elsewhere ? 
     inpparams=locals().copy()
+#    saveinputs(inpparams)
     ###now deal with parameters which are not the same name 
     inpparams['msname']= inpparams.pop('vis')
     inpparams['timestr']= inpparams.pop('timerange')
@@ -408,6 +414,8 @@ def tclean(
             t2=time.time();
             if(specmode=='mfs' and ('stand' in gridder)):
                 casalog.post("***Time for making PB: "+"%.2f"%(t2-t1)+" sec", "INFO3", "task_tclean");
+
+        imager.checkPB()
 
         if niter >=0 : 
 
