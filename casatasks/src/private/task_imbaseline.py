@@ -26,7 +26,7 @@ IMAGE_STACK_MAX_HEIGHT = 4
 MS_STACK_MAX_HEIGHT = 3
 
 qa = quanta()
-do_not_erase_temporary_files = False
+do_not_erase_temporary_files = True
 
 
 class AbstractFolder:
@@ -188,6 +188,7 @@ class MeasurementSetStack(AbstractFileStack):
 
     def __init__(self) -> None:
         super().__init__(max_height=MS_STACK_MAX_HEIGHT)
+        self.spsmoothed = False
 
 
 @contextlib.contextmanager
@@ -314,7 +315,7 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
             # do baselining
             SdbaselineMethods.execute(DATACOLUMN, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
                                       edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
-                                      clipniter, clipthresh, image_stack, ms_stack, input_image_shape)
+                                      clipniter, clipthresh, image_stack, ms_stack, input_image_shape, kwidth)
 
             # convert MeasurementSet into image and subtract results
             ImageSubtractionMethods.execute(linefile, image_stack)
@@ -474,6 +475,7 @@ class SdsmoothMethods():
         ms_stack.push(EraseableFolder(output_ms))
         output_image = MS2ImageMethods.convert(base_image, output_ms, image_shape, datacolumn)
         image_stack.push(EraseableFolder(output_image))
+        ms_stack.spsmoothed = True
 
     @staticmethod
     def require(spkernel: str='none') -> None:
@@ -493,9 +495,10 @@ class SdbaselineMethods():
     @staticmethod
     def execute(datacolumn: str=None, bloutput: str=None, maskmode: str=None, chans: str=None, thresh: float=None,
                 avg_limit: int=None, minwidth: int=None, edge: List[int]=None, blfunc: str=None, order: int=None,
-                npiece: int=None, applyfft: bool=None, fftthresh: float=None, addwn: List[int]=None, rejwn: List[int]=None,
-                blparam: str=None, clipniter: int=None, clipthresh: float=None,
-                image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
+                npiece: int=None, applyfft: bool=None, fftthresh: float=None, addwn: List[int]=None,
+                rejwn: List[int]=None, blparam: str=None, clipniter: int=None, clipthresh: float=None,
+                image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None,
+                image_shape: ImageShape=None, kwidth: int=None) -> None:
         """Call casatasks.sdbaseline task."""
         casalog.post('execute spectral baselining', 'INFO')
         input_ms = ms_stack.peak().path
@@ -503,7 +506,7 @@ class SdbaselineMethods():
         base_image = image_stack.bottom().path
         sdbaseline(**SdbaselineParams(input_ms, output_ms, datacolumn.lower(), bloutput, maskmode, chans, thresh,
                                       avg_limit, minwidth, edge, blfunc, order, npiece, applyfft, fftthresh, addwn,
-                                      rejwn, blparam, clipniter, clipthresh)())
+                                      rejwn, blparam, clipniter, clipthresh, ms_stack.spsmoothed, image_shape, kwidth)())
         ms_stack.push(EraseableFolder(output_ms))
         output_image = MS2ImageMethods.convert(base_image, output_ms, image_shape, datacolumn)
         image_stack.push(EraseableFolder(output_image))
@@ -644,7 +647,8 @@ class SdbaselineParams(AbstractValidatable):
     def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, bloutput: str='', maskmode: str='list',
                  chans: str='', thresh: float=5.0, avg_limit: int=4, minwidth: int=4, edge: List[int]=[0, 0], blfunc: str='poly',
                  order: int=5, npiece: int=3, applyfft: bool=True, fftthresh: float=3.0, addwn: List=[0], rejwn: List=[],
-                 blparam: str='', clipniter: int=0, clipthresh: float=3.0) -> None:
+                 blparam: str='', clipniter: int=0, clipthresh: float=3.0, spsmoothed: bool=False, image_shape: ImageShape=None,
+                 kwidth: int=None) -> None:
         self.infile = infile
         self.outfile = outfile
         self.datacolumn = datacolumn
@@ -665,6 +669,13 @@ class SdbaselineParams(AbstractValidatable):
         self.blparam = blparam if blparam is not None else ''                 # blfunc = variable
         self.clipniter = clipniter if clipniter is not None else 0
         self.clipthresh = clipthresh if clipthresh is not None else 3.0
+
+        if spsmoothed and not self.spw and kwidth:
+            left_edge = kwidth // 2
+            right_edge = image_shape.im_nchan // 2 - 1
+            self.spw = f'0:{left_edge}~{right_edge}'
+        else:
+            self.spw = '0'
 
     def __chans2spw(self, chans: str, maskmode) -> str:
         if not chans or maskmode != 'list':
