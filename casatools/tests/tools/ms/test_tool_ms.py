@@ -1205,7 +1205,6 @@ class mstool_test_iter(mstool_test_base):
 # Tests for ms.fromfits and ms.tofits
 class mstool_test_fits(mstool_test_base):
     # Some of the test cases come from old test_uvfits.py
-    datapath = 'unittest/mstool/'
 
     def setUp(self):
         self.setUpTest()
@@ -1242,13 +1241,13 @@ class mstool_test_fits(mstool_test_base):
         """Verify fix to CAS_4283, uvfits files containing actual Stokes parameters will not be imported"""
         myms = mstool()
         self.msname = "my.ms"
-        inpfits = ctsys.resolve(self.datapath + "1331+305_I.UVFITS")
+        inpfits = ctsys.resolve(datadir + "1331+305_I.UVFITS")
         self.assertRaises(Exception, myms.fromfits, self.msname, inpfits)
 
     def test_receptor_angle(self):
         """CAS-7081: Test receptor angle is preserved"""
         myms = mstool()
-        inpms = ctsys.resolve(self.datapath + "uvfits_test.ms")
+        inpms = ctsys.resolve(datadir + "uvfits_test.ms")
         self.assertTrue(myms.open(inpms), "Input dataset not found")
         self.fitsname = "xyz.uvfits"
         self.assertTrue(myms.tofits(self.fitsname), "Failed to write uvfits")
@@ -1270,7 +1269,7 @@ class mstool_test_fits(mstool_test_base):
     def test_diameters(self):
         """CAS-5818: Verify bogus dish diameters in AN table are not used but normal algorithm is used instead"""
         myms = mstool()
-        inpfits = ctsys.resolve(self.datapath + "CTR_CHI_TR2.RWYCP-10rows-ANT-DIAMTER-0")
+        inpfits = ctsys.resolve(datadir + "CTR_CHI_TR2.RWYCP-10rows-ANT-DIAMTER-0")
         self.msname = "CAS-5818.ms"
         self.assertTrue(myms.fromfits(self.msname, inpfits), "Failed to import uvfits file")
         myms.done()
@@ -1285,7 +1284,7 @@ class mstool_test_fits(mstool_test_base):
     def test_filename_extensions(self):
         """CAS-7696: Verify we turn off fits filename extension support when necessary"""
         myms = mstool()
-        inpfits = ctsys.resolve(self.datapath + "name10rows+000")
+        inpfits = ctsys.resolve(datadir + "name10rows+000")
         self.msname = "CAS-7696.ms"
         self.assertTrue(myms.fromfits(self.msname, inpfits), "Failed to import uvfits file")
         myms.done()
@@ -1293,7 +1292,7 @@ class mstool_test_fits(mstool_test_base):
     def test_export_overwrite(self):
         """CAS-5492: test the overwrite parameter when exporting MSes to uvfits"""
         myms = mstool()
-        inpms = ctsys.resolve(self.datapath + "uvfits_test.ms")
+        inpms = ctsys.resolve(datadir + "uvfits_test.ms")
         myms.open(inpms)
         self.fitsname = "CAS-5492.uvfits"
         self.assertTrue(myms.tofits(self.fitsname))
@@ -1306,7 +1305,7 @@ class mstool_test_fits(mstool_test_base):
     def test_badscan(self):
         """CAS-10054: Tests intermittent incorrect scan number in last row of single-scan dataset"""
         myms = mstool()
-        inpfits = ctsys.resolve(self.datapath + "3c273.fits7")
+        inpfits = ctsys.resolve(datadir + "3c273.fits7")
         self.msname = "ngc4826.tutorial.3c273.7.ms"
         self.assertTrue(myms.fromfits(self.msname, inpfits), "Failed to import uvfits file")
         myms.done()
