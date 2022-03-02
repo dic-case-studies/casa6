@@ -873,6 +873,30 @@ class rg_fromtextfile_test(unittest.TestCase):
         self.assertEqual(xx.statistics()['npts'], 6612, 'Wrong number of pixels masked')
         xx.done()
 
+    def test_poly_2000(self):
+        """Test polygon with 2000 points specified in pixels (CAS-13727)"""
+        # draw a 500x500 box as a polygon with a point every pixel
+        length = 500;
+        region_def = "poly [ [ 0pix, 0pix ]";
+        for i in range(1, length): # blc to brc
+            region_def += ", [ " + str(i) + "pix, 0pix ]"
+        for i in range(1, length): # brc to trc
+            region_def += ", [ " + str(length - 1) + "pix , " + str(i) + "pix ]"
+        for i in range(length - 2, -1, -1): # trc to tlc
+            region_def += ", [ " + str(i) + "pix , " + str(length - 1) + "pix ]"
+        for i in range(length - 2, 0, -1): # tlc to blc
+            region_def += ", [ 0pix , " + str(i) + "pix ]"
+        region_def += " ], color=green, linewidth=4, linestyle=-, label='my_2000pt_polygon'"
+
+        self.ia.fromshape("",[length,length])
+        reg = self.rg.fromtext(
+            region_def, csys=self.ia.coordsys().torecord(),shape=self.ia.shape()
+        )
+
+        region_stats = self.ia.statistics(region=reg)
+        self.assertTrue((region_stats['blc'] == 0).all())
+        self.assertTrue((region_stats['trc'] == 499).all())
+
 # Tests for regionmanager.selectedchannels
 class rg_selectedchannels_test(unittest.TestCase):
 
