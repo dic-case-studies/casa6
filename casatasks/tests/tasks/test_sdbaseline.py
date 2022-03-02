@@ -5439,12 +5439,12 @@ class sdbaseline_clipping(sdbaseline_unittest_base):
 
         # if clipping is turned on, output of sdbaseline must be identical
         # regardless of whether blformat is empty or not
-        self.assertTrue(np.array_equal(self._result(False, True), self._result(True, True)),
+        self.assertTrue(np.allclose(self._result(False, True), self._result(True, True)),
                         msg='unexpected result; result differs with different blformat.')
         # with iterative clipping, output of sdbaseline must be different from that
         # without clipping, regardless of whether blformat is empty or not
         for blout in bools:
-            self.assertFalse(np.array_equal(self._result(blout, True), self._result(blout, False)),
+            self.assertFalse(np.allclose(self._result(blout, True), self._result(blout, False)),
                              msg='unexpected result; clipping is not working.')
 
     def setUp(self):
