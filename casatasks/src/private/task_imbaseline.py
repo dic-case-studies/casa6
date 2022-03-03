@@ -39,6 +39,7 @@ class AbstractFolder:
     has_file = False
 
     def __init__(self, file: str=None) -> None:
+        """Initialize a Folder object."""
         if not os.path.exists(file):
             raise ValueError(f'file {file} is not found')
         self.path = file
@@ -46,6 +47,7 @@ class AbstractFolder:
 
     @abstractmethod
     def erase(self) -> None:
+        """Erase the file pointed path."""
         raise RuntimeError('Not implemented')
 
 
@@ -111,18 +113,22 @@ class AbstractFileStack:
     """CasaImage/MeasurementSet file path stack to be processed by tasks in imbaseline.
 
     The paths of CasaImage or MeasurementSet are wrapped by AbstractFolder class.
-    Implementation classes of AbstractFileStack are _EraseableFolder/Un_EraseableFolder, the _EraseableFolder class erases the path
-    holden by a property 'path' when execute cleaning process, and the Un_EraseableFolder class doesn't erase it.
-    If this class is used to stack a path of CasaImage, the bottom of it must be the input image(an argument 'imagename').
+    Implementation classes of AbstractFileStack are _EraseableFolder/Un_EraseableFolder, the
+    _EraseableFolder class erases the path holden by a property 'path' when execute cleaning
+    process, and the Un_EraseableFolder class doesn't erase it.
+    If this class is used to stack a path of CasaImage, the bottom of it must be the input
+    image(an argument 'imagename').
     """
 
     def __init__(self, top: AbstractFolder=None, max_height=None) -> None:
+        """Initialize a FileStack object."""
         self.stack = []
         self.max_height = max_height
         if isinstance(top, AbstractFolder):
             self.push(top)
 
     def push(self, file: AbstractFolder=None) -> None:
+        """Push a folder into the stack."""
         if not isinstance(file, AbstractFolder):
             raise ValueError(f'cannot append {file.path}')
         elif self.height() == self.max_height:
@@ -173,6 +179,7 @@ class AbstractFileStack:
         self.stack.clear()
 
     def height(self) -> int:
+        """Return height of the stack."""
         return len(self.stack)
 
 
@@ -192,7 +199,7 @@ class _MeasurementSetStack(AbstractFileStack):
 
 
 @contextlib.contextmanager
-def stack_manager(initial_image=None):
+def _stack_manager(initial_image=None):
     image_stack = _CasaImageStack(top=_UnerasableFolder(initial_image))
     ms_stack = _MeasurementSetStack()
     try:
@@ -210,6 +217,7 @@ class AbstractValidatable:
 
     @abstractmethod
     def validate(self) -> None:
+        """Validate the object."""
         raise RuntimeError('Not implemented')
 
 
@@ -219,7 +227,8 @@ class _ImageShape(AbstractValidatable):
     These parameters are been getting in Image2MS, using in MS2Image.
     """
 
-    def __init__(self, im_shape: np.ndarray=None, axis_dir: np.ndarray=None, axis_sp: int=None, axis_pol: int=None) -> None:
+    def __init__(self, im_shape: np.ndarray=None, axis_dir: np.ndarray=None, axis_sp: int=None,
+                 axis_pol: int=None) -> None:
         self.im_shape = im_shape
         self.axis_dir = axis_dir
         self.axis_sp = axis_sp
@@ -233,7 +242,8 @@ class _ImageShape(AbstractValidatable):
         if not len(self.axis_dir):
             raise ValueError(f'invalid value: axis_dir {self.axis_dir}')
 
-        if not (self.axis_sp in [-1, 2, 3] and self.axis_pol in [-1, 2, 3] and self.axis_sp != self.axis_pol):
+        if not (self.axis_sp in [-1, 2, 3] and self.axis_pol in [-1, 2, 3]
+                and self.axis_sp != self.axis_pol):
             raise ValueError(f'invalid value: sp:{self.axis_sp} or pol:{self.axis_pol}')
 
         # if im_nchan is too few, say, <10, sdbaseline should abort
@@ -256,10 +266,10 @@ def _get_image_shape(imagepath: str) -> _ImageShape:
         try:
             cs = ia.coordsys()
             shape = _ImageShape(ia.shape(),
-                               cs.findcoordinate('direction')['world'],
-                               __get_axis_position(cs.findcoordinate('spectral')['world']),  # 3 or 2 or -1
-                               __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
-                               )
+                                cs.findcoordinate('direction')['world'],
+                                __get_axis_position(cs.findcoordinate('spectral')['world']),  # 3 or 2 or -1
+                                __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
+                                )
         finally:
             cs.done()
 
@@ -267,8 +277,9 @@ def _get_image_shape(imagepath: str) -> _ImageShape:
         raise ValueError(f"image '{imagepath}' is invalid")
 
     shape.validate()
-    casalog.post(f'image shape is {shape.im_shape}, direciton {shape.dir_shape} ({shape.im_nrow} pixels), '
-                 f'npol {shape.im_npol}, nchan {shape.im_nchan}', 'DEBUG2')
+    casalog.post(f'image shape is {shape.im_shape}, direciton {shape.dir_shape} '
+                 f'({shape.im_nrow} pixels), npol {shape.im_npol}, nchan {shape.im_nchan}',
+                 'DEBUG2')
 
     return shape
 
@@ -280,11 +291,12 @@ def __get_axis_position(val: array=None) -> int:
 
 
 @sdtask_decorator
-def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, maskmode=None, chans=None, thresh=None,
-               avg_limit=None, minwidth=None, edge=None, blfunc=None, order=None, npiece=None, applyfft=None, fftthresh=None,
-               addwn=None, rejwn=None, blparam=None, clipniter=None, clipthresh=None, dirkernel=None, major=None, minor=None,
-               pa=None, kimage=None, scale=None, spkernel=None, kwidth=None) -> None:
-    """THE MAIN METHOD OF IMBASELINE.
+def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, maskmode=None,
+               chans=None, thresh=None, avg_limit=None, minwidth=None, edge=None, blfunc=None,
+               order=None, npiece=None, applyfft=None, fftthresh=None, addwn=None, rejwn=None,
+               blparam=None, clipniter=None, clipthresh=None, dirkernel=None, major=None,
+               minor=None, pa=None, kimage=None, scale=None, spkernel=None, kwidth=None) -> None:
+    """Execute imbaseline.
 
     All specifications of arguments are defined in:
     https://open-jira.nrao.edu/browse/CAS-13520
@@ -299,7 +311,7 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
     _validate_imagename(imagename)
     linefile = _prepare_linefile(linefile, imagename)
 
-    with stack_manager(imagename) as (image_stack, ms_stack):
+    with _stack_manager(imagename) as (image_stack, ms_stack):
         try:
             input_image_shape = _get_image_shape(image_stack.peak().path)
 
@@ -310,12 +322,14 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
             _Image2MSMethods.execute(DATACOLUMN, input_image_shape, image_stack, ms_stack)
 
             # do spectral smoothing
-            _SdsmoothMethods.execute(DATACOLUMN, spkernel, kwidth, image_stack, ms_stack, input_image_shape)
+            _SdsmoothMethods.execute(DATACOLUMN, spkernel, kwidth, image_stack, ms_stack,
+                                     input_image_shape)
 
             # do baselining
-            _SdbaselineMethods.execute(DATACOLUMN, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
-                                       edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
-                                       clipniter, clipthresh, image_stack, ms_stack, input_image_shape, kwidth)
+            _SdbaselineMethods.execute(DATACOLUMN, bloutput, maskmode, chans, thresh, avg_limit,
+                                       minwidth, edge, blfunc, order, npiece, applyfft, fftthresh,
+                                       addwn, rejwn, blparam, clipniter, clipthresh, image_stack,
+                                       ms_stack, input_image_shape, kwidth)
 
             # convert MeasurementSet into image and subtract results
             _ImageSubtractionMethods.execute(linefile, image_stack)
@@ -335,7 +349,8 @@ def _prepare_linefile(linefile: str=None, imagename: str=None) -> str:
     if linefile == '' or linefile is None:
         linefile = os.path.basename(imagename).rstrip('/') + '_bs'
     if not OVERWRITE and os.path.exists(linefile):
-        raise ValueError(f'Error: file {linefile} already exists, please delete before continuing.', 'SEVERE')
+        raise ValueError(f'Error: file {linefile} already exists, please delete before continuing.',
+                         'SEVERE')
     return linefile
 
 
@@ -375,7 +390,8 @@ def __write_image_history(outfile) -> None:
             param_names = imbaseline.__code__.co_varnames[:imbaseline.__code__.co_argcount]
             vars = locals()
             param_vals = [vars[p] for p in param_names]
-            write_image_history(outia, sys._getframe().f_code.co_name, param_names, param_vals, casalog)
+            write_image_history(outia, sys._getframe().f_code.co_name, param_names,
+                                param_vals, casalog)
         except Exception as instance:
             casalog.post(f'*** Error "{instance}" updating HISTORY', 'WARN')
 
@@ -431,8 +447,8 @@ class _ImsmoothMethods():
     """Methoods for Imsmooth execution."""
 
     @staticmethod
-    def execute(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None, kimage: str=None, scale: float=None,
-                stack: AbstractFileStack=None) -> None:
+    def execute(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None,
+                kimage: str=None, scale: float=None, stack: AbstractFileStack=None) -> None:
         """Call casatasks.imsmooth task if dirkernel is specified."""
         if not _ImsmoothMethods.require(dirkernel):
             casalog.post('omit image smoothing', 'INFO')
@@ -460,8 +476,9 @@ class _SdsmoothMethods():
     """Methoods for Sdsmooth execution."""
 
     @staticmethod
-    def execute(datacolumn: str=None, spkernel: str=None, kwidth: int=None, image_stack: AbstractFileStack=None,
-                ms_stack: AbstractFileStack=None, image_shape: _ImageShape=None) -> None:
+    def execute(datacolumn: str=None, spkernel: str=None, kwidth: int=None,
+                image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None,
+                image_shape: _ImageShape=None) -> None:
         """Call casatasks.sdsmooth task if spkernel is specified."""
         if not _SdsmoothMethods.require(spkernel):
             casalog.post('omit spectral smoothing', 'INFO')
@@ -494,10 +511,11 @@ class _SdbaselineMethods():
     """Methoods for Sdbaseline execution."""
 
     @staticmethod
-    def execute(datacolumn: str=None, bloutput: str=None, maskmode: str=None, chans: str=None, thresh: float=None,
-                avg_limit: int=None, minwidth: int=None, edge: List[int]=None, blfunc: str=None, order: int=None,
-                npiece: int=None, applyfft: bool=None, fftthresh: float=None, addwn: List[int]=None,
-                rejwn: List[int]=None, blparam: str=None, clipniter: int=None, clipthresh: float=None,
+    def execute(datacolumn: str=None, bloutput: str=None, maskmode: str=None, chans: str=None,
+                thresh: float=None, avg_limit: int=None, minwidth: int=None, edge: List[int]=None,
+                blfunc: str=None, order: int=None, npiece: int=None, applyfft: bool=None,
+                fftthresh: float=None, addwn: List[int]=None, rejwn: List[int]=None,
+                blparam: str=None, clipniter: int=None, clipthresh: float=None,
                 image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None,
                 image_shape: _ImageShape=None, kwidth: int=None) -> None:
         """Call casatasks.sdbaseline task."""
@@ -505,9 +523,11 @@ class _SdbaselineMethods():
         input_ms = ms_stack.peak().path
         output_ms = _generate_temporary_filename('baseline', 'ms')
         base_image = image_stack.bottom().path
-        sdbaseline(**_SdbaselineParams(input_ms, output_ms, datacolumn.lower(), bloutput, maskmode, chans, thresh,
-                                       avg_limit, minwidth, edge, blfunc, order, npiece, applyfft, fftthresh, addwn,
-                                       rejwn, blparam, clipniter, clipthresh, ms_stack.spsmoothed, image_shape, kwidth)())
+        sdbaseline(**_SdbaselineParams(input_ms, output_ms, datacolumn.lower(), bloutput, maskmode,
+                                       chans, thresh, avg_limit, minwidth, edge, blfunc, order,
+                                       npiece, applyfft, fftthresh, addwn, rejwn, blparam,
+                                       clipniter, clipthresh, ms_stack.spsmoothed, image_shape,
+                                       kwidth)())
         ms_stack.push(_EraseableFolder(output_ms))
         output_image = _MS2ImageMethods.convert(base_image, output_ms, image_shape, datacolumn)
         image_stack.push(_EraseableFolder(output_image))
@@ -519,7 +539,8 @@ class _SdbaselineMethods():
     def __rename_blparam_filename(filename: str=None, basename: str=None) -> str:
         if not os.path.exists(filename):
             return None
-        newname = os.path.basename(basename) + '.ms_blparam.' + _SdbaselineParams.FIXED_PARAM['blformat']
+        newname = os.path.basename(basename) + '.ms_blparam.' + \
+            _SdbaselineParams.FIXED_PARAM['blformat']
         if os.path.exists(newname):
             return filename
         try:
@@ -545,8 +566,8 @@ class _ImsmoothParams(AbstractValidatable):
         overwrite=True
     )
 
-    def __init__(self, infile: str=None, outfile: str=None, dirkernel: str='none', major: str='', minor: str='', pa: str='',
-                 kimage: str='', scale: int=-1.0) -> None:
+    def __init__(self, infile: str=None, outfile: str=None, dirkernel: str='none', major: str='',
+                 minor: str='', pa: str='', kimage: str='', scale: int=-1.0) -> None:
         self.infile = infile
         self.outfile = outfile
         self.kernel = dirkernel if dirkernel is not None else 'none'       # none(default)/gaussian/boxcar/image
@@ -576,8 +597,9 @@ class _ImsmoothParams(AbstractValidatable):
 
         __log_origin is for callabletask.log_origin_setter
         """
-        return dict(self.FIXED_PARAM, imagename=self.infile, kernel=self.kernel, major=self.major, minor=self.minor, pa=self.pa,
-                    kimage=self.kimage, scale=self.scale, outfile=self.outfile, __log_origin='imbaseline')
+        return dict(self.FIXED_PARAM, imagename=self.infile, kernel=self.kernel, major=self.major,
+                    minor=self.minor, pa=self.pa, kimage=self.kimage, scale=self.scale,
+                    outfile=self.outfile, __log_origin='imbaseline')
 
 
 class _SdsmoothParams(AbstractValidatable):
@@ -595,7 +617,8 @@ class _SdsmoothParams(AbstractValidatable):
         overwrite=True
     )
 
-    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, spkernel: str='none', kwidth: int=5) -> None:
+    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None,
+                 spkernel: str='none', kwidth: int=5) -> None:
         self.infile = infile
         self.outfile = outfile
         self.datacolumn = datacolumn
@@ -617,8 +640,9 @@ class _SdsmoothParams(AbstractValidatable):
 
         __log_origin is for sdutil.callabletask_decorator.
         """
-        return dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn, kernel=self.kernel, kwidth=self.kwidth,
-                    outfile=self.outfile, __log_origin='imbaseline')
+        return dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn,
+                    kernel=self.kernel, kwidth=self.kwidth, outfile=self.outfile,
+                    __log_origin='imbaseline')
 
 
 class _SdbaselineParams(AbstractValidatable):
@@ -645,11 +669,12 @@ class _SdbaselineParams(AbstractValidatable):
         overwrite=True
     )
 
-    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, bloutput: str='', maskmode: str='list',
-                 chans: str='', thresh: float=5.0, avg_limit: int=4, minwidth: int=4, edge: List[int]=[0, 0], blfunc: str='poly',
-                 order: int=5, npiece: int=3, applyfft: bool=True, fftthresh: float=3.0, addwn: List=[0], rejwn: List=[],
-                 blparam: str='', clipniter: int=0, clipthresh: float=3.0, spsmoothed: bool=False, image_shape: _ImageShape=None,
-                 kwidth: int=None) -> None:
+    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, bloutput: str='',
+                 maskmode: str='list', chans: str='', thresh: float=5.0, avg_limit: int=4,
+                 minwidth: int=4, edge: List[int]=[0, 0], blfunc: str='poly', order: int=5,
+                 npiece: int=3, applyfft: bool=True, fftthresh: float=3.0, addwn: List=[0],
+                 rejwn: List=[], blparam: str='', clipniter: int=0, clipthresh: float=3.0,
+                 spsmoothed: bool=False, image_shape: _ImageShape=None, kwidth: int=None) -> None:
         self.infile = infile
         self.outfile = outfile
         self.datacolumn = datacolumn
@@ -693,8 +718,8 @@ class _SdbaselineParams(AbstractValidatable):
 
     def __validate_blfunc(self) -> None:
         def is_valid_blfunc(self) -> None:
-            return self.blfunc == 'poly' or self.blfunc == 'chebyshev' or self.blfunc == 'cspline' or self.blfunc == 'sinusoid' \
-                or self.blfunc == 'variable'
+            return self.blfunc == 'poly' or self.blfunc == 'chebyshev' or self.blfunc == 'cspline' \
+                or self.blfunc == 'sinusoid' or self.blfunc == 'variable'
 
         if not is_valid_blfunc(self):
             raise ValueError(f'Unsupported blfunc, {self.blfunc}', 'SEVERE')
@@ -707,17 +732,21 @@ class _SdbaselineParams(AbstractValidatable):
 
         __log_origin is for sdutil.callabletask_decorator.
         """
-        return dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn, maskmode=self.maskmode, thresh=self.thresh,
-                    avg_limit=self.avg_limit, minwidth=self.minwidth, edge=self.edge, bloutput=self.bloutput, blfunc=self.blfunc,
-                    order=self.order, npiece=self.npiece, applyfft=self.applyfft, fftthresh=self.fftthresh, addwn=self.addwn,
-                    rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter, blparam=self.blparam,
-                    outfile=self.outfile, spw=self.spw, __log_origin='imbaseline')
+        return dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn,
+                    maskmode=self.maskmode, thresh=self.thresh, avg_limit=self.avg_limit,
+                    minwidth=self.minwidth, edge=self.edge, bloutput=self.bloutput,
+                    blfunc=self.blfunc, order=self.order, npiece=self.npiece,
+                    applyfft=self.applyfft, fftthresh=self.fftthresh, addwn=self.addwn,
+                    rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter,
+                    blparam=self.blparam, outfile=self.outfile, spw=self.spw,
+                    __log_origin='imbaseline')
 
 
 class _Image2MSParams(AbstractValidatable):
     """Parameter manipulation class for executing image2ms()."""
 
-    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA', input_image_shape: _ImageShape=None) -> None:
+    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA',
+                 input_image_shape: _ImageShape=None) -> None:
         self.infile = infile
         self.outfile = outfile
         self.datacolumn = datacolumn
@@ -743,7 +772,8 @@ class _Image2MSMethods():
     """Methods for converting image to MeasurementSet."""
 
     @staticmethod
-    def execute(datacolumn: str=None, input_image_shape: _ImageShape=None, image_stack: AbstractFileStack=None,
+    def execute(datacolumn: str=None, input_image_shape: _ImageShape=None,
+                image_stack: AbstractFileStack=None,
                 ms_stack: AbstractFileStack=None) -> None:
         """Convert a casaimage to a MeasurementSet."""
         casalog.post('convert casaimage to MeasurementSet', 'INFO')
@@ -786,7 +816,8 @@ class _Image2MSMethods():
     def __create_maintable(params: _Image2MSParams=None) -> None:
         tb = table()
         try:
-            tb.create(params.outfile, _EmptyMSBaseInformation.ms_desc, dminfo=_EmptyMSBaseInformation.ms_dminfo)
+            tb.create(params.outfile, _EmptyMSBaseInformation.ms_desc,
+                      dminfo=_EmptyMSBaseInformation.ms_dminfo)
             tb.putkeyword(keyword='MS_VERSION', value=2)
             nrow = tb.nrows()
             nrow_req = params.im_nrow * params.im_npol
@@ -946,7 +977,8 @@ class _Image2MSMethods():
         return exists
 
     @staticmethod
-    def __create_subtable(outfile: str=None, subtable: str=None, desc: str=None, dminfo: str=None) -> None:
+    def __create_subtable(outfile: str=None, subtable: str=None,
+                          desc: str=None, dminfo: str=None) -> None:
         tb = table()
         try:
             tb.create(f'{outfile}/{subtable}', desc, dminfo=dminfo)
@@ -957,7 +989,8 @@ class _Image2MSMethods():
 
     @staticmethod
     def __put_parametes_from_image_to_ms(params: _Image2MSParams=None) -> None:
-        _Image2MSMethods.__put_image_parameters_into_ms(params, *_Image2MSMethods.__get_image_parameters(params))
+        _Image2MSMethods.__put_image_parameters_into_ms(
+            params, *_Image2MSMethods.__get_image_parameters(params))
 
     @staticmethod
     def __get_image_parameters(params: _Image2MSParams=None) -> Tuple[np.array, int]:
@@ -980,7 +1013,8 @@ class _Image2MSMethods():
         return arr, msk, xax, yax, spax, polax
 
     @staticmethod
-    def __put_image_parameters_into_ms(params: _Image2MSParams, image_array: np.array, mask_array: np.array, axis_x: int,
+    def __put_image_parameters_into_ms(params: _Image2MSParams, image_array: np.array,
+                                       mask_array: np.array, axis_x: int,
                                        axis_y: int, axis_sp: int, axis_pol: int) -> None:
         # which data column to use
         with table_manager(params.outfile, nomodify=False) as tb:
@@ -1012,7 +1046,8 @@ class _Image2MSMethods():
 class _MS2ImageMethods():
 
     @staticmethod
-    def convert(base_image: str=None, input_ms: str=None, input_image_shape: _ImageShape=None, datacolumn: str=None) -> None:
+    def convert(base_image: str=None, input_ms: str=None, input_image_shape: _ImageShape=None,
+                datacolumn: str=None) -> None:
         output_image = _MS2ImageMethods.__change_file_extension(input_ms, 'im')
         _copy_image_file(base_image, output_image)  # mask data is also copied in this method
 
@@ -1038,7 +1073,8 @@ class _MS2ImageMethods():
         return new_path
 
     @staticmethod
-    def __make_image_array(input_image_shape: _ImageShape=None, infile: str=None, datacolumn: str=None) -> np.array:
+    def __make_image_array(input_image_shape: _ImageShape=None, infile: str=None,
+                           datacolumn: str=None) -> np.array:
         nx, ny = input_image_shape.dir_shape
         image_array = np.empty((nx, ny, input_image_shape.im_nchan))
         pos = 0
