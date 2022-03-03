@@ -49,12 +49,12 @@ class AbstractFolder:
         raise RuntimeError('Not implemented')
 
 
-class EraseableFolder(AbstractFolder):
+class _EraseableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is permitted to erase."""
 
     def __init__(self, file: str=None) -> None:
         super().__init__(file)
-        eraseable_folder_register.register(self)
+        _eraseable_folder_register.register(self)
 
     def erase(self, dry_run: bool=True) -> None:
         if self.has_file:
@@ -70,20 +70,20 @@ class EraseableFolder(AbstractFolder):
             casalog.post(f'not found the file to erase: {self.path}', 'WARN')
 
 
-class UnerasableFolder(AbstractFolder):
+class _UnerasableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is NOT permitted to erase."""
 
     def erase(self, dry_run: bool=True) -> None:
         casalog.post(f'un-erase file: {self.path}', 'DEBUG2')
 
 
-class EraseableFolderRegister():
+class _EraseableFolderRegister():
     """Class of the register of folders that need to be erased."""
 
     _register = dict()
 
-    def register(self, folder: EraseableFolder):
-        if isinstance(folder, EraseableFolder) and folder.path not in self._register.keys():
+    def register(self, folder: _EraseableFolder):
+        if isinstance(folder, _EraseableFolder) and folder.path not in self._register.keys():
             self._register[folder.path] = folder
         else:
             raise ValueError('Irregal folder would be appended', 'SEVERE')
@@ -98,21 +98,21 @@ class EraseableFolderRegister():
                 else:
                     folder.erase(dry_run)
         self._register.clear()
-        casalog.post('cleaned up EraseableFolderRegister', 'DEBUG2')
+        casalog.post('cleaned up _EraseableFolderRegister', 'DEBUG2')
 
-    def pop(self, key: str) -> EraseableFolder:
+    def pop(self, key: str) -> _EraseableFolder:
         return self._register.pop(key)
 
 
-eraseable_folder_register = EraseableFolderRegister()
+_eraseable_folder_register = _EraseableFolderRegister()
 
 
 class AbstractFileStack:
     """CasaImage/MeasurementSet file path stack to be processed by tasks in imbaseline.
 
     The paths of CasaImage or MeasurementSet are wrapped by AbstractFolder class.
-    Implementation classes of AbstractFileStack are EraseableFolder/UneraseableFolder, the EraseableFolder class erases the path
-    holden by a property 'path' when execute cleaning process, and the UneraseableFolder class doesn't erase it.
+    Implementation classes of AbstractFileStack are _EraseableFolder/Un_EraseableFolder, the _EraseableFolder class erases the path
+    holden by a property 'path' when execute cleaning process, and the Un_EraseableFolder class doesn't erase it.
     If this class is used to stack a path of CasaImage, the bottom of it must be the input image(an argument 'imagename').
     """
 
@@ -176,14 +176,14 @@ class AbstractFileStack:
         return len(self.stack)
 
 
-class CasaImageStack(AbstractFileStack):
+class _CasaImageStack(AbstractFileStack):
     """FileStack for CasaImage."""
 
     def __init__(self, top: AbstractFolder=None) -> None:
         super().__init__(top=top, max_height=IMAGE_STACK_MAX_HEIGHT)
 
 
-class MeasurementSetStack(AbstractFileStack):
+class _MeasurementSetStack(AbstractFileStack):
     """FileStack for MeasurementSet."""
 
     def __init__(self) -> None:
@@ -193,8 +193,8 @@ class MeasurementSetStack(AbstractFileStack):
 
 @contextlib.contextmanager
 def stack_manager(initial_image=None):
-    image_stack = CasaImageStack(top=UnerasableFolder(initial_image))
-    ms_stack = MeasurementSetStack()
+    image_stack = _CasaImageStack(top=_UnerasableFolder(initial_image))
+    ms_stack = _MeasurementSetStack()
     try:
         yield image_stack, ms_stack
     finally:
@@ -213,7 +213,7 @@ class AbstractValidatable:
         raise RuntimeError('Not implemented')
 
 
-class ImageShape(AbstractValidatable):
+class _ImageShape(AbstractValidatable):
     """Shape parameters of input image.
 
     These parameters are been getting in Image2MS, using in MS2Image.
@@ -247,7 +247,7 @@ class ImageShape(AbstractValidatable):
             raise ValueError(f'invalid value: dir_shape {self.dir_shape}')
 
 
-def get_image_shape(imagepath: str) -> ImageShape:
+def _get_image_shape(imagepath: str) -> _ImageShape:
     if not os.path.exists(imagepath):
         raise ValueError(f"path '{imagepath}' is not found")
 
@@ -255,7 +255,7 @@ def get_image_shape(imagepath: str) -> ImageShape:
     with tool_manager(imagepath, image) as ia:
         try:
             cs = ia.coordsys()
-            shape = ImageShape(ia.shape(),
+            shape = _ImageShape(ia.shape(),
                                cs.findcoordinate('direction')['world'],
                                __get_axis_position(cs.findcoordinate('spectral')['world']),  # 3 or 2 or -1
                                __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
@@ -296,42 +296,42 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
     (4) do baselining (execute sdbaseline)
     (5) convert MS into casa image, and subtract results
     """
-    validate_imagename(imagename)
-    linefile = prepare_linefile(linefile, imagename)
+    _validate_imagename(imagename)
+    linefile = _prepare_linefile(linefile, imagename)
 
     with stack_manager(imagename) as (image_stack, ms_stack):
         try:
-            input_image_shape = get_image_shape(image_stack.peak().path)
+            input_image_shape = _get_image_shape(image_stack.peak().path)
 
             # do direction plane smoothing
-            ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, image_stack)
+            _ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, image_stack)
 
             # convert casaimage into MeasurementSet
-            Image2MSMethods.execute(DATACOLUMN, input_image_shape, image_stack, ms_stack)
+            _Image2MSMethods.execute(DATACOLUMN, input_image_shape, image_stack, ms_stack)
 
             # do spectral smoothing
-            SdsmoothMethods.execute(DATACOLUMN, spkernel, kwidth, image_stack, ms_stack, input_image_shape)
+            _SdsmoothMethods.execute(DATACOLUMN, spkernel, kwidth, image_stack, ms_stack, input_image_shape)
 
             # do baselining
-            SdbaselineMethods.execute(DATACOLUMN, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
-                                      edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
-                                      clipniter, clipthresh, image_stack, ms_stack, input_image_shape, kwidth)
+            _SdbaselineMethods.execute(DATACOLUMN, bloutput, maskmode, chans, thresh, avg_limit, minwidth,
+                                       edge, blfunc, order, npiece, applyfft, fftthresh, addwn, rejwn, blparam,
+                                       clipniter, clipthresh, image_stack, ms_stack, input_image_shape, kwidth)
 
             # convert MeasurementSet into image and subtract results
-            ImageSubtractionMethods.execute(linefile, image_stack)
+            _ImageSubtractionMethods.execute(linefile, image_stack)
 
             if output_cont:
-                ImageSubtractionMethods.get_continuum_image(image_stack)
+                _ImageSubtractionMethods.get_continuum_image(image_stack)
         finally:
-            do_post_processing(linefile)
+            _do_post_processing(linefile)
 
 
-def validate_imagename(imagename: str=None) -> None:
+def _validate_imagename(imagename: str=None) -> None:
     if not os.path.exists(imagename):
         raise ValueError(f'Error: file {imagename} is not found.', 'SEVERE')
 
 
-def prepare_linefile(linefile: str=None, imagename: str=None) -> str:
+def _prepare_linefile(linefile: str=None, imagename: str=None) -> str:
     if linefile == '' or linefile is None:
         linefile = os.path.basename(imagename).rstrip('/') + '_bs'
     if not OVERWRITE and os.path.exists(linefile):
@@ -339,7 +339,7 @@ def prepare_linefile(linefile: str=None, imagename: str=None) -> str:
     return linefile
 
 
-def generate_temporary_filename(prefix: str='', ext: str='') -> str:
+def _generate_temporary_filename(prefix: str='', ext: str='') -> str:
     if prefix and prefix[-1] != '-':
         prefix = prefix + '-'
     if ext != '':
@@ -350,7 +350,7 @@ def generate_temporary_filename(prefix: str='', ext: str='') -> str:
             return filename
 
 
-def copy_image_file(infile: str=None, outfile: str=None) -> None:
+def _copy_image_file(infile: str=None, outfile: str=None) -> None:
     if not os.path.exists(infile):
         raise Exception(f'Image files not found, infile: {infile}')
 
@@ -363,9 +363,9 @@ def copy_image_file(infile: str=None, outfile: str=None) -> None:
         ia.done()
 
 
-def do_post_processing(outfile) -> None:
+def _do_post_processing(outfile) -> None:
     """Execute some post-processes of imbaseline."""
-    eraseable_folder_register.clear(dry_run=do_not_erase_temporary_files)
+    _eraseable_folder_register.clear(dry_run=do_not_erase_temporary_files)
     __write_image_history(outfile)
 
 
@@ -380,7 +380,7 @@ def __write_image_history(outfile) -> None:
             casalog.post(f'*** Error "{instance}" updating HISTORY', 'WARN')
 
 
-class ImageSubtractionMethods():
+class _ImageSubtractionMethods():
 
     @staticmethod
     def execute(linefile: str=None, image_stack: AbstractFileStack=None) -> None:
@@ -394,27 +394,27 @@ class ImageSubtractionMethods():
         """
         if image_stack.height() <= 2:  # any smoothing were not executed
             output_image = image_stack.pop().path
-            eraseable_folder_register.pop(output_image)
+            _eraseable_folder_register.pop(output_image)
             os.rename(output_image, linefile)
-            image_stack.push(UnerasableFolder(linefile))
+            image_stack.push(_UnerasableFolder(linefile))
         else:
             smoothed_image = image_stack.subpeak().path
             subtracted_image = image_stack.peak().path
             base_image = image_stack.bottom().path
-            copy_image_file(base_image, linefile)
-            ImageSubtractionMethods.__subtract_image(smoothed_image, subtracted_image)
-            ImageSubtractionMethods.__subtract_image(linefile, smoothed_image)
-            image_stack.push(UnerasableFolder(linefile))
+            _copy_image_file(base_image, linefile)
+            _ImageSubtractionMethods.__subtract_image(smoothed_image, subtracted_image)
+            _ImageSubtractionMethods.__subtract_image(linefile, smoothed_image)
+            image_stack.push(_UnerasableFolder(linefile))
 
     @staticmethod
     def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
         """Compute 'input_image - output_image'."""
         base_image = image_stack.bottom().path
         output_image = os.path.basename(base_image) + '.cont'
-        copy_image_file(base_image, output_image)
+        _copy_image_file(base_image, output_image)
 
         linefile = image_stack.peak().path
-        ImageSubtractionMethods.__subtract_image(output_image, linefile)
+        _ImageSubtractionMethods.__subtract_image(output_image, linefile)
 
     @staticmethod
     def __subtract_image(operand_a: str=None, operand_b: str=None) -> None:
@@ -427,22 +427,22 @@ class ImageSubtractionMethods():
             ia.putchunk(pixels=ia.getchunk() - image_array, locking=True)
 
 
-class ImsmoothMethods():
+class _ImsmoothMethods():
     """Methoods for Imsmooth execution."""
 
     @staticmethod
     def execute(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None, kimage: str=None, scale: float=None,
                 stack: AbstractFileStack=None) -> None:
         """Call casatasks.imsmooth task if dirkernel is specified."""
-        if not ImsmoothMethods.require(dirkernel):
+        if not _ImsmoothMethods.require(dirkernel):
             casalog.post('omit image smoothing', 'INFO')
             return
 
         casalog.post('execute image smoothing', 'INFO')
         infile = stack.peak().path
-        outfile = generate_temporary_filename('dirsmooth', 'im')
-        imsmooth(**ImsmoothParams(infile, outfile, dirkernel, major, minor, pa, kimage, scale)())
-        stack.push(EraseableFolder(outfile))
+        outfile = _generate_temporary_filename('dirsmooth', 'im')
+        imsmooth(**_ImsmoothParams(infile, outfile, dirkernel, major, minor, pa, kimage, scale)())
+        stack.push(_EraseableFolder(outfile))
 
     @staticmethod
     def require(dirkernel: str='none') -> None:
@@ -456,26 +456,26 @@ class ImsmoothMethods():
             raise ValueError(f'Unsupported direction smoothing kernel, {dirkernel}', 'SEVERE')
 
 
-class SdsmoothMethods():
+class _SdsmoothMethods():
     """Methoods for Sdsmooth execution."""
 
     @staticmethod
     def execute(datacolumn: str=None, spkernel: str=None, kwidth: int=None, image_stack: AbstractFileStack=None,
-                ms_stack: AbstractFileStack=None, image_shape: ImageShape=None) -> None:
+                ms_stack: AbstractFileStack=None, image_shape: _ImageShape=None) -> None:
         """Call casatasks.sdsmooth task if spkernel is specified."""
-        if not SdsmoothMethods.require(spkernel):
+        if not _SdsmoothMethods.require(spkernel):
             casalog.post('omit spectral smoothing', 'INFO')
             return
 
         casalog.post('execute spectral smoothing', 'INFO')
 
         input_ms = ms_stack.peak().path
-        output_ms = generate_temporary_filename('spsmooth', 'ms')
+        output_ms = _generate_temporary_filename('spsmooth', 'ms')
         base_image = image_stack.bottom().path
-        sdsmooth(**SdsmoothParams(input_ms, output_ms, datacolumn.lower(), spkernel, kwidth)())
-        ms_stack.push(EraseableFolder(output_ms))
-        output_image = MS2ImageMethods.convert(base_image, output_ms, image_shape, datacolumn)
-        image_stack.push(EraseableFolder(output_image))
+        sdsmooth(**_SdsmoothParams(input_ms, output_ms, datacolumn.lower(), spkernel, kwidth)())
+        ms_stack.push(_EraseableFolder(output_ms))
+        output_image = _MS2ImageMethods.convert(base_image, output_ms, image_shape, datacolumn)
+        image_stack.push(_EraseableFolder(output_image))
         ms_stack.spsmoothed = True
 
     @staticmethod
@@ -490,7 +490,7 @@ class SdsmoothMethods():
             raise ValueError(f'Unsupported spectral smoothing kernel, {spkernel}', 'SEVERE')
 
 
-class SdbaselineMethods():
+class _SdbaselineMethods():
     """Methoods for Sdbaseline execution."""
 
     @staticmethod
@@ -499,27 +499,27 @@ class SdbaselineMethods():
                 npiece: int=None, applyfft: bool=None, fftthresh: float=None, addwn: List[int]=None,
                 rejwn: List[int]=None, blparam: str=None, clipniter: int=None, clipthresh: float=None,
                 image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None,
-                image_shape: ImageShape=None, kwidth: int=None) -> None:
+                image_shape: _ImageShape=None, kwidth: int=None) -> None:
         """Call casatasks.sdbaseline task."""
         casalog.post('execute spectral baselining', 'INFO')
         input_ms = ms_stack.peak().path
-        output_ms = generate_temporary_filename('baseline', 'ms')
+        output_ms = _generate_temporary_filename('baseline', 'ms')
         base_image = image_stack.bottom().path
-        sdbaseline(**SdbaselineParams(input_ms, output_ms, datacolumn.lower(), bloutput, maskmode, chans, thresh,
-                                      avg_limit, minwidth, edge, blfunc, order, npiece, applyfft, fftthresh, addwn,
-                                      rejwn, blparam, clipniter, clipthresh, ms_stack.spsmoothed, image_shape, kwidth)())
-        ms_stack.push(EraseableFolder(output_ms))
-        output_image = MS2ImageMethods.convert(base_image, output_ms, image_shape, datacolumn)
-        image_stack.push(EraseableFolder(output_image))
-        blparam_name = input_ms + '_blparam.' + SdbaselineParams.FIXED_PARAM['blformat']
+        sdbaseline(**_SdbaselineParams(input_ms, output_ms, datacolumn.lower(), bloutput, maskmode, chans, thresh,
+                                       avg_limit, minwidth, edge, blfunc, order, npiece, applyfft, fftthresh, addwn,
+                                       rejwn, blparam, clipniter, clipthresh, ms_stack.spsmoothed, image_shape, kwidth)())
+        ms_stack.push(_EraseableFolder(output_ms))
+        output_image = _MS2ImageMethods.convert(base_image, output_ms, image_shape, datacolumn)
+        image_stack.push(_EraseableFolder(output_image))
+        blparam_name = input_ms + '_blparam.' + _SdbaselineParams.FIXED_PARAM['blformat']
         if os.path.exists(blparam_name):
-            SdbaselineMethods.__rename_blparam_filename(blparam_name, base_image)
+            _SdbaselineMethods.__rename_blparam_filename(blparam_name, base_image)
 
     @staticmethod
     def __rename_blparam_filename(filename: str=None, basename: str=None) -> str:
         if not os.path.exists(filename):
             return None
-        newname = os.path.basename(basename) + '.ms_blparam.' + SdbaselineParams.FIXED_PARAM['blformat']
+        newname = os.path.basename(basename) + '.ms_blparam.' + _SdbaselineParams.FIXED_PARAM['blformat']
         if os.path.exists(newname):
             return filename
         try:
@@ -530,7 +530,7 @@ class SdbaselineMethods():
         return newname
 
 
-class ImsmoothParams(AbstractValidatable):
+class _ImsmoothParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks.imsmooth."""
 
     FIXED_PARAM = dict(
@@ -580,7 +580,7 @@ class ImsmoothParams(AbstractValidatable):
                     kimage=self.kimage, scale=self.scale, outfile=self.outfile, __log_origin='imbaseline')
 
 
-class SdsmoothParams(AbstractValidatable):
+class _SdsmoothParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks.sdsmooth."""
 
     FIXED_PARAM = dict(
@@ -621,7 +621,7 @@ class SdsmoothParams(AbstractValidatable):
                     outfile=self.outfile, __log_origin='imbaseline')
 
 
-class SdbaselineParams(AbstractValidatable):
+class _SdbaselineParams(AbstractValidatable):
     """Parameter manipulation class for execution of casatasks.sdbaseline."""
 
     FIXED_PARAM = dict(
@@ -648,7 +648,7 @@ class SdbaselineParams(AbstractValidatable):
     def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, bloutput: str='', maskmode: str='list',
                  chans: str='', thresh: float=5.0, avg_limit: int=4, minwidth: int=4, edge: List[int]=[0, 0], blfunc: str='poly',
                  order: int=5, npiece: int=3, applyfft: bool=True, fftthresh: float=3.0, addwn: List=[0], rejwn: List=[],
-                 blparam: str='', clipniter: int=0, clipthresh: float=3.0, spsmoothed: bool=False, image_shape: ImageShape=None,
+                 blparam: str='', clipniter: int=0, clipthresh: float=3.0, spsmoothed: bool=False, image_shape: _ImageShape=None,
                  kwidth: int=None) -> None:
         self.infile = infile
         self.outfile = outfile
@@ -714,10 +714,10 @@ class SdbaselineParams(AbstractValidatable):
                     outfile=self.outfile, spw=self.spw, __log_origin='imbaseline')
 
 
-class Image2MSParams(AbstractValidatable):
+class _Image2MSParams(AbstractValidatable):
     """Parameter manipulation class for executing image2ms()."""
 
-    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA', input_image_shape: ImageShape=None) -> None:
+    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA', input_image_shape: _ImageShape=None) -> None:
         self.infile = infile
         self.outfile = outfile
         self.datacolumn = datacolumn
@@ -739,42 +739,42 @@ class Image2MSParams(AbstractValidatable):
             raise ValueError(f'Folder exists: {self.outfile}')
 
 
-class Image2MSMethods():
+class _Image2MSMethods():
     """Methods for converting image to MeasurementSet."""
 
     @staticmethod
-    def execute(datacolumn: str=None, input_image_shape: ImageShape=None, image_stack: AbstractFileStack=None,
+    def execute(datacolumn: str=None, input_image_shape: _ImageShape=None, image_stack: AbstractFileStack=None,
                 ms_stack: AbstractFileStack=None) -> None:
         """Convert a casaimage to a MeasurementSet."""
         casalog.post('convert casaimage to MeasurementSet', 'INFO')
         infile = image_stack.peak().path
-        outfile = generate_temporary_filename('img2ms', 'ms')
-        Image2MSMethods.__image2ms(Image2MSParams(infile, outfile, datacolumn, input_image_shape))
-        ms_stack.push(EraseableFolder(outfile))
+        outfile = _generate_temporary_filename('img2ms', 'ms')
+        _Image2MSMethods.__image2ms(_Image2MSParams(infile, outfile, datacolumn, input_image_shape))
+        ms_stack.push(_EraseableFolder(outfile))
 
     @staticmethod
-    def __image2ms(params: Image2MSParams=None) -> None:
+    def __image2ms(params: _Image2MSParams=None) -> None:
         """Convert CasaImage into MeasurementSet."""
-        Image2MSMethods.__create_empty_ms(params)
-        Image2MSMethods.__put_parametes_from_image_to_ms(params)
+        _Image2MSMethods.__create_empty_ms(params)
+        _Image2MSMethods.__put_parametes_from_image_to_ms(params)
 
     @staticmethod
-    def __create_empty_ms(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__cleanup_ms_path(params)
-        Image2MSMethods.__create_maintable(params)
-        Image2MSMethods.__create_antenna_table(params)
-        Image2MSMethods.__create_data_description_table(params)
-        Image2MSMethods.__create_feed_table(params)
-        Image2MSMethods.__create_field_table(params)
-        Image2MSMethods.__create_flag_cmd_table(params)
-        Image2MSMethods.__create_history_table(params)
-        Image2MSMethods.__create_observation_table(params)
-        Image2MSMethods.__create_pointing_table(params)
-        Image2MSMethods.__create_polarization_table(params)
-        Image2MSMethods.__create_processor_table(params)
-        Image2MSMethods.__create_source_table(params)
-        Image2MSMethods.__create_special_window_table(params)
-        Image2MSMethods.__create_state_table(params)
+    def __create_empty_ms(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__cleanup_ms_path(params)
+        _Image2MSMethods.__create_maintable(params)
+        _Image2MSMethods.__create_antenna_table(params)
+        _Image2MSMethods.__create_data_description_table(params)
+        _Image2MSMethods.__create_feed_table(params)
+        _Image2MSMethods.__create_field_table(params)
+        _Image2MSMethods.__create_flag_cmd_table(params)
+        _Image2MSMethods.__create_history_table(params)
+        _Image2MSMethods.__create_observation_table(params)
+        _Image2MSMethods.__create_pointing_table(params)
+        _Image2MSMethods.__create_polarization_table(params)
+        _Image2MSMethods.__create_processor_table(params)
+        _Image2MSMethods.__create_source_table(params)
+        _Image2MSMethods.__create_special_window_table(params)
+        _Image2MSMethods.__create_state_table(params)
 
     @staticmethod
     def __generate_time_list(nrow_req: int) -> np.ndarray:
@@ -783,10 +783,10 @@ class Image2MSMethods():
         return mjd_sec + np.arange(nrow_req) * interval
 
     @staticmethod
-    def __create_maintable(params: Image2MSParams=None) -> None:
+    def __create_maintable(params: _Image2MSParams=None) -> None:
         tb = table()
         try:
-            tb.create(params.outfile, EmptyMSBaseInformation.ms_desc, dminfo=EmptyMSBaseInformation.ms_dminfo)
+            tb.create(params.outfile, _EmptyMSBaseInformation.ms_desc, dminfo=_EmptyMSBaseInformation.ms_dminfo)
             tb.putkeyword(keyword='MS_VERSION', value=2)
             nrow = tb.nrows()
             nrow_req = params.im_nrow * params.im_npol
@@ -800,7 +800,7 @@ class Image2MSMethods():
             tb.putcol('ANTENNA1', dummy)
             tb.putcol('ANTENNA2', dummy)
             tb.putcol('STATE_ID', dummy)
-            time_list = Image2MSMethods.__generate_time_list(nrow_req)
+            time_list = _Image2MSMethods.__generate_time_list(nrow_req)
             tb.putcol('TIME', time_list)
             casalog.post(f'number of rows {nrow}, number of image pixels {params.im_nrow}, '
                          f'number of pols {params.im_npol}, '
@@ -809,40 +809,40 @@ class Image2MSMethods():
             tb.close()
 
     @staticmethod
-    def __create_antenna_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'ANTENNA',
-                                          EmptyMSBaseInformation.antenna_desc,
-                                          EmptyMSBaseInformation.antenna_dminfo)
+    def __create_antenna_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'ANTENNA',
+                                           _EmptyMSBaseInformation.antenna_desc,
+                                           _EmptyMSBaseInformation.antenna_dminfo)
         with table_manager(os.path.join(params.outfile, 'ANTENNA'), nomodify=False) as tb:
             tb.addrows(1)
 
     @staticmethod
-    def __create_data_description_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'DATA_DESCRIPTION',
-                                          EmptyMSBaseInformation.data_description_desc,
-                                          EmptyMSBaseInformation.data_description_dminfo)
+    def __create_data_description_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'DATA_DESCRIPTION',
+                                           _EmptyMSBaseInformation.data_description_desc,
+                                           _EmptyMSBaseInformation.data_description_dminfo)
         with table_manager(os.path.join(params.outfile, 'DATA_DESCRIPTION'), nomodify=False) as tb:
             tb.addrows(1)
             tb.putcell('SPECTRAL_WINDOW_ID', 0, 0)
             tb.putcell('POLARIZATION_ID', 0, 0)
 
     @staticmethod
-    def __create_feed_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'FEED',
-                                          EmptyMSBaseInformation.feed_desc,
-                                          EmptyMSBaseInformation.feed_dminfo)
+    def __create_feed_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'FEED',
+                                           _EmptyMSBaseInformation.feed_desc,
+                                           _EmptyMSBaseInformation.feed_dminfo)
         with table_manager(os.path.join(params.outfile, 'FEED'), nomodify=False) as tb:
             tb.addrows(1)
 
     @staticmethod
-    def __create_field_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'FIELD',
-                                          EmptyMSBaseInformation.field_desc,
-                                          EmptyMSBaseInformation.field_dminfo)
+    def __create_field_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'FIELD',
+                                           _EmptyMSBaseInformation.field_desc,
+                                           _EmptyMSBaseInformation.field_dminfo)
         with table_manager(os.path.join(params.outfile, 'FIELD'), nomodify=False) as tb:
             tb.addrows(1)
             tb.putcell('DELAY_DIR', 0, np.zeros((2, 1)))
@@ -850,41 +850,41 @@ class Image2MSMethods():
             tb.putcell('REFERENCE_DIR', 0, np.zeros((2, 1)))
 
     @staticmethod
-    def __create_flag_cmd_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'FLAG_CMD',
-                                          EmptyMSBaseInformation.flag_cmd_desc,
-                                          EmptyMSBaseInformation.flag_cmd_dminfo)
+    def __create_flag_cmd_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'FLAG_CMD',
+                                           _EmptyMSBaseInformation.flag_cmd_desc,
+                                           _EmptyMSBaseInformation.flag_cmd_dminfo)
 
     @staticmethod
-    def __create_history_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'HISTORY',
-                                          EmptyMSBaseInformation.history_desc,
-                                          EmptyMSBaseInformation.history_dminfo)
+    def __create_history_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'HISTORY',
+                                           _EmptyMSBaseInformation.history_desc,
+                                           _EmptyMSBaseInformation.history_dminfo)
 
     @staticmethod
-    def __create_observation_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'OBSERVATION',
-                                          EmptyMSBaseInformation.observation_desc,
-                                          EmptyMSBaseInformation.observation_dminfo)
+    def __create_observation_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'OBSERVATION',
+                                           _EmptyMSBaseInformation.observation_desc,
+                                           _EmptyMSBaseInformation.observation_dminfo)
         with table_manager(os.path.join(params.outfile, 'OBSERVATION'), nomodify=False) as tb:
             tb.addrows(1)
 
     @staticmethod
-    def __create_pointing_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'POINTING',
-                                          EmptyMSBaseInformation.pointing_desc,
-                                          EmptyMSBaseInformation.pointing_dminfo)
+    def __create_pointing_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'POINTING',
+                                           _EmptyMSBaseInformation.pointing_desc,
+                                           _EmptyMSBaseInformation.pointing_dminfo)
 
     @staticmethod
-    def __create_polarization_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'POLARIZATION',
-                                          EmptyMSBaseInformation.polarization_desc,
-                                          EmptyMSBaseInformation.polarization_dminfo)
+    def __create_polarization_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'POLARIZATION',
+                                           _EmptyMSBaseInformation.polarization_desc,
+                                           _EmptyMSBaseInformation.polarization_dminfo)
         with table_manager(os.path.join(params.outfile, 'POLARIZATION'), nomodify=False) as tb:
             corr_type = np.ones(1, dtype=int)
             corr_product = np.ones(2, dtype=int).reshape((2, 1))
@@ -895,25 +895,25 @@ class Image2MSMethods():
             tb.putcell('CORR_PRODUCT', 0, corr_product)
 
     @staticmethod
-    def __create_processor_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'PROCESSOR',
-                                          EmptyMSBaseInformation.processor_desc,
-                                          EmptyMSBaseInformation.processor_dminfo)
+    def __create_processor_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'PROCESSOR',
+                                           _EmptyMSBaseInformation.processor_desc,
+                                           _EmptyMSBaseInformation.processor_dminfo)
 
     @staticmethod
-    def __create_source_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'SOURCE',
-                                          EmptyMSBaseInformation.source_desc,
-                                          EmptyMSBaseInformation.source_dminfo)
+    def __create_source_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'SOURCE',
+                                           _EmptyMSBaseInformation.source_desc,
+                                           _EmptyMSBaseInformation.source_dminfo)
 
     @staticmethod
-    def __create_special_window_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'SPECTRAL_WINDOW',
-                                          EmptyMSBaseInformation.special_window_desc,
-                                          EmptyMSBaseInformation.special_window_dminfo)
+    def __create_special_window_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'SPECTRAL_WINDOW',
+                                           _EmptyMSBaseInformation.special_window_desc,
+                                           _EmptyMSBaseInformation.special_window_dminfo)
         with table_manager(os.path.join(params.outfile, 'SPECTRAL_WINDOW'), nomodify=False) as tb:
             cw = np.ones(params.im_nchan, dtype=float) * 1e6
             cf = 1e9 + np.arange(params.im_nchan, dtype=float) * 1e6
@@ -928,11 +928,11 @@ class Image2MSMethods():
             tb.putcell('TOTAL_BANDWIDTH', 0, cw.sum())
 
     @staticmethod
-    def __create_state_table(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__create_subtable(params.outfile,
-                                          'STATE',
-                                          EmptyMSBaseInformation.state_desc,
-                                          EmptyMSBaseInformation.state_dminfo)
+    def __create_state_table(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__create_subtable(params.outfile,
+                                           'STATE',
+                                           _EmptyMSBaseInformation.state_desc,
+                                           _EmptyMSBaseInformation.state_dminfo)
         with table_manager(os.path.join(params.outfile, 'STATE'), nomodify=False) as tb:
             if tb.nrows() == 0:
                 tb.addrows(1)
@@ -956,11 +956,11 @@ class Image2MSMethods():
             tb.putkeyword(subtable, f'Table: {outfile}/{subtable}')
 
     @staticmethod
-    def __put_parametes_from_image_to_ms(params: Image2MSParams=None) -> None:
-        Image2MSMethods.__put_image_parameters_into_ms(params, *Image2MSMethods.__get_image_parameters(params))
+    def __put_parametes_from_image_to_ms(params: _Image2MSParams=None) -> None:
+        _Image2MSMethods.__put_image_parameters_into_ms(params, *_Image2MSMethods.__get_image_parameters(params))
 
     @staticmethod
-    def __get_image_parameters(params: Image2MSParams=None) -> Tuple[np.array, int]:
+    def __get_image_parameters(params: _Image2MSParams=None) -> Tuple[np.array, int]:
         # get image array and mask from the image
         with tool_manager(params.infile, image) as ia:
             arr = ia.getchunk()
@@ -980,7 +980,7 @@ class Image2MSMethods():
         return arr, msk, xax, yax, spax, polax
 
     @staticmethod
-    def __put_image_parameters_into_ms(params: Image2MSParams, image_array: np.array, mask_array: np.array, axis_x: int,
+    def __put_image_parameters_into_ms(params: _Image2MSParams, image_array: np.array, mask_array: np.array, axis_x: int,
                                        axis_y: int, axis_sp: int, axis_pol: int) -> None:
         # which data column to use
         with table_manager(params.outfile, nomodify=False) as tb:
@@ -1009,15 +1009,15 @@ class Image2MSMethods():
                         irow += 1
 
 
-class MS2ImageMethods():
+class _MS2ImageMethods():
 
     @staticmethod
-    def convert(base_image: str=None, input_ms: str=None, input_image_shape: ImageShape=None, datacolumn: str=None) -> None:
-        output_image = MS2ImageMethods.__change_file_extension(input_ms, 'im')
-        copy_image_file(base_image, output_image)  # mask data is also copied in this method
+    def convert(base_image: str=None, input_ms: str=None, input_image_shape: _ImageShape=None, datacolumn: str=None) -> None:
+        output_image = _MS2ImageMethods.__change_file_extension(input_ms, 'im')
+        _copy_image_file(base_image, output_image)  # mask data is also copied in this method
 
-        image_array = MS2ImageMethods.__make_image_array(input_image_shape, input_ms, datacolumn)
-        MS2ImageMethods.__output_image(output_image, image_array)
+        image_array = _MS2ImageMethods.__make_image_array(input_image_shape, input_ms, datacolumn)
+        _MS2ImageMethods.__output_image(output_image, image_array)
 
         return output_image
 
@@ -1038,7 +1038,7 @@ class MS2ImageMethods():
         return new_path
 
     @staticmethod
-    def __make_image_array(input_image_shape: ImageShape=None, infile: str=None, datacolumn: str=None) -> np.array:
+    def __make_image_array(input_image_shape: _ImageShape=None, infile: str=None, datacolumn: str=None) -> np.array:
         nx, ny = input_image_shape.dir_shape
         image_array = np.empty((nx, ny, input_image_shape.im_nchan))
         pos = 0
@@ -1057,7 +1057,7 @@ class MS2ImageMethods():
             ia.putchunk(pixels=image_array, locking=True)
 
 
-class EmptyMSBaseInformation:
+class _EmptyMSBaseInformation:
     """The Parameters class for creating an empty MeasurementSet.
 
     This class contains dictionaries to create an empty MS using table.create(), and it has no method.
