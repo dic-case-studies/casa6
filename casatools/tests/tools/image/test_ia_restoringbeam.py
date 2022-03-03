@@ -67,6 +67,7 @@
 ###########################################################################
 import shutil
 import unittest
+import os
 
 from casatools import image as iatool
 from casatools import quanta
@@ -76,10 +77,16 @@ class ia_restoringbeam_test(unittest.TestCase):
     def setUp(self):
         self.qa = quanta( )
         self._myia = iatool()
+        self.imagename = ''
     
     def tearDown(self):
         self.qa.done( )
         self._myia.done()
+        if self.imagename:
+            if os.path.isfile(self.imagename):
+                os.unlink(self.imagename)
+            else:
+                shutil.rmtree(self.imagename)
     
     def test_global_beam(self):
         """Test adding, deleting, and setting beams"""
@@ -154,10 +161,10 @@ class ia_restoringbeam_test(unittest.TestCase):
     def test_copy_beams(self):
         """Test copy beamset option - CAS-5435"""
         myia = self._myia
-        imagename = "source.im"
+        self.imagename = "source.im"
         nchan = 10
         nstokes = 4
-        myia.fromshape(imagename, shape=[5,5, nchan, nstokes])
+        myia.fromshape(self.imagename, shape=[5,5, nchan, nstokes])
         myia.setrestoringbeam(major="4arcsec", minor="2arcsec", pa="0deg", channel=0, polarization=0)
         myia.setrestoringbeam(major="8arcsec", minor="4arcsec", pa="0deg", channel=2, polarization=2)
         myia.done()
@@ -165,34 +172,34 @@ class ia_restoringbeam_test(unittest.TestCase):
         self.assertRaises(
             Exception, myia.setrestoringbeam,
             major="4arcsec", minor="2arcsec", pa="0deg",
-            imagename=imagename
+            imagename=self.imagename
         )
         self.assertRaises(
             Exception, myia.setrestoringbeam,
             remove=True,
-            imagename=imagename
+            imagename=self.imagename
         )
-        myia.setrestoringbeam(imagename=imagename)
-        self._compareBeams(myia, imagename)
+        myia.setrestoringbeam(imagename=self.imagename)
+        self._compareBeams(myia, self.imagename)
         # test overwriting
-        myia.setrestoringbeam(imagename=imagename)
-        self._compareBeams(myia, imagename)
+        myia.setrestoringbeam(imagename=self.imagename)
+        self._compareBeams(myia, self.imagename)
         myia.done()
         # swap axes
         myia.fromshape("", shape=[10,10, nstokes, nchan])
-        myia.setrestoringbeam(imagename=imagename)
-        self._compareBeams(myia, imagename)
+        myia.setrestoringbeam(imagename=self.imagename)
+        self._compareBeams(myia, self.imagename)
         source = iatool()
         source.fromshape(
-            imagename, shape=[5,5, nchan-1, nstokes-1],
+            self.imagename, shape=[5,5, nchan-1, nstokes-1],
             overwrite=True
         )
         source.done()
         # source has no beam
         self.assertRaises(
-            Exception, myia.setrestoringbeam, imagename=imagename
+            Exception, myia.setrestoringbeam, imagename=self.imagename
         )
-        source.open(imagename)
+        source.open(self.imagename)
         source.setrestoringbeam(
             major="4arcsec", minor="2arcsec", pa="0deg",
             channel=0, polarization=0
@@ -203,10 +210,10 @@ class ia_restoringbeam_test(unittest.TestCase):
         )
         # incompatible beam matrices
         self.assertRaises(
-            Exception, myia.setrestoringbeam, imagename=imagename
+            Exception, myia.setrestoringbeam, imagename=self.imagename
         )
         source.fromshape(
-            imagename, shape=[5,5, nstokes],
+            self.imagename, shape=[5,5, nstokes],
             overwrite=True
         )
         source.setrestoringbeam(
@@ -218,11 +225,11 @@ class ia_restoringbeam_test(unittest.TestCase):
             channel=0, polarization=0
         )
         source.done()
-        myia.setrestoringbeam(imagename=imagename)
-        self._compareBeams(myia, imagename)
+        myia.setrestoringbeam(imagename=self.imagename)
+        self._compareBeams(myia, self.imagename)
         
         source.fromshape(
-            imagename, shape=[5,5, nstokes, 1],
+            self.imagename, shape=[5,5, nstokes, 1],
             overwrite=True
         )
         source.setrestoringbeam(
@@ -234,11 +241,11 @@ class ia_restoringbeam_test(unittest.TestCase):
             channel=0, polarization=0
         )
         source.done()
-        myia.setrestoringbeam(imagename=imagename)
-        self._compareBeams(myia, imagename)
+        myia.setrestoringbeam(imagename=self.imagename)
+        self._compareBeams(myia, self.imagename)
         
         source.fromshape(
-            imagename, shape=[5,5, nchan],
+            self.imagename, shape=[5,5, nchan],
             overwrite=True
         )
         source.setrestoringbeam(
@@ -250,11 +257,11 @@ class ia_restoringbeam_test(unittest.TestCase):
             channel=0, polarization=0
         )
         source.done()
-        myia.setrestoringbeam(imagename=imagename)
-        self._compareBeams(myia, imagename)
+        myia.setrestoringbeam(imagename=self.imagename)
+        self._compareBeams(myia, self.imagename)
         
         source.fromshape(
-            imagename, shape=[5,5, nchan, 1],
+            self.imagename, shape=[5,5, nchan, 1],
             overwrite=True
         )
         source.setrestoringbeam(
@@ -266,8 +273,8 @@ class ia_restoringbeam_test(unittest.TestCase):
             channel=0, polarization=0
         )
         source.done()
-        myia.setrestoringbeam(imagename=imagename)
-        self._compareBeams(myia, imagename)
+        myia.setrestoringbeam(imagename=self.imagename)
+        self._compareBeams(myia, self.imagename)
         
         myia.done()
         
@@ -342,7 +349,8 @@ class ia_restoringbeam_test(unittest.TestCase):
     def test_history(self):
         """verify history writing"""
         myia = self._myia
-        myia.fromshape("zz",[20, 20])
+        self.imagename = "zz"
+        myia.fromshape(self.imagename,[20, 20])
         major = "4arcsec"
         minor = "3arcsec"
         pa = "10deg"

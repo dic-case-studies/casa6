@@ -66,7 +66,7 @@
 ###########################################################################
 import shutil
 import unittest
-
+import os
 from casatools import image as iatool
 from casatools import table
 
@@ -74,8 +74,14 @@ class ia_insert_test(unittest.TestCase):
     
     def setUp(self):
         self.ia = iatool()
+        self.insert = ''
     
     def tearDown(self):
+        if self.insert:
+            if os.path.isfile(self.insert):
+                os.unlink(self.insert)
+            else:
+                shutil.rmtree(self.insert)
         tb = table( )
         self.assertTrue(len(tb.showcache()) == 0)
         tb.done( )
@@ -83,8 +89,8 @@ class ia_insert_test(unittest.TestCase):
     def test_insert(self):
         """ ia.insert(): Test insert()"""
         myia = self.ia
-        insert = "zxye.im"
-        myia.fromshape(insert, [10, 10, 10])
+        self.insert = "zxye.im"
+        myia.fromshape(self.insert, [10, 10, 10])
         myia.set(10)
         myia.done()
         myia.fromshape("", [20,20,20])
@@ -92,7 +98,7 @@ class ia_insert_test(unittest.TestCase):
         stats = myia.statistics()
         self.assertTrue(stats["max"] == 20)
         self.assertTrue(stats["min"] == 20)
-        self.assertTrue(myia.insert(infile=insert))
+        self.assertTrue(myia.insert(infile=self.insert))
         bb = myia.getchunk()
         self.assertTrue(bb[0, 0, 0] == 20)
         self.assertTrue(bb[10, 10, 10] == 10)
@@ -104,20 +110,17 @@ class ia_insert_test(unittest.TestCase):
     def test_history(self):
         """Verify ia.insert writes history to image"""
         myia = self.ia
-        insert = "hist_zxye.im"
-        myia.fromshape(insert, [10, 10, 10])
+        self.insert = "hist_zxye.im"
+        myia.fromshape(self.insert, [10, 10, 10])
         myia.set(10)
         myia.done()
         myia.fromshape("", [20,20,20])
         myia.set(20)
-        self.assertTrue(myia.insert(infile=insert))
+        self.assertTrue(myia.insert(infile=self.insert))
         msgs = myia.history()
         myia.done()
         self.assertTrue("ia.insert" in msgs[-2]) 
         self.assertTrue("ia.insert" in msgs[-1])
-   
-def suite():
-    return [ia_insert_test]
 
 if __name__ == '__main__':
     unittest.main()

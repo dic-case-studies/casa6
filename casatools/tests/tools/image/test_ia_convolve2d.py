@@ -96,23 +96,17 @@ class ia_convolve2d_test(unittest.TestCase):
    
     def setUp(self):
         self.datapath = 'unittest/imsmooth/'
-    
+        self.imname = ''
+
     def tearDown(self):
+        if self.imname:
+            if os.path.isfile(self.imname):
+                os.unlink(self.imname)
+            else:
+                shutil.rmtree(self.imname)
+
         self.assertTrue(len(_tb.showcache()) == 0, 'table cache is not empty')
-        # make sure directory is clean as per verification test requirement
-        cwd = os.getcwd()
-        for filename in os.listdir(cwd):
-            file_path = os.path.join(cwd, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e)) 
-   
+
     def _compare_beams(self, beam1, beam2):
         self.assertTrue(_near(beam1["major"], beam2["major"], 2e-5))
         self.assertTrue(_near(beam1["minor"], beam2["minor"], 2e-5))
@@ -134,9 +128,9 @@ class ia_convolve2d_test(unittest.TestCase):
     def test_multibeam(self):
         """Test per plane beams"""
         myia = image()
-        imname = "test_image2dconvolver_multibeam.im"
-        shutil.copytree(ctsys_resolve(os.path.join(self.datapath, imname)), imname)
-        myia.open(imname)
+        self.imname = "test_image2dconvolver_multibeam.im"
+        shutil.copytree(ctsys_resolve(os.path.join(self.datapath, self.imname)), self.imname)
+        myia.open(self.imname)
         major = "10arcmin"
         minor = "8arcmin"
         pa = "80deg"
@@ -161,8 +155,8 @@ class ia_convolve2d_test(unittest.TestCase):
     def test_targetres(self):
         """Test targetres parameter"""
         myia = image()
-        imagename = "tres1.im"
-        myia.fromshape(imagename, [100, 100])
+        self.imname = "tres1.im"
+        myia.fromshape(self.imname, [100, 100])
         csys = myia.coordsys()
         csys.setunits(["arcsec", "arcsec"])
         csys.setincrement([-1, 1])
@@ -177,7 +171,7 @@ class ia_convolve2d_test(unittest.TestCase):
         emin = _qa.quantity("5arcsec")
         epa = _qa.quantity("0deg")
         for unit in ("Jy/beam", "K"):
-            myia.open(imagename)
+            myia.open(self.imname)
             myia.setbrightnessunit(unit)
             myia.done()
             expected = make_gauss2d(shape, 5.0, 10.0)
@@ -196,7 +190,7 @@ class ia_convolve2d_test(unittest.TestCase):
                     pa = "0deg"
                     outfile = "tres2" + unit[0]
                 run_convolve2d(
-                    imagename=imagename, kernel="gaussian",
+                    imagename=self.imname, kernel="gaussian",
                     major=major, minor=minor, pa=pa, targetres=targetres,
                     outfile=outfile
                 )
@@ -204,6 +198,7 @@ class ia_convolve2d_test(unittest.TestCase):
                 gotbeam = myia.restoringbeam()
                 gotvals = myia.getchunk()
                 myia.done()
+                shutil.rmtree(outfile)
                 self._compare_beams(
                     gotbeam, {"major": emaj, "minor": emin, "pa": epa}
                 )    
@@ -211,8 +206,8 @@ class ia_convolve2d_test(unittest.TestCase):
     def test_beam(self):
         """Test the beam parameter"""
         myia = image()
-        imagename = "tbeam1.im"
-        myia.fromshape(imagename, [100, 100])
+        self.imname = "tbeam1.im"
+        myia.fromshape(self.imname, [100, 100])
         csys = myia.coordsys()
         csys.setunits(["arcsec", "arcsec"])
         csys.setincrement([1, 1])
@@ -232,7 +227,7 @@ class ia_convolve2d_test(unittest.TestCase):
         ]:
             outfile = 'convolve2d'
             x = run_convolve2d(
-                imagename=imagename, major="", minor="", pa="",
+                imagename=self.imname, major="", minor="", pa="",
                 beam=beam, outfile=outfile, targetres=False,
                 overwrite=True
             )
@@ -242,12 +237,13 @@ class ia_convolve2d_test(unittest.TestCase):
             maxdiff = (abs(myia.getchunk()-expected)).max()
             self.assertTrue(maxdiff < 1e-6) 
             myia.done()
+            shutil.rmtree(outfile)
 
     def test_history(self):
         """Test that history is written"""
         myia = image()
-        imagename = "zz.im"
-        myia.fromshape(imagename, [20,20])
+        self.imname = "zz.im"
+        myia.fromshape(self.imname, [20,20])
         major = "2arcmin"
         minor = "2arcmin"
         pa = "0deg"
@@ -262,8 +258,8 @@ class ia_convolve2d_test(unittest.TestCase):
     def test_stretch(self):
         """ ia.convolve2d(): Test stretch parameter"""
         yy = image()
-        mymask = "maskim"
-        yy.fromshape(mymask, [200, 200, 1, 1])
+        self.imname = "maskim"
+        yy.fromshape(self.imname, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200,200,1,20]
@@ -272,11 +268,11 @@ class ia_convolve2d_test(unittest.TestCase):
         self.assertRaises(
             Exception,
             yy.convolve2d, "", [0,1], "gaussian", "4arcmin", 
-            "4arcmin", "0deg", mask=mymask + ">0", stretch=False
+            "4arcmin", "0deg", mask=self.imname + ">0", stretch=False
         )
         zz = yy.convolve2d(
             "", [0,1], "gaussian", "4arcmin", "4arcmin", "0deg",
-            mask=mymask + ">0", stretch=True
+            mask=self.imname + ">0", stretch=True
         )
         self.assertTrue(type(zz) == type(yy))
         yy.done()
@@ -303,14 +299,14 @@ class ia_convolve2d_test(unittest.TestCase):
 
     def test_copying_of_input_mask(self):
         """CAS-12904: copy input mask to output image"""
-        imname = 'orig.im'
+        self.imname = 'orig.im'
         yy = image()
-        yy.fromshape(imname, [100, 100, 3])
+        yy.fromshape(self.imname, [100, 100, 3])
         pix = yy.getchunk()
         for i in range(3):
             pix[:, :, i] = i
         yy.putchunk(pix)
-        subi = yy.subimage("", mask=imname + '>0')
+        subi = yy.subimage("", mask=self.imname + '>0')
         yy.done()
         for i in range(3):
             reg = _rg.box([0, 0, i], [99, 99, i])
@@ -321,7 +317,7 @@ class ia_convolve2d_test(unittest.TestCase):
             if i>0:
                 self.assertEqual(npts[0], 10000, 'wrong number of pts')
         conv = subi.convolve2d(
-            major='4arcmin', minor='4arcmin', pa='0deg', mask=imname + '<2'
+            major='4arcmin', minor='4arcmin', pa='0deg', mask=self.imname + '<2'
         )
         subi.done()
         for i in range(3):
