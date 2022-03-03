@@ -5824,7 +5824,7 @@ class test_gclean(testref_base):
           from casatasks.private.imagerhelpers._gclean import gclean
           self.prepData('refim_point.ms')
           cnt = 0
-          for rec in gclean( vis='refim_point.ms', imagename='test', imsize=100, cell='8.0arcsec',
+          for rec in gclean( vis='refim_point.ms', imagename=self.img, imsize=100, cell='8.0arcsec',
                              specmode='cube', interpolation='nearest', nchan=1, start='1.0GHz', width='0.2GHz',
                              pblimit=-1e-05, deconvolver='hogbom', niter=500, cyclefactor=3, scales=[0, 3, 10] ):
                cnt += 1
