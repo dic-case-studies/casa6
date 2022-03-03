@@ -55,6 +55,7 @@
 #include <scimath/Functionals/Polynomial.h>
 #include <scimath/Mathematics/VectorKernel.h>
 #include <tables/LogTables/NewFile.h>
+#include <tables/Tables/TableUtil.h>
 
 #include <components/ComponentModels/GaussianDeconvolver.h>
 #include <components/ComponentModels/SkyCompRep.h>
@@ -5096,8 +5097,8 @@ bool image::removefile(const std::string& filename) {
 
         // Now try and blow it away.  If it's open, tabledelete won't delete it.
         String message;
-        if (Table::canDeleteTable(message, fileName, true)) {
-            Table::deleteTable(fileName, true);
+        if (TableUtil::canDeleteTable(message, fileName, true)) {
+            TableUtil::deleteTable(fileName, true);
             rstat = true;
         } else {
             _log << LogIO::WARN << "Cannot delete file " << fileName
