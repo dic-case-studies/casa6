@@ -1034,13 +1034,13 @@ class test_multifield(testref_base):
           self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\n\nimsize=[80,80]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:58:40.895 +40.55.58.543\nusemask=user\nmask=circle[[40pix,40pix],10pix]')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",outlierfile=self.img+'.out.txt',niter=10,deconvolver='mtmfs',interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, 
-                        iterdone=12,
+                        iterdone=13,
                         nmajordone=2,
                         imgexist=[self.img+'.image.tt0', self.img+'1.image.tt0',self.img+'.image.tt1', self.img+'1.image.tt1', self.img+'.alpha', self.img+'1.alpha'],
                         imgval=[(self.img+'.image.tt0',1.094,[50,50,0,0]),
-                               (self.img+'1.image.tt0',5.577,[40,40,0,0]),
-                               (self.img+'.alpha',-0.90,[50,50,0,0]),
-                               (self.img+'1.alpha',-1.0,[40,40,0,0])])
+                               (self.img+'1.image.tt0',5.572,[40,40,0,0]),
+                               (self.img+'.alpha',-0.91,[50,50,0,0]),
+                               (self.img+'1.alpha',-0.99,[40,40,0,0])])
           self.assertTrue(self.check_final(report))
 
 
@@ -1215,10 +1215,10 @@ class test_multifield(testref_base):
           self.th.write_file(self.img+'.out.txt', 'imagename='+self.img+'1\nimsize=[200,200]\ncell=[8.0arcsec,8.0arcsec]\nphasecenter=J2000 19:59:02.426 +40.51.14.559\n')
           ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',phasecenter="J2000 19:58:39.580 +40.55.55.931",outlierfile=self.img+'.out.txt',niter=20,deconvolver='mtmfs',interactive=0,parallel=self.parallel)
           report=self.th.checkall(ret=ret, 
-                        iterdone=39, ## both images see the brightest source.
+                        iterdone=40, ## both images see the brightest source.
                         nmajordone=2,
                         imgexist=[self.img+'.image.tt0', self.img+'1.image.tt0'],
-                        imgval=[(self.img+'.image.tt0',5.52,[48,51,0,0]),
+                        imgval=[(self.img+'.image.tt0',5.53,[48,51,0,0]),
                                 (self.img+'1.image.tt0',5.53,[130,136,0,0]),
                                (self.img+'.alpha',-0.965,[48,51,0,0]),
                                (self.img+'1.alpha',-0.965,[130,136,0,0])]) 
@@ -3389,7 +3389,7 @@ class test_widefield(testref_base):
           self.prepData("refim_mawproject.ms")
           ret = tclean(vis=self.msfile,spw='*',field='*',imagename=self.img,imsize=512,cell='10.0arcsec',phasecenter="J2000 19:59:28.500 +40.44.01.50",
                        niter=60,gridder='mosaicft',deconvolver='mtmfs', conjbeams=False,parallel=self.parallel)
-          report=self.th.checkall(imgexist=[self.img+'.image.tt0', self.img+'.psf.tt0', self.img+'.weight.tt0'],imgval=[(self.img+'.image.tt0',0.9413,[256,256,0,0]),(self.img+'.weight.tt0',0.50546,[256,256,0,0]),(self.img+'.alpha', 0.07367,[256,256,0,0]) ] , tfmask=[(self.img+'.image.tt0',['mask0'])] )
+          report=self.th.checkall(imgexist=[self.img+'.image.tt0', self.img+'.psf.tt0', self.img+'.weight.tt0'],imgval=[(self.img+'.image.tt0',0.942,[256,256,0,0]),(self.img+'.weight.tt0',0.50591,[256,256,0,0]),(self.img+'.alpha', 0.07759,[256,256,0,0]) ] , tfmask=[(self.img+'.image.tt0',['mask0'])] )
           ## alpha should represent that of the mosaic PB (twice)... and should then converge to zero
           self.assertTrue(self.check_final(report))
           
