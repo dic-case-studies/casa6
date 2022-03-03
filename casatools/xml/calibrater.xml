@@ -1147,6 +1147,46 @@ polynomial bandpasses are determined using the default parameters.
 </method>
 
 
+<method name="returndict" type="function">
+   <shortdescription>Return a dictionary describing the current calibrater state</shortdescription>
+
+<description>
+
+Return a dictionary containing information about the current calibrater tool state.
+This dictionary contains the following keys: 'antennas', 'apply tables', 'field', 'intents', 'observation', 'scan', 'solve table', 'spw'.
+
+Each of these keys will show which values for each of these parameters are selected. By default all of the MS is selected when opened by the calibrater tool.
+
+The values of each of these keys is an array of either strings or integers.
+  
+</description>
+
+<returns type="record"/>
+
+<example>
+
+cb.open('gaincaltest2.ms')
+cb.selectvis(field='1')
+cb.returndict()
+
+This would return a dictionary that looks like this:
+
+{'antennas': array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+ 'apply tables': array([], dtype='U16'),
+'field': array([1]),
+ 'intents': array(['CALIBRATE_AMPLI#ON_SOURCE', 'CALIBRATE_DELAY#ON_SOURCE',
+       'CALIBRATE_PHASE#ON_SOURCE', 'CALIBRATE_WVR#ON_SOURCE'],
+      dtype='U26'),
+ 'observation': array([0]),
+ 'scan': array([ 3,  5,  8, 10, 12, 15, 17, 20, 22, 24]),
+ 'solve table': array([], dtype='U16'),
+ 'spw': array([0, 1, 2, 3])}
+
+</example>
+</method>
+
+
+
  
 <method name="state" type="function">
    <shortdescription>Request the apply/solve state of the calibrater tool</shortdescription>

@@ -44,7 +44,7 @@ namespace casac {
 
 casa::SIImageStore* synthesisimstore::getImStore()
 {
-  containsimage=false;
+  containsimage=false; // why??? get* methods should not have side effects....
   return itsImStore;
 }
 
