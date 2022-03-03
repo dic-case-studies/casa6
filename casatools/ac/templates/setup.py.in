@@ -1457,7 +1457,8 @@ class casa_test(Command):
         self.__lib_dir = os.path.abspath("build/%s" % distutils_dir_name('lib'))
         self.__env = os.environ.copy( )
         if 'PYTHONPATH' in self.__env:
-            self.__env['PYTHONPATH'] = ("%s:%s" % (self.__env['PYTHONPATH'],self.__lib_dir))
+            existing_paths = ":".join(list(map(os.path.abspath,self.__env['PYTHONPATH'].split(':'))))
+            self.__env['PYTHONPATH'] = "%s:%s" % (self.__lib_dir,existing_paths)
         else:
             self.__env['PYTHONPATH'] = self.__lib_dir
         self.__regression_dir = "build/%s" % distutils_dir_name('regression')

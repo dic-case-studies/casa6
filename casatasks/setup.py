@@ -62,7 +62,7 @@ try:
     from casatools.config import build as tools_config
 except ImportError as exc:
     print(f'Exception found when importing casatools: {type(exc).__name__} {exc}')
-    os._exit(1)
+    sys.exit(1)
 
 from setuptools import setup, find_packages
 from distutils.dir_util import copy_tree, remove_tree
