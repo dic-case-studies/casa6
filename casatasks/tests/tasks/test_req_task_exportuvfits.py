@@ -32,19 +32,6 @@ class exportuvfits_test(unittest.TestCase):
     
     def tearDown(self):
         self.assertTrue(len(_tb.showcache()) == 0)
-        # make sure directory is clean as per verification test requirement
-        #cwd = os.getcwd()
-        #for filename in os.listdir(cwd):
-        #    file_path = os.path.join(cwd, filename)
-        #    try:
-        #        if os.path.isfile(file_path) or os.path.islink(file_path):
-        #            os.unlink(file_path)
-        #        elif os.path.isdir(file_path):
-        #            # CASA 5 tests need this directory
-        #            if filename != 'xml':
-        #                shutil.rmtree(file_path)
-        #    except Exception as e:
-        #        print('Failed to delete %s. Reason: %s' % (file_path, e))
 
         _tb.close()
         if os.path.exists(self.output):
@@ -197,6 +184,7 @@ class exportuvfits_test(unittest.TestCase):
         self.assertTrue(selected == 95940)
 
     def test_columnSelection(self):
+        '''Check that the data input column can be selected with the datacolumn parameter'''
         # Corrected data
         applycal(vis=self.testdata, gaintable=[self.gaincaltable])
 
@@ -292,6 +280,7 @@ class exportuvfits_test(unittest.TestCase):
         self.assertFalse(np.all(withoutStation == withStation))
 
     def test_padWithFlags(self):
+        '''Check that missisng data is filled with flags'''
         # first remove spw 0 data
         _tb.open(self.testdata, nomodify=False)
         flag = _tb.getcol('FLAG')
@@ -316,6 +305,7 @@ class exportuvfits_test(unittest.TestCase):
         self.assertFalse(np.all(res == False))
 
     def test_missingWeights(self):
+        '''Check that a WEIGHT_SPECTRUM column is created and filled if one does not exist'''
         exportuvfits(vis=self.testdata, fitsfile=self.output)
         importuvfits(fitsfile=self.output, vis=self.reimport)
 
