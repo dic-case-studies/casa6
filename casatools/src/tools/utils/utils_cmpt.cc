@@ -26,6 +26,7 @@
 #include <casa/OS/File.h>
 #include <casa/OS/DOos.h>
 #include <tables/Tables/Table.h>
+#include <casacore/tables/Tables/TableUtil.h>
 #include <casa/System/Aipsrc.h>
 #include <casa/OS/HostInfo.h>
 #ifndef NO_CRASH_REPORTER
@@ -260,8 +261,8 @@ utils::removetable(const std::vector<std::string> &tablenames)
 // Now try and blow it away.  If it's open, tabledelete won't delete it.
        String message;
        if(rstat && Table::isReadable(fileName)){
-          if (Table::canDeleteTable(message, fileName, true)) {
-             Table::deleteTable(fileName, true);
+          if (TableUtil::canDeleteTable(message, fileName, true)) {
+             TableUtil::deleteTable(fileName, true);
           } else {
              *itsLog << LogIO::WARN << "Cannot delete file " << fileName
              << " because " << message << LogIO::POST;
