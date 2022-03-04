@@ -13,8 +13,8 @@ from casatasks.private.sdutil import table_manager
 from casatasks.private.task_sdbaseline import check_fftthresh
 from casatasks.private.task_sdbaseline import is_empty
 from casatasks.private.task_sdbaseline import parse_wavenumber_param
-# from casatestutils import selection_syntax
-from casatools import ctsys, table
+from casatools import ctsys
+from casatools import table
 
 
 tb = table()
@@ -5248,16 +5248,25 @@ class sdbaseline_clipping(sdbaseline_unittest_base):
     """
     Tests for iterative sigma clipping
 
-    test000 --- blfunc='poly'
-    test001 --- blfunc='cspline'
-    test002 --- blfunc='sinusoid'
-    test003 --- blfunc='variable'
+    test000 --- to confirm if clipping works regardless of blformat when blfunc='poly'
+    test001 --- to confirm if clipping works regardless of blformat blfunc='cspline'
+    test002 --- to confirm if clipping works regardless of blformat blfunc='sinusoid'
+    test003 --- to confirm if clipping works regardless of blformat blfunc='variable'
+
+    test010 --- clipping runs multiple times (positive spikes only, threshold=3sigma)
+    test011 --- clipping runs multiple times (positive spikes only, threshold=10sigma)
+    test012 --- clipping runs multiple times (negative spikes only)
+    test013 --- clipping runs multiple times (both positive/negative spikes)
+
+    test020 --- clipping does run but actually no data clipped (huge threshold)
+    test021 --- clipping does run but actually no data clipped (no spike)
     """
 
     datapath = ctsys_resolve('unittest/sdbaseline/')
     infile = 'analytic_order3_withoffset.ms'
     outroot = sdbaseline_unittest_base.taskname + '_clippingtest'
     outfile = outroot + '.ms'
+    csvfile = infile + '_blparam.csv'
     blparamfile = outroot + '.blparam'
     params = {'infile': infile, 'outfile': outfile,
               'overwrite': True,
@@ -5265,94 +5274,151 @@ class sdbaseline_clipping(sdbaseline_unittest_base):
               'datacolumn': 'float_data',
               'blmode': 'fit',
               'order': 0, 'npiece': 1, 'addwn': 0,
-              'clipthresh': 3.0,
               'blparam': blparamfile}
     outdata = {}
+    outmask = {}
 
-    def _setup_input_data(self):
+    def _setup_input_data(self, spikes):
         with table_manager(self.infile, nomodify=False) as tb:
             data = tb.getcell('FLOAT_DATA', 0)
             for ipol in range(len(data)):
+                # base data by repeating 1 and -1 - this has mean=0, sigma=1
                 for ichan in range(len(data[0])):
                     data[ipol][ichan] = 1.0 if ichan % 2 == 0 else -1.0
-                data[ipol][4000] = 100000.0
+                # add spike data
+                for chan, value in spikes:
+                    data[ipol][chan] = value
             tb.putcell('FLOAT_DATA', 0, data)
 
-    def _set_params(self, blfunc, outbl, doclip):
+    def _set_params(self, blfunc, outbl, clipniter, thres):
         self.params['blfunc'] = blfunc
         self.params['blformat'] = 'csv' if outbl else ''
-        self.params['clipniter'] = 1 if doclip else 0
+        self.params['clipniter'] = clipniter
+        self.params['clipthresh'] = thres
 
-    def _get_data_name(self, outbl, doclip):
+    def _get_data_name(self, outbl, clipniter):
         name_bl = 'bl' if outbl else 'nobl'
-        name_cl = 'clip' if doclip else 'noclip'
+        name_cl = str(clipniter)
 
         return name_bl + '-' + name_cl
 
-    def _exec_sdbaseline(self, blfunc, outbl, doclip):
-        self._set_params(blfunc, outbl, doclip)
+    def _exec_sdbaseline(self, blfunc, outbl, clipniter, thres):
+        self._set_params(blfunc, outbl, clipniter, thres)
 
         if blfunc == 'variable':
-            self._create_blparam_file(doclip)
+            self._create_blparam_file(clipniter, thres)
 
         sdbaseline(**self.params)
 
         with table_manager(self.outfile) as tb:
-            data_name = self._get_data_name(outbl, doclip)
-            # use data at row 0, pol 0 only
-            self.outdata[data_name] = tb.getcell('FLOAT_DATA', 0)[0]
+            data_name = self._get_data_name(outbl, clipniter)
+            self.outdata[data_name] = tb.getcell('FLOAT_DATA', 0)[0]  # row(spw)=0, pol=0
+        if outbl:
+            with open(self.csvfile) as f:
+                for line in csv.reader(f):
+                    if (line[2] == '0') and (line[3] == '0'):  # row(spw)=0, pol=0
+                        data_name = self._get_data_name(outbl, clipniter)
+                        self.outmask[data_name] = line[5]
+
+            remove_single_file_dir(self.csvfile)
 
         remove_files_dirs(self.outroot)
 
-    def _result(self, outbl, doclip):
-        return self.outdata[self._get_data_name(outbl, doclip)]
+    def _result(self, outbl, clipniter):
+        return self.outdata[self._get_data_name(outbl, clipniter)]
 
-    def _create_blparam_file(self, doclip):
-        clipniter = str(1 if doclip else 0)
+    def _resmask(self, clipniter):
+        return self.outmask[self._get_data_name(True, clipniter)]
 
+    def _create_blparam_file(self, clipniter, thres):
         with open(self.blparamfile, 'w') as f:
-            f.write('0,0,,' + clipniter + ',3.,false,,,,,poly,0,,[]')
-            f.write('0,1,,' + clipniter + ',3.,false,,,,,chebyshev,0,,[]')
-            f.write('1,0,,' + clipniter + ',3.,false,,,,,cspline,,1,[]')
-            f.write('1,1,,' + clipniter + ',3.,false,,,,,cspline,,1,[]')
+            f.write(f'0,0,,{clipniter},{thres},false,,,,,poly,0,,[]')
+            f.write(f'0,1,,{clipniter},{thres},false,,,,,chebyshev,0,,[]')
+            f.write(f'1,0,,{clipniter},{thres},false,,,,,cspline,,1,[]')
+            f.write(f'1,1,,{clipniter},{thres},false,,,,,cspline,,1,[]')
 
-    def _run_test(self, blfunc):
+    def _run_test(self, blfunc='poly', spikes=[(4000, 100000.0)], thres=3.0, ifclipped=True):
+        self._setup_input_data(spikes=spikes)
+
         bools = [False, True]
-        lst = [(outbl, doclip) for outbl in bools for doclip in bools]
-        for outbl, doclip in lst:
-            self._exec_sdbaseline(blfunc, outbl, doclip)
+        lst = [(outbl, clipniter) for outbl in bools for clipniter in [0, 1]]
+        for outbl, clipniter in lst:
+            self._exec_sdbaseline(blfunc, outbl, clipniter, thres)
 
         # if clipping is turned on, output of sdbaseline must be identical
         # regardless of whether blformat is empty or not
-        self.assertTrue(np.allclose(self._result(False, True), self._result(True, True)),
+        self.assertTrue(np.allclose(self._result(False, 1), self._result(True, 1)),
                         msg='unexpected result; result differs with different blformat.')
         # with iterative clipping, output of sdbaseline must be different from that
         # without clipping, regardless of whether blformat is empty or not
-        for blout in bools:
-            self.assertFalse(np.allclose(self._result(blout, True), self._result(blout, False)),
-                             msg='unexpected result; clipping is not working.')
+        if ifclipped:
+            for blout in bools:
+                self.assertFalse(np.allclose(self._result(blout, 1), self._result(blout, 0)),
+                                 msg='unexpected result; clipping is not working.')
+        else:
+            for blout in bools:
+                self.assertTrue(np.allclose(self._result(blout, 1), self._result(blout, 0)),
+                                msg='unexpected result; clipping is done.')
+
+    def _run_test_multiple_clipping(self, spikes, thres=3.0):
+        # using a data with two spikes with different values.
+        # this test is to confirm if the larger spike is clipped in the first turn
+        # and if the smaller spike is clipped in the second turn
+        # and if no more data is clipped afterwards.
+
+        self._setup_input_data(spikes=[(2000, 1000.0), (4000, 100000.0)])
+        maxiter = 5
+        for niter in range(maxiter):
+            self._exec_sdbaseline(blfunc='poly', outbl=True, clipniter=niter, thres=thres)
+
+        answer_mask_before = '[[0;8191]]'
+        self.assertEqual(self._resmask(0), answer_mask_before)
+        answer_mask_after_1clip = '[[0;3999];[4001;8191]]'  # channel 4000 is clipped
+        self.assertEqual(self._resmask(1), answer_mask_after_1clip)
+        answer_mask_after_2clip = '[[0;1999];[2001;3999];[4001;8191]]'  # channel 2000 is clipped
+        for i in range(2, maxiter):
+            self.assertEqual(self._resmask(i), answer_mask_after_2clip)
 
     def setUp(self):
         remove_files_dirs(self.infile)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
-        self._setup_input_data()
         default(sdbaseline)
+        self.outdata = {}
+        self.outmask = {}
 
     def tearDown(self):
         remove_files_dirs(self.infile)
         remove_files_dirs(self.outroot)
 
     def test000(self):
-        self._run_test('poly')
+        self._run_test(blfunc='poly')
 
     def test001(self):
-        self._run_test('cspline')
+        self._run_test(blfunc='cspline')
 
     def test002(self):
-        self._run_test('sinusoid')
+        self._run_test(blfunc='sinusoid')
 
     def test003(self):
-        self._run_test('variable')
+        self._run_test(blfunc='variable')
+
+    def test010(self):
+        self._run_test_multiple_clipping(spikes=[(2000, 1000.0), (4000, 100000.0)])
+
+    def test011(self):
+        self._run_test_multiple_clipping(spikes=[(2000, 1000.0), (4000, 100000.0)], thres=10.0)
+
+    def test012(self):
+        self._run_test_multiple_clipping(spikes=[(2000, -1000.0), (4000, -100000.0)])
+
+    def test013(self):
+        self._run_test_multiple_clipping(spikes=[(2000, -1000.0), (4000, 100000.0)])
+
+    def test020(self):
+        self._run_test(thres=100.0, ifclipped=False)
+
+    def test021(self):
+        self._run_test(thres=3.0, spikes=[], ifclipped=False)
 
 
 class sdbaseline_helperTest(sdbaseline_unittest_base):
