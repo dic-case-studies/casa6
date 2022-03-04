@@ -17,25 +17,22 @@ import numpy as np
 
 from casatasks import casalog
 from casatasks.private.sdutil import tool_manager
-from casatasks.private.task_imbaseline import (
-    _CasaImageStack,
-    _EraseableFolder,
-    _Image2MSMethods,
-    _Image2MSParams,
-    _ImageShape,
-    _ImageSubtractionMethods,
-    _ImsmoothMethods,
-    _ImsmoothParams,
-    _MeasurementSetStack,
-    _MS2ImageMethods,
-    _SdbaselineMethods,
-    _SdbaselineParams,
-    _SdsmoothMethods,
-    _SdsmoothParams,
-    _UnerasableFolder,
-    _eraseable_folder_register,
-    _get_image_shape,
-    imbaseline)
+from casatasks.private.task_imbaseline import (_CasaImageStack,
+                                               _eraseable_folder_register,
+                                               _EraseableFolder,
+                                               _get_image_shape,
+                                               _Image2MSMethods,
+                                               _Image2MSParams, _ImageShape,
+                                               _ImageSubtractionMethods,
+                                               _ImsmoothMethods,
+                                               _ImsmoothParams,
+                                               _MeasurementSetStack,
+                                               _MS2ImageMethods,
+                                               _SdbaselineMethods,
+                                               _SdbaselineParams,
+                                               _SdsmoothMethods,
+                                               _SdsmoothParams,
+                                               _UnerasableFolder, imbaseline)
 from casatools import ctsys, image, table
 
 _tb = table()
@@ -63,8 +60,8 @@ class test_base(unittest.TestCase):
         def wrapper(func):
             @functools.wraps(func)
             def _wrapper(self):
-                self.assertTrue(len(exception_pattern) >
-                                0, msg='Internal Error')
+                self.assertTrue(len(exception_pattern) > 0,
+                                msg='Internal Error')
                 with self.assertRaises(exception_type) as ctx:
                     func(self)
                     self.fail(msg='The task must throw an exception')
@@ -542,8 +539,7 @@ class TestImage2MS(test_base):
         self.assertEqual(params.infile, self.expected)
         self.assertEqual(params.outfile, outfile)
         for attr in ('im_shape', 'axis_dir', 'dir_shape'):
-            self.assertTrue(np.all(getattr(params, attr) ==
-                            getattr(self.image_shape, attr)))
+            self.assertTrue(np.all(getattr(params, attr) == getattr(self.image_shape, attr)))
         for attr in ('axis_sp', 'axis_pol', 'im_nrow', 'im_nchan', 'im_npol'):
             self.assertEqual(getattr(params, attr),
                              getattr(self.image_shape, attr))
@@ -1302,11 +1298,12 @@ class TestImbaselineExecution(test_base):
                 kwidth=self.kwidth)
             casalog.post(
                 f'{test_name} [maskmode={maskmode}, blfunc={blfunc}, '
-                f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
+                f'dirkernel={dirkernel}, spkernel={spkernel}]', 'INFO')
             imbaseline(**params)
             for file in self.filenames_existence_check:
                 self.assertTrue(os.path.exists(file))
-        test_method.__doc__ += f'{TestImbaselineExecution.test_no:03} [maskmode={maskmode}, blfunc={blfunc}, dirkernel={dirkernel}, spkernel={spkernel}]'
+        test_method.__doc__ += (f'{TestImbaselineExecution.test_no:03} [maskmode={maskmode}, '
+                                f'blfunc={blfunc}, dirkernel={dirkernel}, spkernel={spkernel}]')
         TestImbaselineExecution.test_no += 1
         return test_method
 
@@ -1386,7 +1383,7 @@ class TestImbaselineOutputs(test_base):
                 pa=self.pa)
             casalog.post(
                 f'{test_name} [maskmode=auto, blfunc={blfunc}, '
-                f'dirkernel={dirkernel}, spkernel={spkernel}]', 'WARN')
+                f'dirkernel={dirkernel}, spkernel={spkernel}]', 'INFO')
             imbaseline(**params)
             if os.path.exists(self.linefile):
                 with tool_manager(self.linefile, image) as ia:
@@ -1401,7 +1398,8 @@ class TestImbaselineOutputs(test_base):
                     self.assertTrue(np.allclose(
                         chunk, self.expected_cont_chunk, atol=2.0))
 
-        test_method.__doc__ += f' No.{TestImbaselineOutputs.test_no:03} [blfunc={blfunc}, dirkernel={dirkernel}, spkernel={spkernel}]'
+        test_method.__doc__ += (f' No.{TestImbaselineOutputs.test_no:03} [blfunc={blfunc}, '
+                                f'dirkernel={dirkernel}, spkernel={spkernel}]')
         TestImbaselineOutputs.test_no += 1
         return test_method
 
@@ -1410,7 +1408,8 @@ class TestImbaselineOutputs(test_base):
             r'test_imbaseline_outputs_([^_]+)_([^_]+)_([^_]+)', test_name)
         prefix = 'cont' if is_cont else ' out'
         print(
-            f'{prefix} blfunc:{m[1]} dirkernel:{m[2]} spkernel:{m[3]}, {np.max(chunk)}, {np.min(chunk)}, {np.average(chunk)}, {np.median(chunk)}')
+            f'{prefix} blfunc:{m[1]} dirkernel:{m[2]} spkernel:{m[3]}, {np.max(chunk)}, '
+            f'{np.min(chunk)}, {np.average(chunk)}, {np.median(chunk)}')
 
 
 # generate test methods of TestImbaselineOutputs dynamically
