@@ -13,9 +13,7 @@ from casatasks.private.sdutil import table_manager
 from casatasks.private.task_sdbaseline import check_fftthresh
 from casatasks.private.task_sdbaseline import is_empty
 from casatasks.private.task_sdbaseline import parse_wavenumber_param
-from casatools import ctsys
-from casatools import table
-
+from casatools import ctsys, table
 
 tb = table()
 ctsys_resolve = ctsys.resolve
@@ -222,7 +220,8 @@ class sdbaseline_unittest_base(unittest.TestCase):
     blparam_dic['ledge'] = [0] * 4 + [10, 50, '', 0]
     blparam_dic['redge'] = [0] * 4 + [10, 50, '', 0]
     blparam_dic['chavg'] = [0] * 4 + [4, '', '', 0]
-    blparam_dic['btype'] = ['poly'] + ['chebyshev'] * 2 + ['poly', 'chebyshev', 'poly'] + ['cspline'] * 2
+    blparam_dic['btype'] = ['poly'] + ['chebyshev'] * 2\
+        + ['poly', 'chebyshev', 'poly'] + ['cspline'] * 2
     blparam_dic['order'] = [0, 0, 1, 1, 2, 2, '', '']
     blparam_dic['npiec'] = [0] * 6 + [1] * 2
     blparam_dic['nwave'] = [[]] * 3 + [''] * 2 + [[]] * 3
@@ -504,7 +503,8 @@ class sdbaseline_unittest_base(unittest.TestCase):
             if printstat:
                 print("Comparing '%s': %s (current run), %s (reference)" %
                       (key, str(currval), str(refval)))
-            self.assertTrue(len(currval) == len(refval), "Number of elemnets in '%s' differs." % key)
+            self.assertTrue(len(currval) == len(refval),
+                            "Number of elemnets in '%s' differs." % key)
             if isinstance(refval[0], str):
                 for i in range(len(currval)):
                     if isinstance(refval[i], str):
@@ -574,7 +574,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
     List of tests:
     test000 --- default values for all parameters
     test001 --- polynominal baselining with no mask (maskmode = 'list'). spw and pol specified.
-    test002 --- Chebyshev polynominal baselining with no mask (maskmode = 'list'). spw and pol specified.
+    test002 --- Chebyshev baselining with no mask (maskmode = 'list'). spw and pol specified.
     test003 --- cubic spline baselining with no mask (maskmode = 'list'). spw and pol specified.
     test004 --- sinusoidal baselining with no mask (maskmode = 'list'). spw and pol specified.
     test050 --- existing file as outfile with overwrite=False (raises an exception)
@@ -651,7 +651,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         self._compareStats(theresult, reference)
 
     def test001(self):
-        """Basic Test 001: simple successful case: blfunc = 'poly', maskmode = 'list' and masklist=[] (no mask)"""
+        """simple successful case: blfunc = 'poly', maskmode = 'list' and masklist=[] (no mask)"""
         tid = '001'
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
@@ -686,7 +686,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         self._compareStats(theresult, reference)
 
     def test001_uppercase_params(self):
-        """Basic Test 001: simple successful case: blfunc = 'poly', maskmode = 'list' and masklist=[] (no mask)"""
+        """simple successful case: blfunc = 'poly', maskmode = 'list' and masklist=[] (no mask)"""
         tid = '001'
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
@@ -721,7 +721,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         self._compareStats(theresult, reference)
 
     def test002(self):
-        """Basic Test 002: simple successful case: blfunc = 'chebyshev', maskmode = 'list' and masklist=[] (no mask)"""
+        """successful case: blfunc = 'chebyshev', maskmode = 'list' and masklist=[] (no mask)"""
         tid = '002'
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
@@ -756,7 +756,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         self._compareStats(theresult, reference)
 
     def test003(self):
-        """Basic Test 003: simple successful case: blfunc = 'cspline', maskmode = 'list' and masklist=[] (no mask)"""
+        """successful case: blfunc = 'cspline', maskmode = 'list' and masklist=[] (no mask)"""
         print("")
 
         tid = '003'
@@ -776,7 +776,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
                             outfile=outfile, overwrite=overwrite)
 
         # sdbaseline returns None if it runs successfully
-        self.assertEqual(result, None, msg="The task returned '" + str(result) + "' instead of None")
+        self.assertIsNone(result, msg="The task returned '" + str(result) + "' instead of None")
         # self._compareBLparam(outfile+"_blparam.txt",self.blrefroot+tid)
         results = self._getStats(outfile)
         print(self._getStats(outfile))
@@ -900,7 +900,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         blformat = ['text', 'table']
 
         # First run
-        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn, blmode=blmode, blformat=blformat)
+        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn,
+                   blmode=blmode, blformat=blformat)
 
         # Keep blparam files, and remove outfile only
         shutil.rmtree(outfile)
@@ -919,7 +920,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         blmode = 'apply'
         bltable = infile + '_blparam.bltable'
         overwrite = True
-        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn, blmode=blmode, bltable=bltable)
+        sdbaseline(infile=infile, outfile=outfile, overwrite=overwrite, datacolumn=datacolumn,
+                   blmode=blmode, bltable=bltable)
 
         # Param files created in the first run should be kept
         for ext in ['txt', 'bltable']:
@@ -927,7 +929,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
             self.assertTrue(os.path.exists(blparamfile), msg='{} should exist'.format(blparamfile))
             blparamfile_backup = blparamfile + '.backup'
             if ext == 'txt':
-                self.assertTrue(filecmp.cmp(blparamfile, blparamfile_backup), msg='{} changed'.format(blparamfile))
+                res = filecmp.cmp(blparamfile, blparamfile_backup)
+                self.assertTrue(res, msg='{} changed'.format(blparamfile))
             elif ext == 'bltable':
                 res = compare_dir(blparamfile, blparamfile_backup)
                 self.assertEqual(res, '', msg='{0} changed: {1}'.format(blparamfile, res))
@@ -939,7 +942,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         outfile = self.outroot + tid + '.ms'
         datacolumn = 'float_data'
         dosubtract = False
-        blformats = ['text', 'csv', 'table', ['text', 'table'], ['text', ''], ['text', 'csv', 'table']]
+        blformats = ['text', 'csv', 'table', ['text', 'table'], ['text', ''],
+                     ['text', 'csv', 'table']]
 
         for blformat in blformats:
             print(f"Testing blformat='{blformat}'...")
@@ -947,7 +951,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
             remove_single_file_dir(outfile)
             self.assertFalse(os.path.exists(outfile), f"{outfile} must be deleted before testing.")
 
-            sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile, dosubtract=dosubtract, blformat=blformat)
+            sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile, dosubtract=dosubtract,
+                       blformat=blformat)
             self.assertFalse(os.path.exists(outfile), f"{outfile} is created.")
 
     def test071(self):
@@ -961,8 +966,10 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
 
         for blformat in blformats:
             print(f"Testing blformat='{blformat}'...")
-            with self.assertRaises(ValueError, msg="blformat must be specified when dosubtract is False"):
-                sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile, dosubtract=dosubtract, blformat=blformat)
+            with self.assertRaises(ValueError,
+                                   msg="blformat must be specified when dosubtract is False"):
+                sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile,
+                           dosubtract=dosubtract, blformat=blformat)
 
     def test080(self):
         """Basic Test 080: existent outfile is not overwritten if dosubtract=False"""
@@ -979,7 +986,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
 
         # Run sdbaseline with dosubtract=False
         try:
-            sdbaseline(infile=infile, outfile=outfile, dosubtract=dosubtract, overwrite=overwrite, datacolumn=datacolumn)
+            sdbaseline(infile=infile, outfile=outfile, dosubtract=dosubtract, overwrite=overwrite,
+                       datacolumn=datacolumn)
         except Exception as e:
             print('unexpected failure!')
             raise e
@@ -1157,13 +1165,13 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
     test105 --- no effective wave number set (addwn empty string, applyfft=True)
     test106 --- no effective wave number set (addwn and rejwn identical, applyfft=False)
     test107 --- no effective wave number set (addwn and rejwn identical, applyfft=True)
-    test108 --- no effective wave number set (rejwn covers wider range than that of addwn, applyfft=False)
-    test109 --- no effective wave number set (rejwn covers wider range than that of addwn, applyfft=True)
+    test108 --- no effective case (rejwn covers wider range than that of addwn, applyfft=False)
+    test109 --- no effective case (rejwn covers wider range than that of addwn, applyfft=True)
     test110 --- wn range greater than upper limit
-    test111 --- explicitly specify wn value (greater than upper limit)
-    test112 --- explicitly specify wn value (negative)
-    test113 --- explicitly specify wn value (addwn has negative and greater than upper limit)
-    test114 --- explicitly specify wn value (both addwn/rejwn have negative and greater than upper limit)
+    test111 --- explicitly specify wn (greater than upper limit)
+    test112 --- explicitly specify wn (negative)
+    test113 --- explicitly specify wn (addwn has negative and greater than upper limit)
+    test114 --- explicitly specify wn (both addwn/rejwn have negative and greater than upper limit)
     test115 --- wrong fftthresh (as list)
     test116 --- wrong fftthresh (as string 'asigma')
     test117 --- wrong fftthresh (as string 'topa')
@@ -1568,7 +1576,8 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         fftthresh = '3.0SIGMA'
         torr = 1.0e-6
         result = sdbaseline(infile=infile, datacolumn=datacolumn, outfile=outfile,
-                            blfunc='sinusoid', addwn=addwn, applyfft=True, fftmethod=fftmethod, fftthresh=fftthresh)
+                            blfunc='sinusoid', addwn=addwn, applyfft=True,
+                            fftmethod=fftmethod, fftthresh=fftthresh)
         self.assertEqual(result, None,
                          msg="The task returned '" + str(result) + "' instead of None")
         stat = self._getStats(filename=outfile, pol='0')
@@ -1653,7 +1662,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             self.assertEqual(str(e), 'string index out of range')
 
     def test106(self):
-        """Sinusoid Test 106: no effective wave number set (addwn and rejwn identical, applyfft=False)"""
+        """no effective wavenumber (addwn and rejwn identical, applyfft=False)"""
         tid = '106'
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
@@ -1667,7 +1676,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
 
     def test107(self):
-        """Sinusoid Test 107: no effective wave number set (addwn and rejwn identical, applyfft=True)"""
+        """no effective wavenumber (addwn and rejwn identical, applyfft=True)"""
         tid = '107'
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
@@ -1681,7 +1690,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
 
     def test108(self):
-        """Sinusoid Test 108: no effective wave number set (rejwn covers wider range than that of addwn, applyfft=False)"""
+        """no effective wavenumber (rejwn covers wider range than that of addwn, applyfft=False)"""
         tid = '108'
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
@@ -1695,7 +1704,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             self.assertEqual(str(e), 'No effective wave number given for sinusoidal fitting.')
 
     def test109(self):
-        """Sinusoid Test 109: no effective wave number set (rejwn covers wider range than that of addwn, applyfft=True)"""
+        """no effective wavenumber (rejwn covers wider range than that of addwn, applyfft=True)"""
         tid = '109'
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
@@ -1751,7 +1760,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             self.assertEqual(str(e), 'wrong value given for addwn/rejwn')
 
     def test113(self):
-        """Sinusoid Test 113: explicitly specify wn value (addwn has negative and greater than upper limit)"""
+        """explicitly specify wn (addwn has negative and greater than upper limit)"""
         tid = '113'
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
@@ -1765,7 +1774,7 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
             self.assertEqual(str(e), 'wrong value given for addwn/rejwn')
 
     def test114(self):
-        """Sinusoid Test 114: explicitly specify wn value (both addwn/rejwn have negative and greater than upper limit)"""
+        """explicitly specify wn (both addwn/rejwn have negative and greater than upper limit)"""
         tid = '114'
         infile = self.infile
         outfile = self.outroot + tid + '.ms'
@@ -2096,8 +2105,9 @@ class sdbaseline_multi_IF_test(sdbaseline_unittest_base):
         outfile = os.path.join(self.outroot, ".asap")
         blparamfile = os.path.join(outfile, self.blparamfile_suffix)
 
-        result = sdbaseline(infile=infile, maskmode=mode, outfile=outfile, blfunc=blfunc, order=order)
-        self.assertEqual(result, None, msg="The task returned '" + str(result) + "' instead of None")
+        result = sdbaseline(infile=infile, maskmode=mode, outfile=outfile,
+                            blfunc=blfunc, order=order)
+        self.assertIsNone(result, msg="The task returned '" + str(result) + "' instead of None")
         self._compareBLparam(blparamfile, self.datapath + self.refblparamfile)
         reference = {5: {'rms': 1.4250789880752563,
                          'min': -4.2702846527099609,
@@ -2197,7 +2207,8 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 if is_skipped:
                     continue
 
-                self.assertEqual(self.ftype[blparam['btype'][i].lower()], tb.getcell('FUNC_TYPE', irow)[ipol][0])
+                self.assertEqual(self.ftype[blparam['btype'][i].lower()],
+                                 tb.getcell('FUNC_TYPE', irow)[ipol][0])
                 fparam_key = 'order' if (blparam['btype'][i] != 'cspline') else 'npiec'
                 self.assertEqual(blparam[fparam_key][i], tb.getcell('FUNC_PARAM', irow)[ipol][0])
 
@@ -2209,17 +2220,21 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 for j in range(len(results[i])):
                     self._checkValue(results[i][j], tb.getcell('RESULT', irow)[ipol][j], 1.0e-5)
                 self._checkValue(rms[i], tb.getcell('RMS', irow)[ipol][0], 1.0e-1)
-                self._checkValue(float(blparam['cthre'][i]), tb.getcell('CLIP_THRESHOLD', irow)[ipol][0], 1.0e-6)
+                self._checkValue(float(blparam['cthre'][i]),
+                                 tb.getcell('CLIP_THRESHOLD', irow)[ipol][0], 1.0e-6)
                 self.assertEqual(blparam['nclip'][i], tb.getcell('CLIP_ITERATION', irow)[ipol][0])
                 uself = (blparam['uself'][i] == 'true')
                 self.assertEqual(uself, tb.getcell('USE_LF', irow)[ipol][0])
-                lthre = 5.0 if ((blparam['lthre'][i] == '') or not uself) else float(blparam['lthre'][i])
+                lthre = 5.0 if ((blparam['lthre'][i] == '') or not uself) \
+                    else float(blparam['lthre'][i])
                 self._checkValue(lthre, tb.getcell('LF_THRESHOLD', irow)[ipol][0], 1.0e-6)
                 chavg = 0 if (blparam['chavg'][i] == '') else int(blparam['chavg'][i])
                 self.assertEqual(chavg, tb.getcell('LF_AVERAGE', irow)[ipol][0])
-                ledge = 0 if ((blparam['ledge'][i] == '') or not uself) else int(blparam['ledge'][i])
+                ledge = 0 if ((blparam['ledge'][i] == '') or not uself) \
+                    else int(blparam['ledge'][i])
                 self.assertEqual(ledge, tb.getcell('LF_EDGE', irow)[ipol][0])
-                redge = 0 if ((blparam['redge'][i] == '') or not uself) else int(blparam['redge'][i])
+                redge = 0 if ((blparam['redge'][i] == '') or not uself) \
+                    else int(blparam['redge'][i])
                 self.assertEqual(redge, tb.getcell('LF_EDGE', irow)[ipol][1])
         finally:
             tb.close()
@@ -2250,7 +2265,8 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 rel = abs((out - ref) / out)
             else:
                 rel = abs(out - ref)
-            self.assertTrue((rel < tol), msg='the output (' + str(out) + ') differs from reference (' + str(ref) + ')')
+            self.assertTrue((rel < tol),
+                            msg=f'the output ({out}) differs from reference ({ref})')
 
     def test301(self):
         """test301: poly/chebyshev/cspline baselining, output bltable"""
@@ -2451,8 +2467,8 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
 
     List of tests
     test400 --- MS with no all-channel-flagged, bltable with apply=True for all spectra
-    test401 --- MS with one spectrum (irow=2, ipol=1) with all channels flagged, while apply=True throughout bltable
-    test402 --- MS with no all-channel-flagged, while apply=False for one spectrum (irow=2, ipol=1) in bltable
+    test401 --- MS with one spectrum with all channels flagged, while apply=True throughout bltable
+    test402 --- MS with no all-channel-flagged, while apply=False for one spectrum in bltable
     test403 --- MS with no all-channel-flagger, while bltable lacks one row (irow=2)
 
     Note: for tests401-403, the spectrum with all channels flagged, or the corresponding
@@ -2537,7 +2553,7 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
         self._checkResult(outfile, '')
 
     def test400_uppercase_params(self):
-        """test400: apply baseline table with blmode='APPLY'. all bltable entries applied to all MS data."""
+        """apply baseline table with blmode='APPLY'. all bltable entries applied to all MS data."""
         self.tid = '400'
         outfile = self.outroot + self.tid + '.ms'
         result = sdbaseline(infile=self.infile, datacolumn='float_data',
@@ -2657,7 +2673,8 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
             ret_dict[key] = [stats[key][idx] for idx in idx_list]
         return ret_dict
 
-    def _run_test(self, infile, reference, mask=None, rtol=1.e-5, atol=1.e-6, flag_spec=(), **task_param):
+    def _run_test(self, infile, reference, mask=None, rtol=1.e-5, atol=1.e-6,
+                  flag_spec=(), **task_param):
         """
         Run sdbaseline with mode='variable' and test output MS.
 
@@ -2723,7 +2740,8 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         infile = 'analytic_variable.ms'
         self.paramfile = 'analytic_variable_blparam_comment.txt'
         self._refetch_files([infile, self.paramfile], self.datapath)
-        self._run_test(infile, self.refstat0, flag_spec=[(0, 0)], blparam=self.paramfile, datacolumn=self.column)
+        self._run_test(infile, self.refstat0, flag_spec=[(0, 0)],
+                       blparam=self.paramfile, datacolumn=self.column)
 
         if os.path.exists(self.infile + '_blparam.txt'):
             os.remove(self.infile + '_blparam.txt')
@@ -2733,11 +2751,13 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
             shutil.rmtree(self.infile + '_blparam.btable')
 
     def testVariable02(self):
-        """Test blfunc='variable' with non-existent lines in blparam file (rows should be flagged)"""
+        # Test blfunc='variable' with non-existent lines in blparam file
+        # (rows should be flagged)
         infile = 'analytic_variable.ms'
         self.paramfile = 'analytic_variable_blparam_2lines.txt'
         self._refetch_files([infile, self.paramfile], self.datapath)
-        self._run_test(infile, self.refstat0, flag_spec=[(0, 0), (1, 1)], blparam=self.paramfile, datacolumn=self.column)
+        self._run_test(infile, self.refstat0, flag_spec=[(0, 0), (1, 1)],
+                       blparam=self.paramfile, datacolumn=self.column)
 
         if os.path.exists(self.infile + '_blparam.txt'):
             os.remove(self.infile + '_blparam.txt')
@@ -2751,8 +2771,11 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         infile = 'analytic_order3_withoffset.ms'
         self.paramfile = 'analytic_variable_blparam_mask.txt'
         self._refetch_files([infile, self.paramfile], self.datapath)
-        mask = [[[0, 4000], [6000, 8000]], [[0, 5000], [6000, 8000]], [[0, 3000], [5000, 8000]], None]
-        self._run_test(infile, self.refstat0, mask=mask, blparam=self.paramfile, datacolumn=self.column)
+        mask = [[[0, 4000], [6000, 8000]],
+                [[0, 5000], [6000, 8000]],
+                [[0, 3000], [5000, 8000]], None]
+        self._run_test(infile, self.refstat0, mask=mask,
+                       blparam=self.paramfile, datacolumn=self.column)
 
         if os.path.exists(self.infile + '_blparam.txt'):
             os.remove(self.infile + '_blparam.txt')
@@ -2766,7 +2789,8 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         infile = 'analytic_variable.ms'
         self.paramfile = 'analytic_variable_blparam_spw1.txt'
         self._refetch_files([infile, self.paramfile], self.datapath)
-        self._run_test(infile, self.refstat0, spw='1', blparam=self.paramfile, datacolumn=self.column)
+        self._run_test(infile, self.refstat0, spw='1',
+                       blparam=self.paramfile, datacolumn=self.column)
 
         if os.path.exists(self.infile + '_blparam.txt'):
             os.remove(self.infile + '_blparam.txt')
@@ -2780,7 +2804,9 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         infile = 'analytic_order3_withoffset.ms'
         self.paramfile = 'analytic_variable_blparam_clip.txt'
         self._refetch_files([infile, self.paramfile], self.datapath)
-        mask = [[[0, 4000], [6000, 8000]], [[0, 5000], [6000, 8000]], [[0, 3000], [5000, 8000]], None]
+        mask = [[[0, 4000], [6000, 8000]],
+                [[0, 5000], [6000, 8000]],
+                [[0, 3000], [5000, 8000]], None]
         self._run_test(infile, self.refstat0, atol=1.e-5,
                        mask=mask, blparam=self.paramfile, datacolumn=self.column)
 
@@ -2808,184 +2834,125 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
 
 class sdbaseline_bloutputTest(sdbaseline_unittest_base):
     """
-Basic unit tests for task sdbaseline. No interactive testing.
+    Basic unit tests for task sdbaseline. No interactive testing.
 
     List of tests:
-    # 'poly'
-    test000 --- blformat=['csv', 'text', 'table'], bloutput=['test.csv', 'test.txt', 'test.table']
-    test001 --- blformat=['text', 'csv', 'table'], bloutput=['test.txt', 'test.csv', 'test.table']
-    test002 --- blformat=['table', 'text', 'csv'], bloutput=['test.table', 'test.txt', 'test.csv']
-    test003 --- blformat=['table', 'text', 'csv'], bloutput=['', 'test.txt', 'test.csv']
-    test004 --- blformat=['table', 'text'],       bloutput=['', '', '']
-    test005 --- blformat=['table', 'text'],       bloutput=['', '']
-    test006 --- blformat=['table'],              bloutput=['']
-    test007 --- blformat=['csv'],                bloutput=['']
-    test008 --- blformat=['text'],               bloutput=['']
-    test009 --- blformat=[''],                   bloutput=['']
-    test010 --- blformat=['', 'csv'],             bloutput=['', 'test.csv']
-    test010a --- blformat=['', 'csv'],             bloutput=['test.text', '']
-    test011 --- blformat='',                     bloutput=''
-    test012 --- blformat='',                     bloutput='test.csv'
 
+    test000 --- no bloutput cases
+    test001 --- no bloutput cases (blformat/bloutput with multiple elements)
 
-    # 'cspline'
-    test016 --- blformat=['csv', 'text', 'table'], bloutput=['test.csv', 'test.txt', 'test.table']
-    test017 --- blformat=['text', 'csv', 'table'], bloutput=['test.txt', 'test.csv', 'test.table']
-    test018 --- blformat=['table', 'text', 'csv'], bloutput=['test.table', 'test.txt', 'test.csv']
-    test019 --- blformat=['table', 'text', 'csv'], bloutput=['', 'test.txt', 'test.csv']
-    test020 --- blformat=['table', 'text'],       bloutput=['', '', '']
-    test021 --- blformat=['table', 'text'],       bloutput=['', '']
-    test022 --- blformat=['table'],              bloutput=['']
-    test023 --- blformat=['csv'],                bloutput=['']
-    test024 --- blformat=['text'],               bloutput=['']
-    test025 --- blformat=[''],                   bloutput=['']
-    test026 --- blformat=['', 'csv'],             bloutput=['', 'test.csv']
-    test027 --- blformat='',                     bloutput=''
-    test028 --- blformat='',                     bloutput='test.csv'
+    test010 --- single bloutput cases (bltable)
+    test011 --- single bloutput cases (text)
+    test012 --- single bloutput cases (csv)
+    test013 --- single bloutput cases (blformat with an empty element)
+    test014 --- single bloutput cases (blformat with empty elements)
 
+    test020 --- double bloutput cases
+    test021 --- double bloutput cases (blformat with an empty element)
 
-    # 'variable'
-    test013 --- blformat=['csv', 'text', 'table'], bloutput=['test.csv', 'test.txt', 'test.table']
-    test014 --- blformat=['table', 'text', 'csv'], bloutput=['test.table', '', 'test.csv']
-    test015 --- blformat=['table', 'text', 'csv'], bloutput=['test.table', 'test.txt', '']
+    test030 --- triple bloutput cases
+    test031 --- triple bloutput cases (in a different order)
+    test032 --- triple bloutput cases (in a different order)
 
-    # 'variable'
-    test029 --- blformat=['csv', 'text', 'table'], bloutput=['test.csv', 'test.txt', 'test.table']
-    test030 --- blformat=['text', 'csv', 'table'], bloutput=['test.txt', 'test.csv', 'test.table']
-    test031 --- blformat=['table', 'text', 'csv'], bloutput=['test.table', 'test.txt', 'test.csv']
-    test032 --- blformat=['table', 'text', 'csv'], bloutput=['', 'test.txt', 'test.csv']
-    test033 --- blformat=['table', 'text'],       bloutput=['', '', '']
-    test034 --- blformat=['table', 'text'],       bloutput=['', '']
-    test035 --- blformat=['table'],              bloutput=['']
-    test036 --- blformat=['csv'],                bloutput=['']
-    test037 --- blformat=['text'],               bloutput=['']
-    test038 --- blformat=[''],                   bloutput=['']
-    test039 --- blformat=['', 'csv'],             bloutput=['', 'test.csv']
-    test040 --- blformat='',                     bloutput=''
-    test041 --- blformat='',                     bloutput='test.csv'
-
-
-
-    # 'sinusoid'
-    test042 --- blformat=['csv', 'text', 'table'],  bloutput=['test.csv', 'test.txt', 'test.table']
-    test043 --- blformat=['text', 'csv', 'table'], bloutput=['test.txt', 'test.csv', 'test.table']
-    test044 --- blformat=['table', 'text', 'csv'], bloutput=['test.table', 'test.txt', 'test.csv']
-    test045 --- blformat=['table', 'text', 'csv'], bloutput=['', 'test.txt', 'test.csv']
-    test046 --- blformat=['table', 'text'],       bloutput=['', '', '']
-    test047 --- blformat=['table', 'text'],       bloutput=['', '']
-    test048 --- blformat=['table'],              bloutput=['']
-    test049 --- blformat=['csv'],                bloutput=['']
-    test050 --- blformat=['text'],               bloutput=['']
-    test051 --- blformat=[''],                   bloutput=['']
-    test052 --- blformat=['', 'csv'],             bloutput=['', 'test.csv']
-    test053 --- blformat='',                     bloutput=''
-    test054 --- blformat='',                     bloutput='test.csv'
-
-
-
+    test100 --- sinusoid test for addwn/rejwn
+    test101 --- sinusoid test for addwn/rejwn
     """
 
     infile = 'OrionS_rawACSmod_calave.ms'
+
+    blout_default_root = infile + '_blparam'
+    blout_defaults = {'text': blout_default_root + '.txt',
+                      'csv': blout_default_root + '.csv',
+                      'table': blout_default_root + '.bltable'}
+
+    blout_test_root = 'test'
+    blout_tests = {'text': blout_test_root + '.txt',
+                   'csv': blout_test_root + '.csv',
+                   'table': blout_test_root + '.bltable'}
+
     outroot = sdbaseline_unittest_base.taskname + '_bloutputtest'
     outfile = "test.ms"
-    bloutput = "test.txt"
     blparam = 'analytic_variable_blparam.txt'
-    bloutput_poly_txt = 'bloutput_poly.txt'
-    bloutput_poly_csv = 'bloutput_poly.csv'
-    bloutput_cspline_txt = 'bloutput_cspline.txt'
-    bloutput_cspline_csv = 'bloutput_cspline.csv'
-    bloutput_variable_txt = 'bloutput_variable.txt'
-    bloutput_variable_csv = 'bloutput_variable.csv'
     blfunc = 'poly'
-    bloutput_sinusoid_txt = 'bloutput_sinusoid.txt'
-    bloutput_sinusoid_addwn012_rejwn0_txt = 'bloutput_sinusoid_addwn012_rejwn0.txt'
-    bloutput_sinusoid_addwn012_rejwn02_txt = 'bloutput_sinusoid_addwn012_rejwn02.txt'
-    bloutput_sinusoid_addwn012_rejwn1_txt = 'bloutput_sinusoid_addwn012_rejwn1.txt'
 
-    bloutput_sinusoid_csv = 'bloutput_sinusoid.csv'
-    bloutput_sinusoid_addwn012_rejwn0_csv = 'bloutput_sinusoid_addwn012_rejwn0.csv'
-    bloutput_sinusoid_addwn012_rejwn02_csv = 'bloutput_sinusoid_addwn012_rejwn02.csv'
-    bloutput_sinusoid_addwn012_rejwn1_csv = 'bloutput_sinusoid_addwn012_rejwn1.csv'
+    ref_blout = {'text': {'poly': 'bloutput_poly.txt',
+                          'cspline': 'bloutput_cspline.txt',
+                          'sinusoid': 'bloutput_sinusoid.txt',
+                          'variable': 'bloutput_variable.txt'},
+                 'csv': {'poly': 'bloutput_poly.csv',
+                         'cspline': 'bloutput_cspline.csv',
+                         'sinusoid': 'bloutput_sinusoid.csv',
+                         'variable': 'bloutput_variable.csv'},
+                 'table': {'poly': 'bloutput_poly.bltable',
+                           'cspline': 'bloutput_cspline.bltable',
+                           'sinusoid': 'bloutput_sinusoid.bltable',
+                           'variable': 'bloutput_variable.bltable'}
+                 }
 
-    bloutput_sinusoid_addwnGt4000_rejwn4005_txt = 'bloutput_sinusoid_addwnGt4000_rejwn4005.txt'
+    blout_s_root = 'bloutput_sinusoid_addwn012_rejwn'
+    blout_s = {'text': {'0': blout_s_root + '0' + '.txt',
+                        '02': blout_s_root + '02' + '.txt',
+                        '1': blout_s_root + '1' + '.txt'
+                        },
+               'csv': {'0': blout_s_root + '0' + '.csv',
+                       '02': blout_s_root + '02' + '.csv',
+                       '1': blout_s_root + '1' + '.csv'
+                       }
+               }
+
+    blout_s_addGt4000rej4005_txt = 'bloutput_sinusoid_addwnGt4000_rejwn4005.txt'
 
     base_param = dict(infile=infile,
                       blfunc=blfunc,
                       datacolumn='float_data',
                       maskmode='list',
                       outfile=outfile,
-                      blformat='text',
-                      blparam=blparam,
-                      bloutput=bloutput)
+                      blparam=blparam)
 
     def setUp(self):
-        if os.path.exists(self.infile):
-            shutil.rmtree(self.infile)
+        remove_single_file_dir(self.infile)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
 
-        if os.path.exists(self.blparam):
-            # shutil.rmtree(self.blparam)
-            os.system('rm ' + self.blparam)
+        remove_single_file_dir(self.blparam)
         shutil.copyfile(os.path.join(self.datapath, self.blparam), self.blparam)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_poly_txt), self.bloutput_poly_txt)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_poly_csv), self.bloutput_poly_csv)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_cspline_txt), self.bloutput_cspline_txt)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_cspline_csv), self.bloutput_cspline_csv)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_variable_txt), self.bloutput_variable_txt)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_variable_csv), self.bloutput_variable_csv)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_sinusoid_csv), self.bloutput_sinusoid_csv)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_sinusoid_txt), self.bloutput_sinusoid_txt)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_sinusoid_addwn012_rejwn0_txt), self.bloutput_sinusoid_addwn012_rejwn0_txt)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_sinusoid_addwn012_rejwn02_txt), self.bloutput_sinusoid_addwn012_rejwn02_txt)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_sinusoid_addwn012_rejwn1_txt), self.bloutput_sinusoid_addwn012_rejwn1_txt)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_sinusoid_addwn012_rejwn0_csv), self.bloutput_sinusoid_addwn012_rejwn0_csv)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_sinusoid_addwn012_rejwn02_csv), self.bloutput_sinusoid_addwn012_rejwn02_csv)
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_sinusoid_addwn012_rejwn1_csv), self.bloutput_sinusoid_addwn012_rejwn1_csv)
 
-        shutil.copyfile(os.path.join(self.datapath, self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt), self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt)
+        for fn in ['poly', 'cspline', 'sinusoid', 'variable']:
+            shutil.copyfile(os.path.join(self.datapath, self.ref_blout['text'][fn]),
+                            self.ref_blout['text'][fn])
+            shutil.copyfile(os.path.join(self.datapath, self.ref_blout['csv'][fn]),
+                            self.ref_blout['csv'][fn])
+        rejwns = [[0], [0, 2], [1]]
+        fmts = ['text', 'csv']
+        lst = [(rejwn, fmt) for rejwn in rejwns for fmt in fmts]
+        for rejwn, fmt in lst:
+            the_file = self.blout_s[fmt][''.join([str(v) for v in rejwn])]
+            shutil.copyfile(os.path.join(self.datapath, the_file), the_file)
+        shutil.copyfile(os.path.join(self.datapath,
+                                     self.blout_s_addGt4000rej4005_txt),
+                        self.blout_s_addGt4000rej4005_txt)
 
         default(sdbaseline)
 
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.bltable'):
-            shutil.rmtree(self.infile + '_blparam.bltable')
-
-        if os.path.exists('test.txt'):
-            os.remove('test.txt')
-        if os.path.exists('test.csv'):
-            os.remove('test.csv')
-        if os.path.exists('test.table'):
-            shutil.rmtree('test.table')
+        for fmt in ['text', 'csv', 'table']:
+            remove_single_file_dir(self.blout_defaults[fmt])
+            remove_single_file_dir(self.blout_tests[fmt])
 
     def tearDown(self):
         remove_single_file_dir(self.infile)
         remove_single_file_dir(self.outroot)
         remove_single_file_dir(self.outfile)
-        remove_single_file_dir(self.bloutput)
         remove_single_file_dir(self.blparam)
-        remove_single_file_dir(self.bloutput_poly_txt)
-        remove_single_file_dir(self.bloutput_poly_csv)
-        remove_single_file_dir(self.bloutput_cspline_txt)
-        remove_single_file_dir(self.bloutput_cspline_csv)
-        remove_single_file_dir(self.bloutput_variable_txt)
-        remove_single_file_dir(self.bloutput_variable_csv)
-        remove_single_file_dir(self.blfunc)
-        remove_single_file_dir(self.bloutput_sinusoid_txt)
-        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn0_txt)
-        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn02_txt)
-        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn1_txt)
-        remove_single_file_dir(self.bloutput_sinusoid_csv)
-        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn0_csv)
-        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn02_csv)
-        remove_single_file_dir(self.bloutput_sinusoid_addwn012_rejwn1_csv)
-        remove_single_file_dir(self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt)
-        remove_single_file_dir('test.csv')
-        remove_single_file_dir('test.table')
+        for fn in ['poly', 'cspline', 'sinusoid', 'variable']:
+            remove_single_file_dir(self.ref_blout['text'][fn])
+            remove_single_file_dir(self.ref_blout['csv'][fn])
+        for bfmt, brej in [(f, r) for f in ['text', 'csv'] for r in ['0', '02', '1']]:
+            remove_single_file_dir(self.blout_s[bfmt][brej])
+        remove_single_file_dir(self.blout_s_addGt4000rej4005_txt)
 
-    def run_test(self, **kwargs):
+        for fmt in ['text', 'csv', 'table']:
+            remove_single_file_dir(self.blout_tests[fmt])
+
+    def exec_sdbaseline(self, **kwargs):
         task_param = self.base_param.copy()
         for key, value in kwargs.items():
             task_param[key] = value
@@ -3000,1573 +2967,202 @@ Basic unit tests for task sdbaseline. No interactive testing.
     def check_bloutputparam_csv(self, bloutputfile, ref_all):
         with open(bloutputfile, 'r') as file:
             list_all = [row for row in csv.reader(file)]
-            self.assertEqual(ref_all, list_all, msg='parameter values of the output csv file are not equivalent to referece values!')
+            self.assertEqual(ref_all, list_all,
+                             msg='parameter values of the output csv file are \
+                                  not equivalent to referece values!')
+
+    def _set_actual_bloutput(self, blfmt, blout):
+        res = {}
+        if blfmt == '':
+            res['name'] = None
+            res['default'] = None
+            res['format'] = None
+        else:
+            res['name'] = self.blout_defaults[blfmt] if blout == '' else blout
+            res['default'] = (blout == '')
+            res['format'] = blfmt
+
+        return res
+
+    def _run_test(self, blformat, bloutput):
+        # print(f'testing blformat={blformat}, bloutput={bloutput}')
+
+        for blfunc in ['poly', 'cspline', 'sinusoid', 'variable']:
+            result = self.exec_sdbaseline(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
+            self.assertIsNone(result, msg=f'invalid return value ({result})')
+
+            actual_bloutput = []
+            if isinstance(blformat, str) and isinstance(bloutput, str):
+                actual_bloutput.append(self._set_actual_bloutput(blformat, bloutput))
+            elif isinstance(blformat, list) and isinstance(bloutput, list):
+                self.assertEqual(len(blformat), len(bloutput),
+                                 msg=f'{blformat} and {bloutput} have different length!')
+                for i in range(len(bloutput)):
+                    actual_bloutput.append(self._set_actual_bloutput(blformat[i], bloutput[i]))
+
+            for f in actual_bloutput:
+                the_blout = f['name']
+                blfmt = f['format']
+                if the_blout is None:
+                    continue
+                self.assertTrue(os.path.exists(the_blout), msg=f'{the_blout} does not exist!')
+                if not f['default']:
+                    fdef = self.blout_defaults[blfmt]
+                    self.assertFalse(os.path.exists(fdef), msg=f'{fdef} exists!')
+                if blfmt != 'table':
+                    ref_blout = self.ref_blout[blfmt][blfunc]
+                    self.assertEqual(os.system('diff ' + the_blout + ' ' + ref_blout), 0,
+                                     msg=f'{the_blout} is not equivalent to {ref_blout}')
+
+            remove_single_file_dir(self.outfile)
+            remove_files_dirs(self.blout_default_root)
+            remove_files_dirs(self.blout_test_root)
 
     def test000(self):
-        """Bloutput Test 000:blfunc='poly', blformat=['csv', 'text', 'table'], bloutput=['test.csv', 'test.txt', 'test.table']"""
-        blfunc = 'poly'
-        blformat = ['csv', 'text', 'table']
-        bloutput = ['test.csv', 'test.txt', 'test.table']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff test.csv ' + self.bloutput_poly_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[0] + ' is not equivalent to ' + self.bloutput_poly_csv)
-
-        diff_value = os.system('diff test.txt ' + self.bloutput_poly_txt)
-        self.assertEqual(diff_value, 0, msg=bloutput[1] + ' is not equivalent to ' + self.bloutput_poly_txt)
+        # no bloutput cases
+        blformats = ['', ['']]
+        bloutputs = ['', [''], 'test.csv', ['test.csv']]
+        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
+        for blformat, bloutput in lst:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
     def test001(self):
-        """Bloutput Test 001: blfunc='poly', blformat=['text', 'csv', 'table'], bloutput=['test.txt', 'test.csv', 'test.table']"""
-        blfunc = 'poly'
-        blformat = ['text', 'csv', 'table']
-        bloutput = ['test.txt', 'test.csv', 'test.table']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff test.csv ' + self.bloutput_poly_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[1] + ' is not equivalent to ' + self.bloutput_poly_csv)
-
-        diff_value = os.system('diff test.txt ' + self.bloutput_poly_txt)
-        self.assertEqual(diff_value, 0, msg=bloutput[0] + ' is not equivalent to ' + self.bloutput_poly_txt)
-
-    def test002(self):
-        """Bloutput Test 002: blfunc='poly', blformat=['table', 'text', 'csv'], bloutput=['test.table', 'test.txt', 'test.csv']"""
-        blfunc = 'poly'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['test.table', 'test.txt', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff test.csv ' + self.bloutput_poly_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[2] + ' is not equivalent to ' + self.bloutput_poly_csv)
-
-        diff_value = os.system('diff test.txt ' + self.bloutput_poly_txt)
-        self.assertEqual(diff_value, 0, msg=bloutput[1] + ' is not equivalent to ' + self.bloutput_poly_txt)
-
-    def test003(self):
-        """Bloutput Test 003: blfunc='poly', blformat=['table', 'text', 'csv'], bloutput=['', 'test.txt', 'test.csv']"""
-        blfunc = 'poly'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['', 'test.txt', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff test.csv ' + self.bloutput_poly_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[2] + 'is not equivalent to ' + self.bloutput_poly_csv)
-
-        diff_value = os.system('diff test.txt ' + self.bloutput_poly_txt)
-        self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_poly_txt)
-
-    def test004(self):
-        """Bloutput Test 004: blfunc='poly', blformat=['table', 'text', 'csv'], bloutput=['', '', '']"""
-        blfunc = 'poly'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['', '', '']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        # self.assertEqual(diff_value, 0, msg=bloutput[0] + ' is not equivalent to ' + self.bloutput_poly_csv)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt' + ' ' + self.bloutput_poly_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + ' is not equivalent to ' + self.bloutput_poly_txt)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv' + ' ' + self.bloutput_poly_csv)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + ' is not equivalent to ' + self.bloutput_poly_csv)
-
-    def test005(self):
-        """Bloutput Test 005: blfunc='poly', blformat=['table', 'text'], bloutput=['', '']"""
-        blfunc = 'poly'
-        blformat = ['table', 'text']
-        bloutput = ['', '']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt' + ' ' + self.bloutput_poly_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + ' is not equivalent to ' + self.bloutput_poly_txt)
-
-    def test006(self):
-        """Bloutput Test 006: blfunc='poly', blformat=['table'], bloutput=['']"""
-        blfunc = 'poly'
-        blformat = ['table']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-    def test007(self):
-        """Bloutput Test 007: blfunc='poly', blformat=['csv'], bloutput=['']"""
-        blfunc = 'poly'
-        blformat = ['csv']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv' + ' ' + self.bloutput_poly_csv)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + ' is not equivalent to ' + self.bloutput_poly_csv)
-
-    def test008(self):
-        """Bloutput Test 008: blfunc='poly', blformat=['text'], bloutput=['']"""
-        blfunc = 'poly'
-        blformat = ['text']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt' + ' ' + self.bloutput_poly_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + ' is not equivalent to ' + self.bloutput_poly_txt)
-
-    def test009(self):
-        """Bloutput Test 009: blfunc='poly', blformat=[''], bloutput=['']"""
-        blfunc = 'poly'
-        blformat = ['']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.text')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
+        # no bloutput cases (blformat/bloutput with multiple elements)
+        bloutputs = [['', '', ''], ['test.csv', 'test.txt', 'test.bltable']]
+        for bloutput in bloutputs:
+            self._run_test(blformat=['', '', ''], bloutput=bloutput)
 
     def test010(self):
-        """Bloutput Test 010: default values for all parameters except blformat=['', 'csv'] and bloutput=['', 'test.csv']"""
-        blfunc = 'poly'
-        blformat = ['', 'csv']
-        bloutput = ['', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        # if len(blformat) == len(bloutput):
-        #    self.check_bloutput(bloutput)
-
-        self.assertEqual(os.path.exists('test.csv'), True, msg='test.csv exists!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.text')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        if os.path.exists('test.csv'):
-            diff_value = os.system('diff test.csv ' + self.bloutput_poly_csv)
-            self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_poly_csv)
-
-    def test010a(self):
-        """Bloutput Test 010a: default values for all parameters except blformat=['', 'csv'] and bloutput=['test.text', '']"""
-        blfunc = 'poly'
-        blformat = ['', 'csv']
-        bloutput = ['test.text', '']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        # if len(blformat) == len(bloutput):
-        #    self.check_bloutput(bloutput)
-
-        self.assertEqual(os.path.exists('test.text'), False, msg='test.text exists!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.text')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv' + ' ' + self.bloutput_poly_csv)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + ' is not equivalent to ' + self.bloutput_poly_csv)
+        # single bloutput (bltable) cases
+        blformats = ['table', ['table']]
+        bloutputs = ['', [''], 'test.bltable', ['test.bltable']]
+        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
+        for blformat, bloutput in lst:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
     def test011(self):
-        """Bloutput Test 011: default values for all parameters except blformat='' and  bloutput=''"""
-
-        blfunc = 'poly'
-        blformat = ''
-        bloutput = ''
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.text')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does exist!')
+        # single bloutput (text) cases
+        blformats = ['text', ['text']]
+        bloutputs = ['', [''], 'test.txt', ['test.txt']]
+        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
+        for blformat, bloutput in lst:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
     def test012(self):
-        """Bloutput Test 012: default values for all parameters except blformat='' and  bloutput='test.csv'"""
-
-        blfunc = 'poly'
-        blformat = ''
-        bloutput = 'test.csv'
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.text')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does exist!')
-        self.assertEqual(os.path.exists(self.bloutput), False, msg=bloutput + ' exist!')
+        # single bloutput (csv) cases
+        blformats = ['csv', ['csv']]
+        bloutputs = ['', [''], 'test.csv', ['test.csv']]
+        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
+        for blformat, bloutput in lst:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
     def test013(self):
-        """Bloutput Test 013: default values for all parameters except blfunc=variable, blparam='analytic_variable_blparam.txt', blformat=['csv', 'text', 'table'], and bloutput=['test.csv', 'test.txt', 'test.table']"""
-        blfunc = 'variable'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['test.table', 'test.txt', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        if os.path.exists('test.csv'):
-            diff_value = os.system('diff test.csv ' + self.bloutput_variable_csv)
-            self.assertEqual(diff_value, 0, msg=bloutput[2] + 'is not equivalent to ' + self.bloutput_variable_csv)
-
-        if os.path.exists('test.txt'):
-            diff_value = os.system('diff test.txt ' + self.bloutput_variable_txt)
-            self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_variable_txt)
+        # single bloutput cases (blformat with an empty element)
+        blformats = [['', 'csv'], ['text', '']]
+        bloutputs = [['', 'test.csv'], ['test.text', '']]
+        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
+        for blformat, bloutput in lst:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
     def test014(self):
-        """Bloutput Test 014: default values for all parameters except  blformat=['table', 'text', 'csv'] and  bloutput=['test.table', '', 'test.csv']"""
-        blfunc = 'poly'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['test.table', '', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt' + ' ' + self.bloutput_poly_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + ' is not equivalent to ' + self.bloutput_poly_txt)
-
-        if os.path.exists('test.csv'):
-            diff_value = os.system('diff test.csv ' + self.bloutput_poly_csv)
-            self.assertEqual(diff_value, 0, msg=bloutput[2] + 'is not equivalent to ' + self.bloutput_poly_csv)
-
-    def test015(self):
-        """Bloutput Test 015: default values for all parameters except blformat=['table', 'text', 'csv'] and bloutput=['test.table', 'test.txt', '']"""
-
-        blfunc = 'poly'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['test.table', 'test.txt', '']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv' + ' ' + self.bloutput_poly_csv)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + ' is not equivalent to ' + self.bloutput_poly_csv)
-
-        if os.path.exists('test.txt'):
-            diff_value = os.system('diff test.txt ' + self.bloutput_poly_txt)
-            self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_poly_txt)
-
-    def test016(self):
-        """Bloutput Test 016: default values for all parameters except blfunc='cspline'"""
-
-        blfunc = 'cspline'
-        blformat = ['csv', 'text', 'table']
-        bloutput = ['test.csv', 'test.txt', 'test.table']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff test.csv ' + self.bloutput_cspline_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[0] + ' is not equivalent to ' + self.bloutput_cspline_csv)
-
-        diff_value = os.system('diff test.txt ' + self.bloutput_cspline_txt)
-        self.assertEqual(diff_value, 0, msg=bloutput[1] + ' is not equivalent to ' + self.bloutput_cspline_txt)
-
-    def test017(self):
-        """Bloutput Test 017: default values for all parameters except blfunc='cspline', blformat=['text', 'csv', 'table'] and bloutput=['test.txt', 'test.csv', 'test.table']"""
-        blfunc = 'cspline'
-        blformat = ['text', 'csv', 'table']
-        bloutput = ['test.txt', 'test.csv', 'test.table']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff test.csv ' + self.bloutput_cspline_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[1] + ' is not equivalent to ' + self.bloutput_cspline_csv)
-
-        diff_value = os.system('diff test.txt ' + self.bloutput_cspline_txt)
-        self.assertEqual(diff_value, 0, msg=bloutput[0] + ' is not equivalent to ' + self.bloutput_cspline_txt)
-
-    def test018(self):
-        """Bloutput Test 018: default values for all parameters except blfunc='cspline', blformat=['table', 'text', 'csv'] and bloutput=['test.table', 'test.txt', 'test.csv']"""
-        blfunc = 'cspline'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['test.table', 'test.txt', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff test.csv ' + self.bloutput_cspline_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[2] + ' is not equivalent to ' + self.bloutput_cspline_csv)
-
-        diff_value = os.system('diff test.txt ' + self.bloutput_cspline_txt)
-        self.assertEqual(diff_value, 0, msg=bloutput[1] + ' is not equivalent to ' + self.bloutput_cspline_txt)
-
-    def test019(self):
-        """Bloutput Test 019: default values for all parameters except blfunc='cspline', blformat=['table', 'text', 'csv'] and bloutput=['', 'test.txt', 'test.csv']"""
-        blfunc = 'cspline'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['', 'test.txt', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff test.csv ' + self.bloutput_cspline_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[2] + 'is not equivalent to ' + self.bloutput_cspline_csv)
-
-        diff_value = os.system('diff test.txt ' + self.bloutput_cspline_txt)
-        self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_cspline_txt)
+        # single bloutput cases (blformat with empty elements)
+        blformats = [['', '', 'csv'], ['', 'text', ''], ['csv', '', '']]
+        bloutputs = [['', '', 'test.csv'], ['', 'test.text', ''], ['test.csv', '', '']]
+        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
+        for blformat, bloutput in lst:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
     def test020(self):
-        """Bloutput Test 020: default values for all parameters except blfunc='cspline', blformat=['table', 'text', 'csv'] and bloutput=['', '', '']"""
+        # double bloutput cases
+        blformat = ['table', 'text']
+        bloutputs = [['', ''], ['test.bltable', ''], ['', 'test.txt'], ['test.bltable', 'test.txt']]
+        for bloutput in bloutputs:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
-        blfunc = 'cspline'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['', '', '']
+        blformat = ['text', 'table']
+        bloutputs = [['', ''], ['test.txt', ''], ['', 'test.bltable'], ['test.txt', 'test.bltable']]
+        for bloutput in bloutputs:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
+        blformat = ['table', 'csv']
+        bloutputs = [['', ''], ['test.bltable', ''], ['', 'test.csv'], ['test.bltable', 'test.csv']]
+        for bloutput in bloutputs:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
+        blformat = ['csv', 'table']
+        bloutputs = [['', ''], ['test.csv', ''], ['', 'test.bltable'], ['test.csv', 'test.bltable']]
+        for bloutput in bloutputs:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv' + ' ' + self.bloutput_cspline_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[0] + ' is not equivalent to ' + self.bloutput_cspline_csv)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt' + ' ' + self.bloutput_cspline_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + ' is not equivalent to ' + self.bloutput_cspline_txt)
+        blformat = ['text', 'csv']
+        bloutputs = [['', ''], ['test.txt', ''], ['', 'test.csv'], ['test.txt', 'test.csv']]
+        for bloutput in bloutputs:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
     def test021(self):
-        """Bloutput Test 021: default values for all parameters except blfunc='cspline', blformat=['table', 'text'] and bloutput=['', '']"""
-        blfunc = 'cspline'
-        blformat = ['table', 'text']
-        bloutput = ['', '']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt' + ' ' + self.bloutput_cspline_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + ' is not equivalent to ' + self.bloutput_cspline_txt)
-
-    def test022(self):
-        """Bloutput Test 022: default values for all parameters except blfunc='cspline', blformat=['table'] and bloutput=['']"""
-        blfunc = 'cspline'
-        blformat = ['table']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-    def test023(self):
-        """Bloutput Test 023: default values for all parameters except blfunc='cspline', blformat=['csv'] and bloutput=['']"""
-
-        blfunc = 'cspline'
-        blformat = ['csv']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv' + ' ' + self.bloutput_cspline_csv)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + ' is not equivalent to ' + self.bloutput_cspline_csv)
-
-    def test024(self):
-        """Bloutput Test 024: default values for all parameters except blfunc='cspline', blformat=['text'] and bloutput=['']"""
-
-        blfunc = 'cspline'
-        blformat = ['text']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt' + ' ' + self.bloutput_cspline_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + ' is not equivalent to ' + self.bloutput_cspline_txt)
-
-    def test025(self):
-        """Bloutput Test 025: default values for all parameters except blfunc='cspline', blformat=[''] and bloutput=['']"""
-
-        blfunc = 'cspline'
-        blformat = ['']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.text')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-    def test026(self):
-        """Bloutput Test 026: default values for all parameters except blfunc='cspline', blformat=['', 'csv'] and bloutput=['', 'test.csv']"""
-
-        blfunc = 'cspline'
-        blformat = ['', 'csv']
-        bloutput = ['', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        # if len(blformat) == len(bloutput):
-        #    self.check_bloutput(bloutput)
-
-        self.assertEqual(os.path.exists('test.csv'), True, msg='test.csv exists!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.text')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        if os.path.exists('test.csv'):
-            diff_value = os.system('diff test.csv ' + self.bloutput_cspline_csv)
-            self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_cspline_csv)
-
-    def test027(self):
-        """Bloutput Test 027: default values for all parameters except blfunc='cspline', blformat='' and  bloutput=''"""
-        blfunc = 'cspline'
-        blformat = ''
-        bloutput = ''
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.text')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does exist!')
-
-    def test028(self):
-        """Bloutput Test 028: default values for all parameters except blfunc='cspline',  blformat='' and  bloutput='test.csv'"""
-
-        blfunc = 'cspline'
-        blformat = ''
-        bloutput = 'test.csv'
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.text')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does exist!')
-        self.assertEqual(os.path.exists(self.bloutput), False, msg=bloutput + ' exist!')
-
-    def test029(self):
-        """Bloutput Test 029: default values for all parameters except blfunc='cspline'"""
-
-        blfunc = 'variable'
-        blformat = ['csv', 'text', 'table']
-        bloutput = ['test.csv', 'test.txt', 'test.table']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        if os.path.exists('test.csv'):
-            diff_value = os.system('diff test.csv ' + self.bloutput_variable_csv)
-            self.assertEqual(diff_value, 0, msg=bloutput[0] + 'is not equivalent to ' + self.bloutput_variable_csv)
-
-        if os.path.exists('test.txt'):
-            diff_value = os.system('diff test.txt ' + self.bloutput_variable_txt)
-            self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_variable_txt)
+        # double bloutput cases (blformat with an empty element)
+        blformats = [['table', 'text', ''], ['table', '', 'csv'], ['', 'text', 'csv']]
+        bloutputs = [['', '', ''], ['test.bltable', '', ''],
+                     ['', 'test.txt', ''], ['', '', 'test.csv']]
+        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
+        for blformat, bloutput in lst:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
     def test030(self):
-        """Bloutput Test 030: default values for all parameters except blfunc='cspline', blformat=['text', 'csv', 'table'] and bloutput=['test.txt', 'test.csv', 'test.table']"""
-
-        blfunc = 'variable'
-        blformat = ['text', 'csv', 'table']
-        bloutput = ['test.txt', 'test.csv', 'test.table']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        if os.path.exists('test.csv'):
-            diff_value = os.system('diff test.csv ' + self.bloutput_variable_csv)
-            self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_variable_csv)
-
-        if os.path.exists('test.txt'):
-            diff_value = os.system('diff test.txt ' + self.bloutput_variable_txt)
-            self.assertEqual(diff_value, 0, msg=bloutput[0] + 'is not equivalent to ' + self.bloutput_variable_txt)
+        # triple bloutput cases
+        blformat = ['table', 'text', 'csv']
+        bloutputs = [['', '', ''],
+                     ['test.bltable', '', ''], ['', 'test.txt', ''], ['', '', 'test.csv'],
+                     ['test.bltable', 'test.txt', ''], ['test.bltable', '', 'test.csv'],
+                     ['', 'test.txt', 'test.csv'], ['test.bltable', 'test.txt', 'test.csv']]
+        for bloutput in bloutputs:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
     def test031(self):
-        """Bloutput Test 031: default values for all parameters except blfunc = 'cspline', blformat=['table', 'text', 'csv'] and bloutput=['test.table', 'test.txt', 'test.csv']"""
-
-        blfunc = 'variable'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['test.table', 'test.txt', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        if os.path.exists('test.csv'):
-            diff_value = os.system('diff test.csv ' + self.bloutput_variable_csv)
-            self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_variable_csv)
-
-        if os.path.exists('test.txt'):
-            diff_value = os.system('diff test.txt ' + self.bloutput_variable_txt)
-            self.assertEqual(diff_value, 0, msg=bloutput[0] + 'is not equivalent to ' + self.bloutput_variable_txt)
+        # triple bloutput cases (in a different order)
+        blformat = ['text', 'table', 'csv']
+        bloutputs = [['', '', ''],
+                     ['test.txt', '', ''], ['', 'test.bltable', ''], ['', '', 'test.csv'],
+                     ['test.txt', 'test.bltable', ''], ['test.txt', '', 'test.csv'],
+                     ['', 'test.bltable', 'test.csv'], ['test.bltable', 'test.txt', 'test.csv']]
+        for bloutput in bloutputs:
+            self._run_test(blformat=blformat, bloutput=bloutput)
 
     def test032(self):
-        """Bloutput Test 032: default values for all parameters except blfunc='cspline', blformat=['table', 'text', 'csv'] and bloutput=['', 'test.txt', 'test.csv']"""
-
-        blfunc = 'variable'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['', 'test.txt', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff test.csv ' + self.bloutput_variable_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[2] + 'is not equivalent to ' + self.bloutput_variable_csv)
-
-        diff_value = os.system('diff test.txt ' + self.bloutput_variable_txt)
-        self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-    def test033(self):
-        """Bloutput Test 033: default values for all parameters except blfunc='cspline', blformat=['table', 'text', 'csv'] and bloutput=['', '', '']"""
-
-        blfunc = 'variable'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['', '', '']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv ' + self.bloutput_variable_csv)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + 'is not equivalent to ' + self.bloutput_variable_csv)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-    def test034(self):
-        """Bloutput Test 034: default values for all parameters except blfunc='cspline', blformat=['table', 'text'] and bloutput=['', '']"""
-
-        blfunc = 'variable'
-        blformat = ['table', 'text']
-        bloutput = ['', '']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        # result_exist = os.path.exists(self.infile + '_blparam.csv')
-        # self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.csv ' + self.bloutput_variable_csv)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + 'is not equivalent to ' + self.bloutput_variable_csv)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-    def test035(self):
-        """Bloutput Test 035: default values for all parameters except blfunc='cspline', blformat=['table'] and bloutput=['']"""
-
-        blfunc = 'variable'
-        blformat = ['table']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.csv ' + self.bloutput_variable_csv)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + 'is not equivalent to ' + self.bloutput_variable_csv)
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-    def test036(self):
-        """Bloutput Test 036: default values for all parameters except blfunc='cspline', blformat=['csv'] and bloutput=['']"""
-
-        blfunc = 'variable'
-        blformat = ['csv']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv ' + self.bloutput_variable_csv)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + 'is not equivalent to ' + self.bloutput_variable_csv)
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-    def test037(self):
-        """Bloutput Test 037: default values for all parameters except blfunc='cspline', blformat=['text'] and bloutput=['']"""
-
-        blfunc = 'variable'
-        blformat = ['text']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-    def test038(self):
-        """Bloutput Test 038: default values for all parameters except blfunc='cspline', blformat=[''] and bloutput=['']"""
-
-        blfunc = 'variable'
-        blformat = ['']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-    def test039(self):
-        """Bloutput Test 039: default values for all parameters except blfunc='cspline', blformat=['', 'csv'] and bloutput=['', 'test.csv']"""
-
-        blfunc = 'variable'
-        blformat = ['', 'csv']
-        bloutput = ['', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        self.assertFalse(os.path.exists(self.infile + '_blparam.bltable'), msg=self.infile + '_blparam.bltable' + ' exists!')
-        self.assertFalse(os.path.exists(self.infile + '_blparam.txt'), msg=self.infile + '_blparam.txt' + ' exists!')
-        self.assertFalse(os.path.exists(self.infile + '_blparam.csv'), msg=self.infile + '_blparam.csv' + ' exists!')
-
-        self.assertTrue(os.path.exists(bloutput[1]), msg=bloutput[1] + ' does not exist!')
-
-        diff_value = os.system('diff ' + bloutput[1] + ' ' + self.bloutput_variable_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[1] + ' is not equivalent to ' + self.bloutput_variable_csv)
-
-    def test040(self):
-        """Bloutput Test 040: default values for all parameters except blfunc='cspline', blformat='' and  bloutput = ''"""
-
-        blfunc = 'variable'
-        blformat = ''
-        bloutput = ''
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        # if len(blformat) == len(bloutput):
-        #    self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-        # result_exist = os.path.exists(bloutput[1])
-        # self.assertEqual(result_exist, True, msg= bloutput[1] + ' does not exist!')
-        # diff_value = os.system('diff ' + bloutput[1] + ' ' + self.bloutput_variable_csv)
-        # self.assertEqual(diff_value, 0, msg=bloutput[1] + ' is not equivalent to ' + self.bloutput_variable_csv)
-
-    def test041(self):
-        """Bloutput Test 041: default values for all parameters except blfunc='cspline', blformat='' and  bloutput = 'test.csv'"""
-
-        blfunc = 'variable'
-        blformat = ''
-        bloutput = 'test.csv'
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        # if len(blformat) == len(bloutput):
-        #    self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-    def test042(self):
-        """Basic Test 042: default values for all parameters except blfunc='sinusoid'"""
-
-        blfunc = 'sinusoid'
+        # triple bloutput cases (in a different order)
         blformat = ['csv', 'text', 'table']
-        bloutput = ['test.csv', 'test.txt', 'test.table']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        if os.path.exists('test.csv'):
-            diff_value = os.system('diff test.csv ' + self.bloutput_sinusoid_csv)
-            self.assertEqual(diff_value, 0, msg=bloutput[0] + 'is not equivalent to ' + self.bloutput_sinusoid_csv)
-
-        if os.path.exists('test.txt'):
-            diff_value = os.system('diff test.txt ' + self.bloutput_sinusoid_txt)
-            self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_sinusoid_txt)
-
-    def test043(self):
-        """Basic Test 043: default values for all parameters except blfunc='sinusoid', blformat=['text', 'csv', 'table'] and bloutput=['test.txt', 'test.csv', 'test.table']"""
-
-        blfunc = 'sinusoid'
-        blformat = ['text', 'csv', 'table']
-        bloutput = ['test.txt', 'test.csv', 'test.table']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        if os.path.exists('test.csv'):
-            diff_value = os.system('diff test.csv ' + self.bloutput_sinusoid_csv)
-            self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_sinusoid_csv)
-
-        if os.path.exists('test.txt'):
-            diff_value = os.system('diff test.txt ' + self.bloutput_sinusoid_txt)
-            self.assertEqual(diff_value, 0, msg=bloutput[0] + 'is not equivalent to ' + self.bloutput_sinusoid_txt)
-
-    def test044(self):
-        """Basic Test 044: default values for all parameters except blfunc='sinusoid', blformat=['table', 'text', 'csv'] and bloutput=['test.table', 'test.txt', 'test.csv']"""
-
-        blfunc = 'sinusoid'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['test.table', 'test.txt', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        if os.path.exists('test.csv'):
-            diff_value = os.system('diff test.csv ' + self.bloutput_sinusoid_csv)
-            self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_variable_csv)
-
-        if os.path.exists('test.txt'):
-            diff_value = os.system('diff test.txt ' + self.bloutput_sinusoid_txt)
-            self.assertEqual(diff_value, 0, msg=bloutput[0] + 'is not equivalent to ' + self.bloutput_sinusoid_txt)
-
-    def test045(self):
-        """Basic Test 045: default values for all parameters except blfunc='sinusoid', blformat=['table', 'text', 'csv'] and bloutput=['', 'test.txt', 'test.csv']"""
-
-        blfunc = 'sinusoid'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['', 'test.txt', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff test.csv ' + self.bloutput_sinusoid_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[2] + 'is not equivalent to ' + self.bloutput_sinusoid_csv)
-
-        diff_value = os.system('diff test.txt ' + self.bloutput_sinusoid_txt)
-        self.assertEqual(diff_value, 0, msg=bloutput[1] + 'is not equivalent to ' + self.bloutput_sinusoid_txt)
-
-    def test046(self):
-        """Basic Test 046: default values for all parameters except blfunc='sinusoid', blformat=['table', 'text', 'csv'] and bloutput=['', '', '']"""
-
-        blfunc = 'sinusoid'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['', '', '']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv ' + self.bloutput_sinusoid_csv)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + 'is not equivalent to ' + self.bloutput_sinusoid_csv)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_sinusoid_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_sinusoid_txt)
-
-    def test047(self):
-        """Basic Test 047: default values for all parameters except blfunc='sinusoid', blformat=['table', 'text'] and bloutput = ['', '']"""
-
-        blfunc = 'sinusoid'
-        blformat = ['table', 'text']
-        bloutput = ['', '']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        # result_exist = os.path.exists(self.infile + '_blparam.csv')
-        # self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.csv ' + self.bloutput_variable_csv)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + 'is not equivalent to ' + self.bloutput_variable_csv)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_sinusoid_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_sinusoid_txt)
-
-    def test048(self):
-        """Basic Test 048: default values for all parameters except blfunc='sinusoid', blformat=['table'] and bloutput=['']"""
-
-        blfunc = 'sinusoid'
-        blformat = ['table']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.csv ' + self.bloutput_variable_csv)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + 'is not equivalent to ' + self.bloutput_variable_csv)
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-    def test049(self):
-        """Basic Test 049: default values for all parameters except blfunc='sinusoid', blformat=['csv'] and bloutput=['']"""
-
-        blfunc = 'sinusoid'
-        blformat = ['csv']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' does not exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv ' + self.bloutput_sinusoid_csv)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + 'is not equivalent to ' + self.bloutput_sinusoid_csv)
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-    def test050(self):
-        """Basic Test 050: default values for all parameters except blfunc='sinusoid', blformat=['text'] and bloutput=['']"""
-
-        blfunc = 'sinusoid'
-        blformat = ['text']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' does not exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_sinusoid_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_sinusoid_txt)
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-    def test051(self):
-        """Basic Test 051: default values for all parameters except blfunc='sinusoid', blformat=[''] and bloutput=['']"""
-
-        blfunc = 'sinusoid'
-        blformat = ['']
-        bloutput = ['']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-    def test052(self):
-        """Basic Test 052: default values for all parameters except blfunc='sinusoid', blformat=['', 'csv'] and bloutput=['', 'test.csv']"""
-
-        blfunc = 'sinusoid'
-        blformat = ['', 'csv']
-        bloutput = ['', 'test.csv']
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        # result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        # self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        # result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        # self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-        result_exist = os.path.exists(bloutput[1])
-        self.assertEqual(result_exist, True, msg=bloutput[1] + ' does not exist!')
-        diff_value = os.system('diff ' + bloutput[1] + ' ' + self.bloutput_sinusoid_csv)
-        self.assertEqual(diff_value, 0, msg=bloutput[1] + ' is not equivalent to ' + self.bloutput_sinusoid_csv)
-
-    def test053(self):
-        """Basic Test 053: default values for all parameters except blfunc='sinusoid', blformat='' and  bloutput=''"""
-
-        blfunc = 'sinusoid'
-        blformat = ''
-        bloutput = ''
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        # if len(blformat) == len(bloutput):
-        #    self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-        # diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_variable_txt)
-        # self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_variable_txt)
-
-        # result_exist = os.path.exists(bloutput[1])
-        # self.assertEqual(result_exist, True, msg= bloutput[1] + ' does not exist!')
-        # diff_value = os.system('diff ' + bloutput[1] + ' ' + self.bloutput_variable_csv)
-        # self.assertEqual(diff_value, 0, msg=bloutput[1] + ' is not equivalent to ' + self.bloutput_variable_csv)
-
-    def test054(self):
-        """Basic Test 054: default values for all parameters except blfunc='sinusoid',  blformat='' and  bloutput = 'test.csv'"""
-
-        blfunc = 'sinusoid'
-        blformat = ''
-        bloutput = 'test.csv'
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-        self.assertEqual(result, None,
-                         msg="The task returned '" + str(result) + "' instead of None")
-
-        # if len(blformat) == len(bloutput):
-        #    self.check_bloutput(bloutput)
-
-        result_exist = not os.path.exists(self.infile + '_blparam.bltable')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.bltable' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.txt')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.txt' + ' exist!')
-
-        result_exist = not os.path.exists(self.infile + '_blparam.csv')
-        self.assertEqual(result_exist, True, msg=self.infile + '_blparam.csv' + ' exist!')
-
-    def test0123(self):
-        """Basic Test 0123: failure test"""
-        blfunc = 'sinusoid'
-        blformat = ''
-        bloutput = 'test.csv'
-        self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
-
-    def test0124(self):
-        """Basic Test 0124: addwn012, rejwn0 test"""
-        blfunc = 'sinusoid'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['', '', '']
-        addwn = [0, 1, 2]
-        rejwn = [0]
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput, addwn=addwn, rejwn=rejwn)
-        self.assertEqual(result, None, msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv ' + self.bloutput_sinusoid_addwn012_rejwn0_csv)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + 'is not equivalent to ' + self.bloutput_sinusoid_addwn012_rejwn0_csv)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_sinusoid_addwn012_rejwn0_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_sinusoid_addwn012_rejwn0_txt)
-
-    def test0125(self):
-        """Basic Test 0125: addwn012, rejwn02 test"""
-        blfunc = 'sinusoid'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['', '', '']
-        addwn = [0, 1, 2]
-        rejwn = [0, 2]
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput, addwn=addwn, rejwn=rejwn)
-        self.assertEqual(result, None, msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv ' + self.bloutput_sinusoid_addwn012_rejwn02_csv)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + 'is not equivalent to ' + self.bloutput_sinusoid_addwn012_rejwn02_csv)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_sinusoid_addwn012_rejwn02_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_sinusoid_addwn012_rejwn02_txt)
-
-    def test0126(self):
-        """Basic Test 0126: addwn012, rejwn1 test"""
-        blfunc = 'sinusoid'
-        blformat = ['table', 'text', 'csv']
-        bloutput = ['', '', '']
-        addwn = [0, 1, 2]
-        rejwn = [1]
-
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput, addwn=addwn, rejwn=rejwn)
-        self.assertEqual(result, None, msg="The task returned '" + str(result) + "' instead of None")
-
-        if len(blformat) == len(bloutput):
-            self.check_bloutput(bloutput)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.csv ' + self.bloutput_sinusoid_addwn012_rejwn1_csv)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.csv' + 'is not equivalent to ' + self.bloutput_sinusoid_addwn012_rejwn1_csv)
-
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_sinusoid_addwn012_rejwn1_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_sinusoid_addwn012_rejwn1_txt)
-
-    def test0127(self):
+        bloutputs = [['', '', ''],
+                     ['test.csv', '', ''], ['', 'test.txt', ''], ['', '', 'test.bltable'],
+                     ['test.csv', 'test.txt', ''], ['test.csv', '', 'test.bltable'],
+                     ['', 'test.txt', 'test.bltable'], ['test.csv', 'test.txt', 'test.bltable']]
+        for bloutput in bloutputs:
+            self._run_test(blformat=blformat, bloutput=bloutput)
+
+    def _run_sinusoid_test(self, rejwn):
+        # print(f'testing {rejwn}...')
+
+        blformat = ['text', 'csv']
+        result = self.exec_sdbaseline(blfunc='sinusoid', addwn=[0, 1, 2], rejwn=rejwn,
+                                      blformat=blformat, bloutput=['', ''])
+        self.assertIsNone(result, msg=f'invalid return value ({result})')
+
+        for fmt in blformat:
+            the_blout = self.blout_defaults[fmt]
+            ref_blout = self.blout_s[fmt][''.join([str(v) for v in rejwn])]
+            diff_value = os.system(f'diff {the_blout} {ref_blout}')
+            self.assertEqual(diff_value, 0, msg=f'{the_blout} is not equivalent to {ref_blout}')
+
+        remove_single_file_dir(self.outfile)
+        remove_files_dirs(self.blout_default_root)
+        remove_files_dirs(self.blout_test_root)
+
+    def test100(self):
+        # sinusoid test for addwn/rejwn
+        rejwns = [[0], [0, 2], [1]]
+        for rejwn in rejwns:
+            self._run_sinusoid_test(rejwn)
+
+    def test101(self):
         """Basic Test 0127: addwn>4000, rejwn4005 test"""
 
         blfunc = 'sinusoid'
@@ -4577,11 +3173,18 @@ Basic unit tests for task sdbaseline. No interactive testing.
         spw = '0'
         applyfft = False
 
-        result = self.run_test(blfunc=blfunc, blformat=blformat, bloutput=bloutput, addwn=addwn, rejwn=rejwn, spw=spw, applyfft=applyfft)
-        self.assertEqual(result, None, msg="The task returned '" + str(result) + "' instead of None")
+        result = self.exec_sdbaseline(blfunc=blfunc, addwn=addwn, rejwn=rejwn, applyfft=applyfft,
+                                      blformat=blformat, bloutput=bloutput, spw=spw)
+        self.assertIsNone(result, msg=f'invalid return value ({result})')
 
-        diff_value = os.system('diff ' + self.infile + '_blparam.txt ' + self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt)
-        self.assertEqual(diff_value, 0, msg=self.infile + '_blparam.txt' + 'is not equivalent to ' + self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt)
+        cmd = 'diff ' + self.blout_defaults['text'] + ' ' + self.blout_s_addGt4000rej4005_txt
+        diff_val = os.system(cmd)
+        msg = self.blout_defaults['text'] + ' differs with ' + self.blout_s_addGt4000rej4005_txt
+        self.assertEqual(diff_val, 0, msg=msg)
+
+        remove_single_file_dir(self.outfile)
+        remove_files_dirs(self.blout_default_root)
+        remove_files_dirs(self.blout_test_root)
 
 
 class sdbaseline_autoTest(sdbaseline_unittest_base):
@@ -4601,7 +3204,7 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
     testAutoCsplMaskFreq : cspline fitting using 500~7691 (no edge mask)
     testAutoSinuMaskFreq : sinusoidal fitting using 500~7691 (no edge mask)
     testAutoPolyChanFlag : polynomial fitting of all channels with channel flag in both edge
-    testAutoChebChanFlag : Chebyshev polynomial fitting of all channels with channel flag in both edge
+    testAutoChebChanFlag : Chebyshev fitting of all channels with channel flag in both edge
     testAutoCsplChanFlag : cspline fitting of all channels with channel flag in both edge
     testAutoSinuChanFlag : sinusoidal fitting of all channels with channel flag in both edge
     """
@@ -4853,7 +3456,8 @@ class sdbaseline_selection(unittest.TestCase):
         tb.open(msname)
         try:
             if not applymode:  # normal fit
-                self.assertEqual(tb.nrows(), len(rowids), "Row number is wrong %d (expected: %d)" % (tb.nrows(), len(rowids)))
+                self.assertEqual(tb.nrows(), len(rowids),
+                                 "Row number wrong %d (expected: %d)" % (tb.nrows(), len(rowids)))
             else:  # in case of apply, rownumber does not change from input MS
                 self.assertGreaterEqual(tb.nrows(), np.array(rowids).max(),
                                         'Reference row number is larger than table size.')
@@ -4863,7 +3467,9 @@ class sdbaseline_selection(unittest.TestCase):
                     out_row = in_row
                 sp = tb.getcell(testcolumn, out_row)
                 if not poltest:
-                    self.assertEqual(sp.shape[0], len(polids), "Number of pol is wrong in row=%d:  %d (expected: %d)" % (out_row, len(polids), sp.shape[0]))
+                    self.assertEqual(sp.shape[0], len(polids),
+                                     "Number of pol is wrong in row=%d:  %d (expected: %d)" %
+                                     (out_row, len(polids), sp.shape[0]))
                 nchan = sp.shape[1]
                 for out_pol in range(len(polids)):
                     in_pol = polids[out_pol]
@@ -4872,7 +3478,7 @@ class sdbaseline_selection(unittest.TestCase):
                         print("data=%s" % str(sp[out_pol]))
                     self.assertTrue(np.allclose(sp[out_pol], reference,
                                                 atol=atol, rtol=rtol),
-                                    "Baselined spectrum differs in row=%d, pol=%d" % (out_row, out_pol))
+                                    "Baselined data differs at row=%d, pol=%d" % (out_row, out_pol))
         finally:
             tb.close()
 
@@ -5036,7 +3642,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
 
     test000 --- updateweight=False - WEIGHT column must not be updated
     test010 --- updateweight=True, sigmavalue=default('stddev')
-    test011 --- updateweight=True, sigmavalue=default('stddev'), channels 4500~6500 flagged in input data
+    test011 --- updateweight=True, sigmavalue=default('stddev'), channels 4500~6500 flagged
     test012 --- updateweight=True, sigmavalue=default('stddev'), spw to flag channels 4500-6499
     test020 --- updateweight=True, sigmavalue='stddev'
     test021 --- updateweight=True, sigmavalue='stddev', channels 4500~6500 flagged in input data
