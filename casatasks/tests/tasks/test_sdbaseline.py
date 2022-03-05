@@ -2,17 +2,15 @@ import contextlib
 import csv
 import filecmp
 import glob
-import numpy as np
 import os
 import shutil
 import unittest
 
-from casatasks import casalog
-from casatasks import sdbaseline
+import numpy as np
+from casatasks import casalog, sdbaseline
 from casatasks.private.sdutil import table_manager
-from casatasks.private.task_sdbaseline import check_fftthresh
-from casatasks.private.task_sdbaseline import is_empty
-from casatasks.private.task_sdbaseline import parse_wavenumber_param
+from casatasks.private.task_sdbaseline import (check_fftthresh, is_empty,
+                                               parse_wavenumber_param)
 from casatools import ctsys, table
 
 tb = table()
