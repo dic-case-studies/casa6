@@ -1,5 +1,5 @@
 ##########################################################################
-# test_tool_agentflagger.py
+# test_task_exportuvfits.py
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
@@ -48,7 +48,6 @@ class exportuvfits_test(unittest.TestCase):
     def tearDown(self):
         _ms.close()
         _tb.close()
-        self.assertTrue(len(_tb.showcache()) == 0)
 
         if os.path.exists(output):
             os.remove(output)
@@ -159,15 +158,21 @@ class exportuvfits_test(unittest.TestCase):
 
     def test_spwSelection(self):
         '''Check that spw selection properly selects a subset of the data'''
-        exportuvfits(vis=testdata, fitsfile=output, spw='0~1')
+        exportuvfits(vis=testdata, fitsfile=output, spw='0,2')
+        _msmd.open(testdata)
+        expected_chanfreq0 = _msmd.chanfreqs(0)
+        expected_chanfreq2 = _msmd.chanfreqs(2)
+        _msmd.done()
+
+        # Reimport and compare the frequency of the first channel in the output spws,
+        # which are reindexed to 0 and 1
         importuvfits(fitsfile=output, vis=reimport)
-
-        expected_spws = {'0', '1'}
-
-        _ms.open(reimport)
-        for i in _ms.getspectralwindowinfo().keys():
-            self.assertTrue(i in expected_spws)
-        _ms.close()
+        _msmd.open(reimport)
+        chanfreq0 = _msmd.chanfreqs(0)
+        chanfreq1 = _msmd.chanfreqs(1)
+        _msmd.done()
+        self.assertEqual(chanfreq0[0], expected_chanfreq0[0])
+        self.assertEqual(chanfreq1[0], expected_chanfreq2[0])
 
     def test_antennaSelection(self):
         '''Check that the antenna parameter selects a subset of the data'''
