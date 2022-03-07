@@ -56,7 +56,7 @@ class exportuvfits_test(unittest.TestCase):
         if os.path.exists('testlog.log'):
             os.remove('testlog.log')
 
-    def test_export_overwrite(self):
+    def test_exportOverwrite(self):
         """CAS-5492: test the overwrite parameter when exporting MSes to uvfits"""
         msname = "uvfits_test.ms" 
         shutil.copytree(os.path.join(datapath, msname), msname)
@@ -81,7 +81,7 @@ class exportuvfits_test(unittest.TestCase):
         )
         
 
-    def test_no_rest_freqs(self):
+    def test_noRestFreqs(self):
         """CAS-11514: test exporting an MS with no rest frequencies in the SOURCE table"""
         msname = "rest_freq_test.ms"
         shutil.copytree(os.path.join(datapath, msname), msname)
