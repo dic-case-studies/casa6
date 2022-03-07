@@ -1,7 +1,7 @@
 ##########################################################################
-#
-# Copyright (C) 2019 ESO (in the framework of the ALMA collaboration)
-# Copyright (C) 2019 Associated Universities, Inc. Washington DC, USA.
+# test_tool_calibrater.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
 #
 # This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
@@ -13,6 +13,10 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
+# [CAS-13589]
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.calibrater.html
 #
 #
 ##########################################################################
@@ -666,10 +670,6 @@ class calibrater_test(unittest.TestCase):
         self.assertTrue(len(resKeys) == len(expectedKeys))
         self.assertFalse(np.array_equal(beforeSpw, afterSpw))
         self.assertTrue(np.array_equal(afterSpw, [1]))
-
-
-def suite():
-    return [calibrater_test]
 
 if __name__ == '__main__':
     unittest.main()
