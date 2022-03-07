@@ -268,10 +268,19 @@
     <param type="any" name="imsize"> 
      <shortdescription>Number of pixels</shortdescription>
 <description>Number of pixels
-         example :  imsize = [350,250]
-                           imsize = 500 is equivalent to [500,500]
-         To take proper advantage of internal optimized FFT routines, the
-         number of pixels must be even and factorizable by 2,3,5 only.
+example:
+
+    imsize = [350,250]
+    imsize = 500 is equivalent to [500,500]
+    
+To take proper advantage of internal optimized FFT routines, the
+number of pixels must be even and factorizable by 2,3,5 only.
+To find the nearest optimal imsize to that desired by the user, please use the following tool method:
+
+    from casatools import synthesisutils
+    su = synthesisutils()
+    su.getOptimumSize(345) 
+    Output :  360
 </description>
       <type>int</type><type>intVec</type>
       <value type="intVec"><value>100</value></value>
