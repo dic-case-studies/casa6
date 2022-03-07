@@ -35,29 +35,24 @@ class exportuvfits_test(unittest.TestCase):
 
     def setUp(self):
         self.datapath = ctsys_resolve(datapath)
+        self.msname = ''
+        self.reimportms = ''
+        self.fitsname = ''
     
     def tearDown(self):
-        self.assertTrue(len(_tb.showcache()) == 0)
-        # make sure directory is clean as per verification test requirement
-        cwd = os.getcwd()
-        for filename in os.listdir(cwd):
-            file_path = os.path.join(cwd, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+        if os.path.exists(self.msname):
+            shutil.rmtree(self.msname)
+        if os.path.exists(self.reimportms):
+            shutil.rmtree(self.reimportms)
+        if os.path.exists(self.fitsname):
+            os.remove(self.fitsname)
 
     def test_export_overwrite(self):
         """CAS-5492: test the overwrite parameter when exporting MSes to uvfits"""
-        msname = "uvfits_test.ms" 
-        shutil.copytree(os.path.join(self.datapath, msname), msname)
-        fitsname = "CAS-5492.uvfits"
-        res = exportuvfits(vis=msname, fitsfile=fitsname)
+        self.msname = "uvfits_test.ms"
+        shutil.copytree(os.path.join(self.datapath, self.msname), self.msname)
+        self.fitsname = "CAS-5492.uvfits"
+        res = exportuvfits(vis=self.msname, fitsfile=self.fitsname)
         if is_CASA6:
             # Not sure why all of a sudden CASA6 is returning None for tasks
             self.assertTrue(res == None, "Failed exportuvfits")
@@ -67,18 +62,18 @@ class exportuvfits_test(unittest.TestCase):
         # CASA 6 throws an exception, CASA 5 returns False
         if is_CASA6 or casa_stack_rethrow:
             self.assertRaises(
-                Exception, exportuvfits, vis=msname, fitsfile=fitsname, overwrite=False,
+                Exception, exportuvfits, vis=self.msname, fitsfile=self.fitsname, overwrite=False,
                 msg="exportuvfits succeeded but should have failed because "
                 + "overwrite=False"
             )
         else:
             self.assertFalse(
-                exportuvfits(vis=msname, fitsfile=fitsname, overwrite=False),
+                exportuvfits(vis=self.msname, fitsfile=self.fitsname, overwrite=False),
                 "exportuvfits succeeded but should have failed because "
                 + "overwrite=False"
             )
         # succeed because overwrite=True
-        res = exportuvfits(vis=msname, fitsfile=fitsname, overwrite=True)
+        res = exportuvfits(vis=self.msname, fitsfile=self.fitsname, overwrite=True)
         if is_CASA6:
             self.assertTrue(
                 res == None,
@@ -95,10 +90,10 @@ class exportuvfits_test(unittest.TestCase):
 
     def test_no_rest_freqs(self):
         """CAS-11514: test exporting an MS with no rest frequencies in the SOURCE table"""
-        msname = "rest_freq_test.ms"
-        shutil.copytree(os.path.join(self.datapath, msname), msname)
-        fitsname = "no_rest_freqs.uvfits"
-        res = exportuvfits(vis=msname, fitsfile=fitsname)
+        self.msname = "rest_freq_test.ms"
+        shutil.copytree(os.path.join(self.datapath, self.msname), self.msname)
+        self.fitsname = "no_rest_freqs.uvfits"
+        res = exportuvfits(vis=self.msname, fitsfile=self.fitsname)
         if is_CASA6:
             self.assertTrue(res == None, "Failed exportuvfits with no rest freqs")
         else:
@@ -106,9 +101,9 @@ class exportuvfits_test(unittest.TestCase):
         # import and check the rest freqs
         # importuvfits doesn't return anything, so we cannot test the
         # return value for success
-        msname = "imported_no_restfreqs.ms"
-        importuvfits(fitsfile=fitsname, vis=msname)
-        _msmd.open(msname)
+        self.reimportms = "imported_no_restfreqs.ms"
+        importuvfits(fitsfile=self.fitsname, vis=self.reimportms)
+        _msmd.open(self.reimportms)
         restfreqs = _msmd.restfreqs()
         _msmd.done()
         expec = {
@@ -123,10 +118,10 @@ class exportuvfits_test(unittest.TestCase):
 
     def test_no_source_table(self):
         """CAS-11514: test exporting an MS with no rest frequencies in the SOURCE table"""
-        msname = "no_source_table.ms"
-        shutil.copytree(os.path.join(self.datapath, msname), msname)
-        fitsname = "no_source_table.uvfits"
-        res = exportuvfits(vis=msname, fitsfile=fitsname)
+        self.msname = "no_source_table.ms"
+        shutil.copytree(os.path.join(self.datapath, self.msname), self.msname)
+        self.fitsname = "no_source_table.uvfits"
+        res = exportuvfits(vis=self.msname, fitsfile=self.fitsname)
         if is_CASA6:
             self.assertTrue(res == None, "Failed exportuvfits with no SOURCE table")
         else:
