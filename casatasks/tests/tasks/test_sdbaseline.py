@@ -3852,18 +3852,18 @@ class sdbaseline_clippingTest(sdbaseline_unittest_base):
     """
     Tests for iterative sigma clipping
 
-    test000 --- to confirm if clipping works regardless of blformat when blfunc='poly'
-    test001 --- to confirm if clipping works regardless of blformat blfunc='cspline'
-    test002 --- to confirm if clipping works regardless of blformat blfunc='sinusoid'
-    test003 --- to confirm if clipping works regardless of blformat blfunc='variable'
+    test000 : to confirm if clipping works regardless of blformat when blfunc='poly'
+    test001 : to confirm if clipping works regardless of blformat blfunc='cspline'
+    test002 : to confirm if clipping works regardless of blformat blfunc='sinusoid'
+    test003 : to confirm if clipping works regardless of blformat blfunc='variable'
 
-    test010 --- clipping runs multiple times (positive spikes only, threshold=3sigma)
-    test011 --- clipping runs multiple times (positive spikes only, threshold=10sigma)
-    test012 --- clipping runs multiple times (negative spikes only)
-    test013 --- clipping runs multiple times (both positive/negative spikes)
+    test010 : clipping runs multiple times (positive spikes only, threshold=3sigma)
+    test011 : clipping runs multiple times (positive spikes only, threshold=10sigma)
+    test012 : clipping runs multiple times (negative spikes only)
+    test013 : clipping runs multiple times (both positive/negative spikes)
 
-    test020 --- clipping does run but actually no data clipped (huge threshold)
-    test021 --- clipping does run but actually no data clipped (no spike)
+    test020 : clipping does run but actually no data clipped (huge threshold)
+    test021 : clipping does run but actually no data clipped (no spike)
     """
 
     datapath = ctsys_resolve('unittest/sdbaseline/')
@@ -3995,33 +3995,43 @@ class sdbaseline_clippingTest(sdbaseline_unittest_base):
         remove_files_dirs(self.outroot)
 
     def test000(self):
+        # test000 : to confirm if clipping works regardless of blformat when blfunc='poly'
         self._run_test(blfunc='poly')
 
     def test001(self):
+        # test001 : to confirm if clipping works regardless of blformat blfunc='cspline'
         self._run_test(blfunc='cspline')
 
     def test002(self):
+        # test002 : to confirm if clipping works regardless of blformat blfunc='sinusoid'
         self._run_test(blfunc='sinusoid')
 
     def test003(self):
+        # test003 : to confirm if clipping works regardless of blformat blfunc='variable'
         self._run_test(blfunc='variable')
 
     def test010(self):
+        # test010 : clipping runs multiple times (positive spikes only, threshold=3sigma)
         self._run_test_multiple_clipping(spikes=[(2000, 1000.0), (4000, 100000.0)])
 
     def test011(self):
+        # test011 : clipping runs multiple times (positive spikes only, threshold=10sigma)
         self._run_test_multiple_clipping(spikes=[(2000, 1000.0), (4000, 100000.0)], thres=10.0)
 
     def test012(self):
+        # test012 : clipping runs multiple times (negative spikes only)
         self._run_test_multiple_clipping(spikes=[(2000, -1000.0), (4000, -100000.0)])
 
     def test013(self):
+        # test013 : clipping runs multiple times (both positive/negative spikes)
         self._run_test_multiple_clipping(spikes=[(2000, -1000.0), (4000, 100000.0)])
 
     def test020(self):
+        # test020 : clipping does run but actually no data clipped (huge threshold)
         self._run_test(thres=100.0, ifclipped=False)
 
     def test021(self):
+        # test021 : clipping does run but actually no data clipped (no spike)
         self._run_test(thres=3.0, spikes=[], ifclipped=False)
 
 
