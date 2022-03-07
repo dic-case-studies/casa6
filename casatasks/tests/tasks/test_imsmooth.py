@@ -26,8 +26,6 @@
 #                        Charlottesville, VA 22903-2475 USA
 #
 
-from __future__ import absolute_import
-from __future__ import print_function
 import random
 import os
 import numpy
@@ -35,36 +33,15 @@ import shutil
 import unittest
 import math
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, image, regionmanager, componentlist, table, quanta
-    from casatasks import imsmooth, casalog, imsubimage
+from casatools import ctsys, image, regionmanager, componentlist, table, quanta
+from casatasks import imsmooth, casalog, imsubimage
 
-    _ia = image()
-    _rg = regionmanager()
-    _tb = table()
-    _qa = quanta()
-    ctsys_resolve = ctsys.resolve
-else:
-    import casac
-    from tasks import *
-    from taskinit import *
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+_ia = image()
+_rg = regionmanager()
+_tb = table()
+_qa = quanta()
+ctsys_resolve = ctsys.resolve
 
-    componentlist = cltool
-    image = iatool
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
-
-    _ia = iatool( )
-    _rg = rgtool()
-
-    # not local tools
-    _tb = tb
-    _qa = qa
 
 datapath = ctsys_resolve('unittest/imsmooth/')
 targetres_im = "imsmooth_targetres.fits"
@@ -107,6 +84,7 @@ def make_gauss2d(shape, xfwhm, yfwhm):
 class imsmooth_test(unittest.TestCase):
 
     def setUp(self):
+        self.tst = 'imsmooth_'
         if(os.path.exists(image_names[0])):
             for file in image_names:
                 os.system('rm -rf ' +file)
@@ -120,20 +98,35 @@ class imsmooth_test(unittest.TestCase):
             os.system('cp -RH '+ os.path.join(datapath,f)+' ' + f)
 
     def tearDown(self):
+        '''Only delete the files copied or created by the test script'''
         self.assertTrue(len(_tb.showcache()) == 0)
         # make sure directory is clean as per verification test requirement
-        cwd = os.getcwd()
-        for filename in os.listdir(cwd):
-            file_path = os.path.join(cwd, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    # CASA 5 tests need this directory
-                    if filename != 'xml':
-                        shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e)) 
+        os.system('rm -rf '+self.tst+'*')
+        os.system('rm -rf smooth'+'*')
+        os.system('rm -rf input_test'+'*')
+        os.system('rm -rf rgn_test'+'*')
+        os.system('rm -rf sub'+'*')
+        for ff in [targetres_im, tiny]:
+            if(os.path.exists(ff)):
+                os.system('rm -rf ' +ff)
+        for ff in image_names:
+            os.system('rm -rf ' + ff)
+        if os.path.exists("test_image2dconvolver_multibeam.im"):
+            shutil.rmtree("test_image2dconvolver_multibeam.im")
+        if os.path.exists( 'garbage.rgn' ):
+            os.remove('garbage.rgn')
+
+        # for filename in os.listdir(cwd):
+        #     file_path = os.path.join(cwd, filename)
+        #     try:
+        #         if os.path.isfile(file_path) or os.path.islink(file_path):
+        #             os.unlink(file_path)
+        #         elif os.path.isdir(file_path):
+        #             # CASA 5 tests need this directory
+        #             if filename != 'xml':
+        #                 shutil.rmtree(file_path)
+        #     except Exception as e:
+        #         print('Failed to delete %s. Reason: %s' % (file_path, e))
  
     ####################################################################
     # Incorrect inputs to parameters.  The parameters are:
@@ -452,10 +445,7 @@ class imsmooth_test(unittest.TestCase):
         casalog.post( "The BOX parameter tests will cause errors to occur, do not be alarmed", 'WARN' )
 
         # CASA6 task throw exceptions, CASA5 tasks return False
-        if is_CASA6 or casa_stack_rethrow:
-            self.assertRaises(Exception, imsmooth, tiny, box='-3,0,511,511', beam=beam)
-        else:
-            self.assertFalse(imsmooth(tiny, box='-3,0,511,511', beam=beam))
+        self.assertRaises(Exception, imsmooth, tiny, box='-3,0,511,511', beam=beam)
 
         x1=random.randint(0,127)
         x2=random.randint(x1,127)
@@ -775,9 +765,9 @@ class imsmooth_test(unittest.TestCase):
         for file in os.listdir( '.' ):
             if file.startswith( 'rgn_test' ):
                 shutil.rmtree( file )
-    
-        if os.path.exists( 'rgn.pointsrc.image' ):
-            shutil.rmtree( 'rgn.pointsrc.image' )
+        rgn_pointsrc = self.tst+'rgn.pointsrc.image'
+        if os.path.exists(rgn_pointsrc):
+            shutil.rmtree(rgn_pointsrc)
     
         # Second step is to create a file with a single point
         # source so that we can check the correctness.  The
@@ -810,7 +800,7 @@ class imsmooth_test(unittest.TestCase):
             
             # Now make the image!
             _ia.fromarray( pixels=inputArray, csys=csys.torecord(), \
-                          outfile='rgn.pointsrc.image' )
+                          outfile=rgn_pointsrc)
             _ia.done()
         except Exception as err:
             retValue['success']=False
@@ -827,7 +817,7 @@ class imsmooth_test(unittest.TestCase):
         #       the should be empty.
     
         try:
-            imsmooth( 'rgn.pointsrc.image', kernel='gauss', \
+            imsmooth(rgn_pointsrc, kernel='gauss', \
                       major=50, minor=25, pa=0, outfile='rgn_test1', \
                       box='350,350,375,390')
         except Exception as err:
@@ -855,7 +845,7 @@ class imsmooth_test(unittest.TestCase):
     
     
         try:
-            imsmooth( 'rgn.pointsrc.image', kernel='gauss', \
+            imsmooth(rgn_pointsrc, kernel='gauss', \
                       major=50, minor=25, pa=0, outfile='rgn_test2', \
                       chans='22')
         except:
@@ -891,7 +881,7 @@ class imsmooth_test(unittest.TestCase):
         #        g192_1.image.rgn      (blc=0,0,0,0 trc=511,511,0,14)
         #
         try:
-            imsmooth( 'rgn.pointsrc.image', kernel='gauss', \
+            imsmooth(rgn_pointsrc, kernel='gauss', \
                       major=10, minor=5, pa=0, outfile='rgn_test3', \
                       chans='14', box='0,0,200,200')
         except:
@@ -934,7 +924,7 @@ class imsmooth_test(unittest.TestCase):
         # This test was all screwed up when it fell in my lap. Fixing as best as I can - dmehring
         output = 'rgn_test5'
         try:
-            imsmooth( 'rgn.pointsrc.image', kernel='gauss', \
+            imsmooth(rgn_pointsrc, kernel='gauss', \
                       major=2, minor=1, pa=0, outfile = output, \
                       region='g192_a2.image:testregion')
         except:
@@ -978,12 +968,12 @@ class imsmooth_test(unittest.TestCase):
     def test_stretch(self):
         """ imsmooth(): Test stretch parameter"""
         yy = image()
-        mymask = "maskim"
+        mymask = self.tst+"maskim"
         yy.fromshape(mymask, [200, 200, 1, 1])
         yy.addnoise()
         yy.done()
         shape = [200,200,1,20]
-        imagename = "tmp.im"
+        imagename = self.tst+"tmp.im"
         yy.fromshape(imagename, shape)
         yy.addnoise()
         yy.done()
@@ -1006,7 +996,7 @@ class imsmooth_test(unittest.TestCase):
         major = "10arcmin"
         minor = "8arcmin"
         pa = "80deg"
-        gotname = 'convolve2d_multibeam.im'
+        gotname = self.tst+'convolve2d_multibeam.im'
         imsmooth(
             imagename=imname, major=major, minor=minor, pa=pa,
             outfile=gotname
@@ -1026,7 +1016,7 @@ class imsmooth_test(unittest.TestCase):
             xx = myia.subimage(region=reg, outfile=subname)
             myia.done()
             xx.done()
-            outname = 'convolve' + str(i) + '.im'
+            outname = self.tst+'convolve' + str(i) + '.im'
             imsmooth(
                 subname, major=major, minor=minor, pa=pa, outfile=outname
             )
@@ -1045,7 +1035,7 @@ class imsmooth_test(unittest.TestCase):
     def test_targetres(self):
         """Test targetres parameter"""
         myia = self.ia
-        imagename = "tres1.im"
+        imagename = self.tst+"tres1.im"
         myia.fromshape(imagename, [100, 100])
         csys = myia.coordsys()
         csys.setunits(["arcsec", "arcsec"])
@@ -1073,12 +1063,12 @@ class imsmooth_test(unittest.TestCase):
                     major = "8arcsec"
                     minor = "4arcsec"
                     pa = "0deg"
-                    outfile = "tres1" + unit[0]
+                    outfile = self.tst+"tres1" + unit[0]
                 else:
                     major = "10arcsec"
                     minor = "5arcsec"
                     pa = "0deg"
-                    outfile = "tres2" + unit[0]
+                    outfile = self.tst+"tres2" + unit[0]
                 run_imsmooth(
                     imagename=imagename, kernel="gaussian",
                     major=major, minor=minor, pa=pa, targetres=targetres,
@@ -1147,9 +1137,9 @@ class imsmooth_test(unittest.TestCase):
                     ebeam.append(gotbeam)
                     convim.done()
                 if targetres:
-                    outfile = "tres3" + unit[0]
+                    outfile = self.tst+"tres3" + unit[0]
                 else:
-                    outfile = "tres4" + unit[0]
+                    outfile = self.tst+"tres4" + unit[0]
                 run_imsmooth(
                      imagename=imagename, kernel="gaussian",
                      major=major, minor=minor, pa=pa, targetres=targetres,
@@ -1169,7 +1159,7 @@ class imsmooth_test(unittest.TestCase):
             major="6arcsec", minor="3arcsec", pa="0deg"
         )
         myia.done()
-        outfile = "tres6"
+        outfile = self.tst+"tres6"
         with self.assertRaises(RuntimeError):
             run_imsmooth(
                 imagename=imagename, kernel="gaussian",
@@ -1180,9 +1170,9 @@ class imsmooth_test(unittest.TestCase):
     def test_overwrite(self):
         """ test overwrite parameter """
         myia = self.ia
-        outfile = "test_overwrite.im"
+        outfile = self.tst+"test_overwrite.im"
         myia.fromshape(outfile, [200, 200])
-        imagename = "input_overwrite"
+        imagename = self.tst+"input_overwrite"
         myia.fromshape(imagename, [200, 200])
         myia.done()
         run_imsmooth(
@@ -1202,7 +1192,7 @@ class imsmooth_test(unittest.TestCase):
     def test_beam(self):
         """Test the beam parameter"""
         myia = self.ia
-        imagename = "tbeam1.im"
+        imagename = self.tst+"tbeam1.im"
         myia.fromshape(imagename, [100, 100])
         csys = myia.coordsys()
         csys.setunits(["arcsec", "arcsec"])
@@ -1221,7 +1211,7 @@ class imsmooth_test(unittest.TestCase):
                 "pa": {"unit": "deg", "value": 0},
             }
         ]:
-            outfile = 'smooth'
+            outfile = self.tst+'smooth'
             x = run_imsmooth(
                 imagename=imagename, major="", minor="", pa="",
                 beam=beam, outfile=outfile, targetres=False,
@@ -1237,7 +1227,7 @@ class imsmooth_test(unittest.TestCase):
     def test_conserve_flux(self):
         """Test flux density is conserved for images with units of K or anything without 'beam'"""
         myia = self.ia
-        imagename = "tres1x.im"
+        imagename = self.tst+"tres1x.im"
         myia.fromshape(imagename, [100, 100])
         csys = myia.coordsys()
         csys.setunits(["arcsec", "arcsec"])
@@ -1254,7 +1244,7 @@ class imsmooth_test(unittest.TestCase):
             mycl.fromrecord(zz['results'])
             expected = mycl.getfluxvalue(0)
             gg = image()
-            outfile = "gxg_" + unit + ".im"
+            outfile = self.tst+"gxg_" + unit + ".im"
             imsmooth(
                 imagename=imagename, targetres=True, major="10arcsec", minor="5arcsec",
                 pa="0deg", outfile=outfile
@@ -1271,7 +1261,7 @@ class imsmooth_test(unittest.TestCase):
     def test_commonbeam(self):
         """Test kernel='commonbeam' in imsmooth"""
         myia = self.ia
-        imagename = "cb1.im"
+        imagename = self.tst+"cb1.im"
         myia.fromshape(imagename, [100, 100, 5])
         csys = myia.coordsys()
         csys.setunits(["arcsec", "arcsec", "Hz"])
@@ -1279,7 +1269,7 @@ class imsmooth_test(unittest.TestCase):
         myia.setcoordsys(csys.torecord())
         myia.setbrightnessunit("Jy/beam")
         myia.done()
-        outfile = "cbout1.im"
+        outfile = self.tst+"cbout1.im"
         
         myia.open(imagename)
         myia.setrestoringbeam(major="6arcsec", minor="3arcsec", pa="0deg")
@@ -1299,7 +1289,7 @@ class imsmooth_test(unittest.TestCase):
         self.assertTrue(abs(_qa.getvalue(beam['minor']) - 3*root2) < 1e-6)
         self.assertTrue(abs(_qa.getvalue(beam['positionangle'])) < 1e-5)
         """
-        outfile = "cbout2.im"
+        outfile = self.tst+"cbout2.im"
         imsmooth(
             imagename=imagename, kernel='commonbeam', outfile=outfile,
             targetres=True
@@ -1318,7 +1308,7 @@ class imsmooth_test(unittest.TestCase):
 
         myia.setrestoringbeam(major="8arcsec", minor="4arcsec", pa="0deg", channel=1)
         myia.done()
-        outfile = "cbout3.im"
+        outfile = self.tst+"cbout3.im"
         """
         self.assertTrue(
             imsmooth(
@@ -1340,7 +1330,7 @@ class imsmooth_test(unittest.TestCase):
             self.assertTrue(abs(_qa.getvalue(beam['positionangle'])) < 1e-5)
         myia.done()
         """
-        outfile = "cbout4.im"
+        outfile = self.tst+"cbout4.im"
         imsmooth(
             imagename=imagename, kernel='commonbeam', outfile=outfile,
             targetres=True
@@ -1358,7 +1348,7 @@ class imsmooth_test(unittest.TestCase):
         """Test image as kernel, CAS-5844"""
         imagename = os.path.join(datapath,"point.im")
         kimage = os.path.join(datapath,"bessel.im")
-        outfile = "point_c_bessel.im"
+        outfile = self.tst+"point_c_bessel.im"
         imsmooth(
             imagename=imagename, kernel="i",
             kimage=kimage, outfile=outfile
@@ -1388,13 +1378,13 @@ class imsmooth_test(unittest.TestCase):
     def test_history(self):
         """Test that history is written"""
         myia = self.ia
-        imagename = "zz.im"
+        imagename = self.tst+"zz.im"
         myia.fromshape(imagename, [20,20])
         major = "2arcmin"
         minor = "2arcmin"
         pa = "0deg"
         myia.done()
-        outfile = "zz_out.im"
+        outfile = self.tst+"zz_out.im"
         imsmooth(
             imagename=imagename, outfile=outfile,
             major=major, minor=minor, pa=pa
@@ -1410,7 +1400,7 @@ class imsmooth_test(unittest.TestCase):
 
     def test_copying_of_input_mask(self):
         """CAS-12904: copy input mask to output image"""
-        imname = 'orig.im'
+        imname = self.tst+'orig.im'
         yy = image()
         yy.fromshape(imname, [100, 100, 3])
         pix = yy.getchunk()
@@ -1418,7 +1408,7 @@ class imsmooth_test(unittest.TestCase):
             pix[:, :, i] = i
         yy.putchunk(pix)
         yy.done()
-        outname = 'mysub.im'
+        outname = self.tst+'mysub.im'
         imsubimage(imagename=imname, outfile=outname, mask=imname + '>0')
         subi = image()
         subi.open(outname)
@@ -1431,7 +1421,7 @@ class imsmooth_test(unittest.TestCase):
                 self.assertEqual(npts[0], 10000, 'wrong number of pts')
         subi.done()
         imname = outname
-        outname = 'conv.im'
+        outname = self.tst+'conv.im'
         imsmooth(
             imname, major='4arcmin', minor='4arcmin', pa='0deg',
             mask=imname + '<2', outfile=outname
@@ -1446,9 +1436,5 @@ class imsmooth_test(unittest.TestCase):
                 self.assertEqual(npts[0], 10000, 'wrong number of pts')
         yy.done()     
 
-def suite():
-    return [imsmooth_test]    
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
