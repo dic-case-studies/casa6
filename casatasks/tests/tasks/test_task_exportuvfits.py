@@ -1,3 +1,23 @@
+##########################################################################
+# test_tool_agentflagger.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.data.exportuvfits.html
+#
+##########################################################################
+
 import os
 import shutil
 import unittest
@@ -127,12 +147,10 @@ class exportuvfits_test(unittest.TestCase):
         exportuvfits(vis=testdata, fitsfile=output, field='0')
         importuvfits(fitsfile=output, vis=reimport)
 
-        fields = set()
         expected_fields = {0}
 
         _tb.open(reimport)
-        for i in _tb.getcol('FIELD_ID'):
-            fields.add(i)
+        fields = {i for i in _tb.getcol('FIELD_ID')}
         _tb.close()
 
         self.assertTrue(fields == expected_fields)
@@ -155,12 +173,10 @@ class exportuvfits_test(unittest.TestCase):
         exportuvfits(vis=testdata, fitsfile=output, antenna='0')
         importuvfits(fitsfile=output, vis=reimport)
 
-        antennas = set()
         expected_antennas = {0}
 
         _tb.open(reimport)
-        for i in _tb.getcol('ANTENNA1'):
-            antennas.add(i)
+        antennas = {i for i in _tb.getcol('ANTENNA1')}
         _tb.close()
 
         print(antennas, expected_antennas)

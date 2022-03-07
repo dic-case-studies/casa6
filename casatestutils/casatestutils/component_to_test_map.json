@@ -391,7 +391,7 @@
             "comment":"DEFAULT"
         },
         {
-            "testScript":"test_exportuvfits",
+            "testScript":"test_task_exportuvfits",
             "testType":"casatasks",
             "maintainer":"Dave Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
