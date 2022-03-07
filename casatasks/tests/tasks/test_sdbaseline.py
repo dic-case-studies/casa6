@@ -2837,118 +2837,92 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
     List of tests:
 
     test000 --- no bloutput cases
-    test001 --- no bloutput cases (blformat/bloutput with multiple elements)
 
-    test010 --- single bloutput cases (bltable)
-    test011 --- single bloutput cases (text)
-    test012 --- single bloutput cases (csv)
-    test013 --- single bloutput cases (blformat with an empty element)
-    test014 --- single bloutput cases (blformat with empty elements)
+    test010 --- single bloutput cases
+    test011 --- single bloutput cases (blformat with extra empty elements)
 
     test020 --- double bloutput cases
-    test021 --- double bloutput cases (blformat with an empty element)
+    test021 --- double bloutput cases (blformat with an extra empty element)
 
     test030 --- triple bloutput cases
-    test031 --- triple bloutput cases (in a different order)
-    test032 --- triple bloutput cases (in a different order)
 
-    test100 --- sinusoid test for addwn/rejwn
-    test101 --- sinusoid test for addwn/rejwn
+    test100 --- sinusoid test for finite wavenumber patterns
+    test101 --- sinusoid test for infinite wavenumber pattern
     """
 
     infile = 'OrionS_rawACSmod_calave.ms'
+    outfile = 'test.ms'
+    blparam = 'analytic_variable_blparam.txt'
+
+    blfuncs = ['poly', 'cspline', 'sinusoid', 'variable']
+    blout_exts = {'text': '.txt', 'csv': '.csv', 'table': '.bltable'}
+    blout_fmts_short = ['text', 'csv']
+    wns = ['0', '02', '1']
 
     blout_default_root = infile + '_blparam'
-    blout_defaults = {'text': blout_default_root + '.txt',
-                      'csv': blout_default_root + '.csv',
-                      'table': blout_default_root + '.bltable'}
+    blout_defaults = {}
+    blout_nondefault_root = infile + '_bloutput_nondefault'
+    blout_nondefaults = {}
+    ref_blout_root = 'bloutput_'
+    ref_blout = {}
+    ref_blout_s_root = 'bloutput_sinusoid_addwn012_rejwn'
+    ref_blout_s = {}
 
-    blout_test_root = 'test'
-    blout_tests = {'text': blout_test_root + '.txt',
-                   'csv': blout_test_root + '.csv',
-                   'table': blout_test_root + '.bltable'}
+    for fmt in blout_exts.keys():
+        blout_defaults[fmt] = blout_default_root + blout_exts[fmt]
+        blout_nondefaults[fmt] = blout_nondefault_root + blout_exts[fmt]
 
-    outroot = sdbaseline_unittest_base.taskname + '_bloutputtest'
-    outfile = "test.ms"
-    blparam = 'analytic_variable_blparam.txt'
-    blfunc = 'poly'
+        ref_blout[fmt] = {}
+        for fn in blfuncs:
+            ref_blout[fmt][fn] = ref_blout_root + fn + blout_exts[fmt]
 
-    ref_blout = {'text': {'poly': 'bloutput_poly.txt',
-                          'cspline': 'bloutput_cspline.txt',
-                          'sinusoid': 'bloutput_sinusoid.txt',
-                          'variable': 'bloutput_variable.txt'},
-                 'csv': {'poly': 'bloutput_poly.csv',
-                         'cspline': 'bloutput_cspline.csv',
-                         'sinusoid': 'bloutput_sinusoid.csv',
-                         'variable': 'bloutput_variable.csv'},
-                 'table': {'poly': 'bloutput_poly.bltable',
-                           'cspline': 'bloutput_cspline.bltable',
-                           'sinusoid': 'bloutput_sinusoid.bltable',
-                           'variable': 'bloutput_variable.bltable'}
-                 }
+        ref_blout_s[fmt] = {}
+        for wn in wns:
+            ref_blout_s[fmt][wn] = ref_blout_s_root + wn + blout_exts[fmt]
 
-    blout_s_root = 'bloutput_sinusoid_addwn012_rejwn'
-    blout_s = {'text': {'0': blout_s_root + '0' + '.txt',
-                        '02': blout_s_root + '02' + '.txt',
-                        '1': blout_s_root + '1' + '.txt'
-                        },
-               'csv': {'0': blout_s_root + '0' + '.csv',
-                       '02': blout_s_root + '02' + '.csv',
-                       '1': blout_s_root + '1' + '.csv'
-                       }
-               }
-
-    blout_s_addGt4000rej4005_txt = 'bloutput_sinusoid_addwnGt4000_rejwn4005.txt'
+    ref_blout101 = 'bloutput_sinusoid_addwnGt4000_rejwn4005.txt'
 
     base_param = dict(infile=infile,
-                      blfunc=blfunc,
                       datacolumn='float_data',
                       maskmode='list',
                       outfile=outfile,
                       blparam=blparam)
 
     def setUp(self):
-        remove_single_file_dir(self.infile)
-        shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
+        self._clear_working_directory()
 
-        remove_single_file_dir(self.blparam)
-        shutil.copyfile(os.path.join(self.datapath, self.blparam), self.blparam)
+        self._copy_data(self.infile)
+        self._copy_data(self.blparam)
 
-        for fn in ['poly', 'cspline', 'sinusoid', 'variable']:
-            shutil.copyfile(os.path.join(self.datapath, self.ref_blout['text'][fn]),
-                            self.ref_blout['text'][fn])
-            shutil.copyfile(os.path.join(self.datapath, self.ref_blout['csv'][fn]),
-                            self.ref_blout['csv'][fn])
-        rejwns = [[0], [0, 2], [1]]
-        fmts = ['text', 'csv']
-        lst = [(rejwn, fmt) for rejwn in rejwns for fmt in fmts]
-        for rejwn, fmt in lst:
-            the_file = self.blout_s[fmt][''.join([str(v) for v in rejwn])]
-            shutil.copyfile(os.path.join(self.datapath, the_file), the_file)
-        shutil.copyfile(os.path.join(self.datapath,
-                                     self.blout_s_addGt4000rej4005_txt),
-                        self.blout_s_addGt4000rej4005_txt)
+        for fmt in self.blout_fmts_short:
+            for fn in self.blfuncs:
+                self._copy_data(self.ref_blout[fmt][fn])
+            for wn in self.wns:
+                self._copy_data(self.ref_blout_s[fmt][wn])
+
+        self._copy_data(self.ref_blout101)
 
         default(sdbaseline)
 
-        for fmt in ['text', 'csv', 'table']:
-            remove_single_file_dir(self.blout_defaults[fmt])
-            remove_single_file_dir(self.blout_tests[fmt])
-
     def tearDown(self):
+        self._clear_working_directory()
+
+    def _clear_working_directory(self):
         remove_single_file_dir(self.infile)
-        remove_single_file_dir(self.outroot)
         remove_single_file_dir(self.outfile)
         remove_single_file_dir(self.blparam)
-        for fn in ['poly', 'cspline', 'sinusoid', 'variable']:
-            remove_single_file_dir(self.ref_blout['text'][fn])
-            remove_single_file_dir(self.ref_blout['csv'][fn])
-        for bfmt, brej in [(f, r) for f in ['text', 'csv'] for r in ['0', '02', '1']]:
-            remove_single_file_dir(self.blout_s[bfmt][brej])
-        remove_single_file_dir(self.blout_s_addGt4000rej4005_txt)
 
-        for fmt in ['text', 'csv', 'table']:
-            remove_single_file_dir(self.blout_tests[fmt])
+        for fmt in self.blout_fmts_short:
+            for fn in self.blfuncs:
+                remove_single_file_dir(self.ref_blout[fmt][fn])
+            for wn in self.wns:
+                remove_single_file_dir(self.ref_blout_s[fmt][wn])
+
+        remove_single_file_dir(self.ref_blout101)
+
+        for fmt in self.blout_exts.keys():
+            remove_single_file_dir(self.blout_defaults[fmt])
+            remove_single_file_dir(self.blout_nondefaults[fmt])
 
     def exec_sdbaseline(self, **kwargs):
         task_param = self.base_param.copy()
@@ -2969,6 +2943,13 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
                              msg='parameter values of the output csv file are \
                                   not equivalent to referece values!')
 
+    def _copy_data(self, filename):
+        remote = os.path.join(self.datapath, filename)
+        if os.path.isdir(remote):
+            shutil.copytree(remote, filename)
+        else:
+            shutil.copyfile(remote, filename)
+
     def _set_actual_bloutput(self, blfmt, blout):
         res = {}
         if blfmt == '':
@@ -2982,10 +2963,42 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
 
         return res
 
-    def _run_test(self, blformat, bloutput):
+    def _create_test_cases(self, blformat):
+        # generate a full list of possible bloutput for given blformat.
+        # for example, when blformat=['csv', 'text'], the returned value will be:
+        # [ ['',''],['foo.csv',''],['','foo.txt'],['foo.csv','foo.txt'] ]
+        # in case blformat has only one element (or a string) like ['csv'],
+        # string values '' and 'foo.csv' are added to the returned value.
+
+        bloutputs = []
+
+        if isinstance(blformat, str):
+            blformat = [blformat]
+
+        if not isinstance(blformat, list):
+            raise Exception('blformat must be list or string!')
+
+        if len(blformat) == 0:
+            raise Exception('blformat must have one element at least!')
+
+        for i in range(2 ** len(blformat)):
+            bloutput = []
+            idxs = [int(v) for v in str(bin(i))[2:].zfill(len(blformat))]
+            for j in range(len(idxs)):
+                elem = '' if idxs[j] == 0 else self.blout_nondefaults[blformat[j]]
+                bloutput.append(elem)
+            bloutputs.append(bloutput)
+
+        if len(blformat) == 1:
+            bloutputs.append('')
+            bloutputs.append(self.blout_nondefaults[blformat[0]])
+
+        return bloutputs
+
+    def _do_run_test(self, blformat, bloutput):
         # print(f'testing blformat={blformat}, bloutput={bloutput}')
 
-        for blfunc in ['poly', 'cspline', 'sinusoid', 'variable']:
+        for blfunc in self.blfuncs:
             result = self.exec_sdbaseline(blfunc=blfunc, blformat=blformat, bloutput=bloutput)
             self.assertIsNone(result, msg=f'invalid return value ({result})')
 
@@ -3008,154 +3021,96 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
                     fdef = self.blout_defaults[blfmt]
                     self.assertFalse(os.path.exists(fdef), msg=f'{fdef} exists!')
                 if blfmt != 'table':
-                    ref_blout = self.ref_blout[blfmt][blfunc]
-                    self.assertEqual(os.system('diff ' + the_blout + ' ' + ref_blout), 0,
-                                     msg=f'{the_blout} is not equivalent to {ref_blout}')
+                    res = filecmp.cmp(the_blout, self.ref_blout[blfmt][blfunc])
+                    self.assertTrue(res, msg=f'{the_blout} is not identical with the reference!')
 
             remove_single_file_dir(self.outfile)
             remove_files_dirs(self.blout_default_root)
-            remove_files_dirs(self.blout_test_root)
+            remove_files_dirs(self.blout_nondefault_root)
+
+    def _get_blformat_inclusive(self, blformats):
+        for i in range(len(blformats)):
+            if isinstance(blformats[i], str):
+                blformats[i] = [blformats[i]]
+
+        res = [''] * len(blformats[0])
+        for blformat in blformats:
+            for i in range(len(blformat)):
+                if blformat[i] != '':
+                    res[i] = blformat[i]
+
+        if res == ['']:
+            res = ['text']
+        elif res == ['', '']:
+            res = ['text', 'csv']
+        elif res == ['', '', '']:
+            res = ['text', 'csv', 'table']
+
+        return res
+
+    def _run_test(self, blformats):
+        blfmt_incl = self._get_blformat_inclusive(blformats)
+        bloutputs = self._create_test_cases(blfmt_incl)
+        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
+        for blformat, bloutput in lst:
+            self._do_run_test(blformat=blformat, bloutput=bloutput)
 
     def test000(self):
         # no bloutput cases
-        blformats = ['', ['']]
-        bloutputs = ['', [''], 'test.csv', ['test.csv']]
-        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
-        for blformat, bloutput in lst:
-            self._run_test(blformat=blformat, bloutput=bloutput)
-
-    def test001(self):
-        # no bloutput cases (blformat/bloutput with multiple elements)
-        bloutputs = [['', '', ''], ['test.csv', 'test.txt', 'test.bltable']]
-        for bloutput in bloutputs:
-            self._run_test(blformat=['', '', ''], bloutput=bloutput)
+        self._run_test(['', ['']])
+        self._run_test([['', '']])
+        self._run_test([['', '', '']])
 
     def test010(self):
-        # single bloutput (bltable) cases
-        blformats = ['table', ['table']]
-        bloutputs = ['', [''], 'test.bltable', ['test.bltable']]
-        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
-        for blformat, bloutput in lst:
-            self._run_test(blformat=blformat, bloutput=bloutput)
+        # single bloutput cases
+        self._run_test(['text', ['text']])
+        self._run_test(['csv', ['csv']])
+        self._run_test(['table', ['table']])
 
     def test011(self):
-        # single bloutput (text) cases
-        blformats = ['text', ['text']]
-        bloutputs = ['', [''], 'test.txt', ['test.txt']]
-        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
-        for blformat, bloutput in lst:
-            self._run_test(blformat=blformat, bloutput=bloutput)
-
-    def test012(self):
-        # single bloutput (csv) cases
-        blformats = ['csv', ['csv']]
-        bloutputs = ['', [''], 'test.csv', ['test.csv']]
-        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
-        for blformat, bloutput in lst:
-            self._run_test(blformat=blformat, bloutput=bloutput)
-
-    def test013(self):
-        # single bloutput cases (blformat with an empty element)
-        blformats = [['', 'csv'], ['text', '']]
-        bloutputs = [['', 'test.csv'], ['test.text', '']]
-        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
-        for blformat, bloutput in lst:
-            self._run_test(blformat=blformat, bloutput=bloutput)
-
-    def test014(self):
         # single bloutput cases (blformat with empty elements)
-        blformats = [['', '', 'csv'], ['', 'text', ''], ['csv', '', '']]
-        bloutputs = [['', '', 'test.csv'], ['', 'test.text', ''], ['test.csv', '', '']]
-        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
-        for blformat, bloutput in lst:
-            self._run_test(blformat=blformat, bloutput=bloutput)
+        self._run_test([['', 'csv'], ['text', '']])
+        self._run_test([['', '', 'table'], ['', 'text', ''], ['csv', '', '']])
 
     def test020(self):
         # double bloutput cases
-        blformat = ['table', 'text']
-        bloutputs = [['', ''], ['test.bltable', ''], ['', 'test.txt'], ['test.bltable', 'test.txt']]
-        for bloutput in bloutputs:
-            self._run_test(blformat=blformat, bloutput=bloutput)
-
-        blformat = ['text', 'table']
-        bloutputs = [['', ''], ['test.txt', ''], ['', 'test.bltable'], ['test.txt', 'test.bltable']]
-        for bloutput in bloutputs:
-            self._run_test(blformat=blformat, bloutput=bloutput)
-
-        blformat = ['table', 'csv']
-        bloutputs = [['', ''], ['test.bltable', ''], ['', 'test.csv'], ['test.bltable', 'test.csv']]
-        for bloutput in bloutputs:
-            self._run_test(blformat=blformat, bloutput=bloutput)
-
-        blformat = ['csv', 'table']
-        bloutputs = [['', ''], ['test.csv', ''], ['', 'test.bltable'], ['test.csv', 'test.bltable']]
-        for bloutput in bloutputs:
-            self._run_test(blformat=blformat, bloutput=bloutput)
-
-        blformat = ['text', 'csv']
-        bloutputs = [['', ''], ['test.txt', ''], ['', 'test.csv'], ['test.txt', 'test.csv']]
-        for bloutput in bloutputs:
-            self._run_test(blformat=blformat, bloutput=bloutput)
+        self._run_test([['table', 'text']])
+        self._run_test([['text', 'table']])
+        self._run_test([['table', 'csv']])
+        self._run_test([['csv', 'table']])
+        self._run_test([['text', 'csv']])
+        self._run_test([['csv', 'text']])
 
     def test021(self):
         # double bloutput cases (blformat with an empty element)
-        blformats = [['table', 'text', ''], ['table', '', 'csv'], ['', 'text', 'csv']]
-        bloutputs = [['', '', ''], ['test.bltable', '', ''],
-                     ['', 'test.txt', ''], ['', '', 'test.csv']]
-        lst = [(blformat, bloutput) for blformat in blformats for bloutput in bloutputs]
-        for blformat, bloutput in lst:
-            self._run_test(blformat=blformat, bloutput=bloutput)
+        self._run_test([['table', 'text', ''], ['table', '', 'csv'], ['', 'text', 'csv']])
 
     def test030(self):
         # triple bloutput cases
-        blformat = ['table', 'text', 'csv']
-        bloutputs = [['', '', ''],
-                     ['test.bltable', '', ''], ['', 'test.txt', ''], ['', '', 'test.csv'],
-                     ['test.bltable', 'test.txt', ''], ['test.bltable', '', 'test.csv'],
-                     ['', 'test.txt', 'test.csv'], ['test.bltable', 'test.txt', 'test.csv']]
-        for bloutput in bloutputs:
-            self._run_test(blformat=blformat, bloutput=bloutput)
-
-    def test031(self):
-        # triple bloutput cases (in a different order)
-        blformat = ['text', 'table', 'csv']
-        bloutputs = [['', '', ''],
-                     ['test.txt', '', ''], ['', 'test.bltable', ''], ['', '', 'test.csv'],
-                     ['test.txt', 'test.bltable', ''], ['test.txt', '', 'test.csv'],
-                     ['', 'test.bltable', 'test.csv'], ['test.bltable', 'test.txt', 'test.csv']]
-        for bloutput in bloutputs:
-            self._run_test(blformat=blformat, bloutput=bloutput)
-
-    def test032(self):
-        # triple bloutput cases (in a different order)
-        blformat = ['csv', 'text', 'table']
-        bloutputs = [['', '', ''],
-                     ['test.csv', '', ''], ['', 'test.txt', ''], ['', '', 'test.bltable'],
-                     ['test.csv', 'test.txt', ''], ['test.csv', '', 'test.bltable'],
-                     ['', 'test.txt', 'test.bltable'], ['test.csv', 'test.txt', 'test.bltable']]
-        for bloutput in bloutputs:
-            self._run_test(blformat=blformat, bloutput=bloutput)
+        self._run_test([['table', 'text', 'csv']])
+        self._run_test([['text', 'table', 'csv']])
+        self._run_test([['csv', 'text', 'table']])
 
     def _run_sinusoid_test(self, rejwn):
         # print(f'testing {rejwn}...')
 
-        blformat = ['text', 'csv']
+        blformat = self.blout_fmts_short  # ['text', 'csv']
         result = self.exec_sdbaseline(blfunc='sinusoid', addwn=[0, 1, 2], rejwn=rejwn,
                                       blformat=blformat, bloutput=['', ''])
         self.assertIsNone(result, msg=f'invalid return value ({result})')
 
         for fmt in blformat:
             the_blout = self.blout_defaults[fmt]
-            ref_blout = self.blout_s[fmt][''.join([str(v) for v in rejwn])]
-            diff_value = os.system(f'diff {the_blout} {ref_blout}')
-            self.assertEqual(diff_value, 0, msg=f'{the_blout} is not equivalent to {ref_blout}')
+            ref_blout = self.ref_blout_s[fmt][''.join([str(v) for v in rejwn])]
+            res = filecmp.cmp(the_blout, ref_blout)
+            self.assertTrue(res, msg=f'{the_blout} is not identical with the reference!')
 
         remove_single_file_dir(self.outfile)
         remove_files_dirs(self.blout_default_root)
-        remove_files_dirs(self.blout_test_root)
+        remove_files_dirs(self.blout_nondefault_root)
 
     def test100(self):
-        # sinusoid test for addwn/rejwn
+        # confirm if bloutput is correctly output for various wavenumber sets
         rejwns = [[0], [0, 2], [1]]
         for rejwn in rejwns:
             self._run_sinusoid_test(rejwn)
@@ -3175,14 +3130,13 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
                                       blformat=blformat, bloutput=bloutput, spw=spw)
         self.assertIsNone(result, msg=f'invalid return value ({result})')
 
-        cmd = 'diff ' + self.blout_defaults['text'] + ' ' + self.blout_s_addGt4000rej4005_txt
-        diff_val = os.system(cmd)
-        msg = self.blout_defaults['text'] + ' differs with ' + self.blout_s_addGt4000rej4005_txt
-        self.assertEqual(diff_val, 0, msg=msg)
+        the_blout = self.blout_defaults['text']
+        res = filecmp.cmp(the_blout, self.ref_blout101)
+        self.assertTrue(res, msg=f'{the_blout} is not identical with the reference!')
 
         remove_single_file_dir(self.outfile)
         remove_files_dirs(self.blout_default_root)
-        remove_files_dirs(self.blout_test_root)
+        remove_files_dirs(self.blout_nondefault_root)
 
 
 class sdbaseline_autoTest(sdbaseline_unittest_base):
