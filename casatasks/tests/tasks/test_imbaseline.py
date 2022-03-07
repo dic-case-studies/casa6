@@ -38,13 +38,13 @@ from casatools import ctsys, image, table
 _tb = table()
 
 # https://open-bitbucket.nrao.edu/projects/CASA/repos/casatestdata/browse/unittest
-DATAPATH = ctsys.resolve('unittest/imbaseline/')
+DATAPATH = ctsys.resolve("unittest/imbaseline/")
 
-DATACOLUMN = 'DATA'
-UNEXISTS = 'unexists'
-DUMMY_FOLDERS = ('dummy1', 'dummy2', 'dummy3')
+DATACOLUMN = "DATA"
+UNEXISTS = "unexists"
+DUMMY_FOLDERS = ("dummy1", "dummy2", "dummy3")
 
-casalog.origin('imbaseline')
+casalog.origin("imbaseline")
 
 
 class test_base(unittest.TestCase):
@@ -57,22 +57,23 @@ class test_base(unittest.TestCase):
         exception_type: type of exception
         exception_pattern: regex for inspecting exception message using re.search
         """
+
         def wrapper(func):
             @functools.wraps(func)
             def _wrapper(self):
-                self.assertTrue(len(exception_pattern) > 0,
-                                msg='Internal Error')
+                self.assertTrue(len(exception_pattern) > 0, msg="Internal Error")
                 with self.assertRaises(exception_type) as ctx:
                     func(self)
-                    self.fail(msg='The task must throw an exception')
+                    self.fail(msg="The task must throw an exception")
                 the_exception = ctx.exception
                 message = str(the_exception)
                 self.assertIsNotNone(
-                    re.search(
-                        exception_pattern,
-                        message),
-                    msg=f'Expected: \'{exception_pattern}\', got: \'{message}\'')
+                    re.search(exception_pattern, message),
+                    msg=f"Expected: '{exception_pattern}', got: '{message}'",
+                )
+
             return _wrapper
+
         return wrapper
 
     @classmethod
@@ -82,7 +83,7 @@ class test_base(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.chdir('..')
+        os.chdir("..")
         cls.workdir.clean()
 
     def tearDown(self):
@@ -98,7 +99,7 @@ class test_base(unittest.TestCase):
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+                print("Failed to delete %s. Reason: %s" % (file_path, e))
 
     def _create_dummy_folders(self):
         def _setup_folder(folder):
@@ -133,23 +134,23 @@ class test_base(unittest.TestCase):
     def _check_ms_tables(self, path):
         self.assertTrue(os.path.exists(path))
         for table_name in (
-            '',
-            'ANTENNA',
-            'DATA_DESCRIPTION',
-            'FEED',
-            'FIELD',
-            'FLAG_CMD',
-            'HISTORY',
-            'OBSERVATION',
-            'POINTING',
-            'POLARIZATION',
-            'PROCESSOR',
-            'SOURCE',
-            'SPECTRAL_WINDOW',
-                'STATE'):
+            "",
+            "ANTENNA",
+            "DATA_DESCRIPTION",
+            "FEED",
+            "FIELD",
+            "FLAG_CMD",
+            "HISTORY",
+            "OBSERVATION",
+            "POINTING",
+            "POLARIZATION",
+            "PROCESSOR",
+            "SOURCE",
+            "SPECTRAL_WINDOW",
+            "STATE",
+        ):
             table_path = os.path.join(path, table_name)
-            self.assertTrue(os.path.exists(
-                os.path.join(table_path, 'table.dat')))
+            self.assertTrue(os.path.exists(os.path.join(table_path, "table.dat")))
 
 
 class TestFileStack(test_base):
@@ -185,7 +186,7 @@ class TestFileStack(test_base):
         stack = _CasaImageStack(_UnerasableFolder(DUMMY_FOLDERS[0]))
         self.assertTrue(stack.height() == 1)
 
-    @test_base.exception_case(ValueError, f'file {UNEXISTS} is not found')
+    @test_base.exception_case(ValueError, f"file {UNEXISTS} is not found")
     def test_filestack_02(self):
         """02. failure case: Create Stack with unexist file, an exception raises."""
         _CasaImageStack(_UnerasableFolder(UNEXISTS))
@@ -196,7 +197,7 @@ class TestFileStack(test_base):
         stack.push(_UnerasableFolder(DUMMY_FOLDERS[0]))
         self.assertTrue(stack.height() == 1)
 
-    @test_base.exception_case(ValueError, f'file {UNEXISTS} is not found')
+    @test_base.exception_case(ValueError, f"file {UNEXISTS} is not found")
     def test_filestack_04(self):
         """04. failure case: push() unexist file into stack, an exception raises."""
         stack = _CasaImageStack()
@@ -212,7 +213,7 @@ class TestFileStack(test_base):
         self.assertEqual(obj, tmp)
         self.assertTrue(stack.height() == 1)
 
-    @test_base.exception_case(RuntimeError, 'the stack cannot pop')
+    @test_base.exception_case(RuntimeError, "the stack cannot pop")
     def test_filestack_06(self):
         """06. failure case: pop() unexist stuff into stack, an exception raises."""
         stack = _CasaImageStack()
@@ -231,7 +232,7 @@ class TestFileStack(test_base):
         self.assertEqual(stack.subpeak(), obj2)
         self.assertEqual(stack.bottom(), obj1)
 
-    @test_base.exception_case(RuntimeError, 'the stack is empty')
+    @test_base.exception_case(RuntimeError, "the stack is empty")
     def test_filestack_08(self):
         """08. failure case: peak() unexist stuff into stack, an exception raises."""
         stack = _CasaImageStack()
@@ -251,7 +252,7 @@ class TestFileStack(test_base):
         self.assertEqual(stack.subpeak(), obj2)
         self.assertEqual(stack.bottom(), obj1)
 
-    @test_base.exception_case(RuntimeError, 'the stack has only one stuff')
+    @test_base.exception_case(RuntimeError, "the stack has only one stuff")
     def test_filestack_10(self):
         """10. failure case: subpeak() unexist stuff into stack, an exception raises."""
         stack = _CasaImageStack(_UnerasableFolder(DUMMY_FOLDERS[0]))
@@ -276,8 +277,7 @@ class TestFileStack(test_base):
         self.assertEqual(stack.peak(), obj2)
         self.assertEqual(stack.bottom(), obj1)
 
-    @test_base.exception_case(RuntimeError,
-                              'the stack has not have enough stuff')
+    @test_base.exception_case(RuntimeError, "the stack has not have enough stuff")
     def test_filestack_12(self):
         """12. failure case: bottom() unexist stuff into stack, an exception raises."""
         stack = _CasaImageStack()
@@ -325,7 +325,7 @@ class TestFileStack(test_base):
         stack.pop()
         self.assertEqual(stack.height(), 1)
 
-    @test_base.exception_case(RuntimeError, 'the stack cannot pop')
+    @test_base.exception_case(RuntimeError, "the stack cannot pop")
     def test_filestack_18(self):
         """18. failure case: pop() when height is 1, an exception raises."""
         stack = _CasaImageStack()
@@ -349,28 +349,41 @@ class TestImageShape(test_base):
 
     def test_imageshape_01(self):
         """01. successful case: axis_sp = axis_pol = 2or3, axis_sp != axis_pol."""
-        shape = _ImageShape(im_shape=np.array(
-            [100, 100, 1, 100]), axis_dir=np.array([0, 1]), axis_sp=3, axis_pol=2)
+        shape = _ImageShape(
+            im_shape=np.array([100, 100, 1, 100]),
+            axis_dir=np.array([0, 1]),
+            axis_sp=3,
+            axis_pol=2,
+        )
         shape.validate()
-        shape = _ImageShape(im_shape=np.array(
-            [100, 100, 100, 1]), axis_dir=np.array([0, 1]), axis_sp=2, axis_pol=3)
+        shape = _ImageShape(
+            im_shape=np.array([100, 100, 100, 1]),
+            axis_dir=np.array([0, 1]),
+            axis_sp=2,
+            axis_pol=3,
+        )
         shape.validate()
         # any exceptions are not thrown, its OK
 
-    @test_base.exception_case(ValueError,
-                              'nchan \\d is too few to perform baseline subtraction')
+    @test_base.exception_case(
+        ValueError, "nchan \\d is too few to perform baseline subtraction"
+    )
     def test_imageshape_02(self):
         """02. failure case: invalid im_nchan, an exception raises."""
-        shape = _ImageShape(im_shape=np.array(
-            [100, 100, 1, 1]), axis_dir=np.array([0, 1]), axis_sp=3, axis_pol=2)
+        shape = _ImageShape(
+            im_shape=np.array([100, 100, 1, 1]),
+            axis_dir=np.array([0, 1]),
+            axis_sp=3,
+            axis_pol=2,
+        )
         shape.validate()
 
-    @test_base.exception_case(ValueError,
-                              'invalid value: dir_shape \\[\\d+\\]')
+    @test_base.exception_case(ValueError, "invalid value: dir_shape \\[\\d+\\]")
     def test_imageshape_03(self):
         """03. failure case: invalid dir_shape, an exception raises."""
-        shape = _ImageShape(np.array([100, 100, 1, 100]), axis_dir=np.array(
-            [0]), axis_sp=3, axis_pol=2)
+        shape = _ImageShape(
+            np.array([100, 100, 1, 100]), axis_dir=np.array([0]), axis_sp=3, axis_pol=2
+        )
         shape.validate()
 
 
@@ -384,64 +397,59 @@ class TestImsmooth(test_base):
     03. set values for _ImsmoothParams and do validate(), and compare properties of it to the correct values
     """
 
-    tiny = 'tiny.im'
+    tiny = "tiny.im"
 
     def setUp(self):
         self._copy_test_files(self.tiny)
 
     def test_imsmooth_01(self):
         """01. successful case: call imsmooth with some parameters."""
-        major = '2.5arcsec'
-        minor = '2arcsec'
-        pa = '0deg'
-        dirkernel = 'gaussian'
-        kimage = ''
+        major = "2.5arcsec"
+        minor = "2arcsec"
+        pa = "0deg"
+        dirkernel = "gaussian"
+        kimage = ""
         scale = -1
 
         stack = _CasaImageStack(top=_UnerasableFolder(self.tiny))
 
-        _ImsmoothMethods.execute(
-            dirkernel, major, minor, pa, kimage, scale, stack)
+        _ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, stack)
         self.assertTrue(os.path.exists(stack.peak().path))
 
-    @test_base.exception_case(ValueError,
-                              'Unsupported direction smoothing kernel, foobar')
+    @test_base.exception_case(
+        ValueError, "Unsupported direction smoothing kernel, foobar"
+    )
     def test_imsmooth_02(self):
         """02. failure case: invalid dirkernel, an exception raises."""
-        major = '2.5arcsec'
-        minor = '2arcsec'
-        pa = '0deg'
-        dirkernel = 'foobar'
-        kimage = ''
+        major = "2.5arcsec"
+        minor = "2arcsec"
+        pa = "0deg"
+        dirkernel = "foobar"
+        kimage = ""
         scale = -1
 
         stack = _CasaImageStack(top=_UnerasableFolder(self.tiny))
 
-        _ImsmoothMethods.execute(
-            dirkernel, major, minor, pa, kimage, scale, stack)
+        _ImsmoothMethods.execute(dirkernel, major, minor, pa, kimage, scale, stack)
 
     def test_imsmooth_03(self):
         """03. set values for _ImsmoothParams and do validate(), and compare properties of it to the correct values."""
         targetres = stretch = False
-        mask = region = box = chans = stokes = ''
+        mask = region = box = chans = stokes = ""
         beam = {}
-        infile = 'infile'
-        outfile = 'outfile'
-        kernel = ('none', 'image', 'gaussian', 'boxcar')
-        major = '2.5arcsec'
-        minor = '2arcsec'
-        pa = '0deg'
+        infile = "infile"
+        outfile = "outfile"
+        kernel = ("none", "image", "gaussian", "boxcar")
+        major = "2.5arcsec"
+        minor = "2arcsec"
+        pa = "0deg"
         kimage = self.tiny
         scale = -2.0
-        logorigin = 'imbaseline'
+        logorigin = "imbaseline"
 
         def compare_params(
-                _kernel,
-                _major=major,
-                _minor=minor,
-                _pa=pa,
-                _kimage=kimage,
-                _scale=scale):
+            _kernel, _major=major, _minor=minor, _pa=pa, _kimage=kimage, _scale=scale
+        ):
             valid_param = dict(
                 targetres=targetres,
                 mask=mask,
@@ -460,9 +468,11 @@ class TestImsmooth(test_base):
                 pa=_pa,
                 kimage=_kimage,
                 scale=_scale,
-                __log_origin=logorigin)
+                __log_origin=logorigin,
+            )
             param = _ImsmoothParams(
-                infile, outfile, _kernel, _major, _minor, _pa, _kimage, _scale)
+                infile, outfile, _kernel, _major, _minor, _pa, _kimage, _scale
+            )
             param.validate()
             self.assertEqual(param(), valid_param)
 
@@ -470,13 +480,13 @@ class TestImsmooth(test_base):
         compare_params(kernel[0])
 
         # image
-        compare_params(kernel[1], _major='', _minor='', _pa='')
+        compare_params(kernel[1], _major="", _minor="", _pa="")
 
         # gaussian
-        compare_params(kernel[2], _kimage='', _scale=-1.0)
+        compare_params(kernel[2], _kimage="", _scale=-1.0)
 
         # boxcar
-        compare_params(kernel[3], _kimage='', _scale=-1.0)
+        compare_params(kernel[3], _kimage="", _scale=-1.0)
 
 
 class TestImage2MS(test_base):
@@ -489,7 +499,7 @@ class TestImage2MS(test_base):
     05. set values for _Image2MSParams and do validate(), and compare properties of it to the correct values
     """
 
-    expected = 'expected.im'
+    expected = "expected.im"
     datacolumn = DATACOLUMN
 
     def setUp(self):
@@ -502,47 +512,51 @@ class TestImage2MS(test_base):
         image_stack = _CasaImageStack(top=_UnerasableFolder(self.expected))
         ms_stack = _MeasurementSetStack()
         _Image2MSMethods.execute(
-            self.datacolumn, self.image_shape, image_stack, ms_stack)
+            self.datacolumn, self.image_shape, image_stack, ms_stack
+        )
         self.assertEqual(ms_stack.height(), 1)
         self._check_ms_tables(ms_stack.peak().path)
 
-    @test_base.exception_case(RuntimeError, 'column INVALID does not exist')
+    @test_base.exception_case(RuntimeError, "column INVALID does not exist")
     def test_image2ms_02(self):
         """02. failure case: execute image2ms with invalid datacolumn parameter, an exception raises."""
         image_stack = _CasaImageStack(top=_UnerasableFolder(self.expected))
         ms_stack = _MeasurementSetStack()
-        _Image2MSMethods.execute(
-            'INVALID', self.image_shape, image_stack, ms_stack)
+        _Image2MSMethods.execute("INVALID", self.image_shape, image_stack, ms_stack)
 
-    @test_base.exception_case(RuntimeError, 'Unable to open image dummy1.')
+    @test_base.exception_case(RuntimeError, "Unable to open image dummy1.")
     def test_image2ms_03(self):
         """03. failure case: execute image2ms with invalid image data, an exception raises."""
         image_stack = _CasaImageStack(top=_UnerasableFolder(DUMMY_FOLDERS[0]))
         ms_stack = _MeasurementSetStack()
         _Image2MSMethods.execute(
-            self.datacolumn, self.image_shape, image_stack, ms_stack)
+            self.datacolumn, self.image_shape, image_stack, ms_stack
+        )
 
-    @test_base.exception_case(RuntimeError, 'the stack is empty')
+    @test_base.exception_case(RuntimeError, "the stack is empty")
     def test_image2ms_04(self):
         """04. failure case: execute image2ms with empty stack, an exception raises."""
         image_stack = _CasaImageStack()
         ms_stack = _MeasurementSetStack()
         _Image2MSMethods.execute(
-            self.datacolumn, self.image_shape, image_stack, ms_stack)
+            self.datacolumn, self.image_shape, image_stack, ms_stack
+        )
 
     def test_image2ms_05(self):
         """05. set values for _Image2MSParams and do validate(), and compare properties of it to the correct values."""
-        outfile = 'output_4_5.ms'
+        outfile = "output_4_5.ms"
         params = _Image2MSParams(
-            self.expected, outfile, self.datacolumn, self.image_shape)
+            self.expected, outfile, self.datacolumn, self.image_shape
+        )
         params.validate()
         self.assertEqual(params.infile, self.expected)
         self.assertEqual(params.outfile, outfile)
-        for attr in ('im_shape', 'axis_dir', 'dir_shape'):
-            self.assertTrue(np.all(getattr(params, attr) == getattr(self.image_shape, attr)))
-        for attr in ('axis_sp', 'axis_pol', 'im_nrow', 'im_nchan', 'im_npol'):
-            self.assertEqual(getattr(params, attr),
-                             getattr(self.image_shape, attr))
+        for attr in ("im_shape", "axis_dir", "dir_shape"):
+            self.assertTrue(
+                np.all(getattr(params, attr) == getattr(self.image_shape, attr))
+            )
+        for attr in ("axis_sp", "axis_pol", "im_nrow", "im_nchan", "im_npol"):
+            self.assertEqual(getattr(params, attr), getattr(self.image_shape, attr))
 
 
 class TestSdsmooth(test_base):
@@ -556,10 +570,10 @@ class TestSdsmooth(test_base):
     04. set values for _SdsmoothParams and do validate(), and compare properties of it to the correct values
     """
 
-    input_image = 'expected.im'
-    input_ms = 'expected.ms'
+    input_image = "expected.im"
+    input_ms = "expected.ms"
     datacolumn = DATACOLUMN
-    spkenel = 'gaussian'
+    spkenel = "gaussian"
     kwidth = 5
 
     def setUp(self):
@@ -578,14 +592,16 @@ class TestSdsmooth(test_base):
             self.kwidth,
             image_stack,
             ms_stack,
-            self.image_shape)
+            self.image_shape,
+        )
         self.assertEqual(image_stack.height(), 2)
         self.assertEqual(ms_stack.height(), 2)
-        self.assertTrue(os.path.exists(os.path.join(
-            image_stack.peak().path, 'table.dat')))
+        self.assertTrue(
+            os.path.exists(os.path.join(image_stack.peak().path, "table.dat"))
+        )
         self._check_ms_tables(ms_stack.peak().path)
 
-    @test_base.exception_case(RuntimeError, 'the stack is empty')
+    @test_base.exception_case(RuntimeError, "the stack is empty")
     def test_sdsmooth_02(self):
         """02. failure case: call sdsmooth with invalid ms stack, an exception raises."""
         image_stack = _CasaImageStack(top=_UnerasableFolder(self.input_image))
@@ -596,10 +612,10 @@ class TestSdsmooth(test_base):
             self.kwidth,
             image_stack,
             ms_stack,
-            self.image_shape)
+            self.image_shape,
+        )
 
-    @test_base.exception_case(RuntimeError,
-                              'the stack has not have enough stuff')
+    @test_base.exception_case(RuntimeError, "the stack has not have enough stuff")
     def test_sdsmooth_03(self):
         """03. failure case: call sdsmooth with invalid image stack, an exception raises."""
         image_stack = _CasaImageStack()
@@ -611,18 +627,19 @@ class TestSdsmooth(test_base):
             self.kwidth,
             image_stack,
             ms_stack,
-            self.image_shape)
+            self.image_shape,
+        )
 
     def test_sdsmooth_04(self):
         """04. set values for _SdsmoothParams and do validate(), and compare properties of it to the correct values."""
-        spw = field = antenna = timerange = scan = pol = intent = ''
+        spw = field = antenna = timerange = scan = pol = intent = ""
         reindex = overwrite = True
-        infile = 'infile'
-        outfile = 'outfile'
+        infile = "infile"
+        outfile = "outfile"
         datacolumn = DATACOLUMN
-        kernel = ('none', 'gaussian', 'boxcar')
+        kernel = ("none", "gaussian", "boxcar")
         kwidth = 5
-        logorigin = 'imbaseline'
+        logorigin = "imbaseline"
 
         def compare_params(_kernel):
             valid_params = dict(
@@ -640,13 +657,15 @@ class TestSdsmooth(test_base):
                 kernel=_kernel,
                 kwidth=kwidth,
                 outfile=outfile,
-                __log_origin=logorigin)
+                __log_origin=logorigin,
+            )
             params = _SdsmoothParams(
                 infile=infile,
                 outfile=outfile,
                 datacolumn=datacolumn,
                 spkernel=_kernel,
-                kwidth=kwidth)
+                kwidth=kwidth,
+            )
             params.validate()
             self.assertEqual(params(), valid_params)
 
@@ -664,17 +683,17 @@ class TestSdbaseline(test_base):
     04. set values for _SdbaselineParams and do validate(), and compare properties of it to the correct values
     """
 
-    input_image = 'expected.im'
-    input_ms = 'expected.ms'
-    bloutput = 'test.csv'
-    maskmode = 'auto'
-    blparam = 'analytic_variable_blparam.txt'
-    chans = ''
+    input_image = "expected.im"
+    input_ms = "expected.ms"
+    bloutput = "test.csv"
+    maskmode = "auto"
+    blparam = "analytic_variable_blparam.txt"
+    chans = ""
     thresh = 5.0
     avg_limit = 4
     minwidth = 4
     edge = [0, 0]
-    blfunc = 'cspline'
+    blfunc = "cspline"
     order = 5
     npiece = 1
     applyfft = True
@@ -717,12 +736,13 @@ class TestSdbaseline(test_base):
             self.clipthresh,
             image_stack,
             ms_stack,
-            self.image_shape)
+            self.image_shape,
+        )
         self.assertTrue(os.path.exists(ms_stack.peak().path))
         self.assertTrue(os.path.exists(self.bloutput))
         self.assertTrue(os.path.exists(image_stack.peak().path))
 
-    @test_base.exception_case(RuntimeError, 'the stack is empty')
+    @test_base.exception_case(RuntimeError, "the stack is empty")
     def test_sdbaseline_02(self):
         """02. failure case: call sdbaseline with invalid ms stack, an exception raises."""
         image_stack = _CasaImageStack(top=_UnerasableFolder(self.input_image))
@@ -748,10 +768,10 @@ class TestSdbaseline(test_base):
             self.clipthresh,
             image_stack,
             ms_stack,
-            self.image_shape)
+            self.image_shape,
+        )
 
-    @test_base.exception_case(RuntimeError,
-                              'the stack has not have enough stuff')
+    @test_base.exception_case(RuntimeError, "the stack has not have enough stuff")
     def test_sdbaseline_03(self):
         """03. failure case: call sdbaseline with invalid image stack, an exception raise."""
         image_stack = _CasaImageStack()
@@ -778,31 +798,32 @@ class TestSdbaseline(test_base):
             self.clipthresh,
             image_stack,
             ms_stack,
-            self.image_shape)
+            self.image_shape,
+        )
 
     def test_sdbaseline_04(self):
         """04. set values for _SdbaselineParams and do validate(), and compare properties of it to the correct values."""
-        antenna = field = timerange = scan = pol = intent = bltable = ''
+        antenna = field = timerange = scan = pol = intent = bltable = ""
         reindex = dosubtract = overwrite = True
         updateweight = showprogress = verbose = False
-        blmode = 'fit'
-        blformat = 'csv'
-        sigmavalue = 'stddev'
+        blmode = "fit"
+        blformat = "csv"
+        sigmavalue = "stddev"
         minnrow = 1000
-        fftmethod = 'fft'
+        fftmethod = "fft"
 
-        infile = 'infile'
-        outfile = 'outfile'
-        datacolumn = 'DATA'
-        bloutput = 'bloutput'
-        maskmode = ('list', 'auto')
-        chans = ''
-        spw = '0'
+        infile = "infile"
+        outfile = "outfile"
+        datacolumn = "DATA"
+        bloutput = "bloutput"
+        maskmode = ("list", "auto")
+        chans = ""
+        spw = "0"
         thresh = 6.0
         avg_limit = 5
         minwidth = 5
         edge = [1, 1]
-        blfunc = ('poly', 'chebyshev', 'cspline', 'sinusoid', 'variable')
+        blfunc = ("poly", "chebyshev", "cspline", "sinusoid", "variable")
         order = 6
         npiece = 2
         applyfft = False
@@ -812,7 +833,7 @@ class TestSdbaseline(test_base):
         blparam = self.blparam
         clipniter = 11
         clipthresh = 3.0
-        logorigin = 'imbaseline'
+        logorigin = "imbaseline"
 
         def compare_params(_maskmode, _blfunc):
             valid_param = dict(
@@ -854,7 +875,8 @@ class TestSdbaseline(test_base):
                 clipniter=clipniter,
                 blparam=blparam,
                 outfile=outfile,
-                __log_origin=logorigin)
+                __log_origin=logorigin,
+            )
             params = _SdbaselineParams(
                 infile=infile,
                 outfile=outfile,
@@ -875,12 +897,16 @@ class TestSdbaseline(test_base):
                 rejwn=rejwn,
                 blparam=blparam,
                 clipniter=clipniter,
-                clipthresh=clipthresh)
+                clipthresh=clipthresh,
+            )
             params.validate()
             self.assertEqual(params(), valid_param)
 
-        [compare_params(_maskmode, _blfunc)
-         for _maskmode in maskmode for _blfunc in blfunc]
+        [
+            compare_params(_maskmode, _blfunc)
+            for _maskmode in maskmode
+            for _blfunc in blfunc
+        ]
 
 
 class TestImageSubtraction(test_base):
@@ -894,68 +920,70 @@ class TestImageSubtraction(test_base):
     06. output data check: two images subtraction test
     """
 
-    existing_image = 'expected.im'
-    existing_imsmoothed_image = 'expected.imsmooth.im'
-    existing_baselined_image = 'expected.bl.im'
-    input_image = ('input_image.im', 1.5, [64, 64, 4, 128])
-    smoothed_image = ('smoothed_image.im', 2.0, [64, 64, 4, 128])
+    existing_image = "expected.im"
+    existing_imsmoothed_image = "expected.imsmooth.im"
+    existing_baselined_image = "expected.bl.im"
+    input_image = ("input_image.im", 1.5, [64, 64, 4, 128])
+    smoothed_image = ("smoothed_image.im", 2.0, [64, 64, 4, 128])
     smoothed_and_subtracted_image = (
-        'smoothed_and_subtracted_image.im', 2.5, [64, 64, 4, 128])
-    testdata_err = ('testdata_err.im', 1, [65, 64, 4, 128])
+        "smoothed_and_subtracted_image.im",
+        2.5,
+        [64, 64, 4, 128],
+    )
+    testdata_err = ("testdata_err.im", 1, [65, 64, 4, 128])
 
     def setUp(self):
         self._copy_test_files(self.existing_image)
         self._copy_test_files(self.existing_imsmoothed_image)
         self._copy_test_files(self.existing_baselined_image)
         self._create_image(
-            self.input_image[0], self.input_image[1], self.input_image[2])
+            self.input_image[0], self.input_image[1], self.input_image[2]
+        )
         self._create_image(
-            self.smoothed_image[0],
-            self.smoothed_image[1],
-            self.smoothed_image[2])
+            self.smoothed_image[0], self.smoothed_image[1], self.smoothed_image[2]
+        )
         self._create_image(
             self.smoothed_and_subtracted_image[0],
             self.smoothed_and_subtracted_image[1],
-            self.smoothed_and_subtracted_image[2])
+            self.smoothed_and_subtracted_image[2],
+        )
         self._create_image(
-            self.testdata_err[0], self.testdata_err[1], self.testdata_err[2])
+            self.testdata_err[0], self.testdata_err[1], self.testdata_err[2]
+        )
 
     def test_image_subtraction_01(self):
         """01. successful test: subtracted output = input_image - (smoothed_image - smoothed_and_subtracted_image)."""
-        image_stack = _CasaImageStack(
-            top=_UnerasableFolder(self.existing_image))
+        image_stack = _CasaImageStack(top=_UnerasableFolder(self.existing_image))
         image_stack.push(_EraseableFolder(self.existing_imsmoothed_image))
         image_stack.push(_EraseableFolder(self.existing_baselined_image))
-        output = 'output_7_1.im'
+        output = "output_7_1.im"
         _ImageSubtractionMethods.execute(output, image_stack)
         self.assertTrue(os.path.exists(output))
 
     def test_image_subtraction_02(self):
         """02. successful test: subtracted output = subtracted_image."""
-        image_stack = _CasaImageStack(
-            top=_UnerasableFolder(self.existing_image))
+        image_stack = _CasaImageStack(top=_UnerasableFolder(self.existing_image))
         image_stack.push(_EraseableFolder(self.existing_baselined_image))
-        output = 'output_7_2.im'
+        output = "output_7_2.im"
         _ImageSubtractionMethods.execute(output, image_stack)
         self.assertTrue(os.path.exists(output))
 
-    @test_base.exception_case(ValueError,
-                              'operands could not be broadcast together with shapes')
+    @test_base.exception_case(
+        ValueError, "operands could not be broadcast together with shapes"
+    )
     def test_image_subtraction_03(self):
         """03. failure case: subtract three images have unmatched shape, an exception raises."""
-        image_stack = _CasaImageStack(
-            top=_UnerasableFolder(self.input_image[0]))
+        image_stack = _CasaImageStack(top=_UnerasableFolder(self.input_image[0]))
         image_stack.push(_EraseableFolder(self.smoothed_image[0]))
         image_stack.push(_EraseableFolder(self.testdata_err[0]))
-        output = 'output_7_3.im'
+        output = "output_7_3.im"
         _ImageSubtractionMethods.execute(output, image_stack)
 
     def test_image_subtraction_04(self):
         """04. successful test: subtract two images have unmatched shape (any exceptions do not raise)."""
-        image_stack = _CasaImageStack(
-            top=_UnerasableFolder(self.input_image[0]))
+        image_stack = _CasaImageStack(top=_UnerasableFolder(self.input_image[0]))
         image_stack.push(_EraseableFolder(self.testdata_err[0]))
-        output = 'output_7_4.im'
+        output = "output_7_4.im"
         _ImageSubtractionMethods.execute(output, image_stack)
         self.assertTrue(os.path.exists(output))
         self.assertFalse(os.path.exists(self.testdata_err[0]))
@@ -963,30 +991,25 @@ class TestImageSubtraction(test_base):
     def test_image_subtraction_05(self):
         """05. output data check: three images subtraction test."""
         # output = input_image - (smoothed_image - smoothed_and_subtracted_image)
-        image_stack = _CasaImageStack(
-            top=_UnerasableFolder(self.input_image[0]))
+        image_stack = _CasaImageStack(top=_UnerasableFolder(self.input_image[0]))
         image_stack.push(_EraseableFolder(self.smoothed_image[0]))
-        image_stack.push(_EraseableFolder(
-            self.smoothed_and_subtracted_image[0]))
-        output = 'output_7_5.im'
+        image_stack.push(_EraseableFolder(self.smoothed_and_subtracted_image[0]))
+        output = "output_7_5.im"
         _ImageSubtractionMethods.execute(output, image_stack)
         with tool_manager(output, image) as ia:
             arr = ia.getchunk()
-            self.assertTrue(np.array_equal(
-                arr, np.full((64, 64, 4, 128), 2.0)))
+            self.assertTrue(np.array_equal(arr, np.full((64, 64, 4, 128), 2.0)))
 
     def test_image_subtraction_06(self):
         """06. output data check: two images subtraction test."""
         # output = smoothed_image
-        image_stack = _CasaImageStack(
-            top=_UnerasableFolder(self.input_image[0]))
+        image_stack = _CasaImageStack(top=_UnerasableFolder(self.input_image[0]))
         image_stack.push(_EraseableFolder(self.smoothed_image[0]))
-        output = 'output_7_6.im'
+        output = "output_7_6.im"
         _ImageSubtractionMethods.execute(output, image_stack)
         with tool_manager(output, image) as ia:
             arr = ia.getchunk()
-            self.assertTrue(np.array_equal(
-                arr, np.full((64, 64, 4, 128), 2.0)))
+            self.assertTrue(np.array_equal(arr, np.full((64, 64, 4, 128), 2.0)))
 
 
 class TestMS2Image(test_base):
@@ -997,10 +1020,10 @@ class TestMS2Image(test_base):
     03. failure case: attempt to convert a MeasurementSet unexisted, an exception raises
     """
 
-    input_image = 'expected.im'
-    original_image = 'expected_orig.im'
-    input_ms = 'expected.ms'
-    baselined_ms = 'expected.bl.ms'
+    input_image = "expected.im"
+    original_image = "expected_orig.im"
+    input_ms = "expected.ms"
+    baselined_ms = "expected.bl.ms"
 
     def setUp(self):
         self._copy_test_files(self.input_image)
@@ -1009,17 +1032,19 @@ class TestMS2Image(test_base):
         if os.path.exists(self.input_image):
             os.rename(self.input_image, self.original_image)
         else:
-            raise RuntimeError('some errors occured in copying files')
+            raise RuntimeError("some errors occured in copying files")
         if not os.path.exists(self.original_image):
-            raise RuntimeError('some errors occured in copying files')
+            raise RuntimeError("some errors occured in copying files")
         self.image_shape = _get_image_shape(self.original_image)
 
     def test_ms2image_01(self):
         """01. successful case: convert a MeasurementSet to image and compare it to the correct chunk."""
-        _MS2ImageMethods.convert(base_image=self.original_image,
-                                 input_ms=self.input_ms,
-                                 input_image_shape=self.image_shape,
-                                 datacolumn=DATACOLUMN)
+        _MS2ImageMethods.convert(
+            base_image=self.original_image,
+            input_ms=self.input_ms,
+            input_image_shape=self.image_shape,
+            datacolumn=DATACOLUMN,
+        )
         self.assertTrue(os.path.exists(self.input_image))
         with tool_manager(self.input_image, image) as ia:
             arr1 = ia.getchunk()
@@ -1027,22 +1052,26 @@ class TestMS2Image(test_base):
             arr2 = ia.getchunk()
         self.assertTrue(np.array_equal(arr1, arr2))
 
-    @test_base.exception_case(TypeError, 'stat: path should be string, ')
+    @test_base.exception_case(TypeError, "stat: path should be string, ")
     def test_ms2image_02(self):
         """02. failure case: attempt to convert a MeasurementSet without base image, an exception raises."""
-        _MS2ImageMethods.convert(base_image=None,
-                                 input_ms=self.input_ms,
-                                 input_image_shape=self.image_shape,
-                                 datacolumn=DATACOLUMN)
+        _MS2ImageMethods.convert(
+            base_image=None,
+            input_ms=self.input_ms,
+            input_image_shape=self.image_shape,
+            datacolumn=DATACOLUMN,
+        )
 
-    @test_base.exception_case(TypeError, 'stat: path should be string, ')
+    @test_base.exception_case(TypeError, "stat: path should be string, ")
     def test_ms2image_03(self):
         """03. failure case: attempt to convert a MeasurementSet unexisted, an exception raises."""
-        _MS2ImageMethods.convert(base_image=self.original_image,
-                                 input_ms=self.baselined_ms,
-                                 input_image_shape=self.image_shape,
-                                 datacolumn=DATACOLUMN)
-        converted = 'expected.bl.im'
+        _MS2ImageMethods.convert(
+            base_image=self.original_image,
+            input_ms=self.baselined_ms,
+            input_image_shape=self.image_shape,
+            datacolumn=DATACOLUMN,
+        )
+        converted = "expected.bl.im"
         self.assertTrue(os.path.exists(converted))
         with tool_manager(self.original_image, image) as ia:
             arr1 = ia.getchunk()
@@ -1050,10 +1079,12 @@ class TestMS2Image(test_base):
             arr2 = ia.getchunk()
         self.assertFalse(np.array_equal(arr1, arr2))
 
-        _MS2ImageMethods.convert(base_image=self.original_image,
-                                 input_ms=None,
-                                 input_image_shape=self.image_shape,
-                                 datacolumn=DATACOLUMN)
+        _MS2ImageMethods.convert(
+            base_image=self.original_image,
+            input_ms=None,
+            input_image_shape=self.image_shape,
+            datacolumn=DATACOLUMN,
+        )
 
 
 class TestModuleMethodsOfImbaseline(test_base):
@@ -1066,8 +1097,8 @@ class TestModuleMethodsOfImbaseline(test_base):
     03. _get_image_shape: failure case: attempt to read an image has invalid shape, an exception raises
     """
 
-    input_image = 'expected.im'
-    g192_im = 'g192_a2.image'
+    input_image = "expected.im"
+    g192_im = "g192_a2.image"
 
     def setUp(self):
         self._copy_test_files(self.input_image)
@@ -1095,16 +1126,15 @@ class TestModuleMethodsOfImbaseline(test_base):
         self.assertEqual(shape.im_nchan, 40)
         self.assertEqual(shape.im_npol, 1)
 
-    @test_base.exception_case(ValueError, 'path \'notexists\' is not found')
+    @test_base.exception_case(ValueError, "path 'notexists' is not found")
     def test_module_methods_02(self):
         """02. _get_image_shape: failure case: attempt to read an image unexisted, an exception raises."""
-        _get_image_shape('notexists')
+        _get_image_shape("notexists")
 
-    @test_base.exception_case(ValueError,
-                              'image \'testdata_01.im\' is invalid')
+    @test_base.exception_case(ValueError, "image 'testdata_01.im' is invalid")
     def test_module_methods_03(self):
         """03. _get_image_shape: failure case: attempt to read an image has invalid shape, an exception raises."""
-        testimage = 'testdata_01.im'
+        testimage = "testdata_01.im"
         self._create_image(testimage, 1.0, [64, 64])
         _get_image_shape(testimage)
 
@@ -1117,83 +1147,89 @@ class TestImbaseline(test_base):
     03. successful case: execute imbaseline with bloutput set output path, bloutput generates
     """
 
-    input_image = 'ref_multipix.signalband'
-    blparam = 'analytic_variable_blparam_spw1.txt'
+    input_image = "ref_multipix.signalband"
+    blparam = "analytic_variable_blparam_spw1.txt"
     f_1_count = 1
 
     def setUp(self):
         self._copy_test_files(self.input_image)
         self._copy_test_files(self.blparam)
 
-    @test_base.exception_case(ValueError, 'Error: file  is not found.')
+    @test_base.exception_case(ValueError, "Error: file  is not found.")
     def test_imbaseline_01(self):
         """01. failure case: attempt to read imagefile set None, an exception raises."""
-        imagefile = ''
-        linefile = 'output_imbaseline_01'
-        dirkernel = 'gaussian'
-        spkernel = 'gaussian'
-        major = '20arcsec'
-        minor = '10arcsec'
-        pa = '0deg'
-        blfunc = 'sinusoid'
+        imagefile = ""
+        linefile = "output_imbaseline_01"
+        dirkernel = "gaussian"
+        spkernel = "gaussian"
+        major = "20arcsec"
+        minor = "10arcsec"
+        pa = "0deg"
+        blfunc = "sinusoid"
         output_cont = True
 
-        imbaseline(imagename=imagefile,
-                   linefile=linefile,
-                   dirkernel=dirkernel,
-                   spkernel=spkernel,
-                   major=major,
-                   minor=minor,
-                   pa=pa,
-                   blfunc=blfunc,
-                   output_cont=output_cont)
+        imbaseline(
+            imagename=imagefile,
+            linefile=linefile,
+            dirkernel=dirkernel,
+            spkernel=spkernel,
+            major=major,
+            minor=minor,
+            pa=pa,
+            blfunc=blfunc,
+            output_cont=output_cont,
+        )
 
     def test_imbaseline_02(self):
         """03. successful case: execute imbaseline with output_cont set False, cont file does not generate."""
         imagefile = self.input_image
-        linefile = 'output_imbaseline_02'
-        dirkernel = 'gaussian'
-        spkernel = 'gaussian'
-        major = '20arcsec'
-        minor = '10arcsec'
-        pa = '0deg'
-        blfunc = 'sinusoid'
+        linefile = "output_imbaseline_02"
+        dirkernel = "gaussian"
+        spkernel = "gaussian"
+        major = "20arcsec"
+        minor = "10arcsec"
+        pa = "0deg"
+        blfunc = "sinusoid"
         output_cont = False
 
-        imbaseline(imagename=imagefile,
-                   linefile=linefile,
-                   dirkernel=dirkernel,
-                   spkernel=spkernel,
-                   major=major,
-                   minor=minor,
-                   pa=pa,
-                   blfunc=blfunc,
-                   output_cont=output_cont)
-        self.assertFalse(os.path.exists(linefile + '.cont'))
+        imbaseline(
+            imagename=imagefile,
+            linefile=linefile,
+            dirkernel=dirkernel,
+            spkernel=spkernel,
+            major=major,
+            minor=minor,
+            pa=pa,
+            blfunc=blfunc,
+            output_cont=output_cont,
+        )
+        self.assertFalse(os.path.exists(linefile + ".cont"))
 
     def test_imbaseline_03(self):
         """04. successful case: execute imbaseline with bloutput set output path, bloutput generates."""
         imagefile = self.input_image
-        linefile = 'output_imbaseline_03'
-        dirkernel = 'gaussian'
-        spkernel = 'gaussian'
-        major = '20arcsec'
-        minor = '10arcsec'
-        pa = '0deg'
-        blfunc = 'sinusoid'
+        linefile = "output_imbaseline_03"
+        dirkernel = "gaussian"
+        spkernel = "gaussian"
+        major = "20arcsec"
+        minor = "10arcsec"
+        pa = "0deg"
+        blfunc = "sinusoid"
         output_cont = True
-        bloutput = self.input_image + 'bloutput'
+        bloutput = self.input_image + "bloutput"
 
-        imbaseline(imagename=imagefile,
-                   linefile=linefile,
-                   dirkernel=dirkernel,
-                   spkernel=spkernel,
-                   major=major,
-                   minor=minor,
-                   pa=pa,
-                   blfunc=blfunc,
-                   output_cont=output_cont,
-                   bloutput=bloutput)
+        imbaseline(
+            imagename=imagefile,
+            linefile=linefile,
+            dirkernel=dirkernel,
+            spkernel=spkernel,
+            major=major,
+            minor=minor,
+            pa=pa,
+            blfunc=blfunc,
+            output_cont=output_cont,
+            bloutput=bloutput,
+        )
         self.assertTrue(os.path.exists(bloutput))
 
 
@@ -1204,13 +1240,13 @@ class TestImbaselineExecution(test_base):
     while module initialisation.
     """
 
-    input_image = 'ref_multipix.signalband'
-    blparam = 'analytic_variable_blparam_spw1.txt'
-    test_name_prefix = 'test_imbaseline_execution'
-    linefile = 'output_f_1'
+    input_image = "ref_multipix.signalband"
+    blparam = "analytic_variable_blparam_spw1.txt"
+    test_name_prefix = "test_imbaseline_execution"
+    linefile = "output_f_1"
     output_cont = True
-    bloutput = input_image + '.bloutput'
-    chans = ''
+    bloutput = input_image + ".bloutput"
+    chans = ""
     thresh = 5.0
     avg_limit = 5
     minwidth = 5
@@ -1223,9 +1259,9 @@ class TestImbaselineExecution(test_base):
     rejwn = []
     clipniter = 0
     clipthresh = 3.0
-    major = '20arcsec'
-    minor = '10arcsec'
-    pa = '0deg'
+    major = "20arcsec"
+    minor = "10arcsec"
+    pa = "0deg"
     kimage = os.path.join(DATAPATH, "bessel.im")
     scale = -1.0
     kwidth = 5
@@ -1239,29 +1275,34 @@ class TestImbaselineExecution(test_base):
 
     @staticmethod
     def generate_tests():
-        maskmode = ('auto', 'list')
-        blfunc = ('poly', 'chebyshev', 'cspline', 'sinusoid', 'variable')
-        dirkernel = ('none', 'gaussian', 'boxcar', 'image')
-        spkernel = ('none', 'gaussian', 'boxcar')
+        maskmode = ("auto", "list")
+        blfunc = ("poly", "chebyshev", "cspline", "sinusoid", "variable")
+        dirkernel = ("none", "gaussian", "boxcar", "image")
+        spkernel = ("none", "gaussian", "boxcar")
 
         def __register_a_test_with_the_class(
-                _class, maskmode, blfunc, dirkernel, spkernel):
-            test_name = f'{_class.test_name_prefix}_{maskmode}_{blfunc}_{dirkernel}_{spkernel}'
+            _class, maskmode, blfunc, dirkernel, spkernel
+        ):
+            test_name = (
+                f"{_class.test_name_prefix}_{maskmode}_{blfunc}_{dirkernel}_{spkernel}"
+            )
             setattr(
                 _class,
                 test_name,
                 _class._generate_a_test(
-                    maskmode,
-                    blfunc,
-                    dirkernel,
-                    spkernel,
-                    test_name))
+                    maskmode, blfunc, dirkernel, spkernel, test_name
+                ),
+            )
 
-        [__register_a_test_with_the_class(__class__, _maskmode, _blfunc, _dirkernel, _spkernel)
-         for _maskmode in maskmode
-         for _blfunc in blfunc
-         for _dirkernel in dirkernel
-         for _spkernel in spkernel]
+        [
+            __register_a_test_with_the_class(
+                __class__, _maskmode, _blfunc, _dirkernel, _spkernel
+            )
+            for _maskmode in maskmode
+            for _blfunc in blfunc
+            for _dirkernel in dirkernel
+            for _spkernel in spkernel
+        ]
 
     @staticmethod
     def _generate_a_test(maskmode, blfunc, dirkernel, spkernel, test_name):
@@ -1295,15 +1336,21 @@ class TestImbaselineExecution(test_base):
                 kimage=self.kimage,
                 scale=self.scale,
                 spkernel=spkernel,
-                kwidth=self.kwidth)
+                kwidth=self.kwidth,
+            )
             casalog.post(
-                f'{test_name} [maskmode={maskmode}, blfunc={blfunc}, '
-                f'dirkernel={dirkernel}, spkernel={spkernel}]', 'INFO')
+                f"{test_name} [maskmode={maskmode}, blfunc={blfunc}, "
+                f"dirkernel={dirkernel}, spkernel={spkernel}]",
+                "INFO",
+            )
             imbaseline(**params)
             for file in self.filenames_existence_check:
                 self.assertTrue(os.path.exists(file))
-        test_method.__doc__ += (f'{TestImbaselineExecution.test_no:03} [maskmode={maskmode}, '
-                                f'blfunc={blfunc}, dirkernel={dirkernel}, spkernel={spkernel}]')
+
+        test_method.__doc__ += (
+            f"{TestImbaselineExecution.test_no:03} [maskmode={maskmode}, "
+            f"blfunc={blfunc}, dirkernel={dirkernel}, spkernel={spkernel}]"
+        )
         TestImbaselineExecution.test_no += 1
         return test_method
 
@@ -1319,21 +1366,21 @@ class TestImbaselineOutputs(test_base):
     while module initialisation.
     """
 
-    input_image = 'ref_multipix.signalband'
-    blparam = 'analytic_variable_blparam_spw1.txt'
+    input_image = "ref_multipix.signalband"
+    blparam = "analytic_variable_blparam_spw1.txt"
     TEST_IMAGE_SHAPE = [128, 128, 1, 10]
     TEST_IMAGE_VALUE = 2.0
     expected_output_chunk = np.full(TEST_IMAGE_SHAPE, 0.0)
     expected_cont_chunk = np.full(TEST_IMAGE_SHAPE, TEST_IMAGE_VALUE)
 
-    test_name_prefix = 'test_imbaseline_outputs'
-    linefile = 'output.im'
+    test_name_prefix = "test_imbaseline_outputs"
+    linefile = "output.im"
     output_cont = True
-    bloutput = linefile + '.bloutput'
-    test_image = 'input_image.im'
-    major = '20arcsec'
-    minor = '10arcsec'
-    pa = '0deg'
+    bloutput = linefile + ".bloutput"
+    test_image = "input_image.im"
+    major = "20arcsec"
+    minor = "10arcsec"
+    pa = "0deg"
 
     test_no = 1
 
@@ -1343,33 +1390,32 @@ class TestImbaselineOutputs(test_base):
 
     @staticmethod
     def generate_tests():
-        blfunc = ('poly', 'chebyshev', 'cspline', 'sinusoid')
-        dirkernel = ('none', 'gaussian', 'boxcar')
-        spkernel = ('none', 'gaussian', 'boxcar')
+        blfunc = ("poly", "chebyshev", "cspline", "sinusoid")
+        dirkernel = ("none", "gaussian", "boxcar")
+        spkernel = ("none", "gaussian", "boxcar")
 
-        def __register_a_test_with_the_class(
-                _class, blfunc, dirkernel, spkernel):
-            test_name = f'{_class.test_name_prefix}_{blfunc}_{dirkernel}_{spkernel}'
+        def __register_a_test_with_the_class(_class, blfunc, dirkernel, spkernel):
+            test_name = f"{_class.test_name_prefix}_{blfunc}_{dirkernel}_{spkernel}"
             setattr(
                 _class,
                 test_name,
-                _class._generate_a_test(
-                    blfunc,
-                    dirkernel,
-                    spkernel,
-                    test_name))
+                _class._generate_a_test(blfunc, dirkernel, spkernel, test_name),
+            )
 
-        [__register_a_test_with_the_class(__class__, _blfunc, _dirkernel, _spkernel)
-         for _blfunc in blfunc
-         for _dirkernel in dirkernel
-         for _spkernel in spkernel]
+        [
+            __register_a_test_with_the_class(__class__, _blfunc, _dirkernel, _spkernel)
+            for _blfunc in blfunc
+            for _dirkernel in dirkernel
+            for _spkernel in spkernel
+        ]
 
     @staticmethod
     def _generate_a_test(blfunc, dirkernel, spkernel, test_name):
         def test_method(self):
             """TestImbaselineOutputs test."""
             self._create_image(
-                self.test_image, self.TEST_IMAGE_VALUE, self.TEST_IMAGE_SHAPE)
+                self.test_image, self.TEST_IMAGE_VALUE, self.TEST_IMAGE_SHAPE
+            )
             params = dict(
                 imagename=self.test_image,
                 linefile=self.linefile,
@@ -1380,43 +1426,50 @@ class TestImbaselineOutputs(test_base):
                 spkernel=spkernel,
                 major=self.major,
                 minor=self.minor,
-                pa=self.pa)
+                pa=self.pa,
+            )
             casalog.post(
-                f'{test_name} [maskmode=auto, blfunc={blfunc}, '
-                f'dirkernel={dirkernel}, spkernel={spkernel}]', 'INFO')
+                f"{test_name} [maskmode=auto, blfunc={blfunc}, "
+                f"dirkernel={dirkernel}, spkernel={spkernel}]",
+                "INFO",
+            )
             imbaseline(**params)
             if os.path.exists(self.linefile):
                 with tool_manager(self.linefile, image) as ia:
                     chunk = ia.getchunk()
                     self._summary(False, test_name, chunk)
-                    self.assertTrue(np.allclose(
-                        chunk, self.expected_output_chunk, atol=2.0))
-            if os.path.exists(self.test_image + '.cont'):
-                with tool_manager(self.test_image + '.cont', image) as ia:
+                    self.assertTrue(
+                        np.allclose(chunk, self.expected_output_chunk, atol=2.0)
+                    )
+            if os.path.exists(self.test_image + ".cont"):
+                with tool_manager(self.test_image + ".cont", image) as ia:
                     chunk = ia.getchunk()
                     self._summary(True, test_name, chunk)
-                    self.assertTrue(np.allclose(
-                        chunk, self.expected_cont_chunk, atol=2.0))
+                    self.assertTrue(
+                        np.allclose(chunk, self.expected_cont_chunk, atol=2.0)
+                    )
 
-        test_method.__doc__ += (f' No.{TestImbaselineOutputs.test_no:03} [blfunc={blfunc}, '
-                                f'dirkernel={dirkernel}, spkernel={spkernel}]')
+        test_method.__doc__ += (
+            f" No.{TestImbaselineOutputs.test_no:03} [blfunc={blfunc}, "
+            f"dirkernel={dirkernel}, spkernel={spkernel}]"
+        )
         TestImbaselineOutputs.test_no += 1
         return test_method
 
     def _summary(self, is_cont, test_name, chunk):  # temporary method
-        m = re.match(
-            r'test_imbaseline_outputs_([^_]+)_([^_]+)_([^_]+)', test_name)
-        prefix = 'cont' if is_cont else ' out'
+        m = re.match(r"test_imbaseline_outputs_([^_]+)_([^_]+)_([^_]+)", test_name)
+        prefix = "cont" if is_cont else " out"
         print(
-            f'{prefix} blfunc:{m[1]} dirkernel:{m[2]} spkernel:{m[3]}, {np.max(chunk)}, '
-            f'{np.min(chunk)}, {np.average(chunk)}, {np.median(chunk)}')
+            f"{prefix} blfunc:{m[1]} dirkernel:{m[2]} spkernel:{m[3]}, {np.max(chunk)}, "
+            f"{np.min(chunk)}, {np.average(chunk)}, {np.median(chunk)}"
+        )
 
 
 # generate test methods of TestImbaselineOutputs dynamically
 TestImbaselineOutputs.generate_tests()
 
 
-class Workdir():
+class Workdir:
     """Workdir manipulation class."""
 
     def __init__(self, path: str):
@@ -1428,25 +1481,24 @@ class Workdir():
             try:
                 shutil.rmtree(self.path)
             except Exception:
-                casalog.post(
-                    'Some errors occured when clearing work dir', 'SEVERE')
+                casalog.post("Some errors occured when clearing work dir", "SEVERE")
                 raise RuntimeError
 
     def chdir(self):
         if os.path.exists(self.path):
             os.chdir(self.path)
         else:
-            casalog.post(
-                'Some errors occured when chdir to work dir', 'SEVERE')
+            casalog.post("Some errors occured when chdir to work dir", "SEVERE")
             raise RuntimeError
 
     @classmethod
-    def create(cls, parent_path: str = None) -> 'Workdir':
+    def create(cls, parent_path: str = None) -> "Workdir":
         def is_valid_parent_path(path):
-            return \
-                os.path.exists(path) and \
-                os.path.isdir(path) and \
-                os.access(path, os.W_OK)
+            return (
+                os.path.exists(path)
+                and os.path.isdir(path)
+                and os.access(path, os.W_OK)
+            )
 
         if not parent_path:
             parent_path = os.getcwd()
@@ -1457,14 +1509,13 @@ class Workdir():
                 path = os.path.join(parent_path, str(uuid.uuid4()))
                 if not os.path.exists(path):
                     os.mkdir(path)
-                    casalog.post(f'created working directory: {path}', 'WARN')
+                    casalog.post(f"created working directory: {path}", "WARN")
                     break
             if path == parent_path:
-                raise RuntimeError(
-                    'Some errors occured when creating work dir')
+                raise RuntimeError("Some errors occured when creating work dir")
             return Workdir(path)
 
-        raise RuntimeError('Some errors occured when creating work dir')
+        raise RuntimeError("Some errors occured when creating work dir")
 
 
 def suite():
@@ -1481,8 +1532,9 @@ def suite():
         TestImageSubtraction,
         TestModuleMethodsOfImbaseline,
         TestImbaselineExecution,
-        TestImbaselineOutputs]
+        TestImbaselineOutputs,
+    ]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
