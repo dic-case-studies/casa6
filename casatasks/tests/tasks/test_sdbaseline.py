@@ -3353,7 +3353,7 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
 #         self.run_test(self.sinustat, spw=self.spw, edge=self.noedge, blfunc='sinusoid')
 
 
-class sdbaseline_selection(unittest.TestCase):
+class sdbaseline_selectionTest(unittest.TestCase):
     datapath = ctsys_resolve('unittest/sdbaseline/')
     infile = "analytic_type1.bl.ms"
     outfile = "baselined.ms"
@@ -3848,7 +3848,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.run_apply_test()
 
 
-class sdbaseline_clipping(sdbaseline_unittest_base):
+class sdbaseline_clippingTest(sdbaseline_unittest_base):
     """
     Tests for iterative sigma clipping
 
@@ -4137,10 +4137,10 @@ def suite():
             sdbaseline_variableTest,
             sdbaseline_bloutputTest,
             sdbaseline_autoTest,
-            sdbaseline_selection,
+            sdbaseline_selectionTest,
             sdbaseline_updateweightTest,
             sdbaseline_updateweightTest2,
-            sdbaseline_clipping,
+            sdbaseline_clippingTest,
             sdbaseline_helperTest
             ]
 
