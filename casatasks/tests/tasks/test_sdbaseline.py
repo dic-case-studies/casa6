@@ -3665,6 +3665,16 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
               'intent': 'OBSERVE_TARGET#ON_SOURCE',
               'datacolumn': 'float_data'}
 
+    def setUp(self):
+        self.init_params()
+        remove_files_dirs(self.infile)
+        shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
+        default(sdbaseline)
+
+    def tearDown(self):
+        remove_files_dirs(self.infile)
+        remove_files_dirs(self.outroot)
+
     def init_params(self):
         self.params['updateweight'] = True
         for key in ['sigmavalue', 'spw',
@@ -3744,16 +3754,6 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
                     for ichan in range(4500, 6500):
                         flag[ipol][ichan][irow] = True
             tb.putcol('FLAG', flag)
-
-    def setUp(self):
-        self.init_params()
-        remove_files_dirs(self.infile)
-        shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
-        default(sdbaseline)
-
-    def tearDown(self):
-        remove_files_dirs(self.infile)
-        remove_files_dirs(self.outroot)
 
     def test000(self):
         self.params['updateweight'] = False
@@ -3882,6 +3882,17 @@ class sdbaseline_clippingTest(sdbaseline_unittest_base):
     outdata = {}
     outmask = {}
 
+    def setUp(self):
+        remove_files_dirs(self.infile)
+        shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
+        default(sdbaseline)
+        self.outdata = {}
+        self.outmask = {}
+
+    def tearDown(self):
+        remove_files_dirs(self.infile)
+        remove_files_dirs(self.outroot)
+
     def _setup_input_data(self, spikes):
         with table_manager(self.infile, nomodify=False) as tb:
             data = tb.getcell('FLOAT_DATA', 0)
@@ -3982,17 +3993,6 @@ class sdbaseline_clippingTest(sdbaseline_unittest_base):
         answer_mask_after_2clip = '[[0;1999];[2001;3999];[4001;8191]]'  # channel 2000 is clipped
         for i in range(2, maxiter):
             self.assertEqual(self._resmask(i), answer_mask_after_2clip)
-
-    def setUp(self):
-        remove_files_dirs(self.infile)
-        shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
-        default(sdbaseline)
-        self.outdata = {}
-        self.outmask = {}
-
-    def tearDown(self):
-        remove_files_dirs(self.infile)
-        remove_files_dirs(self.outroot)
 
     def test000(self):
         # test000 : to confirm if clipping works regardless of blformat when blfunc='poly'
