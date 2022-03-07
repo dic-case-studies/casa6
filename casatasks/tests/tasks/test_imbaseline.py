@@ -4,6 +4,11 @@ Imbaseline test class.
 This module contains tests for the classes of imbaseline. Since the main feature of the task is
 made up of a combination of imsmooth/sdsmooth/sdbaseline, so tests consist of simple tests for
 these tasks and white tests for the unique classes of imbaseline such as image subtraction.
+
+Policy:
+- Variables written in uppercase are constants.
+  Some variables should be treated as constants, but they are lowercased to make them
+  the same string as the task parameters and are not treated as constants.
 """
 
 import functools
@@ -681,6 +686,8 @@ class TestSdbaseline(test_base):
     02. failure case: call sdbaseline with invalid ms stack, an exception raises
     03. failure case: call sdbaseline with invalid image stack, an exception raise
     04. set values for _SdbaselineParams and do validate(), and compare properties of it to the correct values
+
+    note: Class variables must be defined as method-local variables when extending the class by adding methods, etc.
     """
 
     input_image = "expected.im"
