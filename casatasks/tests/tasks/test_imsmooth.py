@@ -1,10 +1,9 @@
-########################################################################3
-#  imsmooth_test.py
-#
-# Copyright (C) 2008, 2009
+##########################################################################
+# test_imsmooth.py
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
-# This scripts free software; you can redistribute it and/or modify it
+# This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.
@@ -14,17 +13,11 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imsmooth.html
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
 #
+##########################################################################
 
 import random
 import os
@@ -115,18 +108,6 @@ class imsmooth_test(unittest.TestCase):
             shutil.rmtree("test_image2dconvolver_multibeam.im")
         if os.path.exists( 'garbage.rgn' ):
             os.remove('garbage.rgn')
-
-        # for filename in os.listdir(cwd):
-        #     file_path = os.path.join(cwd, filename)
-        #     try:
-        #         if os.path.isfile(file_path) or os.path.islink(file_path):
-        #             os.unlink(file_path)
-        #         elif os.path.isdir(file_path):
-        #             # CASA 5 tests need this directory
-        #             if filename != 'xml':
-        #                 shutil.rmtree(file_path)
-        #     except Exception as e:
-        #         print('Failed to delete %s. Reason: %s' % (file_path, e))
  
     ####################################################################
     # Incorrect inputs to parameters.  The parameters are:
