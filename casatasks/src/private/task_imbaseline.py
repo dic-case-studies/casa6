@@ -13,11 +13,13 @@ from numpy import array, uint64
 
 from casatasks import casalog
 from casatasks.private.ialib import write_image_history
-from casatasks.private.sdutil import sdtask_decorator, table_manager, tool_manager
+from casatasks.private.sdutil import (sdtask_decorator, table_manager,
+                                      tool_manager)
 from casatasks.private.task_imsmooth import imsmooth
 from casatasks.private.task_sdbaseline import sdbaseline
 from casatasks.private.task_sdsmooth import sdsmooth
-from casatools import image, table, quanta
+from casatasks.private.update_spw import sets_to_spwchan, spwchan_to_sets
+from casatools import image, quanta, table
 
 DATACOLUMN = 'DATA'
 OVERWRITE = True
@@ -26,7 +28,7 @@ IMAGE_STACK_MAX_HEIGHT = 5
 MS_STACK_MAX_HEIGHT = 3
 
 qa = quanta()
-do_not_erase_temporary_files = True
+do_not_erase_temporary_files = False
 
 
 class AbstractFolder:
@@ -196,6 +198,7 @@ class _MeasurementSetStack(AbstractFileStack):
     def __init__(self) -> None:
         super().__init__(max_height=MS_STACK_MAX_HEIGHT)
         self.spsmoothed = False
+        self.kwidth = 5
 
 
 @contextlib.contextmanager
@@ -329,7 +332,7 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
             _SdbaselineMethods.execute(DATACOLUMN, bloutput, maskmode, chans, thresh, avg_limit,
                                        minwidth, edge, blfunc, order, npiece, applyfft, fftthresh,
                                        addwn, rejwn, blparam, clipniter, clipthresh, image_stack,
-                                       ms_stack, input_image_shape, kwidth)
+                                       ms_stack, input_image_shape)
 
             # convert MeasurementSet into image and subtract results
             _ImageSubtractionMethods.execute(linefile, image_stack)
@@ -489,11 +492,13 @@ class _SdsmoothMethods():
         input_ms = ms_stack.peak().path
         output_ms = _generate_temporary_filename('spsmooth', 'ms')
         base_image = image_stack.bottom().path
-        sdsmooth(**_SdsmoothParams(input_ms, output_ms, datacolumn.lower(), spkernel, kwidth)())
+        params = _SdsmoothParams(input_ms, output_ms, datacolumn.lower(), spkernel, kwidth)
+        sdsmooth(**params())
         ms_stack.push(_EraseableFolder(output_ms))
         output_image = _MS2ImageMethods.convert(base_image, output_ms, image_shape, datacolumn)
         image_stack.push(_EraseableFolder(output_image))
         ms_stack.spsmoothed = True
+        ms_stack.kwidth = params.kwidth
 
     @staticmethod
     def require(spkernel: str='none') -> None:
@@ -517,7 +522,7 @@ class _SdbaselineMethods():
                 fftthresh: float=None, addwn: List[int]=None, rejwn: List[int]=None,
                 blparam: str=None, clipniter: int=None, clipthresh: float=None,
                 image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None,
-                image_shape: _ImageShape=None, kwidth: int=None) -> None:
+                image_shape: _ImageShape=None) -> None:
         """Call casatasks.sdbaseline task."""
         casalog.post('execute spectral baselining', 'INFO')
         input_ms = ms_stack.peak().path
@@ -527,7 +532,7 @@ class _SdbaselineMethods():
                                        chans, thresh, avg_limit, minwidth, edge, blfunc, order,
                                        npiece, applyfft, fftthresh, addwn, rejwn, blparam,
                                        clipniter, clipthresh, ms_stack.spsmoothed, image_shape,
-                                       kwidth)())
+                                       ms_stack.kwidth)())
         ms_stack.push(_EraseableFolder(output_ms))
         output_image = _MS2ImageMethods.convert(base_image, output_ms, image_shape, datacolumn)
         image_stack.push(_EraseableFolder(output_image))
@@ -696,12 +701,19 @@ class _SdbaselineParams(AbstractValidatable):
         self.clipniter = clipniter if clipniter is not None else 0
         self.clipthresh = clipthresh if clipthresh is not None else 3.0
 
-        if spsmoothed and not self.spw and kwidth:
+        spw = '0'
+        if spsmoothed:
             left_edge = kwidth // 2
-            right_edge = image_shape.im_nchan // 2 - 1
-            self.spw = f'0:{left_edge}~{right_edge}'
-        else:
-            self.spw = '0'
+            right_edge = image_shape.im_nchan // 2
+            if self.spw:
+                coverage = set(list(range(left_edge, right_edge)))
+                sets = []
+                for s in spwchan_to_sets(self.infile, self.spw):
+                    sets.append(s & coverage)
+                spw = sets_to_spwchan(sets)
+            else:
+                spw = f'0:{left_edge}~{right_edge-1}'
+        self.spw = spw
 
     def __chans2spw(self, chans: str, maskmode) -> str:
         if not chans or maskmode != 'list':
