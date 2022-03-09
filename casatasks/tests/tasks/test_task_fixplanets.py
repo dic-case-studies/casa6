@@ -17,19 +17,17 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_fixplanets/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.fixplanets.html
 #
 #
 ##########################################################################
 
-import casatools
+from casatools import ctsys
+from casatools import table as tb
 from casatools import ms as mstool
 from casatools import msmetadata as msmdtool
 from casatasks import fixplanets
-CASA6 = True
-tb = casatools.table()
 
-import sys
 import os
 import unittest
 import shutil
@@ -37,7 +35,7 @@ import numpy as np
 
 ### DATA ###
 
-datapath = casatools.ctsys.resolve('unittest/fixplanets/')
+datapath = ctsys.resolve('unittest/fixplanets/')
 
 # Input data
 msfile = 'gaincaltest2.ms'
@@ -89,8 +87,6 @@ class fixplanets_test(unittest.TestCase):
     
     
     def setUp(self):
-        if not CASA6:
-            default(fixplanets)
         if not os.path.exists(copypath):           
             shutil.copytree(os.path.join(datapath, msfile), copypath)
         if not os.path.exists(copypath2):           
