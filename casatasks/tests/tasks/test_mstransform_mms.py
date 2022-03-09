@@ -1,7 +1,6 @@
 ##########################################################################
-# test_mstransform_mms.py
-#
-# Copyright (C) 2016
+# test_task_mstransform_mms.py
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
 # This script is free software; you can redistribute it and/or modify it
@@ -14,21 +13,11 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.mstransform.html
 #
-# Test script for the CASA mstransform task when using the Multi-MS (MMS),
-#
-###########################################################################
-
+##########################################################################
 import os
 import unittest
 
@@ -1347,21 +1336,6 @@ class Cleanup(test_base):
     def test_runTest(self):
         """mstransform: Cleanup"""
         pass
-
-
-def suite():
-    return [
-            test_mms_transformations,
-            test_mms_freqavg,
-            test_mms_parallel,
-            test_mms_spw_poln,
-            test_mms_input,
-            test_mms_output,
-            test_vla_mixed_polarizations_mms,
-            test_alma_wvr_correlation_products_mms,
-            test_otf_calibration,
-            test_no_reindexing,
-            Cleanup]
 
 if __name__ == '__main__':
     unittest.main()

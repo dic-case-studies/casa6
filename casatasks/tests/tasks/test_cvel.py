@@ -1,37 +1,36 @@
-# unit test for the cvel task
-
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_cvel.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.cvel.html
+#
+##########################################################################
 import os
 import numpy
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import cvel, split, importuvfits
-    from casatools import ctsys, table, quanta, ms
+from casatasks import cvel, split, importuvfits
+from casatools import ctsys, table, quanta, ms
 
-    _tb = table( )
-    _qa = quanta( )
-    _ms = ms( )
+_tb = table( )
+_qa = quanta( )
+_ms = ms( )
 
-    ctsys_resolve = ctsys.resolve
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
-    # these aren't local tools in the CASA5 version
-    _tb = tb
-    _qa = qa
-    _ms = ms
-
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
-
-datapath = ctsys_resolve('unittest/cvel/')
+datapath = ctsys.resolve('unittest/cvel/')
 myname = 'test_cvel'
 vis_a = 'ngc4826.ms'
 #vis_b = 'test.ms'
@@ -77,12 +76,9 @@ def verify_ms(msname, expnumspws, expnumchan, inspw, expchanfreqs=[]):
 
     return [True,msg]
 
-
 class cvel_test(unittest.TestCase):
 
     def setUp(self):
-        if not is_CASA6:
-            default('cvel')
         forcereload=False
         
         if(forcereload or not os.path.exists(vis_a)):
@@ -131,7 +127,7 @@ class cvel_test(unittest.TestCase):
             _tb.putcol('TIME', a)
             _tb.close()
             _ms.open(vis_g, nomodify=False)
-            _ms.addephemeris(0,ctsys_resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
+            _ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
                              'Jupiter_54708-55437dUTC', 0 )
             _ms.close()
 
@@ -162,13 +158,9 @@ class cvel_test(unittest.TestCase):
         '''Cvel 2: Only input vis set - expected error'''
         myvis = vis_b
         os.system('ln -sf ' + myvis + ' myinput.ms')
-        if is_CASA6:
-            with self.assertRaises(AssertionError):
-                cvel(vis = 'myinput.ms')
-        else:
-            with self.assertRaises(AssertionError):
-                cvel(vis = 'myinput.ms')
-                    
+        with self.assertRaises(AssertionError):
+            cvel(vis = 'myinput.ms')
+
     def test3(self):
         '''Cvel 3: Input and output vis set'''
         myvis = vis_b
@@ -1319,11 +1311,5 @@ class cleanup(unittest.TestCase):
         '''Cvel: Cleanup'''
         pass
         
-
-
-def suite():
-    return [cvel_test,cleanup]
-    
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

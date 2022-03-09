@@ -1,34 +1,35 @@
-# unit test for the exportasdm task
-
-from __future__ import absolute_import
+#########################################################################
+# test_task_exportasdm.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.data.exportasdm.html
+#
+##########################################################################
 import os
 import shutil
-
 import unittest
+import sys
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    import sys
-    from casatools import ctsys, ms
-    from casatasks import exportasdm, importasdm
-
-    _ms = ms( )
-
-    ctsys_resolve = ctsys.resolve
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import mstool
-    import unittest    #import testhelper as th
-
-    _ms = mstool( )
-
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
-
-datapath = ctsys_resolve('unittest/exportasdm/')
+from casatools import ctsys, ms
+from casatasks import exportasdm, importasdm
 from casatestutils import testhelper as th
+
+_ms = ms( )
+
+datapath = ctsys.resolve('unittest/exportasdm/')
 
 class exportasdm_test(unittest.TestCase):
     
@@ -54,7 +55,7 @@ class exportasdm_test(unittest.TestCase):
         if(not os.path.exists(self.vis_c)):
             os.system('cp -RL '+os.path.join(datapath,'M100-X220-shortened.ms')+' .')
         if(not os.path.exists(self.vis_d)):
-            # CASA6 will fetch this from the repo without the need for ctsys_resolve
+            # CASA6 will fetch this from the repo without the need for ctsys.resolve
             _ms.fromfits( self.vis_d, os.path.join(datapath,'ngc4826.ll.fits5') )
             _ms.close( )
         if(not os.path.exists(self.vis_e)):
@@ -71,9 +72,6 @@ class exportasdm_test(unittest.TestCase):
         if(not os.path.exists(self.vis_i)):
             os.system('ln -sf '+os.path.join(datapath,'uid___A002_X72bc38_X000'))
             importasdm('uid___A002_X72bc38_X000', vis = 'asdm.ms', scans='0:2')
-            
-        if not is_CASA6:
-            default(exportasdm)
 
     def tearDown(self):
         os.system('rm -rf myinput.ms')
@@ -384,9 +382,5 @@ class exportasdm_test2(unittest.TestCase):
         '''Exportasdm: Cleanup'''
         pass
 
-def suite():
-    return [exportasdm_test,exportasdm_test2]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

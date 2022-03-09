@@ -1,19 +1,30 @@
-from __future__ import absolute_import
-from __future__ import print_function
+##########################################################################
+# test_task_listfits.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.information.listfits.html
+#
+##########################################################################
 import os
 import sys
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys
-    from casatasks import casalog, listfits
-else:
-    import commands
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
+from casatools import ctsys
+from casatasks import casalog, listfits
 
 class listfits_test(unittest.TestCase):
     
@@ -27,12 +38,7 @@ class listfits_test(unittest.TestCase):
         if(os.path.exists(self.fitsfile)):
             os.system('rm -rf ' + self.fitsfile)
 
-        if is_CASA6:
-            shutil.copyfile(ctsys.resolve(os.path.join('unittest/listfits/',self.fitsfile)), self.fitsfile)
-        else:
-            default(listfits)
-            shutil.copyfile(os.environ.get('CASAPATH').split()[0] +\
-                            '/casatestdata/unittest/listfits/'+self.fitsfile, self.fitsfile)
+        shutil.copyfile(ctsys.resolve(os.path.join('unittest/listfits/',self.fitsfile)), self.fitsfile)
     
     def tearDown(self):
         if (os.path.exists(self.fitsfile)):
@@ -42,11 +48,7 @@ class listfits_test(unittest.TestCase):
         '''Test 1: Empty input should return False'''
         # CASA5 tasks return False, casatasks throw exceptions
         fitsfile = ''
-        if is_CASA6:
-            self.assertRaises(Exception, listfits, fitsfile)
-        else:
-            self.res = listfits(fitsfile)
-            self.assertFalse(self.res)
+        self.assertRaises(Exception, listfits, fitsfile)
         
     def test2(self):
         '''Test 2: Good input should return None'''
@@ -65,9 +67,5 @@ class listfits_test(unittest.TestCase):
         except:
            print('could not open "%s" for writing' % logfile)
         
-def suite():
-    return [listfits_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

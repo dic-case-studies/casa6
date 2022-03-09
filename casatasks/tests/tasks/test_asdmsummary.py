@@ -1,24 +1,30 @@
+#########################################################################
+# test_task_asdmsummary.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.information.asdmsummary.html
+#
+##########################################################################
 
-# Trivial tests of asdmsummary.
-# Tests that asdmsummary works without dying on a few ASDMs from 
-# different telescopes.  Also checks that the number of new log rows written
-# by asdmsummary matches the expected number for that ASDM.
-
-from __future__ import absolute_import
 import os
 import sys
-
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys
-    from casatasks import asdmsummary, casalog
-
-else:
-    from __main__ import default
-    from tasks import asdmsummary
-    from taskinit import casalog
-
 import unittest
+
+from casatools import ctsys
+from casatasks import asdmsummary, casalog
 
 def logfileLen():
     # count the lines in the current log file
@@ -64,11 +70,7 @@ class asdmsummary_test(unittest.TestCase):
     # CASA5 spits out 8 additional lines to the log that CASA6 does not produce
     dataPath = ""
     extraLines = 0
-    if is_CASA6:
-        dataPath = ctsys.resolve('unittest/asdmsummary/')
-    else:
-        dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'/casatestdata/unittest/asdmsummary/')
-        extraLines = 8
+    dataPath = ctsys.resolve('unittest/asdmsummary/')
 
     def doASDMSummary(self, asdmpath, expectedLogLines):
         # run asdmsummary, expepctedLogLines is the expected number of new log lines
@@ -81,10 +83,7 @@ class asdmsummary_test(unittest.TestCase):
         self.assertEqual(newLines,expectedLogLines+self.extraLines)
 
     def setUp(self):
-        if is_CASA6:
-            pass
-        else:
-            default(asdmsummary)
+        pass
 
     def tearDown(self):
         pass
@@ -113,9 +112,5 @@ class asdmsummary_test(unittest.TestCase):
         nlines = 1021
         self.doASDMSummary('uid___A002_X71e4ae_X317_short',nlines)
 
-def suite():
-    return [asdmsummary_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

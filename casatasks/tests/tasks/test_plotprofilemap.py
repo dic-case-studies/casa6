@@ -1,6 +1,23 @@
-from __future__ import absolute_import
-from __future__ import print_function
-
+###########################################################################
+# test_task_plotprofilemap.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.visualization.plotprofilemap.html
+#
+##########################################################################
 import os
 import shutil
 import numpy
@@ -10,27 +27,13 @@ import unittest
 import matplotlib
 import pylab as pl
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import plotprofilemap
-    from casatasks import exportfits
-    from casatools import image
-    from casatools import regionmanager
-    from casatools import ctsys
-    datapath = ctsys.resolve('unittest/plotprofilemap/')
+from casatasks import plotprofilemap
+from casatasks import exportfits
+from casatools import image
+from casatools import regionmanager
+from casatools import ctsys
 
-    # default isn't used in CASA6
-    def default(atask):
-        pass
-else:
-    from __main__ import default
-    from tasks import plotprofilemap
-    from tasks import exportfits
-    from taskinit import iatool as image
-    from taskinit import rgtool as regionmanager
-
-    # Data path of input/output
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/plotprofilemap/'
+datapath = ctsys.resolve('unittest/plotprofilemap/')
 
 myia = image()
 myrg = regionmanager()
@@ -76,9 +79,6 @@ class plotprofilemap_test(unittest.TestCase):
 
         # copy input image
         shutil.copytree(os.path.join(datapath, self.imagename_ref), self.imagename)
-
-        # make parameters default
-        default(plotprofilemap)
 
         # copy standard task parameter set
         self.task_param = self.standard_task_param.copy()
@@ -467,11 +467,5 @@ class plotprofilemap_test(unittest.TestCase):
 
         self.verify(numpanels, title=title)
 
-
-def suite():
-    return [plotprofilemap_test]
-
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

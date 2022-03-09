@@ -1,36 +1,34 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_flagmanager.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.flagging.flagmanager.html
+#
+##########################################################################
 import shutil
 import unittest
 import os
 import sys
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import flagdata, flagmanager
-    from casatools import ctsys, agentflagger
-    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatasks import flagdata, flagmanager
+from casatools import ctsys, agentflagger
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
-    # CASA6 doesn't need default
-    def default(atask):
-        pass
-
-    # Path for data
-    datapath = ctsys.resolve('unittest/flagmanager/')
-else:
-    from tasks import flagdata, flagmanager
-    from taskinit import aftool as agentflagger
-    from __main__ import default
-    from parallel.parallel_task_helper import ParallelTaskHelper
-    from casa_stack_manip import stack_frame_find
-
-    # to rethrow exception - not relevant in casatasks
-    import inspect
-    g = stack_frame_find( )
-    g['__rethrow_casa_exceptions'] = True
-
-    # Path for data
-    datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/flagmanager/"
+# Path for data
+datapath = ctsys.resolve('unittest/flagmanager/')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -311,12 +309,5 @@ class cleanup(test_base):
         '''flagdata: Cleanup'''
         pass
 
-
-def suite():
-    return [test_flagmanager_ms, 
-            test_flagmanager_caltables,
-            cleanup]
-
-if is_CASA6:    
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

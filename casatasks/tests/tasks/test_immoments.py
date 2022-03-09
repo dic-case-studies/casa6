@@ -1,11 +1,9 @@
-########################################################################
-#  immoment_test.py
-#
-#
-# Copyright (C) 2008, 2009
+#########################################################################
+# test_task_immoments.py
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
-# This scripts free software; you can redistribute it and/or modify it
+# This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.
@@ -15,78 +13,11 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.immoments.html
 #
-# <author>
-# Shannon Jaeger (University of Calgary)
-# </author>
-#
-# <summary>
-# Test suite for the CASA immoments Task
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <etymology>
-# immoments_test stands for image momemnts test
-# </etymology>
-#
-# <synopsis>
-# immoments_test.py is a Python script that tests the correctness
-# of the immoments task in CASA.
-#
-# The tests include:
-#    1. Incorrect input for each paramter.  Incorrect input includes
-#       one input of the incorrect data type, out-of-bounds (where
-#       applicable, and correct data type but non-sensical.
-#    2. Calculating one example of each type of moment.
-#    3. Using the include/exclude pix parameter
-#    4. Calculating moments with region selection on the sky,
-#       channels, and stokes values, as well as using an input
-#       region file.
-#    5.Calculating moments with a mask either from the image
-#      itself or another image.
-# for generating momements along a user specified axis on a CASA image.
-# This is a time-honoured spectral-line analysis technique for discovering
-# spectral line information.
-#
-# In this task, moment, refers to collapsing an axis of the image,
-# the moment axis, to a single pixel.
-#
-# The various moments that can be calculated are described in detail
-# at http://casa.nrao.edu/docs/casaref/image.moments.html#x59-590001.1.1
-# 
-# </synopsis> 
-#
-# <example>
-# # This test was designed to run in the automated CASA test system.
-# # This exmple shows who to run it manually from with casapy.
-# runUnitTest.main(['test_imhead'])
-#
-# or outside casapy like this:
-# casapy -c runUnitTest.py test_imhead
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard to the immoments task to try and ensure
-# coding changes do not break the 
-# </motivation>
-#
-# <todo>
-# Almost everything!
-# </todo>
-
+##########################################################################
 import random
 import sys
 import os
@@ -1272,10 +1203,6 @@ class immoment_test2(unittest.TestCase):
         imhistory(outfile)
         myia.done()
         bb.done()
-        
-def suite():
-    #return [immoment_test1,immoment_test2]
-    return [immoment_test2]
     
 if __name__ == '__main__':
     unittest.main()

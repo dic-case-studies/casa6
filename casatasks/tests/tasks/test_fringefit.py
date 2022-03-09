@@ -1,5 +1,23 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_fringefit.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.fringefit.html
+#
+##########################################################################
 import os
 import sys
 import shutil
@@ -11,34 +29,13 @@ import itertools
 # only
 VERBOSE = False
 
-# is_CASA6 and is_python3
-from casatasks.private.casa_transition import *
-if is_CASA6:
-    from casatools import ms, ctsys, table
-    from casatasks import fringefit, flagmanager, flagdata
-
-    tblocal = table()
-    ctsys_resolve = ctsys.resolve
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import tbtool
-
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata')
-    tblocal = tbtool()
-
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
-
+from casatools import ms, ctsys, table
+from casatasks import fringefit, flagmanager, flagdata
 from casatestutils import testhelper as th
-#if is_python3:
-##    ### for testhelper import
-#    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-#    import testhelper as th
-#else:
-#    import testhelper as th
 
-datapath = ctsys_resolve('unittest/fringefit/')
+tblocal = table()
+
+datapath = ctsys.resolve('unittest/fringefit/')
 
 class Fringefit_tests(unittest.TestCase):
     prefix = 'n08c1'
@@ -238,14 +235,6 @@ class FreqMetaTests(unittest.TestCase):
         except RuntimeError as e: 
             print(e)
             self.assertTrue(True)
-
-
-        
-        
-        
-        
-def suite():
-    return [Fringefit_tests, Fringefit_single_tests, Fringefit_dispersive_tests]
 
 if __name__ == '__main__':
     unittest.main()

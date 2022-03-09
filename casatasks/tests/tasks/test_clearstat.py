@@ -1,22 +1,32 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_clearstat.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.clearstat.html
+#
+##########################################################################
 import os
 import sys
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, image, table
-    from casatasks import clearstat
-    _ia = image( )
-    _tb = table( )
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    _ia = iatool( )
-    _tb = tb
+from casatools import ctsys, image, table
+from casatasks import clearstat
+_ia = image( )
+_tb = table( )
 
 '''
 Unit tests of task clearstat. It tests the following parameters:
@@ -43,19 +53,9 @@ if 'TEST_DATADIR' in os.environ:
     print('clearstat tests will use data from %s' % datapath)
 
 # CASA5 and CASA6 differences to handle this
-if is_CASA6:
-    def ctsys_resolve(apath,ignore_testmms=False):
-        # ignore_testmms isn't necessary here given how datapath is used in the tests
-        return ctsys.resolve(apath)
-else:
-    def ctsys_resolve(apath,ignore_testmms=False):
-        result = apath
-        if not testmms or ignore_testmms:
-            # find it in the standard place
-            dataRoot = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata')
-            result = os.path.join(dataRoot,apath)
-        # otherwise apath should already be the full path
-        return result
+def ctsys_resolve(apath,ignore_testmms=False):
+    # ignore_testmms isn't necessary here given how datapath is used in the tests
+    return ctsys.resolve(apath)
 
 class clearstat_test(unittest.TestCase):
     
@@ -66,8 +66,6 @@ class clearstat_test(unittest.TestCase):
     
     def setUp(self):
         self.res = None
-        if not is_CASA6:
-            default('clearstat')
         if(os.path.exists(self.msfile)):
             os.system('rm -rf ' + self.msfile)
         if(os.path.exists(self.img)):
@@ -149,9 +147,5 @@ class clearstat_test(unittest.TestCase):
         self.assertTrue(tbreadlock==False and tbwritelock==False and lock[0]==False and lock[1]==False,
                         'Failed to clear locks on table and/or image')
 
-def suite():
-    return [clearstat_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

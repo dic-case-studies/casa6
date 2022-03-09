@@ -1,6 +1,5 @@
-##########################################################################
-# test_plotbandpass.py
-#
+###########################################################################
+# test_task_plotbandpass.py
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
@@ -14,8 +13,9 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# [https://open-jira.nrao.edu/browse/CAS-9912]
 #
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.visualization.plotbandpass.html
 #
 ##########################################################################
 
@@ -1450,22 +1450,6 @@ class plotbandpass_badSpwFilename_test(unittest.TestCase):
         plotbandpass(subplot=11, antenna='DA58', overlay='time', caltable='uid___A002_Xa2ce2e_X7bd.ms.tsys', 
                figfile=figdir+'regression113', buildpdf=True,
                showatm=True, yaxis='amp', xaxis='freq', interactive=False)
-
-def suite():
-    return[plotbandpass_1_test,
-           plotbandpass_2_test, 
-           plotbandpass_X3c1_test, 
-           plotbandpass_smooth_test, 
-           plotbandpass_multi_field_Tsys_solution_overlay_test, 
-           plotbandpass_ALMA_1_pol_test, 
-           plotbandpass_ALMA_multi_regions_test, 
-           plotbandpass_EVLA_dual_pol_test, 
-           plotbandpass_EVLA_single_pol_test, 
-           plotbandpass_SMA_ngc6334_SM2_filler_test,
-           plotbandpass_tsysFlagged_test, 
-           plotbandpass_mislabeling_test, 
-           plotbandpass_badAntennaFilename_test, 
-           plotbandpass_badSpwFilename_test]
 
 if __name__ == '__main__':
     unittest.main()

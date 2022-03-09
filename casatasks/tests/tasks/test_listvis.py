@@ -1,29 +1,34 @@
-from __future__ import absolute_import
-from __future__ import print_function
+##########################################################################
+# test_task_listvis.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.information.listvis.html
+#
+##########################################################################
 import os
 import sys
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import *
-if is_CASA6:
-    from casatools import ctsys
-    from casatasks import listvis
-    
-    ctsys_resolve = ctsys.resolve
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
-
+from casatools import ctsys
+from casatasks import listvis
 from casatestutils import listing as lt
 
-datapath = ctsys_resolve('unittest/listvis')
-refpath = ctsys_resolve('unittest/listvis/listvis_reference/')
+datapath = ctsys.resolve('unittest/listvis')
+refpath = ctsys.resolve('unittest/listvis/listvis_reference/')
 
 '''
 Unit tests for task listvis. It tests the following parameters:
@@ -70,10 +75,7 @@ class listvis_test1(unittest.TestCase):
         os.symlink(fpath, msfile2)       
 
         fpath = os.path.join(datapath, msfile3)
-        os.symlink(fpath, msfile3)       
-
-        if not is_CASA6:
-            default(listvis)
+        os.symlink(fpath, msfile3)
     
     def tearDown(self):
         if os.path.lexists(msfile1):
@@ -153,10 +155,5 @@ class listvis_test1(unittest.TestCase):
                         'New and reference files are different. %s != %s. '
                         'See the diff file.'%(output,reference))
         
-        
-def suite():
-    return [listvis_test1]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

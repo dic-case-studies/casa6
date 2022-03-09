@@ -1,90 +1,56 @@
-#############################################################################
-# $Id:$
-# Test Name:                                                                #
-#    Regression Test Script for ASDM version 1.2, 1.3 import to MS          #
-#    and the "inverse filler" task exportasdm
-#                                                                           #
-# Rationale for Inclusion:                                                  #
-#    The conversion of ASDM to MS and back needs to be verified.            #
-#                                                                           #
-# Features tested:                                                          #
-#    1) Is the import performed without raising exceptions                  #
-#    2) Do all expected tables exist                                        #
-#    3) Can the MS be opened                                                #
-#    4) Do the tables contain expected values                               #
-#    5) Is exportasdm performed without raising exceptions                  #
-#    6) Is the created ASDM well-formed (XML) and complete                  #
-#    7) Can the resulting ASDM be reimported without raising exceptions     #
-#    8) Does it have the same number of integrations as the original        #
-#    9) Can a mixed mode ASDM be imported in lazy mode                      #
-#                                                                           #
-# Input data:                                                               #
-#     one dataset for the filler of ASDM 1.0                                #
-#     one simulated MS dataset                                              #
-#                                                                           #
-#############################################################################
+#########################################################################
+# test_task_importasdm_mms.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Features tested:
+#    1) Is the import performed without raising exceptions
+#    2) Do all expected tables exist
+#    3) Can the MS be opened
+#    4) Do the tables contain expected values
+#    5) Is exportasdm performed without raising exceptions
+#    6) Is the created ASDM well-formed (XML) and complete
+#    7) Can the resulting ASDM be reimported without raising exceptions
+#    8) Does it have the same number of integrations as the original
+#    9) Can a mixed mode ASDM be imported in lazy mode
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.data.importasdm.html
+#
+##########################################################################
 import os
 import sys
 import shutil
 import unittest
 
-is_CASA6 = False
 has_mpi = False
-try:
-    from casatools import ctsys, ms, table, msmetadata
-    from casatasks import importasdm, flagdata, listpartition, exportasdm
-    from casatasks.private import partitionhelper as ph
-    from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
-    is_CASA6 = True
-    # make local copies of the tools
-#    tblocal = table( )
-#    mslocal = ms( )
-#    mdlocal = msmetadata()
-    mdlocal = msmetadata()
-    mslocal = ms()
-    tblocal = table()
-    
+from casatools import ctsys, ms, table, msmetadata
+from casatasks import importasdm, flagdata, listpartition, exportasdm
+from casatasks.private import partitionhelper as ph
+from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
 
-    ctsys_resolve = ctsys.resolve
-    # CASAtasks does not use default
-    def default(atask):
-        pass
-except ImportError:
-    from __main__ import default
-    from tasks import importasdm, flagdata, exportasdm, listpartition
-    from taskinit import mstool, tbtool, msmdtool
-    import partitionhelper as ph
-    from parallel.parallel_data_helper import ParallelDataHelper
-    from mpi4casa.MPICommandClient import MPICommandClient
-    from mpi4casa.MPIEnvironment import MPIEnvironment
-    has_mpi = True
-
-    mslocal = mstool()
-    mdlocal = msmdtool()
-    tblocal = tbtool()
-
-#    mst = mstool
-#    tbt = tbtool
-#    mdt = msmdtool
-    # make local copies of the tools
-#    tblocal = tbtool()
-#    mslocal = mstool()
-#    mdlocal = mdt()
-
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+mdlocal = msmetadata()
+mslocal = ms()
+tblocal = table()
 
 # Safeguarding when running the test in macOS
-if is_CASA6:
-    try:
-        from casampi.MPIEnvironment import MPIEnvironment
-        from casampi.MPICommandClient import MPICommandClient
-        has_mpi = True
-    except:
-        from casatasks import casalog
-        casalog.post('casampi is not available. Running in serial', 'WARN')
-
+try:
+    from casampi.MPIEnvironment import MPIEnvironment
+    from casampi.MPICommandClient import MPICommandClient
+    has_mpi = True
+except:
+    from casatasks import casalog
+    casalog.post('casampi is not available. Running in serial', 'WARN')
 
 from casatestutils import testhelper as th
 myname = 'test_importasdm'
@@ -103,13 +69,7 @@ asdmname = myms_dataset_name+'.asdm'
 reimp_msname = 'reimported-'+myms_dataset_name
 
 # Path to input data
-datapath = ctsys_resolve('unittest/importasdm/')
-
-
-# make local copies of the tools
-#tblocal = tblocal()
-#mslocal = mslocal()
-#mdlocal = mdlocal()
+datapath = ctsys.resolve('unittest/importasdm/')
 
 def checktable(thename, theexpectation):
     global msname, myname
@@ -867,12 +827,6 @@ class asdm_import11(test_base):
 
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
-
-def suite():
-    return [asdm_import8,
-            asdm_import9,
-            asdm_import10,
-            asdm_import11]
 
 if __name__ == '__main__':
     unittest.main()

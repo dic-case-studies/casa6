@@ -1,7 +1,6 @@
-##########################################################################
-# imfit_test.py
-#
-# Copyright (C) 2008, 2009
+#########################################################################
+# test_task_imfit.py
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
 # This script is free software; you can redistribute it and/or modify it
@@ -14,92 +13,26 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imfit.html
 #
-# <author>
-# Dave Mehringer
-# </author>
-#
-# <summary>
-# Test suite for the CASA imfit Task
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-#   <li> <linkto class="imfit.py:description">imfit</linkto> 
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# imfit_test stands for imfit test
-# </etymology>
-#
-# <synopsis>
-# imfit_test.py is a Python script that tests the correctness
-# of the ia.fitcomponents tool method and the imfit task in CASA.
-# </synopsis> 
-#
-# <example>
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_imfit[test1,test2,...]
-# </example>
-#
-# <motivation>
-# To provide a test standard to the imfit task to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
-
-###########################################################################
-from __future__ import absolute_import
-from __future__ import print_function
+##########################################################################
 import os
 import hashlib
 import shutil
 import unittest
 import numpy
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, table, image, quanta, componentlist, regionmanager, functional
-    from casatools.platform import str2bytes
-    from casatasks import imfit
+from casatools import ctsys, table, image, quanta, componentlist, regionmanager, functional
+from casatools.platform import str2bytes
+from casatasks import imfit
 
-    _qa = quanta( )
-    _tb = table( )
-    _rg = regionmanager( )
+_qa = quanta( )
+_tb = table( )
+_rg = regionmanager( )
 
-    datapath=ctsys.resolve('unittest/imfit/')
-
-    # CASAtasks doesn't use default
-    def default(atask):
-        pass
-else:
-    import casac
-    from tasks import *
-    from taskinit import *
-    from __main__ import *
-
-    _qa = qa
-    _tb = tb
-    _rg = rg
-
-    image = iatool
-    componentlist =  cltool
-    functional = fntool
-    
-    datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/imfit/'
+datapath=ctsys.resolve('unittest/imfit/')
 
 noisy_image = "gaussian_model_with_noise.im"
 noisy_image_xx = "gaussian_model_with_noise_xx.im"
@@ -212,7 +145,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(imagename=noisy_image)
     
         for i in [0 ,1]:
@@ -307,7 +239,6 @@ class imfit_test(unittest.TestCase):
                 myia.close()
                 return res
             def run_imfit():
-                default('imfit')
                 return imfit(imagename=noisy_image, box=box, region=region)
             for code in [run_fitcomponents, run_imfit]:
                 self._check_box_results(code())
@@ -425,7 +356,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(imagename=noisy_image, box=box)
     
         for code in [run_fitcomponents, run_imfit]:
@@ -478,7 +408,6 @@ class imfit_test(unittest.TestCase):
                 myia.close()
                 return res
             def run_imfit():
-                default('imfit')
                 return imfit(imagename=masked_image, mask=mask, includepix=includepix, excludepix=excludepix)
     
             for code in [run_fitcomponents, run_imfit]:
@@ -551,7 +480,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit(model, residual):
-            default('imfit')
             return imfit(
                 imagename=noisy_image, box=box, residual=residual,
                 model=model
@@ -581,7 +509,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(
                 imagename=convolved_model, box=box,
                 estimates=estimates_convolved
@@ -667,7 +594,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(imagename=convolved_model, box=box)
     
         for code in [run_fitcomponents, run_imfit]:
@@ -705,7 +631,6 @@ class imfit_test(unittest.TestCase):
                 code = run_fitcomponents
             else:
                 def run_imfit(append=None):
-                    default('imfit')
                     if (append == None):
                         return imfit(imagename=two_gaussians_image, box=box, estimates=two_gaussians_estimates, logfile=logfile)
                     else:
@@ -764,7 +689,6 @@ class imfit_test(unittest.TestCase):
                 code = run_fitcomponents
             else:
                 def run_imfit():
-                    default('imfit')
                     return imfit(
                         imagename=two_gaussians_image, box=box, estimates=two_gaussians_estimates,
                         newestimates=newestimates
@@ -774,14 +698,8 @@ class imfit_test(unittest.TestCase):
     
             self.assertTrue(os.path.exists(newestimates)) 
             expec = os.path.join(datapath,expected_new_estimates)
-            if is_CASA6:
-                expected_sha = hashlib.sha512(str2bytes(open(expec, 'r').read())).hexdigest()
-    
-                got_sha = hashlib.sha512(str2bytes(open(newestimates, 'r').read())).hexdigest()
-            else:
-                expected_sha = hashlib.sha512(open(expec, 'r').read()).hexdigest()
-    
-                got_sha = hashlib.sha512(open(newestimates, 'r').read()).hexdigest()
+            expected_sha = hashlib.sha512(str2bytes(open(expec, 'r').read())).hexdigest()
+            got_sha = hashlib.sha512(str2bytes(open(newestimates, 'r').read())).hexdigest()
 
             self.assertTrue(
                 got_sha == expected_sha,
@@ -800,7 +718,6 @@ class imfit_test(unittest.TestCase):
             res = myia.fitcomponents(stokes=stokes)
             return res
         def run_imfit(stokes):
-            default('imfit')
             return imfit(imagename=stokes_image, stokes=stokes)
     
         stokes = ['I','Q','U','V']
@@ -876,7 +793,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(imagename=gauss_no_pol)
         
         for code in [run_fitcomponents, run_imfit]:
@@ -896,7 +812,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(imagename=jyperbeamkms, box=box)
     
         for i in [0 ,1]:
@@ -971,7 +886,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(imagename=jyperbeamkms, box=box)
     
         for i in [0 ,1]:
@@ -1006,7 +920,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit(imagename, estimates, overwrite, box=""):
-            default('imfit')
             return imfit(
                 imagename=imagename, estimates=estimates, box=box,
                 complist=complist, overwrite=overwrite
@@ -1067,7 +980,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(
                 imagename=imagename, chans=chans,
                 mask=mask, complist=complist, estimates=estimates,
@@ -1106,7 +1018,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit(imagename):
-            default('imfit')
             return imfit(
                 imagename=imagename, 
                 box="130,89,170,129", dooff=True, offset=0.0
@@ -1196,7 +1107,6 @@ class imfit_test(unittest.TestCase):
             return res
         j = 0
         def run_imfit(imagename):
-            default('imfit')
             return imfit(
                 imagename=imagename, 
                 box="130,89,170,129", dooff=True,
@@ -1299,7 +1209,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(
                 imagename=imagename, box=box, chans=chans,
                 mask="", complist="", estimates="",
@@ -1359,7 +1268,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(imagename=noisy_image_xx)
     
         for i in [0 ,1]:
@@ -1448,7 +1356,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(imagename=outname, box=box)
     
         for i in [0 ,1]:
@@ -1545,7 +1452,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(imagename=noisy_image, box=box, rms=rms)
         mycl = componentlist()
         for i in [0 ,1]:
@@ -1706,7 +1612,6 @@ class imfit_test(unittest.TestCase):
             myia.done()
             return res
         def run_imfit():
-            default('imfit')
             return imfit(
                 imagename=imagename, chans=chans,
                 rms=rms, noisefwhm=noisefwhm
@@ -1948,9 +1853,5 @@ class imfit_test(unittest.TestCase):
                 zz['converged'][0], "did not converge for type " + mytype
             )
             
-def suite():
-    return [imfit_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

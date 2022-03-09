@@ -1,36 +1,39 @@
-
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_cvel2.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.cvel2.html
+#
+##########################################################################
 import os
 import numpy
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import cvel2, cvel, split, importuvfits, partition
-    from casatools import ms as mstool
-    from casatools import ctsys, table, quanta
-    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-    from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
+from casatasks import cvel2, cvel, split, importuvfits, partition
+from casatools import ms as mstool
+from casatools import ctsys, table, quanta
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
 
-    mytb = table()
-    myqa = quanta()
+mytb = table()
+myqa = quanta()
 
-    datapath = ctsys.resolve('unittest/cvel/')
-    ephedata = ctsys.resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab')
-else:
-    from __main__ import default
-    from tasks import cvel2, cvel, partition, importuvfits, split
-    from taskinit import tbtool, mstool, qa
-    from parallel.parallel_task_helper import ParallelTaskHelper
-    from parallel.parallel_data_helper import ParallelDataHelper
-
-    mytb = tbtool()
-    myqa = qa
-
-    datapath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/unittest/cvel/')
-    ephedata = os.path.join(os.environ['CASAPATH'].split()[0],'data/ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab')
+datapath = ctsys.resolve('unittest/cvel/')
+ephedata = ctsys.resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -179,8 +182,6 @@ class test_base(unittest.TestCase):
             self.cleanup()
 
         os.system('cp -RL '+datapath + self.vis +' '+ self.vis)
-        if not is_CASA6:
-            default(cvel2)
 
     def setUp_mms_vis_c(self):
         # 93 scans, spw=0,1
@@ -193,8 +194,6 @@ class test_base(unittest.TestCase):
         
         # Create an MMS for the tests
         self.testmms = "cvel_input_test.mms"
-        if not is_CASA6:
-            default(partition)
         
         if os.path.exists(self.testmms):
             os.system("rm -rf " + self.testmms)
@@ -223,12 +222,8 @@ class cvel2_test(test_base):
 #             passes = True
 #             print('Expected error!')
 #         self.assertTrue(passes)
-        if is_CASA6:
-            with self.assertRaises(AssertionError):
-                cvel2()
-        else:
-            with self.assertRaises(RuntimeError):
-                cvel2()
+        with self.assertRaises(AssertionError):
+            cvel2()
         print('Expected error!')
 
     def test2(self):
@@ -245,12 +240,8 @@ class cvel2_test(test_base):
 #             passes = True
 #             print('Expected error!')
 #         self.assertTrue(passes)
-        if is_CASA6:
-            with self.assertRaises(AssertionError):
-                cvel2(vis = 'myinput.ms')
-        else:
-            with self.assertRaises(IOError):
-                cvel2(vis = 'myinput.ms')
+        with self.assertRaises(AssertionError):
+            cvel2(vis = 'myinput.ms')
         print('Expected error!')
 
     def test3(self):
@@ -1546,11 +1537,5 @@ class cleanup(unittest.TestCase):
         '''cvel2: Cleanup'''
         pass
         
-
-
-def suite():
-    return [cvel2_test, cleanup]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

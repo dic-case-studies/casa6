@@ -1,5 +1,23 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_gencal.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.gencal.html
+#
+##########################################################################
 import csv
 import os
 import shutil
@@ -9,26 +27,15 @@ import uuid
 
 import numpy as np
 
-from casatasks.private.casa_transition import is_CASA6
 from casatestutils import testhelper as th
 
-if is_CASA6:
-    from casatasks import gencal, rmtables
-    from casatasks.private import tec_maps
-    from casatools import ctsys, table
+from casatasks import gencal, rmtables
+from casatasks.private import tec_maps
+from casatools import ctsys, table
 
-    _tb = table()
+_tb = table()
 
-    datapath = ctsys.resolve('/unittest/gencal/')
-else:
-    from __main__ import default
-    from tasks import gencal, rmtables
-    from taskinit import *
-    from recipes import tec_maps
-
-    _tb = tbtool()
-
-    datapath = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/gencal/'
+datapath = ctsys.resolve('/unittest/gencal/')
 
 # input data
 evndata = 'n08c1.ms'
@@ -114,11 +121,8 @@ class gencal_antpostest(unittest.TestCase):
     def test_antpos_auto_evla(self):
         """Test automated antenna position correction."""
         # check if the URL is reachable
-        if is_CASA6:
-            from urllib.request import urlopen
-            from urllib.error import URLError
-        else:
-            from urllib2 import urlopen, URLError
+        from urllib.request import urlopen
+        from urllib.error import URLError
 
         # current EVLA baseline correction URL
         evlabslncorrURL = "http://www.vla.nrao.edu/cgi-bin/evlais_blines.cgi?Year="
@@ -146,11 +150,8 @@ class gencal_antpostest(unittest.TestCase):
         gencal: test a bugfix of CAS-13057 for automated antenna position correction
         """
         # check if the URL is reachable
-        if is_CASA6:
-            from urllib.request import urlopen
-            from urllib.error import URLError
-        else:
-            from urllib2 import urlopen, URLError
+        from urllib.request import urlopen
+        from urllib.error import URLError
 
         # current EVLA baseline correction URL
         evlabslncorrURL = "http://www.vla.nrao.edu/cgi-bin/evlais_blines.cgi?Year="
@@ -439,8 +440,7 @@ class gencal_gaincurve_test(unittest.TestCase):
         shutil.copytree(os.path.join(datapath, vlbadata), vlbacopy)
 
     def setUp(self):
-        if not is_CASA6:
-            default(gencal)
+        pass
 
     def tearDown(self):
         rmtables(caltab)
@@ -477,8 +477,7 @@ class gencal_tsys_test(unittest.TestCase):
         shutil.copytree(os.path.join(datapath, vlbadata), vlbacopy)
 
     def setUp(self):
-        if not is_CASA6:
-            default(gencal)
+        pass
 
     def tearDown(self):
         rmtables(caltab)
@@ -723,16 +722,5 @@ class TestJyPerK(unittest.TestCase):
 
         self.assertEqual(cm.exception.args[0], 'The infile argument should be str or None.')
 
-
-def suite():
-    return [gencal_antpostest,
-            test_gencal_antpos_alma,
-            gencal_test_tec_vla,
-            gencal_gaincurve_test,
-            gencal_tsys_test,
-            TestJyPerK]
-
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

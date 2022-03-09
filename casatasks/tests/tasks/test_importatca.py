@@ -1,49 +1,42 @@
-#############################################################################
-# $Id:$
-# Test Name:                                                                #
-#    Regression Test Script for the ATCA RPFITS data import to MS           #
-#    
-#                                                                           #
-# Rationale for Inclusion:                                                  #
-#    The conversion of RPFITS data to MS needs to be verified.              #
-#                                                                           # 
-# Features tested:                                                          #
-#    1) Is the import performed without raising exceptions                  #
-#    2) Do all expected tables exist                                        #
-#    3) Can the MS be opened                                                #
-#    4) Do the tables contain expected values                               #
-#                                                                           #
-# Input data:                                                               #
-#                                                                           #
-#############################################################################
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_importatca.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Features tested:
+#    1) Is the import performed without raising exceptions
+#    2) Do all expected tables exist
+#    3) Can the MS be opened
+#    4) Do the tables contain expected values
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.data.importatca.html
+#
+##########################################################################
 import os
 import sys
 import shutil
 import unittest
 import numpy
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, ms, table
-    from casatasks import importatca
+from casatools import ctsys, ms, table
+from casatasks import importatca
 
-    _ms = ms( )
-    _tb = table( )
+_ms = ms( )
+_tb = table( )
 
-    # enhanced later using ctsys.resolve
-    datapath = 'unittest/importatca/'
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
-    # not local tools
-    _ms = ms
-    _tb = tb
-
-    datapath=os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/importatca/'
+# enhanced later using ctsys.resolve
+datapath = 'unittest/importatca/'
 
 myname = 'importatca-unit-test'
 
@@ -75,10 +68,7 @@ def checktable(thename, theexpectation, dataslice=[]):
             else:
                 in_agreement = ( abs(value - mycell[2]) < mycell[3]) 
         else:
-            if is_CASA6:
-                stype = str
-            else:
-                stype = basestring
+            stype = str
             if isinstance(value, stype):
                 in_agreement = value == mycell[2]
             else:
@@ -113,11 +103,8 @@ class test_importatca(unittest.TestCase):
             if(os.path.exists(fname)):
                 os.remove(fname)
             datasetPath = os.path.join(datapath,fname)
-            if is_CASA6:
-                datasetPath = ctsys.resolve(datasetPath)
+            datasetPath = ctsys.resolve(datasetPath)
             shutil.copy(datasetPath, fname)
-        if not is_CASA6:
-            default(importatca)
         
     def tearDown(self):
         for fname in my_dataset_names:
@@ -292,9 +279,5 @@ class test_importatca(unittest.TestCase):
         finally:
             _tb.close()
     
-def suite():
-    return [test_importatca]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

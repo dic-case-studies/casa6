@@ -1,10 +1,29 @@
+#########################################################################
+# test_task_imsubimage.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imsubimage.html
+#
+##########################################################################
 import os
 import shutil
 import unittest
 import numpy
 
 from casatasks import imsubimage
-
 from casatools import image, ctsys
 from casatools import quanta
 from casatools import regionmanager
@@ -173,9 +192,6 @@ class imsubimage_test(unittest.TestCase):
         self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")
         teststr = "imsubimage"
         self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
-
-def suite():
-    return [imsubimage_test]
 
 if __name__ == '__main__':
     unittest.main()

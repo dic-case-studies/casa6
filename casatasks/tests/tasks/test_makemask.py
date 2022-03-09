@@ -1,37 +1,40 @@
-from __future__ import absolute_import
-from __future__ import print_function
+##########################################################################
+# test_task_makemask.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.imaging.makemask.html
+#
+##########################################################################
 import os
 import shutil
 import unittest
 import numpy
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, image
-    from casatasks import makemask
-    from casatasks.private.imtools import pixelmask2cleanmask   ##### <----<<< this dependency should be removed
+from casatools import ctsys, image
+from casatasks import makemask
+from casatasks.private.imtools import pixelmask2cleanmask   ##### <----<<< this dependency should be removed
 
-    ctsys_resolve = ctsys.resolve
-
-    _ia = image( )
-else:
-    from recipes.pixelmask2cleanmask import *
-    from tasks import *
-    from taskinit import *
-    from __main__ import default
-
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
-
-    _ia = iatool( )
+_ia = image( )
 
 """
 Unit tests for task makemask 
 
 """
 
-datapath = ctsys_resolve('unittest/makemask/')
+datapath = ctsys.resolve('unittest/makemask/')
 
 #debug=True
 debug=False
@@ -283,7 +286,7 @@ class test_copy(makemaskTestBase):
         """ (copy mode) testcopy11(CAS-12980): copying a mutli-line CRTF file  to create a 1/0 mask image"""
 
         try:
-            shutil.copy(ctsys_resolve(os.path.join(datapath,self.intextfile)),self.intextfile)
+            shutil.copy(ctsys.resolve(os.path.join(datapath,self.intextfile)),self.intextfile)
             makemask(mode='copy',inpimage=self.inimage7,
                      inpmask=self.intextfile, 
                      output=self.outimage6)
@@ -668,10 +671,5 @@ class test_inmask(makemaskTestBase):
         _ia.close()
         self.assertTrue(defaultmask=='mask2')
 
-def suite():
-    #return [test_inmask]
-    return [test_merge,test_expand,test_copy,test_inmask]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

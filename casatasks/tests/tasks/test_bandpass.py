@@ -1,25 +1,30 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_bandpass.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.bandpass.html
+#
+##########################################################################
 import os
 import shutil
-
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    ### for testhelper import
-    #import sys
-    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    #import testhelper as th
-    from casatools import ctsys
-    from casatasks import bandpass
-else:
-    #import testhelper as th
-    from __main__ import default
-    from tasks import bandpass
-    from taskinit import *
-
-from casatestutils import testhelper as th
 import unittest
 
+from casatools import ctsys
+from casatasks import bandpass
+from casatestutils import testhelper as th
 
 ''' Python unit tests for the bandpass task
 
@@ -28,11 +33,7 @@ tables created for an MS and an MMS agree. These are
 not full unit tests for the bandpass task.
 '''
 
-if is_CASA6:
-    datapath = ctsys.resolve('unittest/bandpass/')
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] +\
-               '/casatestdata/unittest/bandpass/'
+datapath = ctsys.resolve('unittest/bandpass/')
 
 # Pick up alternative data directory to run tests on MMSs
 testmms = False
@@ -71,10 +72,6 @@ class test_base(unittest.TestCase):
         else:
             self.fail('Data does not exist -> '+fpath)
 
-        if not is_CASA6:
-            default('bandpass')
-               
-        
     def setUp_ngc4826(self):
         
         # Input names
@@ -91,10 +88,6 @@ class test_base(unittest.TestCase):
             shutil.copytree(fpath, self.msfile)
         else:
             self.fail('Data does not exist -> '+fpath)
-
-        if not is_CASA6:
-            default('bandpass')
-
 
 class bandpass1_test(test_base):
 
@@ -143,11 +136,6 @@ class bandpass2_test(test_base):
 
         # Compare the calibration tables
         self.assertTrue(th.compTables(msbcal, reference, ['WEIGHT']))
-
-
-def suite():
-    return [bandpass1_test, bandpass2_test]
         
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

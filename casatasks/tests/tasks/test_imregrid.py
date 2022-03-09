@@ -1,4 +1,23 @@
-from __future__ import print_function
+#########################################################################
+# test_task_immregrid.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imregrid.html
+#
+##########################################################################
 import sys
 import traceback
 import os
@@ -11,38 +30,18 @@ import glob
 import struct
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, image, regionmanager, coordsys, table, measures, componentlist, quanta
-    from casatasks import imregrid, casalog, imstat
-    _ia = image()
-    _rg = regionmanager()
-    _cs = coordsys()
-    _tb = table()
-    _me = measures()
-    _cl = componentlist()
-    _qa = quanta()
-    ctsys_resolve = ctsys.resolve
-else:
-    import casac
-    from tasks import *
-    from taskinit import *
-    _ia = iatool()
-    _rg = rgtool()
-    _cs = cstool()
-    _tb = tbtool()
-    _me = metool()
-    _cl = cltool()
-    _qa = qatool()
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata')
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+from casatools import ctsys, image, regionmanager, coordsys, table, measures, componentlist, quanta
+from casatasks import imregrid, casalog, imstat
+_ia = image()
+_rg = regionmanager()
+_cs = coordsys()
+_tb = table()
+_me = measures()
+_cl = componentlist()
+_qa = quanta()
 
 sep = os.sep
-datapath = ctsys_resolve(os.path.join('unittest','imregrid'))
+datapath = ctsys.resolve(os.path.join('unittest','imregrid'))
 
 IMAGE = 'image.im'
 gim = "gaussian_source.im"
@@ -380,7 +379,7 @@ class imregrid_test(unittest.TestCase):
 
     def test_ref_code_preserves_position(self):
         """Test that regridding to new refcode preserves source positions"""
-        shutil.copytree(ctsys_resolve(os.path.join(datapath,gim)), gim)
+        shutil.copytree(ctsys.resolve(os.path.join(datapath,gim)), gim)
         orig = _ia
         myme = _me
         for rah in (0, 4, 8, 12, 16, 20):

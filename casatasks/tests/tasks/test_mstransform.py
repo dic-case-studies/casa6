@@ -1,5 +1,23 @@
-from __future__ import absolute_import
-from __future__ import print_function
+##########################################################################
+# test_task_mstransform.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.mstransform.html
+#
+##########################################################################
 import shutil
 import unittest
 import os
@@ -9,35 +27,17 @@ import sys
 import filecmp
 import glob
 
-from casatestutils import testhelper as th
+from casatools import ctsys, ms, table, msmetadata, agentflagger
+from casatasks import applycal, cvel, cvel2, flagcmd, flagdata, importasdm, listpartition, listobs, mstransform, setjy, split
+#from casatasks import importasdm     ### tar files have been created to avoid the importasdm dependency
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, ms, table, msmetadata, agentflagger
-    from casatasks import applycal, cvel, cvel2, flagcmd, flagdata, importasdm, listpartition, listobs, mstransform, setjy, split
-    #from casatasks import importasdm     ### tar files have been created to avoid the importasdm dependency
+# Define the root for the data files
+datapath = ctsys.resolve('unittest/mstransform/')
 
-    # Define the root for the data files
-    datapath = ctsys.resolve('unittest/mstransform/')
-
-    af_local = agentflagger()
-    msmd_local = msmetadata()
-    ms_local = ms()
-    tb_local = table()
-else:
-    from tasks import mstransform, cvel, cvel2, listpartition, listobs, setjy, flagdata, split, applycal, importasdm, flagcmd
-    from taskinit import mstool, tbtool, msmdtool, aftool
-    from __main__ import default
-#    from sdutil import tbmanager, tool_manager, table_selector
-
-    # Define the root for the data files
-    datapath = os.environ.get('CASAPATH').split()[0] + \
-               "/casatestdata/unittest/mstransform/"
-
-    af_local = aftool()
-    ms_local = mstool()
-    msmd_local = msmdtool()
-    tb_local = tbtool()
+af_local = agentflagger()
+msmd_local = msmetadata()
+ms_local = ms()
+tb_local = table()
 
 from casatestutils import testhelper as th
 
@@ -5893,58 +5893,6 @@ class Cleanup(test_base):
     def test_runTest(self):
         '''mstransform: Cleanup'''
         pass
-
-
-def suite():
-    return [
-            test_Combspw1,
-            test_combinespws_diff_channels,
-            test_regridms_four_ants,
-            test_regridms_jupiter,
-            test_regridms_negative_width,
-            test_regridms_interpolation_only,
-            test_regridms_single_spw,
-            test_regridms_multiple_spws,
-            test_regridms_spw_with_different_number_of_channels,
-            test_Hanning_with_g19,
-            test_Hanning_with_ngc5921,
-            test_FreqAvg,
-            test_Shape,
-            test_Columns,
-            test_SeparateSPWs,
-            test_state,
-            test_WeightSpectrum,
-            test_channelAverageByDefault,
-            test_timeaverage,
-            test_timeaverage_limits,
-            test_multiple_transformations,
-            test_float_column,
-            test_spw_poln,
-            testFlags,
-            test_weight_spectrum_creation,
-            test_subtables_evla,
-            test_subtables_alma,
-            test_radial_velocity_correction_largetimerange,
-            test_radial_velocity_correction,
-            test_vla_mixed_polarizations,
-            test_alma_wvr_correlation_products,
-            test_alma_autocorr_selection_with_wvr,
-            test_spectrum_transformations_sigma_from_weight,
-            test_spectrum_transformations_2_steps_vs_1_step,
-            test_spectrum_transformations_useWeightSpectrum_false_vs_true,
-            test_spectrum_transformations_multiple_col,
-            test_spectrum_transformations_weight_constant,
-            test_spectrum_transformations_sigma_unit,
-            test_spectrum_transformations_flagged_average,   
-            test_spectrum_transformations_mean,
-            test_otf_calibration,
-            test_polarization_reindex,
-            test_antenna_reindexing,
-            test_no_reindexing,
-            test_no_reindexing_ephemeris_copy,
-            test_splitUpdateFlagCmd,
-            test_selectiononly_notransformation,
-            Cleanup]
 
 if __name__ == '__main__':
     unittest.main()

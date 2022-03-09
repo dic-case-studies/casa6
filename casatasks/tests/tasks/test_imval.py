@@ -1,10 +1,9 @@
-###########################################################################
-# imval_test.py
-#
-# Copyright (C) 2008, 2009
+##########################################################################
+# test_task_imval.py
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
-# This scripts free software; you can redistribute it and/or modify it
+# This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.
@@ -14,98 +13,11 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imval.html
 #
-# <author>
-# Shannon Jaeger (University of Calgary)
-# </author>
-#
-# <summary>
-# Test suite for the CASA imval Task
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-#   <li> <linkto class="imval.py:description">imval</linkto> 
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# imval_test stands for image value test
-# </etymology>
-#
-# <synopsis>
-# imval_test.py is a Python script that tests the correctness
-# of the imval task in CASA.
-#
-# Regression Test for the imval task.
-#
-# input/output tests.  Valid and invalid inputs are given
-#         for the following paramaters:
-#           a) No imagename 
-#           b) Bad imagename given
-#           c) Incorrect data type, not a string, to imagename parameter
-#           d) Out of range errors for, box, chans, & stokes parameters
-#           e) incorrect data type to box, chans, & stokes parameters
-#           f) Bad file name to region parameter
-#           g) Incorrect data type, not a string, to region parameter
-#           h) File name that does not contain a region to the region param.
-# Value at a single point tests.
-#           a) Value at bottom-left corner
-#           b) Value at bottom-right corner
-#           c) Value at top-left corner
-#           d) Value at top-right corner
-#           e) Value at 3 points within the image.
-# An array of values
-#           a) A slice of the directional plane
-#           b) Two slices of the directional plane
-#           c) A cube RA,Dec,and Spectral axes
-#           d) Two cubes RA,Dec,and Spectral axes
-#           e) A 4D blob: RA,Dec, Spetral, & Stokes.
-# </synopsis> 
-#
-# <example>
-# # This test was designed to run in the automated CASA test system.
-# # This example shows who to run it manually from within casapy.
-# casapy -c runUnitTest test_imcontsub
-#
-# or
-#
-# # This example shows who to run it manually from with casapy.
-# runUnitTest.main(['imcontsub_test'])
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard to the imval task to try and ensure
-# coding changes do not break the task.
-# </motivation>
-#
-# <todo>
-#  1. produce summary data
-#  2 make sure failure_msgs is used everywere, and display them#
-# </todo>
-#     
-#
-# SDJ Sep. 8, 2008 Created.
-# SDJ May 20, 2009 Updated to testing Framework
-#----------------------------
-
-###########################################################################
-from __future__ import absolute_import
-from __future__ import print_function
+##########################################################################
 import time
 import os
 import shutil
@@ -113,29 +25,13 @@ import glob
 import numpy
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, image
-    from casatasks import imval, casalog
+from casatools import ctsys, image
+from casatasks import imval, casalog
 
-    _ia = image()
-
-    ctsys_resolve = ctsys.resolve
-else:
-    import casac
-    from tasks import *
-    from taskinit import *
-
-    image = iatool
-
-    _ia = image( )
-
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+_ia = image()
 
 # Input files
-datapath = ctsys_resolve('unittest/imval/')
+datapath = ctsys.resolve('unittest/imval/')
 image_file = 'n4826_bima.im'
 good_rgn_file   =  'n4826_bima_test.rgn'
 
@@ -968,9 +864,5 @@ class imval_test(unittest.TestCase):
         got = res['data']
         self.assertTrue((got == expec).all())
     
-def suite():
-    return [imval_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

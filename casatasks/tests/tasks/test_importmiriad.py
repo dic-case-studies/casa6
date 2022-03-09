@@ -1,53 +1,42 @@
-#############################################################################
-# $Id:$
-# Test Name:                                                                #
-#    Regression Test Script for the Miriad uv data import to MS             #
-#    
-#                                                                           #
-# Rationale for Inclusion:                                                  #
-#    The conversion of Miriad uv data to MS needs to be verified.           #
-#                                                                           # 
-# Features tested:                                                          #
-#    1) Is the import performed without raising exceptions                  #
-#    2) Do all expected tables exist                                        #
-#    3) Can the MS be opened                                                #
-#    4) Do the tables contain expected values                               #
-#                                                                           #
-# Input data:                                                               #
-#                                                                           #
-#############################################################################
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_importmiriad.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Features tested:
+#    1) Is the import performed without raising exceptions
+#    2) Do all expected tables exist
+#    3) Can the MS be opened
+#    4) Do the tables contain expected values
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.data.importmiriad.html
+#
+##########################################################################
 import os
 import sys
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, table, ms
-    from casatasks import importmiriad
+from casatools import ctsys, table, ms
+from casatasks import importmiriad
 
-    ctsys_resolve = ctsys.resolve
+ctsys_resolve = ctsys.resolve
 
-    _tb = table( )
-    _ms = ms( )
+_tb = table( )
+_ms = ms( )
 
-    stype = str
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
-    def ctsys_resolve(apath):
-        dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata')
-        return os.path.join(dataRoot,apath)
-
-    # not local tools
-    _tb = tb
-    _ms = ms
-
-    stype = basestring
+stype = str
 
 myname = 'importmiriad-unit-test'
 
@@ -115,8 +104,6 @@ class test_importmiriad(unittest.TestCase):
             if(os.path.exists(fname)):
                 shutil.rmtree(fname)
             shutil.copytree(ctsys_resolve(os.path.join(datapath,fname)), fname)
-        if not is_CASA6:
-            default(importmiriad)
         
     def tearDown(self):
         for fname in my_dataset_names:
@@ -250,10 +237,5 @@ class test_importmiriad(unittest.TestCase):
                 
         self.assertTrue(retValue['success'])
                 
-    
-def suite():
-    return [test_importmiriad]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

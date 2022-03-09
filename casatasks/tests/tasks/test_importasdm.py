@@ -1,76 +1,54 @@
-#############################################################################
-# Test Name:                                                                #
-#    Regression Test Script for ASDM import to MS                           #
-#    and the "inverse filler" task exportasdm                               #
-#                                                                           #
-# Rationale for Inclusion:                                                  #
-#    The conversion of ASDM to MS and back needs to be verified.            #
-#                                                                           # 
-# Features tested:                                                          #
-#    1) Is the import performed without raising exceptions                  #
-#    2) Do all expected tables exist                                        #
-#    3) Can the MS be opened                                                #
-#    4) Do the tables contain expected values                               #
-#    5) Is exportasdm performed without raising exceptions                  #
-#    6) Is the created ASDM well-formed (XML) and complete                  #
-#    7) Can the resulting ASDM be reimported without raising exceptions     #
-#    8) Does it have the same number of integrations as the original        #
-#    9) Can a mixed mode ASDM be imported in lazy mode                      #
-#   10) Does the lazy mode when used with auto-only and the FLOAT_DATA      #
-#       column produce an equivalent MS as the non-lazy mode does with the  #
-#       same data selection                                                 #
-#                                                                           #
-# Input data:                                                               #
-#     one dataset for the filler of ASDM 1.0                                #
-#     one simulated MS dataset                                              #
-#                                                                           #
-#############################################################################
-from __future__ import absolute_import
+#########################################################################
+# test_task_importasdm.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Features tested:
+#    1) Is the import performed without raising exceptions
+#    2) Do all expected tables exist
+#    3) Can the MS be opened
+#    4) Do the tables contain expected values
+#    5) Is exportasdm performed without raising exceptions
+#    6) Is the created ASDM well-formed (XML) and complete
+#    7) Can the resulting ASDM be reimported without raising exceptions
+#    8) Does it have the same number of integrations as the original
+#    9) Can a mixed mode ASDM be imported in lazy mode
+#   10) Does the lazy mode when used with auto-only and the FLOAT_DATA
+#       column produce an equivalent MS as the non-lazy mode does with the
+#       same data selection
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.data.importasdm.html
+#
+##########################################################################
 import os
 import sys
 import shutil
 import numpy
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, ms, table, measures, calibrater, agentflagger
-    from casatasks import importasdm, flagdata, flagcmd, exportasdm, casalog
-    from casatasks.private import flaghelper as fh
-    from casatasks.private import convertephem as ce
-    # make local copies of the tools
-    tblocal = table( )
-    mslocal = ms( )
-
-    ctsys_resolve = ctsys.resolve
-
-    # CASAtasks does not use default
-    def default(atask):
-        pass
-else:
-    from __main__ import default
-    from tasks import importasdm, flagdata, exportasdm, flagcmd
-    from taskinit import mstool, tbtool, cbtool, aftool, casalog
-    import flaghelper as fh
-    import recipes.ephemerides.convertephem as ce
-
-    ms = mstool
-    table = tbtool
-    calibrater = cbtool
-    agentflagger = aftool
-
-    # make local copies of the tools
-    tblocal = tbtool()
-    mslocal = mstool()
-
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
-
+from casatools import ctsys, ms, table, measures, calibrater, agentflagger
+from casatasks import importasdm, flagdata, flagcmd, exportasdm, casalog
+from casatasks.private import flaghelper as fh
+from casatasks.private import convertephem as ce
 from casatestutils import testhelper as th
+
+tblocal = table( )
+mslocal = ms( )
+
 myname = 'test_importasdm'
 
-rootpath = ctsys_resolve('unittest/importasdm/')
+rootpath = ctsys.resolve('unittest/importasdm/')
 # default ASDM dataset name
 myasdm_dataset_name = 'uid___X5f_X18951_X1'
 myms_dataset_name = 'M51.ms'
@@ -205,16 +183,12 @@ class test_base(unittest.TestCase):
         shutil.copytree(datapath, myasdm_dataset_name)
         datapath=os.path.join(rootpath,myms_dataset_name)
         shutil.copytree(datapath, myms_dataset_name)
-        default(importasdm)
 
     def setUp_xosro(self):
         self.asdm = 'X_osro_013.55979.93803716435'  #EVLA SDM
         datapath=os.path.join(rootpath,self.asdm)
         if(not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+' '+self.asdm)
-            
-        default(importasdm)
-        default(flagdata)
 
     def setUp_polyuranus(self):
         self.asdm = 'polyuranus'  # EVLA SDM with ephemeris
@@ -222,51 +196,41 @@ class test_base(unittest.TestCase):
         if (not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+' '+self.asdm)
 
-        default(importasdm)
-        default(flagdata)
-
     def setUp_autocorr(self):
         self.asdm = 'AutocorrASDM'  # ALMA 
         datapath=os.path.join(rootpath,self.asdm)
         if(not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+' '+self.asdm)
-            
-        default(importasdm)
 
     def setUp_acaex(self):
         res = None
         myasdmname = 'uid___A002_X72bc38_X000' # ACA example ASDM with mixed pol/channelisation
         datapath=os.path.join(rootpath, myasdmname)
         os.system('ln -sf '+datapath)
-        default(importasdm)
 
     def setUp_12mex(self):
         res = None
         myasdmname = 'uid___A002_X71e4ae_X317_short' # 12m example ASDM with mixed pol/channelisation
         datapath=os.path.join(rootpath,myasdmname)
         os.system('ln -sf '+datapath)
-        default(importasdm)
 
     def setUp_eph(self):
         res = None
         myasdmname = 'uid___A002_X997a62_X8c-short' # 12m example ASDM with ephemerides
         datapath=os.path.join(rootpath, myasdmname)
         os.system('ln -sf '+datapath)
-        default(importasdm)
 
     def setUp_flags(self):
         res = None
         myasdmname = 'test_uid___A002_X997a62_X8c-short' # Flag.xml is modified
         datapath=os.path.join(rootpath, myasdmname)
         os.system('ln -sf '+datapath)
-        default(importasdm)
 
     def setUp_SD(self):
         res = None
         myasdmname = 'uid___A002_X6218fb_X264' # Single-dish ASDM
         datapath=os.path.join(rootpath, myasdmname)
         os.system('ln -sf '+datapath)
-        default(importasdm)
 
     def setUp_numbin(self):
         res = None
@@ -276,8 +240,6 @@ class test_base(unittest.TestCase):
             if (os.path.exists(this_asdm_name)):
                 shutil.rmtree(this_asdm_name)
             shutil.copytree(os.path.join(datapath,this_asdm_name), this_asdm_name)
-        default(importasdm)
-
 
 ###########################
 # beginning of actual test 
@@ -423,7 +385,6 @@ class asdm_import1(test_base):
         myvis = myms_dataset_name
         os.system('rm -rf exportasdm-output.asdm myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
-        default('exportasdm')
         try:
             print("\n>>>> Test of exportasdm: input MS is %s" % myvis)
             print("(a simulated input MS with pointing table)")
@@ -608,7 +569,6 @@ class asdm_import2(test_base):
         myvis = myms_dataset_name
         os.system('rm -rf exportasdm-output.asdm myinput.ms')
         os.system('cp -R ' + myvis + ' myinput.ms')
-        default('exportasdm')
         try:
             print("\n>>>> Test of exportasdm: input MS  is %s" % myvis)
             print("(a simulated input MS with pointing table)")
@@ -2269,9 +2229,8 @@ class asdm_import7(test_base):
         '''Asdm-import: Test good 12 m ASDM with Ephemeris table in lazy mode'''
 
         # this test relies on the stand-alone executable for features not available in the tool
-        if is_CASA6:
-            print("Skipping asdm_import7.test7_lazy3 - uses stand-alone executable")
-            return
+        print("Skipping asdm_import7.test7_lazy3 - uses stand-alone executable")
+        return
 
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
 
@@ -2793,9 +2752,8 @@ class asdm_import7(test_base):
         '''Asdm-import: Test TP asdm, comparing output when duplicate DATA rows are skipped versus not-skipped, lazy and regular, with bdflagging on'''
 
         # this test relies on the stand-alone executable for features not available in the tool
-        if is_CASA6:
-            print("Skipping asdm_import7.test7_skiprows - uses stand-alone executable")
-            return
+        print("Skipping asdm_import7.test7_skiprows - uses stand-alone executable")
+        return
 
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
 
@@ -3398,16 +3356,5 @@ class asdm_import8(test_base):
 
         self.assertTrue(((logLinesEnd-logLinesMiddle) > (logLinesMiddle-logLinesStart)), 'verbose test failed, did not produce more lines')
 
-def suite():
-    return [asdm_import1, 
-            asdm_import2, 
-            asdm_import3, 
-            asdm_import4,
-            asdm_import5,
-            asdm_import6,
-            asdm_import7,
-            asdm_import8]
-        
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

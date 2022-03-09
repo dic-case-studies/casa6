@@ -1,11 +1,9 @@
-#######################################################################3
-#  immath_test.py
-#
-#
-# Copyright (C) 2008, 2009
+#########################################################################
+# test_task_immath.py
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
-# This scripts free software; you can redistribute it and/or modify it
+# This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.
@@ -15,71 +13,11 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.immath.html
 #
-# <author>
-# Shannon Jaeger (University of Calgary)
-# dmehring
-# </author>
-#
-# <summary>
-# Test suite for the CASA immath Task
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-#   <li> <linkto class="immath.py:description">immath</linkto> 
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# immath_test stands for image math test
-# </etymology>
-#
-# <synopsis>
-# immath_test.py is a Python script that tests the correctness
-# of the immath task in CASA.
-#
-# The tests include:
-#   ????
-#
-# In the immath task ????
-#
-# </synopsis> 
-#
-# <example>
-# # This test was designed to run in the automated CASA test system.
-# # This example shows who to run it manually from with casapy.
-# runUnitTest.main(['test_immath'])
-#
-# or outside casapy like this:
-# casapy -c runUnitTest.py test_immath
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard to the immath task to try and ensure
-# coding changes do not break the 
-# </motivation>
-#
-# <todo>
-# mode input/output parameter test
-# varnames input/output parameter test
-# polariziation/spectral mode tests.
-# </todo>
-########################################################################3
+##########################################################################
 
 import sys
 import traceback
@@ -93,30 +31,14 @@ import glob
 import struct
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, image, regionmanager, table
-    from casatasks import immath, casalog
-    myia = image()
-    _rg = regionmanager()
-    mytb = table()
-    ctsys_resolve = ctsys.resolve
-else:
-    import casac
-    from tasks import *
-    from taskinit import *
-    myia = iatool()
-    _rg = rgtool()
-    mytb = tbtool()
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+from casatools import ctsys, image, regionmanager, table
+from casatasks import immath, casalog
+myia = image()
+_rg = regionmanager()
+mytb = table()
 
 sep = os.sep
-datapath = ctsys_resolve(os.path.join('unittest','immath'))
+datapath = ctsys.resolve(os.path.join('unittest','immath'))
 
 cas1452_1_im = 'CAS-1452-1.im'
 cas1910_im = 'CAS-1910.im'
@@ -1385,18 +1307,10 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done(remove=True)
         outfile = "out2.im"
-        if is_CASA6 or casa_stack_rethrow:
-            self.assertRaises(
-                Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
-                expr="1*IM0", mask="mask2.im > 5", stretch=False
-            )
-        else:
-            self.assertFalse(
-                immath(
-                    imagename="myim.im", outfile=outfile, mode="evalexpr",
-                    expr="1*IM0", mask="mask2.im > 5", stretch=False
-                )
-            )
+        self.assertRaises(
+            Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
+                expr="1*IM0", mask="mask2.im > 5", stretch=False)
+
         outfile = "out3.im"
         immath(
             imagename="myim.im", outfile=outfile, mode="evalexpr",
@@ -1406,18 +1320,11 @@ class immath_test3(unittest.TestCase):
         self.assertTrue((myia.shape() == [10, 20, 4, 40]).all())
         myia.done(remove=True)
         outfile = "out4.im"
-        if is_CASA6 or casa_stack_rethrow:
-            self.assertRaises(
-                Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
+        self.assertRaises(
+            Exception, immath, imagename="myim.im", outfile=outfile, mode="evalexpr",
                 expr="1*IM0", mask="mask3.im > 5", stretch=False
             )
-        else:
-            self.assertFalse(
-                immath(
-                    imagename="myim.im", outfile=outfile, mode="evalexpr",
-                    expr="1*IM0", mask="mask3.im > 5", stretch=False
-                )
-            )
+
         for img in ('myim.im', 'mask1.im', 'mask2.im', 'mask3.im'):
             if os.path.exists(img):
                 shutil.rmtree(img)
@@ -1849,15 +1756,10 @@ class immath_test3(unittest.TestCase):
         for mode in ['poli', 'lpoli', 'tpoli']:
             outfile = 'no_Vout' + mode + '.im'
             if mode == 'tpoli':
-                if is_CASA6 or casa_stack_rethrow:
-                    self.assertRaises(
-                        Exception, immath, imagename=subi, outfile=outfile,
-                        mode=mode
-                    )
-                else: 
-                    self.assertFalse(
-                        immath(imagename=subi, outfile=outfile, mode=mode)
-                    )
+                self.assertRaises(
+                    Exception, immath, imagename=subi, outfile=outfile,
+                        mode=mode)
+
                 continue
             immath(imagename=subi, outfile=outfile, mode=mode)
             myia.open(outfile)
@@ -1917,12 +1819,9 @@ class immath_test3(unittest.TestCase):
         f = open(logfile, 'r')
         lines = f.readlines()
         f.close()
-        if is_CASA6:
-            i0 = 14
-            i1 = 16
-        else:
-            i0 = 17
-            i1 = 19
+        i0 = 14
+        i1 = 16
+
         self.assertTrue(re.search("3.235", lines[i0]), 'Expected pattern not found')
         self.assertTrue(re.search("3.234", lines[i1]), 'Expected pattern not found')
         shutil.rmtree(beam_out)
@@ -1946,12 +1845,9 @@ class immath_test3(unittest.TestCase):
         f = open(logfile, 'r')
         lines = f.readlines()
         f.close()
-        if is_CASA6:
-            i0 = 12
-            i1 = 14
-        else:
-            i0 = 15
-            i1 = 17
+        i0 = 12
+        i1 = 14
+
         self.assertTrue(re.search("3.234568", lines[i0]), 'Expected pattern not found')
         self.assertTrue(re.search("3.234567", lines[i1]), 'Expected pattern not found')
         shutil.rmtree(beam_out)
@@ -1975,21 +1871,15 @@ class immath_test3(unittest.TestCase):
         f = open(logfile, 'r')
         lines = f.readlines()
         f.close()
-        if is_CASA6:
-            i0 = 12
-            i1 = 14
-        else:
-            i0 = 15
-            i1 = 17
+        i0 = 12
+        i1 = 14
+
         self.assertTrue(re.search("3.23456789027778", lines[i0]), 'Expected pattern not found')
         self.assertTrue(re.search("3.23456789017778", lines[i1]), 'Expected pattern not found')
         shutil.rmtree(beam_out)
 
         self.assertTrue(casalog.setlogfile(old_log), 'Failed to reset log file')
         os.remove(logfile)
-
-def suite():
-    return [immath_test1, immath_test2, immath_test3]
     
 if __name__ == '__main__':
     unittest.main()

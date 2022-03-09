@@ -1,30 +1,33 @@
-from __future__ import absolute_import
-from __future__ import print_function
+##########################################################################
+# test_task_listpartition.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.information.listpartition.html
+#
+##########################################################################
 import os
 import sys
 import shutil
 import string
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys
-    from casatasks import listpartition
-    from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
+from casatools import ctsys
+from casatasks import listpartition
+from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
 
-    ctsys_resolve = ctsys.resolve
-
-    def default(atask):
-        pass
-else:
-    from __main__ import default
-    import partitionhelper as ph
-    from tasks import listpartition
-
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
-    
 '''
 Unit tests for task listpartition. It tests the following parameters:
     vis:        wrong and correct values
@@ -35,7 +38,7 @@ Unit tests for task listpartition. It tests the following parameters:
     
 '''
 
-datapath = ctsys_resolve('unittest/listpartition/')
+datapath = ctsys.resolve('unittest/listpartition/')
 
 # Base class which defines setUp functions
 # for importing different data sets
@@ -49,8 +52,6 @@ class test_base(unittest.TestCase):
         else:
             print("Linking to data...")
             os.system('ln -s ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
-            
-        default(listpartition)
 
     def setUp_MMSdata1(self):
         self.vis = 'pFourantsSpw.mms'
@@ -62,8 +63,6 @@ class test_base(unittest.TestCase):
             print("Linking to data...")
             os.system('ln -s ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
 
-        default(listpartition)
-
     def setUp_MMSdata2(self):
         self.vis = 'pFourantsScan.mms'
         self.visdata = self.vis+"/SUBMSS/"
@@ -74,8 +73,6 @@ class test_base(unittest.TestCase):
             print("Linking to data...")
             os.system('ln -s ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
 
-        default(listpartition)
-
     def setUp_MMSdata3(self):
         self.vis = 'pFourantsMix.mms'
         self.visdata = self.vis+"/SUBMSS/"
@@ -85,9 +82,6 @@ class test_base(unittest.TestCase):
         else:
             print("Linking to data...")
             os.system('ln -s ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
-
-        default(listpartition)
-
 
 class test_MS(test_base):
 
@@ -117,18 +111,15 @@ class test_MS(test_base):
         
         self.assertEqual(resdict[0]['MS'], self.vis)
 
-
 class test_MMS_spw(test_base):
 
     def setUp(self):
         self.setUp_MMSdata1()
-             
-        
+
     def testspw1(self):
         '''listpartition MMS spw1: Input MMS'''
         res = listpartition(vis=self.vis)
         self.assertEqual(res, {}, "It should return an empty dictionary")
-
                     
     def testspw2(self):
         '''listpartition MMS spw2: Save to a file'''
@@ -144,7 +135,6 @@ class test_MMS_spw(test_base):
         nlines = len(ff.readlines())
         ff.close()
         self.assertEqual(nlines, 33, 'Wrong number of lines in output')
-        
                 
     def testspw3(self):
         '''listpartition MMS spw3: Create an output dictionary'''
@@ -168,13 +158,11 @@ class test_MMS_scan(test_base):
 
     def setUp(self):
         self.setUp_MMSdata2()
-             
         
     def testscan1(self):
         '''listpartition MMS scan1: Input MMS'''
         res = listpartition(vis=self.vis)
         self.assertEqual(res, {}, "It should return an empty dictionary")
-
                     
     def testscan2(self):
         '''listpartition MMS scan2: Save to a file'''
@@ -190,7 +178,6 @@ class test_MMS_scan(test_base):
         nlines = len(ff.readlines())
         ff.close()
         self.assertEqual(nlines, 3, 'Wrong number of lines in output')
-        
                 
     def testscan3(self):
         '''listpartition MMS scan3: Create an output dictionary'''
@@ -244,13 +231,11 @@ class test_MMS_mix(test_base):
 
     def setUp(self):
         self.setUp_MMSdata3()
-             
         
     def testmix1(self):
         '''listpartition MMS mix1: Input MMS'''
         res = listpartition(vis=self.vis)
         self.assertEqual(res, {}, "It should return an empty dictionary")
-
                     
     def testmix2(self):
         '''listpartition MMS mix2: Save to a file'''
@@ -266,7 +251,6 @@ class test_MMS_mix(test_base):
         nlines = len(ff.readlines())
         ff.close()
         self.assertEqual(nlines, 33, 'Wrong number of lines in output')
-        
                 
     def testmix3(self):
         '''listpartition MMS mix3: Create an output dictionary'''
@@ -315,7 +299,6 @@ class test_MMS_mix(test_base):
 
                 # Compare both
                 self.assertEqual(dusize, rear[2], '%s is not equal to %s for %s'%(dusize,rear[2],front[0]))
-            
 
 class listpartition_cleanup(unittest.TestCase):
 
@@ -332,14 +315,6 @@ class listpartition_cleanup(unittest.TestCase):
     def test_run(self):
         '''listpartition: Cleanup'''
         pass
-        
-def suite():
-    return [test_MS,
-            test_MMS_spw,
-            test_MMS_scan,
-            test_MMS_mix,
-            listpartition_cleanup]
     
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

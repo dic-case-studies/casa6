@@ -1,37 +1,34 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_hanningsmooth.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.hanningsmooth.html
+#
+##########################################################################
 import os
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    ### for testhelper import
-    import sys
-    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    #import testhelper as th
-    from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
-
-    from casatasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
-    from casatools import ctsys, ms
-
-    # default is not used in CASAtasks
-    def default(atask):
-        pass
-
-    # Path for data
-    datapath = ctsys.resolve('unittest/hanningsmooth/')
-else:
-    from __main__ import default
-    from tasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
-    from taskinit import mstool as ms
-    #import testhelper as th
-    from parallel.parallel_data_helper import ParallelDataHelper
-
-    # Path for data
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/hanningsmooth/'
-
+from casatasks.private.parallel.parallel_data_helper import ParallelDataHelper
+from casatasks import hanningsmooth, mstransform, partition, cvel, split, clearcal
+from casatools import ctsys, ms
 from casatestutils import testhelper as th
+
+# Path for data
+datapath = ctsys.resolve('unittest/hanningsmooth/')
 
 '''
 functional tests for task hanningsmooth
@@ -385,9 +382,5 @@ class Cleanup(test_base):
         '''hanningsmooth: Cleanup'''
         pass
             
-def suite():
-    return [hanningsmooth_test1,hanningsmooth_test2,Cleanup]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

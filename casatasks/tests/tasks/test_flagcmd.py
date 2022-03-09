@@ -1,37 +1,37 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_flagcmd.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.flagging.flagcmd.html
+#
+##########################################################################
 import shutil
 import unittest
 import os
 import filecmp
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import flagcmd, flagdata, flagmanager
-    from casatools import ctsys, agentflagger, table
-    from collections import OrderedDict
+from casatasks import flagcmd, flagdata, flagmanager
+from casatools import ctsys, agentflagger, table
+from collections import OrderedDict
 
-    # Local copy of the agentflagger tool
-    aflocal = agentflagger()
+# Local copy of the agentflagger tool
+aflocal = agentflagger()
 
-    # default isn't necessary in CASA6
-    def default(atask):
-        pass
-
-    # Path for data
-    datapath = ctsys.resolve("unittest/flagcmd/")
-else:
-    from tasks import flagcmd, flagdata, flagmanager
-    from taskinit import aftool
-    from taskinit import tbtool as table
-    from __main__ import default
-    from OrderedDictionary import OrderedDict
-
-    # Local copy of the agentflagger tool
-    aflocal = aftool()
-
-    # Path for data
-    datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/flagcmd/"
+# Path for data
+datapath = ctsys.resolve("unittest/flagcmd/")
 
 #
 # Test of flagcmd task. It uses flagdata to unflag and summary
@@ -771,9 +771,7 @@ class test_XML(test_base):
         # The MS only contains clip and shadow commands
 
         # CASA6 needs this
-        if is_CASA6:
-            # without syncing the ms, we get an error that there are no flags in the table
-            os.system('rsync -a '+os.path.join(datapath,self.vis)+' .')
+        os.system('rsync -a '+os.path.join(datapath,self.vis)+' .')
         # Apply the shadow command
         flagcmd(vis=self.vis, action='apply', reason='SHADOW', flagbackup=False)
         res = flagdata(vis=self.vis, mode='summary')
@@ -1377,6 +1375,5 @@ def suite():
             test_cmdbandpass,
             cleanup]
 
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

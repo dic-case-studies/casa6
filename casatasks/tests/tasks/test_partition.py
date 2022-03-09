@@ -1,47 +1,47 @@
+##########################################################################
+# test_task_partition.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.partition.html
+#
+##########################################################################
 import os
 import shutil
 import time
 import unittest
 
+from casatasks import listobs, listpartition, flagdata, flagmanager, partition, setjy, split
+from casatools import ctsys, msmetadata, ms, agentflagger, table
+from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
 from casatestutils import testhelper as th
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import listobs, listpartition, flagdata, flagmanager, partition, setjy, split
-    from casatools import ctsys, msmetadata, ms, agentflagger, table
-    from casatasks.private import partitionhelper as ph   ##### <----<<< this dependency should be removed
+msmdt_local = msmetadata()
+msmdt_local2 = msmetadata()
+mst_local = ms()
+aft_local = agentflagger()
+tbt_local = table()
 
-    msmdt_local = msmetadata()
-    msmdt_local2 = msmetadata()
-    mst_local = ms()
-    aft_local = agentflagger()
-    tbt_local = table()
+datapath = ctsys.resolve('unittest/partition/')
 
-    datapath = ctsys.resolve('unittest/partition/')
-else:
-    from tasks import partition, flagdata, flagmanager, split, setjy, listpartition, listobs
-    from taskinit import msmdtool, mstool, aftool, tbtool
-
-    from parallel.parallel_task_helper import ParallelTaskHelper
-    import partitionhelper as ph
-
-    msmdt_local = msmdtool()
-    msmdt_local2 = msmdtool()
-    mst_local = mstool()
-    aft_local = aftool()
-    tbt_local = tbtool()
-
-    datapath = os.environ.get('CASAPATH').split()[0] + \
-                       "/casatestdata/unittest/partition/"
-
-from casatestutils import testhelper as th
 ''' Unit Tests for task partition'''
 
 # jagonzal (CAS-4287): Add a cluster-less mode to by-pass parallel processing for MMSs as requested 
 if 'BYPASS_PARALLEL_PROCESSING' in os.environ:
     ParallelTaskHelper.bypassParallelProcessing(1)
 
-    
 class test_base(unittest.TestCase):
     
     def setUp_ngc4826(self):
@@ -994,17 +994,6 @@ class partition_cleanup(test_base):
     def test_runTest(self):
         '''partition: Cleanup'''
         print('Cleaning up after test_partition')
-          
-def suite():
-    return [partition_test1, 
-            partition_test2, 
-            partition_float,
-            test_partiton_subtables_evla,
-            test_partiton_subtables_alma,
-            test_partition_balanced,
-            test_partition_balanced_multiple_scan,
-            test_partition_baseline_axis,
-            partition_cleanup]
 
 if __name__ == '__main__':
     unittest.main()

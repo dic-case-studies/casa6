@@ -1,11 +1,9 @@
-########################################################################3
-#  imcontsub_test.py
-#
-#
-# Copyright (C) 2008, 2009
+#########################################################################
+# test_task_imcontsub.py
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
-# This scripts free software; you can redistribute it and/or modify it
+# This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.
@@ -15,109 +13,21 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imcontsub.html
 #
-# <author>
-# Shannon Jaeger (University of Calgary)
-# </author>
-#
-# <summary>
-# Test suite for the CASA imcontsub Task
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <etymology>
-# imcontsub_test stands for image momemnts test
-# </etymology>
-#
-# <synopsis>
-# imcontsub_test.py is a Python script that tests the correctness
-# of the imcontsub task in CASA.
-#
-# The tests include:
-#    1. Incorrect input for each paramter.  Incorrect input includes
-#       one input of the incorrect data type, out-of-bounds (where
-#       applicable, and correct data type but non-sensical.
-#    2. A set of sample continuum subtractions with expected
-#       output
-#    3. Calculating one example for each allowed fitorder
-#    4. Continuum subtraction with region selection on the sky,
-#       channels, and stokes values, as well as using an input
-#       region file.
-#
-# In the imcontsub task a specified continuum channel is subtracted
-# from spectral line data.
-#
-# The expected input is a spectral line image. Both a continuum
-# image and a continuum-subtracted spectral line are created as
-# output, as long as the user has provided filenames for them.
-#
-# By default the continuum subtraction is applied to the whole
-# image, however, if a region file is given and/or the user specifies
-# a box range, channels, or stokes values then the subtraction is
-# performed on this portion of the image only.
-#
-# </synopsis> 
-#
-# <example>
-# # This test was designed to run in the CASA unit test system.
-# # This example shows who to run it manually from outside casapy.
-# casapy -c runUnitTest test_imcontsub
-#
-# or
-#
-# # This example shows who to run it manually from with casapy.
-# runUnitTest.main(['imcontsub_test'])
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard to the imcontsub task to try and ensure
-# coding changes do not break the 
-# </motivation>
-#
-# <todo>
-# Almost everything!
-#
-# imcontsub doesn't return anything currently on success or failure.
-# If this changes the tests will need to change to check for this.
-# The basic design of the tests is based on the immoments test which
-# returns an image tool upon success.
-# </todo>
-
-#import random
-from __future__ import absolute_import
+##########################################################################
 import os
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, image
-    from casatasks import casalog, imcontsub, immath
+from casatools import ctsys, image
+from casatasks import casalog, imcontsub, immath
 
-    _ia = image( )
+_ia = image( )
 
-    datapath = ctsys.resolve('unittest/imcontsub/')
-else:
-    import casac
-    from tasks import *
-    from taskinit import *
-
-    _ia = iatool( )
-    
-    datapath = os.environ.get('CASAPATH').split()[0]+'/casatestdata/unittest/imcontsub/'
+datapath = ctsys.resolve('unittest/imcontsub/')
 
 # Input files
 mylist = ['g192_a2.image', 'g192_a2.image-2.rgn', 
@@ -493,9 +403,5 @@ class imcontsub_test(unittest.TestCase):
 
         self.assertTrue(retValue['success'], retValue['error_msgs'])
         
-def suite():
-    return [imcontsub_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

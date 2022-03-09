@@ -1,7 +1,6 @@
-#############################################
-# test_imcollapse.py
-#
-# Copyright (C) 2008, 2009
+#########################################################################
+# test_task_imcollapse.py
+# Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
 #
 # This script is free software; you can redistribute it and/or modify it
@@ -14,60 +13,11 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imcollapse.html
 #
-# <author>
-# Dave Mehringer
-# </author>
-#
-# <summary>
-# Test suite for the CASA task imcollapse
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-#   <li> <linkto class="task_imcollapse.py:description">imcollapse</linkto> 
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# Test for the imcollapse task
-# </etymology>
-#
-# <synopsis>
-# Test the imcollapse task and the ia.collapse() method upon which it is built.
-# </synopsis> 
-#
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_imcollapse[test1,test2,...]
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard for the imcollapse task to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
-
-###########################################################################
-from __future__ import absolute_import
-
+##########################################################################
 import math
 import numpy
 import os
@@ -75,23 +25,10 @@ import shutil
 import unittest
 from casatasks.private.casa_transition import *
 
-if is_CASA6:
-    from casatools import ctsys, image, table, quanta, regionmanager
-    from casatasks import imcollapse
-    ctsys_resolve = ctsys.resolve
-    datapath = ctsys.resolve('unittest/imcollapse/')
-else:
-    import casac
-    from tasks import *
-    from taskinit import *
-    image = iatool
-    table = tbtool
-    quanta = qatool
-    regionmanager = rgtool
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    datapath = dataRoot + 'unittest/imcollapse/'
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+from casatools import ctsys, image, table, quanta, regionmanager
+from casatasks import imcollapse
+ctsys_resolve = ctsys.resolve
+datapath = ctsys.resolve('unittest/imcollapse/')
 
 _ia = image()
 _tb = table()
@@ -621,9 +558,6 @@ class imcollapse_test(unittest.TestCase):
         xx.done()
         self.assertTrue((shape == [20, 20, 1]).all(), "wrong shape")
         
-def suite():
-    return [imcollapse_test]
-
 if __name__ == '__main__':
     unittest.main()
 

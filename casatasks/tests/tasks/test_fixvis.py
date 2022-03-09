@@ -1,31 +1,33 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_fixvis.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.fixvis.html
+#
+##########################################################################
 import os
 import sys
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, table, quanta
-    from casatasks import fixvis, imstat, tclean, split
+from casatools import ctsys, table, quanta
+from casatasks import fixvis, imstat, tclean, split
 
-    _tb = table()
-    _qa = quanta()
-
-    ctsys_resolve = ctsys.resolve
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
-    # not local tools
-    _tb = tb
-    _qa = qa
-
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+_tb = table()
+_qa = quanta()
 
 '''
 Unit tests for task fixvis.
@@ -37,7 +39,7 @@ Features tested:
 
 Note: The equinox_vis regression is a more general test of fixvis.
 '''
-datapath = ctsys_resolve('unittest/fixvis/')
+datapath = ctsys.resolve('unittest/fixvis/')
 inpms = '0420+417.ms'
 outms = 'output.ms'
 inpms2 = 'twocenteredpointsources.ms'
@@ -50,8 +52,7 @@ class fixvis_test1(unittest.TestCase):
             shutil.copytree(os.path.join(datapath,inpms),inpms)
         if not os.path.exists(inpms2):
             shutil.copytree(os.path.join(datapath,inpms2),inpms2)
-        if not is_CASA6:
-            default(fixvis)
+
         shutil.rmtree(outms, ignore_errors=True)
         shutil.rmtree(outms2, ignore_errors=True)
         
@@ -384,9 +385,5 @@ class fixvis_test1(unittest.TestCase):
         self.assertTrue(mystats['maxposf'] == '18:00:02.309, -29.59.29.999, I, 2.25982e+11Hz' and
                         (mystats['maxpos'] == [64, 64, 0, 0]).all())
 
-def suite():
-    return [fixvis_test1]        
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

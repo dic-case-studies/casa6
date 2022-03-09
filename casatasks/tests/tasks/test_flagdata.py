@@ -1,5 +1,23 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_flagdata.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.flagging.flagdata.html
+#
+##########################################################################
 import os
 import shutil
 import unittest
@@ -8,43 +26,15 @@ import pprint
 import numpy as np
 from numpy import array
 import ast
+import sys
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    import sys
-
-    from casatasks import flagcmd, flagdata, mstransform, setjy, delmod, split
-    from casatools import ctsys, agentflagger, table, measures, quanta
-    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-    from casatasks.private import flaghelper as fh
-
-    ### for testhelper import
-    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    #import testhelper as th
-
-    # CASA6 doesn't need defaul
-    def default(atask):
-        pass
-
-    ctsys_resolve = ctsys.resolve
-else:
-    from tasks import flagcmd, flagdata, mstransform, setjy, delmod, split
-    from taskinit import aftool as agentflagger
-    from taskinit import tbtool as table
-    from taskinit import metool as measures
-    from taskinit import qatool as quanta
-    from __main__ import default
-    from parallel.parallel_task_helper import ParallelTaskHelper
-    import flaghelper as fh
-    #import testhelper as th
-
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
-
+from casatasks import flagcmd, flagdata, mstransform, setjy, delmod, split
+from casatools import ctsys, agentflagger, table, measures, quanta
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatasks.private import flaghelper as fh
 from casatestutils import testhelper as th
 
-#from IPython.kernel.core.display_formatter import PPrintDisplayFormatter
+ctsys_resolve = ctsys.resolve
 
 #
 # Test of flagdata modes
@@ -5061,42 +5051,5 @@ class cleanup(test_base):
         '''flagdata: Cleanup'''
         pass
 
-
-def suite():
-    return [test_dict_consolidation,
-            test_antint,
-            test_rflag,
-            test_rflag_evla,
-            test_tfcrop,
-            test_shadow,
-            test_selections,
-            test_selections2,
-            test_alma,
-            test_statistics_queries,
-            test_msselection,
-            test_elevation,
-            test_list_list,
-            test_list_file,
-            test_clip,
-            test_CASA_4_0_bug_fix,
-            test_correlations,
-            test_tsys,
-            test_bandpass,
-            test_newcal,
-            test_weight_spectrum,
-            test_float_column,
-            test_tbuff,
-            TestMergeManualTimerange,
-            test_preaveraging,
-            test_preaveraging_rflag_residual,
-            test_virtual_col,
-            test_flags_propagation_channelavg,
-            test_flags_propagation_timeavg,
-            test_forbid_avg_in_non_autoflagging_list,
-            test_list_modes_forbidden_with_avg,
-            test_auto_methods_display,
-            cleanup]
-
-if is_CASA6:    
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

@@ -1,38 +1,34 @@
-from __future__ import absolute_import
-
+##########################################################################
+# test_task_nrobeamaverage.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.nrobeamaverage.html
+#
+##########################################################################
 import unittest
 import os
 import math
 import sys
 
-from casatestutils import testhelper as th
-
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import nrobeamaverage
-    from casatools import ms
-    from casatools import table
-
-    # default isn't used in casatasks
-    def default(atask):
-        pass
-
-    from casatasks.private.sdutil import table_manager
-    from casatools import ctsys
-    datapath=ctsys.resolve('unittest/nrobeamaverage/')
-
-else:
-    from tasks import nrobeamaverage
-    from taskinit import mstool as ms
-    from taskinit import tbtool as table
-
-    from __main__ import default
-    from sdutil import tbmanager as table_manager
-
-    # Define the root for the data files
-    datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/nrobeamaverage/"
-
-from casatestutils import testhelper as th
+from casatasks import nrobeamaverage
+from casatools import ms
+from casatools import table
+from casatasks.private.sdutil import table_manager
+from casatools import ctsys
+datapath=ctsys.resolve('unittest/nrobeamaverage/')
 
 def check_eq(val, expval, tol=None):
     """Checks that val matches expval within tol."""
@@ -62,8 +58,6 @@ def check_eq(val, expval, tol=None):
 
 class test_nrobeamaverage(unittest.TestCase):
     def setUp(self):
-        default(nrobeamaverage)
-
         self.i_ms = "onon.ms"
         os.system('cp -RH '+ os.path.join(datapath,self.i_ms) +' '+ self.i_ms)
         self.o_ms = "bave.ms"
@@ -289,10 +283,5 @@ class test_nrobeamaverage(unittest.TestCase):
         self.check_num_data(num_ave)
         self.check_values(num_ave=num_ave) # for the first data with state=on-source, spw=0
 
-
-def suite():
-    return [test_nrobeamaverage]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

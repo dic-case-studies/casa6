@@ -1,12 +1,24 @@
-#############################################################################
-# $Id:$
-# Test Name:                                                                #
-#    Unit Test Script for the concat task
-#    
-#                                                                           #
-#############################################################################
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_concat.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.concat.html
+#
+##########################################################################
+
 import os
 import sys
 import shutil
@@ -14,29 +26,16 @@ import glob
 import unittest
 from math import sqrt
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, calibrater
-    from casatools import table as tbtool
-    from casatools import ms as mstool
-    from casatasks import split, concat
+from casatools import ctsys, calibrater
+from casatools import table as tbtool
+from casatools import ms as mstool
+from casatasks import split, concat
 
-    cb = calibrater( )
-    tb = tbtool( )
-    ms = mstool( )
+cb = calibrater( )
+tb = tbtool( )
+ms = mstool( )
 
-    datapath = ctsys.resolve('unittest/concat/')
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
-    cb = cbtool( )
-
-    dataroot = os.environ.get('CASAPATH').split()[0]
-    datapath = os.path.join(dataroot,'casatestdata/unittest/concat/')
-    ephempath = os.path.join(dataroot, 'data/')
-
+datapath = ctsys.resolve('unittest/concat/')
 myname = 'test_concat'
 
 # name of the resulting MS
@@ -195,16 +194,10 @@ class test_concat(unittest.TestCase):
             shutil.copytree('xy1.ms', 'xy1-noephem.ms')
 
             ms.open('xy1.ms', nomodify=False)
-            if is_CASA6:
-                ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
-                                'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
-                ms.addephemeris(1,ctsys.resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
-                                'Jupiter_54708-55437dUTC', 0)
-            else:
-                ms.addephemeris(0,os.path.join(ephempath,'ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
-                                'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
-                ms.addephemeris(1,os.path.join(ephempath,'ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
-                                'Jupiter_54708-55437dUTC', 0)
+            ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+                            'Uranus_54708-55437dUTC', '1908-201')  # this field is not really Uranus but for a test this doesn't matter
+            ms.addephemeris(1,ctsys.resolve('ephemerides/JPL-Horizons/Jupiter_54708-55437dUTC.tab'),
+                            'Jupiter_54708-55437dUTC', 0)
             ms.close()
             myinputmslist.append('xy1.ms')
             myinputmslist.append('xy1-noephem.ms')
@@ -233,12 +226,8 @@ class test_concat(unittest.TestCase):
             tb.close()
 
             ms.open('xy2.ms', nomodify=False)
-            if is_CASA6:
-                ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
-                                'Uranus_54708-55437dUTC', '1908-201')
-            else:
-                ms.addephemeris(0,os.path.join(ephempath,'ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
-                                'Uranus_54708-55437dUTC', '1908-201')
+            ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_54708-55437dUTC.tab'),
+                            'Uranus_54708-55437dUTC', '1908-201')
                 
             ms.close()
             myinputmslist.append('xy2.ms')
@@ -267,12 +256,8 @@ class test_concat(unittest.TestCase):
             tb.close()
 
             ms.open('xy2late.ms', nomodify=False)
-            if is_CASA6:
-                ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
-                                'Uranus_55437-56293dUTC', '1908-201')
-            else:
-                ms.addephemeris(0,os.path.join(ephempath,'ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
-                                'Uranus_55437-56293dUTC', '1908-201')
+            ms.addephemeris(0,ctsys.resolve('ephemerides/JPL-Horizons/Uranus_55437-56293dUTC.tab'),
+                            'Uranus_55437-56293dUTC', '1908-201')
                 
             ms.close()
             myinputmslist.append('xy2late.ms')
@@ -291,8 +276,6 @@ class test_concat(unittest.TestCase):
 
         cls.listoffiles = myinputmslist
 
-        if not is_CASA6:
-            default(concat)
         return True
 
         
@@ -2179,9 +2162,5 @@ class concat_cleanup(unittest.TestCase):
         '''Concat: Cleanup'''
         pass
     
-def suite():
-    return [test_concat,concat_cleanup]        
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

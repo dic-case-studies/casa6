@@ -1,26 +1,32 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_fixplanets.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.fixplanets.html
+#
+##########################################################################
 import os
 import sys
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys
-    from casatools import ms as mstool
-    from casatools import msmetadata as msmdtool
-    from casatasks import fixplanets
-
-    ctsys_resolve = ctsys.resolve
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+from casatools import ctsys
+from casatools import ms as mstool
+from casatools import msmetadata as msmdtool
+from casatasks import fixplanets
 
 '''
 Unit tests for task fixplanets.
@@ -33,7 +39,7 @@ Features tested:
   5. Does the use of an ephemeris via the direction parameter work
 
 '''
-datapath = ctsys_resolve('unittest/fixplanets/')
+datapath = ctsys.resolve('unittest/fixplanets/')
 outms = 'uid___A002_X1c6e54_X223-thinned.ms'
 inpms = os.path.join(datapath, outms)
 outms2 = 'uid___A002_X1c6e54_X223-thinned.mms/'
@@ -49,9 +55,7 @@ class fixplanets_test1(unittest.TestCase):
         shutil.rmtree(outms, ignore_errors=True)
         shutil.copytree(inpms, outms)
         shutil.rmtree(outms2, ignore_errors=True)
-        os.system('cp -R '+ inpms2 + ' ' + outms2) 
-        if not is_CASA6:
-            default(fixplanets)
+        os.system('cp -R '+ inpms2 + ' ' + outms2)
         
     def tearDown(self):
         shutil.rmtree(outms, ignore_errors=True)
@@ -130,9 +134,5 @@ class fixplanets_test1(unittest.TestCase):
             self.assertTrue(os.path.exists(myms+'/FIELD/EPHEM0_Titan.tab'))
             self.assertTrue(self.verify(myms, 'Titan', 'J2000'))
 
-def suite():
-    return [fixplanets_test1]        
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

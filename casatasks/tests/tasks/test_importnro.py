@@ -1,32 +1,37 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_importnro.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.importnro.html
+#
+##########################################################################
 import os
 import sys
 import shutil
 import unittest
 import numpy
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, measures, ms, table, quanta
-    from casatools.platform import str2bytes
-    from casatasks import importnro
+from casatools import ctsys, measures, ms, table, quanta
+from casatools.platform import str2bytes
+from casatasks import importnro
 
-    _qa = quanta( )
-    _me = measures( )
-    myms = ms( )
-    mytb = table( )
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from importnro import importnro
-
-    myms, mytb = gentools(['ms','tb'])
-
-    # not local tools
-    _qa = qa
-    _me = me
+_qa = quanta( )
+_me = measures( )
+myms = ms( )
+mytb = table( )
 
 # Utilities
 def get_antenna_position(vis, row):
@@ -90,14 +95,8 @@ class importnro_test(unittest.TestCase):
     def setUp(self):
         self.res=None
         if (not os.path.exists(self.infile)):
-            if is_CASA6:
-                datapath = ctsys.resolve(os.path.join('unittest/importnro',self.infile))
-            else:
-                datapath=os.path.join(os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/importnro'),self.infile)
+            datapath = ctsys.resolve(os.path.join('unittest/importnro',self.infile))
             shutil.copy(datapath, self.infile)
-
-        if not is_CASA6:
-            default(importnro)
 
     def tearDown(self):
         if (os.path.exists(self.infile)):
@@ -112,10 +111,7 @@ class importnro_test(unittest.TestCase):
     
     def test_invaliddata(self):
         """test_invaliddata: Invalid data check"""
-        if is_CASA6:
-            with open(self.infile, 'wb') as f: f.write(str2bytes('AA'))
-        else:
-            with open(self.infile, 'wb') as f: f.write('AA')
+        with open(self.infile, 'wb') as f: f.write(str2bytes('AA'))
         #os.remove(os.path.join(self.infile, 'table.info'))
         with self.assertRaisesRegexp(RuntimeError, '.* is not a valid NOSTAR data\.$') as cm:
             importnro(infile=self.infile, outputvis=self.outfile, overwrite=False)
@@ -318,10 +314,5 @@ class importnro_test(unittest.TestCase):
         finally:
             mytb.close()
         
-
-def suite():
-    return [importnro_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

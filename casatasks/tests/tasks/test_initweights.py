@@ -1,37 +1,36 @@
-from __future__ import absolute_import
-from __future__ import print_function
+##########################################################################
+# test_task_initweights.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.initweights.html
+#
+##########################################################################
 import os
 import shutil
 import numpy
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, table
-    from casatasks import initweights
-else:
-    from __main__ import default
-    from tasks import initweights
-    from taskinit import tbtool as table
-    from initweights import initweights
-
-    # this is used in a commented out version of testWeight, so this commented out here
-    # to rethrow exception - not relevant in casatasks
-    # import inspect
-    # from casa_stack_manip import stack_frame_find
-
-    # g = stack_frame_find( )
-    # exception_stat = g['__rethrow_casa_exceptions'] if '__rethrow_casa_exceptions' in g else False
+from casatools import ctsys, table
+from casatasks import initweights
 
 class initweights_common(unittest.TestCase):
     """
     A base test class for initweights task
     """
-    if is_CASA6:
-        datapath = ctsys.resolve('unittest/initweights/')
-    else:
-        datapath = os.path.join(os.environ.get('CASAPATH').split()[0],
-                                'casatestdata/unittest/initweights/')
+    datapath = ctsys.resolve('unittest/initweights/')
         
     # Pick up alternative data directory to run tests on MMSs
     testmms = False
@@ -66,10 +65,6 @@ class initweights_common(unittest.TestCase):
     verbose = False
 
     def setUp(self):
-        # default not relevant for casatasks
-        if not is_CASA6:
-            default(initweights)
-
         for name in self.templist:
             # remove old ones (if exists)
             if (os.path.exists(name)):
@@ -635,9 +630,5 @@ class initweights_delspcol(initweights_common):
 #TODO: dowtsp=F and MS with "WEIGHT_SPECTRUM" (should forced to dowtsp=T)
 #TODO: removal of SIGMA_SPECTRUM in wtmode='tsys', 'tinttsys' with dowtsp=F
 
-def suite():
-    return [initweights_tsys_base, initweights_tsys_map,
-            initweights_base, initweights_delspcol]
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

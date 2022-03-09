@@ -1,22 +1,31 @@
-from __future__ import absolute_import
+##########################################################################
+# test_task_plotants.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.visualization.plotants.html
+#
+##########################################################################
 import os
 import string
 import sys
 import shutil
 import unittest
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import plotants
-    from casatools import ctsys
-    ctsys_resolve = ctsys.resolve
-else:
-    from __main__ import default
-    from tasks import *
-    #from taskinit import *
 
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+from casatasks import plotants
+from casatools import ctsys
 
 '''
 Unit tests for task plotants. It tests the following parameters:
@@ -31,11 +40,10 @@ class plotants_test(unittest.TestCase):
 
     def setUp(self):
         self.res = None
-        if not is_CASA6: default(plotants)
 
         # It is not necessary to copy it for all tests
         if (not os.path.exists(self.msfile)):
-            datapath = ctsys_resolve('unittest/plotants/')
+            datapath = ctsys.resolve('unittest/plotants/')
             shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
 
     def tearDown(self):
@@ -46,20 +54,12 @@ class plotants_test(unittest.TestCase):
 
     def test1(self):
        '''Test 1: Default parameters'''
-       if is_CASA6:
-           self.assertRaises(Exception,plotants)
-       else:
-           self.res = plotants()
-           self.assertFalse(self.res)
+       self.assertRaises(Exception,plotants)
 
     def test2(self):
         '''Test 2: Bad input file'''
         msfile = 'badfile'
-        if is_CASA6:
-            self.assertRaises(Exception,plotants,vis=msfile)
-        else:
-            self.res = plotants(vis=msfile)
-            self.assertFalse(self.res)
+        self.assertRaises(Exception,plotants,vis=msfile)
 
     def test3(self):
         '''Test 3: Good input file and output exists'''
@@ -79,7 +79,10 @@ class plotants_test(unittest.TestCase):
         self.assertEqual(self.res,None)
         self.assertTrue(os.path.exists(self.fig))
 
-    @unittest.skipIf(is_CASA6,"failure, unknown reasons")
+#    @unittest.skipIf(is_CASA6,"failure, unknown reasons")
+    # I think the fix for this test is to change line 133 of task_plotants.py to convert it to a list such as:
+    # allAntIds = list(range(len(antNames)))
+    @unittest.skip('fix might be in line 133 of task_plotants.py')
     def test6(self):
         '''Test 6: Exclude antenna positions'''
         self.res = plotants(vis=self.msfile, figfile=self.fig,
@@ -117,9 +120,5 @@ class plotants_test(unittest.TestCase):
         self.assertEqual(self.res,None)
         self.assertTrue(os.path.exists(self.fig))
 
-def suite():
-    return [plotants_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
