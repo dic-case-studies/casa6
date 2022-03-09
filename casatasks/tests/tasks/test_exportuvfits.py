@@ -10,6 +10,7 @@ import numbers
 try:
     from casatools import ctsys, table, msmetadata
     from casatasks import exportuvfits, importuvfits
+
     _tb = table()
     ctsys_resolve = ctsys.resolve
     _msmd = msmetadata()
@@ -19,23 +20,28 @@ except ImportError:
     from taskinit import *
     import casac
     from __main__ import *
+
     _tb = tbtool()
     _msmd = msmdtool()
     is_CASA6 = False
     from casa_stack_manip import stack_frame_find
+
     casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 
     data_root = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
+
+
     def ctsys_resolve(apath):
         return os.path.join(data_root, apath)
 
 datapath = 'unittest/exportuvfits/'
 
+
 class exportuvfits_test(unittest.TestCase):
 
     def setUp(self):
         self.datapath = ctsys_resolve(datapath)
-    
+
     def tearDown(self):
         self.assertTrue(len(_tb.showcache()) == 0)
         # make sure directory is clean as per verification test requirement
@@ -54,7 +60,7 @@ class exportuvfits_test(unittest.TestCase):
 
     def test_export_overwrite(self):
         """CAS-5492: test the overwrite parameter when exporting MSes to uvfits"""
-        msname = "uvfits_test.ms" 
+        msname = "uvfits_test.ms"
         shutil.copytree(os.path.join(self.datapath, msname), msname)
         fitsname = "CAS-5492.uvfits"
         res = exportuvfits(vis=msname, fitsfile=fitsname)
@@ -69,7 +75,7 @@ class exportuvfits_test(unittest.TestCase):
             self.assertRaises(
                 Exception, exportuvfits, vis=msname, fitsfile=fitsname, overwrite=False,
                 msg="exportuvfits succeeded but should have failed because "
-                + "overwrite=False"
+                    + "overwrite=False"
             )
         else:
             self.assertFalse(
@@ -91,7 +97,6 @@ class exportuvfits_test(unittest.TestCase):
                 "exportuvfits failed but should have succeeded because "
                 + "overwrite=True"
             )
-        
 
     def test_no_rest_freqs(self):
         """CAS-11514: test exporting an MS with no rest frequencies in the SOURCE table"""
@@ -131,9 +136,11 @@ class exportuvfits_test(unittest.TestCase):
             self.assertTrue(res == None, "Failed exportuvfits with no SOURCE table")
         else:
             self.assertTrue(res, "Failed exportuvfits with no SOURCE table")
-            
+
+
 def suite():
-    return [exportuvfits_test]        
+    return [exportuvfits_test]
+
 
 if __name__ == '__main__':
     unittest.main()
