@@ -71,7 +71,7 @@ models are in the directory::/usr/lib/casapy/data/nrao/VLA/CalModels/
                      NOTE: setjy only selects by spectral window, and
                      ignores channel selections.  Fine-grained control
                      could be achieved using (and possibly
-                     constructing) a cube for modimage.
+                     constructing) a cube for model.
 </description>
       <value/>
     </param>
@@ -263,14 +263,6 @@ operate on.
       <value/>
     </param>
                 
-    <param type="string" name="modimage" subparam="true" visibility="hidden">
-<shortdescription>File location for field model (deprecated)</shortdescription>
-<description>File location for field model
-                     Deprecated
-</description>
-      <value/>
-    </param>
-
     <param type="bool" name="listmodels" subparam="true">
 <shortdescription>List the available models for VLA calibrators or Tb models for Solar System objects</shortdescription>
 <description>List the available models for VLA calibrators or Tb

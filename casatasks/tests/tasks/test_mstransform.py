@@ -1328,7 +1328,7 @@ class test_Columns(test_base):
           shutil.copytree(self.vis, inpms)
 
           # First, run setjy to create a virtual MODEl column (SOURCE_MODEL)
-          setjy(vis=inpms,field='1331+305*',modimage='',standard='Perley-Taylor 99',
+          setjy(vis=inpms,field='1331+305*',model='',standard='Perley-Taylor 99',
                 scalebychan=False, usescratch=False)
 
           # Verify that the virtual column exists
