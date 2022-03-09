@@ -23,7 +23,7 @@
 ##########################################################################
 
 from casatools import ctsys
-from casatools import table as tb
+from casatools import table
 from casatools import ms as mstool
 from casatools import msmetadata as msmdtool
 from casatasks import fixplanets
@@ -65,6 +65,7 @@ inpms = os.path.join(datapath, outms)
 outms2 = 'uid___A002_X1c6e54_X223-thinned.mms/'
 inpms2 = os.path.join(datapath,outms2)
 
+tb = table()
 mymst = mstool()
 mymsmdt = msmdtool()
 
