@@ -3851,9 +3851,9 @@ class sdbaseline_clippingTest(sdbaseline_unittest_base):
         with table_manager(self.infile, nomodify=False) as tb:
             data = tb.getcell('FLOAT_DATA', 0)
             for ipol in range(len(data)):
-                # base data by repeating 1 and -1 - this has mean=0, sigma=1
+                # base data by repeating 1 and -1 - this has mean=5, sigma=1
                 for ichan in range(len(data[0])):
-                    data[ipol][ichan] = 1.0 if ichan % 2 == 0 else -1.0
+                    data[ipol][ichan] = 5.0 + (1.0 if ichan % 2 == 0 else -1.0)
                 # add spike data
                 for chan, value in spikes:
                     data[ipol][chan] = value
@@ -3914,11 +3914,15 @@ class sdbaseline_clippingTest(sdbaseline_unittest_base):
         for outbl, clipniter in lst:
             self._exec_sdbaseline(blfunc, outbl, clipniter, thres)
 
-        # if clipping is turned on, output of sdbaseline must be identical
+        # when clipping is turned on, output of sdbaseline must be identical
         # regardless of whether blformat is empty or not
         self.assertTrue(np.allclose(self._result(False, 1), self._result(True, 1)),
                         msg='unexpected result; result differs with different blformat.')
-        # with iterative clipping, output of sdbaseline must be different from that
+        # when clipping is turned off, output of sdbaseline must be identical
+        # regardless of whether blformat is empty or not
+        self.assertTrue(np.allclose(self._result(False, 0), self._result(True, 0)),
+                        msg='unexpected result; result differs with different blformat.')
+        # when clipping is turned on, output of sdbaseline must be different from that
         # without clipping, regardless of whether blformat is empty or not
         if ifclipped:
             for blout in bools:
@@ -3937,9 +3941,18 @@ class sdbaseline_clippingTest(sdbaseline_unittest_base):
 
         self._setup_input_data(spikes=[(2000, 1000.0), (4000, 100000.0)])
         maxiter = 5
-        for niter in range(maxiter):
-            self._exec_sdbaseline(blfunc='poly', outbl=True, clipniter=niter, thres=thres)
 
+        bools = [False, True]
+        for niter in range(maxiter):
+            for outbl in bools:
+                self._exec_sdbaseline(blfunc='poly', outbl=outbl, clipniter=niter, thres=thres)
+
+            # checking for every iteration if output spectrum is identical
+            # regardless of whether bloutput is empty or not
+            self.assertTrue(np.allclose(self._result(False, niter), self._result(True, niter)),
+                            msg='unexpected result; result differs with different blformat.')
+
+        # checking for every iteration if output mask is correct
         answer_mask_before = '[[0;8191]]'
         self.assertEqual(self._resmask(0), answer_mask_before)
         answer_mask_after_1clip = '[[0;3999];[4001;8191]]'  # channel 4000 is clipped
