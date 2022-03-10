@@ -1388,6 +1388,8 @@ class TestImbaselineOutputs(test_base):
     major = "20arcsec"
     minor = "10arcsec"
     pa = "0deg"
+    order = 1
+    kwidth = 5
 
     test_no = 1
 
@@ -1434,6 +1436,8 @@ class TestImbaselineOutputs(test_base):
                 major=self.major,
                 minor=self.minor,
                 pa=self.pa,
+                order=self.order,
+                kwidth=self.kwidth,
             )
             casalog.post(
                 f"{test_name} [maskmode=auto, blfunc={blfunc}, "
