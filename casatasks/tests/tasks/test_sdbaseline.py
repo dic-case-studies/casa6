@@ -3839,7 +3839,6 @@ class sdbaseline_clippingTest(sdbaseline_unittest_base):
     def setUp(self):
         remove_files_dirs(self.infile)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
-        default(sdbaseline)
         self.outdata = {}
         self.outmask = {}
 
