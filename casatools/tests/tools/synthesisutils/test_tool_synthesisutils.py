@@ -43,7 +43,6 @@ from casatestutils import testhelper as th
 from casatestutils import compare  
  
 from casatools import ctsys, synthesisutils, image, msmetadata, measures, table, quanta
-#from casatasks import ...
 su = synthesisutils() 
 _qa = quanta()
 
@@ -292,15 +291,11 @@ class fitpsfbeam_test(sutest_base):
         bmref= {'major': {'unit': 'arcsec', 'value': 52.93011474609375}, 'minor': {'unit': 'arcsec', 'value': 49.147438049316406}, 'positionangle': {'unit': 'deg', 'value': -87.39420318603516}}
  
         su = synthesisutils()
-        #print("psfimtt0==",psfimtt0)
         ret = su.fitPsfBeam(imagename=psfimtt0[:-8],nterms=2)   
         del su
         self.ia.open(psfimtt0)
         newbeam = self.ia.restoringbeam()
         self.ia.done()
-        #print("psfimitt0=",psfimtt0)
-        #print("origbeam=",origbeam)
-        #print("newbeam=",newbeam)     
 
         self.assertTrue(ret)
         # test against expected values
@@ -324,14 +319,14 @@ class getoptimumsize_test(sutest_base):
         del su
         self.assertEqual(ret,100)
 
-    def test_2(self):
+    def test_oddimsize(self):
         '''Test odd non-optimal number'''
         su = synthesisutils()
         ret = su.getOptimumSize(size=501)
         del su
         self.assertEqual(ret,512)
 
-    def test_3(self):
+    def test_evenimsize(self):
         '''Test even non-optimal number '''
         su = synthesisutils()
         ret = su.getOptimumSize(size=510)
@@ -352,14 +347,6 @@ class advisechansel_test(sutest_base):
         for inms in self.inputmses:
             if not os.path.exists(inms):
                 shutil.copytree(os.path.join(self.datapath, inms),inms)
-        # base name for multiterm 
-        #Epsfim2base = 'su_fitpsfbeam_test_mtmfs.psf.tt'
-        #for ext in ['0','1','2']:
-       #     psfname = psfim2base+ext
-       #     psf2ttfullpath = os.path.join(self.datapath, psfname) 
-       #     shutil.copytree(os.path.join(self.datapath, psfname),psfname)
-       #    self.inputims.append(psfname)
-        
 
     ### Teardown
     def TearDown(self):
