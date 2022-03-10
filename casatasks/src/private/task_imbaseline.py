@@ -704,7 +704,7 @@ class _SdbaselineParams(AbstractValidatable):
         spw = '0'
         if spsmoothed:
             left_edge = kwidth // 2
-            right_edge = image_shape.im_nchan // 2
+            right_edge = image_shape.im_nchan - kwidth // 2
             if self.spw:
                 coverage = set(list(range(left_edge, right_edge)))
                 sets = []
