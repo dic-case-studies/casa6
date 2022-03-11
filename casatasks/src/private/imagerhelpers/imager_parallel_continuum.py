@@ -6,7 +6,7 @@ import string
 import time
 import re;
 import copy
-
+import pdb
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import synthesisimager, synthesisnormalizer
@@ -175,9 +175,12 @@ class PyParallelContSynthesisImager(PySynthesisImager):
         #---------------------------------------
         #  Check if cfcache exists.
         #
-        cfCacheName=self.allgridpars['0']['cfcache'];
-        cfcExists=False;
-        
+        cfCacheName=''
+        if(self.allgridpars['0']['gridder'].startswith('awp')):
+            cfCacheName=self.allgridpars['0']['cfcache']
+        else:
+            self.allgridpars['0']['cfcache']=''
+        cfcExists=False
         if(self.allgridpars['0']['gridder'] == 'awproject' or self.allgridpars['0']['gridder'] == 'awprojectft'):
             if (cfCacheName == ''):
                 cfCacheName = self.allimpars['0']['imagename'] + '.cf'
@@ -446,6 +449,9 @@ class PyParallelContSynthesisImager(PySynthesisImager):
         #casalog.post("-----------------------fillCFCache------------------------------------")
         # cflist=[f for f in os.listdir(self.allgridpars['cfcache']) if re.match(r'CFS*', f)];
         # partCFList = 
+        if(not str(self.allgridpars['0']['gridder']).startswith("awp")):
+            return
+         
         allcflist = self.PH.partitionCFCacheList(self.allgridpars['0']);
         cfcPath = "\""+str(self.allgridpars['0']['cfcache'])+"\"";
         ftmname = "\""+str(self.allgridpars['0']['gridder'])+"\"";
