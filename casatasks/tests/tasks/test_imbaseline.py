@@ -1393,6 +1393,15 @@ class TestImbaselineOutputs(test_base):
 
     test_no = 1
 
+    def __init__(self, *args, **kwargs):
+        super(TestImbaselineOutputs, self).__init__(*args, **kwargs)
+
+        self.mask = np.full(self.TEST_IMAGE_SHAPE, True)
+        for i in [0, 1, 8, 9]:
+            self.mask[:, :, :, i] = False
+        self.expected_output_chunk = self.expected_output_chunk * self.mask
+        self.expected_cont_chunk = self.expected_cont_chunk * self.mask
+
     def setUp(self):
         self._copy_test_files(self.input_image)
         self._copy_test_files(self.blparam)
@@ -1425,6 +1434,9 @@ class TestImbaselineOutputs(test_base):
             self._create_image(
                 self.test_image, self.TEST_IMAGE_VALUE, self.TEST_IMAGE_SHAPE
             )
+            kwidth = self.kwidth
+            if spkernel == 'gaussian':
+                kwidth = 2
             params = dict(
                 imagename=self.test_image,
                 linefile=self.linefile,
@@ -1437,7 +1449,7 @@ class TestImbaselineOutputs(test_base):
                 minor=self.minor,
                 pa=self.pa,
                 order=self.order,
-                kwidth=self.kwidth,
+                kwidth=kwidth,
             )
             casalog.post(
                 f"{test_name} [maskmode=auto, blfunc={blfunc}, "
@@ -1447,14 +1459,14 @@ class TestImbaselineOutputs(test_base):
             imbaseline(**params)
             if os.path.exists(self.linefile):
                 with tool_manager(self.linefile, image) as ia:
-                    chunk = ia.getchunk()
+                    chunk = ia.getchunk() * self.mask
                     self._summary(False, test_name, chunk)
                     self.assertTrue(
                         np.allclose(chunk, self.expected_output_chunk, atol=2.0)
                     )
             if os.path.exists(self.test_image + ".cont"):
                 with tool_manager(self.test_image + ".cont", image) as ia:
-                    chunk = ia.getchunk()
+                    chunk = ia.getchunk() * self.mask
                     self._summary(True, test_name, chunk)
                     self.assertTrue(
                         np.allclose(chunk, self.expected_cont_chunk, atol=2.0)
