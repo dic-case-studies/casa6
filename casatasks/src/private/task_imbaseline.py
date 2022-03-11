@@ -29,6 +29,7 @@ MS_STACK_MAX_HEIGHT = 3
 
 qa = quanta()
 do_not_erase_temporary_files = False
+dump_tasks = False
 
 
 class AbstractFolder:
@@ -602,9 +603,12 @@ class _ImsmoothParams(AbstractValidatable):
 
         __log_origin is for callabletask.log_origin_setter
         """
-        return dict(self.FIXED_PARAM, imagename=self.infile, kernel=self.kernel, major=self.major,
-                    minor=self.minor, pa=self.pa, kimage=self.kimage, scale=self.scale,
-                    outfile=self.outfile, __log_origin='imbaseline')
+        retval = dict(self.FIXED_PARAM, imagename=self.infile, kernel=self.kernel, major=self.major,
+                      minor=self.minor, pa=self.pa, kimage=self.kimage, scale=self.scale,
+                      outfile=self.outfile, __log_origin='imbaseline')
+        if dump_tasks:
+            print(_dump_tasks('imsmooth', retval))
+        return retval
 
 
 class _SdsmoothParams(AbstractValidatable):
@@ -645,9 +649,12 @@ class _SdsmoothParams(AbstractValidatable):
 
         __log_origin is for sdutil.callabletask_decorator.
         """
-        return dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn,
-                    kernel=self.kernel, kwidth=self.kwidth, outfile=self.outfile,
-                    __log_origin='imbaseline')
+        retval = dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn,
+                      kernel=self.kernel, kwidth=self.kwidth, outfile=self.outfile,
+                      __log_origin='imbaseline')
+        if dump_tasks:
+            print(_dump_tasks('sdsmooth', retval))
+        return retval
 
 
 class _SdbaselineParams(AbstractValidatable):
@@ -744,14 +751,18 @@ class _SdbaselineParams(AbstractValidatable):
 
         __log_origin is for sdutil.callabletask_decorator.
         """
-        return dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn,
-                    maskmode=self.maskmode, thresh=self.thresh, avg_limit=self.avg_limit,
-                    minwidth=self.minwidth, edge=self.edge, bloutput=self.bloutput,
-                    blfunc=self.blfunc, order=self.order, npiece=self.npiece,
-                    applyfft=self.applyfft, fftthresh=self.fftthresh, addwn=self.addwn,
-                    rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter,
-                    blparam=self.blparam, outfile=self.outfile, spw=self.spw,
-                    __log_origin='imbaseline')
+        retval = dict(self.FIXED_PARAM, infile=self.infile, datacolumn=self.datacolumn,
+                      maskmode=self.maskmode, thresh=self.thresh, avg_limit=self.avg_limit,
+                      minwidth=self.minwidth, edge=self.edge, bloutput=self.bloutput,
+                      blfunc=self.blfunc, order=self.order, npiece=self.npiece,
+                      applyfft=self.applyfft, fftthresh=self.fftthresh, addwn=self.addwn,
+                      rejwn=self.rejwn, clipthresh=self.clipthresh, clipniter=self.clipniter,
+                      blparam=self.blparam, outfile=self.outfile, spw=self.spw,
+                      __log_origin='imbaseline')
+        if dump_tasks:
+            print(_dump_tasks('sdbaseline', retval))
+
+        return retval
 
 
 class _Image2MSParams(AbstractValidatable):
@@ -1103,6 +1114,18 @@ class _MS2ImageMethods():
     def __output_image(outfile: str=None, image_array: np.array=None) -> None:
         with tool_manager(outfile, image) as ia:
             ia.putchunk(pixels=image_array, locking=True)
+
+
+def _dump_tasks(taskname: str, vals: dict):
+    cmd = f'{taskname}('
+    arr = []
+    for key, val in vals.items():
+        if key != '__log_origin':
+            quote = '' if type(val) in (bool, int, float) else '\''
+            arr.append(f'{key}={quote}{val}{quote}')
+    cmd += ', '.join(arr)
+    cmd += ')'
+    return cmd
 
 
 class _EmptyMSBaseInformation:
