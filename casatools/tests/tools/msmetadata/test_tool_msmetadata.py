@@ -1088,9 +1088,16 @@ class msmetadata_test(unittest.TestCase):
         """Test corrbit()"""
         got = self.md.corrbit()
         self.assertTrue((got == ['UNKNOWN']).all())
+        got = self.md.corrbit(-1)
+        self.assertTrue((got == ['UNKNOWN']).all())
         got = self.md.corrbit(0)
         self.assertTrue(got == 'UNKNOWN')
+        got = self.md.corrbit([0, 1])
+        self.assertTrue((got == ['UNKNOWN', 'UNKNOWN']).all())
         self.assertRaises(Exception, self.md.corrbit, 100)
+        self.assertRaises(Exception, self.md.corrbit, [-1, 0])
+        self.assertRaises(Exception, self.md.corrbit, [0, 100])
+        self.assertRaises(Exception, self.md.corrbit, 'hola')
 
     def test_datadescids(self):
         """Test datadescids()"""

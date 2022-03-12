@@ -682,15 +682,42 @@ bool msmetadata::close() {
     return false;
 }
 
-variant* msmetadata::corrbit(long spw) {
+variant* msmetadata::corrbit(const variant& spw) {
     _FUNC(
-        _checkSpwId(spw, false);
-        auto mymap = _msmd->getCorrBits();
-     if (spw >= 0) {
-            return new variant(string(mymap[spw]));
+        const auto myType = spw.type();
+        if (
+            myType == variant::BOOLVEC
+            || (myType == variant::INT && spw.toInt() < 0)
+        ) {
+            // the BOOLVEC case is necessary when spw not specified
+            // because the default value for variants specified in
+            // the xml file are not handled correctly when 
+            // generating the _cmpt.h file, CAS-9534
+            auto mymap = _msmd->getCorrBits();
+            return new variant(_vectorStringToStdVectorString(mymap));
+        }
+        else if (myType == variant::INT) {
+            auto intSpw = spw.toInt();
+            _checkSpwId(intSpw, false);
+            auto mymap = _msmd->getCorrBits();
+            return new variant(string(mymap[intSpw]));
+        }
+        else if (myType == variant::INTVEC) {
+            auto vecSpw = spw.toIntVec();
+            for (const auto& s : vecSpw) {
+                _checkSpwId(s, true);
+            }
+            auto mymap = _msmd->getCorrBits();
+            vector<String> res;
+            for (const auto& s : vecSpw) {
+                res.push_back(mymap[s]);
+            }
+            return new variant(_vectorStringToStdVectorString(res));
         }
         else {
-            return new variant(_vectorStringToStdVectorString(mymap));
+            ThrowCc(
+                "Parameter spw must either be an integer or a list of integers"
+            );
         }
     )
     return nullptr;
