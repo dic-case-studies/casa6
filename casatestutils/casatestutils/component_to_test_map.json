@@ -771,6 +771,16 @@
             "comment":""
         },
         {
+            "testScript":"test_imbaseline",
+            "testType":"casatasks",
+            "maintainer":"Kazuhiko Shimada",
+            "maintainerEmail":"kazuhiko.shimada@nao.ac.jp",
+            "testOptions":[],
+            "testGroup":["imbaseline"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_imcollapse",
             "testType":"casatasks",
             "maintainer":"David Mehringer",
