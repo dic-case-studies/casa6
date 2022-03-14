@@ -685,22 +685,17 @@ bool msmetadata::close() {
 variant* msmetadata::corrbit(const variant& spw) {
     _FUNC(
         const auto myType = spw.type();
-        if (
-            myType == variant::BOOLVEC
-            || (myType == variant::INT && spw.toInt() < 0)
-        ) {
-            // the BOOLVEC case is necessary when spw not specified
-            // because the default value for variants specified in
-            // the xml file are not handled correctly when 
-            // generating the _cmpt.h file, CAS-9534
-            auto mymap = _msmd->getCorrBits();
-            return new variant(_vectorStringToStdVectorString(mymap));
-        }
-        else if (myType == variant::INT) {
+        if (myType == variant::INT) {
             auto intSpw = spw.toInt();
-            _checkSpwId(intSpw, false);
-            auto mymap = _msmd->getCorrBits();
-            return new variant(string(mymap[intSpw]));
+            if (intSpw >= 0) {
+                _checkSpwId(intSpw, false);
+                auto mymap = _msmd->getCorrBits();
+                return new variant(string(mymap[intSpw]));
+            }
+            else {
+                auto mymap = _msmd->getCorrBits();
+                return new variant(_vectorStringToStdVectorString(mymap));
+            }
         }
         else if (myType == variant::INTVEC) {
             auto vecSpw = spw.toIntVec();

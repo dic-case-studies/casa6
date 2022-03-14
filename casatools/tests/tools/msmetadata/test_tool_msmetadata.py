@@ -1087,17 +1087,35 @@ class msmetadata_test(unittest.TestCase):
     def test_corrbit(self):
         """Test corrbit()"""
         got = self.md.corrbit()
-        self.assertTrue((got == ['UNKNOWN']).all())
+        self.assertTrue(
+                (got == ['UNKNOWN']).all(), 'Failed default spw value test'
+            )
         got = self.md.corrbit(-1)
-        self.assertTrue((got == ['UNKNOWN']).all())
+        self.assertTrue((
+                got == ['UNKNOWN']).all(), 'Failed negative spw value test'
+            )
         got = self.md.corrbit(0)
-        self.assertTrue(got == 'UNKNOWN')
+        self.assertTrue(got == 'UNKNOWN', 'Failed spw >= 0 test')
         got = self.md.corrbit([0, 1])
-        self.assertTrue((got == ['UNKNOWN', 'UNKNOWN']).all())
-        self.assertRaises(Exception, self.md.corrbit, 100)
-        self.assertRaises(Exception, self.md.corrbit, [-1, 0])
-        self.assertRaises(Exception, self.md.corrbit, [0, 100])
-        self.assertRaises(Exception, self.md.corrbit, 'hola')
+        self.assertTrue(
+                (got == ['UNKNOWN', 'UNKNOWN']).all(),
+                'Failed spw list all >=0 test'
+            )
+        self.assertRaises(
+                Exception, self.md.corrbit, 100, 'Failed spw out of range test'
+            )
+        self.assertRaises(
+                Exception, self.md.corrbit, [-1, 0],
+                'Failed spw list one negative value test'
+            )
+        self.assertRaises(
+                Exception, self.md.corrbit, [0, 100],
+                'Failed spw list one value out of range test'
+            )
+        self.assertRaises(
+                Exception, self.md.corrbit, 'hola',
+                'Failed spw not an integer or list of ints test'
+            )
 
     def test_datadescids(self):
         """Test datadescids()"""

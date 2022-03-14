@@ -515,9 +515,9 @@ windows in the dataset and close the tool.
             <shortdescription>Get the value of the SPECTRAL_WINDOW::SDM_CORR_BIT column for the specified spw.</shortdescription>
             <input>
                 <param name="spw" direction="in" type="any">
-                <any type="variant"/>
-                    <description>Spectral window ID(s). Less than zero implies all.</description>
-                    <value>-1</value>
+                <any type="variant" limittype="int intArray"/>
+                    <description>Spectral window ID(s). May be an integer or list of integers. If integer, &lt;0 implies all.</description>
+                    <value type="int">-1</value>
                 </param>
             </input>
             <returns type="any"/>
