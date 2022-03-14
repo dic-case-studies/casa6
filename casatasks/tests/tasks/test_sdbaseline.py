@@ -5259,7 +5259,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.init_params()
         remove_files_dirs(self.infile)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
-        default(sdbaseline)
+        # default(sdbaseline)
 
     def tearDown(self):
         remove_files_dirs(self.infile)
@@ -5356,6 +5356,57 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
     def test052(self):
         self.params['spw'] = self.spw
         self.run_apply_test()
+
+    def test060(self):
+        self.params['clipniter'] = 5
+        self.params['clipthresh'] = 3.0
+        self.params['updateweight'] = True
+        self.params['blmode'] = 'fit'
+        self.params['blfunc'] = 'poly'
+        self.params['order'] = 0
+
+        # open infile and set an artificial data having outliers
+        with table_manager(self.infile, nomodify=False) as tb:
+            spec = tb.getcell('FLOAT_DATA', 0)  # row 0
+            for ipol in range(2):
+                for i in range(len(spec[0])):
+                    spec[ipol][i] = 1.0 if i % 2 == 0 else -1.0  # mean=0, sigma=1
+                # add spike
+                spec[ipol][4000] = 100000000.0
+            tb.putcell('FLOAT_DATA', 0, spec)
+
+            flag = tb.getcell('FLAG', 0)  # row 0
+            for ipol in range(2):
+                for i in range(len(flag[0])):
+                    flag[ipol][i] = False
+            tb.putcell('FLAG', 0, flag)
+
+        # calc the answer value of weight
+        mdata1 = np.ma.masked_array(spec, mask=flag)
+        wgt_ref1_array = 1.0 / np.var(mdata1, axis=1)
+        for ipol in range(2):
+            flag[ipol][4000] = True
+        mdata2 = np.ma.masked_array(spec, mask=flag)
+        wgt_ref2_array = 1.0 / np.var(mdata2, axis=1)
+
+        wgt_ref1 = wgt_ref1_array[0]
+        wgt_ref2 = wgt_ref2_array[0]
+        print('weight1 = '+str(wgt_ref1))
+        print('weight2 = '+str(wgt_ref2))
+
+        sdbaseline(**self.params)
+
+        with table_manager(self.outfile) as tb:
+            spec = tb.getcell('FLOAT_DATA', 0)[0]  # row 0, pol 0
+            mask = tb.getcell('FLAG', 0)[0]  # row 0, pol 0
+            # calc weight (wgt1) using mask before clipping (available from the FLAG column)
+            # get mask after clipping
+            # calc weight (wgt2) using mask after clipping
+            wgt = tb.getcell('WEIGHT', 0)[0]
+            # compare the wgt with the caculated values
+            # (before fix) wgt must be identical with wgt1
+            # (after fix) wgt must be identical with wgt2
+        print('wgt = '+str(wgt))
 
 
 class sdbaseline_helperTest(sdbaseline_unittest_base):
