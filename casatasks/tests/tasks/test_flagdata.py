@@ -238,7 +238,6 @@ class test_base(unittest.TestCase):
         os.system('rm -rf ' + self.vis + '.flagversions')
         
         self.unflag_ms()
-        default(flagdata)
 
     def setUp_ngc5921(self, force=False):
         '''VLA data set, scan=1~7, spw=0 63 chans, RR,LL'''
@@ -256,7 +255,6 @@ class test_base(unittest.TestCase):
         
         print("Unflag the MS")
         flagdata(vis=self.vis, mode='unflag', flagbackup=False)
-        default(flagdata)
 
     def setUp_alma_ms(self):
         '''ALMA MS, scan=1,8,10 spw=0~3 4,128,128,1 chans, I,XX,YY'''
@@ -271,7 +269,6 @@ class test_base(unittest.TestCase):
         os.system('rm -rf ' + self.vis + '.flagversions')
 #        self.unflag_ms()
         flagdata(vis=self.vis, mode='unflag', flagbackup=False)
-        default(flagdata)
 
     def setUp_data4tfcrop(self):
         '''EVLA MS, 4 ants, scan=30,31 spw=0~15, 64 chans, RR,RL,LR,LL'''
@@ -309,7 +306,6 @@ class test_base(unittest.TestCase):
             os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
-        default(flagdata)
         flagdata(vis=self.vis, mode='unflag', flagbackup=False)
 
     def setUp_shadowdata2(self):
@@ -323,7 +319,6 @@ class test_base(unittest.TestCase):
             os.system('cp -RH '+os.path.join(datapath,self.vis)+' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
-        default(flagdata)
         flagdata(vis=self.vis, mode='unflag', flagbackup=False)
         
     def setUp_multi(self):
@@ -337,8 +332,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
-        default(flagdata)
-        
+
     def setUp_mwa(self):
         '''MWA data set, scan=1 spw=0, 11 chans, XX,XY,YX,YY'''
         self.vis = "testmwa.ms"
@@ -351,7 +345,6 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
-        default(flagdata)
 
     def setUp_wtspec(self):
         # Four rows, 2 ants, 1 spw, 31 chans, 2 pols, WEIGHT_SPECTRUM col
@@ -365,7 +358,6 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
-        default(flagdata)
 
     def setUp_floatcol(self, force=False):
         # 15 rows, 3 scans, 9 spw, mixed chans, XX,YY, FLOAT_DATA col
@@ -385,7 +377,6 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
-        default(flagdata)
 
     def setUp_tsys_case(self):
         self.vis = "X7ef.tsys"
@@ -401,7 +392,6 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
-        default(flagdata)
 
     def setUp_bpass_case(self):
         self.vis = "cal.fewscans.bpass"
@@ -416,7 +406,6 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')        
         self.unflag_ms()        
-        default(flagdata)
 
     def setUp_newcal(self):
         '''New cal table format from 4.1 onwards'''
@@ -432,8 +421,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
-        default(flagdata)
-        
+
     def setUp_weightcol(self):
         '''Small MS with two rows and WEIGHT column'''
 
@@ -448,8 +436,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
-        default(flagdata)
-        
+
     def setUp_tbuff(self):
         '''Small ALMA MS with low-amp points to be flagged with tbuff parameter'''
         
@@ -468,8 +455,7 @@ class test_base(unittest.TestCase):
         
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
-        default(flagdata)
-        
+
     def setUp_evla_15A_397(self):
         '''EVLA example MS wich has decreasing number of rows per chunk when traversed with VI/VB2'''        
 
@@ -482,7 +468,6 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()
-        default(flagdata)
 
     def unflag_ms(self):
         aflocal.open(self.vis)
@@ -515,7 +500,6 @@ class test_base(unittest.TestCase):
         os.system('rm -rf ' + self.vis + '.flagversions')
 
         self.unflag_ms()
-        default(flagdata)
 
 
 class test_tfcrop(test_base):

@@ -101,7 +101,6 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
-        default(flagcmd)
 
     def setUp_multi(self):
         self.vis = "multiobs.ms"
@@ -114,7 +113,6 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
-        default(flagcmd)
 
     def setUp_alma_ms(self):
         '''ALMA MS, scan=1,8,10 spw=0~3 4,128,128,1 chans, I,XX,YY'''
@@ -128,8 +126,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
-        default(flagcmd)
-        
+
     def setUp_evla(self):
         self.vis = "tosr0001_scan3_noonline.ms"
 
@@ -141,8 +138,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
-        default(flagcmd)
-        
+
     def setUp_shadowdata(self):
         self.vis = "shadowtest_part.ms"
 
@@ -154,8 +150,7 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
-        default(flagcmd)
-        
+
     def setUp_data4rflag(self):
         self.vis = "Four_ants_3C286.ms"
 
@@ -167,7 +162,6 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
-        default(flagcmd)
 
     def setUp_bpass_case(self):
         self.vis = "cal.fewscans.bpass"
@@ -180,7 +174,6 @@ class test_base(unittest.TestCase):
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         self.unflag_ms()        
-        default(flagcmd)        
 
     def unflag_ms(self):
         aflocal.open(self.vis)
@@ -1360,20 +1353,6 @@ class cleanup(test_base):
     def test1(self):
         '''flagcmd: Cleanup'''
         pass
-
-
-def suite():
-    return [test_manual,
-            test_alma,
-            test_unapply,
-            test_savepars,
-            test_XML,
-            test_shadow,
-            test_antint,
-            test_rflag,
-            test_actions,
-            test_cmdbandpass,
-            cleanup]
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,5 @@
 ########################################################################
-# test_req_task_imtrans.py
+# test_task_imtrans.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA
@@ -17,39 +17,17 @@
 # CAS-12700
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_imtrans/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imtrans.html
 #
 #
 ##########################################################################
-
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import unittest
 
-try:
-    from casatools import ctsys, image, table
-    from casatasks import imtrans
-    _tb = table( )
-    ctsys_resolve = ctsys.resolve
-    is_CASA6 = True
-except ImportError:
-    from tasks import *
-    from taskinit import *
-    import casac
-    from __main__ import *
-
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-
-    image = iatool
-    # not a local tool
-    _tb = tb
-    is_CASA6 = False
-    data_root = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
-    def ctsys_resolve(apath):
-        return os.path.join(data_root, apath)
+from casatools import ctsys, image, table
+from casatasks import imtrans
+_tb = table( )
 
 datapath = 'unittest/imtrans/'
 
@@ -62,7 +40,7 @@ def run_imtrans(imagename, outfile, order):
 class imtrans_test(unittest.TestCase):
     
     def setUp(self):
-        shutil.copy(ctsys_resolve(os.path.join(datapath,good_image)), good_image)
+        shutil.copy(ctsys.resolve(os.path.join(datapath,good_image)), good_image)
     
     def tearDown(self):
         self.assertTrue(len(_tb.showcache()) == 0)
@@ -77,10 +55,7 @@ class imtrans_test(unittest.TestCase):
         def testit(imagename, outfile, order):
             # CASA6 tasks always throw exceptions, CASA5 tasks might return False
             # depending on __rethrow_casa_exceptions
-            if is_CASA6 or casa_stack_rethrow:
-                self.assertRaises(Exception, run_imtrans, imagename, outfile, order)
-            else:
-                self.assertFalse(run_imtrans(imagename, outfile, order))
+            self.assertRaises(Exception, run_imtrans, imagename, outfile, order)
 
         # blank imagename
         testit("", "blah", "012")
@@ -151,7 +126,7 @@ class imtrans_test(unittest.TestCase):
 
     def test_cas_2364(self):
         "test CAS-2364 fix"
-        shutil.copytree(ctsys_resolve(os.path.join(datapath, cas_2364im)), cas_2364im)
+        shutil.copytree(ctsys.resolve(os.path.join(datapath, cas_2364im)), cas_2364im)
         order = "0132"
         out1 = "blah2.im"
         imtrans(imagename=cas_2364im, outfile=out1, order=order)
@@ -203,9 +178,5 @@ class imtrans_test(unittest.TestCase):
         myia.open(imname)
         myia.done()
 
-def suite():
-    return [imtrans_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

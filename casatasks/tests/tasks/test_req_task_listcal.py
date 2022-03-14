@@ -1,7 +1,8 @@
-##########################################################################
+########################################################################
+# test_task_listcal.py
 #
-# Copyright (C) 2019 ESO (in the framework of the ALMA collaboration)
-# Copyright (C) 2019 Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
 #
 # This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
@@ -13,39 +14,27 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# CAS-12834 - Very minimal test to have some coverage of task listcal.
-#             This is more a TODO than a test.
+# CAS-12700
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.information.listcal.html
+#
 #
 ##########################################################################
-CASA6=False
-try:
-    import casatools
-    from casatasks import listcal #, casalog
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
 import os
 import shutil
 import unittest
 
+import casatools
+from casatasks import listcal #, casalog
+
+
 reg_unittest_datap = 'unittest/listcal/'
-if CASA6:
-    datapath = casatools.ctsys.resolve(reg_unittest_datap)
-else:
-    datapath = os.path.join(os.path.join(os.environ.get('CASAPATH').split()[0],
-                                         'casatestdata'), reg_unittest_datap)
+datapath = casatools.ctsys.resolve(reg_unittest_datap)
 
 # This is for tests that check what the parameter validator does when parameters are
 # given wrong types - these don't exercise the task but the parameter validator!
-if CASA6:
-    validator_exc_type = AssertionError
-else:
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-    validator_exc_type = RuntimeError
+validator_exc_type = AssertionError
 
 def searchInFile(filename, searched):
     """
@@ -78,9 +67,6 @@ class test_listcal_minimal(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if not CASA6:
-            default(listcal)
-
         vis_name = 'ngc5921.ms'
         caltable_name = 'ngc5921.ref1a.gcal'
         shutil.copytree(os.path.join(datapath,vis_name),vis_name)
@@ -123,11 +109,8 @@ class test_listcal_minimal(unittest.TestCase):
         """
         Test proper error when listcal with MS + forget caltable.
         """
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(validator_exc_type):
-                listcal(vis=self._vis, listfile=self._listfile)
-        else:
-                listcal(vis=self._vis, listfile=self._listfile)
+        with self.assertRaises(validator_exc_type):
+            listcal(vis=self._vis, listfile=self._listfile)
 
         self.assertFalse(os.path.isfile(self._listfile))
 
@@ -135,11 +118,8 @@ class test_listcal_minimal(unittest.TestCase):
         """
         Test proper error when listcal caltable + forget MS.
         """
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(validator_exc_type):
-                listcal(caltable=self._caltable, listfile=self._listfile)
-        else:
-            listcal(caltable=self._caltable, listfile=self._listfile)                
+        with self.assertRaises(validator_exc_type):
+            listcal(caltable=self._caltable, listfile=self._listfile)
 
         self.assertFalse(os.path.isfile(self._listfile))
 
@@ -156,9 +136,6 @@ class listcal_test(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if not CASA6:
-            default(listcal)
-
         vis_name = 'ngc5921.ms'
         caltable_name = 'ngc5921.ref1a.gcal'
         reffile_name = 'reflistcal.txt'
@@ -249,9 +226,6 @@ class listcal_test(unittest.TestCase):
 
         # There are differences in the file path when running the command
         self.assertTrue(len(diff) == 4)
-
-def suite():
-    return [test_listcal_minimal, listcal_test]
 
 if __name__ == '__main__':
     unittest.main()

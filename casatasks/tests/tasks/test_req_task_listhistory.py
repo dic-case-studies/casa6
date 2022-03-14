@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_listhistory.py
+# test_task_listhistory.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,7 +17,7 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs/casa-5.4.0/global-task-list/task_listhistory/about
+# # https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.information.listhistory.html
 #
 #
 ##########################################################################

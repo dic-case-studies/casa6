@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_imreframe.py
+# test_task_imreframe.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,21 +17,10 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_imreframe/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imreframe.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import imreframe, rmtables, casalog, imhead
-    tb = casatools.table()
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
 import sys
 import os
 import unittest
@@ -39,13 +28,13 @@ import shutil
 import numpy as np
 import filecmp
 
-### DATA ###
+import casatools
+from casatasks import imreframe, rmtables, casalog, imhead
+tb = casatools.table()
 
-if CASA6:
-    imfile = casatools.ctsys.resolve('unittest/imreframe/ngc5921.clean.image/')
-else:
-    imfile = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imreframe/ngc5921.clean.image/'
-    
+### DATA ###
+imfile = casatools.ctsys.resolve('unittest/imreframe/ngc5921.clean.image/')
+
 outfile = 'test.im'
 outfile2 = 'test2.im'
 imcopy = 'copy.im'
@@ -71,8 +60,6 @@ class imreframe_test(unittest.TestCase):
         pass
     
     def setUp(self):
-        if not CASA6:
-            default(imreframe)
         shutil.copytree(imfile, imcopy)
         os.chmod(imcopy, 493)
         for root, dirs, files in os.walk(imcopy):
@@ -80,8 +67,6 @@ class imreframe_test(unittest.TestCase):
                 os.chmod(os.path.join(root, d), 493)
             for f in files:
                 os.chmod(os.path.join(root, f), 493)
-        if not CASA6:
-            default(importfits)
             
     def tearDown(self):
         
@@ -205,11 +190,6 @@ class imreframe_test(unittest.TestCase):
         imhead(imcopy, verbose=True)
         self.assertTrue('1e+09 Hz' in open('testlog.log').read())
         os.remove('testlog.log')
-        
-    
-    
-def suite():
-    return[imreframe_test]
 
 if __name__ == '__main__':
     unittest.main()

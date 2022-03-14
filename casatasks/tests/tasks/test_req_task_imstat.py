@@ -1,5 +1,5 @@
 ########################################################################
-# test_req_task_imstat.py
+# test_task_imstat.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA
@@ -17,13 +17,10 @@
 # CAS-12997
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_imstat/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imstat.html
 #
 #
 ##########################################################################
-
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import unittest
@@ -31,32 +28,11 @@ import math
 import numpy as np
 import numbers
 
-try:
-    from casatools import ctsys, image, table, quanta, regionmanager
-    from casatasks import imstat
-    _tb = table()
-    _qa = quanta()
-    _rg = regionmanager()
-    ctsys_resolve = ctsys.resolve
-    is_CASA6 = True
-except ImportError:
-    from tasks import *
-    from taskinit import *
-    import casac
-    from __main__ import *
-
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-
-    # not a local tool
-    _tb = tbtool()
-    _qa = qatool()
-    _rg = rgtool()
-    image = iatool
-    is_CASA6 = False
-    data_root = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
-    def ctsys_resolve(apath):
-        return os.path.join(data_root, apath)
+from casatools import ctsys, image, table, quanta, regionmanager
+from casatasks import imstat
+_tb = table()
+_qa = quanta()
+_rg = regionmanager()
 
 datapath = 'unittest/imstat/'
 
@@ -116,7 +92,7 @@ class imstat_test(unittest.TestCase):
     def setUp(self):
         self.res = None
         self._myia = image()
-        self.datapath = ctsys_resolve(datapath)
+        self.datapath = ctsys.resolve(datapath)
     
     def tearDown(self):
         self._myia.done()
@@ -441,9 +417,6 @@ class imstat_test(unittest.TestCase):
             elif niter == -1:
                 self.assertAlmostEqual(res['sigma'][0], 1.02031194)
                 self.assertAlmostEqual(res['mean'][0], 0.00284497)
-
-def suite():
-    return [imstat_test]
     
 if __name__ == '__main__':
     unittest.main()
