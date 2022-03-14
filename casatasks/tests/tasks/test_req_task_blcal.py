@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_blcal.py
+# test_task_blcal.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -16,35 +16,23 @@
 #
 #
 # Based on the requirements listed in casadocs found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_blcal/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.blcal.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import blcal, mstransform, casalog
-    CASA6 = True
-    tb = casatools.table()
-
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
 import sys
 import os
 import unittest
 import shutil
 import numpy as np
 
+import casatools
+from casatasks import blcal, mstransform, casalog
+tb = casatools.table()
+
 # Data Path using new data repo
-# Need to make a new directory in the repo for blcal
-if CASA6:
-    rootpath = casatools.ctsys.resolve('unittest/blcal/')
-else:
-    rootpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/blcal/'
+rootpath = casatools.ctsys.resolve('unittest/blcal/')
+
 
 datapath = rootpath + 'gaincaltest2.ms'
 refpath = rootpath + 'gaincaltest2.ms.G0'
@@ -200,9 +188,6 @@ class blcal_test(unittest.TestCase):
 
         result = np.mean(getparam(calout))
         self.assertTrue(np.isclose(result, (0.6418628206012734+0.05439148921378219j)))
-
-def suite():
-    return[blcal_test]
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_feather.py
+# test_task_feather.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,42 +17,21 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_feather/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.imaging.feather.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import feather, casalog
-    tb = casatools.table()
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
 import os
 import unittest
 import shutil
 import numpy as np
 
+import casatools
+from casatasks import feather, casalog
+tb = casatools.table()
+
 ### DATA ###
-
-if CASA6:
-#    interpath = casatools.ctsys.resolve('image/orion_tfeather.im/')
-#    sdpath = casatools.ctsys.resolve('image/orion_tsdmem.image/')
-    datapath = casatools.ctsys.resolve('unittest/feather/')
-
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/feather/'
-#    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-#        interpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/orion_tfeather.im/'
-#        sdpath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/image/orion_tsdmem.image/'
-        
-#    else:
-#   sdpath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/image/orion_tsdmem.image/'
-
+datapath = casatools.ctsys.resolve('unittest/feather/')
 
 #Input files
 intimg = 'orion_tfeather.im'
@@ -84,10 +63,7 @@ class feather_test(unittest.TestCase):
             os.symlink(os.path.join(datapath, intimg), intimg)
         if not os.path.exists(sdimg):
             os.symlink(os.path.join(datapath, sdimg), sdimg)
-        
-        if not CASA6:
-            default(feather)
-            
+
     def tearDown(self):
         if os.path.exists(output):
             shutil.rmtree(output)
@@ -202,15 +178,8 @@ class feather_test(unittest.TestCase):
         
         self.assertFalse(np.all(np.isclose(res1, res2)))
         
-        if CASA6:
-            with self.assertRaises(RuntimeError):
-                feather(imagename=output2, highres=intimg, lowres=sdimg, effdishdiam=1000)
-        else:
-            with self.assertRaises(RuntimeError):
-                feather(imagename=output2, highres=intimg, lowres=sdimg, effdishdiam=1000)            
-#             casalog.setlogfile(logname)
-#             feather(imagename=output2, highres=interpath, lowres=sdpath, effdishdiam=1000)
-#             self.assertTrue('SEVERE' in open(logname).read())
+        with self.assertRaises(RuntimeError):
+            feather(imagename=output2, highres=intimg, lowres=sdimg, effdishdiam=1000)
         
     def test_lowpassfiltersd(self):
         '''
@@ -227,10 +196,6 @@ class feather_test(unittest.TestCase):
         res2 = get_map(output2)
         
         self.assertFalse(np.all(np.isclose(res1, res2)))
-    
-    
-def suite():
-    return[feather_test]
 
 if __name__ == '__main__':
     unittest.main()

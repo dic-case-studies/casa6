@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_imhead.py
+# test_task_imhead.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,34 +17,10 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs/casa-5.4.1/global-task-list/task_imhead/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imhead.html
 #
 #
 ##########################################################################
-
-try:
-    import casatools
-    from casatasks import casalog, imhead, rmtables, immoments
-    image = casatools.image
-    _qa = casatools.quanta()
-    _tb = casatools.table()
-    ctsys_resolve = casatools.ctsys.resolve
-    is_CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    image = iatool
-    _qa = qatool()
-    _tb = tbtool()
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-    def ctsys_resolve(data):
-        dataroot = os.environ.get('CASAPATH').split()[0] + '/casatestdata/'
-        return os.path.join(dataroot, data)
-
-    is_CASA6 = False
-
 import sys
 import os
 import unittest
@@ -52,6 +28,12 @@ import shutil
 import numpy as np
 import re
 
+import casatools
+from casatasks import casalog, imhead, rmtables, immoments
+image = casatools.image
+_qa = casatools.quanta()
+_tb = casatools.table()
+ctsys_resolve = casatools.ctsys.resolve
 
 datapath = ctsys_resolve('unittest/imhead/')
 impath = os.path.join(datapath,'ngc5921.clean.imhead.image')
@@ -86,8 +68,6 @@ class imhead_test(unittest.TestCase):
         pass
  
     def setUp(self):
-        if not is_CASA6:
-            default(imhead)
         shutil.copytree(impath, datacopy)
         os.chmod(datacopy, 493)
         for root, dirs, files in os.walk(datacopy):
@@ -505,13 +485,7 @@ class imhead_test(unittest.TestCase):
 
     def test_bad_mode(self):
         """Test unupported mode fails"""
-        if is_CASA6 or casa_stack_rethrow:
-            self.assertRaises(Exception, imhead, datacopy, mode='bogus')
-        else:
-            self.assertFalse(
-                imhead(datacopy, mode='bogus'),
-                'application did not fail as expected for bad mode test'
-            )
+        self.assertRaises(Exception, imhead, datacopy, mode='bogus')
 
     def test_put_sexigesimal(self):
         """ verify mode=put can take sesigimal values where appropriate (CAS-4355)"""
@@ -552,17 +526,11 @@ class imhead_test(unittest.TestCase):
         myia.fromshape(cas6352, [1, 1, 3])
         myia.done()
         msg = 'Incorrectly put a length 1 array, should need three elements'
-        if is_CASA6 or casa_stack_rethrow:
-            self.assertRaises(
-                Exception, imhead, cas6352, mode="put", hdkey="crval3", hdvalue="I",
-                msg=msg
-            )
-        else:
-            self.assertFalse(
-                imhead(
-                    cas6352, mode="put", hdkey="crval3", hdvalue="I"
-                ), msg
+        self.assertRaises(
+            Exception, imhead, cas6352, mode="put", hdkey="crval3", hdvalue="I",
+            msg=msg
         )
+
         expec = ["Q", "XX", "LL"]
         # returns None
         imhead(cas6352, mode="put", hdkey="crval3", hdvalue=expec)
@@ -585,24 +553,15 @@ class imhead_test(unittest.TestCase):
             not 'restfreq' in a.keys() and len(a.keys()) > 0,
             'dictionary incorrectly has key restfreq'
         )
-        if is_CASA6 or casa_stack_rethrow:
-            self.assertRaises(
-                Exception, imhead, cas5901, mode="get", hdkey="restfreq",
-                msg='Incorrectly found key restfreq'
-            )
-            self.assertRaises(
-                Exception, imhead, cas5901, mode="put", hdkey="restfreq", hdvalue="4GHz",
-                msg='Incorrectly put restfreq in an image that does not have a spectral axis'
-            )
-        else:
-            self.assertFalse(
-                imhead(cas5901, mode="get", hdkey="restfreq"),
-                'Incorrectly found key restfreq'
-            )
-            self.assertFalse(
-                imhead(cas5901, mode="put", hdkey="restfreq", hdvalue="4GHz"),
-                'Incorrectly put restfreq in an image that does not have a spectral axis'
-            )
+
+        self.assertRaises(
+            Exception, imhead, cas5901, mode="get", hdkey="restfreq",
+            msg='Incorrectly found key restfreq'
+        )
+        self.assertRaises(
+            Exception, imhead, cas5901, mode="put", hdkey="restfreq", hdvalue="4GHz",
+            msg='Incorrectly put restfreq in an image that does not have a spectral axis'
+        )
 
     def test_ncp(self):
         """Test NCP projection is reported, CAS-6568"""
@@ -699,10 +658,7 @@ class imhead_test(unittest.TestCase):
             self.assertTrue(
                 teststr in msgs[-1],
                 "'" + teststr + "' not found in image history."
-            )    
-
-def suite():
-    return[imhead_test]
+            )
  
 if __name__ == '__main__':
     unittest.main()

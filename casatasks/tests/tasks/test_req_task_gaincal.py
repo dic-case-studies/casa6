@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_gaincal.py
+# test_task_gaincal.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,23 +17,10 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_gaincal/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.gaincal.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import gaincal, mstransform, casalog
-    CASA6 = True
-    tb = casatools.table()
-
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
 import sys
 import os
 import unittest
@@ -41,13 +28,12 @@ import shutil
 import numpy as np
 import pylab as pl
 
+import casatools
+from casatasks import gaincal, mstransform, casalog
+tb = casatools.table()
 from casatestutils import testhelper as th
 
-if CASA6:
-    rootpath = casatools.ctsys.resolve('unittest/gaincal/')
-    
-else:
-    rootpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/gaincal/'
+rootpath = casatools.ctsys.resolve('unittest/gaincal/')
 
 datapath = rootpath + 'gaincaltest2.ms'
 compCal = rootpath + 'gaincaltest2.ms.G0'
@@ -82,7 +68,6 @@ datacopy = 'gaincalTestCopy.ms'
 merged_copy1 = 'merged_copy1.ms'
 merged_copy2 = 'merged_copy2.ms'
 
-
 def getparam(caltable, colname='CPARAM'):
     ''' Open a caltable and get the provided column '''
 
@@ -91,7 +76,6 @@ def getparam(caltable, colname='CPARAM'):
     tb.close()
 
     return outtable
-
 
 def tableComp(table1, table2, cols=[], rtol=8e-5, atol=1e-6):
     ''' Compare two caltables '''
@@ -146,7 +130,6 @@ def change_perms(path):
             os.chmod(os.path.join(root,d), 0o777)
         for f in files:
             os.chmod(os.path.join(root,f), 0o777)
-
 
 class gaincal_test(unittest.TestCase):
 
@@ -203,7 +186,6 @@ class gaincal_test(unittest.TestCase):
 
         if os.path.exists('testspwmap.G3'):
             shutil.rmtree('testspwmap.G3')
-            
 
     @classmethod
     def tearDownClass(cls):
@@ -249,7 +231,6 @@ class gaincal_test(unittest.TestCase):
 
         self.assertTrue(np.all(tableComp(fullRangeCal, combinedRef)[:,1] == 'True'))
         #self.assertTrue(ch.Compare.compare_CASA_tables(fullRangeCal, combinedRef))
-
 
     def test_intervalSNR(self):
         '''
@@ -547,9 +528,6 @@ class gaincal_test(unittest.TestCase):
         g3=tb.getcol('CPARAM')
         tb.close()
         self.assertTrue(np.absolute(np.mean(g1-1.0))<2e-6)
-
-
-
     
     def test_mergedCreatesGainTable(self):
         ''' Gaincal 1a: Default values to create a gain table '''
@@ -576,13 +554,11 @@ class gaincal_test(unittest.TestCase):
         
         self.assertTrue(th.compTables(tempCal, merged_refcal3, ['WEIGHT']))
 
-
     def test_corrDepFlags(self):
         '''
             test_corrDepFlags
             -----------------
         '''
-
 
         # This test exercises the corrdepflags parameter 
         #
@@ -689,8 +665,6 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(flT[1,0,20:30][7])       # spw 2, antenna 7, pol=Y
         # (spw 3 tested above)
 
-
-
     def test_FreqMetaData1a(self):
         '''
             test_FreqMetaData1a: No explicit spw selection + append
@@ -742,8 +716,6 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(np.all(ctspwflag==False))  # all spws unflagged
         self.assertTrue(ctnrows==200)
         self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
-
-
 
     def test_FreqMetaData1b(self):
         '''
@@ -816,7 +788,6 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(ctnrows==150)
         self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
 
-
     def test_FreqMetaData2a(self):
         '''
             test_FreqMetaData2a: No explicit spw selection w/ combine=spw + append
@@ -867,8 +838,6 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(np.all(ctspwflag==[False,True,True,True]))  # only spw 0 unflagged
         self.assertTrue(ctnrows==50)
         self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
-
-
 
     def test_FreqMetaData2b(self):
         '''
@@ -930,14 +899,6 @@ class gaincal_test(unittest.TestCase):
         self.assertTrue(np.all(ctspwflag==[True,False,True,True]))  # only spw 0 unflagged
         self.assertTrue(ctnrows==50)
         self.assertTrue(np.all(np.absolute(fdiff)<1e-15))
-
-
-
-
-
-def suite():
-    return[gaincal_test]
-
 
 if __name__ == '__main__':
     unittest.main()

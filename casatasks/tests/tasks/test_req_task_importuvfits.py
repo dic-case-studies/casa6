@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_importuvfits.py
+# test_task_importuvfits.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,7 +17,7 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs/casa-5.4.0/global-task-list/task_importuvfits/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.data.importuvfits.html
 #
 # test_make tests to see that a valid ms is created
 # test_vlaOldName tests the output for the antnamescheme parameter set to old on VLA data
@@ -34,21 +34,6 @@
 # test_overwrite tests that existing ms files are not overwritten
 #
 ##########################################################################
-CASA6 = False
-try:
-    import casatools
-    from casatools import ctsys
-    from casatasks import casalog, importuvfits, exportuvfits, rmtables
-    ms = casatools.ms()
-    tb = casatools.table()
-    qa = casatools.quanta()
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    import casa_stack_manip
-
 import gc
 import math
 import os
@@ -58,27 +43,20 @@ import shutil
 import sys
 import numpy as np
 
+import casatools
+from casatools import ctsys
+from casatasks import casalog, importuvfits, exportuvfits, rmtables
+ms = casatools.ms()
+tb = casatools.table()
+qa = casatools.quanta()
 
-if CASA6:
-    mergedDataRoot = ctsys.resolve('unittest/importuvfits')
-    vlapath = ctsys.resolve('unittest/importuvfits/3C219D_CAL.UVFITS')
-    path = ctsys.resolve('unittest/importuvfits/refim_Cband.G37line.ms')
+mergedDataRoot = ctsys.resolve('unittest/importuvfits')
+vlapath = ctsys.resolve('unittest/importuvfits/3C219D_CAL.UVFITS')
+path = ctsys.resolve('unittest/importuvfits/refim_Cband.G37line.ms')
 
-    exportuvfits(vis=path, fitsfile='EVLAUV.UVFITS')
-    evlapath = ctsys.resolve('EVLAUV.UVFITS')
-    carmapath = ctsys.resolve('unittest/importuvfits/mirsplit.UVFITS')
-    
-    #filepath = ctsys.resolve('EVLAUV.UVFITS')
-    
-    #testlogpath = ctsys.resolve('testlog.log')
-else:
-    dataroot = os.environ.get('CASAPATH').split()[0] + '/'
-    mergedDataRoot = dataroot + 'casatestdata/unittest/importuvfits'
-    vlapath = dataroot + 'casatestdata/unittest/importuvfits/3C219D_CAL.UVFITS'
-    carmapath = dataroot + 'casatestdata/unittest/importuvfits/mirsplit.UVFITS'
-    exportuvfits(vis=dataroot + 'casatestdata/unittest/importuvfits/refim_Cband.G37line.ms', fitsfile='EVLAUV.UVFITS', overwrite=True)
-
-    evlapath = 'EVLAUV.UVFITS'
+exportuvfits(vis=path, fitsfile='EVLAUV.UVFITS')
+evlapath = ctsys.resolve('EVLAUV.UVFITS')
+carmapath = ctsys.resolve('unittest/importuvfits/mirsplit.UVFITS')
 
 logpath = casalog.logfile()
 
@@ -244,18 +222,9 @@ class importuvfits_test(unittest.TestCase):
         '''test_invalidinput: Tests to see if the given fits file is valid, or if given an invalid filename'''
         # Try for existing non uvfits file types
         casalog.setlogfile('testlog.log')
-        if CASA6 or\
-           casa_stack_manip.stack_frame_find().get('__rethrow_casa_exceptions', False):
-            if CASA6:
-                exc_type = AssertionError
-            else:
-                exc_type = RuntimeError
-
-            with self.assertRaises(exc_type):
-                importuvfits(fitsfile='fake.uvfits', vis='test_set.ms')
-        else:
+        exc_type = AssertionError
+        with self.assertRaises(exc_type):
             importuvfits(fitsfile='fake.uvfits', vis='test_set.ms')
-            self.assertTrue('failed to verify' in open('testlog.log').read(), msg='Verified a non-existing uvfits')
 
     # not talked about in the documentation
     def test_overwrite(self):
@@ -267,7 +236,6 @@ class importuvfits_test(unittest.TestCase):
         self.assertTrue('user does not want to remove it.' in open('testlog.log').read(), msg='No warning saying that the file will not overwrite was displayed')
 
     # Merged test cases from test_importuvfits
-
     def test_receptor_angle(self):
         """CAS-7081: Test receptor angle is preserved"""
         msname = os.path.join(mergedDataRoot, "uvfits_test.ms")
@@ -286,9 +254,6 @@ class importuvfits_test(unittest.TestCase):
         got = tb.getcol(rec_ang)
         tb.done()
         self.assertTrue(np.max(np.abs(got-expec)) < 1e-7, "Receptor angles not preserved")
-
-def suite():
-    return[importuvfits_test]
 
 if __name__ == '__main__':
     unittest.main()

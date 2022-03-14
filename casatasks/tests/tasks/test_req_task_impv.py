@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_impv.py
+# test_task_impv.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,46 +17,27 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_impv/about
+# # https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.impv.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-import numpy
-try:
-    import casatools
-    from casatasks import impv, casalog
-    CASA6 = True
-except ImportError:
-    from __main__ import *
-    from tasks import *
-    from taskinit import *
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-    
 import sys
 import os
 import unittest
 import shutil
-import numpy as np
 from filecmp import dircmp
+import numpy
+
+import casatools
+from casatasks import impv, casalog
 
 ### DATA ###
+datapath = casatools.ctsys.resolve('unittest/impv/ngc5921.clean.image')
+dataroot = casatools.ctsys.resolve('unittest/impv/')
+qa = casatools.quanta()
+mytb = casatools.table()
+myia = casatools.image()
 
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/impv/ngc5921.clean.image')
-    dataroot = casatools.ctsys.resolve('unittest/impv/')
-    qa = casatools.quanta()
-    mytb = casatools.table()
-    myia = casatools.image()
-
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/impv/ngc5921.clean.image'
-    dataroot = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/impv/'
-    myia = ia
-    mytb = tb
-        
 testfile = 'testing.im'
 testfile2 = 'testing2.im'
 testfile3 = 'testing3.im'
@@ -108,8 +89,7 @@ class impv_test(unittest.TestCase):
         pass
     
     def setUp(self):
-        if not CASA6:
-            default(impv)
+        pass
             
     def tearDown(self):
         if os.path.exists(testfile):
@@ -149,15 +129,9 @@ class impv_test(unittest.TestCase):
         self.assertTrue(os.path.exists(testfile))
         
         # Check that the outfile needs to be given
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(UnboundLocalError):
-                impv(imagename=datapath, outfile='', start=[10,15], end=[110,120])
-        else:
-            casalog.setlogfile(logname)
+        with self.assertRaises(UnboundLocalError):
             impv(imagename=datapath, outfile='', start=[10,15], end=[110,120])
-            
-            self.assertTrue('SEVERE' in open(logname).read())
-        
+
         
     def test_modelength(self):
         '''
@@ -168,26 +142,16 @@ class impv_test(unittest.TestCase):
             The use of parameters for the other mode is not allowed
         '''
         # Catch if using the wrong combo of length and mode are allowed
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(UnboundLocalError):
-                impv(imagename=datapath, outfile=testfile, start=[10,15], end=[110,120], mode='length')
-        else:
-            casalog.setlogfile(logname)
+        with self.assertRaises(UnboundLocalError):
             impv(imagename=datapath, outfile=testfile, start=[10,15], end=[110,120], mode='length')
-            self.assertTrue('SEVERE' in open(logname).read())
             
         self.assertFalse(os.path.exists(testfile))
         
     def test_modeStartEnd(self):
         ''' Check that start and end is required '''
         # Catch if there is no start or end given
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(UnboundLocalError):
-                impv(imagename=datapath, outfile=testfile, mode='coords')
-        else:
-            casalog.setlogfile(logname)
+        with self.assertRaises(UnboundLocalError):
             impv(imagename=datapath, outfile=testfile, mode='coords')
-            self.assertTrue('SEVERE' in open(logname).read())
             
     def test_modeUnsupported(self):
         ''' Check unsupported mode values '''
@@ -273,8 +237,7 @@ class impv_test(unittest.TestCase):
         
         impv(imagename=datapath, outfile=testfile, center=[45,50], pa='45deg', length=5, mode='length')
         self.assertTrue(os.path.exists(testfile))
-        
-        
+
         
     def test_width(self):
         '''
@@ -316,7 +279,6 @@ class impv_test(unittest.TestCase):
         mytb.close()
 
 # MERGED TESTS CASES FROM ORIGINAL test_impv
-
     def test_pv(self):
         """ ia.pv(): Test pv()"""
         #myia = self.ia
@@ -590,10 +552,6 @@ class impv_test(unittest.TestCase):
         self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")
         teststr = "impv"
         self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
-
-    
-def suite():
-    return[impv_test]
 
 if __name__ == '__main__':
     unittest.main()

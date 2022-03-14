@@ -1,5 +1,5 @@
 ########################################################################
-# test_req_task_imhistory.py
+# test_task_imhistory.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA
@@ -17,42 +17,25 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_imhistory/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imhistory.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import imhistory, casalog
-    import sys
-    import os
-    myia = casatools.image()
-    tb = casatools.table()
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    CASA6 = True
-except ImportError:
-    import sys
-    import os
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-    myia = iatool()
-
 import unittest
 import shutil
 
-if CASA6:
-    casaimagepath = casatools.ctsys.resolve('unittest/imhistory/ngc5921.clean.image')
-    fitspath = casatools.ctsys.resolve('unittest/imhistory/1904-66_AIR.fits')
-    #miriadpath = casatools.ctsys.resolve('visibilities/other/compact.vis')
-else:
-    casaimagepath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imhistory/ngc5921.clean.image'
-    fitspath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imhistory/1904-66_AIR.fits'
-        
+import casatools
+from casatasks import imhistory, casalog
+import sys
+import os
+myia = casatools.image()
+tb = casatools.table()
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+
+casaimagepath = casatools.ctsys.resolve('unittest/imhistory/ngc5921.clean.image')
+fitspath = casatools.ctsys.resolve('unittest/imhistory/1904-66_AIR.fits')
+#miriadpath = casatools.ctsys.resolve('visibilities/other/compact.vis')
+
 def change_perms(path):
     os.chmod(path, 0o777)
     for root, dirs, files in os.walk(path):
@@ -72,8 +55,7 @@ class imhistory_test(unittest.TestCase):
         change_perms(imagecopy)
     
     def setUp(self):
-        if not CASA6:
-            default(imhistory)
+        pass
 
     def tearDown(self):
         myia.done()
@@ -109,10 +91,7 @@ class imhistory_test(unittest.TestCase):
         casalog.setlogfile('testlog.log')
         historyMessages = imhistory(imagecopy, mode='list', verbose=False)
         
-        if CASA6:
-            self.assertFalse(os.path.getsize("testlog.log") > 41336)
-        else:
-            self.assertFalse('HISTORY' in open('testlog.log').read())
+        self.assertFalse(os.path.getsize("testlog.log") > 41336)
 
     def test_appendModeNoDefaults(self):
         '''5. test_appendModeNoDefaults: Check that the append mode adds a string to the image history without use of default settings for message or origin '''
@@ -128,8 +107,6 @@ class imhistory_test(unittest.TestCase):
         #default(imhistory)
         success = imhistory(imagecopy, mode='append', message='TESTMESSAGEtest6')
         # Run imhistory again to output the history messages to the log to check if the message was added.
-        if not CASA6:
-            default(imhistory)
         imhistory(imagecopy, mode='list', verbose=True)
         self.assertTrue('imhistory' in open('testlog.log').read() and 'TESTMESSAGEtest6' in open('testlog.log').read())
 
@@ -141,18 +118,11 @@ class imhistory_test(unittest.TestCase):
         
     def test_noExistingMode(self):
         ''' 8. test_noExistingMode: Check that an exception is raised when a non-valid mode is given '''
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(Exception):
-                imhistory(imagecopy, mode='fakeMode')
-        else:
-            casalog.setlogfile('testlog.log')
-            imhistory(imagecopy, mode='fakemode')
-            self.assertTrue('SEVERE' in open('testlog.log').read())
-            
-            
+        with self.assertRaises(Exception):
+            imhistory(imagecopy, mode='fakeMode')
+
     # merged imhistory tests start here
     # ---------------------------------------------
-            
     def test_imhistory(self):
         """Test general functionality"""
         shape = [2,3,4]
@@ -174,12 +144,7 @@ class imhistory_test(unittest.TestCase):
         for hh in h[1:2]:
             self.assertTrue("fromshape" in hh, "Incorrect message")
         self.assertTrue(msg in h[3], "Incorrect appended message")
-        
 
-def suite():
-    return[imhistory_test]
-
-# Main #
 if __name__ == '__main__':
     unittest.main()
 

@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_impbcor.py
+# test_task_impbcor.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -14,37 +14,19 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# https://open-jira.nrao.edu/browse/CAS-12986
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.impbcor.html
 #
 ##########################################################################
-
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import shutil
 import unittest
 
-is_CASA6 = False
-try:
-    from casatools import ctsys, image, table
-    from casatasks import impbcor
-    _ia = image()
-    _tb = table()
-    datapath = ctsys.resolve('unittest/impbcor/')
-    is_CASA6 = True
-except ImportError:
-    import casac
-    from tasks import *
-    from taskinit import *
-    from __main__ import *
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-
-    image = iatool
-    _ia = iatool()
-    _tb = tbtool()
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/impbcor/'
-    is_CASA6 = False
+from casatools import ctsys, image, table
+from casatasks import impbcor
+_ia = image()
+_tb = table()
+datapath = ctsys.resolve('unittest/impbcor/')
 
 im1 = "pbtest1_im.fits"
 pb1 = "pbtest1_pb.fits"
@@ -127,24 +109,13 @@ class impbcor_test(unittest.TestCase):
             imagename, pbimage, outfile, overwrite, region,
             box, chans, stokes, mask, mode, cutoff, wantreturn
         ):
-            if is_CASA6 or casa_stack_rethrow:
-                self.assertRaises(
-                    Exception, run_impbcor, imagename=imagename,
-                    pbimage=pbimage, outfile=outfile, overwrite=overwrite,
-                    region=region, box=box, chans=chans,
-                    stokes=stokes, mask=mask, mode=mode,
-                    cutoff=cutoff
-                )
-            else:
-                self.assertFalse(
-                    run_impbcor(
-                        imagename=imagename, pbimage=pbimage,
-                        outfile=outfile, overwrite=overwrite,
-                        region=region, box=box, chans=chans,
-                        stokes=stokes, mask=mask, mode=mode,
-                        cutoff=cutoff
-                    )
-                )
+            self.assertRaises(
+                Exception, run_impbcor, imagename=imagename,
+                pbimage=pbimage, outfile=outfile, overwrite=overwrite,
+                region=region, box=box, chans=chans,
+                stokes=stokes, mask=mask, mode=mode,
+                cutoff=cutoff
+            )
                         
         # no image name given
         testit(
@@ -282,19 +253,13 @@ class impbcor_test(unittest.TestCase):
         yy.done()
         xx.done()
         # CASA6 raises an exception, CASA5 returns False
-        if is_CASA6 or casa_stack_rethrow:
-            self.assertRaises(
+        self.assertRaises(
                 RuntimeError,
                 impbcor,
                 imagename=im2, pbimage=pb2,
                 mask=mymask + ">0", stretch=False, outfile="garbage"
             )
-        else:
-            zz = impbcor(
-                imagename=im2, pbimage=pb2,
-                mask=mymask + ">0", stretch=False
-            )
-            self.assertFalse(zz)
+
         outname = "blahblah"
         impbcor(
             imagename=im2, pbimage=pb2, outfile=outname, mask=mymask + ">0", stretch=True
@@ -346,9 +311,5 @@ class impbcor_test(unittest.TestCase):
         self.assertTrue((myia.shape() == [20,20,1,20]).all(), "Incorrect shape")
         myia.done()
 
-def suite():
-    return [impbcor_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

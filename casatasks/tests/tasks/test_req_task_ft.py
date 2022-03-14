@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_ft.py
+# test_task_ft.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,7 +17,7 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs/casa-5.4.0/global-task-list/task_ft/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.ft.html
 #
 # Test_logreturn checks to make sure a logfile is generated and populated
 # Test_dictreturn checks that the result is a python dict object containing keys specified in the documentation
@@ -27,53 +27,29 @@
 # Test_datacolumn checks that different datacolumn values provide different information
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import ft
-    from casatools import table, ctsys, componentlist
-    tb = table()
-    cl = componentlist()
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    cl = cltool() 
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 import sys
 import os
 import unittest
 import shutil
 import numpy as np
 
+import casatools
+from casatasks import ft
+from casatools import table, ctsys, componentlist
+tb = table()
+cl = componentlist()
+
 # Gaincaltest and gaussian model with noise
 # Need model w/o standard gridder
 # Need new model for model/complist preference?
 
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/ft/uid___X02_X3d737_X1_01_small.ms')
-    modelpath = casatools.ctsys.resolve('unittest/ft/uid___X02_X3d737_X1_01_small.model')
-    simdata = casatools.ctsys.resolve('unittest/ft/ft_test_simulated.ms')
-    simcomplist = casatools.ctsys.resolve('unittest/ft/ft_test_simulated_complist.cl')
-    simmodel = casatools.ctsys.resolve('unittest/ft/ft_test_simulated_image.im')
-    multiterm0 = casatools.ctsys.resolve('unittest/ft/ft_test_multiterm.model.tt0')
-    multiterm1 = casatools.ctsys.resolve('unittest/ft/ft_test_multiterm.model.tt1')
-
-
-else:
-    dp = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/ft/'
-    datapath = dp + 'uid___X02_X3d737_X1_01_small.ms'
-    modelpath = dp + 'uid___X02_X3d737_X1_01_small.model'
-    simdata = dp + 'ft_test_simulated.ms'
-    simcomplist = dp + 'ft_test_simulated_complist.cl'
-    simmodel = dp + 'ft_test_simulated_image.im'
-    multiterm0 = dp + 'ft_test_multiterm.model.tt0'
-    multiterm1 = dp + 'ft_test_multiterm.model.tt1'
-
-
+datapath = casatools.ctsys.resolve('unittest/ft/uid___X02_X3d737_X1_01_small.ms')
+modelpath = casatools.ctsys.resolve('unittest/ft/uid___X02_X3d737_X1_01_small.model')
+simdata = casatools.ctsys.resolve('unittest/ft/ft_test_simulated.ms')
+simcomplist = casatools.ctsys.resolve('unittest/ft/ft_test_simulated_complist.cl')
+simmodel = casatools.ctsys.resolve('unittest/ft/ft_test_simulated_image.im')
+multiterm0 = casatools.ctsys.resolve('unittest/ft/ft_test_multiterm.model.tt0')
+multiterm1 = casatools.ctsys.resolve('unittest/ft/ft_test_multiterm.model.tt1')
 
 datacopy = 'ft_test_copy.ms'
 modelcopy = 'ft_test_model_copy.model'
@@ -91,11 +67,8 @@ def getColList(table):
     return columns
 
 class ft_test(unittest.TestCase):
-    
+
     def setUp(self):
-        if not CASA6:
-            default(calstat)
-    
         if not os.path.exists(datacopy):
             shutil.copytree(datapath, datacopy)
         if not os.path.exists(modelcopy):
@@ -293,9 +266,6 @@ class ft_test(unittest.TestCase):
         lx = np.log(x)
         expec = x**(index[0] + index[1]*lx + index[2]*lx*lx)
         self.assertTrue(np.allclose(data, expec), 'Incorrect intensities')
-
-def suite():
-    return[ft_test]
 
 if __name__ == '__main__':
     unittest.main()

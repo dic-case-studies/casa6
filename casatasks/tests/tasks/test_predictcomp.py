@@ -1,54 +1,50 @@
-from __future__ import absolute_import
-from __future__ import print_function
+###########################################################################
+# test_task_predictcomp.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Features tested here:
+#   objname: error for unsupported object vs supported object
+#          non-visible case
+#   standard: wrong standard vs correct standard
+#   minfreq/maxfreq: wrong unit vs correct unit
+#   output: check for the cl file
+#   antennalist: use of the configuration file to plot 'observed' visibility
+#              amplitudes vs uvdist. GUI is turned off.
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.imaging.predictcomp.html
+#
+##########################################################################
 import os
 import shutil
 import numpy as np
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys
-    from casatasks import predictcomp, casalog
+from casatools import ctsys
+from casatasks import predictcomp, casalog
 
-    ctsys_resolve = ctsys.resolve
-else:
-    from __main__ import default
-    from tasks import predictcomp 
-    from taskinit import *
-
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'data/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
-
-''' Python unit tests for the predictcomp task
-
- - tests the following parameters:
- objname: error for unsupported object vs supported object
-          non-visible case
- standard: wrong standard vs correct standard
- minfreq/maxfreq: wrong unit vs correct unit
- output: check for the cl file
- antennalist: use of the configuration file to plot 'observed' visibility
-              amplitudes vs uvdist. GUI is turned off.
- 
-
-'''
-
-datapath = ctsys_resolve('alma/simmos/')
-
+datapath = ctsys.resolve('alma/simmos/')
 
 class predictcomp_test(unittest.TestCase):
 
     def setUp(self):
         self.res=None
-        if not is_CASA6:
-            default(predictcomp) 
 
     def tearDown(self):
         #pass
         os.system('rm -rf *.cl')
 
-        
     def test_default(self):
         '''predictcomp: test defaults'''
         with self.assertRaises(ValueError):
@@ -79,12 +75,12 @@ class predictcomp_test(unittest.TestCase):
         self.assertTrue(type(self.res)==dict)
         self.assertTrue(os.path.exists(self.res['clist']))
 
-    @unittest.skipIf(is_CASA6,"no plotting in casatasks")
+    @unittest.skip("No plotting available in casatasks")
     def test_predicted_visplot(self):
         '''predictcomp: generate visibility plot for a given array configuration''' 
         self.res=predictcomp( objname='Titan', epoch='2017/09/01/00:00', minfreq='100GHz',
                               maxfreq='120GHz', standard='Butler-JPL-Horizons 2012',
-                              antennalist=ctsys_resolve(os.path.join(datapath,'alma.cycle5.1.cfg')),
+                              antennalist=ctsys.resolve(os.path.join(datapath,'alma.cycle5.1.cfg')),
                               showplot=False,savefig='visplot.png' )
         print("self.res : %s" % self.res)
         print("type : %s" % type(self.res))
@@ -96,11 +92,7 @@ class predictcomp_test(unittest.TestCase):
         '''predictcomp: valid but not visible objname'''
         with self.assertRaises(RuntimeError):
             predictcomp(objname='Mars', epoch='2018/09/01/00:00', minfreq='100GHz', maxfreq='120GHz',
-                               antennalist=ctsys_resolve(os.path.join(datapath,'alma.cycle5.1.cfg')), showplot=False )
+                               antennalist=ctsys.resolve(os.path.join(datapath,'alma.cycle5.1.cfg')), showplot=False )
 
-def suite():
-    return [predictcomp_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

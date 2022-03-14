@@ -1,5 +1,5 @@
 ########################################################################
-# test_req_task_conjugatevis.py
+# test_task_conjugatevis.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA
@@ -17,33 +17,10 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_conjugatevis/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.conjugatevis.html
 #
 #
 ##########################################################################
-''' This function is run using the command from the bin directory of the 
-casa prerelease directory to be tested:
-./casa -c ../lib/python2.7/runUnitTest.py test_req_task_conjugatevis '''
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import conjugatevis, casalog, listobs
-    CASA6 = True
-    conjtb = casatools.table()
-    origtb = casatools.table()
-    tb = casatools.table()
-    ms = casatools.ms()
-
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from taskinit import tbtool
-
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-
 import sys
 import os
 import unittest
@@ -52,15 +29,15 @@ import glob
 import numpy
 import time
 
-# Define paths to sample data files used for tests.
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/conjugatevis/')
+import casatools
+from casatasks import conjugatevis, casalog, listobs
+conjtb = casatools.table()
+origtb = casatools.table()
+tb = casatools.table()
+ms = casatools.ms()
 
-else:
-#    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-#        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/vla/gaincaltest2.ms'
-#    else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/conjugatevis/'
+# Define paths to sample data files used for tests.
+datapath = casatools.ctsys.resolve('unittest/conjugatevis/')
 
 logpath = casalog.logfile()
 msfile = 'gaincaltest2.ms'
@@ -124,9 +101,6 @@ class conjugatevis_test(unittest.TestCase):
     def setUp(self):
         if not os.path.exists(msfile):
             shutil.copytree(os.path.join(datapath, msfile),msfile)
-        if not CASA6:
-            default(conjugatevis)
-        # Merged SetUp
         res = None
 
         cpath = os.path.abspath(os.curdir)
@@ -268,20 +242,11 @@ class conjugatevis_test(unittest.TestCase):
         conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=True)
         modificationTime = time.ctime(os.path.getmtime('gaincal2-conj.ms'))
         
-        if CASA6 or casa_stack_rethrow:
-            # Run again and expect an exception to be raised
-            try:
-                conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=False)
-                self.fail()
-            except Exception:
-                self.assertTrue(True)
-        else:
-            # Run conjugatevis without overwriting
+        try:
             conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=False)
-            afterModificationTime = time.ctime(os.path.getmtime('gaincal2-conj.ms'))
-
-            # Since gaincal2-conj.ms was not overwritten, the modification times should be the same.
-            self.assertTrue(modificationTime == afterModificationTime)
+            self.fail()
+        except Exception:
+            self.assertTrue(True)
 
     #TODO Needs work
     def test_overwriteDefault(self):
@@ -291,20 +256,13 @@ class conjugatevis_test(unittest.TestCase):
         conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=True)
         modificationTime = time.ctime(os.path.getmtime('gaincal2-conj.ms'))
 
-        if CASA6 or casa_stack_rethrow:
-            # Run again and expect an exception to be raised
-            try:
-                conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=False)
-                self.fail()
-            except Exception:
-                self.assertTrue(True)
-        else:
-            # Run conjugatevis without overwriting
+        # Run again and expect an exception to be raised
+        try:
             conjugatevis(vis=msfile, outputvis='gaincal2-conj.ms', overwrite=False)
-            afterModificationTime = time.ctime(os.path.getmtime('gaincal2-conj.ms'))
+            self.fail()
+        except Exception:
+            self.assertTrue(True)
 
-            # Since gaincal2-conj.ms was not overwritten, the modification times should be the same.
-            self.assertTrue(modificationTime == afterModificationTime)
     # MERGED TEST CASES #
     def test1(self):
         '''Conjugatevis 1: '''
@@ -359,10 +317,6 @@ class conjugatevis_test(unittest.TestCase):
             if not results:
                 retValue['success']=False
                 retValue['error_msgs']=retValue['error_msgs']+'Check of table '+name+' failed'
-
-
-def suite():
-    return[conjugatevis_test]
 
 # Main #
 if __name__ == '__main__':

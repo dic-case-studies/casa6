@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_applycal.py
+# test_task_applycal.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,38 +17,24 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_applycal/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.applycal.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import applycal, mstransform, gaincal, casalog, clearcal
-    CASA6 = True
-    from casatasks.private.callibrary import callibrary
-    tb = casatools.table()
-    calibrater = casatools.calibrater
-
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from callibrary import callibrary
-    calibrater = cbtool
-
 import sys
 import os
 import unittest
 import shutil
 import numpy as np
 
+import casatools
+from casatasks import applycal, mstransform, gaincal, casalog, clearcal
+CASA6 = True
+from casatasks.private.callibrary import callibrary
+tb = casatools.table()
+calibrater = casatools.calibrater
 
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/applycal/')
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/applycal/'
+datapath = casatools.ctsys.resolve('unittest/applycal/')
 
 def getparam(caltable, colname='CPARAM'):
     ''' Open a caltable and get the provided column '''
@@ -753,10 +739,6 @@ class applycal_test(unittest.TestCase):
 
         self.assertTrue(correctedmean != datamean)
         self.assertTrue(np.isclose(correctedmean, 2.68767602411+4.91467419904e-06j))
-
-
-def suite():
-    return[applycal_test]
 
 if __name__ == '__main__':
     unittest.main()

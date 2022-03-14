@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_imdev.py
+# test_task_imdev.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,25 +17,10 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_imdev/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.imdev.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import imdev
-    tb = casatools.table()
-    ia = casatools.image()
-    # imports from merged test_imdev
-    from casatools import regionmanager as rgtool
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
 import sys
 import os
 import unittest
@@ -44,14 +29,13 @@ import numpy
 import numbers
 import math
 
+import casatools
+from casatasks import imdev
+tb = casatools.table()
+ia = casatools.image()
+
 ### DATA ###
-
-if CASA6:
-    dataroot = casatools.ctsys.resolve('unittest/imdev/')
-
-
-else:
-    dataroot = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/imdev/'
+dataroot = casatools.ctsys.resolve('unittest/imdev/')
  
 datapath = os.path.join(dataroot, 'orion_tfeather.im')
 datapath2 = os.path.join(dataroot, 'ngc5921.clean.image')
@@ -82,8 +66,6 @@ def imArray(image):
 output = 'testimage.im'
 output2 = 'testimage2.im'
 output3 = 'testimage3.im'
-
-
 
 class imdev_test(unittest.TestCase):
     
@@ -126,9 +108,6 @@ class imdev_test(unittest.TestCase):
 
     
     def setUp(self):
-        if not CASA6:
-            default(imdev)
-
         self.res = None
         self._myia = casatools.image()
             
@@ -292,8 +271,7 @@ class imdev_test(unittest.TestCase):
 
         imdev(imagename=datapath, outfile=output)
         imdev(imagename=datapath, outfile=output, overwrite=True)
-        
-        
+
     def test_grid(self):
         ''' Check that the grid parameter changes the grid spacing  '''
 
@@ -306,8 +284,7 @@ class imdev_test(unittest.TestCase):
         print(numpy.array_equal(origRes, finRes))
 
         self.assertFalse(numpy.array_equal(origRes, finRes))
-        
-        
+
     def test_anchor(self):
         ''' Check that this selects the anchor pixel position '''
 
@@ -320,8 +297,6 @@ class imdev_test(unittest.TestCase):
         print(numpy.array_equal(origRes, finRes))
 
         self.assertFalse(numpy.array_equal(origRes, finRes))
-        
-        
         
     def test_xlength(self):
         ''' Check that this parameter sets the x coordinate length of the bos, or the diameter of the circle. Cirle is used if ylength is an empty string '''
@@ -339,8 +314,7 @@ class imdev_test(unittest.TestCase):
         
         self.assertFalse(numpy.array_equal(origRes, xlenRes))
         self.assertFalse(numpy.array_equal(origRes, xylenRes))
-        
-        
+
     def test_ylength(self):
         ''' Check that this gives the y coordinate length of a box. This returns a different image than the default '''
 
@@ -351,8 +325,7 @@ class imdev_test(unittest.TestCase):
         ylenRes = imArray(output2)
         
         self.assertFalse(numpy.array_equal(origRes, ylenRes))
-        
-        
+
     def test_interp(self):
         ''' Check that the use of different interpolation algorithms creates different image files '''
 
@@ -377,7 +350,6 @@ class imdev_test(unittest.TestCase):
 
         self.assertFalse(numpy.array_equal(res1, res2))
 
-
     def test_stattype(self):
         '''
             test_stattype
@@ -391,8 +363,7 @@ class imdev_test(unittest.TestCase):
         res2 = imArray(output2)
     
         self.assertFalse(numpy.array_equal(res1, res2))
-        
-        
+
     def test_statalg(self):
         ''' Check that changing the stat alg from classic to chauenet produces a different image '''
 
@@ -403,8 +374,7 @@ class imdev_test(unittest.TestCase):
         res2 = imArray(output2)
         
         self.assertFalse(numpy.array_equal(res1, res2))
-    
-    
+
     def test_zscore(self):
         ''' Check that using the zscore parameter generates a different image '''
 
@@ -415,8 +385,7 @@ class imdev_test(unittest.TestCase):
         res2 = imArray(output2)
         
         self.assertFalse(numpy.array_equal(res1, res2))
-        
-        
+
     def test_maxiter(self):
         ''' Check that using the maxiter parameter generates a different image '''
 
@@ -427,10 +396,8 @@ class imdev_test(unittest.TestCase):
         res2 = imArray(output2)
         
         self.assertFalse(numpy.array_equal(res1, res2))
-    
 
     # test cases from test_imdev
-
     def test_allGridPoints(self):
         """Every pixel is a grid point"""
         imdev(
@@ -464,10 +431,6 @@ class imdev_test(unittest.TestCase):
             "incorrect grid pixel value"
         )
         myia.done()
-        
-        
-def suite():
-    return[imdev_test]
 
 if __name__ == '__main__':
     unittest.main()

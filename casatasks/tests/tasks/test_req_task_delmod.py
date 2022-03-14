@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_delmod.py
+# test_task_delmod.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,7 +17,7 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs/casa-5.4.0/global-task-list/task_delmod/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.delmod.html
 #
 # Test_mesSet: Check that only a valid MS is taken
 # Test_removescr: Check that the scratch column is removed
@@ -25,27 +25,15 @@
 # Test-removefield: Check that only the selected fields are removed (This part is broken)
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import delmod, rmtables, clearcal, casalog, ft
-    CASA6 = True
-    tb = casatools.table()
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-
-#import sys
 import os
 import unittest
 import shutil
 import glob
 from filecmp import dircmp
 
+import casatools
+from casatasks import delmod, rmtables, clearcal, casalog, ft
+tb = casatools.table()
 
 ### These along with the sys import are only used if using simuated data
 #sys.path.append('/export/data_1/nschweig/task_test_builds/casa-prerelease-5.5.0-29.el7/bin/simtests/')
@@ -58,16 +46,11 @@ from filecmp import dircmp
 
 
 # DATA #
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/delmod/')
-    # caltable is found in the casadata package
-    calpath = casatools.ctsys.resolve('nrao/VLA/CalModels/3C138_K.im')
-    filepath = casatools.ctsys.resolve('testlog.log')
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/delmod/'        
-    calpath = os.environ.get('CASAPATH').split()[0] + '/data/nrao/VLA/CalModels/3C138_K.im'
-    filepath = 'testlog.log'
-    
+datapath = casatools.ctsys.resolve('unittest/delmod/')
+# caltable is found in the casadata package
+calpath = casatools.ctsys.resolve('nrao/VLA/CalModels/3C138_K.im')
+filepath = casatools.ctsys.resolve('testlog.log')
+
 logpath = casalog.logfile()
 msfile = 'uid___X02_X3d737_X1_01_small.ms'
     
@@ -83,9 +66,7 @@ class delmod_test(unittest.TestCase):
                 for f in files:
                     os.chmod(os.path.join(root, f), 493)
             clearcal(msfile, addmodel=True)
-        if not CASA6:
-            default(delmod)
-    
+
     def tearDown(self):
         print('TABLE IS BEING REMOVED')
         casalog.setlogfile(logpath)
@@ -106,18 +87,10 @@ class delmod_test(unittest.TestCase):
         casalog.setlogfile('testlog.log')
         delmod(msfile)
         self.assertFalse('SEVERE' in open('testlog.log').read(), msg='delmod raises a severe error when run on a valid MS')
-        if CASA6 or casa_stack_rethrow:
-            if CASA6:
-                exc_type = AssertionError
-            else:
-                exc_type = RuntimeError
-
-            with self.assertRaises(exc_type, msg='No error is raised when using a fake MS'):
-                delmod('notareal.ms')
-        else:
+        exc_type = AssertionError
+        with self.assertRaises(exc_type, msg='No error is raised when using a fake MS'):
             delmod('notareal.ms')
-            self.assertTrue('SEVERE' in open('testlog.log').read(), msg='No error is raised when using a fake MS')
-            
+
     def test_removescr(self):
         '''
             test_removescr
@@ -170,9 +143,6 @@ class delmod_test(unittest.TestCase):
         
         dcmp = dircmp(msfile, datapath+msfile)
         self.assertTrue(len(dcmp.diff_files) > 0)
-        
-def suite():
-    return[delmod_test]
 
 if __name__ == '__main__':
     unittest.main()

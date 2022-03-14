@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_fixplanets.py
+# test_task_fixplanets.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,34 +17,21 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_fixplanets/about
-#
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.fixplanets.html#
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import fixplanets
-    CASA6 = True
-    tb = casatools.table()
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
 import sys
 import os
 import unittest
 import shutil
 import numpy as np
 
+import casatools
+from casatasks import fixplanets
+tb = casatools.table()
+
 ### DATA ###
-
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/fixplanets/')
-
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/fixplanets/'
+datapath = casatools.ctsys.resolve('unittest/fixplanets/')
 
 # Input data
 msfile = 'gaincaltest2.ms'
@@ -87,8 +74,6 @@ class fixplanets_test(unittest.TestCase):
     
     
     def setUp(self):
-        if not CASA6:
-            default(fixplanets)
         if not os.path.exists(copypath):           
             shutil.copytree(os.path.join(datapath, msfile), copypath)
         if not os.path.exists(copypath2):           
@@ -243,11 +228,6 @@ class fixplanets_test(unittest.TestCase):
         
         with self.assertRaises(RuntimeError):
             fixplanets(copypath, field='1')
-        
-    
-    
-def suite():
-    return[fixplanets_test]
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_accor.py
+# test_task_accor.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,41 +17,27 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_accor/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.accor.html
 #
 #
 ##########################################################################
 
-CASA6 = False
-try:
-    import casatools
-    from casatasks import accor, rmtables
-    tb = casatools.table()
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
 import sys
 import os
 import unittest
 import shutil
 import numpy
 
-### DATA ###
+import casatools
+from casatasks import accor, rmtables
+tb = casatools.table()
 
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/accor/uid___X02_X3d737_X1_01_small.ms/')
-    libpath = casatools.ctsys.resolve('unittest/accor/testcallib.txt')
-    vladata = casatools.ctsys.resolve('unittest/accor/ngc5921.ms/')
-    VLBAdatapath = casatools.ctsys.resolve('unittest/accor/ba123a.ms')
-    cdfdata = casatools.ctsys.resolve('unittest/accor/n08c1.ms/')
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/uid___X02_X3d737_X1_01_small.ms/'
-    libpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/testcallib.txt'
-    vladata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/ngc5921.ms/'
-    VLBAdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/ba123a.ms/'
-    cdfdata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/accor/n08c1.ms/'
+### DATA ###
+datapath = casatools.ctsys.resolve('unittest/accor/uid___X02_X3d737_X1_01_small.ms/')
+libpath = casatools.ctsys.resolve('unittest/accor/testcallib.txt')
+vladata = casatools.ctsys.resolve('unittest/accor/ngc5921.ms/')
+VLBAdatapath = casatools.ctsys.resolve('unittest/accor/ba123a.ms')
+cdfdata = casatools.ctsys.resolve('unittest/accor/n08c1.ms/')
 
 caltab = 'cal.A'
 cal_default = 'cal.default'
@@ -308,11 +294,6 @@ class accor_test(unittest.TestCase):
         # Cross autocorrelations are flagged; solutions should be found
         accor(vis=cdfcopy, caltable=caltab, corrdepflags=True)
         self.assertTrue(os.path.exists(caltab))
-        
-        
-                
-def suite():
-    return[accor_test]
 
 if __name__ == '__main__':
     unittest.main()

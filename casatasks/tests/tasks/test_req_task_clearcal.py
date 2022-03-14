@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_clearcal.py
+# test_task_clearcal.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,7 +17,7 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs/casa-5.4.0/global-task-list/task_clearcal/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.clearcal.html
 #
 # test_takesMS: Checks that clearcal only takes a valid MS
 # test_modeldata: Checks that the MODEL_DATA column is generated with the proper values
@@ -29,45 +29,23 @@
 # test_addcorr: Check that a CORRECTED_DATA columns is added if there was non before
 #
 ##########################################################################
-CASA6 = False
-try:
-    import casatools
-    from casatasks import clearcal, casalog, rmtables
-    tb = casatools.table()
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    import casa_stack_manip
-
 import os
 import numpy as np
 import unittest
 # Try this instead of os.system
 import shutil
 
+import casatools
+from casatasks import clearcal, casalog, rmtables
+tb = casatools.table()
+
 # DATA #
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/clearcal/nep2-shrunk.ms')
- #   workingdir = casatools.ctsys.resolve('nep2-shrunk.ms')
-    filepath = casatools.ctsys.resolve('testlog.log')
-else:
-#    if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'):
-#        datapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/alma/nep2-shrunk.ms'
-#    else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata//unittest/clearcal/nep2-shrunk.ms'
-#    workingdir = 'nep2-shrunk.ms'
-    filepath = 'testlog.log'
+datapath = casatools.ctsys.resolve('unittest/clearcal/nep2-shrunk.ms')
+filepath = casatools.ctsys.resolve('testlog.log')
 
 # This is for test that check what the parameter validator does when parameters are
 # given wrong types - these don't exercise the task but the parameter validator!
-if CASA6:
-    validator_exc_type = AssertionError
-else:
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-    validator_exc_type = RuntimeError
+validator_exc_type = AssertionError
 
 clearMS = 'nep2-shrunk.ms'
 
@@ -78,8 +56,6 @@ class clearcal_test(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         os.mkdir('fake.ms')
-        if not CASA6:
-            default(clearcal)
     
     def setUp(self):
         shutil.copytree(datapath, clearMS)
@@ -108,29 +84,14 @@ class clearcal_test(unittest.TestCase):
         # Need to check logs for all of these bc it will always return NoneType if it passes or fails
         self.assertFalse('SEVERE' in open('testlog.log').read())
         # In CASA 6 assertion Errors will be raised with improper inputs
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(validator_exc_type, msg='An int was accepted as an input'):
-                clearcal(1)
-            with self.assertRaises(validator_exc_type, msg='A list was accepted as an input'):
-                clearcal([])
-            with self.assertRaises(validator_exc_type, msg='A non-existing ms was accepeted'):
-                clearcal('foo.ms')
-            with self.assertRaises(RuntimeError, msg='A fake ms was accepeted'):
-                clearcal('fake.ms')
-        else:
-            # Check the log for SEVERE failures, assertFalse cannot be used here.
+        with self.assertRaises(validator_exc_type, msg='An int was accepted as an input'):
             clearcal(1)
-            self.assertTrue('Argument vis failed to verify' in open('testlog.log').read(), msg='An int was accepeted as an input')
-            os.system('rm -rf testlog.log')
-            casalog.setlogfile('testlog.log')
+        with self.assertRaises(validator_exc_type, msg='A list was accepted as an input'):
             clearcal([])
-            self.assertTrue('Argument vis failed to verify' in open('testlog.log').read(), msg='A list was accepted as an input')
-            os.system('rm -rf testlog.log')
-            casalog.setlogfile('testlog.log')
+        with self.assertRaises(validator_exc_type, msg='A non-existing ms was accepeted'):
             clearcal('foo.ms')
-            self.assertTrue('Argument vis failed to verify' in open('testlog.log').read(), msg='A list was accepted as an input')
+        with self.assertRaises(RuntimeError, msg='A fake ms was accepeted'):
             clearcal('fake.ms')
-            self.assertTrue('table.dat does not exist' in open('testlog.log').read(), msg='A list was accepted as an input')
        
     def test_modeldata(self):
         '''test modeldata: Checks that the DATA_MODEL column is set to unity in total intensity and zero in polarization'''
@@ -182,13 +143,8 @@ class clearcal_test(unittest.TestCase):
         self.assertTrue(endColNew.real == endColOld.real, msg='values were corrected when they should not have been')
         tb.close()
         
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(validator_exc_type, msg='An int was accepted as input'):
-                clearcal(clearMS, field=2)
-        else:
-            casalog.setlogfile('testlog.log')
+        with self.assertRaises(validator_exc_type, msg='An int was accepted as input'):
             clearcal(clearMS, field=2)
-            self.assertTrue('SEVERE' in open('testlog.log').read(), msg='An int was accepted as input')
             
     def test_spwselect(self):
         '''test spw select: Check that spw select only changes correct spw'''
@@ -212,13 +168,8 @@ class clearcal_test(unittest.TestCase):
         # Close the table
         tb.close()
         # check invalid inputs
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(validator_exc_type, msg='An int was accepted as input'):
-                clearcal(clearMS, spw=2)
-        else:
-            casalog.setlogfile('testlog.log')
+        with self.assertRaises(validator_exc_type, msg='An int was accepted as input'):
             clearcal(clearMS, spw=2)
-            self.assertTrue('SEVERE' in open('testlog.log').read(), msg='An int was accepted as input')
             
     def test_selectintent(self):
         '''test select intent: Check that the intent param correcty preforms for only the provided intent'''
@@ -240,13 +191,8 @@ class clearcal_test(unittest.TestCase):
         # Close the table
         tb.close()
         # Check invalid inputs
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(validator_exc_type, msg='An int was accepted as input'):
-                clearcal(clearMS, intent=2)
-        else:
-            casalog.setlogfile('testlog.log')
+        with self.assertRaises(validator_exc_type, msg='An int was accepted as input'):
             clearcal(clearMS, intent=2)
-            self.assertTrue('SEVERE' in open('testlog.log').read(), msg='An int was selected as input')
             
     def test_addmodel(self):
         '''test add model: Check that the addmodel parameter must be set to True for the MODEL_DATA column to be added'''
@@ -260,13 +206,8 @@ class clearcal_test(unittest.TestCase):
         # Close the table
         tb.close()
         # Test invalid inputs
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(validator_exc_type, msg='An int was accepted as input'):
-                clearcal(clearMS, addmodel=2)
-        else:
-            casalog.setlogfile('testlog.log')
+        with self.assertRaises(validator_exc_type, msg='An int was accepted as input'):
             clearcal(clearMS, addmodel=2)
-            self.assertTrue('SEVERE' in open('testlog.log').read(), msg='An ine was accepted as input')
             
     def test_addcorr(self):
         '''test add corr: Check that a CORRECTED_DATA column is added if none existed before'''
@@ -279,9 +220,6 @@ class clearcal_test(unittest.TestCase):
         self.assertTrue(type(tb.getcol('CORRECTED_DATA')) == np.ndarray, msg='The CORRECTED_DATA column was not created properly')
         # Close the table
         tb.close()
-            
-def suite():
-    return[clearcal_test]
 
 if __name__ == '__main__':
     unittest.main()

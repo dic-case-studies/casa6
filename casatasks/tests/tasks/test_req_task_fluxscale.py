@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_fluxscale.py
+# test_task_fluxscale.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,21 +17,10 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_fluxscale/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.fluxscale.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import fluxscale
-    CASA6 = True
-    tb = casatools.table()
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
 import sys
 import os
 import unittest
@@ -39,13 +28,11 @@ import shutil
 import numpy as np
 from casatestutils import testhelper as th
 
-### DATA ###
+import casatools
+from casatasks import fluxscale
+tb = casatools.table()
 
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/fluxscale/')
-else:
-
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/fluxscale/'
+datapath = casatools.ctsys.resolve('unittest/fluxscale/')
         
 def getParam(data):
     tb.open(data)
@@ -81,9 +68,6 @@ class fluxscale_test(unittest.TestCase):
 
         
     def setUp(self):
-        
-        if not CASA6:
-            default(fluxscale)
         # Set up from merged
         # Input names
         self.prefix = 'ngc5921'
@@ -105,8 +89,6 @@ class fluxscale_test(unittest.TestCase):
             shutil.copytree(fpath, self.reffile2, symlinks=True)
         else:
             self.fail('Data does not exist -> %s' % fpath)
-
-            
         
     def tearDown(self):
         
@@ -610,8 +592,6 @@ class fluxscale3_test(unittest.TestCase):
         else:
             self.fail('Data does not exist -> ' + fpath)
 
-        if not CASA6:
-            default(fluxscale)
 
     def tearDown(self):
         shutil.rmtree(self.msfile, ignore_errors=True)
@@ -716,9 +696,6 @@ class fluxscale_fit_test(unittest.TestCase):
             shutil.copytree(fpath, self.reffile, symlinks=True)
         else:
             self.fail('Data does not exist -> ' + fpath)
-
-        if not CASA6:
-            default(fluxscale)
 
     def tearDown(self):
         shutil.rmtree(self.msfile, ignore_errors=True)
@@ -940,10 +917,6 @@ class fluxscale_fit_test(unittest.TestCase):
         diff_spidx3 = abs(refdict['4']['spidx'][3] - thisdict['4']['spidx'][3]) / refdict['4']['spidx'][3]
         self.assertTrue(diff_spidx3 < tolspidx)
         print(("diff for a_3 for field 4: diff_spidx3=", diff_spidx3))
-        
-        
-def suite():
-    return[fluxscale_test, fluxscale2_test, fluxscale3_test, fluxscale_fit_test]
 
 if __name__ == "__main__":
     unittest.main()
