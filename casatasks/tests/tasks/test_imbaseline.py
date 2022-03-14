@@ -1409,7 +1409,7 @@ class TestImbaselineOutputs(test_base):
     @staticmethod
     def generate_tests():
         blfunc = ("poly", "chebyshev", "cspline", "sinusoid")
-        dirkernel = ("none", "gaussian", "boxcar")
+        dirkernel = ("none", "gaussian")
         spkernel = ("none", "gaussian", "boxcar")
 
         def __register_a_test_with_the_class(_class, blfunc, dirkernel, spkernel):
@@ -1462,7 +1462,7 @@ class TestImbaselineOutputs(test_base):
                     chunk = ia.getchunk() * self.mask
                     self._summary(False, test_name, chunk)
                     self.assertTrue(
-                        np.allclose(chunk, self.expected_output_chunk, atol=2.0)
+                        np.allclose(chunk, self.expected_output_chunk, atol=0.2)
                     )
             if os.path.exists(self.test_image + ".cont"):
                 with tool_manager(self.test_image + ".cont", image) as ia:
