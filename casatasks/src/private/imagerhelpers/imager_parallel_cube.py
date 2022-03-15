@@ -337,6 +337,13 @@ class PyParallelCubeSynthesisImager():
             joblist.append( self.PH.runcmd("imager.makePB()", node) )
         self.PH.checkJobs( joblist )
 
+    def checkPB(self):
+        joblist=[]
+        #for node in self.listOfNodes:
+        for node in self.modifiedListOfNodes:
+            joblist.append( self.PH.runcmd("imager.checkPB()", node) )
+        self.PH.checkJobs( joblist )
+
     def concatImages(self, type='copyvirtual'):
         import subprocess
         imtypes=['image','psf','model','residual','mask','pb', 'image.pbcor', 'weight', 'sumwt']

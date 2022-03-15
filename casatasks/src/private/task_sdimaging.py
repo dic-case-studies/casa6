@@ -201,7 +201,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
 
                 spwid = [int(idx) for idx in spwinfo.keys()]
             else:
-                raise RuntimeError("Invalid spw selction, %s ,for MS %d" (str(spw), file_idx))
+                raise RuntimeError("Invalid spw selction, %s ,for MS %d" % (str(spw), file_idx))
 
             return {'field': fieldid, 'spw': spwid, 'baseline': baseline, 'scan': scanid, 'intent': intent, 'antenna1': sel_ids['antenna1']}
         else:
