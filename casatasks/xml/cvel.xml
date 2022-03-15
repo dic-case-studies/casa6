@@ -258,7 +258,7 @@ Hanning smoothing may not be necessary.
               field='0~2'; field ids 0,1,2
               field='0,4,5~7'; field ids 0,4,5,6,7
               field='3C286,3C295'; field named 3C286 and 3C295
-              field = '3,4C*'; field id 3, all names starting with 4C
+              field = '3,4C\*'; field id 3, all names starting with 4C
 
        spw --Select spectral window/channels
               NOTE: This selects the data passed as the INPUT to mode
