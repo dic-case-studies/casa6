@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_rerefant.py
+# test_task_rerefant.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,43 +17,26 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_rerefant/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.rerefant.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import rerefant, casalog, fringefit, flagdata
-    CASA6 = True
-    tb = casatools.table()
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
 import sys
 import os
 import unittest
 import shutil
 import numpy as np
 
+import casatools
+from casatasks import rerefant, casalog, fringefit, flagdata
+tb = casatools.table()
+
 #import pyfits
 
 ## DATA ## 
-
-if CASA6:
-    casavis = casatools.ctsys.resolve('unittest/rerefant/ngc5921.ms/')
-    casacal = casatools.ctsys.resolve('unittest/rerefant/ngc5921.ref1a.gcal')
-    # old test path
-    #datadir = casatools.ctsys.resolve('/data/regression/evn/')
-    src = casatools.ctsys.resolve('unittest/rerefant/n08c1.ms')
-
-else:
-    casavis = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/rerefant/ngc5921.ms/'
-    casacal = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/rerefant/ngc5921.ref1a.gcal'
-    # old test path
-    src = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/rerefant/n08c1.ms'
+casavis = casatools.ctsys.resolve('unittest/rerefant/ngc5921.ms/')
+casacal = casatools.ctsys.resolve('unittest/rerefant/ngc5921.ref1a.gcal')
+src = casatools.ctsys.resolve('unittest/rerefant/n08c1.ms')
         
 copyvis = 'vis.ms'
 copycal = 'copycal.gcal'
@@ -75,8 +58,6 @@ class rerefant_test(unittest.TestCase):
         pass
     
     def setUp(self):
-        if not CASA6:
-            default(rerefant)
         shutil.copytree(casavis, copyvis)
         shutil.copytree(casacal, copycal)
         file_copy(copyvis, 493)
@@ -231,9 +212,6 @@ class rerefant_test(unittest.TestCase):
         refparam=tsel.getcol('FPARAM')
         tb.close()
         self.assertTrue(refparam.any())
-        
-def suite():
-    return[rerefant_test]
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_polfromgain.py
+# test_task_polfromgain.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,25 +17,10 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs/casa-5.4.0/global-task-list/task_polfromgain/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.calibration.polfromgain.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import polfromgain
-    CASA6 = True
-    tb = casatools.table()
-    import sys
-    import os
-    sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
 import os
 import unittest
 import shutil
@@ -46,18 +31,18 @@ from casatestutils import add_to_dict
 from casatestutils.compare import compare_caltables
 from casatestutils.compare import compare_dictionaries
 
+import casatools
+from casatasks import polfromgain
+tb = casatools.table()
+import sys
+import os
+
 import numpy
 
 # DATA #
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/polfromgain/ngc5921.ms/')
-    caldata = casatools.ctsys.resolve('unittest/polfromgain/ngcgain.G0/')
-    refcal = casatools.ctsys.resolve('unittest/polfromgain/polfromgainCalCompare.cal')
-
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/polfromgain/ngc5921.ms/'
-    caldata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/polfromgain/ngcgain.G0/'
-    refcal = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/polfromgain/polfromgainCalCompare.cal'
+datapath = casatools.ctsys.resolve('unittest/polfromgain/ngc5921.ms/')
+caldata = casatools.ctsys.resolve('unittest/polfromgain/ngcgain.G0/')
+refcal = casatools.ctsys.resolve('unittest/polfromgain/polfromgainCalCompare.cal')
         
 datacopy = 'gaincopy.ms'
 calpath = 'polfromgainout.cal'
@@ -66,10 +51,8 @@ test_dict = {}
         
 class polfromgain_test(unittest.TestCase):
     
-    
     def setUp(self):
-        if not CASA6:
-            default(polfromgain)
+        pass
             
         shutil.copytree(datapath, datacopy)
         shutil.copytree(refcal, refcopy)
@@ -134,10 +117,6 @@ class polfromgain_test(unittest.TestCase):
         
         
         self.assertTrue(compare_caltables(calpath, refcopy))
-    
-    
-def suite():
-    return[polfromgain_test]
 
 if __name__ == '__main__':
     unittest.main()

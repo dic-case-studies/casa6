@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_listsdm.py
+# test_task_listsdm.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,37 +17,24 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs/casa-5.4.0/global-task-list/task_listsdm/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.information.listsdm.html
 #
 # test_readsdm: Makes sure a sdm can be opened as well and that non-sdms won't be
 # test_logOut: Makes sure that the log file contains the proper information
 # test_dictOut: Makes sure that the python dict is returned and contains the proper keys
 #
 ##########################################################################
-CASA6=False
-try:
-    import casatools
-    from casatasks import listsdm, casalog
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 import os
 import unittest
 import shutil
 
-if CASA6:
-    # Real and fake datapaths
-    datapath = casatools.ctsys.resolve('unittest/listsdm/TOSR0001_sb1308595_1.55294.83601028935')
-    falsepath = casatools.ctsys.resolve('unittest/listsdm/')
-    filepath = casatools.ctsys.resolve('testlog.log')
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listsdm/TOSR0001_sb1308595_1.55294.83601028935'
-    falsepath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listsdm/'
-    filepath = 'testlog.log'
+import casatools
+from casatasks import listsdm, casalog
+
+# Real and fake datapaths
+datapath = casatools.ctsys.resolve('unittest/listsdm/TOSR0001_sb1308595_1.55294.83601028935')
+falsepath = casatools.ctsys.resolve('unittest/listsdm/')
+filepath = casatools.ctsys.resolve('testlog.log')
         
 logpath = casalog.logfile()
 contained = ['baseband', 'chanwidth', 'end', 'field', 'intent', 'nchan', 'nsubs', 'reffreq', 'source', 'spws', 'start', 'timerange']
@@ -57,10 +44,7 @@ containedLog = ['Baseband', 'ChWidth', 'FieldName', 'Intent', 'Chans', 'Scan', '
 class listsdm_test(unittest.TestCase):
     
     def setUp(self):
-        if not CASA6:
-            default(listsdm)
-        else:
-            pass
+        pass
         
     def tearDown(self):
         casalog.setlogfile(logpath)
@@ -73,31 +57,22 @@ class listsdm_test(unittest.TestCase):
     def test_readSDM(self):
         '''test readsdm: Makes sure the sdm can be opened without error and fails when looking at fake paths'''
         self.assertTrue(listsdm(sdm=datapath))
-        if CASA6 or casa_stack_rethrow:
-            if CASA6:
-                exp_exc = FileNotFoundError
-            else:
-                exp_exc = IOError
-            with self.assertRaises(exp_exc):
-                listsdm(sdm=falsepath)
 
-            if CASA6:
-                exp_exc = AssertionError
-            else:
-                exp_exc = RuntimeError
-            with self.assertRaises(exp_exc):
-                listsdm(sdm='fake')
-        else:
-            self.assertFalse(listsdm(sdm=falsepath))
-            self.assertFalse(listsdm(sdm='fake'))
-    
+        exp_exc = FileNotFoundError
+        with self.assertRaises(exp_exc):
+            listsdm(sdm=falsepath)
+
+        exp_exc = AssertionError
+        with self.assertRaises(exp_exc):
+            listsdm(sdm='fake')
+
     def test_logOut(self):
         '''test logout: Tests to make sure the logfile contains the proper infromation (Requires further documentation)'''
         casalog.setlogfile('testlog.log')
         listsdm(sdm=datapath)
         for item in containedLog:
             self.assertTrue(item in open('testlog.log').read())
-        
+
     def test_dictOut(self):
         '''test dictout: Tests to make sure that the python dictionary contains all the proper keys'''
         sdmDict = listsdm(sdm=datapath)
@@ -105,9 +80,6 @@ class listsdm_test(unittest.TestCase):
             pass
         else:
             self.fail()
-    
-def suite():
-    return[listsdm_test]
 
 if __name__ == '__main__':
     unittest.main()

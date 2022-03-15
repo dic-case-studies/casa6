@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_rmfit.py
+# test_task_rmfit.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,32 +17,10 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_rmfit/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.rmfit.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import rmfit
-    CASA6 = True
-    myia = casatools.image()
-    tb = casatools.table()
-    mypo = casatools.imagepol()
-    myia = casatools.image()
-    ctsys_resolve = casatools.ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-    mypo = potool()
-    myia = iatool()
-    def ctsys_resolve(data):
-        return os.path.join(os.environ.get('CASAPATH').split()[0], 'casatestdata', data)
-
 import sys
 import os
 import numpy
@@ -50,6 +28,14 @@ import unittest
 import shutil
 from filecmp import dircmp
 import math
+import casatools
+from casatasks import rmfit
+myia = casatools.image()
+tb = casatools.table()
+mypo = casatools.imagepol()
+myia = casatools.image()
+ctsys_resolve = casatools.ctsys.resolve
+
 
 ## DATA ## 
 casaim = ctsys_resolve('unittest/rmfit/ngc5921.clean.image')
@@ -72,10 +58,6 @@ def table_comp(im1, im2):
 class rmfit_test(unittest.TestCase):
     
     def setUp(self):
-        
-        if not CASA6:
-            default(rmfit)
-        
         myia.fromshape(outfile, [20, 20, 4, 20])
         myia.addnoise()
         myia.done()
@@ -108,13 +90,9 @@ class rmfit_test(unittest.TestCase):
             This test checks that if the image provided doesn't have Stokes Q, U, or V the task will fail to execute
         '''
         
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(RuntimeError):
-                rmfit(imagename=casaim, rm='rm.im')
-        else:
-            self.assertTrue(True != rmfit(imagename=casaim, rm='rm.im'))
-        
-        
+        with self.assertRaises(RuntimeError):
+            rmfit(imagename=casaim, rm='rm.im')
+
     def test_multiImage(self):
         '''
             test_multiImage
@@ -203,11 +181,8 @@ class rmfit_test(unittest.TestCase):
         except Exception:
             self.fail()
 
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(RuntimeError):
-                rmfit(imagename=outfile2, rm ='rm2.im')
-        else:
-            self.assertTrue(True != rmfit(imagename=outfile2, rm='rm2.im'))
+        with self.assertRaises(RuntimeError):
+            rmfit(imagename=outfile2, rm ='rm2.im')
             
     def test_axisDiff(self):
         '''
@@ -334,11 +309,6 @@ class rmfit_test(unittest.TestCase):
         myia.done(remove=True)
         tb.done()
         self.assertTrue(len(tb.showcache()) == 0)
-
-        
-        
-def suite():
-    return[rmfit_test]
 
 if __name__ == '__main__':
     unittest.main()

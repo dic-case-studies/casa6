@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_listobs.py
+# test_task_rmtables.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,7 +17,7 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs/casa-5.4.0/global-task-list/task_rmtables/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.rmtables.html
 #
 # test_removeMS: Checks that a MS is removed properly
 # test_removeCAL: Checks that a CAL table is removed properly
@@ -31,23 +31,11 @@ import os
 import unittest
 import shutil
 
-CASA6 = False
-try:
-    print("Importing CASAtools")
-    import casatools
-    from casatasks import rmtables
-    tb = casatools.table()
-    CASA6 = True
-except ImportError:
-    print ("Cannot import CASAtools using taskinit")
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
+import casatools
+from casatasks import rmtables
+tb = casatools.table()
 
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/rmtables/')
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/rmtables'
+datapath = casatools.ctsys.resolve('unittest/rmtables/')
 
 # Input data
 mesSet = os.path.join(datapath,'ngc7538_ut.ms')
@@ -71,8 +59,7 @@ def file_copy(filename, perm):
 class rmtables_test(unittest.TestCase):
 
     def setUp(self):
-        if not CASA6:
-            default(rmtables)
+        pass
 
     def test_removeMS(self):
         '''
@@ -213,10 +200,6 @@ class rmtables_test(unittest.TestCase):
         # Make sure cache is cleared and file is removed
         self.assertFalse(os.path.exists(imCopy), msg='The file was not removed')
         self.assertTrue(len(tb.showcache()) == 0, msg='the cache was not cleared')
-
-
-def suite():
-    return[rmtables_test]
 
 if __name__ == '__main__':
     unittest.main()

@@ -17,60 +17,35 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# # https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.information.listhistory.html
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.information.listhistory.html
 #
 #
 ##########################################################################
-CASA6 = False
-try:
-    print("Importing CASAtools")
-    import casatools
-    from casatools import ctsys
-    from casatools.platform import bytes2str
-    from casatasks import listhistory, casalog
-    CASA6 = True
-except ImportError:
-    print ("Cannot import CASAtools using taskinit")
-    import commands
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    import casa_stack_manip
-
 import sys
 import os
 import subprocess
 import unittest
 import shutil
 
+import casatools
+from casatools import ctsys
+from casatools.platform import bytes2str
+from casatasks import listhistory, casalog
+
+
 logpath = casalog.logfile()
 
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/listhistory/Itziar.ms')
-    fakepath = casatools.ctsys.resolve('unittest/listhistory/')
-    #filepath = casatools.ctsys.resolve('testlog.log')
-else:
-    dataroot = os.environ.get('CASAPATH').split()[0] + '/'
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/listhistory/Itziar.ms'
-    fakepath = dataroot + '/casatestdata/unittest/listhistory/'
-    #filepath = 'testlog.log'
+datapath = casatools.ctsys.resolve('unittest/listhistory/Itziar.ms')
+fakepath = casatools.ctsys.resolve('unittest/listhistory/')
 
 # This is for tests that check what the parameter validator does when parameters are
 # given wrong types - these don't exercise the task but the parameter validator!
-if CASA6:
-    validator_exc_type = AssertionError
-else:
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-    validator_exc_type = RuntimeError
+validator_exc_type = AssertionError
 
 class listhistory_test(unittest.TestCase):
     
     def setUp(self):
-        if not CASA6:
-            default(listhistory)
-        else:
-            pass
+        pass
     
     def tearDown(self):
         casalog.setlogfile(logpath)
@@ -89,14 +64,9 @@ class listhistory_test(unittest.TestCase):
         with open('testlog.log') as tlog:
             self.assertTrue('SEVERE' in tlog.read())
 
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(validator_exc_type):
-                listhistory('fake')
-        else:
+        with self.assertRaises(validator_exc_type):
             listhistory('fake')
-            self.assertTrue('Argument vis failed to verify' in open('testlog.log').read())
-        
-    
+
     def test_logfile(self):
         '''test logfile: Checks to see that a log file is written and populated'''
         casalog.setlogfile('testlog.log')
@@ -111,13 +81,8 @@ class listhistory_test(unittest.TestCase):
         '''Test 1: Empty input should return False'''
         # CASA5 tasks return False, casatasks throw exceptions
         myms = ''
-        if CASA6 or\
-           casa_stack_manip.stack_frame_find().get('__rethrow_casa_exceptions', False):
-            self.assertRaises(Exception,listhistory,myms)
-        else:
-            res = listhistory(myms)
-            self.assertFalse(res)
-            
+        self.assertRaises(Exception,listhistory,myms)
+
     def test_returnNone(self):
         '''Test 2: Good input should return None'''
         res = listhistory(datapath)
@@ -134,8 +99,7 @@ class listhistory_test(unittest.TestCase):
         refnum = 13
         # In CASA6, this +1 accounts for the following log line (which is not in CASA5):
         # Task listhistory complete. Start time: 2020-10-19 11:33:40.195569 End time: ...
-        if CASA6:
-            refnum += 1
+        refnum += 1
 
         # Get only the relevant lines in the logfile, between 'Begin/End Task'
         newfile= "newlisth.log"
@@ -144,20 +108,12 @@ class listhistory_test(unittest.TestCase):
         os.system(cmd)
         logfile = newfile
 
-        if CASA6:
-            cmd=['wc', '-l', logfile]
-            print(cmd)
-            output = bytes2str(subprocess.check_output(cmd))
-        else:
-            cmd="wc -l %s" % logfile
-            print(cmd)
-            output=commands.getoutput(cmd)
+        cmd=['wc', '-l', logfile]
+        print(cmd)
+        output = bytes2str(subprocess.check_output(cmd))
 
         num = int(output.split()[0])
         self.assertEqual(refnum,num)
-    
-def suite():
-    return[listhistory_test]
 
 if __name__ == '__main__':
     unittest.main()

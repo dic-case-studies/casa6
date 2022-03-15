@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_phaseshift.py
+# test_task_phaseshift.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,7 +17,7 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_phaseshift/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.phaseshift.html
 #
 #
 ##########################################################################
@@ -27,49 +27,23 @@ import os
 import shutil
 import unittest
 
-CASA6 = False
-try:
-    from casatools import (
+from casatools import (
         componentlist, ctsys, image, measures, ms, msmetadata, quanta,
         regionmanager, simulator, table
     )
-    from casatasks import flagdata, imstat, phaseshift, tclean
-    from casatasks.private import simutil
-    CASA6 = True
-    cl = componentlist()
-    ia = image()
-    md = msmetadata()
-    me = measures()
-    ms = ms()
-    qa = quanta()
-    rg = regionmanager()
-    sm = simulator()
-    tb = table()
-    datadir = os.path.join('unittest', 'phaseshift')
-    ctsys_resolve = ctsys.resolve
-except ImportError:
-    from __main__ import default
-    from tasks import flagdata, imstat, phaseshift, tclean
-    from taskinit import (
-        cltool, iatool, metool, msmdtool, mstool, qatool, rgtool, smtool,
-        tbtool
-    )
-    import simutil
-    cl = cltool()
-    ia = iatool()
-    md = msmdtool()
-    me = metool()
-    ms = mstool()
-    qa = qatool()
-    rg = rgtool()
-    sm = smtool()
-    tb = tbtool()
-    dataroot = os.path.join(
-        os.environ.get('CASAPATH').split()[0], 'casatestdata'
-    )
-
-    def ctsys_resolve(mypath):
-        return os.path.join(dataroot, mypath)
+from casatasks import flagdata, imstat, phaseshift, tclean
+from casatasks.private import simutil
+cl = componentlist()
+ia = image()
+md = msmetadata()
+me = measures()
+ms = ms()
+qa = quanta()
+rg = regionmanager()
+sm = simulator()
+tb = table()
+datadir = os.path.join('unittest', 'phaseshift')
+ctsys_resolve = ctsys.resolve
 
 datadir = os.path.join('unittest', 'phaseshift')
 datapath = ctsys_resolve(os.path.join(datadir, 'refim_twopoints_twochan.ms'))
@@ -101,8 +75,6 @@ output = 'phaseshiftout.ms'
 class phaseshift_test(unittest.TestCase):
 
     def setUp(self):
-        if not CASA6:
-            default(phaseshift)
         shutil.copytree(datapath, datacopy)
         shutil.copytree(datapath_Itziar, datacopy_Itziar)
         shutil.copytree(datapath_ngc, datacopy_ngc)
@@ -134,9 +106,6 @@ class phaseshift_test(unittest.TestCase):
             datacopy, outputvis=output,
             phasecenter='J2000 19h53m50 40d06m00'
         )
-        # Completion without throwing an exception indicates success in CASA 6
-        if not CASA6:
-            self.assertTrue(result)
 
     def test_outvis(self):
         '''
@@ -188,20 +157,11 @@ class phaseshift_test(unittest.TestCase):
     def test_arraySelect(self):
         ''' Check the array selection parameter '''
         msg = "specified array incorrectly found"
-        if CASA6:
-            with self.assertRaises(RuntimeError, msg=msg):
-                phaseshift(
+        with self.assertRaises(RuntimeError, msg=msg):
+            phaseshift(
                     datacopy_nep, outputvis=output,
                     phasecenter='ICRS 00h06m14 -06d23m35',
                     array='1'
-                )
-        else:
-            self.assertFalse(
-                phaseshift(
-                    datacopy_nep, outputvis=output,
-                    phasecenter='ICRS 00h06m14 -06d23m35',
-                    array='1'
-                ), msg=msg
             )
         phaseshift(
             datacopy_nep, outputvis=output,
@@ -219,20 +179,12 @@ class phaseshift_test(unittest.TestCase):
     def test_observationSelect(self):
         ''' Check the observation selection parameter '''
         msg = "Observation not out of range"
-        if CASA6:
-            with self.assertRaises(RuntimeError, msg=msg):
-                phaseshift(
+        with self.assertRaises(RuntimeError, msg=msg):
+            phaseshift(
                     datacopy_nep, outputvis=output,
                     phasecenter='ICRS 00h06m14 -06d23m35', observation='1'
-                )
-        else:
-            self.assertFalse(
-                phaseshift(
-                    datacopy_nep, outputvis=output,
-                    phasecenter='ICRS 00h06m14 -06d23m35',
-                    observation='1'
-                ), msg=msg
             )
+
         phaseshift(
             datacopy_nep, outputvis=output,
             phasecenter='ICRS 00h06m14 -06d23m35', observation='0'
@@ -266,31 +218,16 @@ class phaseshift_test(unittest.TestCase):
         to the output MS
         '''
         msg = "Data column incorrectly present"
-        if CASA6:
-            with self.assertRaises(RuntimeError, msg=msg):
-                phaseshift(
+        with self.assertRaises(RuntimeError, msg=msg):
+            phaseshift(
                     datacopy_nep, outputvis=output,
                     phasecenter='ICRS 00h06m14 -06d23m35',
                     datacolumn='MODEL'
-                )
+            )
             # running to completion indicates success in CASA 6
             phaseshift(
                 datacopy_nep, outputvis=output,
                 phasecenter='ICRS 00h06m14 -06d23m35', datacolumn='DATA'
-            )
-        else:
-            self.assertFalse(
-                phaseshift(
-                    datacopy_nep, outputvis=output,
-                    phasecenter='ICRS 00h06m14 -06d23m35', datacolumn='MODEL'
-                ), msg=msg
-            )
-            self.assertTrue(
-                phaseshift(
-                    datacopy_nep, outputvis=output,
-                    phasecenter='ICRS 00h06m14 -06d23m35',
-                    datacolumn='DATA'
-                ), msg="phaseshift unexpectedly failed"
             )
 
     def test_phasecenter(self):
@@ -299,19 +236,12 @@ class phaseshift_test(unittest.TestCase):
         phasecenter
         '''
         msg = 'Empty phasecenter param incorrectly runs'
-        if CASA6:
-            with self.assertRaises(ValueError, msg=msg):
-                phaseshift(
+        with self.assertRaises(ValueError, msg=msg):
+            phaseshift(
                     datacopy_nep, outputvis=output,
                     phasecenter=''
-                )
-        else:
-            self.assertFalse(
-                phaseshift(
-                    datacopy_nep, outputvis=output, phasecenter=''
-                ), msg
             )
-            
+
         phaseshift(
             datacopy_nep, outputvis=output,
             phasecenter='ICRS 00h06m14 -08d23m35'
@@ -460,14 +390,10 @@ class reference_frame_tests(unittest.TestCase):
         # Read/create an antenna configuration.
         # Canned antenna config text files are located at
         # /home/casa/data/trunk/alma/simmos/*cfg
-        if CASA6:
-            antennalist = os.path.join(
-                ctsys.resolve("alma/simmos"), "vla.d.cfg"
-            )
-        else:
-            antennalist = os.path.join(
-                '/home', 'casa', 'data', 'trunk', 'alma', 'simmos', "vla.d.cfg"
-            )
+        antennalist = os.path.join(
+            ctsys.resolve("alma/simmos"), "vla.d.cfg"
+        )
+
 
         # Fictitious telescopes can be simulated by specifying x, y, z, d,
         # an, telname, antpos.
@@ -567,14 +493,10 @@ class reference_frame_tests(unittest.TestCase):
         # Read/create an antenna configuration.
         # Canned antenna config text files are located at
         # /home/casa/data/trunk/alma/simmos/*cfg
-        if CASA6:
-            antennalist = os.path.join(
-                ctsys.resolve("alma/simmos"), "vla.d.cfg"
-            )
-        else:
-            antennalist = os.path.join(
-                '/home', 'casa', 'data', 'trunk', 'alma', 'simmos', "vla.d.cfg"
-            )
+        antennalist = os.path.join(
+            ctsys.resolve("alma/simmos"), "vla.d.cfg"
+        )
+
 
         # Fictitious telescopes can be simulated by specifying x, y, z, d,
         # an, telname, antpos.
@@ -977,11 +899,6 @@ class reference_frame_tests(unittest.TestCase):
                 + str(x['max'][0]/x['rms'][0])
             )
             self.__delete_intermediate_products()
-
-
-def suite():
-    return[phaseshift_test, reference_frame_tests]
-
 
 if __name__ == '__main__':
     unittest.main()
