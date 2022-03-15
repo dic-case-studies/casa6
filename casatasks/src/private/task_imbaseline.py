@@ -697,7 +697,8 @@ class _SdbaselineParams(AbstractValidatable):
         self.avg_limit = avg_limit if avg_limit is not None else 4            # maskmode = auto
         self.minwidth = minwidth if minwidth is not None else 4               # maskmode = auto
         self.edge = edge if edge is not None else [0, 0]                      # maskmode = auto
-        self.blfunc = blfunc.lower() if blfunc is not None else 'poly'        # poly(default)/chebyshev/cspline/sinusoid/variable
+        self.blfunc = blfunc.lower() if blfunc is not None else 'poly'        # poly(default)/chebyshev/cspline/
+                                                                              #  sinusoid/variable
         self.order = order if order is not None else 5                        # blfunc = poly/chebyshev
         self.npiece = npiece if npiece is not None else 3                     # blfunc = cspline
         self.applyfft = applyfft if applyfft is not None else True            # blfunc = sinusoid
