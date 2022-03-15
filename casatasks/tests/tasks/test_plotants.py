@@ -79,10 +79,6 @@ class plotants_test(unittest.TestCase):
         self.assertEqual(self.res,None)
         self.assertTrue(os.path.exists(self.fig))
 
-#    @unittest.skipIf(is_CASA6,"failure, unknown reasons")
-    # I think the fix for this test is to change line 133 of task_plotants.py to convert it to a list such as:
-    # allAntIds = list(range(len(antNames)))
-    @unittest.skip('fix might be in line 133 of task_plotants.py')
     def test6(self):
         '''Test 6: Exclude antenna positions'''
         self.res = plotants(vis=self.msfile, figfile=self.fig,
