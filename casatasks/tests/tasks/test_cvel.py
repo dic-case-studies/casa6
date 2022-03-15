@@ -147,12 +147,8 @@ class cvel_test(unittest.TestCase):
     
     def test1(self):
         '''Cvel 1: Testing default - expected error'''
-        if is_CASA6:
-            with self.assertRaises(AssertionError):
-                cvel()
-        else:
-            with self.assertRaises(RuntimeError):
-                cvel()
+        with self.assertRaises(AssertionError):
+            cvel()
 
     def test2(self):
         '''Cvel 2: Only input vis set - expected error'''
