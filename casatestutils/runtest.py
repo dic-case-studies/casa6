@@ -310,7 +310,9 @@ def fetch_tests(work_dir, branch):
             out = proc.stdout.read()
             if int(out)== 0: 
                 if repo in ['casaplotserver', 'casaplotms','casaviewer','casampi','almatasks','casatelemetry']:
+                    print("build.conf location: " + source_dir + "/casa6/build.conf" )
                     branchtag = "tags/{}".format(read_conf(source_dir+"/casa6/build.conf")[repo])
+                    print("branchtag" + branchtag)
                 cmd = ("git checkout " + branchtag).split()
             else:
                 cmd = ("git checkout " + branch).split()
@@ -452,8 +454,21 @@ def unpack_tarball(pkg, outputdir):
     print(cmd)
     r = ShellRunner()
     output = r.runshell(cmd, default_timeout, cwd=os.getcwd())
-    installpath = outputdir + "/" + os.path.basename(pkg).replace(".tar.xz","")
-    return installpath
+   
+    installpath = None
+    
+    print("outputdir contents:" + outputdir)
+    for root, dirs, files in os.walk(outputdir):
+        for d in dirs:
+            print(" " + d)
+            if d.startswith("casa-"):
+                installpath = d
+                print("installpath: " + installpath)
+        break
+
+    if installpath is None:
+        raise  RuntimeError("Couldn't find a directory that looks like a Casa distribution. Expected directory name to start with 'casa-'")  
+    return outputdir + "/" + installpath
 
 def get_casatestutils_exec_path(pkg_dir):
     # Since runtest is no longer part of casatestutils, this may be removed.
@@ -687,6 +702,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
         test_group = [x.strip() for x in test_group.split(',')]
 
     # Unpack the distribution
+    print ("run_bamboo")
     print ("Test list: " + str (test_list))
     print ("Test group: " + str (test_group))
 
@@ -707,6 +723,8 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     if args.branch == None:
         branch = "master"
 
+    print ("run_bamboo fetch_tests branch" + branch)
+    
     # Clone a default set of repositories to if test paths are not provided from command line
     if len(test_paths) == 0 :
         test_paths = fetch_tests(str(work_dir), branch)
@@ -1112,9 +1130,11 @@ if __name__ == "__main__":
             print("Test configuration file: " + str(args.test_config))
             print("Number of cores: " + str(args.ncores))
             print("Workdir: " + str(args.work_dir))
+            print("branch: " + str(args.branch))
             pmodes = ['serial','parallel','both']
             if args.pmode not in pmodes:
                 raise Exception("Invalid pmode: '{}'. Valid modes: '{}'".format(args.pmode ,str(pmodes)))
+
 
             run_bamboo(args.pkg, args.work_dir, args.branch, args.test_group, args.test_list, test_paths, args.test_config, args.ncores, args.verbose, args.pmode, tests_to_ignore)
 
