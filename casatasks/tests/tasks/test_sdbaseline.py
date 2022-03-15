@@ -3849,13 +3849,12 @@ class sdbaseline_clippingTest(sdbaseline_unittest_base):
     def _setup_input_data(self, spikes):
         with table_manager(self.infile, nomodify=False) as tb:
             data = tb.getcell('FLOAT_DATA', 0)
-            for ipol in range(len(data)):
-                # base data by repeating 1 and -1 - this has mean=5, sigma=1
-                for ichan in range(len(data[0])):
-                    data[ipol][ichan] = 5.0 + (1.0 if ichan % 2 == 0 else -1.0)
-                # add spike data
-                for chan, value in spikes:
-                    data[ipol][chan] = value
+            # flat spectrum with (mean, sigma) = (5, 1)
+            data[:, 0::2] = 6.0
+            data[:, 1::2] = 4.0
+            # outliers
+            for chan, value in spikes:
+                data[:, chan] = value
             tb.putcell('FLOAT_DATA', 0, data)
 
     def _set_params(self, blfunc, outbl, clipniter, thres):
