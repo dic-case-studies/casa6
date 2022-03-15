@@ -3830,9 +3830,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
             tb.putcell('FLOAT_DATA', 0, spec)
 
             flag = tb.getcell('FLAG', 0)  # row 0
-            for ipol in range(2):
-                for i in range(len(flag[0])):
-                    flag[ipol][i] = False
+            flag.fill(False)
             tb.putcell('FLAG', 0, flag)
 
         # compute the reference weight value
