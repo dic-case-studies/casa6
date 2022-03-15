@@ -3819,7 +3819,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.run_apply_test()
 
     def run_clipping_test(self):
-        # set an artificial data (flat+outlier) in input MS
+        # set artificial spectra (flat+outlier) in input MS
         with table_manager(self.infile, nomodify=False) as tb:
             spec = tb.getcell('FLOAT_DATA', 0)  # row 0
             for ipol in range(2):
@@ -3835,7 +3835,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
                     flag[ipol][i] = False
             tb.putcell('FLAG', 0, flag)
 
-        # compute the reference value of weight
+        # compute the reference weight value
         for ipol in range(2):
             flag[ipol][4000] = True
         mdata = np.ma.masked_array(spec, mask=flag)
@@ -3845,8 +3845,8 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
 
         # value checking
         # the weight values in the output MS should be close to 1
-        # if the outlier channel is correctly eliminated.
-        # if clipping result is not considered in computing weights,
+        # if the outlier channel is correctly eliminated by iterative clipping.
+        # if clipping result is not taken into account when computing weights,
         # the weight should be a very small value (~ 8 * 10^-13)
         with table_manager(self.outfile) as tb:
             np.allclose(tb.getcell('WEIGHT', 0), weight_ref)
