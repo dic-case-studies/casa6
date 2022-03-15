@@ -1,12 +1,26 @@
-#############################################################################
-# $Id:$
-# Test Name:                                                                #
-#    Unit Test Script for the virtualconcat task
-#    
-#                                                                           #
-#############################################################################
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_virtualconcat.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.virtualconcat.html
+#
+#
+##########################################################################
 import os
 import sys
 import shutil
@@ -14,25 +28,14 @@ import glob
 import time
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, calibrater, table, ms
-    from casatasks import virtualconcat, concat, listobs
+from casatools import ctsys, calibrater, table, ms
+from casatasks import virtualconcat, concat, listobs
 
-    cb = calibrater( )
-    tb = table( )
-    _ms = ms( )
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
+cb = calibrater( )
+tb = table( )
+_ms = ms( )
 
-    cb = cbtool( )
-    # global tb is used
-    # use global ms as _ms
-    _ms = ms
-
-myname = 'test_virtualconcat'
+myname = 'test_task_virtualconcat'
 
 # name of the resulting MS
 msname = 'concatenated.ms'
@@ -90,10 +93,7 @@ class test_virtualconcat(unittest.TestCase):
         global testmms
         res = None
 
-        if is_CASA6:
-            datapath=ctsys.resolve('unittest/virtualconcat/')
-        else:
-            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/virtualconcat/')
+        datapath=ctsys.resolve('unittest/virtualconcat/')
 
         # Pick up alternative data directory to run tests on MMSs
         testmms = False
@@ -112,9 +112,6 @@ class test_virtualconcat(unittest.TestCase):
                 print("Copying ", mymsname)
                 shutil.copytree(mymsname, cpath+'/'+mymsname, True)
         os.chdir(cpath)
-
-        if not is_CASA6:
-            default(virtualconcat)
         
     def tearDown(self):
         shutil.rmtree(msname,ignore_errors=True)
@@ -131,9 +128,9 @@ class test_virtualconcat(unittest.TestCase):
             _ms.open(msname)
         except:
             _ms.close()
-            print(myname, ": Error  Cannot open MS table", tablename)
+            print(myname, ": Error  Cannot open MS table", msname)
             retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
             if 'test1.ms' in glob.glob("*.ms"):
@@ -178,9 +175,9 @@ class test_virtualconcat(unittest.TestCase):
             _ms.open(msname)
         except:
             _ms.close()
-            print(myname, ": Error  Cannot open MS table", tablename)
+            print(myname, ": Error  Cannot open MS table", msname)
             retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
             if 'test2.ms' in glob.glob("*.ms"):
@@ -254,9 +251,9 @@ class test_virtualconcat(unittest.TestCase):
             _ms.open(msname)
         except:
             _ms.close()
-            print(myname, ": Error  Cannot open MS table", tablename)
+            print(myname, ": Error  Cannot open MS table", msname)
             retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
             if 'test3.ms' in glob.glob("*.ms"):
@@ -303,9 +300,9 @@ class test_virtualconcat(unittest.TestCase):
             _ms.open(msname)
         except:
             _ms.close()
-            print(myname, ": Error  Cannot open MS table", tablename)
+            print(myname, ": Error  Cannot open MS table", msname)
             retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
             if 'test4.ms' in glob.glob("*.ms"):
@@ -389,9 +386,9 @@ class test_virtualconcat(unittest.TestCase):
         try:
             _ms.open(msname)
         except:
-            print(myname, ": Error  Cannot open MS table", tablename)
+            print(myname, ": Error  Cannot open MS table", msname)
             retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
             if 'test5.ms' in glob.glob("*.ms"):
@@ -429,9 +426,9 @@ class test_virtualconcat(unittest.TestCase):
             _ms.open(msname)
         except:
             _ms.close()
-            print(myname, ": Error  Cannot open MS table", tablename)
+            print(myname, ": Error  Cannot open MS table", msname)
             retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
             if 'test6.ms' in glob.glob("*.ms"):
@@ -470,9 +467,9 @@ class test_virtualconcat(unittest.TestCase):
             _ms.open(msname)
         except:
             _ms.close()
-            print(myname, ": Error  Cannot open MS table", tablename)
+            print(myname, ": Error  Cannot open MS table", msname)
             retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
             if 'test7.ms' in glob.glob("*.ms"):
@@ -496,8 +493,8 @@ class test_virtualconcat(unittest.TestCase):
 
             if not result:
                 retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']+'Check of table '+name+' failed'
-                retValue['error_msgs']=retValue['error_msgs']+'Check of table '+name+' failed'
+                retValue['error_msgs']=retValue['error_msgs']+'Check of table test7.ms failed'
+                retValue['error_msgs']=retValue['error_msgs']+'Check of table test7.ms failed'
                 
         self.assertTrue(retValue['success'])
 
@@ -518,9 +515,9 @@ class test_virtualconcat(unittest.TestCase):
             _ms.open(msname)
         except:
             _ms.close()
-            print(myname, ": Error  Cannot open MS table", tablename)
+            print(myname, ": Error  Cannot open MS table", msname)
             retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
             if 'test8.ms' in glob.glob("*.ms"):
@@ -603,9 +600,9 @@ class test_virtualconcat(unittest.TestCase):
             _ms.open(msname)
         except:
             _ms.close()
-            print(myname, ": Error  Cannot open MS table", tablename)
+            print(myname, ": Error  Cannot open MS table", msname)
             retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
             if 'test9.ms' in glob.glob("*.ms"):
@@ -666,9 +663,9 @@ class test_virtualconcat(unittest.TestCase):
             _ms.open(msname)
         except:
             _ms.close()
-            print(myname, ": Error  Cannot open MS table", tablename)
+            print(myname, ": Error  Cannot open MS table", msname)
             retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
             if 'test10.ms' in glob.glob("*.ms"):
@@ -746,9 +743,9 @@ class test_virtualconcat(unittest.TestCase):
             _ms.open(msname)
         except:
             _ms.close()
-            print(myname, ": Error  Cannot open MS table", tablename)
+            print(myname, ": Error  Cannot open MS table", msname)
             retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
             if 'test12.ms' in glob.glob("*.ms"):
@@ -780,9 +777,9 @@ class test_virtualconcat(unittest.TestCase):
         try:
             _ms.open(msname)
         except:
-            print(myname, ": Error  Cannot open MS table", tablename)
+            print(myname, ": Error  Cannot open MS table", msname)
             retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+tablename
+            retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
             if 'test13.ms' in glob.glob("*.ms"):
@@ -813,9 +810,5 @@ class virtualconcat_cleanup(unittest.TestCase):
         '''Virtualconcat: Cleanup'''
         pass
     
-def suite():
-    return [test_virtualconcat,virtualconcat_cleanup]        
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
