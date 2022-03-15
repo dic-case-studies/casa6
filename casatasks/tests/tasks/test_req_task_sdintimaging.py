@@ -433,7 +433,7 @@ class test_singlepointing(testref_base):
 
 
     #Test5
-    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Intermittent failures reported on CAS-13737 and moved to CAS-13392")
     def test_singlepointing_cube_intonly(self):
         # Equivalent to onetest(runtype='SinglePointing', specmode='cube', usedata='int')
         """ [singlePointing] Test_singlepointing_cube_intonly """
@@ -808,7 +808,7 @@ class test_mosaic(testref_base):
 
 
     #Test11
-    #@unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Cube Parallel Output Can't be used. Revisit after CAS-9386")
+    @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "Skip test. Intermittent failures reported on CAS-13737 and moved to CAS-13392")
     def test_mosaic_cube_intonly(self):
         # Equivalent to onetest(runtype='Mosaic', specmode='cube', usedata='int')
         """ [Mosaic] Test_mosaic_cube_intonly """
