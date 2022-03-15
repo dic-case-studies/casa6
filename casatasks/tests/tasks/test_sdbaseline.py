@@ -3821,12 +3821,12 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
     def run_clipping_test(self):
         # set artificial spectra (flat+outlier) in input MS
         with table_manager(self.infile, nomodify=False) as tb:
-            spec = tb.getcell('FLOAT_DATA', 0)  # row 0
-            for ipol in range(2):
-                for i in range(len(spec[0])):
-                    spec[ipol][i] = 1.0 if i % 2 == 0 else -1.0  # mean=0, sigma=1
-                # an outlier
-                spec[ipol][4000] = 100000000.0
+            spec = tb.getcell('FLOAT_DATA', 0)  # row 0, shape = (npol, nchan)
+            # flat spectrum with (mean, sigma) = (0, 1)
+            spec[:, 0::2] = 1.0
+            spec[:, 1::2] = -1.0
+            # an outlier
+            spec[:, 4000] = 100000000.0
             tb.putcell('FLOAT_DATA', 0, spec)
 
             flag = tb.getcell('FLAG', 0)  # row 0
@@ -3907,13 +3907,12 @@ class sdbaseline_clippingTest(sdbaseline_unittest_base):
     def _setup_input_data(self, spikes):
         with table_manager(self.infile, nomodify=False) as tb:
             data = tb.getcell('FLOAT_DATA', 0)
-            for ipol in range(len(data)):
-                # base data by repeating 1 and -1 - this has mean=5, sigma=1
-                for ichan in range(len(data[0])):
-                    data[ipol][ichan] = 5.0 + (1.0 if ichan % 2 == 0 else -1.0)
-                # add spike data
-                for chan, value in spikes:
-                    data[ipol][chan] = value
+            # flat spectrum with (mean, sigma) = (5, 1)
+            data[:, 0::2] = 6.0
+            data[:, 1::2] = 4.0
+            # outliers
+            for chan, value in spikes:
+                data[:, chan] = value
             tb.putcell('FLOAT_DATA', 0, data)
 
     def _set_params(self, blfunc, outbl, clipniter, thres):
