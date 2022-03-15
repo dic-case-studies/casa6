@@ -391,22 +391,12 @@
             "comment":"DEFAULT"
         },
         {
-            "testScript":"test_exportuvfits",
+            "testScript":"test_task_exportuvfits",
             "testType":"casatasks",
             "maintainer":"Dave Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
             "testOptions":[],
             "testGroup":["Data Import-Export","exportuvfits"],
-            "timeout":0,
-            "comment":""
-        },
-        {
-            "testScript":"test_fixplanets",
-            "testType":"casatasks",
-            "maintainer":"Dirk Petry",
-            "maintainerEmail":"dpetry@eso.org",
-            "testOptions":[],
-            "testGroup":["fixplanets"],
             "timeout":0,
             "comment":""
         },
@@ -1001,7 +991,7 @@
             "comment":""
         },
         {
-            "testScript":"test_req_task_fixplanets",
+            "testScript":"test_task_fixplanets",
             "testType":"casatasks",
             "maintainer":"Neal Schweighart",
             "maintainerEmail":"nschweig@nrao.edu",
