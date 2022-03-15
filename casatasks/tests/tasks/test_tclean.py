@@ -1,7 +1,21 @@
-##########################################################################
-##########################################################################
+#########################################################################
+# test_task_tclean.py
 #
-# Test programs for the refactored imager :  test_tclean
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Based on the requirements listed in casadocs found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.imaging.tclean.html
 #
 # Each of the following categories (classes) has a set of tests within it.
 #
@@ -99,7 +113,6 @@
 # test_pbcor, test_mosaic_mtmfs, test_mosaic_cube, test_ephemeris, test_hetarray_imaging, test_wproject, test_errors_failures]
 #
 ##########################################################################
-
 import os
 import sys
 import shutil

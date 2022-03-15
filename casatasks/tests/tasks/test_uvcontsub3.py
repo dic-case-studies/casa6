@@ -1,31 +1,40 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_uvcontsub3.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.uvcontsub3.html
+#
+#
+##########################################################################
 import os
 import numpy
 import sys
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import *
-if is_CASA6:
-    from casatools import ctsys, table
-    from casatasks import uvcontsub3
-    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatools import ctsys, table
+from casatasks import uvcontsub3
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
-    tb = table( )
+tb = table( )
 
-    ctsys_resolve = ctsys.resolve
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from parallel.parallel_task_helper import ParallelTaskHelper
+ctsys_resolve = ctsys.resolve
 
-    # uses the global tb tool
-
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
 
 '''
 Unit tests for task uvcontsub3.
@@ -370,9 +379,5 @@ class knowncombspw(UVContsub3UnitTestBase):
                                -2.08497047e-04 -8.49704742e-02j,
                                -2.11834908e-04 -9.24243927e-02j]), 0.001)
         
-def suite():
-    return [zeroth, fourth, combspw, knowncombspw]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

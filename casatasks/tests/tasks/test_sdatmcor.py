@@ -1,3 +1,26 @@
+########################################################################
+# test_task_sdatmcor.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.sdatmcor.html
+#
+#
+##########################################################################
 import itertools
 import os
 import numpy as np
@@ -5,48 +28,17 @@ import shutil
 import sys
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import sdatmcor
-    import casatasks.private.task_sdatmcor as sdatmcor_impl
-    from casatasks.private.sdutil import convert_antenna_spec_autocorr, get_antenna_selection_include_autocorr, table_manager
-    # default isn't used in casatasks
+from casatasks import sdatmcor
+import casatasks.private.task_sdatmcor as sdatmcor_impl
+from casatasks.private.sdutil import convert_antenna_spec_autocorr, get_antenna_selection_include_autocorr, table_manager
 
-    def default(atask):
-        pass
-    # for testhelper import
-    sys.path.append(
-        os.path.dirname(
-            os.path.abspath(
-                os.path.dirname(__file__))))
-    from casatools import ctsys
-    from casatools import calibrater
-    from casatools import ms as mstool
-    from casatools import quanta
-    from casatasks import gencal, applycal
+from casatools import ctsys
+from casatools import calibrater
+from casatools import ms as mstool
+from casatools import quanta
+from casatasks import gencal, applycal
 
-    ctsys_resolve = ctsys.resolve
-
-else:
-    from tasks import sdatmcor
-    import task_sdatmcor as sdatmcor_impl
-
-    from tasks import gencal, applycal
-    from __main__ import default
-    from taskinit import cbtool as calibrater
-    from taskinit import mstool
-    from taskinit import qatool as quanta
-    from sdutil import convert_antenna_spec_autocorr, get_antenna_selection_include_autocorr, tbmanager as table_manager
-
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0], 'casatestdata/')
-        return os.path.join(dataPath, apath)
-#         subdir_hints = ['', 'casa-data-req']
-#         for subdir in subdir_hints:
-#             path = os.path.join(dataPath, subdir, apath)
-#             if os.path.exists(path):
-#                 return path
-
+ctsys_resolve = ctsys.resolve
 
 def smart_remove(name):
     if os.path.exists(name):
@@ -105,8 +97,6 @@ class test_sdatmcor(unittest.TestCase):
     local_unit_test = False
 
     def setUp(self):
-        default(sdatmcor)
-
         # default Args
         self.args = {
             'infile': self.infile,
@@ -785,14 +775,5 @@ class ATMParamTest(unittest.TestCase):
             unit='K'
         )
 
-
-def suite():
-    return [
-        test_sdatmcor,
-        ATMParamTest,
-    ]
-
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

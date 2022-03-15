@@ -1,5 +1,26 @@
-from __future__ import absolute_import
-from __future__ import print_function
+########################################################################
+# test_task_simobserve.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.simulation.simobserve.html
+#
+#
+##########################################################################
 import os
 import sys
 import shutil
@@ -7,38 +28,16 @@ import numpy
 import glob
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, image, ms, msmetadata, quanta, atmosphere
-    from casatasks import simobserve
-    from casatasks.private.simutil import *
+from casatools import ctsys, image, ms, msmetadata, quanta, atmosphere
+from casatasks import simobserve
+from casatasks.private.simutil import *
 
-    # CASA5 uses the global versions of these tools
-    _ia = image()
-    _ms = ms()
-    _msmd = msmetadata()
-    _qa = quanta()
-    _at = atmosphere()
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from simutil import *
-
-    # to rethrow exception - not necessary in CASA6
-    from casa_stack_manip import stack_frame_find
-    glb = stack_frame_find( )
-    if '__rethrow_casa_exceptions' in glb:
-        rethrow_org = glb['__rethrow_casa_exceptions']
-    else:
-        rethrow_org = False
-
-    # global tools
-    _ia = ia
-    _ms = ms
-    _msmd = msmd
-    _qa = qa
-    _at = at
+# CASA5 uses the global versions of these tools
+_ia = image()
+_ms = ms()
+_msmd = msmetadata()
+_qa = quanta()
+_at = atmosphere()
     
 #
 # Unit test of simobserve task.
@@ -50,10 +49,7 @@ class simobserve_unittest_base(unittest.TestCase):
     """
     graphics = "file"
     # Variables
-    if is_CASA6:
-        datapath = ctsys.resolve('unittest/simobserve/')
-    else:
-        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/simobserve/')
+    datapath = ctsys.resolve('unittest/simobserve/')
         
     thistask = "simobserve"
     imkeys=['max','mean','min','npts','rms','blc','blcf','trc','trcf','sigma','sum','sumsq']
@@ -262,8 +258,6 @@ class simobserve_sky(simobserve_unittest_base):
         if os.path.exists(self.project):
             shutil.rmtree(self.project)
 
-        if not is_CASA6:
-            default(simobserve)
         self.refpref_sd = self.refpref + \
                           self._get_data_prefix(self.sdantlist,self.refproj)
         self.refpref_int = self.refpref + \
@@ -554,8 +548,6 @@ class simobserve_comp(simobserve_unittest_base):
         if os.path.exists(self.project):
             shutil.rmtree(self.project)
 
-        if not is_CASA6:
-            default(simobserve)
         self.refpref_sd = self.refpref + \
                           self._get_data_prefix(self.sdantlist,self.refproj)
         self.refpref_int = self.refpref + \
@@ -871,8 +863,6 @@ class simobserve_skycomp(simobserve_unittest_base):
         if os.path.exists(self.project):
             shutil.rmtree(self.project)
 
-        if not is_CASA6:
-            default(simobserve)
         self.refpref_sd = self.refpref + \
                           self._get_data_prefix(self.sdantlist,self.refproj)
         self.refpref_int = self.refpref + \
@@ -1169,8 +1159,6 @@ class simobserve_noise(simobserve_unittest_base):
                 shutil.rmtree(simdir)
             
         self._copy_input(self.indata)
-        if not is_CASA6:
-            default(simobserve)
 
     def tearDown(self):
         if self.teardown:
@@ -1719,18 +1707,11 @@ class simobserve_badinputs(simobserve_unittest_base):
                 os.system("rm -rf %s" % data)
             os.system("cp -RH %s %s" % (os.path.join(self.datapath,data), data))
 
-        # task must rethrow exception - not necessary for CASA6
-        if not is_CASA6:
-            glb['__rethrow_casa_exceptions'] = True
-
-        if not is_CASA6:
-            default(simobserve)
         # Add new line for better reading (these tests always print errors).
         print("")
 
     def tearDown(self):
-        if not is_CASA6:
-            glb['__rethrow_casa_exceptions'] = rethrow_org
+
         if self.teardown:
             for data in self.indata:
                 if os.path.exists(data):
@@ -1795,10 +1776,7 @@ class simobserve_badinputs(simobserve_unittest_base):
                        inbright=inbright,antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
-            if is_CASA6:
-                pos=str(e).find("could not convert string to float: '%s'" % inbright)
-            else:
-                pos=str(e).find("invalid literal for float(): %s" % inbright)
+            pos=str(e).find("could not convert string to float: '%s'" % inbright)
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)
 
@@ -1909,10 +1887,7 @@ class simobserve_badinputs(simobserve_unittest_base):
                        antennalist="alma.out10.cfg")
             self.fail(self.failmsg)
         except Exception as e:
-            if is_CASA6:
-                pos=str(e).find("must be of cInt type")
-            else:
-                pos=str(e).find("Parameter verification failed")
+            pos=str(e).find("must be of cInt type")
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
         
@@ -1995,7 +1970,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Allowed maptype values are not checked in casatasks.")
+    @unittest.skip("Allowed maptype values are not checked in casatasks.")
     def testBad_maptype(self):
         """Test bad maptype"""
         maptype = self.badname
@@ -2025,7 +2000,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             self.assertNotEqual(pos,-1,msg=msg)        
 
 
-    @unittest.skipIf(is_CASA6,"Allowed obsmode types are not checked in casatasks")
+    @unittest.skip("Allowed obsmode types are not checked in casatasks")
     def testBad_obsmode(self):
         """Test bad obsmode"""
         obsmode = self.badname
@@ -2111,12 +2086,9 @@ class simobserve_badinputs(simobserve_unittest_base):
                        sdant=sdant)
             self.fail(self.failmsg)
         except Exception as e:
-            if is_CASA6:
-                pos=str(e).find("must be of cInt type")
-            else:
-                pos=str(e).find("Parameter verification failed")
+            pos=str(e).find("must be of cInt type")
             msg =  self.errmsg % str(e)
-            self.assertNotEqual(pos,-1,msg=msg)        
+            self.assertNotEqual(pos,-1,msg=msg)
 
     def testBad_refdate(self):
         """Test bad refdate"""
@@ -2170,7 +2142,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Allowed noisetype values are not checked in casatasks.")
+    @unittest.skip("Allowed noisetype values are not checked in casatasks.")
     def testBad_noisetype(self):
         """Test bad thermalnoise type"""
         thermalnoise = self.badname
@@ -2184,7 +2156,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Allowed user_pwv values are not checked in casatasks")
+    @unittest.skip("Allowed user_pwv values are not checked in casatasks")
     def testBad_pwv(self):
         """Test bad user_pwv"""
         thermalnoise = 'tsys-atm'
@@ -2199,7 +2171,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Allowed t_ground values are not checked in casatasks")
+    @unittest.skip("Allowed t_ground values are not checked in casatasks")
     def testBad_Tground(self):
         """Test bad t_ground"""
         thermalnoise = 'tsys-atm'
@@ -2214,7 +2186,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Allowed t_sky values are not checked in casatasks")
+    @unittest.skip("Allowed t_sky values are not checked in casatasks")
     def testBad_Tsky(self):
         """Test bad t_sky"""
         thermalnoise = 'tsys-manual'
@@ -2229,7 +2201,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Allowed tau0 values are not checked in casatasks")
+    @unittest.skip("Allowed tau0 values are not checked in casatasks")
     def testBad_tau0(self):
         """Test bad tau0"""
         thermalnoise = 'tsys-manual'
@@ -2244,7 +2216,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
 
-    @unittest.skipIf(is_CASA6,"Allowed leakage values are not checked in casatasks")
+    @unittest.skip("Allowed leakage values are not checked in casatasks")
     def testBad_leakage(self):
         """Test bad leakage"""
         leakage = self.badnum
@@ -2258,7 +2230,7 @@ class simobserve_badinputs(simobserve_unittest_base):
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
     
-    @unittest.skipIf(is_CASA6,"Allowed graphics values are not checked in casatasks")
+    @unittest.skip("Allowed graphics values are not checked in casatasks")
     def testBad_graphics(self):
         """Test bad graphics selection"""
         graphics = self.badname
@@ -2271,12 +2243,6 @@ class simobserve_badinputs(simobserve_unittest_base):
             pos=str(e).find("Parameter verification failed")
             msg =  self.errmsg % str(e)
             self.assertNotEqual(pos,-1,msg=msg)        
-        
 
-def suite():
-    return [simobserve_sky, simobserve_comp, simobserve_skycomp,
-            simobserve_noise,simobserve_badinputs]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

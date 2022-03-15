@@ -1,5 +1,26 @@
-from __future__ import absolute_import
-from __future__ import print_function
+########################################################################
+# test_task_sdsmooth.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.sdsmooth.html
+#
+#
+##########################################################################
 import os
 import sys
 import shutil
@@ -9,22 +30,11 @@ import math
 from scipy import signal
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, table, ms
-    from casatasks import sdsmooth
-    from casatasks.private.sdutil import table_manager, calibrater_manager
+from casatools import ctsys, table, ms
+from casatasks import sdsmooth
+from casatasks.private.sdutil import table_manager, calibrater_manager
 
-    tb = table( )
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from sdutil import tbmanager as table_manager, cbmanager as calibrater_manager
-    from sdsmooth import sdsmooth
-    from taskinit import mstool as ms
-
-    # the global tb tool is used here
+tb = table( )
 
 def gaussian_kernel(nchan, kwidth):
     sigma = kwidth / (2.0 * math.sqrt(2.0 * math.log(2.0)))
@@ -44,10 +54,7 @@ class sdsmooth_test_base(unittest.TestCase):
         decorators (invalid_argument_case, exception_case)
     """
     # Data path of input
-    if is_CASA6:
-        datapath=ctsys.resolve('unittest/sdsmooth/')
-    else:
-        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/sdsmooth/')
+    datapath=ctsys.resolve('unittest/sdsmooth/')
 
     # Input
     infile_data = 'tsdsmooth_test.ms'
@@ -221,9 +228,6 @@ class sdsmooth_test_base(unittest.TestCase):
                 shutil.rmtree(f)
             shutil.copytree(os.path.join(self.datapath, f), f)
 
-        if not is_CASA6:
-            default(task)
-
     def _tearDown(self, files):
         for f in files:
             if os.path.exists(f):
@@ -256,19 +260,13 @@ class sdsmooth_test_fail(sdsmooth_test_base):
     def test_sdsmooth_fail01(self):
         """test_sdsmooth_fail01 --- default parameters (raises an error)"""
         # casatasks throw exceptions, CASA5 tasks return False
-        if is_CASA6:
-            self.assertRaises(Exception, sdsmooth)
-        else:
-            self.result = sdsmooth()
+        self.assertRaises(Exception, sdsmooth)
 
     @invalid_argument_case
     def test_sdsmooth_fail02(self):
         """test_sdsmooth_fail02 --- invalid kernel type"""
         # casatasks throw exceptions, CASA5 tasks return False
-        if is_CASA6:
-            self.assertRaises(Exception, sdsmooth, infile=self.infile, kernel='normal', outfile=self.outfile)
-        else:
-            self.result = sdsmooth(infile=self.infile, kernel='normal', outfile=self.outfile)
+        self.assertRaises(Exception, sdsmooth, infile=self.infile, kernel='normal', outfile=self.outfile)
 
     @exception_case(RuntimeError, 'Spw Expression: No match found for 3')
     def test_sdsmooth_fail03(self):
@@ -290,11 +288,7 @@ class sdsmooth_test_fail(sdsmooth_test_base):
     def test_sdsmooth_fail06(self):
         """test_sdsmooth_fail06 --- invalid data column name"""
         # casatasks throw exceptions, CASA5 tasks return False
-        if is_CASA6:
-            self.assertRaises(Exception, sdsmooth, infile=self.infile, outfile=self.outfile, kernel='gaussian', datacolumn='spectra')
-        else:
-            self.result = sdsmooth(infile=self.infile, outfile=self.outfile, kernel='gaussian', datacolumn='spectra')
-
+        self.assertRaises(Exception, sdsmooth, infile=self.infile, outfile=self.outfile, kernel='gaussian', datacolumn='spectra')
 
 class sdsmooth_test_complex(sdsmooth_test_base):
     """
@@ -642,11 +636,5 @@ class sdsmooth_selection(sdsmooth_test_base, unittest.TestCase):
                 finally: tb.close()
                 shutil.rmtree(outfile)
 
-def suite():
-    return [sdsmooth_test_fail, sdsmooth_test_complex,
-            sdsmooth_test_float, sdsmooth_test_weight,
-            sdsmooth_test_boxcar, sdsmooth_selection]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

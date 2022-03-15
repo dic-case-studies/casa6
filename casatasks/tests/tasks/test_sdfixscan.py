@@ -1,5 +1,26 @@
-from __future__ import absolute_import
-from __future__ import print_function
+########################################################################
+# test_task_sdfixscan.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.sdfixscan.html
+#
+#
+##########################################################################
 import os
 import sys
 import shutil
@@ -8,27 +29,12 @@ import time
 import numpy
 import re
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, quanta
-    from casatools import image as iatool
-    from casatasks import sdfixscan
+from casatools import ctsys, quanta
+from casatools import image as iatool
+from casatasks import sdfixscan
 
-    _ia = iatool( )
-    qa = quanta( )
-
-    # default is not used in casatasks
-    def default(atask):
-        pass
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import iatool
-    from sdfixscan import sdfixscan
-    from taskinit import *
-    
-    _ia = iatool()
-    # global qa tool is used here
+_ia = iatool( )
+qa = quanta( )
 
 #
 # Unit test of sdfixscan task.
@@ -69,10 +75,7 @@ class sdfixscan_unittest_base:
     Base class for sdfixscan unit test
     """
     taskname='sdfixscan'
-    if is_CASA6:
-        datapath=ctsys.resolve('unittest/sdfixscan/')
-    else:
-        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/sdfixscan/')
+    datapath=ctsys.resolve('unittest/sdfixscan/')
     
     def _checkfile( self, name ):
         isthere=os.path.exists(name)
@@ -148,8 +151,6 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
             if (not os.path.exists(name)):
                 shutil.copytree(os.path.join(self.datapath,name), name)
 
-        default(sdfixscan)
-
     def tearDown(self):
         for name in self.rawfiles:
             if (os.path.exists(name)):
@@ -159,11 +160,7 @@ class sdfixscan_test0(unittest.TestCase,sdfixscan_unittest_base):
     def test000(self):
         """Test 000: Default parameters"""
         # casatasks throw exception, CASA 5 tasks return False on failure
-        if is_CASA6:
-            self.assertRaises(Exception,sdfixscan)
-        else:
-            res=sdfixscan()
-            self.assertEqual(res,False)
+        self.assertRaises(Exception,sdfixscan)
 
     def test001(self):
         """Test 001: only 1 image is given for Basket-Weaving"""
@@ -248,8 +245,6 @@ class sdfixscan_test1(unittest.TestCase,sdfixscan_unittest_base):
         if os.path.exists(self.rawfile):
             shutil.rmtree(self.rawfile)
         shutil.copytree(os.path.join(self.datapath,self.rawfile), self.rawfile)
-
-        default(sdfixscan)
 
     def tearDown(self):
         if (os.path.exists(self.rawfile)):
@@ -454,8 +449,6 @@ class sdfixscan_test2(unittest.TestCase,sdfixscan_unittest_base):
                 shutil.rmtree(name)
             shutil.copytree(os.path.join(self.datapath,name), name)
 
-        default(sdfixscan)
-
     def tearDown(self):
         for name in self.rawfiles:
             if (os.path.exists(name)):
@@ -658,12 +651,5 @@ class sdfixscan_test2(unittest.TestCase,sdfixscan_unittest_base):
         self._check_shape(self.rawfilesmod[0], self.outfile)
         self._checkstats(self.outfile,refstats)
 
-
-def suite():
-    return [sdfixscan_test0,
-            sdfixscan_test1,
-            sdfixscan_test2]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

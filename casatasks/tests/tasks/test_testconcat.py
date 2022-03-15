@@ -1,36 +1,40 @@
-#############################################################################
-# $Id:$
-# Test Name:                                                                #
-#    Regression Test Script for the testconcat task
-#    
-#                                                                           #
-#############################################################################
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_testconcat.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+#
+#
+##########################################################################
 import os
 import sys
 import shutil
 import glob
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys
-    from casatools import table as tbtool
-    from casatools import ms as mstool
-    from casatasks import split, testconcat
+from casatools import ctsys
+from casatools import table as tbtool
+from casatools import ms as mstool
+from casatasks import split, testconcat
 
-    tb = tbtool( )
-    ms = mstool( )
+tb = tbtool( )
+ms = mstool( )
 
-    datapath = ctsys.resolve('unittest/testconcat/')
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
-    dataroot = os.environ.get('CASAPATH').split()[0]
-    datapath = os.path.join(dataroot,'casatestdata/unittest/testconcat/')
+datapath = ctsys.resolve('unittest/testconcat/')
 
 myname = 'test_testconcat'
 
@@ -90,9 +94,6 @@ class test_testconcat(unittest.TestCase):
                 print("Copying ", mymsname)
                 shutil.copytree(mymsname, cpath+'/'+mymsname)
         os.chdir(cpath)
-
-        if not is_CASA6:
-            default(testconcat)
         
     def tearDown(self):
         shutil.rmtree(msname,ignore_errors=True)
@@ -555,10 +556,6 @@ class testconcat_cleanup(unittest.TestCase):
         '''Testconcat: Cleanup'''
         pass
     
-def suite():
-    return [test_testconcat,testconcat_cleanup]        
-        
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()
 

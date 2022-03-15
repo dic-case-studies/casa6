@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_visstat.py
+# test_task_visstat.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,27 +17,10 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_visstat/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.information.visstat.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import visstat
-    CASA6 = True
-    
-    tb = casatools.table()
-    qa = casatools.quanta()
-    me = casatools.measures()
-    
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
 import sys
 import os
 import unittest
@@ -45,33 +28,25 @@ import copy
 import shutil
 import numpy as np
 
-if CASA6:
-    loc_zip = zip
-else:
-    from itertools import izip
-    loc_zip = izip
-    
-    
+import casatools
+from casatasks import visstat
+
+tb = casatools.table()
+qa = casatools.quanta()
+me = casatools.measures()
+
+loc_zip = zip
+
 epsilon = 0.0001
 
 ### Data ###
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/visstat/outlier_ut.ms/')
-    mms_data = casatools.ctsys.resolve('unittest/visstat/outlier_mms.mms/')
-    selectiondata = casatools.ctsys.resolve('unittest/visstat/uid___X02_X3d737_X1_01_small.ms/')
-    mms_select = casatools.ctsys.resolve('unittest/visstat/uid___X02_X3d737_X1_01_small.mms')
-    singledish = casatools.ctsys.resolve('unittest/visstat/analytic_spectra_tsys.ms')
-    # Data for merged test
-    merged_data_path = casatools.ctsys.resolve('unittest/visstat/')
-    
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/outlier_ut.ms/'
-    mms_data = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/outlier_mms.mms/'
-    selectiondata = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/uid___X02_X3d737_X1_01_small.ms/'
-    mms_select = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/uid___X02_X3d737_X1_01_small.mms'
-    singledish = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/visstat/analytic_spectra_tsys.ms'
-    # Data from merged test
-    merged_data_path = os.path.join(os.environ.get('CASAPATH').split()[0], 'casatestdata/unittest/visstat/')
+datapath = casatools.ctsys.resolve('unittest/visstat/outlier_ut.ms/')
+mms_data = casatools.ctsys.resolve('unittest/visstat/outlier_mms.mms/')
+selectiondata = casatools.ctsys.resolve('unittest/visstat/uid___X02_X3d737_X1_01_small.ms/')
+mms_select = casatools.ctsys.resolve('unittest/visstat/uid___X02_X3d737_X1_01_small.mms')
+singledish = casatools.ctsys.resolve('unittest/visstat/analytic_spectra_tsys.ms')
+# Data for merged test
+merged_data_path = casatools.ctsys.resolve('unittest/visstat/')
     
 axislist = ['flag', 'antenna1', 'antenna2', 'feed1', 'feed2', 'field_id', 'array_id', 'data_desc_id', 'flag_row', 'interval', 'scan', 'scan_number', 'time', 'weight_spectrum', 'amp', 'amplitude', 'phase', 'real', 'imag', 'imaginary', 'uvrange']
  
@@ -79,30 +54,28 @@ keylist = ['firstquartile', 'isMasked', 'isWeighted', 'max', 'maxDatasetIndex', 
 
 # NOTE: I also need to get and/or make a multimesset to test this data from. I could usr the data from listobs to do this.
 
-if CASA6:
-    ###
-    ### this test uses a sort(...) "cmp" function, but python 3 uses a key function...
-    ### this function from the python 3 documentation converts...
-    ###
-    def cmp_to_key(mycmp):
-        'Convert a cmp= function into a key= function'
-        class K:
-            def __init__(self, obj, *args):
-                self.obj = obj
-            def __lt__(self, other):
-                return mycmp(self.obj, other.obj) < 0
-            def __gt__(self, other):
-                return mycmp(self.obj, other.obj) > 0
-            def __eq__(self, other):
-                return mycmp(self.obj, other.obj) == 0
-            def __le__(self, other):
-                return mycmp(self.obj, other.obj) <= 0
-            def __ge__(self, other):
-                return mycmp(self.obj, other.obj) >= 0
-            def __ne__(self, other):
-                return mycmp(self.obj, other.obj) != 0
-        return K
-
+###
+### this test uses a sort(...) "cmp" function, but python 3 uses a key function...
+### this function from the python 3 documentation converts...
+###
+def cmp_to_key(mycmp):
+    'Convert a cmp= function into a key= function'
+    class K:
+        def __init__(self, obj, *args):
+            self.obj = obj
+        def __lt__(self, other):
+            return mycmp(self.obj, other.obj) < 0
+        def __gt__(self, other):
+            return mycmp(self.obj, other.obj) > 0
+        def __eq__(self, other):
+            return mycmp(self.obj, other.obj) == 0
+        def __le__(self, other):
+            return mycmp(self.obj, other.obj) <= 0
+        def __ge__(self, other):
+            return mycmp(self.obj, other.obj) >= 0
+        def __ne__(self, other):
+            return mycmp(self.obj, other.obj) != 0
+    return K
 
 nostat = visstat(selectiondata)
 nostatmms = visstat(mms_select)
@@ -110,9 +83,6 @@ nostatmms = visstat(mms_select)
 class visstat_test(unittest.TestCase):
      
     def setUp(self):
-        if not CASA6:
-            default(visstat)
-            
         # Data set up from merged test
         self.msfile = "ngc5921_add_corect_model.ms"
         self.msfile2 ="OrionS_rawACSmod_calave.ms"
@@ -149,11 +119,6 @@ class visstat_test(unittest.TestCase):
         shutil.copyfile(os.path.join(merged_data_path,self.msfile11), self.msfile11)
         shutil.copyfile(os.path.join(merged_data_path,self.msfile13), self.msfile13)
         shutil.copyfile(os.path.join(merged_data_path,self.msfile14), self.msfile14)
-        
-        if not CASA6:
-            default('visstat')
-            
-            
         
     def tearDown(self):
         # Teardown from merged test
@@ -408,18 +373,11 @@ class visstat_test(unittest.TestCase):
             
             Assert that checking an out of range array returns a NoneType, and valid selections retrun a dictionary
         '''
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(RuntimeError):
-                arrayFail = visstat(selectiondata, array='1')
-            with self.assertRaises(RuntimeError):
-                arrayFailmms = visstat(mms_select, array='1')
-        else:
+        with self.assertRaises(RuntimeError):
             arrayFail = visstat(selectiondata, array='1')
+        with self.assertRaises(RuntimeError):
             arrayFailmms = visstat(mms_select, array='1')
-            
-            self.assertTrue( type(arrayFail) == type(None) )
-            self.assertTrue( type(arrayFailmms) == type(None) )
-        
+
         arrayPass = visstat(selectiondata, array='0')
         arrayPassmms = visstat(mms_select, array='0')
         
@@ -435,17 +393,11 @@ class visstat_test(unittest.TestCase):
             
             Assert that checking an out of range observation ID returns a NoneType, and valid selections return a dictionary
         '''
-        if CASA6 or casa_stack_rethrow:
-            with self.assertRaises(RuntimeError):
-                observationFail = visstat(selectiondata, observation=1)
-            with self.assertRaises(RuntimeError):
-                observationFailmms = visstat(mms_select, observation=1)
-        else:
+        with self.assertRaises(RuntimeError):
             observationFail = visstat(selectiondata, observation=1)
+        with self.assertRaises(RuntimeError):
             observationFailmms = visstat(mms_select, observation=1)
-            self.assertTrue( type(observationFail) == type(None) )
-            self.assertTrue( type(observationFailmms) == type(None) )
-        
+
         observationPass = visstat(selectiondata, observation=0)
         observationPassmms = visstat(mms_select, observation=0)
     
@@ -734,8 +686,6 @@ class visstat_test(unittest.TestCase):
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
-
-
     def test_reportAxisInt(self):
         '''Visstat 05: Test using reportingaxes=integration, datacolumn=float_data'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
@@ -775,9 +725,6 @@ class visstat_test(unittest.TestCase):
         with open('visstat2_test5.txt','r') as fout:
             f = fout.read()
         self.compare(np.array(result_list), np.array(f[:-1].split(' ')))
-        
-
-
 
     def test_reportAxisField(self):
         '''Visstat 06: Test using reportingaxes=field'''
@@ -823,8 +770,6 @@ class visstat_test(unittest.TestCase):
         self.compare(np.array(ax_scan),np.array(f_scan[:-1].split(' ')))
         #check when ax~amp
         self.compare(np.array(ax_amp),np.array(f_amp[:-1].split(' ')))
-
-
 
     def test_datacolCorrected(self):
         '''Visstat 07: Default values with datacolum=corrected, reportingaxis=ddid'''
@@ -886,8 +831,6 @@ class visstat_test(unittest.TestCase):
 
         self.assertTrue(retValue['success'],retValue['error_msgs'])
 
-
-
     def test_datacolMulti(self):
         '''Visstat 08: Test when using reportingaxes='integration, datacolumn=data,corrected,model'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
@@ -924,8 +867,6 @@ class visstat_test(unittest.TestCase):
         with open('visstat2_test8.txt','r') as fout:
             f = fout.read()
         self.compare(np.array(result_list), np.array(f[:-1].split(' ')))
-
-
 
     def test_corrLLRR(self):
         '''Visstat 09: Test using reportingaxes=ddid, correlation=[LL,RR], datacolumn=float_data spw=[0,1,2,3]'''
@@ -964,8 +905,6 @@ class visstat_test(unittest.TestCase):
         with open('visstat2_test7.txt','r') as fout:
             f = fout.read()
         self.compare(np.array(result_list), np.array(f[:-1].split(' ')))
-
-
 
     def test_intentOnOff(self):
         '''Visstat 10: Test using reportingaxes=field, datacolumn=corrected, intent=[on,off]'''
@@ -1045,10 +984,7 @@ class visstat_test(unittest.TestCase):
         # sort the dictionary keys, and create an ordered list of dictionary
         # elements (i.e, statistics for every averaging interval)
         v2_keys = v2.keys()
-        if CASA6:
-            v2_keys = sorted(v2_keys,key=cmp_to_key(compareKeys))
-        else:
-            v2_keys.sort(cmp=compareKeys)
+        v2_keys = sorted(v2_keys,key=cmp_to_key(compareKeys))
         ordered_v2 = [(scanTime(k), v2[k]) for k in v2_keys]
 
         # get ordered list of scan numbers in visstat results
@@ -1097,20 +1033,15 @@ class visstat_test(unittest.TestCase):
 
         def compareKeys(x, y):
             '''Comparison of visstat dictionary keys by time'''
-            if CASA6:
-                x = statTime(x)
-                y = statTime(y)
-                return (x>y)-(x<y)
-            else:
-                return cmp(statTime(x), statTime(y))
+            x = statTime(x)
+            y = statTime(y)
+            return (x>y)-(x<y)
+
 
         # sort the dictionary keys, and create an ordered list of dictionary
         # elements (i.e, statistics for every averaging interval)
         v2_keys = list(v2.keys())
-        if CASA6:
-            v2_keys = sorted(v2_keys,key=cmp_to_key(compareKeys))
-        else:
-            v2_keys.sort(cmp=compareKeys)
+        v2_keys = sorted(v2_keys,key=cmp_to_key(compareKeys))
         ordered_v2 = [(statTime(k), v2[k]) for k in v2_keys]
 
         # reported statistics should have timestamps that differ by, at least,
@@ -1195,9 +1126,6 @@ class visstat_test(unittest.TestCase):
             got_keys == expected_keys,
             'list of keys for doquantiles=False is incorrect'
         )
-        
-def suite():
-    return[visstat_test]
 
 if __name__ == '__main__':
     unittest.main()

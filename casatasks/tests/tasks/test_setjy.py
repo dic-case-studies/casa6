@@ -1,5 +1,26 @@
-from __future__ import absolute_import
-from __future__ import print_function
+########################################################################
+# test_task_setjy.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.imaging.setjy.html
+#
+#
+##########################################################################
 import shutil
 import unittest
 import numpy as np
@@ -7,24 +28,11 @@ import os
 import filecmp
 import numpy
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, table, ms
-    from casatasks import setjy, partition
-    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-    mslocal = ms()
-    ctsys_resolve = ctsys.resolve
-else:
-    from tasks import *
-    from taskinit import *
-    from taskinit import tbtool as table
-    from parallel.parallel_task_helper import ParallelTaskHelper
-    from casa_stack_manip import stack_frame_find
-    from __main__ import default
-    mslocal = mstool()
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+from casatools import ctsys, table, ms
+from casatasks import setjy, partition
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+mslocal = ms()
+ctsys_resolve = ctsys.resolve
 
 """
 Unit tests for task setjy.
@@ -1318,21 +1326,13 @@ class test_inputs(SetjyUnitTestBase):
         # test by temporarily setting __rethrow_casa_exceptions
         sjran=None
         try:
-            # only necessary for CASA5, casatasks throw exceptions
-            if not is_CASA6:
-                myf = stack_frame_find( )
-                original_rethrow_setting=myf.get('__rethrow_casa_exceptions',False)
-                myf['__rethrow_casa_exceptions']=True
             print("\nRunning setjy with a non-existant vis")
             sjran = setjy(vis=self.inpms,listmodels=False)
         except Exception as setjyUTerr:
             msg = setjyUTerr.message
             self.assertNotEqual(msg.find("%s does not exist" % self.inpms), -1,
                                 'wrong type of exception is thrown')
-        finally:
-            if not is_CASA6:
-                # put back original rethrow setting
-                myf['__rethrow_casa_exceptions']=original_rethrow_setting
+
         self.assertEqual(sjran,None,"Failed to raise exception.") 
      
     def test_listmodels(self):
@@ -1528,21 +1528,13 @@ class test_inputs(SetjyUnitTestBase):
         # test by temporarily setting __rethrow_casa_exceptions
         sjran=None
         try:
-            # only necessary for CASA5, casatasks throw exceptions
-            if not is_CASA6:
-                myf = stack_frame_find( )
-                original_rethrow_setting=myf.get('__rethrow_casa_exceptions',False)
-                myf['__rethrow_casa_exceptions']=True
             print("\nRunning setjy with a non-existant vis")
             sjran = setjy(vis=self.inpms,listmodels=False)
         except Exception as setjyUTerr:
             msg = str(setjyUTerr)
             self.assertNotEqual(msg.find("%s does not exist" % self.inpms), -1,
                                 'wrong type of exception is thrown')
-        finally:
-            if not is_CASA6:
-                # put back original rethrow setting
-                myf['__rethrow_casa_exceptions']=original_rethrow_setting
+
         self.assertEqual(sjran,None,"Failed to raise exception.") 
      
     def test_listmodels(self):
@@ -2084,11 +2076,5 @@ class test_NullSelection(SetjyUnitTestBase):
                       "been handled more gracefully")
 
 
-def suite():
-    return [test_SingleObservation,test_MultipleObservations,test_ModImage, test_inputs,
-            test_conesearch, test_fluxscaleStandard, test_setpol, test_ephemtbl,
-            test_tpmAsteroid,test_NullSelection, test_newStandards, test_newStandards_MMS]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

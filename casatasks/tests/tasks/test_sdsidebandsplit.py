@@ -1,3 +1,26 @@
+########################################################################
+# test_task_sdsidebandsplit.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.sdsidebandsplit.html
+#
+#
+##########################################################################
 import os
 import shutil
 import copy
@@ -6,29 +29,15 @@ import numpy
 from scipy.optimize import curve_fit
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import sdsidebandsplit
-    from casatools import quanta
-    from casatools import image
-    from casatools import ctsys
-    datapath = ctsys.resolve('unittest/sdsidebandsplit/')
+from casatasks import sdsidebandsplit
+from casatools import quanta
+from casatools import image
+from casatools import ctsys
+datapath = ctsys.resolve('unittest/sdsidebandsplit/')
 
-    # default isn't used in casatasks
-    def default(atask):
-        pass
-
-    # stack_frame_find
-    def stack_frame_find():
-        return {}
-else:
-    from tasks import sdsidebandsplit
-    from taskinit import qatool as quanta
-    from taskinit import iatool as image
-    from casa_stack_manip import stack_frame_find
-
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdsidebandsplit/'
-
+# stack_frame_find
+def stack_frame_find():
+    return {}
 
 # Gaussian fit
 def gauss_func(x, *p):
@@ -294,10 +303,7 @@ class failureTestCase(sdsidebandsplitTestBase):
         """test failure: len(imagename)==2 but includes an invalid imagename"""
         invalid_name = 'invalid.image'
         imagename = self.standard_param['imagename'][:-2] + [invalid_name]
-        if is_CASA6:
-            ref_message = '.*must be a path that exists.*'
-        else:
-            ref_message = 'Could not find %s' % invalid_name
+        ref_message = '.*must be a path that exists.*'
         self.run_exception(ref_message, imagename=imagename)
 
     # T-006
@@ -541,10 +547,5 @@ class MultiPixTestCase(sdsidebandsplitTestBase):
         self.run_test(reference, getbothside=True)
 
 
-def suite():
-    return [failureTestCase, standardTestCase, MultiPixTestCase]
-
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

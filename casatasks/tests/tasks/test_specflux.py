@@ -1,8 +1,8 @@
-##########################################################################
-# test_specflux.py
+########################################################################
+# test_task_specflux.py
 #
-# Copyright (C) 2008, 2009
-# Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
 #
 # This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
@@ -14,77 +14,22 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+# [Add the link to the JIRA ticket here once it exists]
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.specflux.html
 #
-# <author>
-# Dave Mehringer
-# </author>
 #
-# <summary>
-# Test suite for the CASA tool method ia.findsources()
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# Test for the ia.findsources() tool method
-# </etymology>
-#
-# <synopsis>
-# Test for the ia.findsources() tool method
-# </synopsis> 
-#
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_specflux[test1,test2,...]
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard for the ia.findsources() tool method to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
-
-###########################################################################
-from __future__ import absolute_import
+##########################################################################
 import os
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys
-    from casatasks import specflux
+from casatools import ctsys
+from casatasks import specflux
 
-    datapath = ctsys.resolve('unittest/specflux/')
-    refpath = ctsys.resolve('unittest/specflux/specflux_reference/')
-else:
-    import casac
-    from tasks import *
-    from taskinit import *
-    from __main__ import *
-
-    datapath = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/specflux/')
-    refpath = os.path.join(datapath,'specflux_reference/')
+datapath = ctsys.resolve('unittest/specflux/')
+refpath = ctsys.resolve('unittest/specflux/specflux_reference/')
 
 im1 = os.path.join(datapath,"specflux1.im")
 im2 = os.path.join(datapath,"specflux2.im")
@@ -167,9 +112,5 @@ class specflux_test(unittest.TestCase):
                 gfile + " mismatch: got: " + myg + " exp: " + mye
             )
  
-def suite():
-    return [specflux_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

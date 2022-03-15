@@ -1,5 +1,26 @@
-from __future__ import absolute_import
-from __future__ import print_function
+########################################################################
+# test_task_sdgaincal.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.sdgaincal.html
+#
+#
+##########################################################################
 import os
 import sys
 import shutil
@@ -8,28 +29,15 @@ import numpy
 import math
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys
-    from casatools import table as tbtool
-    from casatools import ms as mstool
-    from casatasks import sdgaincal, mstransform, sdcal
-    from casatasks.private.sdutil import table_manager
+from casatools import ctsys
+from casatools import table as tbtool
+from casatools import ms as mstool
+from casatasks import sdgaincal, mstransform, sdcal
+from casatasks.private.sdutil import table_manager
 
-    ### for testhelper import
-    sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-
-    # this distinction doesn't exist in casatasks
-    mstransform_cli = mstransform
-    sdcal_cli = sdcal
-else:
-    from __main__ import default
-    from taskinit import tbtool, mstool
-    from sdgaincal import sdgaincal
-    from mstransform_cli import mstransform_cli
-    from sdcal_cli import sdcal_cli
-    from sdutil import tbmanager as table_manager
-
+# this distinction doesn't exist in casatasks
+mstransform_cli = mstransform
+sdcal_cli = sdcal
 
 class sdgaincal_test_base(unittest.TestCase):
     """
@@ -37,10 +45,7 @@ class sdgaincal_test_base(unittest.TestCase):
 
     This class defines attributes and methods common to test cases
     """
-    if is_CASA6:
-        datapath=ctsys.resolve('unittest/sdgaincal/')
-    else:
-        datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/sdgaincal/')
+    datapath=ctsys.resolve('unittest/sdgaincal/')
     
     def __copy_from_datapath(self, filename):
         if os.path.exists(filename):
@@ -52,9 +57,6 @@ class sdgaincal_test_base(unittest.TestCase):
 
         if hasattr(self, 'reffile'):
             self.__copy_from_datapath(self.reffile)
-
-        if not is_CASA6:
-            default(sdgaincal)
 
     def tearDown(self):
         to_be_removed = [self.infile, self.outfile]
@@ -204,10 +206,7 @@ class sdgaincal_fail_test(sdgaincal_test_base):
         """test_fail01: infile not exist"""
         params = self.generate_params(infile=self.infile+'.notexist')
         # casatasks throw exceptions to indicate failure
-        if is_CASA6:
-            self.assertRaises(Exception, self.run_task, **params)
-        else:
-            self._test_fail(**params)
+        self.assertRaises(Exception, self.run_task, **params)
 
     def test_fail02(self):
         """test_fail02: not overwrite existing outfile"""
@@ -216,30 +215,19 @@ class sdgaincal_fail_test(sdgaincal_test_base):
         # outfile exists
         shutil.copytree(params['infile'], params['outfile'])
         # these may be equivalent
-        if is_CASA6:
-            self.assertRaises(Exception, self.run_task, **params)
-        else:
-            self._test_except_regex(RuntimeError, '.* exists\.$', **params)
+        self.assertRaises(Exception, self.run_task, **params)
 
     def test_fail03(self):
         """test_fail03: wrong calibration mode"""
         params = self.generate_params(calmode='otf')
         # casatasks throw exceptions to indicate failure
-        if is_CASA6:
-            self.assertRaises(Exception, self.run_task, **params)
-        else:
-            self._test_fail(**params)
+        self.assertRaises(Exception, self.run_task, **params)
 
     def test_fail04(self):
         """test_fail04: negative radius"""
         params = self.generate_params(radius='-30arcsec')
         # these may be equivalent
-        if is_CASA6:
-            self.assertRaises(Exception, self.run_task, **params)
-        else:
-            self._test_except_regex(RuntimeError,
-                                    '^Error in Calibrater::setsolve\.$',
-                                    **params)
+        self.assertRaises(Exception, self.run_task, **params)
 
 class sdgaincal_const_test(sdgaincal_test_base):
     """
@@ -593,13 +581,5 @@ class sdgaincal_single_polarization_test(sdgaincal_test_base):
 
         self._verify_caltable(self._generic_verify, **params)
 
-def suite():
-    return [sdgaincal_fail_test,
-            sdgaincal_const_test,
-            sdgaincal_variable_test,
-            sdgaincal_preapply_test,
-            sdgaincal_single_polarization_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

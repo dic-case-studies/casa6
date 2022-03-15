@@ -1,3 +1,26 @@
+########################################################################
+# test_task_sdbaseline.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.sdbaseline.html
+#
+#
+##########################################################################
 import contextlib
 import filecmp
 import glob
@@ -5459,23 +5482,6 @@ class sdbaseline_helperTest(sdbaseline_unittest_base):
                 print(f"    fftthresh='{fftthresh}'...")
                 with self.assertRaises(ValueError, msg=test_case['errmsg']):
                     check_fftthresh(fftthresh)
-
-
-def suite():
-    return [sdbaseline_basicTest, 
-            sdbaseline_maskTest,
-            sdbaseline_sinusoidTest,
-            sdbaseline_outbltableTest,
-            sdbaseline_applybltableTest,
-            sdbaseline_variableTest,
-            sdbaseline_bloutputTest,
-            sdbaseline_autoTest,
-            sdbaseline_selection,
-            sdbaseline_updateweightTest,
-            sdbaseline_updateweightTest2,
-            sdbaseline_helperTest
-            ]
-
 
 if __name__ == '__main__':
     unittest.main()

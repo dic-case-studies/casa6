@@ -1,31 +1,39 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_uvcontsub.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.uvcontsub.html
+#
+#
+##########################################################################
 import os
 import numpy
 import sys
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import *
-if is_CASA6:
-    from casatools import ctsys, table
-    from casatasks import uvcontsub
-    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatools import ctsys, table
+from casatasks import uvcontsub
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
-    tb = table( )
+tb = table( )
 
-    ctsys_resolve = ctsys.resolve
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from parallel.parallel_task_helper import ParallelTaskHelper
-
-    # uses the global tb tool
-
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+ctsys_resolve = ctsys.resolve
 
 '''
 Unit tests for task uvcontsub.
@@ -473,11 +481,5 @@ class freqrangeselection(UVContsubUnitTestBase):
         self.assertEqual(pnrows['cont'], 1)
         self.assertEqual(pnrows['contsub'], 1)
 
-
-    
-def suite():
-    return [zeroth, fourth, combspw, excludechans, excludechans2, freqrangeselection]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

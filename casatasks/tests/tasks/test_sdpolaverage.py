@@ -1,30 +1,35 @@
-from __future__ import absolute_import
-from __future__ import print_function
-
+########################################################################
+# test_task_sdpolaverage.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.sdpolaverage.html
+#
+#
+##########################################################################
 import unittest
 import os
 import math
 import sys
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import sdpolaverage
-    from casatasks.private.sdutil import table_manager
-    from casatools import ctsys
-    datapath = ctsys.resolve('unittest/sdpolaverage/')
-
-    # default isn't used in casatasks
-    def default(atask):
-        pass
-
-else:
-    from tasks import sdpolaverage
-    from __main__ import default
-    from sdutil import tbmanager as table_manager
-
-    # Define the root for the data files
-    datapath = os.environ.get('CASAPATH').split()[0] + "/casatestdata/unittest/sdpolaverage/"
-
+from casatasks import sdpolaverage
+from casatasks.private.sdutil import table_manager
+from casatools import ctsys
+datapath = ctsys.resolve('unittest/sdpolaverage/')
 
 def weighToSigma(weight):
     if weight > sys.float_info.min:
@@ -72,7 +77,6 @@ class test_sdpolaverage(unittest.TestCase):
         self.outputms = "polave.ms"
         #datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/tsdfit/"
         os.system('cp -RH ' + datapath + self.inputms + ' ' + self.inputms)
-        default(sdpolaverage)
 
     def tearDown(self):
         os.system('rm -rf ' + self.inputms)
@@ -141,11 +145,5 @@ class test_sdpolaverage(unittest.TestCase):
         self.assertEqual(len(outpoltype), 1, 'Polarization id is inconsistent with data.')
         self.assertEqual(outpoltype[0], 1, 'Has wrong polarization id.')
 
-
-def suite():
-    return [test_sdpolaverage]
-
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

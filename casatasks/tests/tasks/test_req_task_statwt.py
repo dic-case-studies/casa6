@@ -1,12 +1,33 @@
+#########################################################################
+# test_task_simanalyze.py
+#
+# Copyright (C) 2020
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.statwt.html
+#
+# Test case: requirement
+#
+##########################################################################
 import os
 import sys
 import shutil
 import unittest
 import numpy as np
 import numpy.ma as ma
-### for testhelper import
-#from casatestutils import testhelper as th
-is_casa6 = False
+
 subdir = 'unittest/statwt/'
 
 # https://stackoverflow.com/questions/52580105/exception-similar-to-modulenotfounderror-in-python-2-7
@@ -15,24 +36,11 @@ try:
 except NameError:
     ModuleNotFoundError = ImportError
 
-try:
-    from casatools import ctsys, table, ms
-    from casatasks import statwt
-    datadir = ctsys.resolve(subdir)
-    mytb = table()
-    myms = ms()
-    is_casa6 = True
-except (ImportError, ModuleNotFoundError):
-    from tasks import *
-    from taskinit import *
-    from casa_stack_manip import stack_frame_find
-
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
-    datadir = (
-        os.environ.get('CASAPATH').split()[0] + '/casatestdata/' + subdir
-    )
-    mytb = tbtool()
-    myms = mstool()
+from casatools import ctsys, table, ms
+from casatasks import statwt
+datadir = ctsys.resolve(subdir)
+mytb = table()
+myms = ms()
 
 src = os.path.join(datadir, 'ngc5921_small.statwt.ms')
 vlass = os.path.join(datadir, 'test_vlass_subset.ms')
@@ -265,7 +273,7 @@ class statwt_test(unittest.TestCase):
               
     def compare(self, dst, ref):
         self.assertTrue(mytb.open(dst), "Table open failed for " + dst)
-        mytb1 = table() if is_casa6 else tbtool()
+        mytb1 = table()
         ref = os.path.join(refdir, ref)
         self.assertTrue(mytb1.open(ref), "Table open failed for " + ref)
         self.compareTables(mytb, mytb1)
@@ -518,12 +526,10 @@ class statwt_test(unittest.TestCase):
                 statwt(vis=dst, statalg=statalg, center="median",
                        lside=False)
             elif statalg == "bogus":
-                if is_casa6 or casa_stack_rethrow:
-                    self.assertRaises(
+                self.assertRaises(
                         RuntimeError, statwt, vis=dst, statalg=statalg
-                    )
-                else:
-                    self.assertFalse(statwt(vis=dst, statalg=statalg))
+                )
+
             shutil.rmtree(dst)
                 
     def test_wtrange(self):
@@ -1066,9 +1072,6 @@ class statwt_test(unittest.TestCase):
                 reftab.done()
                 dsttab.done()
             shutil.rmtree(dst)
-
-def suite():
-    return [statwt_test]
 
 if __name__ == '__main__':
     unittest.main()

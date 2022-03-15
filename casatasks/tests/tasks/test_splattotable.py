@@ -1,8 +1,8 @@
-##########################################################################
-# imfit_test.py
+########################################################################
+# test_task_splattotable.py
 #
-# Copyright (C) 2008, 2009
-# Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
 #
 # This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
@@ -14,74 +14,19 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+# [Add the link to the JIRA ticket here once it exists]
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.data.splattotable.html
 #
-# <author>
-# Dave Mehringer
-# </author>
 #
-# <summary>
-# Test suite for the CASA task splattotable
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-#   <li> <linkto class="task_splattotable.py:description">splattotable</linkto> 
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# Test for the splattotable task
-# </etymology>
-#
-# <synopsis>
-# Test the splattotable task and the sl.splattotable() method upon which it is built.
-# </synopsis> 
-#
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_splattotable[test1,test2,...]
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard for the splattotable task to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
-
-###########################################################################
-from __future__ import absolute_import
+##########################################################################
 import os
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, table, spectralline
-    from casatasks import splattotable, casalog
-else:
-    import casac
-    from tasks import *
-    from taskinit import *
-    from taskinit import sltool as spectralline
-    from taskinit import tbtool as table
-    from __main__ import *
+from casatools import ctsys, table, spectralline
+from casatasks import splattotable, casalog
 
 good_list = "splattotable_list1.txt"
 bad_list = "splattotable_list2.txt"
@@ -95,8 +40,6 @@ def run_sttmethod(list, tab):
     mysl.done()
 
 def run_stttask(list, tab):
-    if not is_CASA6:
-        default(splattotable)
     return splattotable(filenames=list, table=tab)
 
 
@@ -104,10 +47,7 @@ class splattotable_test(unittest.TestCase):
     
     def setUp(self):
         self._tb = table()
-        if is_CASA6:
-            datapath=ctsys.resolve('unittest/splattotable/')
-        else:
-            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/splattotable/')
+        datapath=ctsys.resolve('unittest/splattotable/')
 
         shutil.copy(os.path.join(datapath,good_list), good_list)
         shutil.copy(os.path.join(datapath,bad_list), bad_list)
@@ -133,12 +73,8 @@ class splattotable_test(unittest.TestCase):
                 if (i==0):
                     self.assertRaises(Exception, check_run_sttmethod, filenames, tab)
                 else:
-                    # CASA6 task raises an exception, CASA5 returns None
-                    if is_CASA6:
-                        self.assertRaises(Exception, run_stttask, filenames, tab)
-                    else:
-                        with self.assertRaises(Exception):
-                            run_stttask(filenames, tab)
+                    self.assertRaises(Exception, run_stttask, filenames, tab)
+
                 # in all cases, nothing should be opened
                 self.assertTrue(len(self._tb.showcache()) == 0)
 
@@ -184,10 +120,5 @@ class splattotable_test(unittest.TestCase):
                     
         testit(good_list, "good_table")
       
-
-def suite():
-    return [splattotable_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

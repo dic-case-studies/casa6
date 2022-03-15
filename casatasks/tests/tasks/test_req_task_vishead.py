@@ -1,5 +1,5 @@
 ########################################################################
-# test_req_task_vishead.py
+# test_task_vishead.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA
@@ -17,27 +17,18 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_vishead/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.information.vishead.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import vishead, casalog
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
 import sys
 import os
 import unittest
 import shutil
 import numpy
-# get is_python3 and is_CASA6
-from casatasks.private.casa_transition import *
+
+import casatools
+from casatasks import vishead, casalog
 
 def copyDirectory(src, dest):
     try:
@@ -58,18 +49,11 @@ def chmod_recursive(path, mode):
         for f in files:
             os.chmod(os.path.join(root, f), mode)
 
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/vishead/')
-    casaimagepath = casatools.ctsys.resolve('unittest/vishead/ngc5921.ms')
-else:
-    datapath = os.path.join(os.environ.get('CASAPATH').split()[0], 'casatestdata/unittest/vishead/')
-    casaimagepath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/vishead/ngc5921.ms'
+datapath = casatools.ctsys.resolve('unittest/vishead/')
+casaimagepath = casatools.ctsys.resolve('unittest/vishead/ngc5921.ms')
 
 # used in a type comparison
-if is_python3:
-    numpy_str_ = numpy.str_
-else:
-    numpy_str_ = numpy.string_
+numpy_str_ = numpy.str_
 
 logpath = casalog.logfile()
 
@@ -143,8 +127,6 @@ class vishead_test(unittest.TestCase):
             os.system('rm -rf ' + input_file)
 
         os.system('cp -RH ' + os.path.join(datapath, input_file) + ' ' + input_file)
-        if not is_CASA6:
-            default('vishead')
 
     def tearDown(self):
         casalog.setlogfile(logpath)
@@ -322,9 +304,6 @@ class vishead_test(unittest.TestCase):
             # imhead( input_file, 'put', 'object', val['value'] )
 
         t.done()
-
-def suite():
-    return[vishead_test]
 
 # Main #
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 #########################################################################
-# test_split.py
+# test_task_split.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -15,7 +15,7 @@
 # License for more details.
 #
 # Based on the requirements listed in casadocs found here:
-# https://casadocs.readthedocs.io/en/latest/api.html
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.split.html
 #
 # Features tested:
 #   1. Are the POLARIZATION, DATA_DESCRIPTION, and (to some extent) the

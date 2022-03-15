@@ -1,36 +1,38 @@
-from __future__ import absolute_import
-from __future__ import print_function
-
+########################################################################
+# test_task_sdtimeaverage.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.sdtimeaverage.html
+#
+#
+##########################################################################
 import datetime
 import re
 import unittest
 import os
 import numpy
 import sys
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import sdtimeaverage
-    # default isn't used in casatasks
 
-    def default(atask):
-        pass
-    # for testhelper import
-    #sys.path.append(
-    #    os.path.dirname(
-    #        os.path.abspath(
-    #            os.path.dirname(__file__))))
-    from casatasks.private.sdutil import table_manager
-    from casatools import ctsys
-    datapath = ctsys.resolve('unittest/sdtimeaverage/')
+from casatasks import sdtimeaverage
+from casatasks.private.sdutil import table_manager
+from casatools import ctsys
+datapath = ctsys.resolve('unittest/sdtimeaverage/')
 
-else:
-    from tasks import sdtimeaverage
-    from __main__ import default
-    from sdutil import tbmanager as table_manager
-
-    # Define the root for the data files
-    datapath = os.environ.get('CASAPATH').split(
-    )[0] + "/casatestdata/unittest/sdtimeaverage/"
 """
 sdtimeaverage begins
 """
@@ -90,8 +92,6 @@ testInterval = 1.0   # fundamental INTERVAL in TEST-MS (tunable)
 
 class test_sdtimeaverage(unittest.TestCase):
     def setUp(self):
-        default(sdtimeaverage)
-
         # parameter on self.
         self.inpMs = defInputMs
         self.interval = testInterval
@@ -1068,11 +1068,5 @@ class test_sdtimeaverage(unittest.TestCase):
         expected_count = numOfScan * numOfState
         self._checkOutputRec(privateOutfile, expected_count)
 
-
-def suite():
-    return [test_sdtimeaverage]
-
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

@@ -1,5 +1,27 @@
-from __future__ import absolute_import
-from __future__ import print_function
+#########################################################################
+# test_task_tsdimaging.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.tsdimaging.html
+#
+#
+##########################################################################
+
 import glob
 import copy
 import os
@@ -9,67 +31,24 @@ import unittest
 import numpy
 import math
 import stat
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, image, regionmanager, measures, msmetadata, table, quanta
-    from casatools import ms as mstool
-    from casatasks import casalog
-    from casatasks import flagdata
-    from casatasks import tsdimaging as sdimaging
-    from casatasks import split as split_ms
-    from casatasks.private.sdutil import tool_manager, table_manager, table_selector, is_ms
-    from enum import Enum
 
-    ### for selection_syntax import
-    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    from casatestutils import selection_syntax
-    from casatestutils.testhelper import TableCacheValidator
+from casatools import ctsys, image, regionmanager, measures, msmetadata, table, quanta
+from casatools import ms as mstool
+from casatasks import casalog
+from casatasks import flagdata
+from casatasks import tsdimaging as sdimaging
+from casatasks import split as split_ms
+from casatasks.private.sdutil import tool_manager, table_manager, table_selector, is_ms
+from enum import Enum
 
-    # default isn't used in casatasks
-    def default(atask):
-        pass
+from casatestutils import selection_syntax
+from casatestutils.testhelper import TableCacheValidator
 
-    ctsys_resolve = ctsys.resolve
+ctsys_resolve = ctsys.resolve
 
-    from casatasks.private.task_tsdimaging import image_suffix, weight_suffix
+from casatasks.private.task_tsdimaging import image_suffix, weight_suffix
 
-    from casatestutils import restfreqtool
-
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from taskinit import metool as measures
-    from taskinit import qatool as quanta
-    from taskinit import tbtool as table
-    from taskinit import mstool
-    from taskinit import iatool as image
-    from taskinit import rgtool as regionmanager
-    from taskinit import msmdtool as msmetadata
-
-    try:
-        from casatestutils import selection_syntax
-    except:
-        import tests.selection_syntax as selection_syntax
-
-    try:
-        from casatestutils.testhelper import TableCacheValidator
-    except:
-        from tests.testutils import TableCacheValidator
-
-    from tsdimaging import tsdimaging as sdimaging
-    from sdutil import tbmanager as table_manager, toolmanager as tool_manager, table_selector
-
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
-
-    from task_tsdimaging import image_suffix
-
-    try:
-        from casatestutils import restfreqtool
-    except:
-        import restfreqtool
+from casatestutils import restfreqtool
 
 _ia = image()
 _rg = regionmanager()
@@ -610,10 +589,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
                             msg='Unexpected exception was thrown: {0}'.format(str(the_exception)))
 
     def run_parameter_verification_test(self, task_param, expected_msg, expected_type=RuntimeError):
-        if is_CASA6:
-            self.run_exception_case(task_param, expected_msg, expected_type)
-        else:
-            self.assertFalse(sdimaging(**task_param))
+        self.run_exception_case(task_param, expected_msg, expected_type)
 
 ###
 # Test on bad parameter settings
@@ -633,7 +609,6 @@ class sdimaging_test0(sdimaging_unittest_base):
         remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
 
-        default(sdimaging)
         self.task_param = dict(infiles=self.rawfile,mode='channel',
                                outfile=self.outfile,intent='',
                                cell=self.cell,imsize=self.imsize,
@@ -816,8 +791,6 @@ class sdimaging_test1(sdimaging_unittest_base):
                                nchan=self.nchan,start=self.start,
                                width=self.width,
                                minweight=self.minweight0)
-
-        default(sdimaging)
 
     def tearDown(self):
         remove_table(self.rawfile)
@@ -1141,8 +1114,6 @@ class sdimaging_test2(sdimaging_unittest_base):
                                gridfunction=self.gridfunction,
                                minweight=self.minweight0)
 
-        default(sdimaging)
-
     def tearDown(self):
         remove_table(self.rawfile)
         remove_tables_starting_with(self.prefix)
@@ -1276,8 +1247,6 @@ class sdimaging_test3(sdimaging_unittest_base):
                                gridfunction=self.gridfunction,
                                minweight=self.minweight0)
 
-        default(sdimaging)
-
     def tearDown(self):
         remove_table(self.rawfile)
         remove_tables_starting_with(self.prefix)
@@ -1404,8 +1373,6 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         self.task_param = dict(infiles=self.rawfile,outfile=self.outfile,
                                intent="",nchan=self.nchan,start=self.start,
                                width=self.width,minweight=self.minweight0)
-
-        default(sdimaging)
 
     def tearDown(self):
         remove_table(self.rawfile)
@@ -1656,7 +1623,6 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
                                phasecenter=self.phasecenter_auto,
                                cell=self.cell_auto,imsize=self.imsize_auto)
 
-        default(sdimaging)
         remove_tables_starting_with(self.prefix)
 
     def tearDown(self):
@@ -2542,7 +2508,6 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
         remove_table(self.outfile)
-        default(sdimaging)
         with table_manager(self.rawfile) as tb:
             self.nchan = len(tb.getcell('DATA', 0)[0])
 
@@ -2749,8 +2714,6 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         # flag ALL POL='XX'
         flagdata(vis=self.infiles,mode='manual',correlation='XX',action='apply')
 
-        default(sdimaging)
-
     def tearDown(self):
         remove_table(self.infiles)
         # Since the data is flagged by flagdata, flagversions directory
@@ -2885,7 +2848,6 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
             remove_table(name)
             shutil.copytree(os.path.join(self.datapath, self.org_ms), name)
 
-        default(sdimaging)
         self.default_param = dict(infiles = self.infiles,
                                   outfile = self.outfile,
                                   intent="",
@@ -2994,7 +2956,6 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
 
         remove_table(self.infiles)
         shutil.copytree(os.path.join(self.datapath, self.infiles), self.infiles)
-        default(sdimaging)
         self.param = self.param_base.copy()
 
     def tearDown(self):
@@ -3102,17 +3063,10 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         cell_ref = refs['cell']
         stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
                                           [7 , 7 ,  0,  9])
-        if is_CASA6:
-            with self.assertRaises(AssertionError):
-                self.run_test(restfreq, beam_ref, cell_ref, stats,
+        with self.assertRaises(AssertionError):
+            self.run_test(restfreq, beam_ref, cell_ref, stats,
                               restfreq=restfreq,imsize=[8,8], outframe='lSrK')
-            print('test_unallowed_outframe: failed as expected')
-        else:
-            self.assertFalse(
-                self.run_test(restfreq, beam_ref, cell_ref, stats,
-                              restfreq=restfreq,imsize=[8,8], outframe='lSrK')
-            )
-
+        print('test_unallowed_outframe: failed as expected')
 
 ###
 #
@@ -3159,7 +3113,6 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
-        default(sdimaging)
         self.param = self.param_base.copy()
 
     def tearDown(self):
@@ -3318,7 +3271,6 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
-        default(sdimaging)
         self.param = self.param_base.copy()
         self.__copy_table(self.infiles)
 
@@ -3488,7 +3440,6 @@ class sdimaging_test_interp(sdimaging_unittest_base):
 
         self.infiles = []
         self.outfiles = []
-        default(sdimaging)
 
     def tearDown(self):
         for infile in self.infiles:
@@ -3632,7 +3583,6 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
 
         for infile in self.params['infiles']:
             self.__copy_table(infile)
-        default(sdimaging)
 
     def tearDown(self):
         for infile in self.params['infiles']:
@@ -3709,8 +3659,6 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
     outfile_ref = 'sdimaging_test_clipping.ref.im'
     def setUp(self):
         self.cache_validator = TableCacheValidator()
-
-        default(sdimaging)
 
         # clear up test data
         self.__clear_up()
@@ -3973,7 +3921,6 @@ class sdimaging_test_projection(sdimaging_unittest_base):
                                phasecenter=self.phasecenter,
                                gridfunction=self.gridfunction)
 
-        default(sdimaging)
 
     def tearDown(self):
         remove_table(self.rawfile)
@@ -4141,7 +4088,6 @@ class sdimaging_test_output(sdimaging_unittest_base):
 
         for infile in self.params['infiles']:
             self.__copy_table(infile)
-        default(sdimaging)
 
     def tearDown(self):
         for infile in self.params['infiles']:
@@ -4295,28 +4241,5 @@ def calc_mapproperty(statistics):
     return {'extent': numpy.array([dra, ddec]), 'npix': npix,
             'blc': numpy.array([blcra, blcdec]), 'trc': numpy.array([trcra, trcdec])}
 
-def suite():
-    return [
-            sdimaging_test0,
-            sdimaging_test1,
-            sdimaging_test2,
-            sdimaging_test3,
-            sdimaging_test_autocoord,
-            sdimaging_test_selection,
-            sdimaging_test_flag,
-            sdimaging_test_polflag,
-            sdimaging_test_mslist,
-            sdimaging_test_restfreq,
-            sdimaging_test_mapextent,
-            sdimaging_test_ephemeris,
-            sdimaging_test_interp,
-            sdimaging_test_clipping,
-            sdimaging_test_projection,
-            sdimaging_test_output,
-            sdimaging_antenna_move
-            ]
-
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

@@ -1,6 +1,8 @@
-#############################################
-# Copyright (C) 2008, 2009
-# Associated Universities, Inc. Washington DC, USA.
+########################################################################
+# test_task_specsmooth.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
 #
 # This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
@@ -12,32 +14,13 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+# [Add the link to the JIRA ticket here once it exists]
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.specsmooth.html
 #
-# <author>
-# Dave Mehringer
-# </author>
 #
-# <summary>
-# Test suite for the CASA task specsmooth
-# </summary>
-#
-# <motivation>
-# To provide a test standard for the specsmooth task to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
-
-###########################################################################
+##########################################################################
 import os
 import shutil
 import unittest
@@ -147,9 +130,6 @@ class specsmooth_test(unittest.TestCase):
         self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")
         teststr = "specsmooth"
         self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
- 
-def suite():
-    return [specsmooth_test]
 
 if __name__ == '__main__':
     unittest.main()

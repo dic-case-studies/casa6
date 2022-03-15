@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_uvmodelfit.py
+# test_task_uvmodelfit.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -17,36 +17,23 @@
 # [Add the link to the JIRA ticket here once it exists]
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_uvmodelfit/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.manipulation.uvmodelfit.html
 #
 #
 ##########################################################################
-
-CASA6 = False
-try:
-    import casatools
-    from casatasks import uvmodelfit, casalog
-    tb = casatools.table()
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
 import sys
 import os
 import unittest
 import shutil
 import numpy as np
 
+import casatools
+from casatasks import uvmodelfit, casalog
+tb = casatools.table()
+
 ### DATA ###
-
-if CASA6:
-    datapath = casatools.ctsys.resolve('unittest/uvmodelfit/Itziar.ms/')
-    spwpath = casatools.ctsys.resolve('unittest/uvmodelfit/ngc7538_ut.ms/')
-
-else:
-    datapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/uvmodelfit/Itziar.ms/'
-    spwpath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/uvmodelfit/ngc7538_ut.ms/'
+datapath = casatools.ctsys.resolve('unittest/uvmodelfit/Itziar.ms/')
+spwpath = casatools.ctsys.resolve('unittest/uvmodelfit/ngc7538_ut.ms/')
         
 datacopy = 'test.ms'
 spwcopy = 'testspw.ms'
@@ -83,9 +70,6 @@ class uvmodelfit_test(unittest.TestCase):
 
     
     def setUp(self):
-        if not CASA6:
-            default(uvmodelfit)
-            
         makecopy()
     
     def tearDown(self):
@@ -327,11 +311,6 @@ class uvmodelfit_test(unittest.TestCase):
         uvmodelfit(vis=datacopy, field='1', outfile='test1.cl')
         
         self.assertTrue(os.path.exists('test1.cl'))
-        
-    
-    
-def suite():
-    return[uvmodelfit_test]
 
 if __name__ == '__main__':
     unittest.main()

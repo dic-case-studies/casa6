@@ -1,4 +1,5 @@
-#test_req_task_simanalyze.py
+##########################################################################
+# test_task_simanalyze.py
 #
 # Copyright (C) 2020
 # Associated Universities, Inc. Washington DC, USA.
@@ -16,54 +17,30 @@
 # https://open-jira.nrao.edu/browse/CAS-3669
 #
 # Based on the requirements listed in plone found here:
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_simanalyze/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.simulation.simanalyze.html
 #
 # Test case: requirement
 #
 ##########################################################################
- 
- 
-####    Imports     ####
 import os
 import unittest
 import shutil
 
-try:
-    from casatasks.private.casa_transition import is_CASA6
-except ImportError:
-    is_CASA6 = False
+from casatools import ctsys, image, coordsys, componentlist, quanta
+ia = image()
+cs = coordsys()
+cl = componentlist()
+qa = quanta()
+from casatasks import tclean, simobserve, simanalyze, casalog
 
-if is_CASA6:
-    from casatools import ctsys, image, coordsys, componentlist, quanta
-    ia = image()
-    cs = coordsys()
-    cl = componentlist()
-    qa = quanta()
-    from casatasks import tclean, simobserve, simanalyze, casalog
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
- 
 # DATA #
-if is_CASA6:
-    ctsys_resolve = ctsys.resolve
-    configpath_int      = ctsys_resolve('alma/simmos/vla.a.cfg')
-    imagepath_int       = ctsys_resolve('nrao/VLA/CalModels/3C286_Q.im/')
-    configpath_both_int = ctsys_resolve('alma/simmos/aca.cycle7.cfg')
-    configpath_sd       = ctsys_resolve('alma/simmos/aca.tp.cfg')
-else:
-    dataroot = os.environ.get('CASAPATH').split()[0]
-    configpath_int      = os.path.join(dataroot, 'data/alma/simmos/vla.a.cfg')
-    imagepath_int       = os.path.join(dataroot, 'data/nrao/VLA/CalModels/3C286_Q.im/')
-    configpath_both_int = os.path.join(dataroot, 'data/alma/simmos/aca.cycle7.cfg')
-    configpath_sd       = os.path.join(dataroot, 'data/alma/simmos/aca.tp.cfg')
-    def ctsys_resolve(apath):
-        dataPath = os.path.join(os.environ['CASAPATH'].split()[0],'casatestdata/')
-        return os.path.join(dataPath,apath)
+configpath_int      = ctsys.resolve('alma/simmos/vla.a.cfg')
+imagepath_int       = ctsys.resolve('nrao/VLA/CalModels/3C286_Q.im/')
+configpath_both_int = ctsys.resolve('alma/simmos/aca.cycle7.cfg')
+configpath_sd       = ctsys.resolve('alma/simmos/aca.tp.cfg')
     
 # Path to MS data
-mspath_sd = ctsys_resolve('unittest/simanalyze/refim_twopoints_twochan.ms')
+mspath_sd = ctsys.resolve('unittest/simanalyze/refim_twopoints_twochan.ms')
 
 logpath = casalog.logfile()
 
@@ -79,11 +56,6 @@ both_model_image_sd = both_component_list[:-3]+'_rebin.im'
 class simanalyze_main_usage_modes_test_int(unittest.TestCase):
 
     def setUp(self):
-        if not is_CASA6: # needs similar branch condition for casalith
-            default(simanalyze)
-            default(simobserve)
-            default(tclean)
-
         simobserve(project=int_project, skymodel=imagepath_int, complist='', setpointings=True, direction=[], 
                    mapsize='', maptype='square', pointingspacing='',caldirection='',calflux='1Jy',obsmode='int', 
                    refdate='2020/02/13', hourangle='transit', totaltime='100s', antennalist=configpath_int,
@@ -158,11 +130,6 @@ class simanalyze_main_usage_modes_test_sd(unittest.TestCase):
 
     def setUp(self):
         """Executes simobserve to create expected directory structure. Minimally, f"{project}/{project}.{suffix}" where suffix in ['skymodel','newmodel','compskymodel']."""
-        if not is_CASA6: # needs similar branch condition for casalith
-            default(simobserve)
-            default(tclean)
-            default(simanalyze)
-
         # create reference image > 2.5*PB to use for SD sim
         tclean(vis=mspath_sd, imagename=imagepath_sd.split('.')[0],
                specmode='cube',nchan=1,imsize=750,cell='20arcsec',niter=100,
@@ -236,11 +203,6 @@ class simanalyze_main_usage_modes_test_both(unittest.TestCase):
 
     def setUp(self):
         """Executes simobserve to create expected directory structure. Minimally, f"{project}/{project}.{suffix}" where suffix in ['skymodel','newmodel','compskymodel']."""
-        if not is_CASA6:
-            default(simobserve)
-            default(tclean)
-            default(simanalyze)
-
         ## create image to serve as skymodel inputs to reference simulations
         # build a point source component and convert to image
         cl.done()
@@ -364,12 +326,7 @@ class simanalyze_main_usage_modes_test_both(unittest.TestCase):
              os.path.isdir(both_project+'/'+both_project+'.sd.image0.weight'))
         # perhaps we should check for feather as well...?
         b = True # Expected value
-        self.assertEqual(a,b) 
-
-####    Suite: Required for CASA5     ####
-
-def suite():
-    return[simanalyze_main_usage_modes_test_int, simanalyze_main_usage_modes_test_sd, simanalyze_main_usage_modes_test_both]
+        self.assertEqual(a,b)
   
 ####    Main     ####
 if __name__ == '__main__':

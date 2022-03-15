@@ -1,8 +1,8 @@
-##########################################################################
-# imfit_test.py
+#########################################################################
+# test_task_spxfit.py
 #
-# Copyright (C) 2008, 2009
-# Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
 #
 # This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
@@ -14,60 +14,13 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+# [Add the link to the JIRA ticket here once it exists]
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.analysis.spxfit.html
 #
-# <author>
-# Dave Mehringer
-# </author>
 #
-# <summary>
-# Test suite for the CASA task spxfit and tool method ia.fitprofile
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-#   <li> <linkto class="task_specfit.py:description">spxfit</linkto>
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# Test for the spxfit task and ia.fitprofile() tool method.
-# </etymology>
-#
-# <synopsis>
-# Test the spxfit task and the ia.fitprofile() method upon which it is built.
-# </synopsis>
-#
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line in casa 5 via eg
-#
-# `echo $CASAPATH/bin/casa | sed -e 's$ $/$'` --nologger --log2term -c `echo $CASAPATH | awk '{print $1}'`/code/xmlcasa/scripts/regressions/admin/runUnitTest.py test_spxfit[test1,test2,...]
-#
-# in casa 6 you can run the test using python or the casa command and point to the test source script
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard for the spxfit task to ensure
-# coding changes do not break the associated bits
-# </motivation>
-#
-
-###########################################################################
+##########################################################################
 import shutil
 import unittest
 import numpy

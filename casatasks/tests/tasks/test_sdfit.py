@@ -1,5 +1,26 @@
-from __future__ import absolute_import
-from __future__ import print_function
+########################################################################
+# test_task_sdfit.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.sdfit.html
+#
+#
+##########################################################################
 import os
 import copy
 import glob
@@ -10,41 +31,13 @@ from numpy import array
 #import listing
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, table, ms
-    from casatasks import sdfit, flagdata
-    from casatasks.private.sdutil import table_manager
+from casatools import ctsys, table, ms
+from casatasks import sdfit, flagdata
+from casatasks.private.sdutil import table_manager
 
-    ### for selection_syntax import
-    #sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-    from casatestutils import selection_syntax
+tb = table()
 
-    tb = table()
-
-    ctsys_resolve = ctsys.resolve
-
-    # default is not used in casatasks
-    def default(atask):
-        pass
-else:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-
-    from sdfit import sdfit
-    from sdutil import tbmanager as table_manager
-
-    try:
-        from . import selection_syntax
-    except:
-        import tests.selection_syntax as selection_syntax
-
-    # the global tb tool is used here
-
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(apath):
-        return os.path.join(dataRoot,apath)
+ctsys_resolve = ctsys.resolve
 
 ### Utilities for reading blparam file
 class FileReader(object):
@@ -630,7 +623,6 @@ class sdfit_basicTest(sdfit_unittest_base):
             if os.path.exists(infile):
                 shutil.rmtree(infile)
             shutil.copytree(os.path.join(self.datapath,infile), infile)
-        default(sdfit)
 
     def tearDown(self):
         for infile in self.infiles:
@@ -881,7 +873,6 @@ class sdfit_selection(sdfit_unittest_base,unittest.TestCase):
     def setUp(self):
         self._remove(self.templist)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
-        default(sdfit)
 
     def tearDown(self):
         self._remove(self.templist)
@@ -1030,7 +1021,6 @@ class sdfit_auto(sdfit_unittest_base,unittest.TestCase):
     def setUp(self):
         self._remove([self.infile])
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
-        default(sdfit)
 
     def tearDown(self):
         self._remove([self.infile, self.infile + '.flagversions'])
@@ -1161,7 +1151,6 @@ class sdfit_timeaverage(sdfit_unittest_base,unittest.TestCase):
     def setUp(self):
         self._remove([self.infile])
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
-        default(sdfit)
 
     def tearDown(self):
         self._remove([self.infile, self.outfile])
@@ -1259,10 +1248,7 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
             shutil.rmtree(self.infile)
 
     def edit_weight(self):
-        if is_CASA6:
-            mytb = table( )
-        else:
-            (mytb,) = gentools(['tb'])
+        mytb = table( )
         mytb.open(self.infile, nomodify=False)
         try:
             print('Editing weight')
@@ -1305,11 +1291,8 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         if mode == 'default' or mode == 'stokes':
             scaled /= 2.0
         elif mode == 'geometric':
-            if is_CASA6:
-                myms = ms()
-                mytb = table()
-            else:
-                (myms, mytb,) = gentools(['ms', 'tb'])
+            myms = ms()
+            mytb = table()
 
             sel = myms.msseltoindex(vis=self.infile, spw='0')
             ddid = sel['dd'][0]
@@ -1432,14 +1415,5 @@ class sdfit_polaverage(sdfit_unittest_base,unittest.TestCase):
         self.edit_meta()
         self.run_test2(mode='geometric')
 
-def suite():
-    return [sdfit_basicTest,
-            sdfit_selection,
-            sdfit_auto,
-            sdfit_timeaverage,
-            sdfit_polaverage
-           ]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

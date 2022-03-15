@@ -1,8 +1,8 @@
-##########################################################################
-# imfit_test.py
+########################################################################
+# test_task_slsearch.py
 #
-# Copyright (C) 2008, 2009
-# Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
 #
 # This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
@@ -14,76 +14,19 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
-# You should have received a copy of the GNU Library General Public License
-# along with this library; if not, write to the Free Software Foundation,
-# Inc., 675 Massachusetts Ave, Cambridge, MA 02139, USA.
+# [Add the link to the JIRA ticket here once it exists]
 #
-# Correspondence concerning AIPS++ should be adressed as follows:
-#        Internet email: aips2-request@nrao.edu.
-#        Postal address: AIPS++ Project Office
-#                        National Radio Astronomy Observatory
-#                        520 Edgemont Road
-#                        Charlottesville, VA 22903-2475 USA
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.information.slsearch.html
 #
-# <author>
-# Dave Mehringer
-# </author>
 #
-# <summary>
-# Test suite for the CASA task slsearch
-# </summary>
-#
-# <reviewed reviwer="" date="" tests="" demos="">
-# </reviewed
-#
-# <prerequisite>
-# <ul>
-#   <li> <linkto class="task_slsearch.py:description">slsearch</linkto> 
-# </ul>
-# </prerequisite>
-#
-# <etymology>
-# Test for the slsearch task
-# </etymology>
-#
-# <synopsis>
-# Test the slsearch task and the sl.search() method upon which it is built.
-# </synopsis> 
-#
-# <example>
-#
-# This test runs as part of the CASA python unit test suite and can be run from
-# the command line via eg
-# 
-# casa --nogui --log2term -c runUnitTest.py test_slsearch
-#
-# </example>
-#
-# <motivation>
-# To provide a test standard for the slsearch task to ensure
-# coding changes do not break the associated bits 
-# </motivation>
-#
-
-###########################################################################
-from __future__ import absolute_import
+##########################################################################
 import os
 import shutil
 import unittest
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import ctsys, spectralline, table
-    from casatasks import slsearch, casalog
-else:
-    import casac
-    from tasks import *
-    from taskinit import *
-    from taskinit import sltool as spectralline
-    from taskinit import tbtool as table
-    from __main__ import *
-    from casa_stack_manip import stack_frame_find
-    casa_stack_rethrow = stack_frame_find().get('__rethrow_casa_exceptions', False)
+from casatools import ctsys, spectralline, table
+from casatasks import slsearch, casalog
 
 good_table = "biglist.tbl"
 
@@ -120,8 +63,7 @@ def run_slsearch(
     eu, rrlinclude, rrlonly, verbose, logfile,
     append
 ):
-    if not is_CASA6:
-        default(slsearch)
+
     return slsearch(
         tablename=tab, outfile=outfile, freqrange=freqrange,
         species=species, reconly=reconly,
@@ -178,10 +120,7 @@ class slsearch_test(unittest.TestCase):
 
     
     def setUp(self):
-        if is_CASA6:
-            datapath=ctsys.resolve('unittest/slsearch/')
-        else:
-            datapath=os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/unittest/slsearch/')
+        datapath=ctsys.resolve('unittest/slsearch/')
         shutil.copytree(os.path.join(datapath,good_table), good_table)
 
     def tearDown(self):
@@ -225,23 +164,14 @@ class slsearch_test(unittest.TestCase):
                     self.assertTrue(len(_tb.showcache()) == 0)
                 else:
                     # CASA6 slsearch raises an exception, CASA5 returns None
-                    if is_CASA6 or casa_stack_rethrow:
-                        self.assertRaises(
+                    self.assertRaises(
                             Exception, run_slsearch,
                             tab, outfile, freqrange, species,
                             reconly, chemnames, qns, intensity,
                             smu2, loga, el, eu, rrlinclude, rrlonly,
                             verbose, logfile, append
-                        )
-                    else:
-                        self.assertEqual(
-                            run_slsearch(
-                                tab, outfile, freqrange, species,
-                                reconly, chemnames, qns, intensity,
-                                smu2, loga, el, eu, rrlinclude, rrlonly,
-                                verbose, logfile, append
-                            ), None
-                        )
+                    )
+
                     # either way, no tables should be open
                     self.assertTrue(len(_tb.showcache()) == 0)
 
@@ -543,10 +473,5 @@ class slsearch_test(unittest.TestCase):
         self.assertEqual(num_lines, 3*5822)
         os.remove(logfile)
 
-
-def suite():
-    return [slsearch_test]
-
-if is_CASA6:
-    if __name__ == '__main__':
-        unittest.main()
+if __name__ == '__main__':
+    unittest.main()

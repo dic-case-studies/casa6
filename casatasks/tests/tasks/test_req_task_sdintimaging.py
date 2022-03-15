@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_sdintimaging.py
+# test_task_sdintimaging.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -20,7 +20,7 @@
 # https://open-jira.nrao.edu/browse/CAS-12898
 #
 # Based on the requirements listed in plone found here (TBD):
-# https://casa.nrao.edu/casadocs-devel/stable/global-task-list/task_sdintimaging/about
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.imaging.sdintimaging.html
 #
 #
 ##########################################################################
@@ -93,61 +93,26 @@
 #testname: test_intonly_mfs_compare_with_tclean
 #
 ###########################################################################
-
-####    Imports     ####
 import os
 import sys
 import unittest
 #import casaTestHelper as th
 import shutil
 import numpy as np
-from casatestutils.imagerhelpers import TestHelpers 
 import inspect
 
-CASA6 = False
-try: 
-    from casatools import ctsys
-    from casatasks import casalog, sdintimaging, flagdata, tclean
-    from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
-    from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-    sys.path.append(os.path.abspath(os.path.basename(__file__)))
-    #from testhelper_imager import TestHelpers
-
-     #refdatapath = '/export/home/murasame2/casadev/imagerRefact/sdint/orig_scripts/WidebandSDINT/Data'
-    CASA6 = True
-except ImportError:
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from parallel.parallel_task_helper import ParallelTaskHelper
-    from imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
-    #from imagerhelpers.testhelper_imager import TestHelpers
+from casatools import ctsys
+from casatasks import casalog, sdintimaging, flagdata, tclean
+from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
+from casatasks.private.imagerhelpers.parallel_imager_helper import PyParallelImagerHelper
+from casatestutils.imagerhelpers import TestHelpers
 
 th = TestHelpers()
 
-if CASA6:
-    #refdatapath = ctsys.resolve('regression/unittest/sdintimaging')
-
-    visdatapath = ctsys.resolve('unittest/sdintimaging/')
-    imdatapath = ctsys.resolve('unittest/sdintimaging/')
-    maskdatapath = ctsys.resolve('unittest/sdintimaging/') 
-    refdatapath = ctsys.resolve('unittest/tclean/')
-else:
-    visdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdintimaging/'
-    imdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdintimaging/'
-    maskdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/sdintimaging/'
-    refdatapath = os.environ.get('CASAPATH').split()[0] + '/casatestdata/unittest/tclean/'
-    
-    #if os.path.exists(os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req'):
-    #    refdatapath = os.environ.get('CASAPATH').split()[0] + '/data/casa-data-req/visibilities/evla/'
-    #else:
-    #    refdatapath = os.environ.get('CASAPATH').split()[0] + '/casa-data-req/visibilities/evla/'
-
-    #For local testing
-    #visdatapath = '/home/vega/rurvashi/TestCASA/VerificationTests/WBSDINT/Data/'
-    #imdatapath = '/home/vega/rurvashi/TestCASA/VerificationTests/WBSDINT/Data/'
-    #maskdatapath = '/home/vega/rurvashi/TestCASA/VerificationTests/WBSDINT/Data/'
-
+visdatapath = ctsys.resolve('unittest/sdintimaging/')
+imdatapath = ctsys.resolve('unittest/sdintimaging/')
+maskdatapath = ctsys.resolve('unittest/sdintimaging/')
+refdatapath = ctsys.resolve('unittest/tclean/')
 
 class testref_base(unittest.TestCase):
     
@@ -946,11 +911,6 @@ class test_compare_sdint_tclean(testref_base):
                                    (outimname1+'.alpha', -1.06, [100,100,0,0]),
                                    (imname2+'.alpha', -1.06, [100,100,0,0]) ])
         self.checkfinal(pstr=report)
-
-
-
-def suite():
-    return[test_singlepointing,test_mosaic,test_compare_sdint_tclean]
 
 if __name__ == '__main__':
     unittest.main() 
