@@ -1460,12 +1460,14 @@ class TestImbaselineOutputs(test_base):
             if os.path.exists(self.linefile):
                 with tool_manager(self.linefile, image) as ia:
                     chunk = ia.getchunk() * self.mask
+                    self._summary(False, test_name, chunk)
                     self.assertTrue(
-                        np.allclose(chunk, self.expected_output_chunk, atol=0.2)
+                        np.allclose(chunk, self.expected_output_chunk, atol=0.016)
                     )
             if os.path.exists(self.test_image + ".cont"):
                 with tool_manager(self.test_image + ".cont", image) as ia:
                     chunk = ia.getchunk() * self.mask
+                    self._summary(True, test_name, chunk)
                     self.assertTrue(
                         np.allclose(chunk, self.expected_cont_chunk, atol=2.0)
                     )
@@ -1477,6 +1479,13 @@ class TestImbaselineOutputs(test_base):
         TestImbaselineOutputs.test_no += 1
         return test_method
 
+    def _summary(self, is_cont, test_name, chunk):  # temporary method
+        m = re.match(r"test_imbaseline_outputs_([^_]+)_([^_]+)_([^_]+)", test_name)
+        prefix = "cont" if is_cont else "line"
+        print(
+            f"{prefix} blfunc:{m[1]} dirkernel:{m[2]} spkernel:{m[3]}, {np.max(chunk)}, "
+            f"{np.min(chunk)}, {np.average(chunk)}, {np.median(chunk)}"
+        )
 
 # generate test methods of TestImbaselineOutputs dynamically
 TestImbaselineOutputs.generate_tests()
