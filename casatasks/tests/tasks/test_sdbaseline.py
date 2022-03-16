@@ -3203,12 +3203,12 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
 
     def flag(self, infile, edge=None, rowidx=None):
         rowflag = True if edge is None else False
-        if type(rowidx) == int:
+        if isinstance(rowidx, int):
             rowidx = [rowidx]
-        tb.open(infile, nomodify=False)
-        if rowidx is None:
-            rowidx = range(tb.nrows())
-        try:
+
+        with table_manager(infile, nomodify=False) as tb:
+            if rowidx is None:
+                rowidx = range(tb.nrows())
             for idx in rowidx:
                 specs = tb.getcell("FLAG", idx)
                 if rowflag:
@@ -3218,8 +3218,6 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
                     if edge[1] > 0:
                         specs[:, -edge[1]:] = True
                 tb.putcell('FLAG', idx, specs)
-        finally:
-            tb.close()
 
     def run_test(self, refstat, **kwargs):
         task_param = self.base_param.copy()
@@ -3603,7 +3601,6 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
     test050 --- blmode='apply'
     test051 --- blmode='apply', channels 4500~6500 flagged in input data
     test052 --- blmode='apply', spw to flag channels 4500-6499
-
     test060 --- confirm that the clipping result (mask) is correctly used to compute weights
     """
 
