@@ -82,6 +82,10 @@ class test_base(unittest.TestCase):
         aflocal.run(writeflags=True)
         aflocal.done()
 
+    @classmethod
+    def tearDownClass(cls):
+        if os.path.exists('flagdatatest.ms'): os.system('rm -rf flagdatatest.*ms*')
+        if os.path.exists('cal.fewscans.bpass'): os.system('rm -rf cal.fewscans.bpass*')
 
 class test_flagmanager_ms(test_base):
     
@@ -295,16 +299,6 @@ class test_flagmanager_caltables(test_base):
 
         self.assertEqual(flagsdict[0]['name'], newname, 'Dictionary should show new name of flag versions')
         print(flagsdict)
-
-# Cleanup class 
-class cleanup(test_base):
-    
-    def tearDown(self):
-        os.system('rm -rf flagdatatest.*ms*')
-
-    def test_runTest(self):
-        '''flagdata: Cleanup'''
-        pass
 
 if __name__ == '__main__':
     unittest.main()

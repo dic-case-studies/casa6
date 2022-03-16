@@ -83,6 +83,13 @@ class test_base(unittest.TestCase):
             print("Linking to data...")
             os.system('ln -s ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
 
+    @classmethod
+    def tearDownClass(self):
+        # It will ignore errors in case the files don't exist
+        if os.path.exists('Four_ants_3C286.ms'): os.system('rm -rf Four_ants_3C286.ms')
+        os.system('rm -rf pFourants*.mms')
+        os.system('rm -rf ' + 'listpartition*.txt')
+
 class test_MS(test_base):
 
     def setUp(self):
@@ -299,22 +306,6 @@ class test_MMS_mix(test_base):
 
                 # Compare both
                 self.assertEqual(dusize, rear[2], '%s is not equal to %s for %s'%(dusize,rear[2],front[0]))
-
-class listpartition_cleanup(unittest.TestCase):
-
-    def setUp(self):
-        pass
-    
-    def tearDown(self):
-        # It will ignore errors in case the files don't exist
-        
-        os.system('rm -rf Four_ants_3C286.ms')
-        os.system('rm -rf pFourants*.mms')
-        os.system('rm -rf ' + 'listpartition*.txt')
-        
-    def test_run(self):
-        '''listpartition: Cleanup'''
-        pass
     
 if __name__ == '__main__':
     unittest.main()

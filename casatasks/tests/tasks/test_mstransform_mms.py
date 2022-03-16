@@ -19,6 +19,7 @@
 #
 ##########################################################################
 import os
+import shutil
 import unittest
 
 from casatestutils import testhelper as th
@@ -140,6 +141,14 @@ class test_base(unittest.TestCase):
     def cleanup(self):
         os.system('rm -rf '+ self.vis)
 
+    @classmethod
+    def tearDownClass(self):
+        os.system('rm -rf comb*.*ms* reg*.*ms hann*.*ms favg*.*ms')
+        os.system('rm -rf split*.*ms')
+        os.system('rm -rf 3c84scan1*ms* test.mms')
+        if os.path.exists('list1.obs'): os.system('rm -rf list*.obs')
+        if os.path.exists('list2.obs'): os.system('rm -rf list*.obs')
+
 class test_base_compare(test_base):
 
     def setUp(self):
@@ -154,7 +163,7 @@ class test_base_compare(test_base):
         self.sortorder=['OBSERVATION_ID','ARRAY_ID','SCAN_NUMBER','FIELD_ID','DATA_DESC_ID','ANTENNA1','ANTENNA2','TIME']
 
     def tearDown(self):
-        os.system('rm -rf '+ self.vis)
+        os.system('rm -rf '+ self.vis +'*')
         os.system('rm -rf '+ self.outvis)
         os.system('rm -rf '+ self.refvis)
         os.system('rm -rf '+ self.outvis_sorted)
@@ -641,7 +650,7 @@ class test_mms_spw_poln(test_base):
     def tearDown(self):
         os.system('rm -rf ' + self.vis)
         os.system('rm -rf ' + self.outputms)
-        os.system('rm -rf list.obs')
+        os.system('rm -rf *.obs')
 
     def test_mms_spw_selection(self):
         """mstransform: Create MMS and select two spws with different polarization shapes"""
@@ -825,6 +834,10 @@ class test_mms_input(test_base):
     def tearDown(self):
         os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.outputms)
+        shutil.rmtree(self.testmms, ignore_errors=True)
+        if os.path.exists('input_sorted.ms'): os.system('rm -rf input_sorted*')
+        if os.path.exists('output_sorted.ms'): os.system('rm -rf output_sorted*')
+
 
     def test_MMS1(self):
         """mstransform: input MMS should be the same as output MMS"""
@@ -1305,7 +1318,7 @@ class test_no_reindexing(test_base):
 
     def tearDown(self):
         os.system('rm -rf ' + self.previs)
-        os.system('rm -rf ' + self.vis)
+        os.system('rm -rf ' + self.vis +'*')
         os.system('rm -rf ' + self.outvis)
 
     def test_regrid_SPWs_separately_with_no_reindexing(self):
@@ -1321,21 +1334,6 @@ class test_no_reindexing(test_base):
         self.assertEqual(spw_col['r2'][0], 1,'Error, DATA_DESCRIPTION tablehas been re-index')
         self.assertEqual(spw_col['r3'][0], 2,'Error, DATA_DESCRIPTION tablehas been re-index')
         self.assertEqual(spw_col['r4'][0], 3,'Error, DATA_DESCRIPTION tablehas been re-index')
-
-
-# Cleanup class
-class Cleanup(test_base):
-
-    def tearDown(self):
-        os.system('rm -rf ngc5921.*ms* jupiter6cm.demo*')
-        os.system('rm -rf Four_ants_3C286.*ms* g19_d2usb_targets*')
-        os.system('rm -rf comb*.*ms* reg*.*ms hann*.*ms favg*.*ms')
-        os.system('rm -rf split*.*ms')
-        os.system('rm -rf 3c84scan1*ms* test.mms')
-
-    def test_runTest(self):
-        """mstransform: Cleanup"""
-        pass
 
 if __name__ == '__main__':
     unittest.main()

@@ -291,6 +291,8 @@ class test_concat(unittest.TestCase):
             os.system('rm -rf '+ifile)
             shutil.rmtree(ifile,ignore_errors=True)
 
+        if os.path.exists('test19.ms'): shutil.rmtree('test19.ms')
+
     def test1(self):
         '''Concat 1: 4 parts, same sources but different spws'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
@@ -2150,17 +2152,5 @@ class test_concat(unittest.TestCase):
         shutil.rmtree('test20.ms',ignore_errors=True)
         self.assertTrue(retValue['success'])
 
-
-class concat_cleanup(unittest.TestCase):           
-    def setUp(self):
-        pass
-    
-    def tearDown(self):
-        os.system('rm -rf *.ms')
-
-    def testrun(self):
-        '''Concat: Cleanup'''
-        pass
-    
 if __name__ == '__main__':
     unittest.main()

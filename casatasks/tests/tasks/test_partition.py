@@ -132,7 +132,13 @@ class test_base(unittest.TestCase):
     def cleanup(self):
         os.system('rm -rf '+ self.vis)
         os.system('rm -rf '+ self.vis +'.flagversions')
- 
+
+    @classmethod
+    def tearDownClass(self):
+        if os.path.exists('ngc4826.ms'): os.system('rm -rf ngc4826*.*ms*')
+        if os.path.exists('Four_ants_3C286.ms'): os.system('rm -rf Four_ants_3C286.*ms*')
+        if os.path.exists('SDFloatColumn.ms'): shutil.rmtree('SDFloatColumn.ms', ignore_errors=True)
+
 class partition_test1(test_base):
     
     def setUp(self):
@@ -731,7 +737,7 @@ class partition_float(test_base):
 
     def tearDown(self):
         shutil.rmtree(self.mmsfile, ignore_errors=True)        
-        shutil.rmtree(self.mmsfile+'.flagversions', ignore_errors=True) 
+        shutil.rmtree(self.mmsfile+'.flagversions', ignore_errors=True)
 
     def test_split_float(self):
         '''partition: split an MS with FLOAT_DATA'''
@@ -910,7 +916,7 @@ class test_partition_balanced_multiple_scan(test_base):
 
     def tearDown(self):
         os.system("rm -rf " + self.vis)
-        os.system("rm -rf " + self.outputms)
+        os.system("rm -rf " + self.outputms +'*')
 
     def test_partition_balanced_multiple_scan(self):
         partition(self.vis, outputvis=self.outputms, separationaxis='auto', numsubms=2, disableparallel=True)
@@ -942,6 +948,7 @@ class test_partition_baseline_axis(test_base):
         
     def tearDown(self):
         os.system("rm -rf " + self.outputms)
+        os.unlink(self.vis)
 
     def test_baseline1(self):
         '''partition: create an MMS per baseline axis. Use the number of MPI servers'''
@@ -983,17 +990,6 @@ class test_partition_baseline_axis(test_base):
         # Take the dictionary and compare with original MS
         thisdict = listpartition(vis=self.outputms, createdict=True)
         self.assertEqual(len(thisdict.keys()), 3, 'There should be 3 subMSs in output MMS')
- 
-
-# Cleanup class 
-class partition_cleanup(test_base):
-    
-    def tearDown(self):
-        os.system('rm -rf ngc4826*.*ms* Four_ants_3C286.*ms*')
-
-    def test_runTest(self):
-        '''partition: Cleanup'''
-        print('Cleaning up after test_partition')
 
 if __name__ == '__main__':
     unittest.main()

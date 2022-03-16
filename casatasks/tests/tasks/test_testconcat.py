@@ -82,10 +82,10 @@ def checktable(thename, theexpectation):
 # beginning of actual test 
 
 class test_testconcat(unittest.TestCase):
-    
-    def setUp(self):
-        res = None
 
+    @classmethod
+    def setUpClass(cls):
+        cls.myinputlist = []
         cpath = os.path.abspath(os.curdir)
         filespresent = sorted(glob.glob("*.ms"))
         os.chdir(datapath)
@@ -93,13 +93,25 @@ class test_testconcat(unittest.TestCase):
             if not mymsname in filespresent:
                 print("Copying ", mymsname)
                 shutil.copytree(mymsname, cpath+'/'+mymsname)
+                cls.myinputlist.append(mymsname)
         os.chdir(cpath)
-        
+
+    def setUp(self):
+        res = None
+        self.tempname = ''
+
     def tearDown(self):
         shutil.rmtree(msname,ignore_errors=True)
+        if os.path.exists(self.tempname): shutil.rmtree(self.tempname)
+
+    @classmethod
+    def tearDownClass(cls):
+        for ff in cls.myinputlist:
+            shutil.rmtree(ff)
 
     def test1(self):
         '''Testconcat 1: 4 parts, same sources but different spws'''
+        self.tempname = self._testMethodName + '.ms'
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
         
         self.res = testconcat(vis=['part1.ms','part2.ms','part3.ms','part4.ms'],testconcatvis=msname)
@@ -151,9 +163,9 @@ class test_testconcat(unittest.TestCase):
             else:
                 print(myname, ": ", name, "present.")
         print(myname, ": pseudo-MS exists. All tables present.")
-        if 'test1.ms' in glob.glob("*.ms"):
-            shutil.rmtree('test1.ms',ignore_errors=True)
-        shutil.copytree(msname,'test1.ms')
+        if self.tempname in glob.glob("*.ms"):
+            shutil.rmtree(self.tempname,ignore_errors=True)
+        shutil.copytree(msname,self.tempname)
         print(myname, ": OK. Checking tables in detail ...")
         retValue['success']=True
 
@@ -182,6 +194,7 @@ class test_testconcat(unittest.TestCase):
 
     def test2(self):
         '''Testconcat 2: 3 parts, different sources, different spws '''
+        self.tempname = self._testMethodName + '.ms'
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
         self.res = testconcat(vis=['part1.ms','part2-mod.ms','part3.ms'],testconcatvis=msname)
         self.assertEqual(self.res,None)
@@ -233,9 +246,9 @@ class test_testconcat(unittest.TestCase):
                 print(myname, ": ", name, "present.")
         print(myname, ": MS exists. All tables present.")
 
-        if 'test2.ms' in glob.glob("*.ms"):
-            shutil.rmtree('test2.ms',ignore_errors=True)
-        shutil.copytree(msname,'test2.ms')
+        if self.tempname in glob.glob("*.ms"):
+            shutil.rmtree(self.tempname,ignore_errors=True)
+        shutil.copytree(msname,self.tempname)
         print(myname, ": OK. Checking tables in detail ...")
         retValue['success']=True
         
@@ -264,6 +277,7 @@ class test_testconcat(unittest.TestCase):
 
     def test3(self):
         '''Testconcat 3: 3 parts, different sources, same spws'''
+        self.tempname = self._testMethodName + '.ms'
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
         self.res = testconcat(vis=['part1.ms','part2-mod2.ms','part3.ms'],testconcatvis=msname)
         self.assertEqual(self.res,None)
@@ -315,9 +329,9 @@ class test_testconcat(unittest.TestCase):
                 print(myname, ": ", name, "present.")
         print(myname, ": MS exists. All tables present.")
 
-        if 'test3.ms' in glob.glob("*.ms"):
-            shutil.rmtree('test3.ms',ignore_errors=True)
-        shutil.copytree(msname,'test3.ms')
+        if self.tempname in glob.glob("*.ms"):
+            shutil.rmtree(self.tempname,ignore_errors=True)
+        shutil.copytree(msname,self.tempname)
         print(myname, ": OK. Checking tables in detail ...")
         retValue['success']=True
         
@@ -346,6 +360,7 @@ class test_testconcat(unittest.TestCase):
 
     def test4(self):
         '''Testconcat 4: five MSs with identical sources but different time/intervals on them (CSV-268)'''
+        self.tempname = self._testMethodName + '.ms'
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
         self.res = testconcat(vis = ['shortpart1.ms', 'shortpart2.ms', 'shortpart3.ms', 'shortpart4.ms', 'shortpart5.ms'],
@@ -399,9 +414,9 @@ class test_testconcat(unittest.TestCase):
                 print(myname, ": ", name, "present.")
         print(myname, ": MS exists. All tables present.")
 
-        if 'test4.ms' in glob.glob("*.ms"):
-            shutil.rmtree('test4.ms',ignore_errors=True)
-        shutil.copytree(msname,'test4.ms')
+        if self.tempname in glob.glob("*.ms"):
+            shutil.rmtree(self.tempname,ignore_errors=True)
+        shutil.copytree(msname,self.tempname)
         print(myname, ": OK. Checking tables in detail ...")
         retValue['success']=True
         
@@ -470,6 +485,7 @@ class test_testconcat(unittest.TestCase):
         
     def test5(self):
         '''Testconcat 5: two MSs with different state table (CAS-2601)'''
+        self.tempname = self._testMethodName + '.ms'
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
         self.res = testconcat(vis = ['A2256LC2_4.5s-1.ms','A2256LC2_4.5s-2.ms'],
@@ -523,9 +539,9 @@ class test_testconcat(unittest.TestCase):
                 print(myname, ": ", name, "present.")
         print(myname, ": MS exists. All tables present.")
 
-        if 'test5.ms' in glob.glob("*.ms"):
-            shutil.rmtree('test5.ms',ignore_errors=True)
-        shutil.copytree(msname,'test5.ms')
+        if self.tempname in glob.glob("*.ms"):
+            shutil.rmtree(self.tempname,ignore_errors=True)
+        shutil.copytree(msname,self.tempname)
         print(myname, ": OK. Checking tables in detail ...")
         retValue['success']=True        
         
@@ -545,17 +561,6 @@ class test_testconcat(unittest.TestCase):
                 
         self.assertTrue(retValue['success'])
 
-class testconcat_cleanup(unittest.TestCase):           
-    def setUp(self):
-        pass
-    
-    def tearDown(self):
-        os.system('rm -rf *.ms')   
-
-    def testrun(self):
-        '''Testconcat: Cleanup'''
-        pass
-    
 if __name__ == '__main__':
     unittest.main()
 

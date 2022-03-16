@@ -203,6 +203,18 @@ class test_base(unittest.TestCase):
         partition(vis=msfile, outputvis=self.testmms,flagbackup=False, separationaxis=axis, scan=scans, spw=spws, field=fields,
                   numsubms=numms)
 
+    @classmethod
+    def tearDownClass(cls):
+        # It will ignore errors in case files don't exist
+        shutil.rmtree(vis_a,ignore_errors=True)
+        shutil.rmtree(vis_b,ignore_errors=True)
+        shutil.rmtree(vis_c,ignore_errors=True)
+        shutil.rmtree(vis_d,ignore_errors=True)
+        shutil.rmtree(vis_e,ignore_errors=True)
+        shutil.rmtree(vis_f,ignore_errors=True)
+        shutil.rmtree(vis_g,ignore_errors=True)
+        shutil.rmtree('xxx.ms', ignore_errors=True)
+
 class cvel2_test(test_base):
 
     def tearDown(self):
@@ -1518,24 +1530,6 @@ class cvel2_test(test_base):
         self.assertNotEqual(rval,False)
         ret = verify_ms(outfile, 1, 2, 0)
         self.assertTrue(ret[0],ret[1])
-        
-        
-class cleanup(unittest.TestCase):
-    def setUp(self):
-        pass
-    
-    def tearDown(self):
-        # It will ignore errors in case files don't exist
-        shutil.rmtree(vis_a,ignore_errors=True)
-        shutil.rmtree(vis_b,ignore_errors=True)
-        shutil.rmtree(vis_c,ignore_errors=True)
-        shutil.rmtree(vis_d,ignore_errors=True)
-        shutil.rmtree(vis_e,ignore_errors=True)
-        shutil.rmtree(vis_f,ignore_errors=True)
-        
-    def test_cleanup(self):
-        '''cvel2: Cleanup'''
-        pass
-        
+
 if __name__ == '__main__':
     unittest.main()

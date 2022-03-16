@@ -397,6 +397,7 @@ class excludechans2(UVContsubUnitTestBase):
     
     def tearDown(self):
         self.cleanup()
+        if os.path.exists(self.inpms + '.contsub'): shutil.rmtree(self.inpms + '.contsub')
 
     def test_excludechans2(self):
         record = {}

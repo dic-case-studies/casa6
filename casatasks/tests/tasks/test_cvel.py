@@ -131,7 +131,6 @@ class cvel_test(unittest.TestCase):
                              'Jupiter_54708-55437dUTC', 0 )
             _ms.close()
 
-            
         self.assertTrue(os.path.exists(vis_a))
         self.assertTrue(os.path.exists(vis_b))
         self.assertTrue(os.path.exists(vis_c))
@@ -140,11 +139,19 @@ class cvel_test(unittest.TestCase):
         self.assertTrue(os.path.exists(vis_f))
         self.assertTrue(os.path.exists(vis_g))
 
-
     def tearDown(self):
-        os.system('rm -rf cvel-output.ms cvel-output.ms.deselected myinput.ms')   
-        pass
-    
+        os.system('rm -rf cvel-output.ms cvel-output.ms.deselected myinput.ms')
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(vis_a,ignore_errors=True)
+        shutil.rmtree(vis_b,ignore_errors=True)
+        shutil.rmtree(vis_c,ignore_errors=True)
+        shutil.rmtree(vis_d,ignore_errors=True)
+        shutil.rmtree(vis_e,ignore_errors=True)
+        shutil.rmtree(vis_f,ignore_errors=True)
+        shutil.rmtree(vis_g,ignore_errors=True)
+
     def test1(self):
         '''Cvel 1: Testing default - expected error'''
         with self.assertRaises(AssertionError):
@@ -1289,23 +1296,5 @@ class cvel_test(unittest.TestCase):
         except Exception as exc:
             self.fail('Unexpected exception: {}'.format(exc))
 
-
-class cleanup(unittest.TestCase):
-    def setUp(self):
-        pass
-    
-    def tearDown(self):
-        # It will ignore errors in case files don't exist
-        shutil.rmtree(vis_a,ignore_errors=True)
-        shutil.rmtree(vis_b,ignore_errors=True)
-        shutil.rmtree(vis_c,ignore_errors=True)
-        shutil.rmtree(vis_d,ignore_errors=True)
-        shutil.rmtree(vis_e,ignore_errors=True)
-        shutil.rmtree(vis_f,ignore_errors=True)
-        
-    def test_cleanup(self):
-        '''Cvel: Cleanup'''
-        pass
-        
 if __name__ == '__main__':
     unittest.main()
