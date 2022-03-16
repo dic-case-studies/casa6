@@ -37,6 +37,12 @@ _ms = ms( )
 
 myname = 'test_task_virtualconcat'
 
+# name of input MS
+datapath = ctsys.resolve('unittest/virtualconcat/')
+inputmslist = ['A2256LC2_4.5s-1.ms','A2256LC2_4.5s-2.ms','part2-mod2.ms','part2.ms','part4.ms','shortpart2.ms',
+               'shortpart4.ms','sim7.ms','X39a.pm03.scan3.ms','X425.pm04.scan4.ms','A2256LC2_4.5s-2b.ms','part1.ms',
+               'part2-mod.ms','part3.ms','shortpart1.ms','shortpart3.ms','shortpart5.ms','sim8.ms','X425.pm03.scan4.ms']
+
 # name of the resulting MS
 msname = 'concatenated.ms'
 
@@ -88,38 +94,49 @@ def checktable(thename, theexpectation, multims=False):
 # beginning of actual test 
 
 class test_virtualconcat(unittest.TestCase):
-    
+
     def setUp(self):
         global testmms
         res = None
 
-        datapath=ctsys.resolve('unittest/virtualconcat/')
-
         # Pick up alternative data directory to run tests on MMSs
         testmms = False
-        if 'TEST_DATADIR' in os.environ:   
-            testmms = True
-            print("\nTesting on MMSs ...\n")
-            DATADIR = str(os.environ.get('TEST_DATADIR'))
-            if os.path.isdir(DATADIR):
-                datapath = DATADIR+'/concat/input/'
+        #if 'TEST_DATADIR' in os.environ:
+            #testmms = True
+            #print("\nTesting on MMSs ...\n")
+            #DATADIR = str(os.environ.get('TEST_DATADIR'))
+            #if os.path.isdir(DATADIR):
+             #   datapath = DATADIR + '/concat/input/'
 
-        cpath = os.path.abspath(os.curdir)
-        filespresent = sorted(glob.glob("*.ms"))
-        os.chdir(datapath)
-        for mymsname in sorted(glob.glob("*.ms")):
-            if not mymsname in filespresent:
+        for mymsname in inputmslist:
+            # Only copy if the MS doesn't exist in the working directory
+            if not os.path.exists(mymsname):
                 print("Copying ", mymsname)
-                shutil.copytree(mymsname, cpath+'/'+mymsname, True)
-        os.chdir(cpath)
-        
+                inpms = os.path.join(datapath,mymsname)
+                print(inpms)
+                shutil.copytree(inpms,mymsname)
+
     def tearDown(self):
         shutil.rmtree(msname,ignore_errors=True)
+        if os.path.exists(self.tempname): shutil.rmtree(self.tempname)
+
+    @classmethod
+    def tearDownClass(cls):
+        for inpms in inputmslist:
+            if os.path.exists(inpms): shutil.rmtree(inpms)
+
+        if os.path.exists('allparts.ms'): shutil.rmtree('allparts.ms')
+        if os.path.exists('refconcatenated.ms'): shutil.rmtree('refconcatenated.ms')
+
+        if os.path.exists('ms.txt'): os.remove('ms.txt')
+        if os.path.exists('mms.txt'): os.remove('mms.txt')
+        if os.path.exists('diff.txt'): os.remove('diff.txt')
+        if os.path.exists('ms.txt'): os.remove('ms.txt')
 
     def test1(self):
         '''Virtualconcat 1: 4 parts, same sources but different spws'''
+        self.tempname = self._testMethodName + '.ms'
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
-        
         self.res = virtualconcat(vis=['part1.ms','part2.ms','part3.ms','part4.ms'],concatvis=msname)
         self.assertEqual(self.res,None)
 
@@ -133,9 +150,9 @@ class test_virtualconcat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
-            if 'test1.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test1.ms',ignore_errors=True)
-            shutil.copytree(msname,'test1.ms', True)
+            if self.tempname in glob.glob("*.ms"):
+                shutil.rmtree(self.tempname,ignore_errors=True)
+            shutil.copytree(msname,self.tempname, True)
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -166,6 +183,8 @@ class test_virtualconcat(unittest.TestCase):
 
     def test2(self):
         '''Virtualconcat 2: 3 parts, different sources, different spws, visweightscale=[3.,2.,1.], keepcopy=True'''
+        self.tempname = self._testMethodName + '.ms'
+
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         self.res = virtualconcat(vis=['part1.ms','part2-mod.ms','part3.ms'],concatvis=msname, visweightscale=[3.,2.,1.], keepcopy=True)
         self.assertEqual(self.res,None)
@@ -180,9 +199,9 @@ class test_virtualconcat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
-            if 'test2.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test2.ms',ignore_errors=True)
-            shutil.copytree(msname,'test2.ms', True)
+            if self.tempname in glob.glob("*.ms"):
+                shutil.rmtree(self.tempname,ignore_errors=True)
+            shutil.copytree(msname,self.tempname, True)
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -242,6 +261,8 @@ class test_virtualconcat(unittest.TestCase):
 
     def test3(self):
         '''Virtualconcat 3: 3 parts, different sources, same spws'''
+        self.tempname = self._testMethodName + '.ms'
+
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
         self.res = virtualconcat(vis=['part1.ms','part2-mod2.ms','part3.ms'],concatvis=msname)
         self.assertEqual(self.res,None)
@@ -256,9 +277,9 @@ class test_virtualconcat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
-            if 'test3.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test3.ms',ignore_errors=True)
-            shutil.copytree(msname,'test3.ms', True)
+            if self.tempname in glob.glob("*.ms"):
+                shutil.rmtree(self.tempname,ignore_errors=True)
+            shutil.copytree(msname,self.tempname, True)
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -289,6 +310,8 @@ class test_virtualconcat(unittest.TestCase):
 
     def test4(self):
         '''Virtualconcat 4: five MSs with identical sources but different time/intervals on them (CSV-268)'''
+        self.tempname = self._testMethodName + '.ms'
+
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
         self.res = virtualconcat(vis = ['shortpart1.ms', 'shortpart2.ms', 'shortpart3.ms', 'shortpart4.ms', 'shortpart5.ms'],
@@ -305,9 +328,9 @@ class test_virtualconcat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
-            if 'test4.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test4.ms',ignore_errors=True)
-            shutil.copytree(msname,'test4.ms', True)
+            if self.tempname in glob.glob("*.ms"):
+                shutil.rmtree(self.tempname,ignore_errors=True)
+            shutil.copytree(msname,self.tempname, True)
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
         
@@ -376,6 +399,8 @@ class test_virtualconcat(unittest.TestCase):
         
     def test5(self):
         '''Virtualconcat 5: two MSs with different state table (CAS-2601)'''
+        self.tempname = self._testMethodName + '.ms'
+
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
         self.res = virtualconcat(vis = ['A2256LC2_4.5s-1.ms','A2256LC2_4.5s-2.ms'],
@@ -391,9 +416,9 @@ class test_virtualconcat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
-            if 'test5.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test5.ms',ignore_errors=True)
-            shutil.copytree(msname,'test5.ms', True)
+            if self.tempname in glob.glob("*.ms"):
+                shutil.rmtree(self.tempname,ignore_errors=True)
+            shutil.copytree(msname,self.tempname, True)
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
     
@@ -415,6 +440,8 @@ class test_virtualconcat(unittest.TestCase):
 
     def test6(self):
         '''Virtualconcat 6: two MSs with different state table and feed table'''
+        self.tempname = self._testMethodName + '.ms'
+
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
         self.res = virtualconcat(vis = ['A2256LC2_4.5s-1.ms','A2256LC2_4.5s-2b.ms'],
@@ -431,9 +458,9 @@ class test_virtualconcat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
-            if 'test6.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test6.ms',ignore_errors=True)
-            shutil.copytree(msname,'test6.ms', True)
+            if self.tempname in glob.glob("*.ms"):
+                shutil.rmtree(self.tempname,ignore_errors=True)
+            shutil.copytree(msname,self.tempname, True)
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
     
@@ -456,6 +483,8 @@ class test_virtualconcat(unittest.TestCase):
 
     def test7(self):
         '''Virtualconcat 7: two MSs with different antenna table such that baseline label reversal becomes necessary'''
+        self.tempname = self._testMethodName + '.ms'
+
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
         self.res = virtualconcat(vis = ['sim7.ms','sim8.ms'],
@@ -472,14 +501,14 @@ class test_virtualconcat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
-            if 'test7.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test7.ms',ignore_errors=True)
-            shutil.copytree(msname,'test7.ms', True)
+            if self.tempname in glob.glob("*.ms"):
+                shutil.rmtree(self.tempname,ignore_errors=True)
+            shutil.copytree(msname,self.tempname, True)
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
     
             # check Main table
-            tb.open('test7.ms')
+            tb.open(self.tempname)
             ant1 = tb.getcol('ANTENNA1')
             ant2 = tb.getcol('ANTENNA2')
             tb.close()
@@ -500,6 +529,8 @@ class test_virtualconcat(unittest.TestCase):
 
     def test8(self):
         '''Virtualconcat 8: two MSs with different antenna tables, copypointing=False'''
+        self.tempname = self._testMethodName + '.ms'
+
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
         os.system('rm -rf ref'+msname)
@@ -520,9 +551,9 @@ class test_virtualconcat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
-            if 'test8.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test8.ms',ignore_errors=True)
-            shutil.copytree(msname,'test8.ms', True)
+            if self.tempname in glob.glob("*.ms"):
+                shutil.rmtree(self.tempname,ignore_errors=True)
+            shutil.copytree(msname,self.tempname, True)
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
     
@@ -532,7 +563,7 @@ class test_virtualconcat(unittest.TestCase):
             ant2ref = tb.getcol('ANTENNA2')
             tb.close()            
             
-            tb.open('test8.ms')
+            tb.open(self.tempname)
             ant1 = tb.getcol('ANTENNA1')
             ant2 = tb.getcol('ANTENNA2')
             tb.close()
@@ -574,6 +605,8 @@ class test_virtualconcat(unittest.TestCase):
 
     def test9(self):
         '''Virtualconcat 9: 3 parts, different sources, same spws, different scratch columns: no, yes, no'''
+        self.tempname = self._testMethodName + '.ms'
+
         global testmms
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
@@ -605,9 +638,9 @@ class test_virtualconcat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
-            if 'test9.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test9.ms',ignore_errors=True)
-            shutil.copytree(msname,'test9.ms', True)
+            if self.tempname in glob.glob("*.ms"):
+                shutil.rmtree(self.tempname,ignore_errors=True)
+            shutil.copytree(msname,self.tempname, True)
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -637,6 +670,8 @@ class test_virtualconcat(unittest.TestCase):
         
     def test10(self):
         '''Virtualconcat 10: 3 parts, different sources, same spws, different scratch columns: yes, no, no'''
+        self.tempname = self._testMethodName + '.ms'
+
         global testmms
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
@@ -668,9 +703,9 @@ class test_virtualconcat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
-            if 'test10.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test10.ms',ignore_errors=True)
-            shutil.copytree(msname,'test10.ms', True)
+            if self.tempname in glob.glob("*.ms"):
+                shutil.rmtree(self.tempname,ignore_errors=True)
+            shutil.copytree(msname,self.tempname, True)
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
@@ -700,6 +735,8 @@ class test_virtualconcat(unittest.TestCase):
 
     def test11(self):
         '''Virtualconcat 11: comparison to concat'''
+        self.tempname = self._testMethodName + '.ms'
+
         global testmms
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
 
@@ -732,6 +769,8 @@ class test_virtualconcat(unittest.TestCase):
 
     def test12(self):
         '''Virtualconcat 12: two MSs with different antenna tables, copypointing=True (default)'''
+        self.tempname = self._testMethodName + '.ms'
+
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
         
         self.res = virtualconcat(vis = ['sim7.ms','sim8.ms'],
@@ -748,9 +787,9 @@ class test_virtualconcat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
-            if 'test12.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test12.ms',ignore_errors=True)
-            shutil.copytree(msname,'test12.ms', True)
+            if self.tempname in glob.glob("*.ms"):
+                shutil.rmtree(self.tempname,ignore_errors=True)
+            shutil.copytree(msname,self.tempname, True)
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True        
 
@@ -769,6 +808,8 @@ class test_virtualconcat(unittest.TestCase):
 
     def test13(self):
         '''Virtualconcat 13: 3 parts, SD data, one non-concurrent, two concurrent (CAS-5316)'''
+        self.tempname = self._testMethodName + '.ms'
+
         retValue = {'success': True, 'msgs': "", 'error_msgs': '' }    
         self.res = virtualconcat(vis=['X39a.pm03.scan3.ms', 'X425.pm03.scan4.ms', 'X425.pm04.scan4.ms'],concatvis=msname)
         self.assertEqual(self.res, None)
@@ -782,13 +823,13 @@ class test_virtualconcat(unittest.TestCase):
             retValue['error_msgs']=retValue['error_msgs']+'Cannot open MS table '+msname
         else:
             _ms.close()
-            if 'test13.ms' in glob.glob("*.ms"):
-                shutil.rmtree('test13.ms',ignore_errors=True)
-            shutil.copytree(msname,'test13.ms')
+            if self.tempname in glob.glob("*.ms"):
+                shutil.rmtree(self.tempname,ignore_errors=True)
+            shutil.copytree(msname,self.tempname)
             print(myname, ": OK. Checking tables in detail ...")
             retValue['success']=True
 
-            tb.open('test13.ms')
+            tb.open(self.tempname)
             a = tb.getcol('SCAN_NUMBER')
             tb.close()
             if not (a[0]==3 and a[59]==3 and a[60]==4 and a[len(a)-1]==4):
@@ -797,18 +838,5 @@ class test_virtualconcat(unittest.TestCase):
 
         self.assertTrue(retValue['success'])
 
-
-
-class virtualconcat_cleanup(unittest.TestCase):           
-    def setUp(self):
-        pass
-    
-    def tearDown(self):
-        os.system('rm -rf *.ms')
-
-    def testrun(self):
-        '''Virtualconcat: Cleanup'''
-        pass
-    
 if __name__ == '__main__':
     unittest.main()
