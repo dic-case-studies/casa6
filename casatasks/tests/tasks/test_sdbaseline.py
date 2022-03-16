@@ -570,19 +570,19 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
     Basic unit tests for task sdbaseline. No interactive testing.
 
     List of tests:
-    test000 --- default values for all parameters
-    test001 --- polynominal baselining with no mask (maskmode = 'list'). spw and pol specified.
-    test002 --- Chebyshev baselining with no mask (maskmode = 'list'). spw and pol specified.
-    test003 --- cubic spline baselining with no mask (maskmode = 'list'). spw and pol specified.
-    test004 --- sinusoidal baselining with no mask (maskmode = 'list'). spw and pol specified.
-    test050 --- existing file as outfile with overwrite=False (raises an exception)
-    test051 --- no data after selection (raises an exception)
-    test060 --- blparam files should be overwritten when overwrite=True in fit mode
-    test061 --- blparam files should not exist when overwrite=False in fit mode
-    test062 --- blparam files should not be removed in apply mode
-    test070 --- no output MS when dosubtract=False
-    test071 --- dosubtract=False and blformat is empty (raises an exception)
-    test080 --- existent outfile is not overwritten if dosubtract=False
+    test000 : default values for all parameters
+    test001 : polynominal baselining with no mask (maskmode = 'list'). spw and pol specified.
+    test002 : Chebyshev baselining with no mask (maskmode = 'list'). spw and pol specified.
+    test003 : cubic spline baselining with no mask (maskmode = 'list'). spw and pol specified.
+    test004 : sinusoidal baselining with no mask (maskmode = 'list'). spw and pol specified.
+    test050 : existing file as outfile with overwrite=False (raises an exception)
+    test051 : no data after selection (raises an exception)
+    test060 : blparam files should be overwritten when overwrite=True in fit mode
+    test061 : blparam files should not exist when overwrite=False in fit mode
+    test062 : blparam files should not be removed in apply mode
+    test070 : no output MS when dosubtract=False
+    test071 : dosubtract=False and blformat is empty (raises an exception)
+    test080 : existent outfile is not overwritten if dosubtract=False
 
     Note: The input data 'OrionS_rawACSmod_calave.ms' is generated
           from a single dish regression data 'OrionS_rawACSmod' as follows:
@@ -1004,8 +1004,8 @@ class sdbaseline_maskTest(sdbaseline_unittest_base):
     Tests for various mask selections. No interactive testing.
 
     List of tests:
-    test100 --- with masked ranges at the edges of spectrum. blfunc is cspline.
-    test101 --- with masked ranges not touching spectrum edge
+    test100 : with masked ranges at the edges of spectrum. blfunc is cspline.
+    test101 : with masked ranges not touching spectrum edge
 
     Note: input data is generated from a single dish regression data,
     'OrionS_rawACSmod', as follows:
@@ -1125,72 +1125,72 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
     Tests for sinusoidal baseline fitting. No interactive testing.
 
     List of tests:
-    test000 --- addwn as integer
-    test001 --- addwn as list of an integer
-    test002 --- addwn as list of integers
-    test003 --- addwn as tuple of an integer
-    test004 --- addwn as tuple of integers
-    test005 --- addwn as string (single wave number)
-    test006 --- addwn as string (comma-separated wave numbers)
-    test007 --- addwn as string (wave number range specified with '-')
-    test008 --- addwn as string (wave number range specified with '~')
-    test009 --- addwn as string (less or equal pattern 1)
-    test010 --- addwn as string (less or equal pattern 2)
-    test011 --- addwn as string (less or equal pattern 3)
-    test012 --- addwn as string (less or equal pattern 4)
-    test013 --- addwn as string (less pattern 1)
-    test014 --- addwn as string (less pattern 2)
-    test015 --- addwn as string (greater or equal pattern 1)
-    test016 --- addwn as string (greater or equal pattern 2)
-    test017 --- addwn as string (greater or equal pattern 3)
-    test018 --- addwn as string (greater or equal pattern 4)
-    test019 --- addwn as string (greater pattern 1)
-    test020 --- addwn as string (greater pattern 2)
-    test021 --- specify fftthresh by 'sigma' + checking residual rms
-    test022 --- specify fftthresh by 'top' + checking residual rms
-    test023 --- sinusoid-related parameters with default values
-    test024 --- addwn has too large value but rejwn removes it
+    test000 : addwn as integer
+    test001 : addwn as list of an integer
+    test002 : addwn as list of integers
+    test003 : addwn as tuple of an integer
+    test004 : addwn as tuple of integers
+    test005 : addwn as string (single wave number)
+    test006 : addwn as string (comma-separated wave numbers)
+    test007 : addwn as string (wave number range specified with '-')
+    test008 : addwn as string (wave number range specified with '~')
+    test009 : addwn as string (less or equal pattern 1)
+    test010 : addwn as string (less or equal pattern 2)
+    test011 : addwn as string (less or equal pattern 3)
+    test012 : addwn as string (less or equal pattern 4)
+    test013 : addwn as string (less pattern 1)
+    test014 : addwn as string (less pattern 2)
+    test015 : addwn as string (greater or equal pattern 1)
+    test016 : addwn as string (greater or equal pattern 2)
+    test017 : addwn as string (greater or equal pattern 3)
+    test018 : addwn as string (greater or equal pattern 4)
+    test019 : addwn as string (greater pattern 1)
+    test020 : addwn as string (greater pattern 2)
+    test021 : specify fftthresh by 'sigma' + checking residual rms
+    test022 : specify fftthresh by 'top' + checking residual rms
+    test023 : sinusoid-related parameters with default values
+    test024 : addwn has too large value but rejwn removes it
 
-    test021_uppercase_params --- specify fftthresh by 'SIGMA' + checking residual rms
-    test022_uppercase_params --- specify fftthresh by 'TOP' + checking residual rms
-    test025_uppercase_params --- specify fftmethod by 'FFT'
+    test021_uppercase_params : specify fftthresh by 'SIGMA' + checking residual rms
+    test022_uppercase_params : specify fftthresh by 'TOP' + checking residual rms
+    test025_uppercase_params : specify fftmethod by 'FFT'
 
-    test100 --- no effective wave number set (addwn empty list, applyfft=False)
-    test101 --- no effective wave number set (addwn empty list, applyfft=True)
-    test102 --- no effective wave number set (addwn empty tuple, applyfft=False)
-    test103 --- no effective wave number set (addwn empty tuple, applyfft=True)
-    test104 --- no effective wave number set (addwn empty string, applyfft=False)
-    test105 --- no effective wave number set (addwn empty string, applyfft=True)
-    test106 --- no effective wave number set (addwn and rejwn identical, applyfft=False)
-    test107 --- no effective wave number set (addwn and rejwn identical, applyfft=True)
-    test108 --- no effective case (rejwn covers wider range than that of addwn, applyfft=False)
-    test109 --- no effective case (rejwn covers wider range than that of addwn, applyfft=True)
-    test110 --- wn range greater than upper limit
-    test111 --- explicitly specify wn (greater than upper limit)
-    test112 --- explicitly specify wn (negative)
-    test113 --- explicitly specify wn (addwn has negative and greater than upper limit)
-    test114 --- explicitly specify wn (both addwn/rejwn have negative and greater than upper limit)
-    test115 --- wrong fftthresh (as list)
-    test116 --- wrong fftthresh (as string 'asigma')
-    test117 --- wrong fftthresh (as string 'topa')
-    test118 --- wrong fftthresh (as string 'top3sigma')
-    test119 --- wrong fftthresh (as string 'a123')
-    test120 --- wrong fftthresh (as string '')
-    test121 --- wrong fftthresh (as string '-3.0')
-    test122 --- wrong fftthresh (as string '0.0')
-    test123 --- wrong fftthresh (as string '-3')
-    test124 --- wrong fftthresh (as string '0')
-    test125 --- wrong fftthresh (as string '-3.0sigma')
-    test126 --- wrong fftthresh (as string '0.0sigma')
-    test127 --- wrong fftthresh (as string '-3sigma')
-    test128 --- wrong fftthresh (as string '0sigma')
-    test129 --- wrong fftthresh (as string 'top-3')
-    test130 --- wrong fftthresh (as string 'top0')
-    test131 --- wrong fftthresh (as string 'top1.5')
-    test132 --- wrong fftthresh (as float -3.0)
-    test133 --- wrong fftthresh (as float 0.0)
-    test134 --- wrong fftthresh (as int -3)
-    test135 --- wrong fftthresh (as int 0)
+    test100 : no effective wave number set (addwn empty list, applyfft=False)
+    test101 : no effective wave number set (addwn empty list, applyfft=True)
+    test102 : no effective wave number set (addwn empty tuple, applyfft=False)
+    test103 : no effective wave number set (addwn empty tuple, applyfft=True)
+    test104 : no effective wave number set (addwn empty string, applyfft=False)
+    test105 : no effective wave number set (addwn empty string, applyfft=True)
+    test106 : no effective wave number set (addwn and rejwn identical, applyfft=False)
+    test107 : no effective wave number set (addwn and rejwn identical, applyfft=True)
+    test108 : no effective case (rejwn covers wider range than that of addwn, applyfft=False)
+    test109 : no effective case (rejwn covers wider range than that of addwn, applyfft=True)
+    test110 : wn range greater than upper limit
+    test111 : explicitly specify wn (greater than upper limit)
+    test112 : explicitly specify wn (negative)
+    test113 : explicitly specify wn (addwn has negative and greater than upper limit)
+    test114 : explicitly specify wn (both addwn/rejwn have negative and greater than upper limit)
+    test115 : wrong fftthresh (as list)
+    test116 : wrong fftthresh (as string 'asigma')
+    test117 : wrong fftthresh (as string 'topa')
+    test118 : wrong fftthresh (as string 'top3sigma')
+    test119 : wrong fftthresh (as string 'a123')
+    test120 : wrong fftthresh (as string '')
+    test121 : wrong fftthresh (as string '-3.0')
+    test122 : wrong fftthresh (as string '0.0')
+    test123 : wrong fftthresh (as string '-3')
+    test124 : wrong fftthresh (as string '0')
+    test125 : wrong fftthresh (as string '-3.0sigma')
+    test126 : wrong fftthresh (as string '0.0sigma')
+    test127 : wrong fftthresh (as string '-3sigma')
+    test128 : wrong fftthresh (as string '0sigma')
+    test129 : wrong fftthresh (as string 'top-3')
+    test130 : wrong fftthresh (as string 'top0')
+    test131 : wrong fftthresh (as string 'top1.5')
+    test132 : wrong fftthresh (as float -3.0)
+    test133 : wrong fftthresh (as float 0.0)
+    test134 : wrong fftthresh (as int -3)
+    test135 : wrong fftthresh (as int 0)
 
     Note: The input data 'sinusoidal.ms' has just two spectral data,
           which are actually identical and described as
@@ -2068,7 +2068,7 @@ class sdbaseline_multi_IF_test(sdbaseline_unittest_base):
     for data that has multiple IFs whose nchan differ each other.
 
     List of tests:
-    test200 --- test multi IF data input
+    test200 : test multi IF data input
     """
     # Input and output names
     infile = 'testMultiIF.asap'
@@ -2135,21 +2135,21 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
     Tests for outputting baseline table
 
     List of tests
-    test301 --- blmode='fit', bloutput!='', dosubtract=True, blfunc='poly'/'chebyshev'/'cspline'
+    test301 : blmode='fit', bloutput!='', dosubtract=True, blfunc='poly'/'chebyshev'/'cspline'
                 (poly/chebyshev/cspline fit in MS, bltable is written)
-    test302 --- blmode='fit', bloutput!='', dosubtract=True, blfunc='variable'
+    test302 : blmode='fit', bloutput!='', dosubtract=True, blfunc='variable'
                 (variable fit in MS, bltable is written)
                 testing 3 cases:
                     (1) blparam contains values for all spectra
                     (2) no values for a spectrum (row=2,pol=1), which is to be skipped
                     (3) values commented out for a spectrum (row=2,pol=1), which is to be skipped
-    test303 --- blmode='fit', bloutput!='', dosubtract=True, blfunc='poly','chebyshev','cspline'
+    test303 : blmode='fit', bloutput!='', dosubtract=True, blfunc='poly','chebyshev','cspline'
                 testing if bltable is shortened
                 testing 3 cases:
                     (1) all spectra in row 2 are flagged entirely
                     (2) in row 2, entirely flagged for pol 0, also pol 1 is unselected
                     (3) in row 2, entirely flagged for pol 1, also pol 0 is unselected
-    test304 --- same as test303, but for blfunc='variable'
+    test304 : same as test303, but for blfunc='variable'
 
     Note: input data is generated from a single dish regression data,
     'OrionS_rawACSmod', as follows:
@@ -2459,10 +2459,10 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
     (blmode='apply' mode)
 
     List of tests
-    test400 --- MS with no all-channel-flagged, bltable with apply=True for all spectra
-    test401 --- MS with one spectrum with all channels flagged, while apply=True throughout bltable
-    test402 --- MS with no all-channel-flagged, while apply=False for one spectrum in bltable
-    test403 --- MS with no all-channel-flagger, while bltable lacks one row (irow=2)
+    test400 : MS with no all-channel-flagged, bltable with apply=True for all spectra
+    test401 : MS with one spectrum with all channels flagged, while apply=True throughout bltable
+    test402 : MS with no all-channel-flagged, while apply=False for one spectrum in bltable
+    test403 : MS with no all-channel-flagger, while bltable lacks one row (irow=2)
 
     Note: for tests401-403, the spectrum with all channels flagged, or the corresponding
     data in baseline table has apply=False or is inexist, should not be subtracted baseline.
@@ -2832,18 +2832,18 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
 
     List of tests:
 
-    test000 --- no bloutput cases
+    test000 : no bloutput cases
 
-    test010 --- single bloutput cases
-    test011 --- single bloutput cases (blformat with extra empty elements)
+    test010 : single bloutput cases
+    test011 : single bloutput cases (blformat with extra empty elements)
 
-    test020 --- double bloutput cases
-    test021 --- double bloutput cases (blformat with an extra empty element)
+    test020 : double bloutput cases
+    test021 : double bloutput cases (blformat with an extra empty element)
 
-    test030 --- triple bloutput cases
+    test030 : triple bloutput cases
 
-    test100 --- sinusoid test for finite wavenumber patterns
-    test101 --- sinusoid test for infinite wavenumber pattern
+    test100 : sinusoid test for finite wavenumber patterns
+    test101 : sinusoid test for infinite wavenumber pattern
     """
 
     infile = 'OrionS_rawACSmod_calave.ms'
@@ -3586,23 +3586,23 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
     """
     Tests for updateweight=True cases
 
-    test000 --- updateweight=False - WEIGHT column must not be updated
-    test010 --- updateweight=True, sigmavalue=default('stddev')
-    test011 --- updateweight=True, sigmavalue=default('stddev'), channels 4500~6500 flagged
-    test012 --- updateweight=True, sigmavalue=default('stddev'), spw to flag channels 4500-6499
-    test020 --- updateweight=True, sigmavalue='stddev'
-    test021 --- updateweight=True, sigmavalue='stddev', channels 4500~6500 flagged in input data
-    test022 --- updateweight=True, sigmavalue='stddev', spw to flag channels 4500-6499
-    test030 --- updateweight=True, sigmavalue='rms'
-    test031 --- updateweight=True, sigmavalue='rms', channels 4500~6500 flagged in input data
-    test032 --- updateweight=True, sigmavalue='rms', spw to flag channels 4500-6499
-    test040 --- blfunc='variable'
-    test041 --- blfunc='variable', channels 4500~6500 flagged in input data
-    test042 --- blfunc='variable', spw to flag channels 4500-6499
-    test050 --- blmode='apply'
-    test051 --- blmode='apply', channels 4500~6500 flagged in input data
-    test052 --- blmode='apply', spw to flag channels 4500-6499
-    test060 --- confirm that the clipping result (mask) is correctly used to compute weights
+    test000 : updateweight=False - WEIGHT column must not be updated
+    test010 : updateweight=True, sigmavalue=default('stddev')
+    test011 : updateweight=True, sigmavalue=default('stddev'), channels 4500~6500 flagged
+    test012 : updateweight=True, sigmavalue=default('stddev'), spw to flag channels 4500-6499
+    test020 : updateweight=True, sigmavalue='stddev'
+    test021 : updateweight=True, sigmavalue='stddev', channels 4500~6500 flagged in input data
+    test022 : updateweight=True, sigmavalue='stddev', spw to flag channels 4500-6499
+    test030 : updateweight=True, sigmavalue='rms'
+    test031 : updateweight=True, sigmavalue='rms', channels 4500~6500 flagged in input data
+    test032 : updateweight=True, sigmavalue='rms', spw to flag channels 4500-6499
+    test040 : blfunc='variable'
+    test041 : blfunc='variable', channels 4500~6500 flagged in input data
+    test042 : blfunc='variable', spw to flag channels 4500-6499
+    test050 : blmode='apply'
+    test051 : blmode='apply', channels 4500~6500 flagged in input data
+    test052 : blmode='apply', spw to flag channels 4500-6499
+    test060 : confirm that the clipping result (mask) is correctly used to compute weights
     """
 
     datapath = ctsys_resolve('unittest/sdbaseline/')
@@ -4038,9 +4038,9 @@ class sdbaseline_helperTest(sdbaseline_unittest_base):
     """
     Tests for helper functions
 
-    test000 --- tests for is_empty()
-    test010 --- tests for parse_wavenumber_param()
-    test020 --- tests for check_fftthresh()
+    test000 : tests for is_empty()
+    test010 : tests for parse_wavenumber_param()
+    test020 : tests for check_fftthresh()
     """
 
     def test000(self):
