@@ -2382,14 +2382,12 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                     shutil.rmtree(infile)
                 shutil.copytree(os.path.join(self.datapath, self.infile), infile)
 
-                tb.open(tablename=infile, nomodify=False)
-                r2msk = tb.getcell('FLAG', 2)
-                for ipol in prange[j]:
-                    r2msk[ipol, :] = True
-                tb.putcell('FLAG', 2, r2msk)
-                tb.close()
-                pol = polval[j]
+                with table_manager(infile, nomodify=False) as tb:
+                    r2msk = tb.getcell('FLAG', 2)
+                    r2msk[prange[j], :] = True
+                    tb.putcell('FLAG', 2, r2msk)
 
+                pol = polval[j]
                 outfile = self.outroot + self.tid + blfunc[i] + testmode[j] + '.ms'
                 bloutput = self.outroot + self.tid + blfunc[i] + testmode[j] + '.bltable'
                 result = sdbaseline(infile=infile, datacolumn=datacolumn,
@@ -2434,8 +2432,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
 
             tb.open(tablename=infile, nomodify=False)
             r2msk = tb.getcell('FLAG', 2)
-            for ipol in prange[j]:
-                r2msk[ipol, :] = True
+            r2msk[prange[j], :] = True
             tb.putcell('FLAG', 2, r2msk)
             tb.close()
             pol = polval[j]
@@ -3217,8 +3214,9 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
                 if rowflag:
                     specs = True
                 else:
-                    specs[:, 0:edge[0]] = True
-                    specs[:, -edge[1]:] = True
+                    specs[:, :edge[0]] = True
+                    if edge[1] > 0:
+                        specs[:, -edge[1]:] = True
                 tb.putcell('FLAG', idx, specs)
         finally:
             tb.close()
