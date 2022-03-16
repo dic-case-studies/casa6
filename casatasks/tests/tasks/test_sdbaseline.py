@@ -2744,8 +2744,9 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
             shutil.rmtree(self.infile + '_blparam.btable')
 
     def testVariable02(self):
-        # Test blfunc='variable' with non-existent lines in blparam file
-        # (rows should be flagged)
+        """Test blfunc='variable' with non-existent lines in blparam file
+        (rows should be flagged)
+        """
         infile = 'analytic_variable.ms'
         self.paramfile = 'analytic_variable_blparam_2lines.txt'
         self._refetch_files([infile, self.paramfile], self.datapath)
@@ -3051,24 +3052,24 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
             self._do_run_test(blformat=blformat, bloutput=bloutput)
 
     def test000(self):
-        # no bloutput cases
+        """no bloutput cases"""
         self._run_test(['', ['']])
         self._run_test([['', '']])
         self._run_test([['', '', '']])
 
     def test010(self):
-        # single bloutput cases
+        """single bloutput cases"""
         self._run_test(['text', ['text']])
         self._run_test(['csv', ['csv']])
         self._run_test(['table', ['table']])
 
     def test011(self):
-        # single bloutput cases (blformat with empty elements)
+        """single bloutput cases (blformat with empty elements)"""
         self._run_test([['', 'csv'], ['text', '']])
         self._run_test([['', '', 'table'], ['', 'text', ''], ['csv', '', '']])
 
     def test020(self):
-        # double bloutput cases
+        """double bloutput cases"""
         self._run_test([['table', 'text']])
         self._run_test([['text', 'table']])
         self._run_test([['table', 'csv']])
@@ -3077,11 +3078,11 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
         self._run_test([['csv', 'text']])
 
     def test021(self):
-        # double bloutput cases (blformat with an empty element)
+        """double bloutput cases (blformat with an empty element)"""
         self._run_test([['table', 'text', ''], ['table', '', 'csv'], ['', 'text', 'csv']])
 
     def test030(self):
-        # triple bloutput cases
+        """triple bloutput cases"""
         self._run_test([['table', 'text', 'csv']])
         self._run_test([['text', 'table', 'csv']])
         self._run_test([['csv', 'text', 'table']])
@@ -3105,7 +3106,7 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
         remove_files_dirs(self.blout_nondefault_root)
 
     def test100(self):
-        # confirm if bloutput is correctly output for various wavenumber sets
+        """confirm if bloutput is correctly output for various wavenumber sets"""
         rejwns = [[0], [0, 2], [1]]
         for rejwn in rejwns:
             self._run_sinusoid_test(rejwn)
@@ -3700,67 +3701,67 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
             tb.putcol('FLAG', flag)
 
     def test000(self):
-        # updateweight=False - WEIGHT column must not be updated
+        """updateweight=False - WEIGHT column must not be updated"""
         self.params['updateweight'] = False
         self.run_test()
 
     def test010(self):
-        # updateweight=True, sigmavalue=default('stddev')
+        """updateweight=True, sigmavalue=default('stddev')"""
         self.run_test()
 
     def test011(self):
-        # updateweight=True, sigmavalue=default('stddev'), channels 4500~6500 flagged
+        """updateweight=True, sigmavalue=default('stddev'), channels 4500~6500 flagged"""
         self.add_mask()
         self.run_test()
 
     def test012(self):
-        # updateweight=True, sigmavalue=default('stddev'), spw to flag channels 4500-6499
+        """updateweight=True, sigmavalue=default('stddev'), spw to flag channels 4500-6499"""
         self.params['spw'] = self.spw
         self.run_test()
 
     def test020(self):
-        # updateweight=True, sigmavalue='stddev'
+        """updateweight=True, sigmavalue='stddev'"""
         self.params['sigmavalue'] = 'stddev'
         self.run_test()
 
     def test021(self):
-        # updateweight=True, sigmavalue='stddev', channels 4500~6500 flagged in input data
+        """updateweight=True, sigmavalue='stddev', channels 4500~6500 flagged in input data"""
         self.add_mask()
         self.params['sigmavalue'] = 'stddev'
         self.run_test()
 
     def test022(self):
-        # updateweight=True, sigmavalue='stddev', spw to flag channels 4500-6499
+        """updateweight=True, sigmavalue='stddev', spw to flag channels 4500-6499"""
         self.params['spw'] = self.spw
         self.params['sigmavalue'] = 'stddev'
         self.run_test()
 
     def test030(self):
-        # updateweight=True, sigmavalue='rms'
+        """updateweight=True, sigmavalue='rms'"""
         self.params['sigmavalue'] = 'rms'
         self.run_test()
 
     def test031(self):
-        # updateweight=True, sigmavalue='rms', channels 4500~6500 flagged in input data
+        """updateweight=True, sigmavalue='rms', channels 4500~6500 flagged in input data"""
         self.add_mask()
         self.params['sigmavalue'] = 'rms'
         self.run_test()
 
     def test032(self):
-        # updateweight=True, sigmavalue='rms', spw to flag channels 4500-6499
+        """updateweight=True, sigmavalue='rms', spw to flag channels 4500-6499"""
         self.params['spw'] = self.spw
         self.params['sigmavalue'] = 'rms'
         self.run_test()
 
     def test040(self):
-        # blfunc='variable'
+        """blfunc='variable'"""
         self.params['blfunc'] = 'variable'
         self.params['blparam'] = self.outroot + '_param.txt'
         self.write_param_file(self.params['blparam'])
         self.run_test()
 
     def test041(self):
-        # blfunc='variable', channels 4500~6500 flagged in input data
+        """blfunc='variable', channels 4500~6500 flagged in input data"""
         self.add_mask()
         self.params['blfunc'] = 'variable'
         self.params['blparam'] = self.outroot + '_param.txt'
@@ -3768,7 +3769,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.run_test()
 
     def test042(self):
-        # blfunc='variable', spw to flag channels 4500-6499
+        """blfunc='variable', spw to flag channels 4500-6499"""
         self.params['spw'] = self.spw
         self.params['blfunc'] = 'variable'
         self.params['blparam'] = self.outroot + '_param.txt'
@@ -3794,16 +3795,16 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.run_test()
 
     def test050(self):
-        # blmode='apply'
+        """blmode='apply'"""
         self.run_apply_test()
 
     def test051(self):
-        # blmode='apply', channels 4500~6500 flagged in input data
+        """blmode='apply', channels 4500~6500 flagged in input data"""
         self.add_mask()
         self.run_apply_test()
 
     def test052(self):
-        # blmode='apply', spw to flag channels 4500-6499
+        """blmode='apply', spw to flag channels 4500-6499"""
         self.params['spw'] = self.spw
         self.run_apply_test()
 
@@ -3839,7 +3840,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
             np.allclose(tb.getcell('WEIGHT', 0), weight_ref)
 
     def test060(self):
-        # confirm that the clipping result (mask) is correctly used to compute weights
+        """confirm that the clipping result (mask) is correctly used to compute weights"""
         self.params['clipniter'] = 5
         self.params['clipthresh'] = 3.0
         self.params['updateweight'] = True
@@ -4007,43 +4008,43 @@ class sdbaseline_clippingTest(sdbaseline_unittest_base):
             self.assertEqual(self._resmask(i), answer_mask_after_2clip)
 
     def test000(self):
-        # test000 : to confirm if clipping works regardless of blformat when blfunc='poly'
+        """confirm if clipping works regardless of blformat when blfunc='poly'"""
         self._run_test(blfunc='poly')
 
     def test001(self):
-        # test001 : to confirm if clipping works regardless of blformat blfunc='cspline'
+        """confirm if clipping works regardless of blformat blfunc='cspline'"""
         self._run_test(blfunc='cspline')
 
     def test002(self):
-        # test002 : to confirm if clipping works regardless of blformat blfunc='sinusoid'
+        """confirm if clipping works regardless of blformat blfunc='sinusoid'"""
         self._run_test(blfunc='sinusoid')
 
     def test003(self):
-        # test003 : to confirm if clipping works regardless of blformat blfunc='variable'
+        """confirm if clipping works regardless of blformat blfunc='variable'"""
         self._run_test(blfunc='variable')
 
     def test010(self):
-        # test010 : clipping runs multiple times (positive spikes only, threshold=3sigma)
+        """clipping runs multiple times (positive spikes only, threshold=3sigma)"""
         self._run_test_multiple_clipping(spikes=[(2000, 1000.0), (4000, 100000.0)])
 
     def test011(self):
-        # test011 : clipping runs multiple times (positive spikes only, threshold=10sigma)
+        """clipping runs multiple times (positive spikes only, threshold=10sigma)"""
         self._run_test_multiple_clipping(spikes=[(2000, 1000.0), (4000, 100000.0)], thres=10.0)
 
     def test012(self):
-        # test012 : clipping runs multiple times (negative spikes only)
+        """clipping runs multiple times (negative spikes only)"""
         self._run_test_multiple_clipping(spikes=[(2000, -1000.0), (4000, -100000.0)])
 
     def test013(self):
-        # test013 : clipping runs multiple times (both positive/negative spikes)
+        """clipping runs multiple times (both positive/negative spikes)"""
         self._run_test_multiple_clipping(spikes=[(2000, -1000.0), (4000, 100000.0)])
 
     def test020(self):
-        # test020 : clipping does run but actually no data clipped (huge threshold)
+        """clipping does run but actually no data clipped (huge threshold)"""
         self._run_test(thres=100.0, ifclipped=False)
 
     def test021(self):
-        # test021 : clipping does run but actually no data clipped (no spike)
+        """clipping does run but actually no data clipped (no spike)"""
         self._run_test(thres=3.0, spikes=[], ifclipped=False)
 
 
@@ -4057,6 +4058,7 @@ class sdbaseline_helperTest(sdbaseline_unittest_base):
     """
 
     def test000(self):
+        """tests for is_empty()"""
         print("Testing a helper function is_empty() with")
 
         # right cases
@@ -4078,6 +4080,7 @@ class sdbaseline_helperTest(sdbaseline_unittest_base):
             self.assertFalse(is_empty(blformat))
 
     def test010(self):
+        """tests for parse_wavenumber_param()"""
         test_cases = [([1, 2, 3], '1,2,3'),
                       ([1, 3, 2], '1,2,3'),
                       ([3, 2, 1], '1,2,3'),
@@ -4124,6 +4127,7 @@ class sdbaseline_helperTest(sdbaseline_unittest_base):
                 self.assertEqual(answer, parse_wavenumber_param(wn))
 
     def test020(self):
+        """tests for check_fftthresh()"""
         print("Testing a helper function check_fftthresh() with")
 
         # right cases
