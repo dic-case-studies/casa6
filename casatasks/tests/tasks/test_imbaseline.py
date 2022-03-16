@@ -38,6 +38,7 @@ from casatasks.private.task_imbaseline import (_CasaImageStack,
                                                _SdsmoothMethods,
                                                _SdsmoothParams,
                                                _UnerasableFolder, imbaseline)
+from casatasks.private.update_spw import sets_to_spwchan, spwchan_to_sets
 from casatools import ctsys, image, table
 
 _tb = table()
@@ -1366,6 +1367,28 @@ class TestImbaselineExecution(test_base):
 TestImbaselineExecution.generate_tests()
 
 
+class Chans():
+    """Class for values of the parameter 'chans' of TestImbaselineOutputs."""
+
+    def __init__(self, name: str, spw_str: str, ignore_spws: list):
+        """Initialiser of the class.
+
+        Parameters
+        ----------
+        name : str
+            an identifier of chans object
+        spw_str : str
+            spw string of imbaseline(sdbaseline)
+        ignore_spws : list
+            ignore spws list (all spws - specified spws by spw_str)
+            this list is only considered to single spws specification like "0:1~5",
+            if the tests should use many spws like "0:1~5,1:1~3" then it must be edit.
+        """
+        self.name = name
+        self.spw_str = spw_str
+        self.ignore_spws = ignore_spws
+
+
 class TestImbaselineOutputs(test_base):
     """Imbaseline output testing.
 
@@ -1375,7 +1398,8 @@ class TestImbaselineOutputs(test_base):
 
     input_image = "ref_multipix.signalband"
     blparam = "analytic_variable_blparam_spw1.txt"
-    TEST_IMAGE_SHAPE = [128, 128, 1, 10]
+    MAX_CHANS = 20
+    TEST_IMAGE_SHAPE = [128, 128, 1, MAX_CHANS]
     TEST_IMAGE_VALUE = 2.0
     expected_output_chunk = np.full(TEST_IMAGE_SHAPE, 0.0)
     expected_cont_chunk = np.full(TEST_IMAGE_SHAPE, TEST_IMAGE_VALUE)
@@ -1397,10 +1421,6 @@ class TestImbaselineOutputs(test_base):
         super(TestImbaselineOutputs, self).__init__(*args, **kwargs)
 
         self.mask = np.full(self.TEST_IMAGE_SHAPE, True)
-        for i in [0, 1, 8, 9]:
-            self.mask[:, :, :, i] = False
-        self.expected_output_chunk = self.expected_output_chunk * self.mask
-        self.expected_cont_chunk = self.expected_cont_chunk * self.mask
 
     def setUp(self):
         self._copy_test_files(self.input_image)
@@ -1411,24 +1431,27 @@ class TestImbaselineOutputs(test_base):
         blfunc = ("poly", "chebyshev", "cspline", "sinusoid")
         dirkernel = ("none", "gaussian")
         spkernel = ("none", "gaussian", "boxcar")
+        chans = (Chans(name='chanA', spw_str='', ignore_spws=[]),
+                 Chans(name='chanB', spw_str='0:0~8;12~19', ignore_spws=[9, 10, 11]))
 
-        def __register_a_test_with_the_class(_class, blfunc, dirkernel, spkernel):
-            test_name = f"{_class.test_name_prefix}_{blfunc}_{dirkernel}_{spkernel}"
+        def __register_a_test_with_the_class(_class, blfunc, dirkernel, spkernel, chans):
+            test_name = f"{_class.test_name_prefix}_{blfunc}_{dirkernel}_{spkernel}_{chans.name}"
             setattr(
                 _class,
                 test_name,
-                _class._generate_a_test(blfunc, dirkernel, spkernel, test_name),
+                _class._generate_a_test(blfunc, dirkernel, spkernel, chans, test_name),
             )
 
         [
-            __register_a_test_with_the_class(__class__, _blfunc, _dirkernel, _spkernel)
+            __register_a_test_with_the_class(__class__, _blfunc, _dirkernel, _spkernel, _chans)
             for _blfunc in blfunc
             for _dirkernel in dirkernel
             for _spkernel in spkernel
+            for _chans in chans
         ]
 
     @staticmethod
-    def _generate_a_test(blfunc, dirkernel, spkernel, test_name):
+    def _generate_a_test(blfunc, dirkernel, spkernel, chans, test_name):
         def test_method(self):
             """TestImbaselineOutputs test."""
             self._create_image(
@@ -1450,26 +1473,36 @@ class TestImbaselineOutputs(test_base):
                 pa=self.pa,
                 order=self.order,
                 kwidth=kwidth,
+                chans=chans.spw_str,
             )
             casalog.post(
                 f"{test_name} [maskmode=auto, blfunc={blfunc}, "
-                f"dirkernel={dirkernel}, spkernel={spkernel}]",
-                "INFO",
+                f"dirkernel={dirkernel}, spkernel={spkernel}, chans={chans.name}"
+                "INFO"
             )
             imbaseline(**params)
+
+            _mask = self.mask
+            if spkernel != "none":
+                for i in [0, 1, self.MAX_CHANS - 2, self.MAX_CHANS - 1]:
+                    _mask[:, :, :, i] = False
+            for i in chans.ignore_spws:
+                _mask[:, :, :, i] = False
+            _expected_output_chunk = self.expected_output_chunk * _mask
+            _expected_cont_chunk = self.expected_cont_chunk * _mask
             if os.path.exists(self.linefile):
                 with tool_manager(self.linefile, image) as ia:
                     chunk = ia.getchunk() * self.mask
                     self._summary(False, test_name, chunk)
                     self.assertTrue(
-                        np.allclose(chunk, self.expected_output_chunk, atol=0.016)
+                        np.allclose(chunk, _expected_output_chunk, atol=0.03)
                     )
             if os.path.exists(self.test_image + ".cont"):
                 with tool_manager(self.test_image + ".cont", image) as ia:
                     chunk = ia.getchunk() * self.mask
                     self._summary(True, test_name, chunk)
                     self.assertTrue(
-                        np.allclose(chunk, self.expected_cont_chunk, atol=2.0)
+                        np.allclose(chunk, _expected_cont_chunk, atol=2.0)
                     )
 
         test_method.__doc__ += (
@@ -1480,12 +1513,13 @@ class TestImbaselineOutputs(test_base):
         return test_method
 
     def _summary(self, is_cont, test_name, chunk):  # temporary method
-        m = re.match(r"test_imbaseline_outputs_([^_]+)_([^_]+)_([^_]+)", test_name)
+        m = re.match(r"test_imbaseline_outputs_([^_]+)_([^_]+)_([^_]+)_([^_]+)", test_name)
         prefix = "cont" if is_cont else "line"
         print(
-            f"{prefix} blfunc:{m[1]} dirkernel:{m[2]} spkernel:{m[3]}, {np.max(chunk)}, "
+            f"{prefix} blfunc:{m[1]} dirkernel:{m[2]} spkernel:{m[3]}, chans:{m[4]}, {np.max(chunk)}, "
             f"{np.min(chunk)}, {np.average(chunk)}, {np.median(chunk)}"
         )
+
 
 # generate test methods of TestImbaselineOutputs dynamically
 TestImbaselineOutputs.generate_tests()

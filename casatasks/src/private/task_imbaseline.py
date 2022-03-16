@@ -709,19 +709,21 @@ class _SdbaselineParams(AbstractValidatable):
         self.clipniter = clipniter if clipniter is not None else 0
         self.clipthresh = clipthresh if clipthresh is not None else 3.0
 
-        spw = '0'
         if spsmoothed:
+            spw = '0'
             left_edge = kwidth // 2
             right_edge = image_shape.im_nchan - kwidth // 2
             if self.spw:
                 coverage = set(list(range(left_edge, right_edge)))
-                sets = []
-                for s in spwchan_to_sets(self.infile, self.spw):
-                    sets.append(s & coverage)
+                sets = dict()
+                for i, s in spwchan_to_sets(self.infile, self.spw).items():
+                    sets[i] = s & coverage
                 spw = sets_to_spwchan(sets)
             else:
                 spw = f'0:{left_edge}~{right_edge-1}'
-        self.spw = spw
+            self.spw = spw
+        if not self.spw:
+            self.spw = '0'
 
     def __chans2spw(self, chans: str, maskmode) -> str:
         if not chans or maskmode != 'list':
