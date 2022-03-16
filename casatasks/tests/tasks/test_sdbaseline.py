@@ -2385,8 +2385,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
                 tb.open(tablename=infile, nomodify=False)
                 r2msk = tb.getcell('FLAG', 2)
                 for ipol in prange[j]:
-                    for ichan in range(len(r2msk[0])):
-                        r2msk[ipol][ichan] = True
+                    r2msk[ipol, :] = True
                 tb.putcell('FLAG', 2, r2msk)
                 tb.close()
                 pol = polval[j]
@@ -2436,8 +2435,7 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
             tb.open(tablename=infile, nomodify=False)
             r2msk = tb.getcell('FLAG', 2)
             for ipol in prange[j]:
-                for ichan in range(len(r2msk[0])):
-                    r2msk[ipol][ichan] = True
+                r2msk[ipol, :] = True
             tb.putcell('FLAG', 2, r2msk)
             tb.close()
             pol = polval[j]
@@ -3219,9 +3217,8 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
                 if rowflag:
                     specs = True
                 else:
-                    for ipol in range(len(specs)):
-                        specs[ipol][0:edge[0]] = True
-                        specs[ipol][-edge[1]:] = True
+                    specs[:, 0:edge[0]] = True
+                    specs[:, -edge[1]:] = True
                 tb.putcell('FLAG', idx, specs)
         finally:
             tb.close()
@@ -3704,10 +3701,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         # flag channels from 4500 to 6499 for each spectrum
         with table_manager(self.infile, nomodify=False) as tb:
             flag = tb.getcol('FLAG')
-            for ipol in range(len(flag)):
-                for irow in range(len(flag[0][0])):
-                    for ichan in range(4500, 6500):
-                        flag[ipol][ichan][irow] = True
+            flag[:, 4500:6500, :] = True
             tb.putcol('FLAG', flag)
 
     def test000(self):
@@ -3834,8 +3828,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
             tb.putcell('FLAG', 0, flag)
 
         # compute the reference weight value
-        for ipol in range(2):
-            flag[ipol][4000] = True
+        flag[:, 4000] = True
         mdata = np.ma.masked_array(spec, mask=flag)
         weight_ref = 1.0 / np.var(mdata, axis=1)
 
