@@ -175,50 +175,40 @@ class test_base(unittest.TestCase):
 
         shutil.copytree(datapath + myasdm_dataset_name, myasdm_dataset_name)
         shutil.copytree(datapath + myms_dataset_name, myms_dataset_name)
-        default(importasdm)
 
     def setUp_xosro(self):
         self.asdm = 'X_osro_013.55979.93803716435'
         if(not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+self.asdm +' '+self.asdm)
 
-        default(importasdm)
-
-
     def setUp_autocorr(self):
         self.asdm = 'AutocorrASDM'
         if(not os.path.lexists(self.asdm)):
             os.system('ln -s '+datapath+self.asdm +' '+self.asdm)
-
-        default(importasdm)
 
     def setUp_acaex(self):
         res = None
         myasdmname = 'uid___A002_X72bc38_X000' # ACA example ASDM with mixed pol/channelisation
 
         os.system('ln -sf '+datapath+myasdmname)
-        default(importasdm)
 
     def setUp_12mex(self):
         res = None
         myasdmname = 'uid___A002_X71e4ae_X317_short' # 12m example ASDM with mixed pol/channelisation
 
         os.system('ln -sf '+datapath+myasdmname)
-        default(importasdm)
 
     def setUp_eph(self):
         res = None
         myasdmname = 'uid___A002_X997a62_X8c-short' # 12m example ASDM with ephemerides
 
         os.system('ln -sf '+datapath+myasdmname)
-        default(importasdm)
 
     def setUp_flags(self):
         res = None
         myasdmname = 'test_uid___A002_X997a62_X8c-short' # Flag.xml is modified
 
         os.system('ln -sf '+datapath+myasdmname)
-        default(importasdm)
 
     def setUp_SD(self):
         res = None
@@ -226,8 +216,6 @@ class test_base(unittest.TestCase):
         myasdmname = 'uid___A002_X6218fb_X264'
 
         os.system('ln -sf '+datapath+myasdmname)
-        default(importasdm)
-
 
 ###########################
 # beginning of actual test

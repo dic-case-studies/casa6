@@ -75,8 +75,7 @@ class accor_test(unittest.TestCase):
         shutil.copytree(VLBAdatapath, VLBAcopy)
     
     def setUp(self):
-        if not CASA6:
-            default(accor)
+        pass
             
     def tearDown(self):
         rmtables(caltab)

@@ -974,12 +974,9 @@ class visstat_test(unittest.TestCase):
 
         def compareKeys(x, y):
             '''Comparison of visstat dictionary keys: scan number, then time'''
-            if CASA6:
-                x = scanTime(x)
-                y = scanTime(y)
-                return (x>y)-(x<y)
-            else:
-                return cmp(scanTime(x), scanTime(y))
+            x = scanTime(x)
+            y = scanTime(y)
+            return (x>y)-(x<y)
 
         # sort the dictionary keys, and create an ordered list of dictionary
         # elements (i.e, statistics for every averaging interval)

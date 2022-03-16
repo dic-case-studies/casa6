@@ -39,11 +39,6 @@ from casatestutils import selection_syntax
 tb = table()
 ctsys_resolve = ctsys.resolve
 
-# default is necessary in CASA6
-def default(atask):
-    pass
-
-
 ### Utilities for reading blparam file
 class FileReader(object):
     def __init__(self, filename):
@@ -627,10 +622,8 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
     Note: The input data 'OrionS_rawACSmod_calave.ms' is generated
           from a single dish regression data 'OrionS_rawACSmod' as follows:
           
-          default(sdcal)
           sdcal(infile='OrionS_rawACSmod',scanlist=[20,21,22,23],
                 calmode='ps',tau=0.09,outfile='temp.asap')
-          default(sdcal)
           sdcal(infile='temp.asap',timeaverage=True,
                 tweight='tintsys',outfile='temp2.asap')
           sdsave(infile='temp2.asap',outformat='MS2',
@@ -646,8 +639,6 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
-
-        default(sdbaseline)
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -1046,10 +1037,8 @@ class sdbaseline_maskTest(sdbaseline_unittest_base):
 
     Note: input data is generated from a single dish regression data,
     'OrionS_rawACSmod', as follows:
-      default(sdcal)
       sdcal(infile='OrionS_rawACSmod',scanlist=[20,21,22,23],
                 calmode='ps',tau=0.09,outfile='temp.asap')
-      default(sdcal)
       sdcal(infile='temp.asap',timeaverage=True,
                 tweight='tintsys',outfile='temp2.asap')
       sdsave(infile='temp2.asap',outformat='MS2',
@@ -1083,7 +1072,6 @@ class sdbaseline_maskTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
-        default(sdbaseline)
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -1246,8 +1234,6 @@ class sdbaseline_sinusoidTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
-
-        default(sdbaseline)
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -2117,8 +2103,6 @@ class sdbaseline_multi_IF_test(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
-        default(sdbaseline)
-
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -2191,10 +2175,8 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
 
     Note: input data is generated from a single dish regression data,
     'OrionS_rawACSmod', as follows:
-      default(sdcal)
       sdcal(infile='OrionS_rawACSmod',scanlist=[20,21,22,23],
                 calmode='ps',tau=0.09,outfile='temp.asap')
-      default(sdcal)
       sdcal(infile='temp.asap',timeaverage=True,
                 tweight='tintsys',outfile='temp2.asap')
       sdsave(infile='temp2.asap',outformat='MS2',
@@ -2210,8 +2192,6 @@ class sdbaseline_outbltableTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
-        default(sdbaseline)
-
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -2517,8 +2497,7 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
-        default(sdbaseline)
-       
+
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
         if os.path.exists(self.infile+'_blparam.csv'):
@@ -2536,7 +2515,6 @@ class sdbaseline_applybltableTest(sdbaseline_unittest_base):
                              dosubtract=True,outfile=self.reffile)
         self.assertEqual(result,None,
                          msg="The task returned '"+str(result)+"' instead of None")
-        default(sdbaseline)
 
     def tearDown(self):
         remove_single_file_dir(self.infile)
@@ -2681,9 +2659,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
     def setUp(self):
         if hasattr(self, 'infile'):
             self.__refetch_files(self.infile)
-
-        default(sdbaseline)
-
 
     def tearDown(self):
         remove_files_dirs(os.path.splitext(self.infile)[0])
@@ -2994,8 +2969,6 @@ Basic unit tests for task sdbaseline. No interactive testing.
         shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_addwn012_rejwn1_csv), self.bloutput_sinusoid_addwn012_rejwn1_csv)
 
         shutil.copyfile(os.path.join(self.datapath,self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt), self.bloutput_sinusoid_addwnGt4000_rejwn4005_txt)
-
-        default(sdbaseline)
 
         if os.path.exists(self.infile+'_blparam.txt'):
             os.remove(self.infile+ '_blparam.txt')
@@ -4791,7 +4764,6 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
-        default(sdbaseline)
 
     def tearDown(self):
         remove_single_file_dir(self.infile)
@@ -4930,7 +4902,6 @@ class sdbaseline_selection(unittest.TestCase):
     def setUp(self):
         self._clearup()
         shutil.copytree(os.path.join(self.datapath,self.infile), self.infile)
-        default(sdbaseline)
 
     def tearDown(self):
         self._clearup()
@@ -5145,7 +5116,6 @@ class sdbaseline_updateweightTest(sdbaseline_unittest_base):
     def setUp(self):
         remove_files_dirs(self.infile)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
-        default(sdbaseline)
 
     def tearDown(self):
         remove_files_dirs(self.infile)
@@ -5282,7 +5252,6 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.init_params()
         remove_files_dirs(self.infile)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
-        default(sdbaseline)
 
     def tearDown(self):
         remove_files_dirs(self.infile)

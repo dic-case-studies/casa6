@@ -115,12 +115,8 @@ class feather_test(unittest.TestCase):
             This parameter is nessisary to run the task
         '''
         
-        if CASA6:
-            with self.assertRaises(AssertionError):
-                feather(imagename=output, lowres=sdimg)
-        else:
-            with self.assertRaises(RuntimeError):
-                feather(imagename=output, lowres=sdimg)
+        with self.assertRaises(AssertionError):
+            feather(imagename=output, lowres=sdimg)
             
 #             casalog.setlogfile(logname)
 #             feather(imagename=output, lowres=sdpath)
@@ -135,12 +131,9 @@ class feather_test(unittest.TestCase):
             This parameter is nessisary to run the task
         '''
         
-        if CASA6:
-            with self.assertRaises(AssertionError):
-                feather(imagename=output, highres=intimg)
-        else:
-            with self.assertRaises(RuntimeError):
-                feather(imagename=output, highres=intimg)            
+        with self.assertRaises(AssertionError):
+            feather(imagename=output, highres=intimg)
+
 #             casalog.setlogfile(logname)
 #             feather(imagename=output, highres=interpath)
 #             self.assertTrue('SEVERE' in open(logname).read())

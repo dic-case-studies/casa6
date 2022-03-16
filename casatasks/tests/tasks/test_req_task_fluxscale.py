@@ -486,9 +486,6 @@ class fluxscale2_test(unittest.TestCase):
         else:
             self.fail('Data does not exist -> ' + fpath)
 
-        if not CASA6:
-            default(fluxscale)
-
     def tearDown(self):
         shutil.rmtree(self.msfile, ignore_errors=True)
         os.system('rm -rf ngc4826*.gcal')

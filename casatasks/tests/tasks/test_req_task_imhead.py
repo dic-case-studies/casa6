@@ -429,15 +429,10 @@ class imhead_test(unittest.TestCase):
                 self.assertEqual(x, exp_dict[k], msg)
         # test bogus key fails
         k = 'boguskey'
-        if is_CASA6 or casa_stack_rethrow:
-            self.assertRaises(
+        self.assertRaises(
                 Exception, imhead, datacopy, mode='get', hdkey=k,
                 msg='Incorrectly found bogus key'
-            )
-        else:
-            self.assertFalse(
-                imhead(datacopy, mode='get', hdkey=k), 'Incorrectly found bogus key'
-            )
+        )
 
     def test_summary(self):
         '''

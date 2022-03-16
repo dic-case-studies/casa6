@@ -54,9 +54,7 @@ class test_base(unittest.TestCase):
             
         if (not os.path.exists(self.msfile)):
             shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
-            
-        default(hanningsmooth)
-    
+
     def setUp_almams(self):
         # MS with DATA and CORRECTED_DATA
         self.msfile = 'ALMA-data-mst-science-testing-CAS-5013-one-baseline-one-timestamp.ms'
@@ -65,8 +63,6 @@ class test_base(unittest.TestCase):
             
         if (not os.path.exists(self.msfile)):
             shutil.copytree(os.path.join(datapath,self.msfile), self.msfile)
-            
-        default(hanningsmooth)
 
     def createMMS(self, msfile, column='data', axis='auto',scans='',spws=''):
         '''Create MMSs for tests with input MMS'''
@@ -76,8 +72,7 @@ class test_base(unittest.TestCase):
         
         # Create an MMS for the tests
         self.testmms = prefix + ".test.mms"
-        default(partition)
-        
+
         if os.path.exists(self.testmms):
             os.system("rm -rf " + self.testmms)
             

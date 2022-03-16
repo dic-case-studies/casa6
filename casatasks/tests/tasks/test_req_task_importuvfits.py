@@ -76,8 +76,7 @@ class importuvfits_test(unittest.TestCase):
     # Its value here should not really matter.
 
     def setUp(self):
-        if not CASA6:
-            default(importuvfits)
+        pass
 
     def tearDown(self):
         casalog.setlogfile(logpath)

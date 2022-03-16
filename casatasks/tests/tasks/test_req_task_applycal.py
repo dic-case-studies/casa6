@@ -29,7 +29,6 @@ import numpy as np
 
 import casatools
 from casatasks import applycal, mstransform, gaincal, casalog, clearcal
-CASA6 = True
 from casatasks.private.callibrary import callibrary
 tb = casatools.table()
 calibrater = casatools.calibrater

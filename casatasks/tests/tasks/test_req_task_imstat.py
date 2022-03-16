@@ -219,7 +219,7 @@ class imstat_test(unittest.TestCase):
             OK = True
         # CASA 5 returns False (depending on __rethrow_casa_exceptions),
         # CASA 6 returns exception
-        self.assertTrue(OK == is_CASA6 or casa_stack_rethrow)
+        self.assertTrue(OK)
         zz = imstat(
             imagename=imagename, mask=mymask + ">0", stretch=True
         )

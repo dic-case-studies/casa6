@@ -61,8 +61,6 @@ class test_base(unittest.TestCase):
             os.system('cp -RH ' + os.path.join(datapath,self.vis) + ' '+ self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
-        
-        default(flagdata)
 
     def setUp_bpass_case(self):
         self.vis = "cal.fewscans.bpass"
@@ -74,7 +72,6 @@ class test_base(unittest.TestCase):
             os.system('cp -RH ' + os.path.join(datapath,self.vis) + ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')        
-        default(flagdata)
 
     def unflag_ms(self):
         aflocal.open(self.vis)
