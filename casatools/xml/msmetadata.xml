@@ -527,7 +527,7 @@ windows in the dataset and close the tool.
                If spw &gt;= 0 is specified, a string value is returned. If spw &lt;0, a list
                of string values with length equal to the number of spectral windows is returned.
                If the SPECTRAL_WINDOW::SDM_CORR_BIT column does not exist, either
-               &quot;UNKNOWN&quot; is is returned if spw&gt;=0, or a list with nspw entries of
+               &quot;UNKNOWN&quot; is returned if spw&gt;=0, or a list with nspw entries of
                &quot;UNKNOWN&quot; is returned if spw&lt;0. A list of integers may also be 
                supplied for the spw parameter. In this case, all integers should be in the
                range [0, spw-1] or an exception will be thrown. The return value will
