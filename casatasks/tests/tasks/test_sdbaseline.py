@@ -3814,13 +3814,14 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
 
     def run_clipping_test(self):
         # set artificial spectra (flat+outlier) in input MS
+        OUTLIER_CHANNEL = 4000
+        OUTLIER_VALUE = 100000000.0
         with table_manager(self.infile, nomodify=False) as tb:
             spec = tb.getcell('FLOAT_DATA', 0)  # row 0, shape = (npol, nchan)
             # flat spectrum with (mean, sigma) = (0, 1)
             spec[:, 0::2] = 1.0
             spec[:, 1::2] = -1.0
-            # an outlier
-            spec[:, 4000] = 100000000.0
+            spec[:, OUTLIER_CHANNEL] = OUTLIER_VALUE
             tb.putcell('FLOAT_DATA', 0, spec)
 
             flag = tb.getcell('FLAG', 0)  # row 0
@@ -3828,7 +3829,7 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
             tb.putcell('FLAG', 0, flag)
 
         # compute the reference weight value
-        flag[:, 4000] = True
+        flag[:, OUTLIER_CHANNEL] = True
         mdata = np.ma.masked_array(spec, mask=flag)
         weight_ref = 1.0 / np.var(mdata, axis=1)
 
