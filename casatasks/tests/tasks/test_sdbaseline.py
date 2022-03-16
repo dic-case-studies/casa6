@@ -3611,11 +3611,6 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
     outroot = sdbaseline_unittest_base.taskname + '_updateweighttest'
     outfile = outroot + '.ms'
     spw = '*:0~4499;6500~8191'
-    """
-    params = {'infile': infile, 'outfile': outfile,
-              'intent': 'OBSERVE_TARGET#ON_SOURCE',
-              'datacolumn': 'float_data'}
-    """
     params_base = {'infile': infile,
                    'outfile': outfile,
                    'intent': 'OBSERVE_TARGET#ON_SOURCE',
