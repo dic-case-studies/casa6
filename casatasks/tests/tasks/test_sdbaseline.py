@@ -1,4 +1,5 @@
 import contextlib
+import copy
 import csv
 import filecmp
 import glob
@@ -3610,26 +3611,25 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
     outroot = sdbaseline_unittest_base.taskname + '_updateweighttest'
     outfile = outroot + '.ms'
     spw = '*:0~4499;6500~8191'
+    """
     params = {'infile': infile, 'outfile': outfile,
               'intent': 'OBSERVE_TARGET#ON_SOURCE',
               'datacolumn': 'float_data'}
+    """
+    params_base = {'infile': infile,
+                   'outfile': outfile,
+                   'intent': 'OBSERVE_TARGET#ON_SOURCE',
+                   'datacolumn': 'float_data',
+                   'updateweight': True}
 
     def setUp(self):
-        self.init_params()
         remove_files_dirs(self.infile)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
+        self.params = copy.deepcopy(self.params_base)
 
     def tearDown(self):
         remove_files_dirs(self.infile)
         remove_files_dirs(self.outroot)
-
-    def init_params(self):
-        self.params['updateweight'] = True
-        for key in ['sigmavalue', 'spw',
-                    'blmode', 'blformat', 'bloutput',
-                    'bltable', 'blfunc', 'blparam']:
-            if key in self.params:
-                del self.params[key]
 
     def _check_weight_identical(self):
         with table_manager(self.infile) as tb:
