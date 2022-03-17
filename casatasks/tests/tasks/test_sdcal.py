@@ -1,5 +1,26 @@
-from __future__ import absolute_import
-from __future__ import print_function
+########################################################################
+# test_task_sdcal.py
+#
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.sdcal.html
+#
+#
+##########################################################################
 import os
 import sys
 import shutil
@@ -9,64 +30,13 @@ import contextlib
 import unittest
 from casatestutils import listing
 
-class Casa5InitError(Exception):
-    pass
+from casatools import ctsys, table, ms, measures
+from casatasks import casalog, sdcal, partition, initweights
+from casatasks.private.sdutil import table_manager, table_selector
 
-class MixedCasa5Casa6InitError(Casa5InitError):
-    pass
+tb = table()
 
-try:
-    try:
-        from casatasks.private.casa_transition import is_CASA6
-    except ImportError as e:
-        # Plain CASA5 or older: CASA5 prior to mixed CASA5-CASA6
-        raise Casa5InitError
-    else:
-        # Init Mixed CASA
-        try:
-            if not is_CASA6:
-                raise MixedCasa5Casa6InitError
-        except MixedCasa5Casa6InitError:
-                raise Casa5InitError
-        else:
-            # Init CASA6
-            from casatools import ctsys, table, ms, measures
-            from casatasks import casalog, sdcal, partition, initweights
-            from casatasks.private.sdutil import table_manager, table_selector
-
-            ### for testhelper import
-            sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-
-            tb = table()
-
-            ctsys_resolve = ctsys.resolve
-            # default isn't used in CASA6
-            def default(atask):
-                pass
-
-except Casa5InitError as e:
-    # Init Plain CASA5 or older, or Mixed CASA which is CASA5
-    is_CASA6 = False
-    from __main__ import default
-    from tasks import *
-    from taskinit import *
-    from sdutil import tbmanager as table_manager, table_selector
-
-    from sdcal import sdcal
-    from partition import partition
-
-    # make the CASA5 tool constuctors used here look the CASA6 versions
-    ms = mstool
-    table = tbtool
-    # the global tb is also used here
-    measures = metool
-
-    # Get the path to data
-    dataRoot = os.path.join(os.environ.get('CASAPATH').split()[0],'casatestdata/')
-    def ctsys_resolve(rel_path):
-        "Resolve absolute path of a unit test data directory given as a relative path"
-        return os.path.join(dataRoot,rel_path)
-
+ctsys_resolve = ctsys.resolve
 
 @contextlib.contextmanager
 def mmshelper(vis, separationaxis='auto'):
@@ -578,8 +548,6 @@ class sdcal_test_base(unittest.TestCase):
                 shutil.rmtree(f)
             shutil.copytree(os.path.join(self.datapath, f), f)
 
-        default(task)
-
     def _tearDown(self, files):
         for f in files:
             if os.path.exists(f):
@@ -707,21 +675,15 @@ class sdcal_test_ps(sdcal_test_base):
         test_ps00 --- default parameters (raises an error)
         """
         # CASA6 throws an exception
-        if is_CASA6:
-            self.assertRaises(Exception, sdcal)
-        else:
-            self.result = sdcal()
+        self.assertRaises(Exception, sdcal)
 
     @invalid_argument_case
     def test_ps01(self):
         """
         test_ps01 --- invalid calibration type
         """
-        # CASA6 throwa nan exception
-        if is_CASA6:
-            self.assertRaises(Exception, sdcal, infile=self.infile, calmode='invalid_type', outfile=self.outfile)
-        else:
-            self.result = sdcal(infile=self.infile, calmode='invalid_type', outfile=self.outfile)
+        # CASA6 throws an exception
+        self.assertRaises(Exception, sdcal, infile=self.infile, calmode='invalid_type', outfile=self.outfile)
 
     @exception_case(RuntimeError, 'Spw Expression: No match found for 99,')
     def test_ps02(self):
@@ -1488,8 +1450,6 @@ class sdcal_test_otf_ephem(unittest.TestCase):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
-
-        default(sdcal)
 
     def tearDown(self):
         to_be_removed = [self.infile, self.outfile]
@@ -2333,17 +2293,5 @@ class sdcal_test_single_polarization(sdcal_test_base):
         self.result = sdcal(infile=self.infile, calmode='ps,apply')
         self._verify_application()
 
-def suite():
-    return [  sdcal_test
-            , sdcal_test_ps
-            , sdcal_test_otfraster
-            , sdcal_test_otf
-            , sdcal_test_apply
-            , sdcal_test_otf_ephem
-            , sdcal_test_single_polarization
-            , sdcal_test_bug_fix_cas_12712
-            ]
-
-if is_CASA6:
-    if __name__ == '__main__':
+if __name__ == '__main__':
         unittest.main()
