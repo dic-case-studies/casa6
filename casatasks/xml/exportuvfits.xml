@@ -89,7 +89,7 @@ deprecated and removed.
                         (i.e. 0,1)
                         spw='0:5~61'; spw 0, channels 5 to 61,
                         INCLUSIVE
-                        spw='*:5~61'; all spw with channels 5 to 61
+                        spw='\*:5~61'; all spw with channels 5 to 61
                         spw='0,10,3:3~45'; spw 0,10 all channels, spw
                         3, channels 3 to 45.
                         spw='0~2:2~6'; spw 0,1,2 with channels 2

@@ -43,7 +43,7 @@ information, see the task pages of flagdata in CASA Docs
                      'antint', 'extend', 'unflag', 'summary'
 
 
-                     * 'list': Flag according to the data selection
+                     \* 'list': Flag according to the data selection
                        and flag commands specified in the input
                        list. The input list may come from a text file,
                        a list of text files or from a Python list of
@@ -79,11 +79,11 @@ information, see the task pages of flagdata in CASA Docs
                        quack mode section of this help.
 
 
-                     * 'manual': Flag according to the data selection
+                     \* 'manual': Flag according to the data selection
                        specified. This is the default mode 
 
 
-                     * 'clip': Clip data according to values of the
+                     \* 'clip': Clip data according to values of the
                        following subparameters. The polarization
                        expression is given by the correlation
                        parameter. For calibration tables, the
@@ -91,11 +91,11 @@ information, see the task pages of flagdata in CASA Docs
                        parameter.
 
 
-                     * 'quack': Option to remove specified part of
+                     \* 'quack': Option to remove specified part of
                        scan beginning/end.
 
 
-                     * 'shadow': Option to flag data of shadowed
+                     \* 'shadow': Option to flag data of shadowed
                        antennas. This mode is not available for cal
                        tables.
                  
@@ -111,12 +111,12 @@ information, see the task pages of flagdata in CASA Docs
                        antenna-pointing direction. 
 
 
-                     * 'elevation': Option to flag based on antenna
+                     \* 'elevation': Option to flag based on antenna
                        elevation. This mode is not available for cal
                        tables.
 
 
-                     * 'tfcrop': Flag using the TFCrop autoflag
+                     \* 'tfcrop': Flag using the TFCrop autoflag
                        algorithm.
  
                        For each field, spw, timerange (specified by
@@ -137,7 +137,7 @@ information, see the task pages of flagdata in CASA Docs
                        sub-parameter extendflags below.
 
 
-                     * 'rflag': Detect outliers based on the RFlag
+                     \* 'rflag': Detect outliers based on the RFlag
                        algorithm (ref. E.Greisen, AIPS, 2011). The
                        polarization expression is given by the
                        correlation parameter.
@@ -187,7 +187,7 @@ information, see the task pages of flagdata in CASA Docs
                        (https://casa.nrao.edu/casadocs/)
                        
 
-                     * 'antint': Flag integrations if all baselines to
+                     \* 'antint': Flag integrations if all baselines to
                        a specified antenna are flagged
 
                        This mode flag all integrations in which a
@@ -212,7 +212,7 @@ information, see the task pages of flagdata in CASA Docs
                        corrupted polarization.
 
 
-                     * 'extend': Extend and/or grow flags beyond what
+                     \* 'extend': Extend and/or grow flags beyond what
                        the basic algorithms detect. This mode will
                        extend the accumulated flags available in the
                        MS, regardless of which algorithm created them.
@@ -234,11 +234,11 @@ information, see the task pages of flagdata in CASA Docs
                        can be obtained via the summary mode.
 
 
-                     * 'unflag': Unflag according to the data
+                     \* 'unflag': Unflag according to the data
                        selection specified.
 
 
-                     * 'summary': List the number of rows and flagged
+                     \* 'summary': List the number of rows and flagged
                        data points for the MS's meta-data. The
                        resulting summary will be returned as a Python
                        dictionary.
@@ -369,7 +369,7 @@ timerange parameters in flag commands.
                      apply the online flags that are created by
                      importasdm when savecmds=True. The value of a
                      regular time buffer should be
-                     tbuff=0.5*max(integration time).
+                     tbuff=0.5\*max(integration time).
 </description>
                     <type>double</type><type>doubleVec</type>
                     <value type="double">0.0</value>
@@ -389,7 +389,7 @@ timerange parameters in flag commands.
                         3 - chans 3 to 45.
                         spw='0~2:2~6'; spw 0,1,2 with channels 2
                         through 6 in each.
-                        spw = '*:3~64'  channels 3 through 64 for all sp id's
+                        spw = '\*:3~64'  channels 3 through 64 for all sp id's
                         spw = ' :3~64' will NOT work.
 
                      NOTE: For modes clip, tfcrop and rflag,
@@ -419,7 +419,7 @@ timerange parameters in flag commands.
                         field='0,4,5~7'; field ids 0,4,5,6,7
                         field='3C286,3C295'; field named 3C286 and
                         3C295
-                        field = '3,4C*'; field id 3, all names
+                        field = '3,4C\*'; field id 3, all names
                         starting with 4C
 </description>
                 <type>string</type><type>stringVec</type>
@@ -538,7 +538,7 @@ timerange parameters in flag commands.
 <description>Select observing intent
                      Default: '' (no selection by intent)
 
-                        Example: intent='*BANDPASS*'  (selects data
+                        Example: intent='\*BANDPASS\*'  (selects data
                         labelled with BANDPASS intent)
 
                      NOTE: intent selection is not supported for cal
@@ -638,10 +638,7 @@ visibilities for flagging
                      average (WEIGHT_SPECTRUM for CORRECTED_DATA and
                      SIGMA_SPECTRUM for DATA).
 
-                     NOTE 1: Pre-average across channels is not
-                     supported in list mode.
-
-                     NOTE 2: Pre-average across channels is not
+                     NOTE: Pre-average across channels is not
                      supported for calibration tables 
 </description>
                 <type>bool</type><type>boolVec</type>
@@ -657,9 +654,9 @@ visibilities for flagging
                      Bin width for channel average in number of input
                      channels. If a list is given, each bin applies to
                      one of the selected SPWs. When chanbin is set to
-                     1 all input channels are used considered for the
-                     average to produce a single output channel, this
-                     behaviour aims to be preserve backwards
+                     1 all input channels are used for the average
+                     to produce a single output channel, this
+                     behaviour aims to preserve backwards
                      compatibility with the previous pre-averaging
                      feature of clip mode.
 </description>
@@ -686,10 +683,7 @@ visibilities for flagging.
                      are used to average together data from different
                      integrations.
 
-                     NOTE 1: Pre-average across time is not
-                     supported in list mode.
-
-                     NOTE 2: Pre-average across time is not
+                     NOTE: Pre-average across time is not
                      supported for calibration tables 
 </description>
                 <type>bool</type><type>boolVec</type>
@@ -1470,12 +1464,12 @@ parameters.
                      Default: 'apply'
                      Options:  'none', 'apply','calculate'
 
-                     * 'apply': Apply the flags to the MS.
-                     * 'calculate': Only calculate the flags but do
+                     - 'apply': Apply the flags to the MS.
+                     - 'calculate': Only calculate the flags but do
                        not write them to the MS. This is useful if
                        used together with the display to analyse the
                        results before writing to the MS.
-                     * '': When set to empty, the underlying tool will
+                     - '': When set to empty, the underlying tool will
                        not be executed and no flags will be
                        produced. No data selection will be done
                        either. This is useful when used together with
@@ -1498,8 +1492,8 @@ parameters.
                      Default: 'none'
                      Options: 'none', 'data', 'report', 'both'
 
-                     * 'none': will not display anything.
-                     * 'data': display data and flags per-chunk at
+                     - 'none': will not display anything.
+                     - 'data': display data and flags per-chunk at
                        run-time, within an interactive GUI.
                        This option opens a GUI to show the 2D
                        time-freq planes of the data with old and new
@@ -1512,9 +1506,9 @@ parameters.
                        current set of parameters is just wrong.
                        -- There is an option to stop the display but
                        continue flagging.
-                     * 'report': displays end-of-MS reports on the
+                     - 'report': displays end-of-MS reports on the
                        screen.
-                     * 'both': displays data per chunk and end-of-MS
+                     - 'both': displays data per chunk and end-of-MS
                        reports on the screen
 </description>
                 <value type="string"/>
@@ -1851,8 +1845,8 @@ save to FLAG_CMD
 <returns type="void"/>
 <example>
 
-FOR MORE INFORMATION, SEE THE TASK PAGES OF FLAGDATA IN CASA DOCS:
-https://casa.nrao.edu/casadocs/
+For more information, see the task pages of flagdata in CASA Docs:
+https://casadocs.readthedocs.io
 
 </example>
 
