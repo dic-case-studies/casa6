@@ -204,13 +204,6 @@
 \def\none{-}
 \setlongtables
 \begin{longtable}{|lccccl|}
-\caption{
-Items recognized by the range, select, getdata and\break putdata functions.\\
-Items marked with a \dag\ are only available in interferometric measurement sets.\\
-Items marked with a \ddag\ are only available in interferometric measurement sets\\
-that have been processed with calibrator or imager.  Items marked with a \all\ do\\
-not require all the data in the selected measurement set to have the same shape.
-}
 \\ \hline
                      \&amp; range &amp; select &amp; getdata &amp; putdata &amp; comment\\ \hline
 \endfirsthead
@@ -219,12 +212,12 @@ not require all the data in the selected measurement set to have the same shape.
                      &amp; range &amp; select &amp; getdata &amp; putdata &amp; comment\\ \hline
 \endhead
 \label{ms:tblItems}
-amplitude\dag        &amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; amplitude of observed data \\
-corrected\_amplitude\ddag &amp;\bul  &amp;\none &amp;\bul   &amp; \none   &amp; amplitude of corrected data \\
-model\_amplitude\ddag &amp; \bul &amp; \none  &amp; \bul    &amp; \none   &amp; amplitude of model data \\
-ratio\_amplitude\ddag &amp; \none  &amp; \none  &amp; \bul  &amp; \none   &amp; amplitude of corrected/model \\
-residual\_amplitude\ddag &amp; \none &amp; \none &amp; \bul &amp; \none   &amp; amplitude of residual data \\
-obs\_residual\_amplitude\ddag &amp; \none &amp; \none &amp; \bul &amp; \none &amp; amplitude of obs residual data \\
+amplitude&#x1D43;        &amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; amplitude of observed data \\
+corrected\_amplitude&#x1D47; &amp;\bul  &amp;\none &amp;\bul   &amp; \none   &amp; amplitude of corrected data \\
+model\_amplitude&#x1D47; &amp; \bul &amp; \none  &amp; \bul    &amp; \none   &amp; amplitude of model data \\
+ratio\_amplitude&#x1D47; &amp; \none  &amp; \none  &amp; \bul  &amp; \none   &amp; amplitude of corrected/model \\
+residual\_amplitude&#x1D47; &amp; \none &amp; \none &amp; \bul &amp; \none   &amp; amplitude of residual data \\
+obs\_residual\_amplitude&#x1D47; &amp; \none &amp; \none &amp; \bul &amp; \none &amp; amplitude of obs residual data \\
 antenna1             &amp; \all  &amp; \bul   &amp; \bul    &amp; \none   &amp; 1st antenna id\\
 antenna2             &amp; \all  &amp; \bul   &amp; \bul    &amp; \none   &amp; 2nd antenna id\\
 antennas             &amp; \all  &amp; \none  &amp; \none   &amp; \none   &amp; list of antenna names\\
@@ -233,12 +226,12 @@ axis\_info           &amp; \none &amp; \none  &amp; \bul    &amp; \none   &amp; 
 chan\_freq           &amp; \bul  &amp; \none  &amp; \none   &amp; \none   &amp; channel frequencies\\
 corr\_names          &amp; \bul  &amp; \none  &amp; \none   &amp; \none   &amp; list of polarization strings\\
 corr\_types          &amp; \bul  &amp; \none  &amp; \none   &amp; \none   &amp; list of polarization enum values\\
-data\dag             &amp; \none &amp; \none  &amp; \bul    &amp; \bul    &amp; complex observed data\\
-corrected\_data\ddag &amp; \none &amp; \none  &amp; \bul    &amp; \bul    &amp; complex corrected data\\
-model\_data\ddag     &amp; \none &amp; \none  &amp; \bul    &amp; \bul    &amp; complex model data\\
-ratio\_data\ddag     &amp; \none  &amp; \none  &amp; \bul    &amp; \none   &amp; complex corrected/model \\
-residual\_data\ddag  &amp; \none &amp; \none  &amp; \bul    &amp; \bul    &amp; complex residual data\\
-obs\_residual\_data\ddag&amp;\none&amp; \none &amp; \bul    &amp; \bul    &amp; complex observed residual data\\
+data&#x1D43;             &amp; \none &amp; \none  &amp; \bul    &amp; \bul    &amp; complex observed data\\
+corrected\_data&#x1D47; &amp; \none &amp; \none  &amp; \bul    &amp; \bul    &amp; complex corrected data\\
+model\_data&#x1D47;     &amp; \none &amp; \none  &amp; \bul    &amp; \bul    &amp; complex model data\\
+ratio\_data&#x1D47;     &amp; \none  &amp; \none  &amp; \bul    &amp; \none   &amp; complex corrected/model \\
+residual\_data&#x1D47;  &amp; \none &amp; \none  &amp; \bul    &amp; \bul    &amp; complex residual data\\
+obs\_residual\_data&#x1D47;&amp;\none&amp; \none &amp; \bul    &amp; \bul    &amp; complex observed residual data\\
 feed1                &amp; \all  &amp; \bul   &amp; \bul    &amp; \none   &amp; 1st feed in correlation\\
 feed2                &amp; \all  &amp; \bul   &amp; \bul    &amp; \none   &amp; 2nd feed in correlation\\
 field\_id            &amp; \all  &amp; \bul   &amp; \bul    &amp; \none   &amp; field number\\
@@ -248,28 +241,28 @@ flag\_row            &amp; \none &amp; \none  &amp; \bul    &amp; \bul    &amp; 
 flag\_sum            &amp; \none &amp; \none  &amp; \bul    &amp; \none   &amp; flag summary\\
 ha                   &amp; \none &amp; \none  &amp; \bul    &amp; \none   &amp; add hour angle to axis\_info\\
 ifr\_number          &amp; \all  &amp; \bul   &amp; \bul    &amp; \none   &amp; 1000*antenna1+antenna2\\
-imaginary\dag        &amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; imag part of observed data\\
-corrected\_imaginary\ddag&amp;\bul  &amp;\none&amp; \bul    &amp; \none   &amp; imag part of corrected data\\
-model\_imaginary\ddag &amp; \bul  &amp; \none &amp; \bul    &amp; \none   &amp; imag part of model data\\
-ratio\_imaginary\ddag &amp; \none &amp; \none &amp; \bul    &amp; \none   &amp; imag part of corrected/model \\
-residual\_imaginary\ddag&amp;\none  &amp;\none &amp; \bul    &amp; \none   &amp; imag part of residual data\\
-obs\_residual\_imaginary\ddag&amp;\none  &amp;\none&amp;\bul &amp; \none   &amp; imag part of obs residual data\\
+imaginary&#x1D43;        &amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; imag part of observed data\\
+corrected\_imaginary&#x1D47;&amp;\bul  &amp;\none&amp; \bul    &amp; \none   &amp; imag part of corrected data\\
+model\_imaginary&#x1D47; &amp; \bul  &amp; \none &amp; \bul    &amp; \none   &amp; imag part of model data\\
+ratio\_imaginary&#x1D47; &amp; \none &amp; \none &amp; \bul    &amp; \none   &amp; imag part of corrected/model \\
+residual\_imaginary&#x1D47;&amp;\none  &amp;\none &amp; \bul    &amp; \none   &amp; imag part of residual data\\
+obs\_residual\_imaginary&#x1D47;&amp;\none  &amp;\none&amp;\bul &amp; \none   &amp; imag part of obs residual data\\
 last                 &amp; \none &amp; \none  &amp; \bul    &amp; \none   &amp; add LAST to axis\_info\\
 num\_corr            &amp; \bul  &amp; \none  &amp; \none   &amp; \none   &amp; number of polarizations\\
 num\_chan            &amp; \bul  &amp; \none  &amp; \none   &amp; \none   &amp; number of freq channels\\
-phase\dag            &amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; phase of observed data\\
-corrected\_phase\ddag&amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; phase of corrected data\\
-model\_phase\ddag    &amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; phase of model data\\
-ratio\_phase\ddag    &amp; \none &amp; \none  &amp; \bul    &amp; \none   &amp; phase of corrected/model \\
-residual\_phase\ddag &amp; \none  &amp; \none  &amp; \bul    &amp; \none   &amp; phase of residual data\\
-obs\_residual\_phase\ddag&amp;\none  &amp;\none&amp; \bul    &amp; \none   &amp; phase of observed residual data\\
+phase&#x1D43;            &amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; phase of observed data\\
+corrected\_phase&#x1D47;&amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; phase of corrected data\\
+model\_phase&#x1D47;    &amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; phase of model data\\
+ratio\_phase&#x1D47;    &amp; \none &amp; \none  &amp; \bul    &amp; \none   &amp; phase of corrected/model \\
+residual\_phase&#x1D47; &amp; \none  &amp; \none  &amp; \bul    &amp; \none   &amp; phase of residual data\\
+obs\_residual\_phase&#x1D47;&amp;\none  &amp;\none&amp; \bul    &amp; \none   &amp; phase of observed residual data\\
 phase\_dir           &amp; \bul  &amp; \none  &amp; \none   &amp; \none   &amp; list of phase centers \&amp; epoch\\
-real\dag            &amp; \bul   &amp; \none  &amp; \bul    &amp; \none   &amp; real part of observed data\\
-corrected\_real\ddag &amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; real part of corrected data\\
-model\_real\ddag     &amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; real part of model data\\
-ratio\_real\ddag     &amp; \none &amp; \none  &amp; \bul    &amp; \none   &amp; real part of corrected/model \\
-residual\_real\ddag  &amp; \none  &amp; \none  &amp; \bul    &amp; \none   &amp; real part of residual data\\
-obs\_residual\_real\ddag&amp;\none  &amp;\none &amp; \bul    &amp; \none   &amp; real part of observed res. data\\
+real&#x1D43;            &amp; \bul   &amp; \none  &amp; \bul    &amp; \none   &amp; real part of observed data\\
+corrected\_real&#x1D47; &amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; real part of corrected data\\
+model\_real&#x1D47;     &amp; \bul  &amp; \none  &amp; \bul    &amp; \none   &amp; real part of model data\\
+ratio\_real&#x1D47;     &amp; \none &amp; \none  &amp; \bul    &amp; \none   &amp; real part of corrected/model \\
+residual\_real&#x1D47;  &amp; \none  &amp; \none  &amp; \bul    &amp; \none   &amp; real part of residual data\\
+obs\_residual\_real&#x1D47;&amp;\none  &amp;\none &amp; \bul    &amp; \none   &amp; real part of observed res. data\\
 ref\_frequency       &amp; \bul  &amp; \none  &amp; \none   &amp; \none   &amp; reference frequency\\
 rows                 &amp; \all  &amp; \bul   &amp; \none   &amp; \none   &amp; row numbers in {\it original} table\\
 scan\_number         &amp; \all  &amp; \bul   &amp; \bul    &amp; \none   &amp; \\
@@ -286,6 +279,11 @@ uvdist               &amp; \all  &amp; \bul   &amp; \bul    &amp; \none   &amp; 
 weight               &amp; \all  &amp; \none  &amp; \bul    &amp; \bul    &amp; weight of the data\\
 \hline
 \end{longtable}
+Items recognized by the range, select, getdata and\break putdata functions.\\
+Items marked with a &#x1D43; are only available in interferometric measurement sets.\\
+Items marked with a &#x1D47; are only available in interferometric measurement sets
+that have been processed with calibrator or imager.\\
+Items marked with a \all\ do not require all the data in the selected measurement set to have the same shape.
 
 <example>
     \begin{verbatim}
@@ -1114,6 +1112,7 @@ back to disk.
     may contain additional data columns. You need to select ONE of
     these columns to be written to the fits file. The possible
     options are:
+    
     1. observed     This is the raw data as collected by the telescope. All
                     interferometric measurement sets must contain this column.
                     A synonym for 'observed' is 'data'.
