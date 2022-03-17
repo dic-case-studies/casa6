@@ -1574,23 +1574,5 @@ class Workdir:
         raise RuntimeError("Some errors occured when creating work dir")
 
 
-def suite():
-    """Unittest suite definition."""
-    return [
-        TestImsmooth,
-        TestFileStack,
-        TestImageShape,
-        TestImbaseline,
-        TestImage2MS,
-        TestSdbaseline,
-        TestSdsmooth,
-        TestMS2Image,
-        TestImageSubtraction,
-        TestModuleMethodsOfImbaseline,
-        TestImbaselineExecution,
-        TestImbaselineOutputs,
-    ]
-
-
 if __name__ == "__main__":
     unittest.main()

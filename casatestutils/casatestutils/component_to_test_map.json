@@ -471,12 +471,12 @@
             "comment":""
         },
         {
-            "testScript":"test_imbaseline",
+            "testScript":"test_task_imbaseline",
             "testType":"casatasks",
             "maintainer":"Kazuhiko Shimada",
             "maintainerEmail":"kazuhiko.shimada@nao.ac.jp",
             "testOptions":[],
-            "testGroup":["imbaseline"],
+            "testGroup":["Single Dish", "Image Analysis", "imbaseline"],
             "timeout":0,
             "comment":""
         },
