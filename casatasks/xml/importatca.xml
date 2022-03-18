@@ -38,25 +38,25 @@ archive data.
                      Options: birdie, reweight, noxycorr, fastmosaic,
                      hires, noac (comma separated list)
 
-                     * birdie: (pre-CABB data only) discard edge
+                     - birdie: (pre-CABB data only) discard edge
                        channels and channels affected by internal RFI
-                     * reweight: (pre-CABB data only) suppress ringing
+                     - reweight: (pre-CABB data only) suppress ringing
                        of RFI spikes by reweighting of the lag
                        spectrum 
-                     * noxycorr: do not apply the xy phase correction
+                     - noxycorr: do not apply the xy phase correction
                        as derived from the switched noise calibration,
                        by default this is applied during loading of
                        the data
-                     * fastmosaic: use this option if you are loading
+                     - fastmosaic: use this option if you are loading
                        mosaic data with many pointings and only one or
                        two integrations per pointing; this option
                        changes the tiling of the data to avoid
                        excessive I/O
-                     * hires: use this option if you have data in time
+                     - hires: use this option if you have data in time
                        binning mode (as used for pulsars) but you want
                        to make it look like data with very short
                        integration time (no bins)
-                     * noac: discard the auto-correlation data
+                     - noac: discard the auto-correlation data
 </description>
            <value/>
        </param>
@@ -74,7 +74,7 @@ archive data.
                         3 - chans 3 to 45.
                         spw='0~2:2~6'; spw 0,1,2 with channels 2
                         through 6 in each.
-                        spw = '*:3~64'  channels 3 through 64 for all sp id's
+                        spw = '\*:3~64'  channels 3 through 64 for all sp id's
                         spw = ' :3~64' will NOT work.
 </description>
            <value><value>-1</value></value>

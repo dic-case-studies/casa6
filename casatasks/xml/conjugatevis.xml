@@ -31,7 +31,7 @@
   <param name="outputvis" type="string">
 <shortdescription>Name of output visibility file</shortdescription>
 <description>Name of output visibility file
-                     Default: 'conjugated_'+vis
+                     Default: 'conjugated\_'+vis
 
                         Example: outputvis='conjugated.ms'
 </description>

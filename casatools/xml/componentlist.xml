@@ -25,11 +25,14 @@
   cleaning data.
 
   The simplest way to make a componentlist tool is to use cl.addcomponent:
+  
+  \begin{verbatim}
   cl.done()   # it is safest to close it before beginning
   # add a single point source component with 
   # Stokes I=2.3Jy and other Stokes parameters 0  
   cl.addcomponent(dir='J2000 10h30m00 -20d00m00.0', flux=[2.3,0,0,0])  
   cl.rename(&quot;myList.cl&quot;)  # save to disk
+  \end{verbatim}
  
   One can open a list on disk with cl.open(filename).
  
@@ -728,7 +731,7 @@ cl.open('crux.cl')
     
      <param name="polarization" type="string">
      <description>The polarization of the value field.
-     ``Stokes'', ``linear'' or ``circular''</description>
+     'Stokes', 'linear' or 'circular'</description>
      <value>Circular</value>
      <value>Linear</value>
      <value>Stokes</value>

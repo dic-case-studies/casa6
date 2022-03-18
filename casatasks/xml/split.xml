@@ -83,7 +83,7 @@ Multi-MS.
                         field='0,4,5~7'; field ids 0,4,5,6,7
                         field='3C286,3C295'; field named 3C286 and
                         3C295
-                        field = '3,4C*'; field id 3, all names
+                        field = '3,4C\*'; field id 3, all names
                         starting with 4C
 </description>
         <type>string</type><type>stringVec</type><type>int</type><type>intVec</type>
@@ -103,7 +103,7 @@ Multi-MS.
                         3 - chans 3 to 45.
                         spw='0~2:2~6'; spw 0,1,2 with channels 2
                         through 6 in each.
-                        spw = '*:3~64'  channels 3 through 64 for all sp id's
+                        spw = '\*:3~64'  channels 3 through 64 for all sp id's
                         spw = ' :3~64' will NOT work.
 
                      NOTE: mstransform does not support multiple
@@ -347,12 +347,13 @@ Multi-MS.
                      help msmd.
 
                         Examples: 
-                      * combine = 'scan'; can be useful when the scan
+                        
+                      - combine = 'scan'; can be useful when the scan
                         number goes up with each integration as in
                         many WSRT MSs.
-                      * combine = ['scan', 'state']: disregard scan
+                      - combine = ['scan', 'state']: disregard scan
                         and state numbers when time averaging.
-                      * combine = 'state,scan'; same as above.
+                      - combine = 'state,scan'; same as above.
 
                      NOTE: It is not possible to do time average with
                      combine='scan' if the input MMS was partitioned
