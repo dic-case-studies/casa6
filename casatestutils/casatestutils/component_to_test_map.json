@@ -477,7 +477,7 @@
             "maintainerEmail":"kazuhiko.shimada@nao.ac.jp",
             "testOptions":[],
             "testGroup":["Single Dish", "Image Analysis", "imbaseline"],
-            "timeout":0,
+            "timeout":3600,
             "comment":""
         },
         {
