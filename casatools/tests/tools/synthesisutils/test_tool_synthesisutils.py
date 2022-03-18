@@ -120,7 +120,7 @@ class sutest_base(unittest.TestCase):
 
     def topof_to_outframef(self, vis, infreq, outframe, fieldid):
         """
-        Calulate corresponding outframe frequencies for the input TOPO 
+        Calculate corresponding outframe frequencies for the input TOPO
         frequency for a specific source for the given observing time stamps
         as the outframe frequency shift.
         (returns a list of measure frequency)
@@ -167,7 +167,7 @@ class sutest_base(unittest.TestCase):
 class fitpsfbeam_test(sutest_base):
     ### su.fitpsBeam has three parameters, imagename, nterms, and psfcutoff.
     ### nterms and psfcutoff have the default values but other values need to be tested.
-    ### Approriate multiterm psfs need to be present for nterms>1
+    ### Appropriate multiterm psfs need to be present for nterms>1
    
      
     ### Set Up
@@ -356,8 +356,8 @@ class advisechansel_test(sutest_base):
 
     ### Test cases
     def test_advisechanelsel_datasel(self):
-        '''Test that data seleciton parameters or given frequency range, etc is returned correctly'''
-        # Run multiple tests with slightly different input but should yield identical result.
+        '''Test that data selection parameters or given frequency range, etc is returned correctly'''
+        # Run multiple tests with slightly different input but should yield identical results.
 
         # First, try it in the data frame 
         su = synthesisutils()
@@ -398,7 +398,7 @@ class advisechansel_test(sutest_base):
         self.assertTrue(all([pof,poflsrk]))
 
     def test_advisechanelsel_datasel_ephem(self):
-        '''Test that data selection parameters for given frequency range,etc for ephemeris object returned correctly'''
+        '''Test that data selection parameters for given frequency range,etc for ephemeris object is returned correctly'''
 
         su = synthesisutils()
         #ret = su.advisechansel(xxxx) 
@@ -430,7 +430,7 @@ class advisechansel_test(sutest_base):
         
 
     def test_su_adivsechansel_getfreqrange(self):
-        '''Test that frequency range for given data selections returned correctly'''
+        '''Test that frequency range for given data selections is returned correctly'''
         refdict = {'freqend': {'unit': 'Hz', 'value': 358203002929.7875}, 'freqstart': {'unit': 'Hz', 'value': 356558910156.25}}
         su = synthesisutils()
         inputms ='twhya.short.ms'
@@ -438,7 +438,7 @@ class advisechansel_test(sutest_base):
         
         (pof, errmsg) = self.checkdict(res, refdict, 'TOPO test') 
         #fstlsrk= '356.58364232412697GHz' fenlsrk= '358.22772677745405GHz'
-        # corresponding LSRK frequecies
+        # corresponding LSRK frequencies
         reslsrk = su.advisechansel(freqframe='LSRK', getfreqrange=True,spwselection='0:500~3839,1', fieldid=2, msname=inputms)
 
         del su
@@ -453,7 +453,7 @@ class advisechansel_test(sutest_base):
         self.assertTrue(pof)
 
     def test_su_advisechansel_getfreqrange_ephem(self):
-        '''Test that frequency range for given data selections for an ephemeris object returned correctly'''
+        '''Test that frequency range for given data selections for an ephemeris object is returned correctly'''
         su = synthesisutils()
         inputms ='alma_ephemobj_icrs.ms'
         tol  = 122070.3125 # chan width in Hz
@@ -464,7 +464,7 @@ class advisechansel_test(sutest_base):
      
         shutil.rmtree('external_EPHEM0_Uranus_57362.91000000.tab')
 
-        # res and resext should be indetical as it effectively uses the same ephem table
+        # res and resext should be identical as it effectively uses the same ephem table
         self.assertEqual(res['freqstart']['value'], refdict['freqstart']['value'])
         self.assertEqual(res['freqend']['value'], refdict['freqend']['value'])
         self.assertEqual(resext['freqstart']['value'], refdict['freqstart']['value'])
@@ -485,6 +485,5 @@ class advisechansel_test(sutest_base):
         self.assertRaises(Exception, su.advisechansel())
 
 
-####    Imports     ####
 if __name__ == '__main__':
     unittest.main()
