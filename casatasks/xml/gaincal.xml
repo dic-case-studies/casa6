@@ -49,7 +49,7 @@ polarizations must be unflagged for any solution to be obtained.
                         field='0,4,5~7'; field ids 0,4,5,6,7
                         field='3C286,3C295'; field named 3C286 and
                         3C295
-                        field = '3,4C*'; field id 3, all names
+                        field = '3,4C\*'; field id 3, all names
                         starting with 4C
 </description>
         <value/>
@@ -67,7 +67,7 @@ polarizations must be unflagged for any solution to be obtained.
                         (i.e. 0,1)
                         spw='0:5~61'; spw 0, channels 5 to 61,
                         INCLUSIVE
-                        spw='*:5~61'; all spw with channels 5 to 61
+                        spw='\*:5~61'; all spw with channels 5 to 61
                         spw='0,10,3:3~45'; spw 0,10 all channels, spw
                         3, channels 3 to 45.
                         spw='0~2:2~6'; spw 0,1,2 with channels 2
@@ -326,23 +326,23 @@ solve
 
                         Example: gaintype='GSPLINE'
 
-                   * 'G' means determine gains for each polarization and sp_wid
-                   * 'T' obtains one solution for both polarizations;
+                   - 'G' means determine gains for each polarization and sp_wid
+                   - 'T' obtains one solution for both polarizations;
                      Hence. their phase offset must be first removed
                      using a prior G.
-                   * 'GSPLINE' makes a spline fit to the calibrator
+                   - 'GSPLINE' makes a spline fit to the calibrator
                      data. It is useful for noisy data and fits a
                      smooth curve through the calibrated amplitude and
                      phase. However, at present GSPLINE is somewhat
                      experimental. Use with caution and check
                      solutions.
-                   * 'K' solves for simple antenna-based delays via
+                   - 'K' solves for simple antenna-based delays via
                      FFTs of the spectra on baselines to the reference
                      antenna.  (This is not global fringe-fitting.)
                      If combine includes 'spw', multi-band delays are
                      determined; otherwise, per-spw single-band delays
                      will be determined.
-                   * 'KCROSS' solves for a global cross-hand delay.
+                   - 'KCROSS' solves for a global cross-hand delay.
                      Use parang=T and apply prior gain and bandpass
                      solutions.  Multi-band delay solves
                      (combine='spw') not yet supported for KCROSS.
@@ -544,20 +544,21 @@ solve
                    Specify a list of strings, aligned with the list of caltable specified
                    in gaintable, that contain the required interpolation parameters
                    for each caltable.
-                   * When frequency interpolation is relevant (B, Df,
+                   
+                   - When frequency interpolation is relevant (B, Df,
                      Xf), separate time-dependent and freq-dependent
-                     interp types with a comma (freq_after_ the
+                     interp types with a comma (freq after the
                      comma). 
-                   * Specifications for frequency are ignored when the
+                   - Specifications for frequency are ignored when the
                      calibration table has no channel-dependence. 
-                   * Time-dependent interp options ending in 'PD'
+                   - Time-dependent interp options ending in 'PD'
                      enable a &quot;phase delay&quot; correction per spw for
                      non-channel-dependent calibration types.
-                   * For multi-obsId datasets, 'perobs' can be
+                   - For multi-obsId datasets, 'perobs' can be
                      appended to the time-dependent interpolation
                      specification to enforce obsId boundaries when
                      interpolating in time. 
-                   * Freq-dependent interp options can have 'flag' appended
+                   - Freq-dependent interp options can have 'flag' appended
                      to enforce channel-dependent flagging, and/or 'rel' 
                      appended to invoke relative frequency interpolation
 

@@ -79,7 +79,6 @@ class plotants_test(unittest.TestCase):
         self.assertEqual(self.res,None)
         self.assertTrue(os.path.exists(self.fig))
 
-    @unittest.skipIf(is_CASA6,"failure, unknown reasons")
     def test6(self):
         '''Test 6: Exclude antenna positions'''
         self.res = plotants(vis=self.msfile, figfile=self.fig,
