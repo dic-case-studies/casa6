@@ -886,13 +886,17 @@ class test_iterbot(testref_base):
 
           ret={}
           if self.parallel:
-            # peakres and modflux is determined from node1 
+            # peakres and modflux is determined from node1
             ret=self.th.mergeParaCubeResults(retpar, ['iterdone', 'nmajordone', 'peakres', 'modflux'])
           else:
-            ret=retpar 
-          report=self.th.checkall(ret=ret, peakres=0.7692, modflux=0.0,iterdone=12,nmajordone=2,imgexist=[self.img+'.psf', self.img+'.residual']) ## modflux=0 because this tests that the edge channels got no deconvolution 
+            ret=retpar
 
-          self.assertTrue(self.check_final(report))
+          report=self.th.checkall(ret=ret,iterdone=12,nmajordone=2,
+                                  imgexist=[self.img+'.psf', self.img+'.residual'],
+                                  imgval=[ (self.img+'.model', 1.73, [50,50,0,7]),    ## Channel id 7 has a line, with flux above the stopping threshold. It should have something.
+                                           (self.img+'.model', 0, [50,50,0,3])     ]) ## Channel id 3 has continuum, with flux below the stopping threshood. It should have zero in the model.
+
+          self.assertTrue(self.check_final(report)) 
 
 
      def test_iterbot_cube_3(self): # test for returned summary/plot for no iteration case 
