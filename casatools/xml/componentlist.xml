@@ -777,13 +777,13 @@ cl.open('crux.cl')
     
      <param name="spectrumtype" type="string">
      <description>The spectrum type,
-     a string that is either 'constant' or 'spectral index'</description>
+     a string that is one of 'constant', 'spectral index', or 'plp'</description>
      <value>spectral index</value>
      <value>constant</value>
      </param>
     
-     <param name="index" type="double">
-     <description>The spectral index</description>
+     <param type="any" name="index" limittypes="int, intArray, double, doubleArray">
+     <description>The spectral index or coeffecients for plp.</description>
      <value>1.0</value>
      </param>
     
@@ -798,6 +798,17 @@ cl.open('crux.cl')
      </param>
   </input>
   <returns type="bool"/>
+  <example>
+      cl.open('my.cl')
+      cl.addcomponent(
+        shape='point', flux=[1.0, 0.0, 0.0, 0.0], dir='J2000 19h00m00 -20d00m00',
+        spectrumtype='plp', index=[1, 2, 3]
+      )
+
+      In this example, a point source with a power log polynomial
+      spectrum having the specified indices is added.
+  </example>
+
 </method>
 
  
@@ -1873,9 +1884,8 @@ An integer between 0 and one less than the list length, inclusively</description
   <description>
     The spectrumtype function returns the current spectral shape of the
     specified component. The spectral shape defines how the flux of
-    the component varies with frequency. Currently there are two
-    spectral shapes available. These are 'Constant' and 'Spectral
-    Index'. This function returns one of these two strings.
+    the component varies with frequency. Returns one of "Constant",
+    "Spectral Index", "Tabular Spectrum", and "Power Logarithmic Polynomial".
 
   </description>
   <input>
@@ -1922,6 +1932,22 @@ An integer between 0 and one less than the list length, inclusively</description
     For the spectral index spectral shape there is also an index
     field.  This contains a vector with four numbers, these are the
     spectral indicies for the I,Q,U,V components of the flux.
+
+    The dictionary associated with a power log polynomial spectrum has the following structure:
+
+    {
+      'coeffs': array([ 1.,  2.,  3.]),
+      'frequency': {
+        'type': 'frequency', 
+        'm0': {'value': 1.4200000000000002, 'unit': 'GHz'}, 
+        'refer': 'LSRK'
+      },
+      'type': 'Power Logarithmic Polynomial',
+      'error': array([ 0.,  0.,  0.])
+    }
+
+    The 'error' value is currently not used.
+
 
   </description>
   <input>
@@ -2100,15 +2126,44 @@ An integer between 0 and one less than the list length, inclusively</description
     to the user specified spectrum.
 
     The type argument defines what the sort of new spectrum to use. This
-    can be either 'constant'or 'spectral index'. The parsing of this
-    string is case insensitive.
+    can be one of 'constant', 'tabular', 'plp', or 'spectral index'. Minimal
+    match, case insensitive.
 
     If the spectrum type is 'constant' then the remaining arguments in
     this function are ignored. There are no other parameters needed to
-    specify a constant spectrum.
+    specify a constant spectrum. The reference frequency is set to be
+    the same value as the component being replaced. Although this is
+    unimportant for a constant spectrum, it may be important if
+    the spectral model of the component in question is changed again
+    later. See rules to how the reference frequencies of various spectral
+    models are set in the description below.
 
-    But if the spectrum is 'spectral index', the 'index' argument is
-    needed to fully specify the spectrum by using the index argument.  
+    If the spectrum is 'spectral index', the 'index' argument is
+    needed to fully specify the spectrum by using the index argument. The
+    index parameter may be in the form of a single numerical value, or
+    an array containing a numerical value. In the case of the array containing
+    multiple values, the zeroth value is used as the value of index, while
+    subsequent values are tacitly ignored. The functional form of this model
+    is 
+
+    R = x^(alpha)
+
+    where R = I_nu/I_nu0 is the ratio of the intensities at observed frequency nu
+    and the reference frequency nu_0, x = nu/nu_0, and alpha is the specified
+    spectral index. The reference frequency is tacitly set to that of the component
+    being replaced. and can be changed by a subsequent call to setfreq().
+ 
+    If spectrum = 'plp', then the spectral model is set to a power log polynomial.
+    The functional form of this model is
+
+    R = x^(c_0 + c_1*(ln(x)) + c_2*(ln(x))^2 + c_3*(ln(x))^3 + ... + c_n*(ln(x))^n)
+
+    where R = I_nu/I_nu0 is the ratio of the intensities at observed frequency nu
+    and the reference frequency nu_0, x = nu/nu_0, ln is the natural logarithm, and
+    c_0 ... c_n are the coefficients specified by index. In this case, index should
+    be an array of numerical values, and the array length is unconstrained. The
+    reference frequency is tacitly set to that of the component being replaced, and
+    can be changed by a subsequent call to setfreq().
 
     If the spectrum is 'tabular', then 'index' is ignored but the
     three parameters 'tabularfreqs', 'tabularflux' and 'tabularframe'
@@ -2117,9 +2172,10 @@ An integer between 0 and one less than the list length, inclusively</description
     interpolate the spectral value in between.  The flux of the source
     is interpolated from these values. Extrapolation outside the range
     given in 'tabularfreqs' is not done.
-
     'tabularfreqs' should be float values in 'Hz'
     'tabularflux' should be float values in 'Jy'
+    The reference frequency is chosen to be the zeroth element of tabularfreqs.
+    
 
 
     You should ensure that the reference
@@ -2137,20 +2193,21 @@ An integer between 0 and one less than the list length, inclusively</description
     
      <param name="type" type="string">
      <description>The new spectrum type.
-     A string that is either 'constant or 'spectral index' or 'tabular'</description>
+     A string that is one of 'constant', 'spectral index' 'tabular', or 'plp' (caseless, minimum match)</description>
      <value>spectral index</value>
      <allowed kind="enum">
        <value>spectral index</value>
        <value>constant</value>
        <value>tabular</value>
+       <value>plp</value>
      </allowed>
      </param>
      
-     
-     <param name="index" type="double">
-     <description>The spectral index.</description>
-     
-     
+     <!-- <param type="doubleArray" name="index"> -->
+     <param type="any" name="index" limittypes="double, doubleArray">
+     <description>The spectral index or coefficients for plp.</description>
+     <!-- A 4-element vector or real numbers -->
+     <!-- <value type="vector"><value>1.0</value></value> -->
      <value>0.0</value>
      </param>
 
@@ -2167,8 +2224,8 @@ An integer between 0 and one less than the list length, inclusively</description
 	 <value>1.0</value>
        </value>
      </param>
-     <param name="tabularframe" type="string">
-       <description> The frame for which the frequencies given are in</description>
+     <param type="string" name="tabularframe">
+       <description> For tabular models, the frame of the provided frequencies.</description>
        <value>LSRK</value>
      </param>
   </input>
@@ -2195,6 +2252,14 @@ An integer between 0 and one less than the list length, inclusively</description
       frequencies (1GHz, 1.1GHz and 1.4GHz) to 1.0Jy, 0.9Jy, 0.75Jy
       respectively.  Any frequency in between the range 1 to 1.4 GHz
       the flux will be estimated by interpolation.
+
+      cl.open('my.cl')
+      cl.addcomponent(shape='point', flux=[1.0, 0.0, 0.0, 0.0], dir='J2000 19h00m00 -20d00m00')
+      cl.setspectrum(which=0, type='plp', index=[1, 2, 3])
+      
+      In this example, the initial component's spectrum is modified to a power log polynomial
+      with the specified indices.
+
   </example>
 </method>
 
