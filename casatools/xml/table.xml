@@ -1265,11 +1265,11 @@ made.  This table query command is equivalent to the Table Query Language
   WHERE OBSERVATION_ID==0
   ORDERBY ARRAY_ID
 
-See http://www.astron.nl/casacore/trunk/casacore/doc/notes/199.html for an explanation of TaQL.
+See https://casacore.github.io/casacore-notes/199.html for an explanation of TaQL.
 
 If &quot;style&quot; is not blank, &quot;using style \&lt;style\&gt; &quot; is prepended to the
 query.  See
-http://www.astron.nl/casacore/trunk/casacore/doc/notes/199.html#x1-50002.2 for
+https://casacore.github.io/casacore-notes/199.html#x1-70002.2 for
 an explanation and list of choices for style.  The default (glish) style is
 1-based, inclusive end, and Fortran ordering.  You may prefer python (0-based,
 exclusive end, and C order) style.

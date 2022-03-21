@@ -52,7 +52,7 @@
                  field='0~2'; field ids 0,1,2
                  field='0,4,5~7'; field ids 0,4,5,6,7
                  field='3C286,3C295'; field named 3C286 and 3C295
-                 field = '3,4C*'; field id 3, all names starting with 4C
+                 field = '3,4C\*'; field id 3, all names starting with 4C
                  For multiple MS input, a list of field strings can be used:
                  field = ['0~2','0~4']; field ids 0-2 for the first MS and 0-4
                          for the second
@@ -191,7 +191,7 @@
                    default: '' (all)
                    example: intent='TARGET_SOURCE'
                    example: intent='TARGET_SOURCE1,TARGET_SOURCE2'
-                   example: intent='TARGET_POINTING*'
+                   example: intent='TARGET_POINTING\*'
 </description>
       <type>string</type><type>stringVec</type>
       <value type="string"/>
@@ -268,10 +268,19 @@
     <param type="any" name="imsize"> 
      <shortdescription>Number of pixels</shortdescription>
 <description>Number of pixels
-         example :  imsize = [350,250]
-                           imsize = 500 is equivalent to [500,500]
-         To take proper advantage of internal optimized FFT routines, the
-         number of pixels must be even and factorizable by 2,3,5 only.
+example:
+
+    imsize = [350,250]
+    imsize = 500 is equivalent to [500,500]
+    
+To take proper advantage of internal optimized FFT routines, the
+number of pixels must be even and factorizable by 2,3,5 only.
+To find the nearest optimal imsize to that desired by the user, please use the following tool method:
+
+    from casatools import synthesisutils
+    su = synthesisutils()
+    su.getOptimumSize(345) 
+    Output :  360
 </description>
       <type>int</type><type>intVec</type>
       <value type="intVec"><value>100</value></value>
@@ -564,14 +573,14 @@
                        The different types (with F = f/f0, the frequency ratio), are:
 
                        Z = (-1 + 1/F)
-                      RATIO = (F) *
+                      RATIO = (F) \*
                       RADIO = (1 - F)
                       OPTICAL == Z
                       BETA = ((1 - F2)/(1 + F2))
-                      GAMMA = ((1 + F2)/2F) *
+                      GAMMA = ((1 + F2)/2F) \*
                       RELATIVISTIC == BETA (== v/c)
                       DEFAULT == RADIO
-                      Note that the ones with an '*' have no real interpretation
+                      Note that the ones with an '\*' have no real interpretation
                       (although the calculation will proceed) if given as a velocity.
 
 </description>
@@ -582,7 +591,7 @@
      <shortdescription>List of rest frequencies</shortdescription>
 <description>List of rest frequencies or a rest frequency in a string.
                       Specify rest frequency to use for output image.
-                      *Currently it uses the first rest frequency in the list for translation of
+                      \*Currently it uses the first rest frequency in the list for translation of
                       velocities. The list will be stored in the output images.
                       Default: []; look for the rest frequency stored in the MS, if not available,
                       use center frequency of the selected channels
@@ -1388,7 +1397,7 @@ to use the correct direction in which the antenna is pointing with respect to th
      <shortdescription>Biases the scale selection when using multi-scale or mtmfs deconvolvers </shortdescription>
      <description>A numerical control to bias the scales when using multi-scale or mtmfs algorithms.
                       The peak from each scale's smoothed residual is
-                      multiplied by ( 1 - smallscalebias * scale/maxscale )
+                      multiplied by ( 1 - smallscalebias \* scale/maxscale )
                       to increase or decrease the amplitude relative to other scales,
                       before the scale with the largest peak is chosen. 
                       Smallscalebias can be varied between -1.0 and 1.0. 
@@ -1612,7 +1621,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                                           a well behaved PSF can help the reconstruction.
 
                        weighting='briggs' :  Gridding weights per visibility data point are given by
-                                                         'data_weight / ( A *total_wt_per_cell + B ) ' where
+                                                         'data_weight / ( A \* total_wt_per_cell + B ) ' where
                                                          A and B vary according to the 'robust' parameter.
 
                                                          robust = -2.0 maps to A=1,B=0 or uniform weighting.
@@ -1625,7 +1634,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                                          imaging sensitivity.
                         weighting='briggsabs' : Experimental option.
                                                          Same as Briggs except the formula is different A=
-                                                         robust*robust and B is dependent on the
+                                                         robust\*robust and B is dependent on the
                                                          noise per visibility estimated. Giving noise='0Jy'
                                                          is a not a reasonable option.
                                                          In this mode (or formula)  robust values
@@ -1643,7 +1652,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                                                                    natural weighting. The peak sensitivity is also
                                                                    closer to natural weighting.
 
-                       weighting='radial' : Gridding weights are given by ' data_weight * uvdistance '
+                       weighting='radial' : Gridding weights are given by ' data_weight \* uvdistance '
                                                       This method approximately minimizes rms sidelobes
                                                       for an east-west synthesis array.
                                                       
@@ -1842,10 +1851,10 @@ to use the correct direction in which the antenna is pointing with respect to th
                                  'cyclethreshold' is computed as follows using the settings in
                                   parameters 'cyclefactor','minpsffraction','maxpsffraction','threshold' :
 
-                                psf_fraction = max_psf_sidelobe_level * 'cyclefactor'
+                                psf_fraction = max_psf_sidelobe_level \* 'cyclefactor'
                                 psf_fraction = max(psf_fraction, 'minpsffraction');
                                 psf_fraction = min(psf_fraction, 'maxpsffraction');
-                                cyclethreshold = peak_residual * psf_fraction
+                                cyclethreshold = peak_residual \* psf_fraction
                                 cyclethreshold = max( cyclethreshold, 'threshold' )
 
                                 If nsigma is set (&gt;0.0), the N-sigma threshold is calculated (see
@@ -1865,7 +1874,7 @@ to use the correct direction in which the antenna is pointing with respect to th
      <shortdescription>Multiplicative factor for rms-based threshold stopping</shortdescription>
 <description>Multiplicative factor for rms-based threshold stopping
 
-                       N-sigma threshold is calculated as nsigma * rms value per image plane determined
+                       N-sigma threshold is calculated as nsigma \* rms value per image plane determined
                        from a robust statistics. For nsigma &gt; 0.0, in a minor cycle, a maximum of the two values,
                        the N-sigma threshold and cyclethreshold, is used to trigger a major cycle
                        (see also the descreption under 'threshold').
@@ -2128,34 +2137,34 @@ to use the correct direction in which the antenna is pointing with respect to th
     
     
     <param type="double" name="sidelobethreshold" subparam="true">
-           <shortdescription>sidelobethreshold *  the max sidelobe level * peak residual</shortdescription>
+           <shortdescription>sidelobethreshold \*  the max sidelobe level \* peak residual</shortdescription>
            <value type="double">3.0</value>
-<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on sidelobe levels:  sidelobethreshold * max_sidelobe_level * peak residual
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on sidelobe levels:  sidelobethreshold \* max_sidelobe_level \* peak residual
 
 </description>
     </param>
     <param type="double" name="noisethreshold" subparam="true">
-    <shortdescription>noisethreshold * rms in residual image + location(median) </shortdescription>
+    <shortdescription>noisethreshold \* rms in residual image + location(median) </shortdescription>
            <value type="double">5.0</value>
-<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on the noise level: noisethreshold * rms + location (=median)
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold based on the noise level: noisethreshold \* rms + location (=median)
 
-              The rms is calculated from MAD with rms = 1.4826*MAD.
+              The rms is calculated from MAD with rms = 1.4826\*MAD.
 </description>
     </param>
     <param type="double" name="lownoisethreshold" subparam="true">
-    <shortdescription>lownoisethreshold * rms in residual image + location(median) </shortdescription>
+    <shortdescription>lownoisethreshold \* rms in residual image + location(median) </shortdescription>
            <value type="double">1.5</value>
-<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold to grow previously masked regions via binary dilation:   lownoisethreshold * rms in residual image + location (=median)
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  mask threshold to grow previously masked regions via binary dilation:   lownoisethreshold \* rms in residual image + location (=median)
 
-              The rms is calculated from MAD with rms = 1.4826*MAD.
+              The rms is calculated from MAD with rms = 1.4826\*MAD.
 </description>
     </param>
     <param type="double" name="negativethreshold" subparam="true">
-           <shortdescription>negativethreshold * rms in residual image + location(median) </shortdescription>
+           <shortdescription>negativethreshold \* rms in residual image + location(median) </shortdescription>
            <value type="double">0.0</value>
-<description>Sub-parameter for &quot;auto-multithresh&quot;: mask threshold  for negative features: -1.0* negativethreshold * rms + location(=median)
+<description>Sub-parameter for &quot;auto-multithresh&quot;: mask threshold  for negative features: -1.0* negativethreshold \* rms + location(=median)
 
-              The rms is calculated from MAD with rms = 1.4826*MAD.
+              The rms is calculated from MAD with rms = 1.4826\*MAD.
 </description>
     </param>
     <param type="double" name="smoothfactor" subparam="true">
@@ -2167,14 +2176,14 @@ to use the correct direction in which the antenna is pointing with respect to th
     <param type="double" name="minbeamfrac" subparam="true">
            <shortdescription>minimum beam fraction for pruning</shortdescription>
            <value type="double">0.3</value>
-<description>Sub-parameter for &quot;auto-multithresh&quot;:  minimum beam fraction in size to prune masks smaller than mimbeamfrac * beam
+<description>Sub-parameter for &quot;auto-multithresh&quot;:  minimum beam fraction in size to prune masks smaller than mimbeamfrac \* beam
                        &lt;=0.0 : No pruning
 </description>
     </param>
     <param type="double" name="cutthreshold" subparam="true">
            <shortdescription>threshold to cut the smoothed mask to create a final mask</shortdescription>
            <value type="double">0.01</value>
-<description>Sub-parameter for &quot;auto-multithresh&quot;: threshold to cut the smoothed mask to create a final mask: cutthreshold * peak of the smoothed mask
+<description>Sub-parameter for &quot;auto-multithresh&quot;: threshold to cut the smoothed mask to create a final mask: cutthreshold \* peak of the smoothed mask
 </description>
     </param>
     <param type="int" name="growiterations" subparam="true">
