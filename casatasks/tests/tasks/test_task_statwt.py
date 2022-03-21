@@ -1043,19 +1043,12 @@ class statwt_test(unittest.TestCase):
                 self.compare(dst, ref)
             else:
                 # Currently there is a bug which requires statwt to be run twice
-                if is_casa6 or casa_stack_rethrow:
-                    self.assertRaises(
+                self.assertRaises(
                         RuntimeError, statwt, vis=dst, combine='scan,field,state',
                         chanbin=1, timebin='1yr', datacolumn='residual_data',
                         selectdata=True, spw=spw
                     )
-                else:
-                    res = statwt(
-                        vis=dst, combine='scan,field,state', chanbin=1,
-                        timebin='1yr', datacolumn='residual_data', selectdata=True, 
-                        spw=spw
-                    )
-                    self.assertFalse(res)
+
                 res = statwt(
                     vis=dst, combine='scan,field,state', chanbin=1,
                     timebin='1yr', datacolumn='residual_data',
