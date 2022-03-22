@@ -2868,28 +2868,44 @@ class test_restoration(testref_base):
 
 ##Task level tests : verify that we perform the same number of iterations as tclean for the same iteration parameters
 class test_niterparms(testref_base):
+    imsize = 500
 
-    def helper_deconvolve_check_iterdone(self, param_name, param_val, expected_iter, extra_params=None):
+    @classmethod
+    def setUpClass(cls):
+        super(test_niterparms, cls).setUpClass()
+        msfile='refim_twochan.ms'
+        cls.staticDelData(msfile)
+        cls.staticPrepData(msfile, tclean_args={'imsize':cls.imsize, 'cell':'8.0arcsec'})
+        cls.staticCopyToCache(msfile, imagename=cls.img, cachedir='niterparms_cache')
+
+    def print_pars(self, funcname, **wargs):
+        args_str = str(wargs)[2:-1].replace("': ", "=").replace(", '", ", ")
+        casalog.post(f"{funcname}({args_str})", "SEVERE")
+
+    def helper_deconvolve_check_iterdone(self, param_name='', param_val=None, expected_iter=0, extra_params=None):
         # casalog.post("Executing deconvolve with {}={}, expected iterations: {}".format(param_name, param_val, expected_iter), "WARN")
 
         # prepare arguments dicts
-        ta = {'imsize':100, 'cell':'8.0arcsec', 'deconvolver':'clark', 'threshold':'1mJy', 'gain':0.1}
-        da = {'threshold':'1mJy', 'gain':0.1}
-        ta[param_name] = param_val
-        da[param_name] = param_val
+        da = {'gain':0.1}
+        if param_val != None:
+            da[param_name] = param_val
+        if param_name != 'niter':
+            da['niter'] = 1000
         if extra_params != None:
             for ep_name in extra_params:
-                ta[ep_name] = extra_params[ep_name]
                 da[ep_name] = extra_params[ep_name]
 
         # run tclean(niter=0) to get the image ready to work with
-        self.prepData('refim_twochan.ms', tclean_args=ta)
+        # self.prepData('refim_twochan.ms', tclean_args=ta)
+        # copytbls = copytbls if copytbls != None else [".residual", ".psf"]
+        self.delData()
+        type(self).staticCopyFromCache()
 
         # run deconvolve
-        results2 = deconvolve(imagename=self.img, deconvolver=ta['deconvolver'], niter=100, interactive=0, restoration=False, **da)
+        results = deconvolve(imagename=self.img, deconvolver='clark', interactive=0, restoration=False, **da)
 
         # verify results
-        report = th.checkall(ret=results2['retrec'], iterdone=expected_iter)
+        report = th.checkall(ret=results['retrec'], iterdone=expected_iter)
         return report
 
     # Test 99
@@ -2899,6 +2915,8 @@ class test_niterparms(testref_base):
         # Deconvolve should execute 10 iterations for gain=0.2, just like the first major-minor cycle of tclean.
         ######################################################################################
         report = self.helper_deconvolve_check_iterdone('gain', param_val=0.2, expected_iter=10)
+        #tclean('refim_twochan.ms', gain=0.2,
+        #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
         self.checkfinal(report)
 
     # Test 100
@@ -2908,6 +2926,8 @@ class test_niterparms(testref_base):
         # Deconvolve should execute 7 iterations for gain=0.3, just like the first major-minor cycle of tclean.
         ######################################################################################
         report = self.helper_deconvolve_check_iterdone('gain', param_val=0.3, expected_iter=7)
+        #tclean('refim_twochan.ms', gain=0.3,
+        #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
         self.checkfinal(report)
 
     # Test 101
@@ -2917,6 +2937,8 @@ class test_niterparms(testref_base):
         # Deconvolve should execute 16 iterations for threshold=0.22, just like the first major-minor cycle of tclean.
         ######################################################################################
         report = self.helper_deconvolve_check_iterdone('threshold', param_val=0.22, expected_iter=16)
+        #tclean('refim_twochan.ms', threshold=0.22,
+        #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
         self.checkfinal(report)
 
     # Test 102
@@ -2926,78 +2948,54 @@ class test_niterparms(testref_base):
         # Deconvolve should execute 19 iterations for threshold=0.18, just like the first major-minor cycle of tclean.
         ######################################################################################
         report = self.helper_deconvolve_check_iterdone('threshold', param_val=0.18, expected_iter=19)
+        #tclean('refim_twochan.ms', threshold=0.18,
+        #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
+        self.checkfinal(report)
+
+    # Test 101
+    def test_niterparms_threshold_3(self):
+        """ [niterparms] test_niterparms_threshold_3 """
+        ######################################################################################
+        # Deconvolve should execute 283 iterations for threshold=0.001, just like the first major-minor cycle of tclean(minspffraction=0.001).
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone('threshold', param_val=0.001, expected_iter=283)
+        #tclean('refim_twochan.ms', threshold=0.001, cyclefactor=0, minpsffraction=0,
+        #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
+        self.checkfinal(report)
+
+    # Test 101
+    def test_niterparms_cyclethreshold_1(self):
+        """ [niterparms] test_niterparms_cyclethreshold_1 """
+        ######################################################################################
+        # Deconvolve should execute 21 iterations for threshold=0, just like the first major-minor cycle of tclean.
+        ######################################################################################
+        report = self.helper_deconvolve_check_iterdone(expected_iter=21)
+        #tclean('refim_twochan.ms',
+        #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
         self.checkfinal(report)
 
     # Test 103
     def test_niterparms_nsigma_1(self):
         """ [niterparms] test_niterparms_nsigma_1 """
         ######################################################################################
-        # Deconvolve should execute 72 iterations for nsigma=0.9, just like the first major-minor cycle of tclean.
+        # Deconvolve should execute 60 iterations for nsigma=3, just like the first major-minor cycle of tclean.
         ######################################################################################
-        report = self.helper_deconvolve_check_iterdone('nsigma', param_val=0.9, expected_iter=72, extra_params={'maxpsffraction':0})
+        # provide a very low threshold  so that it doesn't overshadow nsigma
+        report = self.helper_deconvolve_check_iterdone('nsigma', param_val=3, expected_iter=60, extra_params={'threshold': 0.001})
+        #tclean('refim_twochan.ms', nsigma=3, threshold=0.001, cyclefactor=0, minpsffraction=0,
+        #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
         self.checkfinal(report)
 
     # Test 104
     def test_niterparms_nsigma_2(self):
         """ [niterparms] test_niterparms_nsigma_2 """
         ######################################################################################
-        # Deconvolve should execute 60 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
+        # Deconvolve should execute 79 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
         ######################################################################################
-        report = self.helper_deconvolve_check_iterdone('nsigma', param_val=1.5, expected_iter=60, extra_params={'maxpsffraction':0})
-        self.checkfinal(report)
-
-    # Test 105
-    def test_niterparms_cyclefactor_1(self):
-        """ [niterparms] test_niterparms_cyclefactor_1 """
-        ######################################################################################
-        # Deconvolve should execute 40 iterations for cyclefactor=0.1, just like the first major-minor cycle of tclean.
-        ######################################################################################
-        report = self.helper_deconvolve_check_iterdone('cyclefactor', param_val=0.1, expected_iter=40)
-        self.checkfinal(report)
-
-    # Test 106
-    def test_niterparms_cyclefactor_2(self):
-        """ [niterparms] test_niterparms_cyclefactor_2 """
-        ######################################################################################
-        # Deconvolve should execute 13 iterations for cyclefactor=2.0, just like the first major-minor cycle of tclean.
-        ######################################################################################
-        report = self.helper_deconvolve_check_iterdone('cyclefactor', param_val=2.0, expected_iter=12)
-        self.checkfinal(report)
-
-    # Test 107
-    def test_niterparms_minpsffraction_1(self):
-        """ [niterparms] test_niterparms_minpsffraction_1 """
-        ######################################################################################
-        # Deconvolve should execute 7 iterations for minpsffraction=0.5, just like the first major-minor cycle of tclean.
-        ######################################################################################
-        report = self.helper_deconvolve_check_iterdone('minpsffraction', param_val=0.5, expected_iter=7)
-        self.checkfinal(report)
-
-    # Test 108
-    def test_niterparms_minpsffraction_2(self):
-        """ [niterparms] test_niterparms_minpsffraction_2 """
-        ######################################################################################
-        # Deconvolve should execute 16 iterations for minpsffraction=0.2, just like the first major-minor cycle of tclean.
-        ######################################################################################
-        report = self.helper_deconvolve_check_iterdone('minpsffraction', param_val=0.2, expected_iter=16)
-        self.checkfinal(report)
-
-    # Test 109
-    def test_niterparms_maxpsffraction_1(self):
-        """ [niterparms] test_niterparms_maxpsffraction_1 """
-        ######################################################################################
-        # Deconvolve should execute 78 iterations for maxpsffraction=0.01, just like the first major-minor cycle of tclean.
-        ######################################################################################
-        report = self.helper_deconvolve_check_iterdone('maxpsffraction', param_val=0.01, expected_iter=78)
-        self.checkfinal(report)
-
-    # Test 110
-    def test_niterparms_maxpsffraction_2(self):
-        """ [niterparms] test_niterparms_maxpsffraction_2 """
-        ######################################################################################
-        # Deconvolve should execute 40 iterations for maxpsffraction=0.05, just like the first major-minor cycle of tclean.
-        ######################################################################################
-        report = self.helper_deconvolve_check_iterdone('maxpsffraction', param_val=0.05, expected_iter=40)
+        # provide a very low threshold  so that it doesn't overshadow nsigma
+        report = self.helper_deconvolve_check_iterdone('nsigma', param_val=1.5, expected_iter=79, extra_params={'threshold': 0.001})
+        #tclean('refim_twochan.ms', nsigma=1.5, threshold=0.001, cyclefactor=0, minpsffraction=0,
+        #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
         self.checkfinal(report)
 
 ##############################################

@@ -147,14 +147,10 @@ def deconvolve(
     restoringbeam,#=[],
 
     ##### Iteration control
-    niter,#=0, 
+    niter,#=0,
     gain,#=0.1,
-    cyclethreshold,#=0.0,
     threshold,#=0.0, 
     nsigma,#=0.0
-    cyclefactor,#=1.0,
-    minpsffraction,#=0.1,
-    maxpsffraction,#=0.8,
     interactive,#=False,
     fastnoise,#=True,
 
@@ -239,11 +235,11 @@ def deconvolve(
         paramList=ImagerParameters(**bparm)
 
         # Assign cyclethreshold explicitly, if set explicitly by the user
-        if cyclethreshold != 0:
-            cyclethreshold = cyclethreshold if (type(cyclethreshold) == str) else (str(cyclethreshold*1000)+'mJy')
-            paramList.setIterPars({'cyclethreshold': cyclethreshold, 'cyclethresholdismutable': False})
+        if threshold != 0:
+            threshold = threshold if (type(threshold) == str) else (str(threshold*1000)+'mJy')
+            paramList.setIterPars({'cyclethreshold': threshold, 'cyclethresholdismutable': False})
         else:
-            casalog.post("Calculating cyclethreshold based on current image, threshold, and other stopping criteria", "INFO")
+            casalog.post("Calculating cyclethreshold based on current image", "INFO")
 
         #####################################################
         #### Run the minor cycle

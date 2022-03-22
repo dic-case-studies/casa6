@@ -101,7 +101,7 @@
 
                         Each of the following algorithms operate on residual images and psfs
                         from the gridder and produce output model and restored images.
-                        Minor cycles stop when cyclethreshold or niter are reached. For all
+                        Minor cycles stop when threshold/cyclethreshold or niter are reached. For all
                         methods, components are picked from the entire extent of the image or
                         (if specified) within a mask.
 
@@ -329,16 +329,15 @@
 
                         niter larger than zero : The minor cycle.
 
-                        Note :  Global stopping criteria vs minor-cycle interrupt triggers
-
-                                In addition to global stopping criteria, the following rules are
-                                used to determine when to terminate a set of minor cycle iterations
-                                and return [derived from Cotton-Schwab Clean, 1984]
-                                
-                                'cyclethreshold' : Automatically computed threshold related to the
-                                                   max sidelobe level of the PSF and peak residual.
-                                Divergence, detected as an increase of 10% in peak residual from the
-                                minimum so far (during minor cycle iterations)
+                        Note :  The following additional triggers will also stop minor cycle
+                                iterations. Whichever condition is triggered first stops the minor
+                                cycle.
+                        
+                                'threshold' : The parameter value, if provided, or the automatically
+                                              computed cyclethreshold related to the max sidelobe
+                                              level of the PSF and peak residual.
+                                Divergence :  As detected by an increase of 10% in peak residual from
+                                              the minimum so far (during minor cycle iterations).
                                 
                                 The first criterion to be satisfied takes precedence.
 
@@ -347,7 +346,7 @@
                                 deconvolver operates in sequence, iterations are counted across
                                 all planes (or image fields). The iteration count is compared with
                                 'niter' only after all channels/planes/fields have completed their
-                                minor cycles and exited either due to 'niter' or 'cyclethreshold'.
+                                minor cycles and exited either due to 'niter' or 'threshold'.
                                 Therefore, the actual number of iterations reported in the logger
                                 can sometimes be larger than the user specified value in 'niter'.
                                 For example, with niter=100, nchan=10,threshold=0,
@@ -379,53 +378,37 @@
       <value type="double">0.1</value>
     </param>
 
-    <param type="any" name="cyclethreshold" subparam="true">
-        <shortdescription>Stopping threshold </shortdescription>
-        <description>Stopping threshold (number in units of Jy, or string)
-          
-                        A global stopping threshold that the peak residual (within clean mask)
-                        across all image planes is compared to. If set, then this value will be used
-                        to compare against. If left at the default (0.0), then a new value will be
-                        computed using the other stopping criteria parameters (see threshold) and
-                        used in place of cyclethreshold.
-
-                        The 'cyclethreshold' value is also made visible and editable in the
-                        interactive GUI when deconvolve is run with interactive=True.
-        </description>
-
-        <value type="double">0.0</value>
-    </param>
-
     <param type="any" name="threshold" subparam="true">
       <shortdescription>Stopping threshold </shortdescription>
-      <description>Tclean's stopping threshold (number in units of Jy, or string)
+      <description>The minor cycle's stopping threshold (number in units of Jy, or string)
 
-                        When cyclethreshold isn't set explicitly, the value of threshold is used as
-                        part of the compilation to automatically determine a cyclethreshold value.
-                        This is mainly for maintaing compatibility with tclean.
+                        When threshold isn't set explicitly, the value of threshold is computed
+                        based on the maximum psf sidelobe level (this is done mainly for maintaing
+                        compatibility with tclean). However, if it is set explicitly, then the only
+                        modification to threshold comes from nsigma.
 
                         threshold = 0.005  : 5mJy
                         threshold = '5.0mJy'
 
-                        Note : A 'cyclethreshold' is internally computed and used as a stopping
-                               trigger. It is related what fraction of the PSF can be reliably
-                               used during minor cycle updates of the residual image. By default
-                               the minor cycle iterations terminate once the peak residual reaches
-                               the first sidelobe level of the brightest source.
+                        Note : If threshold is not set, then a 'cyclethreshold' is internally
+                               computed and used as a stopping trigger. It is related what fraction
+                               of the PSF can be reliably used during minor cycle updates of the
+                               residual image. By default the minor cycle iterations terminate once
+                               the peak residual reaches the first sidelobe level of the brightest
+                               source.
                                
-                               'cyclethreshold' is computed as follows using the settings in
-                               parameters 'cyclefactor','minpsffraction','maxpsffraction','threshold' :
+                               'cyclethreshold' is computed as follows based on the input images:
 
-                               psf_fraction = max_psf_sidelobe_level * 'cyclefactor'
-                               psf_fraction = max(psf_fraction, 'minpsffraction');
-                               psf_fraction = min(psf_fraction, 'maxpsffraction');
-                               cyclethreshold = peak_residual * psf_fraction
-                               cyclethreshold = max( cyclethreshold, 'threshold' )
+                               1. psf_fraction = max_psf_sidelobe_level * 1.0
+                               2. psf_fraction = min(max(0.05, psf_fraction), 0.8);
+                               3. cyclethreshold = peak_residual * psf_fraction
+                               4. cyclethreshold = max( cyclethreshold, 'threshold' )
                                
-                               If nsigma is set (&gt;0.0), the N-sigma threshold is calculated (see
-                               the description under nsigma), then cyclethreshold is further modified as,
+                        Note : If nsigma is set (&gt;0.0), the N-sigma threshold is calculated (see
+                               the description under nsigma). Then threshold (or cyclethreshold) is
+                               modified as:
                                
-                               cyclethreshold = max( cyclethreshold, nsgima_threshold )
+                               5. cyclethreshold = max( threshold, nsgima_threshold )
       </description>
 
       <value type="double">0.0</value>
@@ -437,7 +420,7 @@
 
                         N-sigma threshold is calculated as nsigma * rms value per image plane determined
                         from a robust statistics. For nsigma &gt; 0.0, in a minor cycle, a maximum of the two values,
-                        the N-sigma threshold and cyclethreshold, is used as a stopping trigger
+                        the N-sigma threshold and threshold, is used as a stopping trigger
                         (see also the descreption under 'threshold').
                         Set nsigma=0.0 to preserve the previous deconvolve behavior without this feature.
                         The top level parameter, fastnoise is relevant for the rms noise calculation which is used 
@@ -445,53 +428,6 @@
 
       </description>
       <value type="double">0.0</value>
-    </param>
-
-    <param type="double" name="cyclefactor" subparam="true">
-      <shortdescription>Scaling on PSF sidelobe level to compute the minor-cycle stopping threshold.</shortdescription>
-      <description>Scaling on PSF sidelobe level to compute the minor-cycle stopping threshold.
-
-                        Please refer to the Note under the documentation for 'threshold' that
-                        discussed the calculation of 'cyclethreshold'
-
-                        cyclefactor=1.0 results in a cyclethreshold at the first sidelobe level of
-                        the brightest source in the residual image before the minor cycle starts.
-
-                        cyclefactor=0.5 allows the minor cycle to go deeper.
-                        cyclefactor=2.0 triggers stopping the minor cycle sooner.
-
-      </description>
-      <value type="double">1.0</value>
-    </param>
-
-    <param type="double" name="minpsffraction" subparam="true">
-      <shortdescription>PSF fraction that marks the max depth of cleaning in the minor cycle</shortdescription>
-      <description>PSF fraction that marks the max depth of cleaning in the minor cycle
-
-                        Please refer to the Note under the documentation for 'threshold' that
-                        discussed the calculation of 'cyclethreshold'
-
-                        For example, minpsffraction=0.5 will stop cleaning at half the height of
-                        the peak residual.
-
-      </description>
-      <value type="double">0.05</value>
-    </param>
-
-    <param type="double" name="maxpsffraction" subparam="true">
-      <shortdescription>PSF fraction that marks the minimum depth of cleaning in the minor cycle </shortdescription>
-      <description>PSF fraction that marks the minimum depth of cleaning in the minor cycle
-
-                        Please refer to the Note under the documentation for 'threshold' that
-                        discussed the calculation of 'cyclethreshold'
-
-                        For example, maxpsffraction=0.8 will ensure that at least the top 20
-                        percent of the source will be subtracted out in the minor cycle even if
-                        the first PSF sidelobe is at the 0.9 level (an extreme example), or if the
-                        cyclefactor is set too high for anything to get cleaned.
-
-      </description>
-      <value type="double">0.8</value>
     </param>
 
 
@@ -525,10 +461,7 @@
                                             -- iterations left : Sets the limit on the number of iterations
                                                                  about to be done.
                                             -- threshold :       Sets the peak residual stopping threshold for
-                                                                 for this execution of deconvolve. The max
-                                                                 between &quot;threshold&quot; and &quot;cyclethreshold&quot; is
-                                                                 used for this stopping criteria.
-                                            -- cyclethreshold :  See description for &quot;-- threshold&quot;.
+                                                                 for this execution of deconvolve.
 
 
                         [ For scripting purposes, replacing True/False with 1/0 will get deconvolve to
@@ -805,9 +738,6 @@
           <default param="threshold"><value>0.0</value></default>
           <default param="nsigma"><value>0.0</value></default>
          
-          <default param="cyclefactor"><value>1.0</value></default>
-          <default param="minpsffraction"><value>0.05</value></default>
-          <default param="maxpsffraction"><value>0.8</value></default>
           <default param="fastnoise"><value>True</value></default>
 
         </notequals>
