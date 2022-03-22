@@ -291,6 +291,16 @@
             "comment":""
         },
         {
+            "testScript":"test_tool_synthesisutils",
+            "testType":"casatools",
+            "maintainer":"Tak Tsutsumi",
+            "maintainerEmail":"ttsutsum@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_tool_vpmanager",
             "testType":"casatools",
             "maintainer":"Dirk Petry",
