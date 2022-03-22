@@ -235,18 +235,18 @@
             default: 'auto'
             Options: 'scan', 'spw', 'baseline', 'auto'
 
-            * The 'auto' option will partition per scan/spw to obtain optimal load balancing with the
+            - The 'auto' option will partition per scan/spw to obtain optimal load balancing with the
              following criteria:
     
-               1 - Maximize the scan/spw/field distribution across sub-MSs
-               2 - Generate sub-MSs with similar size
+               1. Maximize the scan/spw/field distribution across sub-MSs
+               2. Generate sub-MSs with similar size
 
-            * The 'scan' or 'spw' axes will partition the MS into scan or spw. The individual sub-MSs may
+            - The 'scan' or 'spw' axes will partition the MS into scan or spw. The individual sub-MSs may
             not be balanced with respect to the number of rows.
 
-            * The 'baseline' axis is mostly useful for Single-Dish data. This axis will partition the MS
+            - The 'baseline' axis is mostly useful for Single-Dish data. This axis will partition the MS
               based on the available baselines. If the user wants only auto-correlations, use the
-              antenna selection such as antenna='*&amp;&amp;&amp;' together with this separation axis. Note that in
+              antenna selection such as antenna='\*&amp;&amp;&amp;' together with this separation axis. Note that in
               if numsubms='auto', partition will try to create as many subMSs as the number of available
               servers in the cluster. If the user wants to have one subMS for each baseline, set the numsubms
               parameter to a number higher than the number of baselines to achieve this.        
@@ -291,7 +291,7 @@
            field='0~2'; field ids 0,1,2
            field='0,4,5~7'; field ids 0,4,5,6,7
            field='3C286,3C295'; fields named 3C286 and 3C295
-           field = '3,4C*'; field id 3, all names starting with 4C
+           field = '3,4C\*'; field id 3, all names starting with 4C
 
     spw -- Select spectral window/channels
         default: ''=all spectral windows and channels
@@ -300,9 +300,9 @@
            spw='0:5~61'; spw 0, channels 5 to 61
            spw='0,10,3:3~45'; spw 0,10 all channels, spw 3 - chans 3 to 45.
            spw='0~2:2~6'; spw 0,1,2 with channels 2 through 6 in each.
-           spw = '*:3~64'  channels 3 through 64 for all sp id's
+           spw = '\*:3~64'  channels 3 through 64 for all sp id's
                    spw = ' :3~64' will NOT work.
-           spw = '*:0;60~63'  channel 0 and channels 60 to 63 for all IFs 
+           spw = '\*:0;60~63'  channel 0 and channels 60 to 63 for all IFs 
                   ';' needed to separate different channel ranges in one spw
            spw='0:0~10;15~60'; spectral window 0 with channels 0-10,15-60
            spw='0:0~10,1:20~30,2:1;2;4'; spw 0, channels 0-10,
@@ -361,13 +361,13 @@
 
 2) Create a Multi-MS but select only the first channels of all spws. Do not back up the FLAG
 column.
-    partition('uid0001.ms', outputvis='fechans.mms', spw='*:1~10', flagbackup=False)
+    partition('uid0001.ms', outputvis='fechans.mms', spw='\*:1~10', flagbackup=False)
 
 3) Create a Multi-MS using both separation axes.
     partition('uid0001.ms', outputvis='myuid.mms', createmms=True, separationaxis='auto')
 
 4) Create a single-dish Multi-MS using the baseline axis only for the auto-correlations.
-    partition('uid0001.ms', outputvis='myuid.mms', createmms=True, separationaxis='baseline', antenna='*&amp;&amp;&amp;')
+    partition('uid0001.ms', outputvis='myuid.mms', createmms=True, separationaxis='baseline', antenna='\*&amp;&amp;&amp;')
 
 
 </example> 

@@ -131,57 +131,6 @@ if getfreqrange=True then this is needed to find the range of frequency in the f
 allowed: string
 Default: ''
 
-Example 1
-In this example, we are interested in an image cube which span 20.0682GHz to 20.1982 in LSRK  which will have a channel resolution of 3.9MHz. The field we are interested the one with fieldid=4  
- 
-############################# 
-&gt;&gt;&gt; from casatools import synthesisutils
-&gt;&gt;&gt; syut=synthesisutils()
-&gt;&gt;&gt; syut.advisechansel(freqstart=&quot;20.0682GHz&quot;, freqend=&quot;20.1982GHz&quot;, freqstep=&quot;3.9kHz&quot;, freqframe=&quot;LSRK&quot;, msname=&quot;test1.ms&quot;)
-{&quot;nchan&quot;: array([109,  23], dtype=int32),  &quot;spw&quot;: array([4, 5], dtype=int32),  
-          &quot;start&quot;: array([19,  0], dtype=int32)}
-# implies 108 channels of spw 4 starting channel 19 and 23 channels of spw 5 starting at channel 0 would contribute data to the frequency range under consideration
-#############################
-  
-Example 2
-
-To determine what is the frequency range in a given frame is covered by a given spwselection of the ms
-
-##############
-&gt;&gt;&gt; syut.advisechansel(msname=&quot;test3.ms&quot;, freqframe=&quot;LSRK&quot;, getfreqrange=True, spwselection=&quot;0:20~210&quot;)
-
-{&quot;freqend&quot;: {&quot;unit&quot;: &quot;Hz&quot;, &quot;value&quot;: 362746224619.3091}, &quot;freqstart&quot;: {&quot;unit&quot;: &quot;Hz&quot;, &quot;value&quot;: 362512788988.5036}}
-
-##############
-
-Example 3:
-
-Same as Example 1 but with a solar system moving source and the frequency range provided is in the frame of the source. We are using the ephemeris table attached to the FIELD subtable of the ms.
-
-##########
-&gt;&gt;&gt; syut.advisechansel(msname=&quot;uid___A002_Xc05f54_X142a_target.spw31.contsub.ms&quot;, freqstart=&quot;362.5145206GHz&quot;, freqend=&quot;362.7476643GHz&quot;, freqstep=&quot;122.064714kHz&quot;, fieldid=3, freqframe=&quot;SOURCE&quot;, ephemtable=&quot;TRACKFIELD&quot;)
-###########
-Now one can do the same with a valid ephemeris table
-###########
-&gt;&gt;&gt; syut.advisechansel(msname=&quot;uid___A002_Xc05f54_X142a_target.spw31.contsub.ms&quot;, freqstart=&quot;362.5145206GHz&quot;, freqend=&quot;362.7476643GHz&quot;, freqstep=&quot;122.064714kHz&quot;, fieldid=3, freqframe=&quot;SOURCE&quot;, ephemtable=&quot;EPHEM0_Titan_57889.1.tab&quot;)
-###########
-
-Or if we want it in the frame of a solar system source known by casa, e.g &quot;SATURN&quot;
-############
-&gt;&gt;&gt; syut.advisechansel(msname=&quot;uid___A002_Xc05f54_X142a_target.spw31.contsub.ms&quot;, freqstart=&quot;362.5145206GHz&quot;, freqend=&quot;362.7476643GHz&quot;, freqstep=&quot;122.064714kHz&quot;, fieldid=3, freqframe=&quot;SOURCE&quot;, ephemtable=&quot;SATURN&quot;)
-############
-
-Example 4:
-
-Same as Example 2  but with a solar system moving source and the frequency range we want to find is in the frame of the source.
-
-############
-&gt;&gt;&gt; syut.advisechansel(msname=&quot;uid___A002_Xc05f54_X142a_target.spw31.contsub.ms&quot;, fieldid=3, freqframe=&quot;SOURCE&quot;, ephemtable=&quot;TRACKFIELD&quot;, getfreqrange=True, spwselection=&quot;31:9~1919&quot;)
-#############
-similarly if we want it in the frame of a solar system source known casa e.g saturn
-#############
-&gt;&gt;&gt; syut.advisechansel(msname=&quot;uid___A002_Xc05f54_X142a_target.spw31.contsub.ms&quot;, fieldid=3, freqframe=&quot;SOURCE&quot;, ephemtable=&quot;SATURN&quot;, getfreqrange=True, spwselection=&quot;31:9~1919&quot;)
-#############
 </description>
 <input>
 
