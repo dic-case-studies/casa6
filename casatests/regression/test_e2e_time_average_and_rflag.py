@@ -1,42 +1,44 @@
-#############################################################################
-# $Id:$
-# Test Name:                                                                #
-# test_e2e_time_average_and_rflag.py                                        #
-#                                                                           #
-# Test examples from CAS-11910                                              #
-#                                                                           #
-# Rationale for Inclusion:                                                  #
-#    test autoflagging (rflag) with on-the-fly time average                 #
-#    and backpropagation of flags, when the MS has pre-existing flags       #
-#    and other tricky traits.                                               #
-#                                                                           #
-# Input data:                                                               #
-#     two MS                                                                #
-#                                                                           #
-#                                                                           #
-#############################################################################
+#########################################################################
+# test_regression_timeaverage_and_rflag.py
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA.
+#
+# This script is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+# License for more details.
+#
+# Based on examples from CAS-11910
+# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.agentflagger.html
+#
+# Rationale for Inclusion:
+#    test flagdata autoflagging (rflag mode) with on-the-fly time average
+#    and backpropagation of flags, when the MS has pre-existing flags
+#    and other tricky traits.
+#
+##########################################################################
 
 import time
 import shutil
 import unittest
 
-import casatools
+from casatools import ctsys
 from casatasks import flagdata, casalog, mstransform
 
+datapath = ctsys.resolve("regression/time_average_and_rflag/")
 
+# Input MS
+ms_four_ants = 'Four_ants_3C286.ms'
+ms1 = "Four_ants_copy1.ms"
+ms2 = "Four_ants_copy2.ms"
 
-casapath = ''
-datapath_four_ants = casatools.ctsys.resolve("unittest/flagdata/Four_ants_3C286.ms/")
-datapath_3ctst = casatools.ctsys.resolve("unittest/flagdata/3ctst.ms")
-
-if 'datasets' not in (locals()):
-    myname = 'time_average_and_rflag :'
-    mydict = { 1: 'Four_ants_3C286',
-               2: '3ctst'}
-else:
-    myname = ' '
-    mydict = (locals())['datasets']
-
+ms3ctst = "3ctst.ms"
+ms3ctst_copy = "3ctst_copy.ms"
 
 totaltime = 0
 inittime = time.time()
@@ -68,24 +70,19 @@ def timing(stepname=''):
                      + ' [' + stepname + ']', 'WARN')
 
 
-my_dataset_name = "Four_ants_3C286.ms"
-
-ms3ctst = "3ctst.ms"
-ms3ctst_copy = "3ctst_copy.ms"
-
-ms1 = "Four_ants_copy1.ms"
-ms2 = "Four_ants_copy2.ms"
-
-
 def flag_step(scale=7.0, timebin='1min', step_name='', field='', spw='' , ms=ms1):
-    # Note using spw_sel also in the summary
+    """Run flagdata with mode='rflag' and timeavg=True on selected data.
+       Run and save the summary of flags before and after flagging."""
+
+    # Using spw selection also in summary mode
     summary_orig = flagdata(vis=ms, spw=spw, mode='summary')
     casalog.post(' * Flagging {0}'.format(ms))
-    # Note display='none', would be 'both' but that requires user interaction
     flagdata(vis=ms, mode='rflag', field=field, spw=spw, timeavg=True,
              timebin=timebin, freqdevscale=scale, timedevscale=scale, datacolumn='data',
              extendflags=False, correlation='',combinescans=True, display='none',
              action='apply', flagbackup=False)
+
+    # Using spw selection also in summary mode
     summary_after = flagdata(vis=ms, spw=spw, mode='summary')
     casalog.post(' * Step {0}. Total flagged before: {1} ({2:.3f}%), after: {3} ({4:.3f}%). '
                  'Used timebin: {5}, scale: {6}'.format(step_name,
@@ -98,76 +95,84 @@ def flag_step(scale=7.0, timebin='1min', step_name='', field='', spw='' , ms=ms1
 
 def mstransform_flag_step(scale=7.0, timebin='1min', step_name=''):
     """
-    Flags with time averge, following two alternative approaches. And checks (crude assert)
-    that both produce identical results.
+    Flags with time average, following two different approaches
+    and return the flag summary of both approaches
 
-    Approach "step 1": command 1: mstransform with timeavg =>
-       command 2: flagdata applied on the averaged MS (without timeavg).
+    Approach 1:
+        step 1: run mstransform on original MS with timeaverage=True and save ms_step1
+        step 2: run flagdagta on ms_step1 output with mode=rflag (no timeavg)
+                save summary of flags of ms_step1.
 
-    Approach "step 2": command 1: flagdata with timeavg on the fly =>
-       command 2: mstransform with timeavg to match the dimensions of A).
+    Approach 2:
+        step 1: run flagdata on original MS with mode=rflag and on-the-fly timeavg=True.
+                This step will back-propagate and save the flags (it will not save any average data)
+        step 2: run mstransform on flagged MS from previous step with timeaverage=True. This step
+                will match the average dimension of approach 1 step 1 and save in a new ms_step2.
+                save the summary of flags of ms_step2.
+
+    We expect summary of output1 to be the same of summary of output2.
     """
-    summary_orig = flagdata(vis=ms3ctst_copy, spw='', mode='summary')
+
     casalog.post(' * Flagging {0}'.format(ms3ctst_copy))
 
-    ms_step1 = 'ms_CAS-11910_mstransform_step_name{}_methodA.ms'.format(step_name)
+    # Approach 1
+    # step 1: Run mstransform with timeaverage=True and save output ms_step1
+    ms_step1 = 'ms_approach1.ms'
     mstransform(vis=ms3ctst_copy, outputvis=ms_step1, datacolumn='data', timeaverage=True,
                 timebin=timebin)
+
+    # step 2: Run flagdata mode=rflag on averaged data of ms_step1
     flagdata(vis=ms_step1, mode='rflag', field='', spw='', freqdevscale=scale,
              timedevscale=scale, datacolumn='data', extendflags=False, correlation='',
              combinescans=True, display='none', action='apply', flagbackup=False)
+    # Save summary of average flags of ms_step1
     res1 = flagdata(vis=ms_step1, mode='summary')
 
+    # Approach 2
+    # step 1: Run flagdata mode=rflag with on-the-fly time average. Average flags are not saved, only
+    #            back-ported flags are saved.
     flagdata(vis=ms3ctst_copy, mode='rflag', field='', spw='', timeavg=True,
              timebin=timebin, freqdevscale=scale, timedevscale=scale, datacolumn='data',
              extendflags=False, correlation='', combinescans=True, display='none',
              action='apply', flagbackup=False)
-    summary_after = flagdata(vis=ms3ctst_copy, spw='', mode='summary')
-    ms_step2 = 'ms_CAS-11910_mstransform_step_name{}_methodB.ms'.format(step_name)
+
+    # step 2: Run mstransform with timeaverage=True on flagged MS and save output ms_step2
+    ms_step2 = 'ms_approach2.ms'
     mstransform(vis=ms3ctst_copy, outputvis=ms_step2, datacolumn='data', timeaverage=True, timebin=timebin)
+    # Save summary of average flags of ms_step2
     res2 = flagdata(vis=ms_step2, mode='summary')
 
-    print('* Step {}. ResultA: {}'.format(step_name, res1))
-    print('* Step {}. ResultB: {}'.format(step_name, res2))
-    # Check reslts from flagdata-timeavg and mstransform-timeavg are identical
-    assert res1 == res2
-    summary_after = flagdata(vis=ms3ctst_copy, spw='', mode='summary')
-    casalog.post(' * Step {0}. Total flagged before: {1} ({2:.3f}%), after: {3} ({4:.3f}%). '
-                 'Used timebin: {5}, scale: {6}'.
-                 format(step_name,
-                        summary_orig['flagged'], 100.0 * summary_orig['flagged'] / summary_orig['total'],
-                        summary_after['flagged'], 100.0 * summary_after['flagged'] / summary_after['total'],
-                        timebin, scale))
+    print('**** Flags of Approach 1: {}'.format(res1))
+    print('**** Flags of Approach 2: {}'.format(res2))
 
+    return res1['flagged'], res2['flagged']
 
-
-class regression_time_average_rflag(unittest.TestCase):
+class Timeaverage_and_Rflag(unittest.TestCase):
 
     def setUp(self):
-
-        shutil.copytree(datapath_four_ants, ms1)
-        shutil.copytree(datapath_four_ants, ms2)
-        shutil.copytree(datapath_3ctst, ms3ctst_copy)
+        shutil.copytree(datapath+ms_four_ants, ms1)
+        shutil.copytree(datapath+ms_four_ants, ms2)
+        shutil.copytree(datapath+ms3ctst, ms3ctst_copy)
 
     def tearDown(self):
-
         shutil.rmtree(ms1)
         shutil.rmtree(ms2)
         shutil.rmtree(ms3ctst_copy)
-        shutil.rmtree("ms_CAS-11910_mstransform_step_name1_methodA.ms/")
-        shutil.rmtree("ms_CAS-11910_mstransform_step_name1_methodB.ms/")
 
-        shutil.rmtree("ms_CAS-11910_mstransform_step_name2_methodA.ms/")
-        shutil.rmtree("ms_CAS-11910_mstransform_step_name2_methodB.ms/")
+    def test_rflag_and_timeavg_OTF(self):
+        """Test that flagdata with on-the-fly time averaging accumulates flags
+            when using mode=rflag for different timebins and freqdevscale/timedevscale values"""
 
-    def test_regression(self):
-
+        # Using Four_ants_3C286 MS copy1 with
+        # timebin=30s, timedevscale=freqdevscale=7, accumulate flags 3 times
         flag_30s_7_1_before, flag_30s_7_1_after = flag_step(7, '30s', step_name='1', ms=ms1)
         flag_30s_7_2_before, flag_30s_7_2_after = flag_step(7, '30s', step_name='2', ms=ms1)
         flag_30s_7_3_before, flag_30s_7_3_after = flag_step(7, '30s', step_name='3', ms=ms1)
 
         timing('0')
 
+        # Using Four_ants_3C286 MS copy2 with
+        # timebin=30s, timedevscale=freqdevscale=3, accumulate flags 7 times
         flag_30s_3_1_before, flag_30s_3_1_after = flag_step(3, '30s', step_name='1', ms=ms2)
         flag_30s_3_2_before, flag_30s_3_2_after = flag_step(3, '30s', step_name='2', ms=ms2)
         flag_30s_3_3_before, flag_30s_3_3_after = flag_step(3, '30s', step_name='3', ms=ms2)
@@ -178,6 +183,8 @@ class regression_time_average_rflag(unittest.TestCase):
 
         timing('1')
 
+        # Using 3ctst MS with
+        # timebin=3min, timedevscale=freqdevscale=7, accumulate 7 times
         flag_30s_3_1_before_3ct, flag_30s_3_1_after_3ct = flag_step(7, '3min', step_name='1', field='0', spw='0:20~350', ms=ms3ctst_copy)
         flag_30s_3_2_before_3ct, flag_30s_3_2_after_3ct = flag_step(7, '3min', step_name='2', field='0', spw='0:20~350', ms=ms3ctst_copy)
         flag_30s_3_3_before_3ct, flag_30s_3_3_after_3ct = flag_step(7, '3min', step_name='3', field='0', spw='0:20~350', ms=ms3ctst_copy)
@@ -190,7 +197,7 @@ class regression_time_average_rflag(unittest.TestCase):
 
         lists_equal = True
 
-        # Four ants outputs
+        # Expected summary flags for Four_ants_3C286 copy1 runs
         expected_30s_7_1_before = 211894.0
         expected_30s_7_2_before = 226824.0
         expected_30s_7_3_before = 227004.0
@@ -199,6 +206,7 @@ class regression_time_average_rflag(unittest.TestCase):
         expected_30s_7_2_after = 227004.0
         expected_30s_7_3_after = 227004.0
 
+        # Expected summary flags for Four_ants_3C286 copy2 runs
         expected_30s_3_1_before = 211894.0
         expected_30s_3_2_before = 471802.0
         expected_30s_3_3_before = 602582.0
@@ -215,7 +223,7 @@ class regression_time_average_rflag(unittest.TestCase):
         expected_30s_3_6_after = 817331.0
         expected_30s_3_7_after = 843051.0
 
-        # 3ctst outputs
+        # Expected summary flags of 3ctst copy runs
         expected_30s_3_1_before_3ct = 9593008.0
         expected_30s_3_2_before_3ct = 9611700.0
         expected_30s_3_3_before_3ct = 9614850.0
@@ -231,8 +239,6 @@ class regression_time_average_rflag(unittest.TestCase):
         expected_30s_3_5_after_3ct = 9615350.0
         expected_30s_3_6_after_3ct = 9615354.0
         expected_30s_3_7_after_3ct = 9615354.0
-
-
 
         observed_list = [flag_30s_7_1_before, flag_30s_7_2_before, flag_30s_7_3_before,
                          flag_30s_7_1_after, flag_30s_7_2_after, flag_30s_7_3_after,
@@ -256,46 +262,43 @@ class regression_time_average_rflag(unittest.TestCase):
                          expected_30s_3_1_after_3ct, expected_30s_3_2_after_3ct, expected_30s_3_3_after_3ct,
                          expected_30s_3_4_after_3ct, expected_30s_3_5_after_3ct, expected_30s_3_6_after_3ct, expected_30s_3_7_after_3ct]
 
-        ### mstransform test case
-
-        #hutil.rmtree(ms3ctst_copy)
-        #shutil.copytree(ms3ctst, ms3ctst_copy)
-
-        #mstransform_flag_step(step_name='1', timebin='2min', scale=7)
-        #mstransform_flag_step(step_name='2', timebin='6min', scale=7)
-
-
+        # Check that expected and observed lists are the same or fail if they are not
         for i in range(len(observed_list)):
             if observed_list[i] != expected_list[i]:
                 lists_equal = False
                 casalog.post("Observed value {} does not equal expected value {}".format(observed_list[i], expected_list[i]))
                 print("Observed value {} does not equal expected value {}".format(observed_list[i], expected_list[i]))
+                self.assertEqual(lists_equal, True)
 
         timing('3')
 
-        if lists_equal:
-            casalog.post("Regression PASSED")
-            print("Regression PASSED")
-            self.assertTrue(True)
-        else:
-            casalog.post("Regression FAILED")
-            print("Regression FAILED")
-            self.assertTrue(False)
-
         shutil.rmtree(ms3ctst_copy)
-        shutil.copytree(datapath_3ctst, ms3ctst_copy)
+        shutil.copytree(datapath+ms3ctst, ms3ctst_copy)
 
-        mstransform_flag_step(step_name='1', timebin='2min', scale=7)
 
+class Mstransform_and_Flagdata_TimeAverage(unittest.TestCase):
+
+    def setUp(self):
+        shutil.copytree(datapath+ms3ctst, ms3ctst_copy)
+
+    def tearDown(self):
         shutil.rmtree(ms3ctst_copy)
-        shutil.copytree(datapath_3ctst, ms3ctst_copy)
+        shutil.rmtree("ms_approach1.ms")
+        shutil.rmtree("ms_approach2.ms")
 
-        mstransform_flag_step(step_name='2', timebin='6min', scale=7)
+    def test_timeaverage_and_flags(self):
+        """Run mstransform with timeaverage and compare with flagdata OTF time average"""
 
-        casalog.post("Done")
+        # Compare flags of approach 1 and approach 2
+        flags1, flags2 = mstransform_flag_step(step_name='1', timebin='2min', scale=7)
+        self.assertEqual(flags1, flags2)
 
-def suite():
-    return[regression_time_average_rflag]
+        shutil.rmtree("ms_approach1.ms")
+        shutil.rmtree("ms_approach2.ms")
+
+        flags1, flags2 = mstransform_flag_step(step_name='2', timebin='6min', scale=7)
+        self.assertEqual(flags1, flags2)
+
 
 if __name__ == "__main__":
     unittest.main()
