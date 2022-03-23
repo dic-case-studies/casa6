@@ -130,7 +130,7 @@ def getPlotantsAntennaInfo(msname, log, exclude, checkbaselines):
                 for (x, y, z) in tb.getcol('POSITION').transpose()])
         tb.close()
 
-        allAntIds = range(len(antNames))
+        allAntIds = list(range(len(antNames)))
         if checkbaselines:
                 # Get antenna ids from main table; this will add to runtime
                 tb.open(msname)
