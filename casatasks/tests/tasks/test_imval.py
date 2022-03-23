@@ -946,9 +946,6 @@ class imval_test(unittest.TestCase):
         res = imval(imagename)
         got = res['data']
         self.assertTrue((got == expec).all())
-    
-def suite():
-    return [imval_test]
 
 if __name__ == '__main__':
     unittest.main()
