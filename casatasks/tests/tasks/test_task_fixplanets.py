@@ -1,5 +1,5 @@
 ##########################################################################
-# test_req_task_fixplanets.py
+# test_task_fixplanets.py
 #
 # Copyright (C) 2018
 # Associated Universities, Inc. Washington DC, USA.
@@ -21,6 +21,11 @@
 #
 #
 ##########################################################################
+import sys
+import os
+import unittest
+import shutil
+import numpy as np
 
 from casatools import ctsys
 from casatools import table
@@ -28,13 +33,9 @@ from casatools import ms as mstool
 from casatools import msmetadata as msmdtool
 from casatasks import fixplanets
 
-import os
-import unittest
-import shutil
-import numpy as np
+tb = table()
 
 ### DATA ###
-
 datapath = ctsys.resolve('unittest/fixplanets/')
 
 # Input data
@@ -221,7 +222,7 @@ class fixplanets_test(unittest.TestCase):
             test_reftime
             --------------
             
-            Check that the timestamp provided by reftime is used if the pointing table infromation is being used
+            Check that the timestamp provided by reftime is used if the pointing table information is being used
         '''
         
         fixplanets(refcopy1, field='2', reftime='4968126851')
@@ -333,7 +334,6 @@ class fixplanets_test(unittest.TestCase):
 
             self.assertTrue(os.path.exists(myms + '/FIELD/EPHEM0_Titan.tab'))
             self.assertTrue(self.verify(myms, 'Titan', 'J2000'))
-
 
 if __name__ == "__main__":
     unittest.main()
