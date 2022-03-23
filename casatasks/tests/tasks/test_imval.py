@@ -260,22 +260,17 @@ def trySinglePoint(retValue, imagename='', box='', chans='', stokes='', expected
 class imval_test(unittest.TestCase):
     
     def setUp(self):
-        #if (os.path.exists(image_file)):
-        #    os.system('rm -rf ' +image_file+ ' ' +good_rgn_file)
 
         if os.path.exists(image_file):
             shutil.rmtree(image_file)
         if os.path.exists(good_rgn_file):
             os.remove(good_rgn_file)
-            
-        #os.system('cp -RH '+ os.path.join(datapath,image_file)+' ' + image_file)
-        #os.system('cp -RH '+ os.path.join(datapath,good_rgn_file)+' ' + good_rgn_file)
 
         shutil.copytree(os.path.join(datapath, image_file), image_file)
         shutil.copyfile(os.path.join(datapath, good_rgn_file), good_rgn_file)
 
     def tearDown(self):
-        #os.system('rm -rf ' +image_file+ ' ' +good_rgn_file)
+
         shutil.rmtree(image_file)
         os.remove(good_rgn_file)
 
