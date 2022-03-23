@@ -14,12 +14,19 @@
 # License for more details.
 #
 # Based on examples from CAS-11910
-# https://casadocs.readthedocs.io/en/latest/api/tt/casatools.agentflagger.html
 #
 # Rationale for Inclusion:
 #    test flagdata autoflagging (rflag mode) with on-the-fly time average
 #    and backpropagation of flags, when the MS has pre-existing flags
 #    and other tricky traits.
+#
+# MS datasets used in the tests
+#   Four_ants_3C286.ms:
+#           simulated EVLA MS with 4 spws
+#   3ctst.ms:
+#           from the CAS-11910 original description. GMRT MS that has un-ordered (in time) rows.
+#  That makes it particularly handy to test and expose issues in time average / AveragingTVI and
+#  related functionality.
 #
 ##########################################################################
 
@@ -28,7 +35,7 @@ import shutil
 import unittest
 
 from casatools import ctsys
-from casatasks import flagdata, casalog, mstransform
+from casatasks import flagdata, mstransform
 
 datapath = ctsys.resolve("regression/time_average_and_rflag/")
 
@@ -37,7 +44,7 @@ ms_four_ants = 'Four_ants_3C286.ms'
 ms1 = "Four_ants_copy1.ms"
 ms2 = "Four_ants_copy2.ms"
 
-ms3ctst = "3ctst.ms"
+ms3ctst = "3ctst_gmrt_unordered_time_rows.ms"
 ms3ctst_copy = "3ctst_copy.ms"
 
 totaltime = 0
@@ -142,8 +149,8 @@ def mstransform_flag_step(scale=7.0, timebin='1min', step_name=''):
     # Save summary of average flags of ms_step2
     res2 = flagdata(vis=ms_step2, mode='summary')
 
-    print('**** Flags of Approach 1: {}'.format(res1))
-    print('**** Flags of Approach 2: {}'.format(res2))
+    casalog.post('**** Flags of Approach 1: {}'.format(res1))
+    casalog.post('**** Flags of Approach 2: {}'.format(res2))
 
     return res1['flagged'], res2['flagged']
 
@@ -195,15 +202,13 @@ class Timeaverage_and_Rflag(unittest.TestCase):
 
         timing('2')
 
-        lists_equal = True
-
         # Expected summary flags for Four_ants_3C286 copy1 runs
         expected_30s_7_1_before = 211894.0
         expected_30s_7_2_before = 226824.0
         expected_30s_7_3_before = 227004.0
 
-        expected_30s_7_1_after = 226824.0
-        expected_30s_7_2_after = 227004.0
+        expected_30s_7_1_after = expected_30s_7_2_before
+        expected_30s_7_2_after = expected_30s_7_3_before
         expected_30s_7_3_after = 227004.0
 
         # Expected summary flags for Four_ants_3C286 copy2 runs
@@ -215,12 +220,12 @@ class Timeaverage_and_Rflag(unittest.TestCase):
         expected_30s_3_6_before = 776867.0
         expected_30s_3_7_before = 817331.0
 
-        expected_30s_3_1_after = 471802.0
-        expected_30s_3_2_after = 602582.0
-        expected_30s_3_3_after = 687092.0
-        expected_30s_3_4_after = 736226.0
-        expected_30s_3_5_after = 776867.0
-        expected_30s_3_6_after = 817331.0
+        expected_30s_3_1_after = expected_30s_3_2_before
+        expected_30s_3_2_after = expected_30s_3_3_before
+        expected_30s_3_3_after = expected_30s_3_4_before
+        expected_30s_3_4_after = expected_30s_3_5_before
+        expected_30s_3_5_after = expected_30s_3_6_before
+        expected_30s_3_6_after = expected_30s_3_7_before
         expected_30s_3_7_after = 843051.0
 
         # Expected summary flags of 3ctst copy runs
@@ -232,12 +237,12 @@ class Timeaverage_and_Rflag(unittest.TestCase):
         expected_30s_3_6_before_3ct = 9615350.0
         expected_30s_3_7_before_3ct = 9615354.0
 
-        expected_30s_3_1_after_3ct = 9611700.0
-        expected_30s_3_2_after_3ct = 9614850.0
-        expected_30s_3_3_after_3ct = 9615270.0
-        expected_30s_3_4_after_3ct = 9615343.0
-        expected_30s_3_5_after_3ct = 9615350.0
-        expected_30s_3_6_after_3ct = 9615354.0
+        expected_30s_3_1_after_3ct = expected_30s_3_2_before_3ct
+        expected_30s_3_2_after_3ct = expected_30s_3_3_before_3ct
+        expected_30s_3_3_after_3ct = expected_30s_3_4_before_3ct
+        expected_30s_3_4_after_3ct = expected_30s_3_5_before_3ct
+        expected_30s_3_5_after_3ct = expected_30s_3_6_before_3ct
+        expected_30s_3_6_after_3ct = expected_30s_3_7_before_3ct
         expected_30s_3_7_after_3ct = 9615354.0
 
         observed_list = [flag_30s_7_1_before, flag_30s_7_2_before, flag_30s_7_3_before,
@@ -263,12 +268,8 @@ class Timeaverage_and_Rflag(unittest.TestCase):
                          expected_30s_3_4_after_3ct, expected_30s_3_5_after_3ct, expected_30s_3_6_after_3ct, expected_30s_3_7_after_3ct]
 
         # Check that expected and observed lists are the same or fail if they are not
-        for i in range(len(observed_list)):
-            if observed_list[i] != expected_list[i]:
-                lists_equal = False
-                casalog.post("Observed value {} does not equal expected value {}".format(observed_list[i], expected_list[i]))
-                print("Observed value {} does not equal expected value {}".format(observed_list[i], expected_list[i]))
-                self.assertEqual(lists_equal, True)
+        for l_obs, l_exp in zip(observed_list,expected_list):
+            self.assertEqual(l_obs, l_exp, "Observed value {} does not equal expected value {}".format(l_obs, l_exp))
 
         timing('3')
 
