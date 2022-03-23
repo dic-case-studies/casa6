@@ -280,21 +280,25 @@ class imval_test(unittest.TestCase):
             shutil.rmtree('xxyy.im')
 
     def test_inputNoInputImage(self):
+        '''Test when no image is provided'''
         retValue = tryInput(imagename='',
                             errormsg="\nError: Empty imagename parameter not detected.")
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputRealInputImage(self):
+        '''Test when .rgn file is used as input instead of Image'''
         retValue = tryInput(imagename=good_rgn_file,
                             errormsg="\nError: Invalid image file name not detected.")
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputFloatVal(self):
+        '''Test when a float/invalid file is given as the input'''
         retValue = tryInput(imagename=2.3,
                             errormsg="\nError: Invalid image file name, 2.3,  not detected.")
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputn4826_bima(self):
+        '''Test with real image file n4826_bima'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
 
@@ -321,12 +325,14 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputBoxNegativeX(self):
+        '''Test when negative x value is given in the box parameter'''
         retValue = tryInput(imagename=image_file,
                             box='-3,0,-3,3',
                             errormsg='\nInvalid box parameter, x=-3, values not detected.')
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputBoxLargeRangeX(self):
+        '''Test with large values for x in the box'''
         retValue = tryInput(imagename=image_file,
                             box='200,0,262,3',
                             errormsg='Invalid box parameter values,262, not detected.')
@@ -334,6 +340,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputBoxNegativeY(self):
+        '''Test when negative y value is given in the box parameter'''
         retValue = tryInput(imagename=image_file,
                             box='0,-3,0,3',
                             errormsg='Invalid box parameter value, y=-3, not detected.')
@@ -341,6 +348,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputLargeRangeY(self):
+        '''Test with large values of y in the box'''
         retValue = tryInput(imagename=image_file,
                             box='0,270,0,3',
                             errormsg='Invalid box parameter value, y=270, not detected.')
@@ -348,6 +356,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputBoxLargeY0(self):
+        '''Test when the first y value in the box is larger'''
         retValue = tryInput(imagename=image_file,
                             box='0,110,0,10',
                             errormsg='Invalid box parameter value, y[1]>y[0], not detected.')
@@ -355,6 +364,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputBox(self):
+        '''Test with valid box inputs'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
 
@@ -382,6 +392,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputNegativeChans(self):
+        '''Test when the given channels are negative'''
         retValue = tryInput(imagename=image_file,
                             chans='-3',
                             errormsg='Invalid chans parameter value,-3, not detected.')
@@ -389,6 +400,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputChans50(self):
+        '''Test out of range channel value'''
         retValue = tryInput(imagename=image_file,
                             chans='50',
                             errormsg='Invalid chans parameter value,50, not detected.')
@@ -396,6 +408,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputChans10(self):
+        '''Test valid channel input'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
 
@@ -423,6 +436,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputStokesQ(self):
+        '''Test with stokes Q'''
         retValue = tryInput(imagename=image_file,
                             stokes='Q',
                             errormsg='Invalid stokes value, Q,  not detected.')
@@ -430,6 +444,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputStokes0(self):
+        '''Test with 0 given as stokes value'''
         retValue = tryInput(imagename=image_file,
                             stokes=0,
                             errormsg='Invalid stokes value, 0,  not detected.')
@@ -437,6 +452,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputStokesI(self):
+        '''Test with valid stokes input I'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
 
@@ -465,6 +481,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputRegion(self):
+        '''Test when given region array'''
         retValue = tryInput(imagename=image_file,
                             region=[1, 3],
                             errormsg="\nError: Bad region, '[1, 3]', was not reported.")
@@ -472,7 +489,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputRegionFile(self):
-
+        '''Test when given a bad region file'''
         # First make sure the region file does not exist.
         garbage_rgn_file = os.getcwd() + '/garbage.rgn'
         if (os.path.exists(garbage_rgn_file)):
@@ -486,6 +503,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputModifiedRegionFile(self):
+        '''Test with modified bad region file'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
 
@@ -519,6 +537,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_inputGoodRegionFile(self):
+        '''Test region seleciton with good region file'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
 
@@ -558,6 +577,7 @@ class imval_test(unittest.TestCase):
 
 
     def test_singlePointBottomLeft(self):
+        '''Test box selection at bottom left'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
 
@@ -576,6 +596,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_singlePointBottomRight(self):
+        '''Test box seleciton at bottom right'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
 
@@ -594,6 +615,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_singlePointTopLeft(self):
+        '''Test box selection at top left'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
 
@@ -611,6 +633,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_singlePointTopRight(self):
+        '''Test box selection at top right'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
 
@@ -629,6 +652,7 @@ class imval_test(unittest.TestCase):
 
 
     def test_singlePointLastChanStokes(self):
+        '''Test box seleciton with max stokes and chans'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
 
@@ -646,7 +670,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_singlePointRandom(self):
-
+        '''Test selection a single random point'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
 
@@ -680,6 +704,7 @@ class imval_test(unittest.TestCase):
         self.assertTrue(retValue['success'], retValue['error_msgs'])
 
     def test_singlePointSecondRandom(self):
+        '''Test selecting another single random point'''
         retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
         dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
 
