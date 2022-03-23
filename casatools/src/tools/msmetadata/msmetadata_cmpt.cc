@@ -2340,8 +2340,8 @@ void msmetadata::_checkSpwId(int id, bool throwIfNegative) const {
         id >= (int)_msmd->nSpw(true) || (throwIfNegative && id < 0),
         "Spectral window ID " + String::toString(id)
         + " out of range, must be "
-        + (throwIfNegative ? "nonnegative and " : "") + "less than "
-        + String::toString((int)_msmd->nSpw(true))
+        + (throwIfNegative ? "nonnegative and " : "") + "less than or equal to "
+        + String::toString((int)_msmd->nSpw(true) - 1)
     );
 }
 
