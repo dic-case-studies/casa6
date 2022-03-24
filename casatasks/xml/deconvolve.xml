@@ -101,7 +101,7 @@
 
                         Each of the following algorithms operate on residual images and psfs
                         from the gridder and produce output model and restored images.
-                        Minor cycles stop when threshold/cyclethreshold or niter are reached. For all
+                        Minor cycles stop when threshold or niter are reached. For all
                         methods, components are picked from the entire extent of the image or
                         (if specified) within a mask.
 
@@ -333,9 +333,7 @@
                                 iterations. Whichever condition is triggered first stops the minor
                                 cycle.
                         
-                                'threshold' : The parameter value, if provided, or the automatically
-                                              computed cyclethreshold related to the max sidelobe
-                                              level of the PSF and peak residual.
+                                'threshold' : The parameter value, compared to peak residual.
                                 Divergence :  As detected by an increase of 10% in peak residual from
                                               the minimum so far (during minor cycle iterations).
                                 
@@ -382,33 +380,13 @@
       <shortdescription>Stopping threshold </shortdescription>
       <description>The minor cycle's stopping threshold (number in units of Jy, or string)
 
-                        When threshold isn't set explicitly, the value of threshold is computed
-                        based on the maximum psf sidelobe level (this is done mainly for maintaing
-                        compatibility with tclean). However, if it is set explicitly, then the only
-                        modification to threshold comes from nsigma.
-
                         threshold = 0.005  : 5mJy
                         threshold = '5.0mJy'
-
-                        Note : If threshold is not set, then a 'cyclethreshold' is internally
-                               computed and used as a stopping trigger. It is related what fraction
-                               of the PSF can be reliably used during minor cycle updates of the
-                               residual image. By default the minor cycle iterations terminate once
-                               the peak residual reaches the first sidelobe level of the brightest
-                               source.
-                               
-                               'cyclethreshold' is computed as follows based on the input images:
-
-                               1. psf_fraction = max_psf_sidelobe_level * 1.0
-                               2. psf_fraction = min(max(0.05, psf_fraction), 0.8);
-                               3. cyclethreshold = peak_residual * psf_fraction
-                               4. cyclethreshold = max( cyclethreshold, 'threshold' )
                                
                         Note : If nsigma is set (&gt;0.0), the N-sigma threshold is calculated (see
-                               the description under nsigma). Then threshold (or cyclethreshold) is
-                               modified as:
+                               the description under nsigma). Then threshold is modified as:
                                
-                               5. cyclethreshold = max( threshold, nsgima_threshold )
+                               threshold = max( threshold, nsgima_threshold )
       </description>
 
       <value type="double">0.0</value>
@@ -515,9 +493,6 @@
                                               negativethrehsold,  smoothfactor, minbeamfrac, cutthreshold,
                                               pbmask, growiterations, dogrowprune, minpercentchange, verbose
                               Additional top level parameter relevant to auto-multithresh: fastnoise
-                              
-                              if pbmask is &gt;0.0, the region outside the specified pb gain level is excluded from
-                              image statistics in determination of the threshold.
 
 
 
