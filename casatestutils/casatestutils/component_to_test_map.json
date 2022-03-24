@@ -411,6 +411,16 @@
             "comment":""
         },
         {
+            "testScript":"test_task_imbaseline",
+            "testType":"casatasks",
+            "maintainer":"Kazuhiko Shimada",
+            "maintainerEmail":"kazuhiko.shimada@nao.ac.jp",
+            "testOptions":[],
+            "testGroup":["Single Dish", "Image Analysis", "imbaseline"],
+            "timeout":3600,
+            "comment":""
+        },
+        {
             "testScript":"test_task_imcollapse",
             "testType":"casatasks",
             "maintainer":"David Mehringer",
@@ -441,21 +451,7 @@
             "comment":"DEFAULT"
         },
         {
-<<<<<<< HEAD
-            "testScript":"test_task_imbaseline",
-            "testType":"casatasks",
-            "maintainer":"Kazuhiko Shimada",
-            "maintainerEmail":"kazuhiko.shimada@nao.ac.jp",
-            "testOptions":[],
-            "testGroup":["Single Dish", "Image Analysis", "imbaseline"],
-            "timeout":3600,
-            "comment":""
-        },
-        {
-            "testScript":"test_imcollapse",
-=======
             "testScript":"test_task_imfit",
->>>>>>> origin
             "testType":"casatasks",
             "maintainer":"David Mehringer",
             "maintainerEmail":"dmehring@nrao.edu",
