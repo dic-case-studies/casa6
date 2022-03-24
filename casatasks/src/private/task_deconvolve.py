@@ -236,8 +236,7 @@ def deconvolve(
 
         # Assign cyclethreshold explicitly to threshold
         threshold = threshold if (type(threshold) == str) else (str(threshold*1000)+'mJy')
-        casalog.post(f"Threshold: {threshold}", "SEVERE")
-        paramList.setIterPars({'cyclethreshold': threshold, 'cyclethresholdismutable': False, 'minpsffraction': 0, 'cyclefactor': 0, 'niter': 300, 'cycleniter': 300})
+        paramList.setIterPars({'cyclethreshold': threshold, 'cyclethresholdismutable': False})
 
         #####################################################
         #### Run the minor cycle
