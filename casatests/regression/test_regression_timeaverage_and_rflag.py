@@ -35,7 +35,7 @@ import shutil
 import unittest
 
 from casatools import ctsys
-from casatasks import flagdata, mstransform
+from casatasks import flagdata, casalog, mstransform
 
 datapath = ctsys.resolve("regression/time_average_and_rflag/")
 
