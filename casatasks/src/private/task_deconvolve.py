@@ -234,12 +234,10 @@ def deconvolve(
         ## create the parameters list help object
         paramList=ImagerParameters(**bparm)
 
-        # Assign cyclethreshold explicitly, if set explicitly by the user
-        if threshold != 0:
-            threshold = threshold if (type(threshold) == str) else (str(threshold*1000)+'mJy')
-            paramList.setIterPars({'cyclethreshold': threshold, 'cyclethresholdismutable': False})
-        else:
-            casalog.post("Calculating cyclethreshold based on current image", "INFO")
+        # Assign cyclethreshold explicitly to threshold
+        threshold = threshold if (type(threshold) == str) else (str(threshold*1000)+'mJy')
+        casalog.post(f"Threshold: {threshold}", "SEVERE")
+        paramList.setIterPars({'cyclethreshold': threshold, 'cyclethresholdismutable': False, 'minpsffraction': 0, 'cyclefactor': 0, 'niter': 300, 'cycleniter': 300})
 
         #####################################################
         #### Run the minor cycle

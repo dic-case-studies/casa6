@@ -247,31 +247,31 @@
 #
 #Show multiple executions of deconvolve get a probably-correct answer
 #45. Deconvolve Hogbom + Hogbom: execute deconvolve once and compare the results to those of running deconvolve twice in a row (almost the same, as it is with tclean).
-#imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',threshold:'1mJy',maxpsffraction=0.001
+#imsize:100,cell:'8.0arcsec',deconvolver:'hogbom',threshold:'1mJy'
 #first run to get expected value: niter=399
 #second/third runs to get actual value: niter=199, niter=199
 #testname: test_multirun_hogbomhogbom
 #
 #46. Deconvolve Clark + Clark: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
-#imsize:100,cell:'8.0arcsec',deconvolver:'clark',threshold:'1mJy',maxpsffraction:0.001,gain:0.03
+#imsize:100,cell:'8.0arcsec',deconvolver:'clark',threshold:'1mJy',gain:0.03
 #first run to get expected value: niter=400
 #second/third runs to get actual value: niter=200, niter=200
 #testname: test_multirun_clarkclark
 #
 #47. Deconvolve Clarkstokes + Clarkstokes: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
-#imsize:100,cell:'8.0arcsec',deconvolver:'clarkstokes','cyclefactor':0.1,'stokes':'I',maxpsffraction=0.001,gain:0.01
+#imsize:100,cell:'8.0arcsec',deconvolver:'clarkstokes','stokes':'I',gain:0.01
 #first run to get expected value: niter=400
 #second/third runs to get actual value: niter=200, niter=200
 #testname: test_multirun_clarkstokesclarkstokes
 #
 #48. Deconvolve Multiscale + Multiscale: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
-#imsize:100,cell:'8.0arcsec',deconvolver:'multiscale',threshold:'1mJy',scales:[10,20,40,100],maxpsffraction=0.001
+#imsize:100,cell:'8.0arcsec',deconvolver:'multiscale',threshold:'1mJy',scales:[10,20,40,100]
 #first run to get expected value: niter=400
 #second/third runs to get actual value: niter=200, niter=200
 #testname: test_multirun_multiscalemultiscale
 #
 #49. Deconvolve MTMFS + MTMFS: execute deconvolve once and compare the results to those of running deconvolve twice in a row.
-#imsize:100,cell:'8.0arcsec',deconvolver:'mtmfs',threshold:'1mJy',scales:[10,20,40],maxpsffraction=0.001
+#imsize:100,cell:'8.0arcsec',deconvolver:'mtmfs',threshold:'1mJy',scales:[10,20,40]
 #first run to get expected value: niter=400
 #second/third runs to get actual value: niter=200, niter=200
 #testname: test_multirun_mtmfsmtmfs
@@ -498,174 +498,146 @@
 #
 #
 #N Iter Params tests: verify that we perform the same number of iterations as tclean for the same iteration parameters
-#99. Deconvolve should execute 10 iterations for gain=0.2, just like the first major-minor cycle of tclean.
-#'gain':0.2
+#99. Deconvolve should execute 14 iterations for gain=0.2, just like the first major-minor cycle of tclean.
+#gain: 0.2
 #testname: test_niterparms_gain_1
 #
-#100. Deconvolve should execute 7 iterations for gain=0.3, just like the first major-minor cycle of tclean.
-#'gain':0.3
+#100. Deconvolve should execute 9 iterations for gain=0.3, just like the first major-minor cycle of tclean.
+#gain: 0.3
 #testname: test_niterparms_gain_2
 #
 #101. Deconvolve should execute 16 iterations for threshold=0.22, just like the first major-minor cycle of tclean.
-#'threshold':0.22
+#threshold: 0.22
 #testname: test_niterparms_threshold_1
 #
 #102. Deconvolve should execute 19 iterations for threshold=0.18, just like the first major-minor cycle of tclean.
-#'threshold':0.18
+#threshold: 0.18
 #testname: test_niterparms_threshold_2
 #
-#103. Deconvolve should execute 72 iterations for nsigma=0.9, just like the first major-minor cycle of tclean.
-#'nsigma':0.9, 'maxpsffraction':0
+#103. Deconvolve should execute 112 iterations for threshold=0.01, just like the first major-minor cycle of tclean(minspffraction=0.001).
+#threshold: 0.001
+#testname: test_niterparms_threshold_3
+#
+#104. Deconvolve should execute 300 iterations for threshold=0, just like the first major-minor cycle of tclean.
+#gain: 0.15
+#testname: test_niterparms_unset
+#
+#105. Deconvolve should execute 60 iterations for nsigma=3, just like the first major-minor cycle of tclean.
+#nsigma: 3
 #testname: test_niterparms_nsigma_1
 #
-#104. Deconvolve should execute 60 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
-#'nsigma':1.5, 'maxpsffraction':0
+#106. Deconvolve should execute 79 iterations for nsigma=1.5, just like the first major-minor cycle of tclean.
+#nsigma: 1.5
 #testname: test_niterparms_nsigma_2
-#
-#105. Deconvolve should execute 40 iterations for cyclefactor=0.1, just like the first major-minor cycle of tclean.
-#'cyclefactor':0.1
-#testname: test_niterparms_cyclefactor_1
-#
-#106. Deconvolve should execute 13 iterations for cyclefactor=2.0, just like the first major-minor cycle of tclean.
-#'cyclefactor':2.0
-#testname: test_niterparms_cyclefactor_2
-#
-#107. Deconvolve should execute 7 iterations for minpsffraction=0.5, just like the first major-minor cycle of tclean.
-#'minpsffraction':0.5
-#testname: test_niterparms_minpsffraction_1
-#
-#108. Deconvolve should execute 16 iterations for minpsffraction=0.2, just like the first major-minor cycle of tclean.
-#'minpsffraction':0.2
-#testname: test_niterparms_minpsffraction_2
-#
-#109. Deconvolve should execute 78 iterations for maxpsffraction=0.01, just like the first major-minor cycle of tclean.
-#'maxpsffraction':0.01
-#testname: test_niterparms_maxpsffraction_1
-#
-#110. Deconvolve should execute 40 iterations for maxpsffraction=0.05, just like the first major-minor cycle of tclean.
-#'maxpsffraction':0.05
-#testname: test_niterparms_maxpsffraction_2
 #
 #
 #
 #Minimum images tests: verify that the minimal set of images (.residual and .psf) can be used with each of the other parameters
-#111. Test non-default value for deconvolver_clark with only the .residual and .psf present
+#107. Test non-default value for deconvolver_clark with only the .residual and .psf present
 #deconvolver:"clark"
 #testname: test_minimages_deconvolver_clark
 #
-#112. Test non-default value for deconvolver_multiscale with only the .residual and .psf present
+#108. Test non-default value for deconvolver_multiscale with only the .residual and .psf present
 #deconvolver:"multiscale", scales:[5,10,50]
 #testname: test_minimages_deconvolver_multiscale
 #
-#113. Test non-default value for deconvolver_mtmfs with only the .residual.ttn and .psf.ttn present
+#109. Test non-default value for deconvolver_mtmfs with only the .residual.ttn and .psf.ttn present
 #'imsize':100, 'cell':'10.0arcsec', 'deconvolver':'mtmfs', 'nterms':2})
 #testname: test_minimages_deconvolver_mtmfs
 #
-#114. Test non-default value for smallscalebias with only the .residual and .psf present
+#110. Test non-default value for smallscalebias with only the .residual and .psf present
 #deconvolver:"clark", smallscalebias:1.0
 #testname: test_minimages_smallscalebias
 #
-#115. Test non-default value for restoration with only the .residual and .psf present
+#111. Test non-default value for restoration with only the .residual and .psf present
 #restoration:False
 #testname: test_minimages_restoration
 #
-#116. Test non-default value for restoringbeam with only the .residual and .psf present
+#112. Test non-default value for restoringbeam with only the .residual and .psf present
 #restoringbeam:'5.0arcsec'
 #testname: test_minimages_restoringbeam
 #
-#117. Test non-default value for niter with only the .residual and .psf present
+#113. Test non-default value for niter with only the .residual and .psf present
 #niter:10
 #testname: test_minimages_niter
 #
-#118. Test non-default value for gain with only the .residual and .psf present
+#114. Test non-default value for gain with only the .residual and .psf present
 #gain:0.5
 #testname: test_minimages_gain
 #
-#119. Test non-default value for threshold with only the .residual and .psf present
+#115. Test non-default value for threshold with only the .residual and .psf present
 #threshold:"1Jy"
 #testname: test_minimages_threshold
 #
-#120. Test non-default value for nsigma with only the .residual, .psf, and .pb present
+#116. Test non-default value for nsigma with only the .residual, .psf, and .pb present
 #nsigma:1.5
 #testname: test_minimages_nsigma
 #
-#121. Test non-default value for nsigma with only the .residual and .psf present
+#117. Test non-default value for nsigma with only the .residual and .psf present
 #nsigma:1.5
 #testname: test_minimages_nsigma_nopb
 #
-#122. Test non-default value for mtmfs+nsigma with only the .residual, .psf, and .pb present
+#118. Test non-default value for mtmfs+nsigma with only the .residual, .psf, and .pb present
 #nsigma:1.5
 #testname: test_minimages_nsigma_mtmfs
 #
-#123. Test non-default value for mtmfs+nsigma with only the .residual and .psf present
+#119. Test non-default value for mtmfs+nsigma with only the .residual and .psf present
 #nsigma:1.5
 #testname: test_minimages_nsigma_nopb_mtmfs
 #
-#124. Test non-default value for cyclefactor with only the .residual and .psf present
-#cyclefactor:5.0
-#testname: test_minimages_cyclefactor
-#
-#125. Test non-default value for minpsffraction with only the .residual and .psf present
-#minpsffraction:0.5
-#testname: test_minimages_minpsffraction
-#
-#126. Test non-default value for maxpsffraction with only the .residual and .psf present
-#maxpsffraction:0.5
-#testname: test_minimages_maxpsffraction
-#
-#127. Test non-default value for interactive with only the .residual and .psf present
+#120. Test non-default value for interactive with only the .residual and .psf present
 #interactive:0
 #testname: test_minimages_interactive
 #
-#128. Test non-default value for fastnoise with only the .residual and .psf present
+#121. Test non-default value for fastnoise with only the .residual and .psf present
 #fastnoise:False
 #testname: test_minimages_fastnoise
 #
-#129. Test non-default value for usemask with only the .residual and .psf present
+#122. Test non-default value for usemask with only the .residual and .psf present
 #usemask:"pb"
 #testname: test_minimages_usemask
 #
-#130. Test non-default value for mask with only the .residual and .psf present
+#123. Test non-default value for mask with only the .residual and .psf present
 #mask:'circle[[40pix,40pix],10pix]'
 #testname: test_minimages_mask
 #
-#131. Test non-default value for sidelobethreshold with only the .residual and .psf present
+#124. Test non-default value for sidelobethreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", sidelobethreshold:10.0
 #testname: test_minimages_sidelobethreshold
 #
-#132. Test non-default value for noisethreshold with only the .residual and .psf present
+#125. Test non-default value for noisethreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", noisethreshold:10.0
 #testname: test_minimages_noisethreshold
 #
-#133. Test non-default value for lownoisethreshold with only the .residual and .psf present
+#126. Test non-default value for lownoisethreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", lownoisethreshold:10.0
 #testname: test_minimages_lownoisethreshold
 #
-#134. Test non-default value for negativethreshold with only the .residual and .psf present
+#127. Test non-default value for negativethreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", negativethreshold:0.5
 #testname: test_minimages_negativethreshold
 #
-#135. Test non-default value for smoothfactor with only the .residual and .psf present
+#128. Test non-default value for smoothfactor with only the .residual and .psf present
 #usemask:"auto-multithresh", smoothfactor:0.5
 #testname: test_minimages_smoothfactor
 #
-#136. Test non-default value for minbeamfrac with only the .residual and .psf present
+#129. Test non-default value for minbeamfrac with only the .residual and .psf present
 #usemask:"auto-multithresh", minbeamfrac:0.5
 #testname: test_minimages_minbeamfrac
 #
-#137. Test non-default value for cutthreshold with only the .residual and .psf present
+#130. Test non-default value for cutthreshold with only the .residual and .psf present
 #usemask:"auto-multithresh", cutthreshold:0.5
 #testname: test_minimages_cutthreshold
 #
-#138. Test non-default value for growiterations with only the .residual and .psf present
+#131. Test non-default value for growiterations with only the .residual and .psf present
 #usemask:"auto-multithresh", growiterations:1
 #testname: test_minimages_growiterations
 #
-#139. Test non-default value for dogrowprune with only the .residual and .psf present
+#132. Test non-default value for dogrowprune with only the .residual and .psf present
 #usemask:"auto-multithresh", dogrowprune:False
 #testname: test_minimages_dogrowprune
 #
-#140. Test non-default value for verbose with only the .residual and .psf present
+#133. Test non-default value for verbose with only the .residual and .psf present
 #verbose:True
 #testname: test_minimages_verbose
 #
@@ -1009,17 +981,17 @@ class test_iterbot(testref_base):
 
         self.checkfinal(report)
 
-    def test_iterbot_cyclethreshold_str(self):
+    def test_iterbot_threshold_str(self):
         self.prepData('refim_point.ms', tclean_args={'imsize':100,'cell':'9.0arcsec'})
-        results = deconvolve(imagename=self.img, cyclethreshold='1.058mJy', niter=2000, interactive=0)
-        report = th.checkall(ret=results['retrec'], iterdone=1077, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
+        results = deconvolve(imagename=self.img, threshold='1.058mJy', niter=2000, interactive=0)
+        report = th.checkall(ret=results['retrec'], iterdone=1066, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
 
         self.checkfinal(report)
 
-    def test_iterbot_cyclethreshold_num(self):
+    def test_iterbot_threshold_num(self):
         self.prepData('refim_point.ms', tclean_args={'imsize':100,'cell':'9.0arcsec','nchan':1})
-        results = deconvolve(imagename=self.img, cyclethreshold=1.058e-3, niter=2000, interactive=0)
-        report = th.checkall(ret=results['retrec'], iterdone=1077, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
+        results = deconvolve(imagename=self.img, threshold=1.058e-3, niter=2000, interactive=0)
+        report = th.checkall(ret=results['retrec'], iterdone=1066, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'])
 
         self.checkfinal(report)
 
@@ -1862,14 +1834,14 @@ class test_multirun(testref_base):
         ######################################################################################
         tca = {'imsize':100,'cell':'8.0arcsec','deconvolver':'hogbom','threshold':'1mJy'}
         self.prepData('refim_twochan.ms', tclean_args=tca)
-        results1 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=399, threshold='1mJy', maxpsffraction=0.001, interactive=0)
+        results1 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=399, threshold='1mJy', interactive=0)
         report1  = th.checkall(ret=results1['retrec'], peakres=4.97e-3, modflux=1.315, iterdone=399, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',0.871,[50,50,0,0])])
 
         self.prepData('refim_twochan.ms', tclean_args=tca)
-        results2 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=199, threshold='1mJy', maxpsffraction=0.001, interactive=0, restoration=False)
+        results2 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=199, threshold='1mJy', interactive=0, restoration=False)
         report2  = th.checkall(ret=results2['retrec'], iterdone=199, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
-        results3 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=199, threshold='1mJy', maxpsffraction=0.001, interactive=0)
+        results3 = deconvolve(imagename=self.img, deconvolver='hogbom', niter=199, threshold='1mJy', interactive=0)
         report3  = th.checkall(ret=results3['retrec'], peakres=4.97e-3, modflux=1.315, iterdone=199, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',0.871,[50,50,0,0])])
 
@@ -1884,14 +1856,14 @@ class test_multirun(testref_base):
         ######################################################################################
         tca = {'imsize':100,'cell':'8.0arcsec','deconvolver':'clark','threshold':'1mJy'}
         self.prepData('refim_twochan.ms', tclean_args=tca)
-        results1 = deconvolve(imagename=self.img, deconvolver='clark', niter=400, threshold='1mJy', maxpsffraction=0.001, gain=0.03, interactive=0)
+        results1 = deconvolve(imagename=self.img, deconvolver='clark', niter=400, threshold='1mJy', gain=0.03, interactive=0)
         report1  = th.checkall(ret=results1['retrec'], peakres=1.009e-2, modflux=1.287, iterdone=400, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',0.891,[50,50,0,0])])
 
         self.prepData('refim_twochan.ms', tclean_args=tca)
-        results2 = deconvolve(imagename=self.img, deconvolver='clark', niter=200, threshold='1mJy', maxpsffraction=0.001, gain=0.03, interactive=0, restoration=False)
+        results2 = deconvolve(imagename=self.img, deconvolver='clark', niter=200, threshold='1mJy', gain=0.03, interactive=0, restoration=False)
         report2  = th.checkall(ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
-        results3 = deconvolve(imagename=self.img, deconvolver='clark', niter=200, threshold='1mJy', maxpsffraction=0.001, gain=0.03, interactive=0)
+        results3 = deconvolve(imagename=self.img, deconvolver='clark', niter=200, threshold='1mJy', gain=0.03, interactive=0)
         report3  = th.checkall(ret=results3['retrec'], peakres=1.009e-2, modflux=1.287, iterdone=200, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',0.891,[50,50,0,0])])
 
@@ -1906,14 +1878,14 @@ class test_multirun(testref_base):
         ######################################################################################
         tca = {'imsize':100,'cell':'8.0arcsec','deconvolver':'clarkstokes','stokes':'I','threshold':'1mJy'}
         tca=self.prepData('refim_point_linRL.ms', tclean_args=tca)
-        results1 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=400, threshold='1mJy', maxpsffraction=0.001, gain=0.01, interactive=0)
+        results1 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=400, threshold='1mJy', gain=0.01, interactive=0)
         report1  = th.checkall(ret=results1['retrec'], peakres=1.795e-2, modflux=0.982, iterdone=400, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',0.982,[50,50,0,0])])
 
         self.prepData('refim_point_linRL.ms', tclean_args=tca)
-        results2 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=200, threshold='1mJy', maxpsffraction=0.001, gain=0.01, interactive=0, restoration=False)
+        results2 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=200, threshold='1mJy', gain=0.01, interactive=0, restoration=False)
         report2  = th.checkall(ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
-        results3 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=200, threshold='1mJy', maxpsffraction=0.001, gain=0.01, interactive=0)
+        results3 = deconvolve(imagename=self.img, deconvolver='clarkstokes', niter=200, threshold='1mJy', gain=0.01, interactive=0)
         report3  = th.checkall(ret=results3['retrec'], peakres=1.795e-2, modflux=0.982, iterdone=200, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',0.982,[50,50,0,0])])
 
@@ -1927,14 +1899,14 @@ class test_multirun(testref_base):
         ######################################################################################
         tca={'imsize':100,'cell':'8.0arcsec','deconvolver':'multiscale','scales':[10,20,40,100]}
         self.prepData('refim_twochan.ms', tclean_args=tca)
-        results1 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=400, threshold='1mJy', maxpsffraction=0.001, interactive=0)
+        results1 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=400, threshold='1mJy', interactive=0)
         report1  = th.checkall(ret=results1['retrec'], peakres=0.246, modflux=1.271, iterdone=400, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',3.827e-2,[50,50,0,0])])
 
         self.prepData('refim_twochan.ms', tclean_args=tca)
-        results2 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=200, threshold='1mJy', maxpsffraction=0.001, interactive=0, restoration=False)
+        results2 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=200, threshold='1mJy', interactive=0, restoration=False)
         report2  = th.checkall(ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf', self.img+'.residual'], imgexistnot=[self.img+'.image'])
-        results3 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=200, threshold='1mJy', maxpsffraction=0.001, interactive=0)
+        results3 = deconvolve(imagename=self.img, deconvolver='multiscale', scales=[10,20,40,100], niter=200, threshold='1mJy', interactive=0)
         report3  = th.checkall(ret=results3['retrec'], peakres=0.246, modflux=1.271, iterdone=200, epsilon=0.005, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
                                imgval=[(self.img+'.model',3.827e-2,[50,50,0,0])])
 
@@ -1948,15 +1920,15 @@ class test_multirun(testref_base):
         ######################################################################################
         tca={'imsize':100,'cell':'8.0arcsec','deconvolver':'mtmfs','scales':[10,20,40]}
         self.prepData('refim_eptwochan.ms', tclean_args=tca)
-        results1 = deconvolve(imagename=self.img, deconvolver='mtmfs', scales=[10,20,40], niter=400, threshold='1mJy', maxpsffraction=0.001, interactive=0)
+        results1 = deconvolve(imagename=self.img, deconvolver='mtmfs', scales=[10,20,40], niter=400, threshold='1mJy', interactive=0)
         report1  = th.checkall( ret=results1['retrec'], peakres=4.954e-2, modflux=5.880, iterdone=400, epsilon=0.005,
                                 imgexist=[self.img+'.psf.tt0', self.img+'.psf.tt1', self.img+'.psf.tt2', self.img+'.residual.tt0', self.img+'.residual.tt1', self.img+'.image.tt0', self.img+'.image.tt1'],
                                 imgval=[(self.img+'.model.tt0',5.677e-3,[50,50,0,0]), (self.img+'.model.tt1',-3.517e-3,[50,50,0,0])] )
 
         self.prepData('refim_eptwochan.ms', tclean_args=tca)
-        results2 = deconvolve(imagename=self.img, deconvolver='mtmfs', scales=[10,20,40], niter=200, threshold='1mJy', maxpsffraction=0.001, interactive=0, restoration=False)
+        results2 = deconvolve(imagename=self.img, deconvolver='mtmfs', scales=[10,20,40], niter=200, threshold='1mJy', interactive=0, restoration=False)
         report2  = th.checkall( ret=results2['retrec'], iterdone=200, imgexist=[self.img+'.psf.tt0', self.img+'.psf.tt1', self.img+'.psf.tt2', self.img+'.residual.tt0', self.img+'.residual.tt1'], imgexistnot=[self.img+'.image.tt0', self.img+'.image.tt1'] )
-        results3 = deconvolve(imagename=self.img, deconvolver='mtmfs', scales=[10,20,40], niter=200, threshold='1mJy', maxpsffraction=0.001, interactive=0)
+        results3 = deconvolve(imagename=self.img, deconvolver='mtmfs', scales=[10,20,40], niter=200, threshold='1mJy', interactive=0)
         report3  = th.checkall( ret=results3['retrec'], peakres=4.954e-2, modflux=5.880, iterdone=200, epsilon=0.005,
                                 imgexist=[self.img+'.psf.tt0', self.img+'.psf.tt1', self.img+'.psf.tt2', self.img+'.residual.tt0', self.img+'.residual.tt1', self.img+'.image.tt0', self.img+'.image.tt1'],
                                 imgval=[(self.img+'.model.tt0',5.677e-3,[50,50,0,0]), (self.img+'.model.tt1',-3.517e-3,[50,50,0,0])] )
@@ -2869,6 +2841,7 @@ class test_restoration(testref_base):
 ##Task level tests : verify that we perform the same number of iterations as tclean for the same iteration parameters
 class test_niterparms(testref_base):
     imsize = 500
+    niter = 300
 
     @classmethod
     def setUpClass(cls):
@@ -2890,7 +2863,7 @@ class test_niterparms(testref_base):
         if param_val != None:
             da[param_name] = param_val
         if param_name != 'niter':
-            da['niter'] = 1000
+            da['niter'] = test_niterparms.niter
         if extra_params != None:
             for ep_name in extra_params:
                 da[ep_name] = extra_params[ep_name]
@@ -2912,10 +2885,10 @@ class test_niterparms(testref_base):
     def test_niterparms_gain_1(self):
         """ [niterparms] test_niterparms_gain_1 """
         ######################################################################################
-        # Deconvolve should execute 10 iterations for gain=0.2, just like the first major-minor cycle of tclean.
+        # Deconvolve should execute 14 iterations for gain=0.2, just like the first major-minor cycle of tclean.
         ######################################################################################
-        report = self.helper_deconvolve_check_iterdone('gain', param_val=0.2, expected_iter=10)
-        #tclean('refim_twochan.ms', gain=0.2,
+        report = self.helper_deconvolve_check_iterdone('gain', param_val=0.2, expected_iter=14, extra_params={'threshold':0.1})
+        # tclean('refim_twochan.ms', gain=0.2, threshold=0.1, minpsffraction=0, cyclefactor=0,
         #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
         self.checkfinal(report)
 
@@ -2923,10 +2896,10 @@ class test_niterparms(testref_base):
     def test_niterparms_gain_2(self):
         """ [niterparms] test_niterparms_gain_2 """
         ######################################################################################
-        # Deconvolve should execute 7 iterations for gain=0.3, just like the first major-minor cycle of tclean.
+        # Deconvolve should execute 9 iterations for gain=0.3, just like the first major-minor cycle of tclean.
         ######################################################################################
-        report = self.helper_deconvolve_check_iterdone('gain', param_val=0.3, expected_iter=7)
-        #tclean('refim_twochan.ms', gain=0.3,
+        report = self.helper_deconvolve_check_iterdone('gain', param_val=0.3, expected_iter=9, extra_params={'threshold':0.1})
+        # tclean('refim_twochan.ms', gain=0.3, threshold=0.1, minpsffraction=0, cyclefactor=0,
         #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
         self.checkfinal(report)
 
@@ -2952,29 +2925,33 @@ class test_niterparms(testref_base):
         #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
         self.checkfinal(report)
 
-    # Test 101
+    # Test 103
     def test_niterparms_threshold_3(self):
         """ [niterparms] test_niterparms_threshold_3 """
         ######################################################################################
-        # Deconvolve should execute 283 iterations for threshold=0.001, just like the first major-minor cycle of tclean(minspffraction=0.001).
+        # Deconvolve should execute 112 iterations for threshold=0.01, just like the first major-minor cycle of tclean(minspffraction=0.001).
         ######################################################################################
-        report = self.helper_deconvolve_check_iterdone('threshold', param_val=0.001, expected_iter=283)
-        #tclean('refim_twochan.ms', threshold=0.001, cyclefactor=0, minpsffraction=0,
+        report = self.helper_deconvolve_check_iterdone('threshold', param_val=0.01, expected_iter=112)
+        # tclean('refim_twochan.ms', threshold=0.01, cyclefactor=0, minpsffraction=0,
         #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
         self.checkfinal(report)
 
-    # Test 101
-    def test_niterparms_cyclethreshold_1(self):
-        """ [niterparms] test_niterparms_cyclethreshold_1 """
+    # Test 104
+    def test_niterparms_unset(self):
+        """ [niterparms] test_niterparms_unset """
         ######################################################################################
-        # Deconvolve should execute 21 iterations for threshold=0, just like the first major-minor cycle of tclean.
+        # Deconvolve should execute 300 iterations for threshold=0, just like the first major-minor cycle of tclean.
         ######################################################################################
-        report = self.helper_deconvolve_check_iterdone(expected_iter=21)
-        #tclean('refim_twochan.ms',
+        # Clark clean has it's own "major" cycles, up to 10. With a gain of 0.1, it will only
+        # do 283 iterations. Use a slightly higher gain to clean deeper early in the run so
+        # that clark can iterate over many cycles later in the run and reach our niter limit of
+        # 300.
+        report = self.helper_deconvolve_check_iterdone(expected_iter=300, extra_params={'gain':0.15})
+        # tclean('refim_twochan.ms', threshold=0, cyclefactor=0, minpsffraction=0, gain=0.15,
         #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
         self.checkfinal(report)
 
-    # Test 103
+    # Test 105
     def test_niterparms_nsigma_1(self):
         """ [niterparms] test_niterparms_nsigma_1 """
         ######################################################################################
@@ -2986,7 +2963,7 @@ class test_niterparms(testref_base):
         #       imagename=self.img, deconvolver='clark', niter=300, imsize=test_niterparms.imsize, cell='8.0arcsec', interactive=0)
         self.checkfinal(report)
 
-    # Test 104
+    # Test 106
     def test_niterparms_nsigma_2(self):
         """ [niterparms] test_niterparms_nsigma_2 """
         ######################################################################################
@@ -3017,7 +2994,7 @@ class test_minimages(testref_base):
         self.delData()
         type(self).staticCopyFromCache(copytbls=copytbls)
 
-    # Test 111
+    # Test 107
     def test_minimages_deconvolver_clark(self):
         """ [minimages] test_minimages_deconvolver_clark """
         ######################################################################################
@@ -3027,7 +3004,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, deconvolver="clark")#='hogbom',
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 112
+    # Test 108
     def test_minimages_deconvolver_multiscale(self):
         """ [minimages] test_minimages_deconvolver_multiscale """
         ######################################################################################
@@ -3037,7 +3014,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, deconvolver="multiscale", scales=[5,10,50])#='hogbom',
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 113
+    # Test 109
     def test_minimages_deconvolver_mtmfs(self):
         """ [minimages] test_minimages_deconvolver_mtmfs """
         ######################################################################################
@@ -3049,7 +3026,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, deconvolver="mtmfs", nterms=2)#='hogbom',
         report=th.checkall(imgexist=[self.img+'.image.tt0'], imgval=[(self.img+'.image.tt0',0.482,[50,49,0,0])] )
 
-    # Test 114
+    # Test 110
     def test_minimages_smallscalebias(self):
         """ [minimages] test_minimages_smallscalebias """
         ######################################################################################
@@ -3059,7 +3036,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, deconvolver="clark", smallscalebias=1.0)#=0.0
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 115
+    # Test 111
     def test_minimages_restoration(self):
         """ [minimages] test_minimages_restoration """
         ######################################################################################
@@ -3069,7 +3046,7 @@ class test_minimages(testref_base):
         self.misetup()
         deconvolve(imagename=self.img, niter=10, restoration=False)#=True,
 
-    # Test 116
+    # Test 112
     def test_minimages_restoringbeam(self):
         """ [minimages] test_minimages_restoringbeam """
         ######################################################################################
@@ -3079,7 +3056,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, restoringbeam='5.0arcsec')#=[],
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 117
+    # Test 113
     def test_minimages_niter(self):
         """ [minimages] test_minimages_niter """
         ######################################################################################
@@ -3089,7 +3066,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10)#=0, 
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 118
+    # Test 114
     def test_minimages_gain(self):
         """ [minimages] test_minimages_gain """
         ######################################################################################
@@ -3099,7 +3076,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, gain=0.5)#=0.1,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 119
+    # Test 115
     def test_minimages_threshold(self):
         """ [minimages] test_minimages_threshold """
         ######################################################################################
@@ -3109,7 +3086,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, threshold="1Jy")#=0.0, 
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 120
+    # Test 116
     def test_minimages_nsigma(self):
         """ [minimages] test_minimages_nsigma """
         ######################################################################################
@@ -3119,7 +3096,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, nsigma=1.5, threshold="1Jy")
         report=th.checkall(imgexist=[self.img+'.image'])
 
-    # Test 121
+    # Test 117
     def test_minimages_nsigma_nopb(self):
         """ [minimages] test_minimages_nsigma """
         ######################################################################################
@@ -3130,7 +3107,7 @@ class test_minimages(testref_base):
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, nsigma=1.5)#=0.0
 
-    # Test 122
+    # Test 118
     def test_minimages_nsigma_mtmfs(self):
         """ [minimages] test_minimages_nsigma """
         ######################################################################################
@@ -3142,7 +3119,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, deconvolver="mtmfs", nterms=2, nsigma=1.5)
         report=th.checkall(imgexist=[self.img+'.image.tt0'])
 
-    # Test 123
+    # Test 119
     def test_minimages_nsigma_nopb_mtmfs(self):
         """ [minimages] test_minimages_nsigma """
         ######################################################################################
@@ -3155,37 +3132,7 @@ class test_minimages(testref_base):
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, deconvolver="mtmfs", nterms=2, nsigma=1.5)#=0.0
 
-    # Test 124
-    def test_minimages_cyclefactor(self):
-        """ [minimages] test_minimages_cyclefactor """
-        ######################################################################################
-        # Test non-default value for cyclefactor with only the .residual and .psf present
-        ######################################################################################
-        self.misetup()
-        deconvolve(imagename=self.img, niter=10, cyclefactor=5.0)#=1.0,
-        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
-
-    # Test 125
-    def test_minimages_minpsffraction(self):
-        """ [minimages] test_minimages_minpsffraction """
-        ######################################################################################
-        # Test non-default value for minpsffraction with only the .residual and .psf present
-        ######################################################################################
-        self.misetup()
-        deconvolve(imagename=self.img, niter=10, minpsffraction=0.5)#=0.1,
-        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
-
-    # Test 126
-    def test_minimages_maxpsffraction(self):
-        """ [minimages] test_minimages_maxpsffraction """
-        ######################################################################################
-        # Test non-default value for maxpsffraction with only the .residual and .psf present
-        ######################################################################################
-        self.misetup()
-        deconvolve(imagename=self.img, niter=10, maxpsffraction=0.5)#=0.8,
-        report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
-
-    # Test 127
+    # Test 120
     def test_minimages_interactive(self):
         """ [minimages] test_minimages_interactive """
         ######################################################################################
@@ -3195,7 +3142,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, interactive=0)#=False,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 128
+    # Test 121
     def test_minimages_fastnoise(self):
         """ [minimages] test_minimages_fastnoise """
         ######################################################################################
@@ -3205,7 +3152,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, fastnoise=False)#=True,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 129
+    # Test 122
     def test_minimages_usemask(self):
         """ [minimages] test_minimages_usemask """
         ######################################################################################
@@ -3216,7 +3163,7 @@ class test_minimages(testref_base):
         with self.assertRaisesRegex(RuntimeError, strcheck):
             deconvolve(imagename=self.img, niter=10, usemask="pb", pbmask=0.2)#='user',
 
-    # Test 130
+    # Test 123
     def test_minimages_mask(self):
         """ [minimages] test_minimages_mask """
         ######################################################################################
@@ -3226,7 +3173,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, mask='circle[[40pix,40pix],10pix]')#='',
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 131
+    # Test 124
     def test_minimages_sidelobethreshold(self):
         """ [minimages] test_minimages_sidelobethreshold """
         ######################################################################################
@@ -3236,7 +3183,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", sidelobethreshold=10.0)#=5.0,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 132
+    # Test 125
     def test_minimages_noisethreshold(self):
         """ [minimages] test_minimages_noisethreshold """
         ######################################################################################
@@ -3246,7 +3193,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", noisethreshold=10.0)#=3.0,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 133
+    # Test 126
     def test_minimages_lownoisethreshold(self):
         """ [minimages] test_minimages_lownoisethreshold """
         ######################################################################################
@@ -3256,7 +3203,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", lownoisethreshold=10.0)#=3.0,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 134
+    # Test 127
     def test_minimages_negativethreshold(self):
         """ [minimages] test_minimages_negativethreshold """
         ######################################################################################
@@ -3266,7 +3213,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", negativethreshold=0.5)#=0.0,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 135
+    # Test 128
     def test_minimages_smoothfactor(self):
         """ [minimages] test_minimages_smoothfactor """
         ######################################################################################
@@ -3276,7 +3223,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", smoothfactor=0.5)#=1.0,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 136
+    # Test 129
     def test_minimages_minbeamfrac(self):
         """ [minimages] test_minimages_minbeamfrac """
         ######################################################################################
@@ -3286,7 +3233,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", minbeamfrac=0.5)#=0.3, 
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 137
+    # Test 130
     def test_minimages_cutthreshold(self):
         """ [minimages] test_minimages_cutthreshold """
         ######################################################################################
@@ -3296,7 +3243,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", cutthreshold=0.5)#=0.01,
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 138
+    # Test 131
     def test_minimages_growiterations(self):
         """ [minimages] test_minimages_growiterations """
         ######################################################################################
@@ -3306,7 +3253,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", growiterations=1)#=100
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 139
+    # Test 132
     def test_minimages_dogrowprune(self):
         """ [minimages] test_minimages_dogrowprune """
         ######################################################################################
@@ -3316,7 +3263,7 @@ class test_minimages(testref_base):
         deconvolve(imagename=self.img, niter=10, usemask="auto-multithresh", dogrowprune=False)#=True
         report=th.checkall(imgexist=[self.img+'.image'], imgval=[(self.img+'.image',0.482,[50,49,0,0])] )
 
-    # Test 140
+    # Test 133
     def test_minimages_verbose(self):
         """ [minimages] test_minimages_verbose """
         ######################################################################################
