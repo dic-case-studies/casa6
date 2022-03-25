@@ -1,7 +1,8 @@
-##########################################################################
+#########################################################################
+# test_task_importfits.py
 #
-# Copyright (C) 2019 ESO (in the framework of the ALMA collaboration)
-# Copyright (C) 2019 Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2018
+# Associated Universities, Inc. Washington DC, USA
 #
 # This script is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published by
@@ -13,18 +14,22 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
 # License for more details.
 #
+# [Add the link to the JIRA ticket here once it exists]
+#
+# Based on the requirements listed in plone found here:
+# https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.data.importfits.html
 #
 #
 ##########################################################################
+import os
+import shutil
+import unittest
+import numpy as np
 
 import casatools
 from casatasks import importfits, exportfits, imhead
 tb = casatools.table()
 ia = casatools.image()
-import os
-import shutil
-import unittest
-import numpy as np
 
 reg_unittest_datap = 'unittest/importfits/'
 datapath = casatools.ctsys.resolve(reg_unittest_datap)
@@ -173,11 +178,6 @@ class importfits_test(unittest.TestCase):
 
         # Check that all the nans are now 0s
         self.assertTrue(np.all(imdata == 0))
-
-
-def suite():
-    return [importfits_test]
-
 
 if __name__ == '__main__':
     unittest.main()
