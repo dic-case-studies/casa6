@@ -3820,11 +3820,24 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
 
         return 1.0 / np.var(mdata, axis=1)
 
-    def run_clipping_test(self):
+    def run_clipping_test(self, doapply=False):
+        bltable = self.infile + '_blparam.bltable'
+        if doapply:
+            self.params.update(blmode='fit',
+                               blformat='table', bloutput=bltable,
+                               dosubtract=False,
+                               updateweight=False)
+
         spec, flag = self._set_data_for_clipping()
         weight_ref = self._get_reference_weight(spec, flag)
 
         sdbaseline(**self.params)
+
+        if doapply:
+            self.params.update(blmode='apply', bltable=bltable,
+                               dosubtract=True,
+                               updateweight=True)
+            sdbaseline(**self.params)
 
         # value checking
         # the weight values in the output MS should be close to 1
@@ -3843,33 +3856,9 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
 
     def test061(self):
         """confirm if clipping result is used to compute weights in apply mode"""
-        # set artificial spectrum in input MS
-        spec, flag = self._set_data_for_clipping()
-        weight_ref = self._get_reference_weight(spec, flag)
-
-        # run sdbaseline fit mode and output bltable
-        bltable = self.infile + '_blparam.bltable'
-        self.params.update(blmode='fit', blfunc='poly', order=0,
-                           clipniter=5, clipthresh=3.0,
-                           blformat='table', bloutput=bltable,
-                           dosubtract=False,
-                           updateweight=False)
-        sdbaseline(**self.params)
-
-        # run sdbaseline apply mode and updateweight
-        self.params.update(blmode='apply', bltable=bltable,
-                           dosubtract=True,
-                           updateweight=True)
-        sdbaseline(**self.params)
-
-        # value checking
-        # the weight values in the output MS should be close to 1
-        # if the outlier channel is correctly eliminated by mask info from bltable.
-        # if clipping result is not taken into account when computing weights,
-        # the weight should be a very small value (~ 8 * 10^-13)
-        with table_manager(self.outfile) as tb:
-            self.assertTrue(np.allclose(tb.getcell('WEIGHT', 0), weight_ref),
-                            msg='weight value is wrong.')
+        self.params.update(clipniter=5, clipthresh=3.0,
+                           blmode='fit', blfunc='poly', order=0)
+        self.run_clipping_test(doapply=True)
 
 
 class sdbaseline_clippingTest(sdbaseline_unittest_base):
