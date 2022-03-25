@@ -3832,7 +3832,8 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         # if clipping result is not taken into account when computing weights,
         # the weight should be a very small value (~ 8 * 10^-13)
         with table_manager(self.outfile) as tb:
-            np.allclose(tb.getcell('WEIGHT', 0), weight_ref)
+            self.assertTrue(np.allclose(tb.getcell('WEIGHT', 0), weight_ref),
+                            msg='weight value is wrong.')
 
     def test060(self):
         """confirm if clipping result is used to compute weights in fit mode"""
@@ -3867,7 +3868,8 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         # if clipping result is not taken into account when computing weights,
         # the weight should be a very small value (~ 8 * 10^-13)
         with table_manager(self.outfile) as tb:
-            np.allclose(tb.getcell('WEIGHT', 0), weight_ref)
+            self.assertTrue(np.allclose(tb.getcell('WEIGHT', 0), weight_ref),
+                            msg='weight value is wrong.')
 
 
 class sdbaseline_clippingTest(sdbaseline_unittest_base):
