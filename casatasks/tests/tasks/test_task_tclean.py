@@ -255,6 +255,7 @@ class test_onefield(testref_base):
           self.assertTrue(self.check_final(pstr=report))
           
      ## Add tests for CAS-940 here, for asp using sim_data_VLA_jet.ms which contains 5 chans.
+     @unittest.skipIf(sys.platform == "darwin", "test_onefield_asp is disabled on macOS due to intermittent failures.")
      def test_onefield_asp(self):
           """ [onefield] Test_Onefield_asp : mfs with asp minor cycle """
           #import pdb
