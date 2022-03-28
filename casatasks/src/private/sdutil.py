@@ -114,11 +114,8 @@ def sdtask_decorator(func):
        2) handle exception
 
     So, you don't need to set origin in the task any more.
-    Also, you don't need to write anything about error
-    handling in the task. If you have something to do
-    at the end of the task execution, those should be
-    written in the destructor of worker class, not in
-    the 'finally' block.
+    Also, you don't need to write anything about error handling in the task. If you have something to do at the end of
+    the task execution, those should be written in finally block in the task class.
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -141,16 +138,62 @@ def sdtask_decorator(func):
     return wrapper
 
 
+def callable_sdtask_decorator(func):
+    """
+    This is a decorator function for sd tasks.
+    Currently the decorator does:
+
+       1) if it get the parameter '__log_origin', read it and set origin to the logger.
+        otherwise it reads the function name and set origin to the logger.
+       2) handle exception
+
+    So, you don't need to set origin in the task any more.
+    Also, you don't need to write anything about error handling in the task. If you have something to do at the end of
+    the task execution, those should be written in finally block in the task class.
+
+    Usage:
+
+    @callable_sdtask_decorator
+    def sometask(..)
+        pass
+
+    def othertask(..)
+        kwargs['__log_origin'] = 'othertask'
+        sometask(*args, **kwargs)  # logged "othertask::..."
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        caller = kwargs.pop('__log_origin', func.__name__)
+        casalog.origin(caller)
+
+        retval = None
+        # Any errors are handled outside the task.
+        # however, the implementation below is effectively
+        # equivalent to handling it inside the task.
+        try:
+            # execute task
+            retval = func(*args, **kwargs)
+        except Exception as e:
+            traceback_info = __format_trace(traceback.format_exc())
+            casalog.post(traceback_info, 'SEVERE')
+            casalog.post(str(e), 'ERROR')
+            raise
+        if caller != func.__name__:
+            kwargs['__log_origin'] = caller
+        return retval
+    return wrapper
+
+
 def __format_trace(s):
     wexists = True
-    regex = '.*sdutil\.py.*in wrapper.*'
+    regex = r'.*sdutil\.py.*in wrapper.*'
     retval = s
     while wexists:
         ss = retval.split('\n')
         wexists = False
         for i in range(len(ss)):
             if re.match(regex, ss[i]):
-                ss = ss[:i] + ss[i+2:]
+                ss = ss[:i] + ss[i + 2:]
                 wexists = True
                 break
         retval = '\n'.join(ss)

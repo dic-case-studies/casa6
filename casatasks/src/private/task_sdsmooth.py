@@ -21,7 +21,7 @@ else:
     ms, sdms, tb = gentools(['ms', 'sdms', 'tb'])
 
 
-@sdutil.sdtask_decorator
+@sdutil.callable_sdtask_decorator
 def sdsmooth(infile=None, datacolumn=None, antenna=None,
              field=None, spw=None, timerange=None, scan=None,
              pol=None, intent=None, reindex=None,
