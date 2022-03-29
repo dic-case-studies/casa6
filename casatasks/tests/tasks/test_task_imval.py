@@ -189,6 +189,8 @@ class imval_test(unittest.TestCase):
             shutil.rmtree('mypv.im')
         if os.path.exists('xxyy.im'):
             shutil.rmtree('xxyy.im')
+        if os.path.exists('garbage.rgn'):
+            os.remove('garbage.rgn')
 
     def test_inputNoInputImage(self):
         '''Test when no image is provided'''
@@ -402,7 +404,7 @@ class imval_test(unittest.TestCase):
     def test_inputRegionFile(self):
         '''Test when given a bad region file'''
         # First make sure the region file does not exist.
-        garbage_rgn_file = os.getcwd() + '/garbage.rgn'
+        garbage_rgn_file = 'garbage.rgn'
         if (os.path.exists(garbage_rgn_file)):
             os.remove(garbage_rgn_file)
 
@@ -423,7 +425,7 @@ class imval_test(unittest.TestCase):
         info('Performing input/output tests on imagename, errors WILL occur.')
         results = None
         try:
-            rgn_file = os.getcwd() + 'garbage.rgn'
+            rgn_file = 'garbage.rgn'
             fp = open(rgn_file, 'w')
             fp.writelines('This file does NOT contain a valid CASA region specification\n')
             fp.close()
