@@ -1031,12 +1031,13 @@ if __name__ == "__main__":
                 component = c.strip()
                 for myDict in component_to_test_map["testlist"]:
                     #print(component, myDict["testGroup"])
-                    if component in myDict["testGroup"]:
+                    if component in myDict["testGroup"] or component in myDict["testType"]:
                         _isComponent = True
                         if myDict["testScript"] not in testnames: testnames.append(myDict["testScript"])
                 if not _isComponent:
                     print("No Tests for Component: {}".format(component))
                     no_test_components.append(component)
+
             if (len(no_test_components) > 0) and (len(testnames)==0):
                 print("No Test Suite for Component(s): {} Using Component 'default'".format(no_test_components))
                 component = 'default'
@@ -1086,7 +1087,14 @@ if __name__ == "__main__":
             raise ValueError('unrecognized argument: %s'%(arg))
             sys.exit()
         else:
-            tests = [x.strip() for x in arg.split(",")]
+            if '[' in arg:
+                tests = [x.strip() for x in arg.split("],")]
+                for i in range(len(tests)):
+                    test = tests[i]
+                    if '[' in test and not test.endswith("]"):
+                        tests[i] = tests[i] + "]"
+            else:
+                tests = [x.strip() for x in arg.split(",")]
             for test in tests:
                 try:
                     testcases = None
@@ -1175,6 +1183,7 @@ if __name__ == "__main__":
                 print("List of tests is empty")
                 parser.print_help(sys.stderr)
                 sys.exit(1)
+            #print(testnames)
             run(testnames, args.branch, DRY_RUN)
     except:
         traceback.print_exc()
