@@ -411,6 +411,16 @@
             "comment":""
         },
         {
+            "testScript":"test_task_imbaseline",
+            "testType":"casatasks",
+            "maintainer":"Kazuhiko Shimada",
+            "maintainerEmail":"kazuhiko.shimada@nao.ac.jp",
+            "testOptions":[],
+            "testGroup":["Single Dish", "Image Analysis", "imbaseline"],
+            "timeout":3600,
+            "comment":""
+        },
+        {
             "testScript":"test_task_imcollapse",
             "testType":"casatasks",
             "maintainer":"David Mehringer",
