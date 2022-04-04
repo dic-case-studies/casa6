@@ -1082,6 +1082,7 @@ if __name__ == "__main__":
     if args.test_paths is not None:
         test_paths = [x.strip() for x in args.test_paths.split(',')]
 
+    temp_storage = []
     for arg in unknownArgs:
         if arg.startswith(("-", "--")):
             raise ValueError('unrecognized argument: %s'%(arg))
@@ -1093,6 +1094,14 @@ if __name__ == "__main__":
                     test = tests[i]
                     if '[' in test and not test.endswith("]"):
                         tests[i] = tests[i] + "]"
+                for i in range(len(tests)):
+                    test = tests[i]
+                    #print(tests)
+                    if test.find(",") < test.find('['):
+                        temp_storage = temp_storage + test.split(',',1)
+                    else:
+                        temp_storage.append(test)
+                tests = temp_storage
             else:
                 tests = [x.strip() for x in arg.split(",")]
             for test in tests:
@@ -1184,6 +1193,7 @@ if __name__ == "__main__":
                 parser.print_help(sys.stderr)
                 sys.exit(1)
             #print(testnames)
+            #sys.exit()
             run(testnames, args.branch, DRY_RUN)
     except:
         traceback.print_exc()
