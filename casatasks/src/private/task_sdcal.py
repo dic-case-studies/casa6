@@ -3,30 +3,20 @@ import shutil
 
 import numpy
 import numpy.random as random
-# get is_CASA6 and is_python3
-from casatasks.private.casa_transition import *
 
-if is_CASA6:
-    from casatasks import casalog
-    from casatools import calibrater, ms, table
+from casatasks import casalog
+from casatools import calibrater, ms, table
 
-    from . import sdutil
-    from .mstools import write_history
+from . import sdutil
+from .mstools import write_history
 
-    # Table tool
-    tb = table()
-    # Calibrator tool
-    cb = calibrater()
-    # MS tool
-    myms = ms()
-else:
-    import sdutil
-    from applycal import applycal
-    from mstools import write_history
-    from taskinit import *
+# Table tool
+tb = table()
+# Calibrator tool
+cb = calibrater()
+# MS tool
+myms = ms()
 
-    # Calibrator tool
-    (cb,myms) = gentools(['cb','ms'])
 
 @sdutil.sdtask_decorator
 def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
@@ -135,14 +125,11 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
             
             # Write to HISTORY table of MS
             param_names = sdcal.__code__.co_varnames[:sdcal.__code__.co_argcount]
-            if is_python3:
-                vars = locals()
-                param_vals = [vars[p] for p in param_names]
-            else:
-                param_vals = [eval(p) for p in param_names]
-                
-            write_history(myms, infile, 'sdcal', param_names, 
-                              param_vals, casalog) 
+            vars = locals()
+            param_vals = [vars[p] for p in param_names]
+
+            write_history(myms, infile, 'sdcal', param_names,
+                              param_vals, casalog)
 
         else: # Compute calibration table
             # Reconciliating 'Python world' calmode with 'C++ world' calmode

@@ -7,15 +7,9 @@ import scipy.signal
 import scipy.interpolate
 from scipy import optimize
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import quanta
-    from casatasks import casalog
-else:
-    from taskinit import casalog, qatool
+from casatools import quanta
+from casatasks import casalog
 
-    quanta = qatool
-    
 
 ##################################################
 ### Prediction of theoretical beam size

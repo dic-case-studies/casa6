@@ -4,24 +4,12 @@ import re
 import shutil
 
 import numpy
-from casatasks.private.casa_transition import is_CASA6
 
-if is_CASA6:
-    from casatasks import casalog
-    from casatools import image, ms, msmetadata, quanta, table
+from casatasks import casalog
+from casatools import image, ms, msmetadata, quanta, table
 
-    from . import sdbeamutil, sdutil
-    from .cleanhelper import cleanhelper
-else:
-    import sdbeamutil
-    import sdutil
-    from cleanhelper import cleanhelper
-    from taskinit import casalog
-    from taskinit import iatool as image
-    from taskinit import msmdtool as msmetadata
-    from taskinit import mstool as ms
-    from taskinit import qatool as quanta
-    from taskinit import tbtool as table
+from . import sdbeamutil, sdutil
+from .cleanhelper import cleanhelper
 
 
 @sdutil.sdtask_decorator

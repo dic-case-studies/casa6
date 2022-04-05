@@ -2,17 +2,11 @@ import inspect
 from types import CodeType
 
 import numpy
-from casatasks.private.casa_transition import is_CASA6
 
-if is_CASA6:
-    from casatasks import casalog
-    from casatools import quanta
+from casatasks import casalog
+from casatools import quanta
 
-    from . import sdutil
-else:
-    import sdutil
-    from taskinit import casalog
-    from taskinit import qatool as quanta
+from . import sdutil
 
 qa = quanta()
 

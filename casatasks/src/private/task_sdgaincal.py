@@ -1,14 +1,9 @@
 import os
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import casalog
-    from . import sdutil
-    from .sdutil import calibrater_manager
-else:
-    from taskinit import casalog
-    from . import sdutil
-    from sdutil import cbmanager as calibrater_manager
+from casatasks import casalog
+from . import sdutil
+from .sdutil import calibrater_manager
+
 
 DEFAULT_VALUE = {'interp': 'linear',
                  'spwmap': [-1]}

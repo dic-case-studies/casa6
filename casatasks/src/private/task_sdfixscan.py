@@ -4,23 +4,14 @@ import time
 
 import numpy
 import numpy.fft as npfft
-from casatasks.private.casa_transition import is_CASA6
 
-if is_CASA6:
-    from casatasks import casalog
-    from casatools import ctsys
-    from casatools import image as iatool
-    from casatools import quanta
+from casatasks import casalog
+from casatools import ctsys
+from casatools import image as iatool
+from casatools import quanta
 
-    from . import sdutil
-    _removetable = ctsys.removetable
-else:
-    import sdutil
-    from taskinit import casalog, iatool
-    from taskinit import qatool as quanta
-    from taskinit import utilstool
-    cu = utilstool()
-    _removetable = cu.removetable
+from . import sdutil
+
 
 def create_4d_image(infile, outfile):
     ia = iatool()
@@ -226,7 +217,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         #polyimage.done()
         if os.path.exists( self.tmppolyname ):
             # CAS-5410 Use private tools inside task scripts
-            _removetable([self.tmppolyname])
+            ctsys.removetable([self.tmppolyname])
         self.convimage.setbrightnessunit('K')
         # Unfortunately, ia.fitprofile is very fragile.
         # Using numpy instead for fitting with masked pixels (KS, 2014/07/02)
@@ -260,7 +251,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
             raise RuntimeError("No image found to fit.")
         if os.path.exists( model ):
             # CAS-5410 Use private tools inside task scripts
-            _removetable([model])
+            ctsys.removetable([model])
         tmpia = iatool()
         modelimg = tmpia.newimagefromimage(infile=image,outfile=model)
         try:
@@ -605,4 +596,4 @@ class sdfixscan_worker(sdutil.sdtask_interface):
                         existing_files.append(f)
         # CAS-5410 Use private tools inside task scripts
         if len(existing_files) > 0:
-            _removetable(existing_files)
+            ctsys.removetable(existing_files)

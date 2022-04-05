@@ -8,46 +8,22 @@ from types import CodeType
 
 import numpy
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import casalog
-    from casatools import calibrater, imager, measures
-    from casatools import ms as mstool
-    from casatools import mstransformer, table
-    from casatools.platform import bytes2str
+from casatasks import casalog
+from casatools import calibrater, imager, measures
+from casatools import ms as mstool
+from casatools import mstransformer, table
+from casatools.platform import bytes2str
 
-    from . import flaghelper as fh
-    from .mstools import write_history
-    from .parallel.parallel_data_helper import ParallelDataHelper
-    from .update_spw import update_spwchan
-else:
-    import flaghelper as fh
-    from mstools import write_history
-    from parallel.parallel_data_helper import ParallelDataHelper
-    from taskinit import casalog
-    from taskinit import cbtool as calibrater
-    from taskinit import gentools
-    from taskinit import imtool as imager
-    from taskinit import mstool
-    # make CASA5 tools constructors look like CASA6 tools
-    from taskinit import tbtool as table
-    from update_spw import update_spwchan
+from . import flaghelper as fh
+from .mstools import write_history
+from .parallel.parallel_data_helper import ParallelDataHelper
+from .update_spw import update_spwchan
 
 @contextlib.contextmanager
 def tool_manager(vis, ctor, *args, **kwargs):
-    if is_CASA6:
-        # this is the only syntax allowed in CASA6, code in CASA6 should be converted to
-        # call this method with a tool constructor directly
-        tool = ctor()
-    else:
-        # CASA5 code can invoke this with a tool name, shared CASA5 and CASA6 source
-        # uses the CASA6 syntax - use callable to tell the difference
-        if callable(ctor):
-            tool = ctor()
-        else:
-            # assume the argument is string and use it to get the appropriate tool constructor
-            # the original argument name here was 'tooltype'
-            tool = gentools([ctor])[0]
+    # this is the only syntax allowed in CASA6, code in CASA6 should be converted to
+    # call this method with a tool constructor directly
+    tool = ctor()
     if vis and "open" in dir(tool):
         tool.open(vis, *args, **kwargs)
     try:
@@ -82,10 +58,7 @@ def mstool_manager(vis, *args, **kwargs):
 def is_ms(filename):
     if (os.path.isdir(filename) and os.path.exists(filename+'/table.info') and os.path.exists(filename+'/table.dat')):
         f = open(filename + '/table.info')
-        if is_CASA6:
-            l = bytes2str(f.readline())
-        else:
-            l = f.readline()
+        l = bytes2str(f.readline())
         f.close()
         if (l.find('Measurement Set') != -1):
             return True

@@ -4,15 +4,10 @@ import os
 import shutil
 from types import CodeType
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatasks import casalog
-    from casatools import quanta
-    from . import sdutil
-else:
-    from taskinit import casalog
-    from taskinit import qatool as quanta
-    from . import sdutil
+from casatasks import casalog
+from casatools import quanta
+from . import sdutil
+
 
 """
 The following code is based on the mstransform code, with

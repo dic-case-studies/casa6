@@ -5,44 +5,24 @@ import os
 import shutil
 
 import numpy as np
-from casatasks.private.casa_transition import is_CASA6
 
-if is_CASA6:
-    from casatasks import casalog
-    from casatasks.private import sdutil, simutil
-    from casatools import ms as mstool
-    from casatools import msmetadata, quanta, singledishms
+from casatasks import casalog
+from casatasks.private import sdutil, simutil
+from casatools import ms as mstool
+from casatools import msmetadata, quanta, singledishms
 
-    ut = simutil.simutil()
-    qa = quanta()
-    sdms = singledishms()
+ut = simutil.simutil()
+qa = quanta()
+sdms = singledishms()
 
-    class ATMParameterConfigurator(collections.abc.Iterator):
-        def __init__(self, key, value, do_config=True):
-            data = [(key, value)] if do_config else []
-            self._iter = iter(data)
 
-        def __next__(self):
-            return next(self._iter)
+class ATMParameterConfigurator(collections.abc.Iterator):
+    def __init__(self, key, value, do_config=True):
+        data = [(key, value)] if do_config else []
+        self._iter = iter(data)
 
-else:
-    import sdutil
-    from simutil import simutil
-    from taskinit import casalog, gentools
-    from taskinit import msmdtool as msmetadata
-    from taskinit import mstool, qa
-    from taskinit import tbtool as table
-
-    ut = simutil()
-    (sdms,) = gentools(['sdms'])
-
-    class ATMParameterConfigurator(collections.Iterator):
-        def __init__(self, key, value, do_config=True):
-            data = [(key, value)] if do_config else []
-            self._iter = iter(data)
-
-        def next(self):
-            return next(self._iter)
+    def __next__(self):
+        return next(self._iter)
 
 
 @contextlib.contextmanager

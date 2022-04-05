@@ -11,10 +11,8 @@ import uuid
 import numpy as np
 
 from casatasks.private import jyperk
-from casatasks.private.casa_transition import is_CASA6
 
-if is_CASA6:
-    from casatools import ctsys
+from casatools import ctsys
 
 
 class TestASDMParamsGenerator(unittest.TestCase):
