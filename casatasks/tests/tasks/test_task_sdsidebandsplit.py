@@ -21,18 +21,18 @@
 #
 #
 ##########################################################################
+import copy
 import os
 import shutil
-import copy
+import unittest
 from collections import namedtuple
+
 import numpy
 from scipy.optimize import curve_fit
-import unittest
 
 from casatasks import sdsidebandsplit
-from casatools import quanta
-from casatools import image
-from casatools import ctsys
+from casatools import ctsys, image, quanta
+
 datapath = ctsys.resolve('unittest/sdsidebandsplit/')
 
 # stack_frame_find

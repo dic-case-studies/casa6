@@ -21,22 +21,22 @@
 #
 #
 ##########################################################################
+import copy
 import glob
+import math
 import os
-import sys
 import shutil
 import unittest
+
 import numpy
-import math
-import copy
 
-from casatools import ctsys, image, regionmanager, measures, msmetadata, table, quanta
-from casatools import ms as mstool
-from casatasks import sdimaging, flagdata
-from casatasks.private.sdutil import table_manager, tool_manager, table_selector
-
+from casatasks import flagdata, sdimaging
+from casatasks.private.sdutil import table_manager, tool_manager
 from casatestutils import selection_syntax
 from casatestutils.testhelper import TableCacheValidator
+from casatools import ctsys, image, measures
+from casatools import ms as mstool
+from casatools import msmetadata, quanta, regionmanager, table
 
 ctsys_resolve = ctsys.resolve
 

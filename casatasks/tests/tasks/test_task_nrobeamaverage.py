@@ -18,16 +18,14 @@
 # https://casadocs.readthedocs.io/en/stable/api/tt/casatasks.single.nrobeamaverage.html
 #
 ##########################################################################
-import unittest
-import os
 import math
-import sys
+import os
+import unittest
 
 from casatasks import nrobeamaverage
-from casatools import ms
-from casatools import table
 from casatasks.private.sdutil import table_manager
 from casatools import ctsys
+
 datapath=ctsys.resolve('unittest/nrobeamaverage/')
 
 def check_eq(val, expval, tol=None):

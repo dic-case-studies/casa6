@@ -1,14 +1,14 @@
 from __future__ import absolute_import
 
 import numpy as np
-from numpy import sqrt, cos, sin
-import scipy.special as spspec
-import scipy.signal
 import scipy.interpolate
+import scipy.signal
+import scipy.special as spspec
+from numpy import cos, sin, sqrt
 from scipy import optimize
 
-from casatools import quanta
 from casatasks import casalog
+from casatools import quanta
 
 
 ##################################################
@@ -797,4 +797,3 @@ def centralObstructionFactor(diameter=12.0, obscuration=0.75):
     else:
         # casapy 4.1 and earlier
         return(factor[0])
-

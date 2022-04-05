@@ -22,15 +22,16 @@
 #
 ##########################################################################
 import datetime
+import os
 import re
 import unittest
-import os
+
 import numpy
-import sys
 
 from casatasks import sdtimeaverage
 from casatasks.private.sdutil import table_manager
 from casatools import ctsys
+
 datapath = ctsys.resolve('unittest/sdtimeaverage/')
 
 """

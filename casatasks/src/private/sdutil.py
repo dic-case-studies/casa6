@@ -19,6 +19,7 @@ from .mstools import write_history
 from .parallel.parallel_data_helper import ParallelDataHelper
 from .update_spw import update_spwchan
 
+
 @contextlib.contextmanager
 def tool_manager(vis, ctor, *args, **kwargs):
     # this is the only syntax allowed in CASA6, code in CASA6 should be converted to

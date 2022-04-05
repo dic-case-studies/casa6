@@ -22,18 +22,16 @@
 #
 ##########################################################################
 import os
-import sys
 import shutil
-import re
-import numpy
-import math
 import unittest
 
-from casatools import ctsys
-from casatools import table as tbtool
-from casatools import ms as mstool
-from casatasks import sdgaincal, mstransform, sdcal
+import numpy
+
+from casatasks import mstransform, sdcal, sdgaincal
 from casatasks.private.sdutil import table_manager
+from casatools import ctsys
+from casatools import ms as mstool
+from casatools import table as tbtool
 
 # this distinction doesn't exist in casatasks
 mstransform_cli = mstransform
@@ -46,7 +44,7 @@ class sdgaincal_test_base(unittest.TestCase):
     This class defines attributes and methods common to test cases
     """
     datapath=ctsys.resolve('unittest/sdgaincal/')
-    
+
     def __copy_from_datapath(self, filename):
         if os.path.exists(filename):
             shutil.rmtree(filename)

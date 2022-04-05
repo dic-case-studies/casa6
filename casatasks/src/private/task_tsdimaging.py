@@ -18,7 +18,6 @@ from .cleanhelper import cleanhelper
 from .imagerhelpers.imager_base import PySynthesisImager
 from .imagerhelpers.input_parameters import ImagerParameters
 
-
 image_suffix = '.image'
 residual_suffix = '.residual'
 weight_suffix = '.weight'

@@ -21,18 +21,18 @@
 #
 #
 ##########################################################################
-import os
-import sys
-import shutil
-import re
-import numpy
 import contextlib
+import os
+import re
+import shutil
 import unittest
-from casatestutils import listing
 
-from casatools import ctsys, table, ms, measures
-from casatasks import casalog, sdcal, partition, initweights
+import numpy
+
+from casatasks import casalog, initweights, partition, sdcal
 from casatasks.private.sdutil import table_manager, table_selector
+from casatestutils import listing
+from casatools import ctsys, measures, ms, table
 
 tb = table()
 
@@ -1441,7 +1441,7 @@ class sdcal_test_otf_ephem(unittest.TestCase):
     test_otfephem01 | otf_ephem.ms     | 10%      | otf
     test_otfephem02 | otf_ephem.ms     | 10%      | otf,apply
     """
-    
+
     datapath=ctsys_resolve('unittest/sdcal/')
     infile = 'otf_ephem.ms'
     outfile = infile + '.otfcal'

@@ -1,9 +1,9 @@
 import os
 
 from casatasks import casalog
+
 from . import sdutil
 from .sdutil import calibrater_manager
-
 
 DEFAULT_VALUE = {'interp': 'linear',
                  'spwmap': [-1]}
@@ -123,5 +123,3 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
 
         # solve
         mycb.solve()
-
-

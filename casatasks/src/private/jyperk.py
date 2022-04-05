@@ -3,9 +3,9 @@ import csv
 import json
 import os
 import re
-from socket import timeout as socket_timeout
 import ssl
 import string
+from socket import timeout as socket_timeout
 from time import sleep
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -15,7 +15,8 @@ import certifi
 import numpy as np
 
 from casatasks import casalog
-from casatasks.private.sdutil import table_selector, table_manager, tool_manager
+from casatasks.private.sdutil import (table_manager, table_selector,
+                                      tool_manager)
 from casatools import measures
 from casatools import ms as mstool
 from casatools import msmetadata, quanta

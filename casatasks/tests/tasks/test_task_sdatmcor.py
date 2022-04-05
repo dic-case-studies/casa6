@@ -23,20 +23,19 @@
 ##########################################################################
 import itertools
 import os
-import numpy as np
 import shutil
-import sys
 import unittest
 
-from casatasks import sdatmcor
-import casatasks.private.task_sdatmcor as sdatmcor_impl
-from casatasks.private.sdutil import convert_antenna_spec_autocorr, get_antenna_selection_include_autocorr, table_manager
+import numpy as np
 
-from casatools import ctsys
-from casatools import calibrater
+import casatasks.private.task_sdatmcor as sdatmcor_impl
+from casatasks import applycal, gencal, sdatmcor
+from casatasks.private.sdutil import (convert_antenna_spec_autocorr,
+                                      get_antenna_selection_include_autocorr,
+                                      table_manager)
+from casatools import calibrater, ctsys
 from casatools import ms as mstool
 from casatools import quanta
-from casatasks import gencal, applycal
 
 ctsys_resolve = ctsys.resolve
 

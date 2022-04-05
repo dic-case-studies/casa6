@@ -1,17 +1,16 @@
-from copy import deepcopy
 import json
 import math
 import os
 import shutil
 import unittest
-from unittest.mock import patch, MagicMock
-from urllib.error import HTTPError, URLError
 import uuid
+from copy import deepcopy
+from unittest.mock import MagicMock, patch
+from urllib.error import HTTPError, URLError
 
 import numpy as np
 
 from casatasks.private import jyperk
-
 from casatools import ctsys
 
 

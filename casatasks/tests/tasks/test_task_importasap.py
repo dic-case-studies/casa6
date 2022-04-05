@@ -19,17 +19,17 @@
 #
 ##########################################################################
 import os
-import sys
-import shutil
 import re
+import shutil
 import unittest
+
 import numpy
 
-from casatools import ctsys, ms, table, agentflagger
 from casatasks import importasap
+from casatools import agentflagger, ctsys, ms, table
 
-myms = ms( )
-_tb = table( )
+myms = ms()
+_tb = table()
 
 datapath=ctsys.resolve('unittest/importasap/')
 
@@ -61,13 +61,13 @@ class importasap_test(unittest.TestCase):
         shutil.copytree(self.infile, self.outfile)
         with self.assertRaisesRegexp(RuntimeError, '.* exists\.$') as cm:
             importasap(infile=self.infile, outputvis=self.outfile, overwrite=False)
-    
+
     def test_invaliddata(self):
         """test_invaliddata: Invalid data check"""
         os.remove(os.path.join(self.infile, 'table.info'))
         with self.assertRaisesRegexp(RuntimeError, '.* is not a valid Scantable\.$') as cm:
             importasap(infile=self.infile, outputvis=self.outfile, overwrite=False)
-    
+
     def test_normal(self):
         """test_normal: Normal data import"""
         ret = importasap(infile=self.infile, outputvis=self.outfile,
@@ -77,17 +77,17 @@ class importasap_test(unittest.TestCase):
             # to check if outfile is valid MS
             myms.open(self.outfile)
             myms.close()
-            
+
         except Exception as e:
             print(e)
             self.fail('outputvis is not a valid ms')
-        
+
         # check weight initialization
         self._check_weights(self.outfile)
 
         # check flagversions
         self._check_flagversions(self.outfile)
-        
+
         # check pressure unit and its value
         self._check_atm_pressure(self.outfile)
 
@@ -124,7 +124,7 @@ class importasap_test(unittest.TestCase):
     def test_noflagversions(self):
         """test_noflagversions -- Do not create flagversions file"""
         flagversions = self._flagversions(self.infile)
-        
+
         # create flagversions file
         ret = importasap(infile=self.infile, outputvis=self.outfile,
                          flagbackup=True, overwrite=True)
@@ -137,7 +137,7 @@ class importasap_test(unittest.TestCase):
                          flagbackup=False, overwrite=True)
         self.assertTrue(os.path.exists(self.outfile))
         self.assertFalse(os.path.exists(flagversions))
-    
+
     def _check_weights(self, vis):
         take_diff = lambda actual, expected: numpy.abs((actual - expected) / expected)
         tolerance = 1.0e-7
@@ -145,13 +145,13 @@ class importasap_test(unittest.TestCase):
             _tb.open(os.path.join(vis, 'DATA_DESCRIPTION'))
             spwids = _tb.getcol('SPECTRAL_WINDOW_ID')
             _tb.close()
-            
+
             _tb.open(os.path.join(vis, 'SPECTRAL_WINDOW'))
             nrow = _tb.nrows()
             g = (numpy.mean(_tb.getcell('EFFECTIVE_BW', irow)) for irow in range(nrow))
             effbws = numpy.fromiter(g, dtype=float)
             _tb.close()
-            
+
             _tb.open(vis)
             nrow = _tb.nrows()
             for irow in range(nrow):
@@ -183,7 +183,7 @@ class importasap_test(unittest.TestCase):
         flag_row_org = _tb.getcol('FLAG_ROW')
         flag_org = _tb.getvarcol('FLAG')
         _tb.close()
-        
+
         # flag version named 'Original' should be created
         # its content should match with current flag status
         version_name = 'Original'
@@ -212,21 +212,21 @@ class importasap_test(unittest.TestCase):
 
     def _flagversions(self, vis):
         return vis.rstrip('/') + '.flagversions'
-    
+
     def _check_atm_pressure(self, vis):
         weather_table = os.path.join(vis, 'WEATHER')
         _tb.open(weather_table)
         try:
             # PRESSURE column should exist
             self.assertTrue('PRESSURE' in _tb.colnames())
-            
+
             # unit should be hPa
             colkeys = _tb.getcolkeywords('PRESSURE')
             self.assertTrue('QuantumUnits' in colkeys)
             pressure_unit = colkeys['QuantumUnits'][0]
             print('Pressure unit is {0}'.format(pressure_unit))
             self.assertEqual(pressure_unit, 'hPa')
-            
+
             # value should be in reasonable range
             pressure_min = 400.0
             pressure_max = 1100.0

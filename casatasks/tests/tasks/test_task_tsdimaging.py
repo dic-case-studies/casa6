@@ -22,33 +22,29 @@
 #
 ##########################################################################
 
-import glob
 import copy
-import os
-import sys
-import shutil
-import unittest
-import numpy
+import glob
 import math
+import os
+import shutil
 import stat
-
-from casatools import ctsys, image, regionmanager, measures, msmetadata, table, quanta
-from casatools import ms as mstool
-from casatasks import casalog
-from casatasks import flagdata
-from casatasks import tsdimaging as sdimaging
-from casatasks import split as split_ms
-from casatasks.private.sdutil import tool_manager, table_manager, table_selector, is_ms
+import unittest
 from enum import Enum
 
-from casatestutils import selection_syntax
+import numpy
+
+from casatasks import casalog, flagdata
+from casatasks import split as split_ms
+from casatasks import tsdimaging as sdimaging
+from casatasks.private.sdutil import is_ms, table_manager, tool_manager
+from casatasks.private.task_tsdimaging import image_suffix, weight_suffix
+from casatestutils import restfreqtool, selection_syntax
 from casatestutils.testhelper import TableCacheValidator
+from casatools import ctsys, image, measures
+from casatools import ms as mstool
+from casatools import msmetadata, quanta, regionmanager, table
 
 ctsys_resolve = ctsys.resolve
-
-from casatasks.private.task_tsdimaging import image_suffix, weight_suffix
-
-from casatestutils import restfreqtool
 
 _ia = image()
 _rg = regionmanager()
@@ -126,7 +122,7 @@ def remove_table(filename):
 
 class FileManager:
     """Helper class for copying datasets from casatestdata repository directory.
-    
+
     Motivation: avoid copying multiple times a dataset shared by multiple tests
     Caveat: tsdimaging requires write access to MS MAIN table
     Assumption: all tests are run in the same working directory.
@@ -164,7 +160,7 @@ class FileManager:
 
         if is_invalid:
             raise ValueError(f'File: {name} not found in repository: {self.repo_dir}')
-    
+
     def assert_workdir_did_not_changed(self):
         cwd = os.getcwd()
         if cwd != self.local_dir:
@@ -184,7 +180,7 @@ class FileManager:
             shutil.rmtree(file_basename)
         else:
             os.remove(file_basename)
-    
+
     def delete_cache(self):
         self.assert_workdir_did_not_changed()
         for f in self._files:
@@ -201,7 +197,7 @@ class FileManager:
     @classmethod
     def write_protect(cls,path):
         """Write protect MS to be sdimaged, as far as we can.
-        
+
         When path is a directory it is more or less assumed to be an MS.
         Sadly, we can not sdimage an MS having a write-protected MAIN table.
         """
@@ -242,10 +238,10 @@ class FileManager:
             cur_mode = stat.S_IMODE(os.stat(path).st_mode)
             new_mode = cls.remove_permissions(cur_mode,flags)
             os.chmod(path,new_mode)
-        
+
     def smart_copy(self,file_basename):
         """Copy a dataset from casatestdata only when strictly required"""
-        
+
         self.assert_workdir_did_not_changed()
         self.assert_is_valid(file_basename)
         log_origin = 'smart_copy'
@@ -257,7 +253,7 @@ class FileManager:
         if os.path.exists(dst):
             # We have a local copy and ...
             if not file_basename in self._files:
-                # it's not our's 
+                # it's not our's
                 must_delete = True
                 must_copy = True
             else:
@@ -286,7 +282,7 @@ class FileManager:
 
         if not must_delete and not must_copy:
             self._log(f'Already have: {file_basename}. Skipping copy of: {src}',origin=log_origin)
-        
+
 class sdimaging_standard_paramset(object):
     rawfile='sdimaging.ms'
     phasecenter='J2000 17:18:29 +59.31.23'
@@ -1454,20 +1450,20 @@ class TimeSelectionPattern(Enum):
 
 class TestTimeRangeHelper:
     """Provides parameters and compute expected results for test_timerange* tests"""
-    
+
     _default_params = {
         'infiles': ['uid___A002_Xae00c5_X2e6b.ms.cal.split.shrink.ms'],
         'outfile': 'selection_time.ms.sdimaging',
         'overwrite': True,
         'nchan': 1,
-        'cell': ['9.0arcsec','9.0arcsec'], 
+        'cell': ['9.0arcsec','9.0arcsec'],
         'imsize': [250,250],
-        'gridfunction': 'SF', 
-        'convsupport': 6, 
-        'stokes': 'I', 
+        'gridfunction': 'SF',
+        'convsupport': 6,
+        'stokes': 'I',
         'phasecenter': 'ICRS 17:43:50 -023.15.00'
-    } 
-    
+    }
+
     @classmethod
     def params(cls,time_pattern):
         params = copy.deepcopy(cls._default_params)
@@ -1489,10 +1485,10 @@ class TestTimeRangeHelper:
         params['timerange'] = timerange
         params['outfile'] += '.' + time_pattern.value
         return copy.deepcopy(params)
-    
+
     @staticmethod
     def expected_results(params,debug=False):
-        """ 
+        """
         Compute expected sdimaging results for test_timerange_* unit tests
 
         params -- sdimaging parameters, with the following limitations:
@@ -1516,7 +1512,7 @@ class TestTimeRangeHelper:
             shutil.rmtree(ref_pointing)
             shutil.copytree(org_pointing, ref_pointing)
             FileManager.unlock_owner_write_protection(ref_pointing)
-        
+
             # Step 2: Image whole on-disk time-selected MS
             sel_ms_imaging_params = copy.deepcopy(params)
             sel_ms_imaging_params['infiles'] = [sel_ms_name]
@@ -1600,7 +1596,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     @classmethod
     def setUpClass(cls) -> None:
         cls._file_mgr = FileManager(sdimaging_unittest_base.datapath)
-    
+
     @classmethod
     def tearDownClass(cls):
         file_mgr = cls._file_mgr
@@ -2337,7 +2333,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_RANGE)
         self._test_timerange(params)
-    
+
     def _test_timerange(self,task_params,debug=False):
         # Compute results
         self._fetch_and_run(task_params)

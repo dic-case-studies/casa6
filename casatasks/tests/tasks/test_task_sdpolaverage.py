@@ -21,14 +21,15 @@
 #
 #
 ##########################################################################
-import unittest
-import os
 import math
+import os
 import sys
+import unittest
 
 from casatasks import sdpolaverage
 from casatasks.private.sdutil import table_manager
 from casatools import ctsys
+
 datapath = ctsys.resolve('unittest/sdpolaverage/')
 
 def weighToSigma(weight):

@@ -3,8 +3,8 @@ import re
 
 from casatasks import casalog
 from casatools import agentflagger, calibrater, ms, singledishms
-from . import sdutil
 
+from . import sdutil
 from .mstools import write_history
 
 mysdms = singledishms()

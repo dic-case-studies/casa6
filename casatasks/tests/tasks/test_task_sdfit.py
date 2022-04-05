@@ -21,19 +21,16 @@
 #
 #
 ##########################################################################
-import os
 import copy
-import glob
-import sys
+import os
 import shutil
-import numpy
-from numpy import array
-#import listing
 import unittest
 
-from casatools import ctsys, table, ms
-from casatasks import sdfit, flagdata
+import numpy
+
+from casatasks import flagdata, sdfit
 from casatasks.private.sdutil import table_manager
+from casatools import ctsys, ms, table
 
 tb = table()
 

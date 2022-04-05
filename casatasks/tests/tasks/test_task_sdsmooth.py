@@ -21,18 +21,19 @@
 #
 #
 ##########################################################################
-import os
-import sys
-import shutil
-import re
-import numpy
 import math
-from scipy import signal
+import os
+import re
+import shutil
+import sys
 import unittest
 
-from casatools import ctsys, table, ms
+import numpy
+from scipy import signal
+
 from casatasks import sdsmooth
-from casatasks.private.sdutil import table_manager, calibrater_manager
+from casatasks.private.sdutil import calibrater_manager, table_manager
+from casatools import ctsys, ms, table
 
 tb = table( )
 
