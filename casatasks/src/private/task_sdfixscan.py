@@ -212,7 +212,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         else:
             raise Exception("Sorry, the task don't support inclined scan with respect to horizontal or vertical axis, right now.")
         # Replace duplicated method ia.fitpolynomial with
-        # ia.fitprofile 
+        # ia.fitprofile
         #polyimage = convimage.fitpolynomial( fitfile=tmppolyname, axis=fitaxis, order=numpoly, overwrite=True )
         #polyimage.done()
         if os.path.exists( self.tmppolyname ):
@@ -379,7 +379,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
             self.realimage.close()
             self.imagimage.close()
 
-        # Below working images are all 4D regardless of dimension of input images  
+        # Below working images are all 4D regardless of dimension of input images
         # image shape for temporary images (always 4D)
         ia.open(self.tmprealname[0])
         imshape = ia.shape()
@@ -452,7 +452,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
             """
             if abs(numpy.sin(dirs[i]*dtor)) < eps:
                 # direction is around 0 deg
-                maskw = 0.5 * nx * masks[i] 
+                maskw = 0.5 * nx * masks[i]
                 for ix in range(nx):
                     for iy in range(ny):
                         dd = abs( float(ix) - 0.5 * (nx-1) )
@@ -483,7 +483,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
                             cosd = numpy.cos(0.5*numpy.pi*dd/maskw)
                             weights[i][ix][iy] = 1.0 - cosd * cosd
                         if weights[i][ix][iy] == 0.0:
-                            weights[i][ix][iy] += eps*0.01 
+                            weights[i][ix][iy] += eps*0.01
             """
             # shift
             xshift = -((ny-1)//2)

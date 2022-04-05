@@ -31,7 +31,7 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
         # basic check
         if os.path.exists(outputvis) and not overwrite:
             raise RuntimeError('%s exists.'%(outputvis))
-        
+
         if not _is_scantable(infile):
             raise RuntimeError('%s is not a valid Scantable.'%(infile))
 
@@ -39,7 +39,7 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
         status = mysdms.importasap(infile, outputvis, parallel)
 
         if status:
-            # flagversions file must be deleted 
+            # flagversions file must be deleted
             flagversions = outputvis.rstrip('/') + '.flagversions'
             if os.path.exists(flagversions):
                 os.system('rm -rf %s'%(flagversions))

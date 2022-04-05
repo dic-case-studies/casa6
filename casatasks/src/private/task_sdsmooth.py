@@ -23,19 +23,19 @@ def sdsmooth(infile=None, datacolumn=None, antenna=None,
         if len(outfile) == 0:
             errmsg = 'outfile is empty.'
             raise ValueError(errmsg)
-        
+
         if (os.path.exists(outfile)) and (not overwrite):
             errmsg = outfile+' exists.'
             raise ValueError(errmsg)
 
         sdms.open(infile)
-        sdms.set_selection(spw=spw, field=field, 
+        sdms.set_selection(spw=spw, field=field,
                            antenna=antenna,
                            timerange=timerange, scan=scan,
                            polarization=pol, intent=intent,
                            reindex=reindex)
         sdms.smooth(type=kernel, width=kwidth, datacolumn=datacolumn, outfile=outfile)
-        
+
         # Write to HISTORY of outfile MS
         param_names = sdsmooth.__code__.co_varnames[:sdsmooth.__code__.co_argcount]
         vars = locals()

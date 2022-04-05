@@ -22,13 +22,13 @@ def importnro(infile=None, outputvis=None, overwrite=None, parallel=None):
 
     try:
         outputvis_temp = outputvis + '-backup-' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-        
+
         if os.path.exists(outputvis):
             if overwrite:
                 os.rename(outputvis, outputvis_temp)
             else:
                 raise RuntimeError('%s exists.'%(outputvis))
-        
+
         if not _is_nostar(infile):
             raise RuntimeError('%s is not a valid NOSTAR data.'%(infile))
 
@@ -56,7 +56,7 @@ def importnro(infile=None, outputvis=None, overwrite=None, parallel=None):
 
 
     finally:
-        if status: 
+        if status:
             mycb.close()
 
 

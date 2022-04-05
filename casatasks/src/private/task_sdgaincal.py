@@ -35,7 +35,7 @@ def parse_spwmap_item(spwmap):
     if len(spwmap) == 0:
         return DEFAULT_VALUE['spwmap']
     else:
-        return spwmap    
+        return spwmap
 
 def parse_spwmap(spwmap, index):
     assert hasattr(spwmap, '__iter__')
@@ -56,8 +56,8 @@ def parse_spwmap(spwmap, index):
     assert False
 
 @sdutil.sdtask_decorator
-def sdgaincal(infile=None, calmode=None, radius=None, smooth=None, 
-              antenna=None, field=None, spw=None, scan=None, intent=None, 
+def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
+              antenna=None, field=None, spw=None, scan=None, intent=None,
               applytable=None, interp=None, spwmap=None, outfile='', overwrite=False):
 
     # outfile must be specified
@@ -80,7 +80,7 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
         else:
             baseline = ''
         mycb.selectvis(spw=spw, scan=scan, field=field, intent=intent, baseline=baseline)
-        
+
         # set apply
         casalog.post('interp="{0}" spwmap={1}'.format(interp, spwmap))
         if isinstance(applytable, str):
@@ -90,7 +90,7 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
                 casalog.post('thisinterp="{0}" thisspwmap={1}'.format(thisinterp, thisspwmap))
                 mycb.setapply(table=applytable, interp=thisinterp, spwmap=thisspwmap)
         elif hasattr(applytable, '__iter__'):
-            # list type 
+            # list type
             for i in range(len(applytable)):
                 table = applytable[i]
                 if isinstance(table, str) and len(table) > 0:
@@ -102,7 +102,7 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
                     raise RuntimeError('wrong type of applytable item ({0}). it should be string'.format(type(table)))
         else:
             raise RuntimeError('wrong type of applytable ({0}). it should be string or list'.format(type(applytable)))
-        
+
         # set solve
         if calmode == 'doublecircle':
             if radius is None:
@@ -111,7 +111,7 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
                 rcenter = '%sarcsec'%(radius)
             else:
                 try:
-                    # if radius is a string only consists of numeric value without unit, 
+                    # if radius is a string only consists of numeric value without unit,
                     # it will succeed.
                     rcenter = '%sarcsec'%(float(radius))
                 except:

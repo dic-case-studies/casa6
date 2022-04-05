@@ -730,7 +730,7 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, t
 
         # handle image spectral axis parameters
         imnchan, imstart, imwidth = _configure_spectral_axis(mode, nchan, start, width, restfreq)
-        
+
         # handle image restfreq parameter's default value
         _restfreq = _get_restfreq_if_empty(infiles, _spw, field, restfreq)
 
