@@ -293,7 +293,6 @@ def deconvolve(
         ## Get records from iterbot, to be used in the next call to deconvolve
         iterrec = decon.getIterRecords()
 
-        # TODO this restoration step is now in at least three different tasks (sdintimaging, tclean, deconvolve). Should it be moved into common code somewhere?
         ## Restore images.
         if restoration==True:  
             t0=time.time();
