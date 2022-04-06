@@ -2899,8 +2899,6 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
 
         self._copy_data(self.ref_blout101)
 
-        default(sdbaseline)
-
     def tearDown(self):
         self._clear_working_directory()
 
@@ -3197,7 +3195,6 @@ class sdbaseline_autoTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile):
             shutil.rmtree(self.infile)
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
-        default(sdbaseline)
 
     def tearDown(self):
         remove_single_file_dir(self.infile)
