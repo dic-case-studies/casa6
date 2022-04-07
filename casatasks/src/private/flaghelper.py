@@ -1,48 +1,25 @@
-from __future__ import absolute_import
 import os
 import time
 import ast
 import copy
 import numpy
+import inspect
 
 from collections import deque,defaultdict
+from collections import OrderedDict
 
-# get is_CASA6 and is_python3
-from casatasks.private.casa_transition import *
-if is_CASA6:
-    import inspect
-    from casatasks import casalog
-    from casatools import table,quanta,ms,agentflagger
-    from .parallel.parallel_task_helper import ParallelTaskHelper
-    from collections import OrderedDict
+from casatasks import casalog, flagdata
+from casatools import table,quanta,ms,agentflagger
+from .parallel.parallel_task_helper import ParallelTaskHelper
 
-    ###some helper tools
-    tblocal = table()
-    mslocal = ms()
-    qalocal = quanta()
-    # this can be removed and agentflagger used directly when CASA5 is retired
-    agentflagger_fn = agentflagger
-else:
-    from taskinit import casalog, tbtool, qa, ms, aftool
-    from parallel.parallel_task_helper import ParallelTaskHelper
-    # needed in Python 2.6
-    from OrderedDictionary import OrderedDict
-
-    ###some helper tools
-    tblocal = tbtool()
-
-    # and to make the code read the same in both CASA versions
-    qalocal = qa
-    mslocal = ms
-    agentflagger_fn = aftool
+###some helper tools
+tblocal = table()
+mslocal = ms()
+qalocal = quanta()
 
 # common function to use to get a dictionary item iterator
-if is_python3:
-    def lociteritems(adict):
-        return adict.items()
-else:
-    def lociteritems(adict):
-        return adict.iteritems()
+def lociteritems(adict):
+    return adict.items()
 
 '''
 A set of helper functions for the tasks flagdata and flagcmd.
@@ -82,13 +59,13 @@ Others
 
 debug = False
 
-if is_CASA6:
-    def get_task_arg_default( func, arg ):
-        spec = inspect.getargspec(func.__call__)
-        if arg not in spec.args:
-            raise Exception("cannot find '%s' among the function arguments" % arg)
-        return spec.defaults[spec.args.index(arg)-1]
+def get_task_arg_default( func, arg ):
+    print(arg)
+    spec = inspect.getfullargspec(func.__call__)
 
+    if arg not in spec.args:
+        raise Exception("cannot find '%s' among the function arguments" % arg)
+    return spec.defaults[spec.args.index(arg)-1]
 
 class Parser():
     ''' Parser for input files.
@@ -146,7 +123,6 @@ class Parser():
     def initialsplit(self,string):
         nstring = string.strip()
         return nstring.split(self.prime)
-
 
 #######################################################
 #
@@ -217,7 +193,6 @@ def addAbsolutePath(input_file):
     
     # Return the temporary file
     return output_file
-
 
 def get_flag_cmd_list(inpfile):
     """
@@ -423,7 +398,7 @@ def readAndParse(inputlist, tbuff=None):
                             
     return listofdict
 
-# USe readAndParse to apply tbuff, which is slightly faster. For
+# Use readAndParse to apply tbuff, which is slightly faster. For
 # small files, the difference is not noticeable.
 def readParseTbuff(inputlist, tbuff=None):
     '''Read in a list of flag commands and parse them into a dictionary.
@@ -455,90 +430,85 @@ def readParseTbuff(inputlist, tbuff=None):
     if not isinstance(inputlist, list):
         casalog.post('Error opening list of flag commands ' + inputlist,'ERROR')
         raise       
-    
+
     # List of files
-    if os.path.isfile(inputlist[0]):
-        isFile = True
-        
-    # List of strings
-    else:
-        isFile = False
-        
+    isFile = bool(os.path.isfile(inputlist[0]))
+
     if tbuff is None:
         doPadding = False
     else:
         doPadding = True
-    
-    # Make the list of tbuff a deque        
+
+    # Make the list of tbuff a deque
     dtbuff = deque()
-    
+
     if isinstance(tbuff, float):
         dtbuff.append(tbuff)
     elif isinstance(tbuff, list):
         dtbuff = deque(i for i in tbuff)
-        
-    # List of dictionaries to return    
+
+    # List of dictionaries to return
     listofdict = []
 
     # Initialize the parser
     myParser = Parser(' ', '=')
-    
-    # Read files 
+
+    # Read files
     if isFile:
-        for flagfile in inputlist:        
+        for flagfile in inputlist:
             cmdlist = readFile(flagfile)
             nlines = len(cmdlist)
-            casalog.post('Read %s command(s) from file: %s'%(nlines, flagfile))  
+            casalog.post('Read %s command(s) from file: %s'%(nlines, flagfile))
 
-            if doPadding: 
+            if doPadding:
                 mytbuff = dtbuff.popleft()
- 
+
             parsedlist = []
             for cmd in cmdlist:
                 #Get a dictionary without type evaluation
-                preparsing = myParser.parseNoEval(cmd)   
-                
-                # Evaluate the types          
-                parsed = evaluateParameters(preparsing)     
-                                               
+                preparsing = myParser.parseNoEval(cmd)
+
+                # Evaluate the types
+                parsed = evaluateParameters(preparsing)
+
                 # Apply time buffer to single command
-                if doPadding: 
+                if doPadding:
                     applyTimeBuffer(parsed, mytbuff)
 
                 parsedlist.append(parsed)
-                            
+
             if dtbuff.__len__() == 0:
-                doPadding = False   
-                    
+                doPadding = False
+
             # Append dictionary to list
-            listofdict = listofdict + parsedlist
-            
+            listofdict += parsedlist
+
     # It is a list of strings
     else:
 
         cmdlist = inputlist
         nlines = len(cmdlist)
-        casalog.post('Read %s command(s) from a Python list of strings'%nlines)  
+        casalog.post('Read %s command(s) from a Python list of strings'%nlines)
 
-        if doPadding: 
+        if doPadding:
             mytbuff = dtbuff.popleft()
-        
+
         parsedlist = []
         for cmd in cmdlist:
             #Get a dictionary without type evaluation
-            preparsing = myParser.parseNoEval(cmd)   
-            
-            # Evaluate the types          
+            preparsing = myParser.parseNoEval(cmd)
+
+            # Evaluate the types
             parsed = evaluateParameters(preparsing)
-            
+
             # Apply time buffer to single command
-            if doPadding: 
+            if doPadding:
                 applyTimeBuffer(parsed, mytbuff)
-                
+
             parsedlist.append(parsed)
-                               
-        listofdict = listofdict + parsedlist
-                            
+
+        listofdict += parsedlist
+
     return listofdict
 
 def applyTimeBuffer(cmddict, tbuff):
@@ -580,7 +550,6 @@ def applyTimeBuffer(cmddict, tbuff):
             cmddict['timerange'] = paddedT0+'~'+paddedT1                
 
     return
-
 
 def applyTimeBufferList(alist, tbuff=None):
     ''' Apply in-place a time buffer to ALL timerange parameters of a
@@ -672,15 +641,15 @@ def parseDictionary(cmdlist, reason='any', shadow=True):
     else:
         casalog.post('Cannot read reason; it contains unknown variable types', 'ERROR')
         return
- 
+
     # Separate per ' ', then per '='
     myParser = Parser(' ', '=')
- 
+
     flagdict = {}
     row = 0
     for cmd in cmdlist:
         cmddict = {}
-        
+
         # Simple list of strings ([key1='value1' key2='value2']
         if isinstance(cmd, str):
             # Skip comment and empty lines
@@ -688,20 +657,20 @@ def parseDictionary(cmdlist, reason='any', shadow=True):
                 continue
             if cmd == '':
                 continue
-    
+
             uppercmd = cmd.replace('true','True')
-            cmd = uppercmd.replace('false','False')      
-        
+            cmd = uppercmd.replace('false','False')
+
             # Get a dictionary without type evaluation
             preparsing = myParser.parseNoEval(cmd)
-            
-            # Evaluate the types            
+
+            # Evaluate the types
             parsed = evaluateParameters(preparsing)
-            
+
         # List of dictionaries: [{'key1':'value1', 'key2':'value2'}]
         elif isinstance(cmd, dict):
             parsed = cmd
-                
+
         # Parse the flag commands into a dictionary
         mode = ''
         antenna = ''
@@ -711,13 +680,13 @@ def parseDictionary(cmdlist, reason='any', shadow=True):
         cmddict['command'] = parsed
         if 'mode' in parsed:
             mode = parsed['mode']
-          
-        input_reason = '' 
+
+        input_reason = ''
         if 'reason' in parsed:
             input_reason = parsed['reason']
-            
+
         cmddict['reason'] = input_reason
-                        
+
         if 'timerange' in parsed:
             timerange = parsed['timerange']
         if 'antenna' in parsed:
@@ -732,42 +701,43 @@ def parseDictionary(cmdlist, reason='any', shadow=True):
         cmddict['mode'] = mode
         cmddict['timerange'] = timerange
         cmddict['antenna'] = antenna
-        
+
         flagdict[row] = cmddict
         row += 1
-              
-          
+
     # Select the input cmds based on the requested reasons
     selected_dict = {}
     cmddict = {}
     row = 0
     if myreaslist.__len__() > 0:
-        for key in flagdict.keys():
+        for key in flagdict:
             cmddict = flagdict[key]['command']
             if 'reason' in cmddict:
                 input_reason = cmddict['reason']
                 if selectReason(myreaslist, input_reason):
                     selected_dict[row] = flagdict[key]
                     row += 1
-                     
+
         if selected_dict.__len__() == 0:
             raise Exception('No input lines matching requested reason(s)')
     else:
         selected_dict = flagdict
-                
+
     # Specific for the shadow mode
     if shadow:
         cmddict = {}
         for key in selected_dict:
             cmddict = selected_dict[key]['command']
-            if 'addantenna' in cmddict:
-                if isinstance(cmddict['addantenna'],str) and \
-                    cmddict['addantenna'] != '':
+            if (
+                'addantenna' in cmddict
+                and isinstance(cmddict['addantenna'], str)
+                and cmddict['addantenna'] != ''
+            ):
                 # Create a dictionary and replace the parameter
-                    casalog.post('The addantenna parameter will be parsed as a dictionary', 'DEBUG1')
-                    antdict = readAntennaList(cmddict['addantenna'])
-                    selected_dict[key]['command']['addantenna'] = antdict
-            
+                casalog.post('The addantenna parameter will be parsed as a dictionary', 'DEBUG1')
+                antdict = readAntennaList(cmddict['addantenna'])
+                selected_dict[key]['command']['addantenna'] = antdict
+
     return selected_dict
 
 def selectReason(reasonlist, pattern):
@@ -783,26 +753,18 @@ def selectReason(reasonlist, pattern):
 
     return False
 
-
 def parseSelectionPars(cmddict):
     '''Return only the selection parameters into a dictionary:
        cmddict --> one row-dictionary with parameters
        The correlation parameter will not be considered.
     '''
             
-    # Dictionary of selection parameters to return
-    selectionPars = {}
-    
     # Only these parameters will be included in dictionary
     # correlation is handled by the agents
     parlist = ['observation','array','feed','scan','field','spw',
                'timerange','uvrange','intent','antenna']
-            
-    for par in parlist:
-        if par in cmddict:
-            selectionPars[par] = cmddict[par]
-                        
-    return selectionPars
+
+    return {par: cmddict[par] for par in parlist if par in cmddict}
     
 def parseUnion(vis, flagdict):
     '''Get a dictionary of a union of all selection parameters from a dictionary
@@ -1002,53 +964,50 @@ def parseAgents(aflocal, flagdict, myrows, apply, writeflags, display=''):
         The original flagdict dictionary is not modified '''
     
 
-    if not flagdict.__len__() >0:
+    if flagdict.__len__() <= 0:
         casalog.post('There are no flag cmds in list', 'SEVERE')
         return False
-    
+
     # Do not modify original dictionary
-    myflagcmd = copy.deepcopy(flagdict)  
+    myflagcmd = copy.deepcopy(flagdict)
     commands = []
-        
+
     # Setup the agent for each input line and merge timeranges to one command
     for row in myflagcmd.keys():
         cmd = OrderedDict()
         cmd = myflagcmd[row]['command']
-           
+
         if 'reason' in cmd:
             cmd.pop('reason')
-            
-        if not 'mode' in cmd:
+
+        if (
+            'mode' not in cmd
+            or cmd['mode'] == ''
+            or cmd['mode'] == 'manualflag'
+        ):
             cmd['mode'] = 'manual'
-            
-        elif cmd['mode'] == '':
-            cmd['mode'] = 'manual'
-            
-        elif cmd['mode'] == 'manualflag':
-            cmd['mode'] = 'manual'
-            
+
         elif cmd['mode'] == 'rflag':
             cmd['writeflags'] = writeflags
             cmd['display'] = display
-            
-                                                        
+
         # Read ntime
         readNtime(cmd)
-        
+
         # Cast the correct type of some parameters
         evalParams(cmd)
 
-        # Add the apply/unapply parameter to dictionary            
+        # Add the apply/unapply parameter to dictionary
         cmd['apply'] = apply
-                
+
         # Hold the name of the agent and the cmd row number
         mode = cmd['mode']
         agent_name = mode.capitalize()+'_'+str(row)
-            
+
         cmd['agentname'] = agent_name
-        
+
         # Remove the data selection parameters if there is only one agent for performance reasons.
-        # Explanation: if only one agent exists and the data selection parameters are parsed to it, 
+        # Explanation: if only one agent exists and the data selection parameters are parsed to it,
         # it will have to go through the entire MS and check if each data selection given to the agent
         # matches what the user asked in the selected data.
 
@@ -1061,7 +1020,7 @@ def parseAgents(aflocal, flagdict, myrows, apply, writeflags, display=''):
                     cmd.pop(k)
 
         casalog.post('Parsing parameters of mode %s in row %s'%(mode,row), 'DEBUG')
-        casalog.post('%s'%cmd,'DEBUG')            
+        casalog.post('%s'%cmd,'DEBUG')
 
         commands.append(cmd)
 
@@ -1076,7 +1035,6 @@ def parseAgents(aflocal, flagdict, myrows, apply, writeflags, display=''):
         if (not aflocal.parseagentparameters(cmd)):
             casalog.post('Failed to parse parameters of mode %s in row %s' %(mode,row), 'WARN')
             continue
-                                    
 #    return True
     return myflagcmd
 
@@ -1248,21 +1206,17 @@ def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=Tru
                             v = v.strip("'")
                         cmdstr = "'"+v+"'"
                         cmdline = cmdline + k + '=' + str(cmdstr) + ' '
-                        
                     else:
                         cmdline = cmdline + k + '=' + str(v) + ' '
                
                 # Save to output file
                 ffout.write('%s\n' %cmdline.rstrip())
-                                        
-                    
             ffout.close()                                                                
         except:
             raise Exception('Error writing/appending lines to file ' \
                 + outfile)
         ffout.close()
         return False
-    
     else:
         # Append new commands to existing FLAG_CMD table
 #        casalog.post('Saving commands to the FLAG_CMD table')       
@@ -1272,16 +1226,13 @@ def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=Tru
             cmdline = ""
             reason = ""
             cmddict = flagdict[key]['command']
-            
             # Do not save reason in the COMMAND column
             if 'reason' in cmddict:
                 cmddict.pop('reason')
-                
             # Summary cmds should not go to FLAG_CMD
             if 'mode' in cmddict and cmddict['mode'] == 'summary':
                 casalog.post("Commands with mode='summary' are not allowed in the FLAG_CMD table", 'WARN')
                 continue
-            
             # Add to REASON column the user input reason if requested
             reason = flagdict[key]['reason']
             if reason2add:
@@ -1337,7 +1288,7 @@ def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=Tru
         tblocal.putcol('TYPE', numpy.array(typelist), startrow=nrows,nrow=Nadd)    
         
         newrows = int(tblocal.nrows())
-        newrows = newrows - nrows
+        newrows -= nrows
         if newrows == 0:
             casalog.post('Did not save any rows to FLAG_CMD')
         else:
@@ -1346,7 +1297,6 @@ def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=Tru
         tblocal.close()
         
     return True
-
 
 def parseRFlagOutputFromSummary(mode,summary_stats_list, flagcmd):
     """
@@ -1402,14 +1352,14 @@ def save_rflag_consolidated_files(mode, action, cons_dict, opts_dict, inpfile):
     the consolidated (on the client process) - only when needed for rflag mode (or list
     mode when the list of commands contains some RFlag commands).
 
-    :param mode: mode parameter as given to the flagdata task
+    :param mode: mode parameter as given to the from casatasks.flagdata import flagdata task
     :param action: action parameter as given to the flagdata task
     :param cons_dict: consolidated dictionary of reports from (RFlag) flagdata commands
     :param opts_dict: dictionary with the options needed for parseRFlagOutputFromSummary()
                       (timedev, freqdev and writeflags, from the task input parameters)
     :param inpfile: inpfile parameter as given to the flagdata task
     """
-    if (mode == 'rflag' or mode== 'list') and action != 'apply':
+    if mode in ['rflag', 'list'] and action != 'apply':
         import pprint
         casalog.post('Saving RFlag return dictionary: {0}'.
                      format(pprint.pformat(cons_dict)), 'INFO')
@@ -1886,18 +1836,18 @@ def evaluateParameters(pardict):
     '''
     
     cmddict = OrderedDict()
-    
+
     for key,val in lociteritems(pardict):
-        newval = None        
-                
+        newval = None
+
         if val.startswith('['):
             newval = ast.literal_eval(val)
         elif val.startswith('{'):
             newval = eval(val)
-        elif val == 'True' or val == 'False':
-            if eval(val) == True or eval(val) == False:
+        elif val in ['True', 'False']:
+            if eval(val) in [True, False]:
                 newval = eval(val)
-        if newval == None:
+        if newval is None:
             try:
                 # Try int
                 int(val)
@@ -1908,22 +1858,22 @@ def evaluateParameters(pardict):
                     float(val)
                     newval = float(val)
                 except:
-                    # Try string                    
+                    # Try string
                     if val.count("'") > 0:
                         val = val.strip("'")
                     elif val.count('"') > 0:
                         val = val.strip('"')
-                        
+
                     # CAS-6553 cannot have only one quote. remove it
                     if val.count("'") == 1:
                         val = val.replace("'", '')
                     elif val.count('"') == 1:
                         val = val.replace('"', '')
-                        
+
                     newval = str(val).strip()
-        
+
         cmddict[key] = newval
-    
+
     return cmddict
 
 def evaluateFlagParameters(pardict, pars):
@@ -1939,20 +1889,14 @@ def evaluateFlagParameters(pardict, pars):
         It raises an exception if any parameter or type of value do not match.
 
     """
-    if is_CASA6:
-        from casatasks.flagdata import flagdata
-    else:
-        from tasks import flagdata
+    from casatasks import flagdata
 
     # Make a deepcopy of flagdata parameters dictionary for modification
     fpars = copy.deepcopy(pars)
- 
+
     # Get the defaults of each parameter 
     for par in fpars.keys():
-        if is_CASA6:
-            fpars[par] = get_task_arg_default(flagdata, par)
-        else:
-            fpars[par] = flagdata.itsdefault(par)
+        fpars[par] = get_task_arg_default(flagdata, par)
 
     # Define the parameters that don't go in an input list in flagdata
     removepars = ['vis','inpfile','flagbackup','tbuff','cmdreason','savepars','outfile',
@@ -2083,8 +2027,6 @@ def evaluateFlagParameters(pardict, pars):
 
     casalog.post('Evaluated %s rows of dictionary'%count,'DEBUG1')
     return True
-
-
 
 def evaluateNumpyType(elem):
     '''Evaluate if an element is of numpy type.
@@ -2669,7 +2611,6 @@ def makeDict(cmdlist, myreason='any'):
      
     return myflagd
 
-
 def readXML(sdmfile, mytbuff):
     '''
 #   readflagxml: reads Antenna.xml and Flag.xml SDM tables and parses
@@ -2972,7 +2913,6 @@ def readXML(sdmfile, mytbuff):
     # return the dictionary for later use
     return flags
 
-
 def getUnion(vis, cmddict):
     '''Get a dictionary of a union of all selection parameters from a list of lines:
        vis --> MS
@@ -3125,7 +3065,6 @@ def getUnion(vis, cmddict):
     
     return uniondic
 
-
 def getNumPar(cmddict):
     '''Get the number of occurrences of all parameter keys
        cmdlist --> list of strings with parameters and values
@@ -3243,7 +3182,6 @@ def getNumPar(cmddict):
                         
     return npars
 
-
 def compressSelectionList(vis='',dicpars={}):
     """
     - Find a loose union of data-selection parameters, to reduce the MSSelection parsing load.
@@ -3276,8 +3214,6 @@ def compressSelectionList(vis='',dicpars={}):
     # via mslocal.msseltoindex() and therefore not used here yet.
 
     return;
-
-
 
 # ONLY for flagcmd task
 def writeFlagCmd(msfile, myflags, vrows, applied, add_reason, outfile):
@@ -3474,7 +3410,6 @@ def writeFlagCmd(msfile, myflags, vrows, applied, add_reason, outfile):
 
     return nrows
 
-
 def getReason(cmdline):
     '''Get the reason values from a line with strings
        cmdline --> a string with parameters
@@ -3510,7 +3445,6 @@ def getReason(cmdline):
     
                                     
     return reason
-
 
 def getLinePars(cmdline, mlist=[]):
     '''Get a dictionary of all selection parameters from a line:
@@ -3658,7 +3592,6 @@ def getSelectionPars(cmdline):
             
     return dicpars
 
-
 def readNtime(params):
     '''Check the value and units of ntime
        params --> dictionary of agent's parameters '''
@@ -3697,7 +3630,6 @@ def readNtime(params):
                     casalog.post('Cannot convert units of ntime. Will use default 0.0s', 'WARN')
           
     params['ntime'] = float(newtime)
-
 
 def fixType(params):
     '''Give correct types to non-string parameters
@@ -3839,7 +3771,6 @@ def purgeEmptyPars(cmdline):
         casalog.post('String of parameters is empty','WARN')   
          
     return newstr
-
 
 def purgeParameter(cmdline, par):
     '''Remove parameter from a string:
@@ -4085,7 +4016,6 @@ def setupAgent(aflocal, myflagcmd, myrows, apply, writeflags, display=''):
     
     return savelist
 
-
 def backupFlags(aflocal=None, msfile='', prename='flagbackup'):
     '''Create a backup of the FLAG column
     
@@ -4104,7 +4034,7 @@ def backupFlags(aflocal=None, msfile='', prename='flagbackup'):
     
     if msfile != '':
         # open msfile and attach it to tool
-        aflocal = agentflagger_fn()
+        aflocal = agentflagger()
         aflocal.open(msfile)
     
     elif aflocal == None:
