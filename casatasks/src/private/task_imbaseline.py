@@ -696,21 +696,36 @@ class _SdbaselineParams(AbstractValidatable):
         self.outfile = outfile
         self.datacolumn = datacolumn
         self.bloutput = bloutput if bloutput is not None else ''
-        self.maskmode = maskmode.lower() if maskmode is not None else 'list'  # list(default)/auto
-        self.spw = self.__chans2spw(chans, self.maskmode)                     # maskmode = list
-        self.thresh = thresh if thresh is not None else 5.0                   # maskmode = auto
-        self.avg_limit = avg_limit if avg_limit is not None else 4            # maskmode = auto
-        self.minwidth = minwidth if minwidth is not None else 4               # maskmode = auto
-        self.edge = edge if edge is not None else [0, 0]                      # maskmode = auto
-        self.blfunc = blfunc.lower() if blfunc is not None else 'poly'        # poly(default)/chebyshev/cspline/
-                                                                              # sinusoid/variable
-        self.order = order if order is not None else 5                        # blfunc = poly/chebyshev
-        self.npiece = npiece if npiece is not None else 3                     # blfunc = cspline
-        self.applyfft = applyfft if applyfft is not None else True            # blfunc = sinusoid
-        self.fftthresh = fftthresh if fftthresh is not None else 3.0          # blfunc = sinusoid
-        self.addwn = addwn if addwn is not None else [0]                      # blfunc = sinusoid
-        self.rejwn = rejwn if rejwn is not None else []                       # blfunc = sinusoid
-        self.blparam = blparam if blparam is not None else ''                 # blfunc = variable
+
+        # maskmode: list(default)/auto
+        self.maskmode = maskmode.lower() if maskmode is not None else 'list'
+
+        # subparam for maskmode = list
+        self.spw = self.__chans2spw(chans, self.maskmode)
+
+        # subparam for maskmode = auto
+        self.thresh = thresh if thresh is not None else 5.0
+        self.avg_limit = avg_limit if avg_limit is not None else 4
+        self.minwidth = minwidth if minwidth is not None else 4
+        self.edge = edge if edge is not None else [0, 0]
+
+        # poly(default)/chebyshev/cspline/sinusoid/variable
+        self.blfunc = blfunc.lower() if blfunc is not None else 'poly'
+
+        # subparam for blfunc = poly/chebyshev
+        self.order = order if order is not None else 5
+
+        # subparam for blfunc = cspline
+        self.npiece = npiece if npiece is not None else 3
+
+        # subparam for blfunc = sinusoid
+        self.applyfft = applyfft if applyfft is not None else True
+        self.fftthresh = fftthresh if fftthresh is not None else 3.0
+        self.addwn = addwn if addwn is not None else [0]
+        self.rejwn = rejwn if rejwn is not None else []
+
+        # subparam for blfunc = variable
+        self.blparam = blparam if blparam is not None else ''
         self.clipniter = clipniter if clipniter is not None else 0
         self.clipthresh = clipthresh if clipthresh is not None else 3.0
 
