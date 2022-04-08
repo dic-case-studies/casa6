@@ -449,12 +449,12 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
         tb.putcol('FPARAM', s, 0, 2)
         tb.close()
         with open(self.skytable + '/table.info', 'r') as f:
-            l = f.read()
-        # print l
-        l = l.replace('B TSYS', 'SDSKY_PS')
-        # print l
+            lines = f.read()
+        # print lines
+        lines = lines.replace('B TSYS', 'SDSKY_PS')
+        # print lines
         with open(self.skytable + '/table.info', 'w') as f:
-            f.write(l)
+            f.write(lines)
 
         self.assertTrue(os.path.exists(self.skytable))
 

@@ -79,8 +79,8 @@ def _is_scantable(filename):
     if os.path.isdir(filename) and os.path.exists(filename + '/table.info') \
             and os.path.exists(filename + '/table.dat'):
         with open(filename + '/table.info') as f:
-            l = f.readline()
+            lines = f.readline()
             f.close()
         match_pattern = '^Type = (Scantable)? *$'
-        ret = re.match(match_pattern, l) is not None
+        ret = re.match(match_pattern, lines) is not None
     return ret
