@@ -37,7 +37,6 @@ from casatasks.private.task_imbaseline import (_CasaImageStack,
                                                _SdsmoothMethods,
                                                _SdsmoothParams,
                                                _UnerasableFolder, imbaseline)
-from casatasks.private.update_spw import sets_to_spwchan, spwchan_to_sets
 from casatools import ctsys, image, table
 
 _tb = table()
