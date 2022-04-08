@@ -202,13 +202,13 @@ def _configure_spectral_axis(mode, nchan, start, width, restfreq):
         myunit = ''
 
     tmp_start = _format_quantum_unit(start, myunit)
-    if tmp_start == None:
+    if tmp_start is None:
         raise ValueError("Invalid unit for %s in mode %s: %s" % ('start', mode, start))
     start = tmp_start
     if mode == 'channel':
         start = int(start)
     tmp_width = _format_quantum_unit(width, myunit)
-    if tmp_width == None:
+    if tmp_width is None:
         raise ValueError("Invalid unit for %s in mode %s: %s" % ('width', mode, width))
     width = tmp_width
     if mode == 'channel':

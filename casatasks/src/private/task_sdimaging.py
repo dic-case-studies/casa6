@@ -86,7 +86,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         for name in ['start', 'width']:
             param = getattr(self, name)
             new_param = self.__format_quantum_unit(param, myunit)
-            if new_param == None:
+            if new_param is None:
                 raise ValueError("Invalid unit for %s in mode %s: %s" %
                                  (name, self.mode, param))
             setattr(self, name, new_param)

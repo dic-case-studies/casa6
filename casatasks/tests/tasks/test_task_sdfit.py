@@ -253,10 +253,10 @@ class sdfit_unittest_base(unittest.TestCase):
         NOTE: it is not allowed to specify
         """
         # Check for paths
-        if from_dir == None and dest_dir == None:
+        if from_dir is None and dest_dir is None:
             raise ValueError("Can not copy files to exactly the same path.")
-        from_path = os.path.abspath("." if from_dir == None else from_dir.rstrip("/"))
-        to_path = os.path.abspath("." if dest_dir == None else dest_dir.rstrip("/"))
+        from_path = os.path.abspath("." if from_dir is None else from_dir.rstrip("/"))
+        to_path = os.path.abspath("." if dest_dir is None else dest_dir.rstrip("/"))
         if from_path == to_path:
             raise ValueError("Can not copy files to exactly the same path.")
         # Copy a list of files and directories
@@ -524,7 +524,7 @@ class sdfit_unittest_base(unittest.TestCase):
         If input is None, this method simply returns None.
         """
         listtypes = (list, tuple, numpy.ndarray)
-        if input == None:
+        if input is None:
             return None
         elif type(input) in listtypes:
             return list(input)
