@@ -341,7 +341,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         # direction axis should always exist
         try:
             direction_axis0 = axis_types.index('Direction')
-            direction_axis1 = axis_types[direction_axis0 +1:].index('Direction') \
+            direction_axis1 = axis_types[direction_axis0 + 1:].index('Direction') \
                 + direction_axis0 + 1
         except IndexError:
             raise RuntimeError('Direction axes don\'t exist.')
