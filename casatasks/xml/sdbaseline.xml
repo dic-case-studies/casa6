@@ -89,9 +89,8 @@ pipeline processing for huge dataset.
         <description>mode of setting additional channel masks. &quot;list&quot; and &quot;auto&quot; are available now.</description>
         <value>list</value>
         <allowed ignorecase="true" kind="enum">
-            <value>auto</value>
             <value>list</value>
-
+            <value>auto</value>
         </allowed>
     </param>
 
@@ -269,7 +268,6 @@ pipeline processing for huge dataset.
                         <default param="minwidth"><value>4</value></default>
                         <default param="edge"><value type="vector"><value>0</value><value>0</value></value></default>
                 </equals>
-                <equals value="interact"/>
             </when>
             <when param="blmode">
                 <equals value="fit">
@@ -385,19 +383,22 @@ reindex -- Re-index indices in subtables based on data selection.
 maskmode -- mode of setting additional channel masks. When blmode='apply'
              and/or blfunc='variable', maskmode and its subparameters
              are ignored.
-        options: 'list' and 'auto' ('interact' will be available later)
+        options: 'list', 'auto'
         default: 'list'
-        example: maskmode='auto' runs linefinder to detect line regions 
+        example: maskmode='list' uses channel masks specified with the
+                 spw parameter. Note that additional channel masks may
+                 be applied in case you turn on iterative sigma clipping
+                 by setting a positive number to the clipniter parameter,
+                 but linefinder doesn't run with this mode.
+                 maskmode='auto' runs linefinder to detect line regions 
                  to be excluded from fitting. this mode requires three 
                  expandable parameters: thresh, avg_limit, minwidth, and edge.
                  NOTE maskmode='auto' is EXPERIMENTAL.
                  USE WITH CARE! May need to tweak the expandable parameters.
-                 maskmode='list' uses the given masklist only: no additional 
-                 masks applied.
-                 maskmode='interact' allows users to manually modify the 
-                 mask regions by dragging mouse on the spectrum plotter GUI.
-                 use LEFT or RIGHT button to add or delete regions, 
-                 respectively.
+                 Note also that channel masks given with the spw parameters
+                 and additional masks set by iterative sigma clipping are
+                 effective; the actual channel mask will be a composite
+                 of these masks (i.e., linefinder + spw + sigma clipping).
     &gt;&gt;&gt; maskmode expandable parameters
         thresh -- S/N threshold for linefinder. a single channel S/N ratio
                   above which the channel is considered to be a detection. 
