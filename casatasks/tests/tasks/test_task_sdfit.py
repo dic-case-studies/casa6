@@ -28,7 +28,7 @@ import unittest
 
 import numpy
 
-from casatasks import flagdata, sdfit
+from casatasks import casalog, flagdata, sdfit
 from casatasks.private.sdutil import table_manager
 from casatools import ctsys, ms, table
 
