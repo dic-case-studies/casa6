@@ -72,13 +72,13 @@ def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
                 raise Exception('Applytable name must be specified.')
 
             # check calibration table files
-            for table in _table_list:
+            for _table_name in _table_list:
                 # empty string
-                if len(table) == 0:
+                if len(_table_name) == 0:
                     raise Exception('Applytable name must be specified.')
                 # unexisting table
-                if not os.path.exists(table):
-                    raise Exception("Table doesn't exist: {}".format(table))
+                if not os.path.exists(_table_name):
+                    raise Exception("Table doesn't exist: {}".format(_table_name))
 
             # warning on usage difference with asap.sdcal2
             if (outfile != ''):
