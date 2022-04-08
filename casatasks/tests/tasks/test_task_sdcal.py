@@ -1973,7 +1973,7 @@ class sdcal_test_apply(sdcal_test_base):
                                 regular_data = numpy.where(abs(expected) >= 1.0e-7)
                                 diff[regular_data] = abs(
                                     (corrected[regular_data] - expected[regular_data])
-                                        / expected[regular_data])
+                                    / expected[regular_data])
                                 self.assertTrue(
                                     all(diff.flatten() < self.eps),
                                     msg=f'Calibrated result differ in antenna {antenna} '
