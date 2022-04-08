@@ -11,7 +11,7 @@ import unittest
 import json
 import datetime
 import platform
-import re
+
 ########################################################################################################################
 ######################################            Imports / Constants            #######################################
 ########################################################################################################################
@@ -60,8 +60,6 @@ except ImportError:
 IS_CASA6 = False
 CASA6 = False
 verbose = False
-DRY_RUN = False
-RUN_ALL = False
 
 # JIRA BRANCH TO CHECKOUT
 JIRA_BRANCH = None
@@ -312,7 +310,9 @@ def fetch_tests(work_dir, branch):
             out = proc.stdout.read()
             if int(out)== 0: 
                 if repo in ['casaplotserver', 'casaplotms','casaviewer','casampi','almatasks','casatelemetry']:
+                    print("build.conf location: " + source_dir + "/casa6/build.conf" )
                     branchtag = "tags/{}".format(read_conf(source_dir+"/casa6/build.conf")[repo])
+                    print("branchtag" + branchtag)
                 cmd = ("git checkout " + branchtag).split()
             else:
                 cmd = ("git checkout " + branch).split()
@@ -454,9 +454,21 @@ def unpack_tarball(pkg, outputdir):
     print(cmd)
     r = ShellRunner()
     output = r.runshell(cmd, default_timeout, cwd=os.getcwd())
-    # Remove .tar.xz extension and py3.x extension as necessary
-    installpath = outputdir + "/" + re.sub(r'-py3\..?', '', os.path.basename(pkg).replace(".tar.xz",""))
-    return installpath
+   
+    installpath = None
+    
+    print("outputdir contents:" + outputdir)
+    for root, dirs, files in os.walk(outputdir):
+        for d in dirs:
+            print(" " + d)
+            if d.startswith("casa-"):
+                installpath = d
+                print("installpath: " + installpath)
+        break
+
+    if installpath is None:
+        raise  RuntimeError("Couldn't find a directory that looks like a Casa distribution. Expected directory name to start with 'casa-'")  
+    return outputdir + "/" + installpath
 
 def get_casatestutils_exec_path(pkg_dir):
     # Since runtest is no longer part of casatestutils, this may be removed.
@@ -492,7 +504,7 @@ def unpack_pkg(pkg, work_dir, outputdir):
 ##############################################            Run            ###############################################
 ########################################################################################################################
 
-def run(testnames, branch=None):
+def run(testnames, branch=None, DRY_RUN=False):
 
     if IS_CASA6:
 
@@ -505,7 +517,19 @@ def run(testnames, branch=None):
             # Copy Tests to Working Directory
             os.makedirs(workdir)
 
-            print("Tests: {}".format(testnames))
+            # Remove Duplicates
+            # Since working directory is based on script name
+            # We need to remove multiple calls to the same script
+            setlist = []
+            for duplicate in list(set([ x.split("/")[-1] for x in testnames])):
+                inlist = True
+                for test in testnames:
+                    if duplicate in test:
+                        if inlist:
+                            setlist.append(test)
+                            inlist = False
+            testnames = setlist
+            print("Tests: {}".format(sorted(testnames)))
             gittest = True
             if branch ==None:
                 branch = 'master'
@@ -574,6 +598,7 @@ def run(testnames, branch=None):
                         print("No Tests to Run")
                         sys.exit()
                     else:
+                        
                         myworkdir = os.getcwd()
                         os.chdir("{}".format(workdir + "{}/".format(test if not test.endswith(".py") else test[:-3])))
                         print("Test Directory: {}".format(os.getcwd()))
@@ -677,6 +702,7 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
         test_group = [x.strip() for x in test_group.split(',')]
 
     # Unpack the distribution
+    print ("run_bamboo")
     print ("Test list: " + str (test_list))
     print ("Test group: " + str (test_group))
 
@@ -697,6 +723,8 @@ def run_bamboo(pkg, work_dir, branch = None, test_group = None, test_list= None,
     if args.branch == None:
         branch = "master"
 
+    print ("run_bamboo fetch_tests branch" + branch)
+    
     # Clone a default set of repositories to if test paths are not provided from command line
     if len(test_paths) == 0 :
         test_paths = fetch_tests(str(work_dir), branch)
@@ -997,7 +1025,7 @@ if __name__ == "__main__":
                         component_to_test_map = json.load(ctt)
                 except:
                     print("No JSON file to Map")
-
+            no_test_components = []
             for c in components:
                 _isComponent = False
                 component = c.strip()
@@ -1005,14 +1033,17 @@ if __name__ == "__main__":
                     #print(component, myDict["testGroup"])
                     if component in myDict["testGroup"]:
                         _isComponent = True
-                        testnames.append(myDict["testScript"])
+                        if myDict["testScript"] not in testnames: testnames.append(myDict["testScript"])
                 if not _isComponent:
-                    print("No Tests for Component: {}. Using Component 'default'".format(component))
-                    component = 'default'
-                    for myDict in component_to_test_map["testlist"]:
-                        if component in myDict["testGroup"]:
-                            _isComponent = True
-                            testnames.append(myDict["testScript"])
+                    print("No Tests for Component: {}".format(component))
+                    no_test_components.append(component)
+            if (len(no_test_components) > 0) and (len(testnames)==0):
+                print("No Test Suite for Component(s): {} Using Component 'default'".format(no_test_components))
+                component = 'default'
+                for myDict in component_to_test_map["testlist"]:
+                    if component in myDict["testGroup"]:
+                        _isComponent = True
+                        testnames.append(myDict["testScript"])
 
     if args.verbose:
         verbose = True
@@ -1054,31 +1085,41 @@ if __name__ == "__main__":
         if arg.startswith(("-", "--")):
             raise ValueError('unrecognized argument: %s'%(arg))
             sys.exit()
-
         else:
-
-            if arg.startswith("test") and not RUN_ALL:
-                if len([x.strip() for x in arg.split(",")]) > 1:
-                    testnames.extend([x.strip() for x in arg.split(",")])
-                else:
-                    testnames.append(arg)
-            # local Path file
-            #elif arg.startswith("./") and arg.endswith(".py") and not RUN_ALL:
-            elif arg.startswith("./") and ".py" in arg and not RUN_ALL:
-
+            tests = [x.strip() for x in arg.split(",")]
+            for test in tests:
                 try:
-                    real_path = os.path.realpath(arg[2:])
-                    testnames.append(real_path)
+                    testcases = None
+                    # Check if testcases are provided
+                    if "[" in test:
+                        listarray = test.split("[")
+                        if not listarray[0].endswith(".py"):
+                            testnames.append(test)
+                        else:
+                            test = listarray[0]
+                            testcases = listarray[1]
+                            real_path = os.path.realpath(test)
+                            if ("test_" not in real_path) or  ("test_" not in real_path) or ( os.path.exists(real_path) ==False):
+                                print("{} is not a Test File".format(test))
+                                continue
+                            else:
+                                if testcases is not None: real_path = os.path.realpath(test) + "[" + testcases
+                                testnames.append(real_path)
+
+                    # Check if test is real path are provided
+                    elif test.endswith(".py"):
+                        real_path = os.path.realpath(test)
+                        if ("test_" not in real_path) or  ("test_" not in real_path) or ( os.path.exists(real_path) ==False):
+                            print("{} is not a Test File".format(test))
+                            continue
+                        else:
+                            testnames.append(real_path)
+
+                    # else Assume test exists in bitbucket
+                    else:
+                        testnames.append(test)
                 except:
                     traceback.print_exc()
-
-            elif (arg.startswith("../") or arg.startswith("/"))  and ".py" in arg and not RUN_ALL:
-                try:
-                    real_path = os.path.realpath(arg)
-                    testnames.append(real_path)
-                except:
-                    traceback.print_exc()
-
     try:
         if args.bamboo:
             from testrunner.shell_runner import ShellRunner
@@ -1089,9 +1130,11 @@ if __name__ == "__main__":
             print("Test configuration file: " + str(args.test_config))
             print("Number of cores: " + str(args.ncores))
             print("Workdir: " + str(args.work_dir))
+            print("branch: " + str(args.branch))
             pmodes = ['serial','parallel','both']
             if args.pmode not in pmodes:
                 raise Exception("Invalid pmode: '{}'. Valid modes: '{}'".format(args.pmode ,str(pmodes)))
+
 
             run_bamboo(args.pkg, args.work_dir, args.branch, args.test_group, args.test_list, test_paths, args.test_config, args.ncores, args.verbose, args.pmode, tests_to_ignore)
 
@@ -1120,7 +1163,6 @@ if __name__ == "__main__":
                                         tests.append(os.path.join(root, file))
                 testnames = tests
 
-            print("Testnames: {}".format(testnames))
             if tests_to_ignore is not None:
                 print("\nTests to Ignore: ",tests_to_ignore )
                 indices = []
@@ -1133,7 +1175,7 @@ if __name__ == "__main__":
                 print("List of tests is empty")
                 parser.print_help(sys.stderr)
                 sys.exit(1)
-            run(testnames, args.branch)
+            run(testnames, args.branch, DRY_RUN)
     except:
         traceback.print_exc()
 

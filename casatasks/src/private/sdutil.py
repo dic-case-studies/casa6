@@ -114,11 +114,8 @@ def sdtask_decorator(func):
        2) handle exception
 
     So, you don't need to set origin in the task any more.
-    Also, you don't need to write anything about error
-    handling in the task. If you have something to do
-    at the end of the task execution, those should be
-    written in the destructor of worker class, not in
-    the 'finally' block.
+    Also, you don't need to write anything about error handling in the task. If you have something to do at the end of
+    the task execution, those should be written in finally block in the task class.
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -141,16 +138,62 @@ def sdtask_decorator(func):
     return wrapper
 
 
+def callable_sdtask_decorator(func):
+    """
+    This is a decorator function for sd tasks.
+    Currently the decorator does:
+
+       1) if it get the parameter '__log_origin', read it and set origin to the logger.
+        otherwise it reads the function name and set origin to the logger.
+       2) handle exception
+
+    So, you don't need to set origin in the task any more.
+    Also, you don't need to write anything about error handling in the task. If you have something to do at the end of
+    the task execution, those should be written in finally block in the task class.
+
+    Usage:
+
+    @callable_sdtask_decorator
+    def sometask(..)
+        pass
+
+    def othertask(..)
+        kwargs['__log_origin'] = 'othertask'
+        sometask(*args, **kwargs)  # logged "othertask::..."
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        caller = kwargs.pop('__log_origin', func.__name__)
+        casalog.origin(caller)
+
+        retval = None
+        # Any errors are handled outside the task.
+        # however, the implementation below is effectively
+        # equivalent to handling it inside the task.
+        try:
+            # execute task
+            retval = func(*args, **kwargs)
+        except Exception as e:
+            traceback_info = __format_trace(traceback.format_exc())
+            casalog.post(traceback_info, 'SEVERE')
+            casalog.post(str(e), 'ERROR')
+            raise
+        if caller != func.__name__:
+            kwargs['__log_origin'] = caller
+        return retval
+    return wrapper
+
+
 def __format_trace(s):
     wexists = True
-    regex = '.*sdutil\.py.*in wrapper.*'
+    regex = r'.*sdutil\.py.*in wrapper.*'
     retval = s
     while wexists:
         ss = retval.split('\n')
         wexists = False
         for i in range(len(ss)):
             if re.match(regex, ss[i]):
-                ss = ss[:i] + ss[i+2:]
+                ss = ss[:i] + ss[i + 2:]
                 wexists = True
                 break
         retval = '\n'.join(ss)
@@ -467,125 +510,6 @@ def get_spwids(selection, infile=None):
     for item in spw_list:
         l.append(str(item))
     return ','.join(l)
-
-
-def parse_wavenumber_param(wn):
-    if isinstance(wn, list):
-        __check_positive_or_zero(wn)
-        wn.sort()
-        return ','.join(__get_strlist(wn))
-    elif isinstance(wn, tuple):
-        __check_positive_or_zero(wn)
-        wn_list = list(wn)
-        wn_list.sort()
-        return ','.join(__get_strlist(wn_list))
-    elif isinstance(wn, int):
-        __check_positive_or_zero(wn)
-        return str(wn)
-    elif isinstance(wn, str):
-        if ',' in wn:                            # cases 'a,b,c,...'
-            val0 = wn.split(',')
-            __check_positive_or_zero(val0)
-            val = []
-            for v in val0: val.append(int(v))
-            val.sort()
-            res = list(set(val))  # uniq
-        elif '-' in wn:                          # case 'a-b' : return [a,a+1,...,b-1,b]
-            val = wn.split('-')
-            __check_positive_or_zero(val)
-            val = [int(val[0]), int(val[1])]
-            val.sort()
-            res = [i for i in range(val[0], val[1]+1)]
-        elif '~' in wn:                          # case 'a~b' : return [a,a+1,...,b-1,b]
-            val = wn.split('~')
-            __check_positive_or_zero(val)
-            val = [int(val[0]), int(val[1])]
-            val.sort()
-            res = [i for i in range(val[0], val[1]+1)]
-        elif wn[:2] == '<=' or wn[:2] == '=<':   # cases '<=a','=<a' : return [0,1,...,a-1,a]
-            val = wn[2:]
-            __check_positive_or_zero(val)
-            res = [i for i in range(int(val)+1)]
-        elif wn[-2:] == '>=' or wn[-2:] == '=>': # cases 'a>=','a=>' : return [0,1,...,a-1,a]
-            val = wn[:-2]
-            __check_positive_or_zero(val)
-            res = [i for i in range(int(val)+1)]
-        elif wn[0] == '<':                       # case '<a' :         return [0,1,...,a-2,a-1]
-            val = wn[1:]
-            __check_positive_or_zero(val, False)
-            res = [i for i in range(int(val))]
-        elif wn[-1] == '>':                      # case 'a>' :         return [0,1,...,a-2,a-1]
-            val = wn[:-1]
-            __check_positive_or_zero(val, False)
-            res = [i for i in range(int(val))]
-        elif wn[:2] == '>=' or wn[:2] == '=>':   # cases '>=a','=>a' : return [a,-999], which is
-                                                 #                     then interpreted in C++
-                                                 #                     side as [a,a+1,...,a_nyq]
-                                                 #                     (CAS-3759)
-            val = wn[2:]
-            __check_positive_or_zero(val)
-            res = [int(val), -999]
-        elif wn[-2:] == '<=' or wn[-2:] == '=<': # cases 'a<=','a=<' : return [a,-999], which is
-                                                 #                     then interpreted in C++
-                                                 #                     side as [a,a+1,...,a_nyq]
-                                                 #                     (CAS-3759)
-            val = wn[:-2]
-            __check_positive_or_zero(val)
-            res = [int(val), -999]
-        elif wn[0] == '>':                       # case '>a' :         return [a+1,-999], which is
-                                                 #                     then interpreted in C++
-                                                 #                     side as [a+1,a+2,...,a_nyq]
-                                                 #                     (CAS-3759)
-            val0 = wn[1:]
-            val = int(val0)+1
-            __check_positive_or_zero(val)
-            res = [val, -999]
-        elif wn[-1] == '<':                      # case 'a<' :         return [a+1,-999], which is
-                                                 #                     then interpreted in C++
-                                                 #                     side as [a+1,a+2,...,a_nyq]
-                                                 #                     (CAS-3759)
-            val0 = wn[:-1]
-            val = int(val0)+1
-            __check_positive_or_zero(val)
-            res = [val, -999]
-        else:
-            __check_positive_or_zero(wn)
-            res = [int(wn)]
-
-        # return res
-        return ','.join(__get_strlist(res))
-    else:
-        msg = 'wrong value given for addwn/rejwn'
-        raise RuntimeError(msg)
-
-
-def __check_positive_or_zero(param, allowzero=True):
-    msg = 'wrong value given for addwn/rejwn'
-    try:
-        if isinstance(param, list) or isinstance(param, tuple):
-            for i in range(len(param)):
-                __do_check_positive_or_zero(int(param[i]), allowzero)
-        elif isinstance(param, int):
-            __do_check_positive_or_zero(param, allowzero)
-        elif isinstance(param, str):
-            __do_check_positive_or_zero(int(param), allowzero)
-        else:
-            raise RuntimeError(msg)
-    except:
-        raise RuntimeError(msg)
-
-
-def __get_strlist(param):
-    res = []
-    for i in range(len(param)):
-        res.append(str(param[i]))
-    return res
-
-
-def __do_check_positive_or_zero(param, allowzero):
-    msg = 'wrong value given for addwn/rejwn'
-    if (param < 0) or ((param == 0) and not allowzero):
-        raise RuntimeError(msg)
 
 
 def __is_sequence_or_number(param, ptype=int):

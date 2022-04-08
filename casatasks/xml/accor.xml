@@ -47,7 +47,7 @@ necessary.
                         field='0,4,5~7'; field ids 0,4,5,6,7
                         field='3C286,3C295'; field named 3C286 and
                         3C295
-                        field = '3,4C*'; field id 3, all names
+                        field = '3,4C\*'; field id 3, all names
                         starting with 4C
 
                      Note: do not forget to include the flux density
@@ -67,7 +67,7 @@ necessary.
                         (i.e. 0,1)
                         spw='0:5~61'; spw 0, channels 5 to 61,
                         INCLUSIVE
-                        spw='*:5~61'; all spw with channels 5 to 61
+                        spw='\*:5~61'; all spw with channels 5 to 61
                         spw='0,10,3:3~45'; spw 0,10 all channels, spw
                         3, channels 3 to 45.
                         spw='0~2:2~6'; spw 0,1,2 with channels 2
@@ -87,7 +87,7 @@ necessary.
 <description>Select observing intent
                      default: '' (no selection by intent)
 
-                        Example: intent='*BANDPASS*'  (selects data
+                        Example: intent='\*BANDPASS\*'  (selects data
                         labelled with BANDPASS intent)
 </description>
                 <value/>
@@ -326,20 +326,21 @@ necessary.
                    Specify a list of strings, aligned with the list of caltable specified
                    in gaintable, that contain the required interpolation parameters
                    for each caltable.
-                   * When frequency interpolation is relevant (B, Df,
+                   
+                   - When frequency interpolation is relevant (B, Df,
                      Xf), separate time-dependent and freq-dependent
-                     interp types with a comma (freq_after_ the
+                     interp types with a comma (freq_after\_ the
                      comma). 
-                   * Specifications for frequency are ignored when the
+                   - Specifications for frequency are ignored when the
                      calibration table has no channel-dependence. 
-                   * Time-dependent interp options ending in 'PD'
+                   - Time-dependent interp options ending in 'PD'
                      enable a &quot;phase delay&quot; correction per spw for
                      non-channel-dependent calibration types.
-                   * For multi-obsId datasets, 'perobs' can be
+                   - For multi-obsId datasets, 'perobs' can be
                      appended to the time-dependent interpolation
                      specification to enforce obsId boundaries when
                      interpolating in time. 
-                   * Freq-dependent interp options can have 'flag' appended
+                   - Freq-dependent interp options can have 'flag' appended
                      to enforce channel-dependent flagging, and/or 'rel' 
                      appended to invoke relative frequency interpolation
 
