@@ -57,7 +57,9 @@ def mstool_manager(vis, *args, **kwargs):
 
 
 def is_ms(filename):
-    if (os.path.isdir(filename) and os.path.exists(filename+'/table.info') and os.path.exists(filename+'/table.dat')):
+    if (os.path.isdir(filename)
+        and os.path.exists(filename + '/table.info')
+            and os.path.exists(filename + '/table.dat')):
         f = open(filename + '/table.info')
         l = bytes2str(f.readline())
         f.close()
@@ -88,8 +90,10 @@ def sdtask_decorator(func):
        2) handle exception
 
     So, you don't need to set origin in the task any more.
-    Also, you don't need to write anything about error handling in the task. If you have something to do at the end of
-    the task execution, those should be written in finally block in the task class.
+    Also, you don't need to write anything about error
+    handling in the task. If you have something to do
+    at the end of the task execution, those should be written
+    in finally block in the task class.
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -122,8 +126,10 @@ def callable_sdtask_decorator(func):
        2) handle exception
 
     So, you don't need to set origin in the task any more.
-    Also, you don't need to write anything about error handling in the task. If you have something to do at the end of
-    the task execution, those should be written in finally block in the task class.
+    Also, you don't need to write anything about error handling
+    in the task. If you have something to do at the end of
+    the task execution, those should be written in finally block
+    in the task class.
 
     Usage:
 
@@ -216,8 +222,9 @@ class sdtask_interface(object):
         select_params = ['scan', 'pol', 'beam']
         for param in select_params:
             if hasattr(self, param):
-                setattr(self, param+'no', getattr(self, param))
-                # casalog.post("renaming self.%s -> self.%sno='%s'" % (param, param, getattr(self, param)))
+                setattr(self, param + 'no', getattr(self, param))
+                # casalog.post(
+                #     "renaming self.%s -> self.%sno='%s'" % (param, param, getattr(self, param)))
                 delattr(self, param)
 
     def __del__(self):
@@ -258,6 +265,7 @@ class sdtask_template_imaging(sdtask_interface):
     check in initialize().
     For finalize(), derived classes can implement cleanup().
     """
+
     def __init__(self, **kwargs):
         super(sdtask_template_imaging, self).__init__(**kwargs)
         self.is_table_opened = False
@@ -307,7 +315,7 @@ class sdtask_template_imaging(sdtask_interface):
         # infiles must be MS
         for idx in range(len(self.infiles)):
             if not is_ms(self.infiles[idx]):
-                msg='input data sets must be in MS format'
+                msg = 'input data sets must be in MS format'
                 raise Exception(msg)
 
         self.parameter_check()
@@ -442,7 +450,7 @@ def get_nx_ny(n):
     return (nx, ny)
 
 
-def get_cellx_celly(c,unit='arcsec'):
+def get_cellx_celly(c, unit='arcsec'):
     if isinstance(c, str):
         cellx = celly = c
     elif type(c) in (list, tuple, numpy.ndarray):
@@ -535,7 +543,7 @@ def do_mst(
         outfile,
         intent,
         caller: CodeType,
-        ext_config ):
+        ext_config):
     """
       call mstransform by the provided procedure.
         Followings are parameters of mstransform, but not used by sdtimeaverage,
@@ -873,8 +881,10 @@ def __check_tileshape(tileshape):
 def __process_input_multi_ms(pdh, separationaxis):
     '''
         retval{'status': True,  'axis':''}         --> can run in parallel
-        retval{'status': False, 'axis':'value'}    --> treat MMS as monolithic MS, set new axis for output MMS
-        retval{'status': False, 'axis':''}         --> treat MMS as monolithic MS, create an output MS
+        retval{'status': False, 'axis':'value'}    --> treat MMS as monolithic MS,
+                                                       set new axis for output MMS
+        retval{'status': False, 'axis':''}         --> treat MMS as monolithic MS,
+                                                       create an output MS
         '''
     retval = pdh.validateInputParams()
 
@@ -894,7 +904,9 @@ def __process_input_multi_ms(pdh, separationaxis):
         separationaxis = retval['axis']
         pdh.override__args('separationaxis', retval['axis'])
         casalog.post("Will process the input MMS as a monolithic MS", 'WARN')
-        casalog.post("Will create an output MMS with separation axis \'%s\'" % retval['axis'], 'WARN')
+        casalog.post(
+            f"Will create an output MMS with separation axis \'{retval['axis']}\'",
+            priority='WARN')
         return createmms, separationaxis, False
 
     # MMS is processed in parallel

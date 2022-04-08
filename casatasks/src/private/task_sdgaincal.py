@@ -8,12 +8,14 @@ from .sdutil import calibrater_manager
 DEFAULT_VALUE = {'interp': 'linear',
                  'spwmap': [-1]}
 
+
 def parse_interp_item(interp):
     assert isinstance(interp, str)
     if len(interp) == 0:
         return DEFAULT_VALUE['interp']
     else:
         return interp
+
 
 def parse_interp(interp, index):
     assert index >= 0
@@ -30,12 +32,14 @@ def parse_interp(interp, index):
             return parse_interp_item(interp[index])
     assert False
 
+
 def parse_spwmap_item(spwmap):
     assert hasattr(spwmap, '__iter__')
     if len(spwmap) == 0:
         return DEFAULT_VALUE['spwmap']
     else:
         return spwmap
+
 
 def parse_spwmap(spwmap, index):
     assert hasattr(spwmap, '__iter__')
@@ -54,6 +58,7 @@ def parse_spwmap(spwmap, index):
         # maybe single spwmap that is valid to all applytables
         return spwmap
     assert False
+
 
 @sdutil.sdtask_decorator
 def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
@@ -99,21 +104,23 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
                     casalog.post('thisinterp="{0}" thisspwmap={1}'.format(thisinterp, thisspwmap))
                     mycb.setapply(table=table, interp=thisinterp, spwmap=thisspwmap)
                 else:
-                    raise RuntimeError('wrong type of applytable item ({0}). it should be string'.format(type(table)))
+                    raise RuntimeError(
+                        f'wrong type of applytable item ({type(table)}). it should be string')
         else:
-            raise RuntimeError('wrong type of applytable ({0}). it should be string or list'.format(type(applytable)))
+            raise RuntimeError(
+                f'wrong type of applytable ({type(applytable)}). it should be string or list')
 
         # set solve
         if calmode == 'doublecircle':
             if radius is None:
                 raise RuntimeError('radius must be specified.')
             elif not isinstance(radius, str):
-                rcenter = '%sarcsec'%(radius)
+                rcenter = '%sarcsec' % (radius)
             else:
                 try:
                     # if radius is a string only consists of numeric value without unit,
                     # it will succeed.
-                    rcenter = '%sarcsec'%(float(radius))
+                    rcenter = '%sarcsec' % (float(radius))
                 except:
                     # if the above fails, it may indicate that the string contains unit
                     rcenter = radius

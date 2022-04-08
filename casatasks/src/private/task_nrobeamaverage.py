@@ -9,7 +9,6 @@ from casatools import quanta
 
 from . import sdutil
 
-
 """
 The following code is based on the mstransform code, with
 task name and some task parameters modified.
@@ -23,15 +22,15 @@ to them.
 
 @sdutil.sdtask_decorator
 def nrobeamaverage(
-             infile,
-             datacolumn,
-             field,
-             spw,
-             timerange,
-             scan,
-             beam,
-             timebin,
-             outfile):
+        infile,
+        datacolumn,
+        field,
+        spw,
+        timerange,
+        scan,
+        beam,
+        timebin,
+        outfile):
 
     try:
         # set temporary data name
@@ -64,7 +63,8 @@ def nrobeamaverage(
                 if ocol[i] == 'OBSERVE_TARGET#ON_SOURCE':
                     idx_on = i
                     break
-        if idx_on is None: raise Exception('ON_SOURCE data not found.')
+        if idx_on is None:
+            raise Exception('ON_SOURCE data not found.')
 
         with sdutil.table_manager(os.path.join(tmpfile, 'ANTENNA')) as tb:
             num_beams = len(tb.getcol('NAME'))
@@ -108,7 +108,8 @@ def nrobeamaverage(
 
     finally:
         # delete tmpfile
-        if os.path.isdir(tmpfile): shutil.rmtree(tmpfile)
+        if os.path.isdir(tmpfile):
+            shutil.rmtree(tmpfile)
 
 
 def get_beamid(beam, num_beams):
@@ -122,14 +123,17 @@ def get_beamid(beam, num_beams):
         # the default case (beam='')
         if (len(_beam) == 1) and (_beam[0] == ''):
             _beam = []
-            for i in range(num_beams): _beam.append(i)
+            for i in range(num_beams):
+                _beam.append(i)
         else:
-            for i in range(len(_beam)): _beam[i] = int(_beam[i])
+            for i in range(len(_beam)):
+                _beam[i] = int(_beam[i])
     except Exception as e:
         casalog.post("Error \'%s\' input beam ID is invalid" % (e))
 
     min_beamid = _beam[0]
     for i in range(len(_beam)):
-        if _beam[i] < min_beamid: min_beamid = _beam[i]
+        if _beam[i] < min_beamid:
+            min_beamid = _beam[i]
 
     return _beam, min_beamid

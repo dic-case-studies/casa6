@@ -30,10 +30,10 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
 
         # basic check
         if os.path.exists(outputvis) and not overwrite:
-            raise RuntimeError('%s exists.'%(outputvis))
+            raise RuntimeError('%s exists.' % (outputvis))
 
         if not _is_scantable(infile):
-            raise RuntimeError('%s is not a valid Scantable.'%(infile))
+            raise RuntimeError('%s is not a valid Scantable.' % (infile))
 
         # import
         status = mysdms.importasap(infile, outputvis, parallel)
@@ -42,7 +42,7 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
             # flagversions file must be deleted
             flagversions = outputvis.rstrip('/') + '.flagversions'
             if os.path.exists(flagversions):
-                os.system('rm -rf %s'%(flagversions))
+                os.system('rm -rf %s' % (flagversions))
 
             # initialize weights using cb tool
             mycb.open(outputvis, compress=False, addcorr=False, addmodel=False)
@@ -52,9 +52,10 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
             if flagbackup:
                 aflocal = agentflagger()
                 aflocal.open(outputvis)
-                aflocal.saveflagversion('Original',
-                                        comment='Original flags at import into CASA using importasap',
-                                        merge='save')
+                aflocal.saveflagversion(
+                    'Original',
+                    comment='Original flags at import into CASA using importasap',
+                    merge='save')
                 aflocal.done()
         else:
             raise RuntimeError('Failure in importasap')
@@ -75,10 +76,10 @@ def _is_scantable(filename):
     Check if given data is Scantable or not
     """
     ret = False
-    if os.path.isdir(filename) and os.path.exists(filename+'/table.info') \
-        and os.path.exists(filename+'/table.dat'):
-        with open(filename+'/table.info') as f:
-            l=f.readline()
+    if os.path.isdir(filename) and os.path.exists(filename + '/table.info') \
+            and os.path.exists(filename + '/table.dat'):
+        with open(filename + '/table.info') as f:
+            l = f.readline()
             f.close()
         match_pattern = '^Type = (Scantable)? *$'
         ret = re.match(match_pattern, l) is not None

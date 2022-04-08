@@ -25,7 +25,7 @@ def sdsmooth(infile=None, datacolumn=None, antenna=None,
             raise ValueError(errmsg)
 
         if (os.path.exists(outfile)) and (not overwrite):
-            errmsg = outfile+' exists.'
+            errmsg = outfile + ' exists.'
             raise ValueError(errmsg)
 
         sdms.open(infile)

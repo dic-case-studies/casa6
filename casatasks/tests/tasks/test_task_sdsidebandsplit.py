@@ -36,10 +36,14 @@ from casatools import ctsys, image, quanta
 datapath = ctsys.resolve('unittest/sdsidebandsplit/')
 
 # stack_frame_find
+
+
 def stack_frame_find():
     return {}
 
 # Gaussian fit
+
+
 def gauss_func(x, *p):
     amp, center, width, offset = p
     y = amp * numpy.exp(-(x - center)**2 / (2. * width**2)) + offset
@@ -267,6 +271,7 @@ class failureTestCase(sdsidebandsplitTestBase):
     A class to test invalid task parameters to run sdsidebandsplit.
     Implemented based on test case table attached to CAS-8091
     """
+
     def setUp(self):
         self.g = stack_frame_find()
         if '__rethrow_casa_exceptions' in self.g:
@@ -368,10 +373,11 @@ class standardTestCase(sdsidebandsplitTestBase):
     1 x 1 pixel, stokes I, 4080 channels.
     """
 
-    standard_reference = dict(signal=(SpectralInfo(0, 1500, 4.06522, 0.99518, 2.96347, 898.4841, 30.48852, 1.08165),
-                                      SpectralInfo(1700, 2700, 6.05933, 1.02671, 4.92205, 2297.6872, 19.75842, 1.14450)),
-                              image=(SpectralInfo(1000, 2000, 8.07553, 1.05448, 6.94301, 1600.1052, 19.95953, 1.13069),
-                                     SpectralInfo(2500, 3500, 3.06859, 1.00263, 1.99147, 2999.9953, 9.92538, 1.07988)))
+    standard_reference = dict(
+        signal=(SpectralInfo(0, 1500, 4.06522, 0.99518, 2.96347, 898.4841, 30.48852, 1.08165),
+                SpectralInfo(1700, 2700, 6.05933, 1.02671, 4.92205, 2297.6872, 19.75842, 1.14450)),
+        image=(SpectralInfo(1000, 2000, 8.07553, 1.05448, 6.94301, 1600.1052, 19.95953, 1.13069),
+               SpectralInfo(2500, 3500, 3.06859, 1.00263, 1.99147, 2999.9953, 9.92538, 1.07988)))
 
     def assertAlmostEqual2(self, first, second, eps=1.0e-7, msg=None):
         if second == 0:
@@ -406,14 +412,17 @@ class standardTestCase(sdsidebandsplitTestBase):
             # print('Offset: ref {0} val {1}'.format(seg.offset, fitp[3]))
             self.assertAlmostEqual2(fitp[0], seg.peak, 1e-3, 'Peak comparison failed')
             self.assertAlmostEqual2(fitp[1], seg.center, 1e-3, 'Peak position comparison failed')
-            self.assertAlmostEqual2(numpy.abs(fitp[2]), numpy.abs(seg.width), 1e-3, 'Width comparison failed')
+            self.assertAlmostEqual2(numpy.abs(fitp[2]),
+                                    numpy.abs(seg.width), 1e-3,
+                                    'Width comparison failed')
             self.assertAlmostEqual2(fitp[3], seg.offset, 1e-3, 'Offset comparison failed')
 
     # T-002
     def test_imagename_2images(self):
         """len(imagename)==2"""
-        reference = dict(signal=[SpectralInfo(0, 1500, 4.0, 1.0, 2.86439, 898.70730, 30.33598, 1.09944),
-                                 SpectralInfo(1500, 3000, 6.0, 1.0, 4.91510, 2297.94793, 19.555875, 1.10176954)])
+        reference = dict(
+            signal=[SpectralInfo(0, 1500, 4.0, 1.0, 2.86439, 898.70730, 30.33598, 1.09944),
+                    SpectralInfo(1500, 3000, 6.0, 1.0, 4.91510, 2297.94793, 19.555875, 1.10176954)])
         imagename = self.standard_param['imagename'][:2]
         signalshift = self.standard_param['signalshift'][:2]
         imageshift = self.standard_param['imageshift'][:2]
@@ -470,10 +479,13 @@ class standardTestCase(sdsidebandsplitTestBase):
     # T-025
     def test_otherside(self):
         """otherside = True"""
-        reference = dict(signal=(SpectralInfo(0, 1500, 2.77938, -0.198638, 2.90884, 898.4125, 29.57543, -0.12153),
-                                 SpectralInfo(1500, 3000, 4.74292, -0.20648, 4.88534, 2298.0446, 19.75160, -0.13152)),
-                         image=(SpectralInfo(1000, 2200, 6.67820, -0.24841, 6.84674, 1599.9131, 19.75747, -0.15339),
-                                SpectralInfo(2500, 3500, 1.88367, -0.11315, 1.96069, 2999.8335, 9.94222, -0.07489)))
+        reference = dict(
+            signal=(
+                SpectralInfo(0, 1500, 2.77938, -0.198638, 2.90884, 898.4125, 29.57543, -0.12153),
+                SpectralInfo(1500, 3000, 4.74292, -0.20648, 4.88534, 2298.0446, 19.7516, -0.13152)),
+            image=(
+                SpectralInfo(1000, 2200, 6.67820, -0.24841, 6.84674, 1599.9131, 19.75747, -0.15339),
+                SpectralInfo(2500, 3500, 1.88367, -0.11315, 1.96069, 2999.8335, 9.94222, -0.07489)))
         for doboth in [False, True]:
             print('getbothside = %s' % str(doboth))
             self.run_test(reference, otherside=True, getbothside=doboth, overwrite=True)
@@ -481,12 +493,18 @@ class standardTestCase(sdsidebandsplitTestBase):
     # T-028, T-029, T-030
     def test_threshold(self):
         """various threshold values"""
-        ref_small = dict(signal=(SpectralInfo(0, 1500, 4.09385, 1.08961, 2.99224, 898.04215, 29.99680, 1.09845),
-                                 SpectralInfo(1500, 3000, 6.08972, 1.08962, 4.99175, 2297.9978, 19.98419, 1.09853)))
-        ref_mid = dict(signal=(SpectralInfo(0, 1500, 4.06263, 0.96078, 2.97665, 898.26048, 29.81733, 1.07312),
-                               SpectralInfo(1500, 3000, 6.02824, 0.99354, 4.87862, 2297.8214, 19.10228, 1.19242)))
-        ref_large = dict(signal=(SpectralInfo(0, 1500, 3.99807, 0.97891, 2.96490, 898.00416, -29.48243, 1.04387),
-                                 SpectralInfo(1500, 3000, 5.99822, 0.96876, 4.83709, 2298.0035, -18.79443, 1.21969)))
+        ref_small = dict(
+            signal=(
+                SpectralInfo(0, 1500, 4.09385, 1.08961, 2.99224, 898.04215, 29.99680, 1.09845),
+                SpectralInfo(1500, 3000, 6.08972, 1.08962, 4.99175, 2297.9978, 19.98419, 1.09853)))
+        ref_mid = dict(
+            signal=(
+                SpectralInfo(0, 1500, 4.06263, 0.96078, 2.97665, 898.26048, 29.81733, 1.07312),
+                SpectralInfo(1500, 3000, 6.02824, 0.99354, 4.87862, 2297.8214, 19.10228, 1.19242)))
+        ref_large = dict(
+            signal=(
+                SpectralInfo(0, 1500, 3.99807, 0.97891, 2.96490, 898.00416, -29.48243, 1.04387),
+                SpectralInfo(1500, 3000, 5.99822, 0.96876, 4.83709, 2298.0035, -18.79443, 1.21969)))
         for val, ref in zip((0.0001, 0.5, 0.9999), (ref_small, ref_mid, ref_large)):
             print('Threshold=%f' % val)
             self.run_test(ref, threshold=val, overwrite=True)

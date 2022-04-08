@@ -56,6 +56,8 @@ ms = mstool()
 #
 # Unit test of sdimaging task.
 #
+
+
 def construct_refstat_uniform(fluxval, blc_data, trc_data):
     """
     Return a dictionary of analytic reference statistics of uniform image
@@ -71,11 +73,12 @@ def construct_refstat_uniform(fluxval, blc_data, trc_data):
     ndim = len(blc_data)
     nvalid = 1
     for idim in range(ndim):
-        nvalid *= abs(trc_data[idim]-blc_data[idim]+1)
+        nvalid *= abs(trc_data[idim] - blc_data[idim] + 1)
     retstat = {'min': [fluxval], 'max': [fluxval], 'rms': [fluxval],
                'sigma': [0.], 'mean': [fluxval], 'npts': [nvalid],
-               'sum': [fluxval*nvalid], 'sumsq': [fluxval**2*nvalid]}
+               'sum': [fluxval * nvalid], 'sumsq': [fluxval**2 * nvalid]}
     return retstat
+
 
 def merge_dict(d1, d2):
     """
@@ -88,6 +91,7 @@ def merge_dict(d1, d2):
     d12 = copy.deepcopy(d1)
     d12.update(d2)
     return d12
+
 
 def remove_tables_starting_with(filename):
     """
@@ -105,6 +109,7 @@ def remove_tables_starting_with(filename):
     for filename in filenames:
         remove_table(filename)
 
+
 def remove_table(filename):
     """
     Remove a single directory.
@@ -116,7 +121,7 @@ def remove_table(filename):
     if os.path.exists(filename):
         if os.path.isdir(filename):
             shutil.rmtree(filename)
-        else: # file or symlink
+        else:  # file or symlink
             os.remove(filename)
 
 
@@ -128,7 +133,7 @@ class FileManager:
     Assumption: all tests are run in the same working directory.
     """
 
-    def __init__(self,repo_dir):
+    def __init__(self, repo_dir):
         if not os.path.isdir(repo_dir):
             raise ValueError(f'Not a directory: {repo_dir}')
         if not os.path.isabs(repo_dir):
@@ -138,7 +143,8 @@ class FileManager:
         real_repo_dir = os.path.realpath(repo_dir)
         real_local_dir = os.path.realpath(self._local_dir)
         if real_local_dir.startswith(real_repo_dir):
-            raise ValueError('Local dir: {} is under repo dir: {}'.format(self._local_dir,self._repo_dir))
+            raise ValueError(
+                f'Local dir: {self._local_dir} is under repo dir: {self._repo_dir}')
         self._files = set()
         self._log(f'Local directory: {self.local_dir}')
 
@@ -150,13 +156,13 @@ class FileManager:
     def local_dir(self):
         return self._local_dir
 
-    def assert_is_valid(self,name):
+    def assert_is_valid(self, name):
         is_invalid = (
             not name or
             os.path.sep in name or
             name == '.' or
             name == '..' or
-            not os.path.exists(os.path.join(self.repo_dir,name)))
+            not os.path.exists(os.path.join(self.repo_dir, name)))
 
         if is_invalid:
             raise ValueError(f'File: {name} not found in repository: {self.repo_dir}')
@@ -166,16 +172,16 @@ class FileManager:
         if cwd != self.local_dir:
             raise RuntimeError(f'Working directory changed ! From: {self.local_dir} to: {cwd}')
 
-    def _log(self,msg,priority='INFO',origin=''):
+    def _log(self, msg, priority='INFO', origin=''):
         casalog.origin('test_tsdimaging::FileManager')
-        casalog.post(msg,priority=priority,origin=origin)
+        casalog.post(msg, priority=priority, origin=origin)
         casalog.origin('')
 
-    def _delete(self,file_basename):
+    def _delete(self, file_basename):
         self.assert_workdir_did_not_changed()
         self.assert_is_valid(file_basename)
         self.unlock_owner_write_protection(file_basename)
-        self._log(f'Deleting: {file_basename}',origin='_delete')
+        self._log(f'Deleting: {file_basename}', origin='_delete')
         if os.path.isdir(file_basename) and not os.path.islink(file_basename):
             shutil.rmtree(file_basename)
         else:
@@ -187,15 +193,15 @@ class FileManager:
             self._delete(f)
 
     @classmethod
-    def remove_permissions(cls,mode,flags):
+    def remove_permissions(cls, mode, flags):
         return mode & ~flags
 
     @classmethod
-    def add_permissions(cls,mode,flags):
+    def add_permissions(cls, mode, flags):
         return mode | flags
 
     @classmethod
-    def write_protect(cls,path):
+    def write_protect(cls, path):
         """Write protect MS to be sdimaged, as far as we can.
 
         When path is a directory it is more or less assumed to be an MS.
@@ -205,48 +211,51 @@ class FileManager:
         if os.path.isdir(path):
             for root, dirs, files in os.walk(path):
                 targets = [root]
-                targets.extend([os.path.join(root,f) for f in files])
+                targets.extend([os.path.join(root, f) for f in files])
                 for target in targets:
                     root_base = os.path.basename(root)
                     target_base = os.path.basename(target)
                     # Imager creates scratch columns in MAIN table (?)
-                    if is_ms(root): continue
+                    if is_ms(root):
+                        continue
                     # Imager writes to HISTORY table
-                    if root_base == 'HISTORY': continue
+                    if root_base == 'HISTORY':
+                        continue
                     # Allow write access to lock files
-                    if target_base == 'table.lock': continue
+                    if target_base == 'table.lock':
+                        continue
                     cur_mode = stat.S_IMODE(os.stat(target).st_mode)
-                    new_mode = cls.remove_permissions(cur_mode,can_write)
-                    os.chmod(target,new_mode)
+                    new_mode = cls.remove_permissions(cur_mode, can_write)
+                    os.chmod(target, new_mode)
         else:
             cur_mode = stat.S_IMODE(os.stat(path).st_mode)
-            new_mode = cls.remove_permissions(cur_mode,can_write)
-            os.chmod(path,new_mode)
+            new_mode = cls.remove_permissions(cur_mode, can_write)
+            os.chmod(path, new_mode)
 
     @classmethod
-    def unlock_owner_write_protection(cls,path):
+    def unlock_owner_write_protection(cls, path):
         flags = stat.S_IWUSR
         if os.path.isdir(path):
             for root, dirs, files in os.walk(path):
                 targets = [root]
-                targets.extend([os.path.join(root,f) for f in files])
+                targets.extend([os.path.join(root, f) for f in files])
                 for target in targets:
                     cur_mode = stat.S_IMODE(os.stat(target).st_mode)
-                    new_mode = cls.add_permissions(cur_mode,flags)
-                    os.chmod(target,new_mode)
+                    new_mode = cls.add_permissions(cur_mode, flags)
+                    os.chmod(target, new_mode)
         else:
             cur_mode = stat.S_IMODE(os.stat(path).st_mode)
-            new_mode = cls.remove_permissions(cur_mode,flags)
-            os.chmod(path,new_mode)
+            new_mode = cls.remove_permissions(cur_mode, flags)
+            os.chmod(path, new_mode)
 
-    def smart_copy(self,file_basename):
+    def smart_copy(self, file_basename):
         """Copy a dataset from casatestdata only when strictly required"""
 
         self.assert_workdir_did_not_changed()
         self.assert_is_valid(file_basename)
         log_origin = 'smart_copy'
 
-        src = os.path.join(self.repo_dir,file_basename)
+        src = os.path.join(self.repo_dir, file_basename)
         dst = file_basename
 
         # What shall we do ?
@@ -272,35 +281,37 @@ class FileManager:
         if must_copy:
             # Make a read-only copy and ...
             if os.path.isdir(src):
-                shutil.copytree(src,dst)
+                shutil.copytree(src, dst)
             else:
-                shutil.copy(src,dst)
+                shutil.copy(src, dst)
             self.write_protect(dst)
             # remember we did
             self._files.add(file_basename)
-            self._log(f'Copied: {src} to: {dst}',origin=log_origin)
+            self._log(f'Copied: {src} to: {dst}', origin=log_origin)
 
         if not must_delete and not must_copy:
-            self._log(f'Already have: {file_basename}. Skipping copy of: {src}',origin=log_origin)
+            self._log(f'Already have: {file_basename}. Skipping copy of: {src}', origin=log_origin)
+
 
 class sdimaging_standard_paramset(object):
-    rawfile='sdimaging.ms'
-    phasecenter='J2000 17:18:29 +59.31.23'
-    imsize=[75,75]
-    cell=['3.0arcmin','3.0arcmin']
-    gridfunction='PB'
+    rawfile = 'sdimaging.ms'
+    phasecenter = 'J2000 17:18:29 +59.31.23'
+    imsize = [75, 75]
+    cell = ['3.0arcmin', '3.0arcmin']
+    gridfunction = 'PB'
     minweight0 = 0.
-    mode='channel'
-    nchan=40
-    start=400
-    width=10
+    mode = 'channel'
+    nchan = 40
+    start = 400
+    width = 10
 
 ###
 # Base class for sdimaging unit test
 ###
 
+
 class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
-    #FIXME: only code of common interest to all tests of all derived
+    # FIXME: only code of common interest to all tests of all derived
     # test classe should be here. The rest should be moved outside,
     # for easier readbility and maintenance.
     # sdimaging_standard_paramset is no longer of common interest.
@@ -333,32 +344,33 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
     Furthermore, SYSCAL and POINTING tables are downsized.
 
     """
-    taskname='sdimaging'
-    datapath=ctsys_resolve('unittest/tsdimaging/')
-    postfix='.im'
+    taskname = 'sdimaging'
+    datapath = ctsys_resolve('unittest/tsdimaging/')
+    postfix = '.im'
     ms_nchan = 1024
 #     phasecenter='J2000 17:18:29 +59.31.23'
 #     imsize=[75,75]
 #     cell=['3.0arcmin','3.0arcmin']
 #     gridfunction='PB'
 #     minweight0 = 0.
-    statsinteg={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                'blcf': '17:32:18.690, +57.37.28.536, I, 1.42064e+09Hz',
-                'max': numpy.array([ 0.6109162]),
-                'maxpos': numpy.array([4, 62,  0,  0], dtype=numpy.int32),
-                'maxposf': '17:31:59.439, +60.43.52.421, I, 1.42064e+09Hz',
-                'mean': numpy.array([ 0.39524983]),
-                'min': numpy.array([ 0.]),
-                'minpos': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                'minposf': '17:32:18.690, +57.37.28.536, I, 1.42064e+09Hz',
-                'npts': numpy.array([ 5625.]),
-                'rms': numpy.array([ 0.43127564]),
-                'sigma': numpy.array([ 0.17257331]),
-                'sum': numpy.array([ 2223.28028646]),
-                'sumsq': numpy.array([ 1046.2425779]),
-                'trc': numpy.array([74, 74,  0,  0], dtype=numpy.int32),
-                'trcf': '17:03:03.151, +61.19.10.757, I, 1.42064e+09Hz'}
-    keys=['max','mean','min','npts','rms','blc','blcf','trc','trcf','sigma','sum','sumsq']
+    statsinteg = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.42064e+09Hz',
+                  'max': numpy.array([0.6109162]),
+                  'maxpos': numpy.array([4, 62, 0, 0], dtype=numpy.int32),
+                  'maxposf': '17:31:59.439, +60.43.52.421, I, 1.42064e+09Hz',
+                  'mean': numpy.array([0.39524983]),
+                  'min': numpy.array([0.]),
+                  'minpos': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                  'minposf': '17:32:18.690, +57.37.28.536, I, 1.42064e+09Hz',
+                  'npts': numpy.array([5625.]),
+                  'rms': numpy.array([0.43127564]),
+                  'sigma': numpy.array([0.17257331]),
+                  'sum': numpy.array([2223.28028646]),
+                  'sumsq': numpy.array([1046.2425779]),
+                  'trc': numpy.array([74, 74, 0, 0], dtype=numpy.int32),
+                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.42064e+09Hz'}
+    keys = ['max', 'mean', 'min', 'npts', 'rms', 'blc',
+            'blcf', 'trc', 'trcf', 'sigma', 'sum', 'sumsq']
 
     def run_test_common(self, task_param, refstats, shape, refbeam=None,
                         atol=1.e-8, rtol=1.e-5, compstats=None, ignoremask=True):
@@ -371,25 +383,25 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         (4) image statistics
         (5) reference beam of image (optional)
         """
-        res=sdimaging(**task_param)
+        res = sdimaging(**task_param)
         outprefix = task_param['outfile']
         outfile = outprefix + image_suffix
         # Tests
-        self.assertEqual(res,None,
+        self.assertEqual(res, None,
                          msg='Any error occurred during imaging')
         self._checkfile(outfile)
         self._check_weight_image(outfile)
         self._checkframe(outfile)
-        self._checkshape(outfile, shape[0], shape[1],shape[2],shape[3])
+        self._checkshape(outfile, shape[0], shape[1], shape[2], shape[3])
         self._checkstats(outfile, refstats, compstats=compstats,
                          atol=atol, rtol=rtol, ignoremask=ignoremask)
         if refbeam is not None:
             self._check_beam(outfile, refbeam)
 
-    def _checkfile( self, name ):
-        isthere=os.path.exists(name)
-        self.assertEqual(isthere,True,
-                         msg='output file %s was not created because of the task failure'%(name))
+    def _checkfile(self, name):
+        isthere = os.path.exists(name)
+        self.assertEqual(isthere, True,
+                         msg='output file %s was not created because of the task failure' % (name))
 
     def _check_weight_image(self, imagename):
         # weight image name is imagename + '.weight'
@@ -439,21 +451,22 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         spectral_frame = spectral_frames[0]
         self.assertEqual('LSRK', spectral_frame)
 
-    def _checkshape(self,name,nx,ny,npol,nchan):
+    def _checkshape(self, name, nx, ny, npol, nchan):
         self._checkfile(name)
         _ia.open(name)
-        imshape=_ia.shape()
+        imshape = _ia.shape()
         _ia.close()
-        self.assertEqual(nx,imshape[0],
-                    msg='nx does not match')
-        self.assertEqual(ny,imshape[1],
-                    msg='ny does not match')
-        self.assertEqual(npol,imshape[2],
-                    msg='npol does not match')
-        self.assertEqual(nchan,imshape[3],
-                    msg='nchan does not match')
+        self.assertEqual(nx, imshape[0],
+                         msg='nx does not match')
+        self.assertEqual(ny, imshape[1],
+                         msg='ny does not match')
+        self.assertEqual(npol, imshape[2],
+                         msg='npol does not match')
+        self.assertEqual(nchan, imshape[3],
+                         msg='nchan does not match')
 
-    def _checkstats(self,name, ref, compstats=None, atol=1.e-8, rtol=1.e-5, region=None, ignoremask=False):
+    def _checkstats(self, name, ref, compstats=None, atol=1.e-8, rtol=1.e-5,
+                    region=None, ignoremask=False):
         """
         A test function to compare statistics of an image with reference
         values.
@@ -472,28 +485,33 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
                          is False (take image mask into account).
         """
         self._checkfile(name)
-        if compstats is None: compstats = ref.keys()
-        if region is None: region = ""
+        if compstats is None:
+            compstats = ref.keys()
+        if region is None:
+            region = ""
         _ia.open(name)
         try:
             if ignoremask:
                 def_mask = _ia.maskhandler('default')
                 _ia.calcmask('T')
-            stats=_ia.statistics(region=region, list=True, verbose=True)
+            stats = _ia.statistics(region=region, list=True, verbose=True)
             if ignoremask:
-                _ia.maskhandler('set',def_mask)
-        except: raise
-        finally: _ia.close()
-        #for key in stats.keys():
+                _ia.maskhandler('set', def_mask)
+        except:
+            raise
+        finally:
+            _ia.close()
+        # for key in stats.keys():
         for key in compstats:
-            message='statistics \'%s\' does not match: %s (expected: %s)' % ( key, str(stats[key]), str(ref[key]) )
-            if type(stats[key])==str:
-                self.assertEqual(stats[key],ref[key],
+            message = 'statistics \'%s\' does not match: %s (expected: %s)' % (
+                key, str(stats[key]), str(ref[key]))
+            if type(stats[key]) == str:
+                self.assertEqual(stats[key], ref[key],
                                  msg=message)
             else:
-                #print stats[key]-ref[key]
-                ret=numpy.allclose(stats[key],ref[key], atol=atol, rtol=rtol)
-                self.assertEqual(ret,True,
+                # print stats[key]-ref[key]
+                ret = numpy.allclose(stats[key], ref[key], atol=atol, rtol=rtol)
+                self.assertEqual(ret, True,
                                  msg=message)
 
     def _checkdirax(self, imagename, center, cell, imsize):
@@ -509,27 +527,27 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         ra_unit = ret['axisunits'][ra_idx]
         dec_unit = ret['axisunits'][dec_idx]
         # imsize
-        self.assertEqual(imsize[0], ret['shape'][ra_idx],\
-                         msg="nx = %d (expected: %d)" % \
+        self.assertEqual(imsize[0], ret['shape'][ra_idx],
+                         msg="nx = %d (expected: %d)" %
                          (imsize[0], ret['shape'][ra_idx]))
-        self.assertEqual(imsize[1], ret['shape'][dec_idx],\
-                         msg="nx = %d (expected: %d)" % \
+        self.assertEqual(imsize[1], ret['shape'][dec_idx],
+                         msg="nx = %d (expected: %d)" %
                          (imsize[1], ret['shape'][dec_idx]))
         # image center
         tol = "1arcsec"
         cen_arr = center.split()
         cen_ref = me.direction(*cen_arr)
-        cen_x = (qa.convert(cen_ref['m0'], 'rad')['value'] % (numpy.pi*2))
+        cen_x = (qa.convert(cen_ref['m0'], 'rad')['value'] % (numpy.pi * 2))
         cen_y = qa.convert(cen_ref['m1'], 'rad')['value']
-        ref_x = qa.convert(qa.quantity(ret['refval'][ra_idx],ra_unit),'rad')['value']
-        ref_x = (ref_x % (numpy.pi*2))
-        ref_y = qa.convert(qa.quantity(ret['refval'][dec_idx],dec_unit),'rad')['value']
+        ref_x = qa.convert(qa.quantity(ret['refval'][ra_idx], ra_unit), 'rad')['value']
+        ref_x = (ref_x % (numpy.pi * 2))
+        ref_y = qa.convert(qa.quantity(ret['refval'][dec_idx], dec_unit), 'rad')['value']
         tol_val = qa.convert(tol, 'rad')['value']
-        self.assertTrue(abs(ref_x-cen_x) < tol_val,
-                        msg="center_x = %f %s (expected: %f)" % \
+        self.assertTrue(abs(ref_x - cen_x) < tol_val,
+                        msg="center_x = %f %s (expected: %f)" %
                         (ref_x, ra_unit, cen_x))
-        self.assertTrue(abs(ref_y-cen_y) < tol_val,
-                        msg="center_y = %f %s (expected: %f)" % \
+        self.assertTrue(abs(ref_y - cen_y) < tol_val,
+                        msg="center_y = %f %s (expected: %f)" %
                         (ref_x, ra_unit, cen_x))
 
         # cell (imager seems to set negative incr for dx)
@@ -537,11 +555,11 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         dy = qa.convert(cell[1], dec_unit)['value']
         incx = ret['incr'][ra_idx]
         incy = ret['incr'][dec_idx]
-        self.assertAlmostEqual((incx-dx)/dx, 0., places=5, \
-                               msg="cellx = %f %s (expected: %f)" % \
+        self.assertAlmostEqual((incx - dx) / dx, 0., places=5,
+                               msg="cellx = %f %s (expected: %f)" %
                                (incx, ra_unit, dx))
-        self.assertAlmostEqual((incy-dy)/dy, 0., places=5, \
-                               msg="celly = %f %s (expected: %f)" % \
+        self.assertAlmostEqual((incy - dy) / dy, 0., places=5,
+                               msg="celly = %f %s (expected: %f)" %
                                (incy, dec_unit, dy))
 
     def _format_dir_list(self, inval):
@@ -560,8 +578,12 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         min_asec = qa.getvalue(qa.convert(beam['minor'], 'arcsec'))[0]
         maj_asec_ref = qa.getvalue(qa.convert(ref_beam['major'], 'arcsec'))[0]
         min_asec_ref = qa.getvalue(qa.convert(ref_beam['minor'], 'arcsec'))[0]
-        self.assertAlmostEqual(abs(maj_asec-maj_asec_ref)/max(maj_asec_ref,1.e-12), 0., places=3, msg="major axis = %f arcsec (expected: %f)" % (maj_asec, maj_asec_ref))
-        self.assertAlmostEqual(abs(min_asec-min_asec_ref)/max(min_asec_ref,1.e-12), 0., places=3, msg="minor axis = %f arcsec (expected: %f)" % (min_asec, min_asec_ref))
+        self.assertAlmostEqual(
+            abs(maj_asec - maj_asec_ref) / max(maj_asec_ref, 1.e-12), 0.,
+            places=3, msg="major axis = %f arcsec (expected: %f)" % (maj_asec, maj_asec_ref))
+        self.assertAlmostEqual(
+            abs(min_asec - min_asec_ref) / max(min_asec_ref, 1.e-12), 0.,
+            places=3, msg="minor axis = %f arcsec (expected: %f)" % (min_asec, min_asec_ref))
 
     def _check_restfreq(self, imagename, restfreq):
         """ Test image rest frequency"""
@@ -573,15 +595,15 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         _ia.close()
         testval = qa.getvalue(qa.convert(csys.restfrequency(), myunit))
         csys.done()
-        ret=numpy.allclose(testval,refval, atol=1.e-5, rtol=1.e-5)
+        ret = numpy.allclose(testval, refval, atol=1.e-5, rtol=1.e-5)
         self.assertTrue(ret)
 
     def run_exception_case(self, task_param, expected_msg, expected_type=RuntimeError):
         with self.assertRaises(expected_type) as cm:
-            res=sdimaging(**task_param)
+            res = sdimaging(**task_param)
         the_exception = cm.exception
-        pos=str(the_exception).find(expected_msg)
-        self.assertNotEqual(pos,-1,
+        pos = str(the_exception).find(expected_msg)
+        self.assertNotEqual(pos, -1,
                             msg='Unexpected exception was thrown: {0}'.format(str(the_exception)))
 
     def run_parameter_verification_test(self, task_param, expected_msg, expected_type=RuntimeError):
@@ -590,14 +612,16 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
 ###
 # Test on bad parameter settings
 ###
+
+
 class sdimaging_test0(sdimaging_unittest_base):
     """
     Test on bad parameter setting
     """
     # Input and output names
-    prefix = sdimaging_unittest_base.taskname+'Test0'
+    prefix = sdimaging_unittest_base.taskname + 'Test0'
     badid = '99'
-    outfile = prefix+sdimaging_unittest_base.postfix
+    outfile = prefix + sdimaging_unittest_base.postfix
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -605,12 +629,12 @@ class sdimaging_test0(sdimaging_unittest_base):
         remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
 
-        self.task_param = dict(infiles=self.rawfile,mode='channel',
-                               outfile=self.outfile,intent='',
-                               cell=self.cell,imsize=self.imsize,
+        self.task_param = dict(infiles=self.rawfile, mode='channel',
+                               outfile=self.outfile, intent='',
+                               cell=self.cell, imsize=self.imsize,
                                phasecenter=self.phasecenter,
                                gridfunction=self.gridfunction,
-                               nchan=40,start=400,
+                               nchan=40, start=400,
                                width=10,
                                minweight=self.minweight0)
 
@@ -630,7 +654,7 @@ class sdimaging_test0(sdimaging_unittest_base):
     def test001(self):
         """Test001: Bad mode"""
         # argument verification error
-        task_param = dict(infiles=self.rawfile,mode='badmode',intent='',outfile=self.outfile)
+        task_param = dict(infiles=self.rawfile, mode='badmode', intent='', outfile=self.outfile)
         msg = 'unallowed'
         self.run_parameter_verification_test(task_param, msg, expected_type=AssertionError)
 
@@ -662,7 +686,7 @@ class sdimaging_test0(sdimaging_unittest_base):
     def test006(self):
         """Test006: Bad gridfunction"""
         # argument verification error
-        task_param = dict(infiles=self.rawfile,gridfunction='BAD',intent='',outfile=self.outfile)
+        task_param = dict(infiles=self.rawfile, gridfunction='BAD', intent='', outfile=self.outfile)
         msg = 'unallowed'
         self.run_parameter_verification_test(task_param, msg, expected_type=AssertionError)
 
@@ -675,7 +699,7 @@ class sdimaging_test0(sdimaging_unittest_base):
     def test008(self):
         """Test008: Existing outfile with overwrite=False"""
         outfile = self.outfile + image_suffix
-        f=open(outfile, 'w')
+        f = open(outfile, 'w')
         print('existing file', file=f)
         f.close()
         self.task_param['overwrite'] = False
@@ -690,11 +714,12 @@ class sdimaging_test0(sdimaging_unittest_base):
 
     def test010(self):
         """Test010: Bad phasecenter reference (CHANGED: raise an error)"""
-        # older sdimaging was so kind that it assumed J2000 when unrecognized direction frame was given
-        # in the new tsdimaging raises an error in such case
+        # older sdimaging was so kind that it assumed J2000 when unrecognized direction frame
+        # was given in the new tsdimaging raises an error in such case
         false_phasecenter = self.phasecenter.replace('J2000', 'J3000')
         self.task_param['phasecenter'] = false_phasecenter
-        msg = 'Invalid Image Parameter set : Error in converting \'{0}\' to MDirection.'.format(false_phasecenter)
+        msg = 'Invalid Image Parameter set : ' + \
+              f"Error in converting '{false_phasecenter}' to MDirection."
         self.run_exception_case(self.task_param, msg)
 #         # default for unknown direction frame is J2000
 #         refimage=self.outfile+'2'
@@ -713,20 +738,24 @@ class sdimaging_test0(sdimaging_unittest_base):
     def test011(self):
         """Test011: Bad pointingcolumn name"""
         # argument verification error
-        task_param = dict(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,pointingcolumn='non_exist')
+        task_param = dict(
+            infiles=self.rawfile, outfile=self.outfile, intent='', cell=self.cell,
+            imsize=self.imsize, phasecenter=self.phasecenter, pointingcolumn='non_exist')
         msg = 'unallowed'
         self.run_parameter_verification_test(task_param, msg, expected_type=AssertionError)
 
     def test012(self):
         """Test012: Bad imsize"""
-        self.task_param['imsize'] = [1,0]
-        msg = 'Error in building Coordinate System and Image Shape : Internal Error : Image shape is invalid :'
+        self.task_param['imsize'] = [1, 0]
+        msg = 'Error in building Coordinate System and Image Shape : ' + \
+              'Internal Error : Image shape is invalid :'
         self.run_exception_case(self.task_param, msg)
 
     def test013(self):
         """Test013: Bad cell size"""
         self.task_param['cell'] = [0., 0.]
-        msg = 'Error in building Coordinate System and Image Shape : wcs wcsset_error: Linear transformation matrix is singular'
+        msg = 'Error in building Coordinate System and Image Shape : ' + \
+              'wcs wcsset_error: Linear transformation matrix is singular'
         self.run_exception_case(self.task_param, msg)
 
     def test014(self):
@@ -742,7 +771,9 @@ class sdimaging_test0(sdimaging_unittest_base):
 
     def test015(self):
         """Test015: negative minweight"""
-        task_param = dict(infiles=self.rawfile,outfile=self.outfile,intent='',cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=-1.)
+        task_param = dict(
+            infiles=self.rawfile, outfile=self.outfile, intent='',
+            cell=self.cell, imsize=self.imsize, phasecenter=self.phasecenter, minweight=-1.)
         msg = 'min value is 0'
         self.run_parameter_verification_test(task_param, msg, expected_type=AssertionError)
 
@@ -764,8 +795,8 @@ class sdimaging_test1(sdimaging_unittest_base):
 
     """
     # Input and output names
-    prefix=sdimaging_unittest_base.taskname+'Test1'
-    outfile=prefix+sdimaging_unittest_base.postfix
+    prefix = sdimaging_unittest_base.taskname + 'Test1'
+    outfile = prefix + sdimaging_unittest_base.postfix
 #     mode='channel'
 #     nchan=40
 #     start=400
@@ -778,13 +809,13 @@ class sdimaging_test1(sdimaging_unittest_base):
         shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
 
         # Common task parameters of the class
-        self.task_param = dict(infiles=self.rawfile,mode=self.mode,
+        self.task_param = dict(infiles=self.rawfile, mode=self.mode,
                                spw='0',
-                               outfile=self.outfile,intent='',
-                               cell=self.cell,imsize=self.imsize,
+                               outfile=self.outfile, intent='',
+                               cell=self.cell, imsize=self.imsize,
                                phasecenter=self.phasecenter,
                                gridfunction=self.gridfunction,
-                               nchan=self.nchan,start=self.start,
+                               nchan=self.nchan, start=self.start,
                                width=self.width,
                                minweight=self.minweight0)
 
@@ -796,285 +827,282 @@ class sdimaging_test1(sdimaging_unittest_base):
 
     def test100(self):
         """Test 100: Integrated image"""
-        self.task_param.update(dict(nchan=1,start=0,width=self.ms_nchan))
-        outshape = (self.imsize[0],self.imsize[1],1,1)
+        self.task_param.update(dict(nchan=1, start=0, width=self.ms_nchan))
+        outshape = (self.imsize[0], self.imsize[1], 1, 1)
         self.run_test_common(self.task_param, self.statsinteg, outshape, compstats=self.keys,
                              ignoremask=True)
 
     def test101(self):
         """Test 101: Full channel image (nchan = -1)"""
-        self.task_param.update(dict(nchan=-1,start="",width=""))
-        outshape = (self.imsize[0],self.imsize[1],1,self.ms_nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.419395e+09Hz',
-                  'max': numpy.array([ 24.77152824]),
-                  'maxpos': numpy.array([ 59,  21,   0, 605], dtype=numpy.int32),
-                  'maxposf': '17:10:00.642, +58.42.19.808, I, 1.420872e+09Hz',
-                  'mean': numpy.array([ 0.39542111]),
-                  'min': numpy.array([-1.84636593]),
-                  'minpos': numpy.array([  73,    6,    0, 1023], dtype=numpy.int32),
-                  'minposf': '17:04:54.966, +57.55.36.907, I, 1.421893e+09Hz',
-                  'npts': numpy.array([ 5760000.]),
-                  'rms': numpy.array([ 1.01357317]),
-                  'sigma': numpy.array([ 0.93325921]),
-                  'sum': numpy.array([ 2277625.60731485]),
-                  'sumsq': numpy.array([ 5917423.42281288]),
-                  'trc': numpy.array([  74,   74,    0, 1023], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.421893e+09Hz'}
+        self.task_param.update(dict(nchan=-1, start="", width=""))
+        outshape = (self.imsize[0], self.imsize[1], 1, self.ms_nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.419395e+09Hz',
+                    'max': numpy.array([24.77152824]),
+                    'maxpos': numpy.array([59, 21, 0, 605], dtype=numpy.int32),
+                    'maxposf': '17:10:00.642, +58.42.19.808, I, 1.420872e+09Hz',
+                    'mean': numpy.array([0.39542111]),
+                    'min': numpy.array([-1.84636593]),
+                    'minpos': numpy.array([73, 6, 0, 1023], dtype=numpy.int32),
+                    'minposf': '17:04:54.966, +57.55.36.907, I, 1.421893e+09Hz',
+                    'npts': numpy.array([5760000.]),
+                    'rms': numpy.array([1.01357317]),
+                    'sigma': numpy.array([0.93325921]),
+                    'sum': numpy.array([2277625.60731485]),
+                    'sumsq': numpy.array([5917423.42281288]),
+                    'trc': numpy.array([74, 74, 0, 1023], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.421893e+09Hz'}
         self.run_test_common(self.task_param, refstats, outshape, compstats=self.keys,
                              ignoremask=True)
-
 
     def test102(self):
         """Test 102: Full channel image"""
         tb.open(self.rawfile)
         if 'FLOAT_DATA' in tb.colnames():
-            nchan=tb.getcell('FLOAT_DATA').shape[1]
+            nchan = tb.getcell('FLOAT_DATA').shape[1]
         else:
-            nchan=tb.getcell('DATA').shape[1]
+            nchan = tb.getcell('DATA').shape[1]
         tb.close()
-        self.task_param.update(dict(nchan=nchan,start=0,width=1))
+        self.task_param.update(dict(nchan=nchan, start=0, width=1))
         # for testing
         #self.task_param['gridfunction'] = 'BOX'
-        for (k,v) in self.task_param.items():
-            casalog.post('test102: {0} = \'{1}\' (type {2})'.format(k,v,type(v)))
-        outshape = (self.imsize[0],self.imsize[1],1,nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.419395e+09Hz',
-                  'max': numpy.array([ 24.77152824]),
-                  'maxpos': numpy.array([ 59,  21,   0, 605], dtype=numpy.int32),
-                  'maxposf': '17:10:00.642, +58.42.19.808, I, 1.420872e+09Hz',
-                  'mean': numpy.array([ 0.39542111]),
-                  'min': numpy.array([-1.84636593]),
-                  'minpos': numpy.array([  73,    6,    0, 1023], dtype=numpy.int32),
-                  'minposf': '17:04:54.966, +57.55.36.907, I, 1.421893e+09Hz',
-                  'npts': numpy.array([ 5760000.]),
-                  'rms': numpy.array([ 1.01357317]),
-                  'sigma': numpy.array([ 0.93325921]),
-                  'sum': numpy.array([ 2277625.60731485]),
-                  'sumsq': numpy.array([ 5917423.42281288]),
-                  'trc': numpy.array([  74,   74,    0, 1023], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.421893e+09Hz'}
+        for (k, v) in self.task_param.items():
+            casalog.post('test102: {0} = \'{1}\' (type {2})'.format(k, v, type(v)))
+        outshape = (self.imsize[0], self.imsize[1], 1, nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.419395e+09Hz',
+                    'max': numpy.array([24.77152824]),
+                    'maxpos': numpy.array([59, 21, 0, 605], dtype=numpy.int32),
+                    'maxposf': '17:10:00.642, +58.42.19.808, I, 1.420872e+09Hz',
+                    'mean': numpy.array([0.39542111]),
+                    'min': numpy.array([-1.84636593]),
+                    'minpos': numpy.array([73, 6, 0, 1023], dtype=numpy.int32),
+                    'minposf': '17:04:54.966, +57.55.36.907, I, 1.421893e+09Hz',
+                    'npts': numpy.array([5760000.]),
+                    'rms': numpy.array([1.01357317]),
+                    'sigma': numpy.array([0.93325921]),
+                    'sum': numpy.array([2277625.60731485]),
+                    'sumsq': numpy.array([5917423.42281288]),
+                    'trc': numpy.array([74, 74, 0, 1023], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.421893e+09Hz'}
         self.run_test_common(self.task_param, refstats, outshape, compstats=self.keys,
                              ignoremask=True)
 
     def test103(self):
         """Test 103: Selected channel image"""
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
-                  'max': numpy.array([ 14.79568005]),
-                  'maxpos': numpy.array([57, 20,  0, 20], dtype=numpy.int32),
-                  'maxposf': '17:10:47.496, +58.39.30.813, I, 1.42087e+09Hz',
-                  'mean': numpy.array([ 0.82293006]),
-                  'min': numpy.array([-0.08763941]),
-                  'minpos': numpy.array([61, 71,  0, 35], dtype=numpy.int32),
-                  'minposf': '17:08:30.980, +61.12.02.893, I, 1.42124e+09Hz',
-                  'npts': numpy.array([ 225000.]),
-                  'rms': numpy.array([ 1.54734671]),
-                  'sigma': numpy.array([ 1.31037237]),
-                  'sum': numpy.array([ 185159.263672]),
-                  'sumsq': numpy.array([ 538713.45272028]),
-                  'trc': numpy.array([74, 74,  0, 39], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.42133e+09Hz'}
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
+                    'max': numpy.array([14.79568005]),
+                    'maxpos': numpy.array([57, 20, 0, 20], dtype=numpy.int32),
+                    'maxposf': '17:10:47.496, +58.39.30.813, I, 1.42087e+09Hz',
+                    'mean': numpy.array([0.82293006]),
+                    'min': numpy.array([-0.08763941]),
+                    'minpos': numpy.array([61, 71, 0, 35], dtype=numpy.int32),
+                    'minposf': '17:08:30.980, +61.12.02.893, I, 1.42124e+09Hz',
+                    'npts': numpy.array([225000.]),
+                    'rms': numpy.array([1.54734671]),
+                    'sigma': numpy.array([1.31037237]),
+                    'sum': numpy.array([185159.263672]),
+                    'sumsq': numpy.array([538713.45272028]),
+                    'trc': numpy.array([74, 74, 0, 39], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.42133e+09Hz'}
         # beam size from r32523
-        ref_beam=dict(major='661.858412arcsec',minor='661.858412arcsec')
-        self.run_test_common(self.task_param, refstats, outshape,  refbeam=ref_beam,
+        ref_beam = dict(major='661.858412arcsec', minor='661.858412arcsec')
+        self.run_test_common(self.task_param, refstats, outshape, refbeam=ref_beam,
                              compstats=self.keys, ignoremask=True)
 
     def test104(self):
         """Test 104: Box-car gridding"""
         self.task_param.update(dict(gridfunction='BOX'))
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
-                  'max': numpy.array([ 15.64525127]),
-                  'maxpos': numpy.array([58, 20,  0, 20], dtype=numpy.int32),
-                  'maxposf': '17:10:24.433, +58.39.25.476, I, 1.42087e+09Hz',
-                  'mean': numpy.array([ 0.66097592]),
-                  'min': numpy.array([-0.42533547]),
-                  'minpos': numpy.array([69, 62,  0, 38], dtype=numpy.int32),
-                  'minposf': '17:05:23.086, +60.44.01.427, I, 1.42131e+09Hz',
-                  'npts': numpy.array([ 225000.]),
-                  'rms': numpy.array([ 1.38591599]),
-                  'sigma': numpy.array([ 1.2181464]),
-                  'sum': numpy.array([ 148719.58227018]),
-                  'sumsq': numpy.array([ 432171.72687429]),
-                  'trc': numpy.array([74, 74,  0, 39], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.42133e+09Hz'}
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
+                    'max': numpy.array([15.64525127]),
+                    'maxpos': numpy.array([58, 20, 0, 20], dtype=numpy.int32),
+                    'maxposf': '17:10:24.433, +58.39.25.476, I, 1.42087e+09Hz',
+                    'mean': numpy.array([0.66097592]),
+                    'min': numpy.array([-0.42533547]),
+                    'minpos': numpy.array([69, 62, 0, 38], dtype=numpy.int32),
+                    'minposf': '17:05:23.086, +60.44.01.427, I, 1.42131e+09Hz',
+                    'npts': numpy.array([225000.]),
+                    'rms': numpy.array([1.38591599]),
+                    'sigma': numpy.array([1.2181464]),
+                    'sum': numpy.array([148719.58227018]),
+                    'sumsq': numpy.array([432171.72687429]),
+                    'trc': numpy.array([74, 74, 0, 39], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.42133e+09Hz'}
         # beam size from r32523
-        ref_beam=dict(major='503.181345arcsec',minor='503.181345arcsec')
+        ref_beam = dict(major='503.181345arcsec', minor='503.181345arcsec')
         self.run_test_common(self.task_param, refstats, outshape, refbeam=ref_beam,
                              compstats=self.keys, ignoremask=True)
 
     def test105(self):
         """Test 105: Prolate Spheroidal gridding"""
         self.task_param.update(dict(gridfunction='SF'))
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
-                  'max': numpy.array([ 15.13189793]),
-                  'maxpos': numpy.array([58, 21,  0, 20], dtype=numpy.int32),
-                  'maxposf': '17:10:23.737, +58.42.25.413, I, 1.42087e+09Hz',
-                  'mean': numpy.array([ 0.773227]),
-                  'min': numpy.array([-0.07284018]),
-                  'minpos': numpy.array([ 5, 67,  0, 30], dtype=numpy.int32),
-                  'minposf': '17:31:41.090, +60.59.00.556, I, 1.42112e+09Hz',
-                  'npts': numpy.array([ 225000.]),
-                  'rms': numpy.array([ 1.49926317]),
-                  'sigma': numpy.array([ 1.28449107]),
-                  'sum': numpy.array([ 173976.07570213]),
-                  'sumsq': numpy.array([ 505752.74505987]),
-                  'trc': numpy.array([74, 74,  0, 39], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.42133e+09Hz'}
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
+                    'max': numpy.array([15.13189793]),
+                    'maxpos': numpy.array([58, 21, 0, 20], dtype=numpy.int32),
+                    'maxposf': '17:10:23.737, +58.42.25.413, I, 1.42087e+09Hz',
+                    'mean': numpy.array([0.773227]),
+                    'min': numpy.array([-0.07284018]),
+                    'minpos': numpy.array([5, 67, 0, 30], dtype=numpy.int32),
+                    'minposf': '17:31:41.090, +60.59.00.556, I, 1.42112e+09Hz',
+                    'npts': numpy.array([225000.]),
+                    'rms': numpy.array([1.49926317]),
+                    'sigma': numpy.array([1.28449107]),
+                    'sum': numpy.array([173976.07570213]),
+                    'sumsq': numpy.array([505752.74505987]),
+                    'trc': numpy.array([74, 74, 0, 39], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.42133e+09Hz'}
         # beam size from analysisUtils.
-        #aU.sfBeam(1.42038,diameter=104.9,pixelsize=180.,
+        # aU.sfBeam(1.42038,diameter=104.9,pixelsize=180.,
         #          xSamplingArcsec=354.16985191848795,
         #          ySamplingArcsec=180.0432853343201,
         #          convsupport=3,obscuration=0.0)
-        ref_beam=dict(major='618.853892arcsec',minor='618.853892arcsec')
-        self.run_test_common(self.task_param, refstats, outshape,  refbeam=ref_beam,
+        ref_beam = dict(major='618.853892arcsec', minor='618.853892arcsec')
+        self.run_test_common(self.task_param, refstats, outshape, refbeam=ref_beam,
                              compstats=self.keys, ignoremask=True)
 
     def test106(self):
         """Test 106: Imaging two polarization separately (XX and YY, not Stokes I)"""
-        self.task_param.update(dict(stokes='XXYY',gridfunction='PB'))
-        outshape = (self.imsize[0],self.imsize[1],2,self.nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, XX, 1.42038e+09Hz',
-                  'max': numpy.array([ 15.057868]),
-                  'maxpos': numpy.array([57, 20,  1, 20], dtype=numpy.int32),
-                  'maxposf': '17:10:47.496, +58.39.30.813, YY, 1.42087e+09Hz',
-                  'mean': numpy.array([ 0.82292841]),
-                  'min': numpy.array([-0.41953856]),
-                  'minpos': numpy.array([10,  3,  1, 31], dtype=numpy.int32),
-                  'minposf': '17:28:37.170, +57.47.49.422, YY, 1.42114e+09Hz',
-                  'npts': numpy.array([ 450000.]),
-                  'rms': numpy.array([ 1.55436146]),
-                  'sigma': numpy.array([ 1.31864787]),
-                  'sum': numpy.array([ 370317.78554221]),
-                  'sumsq': numpy.array([ 1087217.77687839]),
-                  'trc': numpy.array([74, 74,  1, 39], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, YY, 1.42133e+09Hz'}
+        self.task_param.update(dict(stokes='XXYY', gridfunction='PB'))
+        outshape = (self.imsize[0], self.imsize[1], 2, self.nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, XX, 1.42038e+09Hz',
+                    'max': numpy.array([15.057868]),
+                    'maxpos': numpy.array([57, 20, 1, 20], dtype=numpy.int32),
+                    'maxposf': '17:10:47.496, +58.39.30.813, YY, 1.42087e+09Hz',
+                    'mean': numpy.array([0.82292841]),
+                    'min': numpy.array([-0.41953856]),
+                    'minpos': numpy.array([10, 3, 1, 31], dtype=numpy.int32),
+                    'minposf': '17:28:37.170, +57.47.49.422, YY, 1.42114e+09Hz',
+                    'npts': numpy.array([450000.]),
+                    'rms': numpy.array([1.55436146]),
+                    'sigma': numpy.array([1.31864787]),
+                    'sum': numpy.array([370317.78554221]),
+                    'sumsq': numpy.array([1087217.77687839]),
+                    'trc': numpy.array([74, 74, 1, 39], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, YY, 1.42133e+09Hz'}
         self.run_test_common(self.task_param, refstats, outshape, compstats=self.keys,
                              ignoremask=True)
 
     def test107(self):
         """Test 107: Gaussian gridding"""
         self.task_param.update(dict(gridfunction='GAUSS'))
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
-                  'max': numpy.array([ 15.28046036]),
-                  'maxpos': numpy.array([58, 21,  0, 20], dtype=numpy.int32),
-                  'maxposf': '17:10:23.737, +58.42.25.413, I, 1.42087e+09Hz',
-                  'mean': numpy.array([ 0.75082603]),
-                  'min': numpy.array([-0.14009152]),
-                  'minpos': numpy.array([34, 69,  0, 33], dtype=numpy.int32),
-                  'minposf': '17:19:43.545, +61.07.22.487, I, 1.42119e+09Hz',
-                  'npts': numpy.array([ 225000.]),
-                  'rms': numpy.array([ 1.47686982]),
-                  'sigma': numpy.array([ 1.2717751]),
-                  'sum': numpy.array([ 168935.85698331]),
-                  'sumsq': numpy.array([ 490757.49952306]),
-                  'trc': numpy.array([74, 74,  0, 39], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.42133e+09Hz'}
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
+                    'max': numpy.array([15.28046036]),
+                    'maxpos': numpy.array([58, 21, 0, 20], dtype=numpy.int32),
+                    'maxposf': '17:10:23.737, +58.42.25.413, I, 1.42087e+09Hz',
+                    'mean': numpy.array([0.75082603]),
+                    'min': numpy.array([-0.14009152]),
+                    'minpos': numpy.array([34, 69, 0, 33], dtype=numpy.int32),
+                    'minposf': '17:19:43.545, +61.07.22.487, I, 1.42119e+09Hz',
+                    'npts': numpy.array([225000.]),
+                    'rms': numpy.array([1.47686982]),
+                    'sigma': numpy.array([1.2717751]),
+                    'sum': numpy.array([168935.85698331]),
+                    'sumsq': numpy.array([490757.49952306]),
+                    'trc': numpy.array([74, 74, 0, 39], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.42133e+09Hz'}
         # beam size from r32523
-        ref_beam=dict(major='510.142597arcsec',minor='510.142597arcsec')
+        ref_beam = dict(major='510.142597arcsec', minor='510.142597arcsec')
         self.run_test_common(self.task_param, refstats, outshape, refbeam=ref_beam,
                              compstats=self.keys, ignoremask=True)
 
     def test108(self):
         """Test 108: Gaussian*Jinc gridding"""
         self.task_param.update(dict(gridfunction='GJINC'))
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
-        refstats={'blc':numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
-                  'max':numpy.array([ 15.31498909]),
-                  'maxpos':numpy.array([58, 21,  0, 20], dtype=numpy.int32),
-                  'maxposf': '17:10:23.737, +58.42.25.413, I, 1.42087e+09Hz',
-                  'mean':numpy.array([ 0.72415226]),
-                  'min':numpy.array([-0.16245638]),
-                  'minpos':numpy.array([68, 69,  0, 36], dtype=numpy.int32),
-                  'minposf': '17:05:39.206, +61.05.09.055, I, 1.42126e+09Hz',
-                  'npts':numpy.array([ 225000.]),
-                  'rms':numpy.array([ 1.44985926]),
-                  'sigma':numpy.array([ 1.25606618]),
-                  'sum':numpy.array([ 162934.25891985]),
-                  'sumsq':numpy.array([ 472970.63791706]),
-                  'trc':numpy.array([74, 74,  0, 39], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.42133e+09Hz'}
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
+                    'max': numpy.array([15.31498909]),
+                    'maxpos': numpy.array([58, 21, 0, 20], dtype=numpy.int32),
+                    'maxposf': '17:10:23.737, +58.42.25.413, I, 1.42087e+09Hz',
+                    'mean': numpy.array([0.72415226]),
+                    'min': numpy.array([-0.16245638]),
+                    'minpos': numpy.array([68, 69, 0, 36], dtype=numpy.int32),
+                    'minposf': '17:05:39.206, +61.05.09.055, I, 1.42126e+09Hz',
+                    'npts': numpy.array([225000.]),
+                    'rms': numpy.array([1.44985926]),
+                    'sigma': numpy.array([1.25606618]),
+                    'sum': numpy.array([162934.25891985]),
+                    'sumsq': numpy.array([472970.63791706]),
+                    'trc': numpy.array([74, 74, 0, 39], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.42133e+09Hz'}
         # beam size from analysisUtils.
-        #aU.gjincBeam(1.42038,diameter=104.9,pixelsize=180.,geometricMean=True,
+        # aU.gjincBeam(1.42038,diameter=104.9,pixelsize=180.,geometricMean=True,
         #             xSamplingArcsec=354.16985191848795,
         #             ySamplingArcsec=180.0432853343201,
         #             obscuration=0.0,widthMultiplier=1.0)
-        ref_beam=dict(major='580.094135arcsec',minor='580.094135arcsec')
+        ref_beam = dict(major='580.094135arcsec', minor='580.094135arcsec')
         self.run_test_common(self.task_param, refstats, outshape, refbeam=ref_beam,
                              compstats=self.keys, ignoremask=True)
 
     def test109(self):
         """Test 109: Empty phasecenter (auto-calculation)"""
-        self.task_param.update(dict(phasecenter="",gridfunction="BOX"))
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:31:48.220, +57.36.09.784, I, 1.42038e+09Hz',
-                  'max': numpy.array([ 15.64525127]),
-                  'maxpos': numpy.array([57, 20,  0, 20], dtype=numpy.int32),
-                  'maxposf': '17:10:17.816, +58.38.11.961, I, 1.42087e+09Hz',
-                  'mean': numpy.array([ 0.66039867]),
-                  'min': numpy.array([-0.42533547]),
-                  'minpos': numpy.array([68, 63,  0, 38], dtype=numpy.int32),
-                  'minposf': '17:05:16.976, +60.45.51.215, I, 1.42131e+09Hz',
-                  'npts': numpy.array([ 225000.]),
-                  'rms': numpy.array([ 1.38517249]),
-                  'sigma': numpy.array([ 1.21761365]),
-                  'sum': numpy.array([ 148589.70138012]),
-                  'sumsq': numpy.array([ 431708.13145918]),
-                  'trc': numpy.array([74, 74,  0, 39], dtype=numpy.int32),
-                  'trcf': '17:02:33.828, +61.17.52.040, I, 1.42133e+09Hz'}
+        self.task_param.update(dict(phasecenter="", gridfunction="BOX"))
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:31:48.220, +57.36.09.784, I, 1.42038e+09Hz',
+                    'max': numpy.array([15.64525127]),
+                    'maxpos': numpy.array([57, 20, 0, 20], dtype=numpy.int32),
+                    'maxposf': '17:10:17.816, +58.38.11.961, I, 1.42087e+09Hz',
+                    'mean': numpy.array([0.66039867]),
+                    'min': numpy.array([-0.42533547]),
+                    'minpos': numpy.array([68, 63, 0, 38], dtype=numpy.int32),
+                    'minposf': '17:05:16.976, +60.45.51.215, I, 1.42131e+09Hz',
+                    'npts': numpy.array([225000.]),
+                    'rms': numpy.array([1.38517249]),
+                    'sigma': numpy.array([1.21761365]),
+                    'sum': numpy.array([148589.70138012]),
+                    'sumsq': numpy.array([431708.13145918]),
+                    'trc': numpy.array([74, 74, 0, 39], dtype=numpy.int32),
+                    'trcf': '17:02:33.828, +61.17.52.040, I, 1.42133e+09Hz'}
         self.run_test_common(self.task_param, refstats, outshape,
                              compstats=self.keys, ignoremask=True)
 
     def test110(self):
         """Test 110: setting minweight=70."""
         self.task_param.update(dict(gridfunction='GJINC', minweight=70.))
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
-        refstats={'blc':numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
-                  'max':numpy.array([ 15.31498909]),
-                  'maxpos':numpy.array([58, 21,  0, 20], dtype=numpy.int32),
-                  'maxposf': '17:10:23.737, +58.42.25.413, I, 1.42087e+09Hz',
-                  'mean': numpy.array([ 0.96643395]),
-                  'min': numpy.array([-0.01385191]),
-                  'minpos': numpy.array([19, 63,  0, 33], dtype=numpy.int32),
-                  'minposf': '17:25:51.974, +60.48.38.410, I, 1.42119e+09Hz',
-                  'npts': numpy.array([ 143920.]),
-                  'rms': numpy.array([ 1.66819704]),
-                  'sigma': numpy.array([ 1.35974246]),
-                  'sum': numpy.array([ 139089.17359187]),
-                  'sumsq': numpy.array([ 400512.27532199]),
-                  'trc':numpy.array([74, 74,  0, 39], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.42133e+09Hz'}
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
+                    'max': numpy.array([15.31498909]),
+                    'maxpos': numpy.array([58, 21, 0, 20], dtype=numpy.int32),
+                    'maxposf': '17:10:23.737, +58.42.25.413, I, 1.42087e+09Hz',
+                    'mean': numpy.array([0.96643395]),
+                    'min': numpy.array([-0.01385191]),
+                    'minpos': numpy.array([19, 63, 0, 33], dtype=numpy.int32),
+                    'minposf': '17:25:51.974, +60.48.38.410, I, 1.42119e+09Hz',
+                    'npts': numpy.array([143920.]),
+                    'rms': numpy.array([1.66819704]),
+                    'sigma': numpy.array([1.35974246]),
+                    'sum': numpy.array([139089.17359187]),
+                    'sumsq': numpy.array([400512.27532199]),
+                    'trc': numpy.array([74, 74, 0, 39], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.42133e+09Hz'}
         self.run_test_common(self.task_param, refstats, outshape,
                              compstats=self.keys, ignoremask=False)
 
-
     def test111(self):
         """imsize in float (ntegrated image)"""
-        outshape = (self.imsize[0],self.imsize[1],1,1)
-        imsize = [ float(v) for v in self.imsize ]
-        self.task_param.update(dict(nchan=1,start=0,width=self.ms_nchan,
+        outshape = (self.imsize[0], self.imsize[1], 1, 1)
+        imsize = [float(v) for v in self.imsize]
+        self.task_param.update(dict(nchan=1, start=0, width=self.ms_nchan,
                                     imsize=imsize))
         self.run_test_common(self.task_param, self.statsinteg, outshape, compstats=self.keys,
                              ignoremask=True)
 
-
     def test112(self):
         """round-up imsize in float (integrated image)"""
-        outshape = (self.imsize[0],self.imsize[1],1,1)
-        imsize = [ float(v)-0.8 for v in self.imsize ]
-        self.task_param.update(dict(nchan=1,start=0,width=self.ms_nchan,
+        outshape = (self.imsize[0], self.imsize[1], 1, 1)
+        imsize = [float(v) - 0.8 for v in self.imsize]
+        self.task_param.update(dict(nchan=1, start=0, width=self.ms_nchan,
                                     imsize=imsize))
         self.run_test_common(self.task_param, self.statsinteg, outshape, compstats=self.keys,
                              ignoremask=True)
@@ -1092,9 +1120,9 @@ class sdimaging_test2(sdimaging_unittest_base):
 
     """
     # Input and output names
-    prefix=sdimaging_unittest_base.taskname+'Test2'
-    outfile=prefix+sdimaging_unittest_base.postfix
-    unit='GHz'
+    prefix = sdimaging_unittest_base.taskname + 'Test2'
+    outfile = prefix + sdimaging_unittest_base.postfix
+    unit = 'GHz'
     mode = "frequency"
 
     def setUp(self):
@@ -1103,9 +1131,9 @@ class sdimaging_test2(sdimaging_unittest_base):
         remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
         # Common task parameters of the class
-        self.task_param = dict(infiles=self.rawfile,mode=self.mode,
-                               outfile=self.outfile,intent='',
-                               cell=self.cell,imsize=self.imsize,
+        self.task_param = dict(infiles=self.rawfile, mode=self.mode,
+                               outfile=self.outfile, intent='',
+                               cell=self.cell, imsize=self.imsize,
                                phasecenter=self.phasecenter,
                                gridfunction=self.gridfunction,
                                minweight=self.minweight0)
@@ -1120,19 +1148,20 @@ class sdimaging_test2(sdimaging_unittest_base):
         """Test 200: Integrated image"""
         nchan = 1
         ms.open(self.rawfile)
-        spwinfo =  ms.getspectralwindowinfo()
+        spwinfo = ms.getspectralwindowinfo()
         ms.close()
         spwid0 = list(spwinfo.keys())[0]
-        start = '%fHz' % (spwinfo[spwid0]['Chan1Freq']+0.5*(spwinfo[spwid0]['TotalWidth']-spwinfo[spwid0]['ChanWidth']))
+        start = '%fHz' % (spwinfo[spwid0]['Chan1Freq'] + 0.5 *
+                          (spwinfo[spwid0]['TotalWidth'] - spwinfo[spwid0]['ChanWidth']))
         width = '%fHz' % (spwinfo[spwid0]['TotalWidth'])
-        self.task_param.update(dict(nchan=nchan,start=start,width=width))
-        outshape = (self.imsize[0],self.imsize[1],1,nchan)
+        self.task_param.update(dict(nchan=nchan, start=start, width=width))
+        outshape = (self.imsize[0], self.imsize[1], 1, nchan)
         self.run_test_common(self.task_param, self.statsinteg, outshape,
                              compstats=self.keys, ignoremask=True)
 
     def test201(self):
         """Test 201: Full channel image (mode='frequency', nchan = -1)"""
-        self.task_param.update(dict(nchan = -1, start = '', width = ''))
+        self.task_param.update(dict(nchan=-1, start='', width=''))
         # workaround for new imager framework
         # New imager looks SPECTRAL_WINDOW table to get whole frequency range
         # regardless of whether associating data exist in the MAIN table or not.
@@ -1140,23 +1169,23 @@ class sdimaging_test2(sdimaging_unittest_base):
         # To proceed this test, spw is explicitly specified here.
         spw = '0'
         self.task_param.update(dict(spw=spw))
-        outshape = (self.imsize[0],self.imsize[1],1,self.ms_nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.419395e+09Hz',
-                  'max': numpy.array([ 24.77152824]),
-                  'maxpos': numpy.array([ 59,  21,   0, 605], dtype=numpy.int32),
-                  'maxposf': '17:10:00.642, +58.42.19.808, I, 1.420872e+09Hz',
-                  'mean': numpy.array([ 0.39542111]),
-                  'min': numpy.array([-1.84636593]),
-                  'minpos': numpy.array([  73,    6,    0, 1023], dtype=numpy.int32),
-                  'minposf': '17:04:54.966, +57.55.36.907, I, 1.421893e+09Hz',
-                  'npts': numpy.array([ 5760000.]),
-                  'rms': numpy.array([ 1.01357317]),
-                  'sigma': numpy.array([ 0.93325921]),
-                  'sum': numpy.array([ 2277625.60731485]),
-                  'sumsq': numpy.array([ 5917423.42281288]),
-                  'trc': numpy.array([  74,   74,    0, 1023], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.421893e+09Hz'}
+        outshape = (self.imsize[0], self.imsize[1], 1, self.ms_nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.419395e+09Hz',
+                    'max': numpy.array([24.77152824]),
+                    'maxpos': numpy.array([59, 21, 0, 605], dtype=numpy.int32),
+                    'maxposf': '17:10:00.642, +58.42.19.808, I, 1.420872e+09Hz',
+                    'mean': numpy.array([0.39542111]),
+                    'min': numpy.array([-1.84636593]),
+                    'minpos': numpy.array([73, 6, 0, 1023], dtype=numpy.int32),
+                    'minposf': '17:04:54.966, +57.55.36.907, I, 1.421893e+09Hz',
+                    'npts': numpy.array([5760000.]),
+                    'rms': numpy.array([1.01357317]),
+                    'sigma': numpy.array([0.93325921]),
+                    'sum': numpy.array([2277625.60731485]),
+                    'sumsq': numpy.array([5917423.42281288]),
+                    'trc': numpy.array([74, 74, 0, 1023], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.421893e+09Hz'}
         self.run_test_common(self.task_param, refstats, outshape,
                              compstats=self.keys, ignoremask=True)
 
@@ -1165,57 +1194,59 @@ class sdimaging_test2(sdimaging_unittest_base):
         nchan = 100
         start = "%f%s" % (1.4202, self.unit)
         width = "%f%s" % (1.0e-5, self.unit)
-        self.task_param.update(dict(nchan=nchan,start=start,width=width))
-        outshape = (self.imsize[0],self.imsize[1],1,nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.4202e+09Hz',
-                  'max': numpy.array([ 21.55560875]),
-                  'maxpos': numpy.array([59, 21,  0, 67], dtype=numpy.int32),
-                  'maxposf': '17:10:00.642, +58.42.19.808, I, 1.42087e+09Hz',
-                  'mean': numpy.array([ 0.80467233]),
-                  'min': numpy.array([-0.27736959]),
-                  'minpos': numpy.array([58, 71,  0, 10], dtype=numpy.int32),
-                  'minposf': '17:09:45.684, +61.12.21.875, I, 1.4203e+09Hz',
-                  'npts': numpy.array([ 562500.]),
-                  'rms': numpy.array([ 1.56429076]),
-                  'sigma': numpy.array([ 1.3414586]),
-                  'sum': numpy.array([ 452628.18628213]),
-                  'sumsq': numpy.array([ 1376440.6075593]),
-                  'trc': numpy.array([74, 74,  0, 99], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.42119e+09Hz'}
+        self.task_param.update(dict(nchan=nchan, start=start, width=width))
+        outshape = (self.imsize[0], self.imsize[1], 1, nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.4202e+09Hz',
+                    'max': numpy.array([21.55560875]),
+                    'maxpos': numpy.array([59, 21, 0, 67], dtype=numpy.int32),
+                    'maxposf': '17:10:00.642, +58.42.19.808, I, 1.42087e+09Hz',
+                    'mean': numpy.array([0.80467233]),
+                    'min': numpy.array([-0.27736959]),
+                    'minpos': numpy.array([58, 71, 0, 10], dtype=numpy.int32),
+                    'minposf': '17:09:45.684, +61.12.21.875, I, 1.4203e+09Hz',
+                    'npts': numpy.array([562500.]),
+                    'rms': numpy.array([1.56429076]),
+                    'sigma': numpy.array([1.3414586]),
+                    'sum': numpy.array([452628.18628213]),
+                    'sumsq': numpy.array([1376440.6075593]),
+                    'trc': numpy.array([74, 74, 0, 99], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.42119e+09Hz'}
         self.run_test_common(self.task_param, refstats, outshape,
                              compstats=self.keys, ignoremask=True)
 
     def test203(self):
         """Test 203: Selected frequency image with other frequency unit"""
-        nchan=100
-        loc_unit='MHz'
+        nchan = 100
+        loc_unit = 'MHz'
         start = "%f%s" % (1420.2, loc_unit)
         width = "%f%s" % (0.01, loc_unit)
-        self.task_param.update(dict(nchan=nchan,start=start,width=width))
-        outshape = (self.imsize[0],self.imsize[1],1,nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.4202e+09Hz',
-                  'max': numpy.array([ 21.55560875]),
-                  'maxpos': numpy.array([59, 21,  0, 67], dtype=numpy.int32),
-                  'maxposf': '17:10:00.642, +58.42.19.808, I, 1.42087e+09Hz',
-                  'mean': numpy.array([ 0.80467233]),
-                  'min': numpy.array([-0.27736959]),
-                  'minpos': numpy.array([58, 71,  0, 10], dtype=numpy.int32),
-                  'minposf': '17:09:45.684, +61.12.21.875, I, 1.4203e+09Hz',
-                  'npts': numpy.array([ 562500.]),
-                  'rms': numpy.array([ 1.56429076]),
-                  'sigma': numpy.array([ 1.3414586]),
-                  'sum': numpy.array([ 452628.18628213]),
-                  'sumsq': numpy.array([ 1376440.6075593]),
-                  'trc': numpy.array([74, 74,  0, 99], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.42119e+09Hz'}
+        self.task_param.update(dict(nchan=nchan, start=start, width=width))
+        outshape = (self.imsize[0], self.imsize[1], 1, nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.4202e+09Hz',
+                    'max': numpy.array([21.55560875]),
+                    'maxpos': numpy.array([59, 21, 0, 67], dtype=numpy.int32),
+                    'maxposf': '17:10:00.642, +58.42.19.808, I, 1.42087e+09Hz',
+                    'mean': numpy.array([0.80467233]),
+                    'min': numpy.array([-0.27736959]),
+                    'minpos': numpy.array([58, 71, 0, 10], dtype=numpy.int32),
+                    'minposf': '17:09:45.684, +61.12.21.875, I, 1.4203e+09Hz',
+                    'npts': numpy.array([562500.]),
+                    'rms': numpy.array([1.56429076]),
+                    'sigma': numpy.array([1.3414586]),
+                    'sum': numpy.array([452628.18628213]),
+                    'sumsq': numpy.array([1376440.6075593]),
+                    'trc': numpy.array([74, 74, 0, 99], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.42119e+09Hz'}
         self.run_test_common(self.task_param, refstats, outshape,
                              compstats=self.keys, ignoremask=True)
 
 ###
 # Test velocity imaging
 ###
+
+
 class sdimaging_test3(sdimaging_unittest_base):
     """
     Test velocity imaging
@@ -1225,9 +1256,9 @@ class sdimaging_test3(sdimaging_unittest_base):
 
     """
     # Input and output names
-    prefix=sdimaging_unittest_base.taskname+'Test3'
-    outfile=prefix+sdimaging_unittest_base.postfix
-    unit='km/s'
+    prefix = sdimaging_unittest_base.taskname + 'Test3'
+    outfile = prefix + sdimaging_unittest_base.postfix
+    unit = 'km/s'
     mode = "velocity"
 
     def setUp(self):
@@ -1236,9 +1267,9 @@ class sdimaging_test3(sdimaging_unittest_base):
         remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
         # Common task parameters of the class
-        self.task_param = dict(infiles=self.rawfile,mode=self.mode,
-                               outfile=self.outfile,intent='',
-                               cell=self.cell,imsize=self.imsize,
+        self.task_param = dict(infiles=self.rawfile, mode=self.mode,
+                               outfile=self.outfile, intent='',
+                               cell=self.cell, imsize=self.imsize,
                                phasecenter=self.phasecenter,
                                gridfunction=self.gridfunction,
                                minweight=self.minweight0)
@@ -1255,54 +1286,54 @@ class sdimaging_test3(sdimaging_unittest_base):
         nchan = 1
         restfreq = '1420405800.0Hz'
         ms.open(self.rawfile)
-        spwinfo =  ms.getspectralwindowinfo()
+        spwinfo = ms.getspectralwindowinfo()
         ms.close()
         chan0_freq = spwinfo[spwid]['Chan1Freq']
         bandwidth = spwinfo[spwid]['TotalWidth']
         chanwidth = spwinfo[spwid]['ChanWidth']
         cent_freq = me.frequency(spwinfo[spwid]['Frame'],
-                                 qa.quantity(chan0_freq+0.5*(bandwidth-chanwidth),'Hz'))
+                                 qa.quantity(chan0_freq + 0.5 * (bandwidth - chanwidth), 'Hz'))
         cent_vel = me.todoppler('radio', cent_freq, restfreq)
         # band-edge frequencies
         start_freq = me.frequency(spwinfo[spwid]['Frame'],
-                                  qa.quantity(chan0_freq-0.5*chanwidth,'Hz'))
+                                  qa.quantity(chan0_freq - 0.5 * chanwidth, 'Hz'))
         start_vel = me.todoppler('radio', start_freq, restfreq)
         end_freq = me.frequency(spwinfo[spwid]['Frame'],
                                 qa.add(start_freq['m0'],
-                                       qa.quantity(bandwidth,'Hz')))
+                                       qa.quantity(bandwidth, 'Hz')))
         end_vel = me.todoppler('radio', end_freq, restfreq)
         start = qa.tos(cent_vel['m0'])
-        width = qa.tos(qa.sub(start_vel['m0'],end_vel['m0']))
+        width = qa.tos(qa.sub(start_vel['m0'], end_vel['m0']))
 
-        self.task_param.update(dict(restfreq=restfreq,spw=spwid,
-                                    nchan=nchan,start=start,width=width))
-        outshape = (self.imsize[0],self.imsize[1],1,1)
+        self.task_param.update(dict(restfreq=restfreq, spw=spwid,
+                                    nchan=nchan, start=start, width=width))
+        outshape = (self.imsize[0], self.imsize[1], 1, 1)
         self.run_test_common(self.task_param, self.statsinteg, outshape,
                              compstats=self.keys, ignoremask=True)
 
     def test301(self):
         """Test 301: Selected velocity image"""
-        nchan=100
+        nchan = 100
         start = "%f%s" % (-200.0, self.unit)
         width = "%f%s" % (2.0, self.unit)
-        self.task_param.update(dict(nchan=nchan,start=start,width=width))
-        outshape = (self.imsize[0],self.imsize[1],1,nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.421353e+09Hz',
-                  'max': numpy.array([ 21.97223091]),
-                  'maxpos': numpy.array([ 4,  5,  0, 50], dtype=numpy.int32),
-                  'maxposf': '17:30:54.243, +57.53.03.440, I, 1.42088e+09Hz',
-                  'mean': numpy.array([ 0.84673187]),
-                  'min': numpy.array([-0.27300295]),
-                  'minpos': numpy.array([61, 71,  0, 16], dtype=numpy.int32),
-                  'minposf': '17:08:30.980, +61.12.02.893, I, 1.421202e+09Hz',
-                  'npts': numpy.array([ 562500.]),
-                  'rms': numpy.array([ 1.6305207]),
-                  'sigma': numpy.array([ 1.3934297]),
-                  'sum': numpy.array([ 476286.67594505]),
-                  'sumsq': numpy.array([ 1495461.22406453]),
-                  'trc': numpy.array([74, 74,  0, 99], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.420415e+09Hz'}
+        self.task_param.update(dict(nchan=nchan, start=start, width=width))
+        outshape = (self.imsize[0], self.imsize[1], 1, nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.421353e+09Hz',
+                    'max': numpy.array([21.97223091]),
+                    'maxpos': numpy.array([4, 5, 0, 50], dtype=numpy.int32),
+                    'maxposf': '17:30:54.243, +57.53.03.440, I, 1.42088e+09Hz',
+                    'mean': numpy.array([0.84673187]),
+                    'min': numpy.array([-0.27300295]),
+                    'minpos': numpy.array([61, 71, 0, 16], dtype=numpy.int32),
+                    'minposf': '17:08:30.980, +61.12.02.893, I, 1.421202e+09Hz',
+                    'npts': numpy.array([562500.]),
+                    'rms': numpy.array([1.6305207]),
+                    'sigma': numpy.array([1.3934297]),
+                    'sum': numpy.array([476286.67594505]),
+                    'sumsq': numpy.array([1495461.22406453]),
+                    'trc': numpy.array([74, 74, 0, 99], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.420415e+09Hz'}
         self.run_test_common(self.task_param, refstats, outshape,
                              compstats=self.keys, ignoremask=True)
 
@@ -1311,30 +1342,32 @@ class sdimaging_test3(sdimaging_unittest_base):
         nchan = 100
         start = "%f%s" % (-100.0, self.unit)
         width = "%f%s" % (2.0, self.unit)
-        self.task_param.update(dict(restfreq='1.420GHz',nchan=nchan,start=start,width=width))
-        outshape = (self.imsize[0],self.imsize[1],1,nchan)
-        refstats={'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
-                  'blcf': '17:32:18.690, +57.37.28.536, I, 1.420474e+09Hz',
-                  'max': numpy.array([ 1.61916351]),
-                  'maxpos': numpy.array([ 4, 52,  0, 33], dtype=numpy.int32),
-                  'maxposf': '17:31:47.043, +60.13.54.473, I, 1.420161e+09Hz',
-                  'mean': numpy.array([ 0.12395606]),
-                  'min': numpy.array([-0.41655564]),
-                  'minpos': numpy.array([60, 71,  0, 93], dtype=numpy.int32),
-                  'minposf': '17:08:55.879, +61.12.09.501, I, 1.419593e+09Hz',
-                  'npts': numpy.array([ 562500.]),
-                  'rms': numpy.array([ 0.19268371]),
-                  'sigma': numpy.array([ 0.14751931]),
-                  'sum': numpy.array([ 69725.28195545]),
-                  'sumsq': numpy.array([ 20883.94443161]),
-                  'trc': numpy.array([74, 74,  0, 99], dtype=numpy.int32),
-                  'trcf': '17:03:03.151, +61.19.10.757, I, 1.419536e+09Hz'}
+        self.task_param.update(dict(restfreq='1.420GHz', nchan=nchan, start=start, width=width))
+        outshape = (self.imsize[0], self.imsize[1], 1, nchan)
+        refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
+                    'blcf': '17:32:18.690, +57.37.28.536, I, 1.420474e+09Hz',
+                    'max': numpy.array([1.61916351]),
+                    'maxpos': numpy.array([4, 52, 0, 33], dtype=numpy.int32),
+                    'maxposf': '17:31:47.043, +60.13.54.473, I, 1.420161e+09Hz',
+                    'mean': numpy.array([0.12395606]),
+                    'min': numpy.array([-0.41655564]),
+                    'minpos': numpy.array([60, 71, 0, 93], dtype=numpy.int32),
+                    'minposf': '17:08:55.879, +61.12.09.501, I, 1.419593e+09Hz',
+                    'npts': numpy.array([562500.]),
+                    'rms': numpy.array([0.19268371]),
+                    'sigma': numpy.array([0.14751931]),
+                    'sum': numpy.array([69725.28195545]),
+                    'sumsq': numpy.array([20883.94443161]),
+                    'trc': numpy.array([74, 74, 0, 99], dtype=numpy.int32),
+                    'trcf': '17:03:03.151, +61.19.10.757, I, 1.419536e+09Hz'}
         self.run_test_common(self.task_param, refstats, outshape,
                              compstats=self.keys, ignoremask=True)
 
 ###
 # Test auto-resolution of spatial gridding parameters
 ###
+
+
 class sdimaging_test_autocoord(sdimaging_unittest_base):
     """
     Test auto-resolution of spatial gridding parameters
@@ -1345,11 +1378,11 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
        - cell (get rest freq from table)
        - imsize
     """
-    prefix=sdimaging_unittest_base.taskname+'Test4'
-    outfile=prefix+sdimaging_unittest_base.postfix
-    nchan=1
-    start=0
-    width=1024
+    prefix = sdimaging_unittest_base.taskname + 'Test4'
+    outfile = prefix + sdimaging_unittest_base.postfix
+    nchan = 1
+    start = 0
+    width = 1024
     # auto calculation result of imsize
     cell_auto = "162.545308arcsec"
     imsize_auto = [73, 68]
@@ -1366,9 +1399,9 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
         remove_table(self.outfile)
         # Common task parameters of the class
-        self.task_param = dict(infiles=self.rawfile,outfile=self.outfile,
-                               intent="",nchan=self.nchan,start=self.start,
-                               width=self.width,minweight=self.minweight0)
+        self.task_param = dict(infiles=self.rawfile, outfile=self.outfile,
+                               intent="", nchan=self.nchan, start=self.start,
+                               width=self.width, minweight=self.minweight0)
 
     def tearDown(self):
         remove_table(self.rawfile)
@@ -1385,21 +1418,21 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         (3) image shape
         (4) image direction axis
         """
-        res=sdimaging(**task_param)
+        res = sdimaging(**task_param)
         #outfile = task_param['outfile']
         outprefix = task_param['outfile']
         outfile = outprefix + image_suffix
         # Tests
-        self.assertEqual(res,None,
+        self.assertEqual(res, None,
                          msg='Any error occurred during imaging')
         self._checkfile(outfile)
         self._check_weight_image(outfile)
-        self._checkshape(outfile,shape[0],shape[1],shape[2],shape[3])
-        self._checkdirax(outfile,dirax[0], dirax[1], dirax[2])
+        self._checkshape(outfile, shape[0], shape[1], shape[2], shape[3])
+        self._checkdirax(outfile, dirax[0], dirax[1], dirax[2])
 
     def test401(self):
         """test 401: Set phasecenter, cell, and imsize manually"""
-        self.task_param.update(dict(cell=self.cell,imsize=self.imsize,
+        self.task_param.update(dict(cell=self.cell, imsize=self.imsize,
                                     phasecenter=self.phasecenter))
         outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
         dirax = (self.phasecenter, self.cell, self.imsize)
@@ -1407,37 +1440,38 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
 
     def test402(self):
         """test 402: Automatic resolution of phasecenter, cell, and imsize"""
-        self.task_param.update(dict(cell="",imsize=[],phasecenter=""))
-        outshape = (self.imsize_auto[0],self.imsize_auto[1],1,self.nchan)
-        dirax = (self.phasecenter_auto,self.cell_auto,self.imsize_auto)
+        self.task_param.update(dict(cell="", imsize=[], phasecenter=""))
+        outshape = (self.imsize_auto[0], self.imsize_auto[1], 1, self.nchan)
+        dirax = (self.phasecenter_auto, self.cell_auto, self.imsize_auto)
         self.run_test(self.task_param, outshape, dirax)
 
     def test403(self):
         """test 403: Resolve phasecenter"""
-        self.task_param.update(dict(cell=self.cell,imsize=self.imsize,phasecenter=""))
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
-        dirax = (self.phasecenter_auto,self.cell, self.imsize)
+        self.task_param.update(dict(cell=self.cell, imsize=self.imsize, phasecenter=""))
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
+        dirax = (self.phasecenter_auto, self.cell, self.imsize)
         self.run_test(self.task_param, outshape, dirax)
 
     def test404(self):
         """test 404: Resolve cell"""
-        self.task_param.update(dict(cell="",imsize=self.imsize,
+        self.task_param.update(dict(cell="", imsize=self.imsize,
                                     phasecenter=self.phasecenter))
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
-        dirax = (self.phasecenter,self.cell_auto,self.imsize)
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
+        dirax = (self.phasecenter, self.cell_auto, self.imsize)
         self.run_test(self.task_param, outshape, dirax)
 
     def test405(self):
         """test 405: Resolve imsize"""
         ref_imsize = [38, 32]
-        self.task_param.update(dict(cell=self.cell,imsize=[],phasecenter=self.phasecenter))
-        outshape = (ref_imsize[0],ref_imsize[1],1,self.nchan)
-        dirax = (self.phasecenter,self.cell,ref_imsize)
+        self.task_param.update(dict(cell=self.cell, imsize=[], phasecenter=self.phasecenter))
+        outshape = (ref_imsize[0], ref_imsize[1], 1, self.nchan)
+        dirax = (self.phasecenter, self.cell, ref_imsize)
         self.run_test(self.task_param, outshape, dirax)
 
 ###
 # Helper classes for test_timerange* tests of class sdimaging_test_selection
 ###
+
 
 class TimeSelectionPattern(Enum):
     VALUE_DEFAULT = 'default'
@@ -1456,8 +1490,8 @@ class TestTimeRangeHelper:
         'outfile': 'selection_time.ms.sdimaging',
         'overwrite': True,
         'nchan': 1,
-        'cell': ['9.0arcsec','9.0arcsec'],
-        'imsize': [250,250],
+        'cell': ['9.0arcsec', '9.0arcsec'],
+        'imsize': [250, 250],
         'gridfunction': 'SF',
         'convsupport': 6,
         'stokes': 'I',
@@ -1465,7 +1499,7 @@ class TestTimeRangeHelper:
     }
 
     @classmethod
-    def params(cls,time_pattern):
+    def params(cls, time_pattern):
         params = copy.deepcopy(cls._default_params)
         pattern = TimeSelectionPattern
         if time_pattern is pattern.VALUE_DEFAULT:
@@ -1487,7 +1521,7 @@ class TestTimeRangeHelper:
         return copy.deepcopy(params)
 
     @staticmethod
-    def expected_results(params,debug=False):
+    def expected_results(params, debug=False):
         """
         Compute expected sdimaging results for test_timerange_* unit tests
 
@@ -1525,15 +1559,17 @@ class TestTimeRangeHelper:
 ###
 # Test data selection
 ###
-class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_unittest_base):
+
+
+class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_unittest_base):
     """
     Test selection syntax. Selection parameters to test are:
     field, spw (with selection), scan, stokes, and antenna
     """
     _file_mgr = None
 
-    prefix = sdimaging_unittest_base.taskname+'TestSel'
-    outfile = prefix+sdimaging_unittest_base.postfix
+    prefix = sdimaging_unittest_base.taskname + 'TestSel'
+    outfile = prefix + sdimaging_unittest_base.postfix
     # input MS names
     miscsel_ms = "selection_misc.ms"
     spwsel_ms = "selection_spw.ms"
@@ -1556,7 +1592,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     # blcf and trcf => qa.formxxx(+-qa.mul(cell_auto, 10.), "hms"/"dms", prec=3)
     # --- for "selection_misc.ms"
     unif_flux = 25.
-    stat_common = {'blc': blc_auto,'trc': trc_auto,
+    stat_common = {'blc': blc_auto, 'trc': trc_auto,
                    'blcf': blcf_auto, 'trcf': trcf_auto}
     region_all = {'blc': blc_auto, 'trc': trc_auto}
     region_bottom = {'blc': [0, 0, 0, 0], 'trc': [20, 11, 0, 0]}
@@ -1570,16 +1606,17 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     # --- for "selection_spw_unifreq.ms" and "selection_spw.ms"
     # flux taken from ms.statistics((column='CORRECTED_DATA', complex_value='amp', spw=idx)['mean']
     spw_flux_unifreq = [3.0008814930915833, 5.0014331340789795, 6.001709461212158]
-    spw_flux = [5.001473307609558, 5.982952607795596, 3.011193051868015]  #NOTE spw=1 and 2 has relatively large O(10^-4) dispersion in intensity.
+    # NOTE spw=1 and 2 has relatively large O(10^-4) dispersion in intensity.
+    spw_flux = [5.001473307609558, 5.982952607795596, 3.011193051868015]
     spw_imsize_auto = [12, 12]
     spw_nchan = 10
     spw_blc_auto = [0, 0, 0, 0]
     spw_trc_auto = [11, 11, 0, 9]
     # blcf and trcf => qa.formxxx(+-qa.mul(cell_auto, 6.), "hms"/"dms", prec=3)
-    spw_stat_common = {'blc': spw_blc_auto,'trc': spw_trc_auto}
-    spw_region_all = {'blc': [1,1,0,0], 'trc': [11,11,0,9]}
+    spw_stat_common = {'blc': spw_blc_auto, 'trc': spw_trc_auto}
+    spw_region_all = {'blc': [1, 1, 0, 0], 'trc': [11, 11, 0, 9]}
     # select channels 2 - 7
-    spw_region_chan1 = {'blc': [1,1,0,2], 'trc': [11,11,0,7]}
+    spw_region_chan1 = {'blc': [1, 1, 0, 2], 'trc': [11, 11, 0, 7]}
 
     @property
     def file_mgr(self):
@@ -1606,7 +1643,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
-        #FIXME: this copies all registered rawfiles
+        # FIXME: this copies all registered rawfiles
         # before any test of the class is executed,
         # even if the test to be run needs none or only 1 of them.
         for name in self.rawfiles:
@@ -1614,10 +1651,10 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
             shutil.copytree(os.path.join(self.datapath, name), name)
         remove_table(self.outfile)
         # Common task parameters of the class
-        self.task_param = dict(mode=self.mode_def,intent="",
-                               gridfunction=self.kernel,outfile=self.outfile,
+        self.task_param = dict(mode=self.mode_def, intent="",
+                               gridfunction=self.kernel, outfile=self.outfile,
                                phasecenter=self.phasecenter_auto,
-                               cell=self.cell_auto,imsize=self.imsize_auto)
+                               cell=self.cell_auto, imsize=self.imsize_auto)
 
         remove_tables_starting_with(self.prefix)
 
@@ -1630,18 +1667,18 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
 
     def run_test(self, task_param, refstats, shape,
                  atol=1.e-8, rtol=1.e-5, box=None):
-        self.res=self.run_task(**task_param)
+        self.res = self.run_task(**task_param)
         # Tests
         imsize = [shape[0], shape[1]]
         outfile = self.outfile + image_suffix
         self._checkfile(outfile)
         self._check_weight_image(outfile)
-        self._checkshape(outfile,shape[0], shape[1],shape[2],shape[3])
-        self._checkdirax(outfile,self.phasecenter_auto,self.cell_auto,imsize)
-        self._checkstats(outfile,refstats,atol=atol,rtol=rtol)
+        self._checkshape(outfile, shape[0], shape[1], shape[2], shape[3])
+        self._checkdirax(outfile, self.phasecenter_auto, self.cell_auto, imsize)
+        self._checkstats(outfile, refstats, atol=atol, rtol=rtol)
         if box is not None:
-            self._checkstats_box(outfile,refstats,box=box,
-                                 atol=atol,rtol=rtol)
+            self._checkstats_box(outfile, refstats, box=box,
+                                 atol=atol, rtol=rtol)
 
     def _fetch_and_run(self, task_params):
         for infile in task_params['infiles']:
@@ -1650,93 +1687,100 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
 
         self.run_task(**task_params)
 
-
     ####################
     # Additional tests
     ####################
-    #N/A Stokes & antenna selection
+    # N/A Stokes & antenna selection
 
     ####################
     # scan
     ####################
+
     def test_scan_id_default(self):
         """test scan selection (scan='')"""
         scan = ''
-        region =  self.region_all
+        region = self.region_all
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,scan=scan))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, scan=scan))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
         outfile = self.outfile + image_suffix
-        self._checkstats(outfile,refstats,atol=1.e-5)
+        self._checkstats(outfile, refstats, atol=1.e-5)
 
     def test_scan_id_exact(self):
         """test scan selection (scan='16')"""
         scan = '16'
-        region =  self.region_topright
+        region = self.region_topright
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,scan=scan))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, scan=scan))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_scan_id_lt(self):
         """test scan selection (scan='<16')"""
         scan = '<16'
-        region =  self.region_left
+        region = self.region_left
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,scan=scan))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, scan=scan))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_scan_id_gt(self):
         """test scan selection (scan='>16')"""
         scan = '>16'
-        region =  self.region_bottomright
+        region = self.region_bottomright
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,scan=scan))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, scan=scan))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_scan_id_range(self):
         """test scan selection (scan='16~17')"""
         scan = '16~17'
-        region =  self.region_right
+        region = self.region_right
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,scan=scan))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, scan=scan))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_scan_id_list(self):
         """test scan selection (scan='16,17')"""
         scan = '16,17'
-        region =  self.region_right
+        region = self.region_right
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,scan=scan))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, scan=scan))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_scan_id_exprlist(self):
         """test scan selection (scan='16,>16')"""
         scan = '16,>16'
-        region =  self.region_right
+        region = self.region_right
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,scan=scan))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, scan=scan))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     ####################
     # intent
@@ -1744,41 +1788,44 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     def test_intent_value_default(self):
         """test intent selection (intent='')"""
         intent = ''
-        region =  self.region_all
+        region = self.region_all
         infile = self.intentsel_ms
-        self.task_param.update(dict(infiles=infile,intent=intent))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, intent=intent))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
         outfile = self.outfile + image_suffix
-        self._checkstats(outfile,refstats,atol=1.e-5)
+        self._checkstats(outfile, refstats, atol=1.e-5)
 
     def test_intent_value_exact(self):
         """test intent selection (intent='OBSERVE_TARGET.ON_SOURCE')"""
         intent = 'OBSERVE_TARGET.ON_SOURCE'
-        region =  self.region_bottomright
+        region = self.region_bottomright
         infile = self.intentsel_ms
-        self.task_param.update(dict(infiles=infile,intent=intent))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, intent=intent))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
         outfile = self.outfile + image_suffix
-        self._checkstats(outfile,refstats,atol=1.e-5)
+        self._checkstats(outfile, refstats, atol=1.e-5)
 
     def test_intent_value_pattern(self):
         """test intent selection (intent='*CALIBRATE_PHASE*')"""
         intent = '*CALIBRATE_PHASE*'
-        region =  self.region_bottomleft
+        region = self.region_bottomleft
         infile = self.intentsel_ms
-        self.task_param.update(dict(infiles=infile,intent=intent))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, intent=intent))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
         outfile = self.outfile + image_suffix
-        self._checkstats(outfile,refstats,atol=1.e-5)
+        self._checkstats(outfile, refstats, atol=1.e-5)
 
     ####################
     # field
@@ -1786,123 +1833,134 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     def test_field_value_default(self):
         """test field selection (field='')"""
         field = ''
-        region =  self.region_all
+        region = self.region_all
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,field=field))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, field=field))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_field_id_exact(self):
         """test field selection (field='6')"""
         field = '6'
-        region =  self.region_bottomleft
+        region = self.region_bottomleft
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,field=field))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, field=field))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_id_lt(self):
         """test field selection (field='<7')"""
         field = '<7'
-        region =  self.region_bottom
+        region = self.region_bottom
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,field=field))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, field=field))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_id_gt(self):
         """test field selection (field='>6')"""
         field = '>6'
-        region =  self.region_top
+        region = self.region_top
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,field=field))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, field=field))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_id_range(self):
         """test field selection (field='7~8')"""
         field = '7~8'
-        region =  self.region_top
+        region = self.region_top
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,field=field))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, field=field))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_id_list(self):
         """test field selection (field='5,7')"""
         field = '5,7'
-        region =  self.region_right
+        region = self.region_right
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,field=field))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, field=field))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_id_exprlist(self):
         """test field selection (field='7,>7')"""
         field = '7,>7'
-        region =  self.region_top
+        region = self.region_top
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,field=field))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, field=field))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_value_exact(self):
         """test field selection (field='bottom')"""
         field = 'bottom'
-        region =  self.region_bottom
+        region = self.region_bottom
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,field=field))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, field=field))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_value_pattern(self):
         """test field selection (field='top*')"""
         field = 'top*'
-        region =  self.region_top
+        region = self.region_top
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,field=field))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, field=field))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_value_list(self):
         """test field selection (field='topright,topleft')"""
         field = 'topright,topleft'
-        region =  self.region_top
+        region = self.region_top
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,field=field))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, field=field))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_mix_exprlist(self):
         """test field selection (field='topr*,>7')"""
         field = 'topr*,>7'
-        region =  self.region_top
+        region = self.region_top
         infile = self.miscsel_ms
-        self.task_param.update(dict(infiles=infile,field=field))
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, region['blc'], region['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
+        self.task_param.update(dict(infiles=infile, field=field))
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, region['blc'], region['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     ####################
     # spw
@@ -1913,111 +1971,119 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
         selspw = range(len(flux_list))
-        region =  self.spw_region_all
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        region = self.spw_region_all
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_exact(self):
         """test spw selection (spw='1')"""
         spw = '1'
         selspw = [1]
-        region =  self.spw_region_all
+        region = self.spw_region_all
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_lt(self):
         """test spw selection (spw='<2')"""
         spw = '<2'
-        selspw = [0,1]
-        region =  self.spw_region_all
+        selspw = [0, 1]
+        region = self.spw_region_all
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_gt(self):
         """test spw selection (spw='>0')"""
         spw = '>0'
-        selspw = [1,2]
-        region =  self.spw_region_all
+        selspw = [1, 2]
+        region = self.spw_region_all
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_range(self):
         """test spw selection (spw='1~2')"""
         spw = '1~2'
-        selspw = [1,2]
-        region =  self.spw_region_all
+        selspw = [1, 2]
+        region = self.spw_region_all
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_list(self):
         """test spw selection (spw='0,2')"""
         spw = '0,2'
-        selspw = [0,2]
-        region =  self.spw_region_all
+        selspw = [0, 2]
+        region = self.spw_region_all
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_exprlist(self):
         """test spw selection (spw='0,>1')"""
         spw = '0,>1'
-        selspw = [0,2]
-        region =  self.spw_region_all
+        selspw = [0, 2]
+        region = self.spw_region_all
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_pattern(self):
         """test spw selection (spw='*')"""
         spw = '*'
-        region =  self.spw_region_all
+        region = self.spw_region_all
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
         selspw = range(len(flux_list))
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     @unittest.expectedFailure
     def test_spw_value_frequency(self):
@@ -2026,13 +2092,14 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         selspw = [0]
         infile = self.spwsel_ms
         flux_list = self.__get_flux_value(infile)
-        region =  self.spw_region_all
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        region = self.spw_region_all
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     @unittest.expectedFailure
     def test_spw_value_velocity(self):
@@ -2043,53 +2110,57 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     def test_spw_mix_exprlist(self):
         """test spw selection (spw='299.99~300.01GHz,0')"""
         spw = '299.99~300.01GHz,0'
-        selspw = [0,1]
-        region =  self.spw_region_all
+        selspw = [0, 1]
+        region = self.spw_region_all
         infile = self.unifreq_ms
         flux_list = self.spw_flux_unifreq
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     #########################
     # spw with channel range
     #########################
     def test_spw_id_default_channel(self):
         """test spw selection w/ channel selection (spw=':2~7')"""
-        spw = ':2~7'   #chan=2-7 in all spws should be selected
-        region =  self.spw_region_chan1
+        spw = ':2~7'  # chan=2-7 in all spws should be selected
+        region = self.spw_region_chan1
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
         selspw = range(len(flux_list))
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_spw_id_default_frequency(self):
         """test spw selection w/ channel selection (spw=':300.4749~300.5251GHz')"""
 #         spw = ':300.4749~300.5251GHz'   #chan=2-7 in spw=1 should be selected
 #         selspw = [1]
-        region =  self.spw_region_chan1
+        region = self.spw_region_chan1
 #         infile = self.spwsel_ms
 #         flux_list = self.__get_flux_value(infile)
-        ##### TEMPORARY CHANGING INPUT DATA due to seg fault in sdimaging caused by a bug in ms.msseltoindex() #####
+        ##### TEMPORARY CHANGING INPUT DATA ####
+        ##### due to seg fault in sdimaging caused by a bug in ms.msseltoindex() #####
         infile = self.unifreq_ms
-        spw = '*:299.9749~300.0251GHz'   #chan=2-7 of spw=1 should be selected
+        spw = '*:299.9749~300.0251GHz'  # chan=2-7 of spw=1 should be selected
         flux_list = self.__get_flux_value(infile)
         selspw = range(len(flux_list))
         # end of temporal change
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-3, rtol=1.e-3)
 
     @unittest.expectedFailure
     def test_spw_id_default_velocity(self):
@@ -2098,45 +2169,48 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
 
     def test_spw_id_default_list(self):
         """test spw selection w/ channel selection (spw=':6~7;2~5')"""
-        spw = ':6~7;2~5'   #chan=2-7 in all spws should be selected
-        region =  self.spw_region_chan1
+        spw = ':6~7;2~5'  # chan=2-7 in all spws should be selected
+        region = self.spw_region_chan1
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
         selspw = range(len(flux_list))
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_spw_id_exact_channel(self):
         """test spw selection w/ channel selection (spw='2:2~7')"""
-        spw = '2:2~7'   #chan=2-7 of spw=2 should be selected
+        spw = '2:2~7'  # chan=2-7 of spw=2 should be selected
         selspw = [2]
-        region =  self.spw_region_chan1
+        region = self.spw_region_chan1
         infile = self.spwsel_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-3, rtol=1.e-3)
 
     def test_spw_id_exact_frequency(self):
         """test spw selection w/ channel selection (spw='1:300.4749~300.5251GHz')"""
-        spw = '1:300.4749~300.5251GHz'   #chan=2-7 of spw=1 should be selected
+        spw = '1:300.4749~300.5251GHz'  # chan=2-7 of spw=1 should be selected
         selspw = [1]
-        region =  self.spw_region_chan1
+        region = self.spw_region_chan1
         infile = self.spwsel_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-3, rtol=1.e-3)
 
     @unittest.expectedFailure
     def test_spw_id_exact_velocity(self):
@@ -2145,51 +2219,55 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
 
     def test_spw_id_exact_list(self):
         """test spw selection w/ channel selection (spw='2:6~7;2~5')"""
-        spw = '2:6~7;2~5'   #chan=2-7 of spw=2 should be selected
+        spw = '2:6~7;2~5'  # chan=2-7 of spw=2 should be selected
         selspw = [2]
-        region =  self.spw_region_chan1
+        region = self.spw_region_chan1
         infile = self.spwsel_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-3, rtol=1.e-3)
 
     def test_spw_id_pattern_channel(self):
         """test spw selection w/ channel selection (spw='*:2~7')"""
         spw = '*:2~7'
-        region =  self.spw_region_chan1
+        region = self.spw_region_chan1
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
         selspw = range(len(flux_list))
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_spw_id_pattern_frequency(self):
         """test spw selection w/ channel selection (spw='*:300.4749~300.5251GHz')"""
-        #spw = '*:300.4749~300.5251GHz'   #chan=2-7 of spw=1 should be selected
+        # spw = '*:300.4749~300.5251GHz'   #chan=2-7 of spw=1 should be selected
         #selspw = [1]
-        region =  self.spw_region_chan1
+        region = self.spw_region_chan1
         #infile = self.spwsel_ms
         #flux_list = self.__get_flux_value(infile)
-        ##### TEMPORARY CHANGING INPUT DATA due to seg fault in sdimaging caused by a bug in ms.msseltoindex() #####
+        ##### TEMPORARY CHANGING INPUT DATA ####
+        #### due to seg fault in sdimaging caused by a bug in ms.msseltoindex() #####
         infile = self.unifreq_ms
-        spw = '*:299.9749~300.0251GHz'   #chan=2-7 of spw=1 should be selected
+        spw = '*:299.9749~300.0251GHz'  # chan=2-7 of spw=1 should be selected
         flux_list = self.__get_flux_value(infile)
         selspw = range(len(flux_list))
         # end of temporal change
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-3, rtol=1.e-3)
 
     @unittest.expectedFailure
     def test_spw_id_pattern_velocity(self):
@@ -2199,44 +2277,47 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
     def test_spw_id_pattern_list(self):
         """test spw selection w/ channel selection (spw='*:6~7;2~5')"""
         spw = '*:6~7;2~5'
-        region =  self.spw_region_chan1
+        region = self.spw_region_chan1
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
         selspw = range(len(flux_list))
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_spw_value_frequency_channel(self):
         """test spw selection w/ channel selection (spw='300.4~300.5GHz:2~7')"""
         spw = '300.4~300.5GHz:2~7'
         selspw = [1]
-        region =  self.spw_region_chan1
+        region = self.spw_region_chan1
         infile = self.spwsel_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-3, rtol=1.e-3)
 
     def test_spw_value_frequency_frequency(self):
         """test spw selection w/ channel selection (spw='300.4~300.5GHz:300.4749~300.5251GHz')"""
-        spw = '300.4~300.5GHz:300.4749~300.5251GHz'   #chan=2-7 of spw=1 should be selected'
+        spw = '300.4~300.5GHz:300.4749~300.5251GHz'  # chan=2-7 of spw=1 should be selected'
         selspw = [1]
-        region =  self.spw_region_chan1
+        region = self.spw_region_chan1
         infile = self.spwsel_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-3,rtol=1.e-3)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-3, rtol=1.e-3)
 
     @unittest.expectedFailure
     def test_spw_value_frequency_velocity(self):
@@ -2248,15 +2329,16 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         """test spw selection w/ channel selection (spw='299.9~300.1GHz:6~7;2~5')"""
         spw = '299.9~300.1GHz:6~7;2~5'
         selspw = [0]
-        region =  self.spw_region_chan1
+        region = self.spw_region_chan1
         infile = self.spwsel_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     @unittest.expectedFailure
     def test_spw_value_velocity_channel(self):
@@ -2282,67 +2364,68 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         """test spw selection w/ channel selection (spw='1:2~7,2:2~7')"""
         spw = '0:2~7,2:2~7'
         selspw = [0, 2]
-        region =  self.spw_region_chan1
+        region = self.spw_region_chan1
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
-        self.task_param.update(dict(infiles=infile,spw=spw,imsize=self.spw_imsize_auto))
-        flux = sum([flux_list[idx] for idx in selspw])/float(len(selspw))
-        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(flux, region['blc'], region['trc']) )
-        out_shape = (self.spw_imsize_auto[0],self.spw_imsize_auto[1],1,self.spw_nchan)
+        self.task_param.update(dict(infiles=infile, spw=spw, imsize=self.spw_imsize_auto))
+        flux = sum([flux_list[idx] for idx in selspw]) / float(len(selspw))
+        refstats = merge_dict(self.spw_stat_common, construct_refstat_uniform(
+            flux, region['blc'], region['trc']))
+        out_shape = (self.spw_imsize_auto[0], self.spw_imsize_auto[1], 1, self.spw_nchan)
         # Tests
-        self.run_test(self.task_param,refstats,out_shape,box=region,atol=1.e-5)
+        self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
-    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    # @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_default(self):
         """test_timerange_value_default: Test default value for timerange"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_DEFAULT)
         self._test_timerange(params)
 
-    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    # @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_exact(self):
         """test_timerange_value_exact: Test timerange selection by syntax 'T0'"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_EXACT)
         self._test_timerange(params)
 
-    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    # @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_gt(self):
         """test_timerange_value_gt: Test timerange selection by syntax '>T0'"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_GT)
         self._test_timerange(params)
 
-    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    # @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_interval(self):
         """test_timerange_value_interval: Test timerange selection by syntax 'T0+dT'"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_INTERVAL)
         self._test_timerange(params)
 
-    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    # @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_lt(self):
         """test_timerange_value_lt: Test timerange selection by syntax '<T0'"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_LT)
         self._test_timerange(params)
 
-    #@unittest.skip("Test data not yet pushed to casatestdata repository")
+    # @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_range(self):
         """test_timerange_value_default: Test default value for timerange"""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_RANGE)
         self._test_timerange(params)
 
-    def _test_timerange(self,task_params,debug=False):
+    def _test_timerange(self, task_params, debug=False):
         # Compute results
         self._fetch_and_run(task_params)
         # Compute reference results
         ref_params = copy.deepcopy(task_params)
         ref_params['outfile'] += '.ref'
-        TestTimeRangeHelper.expected_results(ref_params,debug)
+        TestTimeRangeHelper.expected_results(ref_params, debug)
         # Compare results with reference
-        for suffix in [image_suffix,weight_suffix]:
+        for suffix in [image_suffix, weight_suffix]:
             img_file = task_params['outfile'] + suffix
             ref_img_file = ref_params['outfile'] + suffix
             self.assertTrue(os.path.exists(img_file))
@@ -2355,19 +2438,19 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
                     ref_img_data = ref_ia.getchunk()
                     ref_img_mask = ref_ia.getchunk(getmask=True)
                 self.assertEqual(img_data.shape, ref_img_data.shape)
-                self.assertTrue(numpy.allclose(img_data,ref_img_data,rtol=0.0))
-                self.assertTrue(numpy.array_equal(img_mask,ref_img_mask))
+                self.assertTrue(numpy.allclose(img_data, ref_img_data, rtol=0.0))
+                self.assertTrue(numpy.array_equal(img_mask, ref_img_mask))
             finally:
                 if not debug:
                     remove_table(img_file)
                     remove_table(ref_img_file)
 
-
-
     ####################
     # Helper functions
     ####################
-    def _checkstats_box(self,name, ref, compstats=None, atol=1.e-8, rtol=1.e-5, box=None, ignoremask=False):
+
+    def _checkstats_box(self, name, ref, compstats=None, atol=1.e-8, rtol=1.e-5,
+                        box=None, ignoremask=False):
         """
         A test function to compare statistics of a box region of an image
         with reference values.
@@ -2389,9 +2472,10 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
         refstats = ref.copy()
         refstats.update(box)
         for stats in ['blcf', 'trcf']:
-            if stats in refstats: refstats.pop(stats)
-        self._checkstats(name,refstats,region=boxreg,
-                         compstats=compstats,atol=atol,rtol=rtol,
+            if stats in refstats:
+                refstats.pop(stats)
+        self._checkstats(name, refstats, region=boxreg,
+                         compstats=compstats, atol=atol, rtol=rtol,
                          ignoremask=ignoremask)
 
     def __get_flux_value(self, infile):
@@ -2402,11 +2486,14 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest,sdimaging_un
             return self.spw_flux
         elif infile == self.unifreq_ms:
             return self.spw_flux_unifreq
-        else: raise Exception("Internal error: invalid input file to get flux value.")
+        else:
+            raise Exception("Internal error: invalid input file to get flux value.")
 
 ###
 # Test to verify if flag information is handled properly
 ###
+
+
 class sdimaging_test_flag(sdimaging_unittest_base):
     """
     Test to verify if flag information is handled properly
@@ -2484,19 +2571,19 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
 
     """
-    rawfile='sdimaging_flagtest.ms'
-    prefix=sdimaging_unittest_base.taskname+'TestFlag'
-    outfile=prefix+sdimaging_unittest_base.postfix
+    rawfile = 'sdimaging_flagtest.ms'
+    prefix = sdimaging_unittest_base.taskname + 'TestFlag'
+    outfile = prefix + sdimaging_unittest_base.postfix
     maskfile = outfile + image_suffix + '/mask0'
     weightfile = outfile + '.weight'
 
     gridfunction = "BOX"
     imsize = [32, 24]
-    cellarcsec = 2.062648 #= 0.00001*180.0/3.1415926535897932384*3600.0
-    cell = [str(cellarcsec)+'arcsec', str(cellarcsec)+'arcsec']
-    pcra = cellarcsec*15.0/15.0
-    pcdec = cellarcsec*11.8
-    phasecenter = "J2000 00:00:0"+str(pcra)+" 00.00."+str(pcdec)
+    cellarcsec = 2.062648  # = 0.00001*180.0/3.1415926535897932384*3600.0
+    cell = [str(cellarcsec) + 'arcsec', str(cellarcsec) + 'arcsec']
+    pcra = cellarcsec * 15.0 / 15.0
+    pcdec = cellarcsec * 11.8
+    phasecenter = "J2000 00:00:0" + str(pcra) + " 00.00." + str(pcdec)
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -2533,7 +2620,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
             tshift = numpy.empty_like(torig)
             for ichunk in range(nchunk):
                 ifrom = ichunk * nrow_chunk
-                ito = (ichunk+1) * nrow_chunk
+                ito = (ichunk + 1) * nrow_chunk
                 tshift[ifrom:ito] = torig[ifrom:ito] + ichunk * max_interval
             tb.putcol('TIME', tshift)
 
@@ -2542,26 +2629,31 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
     def testFlag01(self):
         """testFlag01: """
-        res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent="",gridfunction=self.gridfunction,cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=self.minweight0)
-        self.assertEqual(res,None,
+        res = sdimaging(infiles=self.rawfile, outfile=self.outfile, intent="",
+                        gridfunction=self.gridfunction, cell=self.cell, imsize=self.imsize,
+                        phasecenter=self.phasecenter, minweight=self.minweight0)
+        self.assertEqual(res, None,
                          msg='Any error occurred during imaging')
         outfile = self.outfile + image_suffix
         self._checkfile(outfile)
         self._check_weight_image(outfile)
-        self._checkshape(outfile,self.imsize[0],self.imsize[1],1,self.nchan)
+        self._checkshape(outfile, self.imsize[0], self.imsize[1], 1, self.nchan)
         self._set_data_ranges()
         self._check_data()
         self._check_mask()
         self._check_weight()
 
     def testFlag02(self):
-        res=sdimaging(infiles=self.rawfile,outfile=self.outfile,intent="",width=10,gridfunction=self.gridfunction,cell=self.cell,imsize=self.imsize,phasecenter=self.phasecenter,minweight=self.minweight0)
-        self.assertEqual(res,None,
+        res = sdimaging(infiles=self.rawfile, outfile=self.outfile, intent="",
+                        width=10, gridfunction=self.gridfunction, cell=self.cell,
+                        imsize=self.imsize, phasecenter=self.phasecenter,
+                        minweight=self.minweight0)
+        self.assertEqual(res, None,
                          msg='Any error occurred during imaging')
         outfile = self.outfile + image_suffix
         self._checkfile(outfile)
         self._check_weight_image(outfile)
-        self._checkshape(outfile,self.imsize[0],self.imsize[1],1,1)
+        self._checkshape(outfile, self.imsize[0], self.imsize[1], 1, 1)
         self._set_data_ranges(True)
         self._check_data(True)
         self._check_mask(True)
@@ -2572,13 +2664,13 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         xw = self.imsize[0] // xn
         self.x_range = []
         for i in range(xn):
-            self.x_range.append([xw*i, xw*(i+1)])
+            self.x_range.append([xw * i, xw * (i + 1)])
         yn = 3
         yw = self.imsize[1] // yn
         self.y_range = []
         for i in range(yn):
-            self.y_range.append([yw*i, yw*(i+1)])
-        self.f_range = [[0,1]] if chanmerge else [[0,2],[2,7],[7,10]]
+            self.y_range.append([yw * i, yw * (i + 1)])
+        self.f_range = [[0, 1]] if chanmerge else [[0, 2], [2, 7], [7, 10]]
 
     def _check_data(self, chanmerge=False):
         val = self._get_refvalues(self.rawfile, chanmerge)
@@ -2587,7 +2679,9 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         for i in range(len(self.x_range)):
             for j in range(len(self.y_range)):
                 for k in range(len(self.f_range)):
-                    self._checkvalue(outfile, False, self.x_range[i], self.y_range[j], self.f_range[k],  val[idx], chanmerge)
+                    self._checkvalue(
+                        outfile, False, self.x_range[i], self.y_range[j],
+                        self.f_range[k], val[idx], chanmerge)
                     idx += 1
 
     def _check_mask(self, chanmerge=False):
@@ -2596,7 +2690,9 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         for i in range(len(self.x_range)):
             for j in range(len(self.y_range)):
                 for k in range(len(self.f_range)):
-                    self._checkvalue(self.maskfile, True, self.x_range[i], self.y_range[j], self.f_range[k],  val[idx], chanmerge)
+                    self._checkvalue(
+                        self.maskfile, True, self.x_range[i], self.y_range[j],
+                        self.f_range[k], val[idx], chanmerge)
                     idx += 1
 
     def _check_weight(self, chanmerge=False):
@@ -2605,7 +2701,9 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         for i in range(len(self.x_range)):
             for j in range(len(self.y_range)):
                 for k in range(len(self.f_range)):
-                    self._checkvalue(self.weightfile, False, self.x_range[i], self.y_range[j], self.f_range[k],  val[idx], chanmerge)
+                    self._checkvalue(
+                        self.weightfile, False, self.x_range[i], self.y_range[j],
+                        self.f_range[k], val[idx], chanmerge)
                     idx += 1
 
     def _get_refmask(self, file, chanmerge=False):
@@ -2633,15 +2731,16 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         with table_manager(file) as tb:
             for i in [self.imsize[0] // 2, 0]:
                 for j in [0, self.imsize[1] // 3, self.imsize[1] * 2 // 3]:
-                    irow = self.imsize[0]*j+i
+                    irow = self.imsize[0] * j + i
                     if chanmerge:
-                        if (tb.getcell('FLAG', irow)[0]==True).all():
+                        if (tb.getcell('FLAG', irow)[0] == True).all():
                             res.append(0.0)
                         else:
                             res.append(tb.getcell('DATA', irow)[0][0].real)
                     else:
-                        if (tb.getcell('FLAG', irow)[0]==True).all():
-                            for k in range(3): res.append(0.0)
+                        if (tb.getcell('FLAG', irow)[0] == True).all():
+                            for k in range(3):
+                                res.append(0.0)
                         else:
                             res.append(tb.getcell('DATA', irow)[0][0].real)
                             if (tb.getcell('FLAG', irow)[0][5]):
@@ -2652,7 +2751,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         return res
 
     def _checkvalue(self, file, is_maskfile, x_range, y_range, f_range, ref_value, chanmerge=False):
-        tol=1e-5
+        tol = 1e-5
         colname = 'PagedArray' if is_maskfile else 'map'
         with table_manager(file) as tb:
             val = tb.getcell(colname, 0)
@@ -2664,7 +2763,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
                     if type(val[i][j][0][k]) in boolean_types or type(ref_value) in boolean_types:
                         self.assertEqual(val[i][j][0][k], ref_value)
                     else:
-                        diff_value = abs(val[i][j][0][k]-ref_value)
+                        diff_value = abs(val[i][j][0][k] - ref_value)
                         self.assertTrue(diff_value < tol)
 
 
@@ -2672,8 +2771,8 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
     """
     Test imaging of an MS one of polarization (XX) is completely flagged.
     """
-    prefix = sdimaging_unittest_base.taskname+'TestPol'
-    outfile = prefix+sdimaging_unittest_base.postfix
+    prefix = sdimaging_unittest_base.taskname + 'TestPol'
+    outfile = prefix + sdimaging_unittest_base.postfix
     # input MS names
     infiles = "selection_misc.ms"
     # default task parameters
@@ -2692,7 +2791,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
     # blcf and trcf => qa.formxxx(+-qa.mul(cell_auto, 10.), "hms"/"dms", prec=3)
     # --- for "selection_misc.ms"
     unif_flux = 32.
-    stat_common = {'blc': blc_auto,'trc': trc_auto,
+    stat_common = {'blc': blc_auto, 'trc': trc_auto,
                    'blcf': blcf_auto, 'trcf': trcf_auto}
     region_all = {'blc': blc_auto, 'trc': trc_auto}
 
@@ -2704,11 +2803,11 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         remove_tables_starting_with(self.prefix)
 
         # Common task parameters of the class
-        self.task_param = dict(infiles=self.infiles,mode=self.mode,
+        self.task_param = dict(infiles=self.infiles, mode=self.mode,
                                gridfunction=self.kernel,
-                               outfile=self.outfile,intent="")
+                               outfile=self.outfile, intent="")
         # flag ALL POL='XX'
-        flagdata(vis=self.infiles,mode='manual',correlation='XX',action='apply')
+        flagdata(vis=self.infiles, mode='manual', correlation='XX', action='apply')
 
     def tearDown(self):
         remove_table(self.infiles)
@@ -2727,15 +2826,15 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
 
     def run_test(self, task_param, refstats, shape,
                  atol=1.e-8, rtol=1.e-5, box=None):
-        self.res=sdimaging(**task_param)
+        self.res = sdimaging(**task_param)
         # Tests
         imsize = [shape[0], shape[1]]
         outfile = self.outfile + image_suffix
         self._checkfile(outfile)
         self._check_weight_image(outfile)
-        self._checkshape(outfile,shape[0], shape[1],shape[2],shape[3])
-        self._checkdirax(outfile,self.phasecenter_auto,self.cell_auto,imsize)
-        self._checkstats(outfile,refstats,atol=atol,rtol=rtol)
+        self._checkshape(outfile, shape[0], shape[1], shape[2], shape[3])
+        self._checkdirax(outfile, self.phasecenter_auto, self.cell_auto, imsize)
+        self._checkstats(outfile, refstats, atol=atol, rtol=rtol)
 
     def test_i(self):
         """test stokes='I': image constructed by unflagged YY pol (NB after imager migration: image weights all zero)"""
@@ -2743,58 +2842,64 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         # Tests
         # In true Stokes mode, all correlation components are flagged when any of them is flagged
         # Stokes value consistent with older imager based implementation is pseudo-Stokes
-        #refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, self.region_all['blc'], self.region_all['trc']) )
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(0.0, self.region_all['blc'], self.region_all['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
-        self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
+        #refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+        #    self.unif_flux, self.region_all['blc'], self.region_all['trc']) )
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            0.0, self.region_all['blc'], self.region_all['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_pseudo_i(self):
         """test pseudo stokes I: image constructed by unflagged YY pol"""
         self.task_param['stokes'] = 'pseudoI'
         # Tests
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, self.region_all['blc'], self.region_all['trc']) )
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
-        self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
-
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, self.region_all['blc'], self.region_all['trc']))
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_xx(self):
         """test stokes='XX' (flagged): image weights all zero"""
         stokes = 'XX'
         self.task_param['stokes'] = stokes
         # Tests
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(0.0, self.region_all['blc'], self.region_all['trc']) )
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            0.0, self.region_all['blc'], self.region_all['trc']))
         refstats['blcf'] = refstats['blcf'].replace('I', stokes)
         refstats['trcf'] = refstats['trcf'].replace('I', stokes)
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
-        self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_yy(self):
         """test stokes='YY': image constructed by YY pol"""
         stokes = 'YY'
         self.task_param['stokes'] = stokes
         # Tests
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, self.region_all['blc'], self.region_all['trc']) )
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, self.region_all['blc'], self.region_all['trc']))
         refstats['blcf'] = refstats['blcf'].replace('I', stokes)
         refstats['trcf'] = refstats['trcf'].replace('I', stokes)
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],1,1)
-        self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_xxyy(self):
         """test stokes='XXYY': """
         self.task_param['stokes'] = 'XXYY'
         # Tests
-        refstats = merge_dict(self.stat_common, construct_refstat_uniform(self.unif_flux, self.region_all['blc'], self.region_all['trc']) )
+        refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+            self.unif_flux, self.region_all['blc'], self.region_all['trc']))
         refstats['blcf'] = refstats['blcf'].replace('I', 'XX')
         refstats['trcf'] = refstats['trcf'].replace('I', 'YY')
-        refstats['trc'][2] = 1 # the image is in 2 polarization
-        out_shape = (self.imsize_auto[0],self.imsize_auto[1],2,1)
-        self.run_test(self.task_param, refstats, out_shape,atol=1.e-5)
+        refstats['trc'][2] = 1  # the image is in 2 polarization
+        out_shape = (self.imsize_auto[0], self.imsize_auto[1], 2, 1)
+        self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
         # statistics of YY only
         refstats['blc'][2] = 1
-        for key in ['blcf', 'trcf']: refstats.pop(key)
-        box = _rg.box(blc=refstats['blc'],trc=refstats['trc'])
+        for key in ['blcf', 'trcf']:
+            refstats.pop(key)
+        box = _rg.box(blc=refstats['blc'], trc=refstats['trc'])
         outfile = self.outfile + image_suffix
-        self._checkstats(outfile,refstats,atol=1.e-5,region=box)
+        self._checkstats(outfile, refstats, atol=1.e-5, region=box)
 
 
 class sdimaging_test_mslist(sdimaging_unittest_base):
@@ -2802,8 +2907,8 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
     Test more than one MSes as inputs
 
     """
-    prefix = sdimaging_unittest_base.taskname+'TestListMS'
-    outfile = prefix+sdimaging_unittest_base.postfix
+    prefix = sdimaging_unittest_base.taskname + 'TestListMS'
+    outfile = prefix + sdimaging_unittest_base.postfix
     clearup = True
     # input MS names
     org_ms = "selection_misc.ms"
@@ -2811,7 +2916,7 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
     mode = "channel"
     kernel = "BOX"
     infiles = ["multi-in1", "multi-in2"]
-    outfile = prefix+".im"
+    outfile = prefix + ".im"
     # auto calculation result of imsize
     cell = "6.7275953729549656arcsec"
     imsize = [21, 21]
@@ -2828,10 +2933,10 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
     # blcf and trcf => qa.formxxx(+-qa.mul(cell_auto, 10.), "hms"/"dms", prec=3)
     # --- for "selection_misc.ms"
     unif_flux = 25.
-    refstats = merge_dict({'blc': blc,'trc': trc, 'blcf': blcf, 'trcf': trcf},
-                          construct_refstat_uniform(unif_flux, blc, trc) )
-    #nvalid = imsize[0]*imsize[1] #21*21
-    #{'min': [unif_flux], 'max': [unif_flux], 'rms': [unif_flux],
+    refstats = merge_dict({'blc': blc, 'trc': trc, 'blcf': blcf, 'trcf': trcf},
+                          construct_refstat_uniform(unif_flux, blc, trc))
+    # nvalid = imsize[0]*imsize[1] #21*21
+    # {'min': [unif_flux], 'max': [unif_flux], 'rms': [unif_flux],
     # 'sigma': [0.], 'mean': [unif_flux], 'npts': [nvalid],
     # 'sum': [unif_flux*nvalid], 'sumsq': [unif_flux**2*nvalid],
     # 'blc': blc,'trc': trc, 'blcf': blcf, 'trcf': trcf}
@@ -2844,12 +2949,12 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
             remove_table(name)
             shutil.copytree(os.path.join(self.datapath, self.org_ms), name)
 
-        self.default_param = dict(infiles = self.infiles,
-                                  outfile = self.outfile,
+        self.default_param = dict(infiles=self.infiles,
+                                  outfile=self.outfile,
                                   intent="",
-                                  cell = self.cell,
-                                  imsize = self.imsize,
-                                  phasecenter = self.phasecenter,
+                                  cell=self.cell,
+                                  imsize=self.imsize,
+                                  phasecenter=self.phasecenter,
                                   mode=self.mode,
                                   gridfunction=self.kernel,
                                   minweight=0.0)
@@ -2863,18 +2968,18 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
 
         self.assertTrue(self.cache_validator.validate())
 
-    def run_test(self, task_param=None,refstats=None):
+    def run_test(self, task_param=None, refstats=None):
         if task_param is None:
             task_param = self.default_param
         if refstats is None:
             refstats = self.refstats
-        res=sdimaging(**task_param)
+        res = sdimaging(**task_param)
         outfile = self.outfile + image_suffix
         self._checkfile(outfile)
         self._check_weight_image(outfile)
-        self._checkshape(outfile,self.imsize[0],self.imsize[1],1,1)
-        self._checkdirax(outfile,self.phasecenter,self.cell,self.imsize)
-        self._checkstats(outfile,refstats,atol=1.e-5)
+        self._checkshape(outfile, self.imsize[0], self.imsize[1], 1, 1)
+        self._checkdirax(outfile, self.phasecenter, self.cell, self.imsize)
+        self._checkstats(outfile, refstats, atol=1.e-5)
 
     ###########################
     # Tests
@@ -2909,6 +3014,8 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
 # Test ways to define image rest frequency
 #
 ###
+
+
 class sdimaging_test_restfreq(sdimaging_unittest_base):
     """
     Unit test for task sdimaging
@@ -2924,21 +3031,21 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     - the default cell size of the image
     - the beam size of the image
     """
-    datapath=ctsys_resolve('unittest/tsdimaging/')
+    datapath = ctsys_resolve('unittest/tsdimaging/')
     infiles = 'selection_spw.ms'
     outfile = 'sdimaging_restfreq.im'
-    param_base = dict(infiles=infiles,outfile=outfile,intent="",
-                      outframe='lsrk',stokes='I',spw='1',
+    param_base = dict(infiles=infiles, outfile=outfile, intent="",
+                      outframe='lsrk', stokes='I', spw='1',
                       phasecenter='J2000 00:00:00 00.00.00',
-                      restfreq='',overwrite=True)
+                      restfreq='', overwrite=True)
     unifval = 5.98155
     refset = {
         '200GHz': {
-            'beam': dict(major='30.276442arcsec',minor='30.276442arcsec'),
+            'beam': dict(major='30.276442arcsec', minor='30.276442arcsec'),
             'cell': '10.091393059432447arcsec',
         },
         '300GHz': {
-            'beam': dict(major='20.339973arcsec',minor='20.339973arcsec'),
+            'beam': dict(major='20.339973arcsec', minor='20.339973arcsec'),
             'cell': '6.727595372954963arcsec',
         },
         '300.5GHz': {
@@ -2972,7 +3079,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         self._checkstats(outfile, stats, atol=1.e-3, rtol=1.e-3)
         self._check_beam(outfile, beam_ref)
         # check restfreq
-        self._check_restfreq(outfile,restfreq_ref)
+        self._check_restfreq(outfile, restfreq_ref)
         # check cell size
         self._checkdirax(outfile, self.param['phasecenter'],
                          cell_ref, self.param['imsize'])
@@ -2990,78 +3097,78 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
 
     def test_restfreq_param(self):
         """Rest frequency from restfreq parameter"""
-        restfreq='200GHz'
+        restfreq = '200GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
         self.assertTrue('cell' in refs)
         beam_ref = refs['beam']
         cell_ref = refs['cell']
-        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
-                                          [7 , 7 ,  0,  9])
+        stats = construct_refstat_uniform(self.unifval, [0, 0, 0, 0],
+                                          [7, 7, 0, 9])
         self.run_test(restfreq, beam_ref, cell_ref, stats,
-                      restfreq=restfreq,imsize=[8,8])
+                      restfreq=restfreq, imsize=[8, 8])
 
     def test_restfreq_source(self):
         """Rest Frequency from SOURCE table"""
-        restfreq='300GHz'
+        restfreq = '300GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
         self.assertTrue('cell' in refs)
         beam_ref = refs['beam']
         cell_ref = refs['cell']
-        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
-                                          [10, 10,  0,  9])
+        stats = construct_refstat_uniform(self.unifval, [0, 0, 0, 0],
+                                          [10, 10, 0, 9])
         self.run_test(restfreq, beam_ref, cell_ref, stats,
-                      restfreq='',imsize=[11,11])
+                      restfreq='', imsize=[11, 11])
 
     def test_restfreq_mean(self):
         """Rest frequency from mean of SPW frequencies"""
-        restfreq='300.5GHz'
+        restfreq = '300.5GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
         self.assertTrue('cell' in refs)
         beam_ref = refs['beam']
         cell_ref = refs['cell']
-        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
-                                          [10, 10,  0,  9])
+        stats = construct_refstat_uniform(self.unifval, [0, 0, 0, 0],
+                                          [10, 10, 0, 9])
         # remove REST_REQUENCY in SOURCE TABLE
-        tb.open(self.infiles+'/SOURCE', nomodify=False)
-        rf = tb.getcell('REST_FREQUENCY',0)
+        tb.open(self.infiles + '/SOURCE', nomodify=False)
+        rf = tb.getcell('REST_FREQUENCY', 0)
         rf.resize(0)
         for idx in range(tb.nrows()):
             tb.putcell('REST_FREQUENCY', idx, rf)
-            self.assertTrue(len(tb.getcell('REST_FREQUENCY',idx))==0)
+            self.assertTrue(len(tb.getcell('REST_FREQUENCY', idx)) == 0)
         tb.flush()
         tb.close()
         self.run_test(restfreq, beam_ref, cell_ref, stats,
-                      restfreq='', imsize=[11,11])
+                      restfreq='', imsize=[11, 11])
 
     def test_capital_outframe(self):
         """test outframe='LSRK'"""
-        restfreq='200GHz'
+        restfreq = '200GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
         self.assertTrue('cell' in refs)
         beam_ref = refs['beam']
         cell_ref = refs['cell']
-        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
-                                          [7 , 7 ,  0,  9])
+        stats = construct_refstat_uniform(self.unifval, [0, 0, 0, 0],
+                                          [7, 7, 0, 9])
         self.run_test(restfreq, beam_ref, cell_ref, stats,
-                      restfreq=restfreq,imsize=[8,8], outframe='LSRK')
+                      restfreq=restfreq, imsize=[8, 8], outframe='LSRK')
 
     def test_unallowed_outframe(self):
         """test outframe='lSrK' (will fail)"""
-        restfreq='200GHz'
+        restfreq = '200GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
         self.assertTrue('cell' in refs)
         beam_ref = refs['beam']
         cell_ref = refs['cell']
-        stats = construct_refstat_uniform(self.unifval,[0, 0, 0, 0],
-                                          [7 , 7 ,  0,  9])
+        stats = construct_refstat_uniform(self.unifval, [0, 0, 0, 0],
+                                          [7, 7, 0, 9])
         with self.assertRaises(AssertionError):
             self.run_test(restfreq, beam_ref, cell_ref, stats,
-                              restfreq=restfreq,imsize=[8,8], outframe='lSrK')
+                          restfreq=restfreq, imsize=[8, 8], outframe='lSrK')
         print('test_unallowed_outframe: failed as expected')
 
 ###
@@ -3069,6 +3176,8 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
 # Test case for automatic phasecenter calculation
 #
 ###
+
+
 class sdimaging_test_mapextent(sdimaging_unittest_base):
     """
     Unit test for task sdimaging
@@ -3083,7 +3192,7 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
                                only selected data
         test_ephemeris -- Verify phasecenter for ephemeris source
     """
-    datapath=ctsys_resolve('unittest/tsdimaging/')
+    datapath = ctsys_resolve('unittest/tsdimaging/')
     infiles_ephem = ['Uranus1.cal.Ant0.spw34.ms',
                      'Uranus2.cal.Ant0.spw34.ms']
     infiles_selection = 'selection_misc.ms'
@@ -3116,7 +3225,7 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
             remove_table(infile)
         remove_table(self.infiles_selection)
         remove_table(self.infiles_azel)
-        #remove_table(self.outfile)
+        # remove_table(self.outfile)
         remove_tables_starting_with(self.outfile)
 
         self.assertTrue(self.cache_validator.validate())
@@ -3162,19 +3271,24 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
         # also check if resulting map is not too wide
         # acceptable margin is 5% of the map extent
         margin = 0.05
-        self.assertTrue(blc[0] < blc_ref[0] + margin * extent[0], msg='Unexpected coordinate (blc RA is too wide)')
-        self.assertTrue(blc[1] > blc_ref[1] - margin * extent[1], msg='Unexpected coordinate (blc DEC is too wide)')
-        self.assertTrue(trc[0] > trc_ref[0] - margin * extent[0], msg='Unexpected coordinate (trc RA is too wide)')
-        self.assertTrue(trc[1] < trc_ref[1] + margin * extent[1], msg='Unexpected coordinate (trc DEC is too wide)')
+        self.assertTrue(blc[0] < blc_ref[0] + margin * extent[0],
+                        msg='Unexpected coordinate (blc RA is too wide)')
+        self.assertTrue(blc[1] > blc_ref[1] - margin * extent[1],
+                        msg='Unexpected coordinate (blc DEC is too wide)')
+        self.assertTrue(trc[0] > trc_ref[0] - margin * extent[0],
+                        msg='Unexpected coordinate (trc RA is too wide)')
+        self.assertTrue(trc[1] < trc_ref[1] + margin * extent[1],
+                        msg='Unexpected coordinate (trc DEC is too wide)')
 
     def test_azel_pointing(self):
-        # test_azel_pointing: Verify phasecenter in J2000 is properly calculated from AZELGEO pointing direction
+        # test_azel_pointing:
+        # Verify phasecenter in J2000 is properly calculated from AZELGEO pointing direction
         self.__copy_table(self.infiles_azel)
         self.run_test(infiles=self.infiles_azel)
-        npix_ref = numpy.array([27,37])
-        #blc_ref, trc_ref = get_mapextent(self.infiles_azel) #CAS-10301
-        blc_ref = numpy.array([-85.2565977,  -13.87524395]) #CAS-10301
-        trc_ref = numpy.array([-85.30504227, -13.80972133]) #CAS-10301
+        npix_ref = numpy.array([27, 37])
+        # blc_ref, trc_ref = get_mapextent(self.infiles_azel) #CAS-10301
+        blc_ref = numpy.array([-85.2565977, -13.87524395])  # CAS-10301
+        trc_ref = numpy.array([-85.30504227, -13.80972133])  # CAS-10301
         self.verify_mapextent(npix_ref, blc_ref, trc_ref)
 
     def test_data_selection(self):
@@ -3186,26 +3300,31 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
         # by an order of 0.5 pixel
         # this effect causes unexpected failure of the test
         self.run_test(infiles=self.infiles_selection, scan='16', imsize=13)
-        npix_ref = numpy.array([13,13])
-        #blc_ref, trc_ref = get_mapextent(self.infiles_selection, scan='16') #CAS-10301
-        blc_ref = numpy.array([ 0.00202179, -0.00202178]) #CAS-10301
-        trc_ref = numpy.array([-0.01819663,  0.01819663]) #CAS-10301
+        npix_ref = numpy.array([13, 13])
+        # blc_ref, trc_ref = get_mapextent(self.infiles_selection, scan='16') #CAS-10301
+        blc_ref = numpy.array([0.00202179, -0.00202178])  # CAS-10301
+        trc_ref = numpy.array([-0.01819663, 0.01819663])  # CAS-10301
         self.verify_mapextent(npix_ref, blc_ref, trc_ref)
 
     def test_ephemeris(self):
         for infile in self.infiles_ephem:
             self.__copy_table(infile)
         #self.run_test(infiles=self.infiles_ephem, ephemsrcname='Uranus', restfreq='230GHz')
-        self.run_test(infiles=self.infiles_ephem, phasecenter='URANUS', restfreq='230GHz') #CAS-11955
-        npix_ref = numpy.array([37,26])
+        self.run_test(infiles=self.infiles_ephem, phasecenter='URANUS',
+                      restfreq='230GHz')  # CAS-11955
+        npix_ref = numpy.array([37, 26])
         # set reference value manually since expected map area for
         # ephemeris object is difficult to calculate
         #blcf_ref = '00:46:43.672 +04.14.51.504'
         #trcf_ref = '00:46:27.547 +04.17.39.004'
-        blcf_ref = '00:47:09.795 +04.17.10.435' #CAS-11955
-        trcf_ref = '00:46:53.670 +04.19.57.935' #CAS-11955
-        blc_ref = numpy.fromiter(map(lambda x: qa.quantity(x)['value'], blcf_ref.split()), dtype=float)
-        trc_ref = numpy.fromiter(map(lambda x: qa.quantity(x)['value'], trcf_ref.split()), dtype=float)
+        blcf_ref = '00:47:09.795 +04.17.10.435'  # CAS-11955
+        trcf_ref = '00:46:53.670 +04.19.57.935'  # CAS-11955
+        blc_ref = numpy.fromiter(
+            map(lambda x: qa.quantity(x)['value'],
+                blcf_ref.split()), dtype=float)
+        trc_ref = numpy.fromiter(
+            map(lambda x: qa.quantity(x)['value'],
+                trcf_ref.split()), dtype=float)
         #blc_ref, trc_ref = get_mapextent_ephemeris(self.infiles_ephem)
         self.verify_mapextent(npix_ref, blc_ref, trc_ref)
 
@@ -3214,6 +3333,8 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
 # Test case for moving object
 #
 ###
+
+
 class sdimaging_test_ephemeris(sdimaging_unittest_base):
     """
     Tests if tracking moving object works correctly
@@ -3242,9 +3363,9 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
                     datacolumn='float_data')
     """
 
-    datapath=ctsys_resolve('unittest/tsdimaging/')
+    datapath = ctsys_resolve('unittest/tsdimaging/')
     infiles = 'ephemtest.spw18.ms'
-    ephtab  = infiles + '/FIELD/EPHEM0_Sol_58327.6.tab'
+    ephtab = infiles + '/FIELD/EPHEM0_Sol_58327.6.tab'
     outfile = 'sdimaging_test_ephemeris.im'
 
     param_base = {'infiles': infiles,
@@ -3298,15 +3419,17 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
                 xmax = 0
                 for x in range(imsize):
                     if imdata[x][y][0][0] > 0.0:
-                        if x < xmin: xmin = x
-                        if xmax < x: xmax = x
+                        if x < xmin:
+                            xmin = x
+                        if xmax < x:
+                            xmax = x
 
                 # set reference border
                 if _phasecenter == '':
                     xmin_ref = 436.0 - (y - 500.0) / 15.0
                 elif _phasecenter == 'SUN':
                     xmin_ref = 649.0
-                else: # for table name or 'TRACKFIELD'
+                else:  # for table name or 'TRACKFIELD'
                     xmin_ref = 438.0
                 xmax_ref = xmin_ref + 129.0
 
@@ -3316,7 +3439,9 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
                 ignore_case = (_phasecenter == '') and (y == 436)
                 if not ignore_case:
                     inside_border = (xmin_ref <= xmin) and (xmax <= xmax_ref)
-                    message = 'Data x-range(' + str(xmin) + ', ' + str(xmax) + ') outside the reference border(' + str(xmin_ref) + ', ' + str(xmax_ref) + ') at y=' + str(y)
+                    message = 'Data x-range(' + str(xmin) + ', ' + str(xmax) + \
+                              ') outside the reference border(' + \
+                              str(xmin_ref) + ', ' + str(xmax_ref) + ') at y=' + str(y)
                     self.assertTrue(inside_border, msg=message)
 
     def __verify_spectral_reference(self):
@@ -3347,13 +3472,15 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
         chanstart = self.param.get('start', None)
         self.assertIsNotNone(chanstart)
         nchan = self.param.get('nchan', nchanspw) * self.param.get('width', 1)
-        rtol = 0.2 # 20% tolerance w.r.t. Lorentz factor
+        rtol = 0.2  # 20% tolerance w.r.t. Lorentz factor
         metadataset = restfreqtool.get_metadataset(vis, fieldid, spwid, chanstart, nchan)
         msrange = restfreqtool.ms_freq_range(metadataset)
         imrange = restfreqtool.image_freq_range(imagename)
         lorentz_factor = restfreqtool.get_lorentz_factor(metadataset)
-        fmin_ok = restfreqtool.is_frequency_close(msrange.min, imrange.min, lorentz_factor, rtol=rtol)
-        fmax_ok = restfreqtool.is_frequency_close(msrange.max, imrange.max, lorentz_factor, rtol=rtol)
+        fmin_ok = restfreqtool.is_frequency_close(
+            msrange.min, imrange.min, lorentz_factor, rtol=rtol)
+        fmax_ok = restfreqtool.is_frequency_close(
+            msrange.max, imrange.max, lorentz_factor, rtol=rtol)
         print('Result = {}'.format(fmin_ok and fmax_ok))
         self.assertTrue(fmin_ok)
         self.assertTrue(fmax_ok)
@@ -3415,17 +3542,17 @@ class sdimaging_test_interp(sdimaging_unittest_base):
     Also, 'pointing6-2.ms' has 5 hours lag behind 'pointing6.ms'.
     """
     datapath = ctsys_resolve('unittest/tsdimaging/')
-    params = dict(antenna = "0",
-                  intent  = "*ON_SOURCE*",
-                  gridfunction = "SF",
-                  convsupport = 6,
-                  imsize = [512, 512],
-                  cell = "2arcsec",
-                  phasecenter = "J2000 0:00:00.0 00.00.00.0",
-                  pointingcolumn = "direction",
-                  stokes = 'I')
+    params = dict(antenna="0",
+                  intent="*ON_SOURCE*",
+                  gridfunction="SF",
+                  convsupport=6,
+                  imsize=[512, 512],
+                  cell="2arcsec",
+                  phasecenter="J2000 0:00:00.0 00.00.00.0",
+                  pointingcolumn="direction",
+                  stokes='I')
     infiles = []
-    outfiles = [] # have a list of outfiles as multiple task execution may occur in a test
+    outfiles = []  # have a list of outfiles as multiple task execution may occur in a test
 
     def __copy_table(self, f):
         remove_table(f)
@@ -3447,7 +3574,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
 
     def run_task(self, infiles, outfile, **kwargs):
         if isinstance(infiles, str):
-            infiles = [ infiles ]
+            infiles = [infiles]
         for i in range(len(infiles)):
             self.infiles.append(infiles[i])
         self.outfiles.append(outfile)
@@ -3457,7 +3584,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
         self.params.update(**kwargs)
 
         status = sdimaging(infiles=infiles, outfile=outfile, **self.params)
-        self.assertIsNone(status, msg = 'sdimaging failed to execute')
+        self.assertIsNone(status, msg='sdimaging failed to execute')
         outfile = outfile.rstrip('/') + '.image'
         self._checkfile(outfile)
         self._check_weight_image(outfile)
@@ -3469,19 +3596,19 @@ class sdimaging_test_interp(sdimaging_unittest_base):
         # for pixels with strong weight value(>14), collect their distance from the image
         # center and then compute the mean and sigma of their distribution.
         dist_answer = [0.0, 0.0]
-        dist_answer[0] = 0.001*180.0/numpy.pi*3600.0/float(self.params['cell'][0])
-        dist_answer[1] = dist_answer[0]*0.8
-        dist_sep = (dist_answer[0] + dist_answer[1])/2.0
+        dist_answer[0] = 0.001 * 180.0 / numpy.pi * 3600.0 / float(self.params['cell'][0])
+        dist_answer[1] = dist_answer[0] * 0.8
+        dist_sep = (dist_answer[0] + dist_answer[1]) / 2.0
 
         dist_list = [[], []]
         for i in range(self.params['imsize'][0]):
             for j in range(self.params['imsize'][1]):
                 if mapdata[i][j][0][0] > 14.0:
-                    cenx = float(self.params['imsize'][0])/2.0
-                    ceny = float(self.params['imsize'][1])/2.0
+                    cenx = float(self.params['imsize'][0]) / 2.0
+                    ceny = float(self.params['imsize'][1]) / 2.0
                     dx = float(i) - cenx
                     dy = float(j) - ceny
-                    dr = numpy.sqrt(dx*dx + dy*dy)
+                    dr = numpy.sqrt(dx * dx + dy * dy)
                     idx = 0 if (dist_sep < dr) else 1
                     dist_list[idx].append(dr)
         dist_mean1 = [0.0, 0.0]
@@ -3511,9 +3638,8 @@ class sdimaging_test_interp(sdimaging_unittest_base):
             (81.609 - 83.151) and (82.506), respectively.
             """
             self.assertTrue(((dist_llim[i] < dist_answer[i]) and (dist_answer[i] < dist_ulim[i])),
-                            msg = 'spline interpolation seems not working.')
+                            msg='spline interpolation seems not working.')
             #print('['+str(i)+'] --- ' + str(dist_llim[i]) + ' - ' + str(dist_ulim[i]))
-
 
     def check_images_identical(self, image1, image2, weight_image=False):
         suffix = '.weight' if weight_image else '.image'
@@ -3541,9 +3667,9 @@ class sdimaging_test_interp(sdimaging_unittest_base):
         outfile21 = "2and1.out"
         self.run_task(infiles=['pointing6-2.ms', 'pointing6.ms'], outfile=outfile21)
 
-        #check if spline interpolation works
+        # check if spline interpolation works
         self.check_spline_works(outfile12, True)
-        #check if the results (both image and weight) don't change when infiles has inversed order
+        # check if the results (both image and weight) don't change when infiles has inversed order
         self.check_images_identical(outfile12, outfile21)
         self.check_images_identical(outfile12, outfile21, True)
 
@@ -3558,16 +3684,16 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
     applied.
     """
     datapath = ctsys_resolve('unittest/tsdimaging/')
-    params = dict(infiles = ['pointing6.ms'],
-                  outfile = "pointing6.out",
-                  antenna = "0",
-                  intent  = "*ON_SOURCE*",
-                  gridfunction = "SF",
-                  convsupport = 6,
-                  imsize = [512, 512],
-                  cell = "2arcsec",
-                  phasecenter = "J2000 0:00:00.0 00.00.00.0",
-                  pointingcolumn = "direction")
+    params = dict(infiles=['pointing6.ms'],
+                  outfile="pointing6.out",
+                  antenna="0",
+                  intent="*ON_SOURCE*",
+                  gridfunction="SF",
+                  convsupport=6,
+                  imsize=[512, 512],
+                  cell="2arcsec",
+                  phasecenter="J2000 0:00:00.0 00.00.00.0",
+                  pointingcolumn="direction")
     outfile = params['outfile']
 
     def __copy_table(self, f):
@@ -3590,7 +3716,7 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
     def run_test(self, **kwargs):
         self.params.update(**kwargs)
         status = sdimaging(**self.params)
-        self.assertIsNone(status, msg = 'sdimaging failed to execute')
+        self.assertIsNone(status, msg='sdimaging failed to execute')
         outfile = self.outfile + image_suffix
         self._checkfile(outfile)
         self._check_weight_image(outfile)
@@ -3609,11 +3735,11 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
         for i in range(self.params['imsize'][0]):
             for j in range(self.params['imsize'][1]):
                 if mapdata[i][j][0][0] > 14.0:
-                    cenx = float(self.params['imsize'][0])/2.0
-                    ceny = float(self.params['imsize'][1])/2.0
+                    cenx = float(self.params['imsize'][0]) / 2.0
+                    ceny = float(self.params['imsize'][1]) / 2.0
                     dx = float(i) - cenx
                     dy = float(j) - ceny
-                    dist_list.append(numpy.sqrt(dx*dx + dy*dy))
+                    dist_list.append(numpy.sqrt(dx * dx + dy * dy))
         dist_mean = 0.0
         dist_mean2 = 0.0
         for i in range(len(dist_list)):
@@ -3625,7 +3751,7 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
 
         dist_llim = dist_mean - dist_sigma
         dist_ulim = dist_mean + dist_sigma
-        dist_answer = 0.001*180.0/numpy.pi*3600.0/float(self.params['cell'][0])
+        dist_answer = 0.001 * 180.0 / numpy.pi * 3600.0 / float(self.params['cell'][0])
 
         """
         if spline interpolation is done, the range [dist_llim, dist_ulim]
@@ -3635,7 +3761,7 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
         level.
         """
         self.assertTrue(((dist_llim < dist_answer) and (dist_answer < dist_ulim)),
-                        msg = 'spline interpolation seems not working.')
+                        msg='spline interpolation seems not working.')
 
 
 class sdimaging_test_clipping(sdimaging_unittest_base):
@@ -3653,6 +3779,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                  'clipping_3rows_suprious.ms', 'clipping_3rows_2chans.ms']
     outfile = 'sdimaging_test_clipping.im'
     outfile_ref = 'sdimaging_test_clipping.ref.im'
+
     def setUp(self):
         self.cache_validator = TableCacheValidator()
 
@@ -3671,11 +3798,13 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         outfile = self.outfile + image_suffix
         remove_table(outfile)
         remove_table(self.outfile + '.weight')
-        #remove_table(self.outfile + '.psf') # CAS-10893 TODO: uncomment once true PSF image is available
+        # CAS-10893 TODO: uncomment once true PSF image is available
+        # remove_table(self.outfile + '.psf')
         outfile_ref = self.outfile_ref + image_suffix
         remove_table(outfile_ref)
         remove_table(self.outfile_ref + '.weight')
-        #remove_table(self.outfile_ref + '.psf') # CAS-10893 TODO: uncomment once true PSF image is available
+        # CAS-10893 TODO: uncomment once true PSF image is available
+        # remove_table(self.outfile_ref + '.psf')
 
     def _test_clipping(self, infiles, is_clip_effective=True):
         if isinstance(infiles, str):
@@ -3727,7 +3856,8 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                 mymsmd.open(infile)
                 try:
                     for irow in range(int(mymsmd.nrows())):
-                        pointingdirection = mymsmd.pointingdirection(irow)['antenna1']['pointingdirection']
+                        pointingdirection = mymsmd.pointingdirection(
+                            irow)['antenna1']['pointingdirection']
                         ra = pointingdirection['m0']['value']
                         dec = pointingdirection['m1']['value']
                         min_separation = 1e10
@@ -3737,7 +3867,8 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                             for idec in range(imsize):
                                 gra = ra_list[ira]
                                 gdec = dec_list[idec]
-                                separation = math.sqrt(math.pow(ra - gra, 2) + math.pow(dec - gdec, 2))
+                                separation = math.sqrt(
+                                    math.pow(ra - gra, 2) + math.pow(dec - gdec, 2))
                                 if separation < min_separation:
                                     min_ra = ira
                                     min_dec = idec
@@ -3766,19 +3897,21 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                         continue
                     print('### ira {} idec {} data {}'.format(ira, idec, data))
                     for ichan in range(data.shape[1]):
-                        slice = data[:,ichan]
+                        slice = data[:, ichan]
                         argmin = numpy.argmin(slice)
                         argmax = numpy.argmax(slice)
-                        print('### ira {} idec {} argmin {} argmax {}'.format(ira, idec, argmin, argmax))
+                        print('### ira {} idec {} argmin {} argmax {}'.format(
+                            ira, idec, argmin, argmax))
                         for imeta in (argmin, argmax):
                             infile, irow = gridmeta[ira][idec][imeta]
                             mytb.open(infile, nomodify=False)
                             try:
-                                print('### clip {} row {} chan {} data {}'.format(infile, irow, ichan, mytb.getcell('FLOAT_DATA', irow)))
+                                print('### clip {} row {} chan {} data {}'.format(
+                                    infile, irow, ichan, mytb.getcell('FLOAT_DATA', irow)))
                                 #mytb.putcell('FLAG_ROW', irow, True)
                                 flag = mytb.getcell('FLAG', irow)
                                 print('### flag (before) {}'.format(flag))
-                                flag[0,ichan] = True
+                                flag[0, ichan] = True
                                 print('### flag (after) {}'.format(flag))
                                 mytb.putcell('FLAG', irow, flag)
                             finally:
@@ -3816,11 +3949,11 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         mreference = reference[reference_mask]
         self.assertTrue(mresult.shape == mreference.shape)
         #self.assertTrue(numypy.all(result == reference))
-        diff = lambda v, r: abs((v - r) / r) if r != 0.0 else abs(v)
+        def diff(v, r): return abs((v - r) / r) if r != 0.0 else abs(v)
         vdiff = numpy.vectorize(diff)
         err = vdiff(mresult, mreference)
         eps = 1.0e-6
-        print('err = %s (max %s min %s)'%(err, err.max(), err.min()))
+        print('err = %s (max %s min %s)' % (err, err.max(), err.min()))
         self.assertTrue(numpy.all(err < eps))
 
     def test_1row(self):
@@ -3891,8 +4024,8 @@ class sdimaging_test_projection(sdimaging_unittest_base):
 
     """
     # Input and output names
-    prefix=sdimaging_unittest_base.taskname+'ProjectionTest'
-    outfile=prefix+sdimaging_unittest_base.postfix
+    prefix = sdimaging_unittest_base.taskname + 'ProjectionTest'
+    outfile = prefix + sdimaging_unittest_base.postfix
     mode = 'channel'
     cell = ['3.0arcmin', '3.0arcmin']
     imsize = [75, 75]
@@ -3901,8 +4034,8 @@ class sdimaging_test_projection(sdimaging_unittest_base):
     start = 604
     nchan = 1
 
-    keys=['max','maxpos','maxposf','mean','min','minpos','minposf',
-          'npts','rms','blc','blcf','trc','trcf','sigma','sum','sumsq']
+    keys = ['max', 'maxpos', 'maxposf', 'mean', 'min', 'minpos', 'minposf',
+            'npts', 'rms', 'blc', 'blcf', 'trc', 'trcf', 'sigma', 'sum', 'sumsq']
 
     def setUp(self):
         self.cache_validator = TableCacheValidator()
@@ -3910,13 +4043,12 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         remove_table(self.rawfile)
         shutil.copytree(os.path.join(self.datapath, self.rawfile), self.rawfile)
         # Common task parameters of the class
-        self.task_param = dict(infiles=self.rawfile,mode=self.mode,
-                               outfile=self.outfile,intent='OBSERVE_TARGET_ON_SOURCE',
-                               cell=self.cell,imsize=self.imsize,
-                               nchan=self.nchan,start=self.start,
+        self.task_param = dict(infiles=self.rawfile, mode=self.mode,
+                               outfile=self.outfile, intent='OBSERVE_TARGET_ON_SOURCE',
+                               cell=self.cell, imsize=self.imsize,
+                               nchan=self.nchan, start=self.start,
                                phasecenter=self.phasecenter,
                                gridfunction=self.gridfunction)
-
 
     def tearDown(self):
         remove_table(self.rawfile)
@@ -3956,23 +4088,23 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         projection = 'SIN'
         spw = '0'
         self.task_param.update(dict(projection=projection, spw=spw))
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
         refstats = {
             'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
             'blcf': '17:32:18.690, +57.37.28.536, I, 1.42087e+09Hz',
-            'max': numpy.array([ 21.92034912]),
-            'maxpos': numpy.array([59, 21,  0,  0], dtype=numpy.int32),
+            'max': numpy.array([21.92034912]),
+            'maxpos': numpy.array([59, 21, 0, 0], dtype=numpy.int32),
             'maxposf': '17:10:00.642, +58.42.19.808, I, 1.42087e+09Hz',
-            'mean': numpy.array([ 7.84297146]),
-            'min': numpy.array([ 3.36271787]),
-            'minpos': numpy.array([71, 50,  0,  0], dtype=numpy.int32),
+            'mean': numpy.array([7.84297146]),
+            'min': numpy.array([3.36271787]),
+            'minpos': numpy.array([71, 50, 0, 0], dtype=numpy.int32),
             'minposf': '17:04:49.308, +60.07.45.791, I, 1.42087e+09Hz',
-            'npts': numpy.array([ 4217.]),
-            'rms': numpy.array([ 8.70721651]),
-            'sigma': numpy.array([ 3.7824345]),
-            'sum': numpy.array([ 33073.81065345]),
-            'sumsq': numpy.array([ 319714.46711966]),
-            'trc': numpy.array([74, 74,  0,  0], dtype=numpy.int32),
+            'npts': numpy.array([4217.]),
+            'rms': numpy.array([8.70721651]),
+            'sigma': numpy.array([3.7824345]),
+            'sum': numpy.array([33073.81065345]),
+            'sumsq': numpy.array([319714.46711966]),
+            'trc': numpy.array([74, 74, 0, 0], dtype=numpy.int32),
             'trcf': '17:03:03.151, +61.19.10.757, I, 1.42087e+09Hz'
         }
         self.run_test_common(self.task_param, refstats, outshape,
@@ -3984,23 +4116,23 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         projection = 'TAN'
         spw = '0'
         self.task_param.update(dict(projection=projection, spw=spw))
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
         refstats = {
             'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
             'blcf': '17:32:17.872, +57.37.35.824, I, 1.42087e+09Hz',
             'max': numpy.array([21.91863632]),
-            'maxpos': numpy.array([59, 21,  0,  0], dtype=numpy.int32),
+            'maxpos': numpy.array([59, 21, 0, 0], dtype=numpy.int32),
             'maxposf': '17:10:00.782, +58.42.20.655, I, 1.42087e+09Hz',
-            'mean': numpy.array([ 7.84080757]),
-            'min': numpy.array([ 3.36540604]),
-            'minpos': numpy.array([71, 50,  0,  0], dtype=numpy.int32),
+            'mean': numpy.array([7.84080757]),
+            'min': numpy.array([3.36540604]),
+            'minpos': numpy.array([71, 50, 0, 0], dtype=numpy.int32),
             'minposf': '17:04:49.729, +60.07.44.771, I, 1.42087e+09Hz',
-            'npts': numpy.array([ 4222.]),
-            'rms': numpy.array([ 8.7050746]),
-            'sigma': numpy.array([ 3.78198999]),
-            'sum': numpy.array([ 33103.88957095]),
-            'sumsq': numpy.array([ 319936.08330953]),
-            'trc': numpy.array([74, 74,  0,  0], dtype=numpy.int32),
+            'npts': numpy.array([4222.]),
+            'rms': numpy.array([8.7050746]),
+            'sigma': numpy.array([3.78198999]),
+            'sum': numpy.array([33103.88957095]),
+            'sumsq': numpy.array([319936.08330953]),
+            'trc': numpy.array([74, 74, 0, 0], dtype=numpy.int32),
             'trcf': '17:03:04.170, +61.19.04.235, I, 1.42087e+09Hz'
         }
         self.run_test_common(self.task_param, refstats, outshape,
@@ -4012,23 +4144,23 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         projection = 'CAR'
         spw = '0'
         self.task_param.update(dict(projection=projection, spw=spw))
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
         refstats = {
             'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
             'blcf': '17:32:18.122, +57.37.29.933, I, 1.42087e+09Hz',
             'max': numpy.array([21.91925812]),
-            'maxpos': numpy.array([59, 21,  0,  0], dtype=numpy.int32),
+            'maxpos': numpy.array([59, 21, 0, 0], dtype=numpy.int32),
             'maxposf': '17:10:00.722, +58.42.19.922, I, 1.42087e+09Hz',
-            'mean': numpy.array([ 7.84154849]),
-            'min': numpy.array([ 3.36489725]),
-            'minpos': numpy.array([71, 50,  0,  0], dtype=numpy.int32),
+            'mean': numpy.array([7.84154849]),
+            'min': numpy.array([3.36489725]),
+            'minpos': numpy.array([71, 50, 0, 0], dtype=numpy.int32),
             'minposf': '17:04:49.481, +60.07.45.807, I, 1.42087e+09Hz',
-            'npts': numpy.array([ 4219.]),
-            'rms': numpy.array([ 8.70603491]),
-            'sigma': numpy.array([ 3.78266474]),
-            'sum': numpy.array([ 33083.49308872]),
-            'sumsq': numpy.array([ 319779.29008623]),
-            'trc': numpy.array([74, 74,  0,  0], dtype=numpy.int32),
+            'npts': numpy.array([4219.]),
+            'rms': numpy.array([8.70603491]),
+            'sigma': numpy.array([3.78266474]),
+            'sum': numpy.array([33083.49308872]),
+            'sumsq': numpy.array([319779.29008623]),
+            'trc': numpy.array([74, 74, 0, 0], dtype=numpy.int32),
             'trcf': '17:03:03.803, +61.19.09.870, I, 1.42087e+09Hz'
         }
         self.run_test_common(self.task_param, refstats, outshape,
@@ -4040,23 +4172,23 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         projection = 'SFL'
         spw = '0'
         self.task_param.update(dict(projection=projection, spw=spw))
-        outshape = (self.imsize[0],self.imsize[1],1,self.nchan)
+        outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
         refstats = {
             'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
             'blcf': '17:32:18.553, +57.37.29.753, I, 1.42087e+09Hz',
             'max': numpy.array([21.91932678]),
-            'maxpos': numpy.array([59, 21,  0,  0], dtype=numpy.int32),
+            'maxpos': numpy.array([59, 21, 0, 0], dtype=numpy.int32),
             'maxposf': '17:10:00.673, +58.42.19.909, I, 1.42087e+09Hz',
-            'mean': numpy.array([ 7.84234172]),
-            'min': numpy.array([ 3.36329484]),
-            'minpos': numpy.array([71, 50,  0,  0], dtype=numpy.int32),
+            'mean': numpy.array([7.84234172]),
+            'min': numpy.array([3.36329484]),
+            'minpos': numpy.array([71, 50, 0, 0], dtype=numpy.int32),
             'minposf': '17:04:49.429, +60.07.45.787, I, 1.42087e+09Hz',
-            'npts': numpy.array([ 4218.]),
-            'rms': numpy.array([ 8.70668658]),
-            'sigma': numpy.array([ 3.78252027]),
-            'sum': numpy.array([ 33078.99737787]),
-            'sumsq': numpy.array([ 319751.35842591]),
-            'trc': numpy.array([74, 74,  0,  0], dtype=numpy.int32),
+            'npts': numpy.array([4218.]),
+            'rms': numpy.array([8.70668658]),
+            'sigma': numpy.array([3.78252027]),
+            'sum': numpy.array([33078.99737787]),
+            'sumsq': numpy.array([319751.35842591]),
+            'trc': numpy.array([74, 74, 0, 0], dtype=numpy.int32),
             'trcf': '17:03:03.322, +61.19.09.669, I, 1.42087e+09Hz'
         }
         self.run_test_common(self.task_param, refstats, outshape,
@@ -4069,10 +4201,10 @@ class sdimaging_test_output(sdimaging_unittest_base):
     Tests to check if only appropriate images are output
     """
     datapath = ctsys_resolve('unittest/tsdimaging/')
-    params = dict(infiles = ['selection_misc.ms'],
-                  outfile = "outmisc",
-                  imsize = [80,80], # to suppress warning messages
-                  intent = '')
+    params = dict(infiles=['selection_misc.ms'],
+                  outfile="outmisc",
+                  imsize=[80, 80],  # to suppress warning messages
+                  intent='')
     outfile = params['outfile']
 
     def __copy_table(self, f):
@@ -4095,7 +4227,7 @@ class sdimaging_test_output(sdimaging_unittest_base):
     def run_test(self, **kwargs):
         self.params.update(**kwargs)
         status = sdimaging(**self.params)
-        self.assertIsNone(status, msg = 'sdimaging failed to execute')
+        self.assertIsNone(status, msg='sdimaging failed to execute')
         outfile = self.outfile + image_suffix
         self.assertTrue(os.path.exists(outfile), msg='output image is not created.')
 
@@ -4107,10 +4239,11 @@ class sdimaging_test_output(sdimaging_unittest_base):
 
         # check data that must be output
         for suffix in ['.image', '.weight']:
-            self.assertTrue(os.path.exists(self.outfile + suffix), msg=suffix+' not found.')
+            self.assertTrue(os.path.exists(self.outfile + suffix), msg=suffix + ' not found.')
         # check data that must not be output
         for suffix in ['.sumwt', '.psf']:
-            self.assertFalse(os.path.exists(self.outfile + suffix), msg=suffix+' exists though it should not.')
+            self.assertFalse(os.path.exists(self.outfile + suffix),
+                             msg=suffix + ' exists though it should not.')
 
 
 class sdimaging_antenna_move(sdimaging_unittest_base):
@@ -4210,17 +4343,20 @@ def get_mapextent_ephemeris(infiles):
     return numpy.array([xmax, ymin]), numpy.array([xmin, ymax])
 """
 
+
 def str_to_deg(s):
     return qa.quantity(s)['value']
+
 
 def calc_statistics(imagename):
     with tool_manager(imagename, image) as ia:
         s = ia.statistics()
     return s
 
+
 def calc_mapproperty(statistics):
-    ra_in_deg = lambda x: qa.quantity(x.split(',')[0])['value']
-    dec_in_deg = lambda x: qa.quantity(x.split(',')[1])['value']
+    def ra_in_deg(x): return qa.quantity(x.split(',')[0])['value']
+    def dec_in_deg(x): return qa.quantity(x.split(',')[1])['value']
     blcf = statistics['blcf']
     trcf = statistics['trcf']
     blcra = ra_in_deg(blcf)
@@ -4236,6 +4372,7 @@ def calc_mapproperty(statistics):
     ddec = abs(trcdec - blcdec)
     return {'extent': numpy.array([dra, ddec]), 'npix': npix,
             'blc': numpy.array([blcra, blcdec]), 'trc': numpy.array([trcra, trcdec])}
+
 
 if __name__ == '__main__':
     unittest.main()

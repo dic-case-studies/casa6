@@ -12,7 +12,7 @@ from casatools import quanta
 
 
 ##################################################
-### Prediction of theoretical beam size
+# Prediction of theoretical beam size
 ##################################################
 class TheoreticalBeam:
     """
@@ -29,6 +29,7 @@ class TheoreticalBeam:
     # get theoretical beam size of an image.
     beam = bu.get_beamsize_image()
     """
+
     def __init__(self):
         self.is_antenna_set = False
         self.is_kernel_set = False
@@ -37,8 +38,8 @@ class TheoreticalBeam:
         self.antenna_block_m = 0.0
         self.taper = 10
         self.ref_freq = -1.
-        self.kernel_type=""
-        self.kernel_param={}
+        self.kernel_type = ""
+        self.kernel_param = {}
         self.pa = "0.0deg"
         self.sampling_arcsec = []
         self.cell_arcsec = []
@@ -51,11 +52,13 @@ class TheoreticalBeam:
 
     def __to_arcsec(self, angle):
         """convert angle to arcsec and return the value without unit."""
-        my_qa = quanta( )
+        my_qa = quanta()
         if my_qa.isangle(angle):
             return my_qa.getvalue(my_qa.convert(angle, "arcsec"))[0]
-        elif my_qa.getunit(angle)=='': return float(angle)
-        else: raise ValueError("Invalid angle: %s" % (str(angle)))
+        elif my_qa.getunit(angle) == '':
+            return float(angle)
+        else:
+            raise ValueError("Invalid angle: %s" % (str(angle)))
 
     def __parse_width(self, val, cell_size_arcsec):
         """
@@ -63,12 +66,13 @@ class TheoreticalBeam:
         if val is angle, returns a float value in unit of arcsec.
         else the unit is assumed to be pixel and multiplied by cell_size_arcsec
         """
-        my_qa = quanta( )
-        if my_qa.isangle(val): return self.__to_arcsec(val)
+        my_qa = quanta()
+        if my_qa.isangle(val):
+            return self.__to_arcsec(val)
         elif my_qa.getunit(val) in ('', 'pixel'):
-            return my_qa.getvalue(val)*cell_size_arcsec
-        else: raise ValueError("Invalid width %s" % str(val))
-
+            return my_qa.getvalue(val) * cell_size_arcsec
+        else:
+            raise ValueError("Invalid width %s" % str(val))
 
     def set_antenna(self, diam, blockage="0.0m", taper=10):
         """
@@ -77,8 +81,8 @@ class TheoreticalBeam:
         taper: the illumination taper in dB
         """
         # try quantity
-        my_qa = quanta( )
-        self.antenna_diam_m  = my_qa.getvalue(my_qa.convert(diam, "m"))[0]
+        my_qa = quanta()
+        self.antenna_diam_m = my_qa.getvalue(my_qa.convert(diam, "m"))[0]
         self.antenna_block_m = my_qa.getvalue(my_qa.convert(blockage, "m"))[0]
         self.taper = taper
         self.is_antenna_set = True
@@ -90,12 +94,12 @@ class TheoreticalBeam:
         pa: position angle (NOT USED)
         """
         self.pa = pa
-        self.sampling_arcsec = [ abs(a) for a in
-                                 self.__to_arcsec_list(intervals) ]
+        self.sampling_arcsec = [abs(a) for a in
+                                self.__to_arcsec_list(intervals)]
         self.is_sampling_set = True
 
     def set_image_param(self, cell, ref_freq, gridfunction,
-                        convsupport, truncate, gwidth, jwidth,is_alma=False):
+                        convsupport, truncate, gwidth, jwidth, is_alma=False):
         """
         Set imaging parameters
         cell: image pixel size
@@ -105,12 +109,12 @@ class TheoreticalBeam:
         is_alma: valid only for PB kernel to use 10.7m
         """
         self.ref_freq = ref_freq
-        self.cell_arcsec = [ abs(a) for a in
-                             self.__to_arcsec_list(cell) ]
+        self.cell_arcsec = [abs(a) for a in
+                            self.__to_arcsec_list(cell)]
         if gridfunction.upper() == "SF":
             self.__set_sf_kernel(convsupport)
         elif gridfunction.upper() == "GJINC":
-            self.__set_gjinc_kernel(truncate,gwidth,jwidth)
+            self.__set_gjinc_kernel(truncate, gwidth, jwidth)
         elif gridfunction.upper() == "GAUSS":
             self.__set_gauss_kernel(truncate, gwidth)
         elif gridfunction.upper() == "BOX":
@@ -119,30 +123,30 @@ class TheoreticalBeam:
             self.__set_pb_kernel(is_alma)
         self.is_kernel_set = True
 
-    def __set_sf_kernel(self,convsupport):
+    def __set_sf_kernel(self, convsupport):
         """Set SF kernel parameter to the class"""
-        self.kernel_type="SF"
+        self.kernel_type = "SF"
         self.kernel_param = dict(convsupport=convsupport)
 
-    def __set_gjinc_kernel(self,truncate,gwidth,jwidth):
+    def __set_gjinc_kernel(self, truncate, gwidth, jwidth):
         """Set GJINC kernel parameter to the class"""
-        self.kernel_type="GJINC"
-        self.kernel_param = dict(truncate=truncate,gwidth=gwidth,jwidth=jwidth)
+        self.kernel_type = "GJINC"
+        self.kernel_param = dict(truncate=truncate, gwidth=gwidth, jwidth=jwidth)
 
-    def __set_gauss_kernel(self,truncate,gwidth):
+    def __set_gauss_kernel(self, truncate, gwidth):
         """Set GAUSS kernel parameter to the class"""
-        self.kernel_type="GAUSS"
-        self.kernel_param = dict(truncate=truncate,gwidth=gwidth)
+        self.kernel_type = "GAUSS"
+        self.kernel_param = dict(truncate=truncate, gwidth=gwidth)
 
-    def __set_box_kernel(self,width):
+    def __set_box_kernel(self, width):
         """Set BOX kernel parameter to the class"""
-        self.kernel_type="BOX"
-        self.kernel_param=dict(width=width)
+        self.kernel_type = "BOX"
+        self.kernel_param = dict(width=width)
 
-    def __set_pb_kernel(self,alma=False):
+    def __set_pb_kernel(self, alma=False):
         """Set PB kernel parameter to the class"""
         self.kernel_type = "PB"
-        self.kernel_param=dict(alma=alma)
+        self.kernel_param = dict(alma=alma)
 
     def get_beamsize_image(self):
         """
@@ -156,50 +160,53 @@ class TheoreticalBeam:
         casalog.post("Calculating theoretical beam size of the image")
         # construct theoretic beam for image
         axis, beam = self.get_antenna_beam()
-        casalog.post("Length of convolution array=%d, total width=%f arcsec, separation=%f arcsec" % (len(axis), axis[-1]-axis[0], axis[1]-axis[0]),
-                     priority="DEBUG1")
+        casalog.post(
+            f"Length of convolution array={len(axis)}, "
+            f"total width={axis[-1] - axis[0]} arcsec, "
+            f"separation={axis[1] - axis[0]} arcsec",
+            priority="DEBUG1")
         kernel = self.get_kernel(axis)
-        sampling = self.get_box_kernel(axis,self.sampling_arcsec[0])
+        sampling = self.get_box_kernel(axis, self.sampling_arcsec[0])
         # convolution
-        gridded = np.convolve(beam,kernel,mode='same')
+        gridded = np.convolve(beam, kernel, mode='same')
         gridded /= max(gridded)
-        result = np.convolve(gridded,sampling,mode='same')
+        result = np.convolve(gridded, sampling, mode='same')
         result /= max(result)
         #fwhm_arcsec = findFWHM(axis,result)
-        fwhm_arcsec, dummy = self.gaussfit(axis, result, minlevel=0.0,truncate=False)
-        ### DEBUG MESSAGE
+        fwhm_arcsec, dummy = self.gaussfit(axis, result, minlevel=0.0, truncate=False)
+        # DEBUG MESSAGE
         casalog.post("- initial FWHM of beam = %f arcsec" %
-                     findFWHM(axis,beam))
+                     findFWHM(axis, beam))
         casalog.post("- FWHM of gridding kernel = %f arcsec" %
-                     findFWHM(axis,kernel))
+                     findFWHM(axis, kernel))
         casalog.post("- FWHM of theoretical beam = %f arcsec" %
-                     findFWHM(axis,result))
+                     findFWHM(axis, result))
         casalog.post("- FWHM of theoretical beam (gauss fit) = %f arcsec" %
                      fwhm_arcsec)
         ###
         del result
-        if len(self.sampling_arcsec)==1 and \
-               (len(self.cell_arcsec)==1 or self.kernel_type != "BOX"):
+        if len(self.sampling_arcsec) == 1 and \
+                (len(self.cell_arcsec) == 1 or self.kernel_type != "BOX"):
             fwhm_geo_arcsec = fwhm_arcsec
         else:
             pa = None
             if len(self.sampling_arcsec) > 1:
                 sampling = self.get_box_kernel(axis, self.sampling_arcsec[1])
             elif self.kernel_type == "BOX" and len(self.cell_arcsec) > 1:
-                kernel = self.get_box_kernel(axis,self.cell_arcsec[1])
-                gridded = np.convolve(beam,kernel,mode='same')
+                kernel = self.get_box_kernel(axis, self.cell_arcsec[1])
+                gridded = np.convolve(beam, kernel, mode='same')
                 gridded /= max(gridded)
-            result = np.convolve(gridded,sampling,mode='same')
+            result = np.convolve(gridded, sampling, mode='same')
             result /= max(result)
             #fwhm1 = findFWHM(axis,result)
-            fwhm1, dummy = self.gaussfit(axis, result, minlevel=0.0,truncate=False)
-            fwhm_geo_arcsec = np.sqrt(fwhm_arcsec*fwhm1)
-            ### DEBUG MESSAGE
+            fwhm1, dummy = self.gaussfit(axis, result, minlevel=0.0, truncate=False)
+            fwhm_geo_arcsec = np.sqrt(fwhm_arcsec * fwhm1)
+            # DEBUG MESSAGE
             casalog.post("The second axis")
             casalog.post("- FWHM of gridding kernel = %f arcsec" %
-                         findFWHM(axis,kernel))
+                         findFWHM(axis, kernel))
             casalog.post("- FWHM of theoretical beam = %f arcsec" %
-                         findFWHM(axis,result))
+                         findFWHM(axis, result))
             casalog.post("- FWHM of theoretical beam (gauss fit) = %f arcsec" %
                          fwhm1)
             del result
@@ -212,11 +219,13 @@ class TheoreticalBeam:
 
     def __assert_antenna(self):
         """Raise an error if antenna information is not set"""
-        if not self.is_antenna_set: raise RuntimeError("Antenna is not set")
+        if not self.is_antenna_set:
+            raise RuntimeError("Antenna is not set")
 
     def __assert_kernel(self):
         """Raise an error if imaging parameters are not set"""
-        if not self.is_kernel_set: raise RuntimeError("Kernel is not set.")
+        if not self.is_kernel_set:
+            raise RuntimeError("Kernel is not set.")
 
     def __assert_sampling(self):
         """Raise an error if sampling information is not set"""
@@ -237,21 +246,22 @@ class TheoreticalBeam:
                                         obscuration=self.antenna_block_m,
                                         fwhmfactor=None)
         truncate = False
-        convolutionPixelSize = 0.02 #arcsec
+        convolutionPixelSize = 0.02  # arcsec
         # avoid too coarse convolution array w.r.t. sampling
         if self.is_sampling_set and \
-               min(self.sampling_arcsec) < 5*convolutionPixelSize:
+                min(self.sampling_arcsec) < 5 * convolutionPixelSize:
             convolutionPixelSize = min(self.sampling_arcsec) / 5.0
         # avoid too fine convolution arrays.
-        sizes = list(self.cell_arcsec)+[fwhm_arcsec]
-        if self.is_sampling_set: sizes += list(self.sampling_arcsec)
+        sizes = list(self.cell_arcsec) + [fwhm_arcsec]
+        if self.is_sampling_set:
+            sizes += list(self.sampling_arcsec)
         minsize = min(sizes)
         support_min = 1000.
         support_fwhm = 5000.
-        if minsize > support_min*convolutionPixelSize:
-            convolutionPixelSize = minsize/support_min
-        if fwhm_arcsec > support_fwhm*convolutionPixelSize:
-            convolutionPixelSize = min(fwhm_arcsec/support_fwhm,minsize/10.)
+        if minsize > support_min * convolutionPixelSize:
+            convolutionPixelSize = minsize / support_min
+        if fwhm_arcsec > support_fwhm * convolutionPixelSize:
+            convolutionPixelSize = min(fwhm_arcsec / support_fwhm, minsize / 10.)
 
         if (self.taper < 0.1):
             # Airly disk
@@ -261,46 +271,48 @@ class TheoreticalBeam:
                                       diameter=self.antenna_diam_m)
         else:
             # Gaussian beam
-            myxaxis = np.arange(-3*fwhm_arcsec,
-                                3*fwhm_arcsec+0.5*convolutionPixelSize,
+            myxaxis = np.arange(-3 * fwhm_arcsec,
+                                3 * fwhm_arcsec + 0.5 * convolutionPixelSize,
                                 convolutionPixelSize)
-            myfunction = self.gauss(myxaxis,[fwhm_arcsec,truncate])
+            myfunction = self.gauss(myxaxis, [fwhm_arcsec, truncate])
             return myxaxis, myfunction
 
     def get_kernel(self, axis):
         """Returns imaging kernel array"""
         self.__assert_kernel()
         if self.kernel_type == "SF":
-            ### TODO: what to do for cell[0]!=cell[1]???
-            return self.get_sf_kernel(axis,self.kernel_param['convsupport'],
+            # TODO: what to do for cell[0]!=cell[1]???
+            return self.get_sf_kernel(axis, self.kernel_param['convsupport'],
                                       self.cell_arcsec[0])
         elif self.kernel_type == "GJINC":
-            return self.get_gjinc_kernel(axis,self.kernel_param['truncate'],
+            return self.get_gjinc_kernel(axis, self.kernel_param['truncate'],
                                          self.kernel_param['gwidth'],
                                          self.kernel_param['jwidth'],
                                          self.cell_arcsec[0])
         elif self.kernel_type == "GAUSS":
-            return self.get_gauss_kernel(axis,self.kernel_param['truncate'],
+            return self.get_gauss_kernel(axis, self.kernel_param['truncate'],
                                          self.kernel_param['gwidth'],
                                          self.cell_arcsec[0])
         elif self.kernel_type == "BOX":
-            return self.get_box_kernel(axis,self.kernel_param['width'])
+            return self.get_box_kernel(axis, self.kernel_param['width'])
         elif self.kernel_type == "PB":
             diam = self.antenna_diam_m
             if self.kernel_param['alma']:
                 diam = 10.7
-                casalog.post("Using effective antenna diameter %fm for %s kernel of ALMA antennas" % (diam,self.kernel_type))
-            epsilon = self.antenna_block_m/diam
-            return self.get_pb_kernel(axis,diam,self.ref_freq, epsilon=epsilon)
-            #return (self.rootAiryIntensity(axis, epsilon))**2
+                casalog.post(
+                    f"Using effective antenna diameter {diam}m for "
+                    f"{self.kernel_type} kernel of ALMA antennas")
+            epsilon = self.antenna_block_m / diam
+            return self.get_pb_kernel(axis, diam, self.ref_freq, epsilon=epsilon)
+            # return (self.rootAiryIntensity(axis, epsilon))**2
         else:
             raise RuntimeError("Invalid kernel: %s" % self.kernel_type)
 
     def summary(self):
         """Print summary of parameters set to the class"""
-        casalog.post("="*40)
+        casalog.post("=" * 40)
         casalog.post("Summary of Image Beam Parameters")
-        casalog.post("="*40)
+        casalog.post("=" * 40)
         casalog.post("[Antenna]")
         self.__antenna_summary()
 
@@ -340,11 +352,11 @@ class TheoreticalBeam:
         casalog.post("sampling interval: %s arcsec" % str(self.sampling_arcsec))
         casalog.post("position angle: %s" % (self.pa))
 
-
     ##############################
-    ### Construct Kernel arrays
+    # Construct Kernel arrays
     ##############################
     #### BOX ###
+
     def get_box_kernel(self, axis, width):
         """
         Returns a box kernel array with specified width.
@@ -355,7 +367,7 @@ class TheoreticalBeam:
                    = 0.0 (else)
         """
         data = np.zeros(len(axis))
-        indices = np.where(abs(axis) <= width/2.0)
+        indices = np.where(abs(axis) <= width / 2.0)
         data[indices] = 1.0
         return data
 
@@ -370,14 +382,15 @@ class TheoreticalBeam:
         Modified version of one in AnalysisUtils.sfBeamPredict (revision 1.2204, 2015/02/18)
         """
         convsupport = 3 if convsupport == -1 else convsupport
-        supportwidth = (convsupport*1.0 + 0.0)
-        c = 5.356*np.pi/2.0 # value obtained by matching Fred's grdsf.f output with scipy(m=0,n=0)
-        sfaxis = axis/float(supportwidth*cell_size*1.0)
-        indices = np.where(abs(sfaxis)<1)[0]
+        supportwidth = (convsupport * 1.0 + 0.0)
+        # value obtained by matching Fred's grdsf.f output with scipy(m=0,n=0)
+        c = 5.356 * np.pi / 2.0
+        sfaxis = axis / float(supportwidth * cell_size * 1.0)
+        indices = np.where(abs(sfaxis) < 1)[0]
         centralRegion = sfaxis[indices]
         centralRegionY = self.spheroidalWaveFunction(centralRegion, 0, 0, c, 1)
         mysf = np.zeros(len(axis))
-        mysf[indices] += centralRegionY/max(centralRegionY)
+        mysf[indices] += centralRegionY / max(centralRegionY)
         return mysf
 
     def spheroidalWaveFunction(self, x, m=0, n=0, c=0, alpha=0):
@@ -390,11 +403,11 @@ class TheoreticalBeam:
             x = [x]
         else:
             returnScalar = False
-        cv = scipy.special.pro_cv(m,n,c)  # get the eigenvalue
-        result = scipy.special.pro_ang1_cv(m,n,c,cv,x)[0]
+        cv = scipy.special.pro_cv(m, n, c)  # get the eigenvalue
+        result = scipy.special.pro_ang1_cv(m, n, c, cv, x)[0]
         for i in range(len(x)):
-            nu = x[i] # (i-0.5*len(x))/(0.5*len(x))  # only true if x is symmetric about zero
-            result[i] *= (1-nu**2)**alpha
+            nu = x[i]  # (i-0.5*len(x))/(0.5*len(x))  # only true if x is symmetric about zero
+            result[i] *= (1 - nu**2)**alpha
         # The peak of this function is about 10000 for m=0,n=0,c=6
         if (returnScalar):
             return result[0]
@@ -415,13 +428,13 @@ class TheoreticalBeam:
             gwidth = np.sqrt(np.log(2.0))
         gwidth_arcsec = self.__parse_width(gwidth, cell_arcsec)
         # get gauss for full axis
-        result = self.gauss(axis,[gwidth_arcsec])
+        result = self.gauss(axis, [gwidth_arcsec])
         # truncate kernel outside the truncation radius
         if truncate == -1:
-            trunc_arcsec = gwidth_arcsec*1.5
+            trunc_arcsec = gwidth_arcsec * 1.5
         elif truncate is not None:
             trunc_arcsec = self.__parse_width(truncate, cell_arcsec)
-        idx = np.where(abs(axis)>trunc_arcsec)
+        idx = np.where(abs(axis) > trunc_arcsec)
         result[idx] = 0.
         return result
 
@@ -436,11 +449,11 @@ class TheoreticalBeam:
         if (type(parameters) != np.ndarray and type(parameters) != list):
             parameters = np.array([parameters])
         if (len(parameters) < 2):
-            parameters = np.array([parameters[0],0])
+            parameters = np.array([parameters[0], 0])
         fwhm = parameters[0]
         x = np.asarray(x, dtype=np.float64)
-        sigma = fwhm/2.3548201
-        result = np.exp(-(x**2/(2.0*sigma**2)))
+        sigma = fwhm / 2.3548201
+        result = np.exp(-(x**2 / (2.0 * sigma**2)))
         idx = np.where(result < parameters[1])[0]
         result[idx] = 0
         return result
@@ -455,7 +468,7 @@ class TheoreticalBeam:
         cell_arcsec : image pixel size in unit of arcsec
         """
         if gwidth == -1:
-            gwidth = 2.52*np.sqrt(np.log(2.0))
+            gwidth = 2.52 * np.sqrt(np.log(2.0))
         if jwidth == -1:
             jwidth = 1.55
         gwidth_arcsec = self.__parse_width(gwidth, cell_arcsec)
@@ -470,9 +483,9 @@ class TheoreticalBeam:
         Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
         """
         if (useCasaJinc):
-            result = self.grdjinc1(x,jwidth,normalize) * self.gjincGauss(x, gwidth)
+            result = self.grdjinc1(x, jwidth, normalize) * self.gjincGauss(x, gwidth)
         else:
-            result = self.jinc(x,jwidth) * self.gjincGauss(x, gwidth)
+            result = self.jinc(x, jwidth) * self.gjincGauss(x, gwidth)
         return result
 
     def grdjinc1(self, val, c, normalize=True):
@@ -480,40 +493,41 @@ class TheoreticalBeam:
         Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
         """
         # Casa's function
-        #// Calculate J_1(x) using approximate formula
+        # // Calculate J_1(x) using approximate formula
         xs = np.pi * val / c
         result = []
         for x in xs:
-          x = abs(x)  # I added this to make it symmetric
-          ax = abs(x)
-          if (ax < 8.0 ):
-            y = x * x
-            ans1 = x * (72362614232.0 + y * (-7895059235.0 \
-                       + y * (242396853.1 + y * (-2972611.439 \
-                       + y * (15704.48260 + y * (-30.16036606))))))
-            ans2 = 144725228442.0 + y * (2300535178.0 \
-                       + y * (18583304.74 + y * (99447.43394 \
-                       + y * (376.9991397 + y * 1.0))))
-            ans = ans1 / ans2
-          else:
-            z = 8.0 / ax
-            y = z * z
-            xx = ax - 2.356194491
-            ans1 = 1.0 + y * (0.183105e-2 + y * (-0.3516396496e-4 \
-                      + y * (0.2457520174e-5 + y * (-0.240337019e-6))))
-            ans2 = 0.04687499995 + y * (-0.2002690873e-3 \
-                      + y * (0.8449199096e-5 + y * (-0.88228987e-6  \
-                      + y * (0.105787412e-6))))
-            ans = sqrt(0.636619772 / ax) * (cos(xx) * ans1 - z * sin(xx) * ans2)
-          if (x < 0.0):
-            ans = -ans
-          if (x == 0.0):
-            out = 0.5
-          else:
-            out = ans / x
-          if (normalize):
-            out = out / 0.5
-          result.append(out)
+            x = abs(x)  # I added this to make it symmetric
+            ax = abs(x)
+            if (ax < 8.0):
+                y = x * x
+                ans1 = x * (72362614232.0 + y *
+                            (-7895059235.0 + y * (242396853.1 + y *
+                             (-2972611.439 + y * (15704.48260 + y * (-30.16036606))))))
+                ans2 = 144725228442.0 + y * (2300535178.0 + y *
+                                             (18583304.74 + y * (99447.43394 + y *
+                                              (376.9991397 + y * 1.0))))
+                ans = ans1 / ans2
+            else:
+                z = 8.0 / ax
+                y = z * z
+                xx = ax - 2.356194491
+                ans1 = 1.0 + y * (0.183105e-2 + y *
+                                  (-0.3516396496e-4 + y *
+                                   (0.2457520174e-5 + y * (-0.240337019e-6))))
+                ans2 = 0.04687499995 + y * (-0.2002690873e-3 + y *
+                                            (0.8449199096e-5 + y *
+                                             (-0.88228987e-6 + y * (0.105787412e-6))))
+                ans = sqrt(0.636619772 / ax) * (cos(xx) * ans1 - z * sin(xx) * ans2)
+            if (x < 0.0):
+                ans = -ans
+            if (x == 0.0):
+                out = 0.5
+            else:
+                out = ans / x
+            if (normalize):
+                out = out / 0.5
+            result.append(out)
         return(result)
 
     def jinc(self, x, jwidth):
@@ -521,8 +535,8 @@ class TheoreticalBeam:
         The peak of this function is 0.5.
         Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
         """
-        argument = np.pi*np.abs(x)/jwidth
-        np.seterr(invalid='ignore') # prevent warning for central point
+        argument = np.pi * np.abs(x) / jwidth
+        np.seterr(invalid='ignore')  # prevent warning for central point
         result = scipy.special.j1(argument) / argument
         np.seterr(invalid='warn')
         for i in range(len(x)):
@@ -531,10 +545,10 @@ class TheoreticalBeam:
         return result
 
     def gjincGauss(self, x, gwidth):
-        return (np.exp(-np.log(2)*(x/float(gwidth))**2))
+        return (np.exp(-np.log(2) * (x / float(gwidth))**2))
 
     ### Airly disk ###
-    def get_pb_kernel(self, axis,diam,ref_freq, epsilon=0.0):
+    def get_pb_kernel(self, axis, diam, ref_freq, epsilon=0.0):
         """
         Return Airy Disk array defined by the axis, diameter, reference frequency
         and ratio of central hole and antenna diameter
@@ -545,18 +559,18 @@ class TheoreticalBeam:
         epsilon: ratio of central hole diameter to antenna diameter
         """
         a = (self.rootAiryIntensity(axis, epsilon))**2
-        airyfwhm = findFWHM(axis,a)
+        airyfwhm = findFWHM(axis, a)
         fwhm = primaryBeamArcsec(frequency=ref_freq, diameter=diam,
                                  taper=self.taper, showEquation=False,
-                                 obscuration=diam*epsilon,
+                                 obscuration=diam * epsilon,
                                  fwhmfactor=None)
-        ratio = fwhm/airyfwhm
-        tempaxis = axis/ratio
+        ratio = fwhm / airyfwhm
+        tempaxis = axis / ratio
         a = self.rootAiryIntensity(tempaxis, epsilon)
         return a**2
 
     def buildAiryDisk(self, fwhm, xaxisLimitInUnitsOfFwhm, convolutionPixelSize,
-                      truncate=False, obscuration=0.75,diameter=12.0):
+                      truncate=False, obscuration=0.75, diameter=12.0):
         """
         This function computes the Airy disk (with peak of 1.0) across a grid of points
         specified in units of the FWHM of the disk.
@@ -569,18 +583,18 @@ class TheoreticalBeam:
           and its effect on the pattern
         Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
         """
-        epsilon = obscuration/diameter
+        epsilon = obscuration / diameter
         # casalog.post("Using epsilon = %f" % (epsilon))
-        myxaxis = np.arange(-xaxisLimitInUnitsOfFwhm*fwhm,
-                            xaxisLimitInUnitsOfFwhm*fwhm+0.5*convolutionPixelSize,
+        myxaxis = np.arange(-xaxisLimitInUnitsOfFwhm * fwhm,
+                            xaxisLimitInUnitsOfFwhm * fwhm + 0.5 * convolutionPixelSize,
                             convolutionPixelSize)
         a = (self.rootAiryIntensity(myxaxis, epsilon))**2
         # Scale the Airy disk to the desired FWHM, and recompute on finer grid
-        airyfwhm = findFWHM(myxaxis,a)
-        ratio = fwhm/airyfwhm
-        myxaxis = np.arange(-xaxisLimitInUnitsOfFwhm*fwhm/ratio,
-                            (xaxisLimitInUnitsOfFwhm*fwhm+0.5*convolutionPixelSize)/ratio,
-                            convolutionPixelSize/ratio)
+        airyfwhm = findFWHM(myxaxis, a)
+        ratio = fwhm / airyfwhm
+        myxaxis = np.arange(-xaxisLimitInUnitsOfFwhm * fwhm / ratio,
+                            (xaxisLimitInUnitsOfFwhm * fwhm + 0.5 * convolutionPixelSize) / ratio,
+                            convolutionPixelSize / ratio)
         a = self.rootAiryIntensity(myxaxis, epsilon)
         if (truncate):
             a = self.trunc(a)
@@ -596,10 +610,11 @@ class TheoreticalBeam:
         Migrated from AnalysisUtils.py (revision 1.2204, 2015/02/18)
         """
         if (epsilon > 0):
-            a = (2*spspec.j1(myxaxis)/myxaxis - \
-                 epsilon**2*2*spspec.j1(myxaxis*epsilon)/(epsilon*myxaxis)) / (1-epsilon**2)
+            a = (2 * spspec.j1(myxaxis) / myxaxis -
+                 epsilon**2 * 2 * spspec.j1(myxaxis * epsilon) /
+                 (epsilon * myxaxis)) / (1 - epsilon**2)
         else:
-            a = 2*spspec.j1(myxaxis)/myxaxis  # simpler formula for epsilon=0
+            a = 2 * spspec.j1(myxaxis) / myxaxis  # simpler formula for epsilon=0
         return(a)
 
     def trunc(self, result):
@@ -614,22 +629,24 @@ class TheoreticalBeam:
         mask = np.zeros(len(result))
         truncateBefore = 0
         truncateBeyond = len(mask)
-        for r in range(len(result)//2,len(result)):
-            if (result[r]<0):
+        for r in range(len(result) // 2, len(result)):
+            if (result[r] < 0):
                 truncateBeyond = r
                 break
-        for r in range(len(result)//2,0,-1):
-            if (result[r]<0):
+        for r in range(len(result) // 2, 0, -1):
+            if (result[r] < 0):
                 truncateBefore = r
                 break
         mask[truncateBefore:truncateBeyond] = 1
-        # casalog.post("Truncating outside of pixels %d-%d (len=%d)" % (truncateBefore,truncateBeyond-1,len(mask)))
+        # casalog.post(
+        #     "Truncating outside of pixels %d-%d (len=%d)" %
+        #     (truncateBefore,truncateBeyond-1,len(mask)))
         result *= mask
         return result
 
-    def gaussfit_errfunc(self,parameters,x,y):
+    def gaussfit_errfunc(self, parameters, x, y):
         """Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)"""
-        return (y - self.gauss(x,parameters))
+        return (y - self.gauss(x, parameters))
 
     def gaussfit(self, x, y, showplot=False, minlevel=0, verbose=False,
                  title=None, truncate=False):
@@ -639,23 +656,24 @@ class TheoreticalBeam:
         Returns the FWHM and truncation point.
         Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
         """
-        fwhm_guess = findFWHM(x,y)
+        fwhm_guess = findFWHM(x, y)
         if (truncate == False):
             parameters = np.asarray([fwhm_guess], dtype=np.float64)
         else:
-            parameters = np.asarray([fwhm_guess,truncate], dtype=np.float64)
-        if (verbose): casalog.post("Fitting for %d parameters: guesses = %s" % (len(parameters), parameters))
+            parameters = np.asarray([fwhm_guess, truncate], dtype=np.float64)
+        if (verbose):
+            casalog.post("Fitting for %d parameters: guesses = %s" % (len(parameters), parameters))
         xx = np.asarray(x, dtype=np.float64)
         yy = np.asarray(y, dtype=np.float64)
         lenx = len(x)
         if (minlevel > 0):
-            xwidth = findFWHM(x,y,minlevel)
-            xx = x[np.where(np.abs(x) < xwidth*0.5)[0]]
-            yy = y[np.where(np.abs(x) < xwidth*0.5)[0]]
+            xwidth = findFWHM(x, y, minlevel)
+            xx = x[np.where(np.abs(x) < xwidth * 0.5)[0]]
+            yy = y[np.where(np.abs(x) < xwidth * 0.5)[0]]
             if (verbose):
                 casalog.postt("Keeping %d/%d points, guess = %f arcsec" %
-                              (len(x),lenx,fwhm_guess))
-        result = optimize.leastsq(self.gaussfit_errfunc, parameters, args=(xx,yy),
+                              (len(x), lenx, fwhm_guess))
+        result = optimize.leastsq(self.gaussfit_errfunc, parameters, args=(xx, yy),
                                   full_output=1)
         bestParameters = result[0]
         infodict = result[2]
@@ -664,18 +682,20 @@ class TheoreticalBeam:
         ier = result[4]
         if (verbose):
             casalog.post("optimize.leastsq: ier=%d, #calls=%d, message = %s" %
-                         (ier,numberFunctionCalls,mesg))
+                         (ier, numberFunctionCalls, mesg))
         if (type(bestParameters) == list or type(bestParameters) == np.ndarray):
             fwhm = bestParameters[0]
-            if verbose: casalog.post("fitted FWHM = %f" % (fwhm))
+            if verbose:
+                casalog.post("fitted FWHM = %f" % (fwhm))
             if (truncate != False):
                 truncate = bestParameters[1]
                 casalog.post("optimized truncation = %f" % (truncate))
         else:
             fwhm = bestParameters
-        return(fwhm,truncate)
+        return(fwhm, truncate)
 
-def findFWHM(x,y,level=0.5, s=0):
+
+def findFWHM(x, y, level=0.5, s=0):
     """
     Measures the FWHM of the specified profile.  This works
     well in a noise-free environment.  The data are assumed to
@@ -687,21 +707,24 @@ def findFWHM(x,y,level=0.5, s=0):
     -Todd Hunter
     Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
     """
-    halfmax = np.max(y)*level
-    spline = scipy.interpolate.UnivariateSpline(x, y-halfmax, s=s)
+    halfmax = np.max(y) * level
+    spline = scipy.interpolate.UnivariateSpline(x, y - halfmax, s=s)
     result = spline.roots()
     if (len(result) == 2):
-        x0,x1 = result
-        return(abs(x1-x0))
+        x0, x1 = result
+        return(abs(x1 - x0))
     elif (len(result) == 1):
-        return(2*abs(result[0]))
+        return(2 * abs(result[0]))
     else:
-        ### modified (KS 2015/02/19)
-        #casalog.post("More than two crossings (%d), fitting slope to points near that power level." % (len(result)))
+        # modified (KS 2015/02/19)
+        #casalog.post(
+        #     "More than two crossings (%d), fitting slope to points near that power level." % (len(result)))
         #result = 2*findZeroCrossingBySlope(x, y-halfmax)
-        #return(result)
-        errmsg = "Unsupported FWHM search in CASA. More than two corssings (%d) at level %f (%f %% of peak)." % (len(result), halfmax, level)
+        # return(result)
+        errmsg = "Unsupported FWHM search in CASA. " + \
+                 f"More than two corssings ({len(result)}) at level {halfmax} ({level} % of peak)."
         raise Exception(errmsg)
+
 
 def primaryBeamArcsec(frequency, diameter, obscuration, taper,
                       showEquation=True, use2007formula=True, fwhmfactor=None):
@@ -720,25 +743,29 @@ def primaryBeamArcsec(frequency, diameter, obscuration, taper,
     Simplified version of the one in AnalysisUtils (revision 1.2204, 2015/02/18)
     """
     if (fwhmfactor != None):
-        taper = effectiveTaper(fwhmfactor,diameter,obscuration,use2007formula)
-        if (taper == None): return
+        taper = effectiveTaper(fwhmfactor, diameter, obscuration, use2007formula)
+        if (taper == None):
+            return
     if (taper < 0):
         taper = abs(taper)
-    if (obscuration>0.4*diameter):
+    if (obscuration > 0.4 * diameter):
         casalog.post("This central obscuration is too large for the method of calculation employed here.")
         return
     if (type(frequency) == str):
-        my_qa = quanta( )
+        my_qa = quanta()
         frequency = my_qa.getvalue(my_qa.convert(frequency, "Hz"))[0]
-    lambdaMeters = 2.99792458e8/frequency
-    b = baarsTaperFactor(taper,use2007formula) * centralObstructionFactor(diameter, obscuration)
+    lambdaMeters = 2.99792458e8 / frequency
+    b = baarsTaperFactor(taper, use2007formula) * centralObstructionFactor(diameter, obscuration)
     if (showEquation):
         if (use2007formula):
             formula = "Baars (2007) Eq 4.13"
         else:
             formula = "ALMA memo 456 Eq. 18"
-        casalog.post("Coefficient from %s for a -%.1fdB edge taper and obscuration ratio=%g/%g = %.3f*lambda/D" % (formula, taper, obscuration, diameter, b))
-    return(b*lambdaMeters*3600*180/(diameter*np.pi))
+        casalog.post(
+            f"Coefficient from {formula} for a -{taper:.1f}dB edge taper "
+            f"and obscuration ratio={obscuration:g}/{diameter:g} = {b:.3f}*lambda/D")
+    return(b * lambdaMeters * 3600 * 180 / (diameter * np.pi))
+
 
 def effectiveTaper(fwhmFactor=1.16, diameter=12, obscuration=0.75,
                    use2007formula=True):
@@ -755,15 +782,18 @@ def effectiveTaper(fwhmFactor=1.16, diameter=12, obscuration=0.75,
     if (fwhmFactor < 1.02 or fwhmFactor > 1.22):
         casalog.post("Invalid fwhmFactor (1.02<fwhmFactor<1.22)")
         return
-    if (baarsTaperFactor(10,use2007formula)*cOF<fwhmFactor):
+    if (baarsTaperFactor(10, use2007formula) * cOF < fwhmFactor):
         increment = 0.01
-        for taper_dB in np.arange(10,10+increment*1000,increment):
-            if (baarsTaperFactor(taper_dB,use2007formula)*cOF-fwhmFactor>0): break
+        for taper_dB in np.arange(10, 10 + increment * 1000, increment):
+            if (baarsTaperFactor(taper_dB, use2007formula) * cOF - fwhmFactor > 0):
+                break
     else:
         increment = -0.01
-        for taper_dB in np.arange(10,10+increment*1000,increment):
-            if (baarsTaperFactor(taper_dB,use2007formula)*cOF-fwhmFactor<0): break
+        for taper_dB in np.arange(10, 10 + increment * 1000, increment):
+            if (baarsTaperFactor(taper_dB, use2007formula) * cOF - fwhmFactor < 0):
+                break
     return(taper_dB)
+
 
 def baarsTaperFactor(taper_dB, use2007formula=True):
     """
@@ -775,11 +805,12 @@ def baarsTaperFactor(taper_dB, use2007formula=True):
     - Todd Hunter
     Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
     """
-    tau = 10**(-0.05*taper_dB)
+    tau = 10**(-0.05 * taper_dB)
     if (use2007formula):
-        return(1.269 - 0.566*tau + 0.534*(tau**2) - 0.208*(tau**3))
+        return(1.269 - 0.566 * tau + 0.534 * (tau**2) - 0.208 * (tau**3))
     else:
-        return(1.243 - 0.343*tau + 0.12*(tau**2))
+        return(1.243 - 0.343 * tau + 0.12 * (tau**2))
+
 
 def centralObstructionFactor(diameter=12.0, obscuration=0.75):
     """
@@ -788,9 +819,10 @@ def centralObstructionFactor(diameter=12.0, obscuration=0.75):
     -- Todd Hunter
     Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
     """
-    epsilon = obscuration/diameter
-    myspline = scipy.interpolate.UnivariateSpline([0,0.1,0.2,0.33,0.4], [1.22,1.205,1.167,1.098,1.058], s=0)
-    factor = myspline(epsilon)/1.22
+    epsilon = obscuration / diameter
+    myspline = scipy.interpolate.UnivariateSpline(
+        [0, 0.1, 0.2, 0.33, 0.4], [1.22, 1.205, 1.167, 1.098, 1.058], s=0)
+    factor = myspline(epsilon) / 1.22
     if (type(factor) == np.float64):
         # casapy 4.2
         return(factor)

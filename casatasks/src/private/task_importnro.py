@@ -27,10 +27,10 @@ def importnro(infile=None, outputvis=None, overwrite=None, parallel=None):
             if overwrite:
                 os.rename(outputvis, outputvis_temp)
             else:
-                raise RuntimeError('%s exists.'%(outputvis))
+                raise RuntimeError('%s exists.' % (outputvis))
 
         if not _is_nostar(infile):
-            raise RuntimeError('%s is not a valid NOSTAR data.'%(infile))
+            raise RuntimeError('%s is not a valid NOSTAR data.' % (infile))
 
         status = mysdms.importnro(infile, outputvis, parallel)
 
@@ -52,8 +52,7 @@ def importnro(infile=None, outputvis=None, overwrite=None, parallel=None):
         vars = locals()
         param_vals = [vars[p] for p in param_names]
         write_history(myms, outputvis, 'importnro', param_names,
-                          param_vals, casalog)
-
+                      param_vals, casalog)
 
     finally:
         if status:
@@ -65,10 +64,10 @@ def _is_nostar(filename):
     Check if given data is NOSTAR or not
     """
     ret = False
-    if os.path.getsize(filename) >= 15136: # size of observation header
+    if os.path.getsize(filename) >= 15136:  # size of observation header
         with open(filename, 'rb') as f:
             if bytes2str(f.read(8).replace(b'\x00', b'')) == 'RW':
-                ret = (bytes2str(f.read(15136-8+4)[-4:].replace(b'\x00', b'')) == 'LS')
+                ret = (bytes2str(f.read(15136 - 8 + 4)[-4:].replace(b'\x00', b'')) == 'LS')
             f.close()
 
     return ret

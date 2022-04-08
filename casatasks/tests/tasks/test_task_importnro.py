@@ -34,6 +34,8 @@ myms = ms()
 mytb = table()
 
 # Utilities
+
+
 def get_antenna_position(vis, row):
     antenna_table = os.path.join(vis, 'ANTENNA')
 
@@ -45,10 +47,11 @@ def get_antenna_position(vis, row):
         mytb.close()
 
     posref = poskey['MEASINFO']['Ref']
-    qpos = [_qa.quantity(v,u) for v,u in zip(pos, poskey['QuantumUnits'])]
+    qpos = [_qa.quantity(v, u) for v, u in zip(pos, poskey['QuantumUnits'])]
     mantpos = _me.position(rf=posref, v0=qpos[0], v1=qpos[1], v2=qpos[2])
 
     return mantpos
+
 
 def get_valid_pointing_info(vis):
     pointing_table = os.path.join(vis, 'POINTING')
@@ -71,7 +74,7 @@ def get_valid_pointing_info(vis):
         mytb.close()
 
     dirref = dirkey['MEASINFO']['Ref']
-    qdir = [_qa.quantity(v,u) for v,u in zip(pdir[:,0], dirkey['QuantumUnits'])]
+    qdir = [_qa.quantity(v, u) for v, u in zip(pdir[:, 0], dirkey['QuantumUnits'])]
     mpdir = _me.direction(rf=dirref, v0=qdir[0], v1=qdir[1])
 
     timeref = timekey['MEASINFO']['Ref']
@@ -88,20 +91,20 @@ class importnro_test(unittest.TestCase):
        test_normal -- Normal data import
     """
     # Input and output names
-    infile='orixa.OrionKL.20151209212931.16.Y'
-    prefix='importnro_test'
-    outfile=prefix+'.ms'
+    infile = 'orixa.OrionKL.20151209212931.16.Y'
+    prefix = 'importnro_test'
+    outfile = prefix + '.ms'
 
     def setUp(self):
-        self.res=None
+        self.res = None
         if (not os.path.exists(self.infile)):
-            datapath = ctsys.resolve(os.path.join('unittest/importnro',self.infile))
+            datapath = ctsys.resolve(os.path.join('unittest/importnro', self.infile))
             shutil.copy(datapath, self.infile)
 
     def tearDown(self):
         if (os.path.exists(self.infile)):
             os.remove(self.infile)
-        os.system( 'rm -rf '+self.prefix+'*' )
+        os.system('rm -rf ' + self.prefix + '*')
 
     def test_overwrite(self):
         """test_overwrite: File existence check"""
@@ -111,7 +114,8 @@ class importnro_test(unittest.TestCase):
 
     def test_invaliddata(self):
         """test_invaliddata: Invalid data check"""
-        with open(self.infile, 'wb') as f: f.write(str2bytes('AA'))
+        with open(self.infile, 'wb') as f:
+            f.write(str2bytes('AA'))
         #os.remove(os.path.join(self.infile, 'table.info'))
         with self.assertRaisesRegexp(RuntimeError, '.* is not a valid NOSTAR data\.$') as cm:
             importnro(infile=self.infile, outputvis=self.outfile, overwrite=False)
@@ -142,7 +146,7 @@ class importnro_test(unittest.TestCase):
         self._check_weather(self.outfile)
 
     def _check_weights(self, vis):
-        take_diff = lambda actual, expected: numpy.abs((actual - expected) / expected)
+        def take_diff(actual, expected): return numpy.abs((actual - expected) / expected)
         tolerance = 1.0e-7
         try:
             mytb.open(os.path.join(vis, 'DATA_DESCRIPTION'))
@@ -166,12 +170,15 @@ class importnro_test(unittest.TestCase):
                 effbw = effbws[spwid]
                 weight_expected = interval * effbw
                 sigma_expected = 1.0 / numpy.sqrt(weight_expected)
-                #print irow, 'weight', weight, 'sigma', sigma, 'expected', weight_expected, ' ', sigma_expected
+                # print(irow, 'weight', weight, 'sigma', sigma,
+                #       'expected', weight_expected, ' ', sigma_expected)
                 weight_diff = take_diff(weight, weight_expected)
                 sigma_diff = take_diff(sigma, sigma_expected)
-                #print irow, 'weight_diff', weight_diff, 'sigma_diff', sigma_diff
-                self.assertTrue(all(weight_diff < tolerance), msg='Row %s: weight verification failed'%(irow))
-                self.assertTrue(all(sigma_diff < tolerance), msg='Row %s: sigma verification failed'%(irow))
+                # print irow, 'weight_diff', weight_diff, 'sigma_diff', sigma_diff
+                self.assertTrue(all(weight_diff < tolerance),
+                                msg='Row %s: weight verification failed' % (irow))
+                self.assertTrue(all(sigma_diff < tolerance),
+                                msg='Row %s: sigma verification failed' % (irow))
             mytb.close()
         finally:
             mytb.close()
@@ -246,9 +253,9 @@ class importnro_test(unittest.TestCase):
             mytb.close()
 
         for t, dt in zip(source_time, source_interval):
-            source_time_range = numpy.asarray([t-dt/2, t+dt/2])
+            source_time_range = numpy.asarray([t - dt / 2, t + dt / 2])
             diff = numpy.abs((source_time_range - time_range) / time_range)
-            #print 'diff={}'.format(diff)
+            # print 'diff={}'.format(diff)
             self.assertTrue(numpy.all(diff < 1.0e-16))
 
     def test_timestamp(self):
@@ -269,7 +276,8 @@ class importnro_test(unittest.TestCase):
         self.assertTrue(pointing_time['type'] == 'epoch')
         self.assertTrue(_me.ismeasure(pointing_direction))
         self.assertTrue(pointing_direction['type'] == 'direction')
-        self.assertFalse(pointing_direction['m0']['value'] == 0.0 and pointing_direction['m1']['value'])
+        self.assertFalse(
+            pointing_direction['m0']['value'] == 0.0 and pointing_direction['m1']['value'])
 
         # convert pointing_direction (J2000) to AZELGEO
         # frame configuration
@@ -282,9 +290,14 @@ class importnro_test(unittest.TestCase):
 
         # check if elevation is in range [0deg, 90deg]
         elevation = _qa.convert(azel['m1'], 'deg')
-        msg = 'Timestamp used for the conversion could be wrong.: calculated elevation={value}{unit}'.format(**elevation)
-        self.assertLessEqual(elevation['value'], 90.0, msg='Elevation is above the upper limit (> 90deg). {}'.format(msg))
-        self.assertGreaterEqual(elevation['value'], 0.0, msg='Elevation is below the lower limit (< 0deg). {}'.format(msg))
+        msg = 'Timestamp used for the conversion could be wrong.: ' + \
+              'calculated elevation={value}{unit}'.format(**elevation)
+        self.assertLessEqual(
+            elevation['value'], 90.0,
+            msg=f'Elevation is above the upper limit (> 90deg). {msg}')
+        self.assertGreaterEqual(
+            elevation['value'], 0.0,
+            msg=f'Elevation is below the lower limit (< 0deg). {msg}')
 
     def _check_weather(self, vis):
         # check PRESSURE
@@ -313,6 +326,7 @@ class importnro_test(unittest.TestCase):
             self.assertTrue(numpy.all(column_value < value_max))
         finally:
             mytb.close()
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -89,7 +89,7 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
 
 
 blformat_item = ['csv', 'text', 'table']
-blformat_ext = ['csv', 'txt',  'bltable']
+blformat_ext = ['csv', 'txt', 'bltable']
 
 mesg_invalid_wavenumber = 'wrong value given for addwn/rejwn'
 
@@ -185,7 +185,7 @@ def has_duplicate_nonnull_element_ex(lst, base):
 
 
 def normalise_bloutput(infile, blformat, bloutput, overwrite):
-    return [get_normalised_name(infile, blformat, bloutput, item[0], item[1], overwrite) \
+    return [get_normalised_name(infile, blformat, bloutput, item[0], item[1], overwrite)
             for item in zip(blformat_item, blformat_ext)]
 
 
@@ -225,7 +225,7 @@ def output_bloutput_text_header(blformat, bloutput, blfunc, maskmode, infile, ou
 
 def get_temporary_file_name(basename):
     name = basename + '_sdbaseline_pid' + str(os.getpid()) + '_' \
-           + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
+        + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
     return name
 
 
@@ -252,7 +252,8 @@ def parse_wavenumber_param(wn):
             val0 = wn.split(',')
             __check_positive_or_zero(val0)
             val = []
-            for v in val0: val.append(int(v))
+            for v in val0:
+                val.append(int(v))
             val.sort()
             res = list(set(val))  # uniq
         elif '-' in wn:                          # case 'a-b' : return [a,a+1,...,b-1,b]
@@ -260,21 +261,21 @@ def parse_wavenumber_param(wn):
             __check_positive_or_zero(val)
             val = [int(val[0]), int(val[1])]
             val.sort()
-            res = [i for i in range(val[0], val[1]+1)]
+            res = [i for i in range(val[0], val[1] + 1)]
         elif '~' in wn:                          # case 'a~b' : return [a,a+1,...,b-1,b]
             val = wn.split('~')
             __check_positive_or_zero(val)
             val = [int(val[0]), int(val[1])]
             val.sort()
-            res = [i for i in range(val[0], val[1]+1)]
+            res = [i for i in range(val[0], val[1] + 1)]
         elif wn[:2] == '<=' or wn[:2] == '=<':   # cases '<=a','=<a' : return [0,1,...,a-1,a]
             val = wn[2:]
             __check_positive_or_zero(val)
-            res = [i for i in range(int(val)+1)]
-        elif wn[-2:] == '>=' or wn[-2:] == '=>': # cases 'a>=','a=>' : return [0,1,...,a-1,a]
+            res = [i for i in range(int(val) + 1)]
+        elif wn[-2:] == '>=' or wn[-2:] == '=>':  # cases 'a>=','a=>' : return [0,1,...,a-1,a]
             val = wn[:-2]
             __check_positive_or_zero(val)
-            res = [i for i in range(int(val)+1)]
+            res = [i for i in range(int(val) + 1)]
         elif wn[0] == '<':                       # case '<a' :         return [0,1,...,a-2,a-1]
             val = wn[1:]
             __check_positive_or_zero(val, False)
@@ -302,7 +303,7 @@ def parse_wavenumber_param(wn):
                                                  #                     side as [a+1,a+2,...,a_nyq]
                                                  #                     (CAS-3759)
             val0 = wn[1:]
-            val = int(val0)+1
+            val = int(val0) + 1
             __check_positive_or_zero(val)
             res = [val, -999]
         elif wn[-1] == '<':                      # case 'a<' :         return [a+1,-999], which is
@@ -310,7 +311,7 @@ def parse_wavenumber_param(wn):
                                                  #                     side as [a+1,a+2,...,a_nyq]
                                                  #                     (CAS-3759)
             val0 = wn[:-1]
-            val = int(val0)+1
+            val = int(val0) + 1
             __check_positive_or_zero(val)
             res = [val, -999]
         else:                                    # case 'a'
@@ -435,7 +436,7 @@ def restore_sorted_table_keyword(infile, sorttab_info):
 
 
 def _do_apply(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
-             reindex, bltable, updateweight, sigmavalue, outfile, overwrite):
+              reindex, bltable, updateweight, sigmavalue, outfile, overwrite):
     if not os.path.exists(bltable):
         raise ValueError("file specified in bltable '%s' does not exist." % bltable)
 
@@ -466,10 +467,10 @@ def _do_apply(infile, datacolumn, antenna, field, spw, timerange, scan, pol, int
 
 
 def _do_fit(infile, datacolumn, antenna, field, spw, timerange, scan, pol, intent,
-           reindex, maskmode, thresh, avg_limit, minwidth, edge, dosubtract, blformat,
-           bloutput, blfunc, order, npiece, applyfft, fftmethod, fftthresh, addwn,
-           rejwn, clipthresh, clipniter, blparam, verbose, updateweight, sigmavalue,
-           outfile, overwrite):
+            reindex, maskmode, thresh, avg_limit, minwidth, edge, dosubtract, blformat,
+            bloutput, blfunc, order, npiece, applyfft, fftmethod, fftthresh, addwn,
+            rejwn, clipthresh, clipniter, blparam, verbose, updateweight, sigmavalue,
+            outfile, overwrite):
 
     temp_outfile = ''
 
@@ -526,7 +527,7 @@ def _do_fit(infile, datacolumn, antenna, field, spw, timerange, scan, pol, inten
                                               addwn=addwn,
                                               rejwn=rejwn,
                                               clip_threshold_sigma=clipthresh,
-                                              num_fitting_max=clipniter+1,
+                                              num_fitting_max=clipniter + 1,
                                               blparam=blparam,
                                               verbose=verbose,
                                               updateweight=updateweight,

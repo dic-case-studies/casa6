@@ -31,7 +31,8 @@ from casatools import agentflagger, ctsys, ms, table
 myms = ms()
 _tb = table()
 
-datapath=ctsys.resolve('unittest/importasap/')
+datapath = ctsys.resolve('unittest/importasap/')
+
 
 class importasap_test(unittest.TestCase):
     """
@@ -42,19 +43,19 @@ class importasap_test(unittest.TestCase):
        test_noflagversions -- Do not create flagversions file
     """
     # Input and output names
-    infile='uid___A002_X85c183_X36f.test.asap'
-    prefix='importasap_test'
-    outfile=prefix+'.ms'
+    infile = 'uid___A002_X85c183_X36f.test.asap'
+    prefix = 'importasap_test'
+    outfile = prefix + '.ms'
 
     def setUp(self):
-        self.res=None
+        self.res = None
         if (not os.path.exists(self.infile)):
-            shutil.copytree(os.path.join(datapath,self.infile), self.infile)
+            shutil.copytree(os.path.join(datapath, self.infile), self.infile)
 
     def tearDown(self):
         if (os.path.exists(self.infile)):
             shutil.rmtree(self.infile)
-        os.system( 'rm -rf '+self.prefix+'*' )
+        os.system('rm -rf ' + self.prefix + '*')
 
     def test_overwrite(self):
         """test_overwrite: File existence check"""
@@ -101,7 +102,7 @@ class importasap_test(unittest.TestCase):
 
         # save state with different name
         version_name = 'OverwriteTest'
-        aflocal = agentflagger( )
+        aflocal = agentflagger()
         aflocal.open(self.outfile)
         aflocal.saveflagversion(versionname=version_name,
                                 comment='flag state for testing',
@@ -115,10 +116,12 @@ class importasap_test(unittest.TestCase):
         self._check_flagversions(self.outfile)
 
         # verification
-        aflocal = agentflagger( )
+        aflocal = agentflagger()
         aflocal.open(self.outfile)
         versions_list = aflocal.getflagversionlist()
-        self.assertTrue(all(map(lambda x: re.match('^%s : .*$'%(version_name), x) is None, versions_list)))
+        self.assertTrue(all(map(
+            lambda x: re.match(f'^{version_name} : .*$', x) is None,
+            versions_list)))
         aflocal.done()
 
     def test_noflagversions(self):
@@ -139,7 +142,7 @@ class importasap_test(unittest.TestCase):
         self.assertFalse(os.path.exists(flagversions))
 
     def _check_weights(self, vis):
-        take_diff = lambda actual, expected: numpy.abs((actual - expected) / expected)
+        def take_diff(actual, expected): return numpy.abs((actual - expected) / expected)
         tolerance = 1.0e-7
         try:
             _tb.open(os.path.join(vis, 'DATA_DESCRIPTION'))
@@ -163,12 +166,15 @@ class importasap_test(unittest.TestCase):
                 effbw = effbws[spwid]
                 weight_expected = interval * effbw
                 sigma_expected = 1.0 / numpy.sqrt(weight_expected)
-                #print irow, 'weight', weight, 'sigma', sigma, 'expected', weight_expected, ' ', sigma_expected
+                # print(irow, 'weight', weight, 'sigma', sigma,
+                #       'expected', weight_expected, ' ', sigma_expected)
                 weight_diff = take_diff(weight, weight_expected)
                 sigma_diff = take_diff(sigma, sigma_expected)
-                #print irow, 'weight_diff', weight_diff, 'sigma_diff', sigma_diff
-                self.assertTrue(all(weight_diff < tolerance), msg='Row %s: weight verification failed'%(irow))
-                self.assertTrue(all(sigma_diff < tolerance), msg='Row %s: sigma verification failed'%(irow))
+                # print irow, 'weight_diff', weight_diff, 'sigma_diff', sigma_diff
+                self.assertTrue(all(weight_diff < tolerance),
+                                msg='Row %s: weight verification failed' % (irow))
+                self.assertTrue(all(sigma_diff < tolerance),
+                                msg='Row %s: sigma verification failed' % (irow))
             _tb.close()
         finally:
             _tb.close()
@@ -187,10 +193,12 @@ class importasap_test(unittest.TestCase):
         # flag version named 'Original' should be created
         # its content should match with current flag status
         version_name = 'Original'
-        aflocal = agentflagger( )
+        aflocal = agentflagger()
         aflocal.open(vis)
         versions_list = aflocal.getflagversionlist()
-        self.assertTrue(any(map(lambda x: re.match('^%s : .*$'%(version_name), x) is not None, versions_list)))
+        self.assertTrue(any(map(
+            lambda x: re.match(f'^{version_name} : .*$', x) is not None,
+            versions_list)))
 
         # restore flag state
         aflocal.restoreflagversion(versionname=version_name, merge='replace')
@@ -204,11 +212,13 @@ class importasap_test(unittest.TestCase):
 
         # verification
         for irow in range(nrow):
-            self.assertEqual(flag_row_org[irow], flag_row[irow], msg='row %s: FLAG_ROW is different'%(irow))
+            self.assertEqual(flag_row_org[irow], flag_row[irow],
+                             msg='row %s: FLAG_ROW is different' % (irow))
 
         for (row, val_org) in flag_org.items():
             val = flag[row]
-            self.assertTrue(all((val_org == val).flatten()), msg='row %s: FLAG is different'%(row))
+            self.assertTrue(all((val_org == val).flatten()),
+                            msg='row %s: FLAG is different' % (row))
 
     def _flagversions(self, vis):
         return vis.rstrip('/') + '.flagversions'
@@ -236,5 +246,6 @@ class importasap_test(unittest.TestCase):
         finally:
             _tb.close()
 
+
 if __name__ == '__main__':
-        unittest.main()
+    unittest.main()

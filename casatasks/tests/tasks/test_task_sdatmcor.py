@@ -39,6 +39,7 @@ from casatools import quanta
 
 ctsys_resolve = ctsys.resolve
 
+
 def smart_remove(name):
     if os.path.exists(name):
         if os.path.isdir(name):
@@ -271,32 +272,38 @@ class test_sdatmcor(unittest.TestCase):
 
     def test_sdatmcor_spw_process_23_select_23(self):
         '''test data selection: select and process spw 23'''
-        sdatmcor(infile=self.infile, spw='23', outputspw='23', outfile=self.outfile, datacolumn='data')
+        sdatmcor(infile=self.infile, spw='23', outputspw='23',
+                 outfile=self.outfile, datacolumn='data')
         self.check_result({23: True})
 
     def test_sdatmcor_spw_process_all_select_19(self):
         '''test data selection: process spw 19 and 23 but output only spw 19'''
-        sdatmcor(infile=self.infile, spw='19,23', outputspw='19', outfile=self.outfile, datacolumn='data')
+        sdatmcor(infile=self.infile, spw='19,23', outputspw='19',
+                 outfile=self.outfile, datacolumn='data')
         self.check_result({19: True})
 
     def test_sdatmcor_spw_process_23_select_all(self):
         '''test data selection: process only spw 23 but output both 19 and 23'''
-        sdatmcor(infile=self.infile, spw='23', outputspw='19,23', outfile=self.outfile, datacolumn='data')
+        sdatmcor(infile=self.infile, spw='23', outputspw='19,23',
+                 outfile=self.outfile, datacolumn='data')
         self.check_result({19: False, 23: True})
 
     def test_sdatmcor_spw_process_99_select_all(self):
         '''test data selection: specify invalid spw to process'''
         with self.assertRaises(Exception):
-            sdatmcor(infile=self.infile, spw='19,99', outputspw='19,23', outfile=self.outfile, datacolumn='data')
+            sdatmcor(infile=self.infile, spw='19,99', outputspw='19,23',
+                     outfile=self.outfile, datacolumn='data')
 
     def test_sdatmcor_intent_selection(self):
         '''test intent selection: test if selection of ON_SOURCE data (i.e. excluding OFF_SOURCE data) still works'''
-        sdatmcor(infile=self.infile, outfile=self.outfile, intent='OBSERVE_TARGET#ON_SOURCE*', datacolumn='data')
+        sdatmcor(infile=self.infile, outfile=self.outfile,
+                 intent='OBSERVE_TARGET#ON_SOURCE*', datacolumn='data')
         self.check_result({19: True, 23: True}, on_source_only=True)
 
     def test_sdatmcor_spw_process_less_than_20_select_all(self):
         '''test data selection: specify invalid spw to process'''
-        sdatmcor(infile=self.infile, spw='<20', outputspw='', outfile=self.outfile, datacolumn='data')
+        sdatmcor(infile=self.infile, spw='<20', outputspw='',
+                 outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: False})
 
     def test_sdatmcor_scan_selection(self):
@@ -343,7 +350,8 @@ class test_sdatmcor(unittest.TestCase):
             p = 1 / np.sqrt(v)
             gencal(vis=self.infile, caltable=self.caltable, caltype='amp', spw=k, parameter=[p])
         applycal(vis=self.infile, gaintable=self.caltable, flagbackup=False)
-        sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='corrected', gainfactor=gainfactor)
+        sdatmcor(infile=self.infile, outfile=self.outfile,
+                 datacolumn='corrected', gainfactor=gainfactor)
         self.check_result({19: True, 23: True})
 
     def test_parse_gainfactor_exception(self):
@@ -474,7 +482,7 @@ class test_sdatmcor(unittest.TestCase):
             atmdetail=True,
             altitude=5100., temperature=290., pressure=700.,
             humidity=30, pwv=10., dp=10., dpm=1.2,
-            layerboundaries=[800.,1500.], layertemperature=[250.,200.]
+            layerboundaries=[800., 1500.], layertemperature=[250., 200.]
         )
         self.check_result({19: True, 23: True})
 
@@ -489,7 +497,8 @@ class test_sdatmcor(unittest.TestCase):
 
 
 class ATMParamTest(unittest.TestCase):
-    def _param_test_template(self, valid_test_cases, invalid_user_input, user_default, task_default, unit=''):
+    def _param_test_template(self, valid_test_cases,
+                             invalid_user_input, user_default, task_default, unit=''):
         # internal error
         wrong_task_default = 'NG'
         with self.assertRaises(RuntimeError):
@@ -509,7 +518,8 @@ class ATMParamTest(unittest.TestCase):
 
         # valid inputs
         qa = quanta()
-        for user_input, expected in itertools.chain([(user_default, task_default)], valid_test_cases):
+        for user_input, expected in itertools.chain(
+                [(user_default, task_default)], valid_test_cases):
             print('"{}" "{}"'.format(user_input, expected))
             param, is_customized = sdatmcor_impl.parse_atm_params(
                 user_input,
@@ -526,7 +536,8 @@ class ATMParamTest(unittest.TestCase):
             else:
                 self.assertEqual(param, expected)
 
-    def _list_param_test_template(self, valid_test_cases, invalid_user_input, user_default, task_default, unit):
+    def _list_param_test_template(self, valid_test_cases,
+                                  invalid_user_input, user_default, task_default, unit):
         # internal error
         wrong_task_default = 'NG'
         with self.assertRaises(ValueError):
@@ -548,7 +559,8 @@ class ATMParamTest(unittest.TestCase):
 
         # valid inputs
         qa = quanta()
-        for user_input, expected in itertools.chain([(user_default, task_default)], valid_test_cases):
+        for user_input, expected in itertools.chain(
+                [(user_default, task_default)], valid_test_cases):
             print('"{}" "{}"'.format(user_input, expected))
             param, is_customized = sdatmcor_impl.parse_atm_list_params(
                 user_input,
@@ -773,6 +785,7 @@ class ATMParamTest(unittest.TestCase):
             task_default=task_default,
             unit='K'
         )
+
 
 if __name__ == '__main__':
     unittest.main()

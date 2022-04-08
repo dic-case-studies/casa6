@@ -122,7 +122,7 @@ class test_sdtimeaverage(unittest.TestCase):
         # create TEST-MS only for the first time.
         #  (for TimeSpan test)
         if not self._if_exist(defWorkMsTimeSpan):
-            print("- TestMS(for TimeSpan.[{}] being created on current dir.".format(defWorkMsTimeSpan))
+            print(f"- TestMS(for TimeSpan.[{defWorkMsTimeSpan}] being created on current dir.")
 
             # Copy template #
             self._copy_remote_file(defInputMs, defWorkMsTimeSpan)
@@ -1068,6 +1068,7 @@ class test_sdtimeaverage(unittest.TestCase):
         print("numOfScan ={}, numOfState={}".format(numOfScan, numOfState))
         expected_count = numOfScan * numOfState
         self._checkOutputRec(privateOutfile, expected_count)
+
 
 if __name__ == '__main__':
     unittest.main()

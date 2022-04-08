@@ -26,7 +26,8 @@ from casatasks import nrobeamaverage
 from casatasks.private.sdutil import table_manager
 from casatools import ctsys
 
-datapath=ctsys.resolve('unittest/nrobeamaverage/')
+datapath = ctsys.resolve('unittest/nrobeamaverage/')
+
 
 def check_eq(val, expval, tol=None):
     """Checks that val matches expval within tol."""
@@ -36,9 +37,9 @@ def check_eq(val, expval, tol=None):
     else:
         try:
             if tol and hasattr(val, '__rsub__'):
-                are_eq = abs(val - expval) < tol #absolute check
+                are_eq = abs(val - expval) < tol  # absolute check
                 if not are_eq:
-                    are_eq = abs(val - expval)/abs(expval) < tol #relative check
+                    are_eq = abs(val - expval) / abs(expval) < tol  # relative check
             else:
                 are_eq = val == expval
             if hasattr(are_eq, 'all'):
@@ -47,24 +48,25 @@ def check_eq(val, expval, tol=None):
                 raise ValueError('!=')
         except ValueError:
             errmsg = "%r != %r" % (val, expval)
-            if (len(errmsg) > 66): # 66 = 78 - len('ValueError: ')
+            if (len(errmsg) > 66):  # 66 = 78 - len('ValueError: ')
                 errmsg = "\n%r\n!=\n%r" % (val, expval)
             raise ValueError(errmsg)
         except Exception as e:
             print("Error comparing {} to {}".format(val, expval))
             raise
 
+
 class test_nrobeamaverage(unittest.TestCase):
     def setUp(self):
         self.i_ms = "onon.ms"
-        os.system('cp -RH '+ os.path.join(datapath,self.i_ms) +' '+ self.i_ms)
+        os.system('cp -RH ' + os.path.join(datapath, self.i_ms) + ' ' + self.i_ms)
         self.o_ms = "bave.ms"
         self.args = {'infile': self.i_ms, 'outfile': self.o_ms}
 
         self.antid = self._get_antid()
         self.min_antid = 0
         self.st_onsrc = self._get_onsource_stateid()
-        self.interval = 21 # in seconds
+        self.interval = 21  # in seconds
         self.tol = 1e-5
 
     def tearDown(self):
@@ -84,18 +86,22 @@ class test_nrobeamaverage(unittest.TestCase):
             if ocol[i] == 'OBSERVE_TARGET#ON_SOURCE':
                 res = i
                 break
-        if res is None: raise Exception('State ID for on_source data not found.')
+        if res is None:
+            raise Exception('State ID for on_source data not found.')
         return res
 
     def run_task(self, aux_args=None):
         if aux_args is not None:
-            for k in aux_args: self.args[k] = aux_args[k]
+            for k in aux_args:
+                self.args[k] = aux_args[k]
         nrobeamaverage(**self.args)
         self._get_data()
 
     def _get_data(self):
-        self.i_tm, self.i_a1, self.i_a2, self.i_dd, self.i_sc, self.i_st = self._do_get_data(self.i_ms)
-        self.o_tm, self.o_a1, self.o_a2, self.o_dd, self.o_sc, self.o_st = self._do_get_data(self.o_ms)
+        self.i_tm, self.i_a1, self.i_a2, self.i_dd, self.i_sc, self.i_st = self._do_get_data(
+            self.i_ms)
+        self.o_tm, self.o_a1, self.o_a2, self.o_dd, self.o_sc, self.o_st = self._do_get_data(
+            self.o_ms)
 
     def _do_get_data(self, msname):
         with table_manager(msname) as tb:
@@ -162,7 +168,7 @@ class test_nrobeamaverage(unittest.TestCase):
 
         # weight and sigma
         ref_wgt = float(num_ave)
-        ref_sig = 1.0/math.sqrt(ref_wgt)
+        ref_sig = 1.0 / math.sqrt(ref_wgt)
         for i in range(len(oval['wgt'])):
             check_eq(oval['wgt'][i], ref_wgt, self.tol)
             check_eq(oval['sig'][i], ref_sig, self.tol)
@@ -170,11 +176,15 @@ class test_nrobeamaverage(unittest.TestCase):
     def _get_index_outdata(self, iidx):
         res = None
         for oidx in range(len(self.o_tm)):
-            if (self.o_dd[oidx] == self.i_dd[iidx]) and (self.o_sc[oidx] == self.i_sc[iidx]) and (self.o_st[oidx] == self.i_st[iidx]):
-                if (self.o_st[oidx] != self.st_onsrc) and (self.o_a1[oidx] != self.i_a1[iidx]): continue
+            if (self.o_dd[oidx] == self.i_dd[iidx]) \
+                and (self.o_sc[oidx] == self.i_sc[iidx]) \
+                    and (self.o_st[oidx] == self.i_st[iidx]):
+                if (self.o_st[oidx] != self.st_onsrc) and (self.o_a1[oidx] != self.i_a1[iidx]):
+                    continue
                 res = oidx
                 break
-        if res is None: raise Exception('Output data not found.')
+        if res is None:
+            raise Exception('Output data not found.')
         return res
 
     def _do_check_values(self, iidx, oidx, beam=None):
@@ -193,10 +203,12 @@ class test_nrobeamaverage(unittest.TestCase):
             lst_beam = self.antid
         else:
             lst_beam = beam.strip().split(',')
-            for i in range(len(lst_beam)): lst_beam[i] = int(lst_beam[i])
+            for i in range(len(lst_beam)):
+                lst_beam[i] = int(lst_beam[i])
             min_beam = lst_beam[0]
             for i in range(len(lst_beam)):
-                if lst_beam[i] < min_beam: min_beam = lst_beam[i]
+                if lst_beam[i] < min_beam:
+                    min_beam = lst_beam[i]
             self.min_antid = min_beam
 
         if (self.o_st[oidx] == self.st_onsrc) and (self.o_a1[oidx] in lst_beam):
@@ -252,34 +264,35 @@ class test_nrobeamaverage(unittest.TestCase):
                             time2 = self.i_tm[i]
         return time1, time2
 
-    def test_default(self): # no time averaging(timebin='0s'), rewriting beam IDs only
+    def test_default(self):  # no time averaging(timebin='0s'), rewriting beam IDs only
         self.run_task()
         self.check_num_data()
         self.check_values()
 
-    def test_beam01(self): # beam='0,1': same as the default case
+    def test_beam01(self):  # beam='0,1': same as the default case
         beam = '0,1'
         self.run_task({'beam': beam})
         self.check_num_data()
         self.check_values(beam=beam)
 
-    def test_beam0(self): # beam='0': no time averaging, no rewriting beam IDs
+    def test_beam0(self):  # beam='0': no time averaging, no rewriting beam IDs
         beam = '0'
         self.run_task({'beam': beam})
         self.check_num_data()
         self.check_values(beam=beam)
 
-    def test_beam1(self): # beam='1': no time averaging, no rewriting beam IDs
+    def test_beam1(self):  # beam='1': no time averaging, no rewriting beam IDs
         beam = '1'
         self.run_task({'beam': beam})
         self.check_num_data()
         self.check_values(beam=beam)
 
-    def test_time_averaging(self): # every two on-spectra are averaged into one specrum
+    def test_time_averaging(self):  # every two on-spectra are averaged into one specrum
         num_ave = 2
         self.run_task({'timebin': self.get_timebin(num_ave)})
         self.check_num_data(num_ave)
-        self.check_values(num_ave=num_ave) # for the first data with state=on-source, spw=0
+        self.check_values(num_ave=num_ave)  # for the first data with state=on-source, spw=0
+
 
 if __name__ == '__main__':
     unittest.main()

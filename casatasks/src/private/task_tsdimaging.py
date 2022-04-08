@@ -14,7 +14,7 @@ from casatools import quanta
 
 from . import sdbeamutil, sdutil
 from .cleanhelper import cleanhelper
-## (1) Import the python application layer
+# (1) Import the python application layer
 from .imagerhelpers.imager_base import PySynthesisImager
 from .imagerhelpers.input_parameters import ImagerParameters
 
@@ -22,6 +22,7 @@ image_suffix = '.image'
 residual_suffix = '.residual'
 weight_suffix = '.weight'
 associate_suffixes = ['.psf', '.sumwt', weight_suffix, residual_suffix]
+
 
 @contextlib.contextmanager
 def open_ia(imagename):
@@ -32,6 +33,7 @@ def open_ia(imagename):
     finally:
         ia.close()
 
+
 @contextlib.contextmanager
 def open_ms(vis):
     ms = mstool()
@@ -40,6 +42,7 @@ def open_ms(vis):
         yield ms
     finally:
         ms.close()
+
 
 class SelectionHandler(object):
     def __init__(self, sel):
@@ -62,6 +65,7 @@ class SelectionHandler(object):
 
     def _select2(self, i):
         return self.sel[i]
+
 
 class OldImagerBasedTools(object):
     def __init__(self):
@@ -111,8 +115,9 @@ class OldImagerBasedTools(object):
                         _baseline = _antenna + '&&&'
                     else:
                         _baseline = _antenna
-                    self.imager.selectvis(vis, field=_field, spw=_spw, nchan=-1, start=0, step=1,
-                                          baseline=_baseline, scan=_scan, intent=_intent, time=_timerangesel)
+                    self.imager.selectvis(
+                        vis, field=_field, spw=_spw, nchan=-1, start=0, step=1,
+                        baseline=_baseline, scan=_scan, intent=_intent, time=_timerangesel)
                 yield self.imager
             finally:
                 self.imager.close()
@@ -122,22 +127,23 @@ class OldImagerBasedTools(object):
             casalog.post('test')
             raise RuntimeError('ERROR!')
 
-    def get_pointing_sampling_params(self, vis, field, spw, baseline, scan, intent, timerange, outref, movingsource, pointingcolumntouse, antenna_name):
+    def get_pointing_sampling_params(self, vis, field, spw, baseline, scan, intent, timerange,
+                                     outref, movingsource, pointingcolumntouse, antenna_name):
         with self.open_old_imager(vis) as im:
             im.selectvis(field=field,
-                        spw=spw,
-                        nchan=-1,
-                        start=0,
-                        step=1,
-                        baseline=baseline,
-                        scan=scan,
-                        intent=intent,
-                        time=timerange)
+                         spw=spw,
+                         nchan=-1,
+                         start=0,
+                         step=1,
+                         baseline=baseline,
+                         scan=scan,
+                         intent=intent,
+                         time=timerange)
             sampling_params = im.pointingsampling(pattern='raster',
-                                                ref=outref,
-                                                movingsource=movingsource,
-                                                pointingcolumntouse=pointingcolumntouse,
-                                                antenna='{0}&&&'.format(antenna_name))
+                                                  ref=outref,
+                                                  movingsource=movingsource,
+                                                  pointingcolumntouse=pointingcolumntouse,
+                                                  antenna='{0}&&&'.format(antenna_name))
         return sampling_params
 
     def get_map_extent(self, vislist, field, spw, antenna, scan, intent, timerange,
@@ -171,22 +177,28 @@ class OldImagerBasedTools(object):
         sorted_intent = [intentsel(i) for i in sorted_idx]
         timerangesel = SelectionHandler(timerange)
         sorted_timerange = [timerangesel(i) for i in sorted_idx]
-        return sorted_vislist, sorted_field, sorted_spw, sorted_antenna, sorted_scan, sorted_intent, sorted_timerange
+        return (sorted_vislist, sorted_field, sorted_spw, sorted_antenna, sorted_scan,
+                sorted_intent, sorted_timerange)
+
 
 def _configure_spectral_axis(mode, nchan, start, width, restfreq):
     # fix default
     if mode == 'channel':
-        if start == '': start = 0
-        if width == '': width = 1
+        if start == '':
+            start = 0
+        if width == '':
+            width = 1
     else:
-        if start == 0: start = ''
-        if width == 1: width = ''
+        if start == 0:
+            start = ''
+        if width == 1:
+            width = ''
     # fix unit
     if mode == 'frequency':
         myunit = 'Hz'
     elif mode == 'velocity':
         myunit = 'km/s'
-    else: # channel
+    else:  # channel
         myunit = ''
 
     tmp_start = _format_quantum_unit(start, myunit)
@@ -202,11 +214,12 @@ def _configure_spectral_axis(mode, nchan, start, width, restfreq):
     if mode == 'channel':
         width = int(width)
 
-    #TODO: work for nchan
+    # TODO: work for nchan
     imnchan = nchan
     imstart = start
     imwidth = width
     return imnchan, imstart, imwidth
+
 
 def _format_quantum_unit(data, unit):
     """
@@ -223,6 +236,7 @@ def _format_quantum_unit(data, unit):
         return '%f%s' % (data, unit)
     return None
 
+
 def _handle_grid_defaults(value):
     ret = ''
     if isinstance(value, int) or isinstance(value, float):
@@ -230,6 +244,7 @@ def _handle_grid_defaults(value):
     elif isinstance(value, str):
         ret = value
     return ret
+
 
 def _calc_PB(vis, antenna_id, restfreq):
     """
@@ -259,33 +274,35 @@ def _calc_PB(vis, antenna_id, restfreq):
         antdiam_ave = tb.getcell('DISH_DIAMETER', antenna_id)
     #antdiam_ave = self._get_average_antenna_diameter(antenna)
     # Calculate PB
-    wave_length = 0.2997924 / my_qa.convert(my_qa.quantity(ref_freq),'GHz')['value']
+    wave_length = 0.2997924 / my_qa.convert(my_qa.quantity(ref_freq), 'GHz')['value']
     D_m = my_qa.convert(antdiam_ave, 'm')['value']
     lambda_D = wave_length / D_m * 3600. * 180 / numpy.pi
-    PB = my_qa.quantity(pb_factor*lambda_D, 'arcsec')
+    PB = my_qa.quantity(pb_factor * lambda_D, 'arcsec')
     # Summary
     casalog.post("- Antenna diameter: %s m" % D_m)
     casalog.post("- Reference Frequency: %s" % ref_freq)
     casalog.post("PB size = %5.3f * lambda/D = %s" % (pb_factor, my_qa.tos(PB)))
     return PB
 
+
 def _get_imsize(width, height, dx, dy):
     casalog.post("Calculating pixel size.")
     # CAS-5410 Use private tools inside task scripts
     my_qa = quanta()
-    ny = numpy.ceil( ( my_qa.convert(height, my_qa.getunit(dy))['value'] /  \
-                       my_qa.getvalue(dy) ) )
-    nx = numpy.ceil( ( my_qa.convert(width, my_qa.getunit(dx))['value'] /  \
-                       my_qa.getvalue(dx) ) )
+    ny = numpy.ceil((my_qa.convert(height, my_qa.getunit(dy))['value'] /
+                     my_qa.getvalue(dy)))
+    nx = numpy.ceil((my_qa.convert(width, my_qa.getunit(dx))['value'] /
+                     my_qa.getvalue(dx)))
     casalog.post("- Map extent: [%s, %s]" % (my_qa.tos(width), my_qa.tos(height)))
     casalog.post("- Cell size: [%s, %s]" % (my_qa.tos(dx), my_qa.tos(dy)))
-    casalog.post("Image pixel numbers to cover the extent: [%d, %d] (projected)" % \
-                 (nx+1, ny+1))
-    return [int(nx+1), int(ny+1)]
+    casalog.post("Image pixel numbers to cover the extent: [%d, %d] (projected)" %
+                 (nx + 1, ny + 1))
+    return [int(nx + 1), int(ny + 1)]
+
 
 def _get_pointing_extent(phasecenter, vislist, field, spw, antenna, scan, intent, timerange,
                          pointingcolumntouse, ephemsrcname):
-    ### MS selection is ignored. This is not quite right.
+    # MS selection is ignored. This is not quite right.
     casalog.post("Calculating map extent from pointings.")
     # CAS-5410 Use private tools inside task scripts
     my_qa = quanta()
@@ -320,28 +337,32 @@ def _get_pointing_extent(phasecenter, vislist, field, spw, antenna, scan, intent
     mapextent = t.get_map_extent(vislist, field, spw, antenna, scan, intent, timerange,
                                  ref=base_mref, movingsource=ephemsrcname,
                                  pointingcolumntouse=pointingcolumntouse)
-    #mapextent = self.imager.mapextent(ref=base_mref, movingsource=ephemsrcname,
+    # mapextent = self.imager.mapextent(ref=base_mref, movingsource=ephemsrcname,
     #                                  pointingcolumntouse=colname)
     if mapextent['status']:
         qheight = my_qa.quantity(mapextent['extent'][1], 'rad')
         qwidth = my_qa.quantity(mapextent['extent'][0], 'rad')
         qcent0 = my_qa.quantity(mapextent['center'][0], 'rad')
         qcent1 = my_qa.quantity(mapextent['center'][1], 'rad')
-        scenter = '%s %s %s'%(base_mref, my_qa.formxxx(qcent0, 'hms'),
-                              my_qa.formxxx(qcent1, 'dms'))
+        scenter = '%s %s %s' % (base_mref, my_qa.formxxx(qcent0, 'hms'),
+                                my_qa.formxxx(qcent1, 'dms'))
 
         casalog.post("- Pointing center: %s" % scenter)
-        casalog.post("- Pointing extent: [%s, %s] (projected)" % (my_qa.tos(qwidth), \
-                                                              my_qa.tos(qheight)))
+        casalog.post("- Pointing extent: [%s, %s] (projected)" % (my_qa.tos(qwidth),
+                                                                  my_qa.tos(qheight)))
         ret_dict['center'] = scenter
         ret_dict['width'] = qwidth
         ret_dict['height'] = qheight
     else:
-        casalog.post('Failed to derive map extent from the MSs registered to the imager probably due to mising valid data.', priority='SEVERE')
+        casalog.post(
+            'Failed to derive map extent from the MSs registered to the imager probably '
+            'due to mising valid data.',
+            priority='SEVERE')
         ret_dict['center'] = ''
         ret_dict['width'] = my_qa.quantity(0.0, 'rad')
         ret_dict['height'] = my_qa.quantity(0.0, 'rad')
     return ret_dict
+
 
 def _handle_image_params(imsize, cell, phasecenter,
                          vislist, field, spw, antenna, scan, intent, timerange,
@@ -349,9 +370,10 @@ def _handle_image_params(imsize, cell, phasecenter,
     # round-up imsize
     _imsize = sdutil.to_list(imsize, int) or sdutil.to_list(imsize, numpy.integer)
     if _imsize is None:
-        _imsize = imsize if hasattr(imsize, '__iter__') else [ imsize ]
-        _imsize = [ int(numpy.ceil(v)) for v in _imsize ]
-        casalog.post("imsize is not integers. force converting to integer pixel numbers.", priority="WARN")
+        _imsize = imsize if hasattr(imsize, '__iter__') else [imsize]
+        _imsize = [int(numpy.ceil(v)) for v in _imsize]
+        casalog.post(
+            "imsize is not integers. force converting to integer pixel numbers.", priority="WARN")
         casalog.post("rounded-up imsize: %s --> %s" % (str(imsize), str(_imsize)))
 
     # calculate cell based on PB if it is not given
@@ -380,23 +402,33 @@ def _handle_image_params(imsize, cell, phasecenter,
         grid_factor = 3.
         casalog.post("The cell size will be calculated using PB size of antennas in the first MS")
         qpb = _calc_PB(vis, antenna_id, restfreq)
-        _cell = '%f%s' % (qpb['value']/grid_factor, qpb['unit'])
+        _cell = '%f%s' % (qpb['value'] / grid_factor, qpb['unit'])
         casalog.post("Using cell size = PB/%4.2F = %s" % (grid_factor, _cell))
 
     # Calculate Pointing center and extent (if necessary)
     _phasecenter = phasecenter
     if _phasecenter == '' or len(_imsize) == 0 or _imsize[0] < 1:
         # return a dictionary with keys 'center', 'width', 'height'
-        map_param = _get_pointing_extent(_phasecenter, vislist, field, spw, antenna, scan, intent, timerange,
-                                         pointingcolumntouse, ephemsrcname)
+        map_param = _get_pointing_extent(_phasecenter, vislist, field, spw, antenna, scan, intent,
+                                         timerange, pointingcolumntouse, ephemsrcname)
         # imsize
-        (cellx,celly) = sdutil.get_cellx_celly(_cell, unit='arcmin')
+        (cellx, celly) = sdutil.get_cellx_celly(_cell, unit='arcmin')
         if len(_imsize) == 0 or _imsize[0] < 1:
             _imsize = _get_imsize(map_param['width'], map_param['height'], cellx, celly)
             if _phasecenter != "":
-                casalog.post("You defined phasecenter but not imsize. The image will cover as wide area as pointing in MS extends, but be centered at phasecenter. This could result in a strange image if your phasecenter is a part from the center of pointings", priority='WARN')
+                casalog.post(
+                    "You defined phasecenter but not imsize. "
+                    "The image will cover as wide area as pointing in MS extends, "
+                    "but be centered at phasecenter. "
+                    "This could result in a strange image if your phasecenter is "
+                    "apart from the center of pointings",
+                    priority='WARN')
             if _imsize[0] > 1024 or _imsize[1] > 1024:
-                casalog.post("The calculated image pixel number is larger than 1024. It could take time to generate the image depending on your computer resource. Please wait...", priority='WARN')
+                casalog.post(
+                    "The calculated image pixel number is larger than 1024. "
+                    "It could take time to generate the image depending on your computer resource. "
+                    "Please wait...",
+                    priority='WARN')
 
         # phasecenter
         # if empty, it should be determined here...
@@ -404,6 +436,7 @@ def _handle_image_params(imsize, cell, phasecenter,
             _phasecenter = map_param['center']
 
     return _imsize, _cell, _phasecenter
+
 
 def _calc_pblimit(minweight):
     if minweight == 0.0:
@@ -416,6 +449,7 @@ def _calc_pblimit(minweight):
     pblimit = 1e-16
     return pblimit
 
+
 def _get_param(ms_index, param):
     if isinstance(param, str):
         return param
@@ -427,6 +461,7 @@ def _get_param(ms_index, param):
     else:
         raise RuntimeError('Invalid parameter')
 
+
 def _remove_image(imagename):
     if os.path.exists(imagename):
         if os.path.isdir(imagename):
@@ -436,6 +471,7 @@ def _remove_image(imagename):
         else:
             # could be a symlink
             os.remove(imagename)
+
 
 def _get_restfreq_if_empty(vislist, spw, field, restfreq):
     qa = quanta()
@@ -476,7 +512,6 @@ def _get_restfreq_if_empty(vislist, spw, field, restfreq):
         fieldsel = field[0]
     else:
         raise RuntimeError('Internal Error: invalid field selection \'{0}\''.format(field))
-
 
     with open_ms(vis) as ms:
         ms.msselect({'spw': spwsel, 'field': fieldsel})
@@ -536,6 +571,7 @@ def _get_restfreq_if_empty(vislist, spw, field, restfreq):
 
     return rf
 
+
 def set_beam_size(vis, imagename,
                   field, spw, baseline, scan, intent, timerange,
                   ephemsrcname, pointingcolumntouse, antenna_name, antenna_diameter,
@@ -553,11 +589,12 @@ def set_beam_size(vis, imagename,
         csys.done()
 
     old_tool = OldImagerBasedTools()
-    sampling_params = old_tool.get_pointing_sampling_params(vis, field, spw, baseline, scan, intent, timerange,
-                                                        outref=outref,
-                                                        movingsource=ephemsrcname,
-                                                        pointingcolumntouse=pointingcolumntouse,
-                                                        antenna_name=antenna_name)
+    sampling_params = old_tool.get_pointing_sampling_params(vis, field, spw, baseline,
+                                                            scan, intent, timerange,
+                                                            outref=outref,
+                                                            movingsource=ephemsrcname,
+                                                            pointingcolumntouse=pointingcolumntouse,
+                                                            antenna_name=antenna_name)
     qa = quanta()
     casalog.post('sampling_params={0}'.format(sampling_params))
     xsampling, ysampling = qa.getvalue(qa.convert(sampling_params['sampling'], 'arcsec'))
@@ -570,21 +607,28 @@ def set_beam_size(vis, imagename,
     # TODO: copy from sdimaging implementation
     sampling = [xsampling, ysampling]
     if abs(xsampling) < 2.2e-3 or not numpy.isfinite(xsampling):
-        casalog.post("Invalid sampling=%s arcsec. Using the value of orthogonal direction=%s arcsec" % (xsampling, ysampling), priority="WARN")
-        sampling = [ ysampling ]
+        casalog.post(
+            f"Invalid sampling={xsampling} arcsec. "
+            f"Using the value of orthogonal direction={ysampling} arcsec",
+            priority="WARN")
+        sampling = [ysampling]
         angle = 0.0
         valid_sampling = False
     if abs(ysampling) < 1.0e-3 or not numpy.isfinite(ysampling):
         if valid_sampling:
-            casalog.post("Invalid sampling=%s arcsec. Using the value of orthogonal direction=%s arcsec" % (ysampling, xsampling), priority="WARN")
-            sampling = [ xsampling ]
+            casalog.post(
+                f"Invalid sampling={ysampling} arcsec. "
+                f"Using the value of orthogonal direction={xsampling} arcsec",
+                priority="WARN")
+            sampling = [xsampling]
             angle = 0.0
             valid_sampling = True
     # reduce sampling and cell if it's possible
     if len(sampling) > 1 and abs(sampling[0] - sampling[1]) <= 0.01 * abs(sampling[0]):
         sampling = [sampling[0]]
         angle = 0.0
-        if cell[0] == cell[1]: cell = [cell[0]]
+        if cell[0] == cell[1]:
+            cell = [cell[0]]
     if valid_sampling:
         # actual calculation of beam size
         bu = sdbeamutil.TheoreticalBeam()
@@ -603,17 +647,20 @@ def set_beam_size(vis, imagename,
             ia.setrestoringbeam(**imbeam_dict)
     else:
         # BOTH sampling was invalid
-        casalog.post("Could not detect valid raster sampling. Exitting without setting beam size to image", priority='WARN')
+        casalog.post(
+            "Could not detect valid raster sampling. Exitting without setting beam size to image",
+            priority='WARN')
+
 
 def do_weight_mask(imagename, weightimage, minweight):
     # Mask image pixels whose weight are smaller than minweight.
     # Weight image should have 0 weight for pixels below < minweight
-    casalog.post("Start masking the map using minweight = %f" % \
+    casalog.post("Start masking the map using minweight = %f" %
                  minweight, "INFO")
     with open_ia(weightimage) as ia:
         try:
-            stat=ia.statistics(mask="'"+weightimage+"' > 0.0", robust=True)
-            valid_pixels=stat['npts']
+            stat = ia.statistics(mask="'" + weightimage + "' > 0.0", robust=True)
+            valid_pixels = stat['npts']
         except RuntimeError as e:
             if 'No valid data found.' in str(e):
                 valid_pixels = [0]
@@ -621,16 +668,20 @@ def do_weight_mask(imagename, weightimage, minweight):
                 raise e
 
     if len(valid_pixels) == 0 or valid_pixels[0] == 0:
-        casalog.post("All pixels weight zero. This indicates no data in MS is in image area. Mask will not be set. Please check your image parameters.","WARN")
+        casalog.post(
+            "All pixels weight zero. "
+            "This indicates no data in MS is in image area. "
+            "Mask will not be set. Please check your image parameters.",
+            priority="WARN")
         return
     median_weight = stat['median'][0]
     weight_threshold = median_weight * minweight
-    casalog.post("Median of weight in the map is %f" % median_weight, \
+    casalog.post("Median of weight in the map is %f" % median_weight,
                  "INFO")
-    casalog.post("Pixels in map with weight <= median(weight)*minweight = %f will be masked." % \
-                 (weight_threshold),"INFO")
-    ###Leaving the original logic to calculate the number of masked pixels via
-    ###product of median of and min_weight (which i don't understand the logic)
+    casalog.post("Pixels in map with weight <= median(weight)*minweight = %f will be masked." %
+                 (weight_threshold), "INFO")
+    # Leaving the original logic to calculate the number of masked pixels via
+    # product of median of and min_weight (which i don't understand the logic)
 
     # Modify default mask
     with open_ia(imagename) as ia:
@@ -649,12 +700,15 @@ def do_weight_mask(imagename, weightimage, minweight):
             else:
                 raise
 
-    masked_fraction = 100. * (1.-valid_pixels_after/float(valid_pixels[0]))
+    masked_fraction = 100. * (1. - valid_pixels_after / float(valid_pixels[0]))
 
-    msg = "This amounts to {fraction:5.1f} % of the area with nonzero weight.".format(fraction=masked_fraction)
+    msg = f"This amounts to {masked_fraction:5.1f} % of the area with nonzero weight."
     casalog.post(msg, "INFO")
-    casalog.post("The weight image '%s' is returned by this task, if the user wishes to assess the results in detail." \
-                 % (weightimage), "INFO")
+    casalog.post(
+        f"The weight image '{weightimage}' is returned by this task, "
+        "if the user wishes to assess the results in detail.",
+        priority="INFO")
+
 
 def get_ms_column_unit(tb, colname):
     col_unit = ''
@@ -668,11 +722,13 @@ def get_ms_column_unit(tb, colname):
                 col_unit = u[0].strip()
     return col_unit
 
+
 def get_brightness_unit_from_ms(msname):
     image_unit = ''
     with sdutil.table_manager(msname) as tb:
         image_unit = get_ms_column_unit(tb, 'DATA')
-        if image_unit == '': image_unit = get_ms_column_unit(tb, 'FLOAT_DATA')
+        if image_unit == '':
+            image_unit = get_ms_column_unit(tb, 'FLOAT_DATA')
     if image_unit.upper() == 'K':
         image_unit = 'K'
     else:
@@ -682,10 +738,11 @@ def get_brightness_unit_from_ms(msname):
 
 
 @sdutil.sdtask_decorator
-def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, timerange, mode, nchan, start, width, veltype,
+def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, timerange, mode,
+               nchan, start, width, veltype,
                specmode, outframe,
-               gridfunction, convsupport, truncate, gwidth, jwidth, imsize, cell, phasecenter, projection,
-               pointingcolumn, restfreq, stokes, minweight, brightnessunit, clipminmax):
+               gridfunction, convsupport, truncate, gwidth, jwidth, imsize, cell, phasecenter,
+               projection, pointingcolumn, restfreq, stokes, minweight, brightnessunit, clipminmax):
 
     origin = 'tsdimaging'
     imager = None
@@ -734,57 +791,68 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, t
         _restfreq = _get_restfreq_if_empty(infiles, _spw, field, restfreq)
 
         # handle gridder parameters
-        # ---- translate some default values into the ones that are consistent with the current framework
+        # ---- translate some default values into the ones
+        #      that are consistent with the current framework
         gtruncate = _handle_grid_defaults(truncate)
         ggwidth = _handle_grid_defaults(gwidth)
         gjwidth = _handle_grid_defaults(jwidth)
 
         # handle infiles parameter
-        # ---- sort input data using cleanhelper function to get results consistent with older sdimaging task
+        # ---- sort input data using cleanhelper function to get results
+        #      consistent with older sdimaging task
         old_way = OldImagerBasedTools()
-        _sorted = old_way.sort_vis(infiles, _spw, mode, imwidth, field, antenna, scan, intent, timerange)
-        sorted_vis, sorted_field, sorted_spw, sorted_antenna, sorted_scan, sorted_intent, sorted_timerange = _sorted
+        _sorted = old_way.sort_vis(infiles, _spw, mode, imwidth, field,
+                                   antenna, scan, intent, timerange)
+        sorted_vis = _sorted[0]
+        sorted_field = _sorted[1]
+        sorted_spw = _sorted[2]
+        sorted_antenna = _sorted[3]
+        sorted_scan = _sorted[4]
+        sorted_intent = _sorted[5]
+        sorted_timerange = _sorted[6]
 
         # handle image geometric parameters
         _ephemsrcname = ''
-        ephem_sources = ['MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO', 'SUN', 'MOON', 'TRACKFIELD']
+        ephem_sources = ['MERCURY', 'VENUS', 'MARS', 'JUPITER', 'SATURN',
+                         'URANUS', 'NEPTUNE', 'PLUTO', 'SUN', 'MOON', 'TRACKFIELD']
         if isinstance(phasecenter, str) and phasecenter.strip().upper() in ephem_sources:
             _ephemsrcname = phasecenter
-        _imsize, _cell, _phasecenter = _handle_image_params(imsize, cell, phasecenter, sorted_vis,
-                                                            sorted_field, sorted_spw, sorted_antenna,
-                                                            sorted_scan, sorted_intent, sorted_timerange,
-                                                            _restfreq, pointingcolumn, _ephemsrcname)
+        _imsize, _cell, _phasecenter = _handle_image_params(
+            imsize, cell, phasecenter, sorted_vis,
+            sorted_field, sorted_spw, sorted_antenna,
+            sorted_scan, sorted_intent, sorted_timerange,
+            _restfreq, pointingcolumn, _ephemsrcname)
 
         # calculate pblimit from minweight
         pblimit = _calc_pblimit(minweight)
 
-        ## (2) Set up Input Parameters
-        ##       - List all parameters that you need here
-        ##       - Defaults will be assumed for unspecified parameters
-        ##       - Nearly all parameters are identical to that in the task. Please look at the
-        ##         list of parameters under __init__ using  " help ImagerParameters " )
+        # (2) Set up Input Parameters
+        # - List all parameters that you need here
+        # - Defaults will be assumed for unspecified parameters
+        # - Nearly all parameters are identical to that in the task. Please look at the
+        # list of parameters under __init__ using  " help ImagerParameters " )
         casalog.post('*** Creating paramList ***', origin=origin)
         paramList = ImagerParameters(
             # input file name
-            msname =infiles,#'sdimaging.ms',
+            msname=infiles,  # 'sdimaging.ms',
             # data selection
-            field=field,#'',
-            spw=_spw,#'0',
+            field=field,  # '',
+            spw=_spw,  # '0',
             timestr=timerange,
             antenna=baseline,
             scan=scan,
             state=intent,
             # image parameters
-            imagename=_outfile,#'try2',
-            nchan=imnchan,#1024,
-            start=imstart,#'0',
-            width=imwidth,#'1',
+            imagename=_outfile,  # 'try2',
+            nchan=imnchan,  # 1024,
+            start=imstart,  # '0',
+            width=imwidth,  # '1',
             outframe=outframe,
             veltype=veltype,
             restfreq=_restfreq,
-            phasecenter=_phasecenter,#'J2000 17:18:29 +59.31.23',
-            imsize=_imsize,#[75,75],
-            cell=_cell,#['3arcmin', '3arcmin'],
+            phasecenter=_phasecenter,  # 'J2000 17:18:29 +59.31.23',
+            imsize=_imsize,  # [75,75],
+            cell=_cell,  # ['3arcmin', '3arcmin'],
             projection=projection,
             stokes=stokes,
             specmode=specmode,
@@ -816,29 +884,29 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, t
         # TODO: handle overwrite
         # TODO: output image name
 
-        ## (3) Construct the PySynthesisImager object, with all input parameters
+        # (3) Construct the PySynthesisImager object, with all input parameters
 
         casalog.post('*** Creating imager object ***', origin=origin)
         imager = PySynthesisImager(params=paramList)
 
-        ## (4) Initialize various modules.
-        ##       - Pick only the modules you will need later on. For example, to only make
-        ##         the PSF, there is no need for the deconvolver or iteration control modules.
+        # (4) Initialize various modules.
+        # - Pick only the modules you will need later on. For example, to only make
+        # the PSF, there is no need for the deconvolver or iteration control modules.
 
-        ## Initialize modules major cycle modules
+        # Initialize modules major cycle modules
 
         casalog.post('*** Initializing imagers ***', origin=origin)
         imager.initializeImagers()
         casalog.post('*** Initializing normalizers ***', origin=origin)
         imager.initializeNormalizers()
 
-        ## (5) Make the initial images
+        # (5) Make the initial images
 
         casalog.post('*** makeSdImage... ***', origin=origin)
         imager.makeSdImage()
 
     finally:
-        ## (8) Close tools.
+        # (8) Close tools.
 
         casalog.post('*** Cleaning up tools ***', origin=origin)
         if imager is not None:
