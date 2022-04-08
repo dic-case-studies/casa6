@@ -559,7 +559,7 @@ class sdimaging_test0(sdimaging_unittest_base):
                             msg='The task must throw exception')
         except Exception as e:
             pos = str(e).find(
-                'Output frequency grid cannot be calculated:  ' + \
+                'Output frequency grid cannot be calculated:  ' +
                 'please check start and width parameters')
             #pos=str(e).find('calcChanFreqs failed, check input start and width parameters')
             self.assertNotEqual(pos, -1,

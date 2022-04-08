@@ -694,7 +694,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                             #      +") - answer("+str(answer[key][i][j]) \
                             #      +") - upper("+str(result_upper) +")")
                             self.assertTrue(
-                                ((result_lower <= answer[key][i][j]) \
+                                ((result_lower <= answer[key][i][j])
                                     and (answer[key][i][j] <= result_upper)),
                                 msg="row%s, comp%s result inconsistent with answer" % (i, j))
 
@@ -734,7 +734,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                             #      ") - answer("+str(answer[key][i][j])+") - upper("+ \
                             #      str(result_upper) +")")
                             self.assertTrue(
-                                ((result_lower <= answer[key][i][j]) \
+                                ((result_lower <= answer[key][i][j])
                                     and (answer[key][i][j] <= result_upper)),
                                 msg=f"row {i}, comp {j} result inconsistent with answer")
 
@@ -771,7 +771,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                             #      ") - answer("+str(answer[key][i][j])+") - upper("+ \
                             #      str(result_upper) +")")
                             self.assertTrue(
-                                ((result_lower <= answer[key][i][j]) \
+                                ((result_lower <= answer[key][i][j])
                                     and (answer[key][i][j] <= result_upper)),
                                 msg=f"row {i}, comp {j} result inconsistent with answer")
 
@@ -810,7 +810,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                             #       ") - answer("+str(answer[key][i][j])+") - upper("+ \
                             #       str(result_upper) +")")
                             self.assertTrue(
-                                ((result_lower <= answer[key][i][j]) \
+                                ((result_lower <= answer[key][i][j])
                                     and (answer[key][i][j] <= result_upper)),
                                 msg=f"row {i}, comp {j} result inconsistent with answer")
 
@@ -853,7 +853,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                             #       ") - answer("+str(answer[key][i][j])+") - upper("+ \
                             #       str(result_upper) +")")
                             self.assertTrue(
-                                ((result_lower <= answer[key][i][j]) \
+                                ((result_lower <= answer[key][i][j])
                                     and (answer[key][i][j] <= result_upper)),
                                 msg=f"row {i}, comp {j} result inconsistent with answer")
 
@@ -897,7 +897,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                             #       ") - answer("+str(answer[key][i][j])+") - upper("+ \
                             #       str(result_upper) +")")
                             self.assertTrue(
-                                ((result_lower <= answer[key][i][j]) \
+                                ((result_lower <= answer[key][i][j])
                                     and (answer[key][i][j] <= result_upper)),
                                 msg=f"row {i}, comp {j} result inconsistent with answer")
 
@@ -1001,8 +1001,8 @@ class sdfit_selection(sdfit_unittest_base, unittest.TestCase):
                         numpy.allclose([test_value[key][idx]],
                                        [reference[key]],
                                        atol=atol, rtol=rtol),
-                        f"Fitting result '{key}' in row={in_row}, " + \
-                        f"pol={in_pol} differs: " + \
+                        f"Fitting result '{key}' in row={in_row}, " +
+                        f"pol={in_pol} differs: " +
                         f"{test_value[key][idx]} (expected: {reference[key]})")
                 # Next spectrum
                 idx += 1
@@ -1125,7 +1125,7 @@ class sdfit_auto(sdfit_unittest_base, unittest.TestCase):
             # test the number of detected lines
             self.assertEqual(
                 fit_val['nfit'][irow], reference['nfit'][irow],
-                f"The number of lines in row {irow} differ: " + \
+                f"The number of lines in row {irow} differ: " +
                 f"{fit_val['nfit'][irow]} (expected: {reference['nfit'][irow]})")
             nline = fit_val['nfit'][irow]
             for key in fit_val.keys():

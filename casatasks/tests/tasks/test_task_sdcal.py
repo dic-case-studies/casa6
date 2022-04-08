@@ -1016,8 +1016,8 @@ class sdcal_test_otfraster(sdcal_test_base):
                                 self.assertEqual(
                                     expected.shape,
                                     fparam.shape,
-                                    msg=f'Shape mismatch for antenna {ant} spw {spw} ' + \
-                                        f'row {irow} (expected {expected.shape} ' + \
+                                    msg=f'Shape mismatch for antenna {ant} spw {spw} ' +
+                                        f'row {irow} (expected {expected.shape} ' +
                                         f'actual {fparam.shape})')
                                 npol, nchan = expected.shape
                                 for ipol in range(npol):
@@ -1972,7 +1972,7 @@ class sdcal_test_apply(sdcal_test_base):
                                 diff[small_data] = abs(corrected[small_data] - expected[small_data])
                                 regular_data = numpy.where(abs(expected) >= 1.0e-7)
                                 diff[regular_data] = abs(
-                                    (corrected[regular_data] - expected[regular_data]) \
+                                    (corrected[regular_data] - expected[regular_data])
                                         / expected[regular_data])
                                 self.assertTrue(
                                     all(diff.flatten() < self.eps),
