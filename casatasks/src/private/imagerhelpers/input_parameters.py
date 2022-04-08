@@ -144,6 +144,8 @@ class ImagerParameters():
                  minpercentchange=0.0,
                  verbose=False,
                  fastnoise=False,
+                 fusedthreshold=0.0,
+                 largestscale=-1,
 
 #                 usescratch=True,
 #                 readonly=True,
@@ -236,6 +238,7 @@ class ImagerParameters():
                                     #'maskresolution':maskresolution, 'nmask':nmask,'autoadjust':autoadjust,
                                     'sidelobethreshold':sidelobethreshold, 'noisethreshold':noisethreshold,
                                     'lownoisethreshold':lownoisethreshold, 'negativethreshold':negativethreshold,'smoothfactor':smoothfactor,
+                                    'fusedthreshold':fusedthreshold, 'specmode':specmode,'largestscale':largestscale,
 
                                     'minbeamfrac':minbeamfrac, 'cutthreshold':cutthreshold, 'growiterations':growiterations, 
                                      'dogrowprune':dogrowprune, 'minpercentchange':minpercentchange, 'verbose':verbose, 'fastnoise':fastnoise,
