@@ -291,8 +291,8 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
                 msg = 'No valid spw id exists in the first table'
                 raise ValueError(msg)
         self.allchannels = self.table.getcell('NUM_CHAN', spwid_ref)
-        freq_chan0 = self.table.getcell('CHAN_FREQ', spwid_ref)[0]
-        freq_inc0 = self.table.getcell('CHAN_WIDTH', spwid_ref)[0]
+        # freq_chan0 = self.table.getcell('CHAN_FREQ', spwid_ref)[0]
+        # freq_inc0 = self.table.getcell('CHAN_WIDTH', spwid_ref)[0]
         # in case rest frequency is not defined yet.
         if self.restfreq == '':
             self.restfreq = '%fHz' % self.table.getcell('CHAN_FREQ', spwid_ref).mean()
@@ -829,7 +829,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         voids = [False for dummy in range(npart)]
         for ipos in range(npart):
             try:
-                dummy = pos.index(ipos)
+                pos.index(ipos)
             except Exception:
                 voids[ipos] = True
         if not any(voids):

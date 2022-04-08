@@ -402,7 +402,7 @@ class sdfit_unittest_base(unittest.TestCase):
         res_elem['rms'] = numpy.sqrt(numpy.var(spec))
         res_elem['min'] = numpy.min(spec)
         res_elem['max'] = numpy.max(spec)
-        spec_mea = numpy.mean(spec)
+        # spec_mea = numpy.mean(spec)
         res_elem['median'] = numpy.median(spec)
         res_elem['stddev'] = numpy.std(spec)
         return res_elem
@@ -645,7 +645,7 @@ class sdfit_basicTest(sdfit_unittest_base):
 
     def test000(self):
         """Basic Test 000: default values for all parameters (nfit=[0] : no fitting)"""
-        tid = '000'
+        # tid = '000'
         for infile in self.infiles:
             datacolumn = 'float_data'
             result = sdfit(infile=infile, datacolumn=datacolumn)
@@ -665,7 +665,7 @@ class sdfit_basicTest(sdfit_unittest_base):
 
     def test001(self):
         """Basic Test 001: fitting with single line profile (spw='0,1,2', nfit=[1])"""
-        tid = '001'
+        # tid = '001'
         for infile in self.infiles:
             datacolumn = 'float_data'
             spw = '0,1,2'
@@ -700,7 +700,7 @@ class sdfit_basicTest(sdfit_unittest_base):
 
     def test002(self):
         """Basic Test 002: fitting with double fitrange (spw='3', nfit=[1,1])"""
-        tid = '002'
+        # tid = '002'
         for infile in self.infiles:
             datacolumn = 'float_data'
             spw = '3:0~4000;4001~8191'
@@ -740,7 +740,7 @@ class sdfit_basicTest(sdfit_unittest_base):
 
     def test003(self):
         """Basic Test 003: fitting with double lines (spw='3', nfit=[2])"""
-        tid = '003'
+        # tid = '003'
         for infile in self.infiles:
             datacolumn = 'float_data'
             spw = '3'

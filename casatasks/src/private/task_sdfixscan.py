@@ -156,10 +156,10 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         # back-up original mask name
         is_initial_mask = (self.image.maskhandler('default')[0] != '')
         temp_maskname = "temporal"
-        imshape = self.image.shape()
-        ndim = len(imshape)
-        nx = imshape[0]
-        ny = imshape[1]
+        # imshape = self.image.shape()
+        # ndim = len(imshape)
+        # nx = imshape[0]
+        # ny = imshape[1]
         if len(self.thresh) == 0:
             casalog.post('Use whole region')
         else:
@@ -347,7 +347,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         outimage = ia.newimagefromimage(
             infile=self.infiles[0], outfile=self.outfile, overwrite=self.overwrite)
         imshape_out = outimage.shape()
-        ndim_out = len(imshape_out)
+        # ndim_out = len(imshape_out)
         coordsys = outimage.coordsys()
         axis_types = coordsys.axiscoordinatetypes()
         # direction axis should always exist
@@ -404,7 +404,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         # image shape for temporary images (always 4D)
         ia.open(self.tmprealname[0])
         imshape = ia.shape()
-        ndim = len(imshape)
+        # ndim = len(imshape)
         ia.close()
 
         if len(self.thresh) == 0:

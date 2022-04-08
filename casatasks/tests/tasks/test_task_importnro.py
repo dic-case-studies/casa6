@@ -109,7 +109,7 @@ class importnro_test(unittest.TestCase):
     def test_overwrite(self):
         """test_overwrite: File existence check"""
         shutil.copy(self.infile, self.outfile)
-        with self.assertRaisesRegexp(RuntimeError, '.* exists\.$') as cm:
+        with self.assertRaisesRegexp(RuntimeError, '.* exists\.$'):
             importnro(infile=self.infile, outputvis=self.outfile, overwrite=False)
 
     def test_invaliddata(self):
@@ -117,12 +117,12 @@ class importnro_test(unittest.TestCase):
         with open(self.infile, 'wb') as f:
             f.write(str2bytes('AA'))
         #os.remove(os.path.join(self.infile, 'table.info'))
-        with self.assertRaisesRegexp(RuntimeError, '.* is not a valid NOSTAR data\.$') as cm:
+        with self.assertRaisesRegexp(RuntimeError, '.* is not a valid NOSTAR data\.$'):
             importnro(infile=self.infile, outputvis=self.outfile, overwrite=False)
 
     def test_normal(self):
         """test_normal: Normal data import"""
-        ret = importnro(infile=self.infile, outputvis=self.outfile, overwrite=True)
+        importnro(infile=self.infile, outputvis=self.outfile, overwrite=True)
         self.assertTrue(os.path.exists(self.outfile))
         try:
             # to check if outfile is valid MS
@@ -262,7 +262,7 @@ class importnro_test(unittest.TestCase):
 
     def test_timestamp(self):
         """test_timestamp: Check if timestamp is properly converted to UTC"""
-        ret = importnro(infile=self.infile, outputvis=self.outfile, overwrite=True)
+        importnro(infile=self.infile, outputvis=self.outfile, overwrite=True)
         self.assertTrue(os.path.exists(self.outfile))
 
         # antenna_position should be a position measure

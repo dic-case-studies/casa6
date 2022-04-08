@@ -414,14 +414,13 @@ class sdimaging_test0(sdimaging_unittest_base):
 
     def test002(self):
         """Test002: Bad field id"""
-        outfile = self.prefix + self.postfix
         self.assertRaises(Exception, sdimaging, infiles=self.rawfile,
                           field=self.badid, intent='', outfile=self.outfile)
 
     def test003(self):
         """Test003: Bad spectral window id"""
         try:
-            res = sdimaging(infiles=self.rawfile, spw=self.badid, intent='', outfile=self.outfile)
+            sdimaging(infiles=self.rawfile, spw=self.badid, intent='', outfile=self.outfile)
             self.assertTrue(False,
                             msg='The task must throw exception')
         except Exception as e:
@@ -432,8 +431,8 @@ class sdimaging_test0(sdimaging_unittest_base):
     def test004(self):
         """Test004: Bad antenna id"""
         try:
-            res = sdimaging(infiles=self.rawfile, antenna=self.badid, intent='',
-                            imsize=self.imsize, cell=self.cell, outfile=self.outfile)
+            sdimaging(infiles=self.rawfile, antenna=self.badid, intent='',
+                      imsize=self.imsize, cell=self.cell, outfile=self.outfile)
             self.assertTrue(False,
                             msg='The task must throw exception')
         except Exception as e:
@@ -444,7 +443,7 @@ class sdimaging_test0(sdimaging_unittest_base):
     def test005(self):
         """Test005: Bad stokes parameter"""
         try:
-            res = sdimaging(infiles=self.rawfile, stokes='BAD', intent='', outfile=self.outfile)
+            sdimaging(infiles=self.rawfile, stokes='BAD', intent='', outfile=self.outfile)
             self.assertTrue(False,
                             msg='The task must throw exception')
         except Exception as e:
@@ -462,7 +461,7 @@ class sdimaging_test0(sdimaging_unittest_base):
     def test007(self):
         """Test007: Bad scanlist"""
         try:
-            res = sdimaging(infiles=self.rawfile, scan=self.badid, intent='', outfile=self.outfile)
+            sdimaging(infiles=self.rawfile, scan=self.badid, intent='', outfile=self.outfile)
         except Exception as e:
             pos = str(e).find('Selection is empty')
             self.assertNotEqual(pos, -1,
@@ -474,7 +473,7 @@ class sdimaging_test0(sdimaging_unittest_base):
         print('existing file', file=f)
         f.close()
         try:
-            res = sdimaging(infiles=self.rawfile, intent='', outfile=self.outfile)
+            sdimaging(infiles=self.rawfile, intent='', outfile=self.outfile)
             self.assertTrue(False,
                             msg='The task must throw exception')
         except Exception as e:
@@ -485,8 +484,8 @@ class sdimaging_test0(sdimaging_unittest_base):
     def test009(self):
         """Test009: Bad phasecenter string"""
         try:
-            res = sdimaging(infiles=self.rawfile, outfile=self.outfile, intent='',
-                            cell=self.cell, imsize=self.imsize, phasecenter='This is bad')
+            sdimaging(infiles=self.rawfile, outfile=self.outfile, intent='',
+                      cell=self.cell, imsize=self.imsize, phasecenter='This is bad')
             self.assertTrue(False,
                             msg='The task must throw exception')
         except Exception as e:
@@ -537,8 +536,8 @@ class sdimaging_test0(sdimaging_unittest_base):
         """Test013: Bad cell size"""
         # empty image will be created
         try:
-            res = sdimaging(infiles=self.rawfile, outfile=self.outfile, intent='',
-                            cell=[0., 0.], imsize=self.imsize, phasecenter=self.phasecenter)
+            sdimaging(infiles=self.rawfile, outfile=self.outfile, intent='',
+                      cell=[0., 0.], imsize=self.imsize, phasecenter=self.phasecenter)
             self.assertFail(msg='The task must throw exception')
         except Exception as e:
             pos = str(e).find('Infinite resolution not possible.')
@@ -551,10 +550,10 @@ class sdimaging_test0(sdimaging_unittest_base):
             specunit = 'GHz'
             start = '%f%s' % (1.4202, specunit)
             width = '%e%s' % (1.0e-10, specunit)
-            res = sdimaging(infiles=self.rawfile, outfile=self.outfile, intent='', cell=self.cell,
-                            imsize=self.imsize, phasecenter=self.phasecenter,
-                            gridfunction=self.gridfunction, mode='frequency',
-                            nchan=10, start=start, width=width)
+            sdimaging(infiles=self.rawfile, outfile=self.outfile, intent='', cell=self.cell,
+                      imsize=self.imsize, phasecenter=self.phasecenter,
+                      gridfunction=self.gridfunction, mode='frequency',
+                      nchan=10, start=start, width=width)
             self.assertTrue(False,
                             msg='The task must throw exception')
         except Exception as e:
@@ -2546,7 +2545,7 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
             task_param = self.default_param
         if refstats is None:
             refstats = self.refstats
-        res = sdimaging(**task_param)
+        sdimaging(**task_param)
         self._checkfile(self.outfile)
         self._check_weight_image(self.outfile)
         self._checkshape(self.outfile, self.imsize[0], self.imsize[1], 1, 1)
@@ -3124,11 +3123,11 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
 
         if is_clip_effective == True:
             # pre-flag the data to be clipped
-            myme = measures()
+            # myme = measures()
             mymsmd = msmetadata()
             mytb = table()
             myqa = quanta()
-            center = myme.direction('J2000', myqa.quantity(0, 'rad'), myqa.quantity(0, 'rad'))
+            # center = myme.direction('J2000', myqa.quantity(0, 'rad'), myqa.quantity(0, 'rad'))
             offset_plus = myqa.convert(myqa.quantity('1arcmin'), 'rad')
             offset_minus = myqa.mul(offset_plus, -1)
             grid = [[[], [], []],

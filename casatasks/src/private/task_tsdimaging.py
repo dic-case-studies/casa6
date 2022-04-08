@@ -123,7 +123,7 @@ class OldImagerBasedTools(object):
                 self.imager.close()
 
     def test(self, vis):
-        with self.open_old_imager(vis) as im:
+        with self.open_old_imager(vis):
             casalog.post('test')
             raise RuntimeError('ERROR!')
 
@@ -313,7 +313,7 @@ def _get_pointing_extent(phasecenter, vislist, field, spw, antenna, scan, intent
     else:
         vis = vislist[0]
 
-    colname = pointingcolumntouse.upper()
+    # colname = pointingcolumntouse.upper()
 
     if phasecenter == "":
         # defaut is J2000
@@ -919,7 +919,7 @@ def tsdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent, t
     # set beam size
     # TODO: re-define related functions in the new tool framework (sdms?)
     imagename = outfile + image_suffix
-    ms_index = 0
+    # ms_index = 0
     rep_ms = _get_param(0, infiles)
     rep_field = _get_param(0, field)
     rep_spw = _get_param(0, _spw)

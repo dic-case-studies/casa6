@@ -51,7 +51,7 @@ def check_eq(val, expval, tol=None):
             if (len(errmsg) > 66):  # 66 = 78 - len('ValueError: ')
                 errmsg = "\n%r\n!=\n%r" % (val, expval)
             raise ValueError(errmsg)
-        except Exception as e:
+        except Exception:
             print("Error comparing {} to {}".format(val, expval))
             raise
 

@@ -171,7 +171,7 @@ class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
     def test001(self):
         """Test 001: only 1 image is given for Basket-Weaving"""
         try:
-            res = sdfixscan(infiles=[self.rawfiles[0]], mode='fft_mask', direction=[0.])
+            sdfixscan(infiles=[self.rawfiles[0]], mode='fft_mask', direction=[0.])
             self.assertTrue(False,
                             msg='The task must throw exception')
         except Exception as e:
@@ -182,7 +182,7 @@ class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
     def test002(self):
         """Test 002: direction is not given for Basket-Weaving"""
         try:
-            res = sdfixscan(infiles=self.rawfiles, mode='fft_mask')
+            sdfixscan(infiles=self.rawfiles, mode='fft_mask')
             self.assertTrue(False,
                             msg='The task must throw exception')
         except Exception as e:
@@ -193,7 +193,7 @@ class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
     def test003(self):
         """Test 003: Multiple images are given for Press"""
         try:
-            res = sdfixscan(infiles=self.rawfiles, mode='model')
+            sdfixscan(infiles=self.rawfiles, mode='model')
             self.assertTrue(False,
                             msg='The task must throw exception')
         except Exception as e:
@@ -204,7 +204,7 @@ class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
     def test004(self):
         """Test 004: direction is not given for Press"""
         try:
-            res = sdfixscan(infiles=[self.rawfiles[0]], mode='model')
+            sdfixscan(infiles=[self.rawfiles[0]], mode='model')
             self.assertTrue(False,
                             msg='The task must throw exception')
         except Exception as e:
@@ -481,9 +481,8 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
 
     def test200(self):
         """Test 200: FFT based Basket-Weaving using whole pixels"""
-        res = sdfixscan(infiles=self.rawfiles, mode=self.mode,
-                        direction=[0.0, 90.0], maskwidth=20.0,
-                        outfile=self.outfile, overwrite=True)
+        sdfixscan(infiles=self.rawfiles, mode=self.mode, direction=[0.0, 90.0],
+                  maskwidth=20.0, outfile=self.outfile, overwrite=True)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
                     'blcf': '00:00:00.000, +00.00.00.000, I, 1.415e+09Hz',
                     'max': numpy.array([0.92863309]),
@@ -508,9 +507,8 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
 
     def test201(self):
         """Test 201: FFT based Basket-Weaving with certain threshold"""
-        res = sdfixscan(infiles=self.rawfiles, mode=self.mode,
-                        direction=[0.0, 90.0], maskwidth=20.0,
-                        tmax=0.5, tmin=-0.1, outfile=self.outfile, overwrite=True)
+        sdfixscan(infiles=self.rawfiles, mode=self.mode, direction=[0.0, 90.0],
+                  maskwidth=20.0, tmax=0.5, tmin=-0.1, outfile=self.outfile, overwrite=True)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
                     'blcf': '00:00:00.000, +00.00.00.000, I, 1.415e+09Hz',
                     'max': numpy.array([0.99608284]),
@@ -567,9 +565,8 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
             mask_ref += msk
         del mask_in
         # Task execution
-        res = sdfixscan(infiles=self.rawfiles, mode=self.mode,
-                        direction=[0.0, 90.0], maskwidth=20.0,
-                        outfile=self.outfile, overwrite=True)
+        sdfixscan(infiles=self.rawfiles, mode=self.mode, direction=[0.0, 90.0],
+                  maskwidth=20.0, outfile=self.outfile, overwrite=True)
         # Test results
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
                     'blcf': '00:00:00.000, +00.00.00.000, I, 1.415e+09Hz',
@@ -602,9 +599,8 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
     def test203(self):
         """Test 203: test for len(infiles) > len(direction)"""
         infiles = self.rawfiles + self.rawfiles
-        res = sdfixscan(infiles=infiles, mode=self.mode,
-                        direction=[0.0, 90.0], maskwidth=20.0,
-                        outfile=self.outfile, overwrite=True)
+        sdfixscan(infiles=infiles, mode=self.mode, direction=[0.0, 90.0],
+                  maskwidth=20.0, outfile=self.outfile, overwrite=True)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
                     'blcf': '00:00:00.000, +00.00.00.000, I, 1.415e+09Hz',
                     'max': numpy.array([0.92863309]),
@@ -632,9 +628,8 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
         for infile, outfile in zip(self.rawfiles, self.rawfilesmod):
             drop_stokes_axis(infile, outfile)
             self.assertTrue(os.path.exists(outfile))
-        res = sdfixscan(infiles=self.rawfilesmod, mode=self.mode,
-                        direction=[0.0, 90.0], maskwidth=20.0,
-                        outfile=self.outfile, overwrite=True)
+        sdfixscan(infiles=self.rawfilesmod, mode=self.mode, direction=[0.0, 90.0],
+                  maskwidth=20.0, outfile=self.outfile, overwrite=True)
         refstats = {'blc': numpy.array([0, 0, 0], dtype=numpy.int32),
                     'blcf': '00:00:00.000, +00.00.00.000, 1.415e+09Hz',
                     'max': numpy.array([0.92863309]),
@@ -662,9 +657,8 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
         for infile, outfile in zip(self.rawfiles, self.rawfilesmod):
             drop_deg_axes(infile, outfile)
             self.assertTrue(os.path.exists(outfile))
-        res = sdfixscan(infiles=self.rawfilesmod, mode=self.mode,
-                        direction=[0.0, 90.0], maskwidth=20.0,
-                        outfile=self.outfile, overwrite=True)
+        sdfixscan(infiles=self.rawfilesmod, mode=self.mode, direction=[0.0, 90.0],
+                  maskwidth=20.0, outfile=self.outfile, overwrite=True)
         refstats = {'blc': numpy.array([0, 0], dtype=numpy.int32),
                     'blcf': '00:00:00.000, +00.00.00.000',
                     'max': numpy.array([0.92863309]),

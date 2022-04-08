@@ -600,7 +600,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
 
     def run_exception_case(self, task_param, expected_msg, expected_type=RuntimeError):
         with self.assertRaises(expected_type) as cm:
-            res = sdimaging(**task_param)
+            sdimaging(**task_param)
         the_exception = cm.exception
         pos = str(the_exception).find(expected_msg)
         self.assertNotEqual(pos, -1,
@@ -2961,7 +2961,6 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
 
     def tearDown(self):
         if self.clearup:
-            outfile = self.outfile + image_suffix
             remove_tables_starting_with(self.outfile)
             for name in self.infiles:
                 remove_table(name)
@@ -2973,7 +2972,7 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
             task_param = self.default_param
         if refstats is None:
             refstats = self.refstats
-        res = sdimaging(**task_param)
+        sdimaging(**task_param)
         outfile = self.outfile + image_suffix
         self._checkfile(outfile)
         self._check_weight_image(outfile)
@@ -3837,11 +3836,11 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
 
         if is_clip_effective == True:
             # pre-flag the data to be clipped
-            myme = measures()
+            # myme = measures()
             mymsmd = msmetadata()
             mytb = table()
             myqa = qa
-            center = myme.direction('J2000', myqa.quantity(0, 'rad'), myqa.quantity(0, 'rad'))
+            # center = myme.direction('J2000', myqa.quantity(0, 'rad'), myqa.quantity(0, 'rad'))
             offset_plus = myqa.convert(myqa.quantity('1arcmin'), 'rad')
             offset_minus = myqa.mul(offset_plus, -1)
             grid = [[[], [], []],

@@ -198,7 +198,7 @@ class sdgaincal_fail_test(sdgaincal_test_base):
         self.assertEqual(result, False)
 
     def _test_except_regex(self, exception_type, pattern, **params):
-        with self.assertRaisesRegexp(exception_type, pattern) as cm:
+        with self.assertRaisesRegexp(exception_type, pattern):
             self.run_task(**params)
 
     def test_fail01(self):
@@ -378,9 +378,9 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
     def _verify_param_and_flag_variable(self, table):
         nrow = table.nrows()
         nrow_per_spw = nrow // 2
-        ref_min = 0.90240508
-        ref_max = 1.08644176
-        delta = (ref_max - ref_min) / nrow_per_spw
+        # ref_min = 0.90240508
+        # ref_max = 1.08644176
+        # delta = (ref_max - ref_min) / nrow_per_spw
         ref = numpy.array(
             [0.90240508, 0.90413946, 0.90609813, 0.90798497, 0.90980464,
              0.91156137, 0.91352099, 0.91541398, 0.91724426, 0.91901565,

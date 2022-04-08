@@ -98,7 +98,7 @@ class sdcal_test(unittest.TestCase):
     def test00(self):
         """Test00:Check the identification of TSYS_SPECTRuM and FPARAM"""
 
-        tid = "00"
+        # tid = "00"
         infile = self.infile1
         sdcal(infile=infile, calmode='tsys', outfile=self.tsystable)
         compfile1 = infile + '/SYSCAL'
@@ -136,7 +136,7 @@ class sdcal_test(unittest.TestCase):
     def test00M(self):
         """Test00M:Check the identification of TSYS_SPECTRuM and FPARAM (MMS)"""
 
-        tid = "00M"
+        # tid = "00M"
         infile = self.infile1
         with mmshelper(infile) as mvis:
             self.assertTrue(mvis is not None)
@@ -178,7 +178,7 @@ class sdcal_test(unittest.TestCase):
         # focus on antenna1=0, data_disk_id=1
         # spwmap_dict={1:[1],3:[3],5:[5],7:[7]}
 
-        tid = "01"
+        # tid = "01"
         infile = self.infile1
         sdcal(infile=infile, calmode='tsys', outfile=self.tsystable)
         initweights(vis=infile, wtmode='nyq', dowtsp=True)
@@ -225,7 +225,7 @@ class sdcal_test(unittest.TestCase):
         # focus on antenna1=0, data_disk_id=1
         # spwmap_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
 
-        tid = "02"
+        # tid = "02"
         infile = self.infile1
         sdcal(infile=infile, calmode='tsys', outfile=self.tsystable)
         initweights(vis=infile, wtmode='nyq', dowtsp=True)
@@ -321,7 +321,7 @@ class sdcal_test(unittest.TestCase):
     def test03(self):
         """Test03: Validation of CORRECTED_DATA = DATA X FPARAM (spwmap={1:[1], 3:[3], 5:[5], 7:[7]})"""
 
-        tid = "03"
+        # tid = "03"
         infile = self.infile1
         tsysfile = self.tsystable
 
@@ -356,7 +356,7 @@ class sdcal_test(unittest.TestCase):
         antanna1=0, DATA_DISC_ID=9, FPARAM_average
         """
 
-        tid = "04"
+        # tid = "04"
         infile = self.infile1
         tsysfile = self.tsystable
 
@@ -395,7 +395,7 @@ class sdcal_test(unittest.TestCase):
         """
         print('')
 
-        tid = "05"
+        # tid = "05"
         infile = self.infile1
         tsysfile = self.tsystable
 
@@ -428,7 +428,7 @@ class sdcal_test(unittest.TestCase):
         # focus on antenna1=0, data_disk_id=1
         # spwmap_dict={1:[1],3:[3],5:[5],7:[7]}
 
-        tid = "06"
+        # tid = "06"
         infile = self.infile1
         sdcal(infile=infile, calmode='tsys', outfile=self.tsystable)
         initweights(vis=infile, wtmode='nyq', dowtsp=True)
@@ -440,7 +440,7 @@ class sdcal_test(unittest.TestCase):
               applytable=self.tsystable, interp='nearest', outfile='')
 
         row = 0
-        eps = 1.0e-1
+        # eps = 1.0e-1
 
         tb.open(infile)
         sigma = tb.getcell('SIGMA', row)
@@ -2163,7 +2163,7 @@ class sdcal_test_apply(sdcal_test_base):
                     tsys = 100.0
                     for irow in range(nrow):
                         tsys_spectrum = tsel.getcell('TSYS_SPECTRUM', irow)
-                        tsys_spectrum[:] = 100.0
+                        tsys_spectrum[:] = tsys
                         tsel.putcell('TSYS_SPECTRUM', irow, tsys_spectrum)
                         #tsys += 100.0
                 finally:

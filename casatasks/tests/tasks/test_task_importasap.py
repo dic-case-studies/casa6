@@ -60,19 +60,19 @@ class importasap_test(unittest.TestCase):
     def test_overwrite(self):
         """test_overwrite: File existence check"""
         shutil.copytree(self.infile, self.outfile)
-        with self.assertRaisesRegexp(RuntimeError, '.* exists\.$') as cm:
+        with self.assertRaisesRegexp(RuntimeError, '.* exists\.$'):
             importasap(infile=self.infile, outputvis=self.outfile, overwrite=False)
 
     def test_invaliddata(self):
         """test_invaliddata: Invalid data check"""
         os.remove(os.path.join(self.infile, 'table.info'))
-        with self.assertRaisesRegexp(RuntimeError, '.* is not a valid Scantable\.$') as cm:
+        with self.assertRaisesRegexp(RuntimeError, '.* is not a valid Scantable\.$'):
             importasap(infile=self.infile, outputvis=self.outfile, overwrite=False)
 
     def test_normal(self):
         """test_normal: Normal data import"""
-        ret = importasap(infile=self.infile, outputvis=self.outfile,
-                         flagbackup=True, overwrite=True)
+        importasap(infile=self.infile, outputvis=self.outfile,
+                   flagbackup=True, overwrite=True)
         self.assertTrue(os.path.exists(self.outfile))
         try:
             # to check if outfile is valid MS
@@ -95,8 +95,8 @@ class importasap_test(unittest.TestCase):
     def test_flagversions(self):
         """test_flagversions -- Check if existing flagversions file is overwritten"""
         # create flagversions file
-        ret = importasap(infile=self.infile, outputvis=self.outfile,
-                         flagbackup=True, overwrite=True)
+        importasap(infile=self.infile, outputvis=self.outfile,
+                   flagbackup=True, overwrite=True)
         self.assertTrue(os.path.exists(self.outfile))
         self._check_flagversions(self.outfile)
 
@@ -110,8 +110,8 @@ class importasap_test(unittest.TestCase):
         aflocal.done()
 
         # then, create flagversions file
-        ret = importasap(infile=self.infile, outputvis=self.outfile,
-                         flagbackup=True, overwrite=True)
+        importasap(infile=self.infile, outputvis=self.outfile,
+                   flagbackup=True, overwrite=True)
         self.assertTrue(os.path.exists(self.outfile))
         self._check_flagversions(self.outfile)
 
@@ -129,15 +129,15 @@ class importasap_test(unittest.TestCase):
         flagversions = self._flagversions(self.infile)
 
         # create flagversions file
-        ret = importasap(infile=self.infile, outputvis=self.outfile,
-                         flagbackup=True, overwrite=True)
+        importasap(infile=self.infile, outputvis=self.outfile,
+                   flagbackup=True, overwrite=True)
         self.assertTrue(os.path.exists(self.outfile))
         self._check_flagversions(self.outfile)
 
         # run importasap
         # existing flagversions file must be deleted
-        ret = importasap(infile=self.infile, outputvis=self.outfile,
-                         flagbackup=False, overwrite=True)
+        importasap(infile=self.infile, outputvis=self.outfile,
+                   flagbackup=False, overwrite=True)
         self.assertTrue(os.path.exists(self.outfile))
         self.assertFalse(os.path.exists(flagversions))
 

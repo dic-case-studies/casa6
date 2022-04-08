@@ -176,7 +176,7 @@ class sdsmooth_test_base(unittest.TestCase):
         with table_manager(self.outfile) as tb:
             nrow = tb.nrows()
             data_out = tb.getvarcol(datacol_name)
-            flag_out = tb.getvarcol('FLAG')
+            # flag_out = tb.getvarcol('FLAG')
             if weight_mode:
                 weight_out = tb.getvarcol('WEIGHT_SPECTRUM')
 
@@ -469,9 +469,8 @@ class sdsmooth_test_boxcar(sdsmooth_test_base):
     def test000(self):
         # testing kwidth from 1 to 5.
         for kwidth in range(1, 6):
-            result = sdsmooth(infile=self.infile, outfile=self.outfile,
-                              datacolumn=self.datacolumn, overwrite=True,
-                              kernel='boxcar', kwidth=kwidth)
+            sdsmooth(infile=self.infile, outfile=self.outfile, datacolumn=self.datacolumn,
+                     overwrite=True, kernel='boxcar', kwidth=kwidth)
             with table_manager(self.outfile) as tb:
                 for irow in range(tb.nrows()):
                     spec = tb.getcell(self.datacolumn.upper(), irow)
@@ -483,9 +482,8 @@ class sdsmooth_test_boxcar(sdsmooth_test_base):
         # testing kwidth from 1 to 5.
         datacolumn = "FLOAT_DATA"
         for kwidth in range(1, 6):
-            result = sdsmooth(infile=self.infile, outfile=self.outfile,
-                              datacolumn=datacolumn, overwrite=True,
-                              kernel='boxcar', kwidth=kwidth)
+            sdsmooth(infile=self.infile, outfile=self.outfile, datacolumn=datacolumn,
+                     overwrite=True, kernel='boxcar', kwidth=kwidth)
             with table_manager(self.outfile) as tb:
                 for irow in range(tb.nrows()):
                     spec = tb.getcell(datacolumn.upper(), irow)

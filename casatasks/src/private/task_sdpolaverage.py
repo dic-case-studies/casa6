@@ -33,15 +33,9 @@ def sdpolaverage(
 
     # followings are parameters of mstransform but not used by sdpolaverage.
     # just putting default values
-    vis = infile             # needed for ParallelDataHelper
-    outputvis = outfile      # needed for ParallelDataHelper
     do_timeaverage = False
     timebin = "0s"
     timespan = ""
-
-    # debug parameter
-    _disableparallel = False
-    _monolithic_processing = False
 
     # Only parse timeaverage parameters when timebin > 0s
     if do_timeaverage:
