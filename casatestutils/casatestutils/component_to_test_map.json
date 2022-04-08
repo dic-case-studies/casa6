@@ -121,6 +121,16 @@
             "comment":"Only run in mpi mode"
         },
         {
+            "testScript":"test_regression_timeaverage_and_rflag",
+            "testType":"regression",
+            "maintainer":"Sandra Castro",
+            "maintainerEmail":"scastro@eso.org",
+            "testOptions":[],
+            "testGroup":["regression","Flagging"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_stk_alma_pipeline_imaging",
             "testType":"stakeholder",
             "maintainer":"Sandra Castro",
