@@ -497,7 +497,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
             stats = _ia.statistics(region=region, list=True, verbose=True)
             if ignoremask:
                 _ia.maskhandler('set', def_mask)
-        except:
+        except Exception:
             raise
         finally:
             _ia.close()

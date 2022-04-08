@@ -121,7 +121,7 @@ def sdgaincal(infile=None, calmode=None, radius=None, smooth=None,
                     # if radius is a string only consists of numeric value without unit,
                     # it will succeed.
                     rcenter = '%sarcsec' % (float(radius))
-                except:
+                except Exception:
                     # if the above fails, it may indicate that the string contains unit
                     rcenter = radius
             mycb.setsolve(type='SDGAIN_OTFD', table=outfile, radius=rcenter, smooth=smooth)

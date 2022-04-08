@@ -272,7 +272,7 @@ class sdimaging_unittest_base(unittest.TestCase):
             stats = _ia.statistics(region=region, list=True, verbose=True)
             if ignoremask:
                 _ia.maskhandler('set', def_mask)
-        except:
+        except Exception:
             raise
         finally:
             _ia.close()
@@ -572,7 +572,7 @@ class sdimaging_test0(sdimaging_unittest_base):
             success = sdimaging(infiles=self.rawfile, outfile=self.outfile, intent='',
                                 cell=self.cell, imsize=self.imsize,
                                 phasecenter=self.phasecenter, minweight=-1.)
-        except:
+        except Exception:
             success = False
         self.assertFalse(success)
 

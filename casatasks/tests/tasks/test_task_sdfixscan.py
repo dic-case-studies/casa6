@@ -337,7 +337,7 @@ class sdfixscan_test1(unittest.TestCase, sdfixscan_unittest_base):
             mask_in = my_ia.getchunk(getmask=True)
             mpix = numpy.where(mask_in == False)
             self.assertEqual(len(mpix[0]), 100, "Failed to set mask properly at pre-processing.")
-        except:
+        except Exception:
             raise
         finally:
             my_ia.close()
@@ -554,7 +554,7 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
                 my_ia.calcmask("mask(%s) && '%s'<%f" % (name, name, 10. * maxval),
                                name="sprious", asdefault=True)
                 mask_in.append(my_ia.getchunk(getmask=True))
-            except:
+            except Exception:
                 raise
             finally:
                 my_ia.done()

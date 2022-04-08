@@ -193,7 +193,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
                 my_ms.open(vis)
                 try:
                     spwinfo = my_ms.getspectralwindowinfo()
-                except:
+                except Exception:
                     raise
                 finally:
                     my_ms.close()
@@ -830,7 +830,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         for ipos in range(npart):
             try:
                 dummy = pos.index(ipos)
-            except:
+            except Exception:
                 voids[ipos] = True
         if not any(voids):
             raise Exception(

@@ -118,7 +118,7 @@ class BlparamFileParser(FileReader):
                     coeffs += coeff
                     idx += 1
                 self.__coeff.append(coeffs)
-            except:
+            except Exception:
                 break
         return
 
@@ -130,7 +130,7 @@ class BlparamFileParser(FileReader):
             try:
                 idx = self.index(self.__rtxt, idx)
                 self.__rms.append(self.__parseRms(idx))
-            except:
+            except Exception:
                 break
         return
 

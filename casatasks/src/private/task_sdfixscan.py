@@ -295,7 +295,7 @@ class sdfixscan_worker(sdutil.sdtask_interface):
 
             # the fit model image itself is free from invalid pixels
             modelimg.calcmask('T', asdefault=True)
-        except:
+        except Exception:
             raise
         finally:
             modelimg.close()

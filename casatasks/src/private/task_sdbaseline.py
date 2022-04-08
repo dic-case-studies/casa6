@@ -356,7 +356,7 @@ def check_fftthresh(fftthresh):
             else:
                 if (float(fftthresh) <= 0.0):
                     val_not_positive = True
-        except:
+        except Exception:
             raise ValueError('fftthresh has a wrong format.')
     else:
         has_invalid_type = True
