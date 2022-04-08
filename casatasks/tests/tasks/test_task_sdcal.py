@@ -1863,7 +1863,7 @@ class sdcal_test_apply(sdcal_test_base):
                             flag_org[antenna][spw] = tb.getcol('FLAG')
                             weight_org[antenna][spw] = tb.getcol('WEIGHT')
                             if 'WEIGHT_SPECTRUM' in tb.colnames() \
-                                and tb.iscelldefined('WEIGHT_SPECTRUM', 0):
+                                    and tb.iscelldefined('WEIGHT_SPECTRUM', 0):
                                 #print('WEIGHT_SPECTRUM is defined for '
                                 #      f'antenna {antenna} spw {spw}')
                                 weightsp_org[antenna][spw] = tb.getcol('WEIGHT_SPECTRUM')
