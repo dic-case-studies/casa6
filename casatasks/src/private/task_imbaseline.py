@@ -2111,7 +2111,7 @@ class _EmptyMSBaseInformation:
                          'option': 0,
                          'valueType': 'int'},
         'CORR_TYPE': {'comment':
-                          'The polarization type for each correlation product, as a Stokes enum.',
+                      'The polarization type for each correlation product, as a Stokes enum.',
                       'dataManagerGroup': 'StandardStMan',
                       'dataManagerType': 'StandardStMan',
                       'keywords': {},
