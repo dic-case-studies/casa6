@@ -261,7 +261,7 @@ class FileManager:
         # What shall we do ?
         if os.path.exists(dst):
             # We have a local copy and ...
-            if not file_basename in self._files:
+            if file_basename not in self._files:
                 # it's not our's
                 must_delete = True
                 must_copy = True
