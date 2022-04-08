@@ -146,7 +146,9 @@ class importnro_test(unittest.TestCase):
         self._check_weather(self.outfile)
 
     def _check_weights(self, vis):
-        def take_diff(actual, expected): return numpy.abs((actual - expected) / expected)
+        def take_diff(actual, expected):
+            return numpy.abs((actual - expected) / expected)
+
         tolerance = 1.0e-7
         try:
             mytb.open(os.path.join(vis, 'DATA_DESCRIPTION'))

@@ -3949,7 +3949,9 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         mreference = reference[reference_mask]
         self.assertTrue(mresult.shape == mreference.shape)
         #self.assertTrue(numypy.all(result == reference))
-        def diff(v, r): return abs((v - r) / r) if r != 0.0 else abs(v)
+        def diff(v, r):
+            return abs((v - r) / r) if r != 0.0 else abs(v)
+
         vdiff = numpy.vectorize(diff)
         err = vdiff(mresult, mreference)
         eps = 1.0e-6
@@ -4355,8 +4357,12 @@ def calc_statistics(imagename):
 
 
 def calc_mapproperty(statistics):
-    def ra_in_deg(x): return qa.quantity(x.split(',')[0])['value']
-    def dec_in_deg(x): return qa.quantity(x.split(',')[1])['value']
+    def ra_in_deg(x):
+        return qa.quantity(x.split(',')[0])['value']
+
+    def dec_in_deg(x):
+        return qa.quantity(x.split(',')[1])['value']
+
     blcf = statistics['blcf']
     trcf = statistics['trcf']
     blcra = ra_in_deg(blcf)

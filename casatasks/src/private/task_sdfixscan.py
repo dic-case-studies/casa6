@@ -267,18 +267,30 @@ class sdfixscan_worker(sdutil.sdtask_interface):
             ny = imshape[1]
             # an xy-plane can be fit simultaneously (doing per plane to save memory)
             if ndim == 3:
-                def get_blc(i, j): return [0, 0, i]
-                def get_trc(i, j): return [nx - 1, ny - 1, i]
+                def get_blc(i, j):
+                    return [0, 0, i]
+
+                def get_trc(i, j):
+                    return [nx - 1, ny - 1, i]
+
                 imshape2 = imshape[2]
                 imshape3 = 1
             elif ndim == 4:
-                def get_blc(i, j): return [0, 0, i, j]
-                def get_trc(i, j): return [nx - 1, ny - 1, i, j]
+                def get_blc(i, j):
+                    return [0, 0, i, j]
+
+                def get_trc(i, j):
+                    return [nx - 1, ny - 1, i, j]
+
                 imshape2 = imshape[2]
                 imshape3 = imshape[3]
             else:  # ndim == 2
-                def get_blc(i, j): return [0, 0]
-                def get_trc(i, j): return [nx - 1, ny - 1]
+                def get_blc(i, j):
+                    return [0, 0]
+
+                def get_trc(i, j):
+                    return [nx - 1, ny - 1]
+
                 imshape2 = 1
                 imshape3 = 1
 

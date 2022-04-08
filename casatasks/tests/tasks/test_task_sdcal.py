@@ -648,7 +648,10 @@ class sdcal_test_ps(sdcal_test_base):
                         if spw_selection is not None and spw not in spw_selection:
                             continue
                         #print(ant, spw, val)
-                        def construct(x): return '%s == %s' % (x)
+
+                        def construct(x):
+                            return '%s == %s' % (x)
+
                         taql = ' && '.join(
                             map(construct, [('ANTENNA1', ant), ('SPECTRAL_WINDOW_ID', spw)]))
                         with table_selector(self.outfile, taql) as tb:
@@ -1003,7 +1006,10 @@ class sdcal_test_otfraster(sdcal_test_base):
                         if spw_selection is not None and spw not in spw_selection:
                             continue
                         #print(ant, spw, val)
-                        def construct(x): return '%s == %s' % (x)
+
+                        def construct(x):
+                            return '%s == %s' % (x)
+
                         taql = ' && '.join(
                             map(construct, [('ANTENNA1', ant), ('SPECTRAL_WINDOW_ID', spw)]))
                         with table_selector(self.outfile, taql) as tb:

@@ -142,7 +142,9 @@ class importasap_test(unittest.TestCase):
         self.assertFalse(os.path.exists(flagversions))
 
     def _check_weights(self, vis):
-        def take_diff(actual, expected): return numpy.abs((actual - expected) / expected)
+        def take_diff(actual, expected):
+            return numpy.abs((actual - expected) / expected)
+
         tolerance = 1.0e-7
         try:
             _tb.open(os.path.join(vis, 'DATA_DESCRIPTION'))
