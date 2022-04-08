@@ -3949,6 +3949,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         mreference = reference[reference_mask]
         self.assertTrue(mresult.shape == mreference.shape)
         #self.assertTrue(numypy.all(result == reference))
+
         def diff(v, r):
             return abs((v - r) / r) if r != 0.0 else abs(v)
 
