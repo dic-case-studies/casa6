@@ -54,7 +54,6 @@ def mmshelper(vis, separationaxis='auto'):
 
 
 class sdcal_test(unittest.TestCase):
-
     """
     Unit test for task sdcal.
 
@@ -1688,7 +1687,6 @@ class NearestInterpolator(Interpolator):
 
 
 class sdcal_test_apply(sdcal_test_base):
-
     """
     Unit test for task sdcal (apply tables).
 
