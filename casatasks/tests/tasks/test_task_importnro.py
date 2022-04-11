@@ -85,7 +85,9 @@ def get_valid_pointing_info(vis):
 
 
 class importnro_test(unittest.TestCase):
-    """
+    """Test suite for importnro.
+
+    List of tests:
        test_overwrite -- File existence check
        test_invaliddata -- Invalid data check
        test_normal -- Normal data import

@@ -545,10 +545,10 @@ def do_mst(
         intent,
         caller: CodeType,
         ext_config):
-    """
-      call mstransform by the provided procedure.
-        Followings are parameters of mstransform, but not used by sdtimeaverage,
-        just only putting default values.
+    """Call mstransform by the provided procedure.
+
+    Followings are parameters of mstransform, but not used by sdtimeaverage,
+    just only putting default values.
     """
     vis = infile             # needed for ParallelDataHelper
     outputvis = outfile      # needed for ParallelDataHelper
@@ -879,12 +879,12 @@ def __check_tileshape(tileshape):
 
 def __process_input_multi_ms(pdh, separationaxis):
     '''
-        retval{'status': True,  'axis':''}         --> can run in parallel
-        retval{'status': False, 'axis':'value'}    --> treat MMS as monolithic MS,
-                                                       set new axis for output MMS
-        retval{'status': False, 'axis':''}         --> treat MMS as monolithic MS,
-                                                       create an output MS
-        '''
+    retval{'status': True,  'axis':''}         --> can run in parallel
+    retval{'status': False, 'axis':'value'}    --> treat MMS as monolithic MS,
+                                                   set new axis for output MMS
+    retval{'status': False, 'axis':''}         --> treat MMS as monolithic MS,
+                                                   create an output MS
+    '''
     retval = pdh.validateInputParams()
 
     # Cannot create an output MMS.

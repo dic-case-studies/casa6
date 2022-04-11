@@ -90,10 +90,10 @@ def sdtimeaverage(
 
 
 def use_alternative_column(infile, datacolumn):
-    """
-     Alternatively use datacolumn if the specified column does not exist.
-       In case 'float_data' does not exist, sdtimeaverage attempt to use 'data'
-       and vice versa. (For user's convenience)
+    """Alternatively use datacolumn if the specified column does not exist.
+
+    In case 'float_data' does not exist, sdtimeaverage attempt to use 'data'
+    and vice versa. (For user's convenience)
     """
     #  obtain the existence of data-column on specified MS.
     ex_float_data, ex_data = check_column(infile)
@@ -123,9 +123,9 @@ def check_column(msname):
 
 
 def set_timebin_all():
-    """
-      Synthesize timebin
-        assign very large value to cover 'all'.
+    """Synthesize timebin
+
+    assign very large value to cover 'all'.
     """
     timebin = numpy.finfo(float).max
     return str(timebin)

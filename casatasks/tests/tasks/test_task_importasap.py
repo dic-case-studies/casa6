@@ -35,7 +35,10 @@ datapath = ctsys.resolve('unittest/importasap/')
 
 
 class importasap_test(unittest.TestCase):
-    """
+    """Test suite for importasap.
+
+    List of tests:
+
        test_overwrite -- File existence check
        test_invaliddata -- Invalid data check
        test_normal -- Normal data import

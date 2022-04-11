@@ -212,9 +212,9 @@ class test_sdtimeaverage(unittest.TestCase):
 #################
 
     def _checkZero(self, data):
-        '''
-          check all the results must be zero.
-            See _generate_data() to see Test Data.
+        '''Check all the results must be zero.
+
+        See _generate_data() to see Test Data.
         '''
         print("-- checking Zero --")
 
@@ -222,9 +222,9 @@ class test_sdtimeaverage(unittest.TestCase):
         self.assertTrue(check, msg='## Zero check Failed ##\n{}'.format(data))
 
     def _checkNonZero(self, data):
-        '''
-          check sum of each averaged result
-            check non Zero.
+        '''Check sum of each averaged result.
+
+        check non Zero.
         '''
         print("-- checking Non Zero --")
 
@@ -236,9 +236,9 @@ class test_sdtimeaverage(unittest.TestCase):
                 data))
 
     def _checkZeroSum(self, data1, data2):
-        '''
-          check sum of each averaged result
-            check Zero.
+        '''Check sum of each averaged result.
+
+        check Zero.
         '''
         print("-- checking ZeroSum of data1 and data2.")
 
@@ -255,9 +255,9 @@ class test_sdtimeaverage(unittest.TestCase):
 ######################
 
     def _checkTime(self, msName, row, refTime):
-        '''
-          check time of specified row,
-              compare value with the reference.
+        '''Check time of specified row.
+
+        compare value with the reference.
         '''
         print("-- checking Time --")
 
@@ -278,9 +278,9 @@ class test_sdtimeaverage(unittest.TestCase):
 ######################
 
     def _checkOutputRec(self, msName, refNRow):
-        '''
-          check calculated result record count,
-            compare value with the expected count.
+        '''Check calculated result record count.
+
+        compare value with the expected count.
         '''
         print("-- checking Output Record Count --")
 
@@ -301,10 +301,10 @@ class test_sdtimeaverage(unittest.TestCase):
 ######################
 
     def _check_scan(self, out_msname, refValue):
-        '''
-          check 'scan'
-            number of output must 1,
-            compare value with expected value.
+        '''Check 'scan'.
+
+        number of output must 1,
+        compare value with expected value.
         '''
         print("-- checking scan selection --")
         # get table
@@ -323,10 +323,10 @@ class test_sdtimeaverage(unittest.TestCase):
 
     # Check Wait and Sigma
     def _checkWeightSigma(self, msName, row, weight_ref):
-        '''
-          check Sigma and Weight
-            compare 'weight' with expected value.
-            Sigma is mathematically inspected.
+        '''Check Sigma and Weight.
+
+        compare 'weight' with expected value.
+        Sigma is mathematically inspected.
         '''
         print("-- checking Weight and Sigma --")
 
