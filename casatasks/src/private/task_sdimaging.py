@@ -783,7 +783,14 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
             self.close_table()
         else:
             # may be phasecenter is explicitly specified
-            pattern = '^([\-\+]?[0-9.]+([eE]?-?[0-9])?)|([\-\+]?[0-9][:h][0-9][:m][0-9.]s?)|([\-\+]?[0-9][.d][0-9][.d][0-9.]s?)$'
+            # numeric value: 3.14, -.3e1, etc.
+            numeric_pattern = r'[-+]?([0-9]+(.[0-9]*)?|\.[0-9]+)([eE]-?[0-9])?'
+            # HMS string: 9:15:29, -9h15m29
+            hms_pattern = r'[-+]?[0-9]+[:h][0-9]+[:m][0-9.]+s?'
+            # DMS string: 9.15.29, -9d15m29s
+            dms_pattern = r'[-+]?[0-9]+[.d][0-9]+[.m][0-9.]+s?'
+            # composite pattern
+            pattern = fr'^({numeric_pattern}|{hms_pattern}|{dms_pattern})$'
             items = self.phasecenter.split()
             base_mref = 'J2000'
             for i in items:
