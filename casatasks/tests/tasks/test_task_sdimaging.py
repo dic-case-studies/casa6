@@ -290,7 +290,7 @@ class sdimaging_unittest_base(unittest.TestCase):
                                  msg=message)
 
     def _checkdirax(self, imagename, center, cell, imsize):
-        """ Test image center, cell size and imsize"""
+        """Test image center, cell size and imsize."""
         cell = self._format_dir_list(cell)
         imsize = self._format_dir_list(imsize)
         _ia.open(imagename)
@@ -361,7 +361,7 @@ class sdimaging_unittest_base(unittest.TestCase):
                                msg=f"minor axis = {min_asec} arcsec (expected: {min_asec_ref})")
 
     def _check_restfreq(self, imagename, restfreq):
-        """ Test image rest frequency"""
+        """Test image rest frequency."""
         self.assertTrue(qa.compare(restfreq, 'Hz'))
         myunit = qa.getunit(restfreq)
         refval = qa.getvalue(restfreq)[0]
@@ -2094,7 +2094,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
                          ignoremask=ignoremask)
 
     def __get_flux_value(self, infile):
-        """ returns proper flux list """
+        """returns proper flux list."""
         if infile == self.miscsel_ms:
             return self.unif_flux
         elif infile == self.spwsel_ms:
@@ -2220,7 +2220,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
         self.assertTrue(self.cache_validator.validate())
 
     def testFlag01(self):
-        """testFlag01: """
+        """testFlag01:"""
         res = sdimaging(infiles=self.rawfile, outfile=self.outfile, intent="",
                         gridfunction=self.gridfunction, cell=self.cell,
                         imsize=self.imsize, phasecenter=self.phasecenter,
@@ -2462,7 +2462,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_xxyy(self):
-        """test stokes='XXYY': """
+        """test stokes='XXYY':"""
         self.task_param['stokes'] = 'XXYY'
         # Tests
         refstats = merge_dict(self.stat_common, construct_refstat_uniform(

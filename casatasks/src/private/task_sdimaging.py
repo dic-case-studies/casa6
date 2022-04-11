@@ -204,7 +204,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
             raise ValueError("Invalid file index, %d" % file_idx)
 
     def format_ac_baseline(self, in_antenna):
-        """ format auto-correlation baseline string from antenna idx list """
+        """format auto-correlation baseline string from antenna idx list."""
         # exact match string
         if is_string_type(in_antenna):
             # return sdutil.convert_antenna_spec_autocorr(in_antenna)

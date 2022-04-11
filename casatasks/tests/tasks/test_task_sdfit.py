@@ -964,7 +964,7 @@ class sdfit_selection(sdfit_unittest_base, unittest.TestCase):
         return retval
 
     def _get_gauss_param_from_return(self, params, keys):
-        """returns a dictionary that stores a list of cent, fwhm, and peak """
+        """returns a dictionary that stores a list of cent, fwhm, and peak."""
         retval = {}
         for key in keys:
             self.assertTrue(key in params.keys(),
@@ -1162,7 +1162,7 @@ class sdfit_auto(sdfit_unittest_base, unittest.TestCase):
         self.run_test(True, None, edge=[20, 27])
 
     def testAutoFlag(self):
-        """Test fitmode='auto' of flagged data """
+        """Test fitmode='auto' of flagged data."""
         # flagg edge channels
         flagdata(vis=self.infile, spw='6:0~19;101~127')
         self.run_test(True, None, spw='', edge=[0])
@@ -1467,24 +1467,24 @@ class sdfit_polaverage(sdfit_unittest_base, unittest.TestCase):
             self.verify(mode, subresult, where=[2 * i, 2 * i + 1])
 
     def test_polaverage_default(self):
-        """ test_polaverage_default: test default case (no averaging) """
+        """test_polaverage_default: test default case (no averaging)."""
         self.run_test(mode='')
 
     def test_polaverage_stokes(self):
-        """ test_polaverage_stokes: test stokes average mode """
+        """test_polaverage_stokes: test stokes average mode."""
         self.run_test(mode='stokes')
 
     def test_polaverage_geometric(self):
-        """ test_polaverage_geometric: test geometric average mode """
+        """test_polaverage_geometric: test geometric average mode."""
         self.run_test(mode='geometric')
 
     def test_polaverage_stokes_chunk(self):
-        """ test_polaverage_stokes_chunk: test stokes average mode against different access pattern """
+        """test_polaverage_stokes_chunk: test stokes average mode against different access pattern."""
         self.edit_meta()
         self.run_test2(mode='stokes')
 
     def test_polaverage_geometric_chunk(self):
-        """ test_polaverage_geometric_chunk: test geometric average mode against different access pattern """
+        """test_polaverage_geometric_chunk: test geometric average mode against different access pattern."""
         self.edit_meta()
         self.run_test2(mode='geometric')
 

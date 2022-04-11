@@ -459,7 +459,8 @@ def get_default_antenna(msname):
 
 
 def get_default_altitude(msname, antid):
-    """ Get default altitude of the antenna
+    """Get default altitude of the antenna.
+
     decide default value of 'Altitude' for Atm Correction.
     This requires to calculate Elevation from Antenna Position Information.
     """
