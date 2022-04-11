@@ -61,9 +61,9 @@ def is_ms(filename):
         and os.path.exists(filename + '/table.info')
             and os.path.exists(filename + '/table.dat')):
         f = open(filename + '/table.info')
-        l = bytes2str(f.readline())
+        lines = bytes2str(f.readline())
         f.close()
-        if (l.find('Measurement Set') != -1):
+        if (lines.find('Measurement Set') != -1):
             return True
         else:
             return False
@@ -488,10 +488,10 @@ def get_spwids(selection, infile=None):
         with table_manager(os.path.join(infile, 'DATA_DESCRIPTION')) as tb:
             spw_list = tb.getcol('SPECTRAL_WINDOW_ID')
 
-    l = []
+    items = []
     for item in spw_list:
-        l.append(str(item))
-    return ','.join(l)
+        items.append(str(item))
+    return ','.join(items)
 
 
 def __is_sequence_or_number(param, ptype=int):

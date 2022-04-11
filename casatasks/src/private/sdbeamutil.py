@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 
 import numpy as np
+from numpy import cos, sin, sqrt
 import scipy.interpolate
+import scipy.optimize as optimize
 import scipy.signal
 import scipy.special as spspec
-from numpy import cos, sin, sqrt
-from scipy import optimize
 
 from casatasks import casalog
 from casatools import quanta
@@ -172,7 +172,7 @@ class TheoreticalBeam:
         gridded /= max(gridded)
         result = np.convolve(gridded, sampling, mode='same')
         result /= max(result)
-        #fwhm_arcsec = findFWHM(axis,result)
+        # fwhm_arcsec = findFWHM(axis,result)
         fwhm_arcsec, dummy = self.gaussfit(axis, result, minlevel=0.0, truncate=False)
         # DEBUG MESSAGE
         casalog.post("- initial FWHM of beam = %f arcsec" %
@@ -189,7 +189,6 @@ class TheoreticalBeam:
                 (len(self.cell_arcsec) == 1 or self.kernel_type != "BOX"):
             fwhm_geo_arcsec = fwhm_arcsec
         else:
-            pa = None
             if len(self.sampling_arcsec) > 1:
                 sampling = self.get_box_kernel(axis, self.sampling_arcsec[1])
             elif self.kernel_type == "BOX" and len(self.cell_arcsec) > 1:
@@ -198,8 +197,8 @@ class TheoreticalBeam:
                 gridded /= max(gridded)
             result = np.convolve(gridded, sampling, mode='same')
             result /= max(result)
-            #fwhm1 = findFWHM(axis,result)
-            fwhm1, dummy = self.gaussfit(axis, result, minlevel=0.0, truncate=False)
+            # fwhm1 = findFWHM(axis,result)
+            fwhm1, _ = self.gaussfit(axis, result, minlevel=0.0, truncate=False)
             fwhm_geo_arcsec = np.sqrt(fwhm_arcsec * fwhm1)
             # DEBUG MESSAGE
             casalog.post("The second axis")
@@ -352,11 +351,13 @@ class TheoreticalBeam:
         casalog.post("sampling interval: %s arcsec" % str(self.sampling_arcsec))
         casalog.post("position angle: %s" % (self.pa))
 
-    ##############################
+    #
     # Construct Kernel arrays
-    ##############################
-    #### BOX ###
+    #
 
+    #
+    # BOX
+    #
     def get_box_kernel(self, axis, width):
         """
         Returns a box kernel array with specified width.
@@ -371,7 +372,9 @@ class TheoreticalBeam:
         data[indices] = 1.0
         return data
 
-    ### SF ###
+    #
+    # SF
+    #
     def get_sf_kernel(self, axis, convsupport, cell_size):
         """
         Returns spheroidal kernel array
@@ -414,7 +417,9 @@ class TheoreticalBeam:
         else:
             return result
 
-    ### GAUSS ###
+    #
+    # GAUSS
+    #
     def get_gauss_kernel(self, axis, truncate, gwidth, cell_arcsec):
         """
         Returns a gaussian kernel array
@@ -458,7 +463,9 @@ class TheoreticalBeam:
         result[idx] = 0
         return result
 
-    ### GJINC ###
+    #
+    # GJINC
+    #
     def get_gjinc_kernel(self, axis, truncate, gwidth, jwidth, cell_arcsec):
         """
         Returns a GJinc kernel array
@@ -547,7 +554,9 @@ class TheoreticalBeam:
     def gjincGauss(self, x, gwidth):
         return (np.exp(-np.log(2) * (x / float(gwidth))**2))
 
-    ### Airly disk ###
+    #
+    # Airly disk
+    #
     def get_pb_kernel(self, axis, diam, ref_freq, epsilon=0.0):
         """
         Return Airy Disk array defined by the axis, diameter, reference frequency
@@ -717,9 +726,11 @@ def findFWHM(x, y, level=0.5, s=0):
         return(2 * abs(result[0]))
     else:
         # modified (KS 2015/02/19)
-        #casalog.post(
-        #     "More than two crossings (%d), fitting slope to points near that power level." % (len(result)))
-        #result = 2*findZeroCrossingBySlope(x, y-halfmax)
+        # casalog.post(
+        #     f"More than two crossings ({len(result)}), "
+        #     "fitting slope to points near that power level."
+        # )
+        # result = 2*findZeroCrossingBySlope(x, y-halfmax)
         # return(result)
         errmsg = "Unsupported FWHM search in CASA. " + \
                  f"More than two corssings ({len(result)}) at level {halfmax} ({level} % of peak)."
@@ -742,14 +753,15 @@ def primaryBeamArcsec(frequency, diameter, obscuration, taper,
     -- Todd Hunter
     Simplified version of the one in AnalysisUtils (revision 1.2204, 2015/02/18)
     """
-    if (fwhmfactor != None):
+    if (fwhmfactor is not None):
         taper = effectiveTaper(fwhmfactor, diameter, obscuration, use2007formula)
-        if (taper == None):
+        if (taper is None):
             return
     if (taper < 0):
         taper = abs(taper)
     if (obscuration > 0.4 * diameter):
-        casalog.post("This central obscuration is too large for the method of calculation employed here.")
+        casalog.post(
+            "This central obscuration is too large for the method of calculation employed here.")
         return
     if (type(frequency) == str):
         my_qa = quanta()
