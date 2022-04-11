@@ -579,12 +579,19 @@ class _ImsmoothParams(AbstractValidatable):
                  scale: int = -1.0) -> None:
         self.infile = infile
         self.outfile = outfile
-        self.kernel = dirkernel if dirkernel is not None else 'none'       # none(default)/gaussian/boxcar/image
-        self.major = major if major is not None else ''                    # dirkernel = gaussian/boxcar
-        self.minor = minor if minor is not None else ''                    # dirkernel = gaussian/boxcar
-        self.pa = pa if pa is not None else ''                             # dirkernel = gaussian/boxcar
-        self.kimage = kimage if kimage is not None else ''                 # dirkernel = image
-        self.scale = scale if scale is not None else -1.0                  # dirkernel = image
+
+        # dirkernel options: none(default)/gaussian/boxcar/image
+        self.kernel = dirkernel if dirkernel is not None else 'none'
+
+        # subparameter for dirkernel = gaussian/boxcar
+        self.major = major if major is not None else ''
+        self.minor = minor if minor is not None else ''
+        self.pa = pa if pa is not None else ''
+
+        # subparameter for dirkernel = image
+        self.kimage = kimage if kimage is not None else ''
+        self.scale = scale if scale is not None else -1.0
+
         self.validate()
 
     def validate(self) -> None:

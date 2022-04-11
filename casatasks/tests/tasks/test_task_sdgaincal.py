@@ -343,7 +343,7 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
     ==========================================================================
     test_preapply01  | '65arcsec'  | only sky caltable is applied (resulting const factor)
     test_preapply02  | '65arcsec'  | only tsys caltable is applied (resulting variable factor)
-    test_preapply03  | '65arcsec'  | both tsys and sky caltables are applied (resulting variable factor)
+    test_preapply03  | '65arcsec'  | tsys and sky caltables are applied (resulting variable factor)
     test_preapply04  | '65arcsec'  | transfer Tsys from [2,3] to [0,1]
     """
     infile = 'doublecircletest_const.ms'
