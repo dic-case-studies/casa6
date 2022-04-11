@@ -497,9 +497,7 @@ class ATMScalarParameterConfigurator(ATMParameterConfigurator):
             user_param=user_input, user_default=api_default,
             task_default=impl_default, default_unit=default_unit)
         do_config = is_mandatory or (is_effective and is_customized)
-        # TODO: remove arguments for super, i.e. just super().__init__(...)
-        # once we completely get rid of CASA5
-        super(self.__class__, self).__init__(key=key, value=value, do_config=do_config)
+        super().__init__(key=key, value=value, do_config=do_config)
 
 
 class ATMListParameterConfigurator(ATMParameterConfigurator):
@@ -509,9 +507,7 @@ class ATMListParameterConfigurator(ATMParameterConfigurator):
             user_param=user_input, user_default=api_default,
             task_default=impl_default, default_unit=default_unit)
         do_config = is_mandatory or (is_effective and is_customized)
-        # TODO: remove arguments for super, i.e. just super().__init__(...)
-        # once we completely get rid of CASA5
-        super(self.__class__, self).__init__(key=key, value=value, do_config=do_config)
+        super().__init__(key=key, value=value, do_config=do_config)
 
 
 def get_configuration_for_atmcor(infile, spw, outputspw, gainfactor, user_inputs):
