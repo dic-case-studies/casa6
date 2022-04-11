@@ -28,11 +28,11 @@ import unittest
 
 import numpy as np
 
-import casatasks.private.task_sdatmcor as sdatmcor_impl
 from casatasks import applycal, gencal, sdatmcor
 from casatasks.private.sdutil import (convert_antenna_spec_autocorr,
                                       get_antenna_selection_include_autocorr,
                                       table_manager)
+import casatasks.private.task_sdatmcor as sdatmcor_impl
 from casatools import calibrater, ctsys
 from casatools import ms as mstool
 from casatools import quanta

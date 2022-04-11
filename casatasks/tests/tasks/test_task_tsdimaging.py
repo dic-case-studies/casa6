@@ -23,13 +23,13 @@
 ##########################################################################
 
 import copy
+from enum import Enum
 import glob
 import math
 import os
 import shutil
 import stat
 import unittest
-from enum import Enum
 
 import numpy
 

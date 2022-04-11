@@ -1,12 +1,12 @@
 # image-based line finding and baseline subtraction.
 
+from abc import abstractmethod
 import contextlib
 import os
 import shutil
 import sys
-import uuid
-from abc import abstractmethod
 from typing import Any, Dict, List, Tuple, Union
+import uuid
 
 import numpy as np
 from numpy import array, uint64

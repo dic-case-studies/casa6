@@ -19,6 +19,7 @@ import unittest
 import uuid
 
 import numpy as np
+
 from casatasks import casalog
 from casatasks.private.sdutil import tool_manager
 from casatasks.private.task_imbaseline import (_CasaImageStack,

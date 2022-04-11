@@ -1,7 +1,7 @@
+from collections import Counter
 import datetime
 import os
 import shutil
-from collections import Counter
 
 from casatasks import casalog
 from casatools import ms as mstool

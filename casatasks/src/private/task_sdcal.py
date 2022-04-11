@@ -22,8 +22,7 @@ myms = ms()
 def sdcal(infile=None, calmode='tsys', fraction='10%', noff=-1,
           width=0.5, elongated=False, applytable='', interp='', spwmap={},
           outfile='', overwrite=False, field='', spw='', scan='', intent=''):
-    """ Externally specify calibration solutions of various types
-    """
+    """Externally specify calibration solutions of various types"""
     # Composite mode: compute calibration table and calibrate
     if ',' in calmode:
         handle_composite_mode(locals())

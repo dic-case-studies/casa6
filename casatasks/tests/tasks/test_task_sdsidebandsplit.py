@@ -21,11 +21,11 @@
 #
 #
 ##########################################################################
+from collections import namedtuple
 import copy
 import os
 import shutil
 import unittest
-from collections import namedtuple
 
 import numpy
 from scipy.optimize import curve_fit
