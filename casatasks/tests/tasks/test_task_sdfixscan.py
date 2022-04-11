@@ -75,9 +75,7 @@ def drop_deg_axes(imagename, outimagename):
 
 
 class sdfixscan_unittest_base:
-    """
-    Base class for sdfixscan unit test
-    """
+    """Base class for sdfixscan unit test"""
     taskname = 'sdfixscan'
     datapath = ctsys.resolve('unittest/sdfixscan/')
 
@@ -143,9 +141,7 @@ class sdfixscan_unittest_base:
 
 
 class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
-    """
-    Test on bad parameter setting
-    """
+    """Test on bad parameter setting"""
     # Input and output names
     rawfiles = ['scan_x.im', 'scan_y.im']
     prefix = sdfixscan_unittest_base.taskname + 'Test0'

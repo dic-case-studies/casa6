@@ -486,9 +486,7 @@ class TheoreticalBeam:
         return mygjinc
 
     def gjinc(self, x, gwidth, jwidth, useCasaJinc=False, normalize=False):
-        """
-        Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
-        """
+        """Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)"""
         if (useCasaJinc):
             result = self.grdjinc1(x, jwidth, normalize) * self.gjincGauss(x, gwidth)
         else:
@@ -496,9 +494,7 @@ class TheoreticalBeam:
         return result
 
     def grdjinc1(self, val, c, normalize=True):
-        """
-        Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
-        """
+        """Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)"""
         # Casa's function
         # // Calculate J_1(x) using approximate formula
         xs = np.pi * val / c

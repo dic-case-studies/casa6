@@ -615,9 +615,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
 
 
 class sdimaging_test0(sdimaging_unittest_base):
-    """
-    Test on bad parameter setting
-    """
+    """Test on bad parameter setting"""
     # Input and output names
     prefix = sdimaging_unittest_base.taskname + 'Test0'
     badid = '99'
@@ -2773,9 +2771,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
 
 class sdimaging_test_polflag(sdimaging_unittest_base):
-    """
-    Test imaging of an MS one of polarization (XX) is completely flagged.
-    """
+    """Test imaging of an MS one of polarization (XX) is completely flagged."""
     prefix = sdimaging_unittest_base.taskname + 'TestPol'
     outfile = prefix + sdimaging_unittest_base.postfix
     # input MS names
@@ -2908,10 +2904,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
 
 
 class sdimaging_test_mslist(sdimaging_unittest_base):
-    """
-    Test more than one MSes as inputs
-
-    """
+    """Test more than one MSes as inputs"""
     prefix = sdimaging_unittest_base.taskname + 'TestListMS'
     outfile = prefix + sdimaging_unittest_base.postfix
     clearup = True
@@ -4198,9 +4191,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
 
 
 class sdimaging_test_output(sdimaging_unittest_base):
-    """
-    Tests to check if only appropriate images are output
-    """
+    """Tests to check if only appropriate images are output"""
     datapath = ctsys_resolve('unittest/tsdimaging/')
     params = dict(infiles=['selection_misc.ms'],
                   outfile="outmisc",

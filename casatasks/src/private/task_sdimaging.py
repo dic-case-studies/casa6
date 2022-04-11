@@ -25,9 +25,7 @@ def sdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent,
 
 
 def is_string_type(val):
-    """
-    Returns True if the argument is string type.
-    """
+    """Returns True if the argument is string type."""
     return type(val) in [str, numpy.string_]
 
 
@@ -113,9 +111,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
             self.convsupport = -1
 
     def __format_spw_string(self, spw):
-        """
-        Returns formatted spw selection string which is accepted by imager.
-        """
+        """Returns formatted spw selection string which is accepted by imager."""
         if type(spw) != str:
             raise ValueError("The parameter should be string.")
         if spw.strip() == '*':

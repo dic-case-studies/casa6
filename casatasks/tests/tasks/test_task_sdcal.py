@@ -677,81 +677,61 @@ class sdcal_test_ps(sdcal_test_base):
 
     @invalid_argument_case
     def test_ps00(self):
-        """
-        test_ps00 --- default parameters (raises an error)
-        """
+        """test_ps00 --- default parameters (raises an error)"""
         # CASA6 throws an exception
         self.assertRaises(Exception, sdcal)
 
     @invalid_argument_case
     def test_ps01(self):
-        """
-        test_ps01 --- invalid calibration type
-        """
+        """test_ps01 --- invalid calibration type"""
         # CASA6 throws an exception
         self.assertRaises(Exception, sdcal, infile=self.infile,
                           calmode='invalid_type', outfile=self.outfile)
 
     @exception_case(RuntimeError, 'Spw Expression: No match found for 99,')
     def test_ps02(self):
-        """
-        test_ps02 --- invalid selection (invalid spw selection)
-        """
+        """test_ps02 --- invalid selection (invalid spw selection)"""
         self.result = sdcal(infile=self.infile, calmode='ps', spw='99', outfile=self.outfile)
 
     @exception_case(RuntimeError, '^overwrite is False and output file exists:')
     def test_ps03(self):
-        """
-        test_ps03 --- outfile exists (overwrite=False)
-        """
+        """test_ps03 --- outfile exists (overwrite=False)"""
         # copy input to output
         shutil.copytree(self.infile, self.outfile)
         self.result = sdcal(infile=self.infile, calmode='ps', outfile=self.outfile, overwrite=False)
 
     @exception_case(RuntimeError, r'Output file name must be specified\.')
     def test_ps04(self):
-        """
-        test_ps04 --- empty outfile
-        """
+        """test_ps04 --- empty outfile"""
         self.result = sdcal(infile=self.infile, calmode='ps', outfile='', overwrite=False)
 
     @normal_case()
     def test_ps05(self):
-        """
-        test_ps05 --- position switch calibration ('ps')
-        """
+        """test_ps05 --- position switch calibration ('ps')"""
         self.result = sdcal(infile=self.infile, calmode='ps', outfile=self.outfile)
 
     @normal_case()
     def test_ps05M(self):
-        """
-        test_ps05M --- position switch calibration ('ps') for MMS
-        """
+        """test_ps05M --- position switch calibration ('ps') for MMS"""
         with mmshelper(vis=self.infile) as mvis:
             self.assertTrue(mvis is not None)
             self.result = sdcal(infile=mvis, calmode='ps', outfile=self.outfile)
 
     @normal_case(spw='9')
     def test_ps06(self):
-        """
-        test_ps06 --- position switch calibration ('ps') with data selection
-        """
+        """test_ps06 --- position switch calibration ('ps') with data selection"""
         self.result = sdcal(infile=self.infile, calmode='ps', spw='9', outfile=self.outfile)
 
     @normal_case()
     def test_ps07(self):
-        """
-        test_ps07 --- outfile exists (overwrite=True)
-        """
+        """test_ps07 --- outfile exists (overwrite=True)"""
         # copy input to output
         shutil.copytree(self.infile, self.outfile)
         self.result = sdcal(infile=self.infile, calmode='ps', outfile=self.outfile, overwrite=True)
 
     @exception_case(RuntimeError, "Error in Calibrater::solve")
     def test_ps08(self):
-        """
-        test_ps08 --- inappropriate calmode ('otfraster')
-        """
+        """test_ps08 --- inappropriate calmode ('otfraster')"""
         # the data doesn't an OTF raster scan so that unexpected behavior may happen
         # if calmode is 'otfraster'
         # in this case, gap detection detects the row having only one integration
@@ -807,9 +787,7 @@ class DataManager:
 
 
 class sdcal_test_bug_fix_cas_12712(unittest.TestCase):
-    """
-    Test fix for sdcal bug reported in CAS-12712
-    """
+    """Test fix for sdcal bug reported in CAS-12712"""
     io_files = None
 
     @DataManager({'input': {'ms_name': 'uid___A002_X85c183_X36f.ms.sel'},
@@ -1069,65 +1047,49 @@ class sdcal_test_otfraster(sdcal_test_base):
 
     @exception_case(ValueError, r'^Too many edge points\. fraction must be < 0.5\.$')
     def test_otfraster01(self):
-        """
-        test_otfraster01 --- too many edge points (fraction 0.5)
-        """
+        """test_otfraster01 --- too many edge points (fraction 0.5)"""
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='otfraster', fraction=0.5)
 
     @exception_case(ValueError, r'^Too many edge points\. fraction must be < 0.5\.$')
     def test_otfraster02(self):
-        """
-        test_otfraster02 --- too many edge points (fraction 50%)
-        """
+        """test_otfraster02 --- too many edge points (fraction 50%)"""
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='otfraster', fraction='50%')
 
     @exception_case(RuntimeError, 'Error in Calibrater::solve')
     def test_otfraster03(self):
-        """
-        test_otfraster03 --- too many edge points (noff 100000)
-        """
+        """test_otfraster03 --- too many edge points (noff 100000)"""
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='otfraster', noff=10000)
 
     # @exception_case(RuntimeError, 'Error in Calibrater::solve')
     # def test_otfraster04(self):
-    #    """
-    #    test_otfraster04 --- negative edge points
-    #    """
+    #    """test_otfraster04 --- negative edge points"""
     #    self.result = sdcal(infile=self.infile, outfile=self.outfile,
     #                         calmode='otfraster', noff=-3)
 
     # @exception_case(RuntimeError, 'Error in Calibrater::solve')
     # def test_otfraster05(self):
-    #    """
-    #    test_otfraster05 --- zero edge points
-    #    """
+    #    """test_otfraster05 --- zero edge points"""
     #    self.result = sdcal(infile=self.infile, outfile=self.outfile,
     #                         calmode='otfraster', noff=0)
 
     @exception_case(RuntimeError, 'Error in Calibrater::solve')
     def test_otfraster06(self):
-        """
-        test_otfraster06 --- inappropriate calibration mode ('ps')
-        """
+        """test_otfraster06 --- inappropriate calibration mode ('ps')"""
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='ps')
 
     @normal_case(numedge=1)
     def test_otfraster07(self):
-        """
-        test_otfraster07 --- OTF raster calibration ('otfraster') with default setting
-        """
+        """test_otfraster07 --- OTF raster calibration ('otfraster') with default setting"""
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='otfraster')
 
     @normal_case(numedge=1)
     def test_otfraster07M(self):
-        """
-        test_otfraster07M --- OTF raster calibration ('otfraster') with default setting (MMS)
-        """
+        """test_otfraster07M --- OTF raster calibration ('otfraster') with default setting (MMS)"""
         with mmshelper(vis=self.infile) as mvis:
             self.assertTrue(mvis is not None)
             self.result = sdcal(infile=mvis, outfile=self.outfile,
@@ -1135,49 +1097,37 @@ class sdcal_test_otfraster(sdcal_test_base):
 
     @normal_case(numedge=2)
     def test_otfraster08(self):
-        """
-        test_otfraster08 --- OTF raster calibration ('otfraster') with string fraction (numeric value)
-        """
+        """test_otfraster08 --- OTF raster calibration ('otfraster') with string fraction (numeric value)"""
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='otfraster', fraction='0.3')
 
     @normal_case(numedge=2)
     def test_otfraster09(self):
-        """
-        test_otfraster09 --- OTF raster calibration ('otfraster') with string fraction (percentage)
-        """
+        """test_otfraster09 --- OTF raster calibration ('otfraster') with string fraction (percentage)"""
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='otfraster', fraction='30%')
 
     @normal_case(numedge=2)
     def test_otfraster10(self):
-        """
-        test_otfraster10 --- OTF raster calibration ('otfraster') with numeric fraction
-        """
+        """test_otfraster10 --- OTF raster calibration ('otfraster') with numeric fraction"""
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='otfraster', fraction=0.3)
 
     @normal_case(numedge=2)
     def test_otfraster11(self):
-        """
-        test_otfraster11 --- OTF raster calibration ('otfraster') with auto detection
-        """
+        """test_otfraster11 --- OTF raster calibration ('otfraster') with auto detection"""
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='otfraster', fraction=0, noff=0)
 
     @normal_case(numedge=3)
     def test_otfraster12(self):
-        """
-        test_otfraster12 --- OTF raster calibration ('otfraster') with custom noff
-        """
+        """test_otfraster12 --- OTF raster calibration ('otfraster') with custom noff"""
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='otfraster', noff=3)
 
     @normal_case(numedge=3)
     def test_otfraster13(self):
-        """
-        test_otfraster13 --- check if noff takes priority over fraction
-        """
+        """test_otfraster13 --- check if noff takes priority over fraction"""
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='otfraster', fraction='90%', noff=3)
 
@@ -1334,9 +1284,7 @@ class sdcal_test_otf(unittest.TestCase):
             return os.path.join(self.ref_datapath, ref_ms_name)
 
     def test_otf01(self):
-        """
-        test_otf01 --- Compute calibration table. calmode='otf' ms=squares.dec60_cs.ms
-        """
+        """test_otf01 --- Compute calibration table. calmode='otf' ms=squares.dec60_cs.ms"""
         self.sdcal_params = {
             'infile': 'squares.dec60_cs.ms',
             'calmode': 'otf',
@@ -1351,9 +1299,7 @@ class sdcal_test_otf(unittest.TestCase):
         self.assertEqual(sdcal_result, expected_result)  # AlmostEqual semantics
 
     def test_otf02(self):
-        """
-        test_otf02 --- Compute calibration table. calmode='otf' ms=squares.dec60_cs.ms edges_fraction=20%
-        """
+        """test_otf02 --- Compute calibration table. calmode='otf' ms=squares.dec60_cs.ms edges_fraction=20%"""
         self.sdcal_params = {
             'infile': 'squares.dec60_cs.ms',
             'calmode': 'otf',
@@ -1369,9 +1315,7 @@ class sdcal_test_otf(unittest.TestCase):
         self.assertEqual(sdcal_result, expected_result)  # AlmostEqual semantics
 
     def test_otf03(self):
-        """
-        test_otf03 --- Compute calibration table. calmode='otf' ms=lissajous.ms
-        """
+        """test_otf03 --- Compute calibration table. calmode='otf' ms=lissajous.ms"""
         self.sdcal_params = {
             'infile': 'lissajous.ms',
             'calmode': 'otf',
@@ -1386,9 +1330,7 @@ class sdcal_test_otf(unittest.TestCase):
         self.assertEqual(sdcal_result, expected_result)  # AlmostEqual semantics
 
     def test_otf03M(self):
-        """
-        test_otf03 --- Compute calibration table. calmode='otf' ms=lissajous.ms (MMS)
-        """
+        """test_otf03 --- Compute calibration table. calmode='otf' ms=lissajous.ms (MMS)"""
         self.sdcal_params = {
             'infile': 'lissajous.ms',
             'calmode': 'otf',
@@ -1409,9 +1351,7 @@ class sdcal_test_otf(unittest.TestCase):
         self.assertEqual(sdcal_result, expected_result)  # AlmostEqual semantics
 
     def test_otf04(self):
-        """
-        test_otf04 --- Compute calibration table. calmode='otf' ms=lissajous.ms edges_fraction=20%
-        """
+        """test_otf04 --- Compute calibration table. calmode='otf' ms=lissajous.ms edges_fraction=20%"""
         self.sdcal_params = {
             'infile': 'lissajous.ms',
             'calmode': 'otf',
@@ -1427,9 +1367,7 @@ class sdcal_test_otf(unittest.TestCase):
         self.assertEqual(sdcal_result, expected_result)  # AlmostEqual semantics
 
     def test_otf05(self):
-        """
-        test_otf05 --- Sky calibration. calmode='otf,apply' ms=squares.dec60_cs.ms
-        """
+        """test_otf05 --- Sky calibration. calmode='otf,apply' ms=squares.dec60_cs.ms"""
         self.sdcal_params = {
             'infile': 'squares.dec60_cs.ms',
             'calmode': 'otf,apply'
@@ -1444,9 +1382,7 @@ class sdcal_test_otf(unittest.TestCase):
         self.assertEqual(sdcal_result, expected_result)  # AlmostEqual semantics
 
     def test_otf06(self):
-        """
-        test_otf06 --- Sky calibration reusing caltable pre-computed with calmode='otf'. calmode='apply' ms=lissajous.ms
-        """
+        """test_otf06 --- Sky calibration reusing caltable pre-computed with calmode='otf'. calmode='apply' ms=lissajous.ms"""
         self.sdcal_params = {
             'infile': 'lissajous.ms',
             'calmode': 'apply',
@@ -1465,9 +1401,7 @@ class sdcal_test_otf(unittest.TestCase):
         self.assertEqual(sdcal_result, expected_result)  # AlmostEqual semantics
 
     def test_otf07(self):
-        """
-        test_otf07 --- Sky calibration + Tsys conversion, composite calmode='otf,tsys,apply'. ms=lissajous.ms
-        """
+        """test_otf07 --- Sky calibration + Tsys conversion, composite calmode='otf,tsys,apply'. ms=lissajous.ms"""
         self.sdcal_params = {
             'infile': 'lissajous.ms',
             'calmode': 'otf,tsys,apply',
@@ -1995,78 +1929,58 @@ class sdcal_test_apply(sdcal_test_base):
 
     @exception_case(Exception, 'Applytable name must be specified.')
     def test_apply_sky00(self):
-        """
-        test_apply_sky00 --- empty applytable
-        """
+        """test_apply_sky00 --- empty applytable"""
         self.result = sdcal(infile=self.infile, calmode='apply', applytable='')
 
     @exception_case(Exception, 'Applytable name must be specified.')
     def test_apply_sky01(self):
-        """
-        test_apply_sky01 --- empty applytable (list ver.)
-        """
+        """test_apply_sky01 --- empty applytable (list ver.)"""
         self.result = sdcal(infile=self.infile, calmode='apply', applytable=[''])
 
     @exception_case(Exception, 'Applytable name must be specified.')
     def test_apply_sky02(self):
-        """
-        test_apply_sky02 --- empty applytable list
-        """
+        """test_apply_sky02 --- empty applytable list"""
         self.result = sdcal(infile=self.infile, calmode='apply', applytable=[])
 
     @exception_case(Exception, "^Table doesn't exist:")
     def test_apply_sky03(self):
-        """
-        test_apply_sky03 --- unexisting applytable
-        """
+        """test_apply_sky03 --- unexisting applytable"""
         self.result = sdcal(infile=self.infile, calmode='apply', applytable='notexist.sky')
 
     @exception_case(Exception, "^Table doesn't exist:")
     def test_apply_sky04(self):
-        """
-        test_apply_sky04 --- unexisting applytable (list ver.)
-        """
+        """test_apply_sky04 --- unexisting applytable (list ver.)"""
         self.result = sdcal(infile=self.infile, calmode='apply', applytable=['notexist.sky'])
 
     @exception_case(RuntimeError, 'Spw Expression: No match found for 99')
     def test_apply_sky05(self):
-        """
-        test_apply_sky05 --- invalid selection (empty selection result)
-        """
+        """test_apply_sky05 --- invalid selection (empty selection result)"""
         self.result = sdcal(infile=self.infile, calmode='apply',
                             spw='99', applytable=[self.applytable])
 
     # @exception_case(RuntimeError, '^Unknown interptype: \'.+\'!! Check inputs and try again\.$')
     @exception_case(RuntimeError, 'Error in Calibrater::setapply.')
     def test_apply_sky06(self):
-        """
-        test_apply_sky06 --- invalid interp value
-        """
+        """test_apply_sky06 --- invalid interp value"""
         # 'sinusoid' interpolation along time axis is not supported
         self.result = sdcal(infile=self.infile, calmode='apply',
                             applytable=[self.applytable], interp='sinusoid')
 
     @exception_case(RuntimeError, '^Applytable \'.+\' is not a caltable format$')
     def test_apply_sky07(self):
-        """
-        test_apply_sky07 --- invalid applytable (not caltable)
-        """
+        """test_apply_sky07 --- invalid applytable (not caltable)"""
         self.result = sdcal(infile=self.infile, calmode='apply',
                             applytable=[self.infile], interp='linear')
 
     @normal_case()
     def test_apply_sky08(self):
-        """
-        test_apply_sky08 --- apply data (linear)
-        """
+        """test_apply_sky08 --- apply data (linear)"""
         self.result = sdcal(infile=self.infile, calmode='apply',
                             applytable=[self.applytable], interp='linear')
 
     @normal_case()
     def test_apply_sky08M(self):
-        """
-        test_apply_sky08M --- apply data (linear) for MMS
-        """
+        """test_apply_sky08M --- apply data (linear) for MMS"""
         self.skipTest(
             'Skip test_apply_sky08M until calibrator tool supports processing MMS on serial casa')
         # self.result = sdcal(infile=self.infile, calmode='apply',
@@ -2074,49 +1988,37 @@ class sdcal_test_apply(sdcal_test_base):
 
     @normal_case(spw='9')
     def test_apply_sky09(self):
-        """
-        test_apply_sky09 --- apply selected data
-        """
+        """test_apply_sky09 --- apply selected data"""
         self.result = sdcal(infile=self.infile, calmode='apply', applytable=[
                             self.applytable], spw='9', interp='linear')
 
     @normal_case(interp='nearest')
     def test_apply_sky10(self):
-        """
-        test_apply_sky10 --- apply data (nearest)
-        """
+        """test_apply_sky10 --- apply data (nearest)"""
         self.result = sdcal(infile=self.infile, calmode='apply',
                             applytable=[self.applytable], interp='nearest')
 
     @normal_case(interp='linear,linearflag')
     def test_apply_sky11(self):
-        """
-        test_apply_sky11 --- apply data (linearflag for frequency interpolation)
-        """
+        """test_apply_sky11 --- apply data (linearflag for frequency interpolation)"""
         self.result = sdcal(infile=self.infile, calmode='apply', applytable=[
                             self.applytable], interp='linear,linearflag')
 
     @normal_case(interp='linear,nearestflag')
     def test_apply_sky12(self):
-        """
-        test_apply_sky12 --- apply data (nearestflag for frequency interpolation)
-        """
+        """test_apply_sky12 --- apply data (nearestflag for frequency interpolation)"""
         self.result = sdcal(infile=self.infile, calmode='apply', applytable=[
                             self.applytable], interp='linear,nearestflag')
 
     @normal_case(interp='linear')
     def test_apply_sky13(self):
-        """
-        test_apply_sky13 --- apply data (string applytable input)
-        """
+        """test_apply_sky13 --- apply data (string applytable input)"""
         self.result = sdcal(infile=self.infile, calmode='apply',
                             applytable=self.applytable, interp='linear')
 
     @normal_case(interp='')
     def test_apply_sky14(self):
-        """
-        test_apply_sky14 --- apply data (interp='')
-        """
+        """test_apply_sky14 --- apply data (interp='')"""
         self.result = sdcal(infile=self.infile, calmode='apply',
                             applytable=self.applytable, interp='')
 
@@ -2141,9 +2043,7 @@ class sdcal_test_apply(sdcal_test_base):
     @fill_weightspectrum
     @normal_case(interp='linear')
     def test_apply_sky15(self):
-        """
-        test_apply_sky15 --- check if WEIGHT_SPECTRUM is updated properly when it exists
-        """
+        """test_apply_sky15 --- check if WEIGHT_SPECTRUM is updated properly when it exists"""
         self.result = sdcal(infile=self.infile, calmode='apply',
                             applytable=self.applytable, interp='linear')
 
@@ -2170,17 +2070,13 @@ class sdcal_test_apply(sdcal_test_base):
 
     @normal_case()
     def test_apply_composite00(self):
-        """
-        test_apply_composite00 --- on-the-fly application of sky table ('ps,apply')
-        """
+        """test_apply_composite00 --- on-the-fly application of sky table ('ps,apply')"""
         sdcal(infile=self.infile, calmode='ps,apply')
 
     @modify_tsys
     @normal_case(tsys=100.0)
     def test_apply_composite01(self):
-        """
-        test_apply_composite01 --- on-the-fly application of sky table with existing Tsys table
-        """
+        """test_apply_composite01 --- on-the-fly application of sky table with existing Tsys table"""
         # generate Tsys table
         tsystable = self.infile.rstrip('/') + '.tsys'
 
@@ -2198,18 +2094,14 @@ class sdcal_test_apply(sdcal_test_base):
     @modify_tsys
     @normal_case(tsys=100.0)
     def test_apply_composite02(self):
-        """
-        test_apply_composite02 --- on-the-fly application of sky and tsys tables ('ps,tsys,apply')
-        """
+        """test_apply_composite02 --- on-the-fly application of sky and tsys tables ('ps,tsys,apply')"""
         sdcal(infile=self.infile, calmode='ps,tsys,apply',
               spwmap={1: [9], 3: [11]})
 
     @modify_tsys
     @normal_case(tsys=100.0)
     def test_apply_composite03(self):
-        """
-        test_apply_composite03 --- on-the-fly application of sky table ('otfraster,apply')
-        """
+        """test_apply_composite03 --- on-the-fly application of sky table ('otfraster,apply')"""
         sdcal(infile=self.infile, calmode='tsys,apply', applytable=self.applytable,
               spwmap={1: [9], 3: [11]})
 
@@ -2369,16 +2261,12 @@ class sdcal_test_single_polarization(sdcal_test_base):
                 tsel.close()
 
     def test_single_pol_ps(self):
-        """
-        test_single_pol_ps --- generate caltable for single-polarization data
-        """
+        """test_single_pol_ps --- generate caltable for single-polarization data"""
         self.result = sdcal(infile=self.infile, calmode='ps', outfile=self.outfile)
         self._verify_caltable()
 
     def test_single_pol_apply(self):
-        """
-        test_single_pol_apply --- apply caltable to single-polarization data
-        """
+        """test_single_pol_apply --- apply caltable to single-polarization data"""
         self.test_single_pol_ps()
         self.assertTrue(os.path.exists(self.outfile))
 
@@ -2386,9 +2274,7 @@ class sdcal_test_single_polarization(sdcal_test_base):
         self._verify_application()
 
     def test_single_pol_apply_composite(self):
-        """
-        test_single_pol_apply_composite --- on-the-fly calibration/application on single-polarization data
-        """
+        """test_single_pol_apply_composite --- on-the-fly calibration/application on single-polarization data"""
         self.result = sdcal(infile=self.infile, calmode='ps,apply')
         self._verify_application()
 

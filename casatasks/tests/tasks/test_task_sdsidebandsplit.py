@@ -290,9 +290,7 @@ class failureTestCase(sdsidebandsplitTestBase):
         del self.g
 
     def run_exception(self, ref_message, **new_param):
-        """
-        Run task and compare
-        """
+        """Run task and compare"""
         task_param = self.update_task_param(new_param)
         self.assertRaisesRegexp(Exception, ref_message, sdsidebandsplit, **task_param)
 

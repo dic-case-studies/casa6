@@ -518,9 +518,7 @@ class test_sdtimeaverage(unittest.TestCase):
         self._checkWeightSigma(outMsName, 2, (nRow / 3))
 
     def _check_averaged_result_N3TimeSpan(self, outMsName):
-        '''
-        This is for TimeSpan (when number of state=3)
-        '''
+        '''This is for TimeSpan (when number of state=3)'''
         # check result record count. (must be same as state count)
         self._get_main(outMsName)
         check = (len(self.tm) == 3)

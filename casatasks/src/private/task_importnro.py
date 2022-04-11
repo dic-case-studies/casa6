@@ -60,9 +60,7 @@ def importnro(infile=None, outputvis=None, overwrite=None, parallel=None):
 
 
 def _is_nostar(filename):
-    """
-    Check if given data is NOSTAR or not
-    """
+    """Check if given data is NOSTAR or not"""
     ret = False
     if os.path.getsize(filename) >= 15136:  # size of observation header
         with open(filename, 'rb') as f:

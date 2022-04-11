@@ -698,9 +698,7 @@ def add_history(
         caller,
         casalog,
         outfile):
-    """
-    Write history to output MS, not the input ms.
-    """
+    """Write history to output MS, not the input ms."""
     mslocal = mstool()
     try:
         param_names = caller.co_varnames[:caller.co_argcount]

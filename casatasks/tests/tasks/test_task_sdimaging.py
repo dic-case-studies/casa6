@@ -377,9 +377,7 @@ class sdimaging_unittest_base(unittest.TestCase):
 # Test on bad parameter settings
 ###
 class sdimaging_test0(sdimaging_unittest_base):
-    """
-    Test on bad parameter setting
-    """
+    """Test on bad parameter setting"""
     # Input and output names
     prefix = sdimaging_unittest_base.taskname + 'Test0'
     badid = '99'
@@ -2353,9 +2351,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
 
 class sdimaging_test_polflag(sdimaging_unittest_base):
-    """
-    Test imaging of an MS one of polarization (XX) is completely flagged.
-    """
+    """Test imaging of an MS one of polarization (XX) is completely flagged."""
     prefix = sdimaging_unittest_base.taskname + 'TestPol'
     outfile = prefix + sdimaging_unittest_base.postfix
     # input MS names
@@ -2477,10 +2473,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
 
 
 class sdimaging_test_mslist(sdimaging_unittest_base):
-    """
-    Test more than one MSes as inputs
-
-    """
+    """Test more than one MSes as inputs"""
     prefix = sdimaging_unittest_base.taskname + 'TestListMS'
     outfile = prefix + sdimaging_unittest_base.postfix
     clearup = True

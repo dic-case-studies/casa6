@@ -583,9 +583,7 @@ def set_beam_size(vis, imagename,
                   field, spw, baseline, scan, intent, timerange,
                   ephemsrcname, pointingcolumntouse, antenna_name, antenna_diameter,
                   restfreq, gridfunction, convsupport, truncate, gwidth, jwidth):
-    """
-    Set estimated beam size to the image.
-    """
+    """Set estimated beam size to the image."""
     is_alma = antenna_name[0:2] in ['PM', 'DV', 'DA', 'CM']
     blockage = '0.75m' if is_alma else '0.0m'
 

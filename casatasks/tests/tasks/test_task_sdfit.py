@@ -155,9 +155,7 @@ def parseRms(txt):
 
 
 class sdfit_unittest_base(unittest.TestCase):
-    """
-    Base class for sdfit unit test
-    """
+    """Base class for sdfit unit test"""
     # Data path of input/output
     datapath = ctsys_resolve('unittest/sdfit/')
     taskname = "sdfit"
@@ -232,9 +230,7 @@ class sdfit_unittest_base(unittest.TestCase):
             return isthere
 
     def _remove(self, names):
-        """
-        Remove a list of files and directories from disk
-        """
+        """Remove a list of files and directories from disk"""
         for name in names:
             if os.path.exists(name):
                 if os.path.isdir(name):
@@ -1066,9 +1062,7 @@ class sdfit_selection(sdfit_unittest_base, unittest.TestCase):
 
 
 class sdfit_auto(sdfit_unittest_base, unittest.TestCase):
-    """
-    This class tests fitmode='auto'
-    """
+    """This class tests fitmode='auto'"""
     datapath = ctsys_resolve('unittest/sdfit/')
     infile = "analytic_type2.fit1row.ms"
     common_param = dict(infile=infile, outfile='', datacolumn='float_data',
@@ -1453,9 +1447,7 @@ class sdfit_polaverage(sdfit_unittest_base, unittest.TestCase):
         self.verify(mode, result)
 
     def run_test2(self, mode):
-        """
-        run_test2 is test function that should be used for tests including edit_meta
-        """
+        """run_test2 is test function that should be used for tests including edit_meta"""
         # only spw 0 is processed
         # since edit_meta, effectively it corresponds to process both spw 0 and 1
         result = sdfit(infile=self.infile, datacolumn='float_data', fitfunc='gaussian',
