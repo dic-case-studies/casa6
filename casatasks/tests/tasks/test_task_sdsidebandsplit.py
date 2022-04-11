@@ -513,6 +513,7 @@ class MultiPixTestCase(sdsidebandsplitTestBase):
     A class to test sdsidebandsplit with multi-pixel images.
     Implemented based on test case table attached to CAS-8091 (T-032)
     """
+
     standard_param = dict(
         imagename=['multipix_noiseless_shift0.image', 'multipix_noiseless_shift-102.image',
                    'multipix_noiseless_shift8.image', 'multipix_noiseless_shift62.image',

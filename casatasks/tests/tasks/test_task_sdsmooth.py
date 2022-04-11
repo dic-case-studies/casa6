@@ -56,6 +56,7 @@ class sdsmooth_test_base(unittest.TestCase):
         datapath
         decorators (invalid_argument_case, exception_case)
     """
+
     # Data path of input
     datapath = ctsys.resolve('unittest/sdsmooth/')
 
@@ -267,6 +268,7 @@ class sdsmooth_test_fail(sdsmooth_test_base):
     test_sdsmooth_fail05 --- empty outfile
     test_sdsmooth_fail06 --- invalid data column name
     """
+
     invalid_argument_case = sdsmooth_test_base.invalid_argument_case
     exception_case = sdsmooth_test_base.exception_case
 
@@ -321,6 +323,7 @@ class sdsmooth_test_complex(sdsmooth_test_base):
     test_sdsmooth_complex_select --- data selection (spw)
     test_sdsmooth_complex_overwrite --- overwrite existing outfile (overwrite=True)
     """
+
     exception_case = sdsmooth_test_base.exception_case
     infile = sdsmooth_test_base.infile_data
     datacolumn = 'data'
@@ -360,6 +363,7 @@ class sdsmooth_test_float(sdsmooth_test_base):
     test_sdsmooth_float_select --- data selection (spw)
     test_sdsmooth_float_overwrite --- overwrite existing outfile (overwrite=True)
     """
+
     exception_case = sdsmooth_test_base.exception_case
     infile = sdsmooth_test_base.infile_float
     datacolumn = 'float_data'
@@ -396,6 +400,7 @@ class sdsmooth_test_weight(sdsmooth_test_base):
     test_sdsmooth_weight_gauss01 --- gaussian smoothing (kwidth 5)
     test_sdsmooth_weight_gauss02 --- gaussian smoothing (kwidth 3)
     """
+
     weight_case = sdsmooth_test_base.weight_case
     infile = sdsmooth_test_base.infile_data
     datacolumn = 'data'

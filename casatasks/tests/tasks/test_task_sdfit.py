@@ -156,6 +156,7 @@ def parseRms(txt):
 
 class sdfit_unittest_base(unittest.TestCase):
     """Base class for sdfit unit test"""
+
     # Data path of input/output
     datapath = ctsys_resolve('unittest/sdfit/')
     taskname = "sdfit"
@@ -599,6 +600,7 @@ class sdfit_basicTest(sdfit_unittest_base):
       of the other rows have single line.
       spw value is identical to irow, and number of channels is 8192.
     """
+
     # Input and output names
     infiles = ['gaussian.ms', 'lorentzian.ms']
     outroot = sdfit_unittest_base.taskname + '_basictest'
@@ -906,6 +908,7 @@ class sdfit_selection(sdfit_unittest_base, unittest.TestCase):
         intent, antenna, field, spw, timerange, scan, and pol,
     in combination with datacolumn selection = {corrected | float_data}
     """
+
     datapath = ctsys_resolve('unittest/sdfit/')
     infile = "analytic_type1.fit.ms"
     common_param = dict(infile=infile, outfile='',
@@ -1063,6 +1066,7 @@ class sdfit_selection(sdfit_unittest_base, unittest.TestCase):
 
 class sdfit_auto(sdfit_unittest_base, unittest.TestCase):
     """This class tests fitmode='auto'"""
+
     datapath = ctsys_resolve('unittest/sdfit/')
     infile = "analytic_type2.fit1row.ms"
     common_param = dict(infile=infile, outfile='', datacolumn='float_data',
@@ -1208,6 +1212,7 @@ class sdfit_timeaverage(sdfit_unittest_base, unittest.TestCase):
           Averaging the first 4 rows, taking account of weight, gives
           Gaussian with peak amplitude of 1.
     """
+
     datapath = ctsys_resolve('unittest/sdfit/')
     infile = "sdfit_tave.ms"
     outfile = "sdfit.out"
@@ -1302,6 +1307,7 @@ class sdfit_polaverage(sdfit_unittest_base, unittest.TestCase):
         test_polaverage_stokes_chunk -- test stokes average mode against different access pattern
         test_polaverage_geometric_chunk -- test geometric average mode against different access pattern
     """
+
     infile = "gaussian.ms"
 
     # reference value from basicTest

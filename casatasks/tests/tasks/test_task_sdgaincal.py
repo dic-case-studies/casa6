@@ -44,6 +44,7 @@ class sdgaincal_test_base(unittest.TestCase):
 
     This class defines attributes and methods common to test cases
     """
+
     datapath = ctsys.resolve('unittest/sdgaincal/')
 
     def __copy_from_datapath(self, filename):
@@ -190,6 +191,7 @@ class sdgaincal_fail_test(sdgaincal_test_base):
     test_fail03     | wrong calibration mode
     test_fail04     | negative radius
     """
+
     infile = 'doublecircletest_const.ms'
     outfile = 'sdgaincal_fail_test.sdgain.caltable'
 
@@ -243,6 +245,7 @@ class sdgaincal_const_test(sdgaincal_test_base):
     test_const03     | ''          | overwrite existing file
     test_const04     | ''          | test if data selection works
     """
+
     infile = 'doublecircletest_const.ms'
     outfile = 'sdgaincal_const_test.sdgain.caltable'
 
@@ -299,6 +302,7 @@ class sdgaincal_variable_test(sdgaincal_test_base):
     ==========================================================================
     test_variable01     | '65arcsec'  | valid caltable is created
     """
+
     infile = 'doublecircletest_autoscale.ms'
     outfile = 'sdgaincal_variable_test.sdgain.caltable'
     reffile = 'doublecircletest_autoscale.sdgain.caltable'
@@ -346,6 +350,7 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
     test_preapply03  | '65arcsec'  | tsys and sky caltables are applied (resulting variable factor)
     test_preapply04  | '65arcsec'  | transfer Tsys from [2,3] to [0,1]
     """
+
     infile = 'doublecircletest_const.ms'
     outfile = 'sdgaincal_const_test.sdgain.caltable'
     tsystable = infile + '.tsys'
@@ -534,6 +539,7 @@ class sdgaincal_single_polarization_test(sdgaincal_test_base):
     ==========================================================================
     test_single_pol  | '65arcsec'  | test single-polarization calibration (YY)
     """
+
     infile = 'doublecircletest_const.ms'
     outfile = 'sdgaincal_const_test.sdgain.caltable'
 

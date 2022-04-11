@@ -42,6 +42,7 @@ class importasap_test(unittest.TestCase):
        test_flagversions -- Check if existing flagversions file is overwritten
        test_noflagversions -- Do not create flagversions file
     """
+
     # Input and output names
     infile = 'uid___A002_X85c183_X36f.test.asap'
     prefix = 'importasap_test'

@@ -476,6 +476,7 @@ class sdcal_test_base(unittest.TestCase):
         datapath
         decorators (invalid_argument_case, exception_case)
     """
+
     # Data path of input
     datapath = ctsys_resolve('unittest/sdcal/')
 
@@ -554,6 +555,7 @@ class sdcal_test_ps(sdcal_test_base):
     test_ps07 --- outfile exists (overwrite=True)
     test_ps08 --- inappropriate calmode ('otfraster')
     """
+
     invalid_argument_case = sdcal_test_base.invalid_argument_case
     exception_case = sdcal_test_base.exception_case
 
@@ -784,6 +786,7 @@ class DataManager:
 
 class sdcal_test_bug_fix_cas_12712(unittest.TestCase):
     """Test fix for sdcal bug reported in CAS-12712"""
+
     io_files = None
 
     @DataManager({'input': {'ms_name': 'uid___A002_X85c183_X36f.ms.sel'},
@@ -856,6 +859,7 @@ class sdcal_test_otfraster(sdcal_test_base):
     test_otfraster12 --- OTF raster calibration ('otfraster') with custom noff
     test_otfraster13 --- check if noff takes priority over fraction
     """
+
     invalid_argument_case = sdcal_test_base.invalid_argument_case
     exception_case = sdcal_test_base.exception_case
     infile = 'uid___A002_X6218fb_X264.ms.sel.otfraster'
@@ -1711,6 +1715,7 @@ class sdcal_test_apply(sdcal_test_base):
     test_apply_composite02 --- on-the-fly application of sky and tsys tables ('ps,tsys,apply')
     test_apply_composite03 --- on-the-fly application of sky table ('otfraster,apply')
     """
+
     invalid_argument_case = sdcal_test_base.invalid_argument_case
     exception_case = sdcal_test_base.exception_case
 
@@ -2112,6 +2117,7 @@ class sdcal_test_single_polarization(sdcal_test_base):
     test_single_pol_apply_composite --- on-the-fly calibration/application
                                         on single-polarization data
     """
+
     datapath = ctsys_resolve('unittest/sdcal/')
     # Input
     infile = 'analytic_spectra.ms'

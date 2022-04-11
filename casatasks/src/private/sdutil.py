@@ -213,6 +213,7 @@ class sdtask_interface(object):
     Derived classes must implement the above three methods: initialize(),
     execute(), and finalize().
     """
+
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, **kwargs):

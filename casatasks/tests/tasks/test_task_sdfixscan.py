@@ -76,6 +76,7 @@ def drop_deg_axes(imagename, outimagename):
 
 class sdfixscan_unittest_base:
     """Base class for sdfixscan unit test"""
+
     taskname = 'sdfixscan'
     datapath = ctsys.resolve('unittest/sdfixscan/')
 
@@ -142,6 +143,7 @@ class sdfixscan_unittest_base:
 
 class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
     """Test on bad parameter setting"""
+
     # Input and output names
     rawfiles = ['scan_x.im', 'scan_y.im']
     prefix = sdfixscan_unittest_base.taskname + 'Test0'
@@ -240,6 +242,7 @@ class sdfixscan_test1(unittest.TestCase, sdfixscan_unittest_base):
        - smoothed by Gaussian kernel of FWHM of 10 pixel
 
     """
+
     # Input and output names
     rawfile = 'scan_x.im'
     rawfilemod = rawfile.replace('.im', '_mod.im')
@@ -452,6 +455,7 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
        - smoothed by Gaussian kernel of FWHM of 10 pixel
 
     """
+
     # Input and output names
     rawfiles = ['scan_x.im', 'scan_y.im']
     rawfilesmod = list(map(lambda x: x.replace('.im', '_mod.im'), rawfiles))

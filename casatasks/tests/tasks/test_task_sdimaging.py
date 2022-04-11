@@ -119,6 +119,7 @@ class sdimaging_unittest_base(unittest.TestCase):
     Furthermore, SYSCAL and POINTING tables are downsized.
 
     """
+
     taskname = 'sdimaging'
     datapath = ctsys_resolve('unittest/sdimaging/')
     rawfile = 'sdimaging.ms'
@@ -378,6 +379,7 @@ class sdimaging_unittest_base(unittest.TestCase):
 ###
 class sdimaging_test0(sdimaging_unittest_base):
     """Test on bad parameter setting"""
+
     # Input and output names
     prefix = sdimaging_unittest_base.taskname + 'Test0'
     badid = '99'
@@ -589,6 +591,7 @@ class sdimaging_test1(sdimaging_unittest_base):
        - settting minweight = 0.2
 
     """
+
     # Input and output names
     prefix = sdimaging_unittest_base.taskname + 'Test1'
     outfile = prefix + sdimaging_unittest_base.postfix
@@ -910,6 +913,7 @@ class sdimaging_test2(sdimaging_unittest_base):
        - selected frequency image
 
     """
+
     # Input and output names
     prefix = sdimaging_unittest_base.taskname + 'Test2'
     outfile = prefix + sdimaging_unittest_base.postfix
@@ -1041,6 +1045,7 @@ class sdimaging_test3(sdimaging_unittest_base):
        - selected velocity image
 
     """
+
     # Input and output names
     prefix = sdimaging_unittest_base.taskname + 'Test3'
     outfile = prefix + sdimaging_unittest_base.postfix
@@ -1166,6 +1171,7 @@ class sdimaging_autocoord(sdimaging_unittest_base):
        - cell (get rest freq from table)
        - imsize
     """
+
     prefix = sdimaging_unittest_base.taskname + 'Test4'
     outfile = prefix + sdimaging_unittest_base.postfix
     nchan = 1
@@ -2180,6 +2186,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
 
     """
+
     rawfile = 'sdimaging_flagtest.ms'
     prefix = sdimaging_unittest_base.taskname + 'TestFlag'
     outfile = prefix + sdimaging_unittest_base.postfix
@@ -2352,6 +2359,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
 
 class sdimaging_test_polflag(sdimaging_unittest_base):
     """Test imaging of an MS one of polarization (XX) is completely flagged."""
+
     prefix = sdimaging_unittest_base.taskname + 'TestPol'
     outfile = prefix + sdimaging_unittest_base.postfix
     # input MS names
@@ -2474,6 +2482,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
 
 class sdimaging_test_mslist(sdimaging_unittest_base):
     """Test more than one MSes as inputs"""
+
     prefix = sdimaging_unittest_base.taskname + 'TestListMS'
     outfile = prefix + sdimaging_unittest_base.postfix
     clearup = True
@@ -2600,6 +2609,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
     - the default cell size of the image
     - the beam size of the image
     """
+
     datapath = ctsys_resolve('unittest/sdimaging/')
     infiles = 'selection_spw.ms'
     outfile = 'sdimaging_restfreq.im'
@@ -2760,6 +2770,7 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
                                only selected data
         test_ephemeris -- Verify phasecenter for ephemeris source
     """
+
     datapath = ctsys_resolve('unittest/sdimaging/')
     infiles_ephem = ['Uranus1.cal.Ant0.spw34.ms',
                      'Uranus2.cal.Ant0.spw34.ms']
@@ -2911,6 +2922,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
     applied.
     Also, 'pointing6-2.ms' has 5 hours lag behind 'pointing6.ms'.
     """
+
     datapath = ctsys_resolve('unittest/sdimaging/')
     params = dict(antenna="0",
                   intent="*ON_SOURCE*",
@@ -3061,6 +3073,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
     test_suprious: check if clipping properly handles suprious data
     test_multichan: check if clipping handles multi-channel data properly
     """
+
     data_list = ['clipping_1row.ms', 'clipping_2rows.ms', 'clipping_3rows.ms',
                  'clipping_3rows_suprious.ms', 'clipping_3rows_2chans.ms']
     outfile = 'sdimaging_test_clipping.im'
@@ -3305,6 +3318,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
        - test_projection_SFL: create image with SFL (Sanson-Flamsteed) projection
 
     """
+
     # Input and output names
     prefix = sdimaging_unittest_base.taskname + 'ProjectionTest'
     outfile = prefix + sdimaging_unittest_base.postfix

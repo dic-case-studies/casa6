@@ -90,6 +90,7 @@ class importnro_test(unittest.TestCase):
        test_invaliddata -- Invalid data check
        test_normal -- Normal data import
     """
+
     # Input and output names
     infile = 'orixa.OrionKL.20151209212931.16.Y'
     prefix = 'importnro_test'
