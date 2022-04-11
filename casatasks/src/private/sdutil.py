@@ -878,13 +878,13 @@ def __check_tileshape(tileshape):
 
 
 def __process_input_multi_ms(pdh, separationaxis):
-    '''
+    """
     retval{'status': True,  'axis':''}         --> can run in parallel
     retval{'status': False, 'axis':'value'}    --> treat MMS as monolithic MS,
                                                    set new axis for output MMS
     retval{'status': False, 'axis':''}         --> treat MMS as monolithic MS,
                                                    create an output MS
-    '''
+    """
     retval = pdh.validateInputParams()
 
     # Cannot create an output MMS.

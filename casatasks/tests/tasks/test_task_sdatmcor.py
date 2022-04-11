@@ -211,38 +211,38 @@ class test_sdatmcor(unittest.TestCase):
             self._check_result_spw(spw, is_selected, is_processed, on_source_only)
 
     def test_sdatmcor_normal(self):
-        '''test normal usage of sdatmcor'''
+        """test normal usage of sdatmcor"""
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_explicit_atmtype(self):
-        '''test specifying atmtype explicitly'''
+        """test specifying atmtype explicitly"""
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', atmtype=2)
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_overwrite(self):
-        '''test overwriting existing outfile'''
+        """test overwriting existing outfile"""
         os.mkdir(self.outfile)
         self.assertTrue(os.path.exists(self.outfile))
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', overwrite=True)
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_no_overwrite(self):
-        '''test to avoid overwriting existing outfile'''
+        """test to avoid overwriting existing outfile"""
         os.mkdir(self.outfile)
         self.assertTrue(os.path.exists(self.outfile))
         with self.assertRaises(Exception):
             sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', overwrite=False)
 
     def test_sdatmcor_wrong_datacolumn(self):
-        '''test wrong datacolumn'''
+        """test wrong datacolumn"""
         wrong_colnames = ['corrected', 'float_data']
         for colname in wrong_colnames:
             with self.assertRaises(Exception):
                 sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn=colname)
 
     def test_sdatmcor_corrected(self):
-        '''test if CORRECTED_DATA column is handled properly'''
+        """test if CORRECTED_DATA column is handled properly"""
         # add CORRECTED_DATA column
         cb = calibrater()
         cb.open(self.infile, addcorr=True, addmodel=False)
@@ -251,57 +251,57 @@ class test_sdatmcor(unittest.TestCase):
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_spw_select_23(self):
-        '''test data selection: select spw 23'''
+        """test data selection: select spw 23"""
         sdatmcor(infile=self.infile, outputspw='23', outfile=self.outfile, datacolumn='data')
         self.check_result({23: True})
 
     def test_sdatmcor_spw_select_all(self):
-        '''test data selection: select 19 and 23 explicitly'''
+        """test data selection: select 19 and 23 explicitly"""
         sdatmcor(infile=self.infile, outputspw='19,23', outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_spw_process_19(self):
-        '''test data selection: process only spw 19'''
+        """test data selection: process only spw 19"""
         sdatmcor(infile=self.infile, spw='19', outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: False})
 
     def test_sdatmcor_spw_process_all(self):
-        '''test data selection: declare to process 19 and 23 explicitly'''
+        """test data selection: declare to process 19 and 23 explicitly"""
         sdatmcor(infile=self.infile, spw='19,23', outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_spw_process_23_select_23(self):
-        '''test data selection: select and process spw 23'''
+        """test data selection: select and process spw 23"""
         sdatmcor(infile=self.infile, spw='23', outputspw='23',
                  outfile=self.outfile, datacolumn='data')
         self.check_result({23: True})
 
     def test_sdatmcor_spw_process_all_select_19(self):
-        '''test data selection: process spw 19 and 23 but output only spw 19'''
+        """test data selection: process spw 19 and 23 but output only spw 19"""
         sdatmcor(infile=self.infile, spw='19,23', outputspw='19',
                  outfile=self.outfile, datacolumn='data')
         self.check_result({19: True})
 
     def test_sdatmcor_spw_process_23_select_all(self):
-        '''test data selection: process only spw 23 but output both 19 and 23'''
+        """test data selection: process only spw 23 but output both 19 and 23"""
         sdatmcor(infile=self.infile, spw='23', outputspw='19,23',
                  outfile=self.outfile, datacolumn='data')
         self.check_result({19: False, 23: True})
 
     def test_sdatmcor_spw_process_99_select_all(self):
-        '''test data selection: specify invalid spw to process'''
+        """test data selection: specify invalid spw to process"""
         with self.assertRaises(Exception):
             sdatmcor(infile=self.infile, spw='19,99', outputspw='19,23',
                      outfile=self.outfile, datacolumn='data')
 
     def test_sdatmcor_intent_selection(self):
-        '''test intent selection: test if selection of ON_SOURCE data (i.e. excluding OFF_SOURCE data) still works'''
+        """test intent selection: test if selection of ON_SOURCE data (i.e. excluding OFF_SOURCE data) still works"""
         sdatmcor(infile=self.infile, outfile=self.outfile,
                  intent='OBSERVE_TARGET#ON_SOURCE*', datacolumn='data')
         self.check_result({19: True, 23: True}, on_source_only=True)
 
     def test_sdatmcor_spw_process_less_than_20_select_all(self):
-        '''test data selection: specify invalid spw to process'''
+        """test data selection: specify invalid spw to process"""
         sdatmcor(infile=self.infile, spw='<20', outputspw='',
                  outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: False})
