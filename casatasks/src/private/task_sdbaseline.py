@@ -36,6 +36,9 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
         if isinstance(fftthresh, str):
             fftthresh = fftthresh.lower()
 
+        if (spw == ''):
+            spw = '*'
+
         if not os.path.exists(infile):
             raise ValueError("infile='" + str(infile) + "' does not exist.")
         if (outfile == '') or not isinstance(outfile, str):
@@ -43,14 +46,8 @@ def sdbaseline(infile=None, datacolumn=None, antenna=None, field=None,
             casalog.post("outfile is empty or non-string. set to '" + outfile + "'")
         if (not overwrite) and dosubtract and os.path.exists(outfile):
             raise ValueError("outfile='%s' exists, and cannot overwrite it." % (outfile))
-
-        if (maskmode == 'interact'):
-            raise ValueError("maskmode='%s' is not supported yet" % maskmode)
         if (blfunc == 'variable') and not os.path.exists(blparam):
             raise ValueError("input file '%s' does not exists" % blparam)
-
-        if (spw == ''):
-            spw = '*'
 
         if (blmode == 'fit'):
             temp_outfile = _do_fit(infile, datacolumn, antenna, field, spw, timerange, scan,
