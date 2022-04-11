@@ -163,7 +163,7 @@ class sdfit_unittest_base(unittest.TestCase):
     taskname = "sdfit"
     verboselog = False
 
-    #complist = ['max','min','rms','median','stddev']
+    # complist = ['max','min','rms','median','stddev']
 
     blparam_order = ['row', 'pol', 'mask', 'nclip', 'cthre',
                      'uself', 'lthre', 'ledge', 'redge', 'chavg',
@@ -171,7 +171,7 @@ class sdfit_unittest_base(unittest.TestCase):
     blparam_dic = {}
     blparam_dic['row'] = [0, 0, 1, 1, 2, 2, 3, 3]
     blparam_dic['pol'] = [0, 1, 0, 1, 0, 1, 0, 1]
-    #blparam_dic['mask']  = ['0~4000;6000~8000']*3 + ['']*5
+    # blparam_dic['mask']  = ['0~4000;6000~8000']*3 + ['']*5
     blparam_dic['mask'] = ['500~2500;5000~7500'] * 8
     blparam_dic['nclip'] = [0] * 8
     blparam_dic['cthre'] = ['3.'] * 8
@@ -314,7 +314,7 @@ class sdfit_unittest_base(unittest.TestCase):
         res = []
         for i in range(len(data_list)):
             if data_list[i] in sel_list:
-                #idx = sel_list.index(data_list[i])
+                # idx = sel_list.index(data_list[i])
                 res.append(i)
         return self._getUniqList(res)
 
@@ -455,7 +455,6 @@ class sdfit_unittest_base(unittest.TestCase):
             keylist = complist
         else:
             keylist = refstat.keys()
-            #keylist = self.complist
 
         for key in keylist:
             self.assertTrue(key in currstat,
@@ -690,9 +689,9 @@ class sdfit_basicTest(sdfit_unittest_base):
                         for j in range(len(result[key][i])):
                             result_lower = result[key][i][j][0] - 3.0 * result[key][i][j][1]
                             result_upper = result[key][i][j][0] + 3.0 * result[key][i][j][1]
-                            #print("infile="+infile+" --- "+"lower("+str(result_lower) \
-                            #      +") - answer("+str(answer[key][i][j]) \
-                            #      +") - upper("+str(result_upper) +")")
+                            # print("infile="+infile+" --- "+"lower("+str(result_lower) \
+                            #       +") - answer("+str(answer[key][i][j]) \
+                            #       +") - upper("+str(result_upper) +")")
                             self.assertTrue(
                                 ((result_lower <= answer[key][i][j])
                                     and (answer[key][i][j] <= result_upper)),
@@ -730,9 +729,9 @@ class sdfit_basicTest(sdfit_unittest_base):
                                 thres = 18.0
                             result_lower = result[key][i][j][0] - thres * result[key][i][j][1]
                             result_upper = result[key][i][j][0] + thres * result[key][i][j][1]
-                            #print("infile="+infile+" --- "+"lower("+str(result_lower)+ \
-                            #      ") - answer("+str(answer[key][i][j])+") - upper("+ \
-                            #      str(result_upper) +")")
+                            # print("infile="+infile+" --- "+"lower("+str(result_lower)+ \
+                            #       ") - answer("+str(answer[key][i][j])+") - upper("+ \
+                            #       str(result_upper) +")")
                             self.assertTrue(
                                 ((result_lower <= answer[key][i][j])
                                     and (answer[key][i][j] <= result_upper)),
@@ -767,9 +766,9 @@ class sdfit_basicTest(sdfit_unittest_base):
                         for j in range(len(result[key][i])):
                             result_lower = result[key][i][j][0] - 3.0 * result[key][i][j][1]
                             result_upper = result[key][i][j][0] + 3.0 * result[key][i][j][1]
-                            #print("infile="+infile+" --- "+"lower("+str(result_lower)+ \
-                            #      ") - answer("+str(answer[key][i][j])+") - upper("+ \
-                            #      str(result_upper) +")")
+                            # print("infile="+infile+" --- "+"lower("+str(result_lower)+ \
+                            #       ") - answer("+str(answer[key][i][j])+") - upper("+ \
+                            #       str(result_upper) +")")
                             self.assertTrue(
                                 ((result_lower <= answer[key][i][j])
                                     and (answer[key][i][j] <= result_upper)),

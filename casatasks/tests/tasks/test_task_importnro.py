@@ -116,7 +116,6 @@ class importnro_test(unittest.TestCase):
         """test_invaliddata: Invalid data check"""
         with open(self.infile, 'wb') as f:
             f.write(str2bytes('AA'))
-        #os.remove(os.path.join(self.infile, 'table.info'))
         with self.assertRaisesRegexp(RuntimeError, '.* is not a valid NOSTAR data\.$'):
             importnro(infile=self.infile, outputvis=self.outfile, overwrite=False)
 

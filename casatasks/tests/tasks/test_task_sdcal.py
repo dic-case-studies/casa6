@@ -268,7 +268,7 @@ class sdcal_test(unittest.TestCase):
         tb.close()
 
         # print(type(fparam_dict))
-        #print('shape of fparam')
+        # print('shape of fparam')
         # print('shape of fparam_dict['r29']', fparam_dict['r29'].shape)
         # print(fparam_dict['r29'][0])
         # print(fparam_dict['r29'][1])
@@ -278,7 +278,7 @@ class sdcal_test(unittest.TestCase):
 
         # data_dict=tb.getvarcol('DATA')
 
-        #subt=tb.query('', sortlist='ANTENNA1, TIME, SPECTRAL_WINDOW_ID', columns='FPARAM, DATA')
+        # subt=tb.query('', sortlist='ANTENNA1, TIME, SPECTRAL_WINDOW_ID', columns='FPARAM, DATA')
         # data=subt2.getcol('DATA')
         # fparam=subt2.getcol('FPARAM')
         # print(data[0])
@@ -286,8 +286,8 @@ class sdcal_test(unittest.TestCase):
         # print(fparam[0])
         # print(fparam[1])
 
-        #subt_dict=tb.query('', sortlist='ANTENNA1, TIME', columns='WEIGHT, CORRECTED_DATA')
-        #weight_dict = subt_dict.getcol('WEIGHT')
+        # subt_dict=tb.query('', sortlist='ANTENNA1, TIME', columns='WEIGHT, CORRECTED_DATA')
+        # weight_dict = subt_dict.getcol('WEIGHT')
         # weight_dict=tb.getvarcol('WEIGHT')
         # print(type(weight_dict))
         # print(weight_dict['r69'])
@@ -295,25 +295,25 @@ class sdcal_test(unittest.TestCase):
         # print(weight_dict['r69'][1])
         # print(weight_dict)
 
-        #corrected_data_dict = subt_dict.getcol('CORRECTED_DATA')
+        # corrected_data_dict = subt_dict.getcol('CORRECTED_DATA')
         # tb.close()
         # subt_dict.close()
 
-        #sdcal(infile=infile, calmode='apply', spwmap=spwmap_dict,
-        #      applytable='tsys.cal', outfile='')
+        # sdcal(infile=infile, calmode='apply', spwmap=spwmap_dict,
+        #       applytable='tsys.cal', outfile='')
         # tb.open(infile)
-        #subt_list=tb.query('', sortlist='ANTENNA1, TIME, SPECTRAL_WINDOW_ID',
-        #                   columns='WEIGHT, CORRECTED_DATA')
-        #weight_list = subt_list.getcol('WEIGHT')
-        #corrected_data_list = subt_list.getcol('CORRECTED_DATA')
+        # subt_list=tb.query('', sortlist='ANTENNA1, TIME, SPECTRAL_WINDOW_ID',
+        #                    columns='WEIGHT, CORRECTED_DATA')
+        # weight_list = subt_list.getcol('WEIGHT')
+        # corrected_data_list = subt_list.getcol('CORRECTED_DATA')
         # tb.close()
         # subt_list.close()
 
-        #sdcal(infile=infile, calmode='apply', spwmap=spwmap_list,
-        #      applytable='tsys.cal', outfile='')
+        # sdcal(infile=infile, calmode='apply', spwmap=spwmap_list,
+        #       applytable='tsys.cal', outfile='')
 
-        #print('dict:', spwmap)
-        #print('list:', spwmap)
+        # print('dict:', spwmap)
+        # print('list:', spwmap)
         # if spwmap.all()==spwmap_dict.all():
         #    Spwmap is able to cope with dictionary and list.
         # print(spwmap.all()==spwmap_dict.all())
@@ -330,7 +330,6 @@ class sdcal_test(unittest.TestCase):
         # spwmap=[0,1,2,3,4,5,6,7,8,1,10,3,12,5,14,7,16]
         spwmap = {1: [1], 3: [3], 5: [5], 7: [7]}
         initweights(vis=infile, wtmode='nyq', dowtsp=True)
-        #sdcal(infile=infile, calmode='apply', spwmap=spwmap, applytable=tsysfile, outfile='')
 
         sdcal(infile=infile, calmode='apply', spwmap=spwmap, applytable=tsysfile)
 
@@ -365,7 +364,6 @@ class sdcal_test(unittest.TestCase):
         # spwmap=[0,1,2,3,4,5,6,7,8,1,10,3,12,5,14,7,16]
         spwmap = {1: [9], 3: [11], 5: [13], 7: [15]}
         initweights(vis=infile, wtmode='nyq', dowtsp=True)
-        #sdcal(infile=infile, calmode='apply', spwmap=spwmap, applytable=tsysfile, outfile='')
         sdcal(infile=infile, calmode='apply', spwmap=spwmap, applytable=tsysfile)
 
         tb.open(infile)
@@ -404,7 +402,6 @@ class sdcal_test(unittest.TestCase):
         # spwmap=[0,1,2,3,4,5,6,7,8,1,10,3,12,5,14,7,16]
         spwmap = {1: [9], 3: [11], 5: [13], 7: [15]}
         initweights(vis=infile, wtmode='nyq', dowtsp=True)
-        #sdcal(infile=infile, calmode='apply', spwmap=spwmap, applytable=tsysfile, outfile='')
         sdcal(infile=infile, calmode='apply', spwmap=spwmap, applytable=tsysfile)
 
         tb.open(infile)
@@ -451,14 +448,14 @@ class sdcal_test(unittest.TestCase):
         tb.open(self.tsystable)
         fparam = tb.getcell('FPARAM', row)
         for ch in range(total_ch):
-            #print('SIGMA00 ', sigma[0])
-            #print('SIGMA10 ', sigma[1])
-            #print('WEIGHT_SPECTRUM00 ', weight_spectrum[0][ch])
-            #print('WEIGHT_SPECTRUM10 ', weight_spectrum[1][ch])
+            # print('SIGMA00 ', sigma[0])
+            # print('SIGMA10 ', sigma[1])
+            # print('WEIGHT_SPECTRUM00 ', weight_spectrum[0][ch])
+            # print('WEIGHT_SPECTRUM10 ', weight_spectrum[1][ch])
             answer0 = 1 / (sigma[0]**2) * 1 / (fparam[0][ch]**2)
             answer1 = 1 / (sigma[1]**2) * 1 / (fparam[1][ch]**2)
-            #print('pol0: 1/SIGMA**2 X 1/(FPARAM)**2', answer0)
-            #print('pol1: 1/SIGMA**2 X 1/(FPARAM)**2', answer1i)
+            # print('pol0: 1/SIGMA**2 X 1/(FPARAM)**2', answer0)
+            # print('pol1: 1/SIGMA**2 X 1/(FPARAM)**2', answer1i)
             diff0 = weight_spectrum[0][ch] - answer0
             diff1 = weight_spectrum[1][ch] - answer1
             diff0_percent = diff0 / weight_spectrum[0][ch] * 100
@@ -471,7 +468,7 @@ class sdcal_test(unittest.TestCase):
                   ': diff between 1/SIGMA**2 X 1/(FPARAM[' +
                   str(ch) + '])**2 and WEIGHT_SPECTRUM[' + str(ch) + ']', diff0, diff1)
             print(diff0_percent, '%', diff1_percent, '%')
-            #self.assertTrue(diff0 < eps, msg='The error is small enough')
+            # self.assertTrue(diff0 < eps, msg='The error is small enough')
         tb.close()
 
 
@@ -647,7 +644,7 @@ class sdcal_test_ps(sdcal_test_base):
                     for (spw, val) in d.items():
                         if spw_selection is not None and spw not in spw_selection:
                             continue
-                        #print(ant, spw, val)
+                        # print(ant, spw, val)
 
                         def construct(x):
                             return '%s == %s' % (x)
@@ -911,19 +908,19 @@ class sdcal_test_otfraster(sdcal_test_base):
                         flag = tsel.getcol('FLAG')
                     finally:
                         tsel.close()
-                #print('time_list', time_list)
+                # print('time_list', time_list)
                 if len(time_list) < 2:
                     continue
                 data_list = []
                 time_difference = time_list[1:] - time_list[:-1]
-                #print('time_difference', time_difference)
+                # print('time_difference', time_difference)
                 gap_threshold = numpy.median(time_difference) * 5
-                #print('gap_threshold', gap_threshold)
+                # print('gap_threshold', gap_threshold)
                 gap_list = numpy.concatenate(
                     ([0], numpy.where(time_difference > gap_threshold)[0] + 1))
                 if gap_list[-1] != len(time_list):
                     gap_list = numpy.concatenate((gap_list, [len(time_list)]))
-                #print('gap_list', gap_list)
+                # print('gap_list', gap_list)
                 for i in range(len(gap_list) - 1):
                     start = gap_list[i]
                     end = gap_list[i + 1]
@@ -934,7 +931,7 @@ class sdcal_test_otfraster(sdcal_test_base):
                     right_edge = raster_row[:, :, -numedge:].mean(axis=2)
                     data_list.extend([left_edge, right_edge])
                 expected_value[antenna][spw] = data_list
-                #print('antenna', antenna, 'spw', spw, 'len(data_list)', len(data_list))
+                # print('antenna', antenna, 'spw', spw, 'len(data_list)', len(data_list))
 
         return expected_value
 
@@ -1005,7 +1002,7 @@ class sdcal_test_otfraster(sdcal_test_base):
                     for (spw, val) in d.items():
                         if spw_selection is not None and spw not in spw_selection:
                             continue
-                        #print(ant, spw, val)
+                        # print(ant, spw, val)
 
                         def construct(x):
                             return '%s == %s' % (x)
@@ -1051,17 +1048,17 @@ class sdcal_test_otfraster(sdcal_test_base):
                                             diff = abs((_fparam - _expected) / _expected)
                                             self.assertLess(diff, eps, msg=message_template(
                                                 'FPARAM', _expected, _fparam))
-                                #self.assertTrue(
-                                #    all(flag[:,:10].flatten() == True),
-                                #    msg=message_template('flag status', True))
-                                #self.assertTrue(
-                                #    all(flag[:,10:].flatten() == False),
+                                # self.assertTrue(
+                                #     all(flag[:,:10].flatten() == True),
+                                #     msg=message_template('flag status', True))
+                                # self.assertTrue(
+                                #     all(flag[:,10:].flatten() == False),
                                 # msg=message_template('flag status', False))
-                                #fparam_valid = fparam[flag == False]
-                                #error = abs((fparam_valid - expected) / expected)
-                                #self.assertTrue(
-                                #    all(error < eps),
-                                #    msg=message_template('sky data', expected))
+                                # fparam_valid = fparam[flag == False]
+                                # error = abs((fparam_valid - expected) / expected)
+                                # self.assertTrue(
+                                #     all(error < eps),
+                                #     msg=message_template('sky data', expected))
             return _wrapper
         return wrapper
 
@@ -1804,9 +1801,9 @@ class sdcal_test_apply(sdcal_test_base):
         self._tearDown([self.infile, self.applytable])
 
     def check_weight(self, inweight, outweight, scale):
-        #print('inweight', inweight)
-        #print('outweight', outweight)
-        #print('scale', scale)
+        # print('inweight', inweight)
+        # print('outweight', outweight)
+        # print('scale', scale)
         # shape check
         self.assertEqual(inweight.shape, outweight.shape, msg='')
 
@@ -1870,8 +1867,8 @@ class sdcal_test_apply(sdcal_test_base):
                             weight_org[antenna][spw] = tb.getcol('WEIGHT')
                             if 'WEIGHT_SPECTRUM' in tb.colnames() \
                                     and tb.iscelldefined('WEIGHT_SPECTRUM', 0):
-                                #print('WEIGHT_SPECTRUM is defined for '
-                                #      f'antenna {antenna} spw {spw}')
+                                # print('WEIGHT_SPECTRUM is defined for '
+                                #       f'antenna {antenna} spw {spw}')
                                 weightsp_org[antenna][spw] = tb.getcol('WEIGHT_SPECTRUM')
                             # else:
                             #    print('WEIGHT_SPECTRUM is NOT defined for '
@@ -1958,12 +1955,12 @@ class sdcal_test_apply(sdcal_test_base):
                                 else:
                                     self.check_weight(inweight, outweight, weightscale / tsyssq)
 
-                                #print('antenna', antenna, 'spw', spw, 'row', irow)
-                                #print('inflag', inflag[:,:12], 'calflag', calflag[:,:12],
-                                #      'expflag', expected_flag[:,:12], 'outflag', outflag[:,:12])
-                                #print('ref', ref[:,126:130], 'data', data[:,126:130],
-                                #      'expected', expected[:,126:130],
-                                #      'corrected', corrected[:,126:130])
+                                # print('antenna', antenna, 'spw', spw, 'row', irow)
+                                # print('inflag', inflag[:,:12], 'calflag', calflag[:,:12],
+                                #       'expflag', expected_flag[:,:12], 'outflag', outflag[:,:12])
+                                # print('ref', ref[:,126:130], 'data', data[:,126:130],
+                                #       'expected', expected[:,126:130],
+                                #       'corrected', corrected[:,126:130])
 
                                 self.assertEqual(
                                     corrected.shape,
@@ -2072,8 +2069,8 @@ class sdcal_test_apply(sdcal_test_base):
         """
         self.skipTest(
             'Skip test_apply_sky08M until calibrator tool supports processing MMS on serial casa')
-        #self.result = sdcal(infile=self.infile, calmode='apply',
-        #                    applytable=[self.applytable], interp='linear')
+        # self.result = sdcal(infile=self.infile, calmode='apply',
+        #                     applytable=[self.applytable], interp='linear')
 
     @normal_case(spw='9')
     def test_apply_sky09(self):
@@ -2165,7 +2162,7 @@ class sdcal_test_apply(sdcal_test_base):
                         tsys_spectrum = tsel.getcell('TSYS_SPECTRUM', irow)
                         tsys_spectrum[:] = tsys
                         tsel.putcell('TSYS_SPECTRUM', irow, tsys_spectrum)
-                        #tsys += 100.0
+                        # tsys += 100.0
                 finally:
                     tsel.close()
             func(self)
@@ -2230,7 +2227,6 @@ class sdcal_test_single_polarization(sdcal_test_base):
     datapath = ctsys_resolve('unittest/sdcal/')
     # Input
     infile = 'analytic_spectra.ms'
-    #applytable = infile + '.sky'
 
     # task execution result
     result = None
@@ -2366,7 +2362,7 @@ class sdcal_test_single_polarization(sdcal_test_base):
                 diff = numpy.abs((corrected_data.real - calibrated) / calibrated)
                 diff_not_nan = diff[idx_not_nan]
                 eps = 1.0e-7
-                #print('maxdiff = {}'.format(diff_not_nan.max()))
+                # print('maxdiff = {}'.format(diff_not_nan.max()))
                 self.assertTrue(numpy.all(diff_not_nan < eps))
                 self.assertTrue(numpy.all(corrected_data[idx_not_nan].imag == 0.0))
             finally:

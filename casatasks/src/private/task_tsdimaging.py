@@ -272,7 +272,7 @@ def _calc_PB(vis, antenna_id, restfreq):
     # Antenna diameter
     with sdutil.table_manager(os.path.join(vis, 'ANTENNA')) as tb:
         antdiam_ave = tb.getcell('DISH_DIAMETER', antenna_id)
-    #antdiam_ave = self._get_average_antenna_diameter(antenna)
+    # antdiam_ave = self._get_average_antenna_diameter(antenna)
     # Calculate PB
     wave_length = 0.2997924 / my_qa.convert(my_qa.quantity(ref_freq), 'GHz')['value']
     D_m = my_qa.convert(antdiam_ave, 'm')['value']

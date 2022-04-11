@@ -77,7 +77,6 @@ class test_sdpolaverage(unittest.TestCase):
     def setUp(self):
         self.inputms = "analytic_type1.fit.ms"
         self.outputms = "polave.ms"
-        #datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/tsdfit/"
         os.system('cp -RH ' + datapath + self.inputms + ' ' + self.inputms)
 
     def tearDown(self):

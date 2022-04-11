@@ -865,7 +865,7 @@ class sdimaging_test1(sdimaging_unittest_base):
         tb.close()
         self.task_param.update(dict(nchan=nchan, start=0, width=1))
         # for testing
-        #self.task_param['gridfunction'] = 'BOX'
+        # self.task_param['gridfunction'] = 'BOX'
         for (k, v) in self.task_param.items():
             casalog.post('test102: {0} = \'{1}\' (type {2})'.format(k, v, type(v)))
         outshape = (self.imsize[0], self.imsize[1], 1, nchan)
@@ -1419,7 +1419,6 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         (4) image direction axis
         """
         res = sdimaging(**task_param)
-        #outfile = task_param['outfile']
         outprefix = task_param['outfile']
         outfile = outprefix + image_suffix
         # Tests
@@ -2250,10 +2249,10 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
     def test_spw_id_pattern_frequency(self):
         """test spw selection w/ channel selection (spw='*:300.4749~300.5251GHz')"""
         # spw = '*:300.4749~300.5251GHz'   #chan=2-7 of spw=1 should be selected
-        #selspw = [1]
+        # selspw = [1]
         region = self.spw_region_chan1
-        #infile = self.spwsel_ms
-        #flux_list = self.__get_flux_value(infile)
+        # infile = self.spwsel_ms
+        # flux_list = self.__get_flux_value(infile)
         ##### TEMPORARY CHANGING INPUT DATA ####
         #### due to seg fault in sdimaging caused by a bug in ms.msseltoindex() #####
         infile = self.unifreq_ms
@@ -2842,8 +2841,8 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         # Tests
         # In true Stokes mode, all correlation components are flagged when any of them is flagged
         # Stokes value consistent with older imager based implementation is pseudo-Stokes
-        #refstats = merge_dict(self.stat_common, construct_refstat_uniform(
-        #    self.unif_flux, self.region_all['blc'], self.region_all['trc']) )
+        # refstats = merge_dict(self.stat_common, construct_refstat_uniform(
+        #     self.unif_flux, self.region_all['blc'], self.region_all['trc']) )
         refstats = merge_dict(self.stat_common, construct_refstat_uniform(
             0.0, self.region_all['blc'], self.region_all['trc']))
         out_shape = (self.imsize_auto[0], self.imsize_auto[1], 1, 1)
@@ -3246,13 +3245,11 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
         blc = map_property['blc']
         trc = map_property['trc']
         extent = map_property['extent']
-        #blc_ref = numpy.array([0.0, 0.0])
-        #trc_ref = numpy.array(map(str_to_deg, ['23:59:55.515', '+00.01.07.276']))
         if trc_ref[0] > 180.0:
             trc_ref[0] -= 360.0
         if blc_ref[0] > 180.0:
             blc_ref[0] -= 360.0
-        #self.verify_mapextent(npix_ref, blc_ref, trc_ref)
+        # self.verify_mapextent(npix_ref, blc_ref, trc_ref)
         # resulting map contain reference position
         print('npix {} npix_ref {}'.format(npix, npix_ref))
         print('blc {} blc_ref {}'.format(blc, blc_ref))
@@ -3308,14 +3305,11 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
     def test_ephemeris(self):
         for infile in self.infiles_ephem:
             self.__copy_table(infile)
-        #self.run_test(infiles=self.infiles_ephem, ephemsrcname='Uranus', restfreq='230GHz')
         self.run_test(infiles=self.infiles_ephem, phasecenter='URANUS',
                       restfreq='230GHz')  # CAS-11955
         npix_ref = numpy.array([37, 26])
         # set reference value manually since expected map area for
         # ephemeris object is difficult to calculate
-        #blcf_ref = '00:46:43.672 +04.14.51.504'
-        #trcf_ref = '00:46:27.547 +04.17.39.004'
         blcf_ref = '00:47:09.795 +04.17.10.435'  # CAS-11955
         trcf_ref = '00:46:53.670 +04.19.57.935'  # CAS-11955
         blc_ref = numpy.fromiter(
@@ -3324,7 +3318,7 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
         trc_ref = numpy.fromiter(
             map(lambda x: qa.quantity(x)['value'],
                 trcf_ref.split()), dtype=float)
-        #blc_ref, trc_ref = get_mapextent_ephemeris(self.infiles_ephem)
+        # blc_ref, trc_ref = get_mapextent_ephemeris(self.infiles_ephem)
         self.verify_mapextent(npix_ref, blc_ref, trc_ref)
 
 ###
@@ -3638,7 +3632,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
             """
             self.assertTrue(((dist_llim[i] < dist_answer[i]) and (dist_answer[i] < dist_ulim[i])),
                             msg='spline interpolation seems not working.')
-            #print('['+str(i)+'] --- ' + str(dist_llim[i]) + ' - ' + str(dist_ulim[i]))
+            # print('['+str(i)+'] --- ' + str(dist_llim[i]) + ' - ' + str(dist_ulim[i]))
 
     def check_images_identical(self, image1, image2, weight_image=False):
         suffix = '.weight' if weight_image else '.image'
@@ -3907,7 +3901,6 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                             try:
                                 print('### clip {} row {} chan {} data {}'.format(
                                     infile, irow, ichan, mytb.getcell('FLOAT_DATA', irow)))
-                                #mytb.putcell('FLAG_ROW', irow, True)
                                 flag = mytb.getcell('FLAG', irow)
                                 print('### flag (before) {}'.format(flag))
                                 flag[0, ichan] = True
@@ -3947,7 +3940,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         mresult = result[result_mask]
         mreference = reference[reference_mask]
         self.assertTrue(mresult.shape == mreference.shape)
-        #self.assertTrue(numypy.all(result == reference))
+        # self.assertTrue(numypy.all(result == reference))
 
         def diff(v, r):
             return abs((v - r) / r) if r != 0.0 else abs(v)

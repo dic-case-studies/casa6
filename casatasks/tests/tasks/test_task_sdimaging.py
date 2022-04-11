@@ -560,7 +560,6 @@ class sdimaging_test0(sdimaging_unittest_base):
             pos = str(e).find(
                 'Output frequency grid cannot be calculated:  ' +
                 'please check start and width parameters')
-            #pos=str(e).find('calcChanFreqs failed, check input start and width parameters')
             self.assertNotEqual(pos, -1,
                                 msg='Unexpected exception was thrown: %s' % (str(e)))
 
@@ -1927,10 +1926,10 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
     def test_spw_id_pattern_frequency(self):
         """test spw selection w/ channel selection (spw='*:300.4749~300.5251GHz')"""
         # spw = '*:300.4749~300.5251GHz'   #chan=2-7 of spw=1 should be selected
-        #selspw = [1]
+        # selspw = [1]
         region = self.spw_region_chan1
-        #infile = self.spwsel_ms
-        #flux_list = self.__get_flux_value(infile)
+        # infile = self.spwsel_ms
+        # flux_list = self.__get_flux_value(infile)
         ##### TEMPORARY CHANGING INPUT DATA #####
         ##### due to seg fault in sdimaging caused by a bug in ms.msseltoindex() #####
         infile = self.unifreq_ms
@@ -2819,13 +2818,11 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
         blc = map_property['blc']
         trc = map_property['trc']
         extent = map_property['extent']
-        #blc_ref = numpy.array([0.0, 0.0])
-        #trc_ref = numpy.array(map(str_to_deg, ['23:59:55.515', '+00.01.07.276']))
         if trc_ref[0] > 180.0:
             trc_ref[0] -= 360.0
         if blc_ref[0] > 180.0:
             blc_ref[0] -= 360.0
-        #self.verify_mapextent(npix_ref, blc_ref, trc_ref)
+        # self.verify_mapextent(npix_ref, blc_ref, trc_ref)
         # resulting map contain reference position
         print('npix', npix, 'npix_ref', npix_ref)
         print('blc', blc, 'blc_ref', blc_ref)
@@ -2888,7 +2885,7 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
         trcf_ref = '00:46:27.547 +04.17.39.004'
         blc_ref = numpy.array(list(map(lambda x: qa.quantity(x)['value'], blcf_ref.split())))
         trc_ref = numpy.array(list(map(lambda x: qa.quantity(x)['value'], trcf_ref.split())))
-        #blc_ref, trc_ref = get_mapextent_ephemeris(self.infiles_ephem)
+        # blc_ref, trc_ref = get_mapextent_ephemeris(self.infiles_ephem)
         self.verify_mapextent(npix_ref, blc_ref, trc_ref)
 
 ###
@@ -3016,7 +3013,7 @@ class sdimaging_test_interp(sdimaging_unittest_base):
             """
             self.assertTrue(((dist_llim[i] < dist_answer[i]) and (dist_answer[i] < dist_ulim[i])),
                             msg='spline interpolation seems not working.')
-            #print('['+str(i)+'] --- ' + str(dist_llim[i]) + ' - ' + str(dist_ulim[i]))
+            # print('['+str(i)+'] --- ' + str(dist_llim[i]) + ' - ' + str(dist_ulim[i]))
 
     def check_images_identical(self, image1, image2, weight_image=False):
         img1 = image1
@@ -3193,7 +3190,6 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
                             try:
                                 print('### clip', infile, 'row', irow, 'chan', ichan,
                                       'data', mytb.getcell('FLOAT_DATA', irow))
-                                #mytb.putcell('FLAG_ROW', irow, True)
                                 flag = mytb.getcell('FLAG', irow)
                                 print('### flag (before)', flag)
                                 flag[0, ichan] = True
@@ -3232,7 +3228,7 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         mresult = result[result_mask]
         mreference = reference[reference_mask]
         self.assertTrue(mresult.shape == mreference.shape)
-        #self.assertTrue(numypy.all(result == reference))
+        # self.assertTrue(numypy.all(result == reference))
 
         def diff(v, r):
             return abs((v - r) / r) if r != 0.0 else abs(v)

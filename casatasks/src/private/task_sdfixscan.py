@@ -175,8 +175,8 @@ class sdfixscan_worker(sdutil.sdtask_interface):
             self.image.calcmask(mask=maskstr, name=temp_maskname, asdefault=True)
 
         # smoothing
-        #bmajor = 0.0
-        #bminor = 0.0
+        # bmajor = 0.0
+        # bminor = 0.0
         # CAS-5410 Use private tools inside task scripts
         qa = quanta()
         if type(self.beamsize) == str:
@@ -184,12 +184,12 @@ class sdfixscan_worker(sdutil.sdtask_interface):
         else:
             qbeamsize = qa.quantity(self.beamsize, 'arcsec')
         if type(self.smoothsize) == str:
-            #bmajor = smoothsize
-            #bminor = smoothsize
+            # bmajor = smoothsize
+            # bminor = smoothsize
             qsmoothsize = qa.quantity(self.smoothsize)
         else:
-            #bmajor = '%sarcsec' % (beamsize*smoothsize)
-            #bminor = '%sarcsec' % (beamsize*smoothsize)
+            # bmajor = '%sarcsec' % (beamsize*smoothsize)
+            # bminor = '%sarcsec' % (beamsize*smoothsize)
             qsmoothsize = qa.mul(qbeamsize, self.smoothsize)
         bmajor = qsmoothsize
         bminor = qsmoothsize
@@ -457,14 +457,14 @@ class sdfixscan_worker(sdutil.sdtask_interface):
                 for iy in range(ny):
                     halfwy = (ny - 1) // 2
                     if scan_direction == 'horizontal':
-                        #dd = abs(float(ix) - 0.5*(nx-1))
+                        # dd = abs(float(ix) - 0.5*(nx-1))
                         dd = abs(float(ix) - halfwx)  # for CAS-9434
                     elif scan_direction == 'vertical':
-                        #dd = abs(float(iy) - 0.5*(ny-1))
+                        # dd = abs(float(iy) - 0.5*(ny-1))
                         dd = abs(float(iy) - halfwy)  # for CAS-9434
                     else:
                         tand = numpy.tan((dirs[i] - 90.0) * dtor)
-                        #dd = abs((float(ix) - 0.5*(nx-1)) * tand - (float(iy) - 0.5*(ny-1)))
+                        # dd = abs((float(ix) - 0.5*(nx-1)) * tand - (float(iy) - 0.5*(ny-1)))
                         dd = abs((float(ix) - halfwx) * tand - (float(iy) - halfwy))  # for CAS-9434
                         dd = dd / numpy.sqrt(1.0 + tand * tand)
                     if dd < maskw:
