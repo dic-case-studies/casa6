@@ -572,7 +572,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param00(self):
         '''sdtimeagerage::00:: timerange = 00:00:00~01:04:03 NORMAL (3843s same as in MS)'''
-
         # set timebin string and private outputMS name.
         privateOutfile, dmy = self._set_outfile_timebin(0, nRow)
         # Time string (justify to interval and row counts)
@@ -591,7 +590,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param01E(self):
         '''sdtimeagerage::01E:: timerange = 00:00:00~01:00:00 ERROR case(3600s INSUFFICIENT)'''
-
         # set timebin string and private outputMS name.
         privateOutfile, dmy = self._set_outfile_timebin(1, nRow)
         # Time string (justify to interval and row counts)
@@ -613,7 +611,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param02(self):
         '''sdtimeagerage::02:: timerange = "" (dafault) '''
-
         # set timebin string and private outputMS name.
         privateOutfile, dmy = self._set_outfile_timebin(2, nRow + 1)
         # Run Task
@@ -633,7 +630,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_para10(self):
         '''sdtimeagerage::10:: scan=2 (Within the range)'''
-
         # Run Task
         scan_no = 2    # SCAN = 2 #
         prm = {'timebin': '',
@@ -645,7 +641,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param11(self):
         '''sdtimeagerage::11:: scan=61 (Within the range)'''
-
         # Run Task
         scan_no = 61    # SCAN = 61 #
         prm = {'timebin': '',
@@ -657,7 +652,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param12E(self):
         '''sdtimeagerage::12E:: scan=62 (Error Out of range) '''
-
         # Run Task
         prm = {'timebin': '',
                'scan': '62'}  # ERROR : out of range in MS #
@@ -666,7 +660,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param13(self):
         '''sdtimeagerage::13:: scan='' (no number) Default action. '''
-
         # set timebin string and private outputMS name.
         privateOutfile, dmy = self._set_outfile_timebin(13, nRow)
 
@@ -687,7 +680,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param20(self):
         '''sdtimeaverage::20:: field = 'FLS3a*' (Exact NAME)'''
-
         prm = {'field': 'FLS3a*'}
         # Run Task and check
         self._run_task(prm)
@@ -695,7 +687,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param21E(self):
         '''sdtimeaverage::21E:: field = 'hoge*' (Error :Bad NAME)'''
-
         prm = {'field': 'hoge'}
         # Run Task and check
         with self.assertRaises(RuntimeError):
@@ -703,7 +694,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param22(self):
         '''sdtimeaverage::22:: field = '*' (OK : wildcard)'''
-
         prm = {'field': '*'}
         # Run Task and check
         self._run_task(prm)
@@ -711,7 +701,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param23(self):
         '''sdtimeaverage::23:: field = '' (OK : default)'''
-
         prm = {'field': ''}
         # Run Task and check
         self._run_task(prm)
@@ -723,7 +712,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param30(self):
         '''sdtimeaverage::30:: spw = '0' (exist)'''
-
         prm = {'spw': '0'}
         # Run Task and check
         self._run_task(prm)
@@ -731,7 +719,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param31E(self):
         '''sdtimeaverage::31E:: spw = '9' (Error: Not Exist)'''
-
         prm = {'spw': '9'}
         # Run Task and check
         with self.assertRaises(RuntimeError):
@@ -739,7 +726,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param32(self):
         '''sdtimeaverage::32:: spw = '' (default)'''
-
         prm = {'spw': ''}
         # Run Task and check
         self._run_task(prm)
@@ -747,7 +733,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param33(self):
         '''sdtimeaverage::33:: spw = '*' (OK: Wildcard)'''
-
         prm = {'spw': ''}
         # Run Task and check
         self._run_task(prm)
@@ -759,7 +744,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param40(self):
         '''sdtimeaverage::40:: antenna = 'GBT' (Exact name without &&&)'''
-
         prm = {'antenna': 'GBT'}
         # Run Task and check
         self._run_task(prm)
@@ -767,7 +751,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param41(self):
         '''sdtimeaverage::41:: antenna = 'GBT&&&' (Fully given)'''
-
         prm = {'antenna': 'GBT&&&'}
         # Run Task and check
         self._run_task(prm)
@@ -775,7 +758,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param42E(self):
         '''sdtimeaverage::42E antenna = 'gBT' (Error: Bad name) '''
-
         prm = {'antenna': 'gBT'}
         # Run Task and check
         with self.assertRaises(RuntimeError):
@@ -783,7 +765,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param43E(self):
         '''sdtimeaverage::43E antenna = 'gBT&&&' (Error: Bad name with &&&) '''
-
         prm = {'antenna': 'gBT&&&'}
         # Run Task and check
         with self.assertRaises(RuntimeError):
@@ -811,7 +792,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param101(self):
         '''sdtimeaverage::101: timebin=3846(N=1), timebin=''  '''
-
         # set timebin string and private outputMS name.
         privateOutfile, timebin_str = self._set_outfile_timebin(101, nRow + 3)
 
@@ -827,7 +807,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param103(self):
         '''sdtimeaverage::103: timebin=3846(N=1), timebin='all'  '''
-
         # set timebin string and private outputMS name.
         privateOutfile, dmy = self._set_outfile_timebin(103, nRow)
 
@@ -847,7 +826,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param110(self):
         '''sdtimeagerage::110:: timebin='all' '''
-
         prm = {'timebin': 'all'}
         # Run Task and check
         self._run_task(prm)
@@ -855,7 +833,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param111(self):
         '''sdtimeagerage::111:: timebin='ALL' '''
-
         # Run Task
         prm = {'timebin': 'ALL'}
         # Run Task and check
@@ -864,7 +841,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param112(self):
         '''sdtimeagerage::112:: timebin='' (default)    '''
-
         # Run Task
         prm = {'timebin': ''}
         # Run Task and check
@@ -873,7 +849,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param113E(self):
         '''sdtimeagerage::113E:: timebin='Alles' (ERROR: Bad keyword)    '''
-
         # Run Task
         prm = {'timebin': 'Alles'}
         # Run Task and check
@@ -882,7 +857,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param114(self):
         '''sdtimeagerage::114:: timebin='aLL' (OK: Upper/Lower case mixed)    '''
-
         # Run Task
         prm = {'timebin': 'aLL'}
         # Run Task and check
@@ -891,7 +865,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param115(self):
         '''sdtimeagerage::115:: timebin='0' (No averaging, not an Error)    '''
-
         # Run Task
         prm = {'timebin': '0'}
         # Run Task and check
@@ -901,7 +874,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param116(self):
         '''sdtimeagerage::116:: timebin='-1' (Error. Not acceptable)    '''
-
         # Run Task
         prm = {'timebin': '-1'}
         # Run Task and check
@@ -914,7 +886,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param50(self):
         '''sdtimeaverage::50:: MS= 'float_data'   arg = 'float_data' (NORMAL)   '''
-
         prm = {'infile': defWorkMs3NRO,
                'outfile': "TEST-50.ms",
                'datacolumn': 'float_data'}
@@ -923,7 +894,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param51(self):
         '''sdtimeaverage::51:: MS= 'float_data'    arg = 'data' (Column Switch)  '''
-
         prm = {'infile': defWorkMs3NRO,
                'outfile': "TEST-51.ms",
                'datacolumn': 'data'}
@@ -933,7 +903,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param52(self):
         '''sdtimeaverage::52:: MS= 'data'    arg = 'float_data' (Column Switch) '''
-
         prm = {'infile': defWorkMs3ALMA,
                'outfile': "TEST-52.ms",
                'datacolumn': 'float_data'}
@@ -943,7 +912,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param53(self):
         '''sdtimeaverage::53:: MS= 'data'    arg = 'data'   (NORMAL)  '''
-
         prm = {'infile': defWorkMs3ALMA,
                'outfile': "TEST-53.ms",
                'datacolumn': 'data'}
@@ -957,7 +925,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param60Nobeyama(self):
         '''sdtimeaverage::60 Nobeyama:: 'scan' will be applied in mstransform  '''
-
         privateOutfile = "TEST-60-Nobeyama.ms"
         prm = {'infile': defWorkMs3NRO,
                'outfile': privateOutfile,
@@ -970,7 +937,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param60ALMA(self):
         '''sdtimeaverage::61:: ALMA:: 'scan, state' will be applied in mstransform. '''
-
         privateOutfile = "TEST-61-ALMA.ms"
         prm = {'infile': defWorkMs3ALMA,
                'outfile': privateOutfile,
@@ -987,7 +953,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param70(self):
         '''sdtimeaverage::70:: timespan="scan"  '''
-
         privateOutfile, dmy = self._set_outfile_timebin(70, nRow)
         prm = {'infile': defWorkMsTimeSpan,
                'timespan': 'scan',
@@ -1001,7 +966,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param71(self):
         '''sdtimeaverage::71:: timespan="state"  '''
-
         privateOutfile, dmy = self._set_outfile_timebin(71, nRow)
         prm = {'infile': defWorkMsTimeSpan,
                'timespan': 'state',
@@ -1016,7 +980,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param72(self):
         '''sdtimeaverage::72:: timespan="scan,state" (WARN) in NRO '''
-
         privateOutfile, dmy = self._set_outfile_timebin(72, nRow)
         prm = {'infile': defWorkMsTimeSpan,
                'timespan': 'scan,state',  # scan and state are specified. #
@@ -1029,7 +992,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param73(self):
         '''sdtimeaverage::73:: timespan="state,scan" (WARN) in NRO '''
-
         privateOutfile, dmy = self._set_outfile_timebin(73, nRow)
         prm = {'infile': defWorkMsTimeSpan,
                'timespan': 'state,scan',  # opposite keywords location #
@@ -1042,7 +1004,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param74E(self):
         '''sdtimeaverage::74E:: timespan="hoge"  '''
-
         privateOutfile, dmy = self._set_outfile_timebin(79, nRow)
         prm = {'infile': defWorkMsTimeSpan,
                'timespan': 'hoge',
@@ -1053,7 +1014,6 @@ class test_sdtimeaverage(unittest.TestCase):
 
     def test_param75(self):
         '''sdtimeaverage::75:: timespan=""  '''
-
         privateOutfile, dmy = self._set_outfile_timebin(75, nRow)
         prm = {'infile': defWorkMsTimeSpan,
                'timespan': '',

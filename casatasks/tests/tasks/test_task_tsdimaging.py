@@ -250,7 +250,6 @@ class FileManager:
 
     def smart_copy(self, file_basename):
         """Copy a dataset from casatestdata only when strictly required"""
-
         self.assert_workdir_did_not_changed()
         self.assert_is_valid(file_basename)
         log_origin = 'smart_copy'
@@ -1525,7 +1524,6 @@ class TestTimeRangeHelper:
         params -- sdimaging parameters, with the following limitations:
                     * len(infiles) = 1
         """
-
         # Step 1: create new on-disk time-selected MS
         input_ms = params['infiles'][0]
         # ---- 1.1 Split input MS by time
@@ -3715,7 +3713,6 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
 
     def test_spline_interp(self):
         """test_spline_interp: Check if spline interpolation works for fast scan data."""
-
         self.run_test()
 
         weightfile = self.outfile + '.weight'

@@ -97,7 +97,6 @@ class sdcal_test(unittest.TestCase):
 
     def test00(self):
         """Test00:Check the identification of TSYS_SPECTRuM and FPARAM"""
-
         # tid = "00"
         infile = self.infile1
         sdcal(infile=infile, calmode='tsys', outfile=self.tsystable)
@@ -135,7 +134,6 @@ class sdcal_test(unittest.TestCase):
 
     def test00M(self):
         """Test00M:Check the identification of TSYS_SPECTRuM and FPARAM (MMS)"""
-
         # tid = "00M"
         infile = self.infile1
         with mmshelper(infile) as mvis:
@@ -320,7 +318,6 @@ class sdcal_test(unittest.TestCase):
 
     def test03(self):
         """Test03: Validation of CORRECTED_DATA = DATA X FPARAM (spwmap={1:[1], 3:[3], 5:[5], 7:[7]})"""
-
         # tid = "03"
         infile = self.infile1
         tsysfile = self.tsystable
@@ -354,7 +351,6 @@ class sdcal_test(unittest.TestCase):
         (spwmap={1:[9], 3:[11], 5:[13], 7:[15]})
         antanna1=0, DATA_DISC_ID=9, FPARAM_average
         """
-
         # tid = "04"
         infile = self.infile1
         tsysfile = self.tsystable

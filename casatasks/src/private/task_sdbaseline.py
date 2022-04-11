@@ -348,7 +348,6 @@ def check_fftthresh(fftthresh):
     (2) 'top' + positive integer value
     (3) positive float value + 'sigma'
     """
-
     has_invalid_type = False
     val_not_positive = False
 
