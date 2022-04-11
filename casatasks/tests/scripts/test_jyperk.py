@@ -1,12 +1,12 @@
+from copy import deepcopy
 import json
 import math
 import os
 import shutil
 import unittest
-import uuid
-from copy import deepcopy
 from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError, URLError
+import uuid
 
 import numpy as np
 

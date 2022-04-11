@@ -3,9 +3,9 @@ import csv
 import json
 import os
 import re
+from socket import timeout as socket_timeout
 import ssl
 import string
-from socket import timeout as socket_timeout
 from time import sleep
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -111,7 +111,7 @@ class ASDMParamsGenerator():
             str -- Corresponding ASDM uid.
         """
         basename = os.path.basename(os.path.abspath(vis))
-        pattern = '^uid___A[0-9][0-9][0-9]_X[0-9a-f]+_X[0-9a-f]+\.ms$'
+        pattern = r'^uid___A[0-9][0-9][0-9]_X[0-9a-f]+_X[0-9a-f]+\.ms$'
         if re.match(pattern, basename):
             return basename.replace('___', '://').replace('_', '/').replace('.ms', '')
         else:
@@ -519,7 +519,7 @@ class JyPerKDatabaseClient():
         for i in range(self.retry):
             response_with_tag = self._retrieve(url)
             if response_with_tag['status'] == 'Success':
-                casalog.post(f'Got a response successfully')
+                casalog.post('Got a response successfully')
                 return response_with_tag['body']
 
             if i < self.retry - 1:
@@ -542,7 +542,7 @@ class JyPerKDatabaseClient():
             raise RuntimeError(msg)
 
     def _check_retval(self, retval):
-        """ Check if 'success' of retval dict is True.
+        """Check if 'success' of retval dict is True.
 
         This method only checks if the api was able to complete the process successfully or not.
         It is expected that 'success' will be False as a response, so the mothod does not raise
