@@ -109,14 +109,14 @@ class importnro_test(unittest.TestCase):
     def test_overwrite(self):
         """test_overwrite: File existence check"""
         shutil.copy(self.infile, self.outfile)
-        with self.assertRaisesRegexp(RuntimeError, '.* exists\.$'):
+        with self.assertRaisesRegexp(RuntimeError, r'.* exists\.$'):
             importnro(infile=self.infile, outputvis=self.outfile, overwrite=False)
 
     def test_invaliddata(self):
         """test_invaliddata: Invalid data check"""
         with open(self.infile, 'wb') as f:
             f.write(str2bytes('AA'))
-        with self.assertRaisesRegexp(RuntimeError, '.* is not a valid NOSTAR data\.$'):
+        with self.assertRaisesRegexp(RuntimeError, r'.* is not a valid NOSTAR data\.$'):
             importnro(infile=self.infile, outputvis=self.outfile, overwrite=False)
 
     def test_normal(self):

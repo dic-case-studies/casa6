@@ -60,13 +60,13 @@ class importasap_test(unittest.TestCase):
     def test_overwrite(self):
         """test_overwrite: File existence check"""
         shutil.copytree(self.infile, self.outfile)
-        with self.assertRaisesRegexp(RuntimeError, '.* exists\.$'):
+        with self.assertRaisesRegexp(RuntimeError, r'.* exists\.$'):
             importasap(infile=self.infile, outputvis=self.outfile, overwrite=False)
 
     def test_invaliddata(self):
         """test_invaliddata: Invalid data check"""
         os.remove(os.path.join(self.infile, 'table.info'))
-        with self.assertRaisesRegexp(RuntimeError, '.* is not a valid Scantable\.$'):
+        with self.assertRaisesRegexp(RuntimeError, r'.* is not a valid Scantable\.$'):
             importasap(infile=self.infile, outputvis=self.outfile, overwrite=False)
 
     def test_normal(self):

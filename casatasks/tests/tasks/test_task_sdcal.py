@@ -708,7 +708,7 @@ class sdcal_test_ps(sdcal_test_base):
         shutil.copytree(self.infile, self.outfile)
         self.result = sdcal(infile=self.infile, calmode='ps', outfile=self.outfile, overwrite=False)
 
-    @exception_case(RuntimeError, 'Output file name must be specified\.')
+    @exception_case(RuntimeError, r'Output file name must be specified\.')
     def test_ps04(self):
         """
         test_ps04 --- empty outfile
@@ -1062,12 +1062,12 @@ class sdcal_test_otfraster(sdcal_test_base):
             return _wrapper
         return wrapper
 
-    @exception_case(RuntimeError, '^Invalid fraction value \(.+\)$')
+    @exception_case(RuntimeError, r'^Invalid fraction value \(.+\)$')
     def test_otfraster00(self):
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='otfraster', fraction='auto')
 
-    @exception_case(ValueError, '^Too many edge points\. fraction must be < 0.5\.$')
+    @exception_case(ValueError, r'^Too many edge points\. fraction must be < 0.5\.$')
     def test_otfraster01(self):
         """
         test_otfraster01 --- too many edge points (fraction 0.5)
@@ -1075,7 +1075,7 @@ class sdcal_test_otfraster(sdcal_test_base):
         self.result = sdcal(infile=self.infile, outfile=self.outfile,
                             calmode='otfraster', fraction=0.5)
 
-    @exception_case(ValueError, '^Too many edge points\. fraction must be < 0.5\.$')
+    @exception_case(ValueError, r'^Too many edge points\. fraction must be < 0.5\.$')
     def test_otfraster02(self):
         """
         test_otfraster02 --- too many edge points (fraction 50%)

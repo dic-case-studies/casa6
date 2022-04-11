@@ -290,14 +290,14 @@ class sdsmooth_test_fail(sdsmooth_test_base):
         """test_sdsmooth_fail03 --- invalid selection (empty selection result)"""
         self.result = sdsmooth(infile=self.infile, kernel='gaussian', outfile=self.outfile, spw='3')
 
-    @exception_case(Exception, 'sdsmooth_test\.ms_out exists\.')
+    @exception_case(Exception, r'sdsmooth_test\.ms_out exists\.')
     def test_sdsmooth_fail04(self):
         """test_sdsmooth_fail04 --- outfile exists (overwrite=False)"""
         shutil.copytree(self.infile, self.outfile)
         self.result = sdsmooth(infile=self.infile, kernel='gaussian',
                                outfile=self.outfile, overwrite=False)
 
-    @exception_case(Exception, 'outfile is empty\.')
+    @exception_case(Exception, r'outfile is empty\.')
     def test_sdsmooth_fail05(self):
         """test_sdsmooth_fail05 --- empty outfile"""
         self.result = sdsmooth(infile=self.infile, kernel='gaussian', outfile='')
@@ -325,7 +325,7 @@ class sdsmooth_test_complex(sdsmooth_test_base):
     infile = sdsmooth_test_base.infile_data
     datacolumn = 'data'
 
-    @exception_case(RuntimeError, 'Desired column \(FLOAT_DATA\) not found in the input MS')
+    @exception_case(RuntimeError, r'Desired column \(FLOAT_DATA\) not found in the input MS')
     def test_sdsmooth_complex_fail01(self):
         """test_sdsmooth_complex_fail01 --- non-existing data column (FLOAT_DATA)"""
         self.result = sdsmooth(infile=self.infile, outfile=self.outfile,
@@ -364,7 +364,7 @@ class sdsmooth_test_float(sdsmooth_test_base):
     infile = sdsmooth_test_base.infile_float
     datacolumn = 'float_data'
 
-    @exception_case(RuntimeError, 'Desired column \(DATA\) not found in the input MS')
+    @exception_case(RuntimeError, r'Desired column \(DATA\) not found in the input MS')
     def test_sdsmooth_float_fail01(self):
         """test_sdsmooth_complex_fail01 --- non-existing data column (DATA)"""
         self.result = sdsmooth(infile=self.infile, outfile=self.outfile,
