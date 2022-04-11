@@ -2141,13 +2141,16 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 
     def test_spw_id_default_frequency(self):
         """test spw selection w/ channel selection (spw=':300.4749~300.5251GHz')"""
-#         spw = ':300.4749~300.5251GHz'   #chan=2-7 in spw=1 should be selected
-#         selspw = [1]
         region = self.spw_region_chan1
-#         infile = self.spwsel_ms
-#         flux_list = self.__get_flux_value(infile)
-        ##### TEMPORARY CHANGING INPUT DATA ####
-        ##### due to seg fault in sdimaging caused by a bug in ms.msseltoindex() #####
+
+        #
+        # TEMPORARY CHANGING INPUT DATA
+        #
+        # due to seg fault in sdimaging caused by a bug in ms.msseltoindex()
+        #
+        # infile = self.spwsel_ms
+        # spw = ':300.4749~300.5251GHz'   #chan=2-7 in spw=1 should be selected
+        # selspw = [1]
         infile = self.unifreq_ms
         spw = '*:299.9749~300.0251GHz'  # chan=2-7 of spw=1 should be selected
         flux_list = self.__get_flux_value(infile)
@@ -2248,13 +2251,16 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 
     def test_spw_id_pattern_frequency(self):
         """test spw selection w/ channel selection (spw='*:300.4749~300.5251GHz')"""
+        region = self.spw_region_chan1
+
+        #
+        # TEMPORARY CHANGING INPUT DATA
+        #
+        # due to seg fault in sdimaging caused by a bug in ms.msseltoindex()
+        #
+        # infile = self.spwsel_ms
         # spw = '*:300.4749~300.5251GHz'   #chan=2-7 of spw=1 should be selected
         # selspw = [1]
-        region = self.spw_region_chan1
-        # infile = self.spwsel_ms
-        # flux_list = self.__get_flux_value(infile)
-        ##### TEMPORARY CHANGING INPUT DATA ####
-        #### due to seg fault in sdimaging caused by a bug in ms.msseltoindex() #####
         infile = self.unifreq_ms
         spw = '*:299.9749~300.0251GHz'  # chan=2-7 of spw=1 should be selected
         flux_list = self.__get_flux_value(infile)

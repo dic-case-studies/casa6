@@ -186,7 +186,9 @@ class sdfit_unittest_base(unittest.TestCase):
     blparam_dic['npiec'] = [0] * 6 + [1] * 2
     blparam_dic['nwave'] = [[]] * 3 + [''] * 2 + [[]] * 3
 
-    ### helper functions for tests ###
+    #
+    # helper functions for tests
+    #
     def _createBlparamFile(self, file, param_order, val, option=''):
         nspec = 8
         f = open(file, 'w')
