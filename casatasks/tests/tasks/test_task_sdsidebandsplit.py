@@ -438,7 +438,7 @@ class standardTestCase(sdsidebandsplitTestBase):
 
     # T-010
     def test_imageband_exists_signalonly(self):
-        """imageband image exists but only signal band is solved (must succeed)"""
+        """imageband image exists but only signal band is solved (must succeed)."""
         imageband = self.standard_param['outfile'] + '.imageband'
         os.mkdir(imageband)
         self.assertTrue(os.path.exists(imageband), "Failed to create '%s'" % imageband)
