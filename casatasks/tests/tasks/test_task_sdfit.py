@@ -1298,6 +1298,7 @@ class sdfit_timeaverage(sdfit_unittest_base, unittest.TestCase):
 class sdfit_polaverage(sdfit_unittest_base, unittest.TestCase):
     """Test polarization averaging capability.
 
+    List of tests:
         test_polaverage_default   -- test default average mode (=stokes)
         test_polaverage_stokes    -- test stokes average mode
         test_polaverage_geometric -- test geometric average mode

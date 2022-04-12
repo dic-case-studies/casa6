@@ -582,6 +582,7 @@ class sdimaging_test0(sdimaging_unittest_base):
 class sdimaging_test1(sdimaging_unittest_base):
     """Test channel imaging.
 
+    List of tests:
        - integrated image
        - full channel image
        - selected channel image
@@ -908,9 +909,9 @@ class sdimaging_test1(sdimaging_unittest_base):
 class sdimaging_test2(sdimaging_unittest_base):
     """Test frequency imaging.
 
+    List of tests:
        - integrated image
        - selected frequency image
-
     """
 
     # Input and output names
@@ -1039,9 +1040,9 @@ class sdimaging_test2(sdimaging_unittest_base):
 class sdimaging_test3(sdimaging_unittest_base):
     """Test velocity imaging.
 
+    List of tests:
        - integrated image
        - selected velocity image
-
     """
 
     # Input and output names
@@ -1162,6 +1163,7 @@ class sdimaging_test3(sdimaging_unittest_base):
 class sdimaging_autocoord(sdimaging_unittest_base):
     """Test auto-resolution of spatial gridding parameters.
 
+    List of tests:
        - manual setting
        - all
        - phasecenter
@@ -2111,6 +2113,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 class sdimaging_test_flag(sdimaging_unittest_base):
     """Test to verify if flag information is handled properly.
 
+    Notes:
        - If a channel is flagged, the data of the channel must not be
          added to the output CASA image.
        - If all channels of a spectrum are flagged (i.e., row-flagged
@@ -2118,7 +2121,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
          not be added to the output CASA image.
        - Flagged channels must not be modified by sdimaging.
 
-       The input data: sdimaging_flagtest.ms
+    The input data: sdimaging_flagtest.ms
        - this data contains 768 spectra covering 32x24 grid-like points
          with interval of 10^-5 radian (the position of the bottom-right
          corner is (00:00:00.0, 00.00.00.0) in (RA, Dec)). Amongst the
