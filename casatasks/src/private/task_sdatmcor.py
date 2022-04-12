@@ -59,7 +59,7 @@ def get_default_params():
 
 
 def parse_gainfactor(gainfactor):
-    """Parse gainfactor parameter
+    """Parse gainfactor parameter.
 
     Parse gainfactor parameter.
 
@@ -130,7 +130,8 @@ def gaindict2list(msname, gaindict):
 
 
 def get_all_spws_from_main(msname):
-    """
+    """Extract all spw ids from MAIN table.
+
     Extract all spectral window ids that have any
     associated data in MS MAIN table.
 
@@ -174,7 +175,7 @@ def get_selected_spws(msname, spw):
 
 
 def parse_spw(msname, spw=''):
-    """Parse spw selection into list of spw ids
+    """Parse spw selection into list of spw ids.
 
     Parse spw selection into list of spw ids that have
     associated data in the MAIN table of given MS.

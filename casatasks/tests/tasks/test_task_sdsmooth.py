@@ -49,8 +49,8 @@ def gaussian_kernel(nchan, kwidth):
 
 
 class sdsmooth_test_base(unittest.TestCase):
-    """
-    Base class for sdsmooth unit test.
+    """Base class for sdsmooth unit test.
+
     The following attributes/functions are defined here.
 
         datapath
@@ -74,10 +74,7 @@ class sdsmooth_test_base(unittest.TestCase):
     # decorators
     @staticmethod
     def invalid_argument_case(func):
-        """
-        Decorator for the test case that is intended to fail
-        due to invalid argument.
-        """
+        """Decorator for the test case that is intended to fail due to invalid argument."""
         import functools
 
         @functools.wraps(func)
@@ -88,10 +85,9 @@ class sdsmooth_test_base(unittest.TestCase):
 
     @staticmethod
     def exception_case(exception_type, exception_pattern):
-        """
-        Decorator for the test case that is intended to throw
-        exception.
+        """Decorator for the test case that is intended to throw exception.
 
+        Args:
             exception_type: type of exception
             exception_pattern: regex for inspecting exception message
                                using re.search
@@ -276,37 +272,37 @@ class sdsmooth_test_fail(sdsmooth_test_base):
 
     @invalid_argument_case
     def test_sdsmooth_fail01(self):
-        """test_sdsmooth_fail01 --- default parameters (raises an error)"""
+        """test_sdsmooth_fail01 --- default parameters (raises an error)."""
         # casatasks throw exceptions, CASA5 tasks return False
         self.assertRaises(Exception, sdsmooth)
 
     @invalid_argument_case
     def test_sdsmooth_fail02(self):
-        """test_sdsmooth_fail02 --- invalid kernel type"""
+        """test_sdsmooth_fail02 --- invalid kernel type."""
         # casatasks throw exceptions, CASA5 tasks return False
         self.assertRaises(Exception, sdsmooth, infile=self.infile,
                           kernel='normal', outfile=self.outfile)
 
     @exception_case(RuntimeError, 'Spw Expression: No match found for 3')
     def test_sdsmooth_fail03(self):
-        """test_sdsmooth_fail03 --- invalid selection (empty selection result)"""
+        """test_sdsmooth_fail03 --- invalid selection (empty selection result)."""
         self.result = sdsmooth(infile=self.infile, kernel='gaussian', outfile=self.outfile, spw='3')
 
     @exception_case(Exception, r'sdsmooth_test\.ms_out exists\.')
     def test_sdsmooth_fail04(self):
-        """test_sdsmooth_fail04 --- outfile exists (overwrite=False)"""
+        """test_sdsmooth_fail04 --- outfile exists (overwrite=False)."""
         shutil.copytree(self.infile, self.outfile)
         self.result = sdsmooth(infile=self.infile, kernel='gaussian',
                                outfile=self.outfile, overwrite=False)
 
     @exception_case(Exception, r'outfile is empty\.')
     def test_sdsmooth_fail05(self):
-        """test_sdsmooth_fail05 --- empty outfile"""
+        """test_sdsmooth_fail05 --- empty outfile."""
         self.result = sdsmooth(infile=self.infile, kernel='gaussian', outfile='')
 
     @invalid_argument_case
     def test_sdsmooth_fail06(self):
-        """test_sdsmooth_fail06 --- invalid data column name"""
+        """test_sdsmooth_fail06 --- invalid data column name."""
         # casatasks throw exceptions, CASA5 tasks return False
         self.assertRaises(Exception, sdsmooth, infile=self.infile,
                           outfile=self.outfile, kernel='gaussian', datacolumn='spectra')
@@ -330,24 +326,24 @@ class sdsmooth_test_complex(sdsmooth_test_base):
 
     @exception_case(RuntimeError, r'Desired column \(FLOAT_DATA\) not found in the input MS')
     def test_sdsmooth_complex_fail01(self):
-        """test_sdsmooth_complex_fail01 --- non-existing data column (FLOAT_DATA)"""
+        """test_sdsmooth_complex_fail01 --- non-existing data column (FLOAT_DATA)."""
         self.result = sdsmooth(infile=self.infile, outfile=self.outfile,
                                kernel='gaussian', datacolumn='float_data')
 
     def test_sdsmooth_complex_gauss01(self):
-        """test_sdsmooth_complex_gauss01 --- gaussian smoothing (kwidth 5)"""
+        """test_sdsmooth_complex_gauss01 --- gaussian smoothing (kwidth 5)."""
         self.run_test(kwidth=5)
 
     def test_sdsmooth_complex_gauss02(self):
-        """test_sdsmooth_complex_gauss02 --- gaussian smoothing (kwidth 3)"""
+        """test_sdsmooth_complex_gauss02 --- gaussian smoothing (kwidth 3)."""
         self.run_test(kwidth=3)
 
     def test_sdsmooth_complex_select(self):
-        """test_sdsmooth_complex_select --- data selection (spw)"""
+        """test_sdsmooth_complex_select --- data selection (spw)."""
         self.run_test(kwidth=5, spw='1')
 
     def test_sdsmooth_complex_overwrite(self):
-        """test_sdsmooth_complex_overwrite --- overwrite existing outfile (overwrite=True)"""
+        """test_sdsmooth_complex_overwrite --- overwrite existing outfile (overwrite=True)."""
         shutil.copytree(self.infile, self.outfile)
         self.run_test(kwidth=5, overwrite=True)
 
@@ -370,24 +366,24 @@ class sdsmooth_test_float(sdsmooth_test_base):
 
     @exception_case(RuntimeError, r'Desired column \(DATA\) not found in the input MS')
     def test_sdsmooth_float_fail01(self):
-        """test_sdsmooth_complex_fail01 --- non-existing data column (DATA)"""
+        """test_sdsmooth_complex_fail01 --- non-existing data column (DATA)."""
         self.result = sdsmooth(infile=self.infile, outfile=self.outfile,
                                kernel='gaussian', datacolumn='data')
 
     def test_sdsmooth_float_gauss01(self):
-        """test_sdsmooth_float_gauss01 --- gaussian smoothing (kwidth 5)"""
+        """test_sdsmooth_float_gauss01 --- gaussian smoothing (kwidth 5)."""
         self.run_test(kwidth=5)
 
     def test_sdsmooth_float_gauss02(self):
-        """test_sdsmooth_float_gauss02 --- gaussian smoothing (kwidth 3)"""
+        """test_sdsmooth_float_gauss02 --- gaussian smoothing (kwidth 3)."""
         self.run_test(kwidth=3)
 
     def test_sdsmooth_float_select(self):
-        """test_sdsmooth_float_select --- data selection (spw)"""
+        """test_sdsmooth_float_select --- data selection (spw)."""
         self.run_test(kwidth=5, spw='1')
 
     def test_sdsmooth_float_overwrite(self):
-        """test_sdsmooth_float_overwrite --- overwrite existing outfile (overwrite=True)"""
+        """test_sdsmooth_float_overwrite --- overwrite existing outfile (overwrite=True)."""
         shutil.copytree(self.infile, self.outfile)
         self.run_test(kwidth=5, overwrite=True)
 
@@ -414,12 +410,12 @@ class sdsmooth_test_weight(sdsmooth_test_base):
 
     @weight_case
     def test_sdsmooth_weight_gauss01(self):
-        """test_sdsmooth_weight_gauss01 --- gaussian smoothing (kwidth 5)"""
+        """test_sdsmooth_weight_gauss01 --- gaussian smoothing (kwidth 5)."""
         self.run_test(kwidth=5)
 
     @weight_case
     def test_sdsmooth_weight_gauss02(self):
-        """test_sdsmooth_weight_gauss02 --- gaussian smoothing (kwidth 3)"""
+        """test_sdsmooth_weight_gauss02 --- gaussian smoothing (kwidth 3)."""
         self.run_test(kwidth=3)
 
 
@@ -580,63 +576,63 @@ class sdsmooth_selection(sdsmooth_test_base, unittest.TestCase):
             tb.close()
 
     def testIntentF(self):
-        """Test selection by intent (float_data)"""
+        """Test selection by intent (float_data)."""
         self.run_test("intent", "float_data")
 
     def testIntentC(self):
-        """Test selection by intent (corrected)"""
+        """Test selection by intent (corrected)."""
         self.run_test("intent", "corrected")
 
     def testAntennaF(self):
-        """Test selection by antenna (float_data)"""
+        """Test selection by antenna (float_data)."""
         self.run_test("antenna", "float_data")
 
     def testAntennaC(self):
-        """Test selection by antenna (corrected)"""
+        """Test selection by antenna (corrected)."""
         self.run_test("antenna", "corrected")
 
     def testFieldF(self):
-        """Test selection by field (float_data)"""
+        """Test selection by field (float_data)."""
         self.run_test("field", "float_data")
 
     def testFieldC(self):
-        """Test selection by field (corrected)"""
+        """Test selection by field (corrected)."""
         self.run_test("field", "corrected")
 
     def testSpwF(self):
-        """Test selection by spw (float_data)"""
+        """Test selection by spw (float_data)."""
         self.run_test("spw", "float_data")
 
     def testSpwC(self):
-        """Test selection by spw (corrected)"""
+        """Test selection by spw (corrected)."""
         self.run_test("spw", "corrected")
 
     def testTimerangeF(self):
-        """Test selection by timerange (float_data)"""
+        """Test selection by timerange (float_data)."""
         self.run_test("timerange", "float_data")
 
     def testTimerangeC(self):
-        """Test selection by timerange (corrected)"""
+        """Test selection by timerange (corrected)."""
         self.run_test("timerange", "corrected")
 
     def testScanF(self):
-        """Test selection by scan (float_data)"""
+        """Test selection by scan (float_data)."""
         self.run_test("scan", "float_data")
 
     def testScanC(self):
-        """Test selection by scan (corrected)"""
+        """Test selection by scan (corrected)."""
         self.run_test("scan", "corrected")
 
     def testPolF(self):
-        """Test selection by pol (float_data)"""
+        """Test selection by pol (float_data)."""
         self.run_test("pol", "float_data")
 
     def testPolC(self):
-        """Test selection by pol (corrected)"""
+        """Test selection by pol (corrected)."""
         self.run_test("pol", "corrected")
 
     def testReindexSpw(self):
-        """Test reindex =T/F in spw selection"""
+        """Test reindex =T/F in spw selection."""
         outfile = self.common_param['outfile']
         for datacol in ['float_data', 'corrected']:
             print("Test: %s" % datacol.upper())
@@ -658,7 +654,7 @@ class sdsmooth_selection(sdsmooth_test_base, unittest.TestCase):
                 shutil.rmtree(outfile)
 
     def testReindexIntent(self):
-        """Test reindex =T/F in intent selection"""
+        """Test reindex =T/F in intent selection."""
         outfile = self.common_param['outfile']
         for datacol in ['float_data', 'corrected']:
             print("Test: %s" % datacol.upper())

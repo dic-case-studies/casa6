@@ -48,7 +48,7 @@ def sigmaToWeight(sigma):
 
 
 def check_eq(val, expval, tol=None):
-    """Checks that val matches expval within tol."""
+    """Check that val matches expval within tol."""
 #    print val
     if type(val) == dict:
         for k in val:

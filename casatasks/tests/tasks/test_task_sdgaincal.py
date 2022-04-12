@@ -204,13 +204,13 @@ class sdgaincal_fail_test(sdgaincal_test_base):
             self.run_task(**params)
 
     def test_fail01(self):
-        """test_fail01: infile not exist"""
+        """test_fail01: infile not exist."""
         params = self.generate_params(infile=self.infile + '.notexist')
         # casatasks throw exceptions to indicate failure
         self.assertRaises(Exception, self.run_task, **params)
 
     def test_fail02(self):
-        """test_fail02: not overwrite existing outfile"""
+        """test_fail02: not overwrite existing outfile."""
         params = self.generate_params()
 
         # outfile exists
@@ -219,21 +219,21 @@ class sdgaincal_fail_test(sdgaincal_test_base):
         self.assertRaises(Exception, self.run_task, **params)
 
     def test_fail03(self):
-        """test_fail03: wrong calibration mode"""
+        """test_fail03: wrong calibration mode."""
         params = self.generate_params(calmode='otf')
         # casatasks throw exceptions to indicate failure
         self.assertRaises(Exception, self.run_task, **params)
 
     def test_fail04(self):
-        """test_fail04: negative radius"""
+        """test_fail04: negative radius."""
         params = self.generate_params(radius='-30arcsec')
         # these may be equivalent
         self.assertRaises(Exception, self.run_task, **params)
 
 
 class sdgaincal_const_test(sdgaincal_test_base):
-    """
-    Unit tests for task sdgaincal.
+    """Unit tests for task sdgaincal.
+
     Test data contains the data constant over time and direction, which
     means that gain factor is always 1.0.
 
@@ -267,21 +267,21 @@ class sdgaincal_const_test(sdgaincal_test_base):
             self.assertTrue(numpy.all(flag == False))
 
     def test_const01(self):
-        """test_const01: too narrow central region, empty caltable is created"""
+        """test_const01: too narrow central region, empty caltable is created."""
         params = self.generate_params()
         self.run_task(**params)
 
         self._verify_caltable(self._is_empty_caltable, **params)
 
     def test_const02(self):
-        """test_const02: valid caltable is created. gain factor is all 1.0"""
+        """test_const02: valid caltable is created. gain factor is all 1.0."""
         params = self.generate_params(radius='65arcsec')
         self.run_task(**params)
 
         self._verify_caltable(self._generic_verify, **params)
 
     def test_const03(self):
-        """test_const03: overwrite existing file"""
+        """test_const03: overwrite existing file."""
         params = self.generate_params(overwrite=True, radius='65arcsec')
 
         # outfile exists
@@ -293,8 +293,8 @@ class sdgaincal_const_test(sdgaincal_test_base):
 
 
 class sdgaincal_variable_test(sdgaincal_test_base):
-    """
-    Unit tests for task sdgaincal.
+    """Unit tests for task sdgaincal.
+
     Gain calibration for variable data.
 
     The list of tests:
@@ -328,7 +328,7 @@ class sdgaincal_variable_test(sdgaincal_test_base):
             reftable.close()
 
     def test_variable01(self):
-        """test_variable01: valid caltable is created"""
+        """test_variable01: valid caltable is created."""
         params = self.generate_params(radius='65arcsec')
         self.run_task(**params)
 
@@ -336,8 +336,8 @@ class sdgaincal_variable_test(sdgaincal_test_base):
 
 
 class sdgaincal_preapply_test(sdgaincal_test_base):
-    """
-    Unit tests for task sdgaincal.
+    """Unit tests for task sdgaincal.
+
     This class is intended to verify preapplication capability (CAS-8879).
     Test data contains the data constant over time and direction, which
     means that gain factor is always 1.0.
@@ -492,7 +492,7 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
         tb.close()
 
     def test_preapply01(self):
-        """test_preapply01: only sky caltable is applied (resulting const factor)"""
+        """test_preapply01: only sky caltable is applied (resulting const factor)."""
         params = self.generate_params(radius='65arcsec', applytable=self.skytable)
         self.run_task(**params)
 
@@ -500,7 +500,7 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
         self._verify_caltable(self._generic_verify, **params)
 
     def test_preapply02(self):
-        """test_preapply02: only tsys caltable is applied (resulting variable factor)"""
+        """test_preapply02: only tsys caltable is applied (resulting variable factor)."""
         params = self.generate_params(radius='65arcsec', applytable=self.tsystable)
         self.run_task(**params)
 
@@ -508,7 +508,7 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
         self._verify_caltable(self._generic_verify, **params)
 
     def test_preapply03(self):
-        """test_preapply03: both tsys and sky caltables are applied (resulting variable factor)"""
+        """test_preapply03: both tsys and sky caltables are applied (resulting variable factor)."""
         params = self.generate_params(radius='65arcsec',
                                       applytable=[self.tsystable, self.skytable])
         self.run_task(**params)
@@ -517,7 +517,7 @@ class sdgaincal_preapply_test(sdgaincal_test_base):
         self._verify_caltable(self._generic_verify, **params)
 
     def test_preapply04(self):
-        """test_preapply04: transfer Tsys from [2,3] to [0,1]"""
+        """test_preapply04: transfer Tsys from [2,3] to [0,1]."""
         # edit spwid [0,1] to [2,3]
         spwmap = [2, 3, 2, 3]
         self._edit_tsys_spw(spwmap=spwmap)
@@ -553,7 +553,8 @@ class sdgaincal_single_polarization_test(sdgaincal_test_base):
             shutil.rmtree(self.infile_YY)
 
     def _verify_param_and_flag(self, table):
-        """
+        """Verify calibration factors and flags.
+
         Only first polarization is effective.
         Second polarization should be all flagged.
         """
@@ -568,7 +569,7 @@ class sdgaincal_single_polarization_test(sdgaincal_test_base):
             self.assertTrue(numpy.all(flag[1] == True))
 
     def test_single_pol(self):
-        """test_single_pol: test single-polarization calibration (YY)"""
+        """test_single_pol: test single-polarization calibration (YY)."""
         # generate single-polarization MS
         # for casatasks, mstransform_cli IS mstransform
         mstransform_cli(vis=self.infile, outputvis=self.infile_YY, correlation='YY',

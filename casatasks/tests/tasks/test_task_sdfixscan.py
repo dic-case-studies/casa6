@@ -43,8 +43,8 @@ qa = quanta()
 
 
 def drop_stokes_axis(imagename, outimagename):
-    """
-    create 3d image from 4d.
+    """Create 3d image from 4d.
+
     The function intends to drop Stokes axis and assumes that
     the third axis is Stokes.
     """
@@ -57,8 +57,8 @@ def drop_stokes_axis(imagename, outimagename):
 
 
 def drop_deg_axes(imagename, outimagename):
-    """
-    create 2d image from 4d.
+    """Create 2d image from 4d.
+
     The function intends to drop both Stokes and Spectral axis and assumes that
     the third axis is Spectral and fourth axis is Stokes.
     """
@@ -75,7 +75,7 @@ def drop_deg_axes(imagename, outimagename):
 
 
 class sdfixscan_unittest_base:
-    """Base class for sdfixscan unit test"""
+    """Base class for sdfixscan unit test."""
 
     taskname = 'sdfixscan'
     datapath = ctsys.resolve('unittest/sdfixscan/')
@@ -142,7 +142,7 @@ class sdfixscan_unittest_base:
 
 
 class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
-    """Test on bad parameter setting"""
+    """Test on bad parameter setting."""
 
     # Input and output names
     rawfiles = ['scan_x.im', 'scan_y.im']
@@ -162,12 +162,12 @@ class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
         os.system('rm -rf ' + self.prefix + '*')
 
     def test000(self):
-        """Test 000: Default parameters"""
+        """Test 000: Default parameters."""
         # casatasks throw exception, CASA 5 tasks return False on failure
         self.assertRaises(Exception, sdfixscan)
 
     def test001(self):
-        """Test 001: only 1 image is given for Basket-Weaving"""
+        """Test 001: only 1 image is given for Basket-Weaving."""
         try:
             sdfixscan(infiles=[self.rawfiles[0]], mode='fft_mask', direction=[0.])
             self.assertTrue(False,
@@ -178,7 +178,7 @@ class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
                                 msg='Unexpected exception was thrown: %s' % (str(e)))
 
     def test002(self):
-        """Test 002: direction is not given for Basket-Weaving"""
+        """Test 002: direction is not given for Basket-Weaving."""
         try:
             sdfixscan(infiles=self.rawfiles, mode='fft_mask')
             self.assertTrue(False,
@@ -189,7 +189,7 @@ class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
                                 msg='Unexpected exception was thrown: %s' % (str(e)))
 
     def test003(self):
-        """Test 003: Multiple images are given for Press"""
+        """Test 003: Multiple images are given for Press."""
         try:
             sdfixscan(infiles=self.rawfiles, mode='model')
             self.assertTrue(False,
@@ -200,7 +200,7 @@ class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
                                 msg='Unexpected exception was thrown: %s' % (str(e)))
 
     def test004(self):
-        """Test 004: direction is not given for Press"""
+        """Test 004: direction is not given for Press."""
         try:
             sdfixscan(infiles=[self.rawfiles[0]], mode='model')
             self.assertTrue(False,
@@ -211,13 +211,13 @@ class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
                                 msg='Unexpected exception was thrown: %s' % (str(e)))
 
     def test005(self):
-        """Test 005: Existing output image file"""
+        """Test 005: Existing output image file."""
         shutil.copytree(os.path.join(self.datapath, self.rawfiles[0]), self.outfile)
         self.assertRaises(Exception, sdfixscan, infiles=self.rawfiles, mode='fft_mask',
                           direction=[0., 90.0], outfile=self.outfile, overwrite=False)
 
     def test006(self):
-        """Test 006: Zero beamsize for Press"""
+        """Test 006: Zero beamsize for Press."""
         self.assertRaises(Exception, sdfixscan, infiles=[self.rawfiles[0]],
                           mode='model', beamsize=0.0, direction=[0.], outfile=self.outfile,
                           overwrite=True)
@@ -228,8 +228,7 @@ class sdfixscan_test0(unittest.TestCase, sdfixscan_unittest_base):
 
 
 class sdfixscan_test1(unittest.TestCase, sdfixscan_unittest_base):
-    """
-    Test on Pressed method.
+    """Test on Pressed method.
 
     Test data, scan_x.im, is artificial data, which is
 
@@ -264,7 +263,7 @@ class sdfixscan_test1(unittest.TestCase, sdfixscan_unittest_base):
         os.system('rm -rf ' + self.prefix + '*')
 
     def test100(self):
-        """Test 100: Pressed method using whole pixels"""
+        """Test 100: Pressed method using whole pixels."""
         res = sdfixscan(infiles=self.rawfile, mode=self.mode, numpoly=0, beamsize=300.0,
                         smoothsize=2.0, direction=0.0, outfile=self.outfile, overwrite=True)
         self.assertEqual(res, None,
@@ -292,7 +291,7 @@ class sdfixscan_test1(unittest.TestCase, sdfixscan_unittest_base):
         self._checkstats(self.outfile, refstats)
 
     def test101(self):
-        """Test 101: Pressed method with certain threshold"""
+        """Test 101: Pressed method with certain threshold."""
         res = sdfixscan(infiles=self.rawfile, mode=self.mode, numpoly=2, beamsize=300.0,
                         smoothsize=2.0, direction=0.0, tmax=0.1, tmin=-0.1,
                         outfile=self.outfile, overwrite=True)
@@ -321,7 +320,7 @@ class sdfixscan_test1(unittest.TestCase, sdfixscan_unittest_base):
         self._checkstats(self.outfile, refstats)
 
     def test102(self):
-        """Test 102: Test mask in pressed method using whole pixels"""
+        """Test 102: Test mask in pressed method using whole pixels."""
         # add spurious to image and mask the spurious.
         my_ia = iatool()
         my_ia.open(self.rawfile)
@@ -375,7 +374,7 @@ class sdfixscan_test1(unittest.TestCase, sdfixscan_unittest_base):
         self.assertTrue((mask_out == mask_in).all(), "Unexpected mask in output image.")
 
     def test100_3d(self):
-        """Test 100_3d: Pressed method using whole pixels for 3D image"""
+        """Test 100_3d: Pressed method using whole pixels for 3D image."""
         drop_stokes_axis(self.rawfile, self.rawfilemod)
         self.assertTrue(os.path.exists(self.rawfilemod))
         res = sdfixscan(infiles=self.rawfilemod, mode=self.mode, numpoly=0, beamsize=300.0,
@@ -405,7 +404,7 @@ class sdfixscan_test1(unittest.TestCase, sdfixscan_unittest_base):
         self._checkstats(self.outfile, refstats)
 
     def test100_2d(self):
-        """Test 100_2d: Pressed method using whole pixels for 2D image"""
+        """Test 100_2d: Pressed method using whole pixels for 2D image."""
         drop_deg_axes(self.rawfile, self.rawfilemod)
         self.assertTrue(os.path.exists(self.rawfilemod))
         res = sdfixscan(infiles=self.rawfilemod, mode=self.mode, numpoly=0, beamsize=300.0,
@@ -440,8 +439,7 @@ class sdfixscan_test1(unittest.TestCase, sdfixscan_unittest_base):
 
 
 class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
-    """
-    Test on FFT based Basket-Weaving
+    """Test on FFT based Basket-Weaving.
 
     Test data, scan_x.im and scan_y.im, are artificial data, which is
 
@@ -480,7 +478,7 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
         os.system('rm -rf ' + self.prefix + '*')
 
     def test200(self):
-        """Test 200: FFT based Basket-Weaving using whole pixels"""
+        """Test 200: FFT based Basket-Weaving using whole pixels."""
         sdfixscan(infiles=self.rawfiles, mode=self.mode, direction=[0.0, 90.0],
                   maskwidth=20.0, outfile=self.outfile, overwrite=True)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -506,7 +504,7 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
         self._checkstats(self.outfile, refstats)
 
     def test201(self):
-        """Test 201: FFT based Basket-Weaving with certain threshold"""
+        """Test 201: FFT based Basket-Weaving with certain threshold."""
         sdfixscan(infiles=self.rawfiles, mode=self.mode, direction=[0.0, 90.0],
                   maskwidth=20.0, tmax=0.5, tmin=-0.1, outfile=self.outfile, overwrite=True)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -532,7 +530,7 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
         self._checkstats(self.outfile, refstats)
 
     def test202(self):
-        """Test 202: Test mask in FFT based Basket-Weaving using whole pixels"""
+        """Test 202: Test mask in FFT based Basket-Weaving using whole pixels."""
         # add spurious to images and mask the spurious pixels.
         spix = [10, 15]
         epix = [20, 25]
@@ -597,7 +595,7 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
         self.assertTrue((mask_out == mask_ref).all(), "Unexpected mask in output image.")
 
     def test203(self):
-        """Test 203: test for len(infiles) > len(direction)"""
+        """Test 203: test for len(infiles) > len(direction)."""
         infiles = self.rawfiles + self.rawfiles
         sdfixscan(infiles=infiles, mode=self.mode, direction=[0.0, 90.0],
                   maskwidth=20.0, outfile=self.outfile, overwrite=True)
@@ -624,7 +622,7 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
         self._checkstats(self.outfile, refstats)
 
     def test200_3d(self):
-        """Test 200_3d: FFT based Basket-Weaving using whole pixels for 3D image"""
+        """Test 200_3d: FFT based Basket-Weaving using whole pixels for 3D image."""
         for infile, outfile in zip(self.rawfiles, self.rawfilesmod):
             drop_stokes_axis(infile, outfile)
             self.assertTrue(os.path.exists(outfile))
@@ -653,7 +651,7 @@ class sdfixscan_test2(unittest.TestCase, sdfixscan_unittest_base):
         self._checkstats(self.outfile, refstats)
 
     def test200_2d(self):
-        """Test 200_2d: FFT based Basket-Weaving using whole pixels for 2D image"""
+        """Test 200_2d: FFT based Basket-Weaving using whole pixels for 2D image."""
         for infile, outfile in zip(self.rawfiles, self.rawfilesmod):
             drop_deg_axes(infile, outfile)
             self.assertTrue(os.path.exists(outfile))

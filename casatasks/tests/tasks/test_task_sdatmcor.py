@@ -197,7 +197,7 @@ class test_sdatmcor(unittest.TestCase):
             self.assertTrue(np.all(data_after == data_before))
 
     def check_result(self, spwprocess, on_source_only=False):
-        """Check Result
+        """Check Result.
 
         Args:
             spwprocess (dict): key is spw id, value is whether or not the spw is processed
@@ -211,38 +211,38 @@ class test_sdatmcor(unittest.TestCase):
             self._check_result_spw(spw, is_selected, is_processed, on_source_only)
 
     def test_sdatmcor_normal(self):
-        """test normal usage of sdatmcor"""
+        """Test normal usage of sdatmcor."""
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_explicit_atmtype(self):
-        """test specifying atmtype explicitly"""
+        """Test specifying atmtype explicitly."""
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', atmtype=2)
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_overwrite(self):
-        """test overwriting existing outfile"""
+        """Test overwriting existing outfile."""
         os.mkdir(self.outfile)
         self.assertTrue(os.path.exists(self.outfile))
         sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', overwrite=True)
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_no_overwrite(self):
-        """test to avoid overwriting existing outfile"""
+        """Test to avoid overwriting existing outfile."""
         os.mkdir(self.outfile)
         self.assertTrue(os.path.exists(self.outfile))
         with self.assertRaises(Exception):
             sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', overwrite=False)
 
     def test_sdatmcor_wrong_datacolumn(self):
-        """test wrong datacolumn"""
+        """Test wrong datacolumn."""
         wrong_colnames = ['corrected', 'float_data']
         for colname in wrong_colnames:
             with self.assertRaises(Exception):
                 sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn=colname)
 
     def test_sdatmcor_corrected(self):
-        """test if CORRECTED_DATA column is handled properly"""
+        """Test if CORRECTED_DATA column is handled properly."""
         # add CORRECTED_DATA column
         cb = calibrater()
         cb.open(self.infile, addcorr=True, addmodel=False)
@@ -251,63 +251,63 @@ class test_sdatmcor(unittest.TestCase):
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_spw_select_23(self):
-        """test data selection: select spw 23"""
+        """Test data selection: select spw 23."""
         sdatmcor(infile=self.infile, outputspw='23', outfile=self.outfile, datacolumn='data')
         self.check_result({23: True})
 
     def test_sdatmcor_spw_select_all(self):
-        """test data selection: select 19 and 23 explicitly"""
+        """Test data selection: select 19 and 23 explicitly."""
         sdatmcor(infile=self.infile, outputspw='19,23', outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_spw_process_19(self):
-        """test data selection: process only spw 19"""
+        """Test data selection: process only spw 19."""
         sdatmcor(infile=self.infile, spw='19', outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: False})
 
     def test_sdatmcor_spw_process_all(self):
-        """test data selection: declare to process 19 and 23 explicitly"""
+        """Test data selection: declare to process 19 and 23 explicitly."""
         sdatmcor(infile=self.infile, spw='19,23', outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_spw_process_23_select_23(self):
-        """test data selection: select and process spw 23"""
+        """Test data selection: select and process spw 23."""
         sdatmcor(infile=self.infile, spw='23', outputspw='23',
                  outfile=self.outfile, datacolumn='data')
         self.check_result({23: True})
 
     def test_sdatmcor_spw_process_all_select_19(self):
-        """test data selection: process spw 19 and 23 but output only spw 19"""
+        """Test data selection: process spw 19 and 23 but output only spw 19."""
         sdatmcor(infile=self.infile, spw='19,23', outputspw='19',
                  outfile=self.outfile, datacolumn='data')
         self.check_result({19: True})
 
     def test_sdatmcor_spw_process_23_select_all(self):
-        """test data selection: process only spw 23 but output both 19 and 23"""
+        """Test data selection: process only spw 23 but output both 19 and 23."""
         sdatmcor(infile=self.infile, spw='23', outputspw='19,23',
                  outfile=self.outfile, datacolumn='data')
         self.check_result({19: False, 23: True})
 
     def test_sdatmcor_spw_process_99_select_all(self):
-        """test data selection: specify invalid spw to process"""
+        """Test data selection: specify invalid spw to process."""
         with self.assertRaises(Exception):
             sdatmcor(infile=self.infile, spw='19,99', outputspw='19,23',
                      outfile=self.outfile, datacolumn='data')
 
     def test_sdatmcor_intent_selection(self):
-        """test intent selection: test if selection of ON_SOURCE data (i.e. excluding OFF_SOURCE data) still works"""
+        """Test intent selection: test if selection of ON_SOURCE data (i.e. excluding OFF_SOURCE data) still works."""
         sdatmcor(infile=self.infile, outfile=self.outfile,
                  intent='OBSERVE_TARGET#ON_SOURCE*', datacolumn='data')
         self.check_result({19: True, 23: True}, on_source_only=True)
 
     def test_sdatmcor_spw_process_less_than_20_select_all(self):
-        """test data selection: specify invalid spw to process"""
+        """Test data selection: specify invalid spw to process."""
         sdatmcor(infile=self.infile, spw='<20', outputspw='',
                  outfile=self.outfile, datacolumn='data')
         self.check_result({19: True, 23: False})
 
     def test_sdatmcor_scan_selection(self):
-        """test data selection: select only one scan (scan 5)"""
+        """Test data selection: select only one scan (scan 5)."""
         # just to confirm the task completes without error
         try:
             sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data', scan='5')
@@ -315,12 +315,12 @@ class test_sdatmcor(unittest.TestCase):
             self.fail('sdatmcor should not raise any Exception')
 
     def test_sdatmcor_antenna_selection(self):
-        """Test antenna selection"""
+        """Test antenna selection."""
         sdatmcor(infile=self.infile, antenna='PM02', outfile=self.outfile)
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_msselect(self):
-        """Test msselect"""
+        """Test msselect."""
         sdatmcor(infile=self.infile, msselect='ANTENNA1 == 1', outfile=self.outfile)
         self.check_result({19: True, 23: True})
 
@@ -328,7 +328,7 @@ class test_sdatmcor(unittest.TestCase):
             sdatmcor(infile=self.infile, msselect='ANTENNA1 == 2', outfile=self.outfile)
 
     def test_sdatmcor_gainfactor_float(self):
-        """test gainfactor: float input"""
+        """Test gainfactor: float input."""
         gainfactor = 10.0
         apply_gainfactor(self.infile, 19, gainfactor)
         apply_gainfactor(self.infile, 23, gainfactor)
@@ -336,7 +336,7 @@ class test_sdatmcor(unittest.TestCase):
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_gainfactor_dict(self):
-        """test gainfactor: dict input"""
+        """Test gainfactor: dict input."""
         gainfactor = {'19': 10.0, '23': 45.0}
         apply_gainfactor(self.infile, 19, gainfactor['19'])
         apply_gainfactor(self.infile, 23, gainfactor['23'])
@@ -344,7 +344,7 @@ class test_sdatmcor(unittest.TestCase):
         self.check_result({19: True, 23: True})
 
     def test_sdatmcor_gainfactor_caltable(self):
-        """test gainfactor: caltable input"""
+        """Test gainfactor: caltable input."""
         gainfactor = {'19': 10.0, '23': 45.0}
         for k, v in gainfactor.items():
             p = 1 / np.sqrt(v)
@@ -355,12 +355,12 @@ class test_sdatmcor(unittest.TestCase):
         self.check_result({19: True, 23: True})
 
     def test_parse_gainfactor_exception(self):
-        """test exception raised in parse_gainfactor"""
+        """Test exception raised in parse_gainfactor."""
         with self.assertRaises(RuntimeError):
             sdatmcor_impl.parse_gainfactor(self.infile)
 
     def test_parse_spw(self):
-        """test utility functio, parse_spw"""
+        """Test utility functio, parse_spw."""
         test_cases = [
             ('', [19, 23]),
             ('*', [19, 23]),
@@ -389,7 +389,7 @@ class test_sdatmcor(unittest.TestCase):
                     actual = sdatmcor_impl.parse_spw(self.infile, spw)
 
     def test_tweak_antenna_selection(self):
-        """Test tweak of antenna selection"""
+        """Test tweak of antenna selection."""
         # common test cases
         test_cases0 = [
             ('', ''),
@@ -423,7 +423,7 @@ class test_sdatmcor(unittest.TestCase):
             self.assertEqual(actual, expected)
 
     def test_get_default_antenna(self):
-        """test get_default_antenna and relevant function"""
+        """Test get_default_antenna and relevant function."""
         duration_ref = {
             'PM01': 1024.320,
             'PM02': 1019.808,
@@ -442,7 +442,7 @@ class test_sdatmcor(unittest.TestCase):
         self.assertEqual(default_antenna, 1)
 
     def test_default_antenna_with_selection(self):
-        """Test default antenna determination with data selection excluding the best one"""
+        """Test default antenna determination with data selection excluding the best one."""
         # check if the "best" antenna is not in the MAIN table
         with table_manager(os.path.join(self.infile, 'ANTENNA'), nomodify=False) as tb:
             # replace antenna name to simulate the data selection excluding PM02
@@ -453,7 +453,7 @@ class test_sdatmcor(unittest.TestCase):
         self.check_result({19: True, 23: False})
 
     def test_default_antenna_with_no_flag_commands(self):
-        """Test default antenna determination for empty FLAG_CMD table"""
+        """Test default antenna determination for empty FLAG_CMD table."""
         # check if the task can handle empty FLAG_CMD table
         with table_manager(os.path.join(self.infile, 'FLAG_CMD'), nomodify=False) as tb:
             for i in range(tb.nrows()):
@@ -463,7 +463,7 @@ class test_sdatmcor(unittest.TestCase):
         self.check_result({19: True, 23: True})
 
     def test_custom_atm_params(self):
-        """Test customized ATM parameters"""
+        """Test customized ATM parameters."""
         sdatmcor(
             infile=self.infile, outfile=self.outfile, datacolumn='data',
             dtem_dh='-5.7K/km', h0='2010m',
@@ -475,7 +475,7 @@ class test_sdatmcor(unittest.TestCase):
         self.check_result({19: True, 23: True})
 
     def test_custom_atm_params_nounit(self):
-        """Test customized ATM parameters (no unit)"""
+        """Test customized ATM parameters (no unit)."""
         sdatmcor(
             infile=self.infile, outfile=self.outfile, datacolumn='data',
             dtem_dh=-5.7, h0=2.01,
@@ -487,7 +487,7 @@ class test_sdatmcor(unittest.TestCase):
         self.check_result({19: True, 23: True})
 
     def test_custom_atm_params_non_conform_list_input(self):
-        """Test customized ATM parameters: non-conform layerboundaries and layertemperature"""
+        """Test customized ATM parameters: non-conform layerboundaries and layertemperature."""
         with self.assertRaises(Exception):
             sdatmcor(
                 infile=self.infile, outfile=self.outfile, datacolumn='data',

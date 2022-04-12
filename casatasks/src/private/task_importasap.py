@@ -72,7 +72,7 @@ def importasap(infile=None, outputvis=None, flagbackup=None, overwrite=None, par
 
 
 def _is_scantable(filename):
-    """Check if given data is Scantable or not"""
+    """Check if given data is Scantable or not."""
     ret = False
     if os.path.isdir(filename) and os.path.exists(filename + '/table.info') \
             and os.path.exists(filename + '/table.dat'):

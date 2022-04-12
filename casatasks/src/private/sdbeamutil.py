@@ -45,13 +45,13 @@ class TheoreticalBeam:
         self.cell_arcsec = []
 
     def __to_arcsec_list(self, angle):
-        """return a list of angles in arcsec (value only without unit)"""
+        """Return a list of angles in arcsec (value only without unit)."""
         if type(angle) not in [list, tuple, np.ndarray]:
             angle = [angle]
         return [self.__to_arcsec(val) for val in angle]
 
     def __to_arcsec(self, angle):
-        """convert angle to arcsec and return the value without unit."""
+        """Convert angle to arcsec and return the value without unit."""
         my_qa = quanta()
         if my_qa.isangle(angle):
             return my_qa.getvalue(my_qa.convert(angle, "arcsec"))[0]
@@ -61,9 +61,9 @@ class TheoreticalBeam:
             raise ValueError("Invalid angle: %s" % (str(angle)))
 
     def __parse_width(self, val, cell_size_arcsec):
-        """
-        Convert value in unit of arcsec
-        if val is angle, returns a float value in unit of arcsec.
+        """Convert value in unit of arcsec.
+
+        If val is angle, returns a float value in unit of arcsec.
         else the unit is assumed to be pixel and multiplied by cell_size_arcsec
         """
         my_qa = quanta()
@@ -75,8 +75,8 @@ class TheoreticalBeam:
             raise ValueError("Invalid width %s" % str(val))
 
     def set_antenna(self, diam, blockage="0.0m", taper=10):
-        """
-        set parameters to construct antenna beam
+        """Set parameters to construct antenna beam.
+
         antenna diameter and blockage
         taper: the illumination taper in dB
         """
@@ -88,8 +88,8 @@ class TheoreticalBeam:
         self.is_antenna_set = True
 
     def set_sampling(self, intervals, pa="0deg"):
-        """
-        Aet sampling interval of observation
+        """Set sampling interval of observation.
+
         intervals: pointing inteval of observation (['10arcsec','10arcsec'])
         pa: position angle (NOT USED)
         """
@@ -100,8 +100,8 @@ class TheoreticalBeam:
 
     def set_image_param(self, cell, ref_freq, gridfunction,
                         convsupport, truncate, gwidth, jwidth, is_alma=False):
-        """
-        Set imaging parameters
+        """Set imaging parameters.
+
         cell: image pixel size
         ref_freq: reference frequency of image to calculate beam size
         gridfunction, convsupport, truncate, gwidth, jwidth:
@@ -124,33 +124,33 @@ class TheoreticalBeam:
         self.is_kernel_set = True
 
     def __set_sf_kernel(self, convsupport):
-        """Set SF kernel parameter to the class"""
+        """Set SF kernel parameter to the class."""
         self.kernel_type = "SF"
         self.kernel_param = dict(convsupport=convsupport)
 
     def __set_gjinc_kernel(self, truncate, gwidth, jwidth):
-        """Set GJINC kernel parameter to the class"""
+        """Set GJINC kernel parameter to the class."""
         self.kernel_type = "GJINC"
         self.kernel_param = dict(truncate=truncate, gwidth=gwidth, jwidth=jwidth)
 
     def __set_gauss_kernel(self, truncate, gwidth):
-        """Set GAUSS kernel parameter to the class"""
+        """Set GAUSS kernel parameter to the class."""
         self.kernel_type = "GAUSS"
         self.kernel_param = dict(truncate=truncate, gwidth=gwidth)
 
     def __set_box_kernel(self, width):
-        """Set BOX kernel parameter to the class"""
+        """Set BOX kernel parameter to the class."""
         self.kernel_type = "BOX"
         self.kernel_param = dict(width=width)
 
     def __set_pb_kernel(self, alma=False):
-        """Set PB kernel parameter to the class"""
+        """Set PB kernel parameter to the class."""
         self.kernel_type = "PB"
         self.kernel_param = dict(alma=alma)
 
     def get_beamsize_image(self):
-        """
-        Returns FWHM of theoretical beam size in image.
+        """Return FWHM of theoretical beam size in image.
+
         The FWHM is derived by fitting gridded beam with Gaussian function.
         """
         # assert necessary information is set
@@ -217,23 +217,23 @@ class TheoreticalBeam:
                     pa=self.pa)
 
     def __assert_antenna(self):
-        """Raise an error if antenna information is not set"""
+        """Raise an error if antenna information is not set."""
         if not self.is_antenna_set:
             raise RuntimeError("Antenna is not set")
 
     def __assert_kernel(self):
-        """Raise an error if imaging parameters are not set"""
+        """Raise an error if imaging parameters are not set."""
         if not self.is_kernel_set:
             raise RuntimeError("Kernel is not set.")
 
     def __assert_sampling(self):
-        """Raise an error if sampling information is not set"""
+        """Raise an error if sampling information is not set."""
         if not self.is_sampling_set:
             raise RuntimeError("Sampling information is not set")
 
     def get_antenna_beam(self):
-        """
-        Returns arrays of antenna beam response and it's horizontal axis
+        """Return arrays of antenna beam response and it's horizontal axis.
+
         Picked from AnalysisUtils (revision 1.2204, 2015/02/18)
         """
         self.__assert_antenna()
@@ -277,7 +277,7 @@ class TheoreticalBeam:
             return myxaxis, myfunction
 
     def get_kernel(self, axis):
-        """Returns imaging kernel array"""
+        """Return imaging kernel array."""
         self.__assert_kernel()
         if self.kernel_type == "SF":
             # TODO: what to do for cell[0]!=cell[1]???
@@ -308,7 +308,7 @@ class TheoreticalBeam:
             raise RuntimeError("Invalid kernel: %s" % self.kernel_type)
 
     def summary(self):
-        """Print summary of parameters set to the class"""
+        """Print summary of parameters set to the class."""
         casalog.post("=" * 40)
         casalog.post("Summary of Image Beam Parameters")
         casalog.post("=" * 40)
@@ -325,7 +325,7 @@ class TheoreticalBeam:
         casalog.post("Not set.")
 
     def __antenna_summary(self):
-        """Print summary of antenna setup"""
+        """Print summary of antenna setup."""
         if not self.is_antenna_set:
             self.__notset_message()
             return
@@ -333,7 +333,7 @@ class TheoreticalBeam:
         casalog.post("blockage: %f m" % (self.antenna_block_m))
 
     def __kernel_summary(self):
-        """Print summary of imaging parameter setup"""
+        """Print summary of imaging parameter setup."""
         if not self.is_kernel_set:
             self.__notset_message()
             return
@@ -344,7 +344,7 @@ class TheoreticalBeam:
             casalog.post("%s: %s" % (key, str(val)))
 
     def __sampling_summary(self):
-        """Print summary of sampling setup"""
+        """Print summary of sampling setup."""
         if not self.is_sampling_set:
             self.__notset_message()
             return
@@ -359,8 +359,8 @@ class TheoreticalBeam:
     # BOX
     #
     def get_box_kernel(self, axis, width):
-        """
-        Returns a box kernel array with specified width.
+        """Return a box kernel array with specified width.
+
         axis: an array of xaxis values
         width: kernel width
         output array
@@ -376,8 +376,8 @@ class TheoreticalBeam:
     # SF
     #
     def get_sf_kernel(self, axis, convsupport, cell_size):
-        """
-        Returns spheroidal kernel array
+        """Return spheroidal kernel array.
+
         axis: an array of xaxis values
         convsupport: the truncation radius of SF kernel in pixel unit.
         cell_size: image pixel size
@@ -397,8 +397,8 @@ class TheoreticalBeam:
         return mysf
 
     def spheroidalWaveFunction(self, x, m=0, n=0, c=0, alpha=0):
-        """
-        Returns spheroidal wave function
+        """Return spheroidal wave function.
+
         Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
         """
         if (type(x) != list and type(x) != np.ndarray):
@@ -421,8 +421,8 @@ class TheoreticalBeam:
     # GAUSS
     #
     def get_gauss_kernel(self, axis, truncate, gwidth, cell_arcsec):
-        """
-        Returns a gaussian kernel array
+        """Return a gaussian kernel array.
+
         axis : an array of xaxis values
         truncate : truncation radius
             NOTE definition is different from truncate in gauss()!
@@ -444,8 +444,9 @@ class TheoreticalBeam:
         return result
 
     def gauss(self, x, parameters):
-        """
-        Computes the value of the Gaussian function at the specified
+        """Compute the value of the Gaussian function.
+
+        Compute the value of the Gaussian function at the specified
         location(s) with respect to the peak (which is assumed to be at x=0).
         truncate: if not None, then set result to zero if below this value.
         -Todd Hunter
@@ -467,8 +468,8 @@ class TheoreticalBeam:
     # GJINC
     #
     def get_gjinc_kernel(self, axis, truncate, gwidth, jwidth, cell_arcsec):
-        """
-        Returns a GJinc kernel array
+        """Return a GJinc kernel array.
+
         axis : an array of xaxis values
         truncate : truncation radius (NOT SUPPORTED YET)
         gwidth jwidth : kernel gwidth
@@ -486,7 +487,7 @@ class TheoreticalBeam:
         return mygjinc
 
     def gjinc(self, x, gwidth, jwidth, useCasaJinc=False, normalize=False):
-        """Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)"""
+        """Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)."""
         if (useCasaJinc):
             result = self.grdjinc1(x, jwidth, normalize) * self.gjincGauss(x, gwidth)
         else:
@@ -494,7 +495,7 @@ class TheoreticalBeam:
         return result
 
     def grdjinc1(self, val, c, normalize=True):
-        """Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)"""
+        """Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)."""
         # Casa's function
         # // Calculate J_1(x) using approximate formula
         xs = np.pi * val / c
@@ -534,7 +535,8 @@ class TheoreticalBeam:
         return(result)
 
     def jinc(self, x, jwidth):
-        """
+        """Compute JINC value.
+
         The peak of this function is 0.5.
         Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)
         """
@@ -554,7 +556,8 @@ class TheoreticalBeam:
     # Airly disk
     #
     def get_pb_kernel(self, axis, diam, ref_freq, epsilon=0.0):
-        """
+        """Return Airy Disk array.
+
         Return Airy Disk array defined by the axis, diameter, reference frequency
         and ratio of central hole and antenna diameter
 
@@ -576,7 +579,8 @@ class TheoreticalBeam:
 
     def buildAiryDisk(self, fwhm, xaxisLimitInUnitsOfFwhm, convolutionPixelSize,
                       truncate=False, obscuration=0.75, diameter=12.0):
-        """
+        """Build airy disk.
+
         This function computes the Airy disk (with peak of 1.0) across a grid of points
         specified in units of the FWHM of the disk.
         fwhm: a value in arcsec
@@ -608,7 +612,8 @@ class TheoreticalBeam:
         return(myxaxis, a)
 
     def rootAiryIntensity(self, myxaxis, epsilon=0.0, showplot=False):
-        """
+        """Compute the value of 2*J1(x)/x.
+
         This function computes 2*J1(x)/x, which can be squared to get an Airy disk.
         myxaxis: the x-axis values to use
         epsilon: radius of central hole in units of the dish diameter
@@ -623,7 +628,8 @@ class TheoreticalBeam:
         return(a)
 
     def trunc(self, result):
-        """
+        """Truncate a list at the first null.
+
         Truncates a list at the first null on both sides of the center,
         starting at the center and moving outward in each direction.
         Assumes the list is positive in the center, e.g. a Gaussian beam.
@@ -650,12 +656,13 @@ class TheoreticalBeam:
         return result
 
     def gaussfit_errfunc(self, parameters, x, y):
-        """Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)"""
+        """Migrated from AnalysisUtils (revision 1.2204, 2015/02/18)."""
         return (y - self.gauss(x, parameters))
 
     def gaussfit(self, x, y, showplot=False, minlevel=0, verbose=False,
                  title=None, truncate=False):
-        """
+        """Perform 1D Gaussian fit.
+
         Fits a 1D Gaussian assumed to be centered at x=0 with amp=1 to the
         specified data, with an option to truncate it at some level.
         Returns the FWHM and truncation point.
@@ -701,10 +708,10 @@ class TheoreticalBeam:
 
 
 def findFWHM(x, y, level=0.5, s=0):
-    """
-    Measures the FWHM of the specified profile.  This works
-    well in a noise-free environment.  The data are assumed to
-    be sorted by the x variable.
+    """Measure the FWHM of the specified profile.
+
+    This works well in a noise-free environment.
+    The data are assumed to be sorted by the x variable.
     x: the position variable
     y: the intensity variable
     level: the signal level for which to find the full width
@@ -735,8 +742,8 @@ def findFWHM(x, y, level=0.5, s=0):
 
 def primaryBeamArcsec(frequency, diameter, obscuration, taper,
                       showEquation=True, use2007formula=True, fwhmfactor=None):
-    """
-    Implements the Baars formula: b*lambda / D.
+    """Implement the Baars formula: b*lambda / D.
+
       if use2007formula==False, use the formula from ALMA Memo 456
       if use2007formula==True, use the formula from Baars 2007 book
         (see au.baarsTaperFactor)
@@ -777,7 +784,8 @@ def primaryBeamArcsec(frequency, diameter, obscuration, taper,
 
 def effectiveTaper(fwhmFactor=1.16, diameter=12, obscuration=0.75,
                    use2007formula=True):
-    """
+    """Compute effective taper from constant factor for illumination pattern.
+
     The inverse of (Baars formula multiplied by the central
     obstruction factor).  Converts an observed value of the constant X in
     the formula FWHM=X*lambda/D into a taper in dB (positive value).
@@ -804,7 +812,8 @@ def effectiveTaper(fwhmFactor=1.16, diameter=12, obscuration=0.75,
 
 
 def baarsTaperFactor(taper_dB, use2007formula=True):
-    """
+    """Convert a taper to the constant factor for illumination pattern.
+
     Converts a taper in dB to the constant X
     in the formula FWHM=X*lambda/D for the parabolic illumination pattern.
     We assume that taper_dB comes in as a positive value.
@@ -821,7 +830,8 @@ def baarsTaperFactor(taper_dB, use2007formula=True):
 
 
 def centralObstructionFactor(diameter=12.0, obscuration=0.75):
-    """
+    """Compute the scale factor of an Airy pattern.
+
     Computes the scale factor of an Airy pattern as a function of the
     central obscuration, using Table 10.1 of Schroeder's 'Astronomical Optics'.
     -- Todd Hunter

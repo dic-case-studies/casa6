@@ -25,7 +25,7 @@ def sdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent,
 
 
 def is_string_type(val):
-    """Returns True if the argument is string type."""
+    """Return True if the argument is string type."""
     return type(val) in [str, numpy.string_]
 
 
@@ -111,7 +111,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
             self.convsupport = -1
 
     def __format_spw_string(self, spw):
-        """Returns formatted spw selection string which is accepted by imager."""
+        """Return formatted spw selection string which is accepted by imager."""
         if type(spw) != str:
             raise ValueError("The parameter should be string.")
         if spw.strip() == '*':
@@ -122,7 +122,8 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         return spw
 
     def __format_quantum_unit(self, data, unit):
-        """
+        """Format quantity data.
+
         Returns False if data has an unit which in not a variation of
         input unit.
         Otherwise, returns input data as a quantum string. The input
@@ -137,7 +138,8 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         return None
 
     def __check_selection_length(self, data, nfile):
-        """
+        """Check length of the data.
+
         Returns true if data is either a string, an array with length
         1 or nfile
         """
@@ -146,8 +148,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
         return True
 
     def get_selection_param_for_ms(self, fileid, param):
-        """
-        Returns valid selection string for a certain ms
+        """Return valid selection string for a certain ms.
 
         Arguments
             fileid : file idx in infiles list
@@ -161,8 +162,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
             return param[fileid]
 
     def get_selection_idx_for_ms(self, file_idx):
-        """
-        Returns a dictionary of selection indices for i-th MS in infiles
+        """Return a dictionary of selection indices for i-th MS in infiles.
 
         Argument: file idx in infiles list
         """
@@ -204,7 +204,7 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
             raise ValueError("Invalid file index, %d" % file_idx)
 
     def format_ac_baseline(self, in_antenna):
-        """format auto-correlation baseline string from antenna idx list."""
+        """Format auto-correlation baseline string from antenna idx list."""
         # exact match string
         if is_string_type(in_antenna):
             # return sdutil.convert_antenna_spec_autocorr(in_antenna)
@@ -707,7 +707,8 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
                 priority='WARN')
 
     def _calc_PB(self, antenna):
-        """
+        """Calculate the primary beam size of antenna.
+
         Calculate the primary beam size of antenna, using dish diamenter
         and rest frequency
         Average antenna diamter and reference frequency are adopted for

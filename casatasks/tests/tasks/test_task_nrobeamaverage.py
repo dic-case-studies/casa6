@@ -30,7 +30,7 @@ datapath = ctsys.resolve('unittest/nrobeamaverage/')
 
 
 def check_eq(val, expval, tol=None):
-    """Checks that val matches expval within tol."""
+    """Check that val matches expval within tol."""
     if type(val) == dict:
         for k in val:
             check_eq(val[k], expval[k], tol)

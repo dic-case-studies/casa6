@@ -59,8 +59,8 @@ ms = mstool()
 
 
 def construct_refstat_uniform(fluxval, blc_data, trc_data):
-    """
-    Return a dictionary of analytic reference statistics of uniform image
+    """Return a dictionary of analytic reference statistics of uniform image.
+
     Arguments:
         fluxval  : the uniform flux of the image
         blc_data : blc of un-masked pixel (e.g., [0,0,0,0] for whole image)
@@ -81,7 +81,8 @@ def construct_refstat_uniform(fluxval, blc_data, trc_data):
 
 
 def merge_dict(d1, d2):
-    """
+    """Merge two dictionaries into one.
+
     Out of place merge of two dictionaries.
     If both dictionary has the same keys, value of the second
     dictionary is adopted.
@@ -94,8 +95,8 @@ def merge_dict(d1, d2):
 
 
 def remove_tables_starting_with(filename):
-    """
-    Remove files/directories/symlinks 'filename*'.
+    """Remove files/directories/symlinks 'filename*'.
+
     For filename, '', '.' and those starting with '..' are not allowed.
     """
     if filename == '.' or filename[:2] == '..':
@@ -111,8 +112,8 @@ def remove_tables_starting_with(filename):
 
 
 def remove_table(filename):
-    """
-    Remove a single directory.
+    """Remove a single directory.
+
     For filename, '.' and those starting with '..' are not allowed.
     """
     if filename == '.' or filename[:2] == '..':
@@ -249,7 +250,7 @@ class FileManager:
             os.chmod(path, new_mode)
 
     def smart_copy(self, file_basename):
-        """Copy a dataset from casatestdata only when strictly required"""
+        """Copy a dataset from casatestdata only when strictly required."""
         self.assert_workdir_did_not_changed()
         self.assert_is_valid(file_basename)
         log_origin = 'smart_copy'
@@ -315,8 +316,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
     # for easier readbility and maintenance.
     # sdimaging_standard_paramset is no longer of common interest.
     # We can use it, but not derive from it.
-    """
-    Base class for sdimaging unit test
+    """Base class for sdimaging unit test.
 
     Test data is originally FLS3_all_newcal_SP and created
     by the following script:
@@ -374,8 +374,8 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
 
     def run_test_common(self, task_param, refstats, shape, refbeam=None,
                         atol=1.e-8, rtol=1.e-5, compstats=None, ignoremask=True):
-        """
-        Run sdimaging and test results.
+        """Run sdimaging and test results.
+
         A list of tests:
         (1) task completes without an error
         (2) ouput image and weight image exist
@@ -467,7 +467,8 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
 
     def _checkstats(self, name, ref, compstats=None, atol=1.e-8, rtol=1.e-5,
                     region=None, ignoremask=False):
-        """
+        """Check image statistics.
+
         A test function to compare statistics of an image with reference
         values.
         Arguments:
@@ -570,7 +571,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
         return inval[0:2]
 
     def _check_beam(self, image, ref_beam):
-        """Check image beam size"""
+        """Check image beam size."""
         _ia.open(image)
         beam = _ia.restoringbeam()
         _ia.close()
@@ -615,7 +616,7 @@ class sdimaging_unittest_base(unittest.TestCase, sdimaging_standard_paramset):
 
 
 class sdimaging_test0(sdimaging_unittest_base):
-    """Test on bad parameter setting"""
+    """Test on bad parameter setting."""
 
     # Input and output names
     prefix = sdimaging_unittest_base.taskname + 'Test0'
@@ -644,59 +645,59 @@ class sdimaging_test0(sdimaging_unittest_base):
         self.assertTrue(self.cache_validator.validate())
 
     def test000(self):
-        """Test 000: Default parameters"""
+        """Test 000: Default parameters."""
         # argument verification error
         task_param = {}
         msg = 'list index out of range'
         self.run_parameter_verification_test(task_param, msg, expected_type=IndexError)
 
     def test001(self):
-        """Test001: Bad mode"""
+        """Test001: Bad mode."""
         # argument verification error
         task_param = dict(infiles=self.rawfile, mode='badmode', intent='', outfile=self.outfile)
         msg = 'unallowed'
         self.run_parameter_verification_test(task_param, msg, expected_type=AssertionError)
 
     def test002(self):
-        """Test002: Bad field id"""
+        """Test002: Bad field id."""
         self.task_param['field'] = self.badid
         msg = 'Field Expression: Partial or no match for Field ID list [{0}]'.format(self.badid)
         self.run_exception_case(self.task_param, msg)
 
     def test003(self):
-        """Test003: Bad spectral window id"""
+        """Test003: Bad spectral window id."""
         self.task_param['spw'] = self.badid
         msg = 'Spw Expression: No match found for {0}'.format(self.badid)
         self.run_exception_case(self.task_param, msg)
 
     def test004(self):
-        """Test004: Bad antenna id"""
+        """Test004: Bad antenna id."""
         self.task_param['antenna'] = self.badid
         msg = 'No match found for the antenna specificion'
         self.run_exception_case(self.task_param, msg)
 
     def test005(self):
-        """Test005: Bad stokes parameter"""
+        """Test005: Bad stokes parameter."""
         # argument verification error
         self.task_param['stokes'] = 'BAD'
         msg = 'unallowed'
         self.run_parameter_verification_test(self.task_param, msg, expected_type=AssertionError)
 
     def test006(self):
-        """Test006: Bad gridfunction"""
+        """Test006: Bad gridfunction."""
         # argument verification error
         task_param = dict(infiles=self.rawfile, gridfunction='BAD', intent='', outfile=self.outfile)
         msg = 'unallowed'
         self.run_parameter_verification_test(task_param, msg, expected_type=AssertionError)
 
     def test007(self):
-        """Test007: Bad scanlist"""
+        """Test007: Bad scanlist."""
         self.task_param['scan'] = self.badid
         msg = 'Data selection ended with 0 rows'
         self.run_exception_case(self.task_param, msg)
 
     def test008(self):
-        """Test008: Existing outfile with overwrite=False"""
+        """Test008: Existing outfile with overwrite=False."""
         outfile = self.outfile + image_suffix
         f = open(outfile, 'w')
         print('existing file', file=f)
@@ -706,13 +707,13 @@ class sdimaging_test0(sdimaging_unittest_base):
         self.run_exception_case(self.task_param, msg)
 
     def test009(self):
-        """Test009: Bad phasecenter string"""
+        """Test009: Bad phasecenter string."""
         self.task_param['phasecenter'] = 'This is bad'
         msg = 'Error in converting \'{0}\' to MDirection.'.format(self.task_param['phasecenter'])
         self.run_exception_case(self.task_param, msg)
 
     def test010(self):
-        """Test010: Bad phasecenter reference (CHANGED: raise an error)"""
+        """Test010: Bad phasecenter reference (CHANGED: raise an error)."""
         # older sdimaging was so kind that it assumed J2000 when unrecognized direction frame
         # was given in the new tsdimaging raises an error in such case
         false_phasecenter = self.phasecenter.replace('J2000', 'J3000')
@@ -735,7 +736,7 @@ class sdimaging_test0(sdimaging_unittest_base):
 #         self.assertTrue(ret)
 
     def test011(self):
-        """Test011: Bad pointingcolumn name"""
+        """Test011: Bad pointingcolumn name."""
         # argument verification error
         task_param = dict(
             infiles=self.rawfile, outfile=self.outfile, intent='', cell=self.cell,
@@ -744,21 +745,21 @@ class sdimaging_test0(sdimaging_unittest_base):
         self.run_parameter_verification_test(task_param, msg, expected_type=AssertionError)
 
     def test012(self):
-        """Test012: Bad imsize"""
+        """Test012: Bad imsize."""
         self.task_param['imsize'] = [1, 0]
         msg = 'Error in building Coordinate System and Image Shape : ' + \
               'Internal Error : Image shape is invalid :'
         self.run_exception_case(self.task_param, msg)
 
     def test013(self):
-        """Test013: Bad cell size"""
+        """Test013: Bad cell size."""
         self.task_param['cell'] = [0., 0.]
         msg = 'Error in building Coordinate System and Image Shape : ' + \
               'wcs wcsset_error: Linear transformation matrix is singular'
         self.run_exception_case(self.task_param, msg)
 
     def test014(self):
-        """Test014: Too fine resolution (smaller than original channel width"""
+        """Test014: Too fine resolution (smaller than original channel width."""
         specunit = 'GHz'
         start = '%f%s' % (1.4202, specunit)
         width = '%e%s' % (1.0e-10, specunit)
@@ -769,7 +770,7 @@ class sdimaging_test0(sdimaging_unittest_base):
         self.run_exception_case(self.task_param, msg)
 
     def test015(self):
-        """Test015: negative minweight"""
+        """Test015: negative minweight."""
         task_param = dict(
             infiles=self.rawfile, outfile=self.outfile, intent='',
             cell=self.cell, imsize=self.imsize, phasecenter=self.phasecenter, minweight=-1.)
@@ -781,9 +782,9 @@ class sdimaging_test0(sdimaging_unittest_base):
 # Test channel imaging
 ###
 class sdimaging_test1(sdimaging_unittest_base):
-    """
-    Test channel imaging
+    """Test channel imaging.
 
+    List of tests:
        - integrated image
        - full channel image
        - selected channel image
@@ -826,14 +827,14 @@ class sdimaging_test1(sdimaging_unittest_base):
         self.assertTrue(self.cache_validator.validate())
 
     def test100(self):
-        """Test 100: Integrated image"""
+        """Test 100: Integrated image."""
         self.task_param.update(dict(nchan=1, start=0, width=self.ms_nchan))
         outshape = (self.imsize[0], self.imsize[1], 1, 1)
         self.run_test_common(self.task_param, self.statsinteg, outshape, compstats=self.keys,
                              ignoremask=True)
 
     def test101(self):
-        """Test 101: Full channel image (nchan = -1)"""
+        """Test 101: Full channel image (nchan = -1)."""
         self.task_param.update(dict(nchan=-1, start="", width=""))
         outshape = (self.imsize[0], self.imsize[1], 1, self.ms_nchan)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -856,7 +857,7 @@ class sdimaging_test1(sdimaging_unittest_base):
                              ignoremask=True)
 
     def test102(self):
-        """Test 102: Full channel image"""
+        """Test 102: Full channel image."""
         tb.open(self.rawfile)
         if 'FLOAT_DATA' in tb.colnames():
             nchan = tb.getcell('FLOAT_DATA').shape[1]
@@ -889,7 +890,7 @@ class sdimaging_test1(sdimaging_unittest_base):
                              ignoremask=True)
 
     def test103(self):
-        """Test 103: Selected channel image"""
+        """Test 103: Selected channel image."""
         outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
                     'blcf': '17:32:18.690, +57.37.28.536, I, 1.42038e+09Hz',
@@ -913,7 +914,7 @@ class sdimaging_test1(sdimaging_unittest_base):
                              compstats=self.keys, ignoremask=True)
 
     def test104(self):
-        """Test 104: Box-car gridding"""
+        """Test 104: Box-car gridding."""
         self.task_param.update(dict(gridfunction='BOX'))
         outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -938,7 +939,7 @@ class sdimaging_test1(sdimaging_unittest_base):
                              compstats=self.keys, ignoremask=True)
 
     def test105(self):
-        """Test 105: Prolate Spheroidal gridding"""
+        """Test 105: Prolate Spheroidal gridding."""
         self.task_param.update(dict(gridfunction='SF'))
         outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -967,7 +968,7 @@ class sdimaging_test1(sdimaging_unittest_base):
                              compstats=self.keys, ignoremask=True)
 
     def test106(self):
-        """Test 106: Imaging two polarization separately (XX and YY, not Stokes I)"""
+        """Test 106: Imaging two polarization separately (XX and YY, not Stokes I)."""
         self.task_param.update(dict(stokes='XXYY', gridfunction='PB'))
         outshape = (self.imsize[0], self.imsize[1], 2, self.nchan)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -990,7 +991,7 @@ class sdimaging_test1(sdimaging_unittest_base):
                              ignoremask=True)
 
     def test107(self):
-        """Test 107: Gaussian gridding"""
+        """Test 107: Gaussian gridding."""
         self.task_param.update(dict(gridfunction='GAUSS'))
         outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -1015,7 +1016,7 @@ class sdimaging_test1(sdimaging_unittest_base):
                              compstats=self.keys, ignoremask=True)
 
     def test108(self):
-        """Test 108: Gaussian*Jinc gridding"""
+        """Test 108: Gaussian*Jinc gridding."""
         self.task_param.update(dict(gridfunction='GJINC'))
         outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -1044,7 +1045,7 @@ class sdimaging_test1(sdimaging_unittest_base):
                              compstats=self.keys, ignoremask=True)
 
     def test109(self):
-        """Test 109: Empty phasecenter (auto-calculation)"""
+        """Test 109: Empty phasecenter (auto-calculation)."""
         self.task_param.update(dict(phasecenter="", gridfunction="BOX"))
         outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
         refstats = {'blc': numpy.array([0, 0, 0, 0], dtype=numpy.int32),
@@ -1090,7 +1091,7 @@ class sdimaging_test1(sdimaging_unittest_base):
                              compstats=self.keys, ignoremask=False)
 
     def test111(self):
-        """imsize in float (ntegrated image)"""
+        """imsize in float (ntegrated image)."""
         outshape = (self.imsize[0], self.imsize[1], 1, 1)
         imsize = [float(v) for v in self.imsize]
         self.task_param.update(dict(nchan=1, start=0, width=self.ms_nchan,
@@ -1099,7 +1100,7 @@ class sdimaging_test1(sdimaging_unittest_base):
                              ignoremask=True)
 
     def test112(self):
-        """round-up imsize in float (integrated image)"""
+        """Round-up imsize in float (integrated image)."""
         outshape = (self.imsize[0], self.imsize[1], 1, 1)
         imsize = [float(v) - 0.8 for v in self.imsize]
         self.task_param.update(dict(nchan=1, start=0, width=self.ms_nchan,
@@ -1112,9 +1113,9 @@ class sdimaging_test1(sdimaging_unittest_base):
 # Test frequency imaging
 ###
 class sdimaging_test2(sdimaging_unittest_base):
-    """
-    Test frequency imaging
+    """Test frequency imaging.
 
+    List of tests:
        - integrated image
        - selected frequency image
 
@@ -1146,7 +1147,7 @@ class sdimaging_test2(sdimaging_unittest_base):
         self.assertTrue(self.cache_validator.validate())
 
     def test200(self):
-        """Test 200: Integrated image"""
+        """Test 200: Integrated image."""
         nchan = 1
         ms.open(self.rawfile)
         spwinfo = ms.getspectralwindowinfo()
@@ -1161,7 +1162,7 @@ class sdimaging_test2(sdimaging_unittest_base):
                              compstats=self.keys, ignoremask=True)
 
     def test201(self):
-        """Test 201: Full channel image (mode='frequency', nchan = -1)"""
+        """Test 201: Full channel image (mode='frequency', nchan = -1)."""
         self.task_param.update(dict(nchan=-1, start='', width=''))
         # workaround for new imager framework
         # New imager looks SPECTRAL_WINDOW table to get whole frequency range
@@ -1191,7 +1192,7 @@ class sdimaging_test2(sdimaging_unittest_base):
                              compstats=self.keys, ignoremask=True)
 
     def test202(self):
-        """Test 202: Selected frequency image"""
+        """Test 202: Selected frequency image."""
         nchan = 100
         start = "%f%s" % (1.4202, self.unit)
         width = "%f%s" % (1.0e-5, self.unit)
@@ -1217,7 +1218,7 @@ class sdimaging_test2(sdimaging_unittest_base):
                              compstats=self.keys, ignoremask=True)
 
     def test203(self):
-        """Test 203: Selected frequency image with other frequency unit"""
+        """Test 203: Selected frequency image with other frequency unit."""
         nchan = 100
         loc_unit = 'MHz'
         start = "%f%s" % (1420.2, loc_unit)
@@ -1249,9 +1250,9 @@ class sdimaging_test2(sdimaging_unittest_base):
 
 
 class sdimaging_test3(sdimaging_unittest_base):
-    """
-    Test velocity imaging
+    """Test velocity imaging.
 
+    List of tests:
        - integrated image
        - selected velocity image
 
@@ -1283,7 +1284,7 @@ class sdimaging_test3(sdimaging_unittest_base):
         self.assertTrue(self.cache_validator.validate())
 
     def test300(self):
-        """Test 300: Integrated image"""
+        """Test 300: Integrated image."""
         spwid = '0'
         nchan = 1
         restfreq = '1420405800.0Hz'
@@ -1314,7 +1315,7 @@ class sdimaging_test3(sdimaging_unittest_base):
                              compstats=self.keys, ignoremask=True)
 
     def test301(self):
-        """Test 301: Selected velocity image"""
+        """Test 301: Selected velocity image."""
         nchan = 100
         start = "%f%s" % (-200.0, self.unit)
         width = "%f%s" % (2.0, self.unit)
@@ -1340,7 +1341,7 @@ class sdimaging_test3(sdimaging_unittest_base):
                              compstats=self.keys, ignoremask=True)
 
     def test302(self):
-        """Test 302: Selected velocity image (different rest frequency)"""
+        """Test 302: Selected velocity image (different rest frequency)."""
         nchan = 100
         start = "%f%s" % (-100.0, self.unit)
         width = "%f%s" % (2.0, self.unit)
@@ -1371,9 +1372,9 @@ class sdimaging_test3(sdimaging_unittest_base):
 
 
 class sdimaging_test_autocoord(sdimaging_unittest_base):
-    """
-    Test auto-resolution of spatial gridding parameters
+    """Test auto-resolution of spatial gridding parameters.
 
+    List of tests:
        - manual setting
        - all
        - phasecenter
@@ -1413,8 +1414,8 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         self.assertTrue(self.cache_validator.validate())
 
     def run_test(self, task_param, shape, dirax):
-        """
-        Run sdimaging and test results.
+        """Run sdimaging and test results.
+
         A list of tests:
         (1) task completes without an error
         (2) ouput image and weight image exist
@@ -1433,7 +1434,7 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         self._checkdirax(outfile, dirax[0], dirax[1], dirax[2])
 
     def test401(self):
-        """test 401: Set phasecenter, cell, and imsize manually"""
+        """Test 401: Set phasecenter, cell, and imsize manually."""
         self.task_param.update(dict(cell=self.cell, imsize=self.imsize,
                                     phasecenter=self.phasecenter))
         outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
@@ -1441,21 +1442,21 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         self.run_test(self.task_param, outshape, dirax)
 
     def test402(self):
-        """test 402: Automatic resolution of phasecenter, cell, and imsize"""
+        """Test 402: Automatic resolution of phasecenter, cell, and imsize."""
         self.task_param.update(dict(cell="", imsize=[], phasecenter=""))
         outshape = (self.imsize_auto[0], self.imsize_auto[1], 1, self.nchan)
         dirax = (self.phasecenter_auto, self.cell_auto, self.imsize_auto)
         self.run_test(self.task_param, outshape, dirax)
 
     def test403(self):
-        """test 403: Resolve phasecenter"""
+        """Test 403: Resolve phasecenter."""
         self.task_param.update(dict(cell=self.cell, imsize=self.imsize, phasecenter=""))
         outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
         dirax = (self.phasecenter_auto, self.cell, self.imsize)
         self.run_test(self.task_param, outshape, dirax)
 
     def test404(self):
-        """test 404: Resolve cell"""
+        """Test 404: Resolve cell."""
         self.task_param.update(dict(cell="", imsize=self.imsize,
                                     phasecenter=self.phasecenter))
         outshape = (self.imsize[0], self.imsize[1], 1, self.nchan)
@@ -1463,7 +1464,7 @@ class sdimaging_test_autocoord(sdimaging_unittest_base):
         self.run_test(self.task_param, outshape, dirax)
 
     def test405(self):
-        """test 405: Resolve imsize"""
+        """Test 405: Resolve imsize."""
         ref_imsize = [38, 32]
         self.task_param.update(dict(cell=self.cell, imsize=[], phasecenter=self.phasecenter))
         outshape = (ref_imsize[0], ref_imsize[1], 1, self.nchan)
@@ -1485,7 +1486,7 @@ class TimeSelectionPattern(Enum):
 
 
 class TestTimeRangeHelper:
-    """Provides parameters and compute expected results for test_timerange* tests"""
+    """Provides parameters and compute expected results for test_timerange* tests."""
 
     _default_params = {
         'infiles': ['uid___A002_Xae00c5_X2e6b.ms.cal.split.shrink.ms'],
@@ -1524,8 +1525,7 @@ class TestTimeRangeHelper:
 
     @staticmethod
     def expected_results(params, debug=False):
-        """
-        Compute expected sdimaging results for test_timerange_* unit tests
+        """Compute expected sdimaging results for test_timerange_* unit tests.
 
         params -- sdimaging parameters, with the following limitations:
                     * len(infiles) = 1
@@ -1563,8 +1563,9 @@ class TestTimeRangeHelper:
 
 
 class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_unittest_base):
-    """
-    Test selection syntax. Selection parameters to test are:
+    """Test selection syntax.
+
+    Selection parameters to test are:
     field, spw (with selection), scan, stokes, and antenna
     """
 
@@ -1699,7 +1700,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
     ####################
 
     def test_scan_id_default(self):
-        """test scan selection (scan='')"""
+        """Test scan selection (scan='')."""
         scan = ''
         region = self.region_all
         infile = self.miscsel_ms
@@ -1713,7 +1714,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self._checkstats(outfile, refstats, atol=1.e-5)
 
     def test_scan_id_exact(self):
-        """test scan selection (scan='16')"""
+        """Test scan selection (scan='16')."""
         scan = '16'
         region = self.region_topright
         infile = self.miscsel_ms
@@ -1725,7 +1726,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_scan_id_lt(self):
-        """test scan selection (scan='<16')"""
+        """Test scan selection (scan='<16')."""
         scan = '<16'
         region = self.region_left
         infile = self.miscsel_ms
@@ -1737,7 +1738,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_scan_id_gt(self):
-        """test scan selection (scan='>16')"""
+        """Test scan selection (scan='>16')."""
         scan = '>16'
         region = self.region_bottomright
         infile = self.miscsel_ms
@@ -1749,7 +1750,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_scan_id_range(self):
-        """test scan selection (scan='16~17')"""
+        """Test scan selection (scan='16~17')."""
         scan = '16~17'
         region = self.region_right
         infile = self.miscsel_ms
@@ -1761,7 +1762,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_scan_id_list(self):
-        """test scan selection (scan='16,17')"""
+        """Test scan selection (scan='16,17')."""
         scan = '16,17'
         region = self.region_right
         infile = self.miscsel_ms
@@ -1773,7 +1774,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_scan_id_exprlist(self):
-        """test scan selection (scan='16,>16')"""
+        """Test scan selection (scan='16,>16')."""
         scan = '16,>16'
         region = self.region_right
         infile = self.miscsel_ms
@@ -1788,7 +1789,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
     # intent
     ####################
     def test_intent_value_default(self):
-        """test intent selection (intent='')"""
+        """Test intent selection (intent='')."""
         intent = ''
         region = self.region_all
         infile = self.intentsel_ms
@@ -1802,7 +1803,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self._checkstats(outfile, refstats, atol=1.e-5)
 
     def test_intent_value_exact(self):
-        """test intent selection (intent='OBSERVE_TARGET.ON_SOURCE')"""
+        """Test intent selection (intent='OBSERVE_TARGET.ON_SOURCE')."""
         intent = 'OBSERVE_TARGET.ON_SOURCE'
         region = self.region_bottomright
         infile = self.intentsel_ms
@@ -1816,7 +1817,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self._checkstats(outfile, refstats, atol=1.e-5)
 
     def test_intent_value_pattern(self):
-        """test intent selection (intent='*CALIBRATE_PHASE*')"""
+        """Test intent selection (intent='*CALIBRATE_PHASE*')."""
         intent = '*CALIBRATE_PHASE*'
         region = self.region_bottomleft
         infile = self.intentsel_ms
@@ -1833,7 +1834,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
     # field
     ####################
     def test_field_value_default(self):
-        """test field selection (field='')"""
+        """Test field selection (field='')."""
         field = ''
         region = self.region_all
         infile = self.miscsel_ms
@@ -1845,7 +1846,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_field_id_exact(self):
-        """test field selection (field='6')"""
+        """Test field selection (field='6')."""
         field = '6'
         region = self.region_bottomleft
         infile = self.miscsel_ms
@@ -1857,7 +1858,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_id_lt(self):
-        """test field selection (field='<7')"""
+        """Test field selection (field='<7')."""
         field = '<7'
         region = self.region_bottom
         infile = self.miscsel_ms
@@ -1869,7 +1870,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_id_gt(self):
-        """test field selection (field='>6')"""
+        """Test field selection (field='>6')."""
         field = '>6'
         region = self.region_top
         infile = self.miscsel_ms
@@ -1881,7 +1882,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_id_range(self):
-        """test field selection (field='7~8')"""
+        """Test field selection (field='7~8')."""
         field = '7~8'
         region = self.region_top
         infile = self.miscsel_ms
@@ -1893,7 +1894,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_id_list(self):
-        """test field selection (field='5,7')"""
+        """Test field selection (field='5,7')."""
         field = '5,7'
         region = self.region_right
         infile = self.miscsel_ms
@@ -1905,7 +1906,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_id_exprlist(self):
-        """test field selection (field='7,>7')"""
+        """Test field selection (field='7,>7')."""
         field = '7,>7'
         region = self.region_top
         infile = self.miscsel_ms
@@ -1917,7 +1918,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_value_exact(self):
-        """test field selection (field='bottom')"""
+        """Test field selection (field='bottom')."""
         field = 'bottom'
         region = self.region_bottom
         infile = self.miscsel_ms
@@ -1929,7 +1930,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_value_pattern(self):
-        """test field selection (field='top*')"""
+        """Test field selection (field='top*')."""
         field = 'top*'
         region = self.region_top
         infile = self.miscsel_ms
@@ -1941,7 +1942,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_value_list(self):
-        """test field selection (field='topright,topleft')"""
+        """Test field selection (field='topright,topleft')."""
         field = 'topright,topleft'
         region = self.region_top
         infile = self.miscsel_ms
@@ -1953,7 +1954,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_field_mix_exprlist(self):
-        """test field selection (field='topr*,>7')"""
+        """Test field selection (field='topr*,>7')."""
         field = 'topr*,>7'
         region = self.region_top
         infile = self.miscsel_ms
@@ -1968,7 +1969,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
     # spw
     ####################
     def test_spw_id_default(self):
-        """test spw selection (spw='')"""
+        """Test spw selection (spw='')."""
         spw = ''
         infile = self.unifreq_ms
         flux_list = self.__get_flux_value(infile)
@@ -1983,7 +1984,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_exact(self):
-        """test spw selection (spw='1')"""
+        """Test spw selection (spw='1')."""
         spw = '1'
         selspw = [1]
         region = self.spw_region_all
@@ -1998,7 +1999,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_lt(self):
-        """test spw selection (spw='<2')"""
+        """Test spw selection (spw='<2')."""
         spw = '<2'
         selspw = [0, 1]
         region = self.spw_region_all
@@ -2013,7 +2014,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_gt(self):
-        """test spw selection (spw='>0')"""
+        """Test spw selection (spw='>0')."""
         spw = '>0'
         selspw = [1, 2]
         region = self.spw_region_all
@@ -2028,7 +2029,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_range(self):
-        """test spw selection (spw='1~2')"""
+        """Test spw selection (spw='1~2')."""
         spw = '1~2'
         selspw = [1, 2]
         region = self.spw_region_all
@@ -2043,7 +2044,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_list(self):
-        """test spw selection (spw='0,2')"""
+        """Test spw selection (spw='0,2')."""
         spw = '0,2'
         selspw = [0, 2]
         region = self.spw_region_all
@@ -2058,7 +2059,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_exprlist(self):
-        """test spw selection (spw='0,>1')"""
+        """Test spw selection (spw='0,>1')."""
         spw = '0,>1'
         selspw = [0, 2]
         region = self.spw_region_all
@@ -2073,7 +2074,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_spw_id_pattern(self):
-        """test spw selection (spw='*')"""
+        """Test spw selection (spw='*')."""
         spw = '*'
         region = self.spw_region_all
         infile = self.unifreq_ms
@@ -2089,7 +2090,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 
     @unittest.expectedFailure
     def test_spw_value_frequency(self):
-        """test spw selection (spw='299.4~299.6GHz')"""
+        """Test spw selection (spw='299.4~299.6GHz')."""
         spw = '299.4~299.6GHz'
         selspw = [0]
         infile = self.spwsel_ms
@@ -2105,12 +2106,12 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 
     @unittest.expectedFailure
     def test_spw_value_velocity(self):
-        """test spw selection (spw='-550~-450km/s') NOT SUPPORTED YET"""
+        """Test spw selection (spw='-550~-450km/s') NOT SUPPORTED YET."""
         self._default_test()
 
     @unittest.expectedFailure
     def test_spw_mix_exprlist(self):
-        """test spw selection (spw='299.99~300.01GHz,0')"""
+        """Test spw selection (spw='299.99~300.01GHz,0')."""
         spw = '299.99~300.01GHz,0'
         selspw = [0, 1]
         region = self.spw_region_all
@@ -2128,7 +2129,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
     # spw with channel range
     #########################
     def test_spw_id_default_channel(self):
-        """test spw selection w/ channel selection (spw=':2~7')"""
+        """Test spw selection w/ channel selection (spw=':2~7')."""
         spw = ':2~7'  # chan=2-7 in all spws should be selected
         region = self.spw_region_chan1
         infile = self.unifreq_ms
@@ -2143,7 +2144,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_spw_id_default_frequency(self):
-        """test spw selection w/ channel selection (spw=':300.4749~300.5251GHz')"""
+        """Test spw selection w/ channel selection (spw=':300.4749~300.5251GHz')."""
         region = self.spw_region_chan1
 
         #
@@ -2169,11 +2170,11 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 
     @unittest.expectedFailure
     def test_spw_id_default_velocity(self):
-        """test spw selection w/ channel selection (spw='X~Ykm/s') NOT SUPPORTED YET"""
+        """Test spw selection w/ channel selection (spw='X~Ykm/s') NOT SUPPORTED YET."""
         self._default_test()
 
     def test_spw_id_default_list(self):
-        """test spw selection w/ channel selection (spw=':6~7;2~5')"""
+        """Test spw selection w/ channel selection (spw=':6~7;2~5')."""
         spw = ':6~7;2~5'  # chan=2-7 in all spws should be selected
         region = self.spw_region_chan1
         infile = self.unifreq_ms
@@ -2188,7 +2189,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_spw_id_exact_channel(self):
-        """test spw selection w/ channel selection (spw='2:2~7')"""
+        """Test spw selection w/ channel selection (spw='2:2~7')."""
         spw = '2:2~7'  # chan=2-7 of spw=2 should be selected
         selspw = [2]
         region = self.spw_region_chan1
@@ -2203,7 +2204,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-3, rtol=1.e-3)
 
     def test_spw_id_exact_frequency(self):
-        """test spw selection w/ channel selection (spw='1:300.4749~300.5251GHz')"""
+        """Test spw selection w/ channel selection (spw='1:300.4749~300.5251GHz')."""
         spw = '1:300.4749~300.5251GHz'  # chan=2-7 of spw=1 should be selected
         selspw = [1]
         region = self.spw_region_chan1
@@ -2219,11 +2220,11 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 
     @unittest.expectedFailure
     def test_spw_id_exact_velocity(self):
-        """test spw selection w/ channel selection (spw='0:X~Ykm/s') NOT SUPPORTED YET"""
+        """Test spw selection w/ channel selection (spw='0:X~Ykm/s') NOT SUPPORTED YET."""
         self._default_test()
 
     def test_spw_id_exact_list(self):
-        """test spw selection w/ channel selection (spw='2:6~7;2~5')"""
+        """Test spw selection w/ channel selection (spw='2:6~7;2~5')."""
         spw = '2:6~7;2~5'  # chan=2-7 of spw=2 should be selected
         selspw = [2]
         region = self.spw_region_chan1
@@ -2238,7 +2239,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-3, rtol=1.e-3)
 
     def test_spw_id_pattern_channel(self):
-        """test spw selection w/ channel selection (spw='*:2~7')"""
+        """Test spw selection w/ channel selection (spw='*:2~7')."""
         spw = '*:2~7'
         region = self.spw_region_chan1
         infile = self.unifreq_ms
@@ -2253,7 +2254,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_spw_id_pattern_frequency(self):
-        """test spw selection w/ channel selection (spw='*:300.4749~300.5251GHz')"""
+        """Test spw selection w/ channel selection (spw='*:300.4749~300.5251GHz')."""
         region = self.spw_region_chan1
 
         #
@@ -2279,11 +2280,11 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 
     @unittest.expectedFailure
     def test_spw_id_pattern_velocity(self):
-        """test spw selection w/ channel selection (spw='*:X~Ykm/s') NOT SUPPORTED YET"""
+        """Test spw selection w/ channel selection (spw='*:X~Ykm/s') NOT SUPPORTED YET."""
         self._default_test()
 
     def test_spw_id_pattern_list(self):
-        """test spw selection w/ channel selection (spw='*:6~7;2~5')"""
+        """Test spw selection w/ channel selection (spw='*:6~7;2~5')."""
         spw = '*:6~7;2~5'
         region = self.spw_region_chan1
         infile = self.unifreq_ms
@@ -2298,7 +2299,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-5)
 
     def test_spw_value_frequency_channel(self):
-        """test spw selection w/ channel selection (spw='300.4~300.5GHz:2~7')"""
+        """Test spw selection w/ channel selection (spw='300.4~300.5GHz:2~7')."""
         spw = '300.4~300.5GHz:2~7'
         selspw = [1]
         region = self.spw_region_chan1
@@ -2313,7 +2314,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
         self.run_test(self.task_param, refstats, out_shape, box=region, atol=1.e-3, rtol=1.e-3)
 
     def test_spw_value_frequency_frequency(self):
-        """test spw selection w/ channel selection (spw='300.4~300.5GHz:300.4749~300.5251GHz')"""
+        """Test spw selection w/ channel selection (spw='300.4~300.5GHz:300.4749~300.5251GHz')."""
         spw = '300.4~300.5GHz:300.4749~300.5251GHz'  # chan=2-7 of spw=1 should be selected'
         selspw = [1]
         region = self.spw_region_chan1
@@ -2329,12 +2330,12 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 
     @unittest.expectedFailure
     def test_spw_value_frequency_velocity(self):
-        """test spw selection w/ channel selection (spw='A~BHz:X~Ykm/s') NOT SUPPORTED YET"""
+        """Test spw selection w/ channel selection (spw='A~BHz:X~Ykm/s') NOT SUPPORTED YET."""
         self._default_test()
 
     @unittest.expectedFailure
     def test_spw_value_frequency_list(self):
-        """test spw selection w/ channel selection (spw='299.9~300.1GHz:6~7;2~5')"""
+        """Test spw selection w/ channel selection (spw='299.9~300.1GHz:6~7;2~5')."""
         spw = '299.9~300.1GHz:6~7;2~5'
         selspw = [0]
         region = self.spw_region_chan1
@@ -2350,26 +2351,26 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 
     @unittest.expectedFailure
     def test_spw_value_velocity_channel(self):
-        """test spw selection w/ channel selection (spw='X~Ykm/s:A~B') NOT SUPPORTED YET"""
+        """Test spw selection w/ channel selection (spw='X~Ykm/s:A~B') NOT SUPPORTED YET."""
         self._default_test()
 
     @unittest.expectedFailure
     def test_spw_value_velocity_frequency(self):
-        """test spw selection w/ channel selection (spw='X~Ykm/s:A~BHz') NOT SUPPORTED YET"""
+        """Test spw selection w/ channel selection (spw='X~Ykm/s:A~BHz') NOT SUPPORTED YET."""
         self._default_test()
 
     @unittest.expectedFailure
     def test_spw_value_velocity_velocity(self):
-        """test spw selection w/ channel selection (spw='X~Ykm/s:Z~Wkm/s') NOT SUPPORTED YET"""
+        """Test spw selection w/ channel selection (spw='X~Ykm/s:Z~Wkm/s') NOT SUPPORTED YET."""
         self._default_test()
 
     @unittest.expectedFailure
     def test_spw_value_velocity_list(self):
-        """test spw selection w/ channel selection (spw='X~Ykm/s:A~B;C~D') NOT SUPPORTED YET"""
+        """Test spw selection w/ channel selection (spw='X~Ykm/s:A~B;C~D') NOT SUPPORTED YET."""
         self._default_test()
 
     def test_spw_id_list_channel(self):
-        """test spw selection w/ channel selection (spw='1:2~7,2:2~7')"""
+        """Test spw selection w/ channel selection (spw='1:2~7,2:2~7')."""
         spw = '0:2~7,2:2~7'
         selspw = [0, 2]
         region = self.spw_region_chan1
@@ -2385,42 +2386,42 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 
     # @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_default(self):
-        """test_timerange_value_default: Test default value for timerange"""
+        """test_timerange_value_default: Test default value for timerange."""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_DEFAULT)
         self._test_timerange(params)
 
     # @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_exact(self):
-        """test_timerange_value_exact: Test timerange selection by syntax 'T0'"""
+        """test_timerange_value_exact: Test timerange selection by syntax 'T0'."""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_EXACT)
         self._test_timerange(params)
 
     # @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_gt(self):
-        """test_timerange_value_gt: Test timerange selection by syntax '>T0'"""
+        """test_timerange_value_gt: Test timerange selection by syntax '>T0'."""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_GT)
         self._test_timerange(params)
 
     # @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_interval(self):
-        """test_timerange_value_interval: Test timerange selection by syntax 'T0+dT'"""
+        """test_timerange_value_interval: Test timerange selection by syntax 'T0+dT'."""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_INTERVAL)
         self._test_timerange(params)
 
     # @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_lt(self):
-        """test_timerange_value_lt: Test timerange selection by syntax '<T0'"""
+        """test_timerange_value_lt: Test timerange selection by syntax '<T0'."""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_LT)
         self._test_timerange(params)
 
     # @unittest.skip("Test data not yet pushed to casatestdata repository")
     def test_timerange_value_range(self):
-        """test_timerange_value_default: Test default value for timerange"""
+        """test_timerange_value_default: Test default value for timerange."""
         helper = TestTimeRangeHelper
         params = helper.params(TimeSelectionPattern.VALUE_RANGE)
         self._test_timerange(params)
@@ -2459,7 +2460,8 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 
     def _checkstats_box(self, name, ref, compstats=None, atol=1.e-8, rtol=1.e-5,
                         box=None, ignoremask=False):
-        """
+        """Check statistics for given box region.
+
         A test function to compare statistics of a box region of an image
         with reference values.
         Arguments:
@@ -2487,7 +2489,7 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
                          ignoremask=ignoremask)
 
     def __get_flux_value(self, infile):
-        """returns proper flux list."""
+        """Return proper flux list."""
         if infile == self.miscsel_ms:
             return self.unif_flux
         elif infile == self.spwsel_ms:
@@ -2503,9 +2505,9 @@ class sdimaging_test_selection(selection_syntax.SelectionSyntaxTest, sdimaging_u
 
 
 class sdimaging_test_flag(sdimaging_unittest_base):
-    """
-    Test to verify if flag information is handled properly
+    """Test to verify if flag information is handled properly.
 
+    Notes:
        - If a channel is flagged, the data of the channel must not be
          added to the output CASA image.
        - If all channels of a spectrum are flagged (i.e., row-flagged
@@ -2513,7 +2515,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
          not be added to the output CASA image.
        - Flagged channels must not be modified by sdimaging.
 
-       The input data: sdimaging_flagtest.ms
+    The input data: sdimaging_flagtest.ms
        - this data contains 768 spectra covering 32x24 grid-like points
          with interval of 10^-5 radian (the position of the bottom-right
          corner is (00:00:00.0, 00.00.00.0) in (RA, Dec)). Amongst the
@@ -2637,7 +2639,7 @@ class sdimaging_test_flag(sdimaging_unittest_base):
             tb.putcol('TIME', tshift)
 
     def testFlag01(self):
-        """testFlag01:"""
+        """testFlag01."""
         res = sdimaging(infiles=self.rawfile, outfile=self.outfile, intent="",
                         gridfunction=self.gridfunction, cell=self.cell, imsize=self.imsize,
                         phasecenter=self.phasecenter, minweight=self.minweight0)
@@ -2845,7 +2847,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         self._checkstats(outfile, refstats, atol=atol, rtol=rtol)
 
     def test_i(self):
-        """test stokes='I': image constructed by unflagged YY pol (NB after imager migration: image weights all zero)"""
+        """Test stokes='I': image constructed by unflagged YY pol (NB after imager migration: image weights all zero)."""
         self.task_param['stokes'] = 'I'
         # Tests
         # In true Stokes mode, all correlation components are flagged when any of them is flagged
@@ -2858,7 +2860,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_pseudo_i(self):
-        """test pseudo stokes I: image constructed by unflagged YY pol"""
+        """Test pseudo stokes I: image constructed by unflagged YY pol."""
         self.task_param['stokes'] = 'pseudoI'
         # Tests
         refstats = merge_dict(self.stat_common, construct_refstat_uniform(
@@ -2867,7 +2869,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_xx(self):
-        """test stokes='XX' (flagged): image weights all zero"""
+        """Test stokes='XX' (flagged): image weights all zero."""
         stokes = 'XX'
         self.task_param['stokes'] = stokes
         # Tests
@@ -2879,7 +2881,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_yy(self):
-        """test stokes='YY': image constructed by YY pol"""
+        """Test stokes='YY': image constructed by YY pol."""
         stokes = 'YY'
         self.task_param['stokes'] = stokes
         # Tests
@@ -2891,7 +2893,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
         self.run_test(self.task_param, refstats, out_shape, atol=1.e-5)
 
     def test_xxyy(self):
-        """test stokes='XXYY':"""
+        """Test stokes='XXYY'."""
         self.task_param['stokes'] = 'XXYY'
         # Tests
         refstats = merge_dict(self.stat_common, construct_refstat_uniform(
@@ -2911,7 +2913,7 @@ class sdimaging_test_polflag(sdimaging_unittest_base):
 
 
 class sdimaging_test_mslist(sdimaging_unittest_base):
-    """Test more than one MSes as inputs"""
+    """Test more than one MSes as inputs."""
 
     prefix = sdimaging_unittest_base.taskname + 'TestListMS'
     outfile = prefix + sdimaging_unittest_base.postfix
@@ -2990,25 +2992,25 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
     # Tests
     ###########################
     def multi_input(self):
-        """Test two MSes as input"""
+        """Test two MSes as input."""
         self.run_test()
 
     def test_string_selection(self):
-        """Test data selection by string (2 MS inputs)"""
+        """Test data selection by string (2 MS inputs)."""
         self.default_param['field'] = str(',').join(self.field_list)
         self.default_param['scan'] = str(',').join(self.scan_list)
         self.default_param['spw'] = self.spw
         self.run_test()
 
     def test_1elemlist_selection(self):
-        """Test data selection by single element list (2 MS inputs)"""
+        """Test data selection by single element list (2 MS inputs)."""
         self.default_param['field'] = [str(',').join(self.field_list)]
         self.default_param['scan'] = [str(',').join(self.scan_list)]
         self.default_param['spw'] = [self.spw]
         self.run_test()
 
     def test_2elemlist_selection(self):
-        """Test data selection by 2 elements list (2 MS inputs)"""
+        """Test data selection by 2 elements list (2 MS inputs)."""
         self.default_param['field'] = self.field_list
         self.default_param['scan'] = self.scan_list
         self.default_param['spw'] = [self.spw, self.spw]
@@ -3022,8 +3024,7 @@ class sdimaging_test_mslist(sdimaging_unittest_base):
 
 
 class sdimaging_test_restfreq(sdimaging_unittest_base):
-    """
-    Unit test for task sdimaging
+    """Unit test for task sdimaging.
 
     Test 3 different ways to define image rest frequency.
     (1) defined by parameter restfreq (test_restfreq_param)
@@ -3102,7 +3103,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
         return self.refset.get(restfreq, {})
 
     def test_restfreq_param(self):
-        """Rest frequency from restfreq parameter"""
+        """Rest frequency from restfreq parameter."""
         restfreq = '200GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
@@ -3115,7 +3116,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
                       restfreq=restfreq, imsize=[8, 8])
 
     def test_restfreq_source(self):
-        """Rest Frequency from SOURCE table"""
+        """Rest Frequency from SOURCE table."""
         restfreq = '300GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
@@ -3128,7 +3129,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
                       restfreq='', imsize=[11, 11])
 
     def test_restfreq_mean(self):
-        """Rest frequency from mean of SPW frequencies"""
+        """Rest frequency from mean of SPW frequencies."""
         restfreq = '300.5GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
@@ -3150,7 +3151,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
                       restfreq='', imsize=[11, 11])
 
     def test_capital_outframe(self):
-        """test outframe='LSRK'"""
+        """Test outframe='LSRK'."""
         restfreq = '200GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
@@ -3163,7 +3164,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
                       restfreq=restfreq, imsize=[8, 8], outframe='LSRK')
 
     def test_unallowed_outframe(self):
-        """test outframe='lSrK' (will fail)"""
+        """Test outframe='lSrK' (will fail)."""
         restfreq = '200GHz'
         refs = self.get_reference_from_restfreq(restfreq)
         self.assertTrue('beam' in refs)
@@ -3185,8 +3186,7 @@ class sdimaging_test_restfreq(sdimaging_unittest_base):
 
 
 class sdimaging_test_mapextent(sdimaging_unittest_base):
-    """
-    Unit test for task sdimaging
+    """Unit test for task sdimaging.
 
     This test case defines automatic calculation of phasecenter and
     imsize. Basic tests has already been defined in test109 and test402
@@ -3338,9 +3338,9 @@ class sdimaging_test_mapextent(sdimaging_unittest_base):
 
 
 class sdimaging_test_ephemeris(sdimaging_unittest_base):
-    """
-    Tests if tracking moving object works correctly
+    """Tests if tracking moving object works correctly.
 
+    List of tests:
         test_ephemeris_notset -- Verify scanned area in the output image is
                                  distorted from rectangle
         test_ephemeris_sun -- Verify image center is fixed to the center of the
@@ -3527,7 +3527,8 @@ class sdimaging_test_ephemeris(sdimaging_unittest_base):
 #
 ###
 class sdimaging_test_interp(sdimaging_unittest_base):
-    """
+    """Unit tests for sdimaging (interporation).
+
     tests:
     test_spline_interp_single_infiles: check if spline interpolation works for single MS
     test_spline_interp_multiple_infiles: check if spline interpolation works for multiple MSs
@@ -3678,7 +3679,8 @@ class sdimaging_test_interp(sdimaging_unittest_base):
 
 
 class sdimaging_test_interp_old(sdimaging_unittest_base):
-    """
+    """Unit tests for sdimaging (interporation, old).
+
     The test data 'pointing6.ms' contains 1000 rows for TP data, while only 10 rows given
     for POINTING data. The pointing data is given as corner points of a hexagon centered at
     (RA, Dec) = (0h00m00s, 0d00m00s) and with side of 0.001 radian.
@@ -3768,7 +3770,8 @@ class sdimaging_test_interp_old(sdimaging_unittest_base):
 
 
 class sdimaging_test_clipping(sdimaging_unittest_base):
-    """
+    """Unit tests for sdimaging (minmax clipping).
+
     test_1row: check if clipping is not activated (1 spectrum)
     test_2rows: check if clipping is not activated (2 spectra)
     test_3rows: check if clipping is activated (3 spectra)
@@ -3963,37 +3966,37 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         self.assertTrue(numpy.all(err < eps))
 
     def test_1row(self):
-        """test_1row: check if clipping is not activated (1 spectrum)"""
+        """test_1row: check if clipping is not activated (1 spectrum)."""
         infile = 'clipping_1row.ms'
         self._test_clipping(infile, is_clip_effective=False)
 
     def test_2rows(self):
-        """test_2rows: check if clipping is not activated (2 spectra)"""
+        """test_2rows: check if clipping is not activated (2 spectra)."""
         infile = 'clipping_2rows.ms'
         self._test_clipping(infile, is_clip_effective=False)
 
     def test_3rows(self):
-        """test_3rows: check if clipping is activated (3 spectra)"""
+        """test_3rows: check if clipping is activated (3 spectra)."""
         infile = 'clipping_3rows.ms'
         self._test_clipping(infile, is_clip_effective=True)
 
     def test_multivis(self):
-        """test_multivis: check if clipping properly handles multiple ms inputs"""
+        """test_multivis: check if clipping properly handles multiple ms inputs."""
         infiles = ['clipping_1row.ms', 'clipping_2rows.ms']
         self._test_clipping(infiles, is_clip_effective=True)
 
     def test_clip(self):
-        """test_clip: check if clipping is applied to every image pixel separately"""
+        """test_clip: check if clipping is applied to every image pixel separately."""
         infiles = ['clipping_1row.ms', 'clipping_2rows.ms', 'clipping_3rows.ms']
         self._test_clipping(infiles, is_clip_effective=True)
 
     def test_clip2(self):
-        """test_clip2: check if clipping is activated on one pixel but is not on others"""
+        """test_clip2: check if clipping is activated on one pixel but is not on others."""
         infiles = ['clipping_1row.ms', 'clipping_3rows.ms']
         self._test_clipping(infiles, is_clip_effective=True)
 
     def test_suprious(self):
-        """test_suprious: check if clipping properly handles suprious data"""
+        """test_suprious: check if clipping properly handles suprious data."""
         # This test is defined to verify new clipping algorithm
         #
         # Test data contains suprious. It is 10 orders of magnitude larger
@@ -4013,15 +4016,15 @@ class sdimaging_test_clipping(sdimaging_unittest_base):
         self._test_clipping(infile, is_clip_effective=True)
 
     def test_multichan(self):
-        """test_multichan: check if clipping handles multi-channel data properly"""
+        """test_multichan: check if clipping handles multi-channel data properly."""
         infile = 'clipping_3rows_2chans.ms'
         self._test_clipping(infile, is_clip_effective=True)
 
 
 class sdimaging_test_projection(sdimaging_unittest_base):
-    """
-    Test projection
+    """Test projection.
 
+    List of tests:
        - test_projection_GSL: unsupported projection type
        - test_projection_SIN: create image with SIN (Slant Orthographic) projection
        - test_projection_TAN: create image with TAN (Gnomonic) projection
@@ -4081,7 +4084,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         self.assertEqual(projection, result_projection)
 
     def test_projection_GSL(self):
-        """test_projection_GSL: unsupported projection type"""
+        """test_projection_GSL: unsupported projection type."""
         projection = 'GSL'
         spw = '0'
         self.task_param.update(dict(projection=projection, spw=spw))
@@ -4091,7 +4094,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
         self.assertFalse(os.path.exists(outfile))
 
     def test_projection_SIN(self):
-        """test_projection_SIN: create image with SIN (Slant Orthographic) projection"""
+        """test_projection_SIN: create image with SIN (Slant Orthographic) projection."""
         projection = 'SIN'
         spw = '0'
         self.task_param.update(dict(projection=projection, spw=spw))
@@ -4119,7 +4122,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
                              projection=projection)
 
     def test_projection_TAN(self):
-        """test_projection_TAN: create image with TAN (Gnomonic) projection"""
+        """test_projection_TAN: create image with TAN (Gnomonic) projection."""
         projection = 'TAN'
         spw = '0'
         self.task_param.update(dict(projection=projection, spw=spw))
@@ -4147,7 +4150,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
                              projection=projection)
 
     def test_projection_CAR(self):
-        """test_projection_CAR: create image with CAR (Plate Caree) projection"""
+        """test_projection_CAR: create image with CAR (Plate Caree) projection."""
         projection = 'CAR'
         spw = '0'
         self.task_param.update(dict(projection=projection, spw=spw))
@@ -4175,7 +4178,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
                              projection=projection)
 
     def test_projection_SFL(self):
-        """test_projection_SFL: create image with SFL (Sanson-Flamsteed) projection"""
+        """test_projection_SFL: create image with SFL (Sanson-Flamsteed) projection."""
         projection = 'SFL'
         spw = '0'
         self.task_param.update(dict(projection=projection, spw=spw))
@@ -4204,7 +4207,7 @@ class sdimaging_test_projection(sdimaging_unittest_base):
 
 
 class sdimaging_test_output(sdimaging_unittest_base):
-    """Tests to check if only appropriate images are output"""
+    """Tests to check if only appropriate images are output."""
 
     datapath = ctsys_resolve('unittest/tsdimaging/')
     params = dict(infiles=['selection_misc.ms'],

@@ -85,7 +85,8 @@ class sdsidebandsplitTestBase(unittest.TestCase):
     )
 
     def update_task_param(self, new_param={}):
-        """
+        """Update task parameter dictionary.
+
         Overwrite standard task parameter and return a new dictionary
         with updated parameters.
         Note this task does not check validity of parameter names in
@@ -127,8 +128,7 @@ class sdsidebandsplitTestBase(unittest.TestCase):
                 shutil.rmtree(prefix + suffix)
 
     def run_test(self, reference, **new_param):
-        """
-        Run sdsidebandsplit with given parameters and test result
+        """Run sdsidebandsplit with given parameters and test result.
 
         Arguments
             reference : a reference to compare results.
@@ -171,8 +171,8 @@ class sdsidebandsplitTestBase(unittest.TestCase):
             self.check_result(imagename, refcsys, refshape, reference['image'])
 
     def get_image(self, imagename, getdata=False, getmask=False):
-        """
-        Returns image coordinate system object, shape.
+        """Return image coordinate system object, shape.
+
         Optionally returns image pixel and mask values.
         Return values are in the order of
             csys, shape, data (optional), mask (optional).
@@ -203,7 +203,8 @@ class sdsidebandsplitTestBase(unittest.TestCase):
         return retval
 
     def check_result(self, imagename, ref_csys, ref_shape, ref_value):
-        """
+        """Compare images.
+
         Compare an image with reference coordinate system, shape, and values.
         Details of tests shold be defined by methods called from this method,
         i.e., compare_image_coordinate and compare_image_data.
@@ -221,7 +222,8 @@ class sdsidebandsplitTestBase(unittest.TestCase):
         self.compare_image_data(mydata, ref_value)
 
     def compare_image_coordinate(self, csys, shape, ref_csys, ref_shape):
-        """
+        """Compare image coordinates.
+
         This method compares a coordinate system and shape with reference ones.
         The order of axes should be the same.
         Tested items:
@@ -267,7 +269,8 @@ class sdsidebandsplitTestBase(unittest.TestCase):
 
 
 class failureTestCase(sdsidebandsplitTestBase):
-    """
+    """Unit test for failures.
+
     A class to test invalid task parameters to run sdsidebandsplit.
     Implemented based on test case table attached to CAS-8091
     """
@@ -290,20 +293,20 @@ class failureTestCase(sdsidebandsplitTestBase):
         del self.g
 
     def run_exception(self, ref_message, **new_param):
-        """Run task and compare"""
+        """Run task and compare."""
         task_param = self.update_task_param(new_param)
         self.assertRaisesRegexp(Exception, ref_message, sdsidebandsplit, **task_param)
 
     # T-001
     def test_imagename_1image(self):
-        """test failure: len(imagename)<2"""
+        """Test failure: len(imagename)<2."""
         imagename = [self.standard_param['imagename'][0]]
         ref_message = 'At least two valid input data are required for processing'
         self.run_exception(ref_message, imagename=imagename)
 
     # T-005
     def test_imagename_invalidname(self):
-        """test failure: len(imagename)==2 but includes an invalid imagename"""
+        """Test failure: len(imagename)==2 but includes an invalid imagename."""
         invalid_name = 'invalid.image'
         imagename = self.standard_param['imagename'][:-2] + [invalid_name]
         ref_message = '.*must be a path that exists.*'
@@ -311,13 +314,13 @@ class failureTestCase(sdsidebandsplitTestBase):
 
     # T-006
     def test_outfile_undefined(self):
-        """test failure: outfile is empty"""
+        """Test failure: outfile is empty."""
         ref_message = 'Output file name is undefined.'
         self.run_exception(ref_message, outfile='')
 
     # T-008, T-009
     def test_outfile_exists(self):
-        """test failure: overwrite=F and outfile already exists."""
+        """Test failure: overwrite=F and outfile already exists."""
         for sideband in ('signalband', 'imageband'):
             print('Test %s' % sideband)
             name = self.standard_param['outfile'] + '.' + sideband
@@ -329,13 +332,13 @@ class failureTestCase(sdsidebandsplitTestBase):
 
     # T-012
     def test_shifts_undefined(self):
-        """test failure: both signalshift and imageshift are undefined"""
+        """Test failure: both signalshift and imageshift are undefined."""
         ref_message = 'Channel shift was not been set.'
         self.run_exception(ref_message, signalshift=[], imageshift=[])
 
     # T-014, T-015, T-017, T-018
     def test_shift_wrong_length(self):
-        """test failure: lengh of signalshift or imageshift does not match len(imagename)"""
+        """Test failure: lengh of signalshift or imageshift does not match len(imagename)."""
         ref_message = "The number of shift should match that of images"
         for sideband in ['signalshift', 'imageshift']:
             myshift = self.standard_param[sideband] + [50]
@@ -346,7 +349,7 @@ class failureTestCase(sdsidebandsplitTestBase):
 
     # T-022, T-023, T-024
     def test_refval_invalid(self):
-        """test failure: refval is invalid (empty, a negative freqency or not a frequency)"""
+        """Test failure: refval is invalid (empty, a negative freqency or not a frequency)."""
         ref_message = ('refval is not a dictionary',
                        'Frequency should be positive',
                        'From/to units not consistent.')
@@ -356,7 +359,7 @@ class failureTestCase(sdsidebandsplitTestBase):
 
     # T-027, T-031
     def test_threshold_outofrange(self):
-        """test failure: threshold = 0.0, 1.0"""
+        """Test failure: threshold = 0.0, 1.0."""
         ref_message = 'Rejection limit should be > 0.0 and < 1.0'
         for thres in (0.0, 1.0):
             print('Test threshold=%f' % thres)
@@ -364,7 +367,8 @@ class failureTestCase(sdsidebandsplitTestBase):
 
 
 class standardTestCase(sdsidebandsplitTestBase):
-    """
+    """Unit test for successful cases.
+
     A class to test valid task parameters to run sdsidebandsplit.
     Implemented based on test case table attached to CAS-8091
     The input images are synthesized spectra of
@@ -417,7 +421,7 @@ class standardTestCase(sdsidebandsplitTestBase):
 
     # T-002
     def test_imagename_2images(self):
-        """len(imagename)==2"""
+        """len(imagename)==2."""
         reference = dict(
             signal=[SpectralInfo(0, 1500, 4.0, 1.0, 2.86439, 898.70730, 30.33598, 1.09944),
                     SpectralInfo(1500, 3000, 6.0, 1.0, 4.91510, 2297.94793, 19.555875, 1.10176954)])
@@ -429,7 +433,7 @@ class standardTestCase(sdsidebandsplitTestBase):
 
     # T-007
     def test_imagename_6images(self):
-        """standard run: valid outfile, len(imagename)==6"""
+        """Standard run: valid outfile, len(imagename)==6."""
         self.run_test(self.standard_reference)
 
     # T-010
@@ -442,7 +446,7 @@ class standardTestCase(sdsidebandsplitTestBase):
 
     # T-011
     def test_overwrite(self):
-        """overwrite = True"""
+        """overwrite = True."""
         for sideband in ['.signalband', '.imageband']:
             name = self.standard_param['outfile'] + sideband
             os.mkdir(name)
@@ -451,32 +455,32 @@ class standardTestCase(sdsidebandsplitTestBase):
 
     # T-013
     def test_signalshift_from_imageshift(self):
-        """obtain signalshift from imageshift"""
+        """Obtain signalshift from imageshift."""
         self.run_test(self.standard_reference, signalshift=[])
 
     # T-016
     def test_imageshift_from_signalshift(self):
-        """obtain imageshift from signalshift"""
+        """Obtain imageshift from signalshift."""
         self.run_test(self.standard_reference, imageshift=[])
 
     # T-019
     def test_getbothside(self):
-        """getbothside = True"""
+        """getbothside = True."""
         self.run_test(self.standard_reference, getbothside=True)
 
     # T-020
     def test_refchan_negative(self):
-        """refchan = -1.0"""
+        """refchan = -1.0."""
         self.run_test(self.standard_reference, getbothside=True, refchan=-1.0)
 
     # T-021
     def test_refchan_large(self):
-        """refchan > nchan"""
+        """refchan > nchan."""
         self.run_test(self.standard_reference, getbothside=True, refchan=5000.0)
 
     # T-025
     def test_otherside(self):
-        """otherside = True"""
+        """otherside = True."""
         reference = dict(
             signal=(
                 SpectralInfo(0, 1500, 2.77938, -0.198638, 2.90884, 898.4125, 29.57543, -0.12153),
@@ -490,7 +494,7 @@ class standardTestCase(sdsidebandsplitTestBase):
 
     # T-028, T-029, T-030
     def test_threshold(self):
-        """various threshold values"""
+        """various threshold values."""
         ref_small = dict(
             signal=(
                 SpectralInfo(0, 1500, 4.09385, 1.08961, 2.99224, 898.04215, 29.99680, 1.09845),
@@ -509,7 +513,8 @@ class standardTestCase(sdsidebandsplitTestBase):
 
 
 class MultiPixTestCase(sdsidebandsplitTestBase):
-    """
+    """Unit test for multi-pixel case.
+
     A class to test sdsidebandsplit with multi-pixel images.
     Implemented based on test case table attached to CAS-8091 (T-032)
     """
@@ -558,7 +563,7 @@ class MultiPixTestCase(sdsidebandsplitTestBase):
 
     # T-032
     def test_multi_pixels(self):
-        """images with 10x10 spatial pixel"""
+        """Images with 10x10 spatial pixel."""
         reference = dict(signal=datapath + 'ref_multipix.signalband',
                          image=datapath + 'ref_multipix.imageband')
         self.run_test(reference, getbothside=True)

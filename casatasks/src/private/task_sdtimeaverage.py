@@ -123,7 +123,7 @@ def check_column(msname):
 
 
 def set_timebin_all():
-    """Synthesize timebin
+    """Synthesize timebin.
 
     assign very large value to cover 'all'.
     """

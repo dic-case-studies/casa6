@@ -1382,7 +1382,7 @@ class Chans():
     """Class for values of the parameter 'chans' of TestImbaselineOutputs."""
 
     def __init__(self, name: str, spw_str: str, ignore_spws: list):
-        """Initialiser of the class.
+        """Initialise the class.
 
         Parameters
         ----------

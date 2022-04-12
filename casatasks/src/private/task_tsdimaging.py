@@ -222,7 +222,8 @@ def _configure_spectral_axis(mode, nchan, start, width, restfreq):
 
 
 def _format_quantum_unit(data, unit):
-    """
+    """Format quantity data.
+
     Returns False if data has an unit which in not a variation of
     input unit.
     Otherwise, returns input data as a quantum string. The input
@@ -247,7 +248,8 @@ def _handle_grid_defaults(value):
 
 
 def _calc_PB(vis, antenna_id, restfreq):
-    """
+    """Calculate the primary beam size of antenna.
+
     Calculate the primary beam size of antenna, using dish diamenter
     and rest frequency
     Average antenna diamter and reference frequency are adopted for

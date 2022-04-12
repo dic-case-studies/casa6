@@ -155,7 +155,7 @@ def parseRms(txt):
 
 
 class sdfit_unittest_base(unittest.TestCase):
-    """Base class for sdfit unit test"""
+    """Base class for sdfit unit test."""
 
     # Data path of input/output
     datapath = ctsys_resolve('unittest/sdfit/')
@@ -217,8 +217,8 @@ class sdfit_unittest_base(unittest.TestCase):
         f.close()
 
     def _checkfile(self, name, fail=True):
-        """
-        Check if the file exists.
+        """Check if the file exists.
+
         name : the path and file name to test
         fail : if True, Error if the file does not exists.
                if False, return if the file exists
@@ -231,7 +231,7 @@ class sdfit_unittest_base(unittest.TestCase):
             return isthere
 
     def _remove(self, names):
-        """Remove a list of files and directories from disk"""
+        """Remove a list of files and directories from disk."""
         for name in names:
             if os.path.exists(name):
                 if os.path.isdir(name):
@@ -240,7 +240,8 @@ class sdfit_unittest_base(unittest.TestCase):
                     os.remove(name)
 
     def _copy(self, names, from_dir=None, dest_dir=None):
-        """
+        """Copy files to destination directory.
+
         Copy a list of files and directories from a directory (from_dir) to
         another (dest_dir) in the same name.
 
@@ -273,14 +274,14 @@ class sdfit_unittest_base(unittest.TestCase):
                 casalog.post("Could not find '%s'...skipping copy" % from_name, 'WARN')
 
     def _getUniqList(self, val):
-        """Accepts a python list and returns a list of unique values"""
+        """Accept a python list and returns a list of unique values."""
         if not isinstance(val, list):
             raise Exception('_getUniqList: input value must be a list.')
         return list(set(val))
 
     def _getListSelection(self, val):
-        """
-        Converts input to a list of unique integers
+        """Convert input to a list of unique integers.
+
         Input: Either comma separated string of IDs, an integer, or a list of values.
         Output: a list of unique integers in input arguments for string and integer input.
                 In case the input is a list of values, output will be a list of unique values.
@@ -299,9 +300,8 @@ class sdfit_unittest_base(unittest.TestCase):
         return self._getUniqList(val_sel)
 
     def _getListSelectedRowID(self, data_list, sel_list):
-        """
-        Returns IDs of data_list that contains values equal to one in
-        sel_list.
+        """Return IDs of data_list that contains values equal to one in sel_list.
+
         The function is used to get row IDs that corresponds to a
         selected IDs. In that use case, data_list is typically a list
         of values in a column of an MS (e.g., SCAN_NUMBER) and sel_list is
@@ -318,8 +318,8 @@ class sdfit_unittest_base(unittest.TestCase):
         return self._getUniqList(res)
 
     def _getEffective(self, spec, mask):
-        """
-        Returns an array made by selected elements in spec array.
+        """Return an array made by selected elements in spec array.
+
         Only the elements in the ID range in mask are returned.
 
         spec : a data array
@@ -333,8 +333,7 @@ class sdfit_unittest_base(unittest.TestCase):
         return numpy.array(res)
 
     def _getStats(self, filename=None, spw=None, pol=None, colname=None, mask=None):
-        """
-        Returns a list of statistics dictionary of selected rows in an MS.
+        """Return a list of statistics dictionary of selected rows in an MS.
 
         filename : the name of MS
         spw      : spw ID selection (default: all spws in MS)
@@ -407,8 +406,7 @@ class sdfit_unittest_base(unittest.TestCase):
         return res_elem
 
     def _convert_statslist_to_dict(self, stat_list):
-        """
-        Returns a disctionary of statistics of selected rows in an MS.
+        """Return a disctionary of statistics of selected rows in an MS.
 
         stat_list: a list of stats dictionary (e.g., return value of _getStats)
 
@@ -428,7 +426,8 @@ class sdfit_unittest_base(unittest.TestCase):
         return stat_dict
 
     def _compareStats(self, currstat, refstat, rtol=1.0e-2, atol=1.0e-5, complist=None):
-        """
+        """Compare statictics results.
+
         Compare statistics results (dictionaries) and test if the values are within
         an allowed tolerance.
 
@@ -517,8 +516,8 @@ class sdfit_unittest_base(unittest.TestCase):
 #         return (abs(rdiff) <= reltol)
 
     def _to_list(self, input):
-        """
-        Convert input to a list
+        """Convert input to a list.
+
         If input is None, this method simply returns None.
         """
         listtypes = (list, tuple, numpy.ndarray)
@@ -643,7 +642,7 @@ class sdfit_basicTest(sdfit_unittest_base):
         os.system('rm -rf ' + self.outroot + '*')
 
     def test000(self):
-        """Basic Test 000: default values for all parameters (nfit=[0] : no fitting)"""
+        """Basic Test 000: default values for all parameters (nfit=[0] : no fitting)."""
         # tid = '000'
         for infile in self.infiles:
             datacolumn = 'float_data'
@@ -663,7 +662,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                         self.assertEqual(result[key][i], [], msg="%s has wrong value." % (key))
 
     def test001(self):
-        """Basic Test 001: fitting with single line profile (spw='0,1,2', nfit=[1])"""
+        """Basic Test 001: fitting with single line profile (spw='0,1,2', nfit=[1])."""
         # tid = '001'
         for infile in self.infiles:
             datacolumn = 'float_data'
@@ -698,7 +697,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                                 msg="row%s, comp%s result inconsistent with answer" % (i, j))
 
     def test002(self):
-        """Basic Test 002: fitting with double fitrange (spw='3', nfit=[1,1])"""
+        """Basic Test 002: fitting with double fitrange (spw='3', nfit=[1,1])."""
         # tid = '002'
         for infile in self.infiles:
             datacolumn = 'float_data'
@@ -738,7 +737,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                                 msg=f"row {i}, comp {j} result inconsistent with answer")
 
     def test003(self):
-        """Basic Test 003: fitting with double lines (spw='3', nfit=[2])"""
+        """Basic Test 003: fitting with double lines (spw='3', nfit=[2])."""
         # tid = '003'
         for infile in self.infiles:
             datacolumn = 'float_data'
@@ -775,7 +774,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                                 msg=f"row {i}, comp {j} result inconsistent with answer")
 
     def test004(self):
-        """Basic Test 004: fitting negative line profile with single line model (spw='0,1,2', nfit=[1])"""
+        """Basic Test 004: fitting negative line profile with single line model (spw='0,1,2', nfit=[1])."""
         tid = '004'
         for infile in self.infiles:
             infile_negative = self.outroot + tid + '.negative.ms'
@@ -814,7 +813,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                                 msg=f"row {i}, comp {j} result inconsistent with answer")
 
     def test005(self):
-        """Basic Test 005: fitting with double fitrange (spw='3', nfit=[1,1])"""
+        """Basic Test 005: fitting with double fitrange (spw='3', nfit=[1,1])."""
         tid = '005'
         for infile in self.infiles:
             infile_negative = self.outroot + tid + '.negative.ms'
@@ -857,7 +856,7 @@ class sdfit_basicTest(sdfit_unittest_base):
                                 msg=f"row {i}, comp {j} result inconsistent with answer")
 
     def test006(self):
-        """Basic Test 006: fitting with double line profiles (spw='3', nfit=[2])"""
+        """Basic Test 006: fitting with double line profiles (spw='3', nfit=[2])."""
         tid = '006'
         for infile in self.infiles:
             infile_negative = self.outroot + tid + '.negative.ms'
@@ -902,7 +901,8 @@ class sdfit_basicTest(sdfit_unittest_base):
 
 
 class sdfit_selection(sdfit_unittest_base, unittest.TestCase):
-    """
+    """Test for data selection.
+
     This class tests data selection parameters,
     i.e.,
         intent, antenna, field, spw, timerange, scan, and pol,
@@ -964,7 +964,7 @@ class sdfit_selection(sdfit_unittest_base, unittest.TestCase):
         return retval
 
     def _get_gauss_param_from_return(self, params, keys):
-        """returns a dictionary that stores a list of cent, fwhm, and peak."""
+        """Return a dictionary that stores a list of cent, fwhm, and peak."""
         retval = {}
         for key in keys:
             self.assertTrue(key in params.keys(),
@@ -1008,64 +1008,64 @@ class sdfit_selection(sdfit_unittest_base, unittest.TestCase):
                 idx += 1
 
     def testIntentF(self):
-        """Test selection by intent (float_data)"""
+        """Test selection by intent (float_data)."""
         self.run_test("intent", "float_data")
 
     def testIntentC(self):
-        """Test selection by intent (corrected)"""
+        """Test selection by intent (corrected)."""
         self.run_test("intent", "corrected")
 
     def testAntennaF(self):
-        """Test selection by antenna (float_data)"""
+        """Test selection by antenna (float_data)."""
         self.run_test("antenna", "float_data")
 
     def testAntennaC(self):
-        """Test selection by antenna (corrected)"""
+        """Test selection by antenna (corrected)."""
         self.run_test("antenna", "corrected")
 
     def testFieldF(self):
-        """Test selection by field (float_data)"""
+        """Test selection by field (float_data)."""
         self.run_test("field", "float_data")
 
     def testFieldC(self):
-        """Test selection by field (corrected)"""
+        """Test selection by field (corrected)."""
         self.run_test("field", "corrected")
 
     def testSpwF(self):
-        """Test selection by spw (float_data)"""
+        """Test selection by spw (float_data)."""
         self.run_test("spw", "float_data")
 
     def testSpwC(self):
-        """Test selection by spw (corrected)"""
+        """Test selection by spw (corrected)."""
         self.run_test("spw", "corrected")
 
     def testTimerangeF(self):
-        """Test selection by timerange (float_data)"""
+        """Test selection by timerange (float_data)."""
         self.run_test("timerange", "float_data")
 
     def testTimerangeC(self):
-        """Test selection by timerange (corrected)"""
+        """Test selection by timerange (corrected)."""
         self.run_test("timerange", "corrected")
 
     def testScanF(self):
-        """Test selection by scan (float_data)"""
+        """Test selection by scan (float_data)."""
         self.run_test("scan", "float_data")
 
     def testScanC(self):
-        """Test selection by scan (corrected)"""
+        """Test selection by scan (corrected)."""
         self.run_test("scan", "corrected")
 
     def testPolF(self):
-        """Test selection by pol (float_data)"""
+        """Test selection by pol (float_data)."""
         self.run_test("pol", "float_data")
 
     def testPolC(self):
-        """Test selection by pol (corrected)"""
+        """Test selection by pol (corrected)."""
         self.run_test("pol", "corrected")
 
 
 class sdfit_auto(sdfit_unittest_base, unittest.TestCase):
-    """This class tests fitmode='auto'"""
+    """This class tests fitmode='auto'."""
 
     datapath = ctsys_resolve('unittest/sdfit/')
     infile = "analytic_type2.fit1row.ms"
@@ -1137,19 +1137,19 @@ class sdfit_auto(sdfit_unittest_base, unittest.TestCase):
                                     "%s in row %d line %d differs" % (key, irow, iline))
 
     def testAuto(self):
-        """Test fitmode='auto' with default parameters"""
+        """Test fitmode='auto' with default parameters."""
         self.run_test(False, self.base_ref)
 
     def testAutoMask(self):
-        """Test fitmode='auto' with line mask by spw parameter"""
+        """Test fitmode='auto' with line mask by spw parameter."""
         self.run_test(True, None, spw='6:20~100')
 
     def testAutoThres(self):
-        """Test fitmode='auto' with threshold"""
+        """Test fitmode='auto' with threshold."""
         self.run_test(False, None, thresh=15.0)
 
     def testAutoMinwidth(self):
-        """Test fitmode='auto' with minwidth"""
+        """Test fitmode='auto' with minwidth."""
         ref_stat = {'cent': [[[61.40139389, 0.25993374]], [[61.40139389, 0.25993374]]],
                     'fwhm': [[[8.92976952, 0.64963025]], [[8.92976952, 0.64963025]]],
                     'nfit': [1, 1],
@@ -1158,7 +1158,7 @@ class sdfit_auto(sdfit_unittest_base, unittest.TestCase):
         self.run_test(False, ref_stat, minwidth=12, thresh=4.)
 
     def testAutoEdge(self):
-        """Test fitmode='auto' with edge"""
+        """Test fitmode='auto' with edge."""
         self.run_test(True, None, edge=[20, 27])
 
     def testAutoFlag(self):
@@ -1169,8 +1169,7 @@ class sdfit_auto(sdfit_unittest_base, unittest.TestCase):
 
 
 class sdfit_timeaverage(sdfit_unittest_base, unittest.TestCase):
-    """
-    tests for time-averaging capability
+    """Test time-averaging capability.
 
     Note: the input data 'sdfit_tave.ms' has 32 rows. Any combination of
           SCAN_ID (8 and 9), STATE_ID (6 and 4) and FIELD_ID (4 and 5)
@@ -1241,64 +1240,63 @@ class sdfit_timeaverage(sdfit_unittest_base, unittest.TestCase):
                             "result in row %d differs" % (irow))
 
     def testTimebinNullString(self):
-        """Test timebin='' : no averaging (default)"""
+        """Test timebin='' : no averaging (default)."""
         ref = [0.94, 0.98, 1.01, 1.03]
         self.run_test(True, ref, timebin='')
 
     def testAverage2(self):
-        """Test timebin='0.2s' : averaging 2 spectra"""
+        """Test timebin='0.2s' : averaging 2 spectra."""
         ref = [0.96, 1.02]
         self.run_test(True, ref, timebin='0.2s')
 
     def testAverage4(self):
-        """Test timebin='0.4s' : averaging 4 spectra"""
+        """Test timebin='0.4s' : averaging 4 spectra."""
         ref = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
         self.run_test(False, ref, timebin='0.4s')
 
     def testTimespanScan(self):
-        """Test timespan='scan' : averaging across SCAN_NUMBER border"""
+        """Test timespan='scan' : averaging across SCAN_NUMBER border."""
         ref = [3.0, 4.0, 5.0, 6.0]
         self.run_test(False, ref, timebin='10s', timespan='scan')
 
     def testTimespanState(self):
-        """Test timespan='state' : averaging across STATE_ID border"""
+        """Test timespan='state' : averaging across STATE_ID border."""
         ref = [2.0, 3.0, 6.0, 7.0]
         self.run_test(False, ref, timebin='10s', timespan='state')
 
     def testTimespanField(self):
-        """Test timespan='field' : averaging across FIELD_ID border"""
+        """Test timespan='field' : averaging across FIELD_ID border."""
         ref = [1.5, 3.5, 5.5, 7.5]
         self.run_test(False, ref, timebin='10s', timespan='field')
 
     def testTimespanScanState(self):
-        """Test timespan='scan,state' : averaging across SCAN_NUMBER and STATE_ID borders"""
+        """Test timespan='scan,state' : averaging across SCAN_NUMBER and STATE_ID borders."""
         ref = [4.0, 10.0]
         self.run_test(False, ref, timebin='10s', timespan='scan,state')
 
     def testTimespanScanField(self):
-        """Test timespan='scan,field' : averaging across SCAN_NUMBER and FIELD_ID borders"""
+        """Test timespan='scan,field' : averaging across SCAN_NUMBER and FIELD_ID borders."""
         ref = [3.5, 5.5]
         self.run_test(False, ref, timebin='10s', timespan='scan,field')
 
     def testTimespanStateField(self):
-        """Test timespan='state,field' : averaging across STATE_ID and FIELD_ID borders"""
+        """Test timespan='state,field' : averaging across STATE_ID and FIELD_ID borders."""
         ref = [2.5, 6.5]
         self.run_test(False, ref, timebin='10s', timespan='state,field')
 
     def testTimespanScanStateField(self):
-        """Test timespan='scan,state,field' : averaging across SCAN_NUMBER, STATE_ID and FIELD_ID borders"""
+        """Test timespan='scan,state,field' : averaging across SCAN_NUMBER, STATE_ID and FIELD_ID borders."""
         ref = [4.5]
         self.run_test(False, ref, timebin='10s', timespan='scan,state,field')
 
     def testTimespanStateAutoAdded(self):
-        """Test timespan='scan,field' : to see if 'state' is automatically added to timespan"""
+        """Test timespan='scan,field' : to see if 'state' is automatically added to timespan."""
         ref = [4.5]
         self.run_test(False, ref, timebin='100s', timespan='scan,field')
 
 
 class sdfit_polaverage(sdfit_unittest_base, unittest.TestCase):
-    """
-    Test polarization averaging capability
+    """Test polarization averaging capability.
 
         test_polaverage_default   -- test default average mode (=stokes)
         test_polaverage_stokes    -- test stokes average mode
@@ -1338,7 +1336,8 @@ class sdfit_polaverage(sdfit_unittest_base, unittest.TestCase):
             mytb.close()
 
     def edit_meta(self):
-        """
+        """Edit meta data for testing.
+
         Edit DATA_DESC_ID and TIME (TIME_CENTROID) so taht VI/VB2 takes more than
         one row in one (sub)chunk
         """
@@ -1453,7 +1452,7 @@ class sdfit_polaverage(sdfit_unittest_base, unittest.TestCase):
         self.verify(mode, result)
 
     def run_test2(self, mode):
-        """run_test2 is test function that should be used for tests including edit_meta"""
+        """run_test2 is test function that should be used for tests including edit_meta."""
         # only spw 0 is processed
         # since edit_meta, effectively it corresponds to process both spw 0 and 1
         result = sdfit(infile=self.infile, datacolumn='float_data', fitfunc='gaussian',

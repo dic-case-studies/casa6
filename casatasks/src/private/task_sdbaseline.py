@@ -108,7 +108,8 @@ def remove_data(filename):
 
 
 def is_empty(blformat):
-    """
+    """Check if blformat is empty.
+
     returns True if blformat is None, '', [] and
     a string list containing only '' (i.e., ['', '', ..., ''])
     """
@@ -342,7 +343,8 @@ def __get_strlist(param):
 
 
 def check_fftthresh(fftthresh):
-    """
+    """Validate fftthresh value.
+
     The fftthresh must be one of the following:
     (1) positive value (float, integer or string)
     (2) 'top' + positive integer value

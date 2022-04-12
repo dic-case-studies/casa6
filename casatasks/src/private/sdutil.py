@@ -82,8 +82,8 @@ def table_selector(table, taql, *args, **kwargs):
 
 
 def sdtask_decorator(func):
-    """
-    This is a decorator function for sd tasks.
+    """This is a decorator function for sd tasks.
+
     Currently the decorator does:
 
        1) set origin to the logger
@@ -117,8 +117,8 @@ def sdtask_decorator(func):
 
 
 def callable_sdtask_decorator(func):
-    """
-    This is a decorator function for sd tasks.
+    """This is a decorator function for sd tasks.
+
     Currently the decorator does:
 
        1) if it get the parameter '__log_origin', read it and set origin to the logger.
@@ -200,9 +200,9 @@ class sdtask_manager(object):
 
 
 class sdtask_interface(object):
-    """
-    The sdtask_interface defines a common interface for sdtask_worker
-    class. All worker classes can be used as follows:
+    """The sdtask_interface defines a common interface for sdtask_worker class.
+
+    All worker classes can be used as follows:
 
        worker = sdtask_worker(**locals())
        worker.initialize()
@@ -256,7 +256,8 @@ class sdtask_interface(object):
 
 
 class sdtask_template_imaging(sdtask_interface):
-    """
+    """Template class for imaging tasks.
+
     The sdtask_template_imaging is a template class for worker
     class of imaging related sdtasks. It partially implement initialize()
     and finalize() using internal methods that must be implemented
@@ -496,8 +497,8 @@ def get_spwids(selection, infile=None):
 
 
 def __is_sequence_or_number(param, ptype=int):
-    """
-    Returns true if input is an array type or a number with a give data type.
+    """Return true if input is an array type or a number with a give data type.
+
     Arguments
         param : an array or number to test
         ptype : the data type that param should be.
@@ -512,8 +513,8 @@ def __is_sequence_or_number(param, ptype=int):
 
 
 def to_list(param, ptype=int, convert=False):
-    """
-    Convert a number, an array type or a string to a list.
+    """Convert a number, an array type or a string to a list.
+
     The function returns None if input values are not ptype and convert=False.
     When convert is True, force converting input values to a list of ptype.
     """
@@ -878,7 +879,8 @@ def __check_tileshape(tileshape):
 
 
 def __process_input_multi_ms(pdh, separationaxis):
-    """
+    """Process MS.
+
     retval{'status': True,  'axis':''}         --> can run in parallel
     retval{'status': False, 'axis':'value'}    --> treat MMS as monolithic MS,
                                                    set new axis for output MMS

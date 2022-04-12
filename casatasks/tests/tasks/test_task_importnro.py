@@ -110,20 +110,20 @@ class importnro_test(unittest.TestCase):
         os.system('rm -rf ' + self.prefix + '*')
 
     def test_overwrite(self):
-        """test_overwrite: File existence check"""
+        """test_overwrite: File existence check."""
         shutil.copy(self.infile, self.outfile)
         with self.assertRaisesRegexp(RuntimeError, r'.* exists\.$'):
             importnro(infile=self.infile, outputvis=self.outfile, overwrite=False)
 
     def test_invaliddata(self):
-        """test_invaliddata: Invalid data check"""
+        """test_invaliddata: Invalid data check."""
         with open(self.infile, 'wb') as f:
             f.write(str2bytes('AA'))
         with self.assertRaisesRegexp(RuntimeError, r'.* is not a valid NOSTAR data\.$'):
             importnro(infile=self.infile, outputvis=self.outfile, overwrite=False)
 
     def test_normal(self):
-        """test_normal: Normal data import"""
+        """test_normal: Normal data import."""
         importnro(infile=self.infile, outputvis=self.outfile, overwrite=True)
         self.assertTrue(os.path.exists(self.outfile))
         try:
@@ -188,11 +188,11 @@ class importnro_test(unittest.TestCase):
             mytb.close()
 
     def _check_optional_subtables(self, vis):
-        """Check if optional subtables are valid"""
+        """Check if optional subtables are valid."""
         self._check_NRO_ARRAY(vis)
 
     def _check_NRO_ARRAY(self, vis):
-        """Check if NRO_ARRAY table is valid"""
+        """Check if NRO_ARRAY table is valid."""
         table_name = 'NRO_ARRAY'
         mytb.open(vis)
         try:
@@ -237,7 +237,7 @@ class importnro_test(unittest.TestCase):
         self.assertTrue(numpy.all(pol_expected == pol))
 
     def _check_source_interval(self, vis):
-        """Check if SOURCE INTERVAL is consistent with OBSERVATION TIME_RANGE"""
+        """Check if SOURCE INTERVAL is consistent with OBSERVATION TIME_RANGE."""
         source_table = os.path.join(vis, 'SOURCE')
         observation_table = os.path.join(vis, 'OBSERVATION')
 
@@ -263,7 +263,7 @@ class importnro_test(unittest.TestCase):
             self.assertTrue(numpy.all(diff < 1.0e-16))
 
     def test_timestamp(self):
-        """test_timestamp: Check if timestamp is properly converted to UTC"""
+        """test_timestamp: Check if timestamp is properly converted to UTC."""
         importnro(infile=self.infile, outputvis=self.outfile, overwrite=True)
         self.assertTrue(os.path.exists(self.outfile))
 

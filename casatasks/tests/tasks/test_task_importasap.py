@@ -62,19 +62,19 @@ class importasap_test(unittest.TestCase):
         os.system('rm -rf ' + self.prefix + '*')
 
     def test_overwrite(self):
-        """test_overwrite: File existence check"""
+        """test_overwrite: File existence check."""
         shutil.copytree(self.infile, self.outfile)
         with self.assertRaisesRegexp(RuntimeError, r'.* exists\.$'):
             importasap(infile=self.infile, outputvis=self.outfile, overwrite=False)
 
     def test_invaliddata(self):
-        """test_invaliddata: Invalid data check"""
+        """test_invaliddata: Invalid data check."""
         os.remove(os.path.join(self.infile, 'table.info'))
         with self.assertRaisesRegexp(RuntimeError, r'.* is not a valid Scantable\.$'):
             importasap(infile=self.infile, outputvis=self.outfile, overwrite=False)
 
     def test_normal(self):
-        """test_normal: Normal data import"""
+        """test_normal: Normal data import."""
         importasap(infile=self.infile, outputvis=self.outfile,
                    flagbackup=True, overwrite=True)
         self.assertTrue(os.path.exists(self.outfile))
@@ -97,7 +97,7 @@ class importasap_test(unittest.TestCase):
         self._check_atm_pressure(self.outfile)
 
     def test_flagversions(self):
-        """test_flagversions -- Check if existing flagversions file is overwritten"""
+        """test_flagversions -- Check if existing flagversions file is overwritten."""
         # create flagversions file
         importasap(infile=self.infile, outputvis=self.outfile,
                    flagbackup=True, overwrite=True)
@@ -129,7 +129,7 @@ class importasap_test(unittest.TestCase):
         aflocal.done()
 
     def test_noflagversions(self):
-        """test_noflagversions -- Do not create flagversions file"""
+        """test_noflagversions -- Do not create flagversions file."""
         flagversions = self._flagversions(self.infile)
 
         # create flagversions file
