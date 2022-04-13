@@ -46,10 +46,6 @@ from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
 from casatestutils import testhelper as th
 
-
-def lociteritems(adict):
-    return adict.items()
-
 datapath = ctsys.resolve('unittest/split/')
 
 # To run test_split with MMS, create MMS from the MSs used in these tests and save them
@@ -130,7 +126,7 @@ def compare_tables(tabname, exptabname, tol=None):
         raise ValueError(tabname + ' and ' + exptabname + ' have different keywords')
     if set(tabdict['cols'].keys()) != set(exptabdict['cols'].keys()):
         raise ValueError(tabname + ' and ' + exptabname + ' have different columns')
-    for col, tabentry in lociteritems(tabdict['cols']):
+    for col, tabentry in tabdict['cols'].items():
         if set(tabentry['keywords']) != set(exptabdict['cols'][col]['keywords']):
             raise ValueError(tabname + ' and ' + exptabname + ' have different keywords for column ' + col)
 
