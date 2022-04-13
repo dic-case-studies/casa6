@@ -600,7 +600,7 @@ def flagdata(vis,
             tempdict = copy.deepcopy(seldic)
             # Remove the empty parameters
             for k,v in lociteritems(seldic):
-                if v == '':
+                if v is '':
                     tempdict.pop(k)
 
             cmddict = {'command':tempdict}

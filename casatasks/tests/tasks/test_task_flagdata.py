@@ -425,13 +425,13 @@ class test_base(unittest.TestCase):
     def setUp_weightcol(self):
         '''Small MS with two rows and WEIGHT column'''
 
-        inpvis = "combine-1-timestamp-2-SPW-no-WEIGHT_SPECTRUM-Same-Exposure.ms"
         self.vis = "msweight.ms"
-        
+
         if os.path.exists(self.vis):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
+            inpvis = "combine-1-timestamp-2-SPW-no-WEIGHT_SPECTRUM-Same-Exposure.ms"
             os.system('cp -RH '+os.path.join(datapath,inpvis)+' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
@@ -2064,17 +2064,17 @@ class test_list_file(test_base):
 
         # Extract only the type 'summary' reports into a list
         summary_reps = self.extract_reports(summary_stats_list)
- 
-        for ind in range(0,len(summary_reps)):        
+
+        for ind in range(len(summary_reps)):
             flagcount = summary_reps[ind]['flagged'];
-            totalcount = summary_reps[ind]['total'];         
+            totalcount = summary_reps[ind]['total'];
             # From the second summary onwards, subtract counts from the previous one :)
             if ( ind > 0 ):
                  flagcount = flagcount - summary_reps[ind-1]['flagged'];
-         
+
             print("Summary ", ind , "(" , summary_reps[ind]['name']  , ") :  Flagged : " , flagcount , " out of " , totalcount)
-         
-        self.assertEqual(summary_reps[0]['flagged'],238140, 'Should show only scan=2 flagged')    
+
+        self.assertEqual(summary_reps[0]['flagged'],238140, 'Should show only scan=2 flagged')
         self.assertEqual(summary_reps[1]['flagged']-summary_reps[0]['flagged'],0, 'Should not flag any zeros')    
  
     def test_file_summary2(self):
@@ -4513,8 +4513,7 @@ class test_flags_propagation_base(test_base):
         try:
             tbt = table()
             tbt.open(mss)
-            flags = tbt.getcol('FLAG')
-            return flags
+            return tbt.getcol('FLAG')
         finally:
             tbt.close()
 
@@ -5168,33 +5167,6 @@ class test_auto_methods_display(test_base):
 
         flagdata(vis=self.vis, flagbackup=False, mode='list', inpfile=inplist,
                  display='data')
-
-
-# Cleanup class
-# class cleanup(test_base):
-# 
-#     def tearDown(self):
-#         os.system('rm -rf ngc5921.*ms* testwma*ms*')
-#         os.system('rm -rf flagdatatest.*ms*')
-#         os.system('rm -rf missing-baseline.*ms*')
-#         os.system('rm -rf multiobs.*ms*')
-#         os.system('rm -rf uid___A002_X30a93d_X43e_small.*ms*')
-#         os.system('rm -rf Four_ants_3C286*')
-#         os.system('rm -rf shadow*.*ms*')
-#         os.system('rm -rf testmwa.*ms*')
-#         os.system('rm -rf cal.fewscans.bpass*')
-#         os.system('rm -rf X7ef.tsys*')
-#         os.system('rm -rf ap314.gcal*')
-#         os.system('rm -rf list*txt*')
-#         os.system('rm -rf fourrows*')
-#         os.system('rm -rf SDFloatColumn*')
-#         os.system('rm -rf *weight*ms*')
-#         os.system('rm -rf uid___A002_X72c4aa_X8f5_scan21_spw18*')
-#         os.system('rm -rf test_residual_step*.ms')
-# 
-#     def test_runTest(self):
-#         '''flagdata: Cleanup'''
-#         pass
 
 if __name__ == '__main__':
     unittest.main()
