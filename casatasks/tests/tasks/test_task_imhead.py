@@ -430,9 +430,31 @@ class imhead_test(unittest.TestCase):
         # test bogus key fails
         k = 'boguskey'
         self.assertRaises(
-                Exception, imhead, datacopy, mode='get', hdkey=k,
-                msg='Incorrectly found bogus key'
+            Exception, imhead, datacopy, mode='get', hdkey=k,
+            msg='Incorrectly found bogus key'
         )
+        # CAS-13654
+        with self.assertRaises(RuntimeError) as cm:
+            casalog.post('xyz', 'SEVERE')
+            imhead(datacopy, mode='get', hdkey='incr')
+            casalog.post('ab', 'SEVERE')
+            print('ab')
+            exc = cm.exception
+            print('ac')
+            expected_msg = (
+               'Uknown keyword incr. If you are trying to use a key name '
+               'from the imhead summary dictionary, note that some keys in '
+               'mode=\'put\'/\'get\' are different from mode=\'summary\'. '
+               'Please see imhead description in the CASA online '
+               'documentation for complete details.'
+            )
+            print('ad')
+            pos = str(exc).find(expected_msg)
+            print('abcdef pos', pos)
+            self.assertNotEqual(
+                pos, -1, msg=f'Unexpected exception was thrown: {exc}'
+            )
+
 
     def test_summary(self):
         '''
