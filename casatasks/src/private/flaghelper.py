@@ -17,10 +17,6 @@ tblocal = table()
 mslocal = ms()
 qalocal = quanta()
 
-# common function to use to get a dictionary item iterator
-def lociteritems(adict):
-    return adict.items()
-
 '''
 A set of helper functions for the tasks flagdata and flagcmd.
 Class Parser: to parse flag commands
@@ -808,7 +804,7 @@ def parseUnion(vis, flagdict):
         # Each key is a dictionary of one flag command
         cmddict = flagdict[k]['command']
                
-        for xkey,xval in lociteritems(cmddict):
+        for xkey,xval in cmddict.items():
             # Check which parameter
             if xkey == "scan":
                 scans += xval + ','
@@ -896,7 +892,7 @@ def parseUnion(vis, flagdict):
     ncmds = flagdict.__len__()
 
     # Make the union. Only leave non-empty parameters in dictionary
-    for k,v in lociteritems(npars):
+    for k,v in npars.items():
         if v < ncmds:
             dictpars.pop(k)
          
@@ -1196,7 +1192,7 @@ def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=Tru
                 if reason != '':
                     cmddict['reason'] = reason
                                         
-                for k,v in lociteritems(cmddict):
+                for k,v in cmddict.items():
                     cmdstr = ""
                     if isinstance(v, str):
                         # Add quotes to string values
@@ -1238,7 +1234,7 @@ def writeFlagCommands(msfile, flagdict, applied, add_reason, outfile, append=Tru
             if reason2add:
                 reason = add_reason
                 
-            for k,v in lociteritems(cmddict):
+            for k,v in cmddict.items():
                 cmdstr = ""
                 if isinstance(v, str):
                     # Add quotes to string values
@@ -1837,7 +1833,7 @@ def evaluateParameters(pardict):
     
     cmddict = OrderedDict()
 
-    for key,val in lociteritems(pardict):
+    for key,val in pardict.items():
         newval = None
 
         if val.startswith('['):
@@ -2009,7 +2005,7 @@ def evaluateFlagParameters(pardict, pars):
     for idx in pardict.keys():
         mydict = pardict[idx]['command']
         count += 1
-        for key,val in lociteritems(mydict):
+        for key,val in mydict.items():
             if key not in refkeys:
                 raise ValueError('Parameter \'%s\' in row=%s is not a valid flagdata parameter'%(key,idx))
 
@@ -3051,7 +3047,7 @@ def getUnion(vis, cmddict):
     nlines = nrows - npars['comment']
         
     # Make the union. 
-    for k,v in lociteritems(npars):
+    for k,v in npars.items():
         if k != 'comment':
             if v < nlines:
                 dicpars[k] = ''
@@ -3059,7 +3055,7 @@ def getUnion(vis, cmddict):
 
     uniondic = dicpars.copy()
     # Remove empty parameters from the dictionary
-    for k,v in lociteritems(dicpars):
+    for k,v in dicpars.items():
         if v == '':
             uniondic.pop(k)
     
@@ -3271,7 +3267,7 @@ def writeFlagCmd(msfile, myflags, vrows, applied, add_reason, outfile):
                 newdict = evalString(cmdline)
 #                newdict = evaluateString(cmdline)
                 cmdline = ''
-                for k,v in lociteritems(newdict):
+                for k,v in newdict.items():
                     cmdstr = ""
                     # Add quotes to non-quoted strings
                     if isinstance(v, str):
@@ -3338,7 +3334,7 @@ def writeFlagCmd(msfile, myflags, vrows, applied, add_reason, outfile):
             newdict = evalString(command)
 #            newdict = evaluateString(command)
             cmdline = ''
-            for k,v in lociteritems(newdict):
+            for k,v in newdict.items():
                 cmdstr = ""
                 if isinstance(v, str):
                     if v.count("'") > 0:
