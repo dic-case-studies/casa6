@@ -1648,7 +1648,7 @@ to use.
     and n_integrations are the number of correlator integration times 
     in the MS (~ track time / int. time)
     
-    For mode=tsys-atm or tsys-atm, the noise will vary with dish
+    For mode=tsys-atm or tsys-manual, the noise will vary with dish
     diameter, antenna efficiency, system temperature, opacity, sky
     temperature, etc.  The noise will increase with the airmass if tau
     is greater than zero.  The noise is calculated according to the
