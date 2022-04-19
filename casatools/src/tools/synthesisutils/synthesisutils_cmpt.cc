@@ -325,13 +325,13 @@ synthesisutils::~synthesisutils()
   return rstat;
 }
   
-  bool  synthesisutils::fitPsfBeam(const string& imagename, const long nterms, const float psfcutoff, const long nscales)
+  bool  synthesisutils::fitPsfBeam(const string& imagename, const long nterms, const float psfcutoff)
 {
    int rstat(false);
 
   try
     {
-      rstat = SynthesisUtilMethods::fitPsfBeam(imagename, nterms, psfcutoff, nscales);
+      rstat = SynthesisUtilMethods::fitPsfBeam(imagename, nterms, psfcutoff);
     }
   catch  (AipsError x)
     {

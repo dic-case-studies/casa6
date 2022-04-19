@@ -6,7 +6,6 @@ import numpy
 import os
 import shutil
 import re
-import numpy as np
 
 # get is_CASA6 and is_python3, and import other classes
 try:
@@ -64,16 +63,11 @@ def check_requiredimgs_exist(imagename, inp):
     reqims = []
     if inp['deconvolver'] == 'mtmfs':
         nterms = inp['nterms']
-        nscales = len(inp['scales'])
         end = nterms*2-1
-        for ttn in range(nterms*2-1):
+        for ttn in range(0, nterms*2-1):
             reqims.append(imagename + ".psf" + ".tt" + str(ttn))
-        for ttn in range(nterms):
+        for ttn in range(0, nterms):
             reqims.append(imagename + ".residual" + ".tt" + str(ttn))
-        if os.path.exists(imagename + ".residual.tt0.s0"):
-            for ttn in range(nterms):
-                for six in range(nscales):
-                    reqims.append(f"{imagename}.residual.tt{ttn}.s{six}")
     else:
         reqims.append(imagename + ".residual")
         reqims.append(imagename + ".psf")
@@ -136,24 +130,6 @@ def check_starmodel_model_collisions(startmodel, imagename, deconvolver):
                                os.linesep+"\tEither unset startmodel or remove {0} to continue".format(modim))
 
     return sm_modim_map
-
-def check_scaledresiduals_sizes(imagename, inp):
-    nterms = inp['nterms']
-    nscales = len(inp['scales'])
-    for tix in range(nterms):
-        # get the size to compare to
-        ia.open(f"{imagename}.residual.tt{tix}")
-        resshape = ia.shape()
-        ia.done()
-
-        # compare residual shaped to the scaled residuals shapes
-        for six in range(nscales):
-            scaledresname = f"{imagename}.residual.tt{tix}.s{six}"
-            ia.open(scaledresname)
-            scaledresshape = ia.shape()
-            ia.done()
-            if not np.array_equal(resshape, scaledresshape):
-                raise RuntimeError("Mismatched Data Error: .residual image and scaled residual images .residual.tt*.s* should have the same dimensions")
 
 def deconvolve(
     ####### Data Selection
@@ -262,13 +238,6 @@ def deconvolve(
         threshold = threshold if (type(threshold) == str) else (str(threshold*1000)+'mJy')
         paramList.setIterPars({'cyclethreshold': threshold, 'cyclethresholdismutable': False})
 
-        # Use the previous scaled residuals, if any
-        if deconvolver == 'mtmfs':
-            if os.path.exists(imagename + ".residual.tt0.s0"):
-                check_scaledresiduals_sizes(imagename, inp)
-                paramList.setDecParsAll({'useprevscaledres': True})
-            paramList.setDecParsAll({'savescaledres': not restoration})
-
         #####################################################
         #### Run the minor cycle
         #####################################################
@@ -330,10 +299,6 @@ def deconvolve(
             decon.restoreImages()
             t1=time.time();
             casalog.post("***Time for restoring images: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_deconvolve");
-
-        ## Remove images related to continuation of a mtmfs run
-        if restoration:
-            os.system(f"rm -rf {imagename}.residual.tt*.s*")
 
         ##close tools
         decon.deleteTools()

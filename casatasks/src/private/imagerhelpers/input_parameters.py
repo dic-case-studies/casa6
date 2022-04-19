@@ -328,10 +328,6 @@ class ImagerParameters():
     def setDecPars(self,decpars):
         for key in decpars.keys():
             self.alldecpars[key] = decpars[key]
-    def setDecParsAll(self,decpars):
-        for immod in self.alldecpars.keys():
-            for key in decpars.keys():
-                self.alldecpars[immod][key] = decpars[key]
     def setIterPars(self,iterpars):
         for key in iterpars.keys():
             self.iterpars[key] = iterpars[key]
