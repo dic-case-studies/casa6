@@ -130,7 +130,7 @@ def getPlotantsAntennaInfo(msname, log, exclude, checkbaselines):
                 for (x, y, z) in tb.getcol('POSITION').transpose()])
         tb.close()
 
-        allAntIds = range(len(antNames))
+        allAntIds = list(range(len(antNames)))
         if checkbaselines:
                 # Get antenna ids from main table; this will add to runtime
                 tb.open(msname)
@@ -306,7 +306,7 @@ def plotAntennasLog(telescope, names, ids, xpos, ypos, antindex, stations):
                         valign, halign, angle = getAntennaLabelProps(telescope, station, log=True)
                         # adjust so text is not on the circle:
                         yoffset = 0
-                        if halign is 'center':
+                        if halign == 'center':
                                 yoffset = 0.1
                         ax.text(theta[i], np.log(r[i])+yoffset, ' '+name, size=8, va=valign, ha=halign,
                                 rotation=angle, weight='semibold')
@@ -348,7 +348,7 @@ def plotAntennas(telescope, names, ids, xpos, ypos, antindex, stations, showplot
                         # set alignment and rotation angle (for VLA)
                         valign, halign, angle = getAntennaLabelProps(telescope, station)
                         # adjust so text is not on the circle:
-                        if halign is 'center':
+                        if halign == 'center':
                                 y -= 10
                         ax.text(x, y, ' '+name, size=8, va=valign, ha=halign, rotation=angle,
                                 weight='semibold')
