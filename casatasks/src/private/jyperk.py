@@ -15,7 +15,8 @@ import certifi
 import numpy as np
 
 from casatasks import casalog
-from casatasks.private.sdutil import table_selector, table_manager, tool_manager
+from casatasks.private.sdutil import (table_manager, table_selector,
+                                      tool_manager)
 from casatools import measures
 from casatools import ms as mstool
 from casatools import msmetadata, quanta
@@ -110,7 +111,7 @@ class ASDMParamsGenerator():
             str -- Corresponding ASDM uid.
         """
         basename = os.path.basename(os.path.abspath(vis))
-        pattern = '^uid___A[0-9][0-9][0-9]_X[0-9a-f]+_X[0-9a-f]+\.ms$'
+        pattern = r'^uid___A[0-9][0-9][0-9]_X[0-9a-f]+_X[0-9a-f]+\.ms$'
         if re.match(pattern, basename):
             return basename.replace('___', '://').replace('_', '/').replace('.ms', '')
         else:
@@ -136,7 +137,8 @@ class InterpolationParamsGenerator():
         params = {}
 
         science_windows = cls._get_science_windows(vis, spw)
-        timerange, antenna_names, basebands, mean_freqs, spwnames = cls._extract_msmetadata(science_windows, vis)
+        timerange, antenna_names, basebands, mean_freqs, spwnames = \
+            cls._extract_msmetadata(science_windows, vis)
 
         mean_freqs = cls._get_mean_freqs(vis, science_windows)
         bands = Bands.get(science_windows, spwnames, mean_freqs, vis)
@@ -180,7 +182,9 @@ class InterpolationParamsGenerator():
         with tool_manager(vis, msmetadata) as msmd:
             spwnames = msmd.namesforspws(science_windows)
 
-        spw = ','.join(map(str, [i for i, name in enumerate(spwnames) if not name.startswith('WVR')]))
+        spw = ','.join(
+            map(str, [i for i, name in enumerate(spwnames)
+                      if not name.startswith('WVR')]))
         return spw
 
     @staticmethod
@@ -243,7 +247,7 @@ class Bands():
         """
         bands = cls._extract_bands_from_spwnames(science_windows, spwnames)
         mean_freqs_with_undetected_band = cls._filter_mean_freqs_with_undetected_band(
-                                            science_windows, spwnames, mean_freqs)
+            science_windows, spwnames, mean_freqs)
         if len(mean_freqs_with_undetected_band) > 0:
             bands.update(
                 cls._detect_bands_from_mean_freqs(mean_freqs_with_undetected_band, vis)
@@ -362,7 +366,8 @@ class MeanElevation():
 
     @staticmethod
     def _query_rows(vis, science_dd, stateid, antenna_id):
-        query = f'ANTENNA1=={antenna_id}&&ANTENNA2=={antenna_id}&&DATA_DESC_ID=={science_dd[0]}&&STATE_ID IN {list(stateid)}'
+        query = f'ANTENNA1=={antenna_id}&&ANTENNA2=={antenna_id}&&DATA_DESC_ID=={science_dd[0]}' + \
+                f'&&STATE_ID IN {list(stateid)}'
         with table_selector(vis, query) as tb:
             rows = tb.rownumbers()
 
@@ -407,7 +412,9 @@ class RequestsManager():
 
     def get(self, params):
         """Get the responses of the Jy/K DB."""
-        dataset = [{'response': self.client.get(param.param), 'aux': param.subparam} for param in params]
+        dataset = [
+            {'response': self.client.get(param.param), 'aux': param.subparam}
+            for param in params]
         return self._filter_success_is_true(dataset)
 
     def _filter_success_is_true(self, dataset):
@@ -437,7 +444,8 @@ class JyPerKDatabaseClient():
                 access fails, defaults to 5 sec.
         """
         assert endpoint in ['asdm', 'model-fit', 'interpolation'], \
-            'The JyPerKDatabaseClient class requires one of endpoint: asdm, model-fit or interpolation'
+            'The JyPerKDatabaseClient class requires one of endpoint: ' \
+            'asdm, model-fit or interpolation'
         self.web_api_url = self._generate_web_api_url(endpoint)
         self.timeout = timeout
         self.retry = retry
@@ -506,18 +514,18 @@ class JyPerKDatabaseClient():
             casalog.post(msg)
             return {'status': 'URLError', 'err_msg': msg}
 
-
     def _try_to_get_response(self, url):
         casalog.post(f'Accessing Jy/K DB: request URL is "{url}"')
         for i in range(self.retry):
             response_with_tag = self._retrieve(url)
             if response_with_tag['status'] == 'Success':
-                casalog.post(f'Got a response successfully')
+                casalog.post('Got a response successfully')
                 return response_with_tag['body']
-            
+
             if i < self.retry - 1:
                 casalog.post(response_with_tag['err_msg'])
-                casalog.post(f'Sleeping for {str(self.retry_wait_time)} seconds because the request failed')
+                casalog.post(
+                    f'Sleeping for {str(self.retry_wait_time)} seconds because the request failed')
                 sleep(self.retry_wait_time)
                 casalog.post(f'Retry to access Jy/K DB ({str(i + 2)}/{str(self.retry)})')
 
@@ -534,7 +542,7 @@ class JyPerKDatabaseClient():
             raise RuntimeError(msg)
 
     def _check_retval(self, retval):
-        """ Check if 'success' of retval dict is True.
+        """Check if 'success' of retval dict is True.
 
         This method only checks if the api was able to complete the process successfully or not.
         It is expected that 'success' will be False as a response, so the mothod does not raise
@@ -653,18 +661,22 @@ class InterpolationRspTranslator():
                 raise TypeError('The response.aux in the JSON obtained from Jy/K db must be dict.')
 
             if 'vis' not in aux:
-                raise KeyError('The response.aux in the JSON obtained from Jy/K db must contain vis.')
+                raise KeyError(
+                    'The response.aux in the JSON obtained from Jy/K db must contain vis.')
 
             if 'spwid' not in aux:
-                raise KeyError('The response.aux in the JSON obtained from Jy/K db must contain spwid.')
+                raise KeyError(
+                    'The response.aux in the JSON obtained from Jy/K db must contain spwid.')
 
             spwid = aux['spwid']
             if not isinstance(spwid, int):
-                raise TypeError('The response.aux.spwid in the JSON obtained from Jy/K db must be int.')
+                raise TypeError(
+                    'The response.aux.spwid in the JSON obtained from Jy/K db must be int.')
 
             vis = aux['vis']
             if not isinstance(vis, str):
-                raise TypeError('The response.aux.vis in the JSON obtained from Jy/K db must be str.')
+                raise TypeError(
+                    'The response.aux.vis in the JSON obtained from Jy/K db must be str.')
 
             basename = os.path.basename(os.path.abspath(vis))
 

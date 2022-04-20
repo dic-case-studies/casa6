@@ -38,7 +38,6 @@ from casatasks.private.task_imbaseline import (_CasaImageStack,
                                                _SdsmoothMethods,
                                                _SdsmoothParams,
                                                _UnerasableFolder, imbaseline)
-from casatasks.private.update_spw import sets_to_spwchan, spwchan_to_sets
 from casatools import ctsys, image, table
 
 _tb = table()
@@ -396,11 +395,13 @@ class TestImageShape(test_base):
 class TestImsmooth(test_base):
     """Test imsmooth execution.
 
-    Tests of imsmooth rely on ones of test_imsmooth basically, so we have minimal tests in imbaseline.
+    Tests of imsmooth rely on ones of test_imsmooth basically,
+    so we have minimal tests in imbaseline.
 
     01. successful case: call imsmooth with some parameters
     02. failure case: invalid dirkernel, an exception raises
-    03. set values for _ImsmoothParams and do validate(), and compare properties of it to the correct values
+    03. set values for _ImsmoothParams and do validate(),
+        and compare properties of it to the correct values
     """
 
     tiny = "tiny.im"
@@ -499,10 +500,12 @@ class TestImage2MS(test_base):
     """Test image2ms.
 
     01. successful case: create MeasurementSet from a image
-    02. failure case: execute image2ms with invalid datacolumn parameter, an exception raises
+    02. failure case: execute image2ms with invalid datacolumn parameter,
+        an exception raises
     03. failure case: execute image2ms with invalid image data, an exception raises
     04. failure case: execute image2ms with empty stack, an exception raises
-    05. set values for _Image2MSParams and do validate(), and compare properties of it to the correct values
+    05. set values for _Image2MSParams and do validate(),
+        and compare properties of it to the correct values
     """
 
     expected = "expected.im"
@@ -568,12 +571,14 @@ class TestImage2MS(test_base):
 class TestSdsmooth(test_base):
     """Test sdsmooth execution.
 
-    Tests of sdsmooth rely on ones of test_sdsmooth basically, so we have minimal tests in imbaseline.
+    Tests of sdsmooth rely on ones of test_sdsmooth basically,
+    so we have minimal tests in imbaseline.
 
     01. successful case: call sdsmooth with some parameters
     02. failure case: call sdsmooth with invalid ms stack, an exception raises
     03. failure case: call sdsmooth with invalid image stack, an exception raises
-    04. set values for _SdsmoothParams and do validate(), and compare properties of it to the correct values
+    04. set values for _SdsmoothParams and do validate(),
+        and compare properties of it to the correct values
     """
 
     input_image = "expected.im"
@@ -681,14 +686,17 @@ class TestSdsmooth(test_base):
 class TestSdbaseline(test_base):
     """Test sdbaseline execution.
 
-    Tests of sdbaseline rely on ones of test_sdbaseline basically, so we have minimal tests in imbaseline.
+    Tests of sdbaseline rely on ones of test_sdbaseline basically,
+    so we have minimal tests in imbaseline.
 
     01. successful case: call sdbaseline with some parameters
     02. failure case: call sdbaseline with invalid ms stack, an exception raises
     03. failure case: call sdbaseline with invalid image stack, an exception raise
-    04. set values for _SdbaselineParams and do validate(), and compare properties of it to the correct values
+    04. set values for _SdbaselineParams and do validate(),
+        and compare properties of it to the correct values
 
-    note: Class variables must be defined as method-local variables when extending the class by adding methods, etc.
+    note: Class variables must be defined as method-local variables
+          when extending the class by adding methods, etc.
     """
 
     input_image = "expected.im"
@@ -920,8 +928,10 @@ class TestSdbaseline(test_base):
 class TestImageSubtraction(test_base):
     """Test image subtractions.
 
-    01. successful test: subtracted output = input_image - (smoothed_image - smoothed_and_subtracted_image)
-    02. successful test: subtracted output = subtracted_image
+    01. successful test:
+            subtracted output = input_image - (smoothed_image - smoothed_and_subtracted_image)
+    02. successful test:
+            subtracted output = subtracted_image
     03. failure case: subtract three images have unmatched shape, an exception raises
     04. successful test: subtract two images have unmatched shape (any exceptions do not raise)
     05. output data check: three images subtraction test
@@ -1102,7 +1112,8 @@ class TestModuleMethodsOfImbaseline(test_base):
 
     01. _get_image_shape: successful case: get an image shape and check properties of it
     02. _get_image_shape: failure case: attempt to read an image unexisted, an exception raises
-    03. _get_image_shape: failure case: attempt to read an image has invalid shape, an exception raises
+    03. _get_image_shape: failure case: attempt to read an image has invalid shape,
+        an exception raises
     """
 
     input_image = "expected.im"
@@ -1371,7 +1382,7 @@ class Chans():
     """Class for values of the parameter 'chans' of TestImbaselineOutputs."""
 
     def __init__(self, name: str, spw_str: str, ignore_spws: list):
-        """Initialiser of the class.
+        """Initialise the class.
 
         Parameters
         ----------
@@ -1516,7 +1527,8 @@ class TestImbaselineOutputs(test_base):
         m = re.match(r"test_imbaseline_outputs_([^_]+)_([^_]+)_([^_]+)_([^_]+)", test_name)
         prefix = "cont" if is_cont else "line"
         print(
-            f"{prefix} blfunc:{m[1]} dirkernel:{m[2]} spkernel:{m[3]}, chans:{m[4]}, {np.max(chunk)}, "
+            f"{prefix} blfunc:{m[1]} dirkernel:{m[2]} spkernel:{m[3]}, "
+            f"chans:{m[4]}, {np.max(chunk)}, "
             f"{np.min(chunk)}, {np.average(chunk)}, {np.median(chunk)}"
         )
 
