@@ -2828,6 +2828,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         if os.path.exists(self.infile + '_blparam.btable'):
             shutil.rmtree(self.infile + '_blparam.btable')
 
+    """
     def _extract_blfunc_params(self, paramfile):
         blparams = {'func': [], 'pname': [], 'pvalue': []}
         isref = (paramfile == self.paramfile)
@@ -2854,6 +2855,36 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
                 blparams['func'].append(val_func)
                 blparams['pname'].append(val_pname)
                 blparams['pvalue'].append(val_pval)
+
+        return blparams
+    """
+    def _extract_blfunc_params(self, paramfile):
+        blparams = {'func': [], 'pname': [], 'pvalue': []}
+        isref = (paramfile == self.paramfile)
+
+        with open(paramfile, 'r') as f:
+            lines = sorted(f.readlines()) if isref else f.readlines()
+
+            for line in lines:
+                elems = line.rstrip('\n')
+                if isref and (elems[0] == '#'):
+                    continue
+
+                elem = elems.split(',' if isref else None)
+                if not isref:
+                    if len(elem) < 8:
+                        continue
+                    if (elem[0] != 'Baseline') or (elem[1] != 'parameters'):
+                        continue
+
+                for k in blparams.keys():
+                    if k == 'func':
+                        val = elem[10] if isref else elem[4]
+                    elif k == 'pname':
+                        val = ('npiece' if elem[10] == 'cspline' else 'order') if isref else elem[5]
+                    elif k == 'pvalue':
+                        val = (elem[12] if elem[10] == 'cspline' else elem[11]) if isref else elem[7]
+                    blparams[k].append(val)
 
         return blparams
 
