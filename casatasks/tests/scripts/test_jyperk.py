@@ -4,17 +4,14 @@ import math
 import os
 import shutil
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError, URLError
 import uuid
 
 import numpy as np
 
 from casatasks.private import jyperk
-from casatasks.private.casa_transition import is_CASA6
-
-if is_CASA6:
-    from casatools import ctsys
+from casatools import ctsys
 
 
 class TestASDMParamsGenerator(unittest.TestCase):
@@ -40,7 +37,7 @@ class JyPerKWithVisTestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.casa_cwd_path = os.getcwd()
         cls.working_directory = JyPerKWithVisTestCase._generate_uniq_fuse_name_in_cwd(
-                                    prefix='working_directory_for_jyperk_')
+            prefix='working_directory_for_jyperk_')
         os.mkdir(cls.working_directory)
         os.chdir(cls.working_directory)
 
@@ -74,9 +71,11 @@ class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
         params = jyperk.InterpolationParamsGenerator.get_params(self.vis, spw='1')
 
         param = params.__next__()
-        self.assertEqual(param.param, {'date': '2014-07-01T21:49:32', 'temperature': 266.50347483801465,
-                                       'delta_days': 1000, 'antenna': 'DA61', 'elevation': 51.11212932686397,
-                                       'band': 3, 'baseband': 1, 'frequency': 90994575000.0})
+        self.assertEqual(
+            param.param,
+            {'date': '2014-07-01T21:49:32', 'temperature': 266.50347483801465,
+             'delta_days': 1000, 'antenna': 'DA61', 'elevation': 51.11212932686397,
+             'band': 3, 'baseband': 1, 'frequency': 90994575000.0})
         self.assertEqual(param.subparam, {'vis': 'uid___A002_X85c183_X36f.ms', 'spwid': 1})
 
     def _generate_spwnames(self):
@@ -117,17 +116,24 @@ class TestCollection4InterpolationParamsGenerator(JyPerKWithVisTestCase):
 class TestInterpolationRspTranslator(JyPerKWithVisTestCase):
     """Test InterpolationRspTranslator class."""
 
-    response1 = \
-        ({'response': {'success': True, 'timestamp': '2021-10-05T05:51:20', 'elapsed': '0:00:00.461',
-         'error': None, 'query': {'elevation': '51.11212932686397', 'temperature': '266.50347483801465',
-         'antenna': 'DA61', 'band': '3', 'frequency': '90994575000.0', 'date': '2014-07-01T21:49:32',
-         'baseband': '1', 'delta_days': '1000'}, 'data': {'factor': {'std': 2.004, 'n': 18, 'mean':
-         44.672}}}, 'aux': {'vis': './uid___A002_X85c183_X36f.ms', 'spwid': 1}}, {'response': {'success':
-         True, 'timestamp': '2021-10-05T05:51:21', 'elapsed': '0:00:00.442', 'error': None, 'query':
-         {'elevation': 'nan', 'temperature': '266.50347483801465', 'antenna': 'PM03', 'band': '3',
-         'frequency': '90994575000.0', 'date': '2014-07-01T21:49:32', 'baseband': '1', 'delta_days':
-         '1000'}, 'data': {'factor': {'std': 2.004, 'n': 18, 'mean': 44.672}}}, 'aux': {'vis':
-         './uid___A002_X85c183_X36f.ms', 'spwid': 1}})
+    response1 = (
+        {'response':
+            {'success': True, 'timestamp': '2021-10-05T05:51:20', 'elapsed': '0:00:00.461',
+             'error': None,
+             'query': {'elevation': '51.11212932686397', 'temperature': '266.50347483801465',
+                       'antenna': 'DA61', 'band': '3', 'frequency': '90994575000.0',
+                       'date': '2014-07-01T21:49:32',
+                       'baseband': '1', 'delta_days': '1000'},
+             'data': {'factor': {'std': 2.004, 'n': 18, 'mean': 44.672}}},
+         'aux': {'vis': './uid___A002_X85c183_X36f.ms', 'spwid': 1}},
+        {'response':
+            {'success': True, 'timestamp': '2021-10-05T05:51:21', 'elapsed': '0:00:00.442',
+             'error': None,
+             'query': {'elevation': 'nan', 'temperature': '266.50347483801465', 'antenna': 'PM03',
+                       'band': '3', 'frequency': '90994575000.0', 'date': '2014-07-01T21:49:32',
+                       'baseband': '1', 'delta_days': '1000'},
+             'data': {'factor': {'std': 2.004, 'n': 18, 'mean': 44.672}}},
+         'aux': {'vis': './uid___A002_X85c183_X36f.ms', 'spwid': 1}})
     response2 = [deepcopy(response1[0])]
     response2[0]['aux'] = 'some string'
     response3 = [deepcopy(response1[0])]
@@ -189,15 +195,23 @@ class TestInterpolationRspTranslator(JyPerKWithVisTestCase):
 class TestModelFitRspTranslator(JyPerKWithVisTestCase):
     """Test ModelFitRspTranslator class."""
 
-    response = [{'response': {'success': True, 'timestamp': '2021-10-05T06:53:58', 'elapsed': '0:00:00.015',
-                'error': None, 'query': {'elevation': '51.11212932686397', 'temperature': '266.50347483801465',
-                'antenna': 'DA61', 'band': '3', 'frequency': '90994575000.0', 'date': '2014-07-01T21:49:32',
-                'baseband': '1'}, 'data': {'factor': 43.719}}, 'aux': {'vis': './uid___A002_X85c183_X36f.ms',
-                'spwid': 1}}, {'response': {'success': True, 'timestamp': '2021-10-05T06:53:59', 'elapsed':
-                '0:00:00.004', 'error': None, 'query': {'elevation': 'nan', 'temperature': '266.50347483801465',
-                'antenna': 'PM03', 'band': '3', 'frequency': '90994575000.0', 'date': '2014-07-01T21:49:32',
-                'baseband': '1'}, 'data': {'factor': 43.719}}, 'aux': {'vis': './uid___A002_X85c183_X36f.ms',
-                'spwid': 1}}]
+    response = [
+        {'response':
+            {'success': True, 'timestamp': '2021-10-05T06:53:58', 'elapsed': '0:00:00.015',
+             'error': None,
+             'query': {'elevation': '51.11212932686397', 'temperature': '266.50347483801465',
+                       'antenna': 'DA61', 'band': '3', 'frequency': '90994575000.0',
+                       'date': '2014-07-01T21:49:32', 'baseband': '1'},
+             'data': {'factor': 43.719}},
+         'aux': {'vis': './uid___A002_X85c183_X36f.ms', 'spwid': 1}},
+        {'response':
+            {'success': True, 'timestamp': '2021-10-05T06:53:59', 'elapsed': '0:00:00.004',
+             'error': None,
+             'query': {'elevation': 'nan', 'temperature': '266.50347483801465',
+                       'antenna': 'PM03', 'band': '3', 'frequency': '90994575000.0',
+                       'date': '2014-07-01T21:49:32', 'baseband': '1'},
+             'data': {'factor': 43.719}},
+         'aux': {'vis': './uid___A002_X85c183_X36f.ms', 'spwid': 1}}]
     factors = [['uid___A002_X85c183_X36f.ms', 'DA61', '1', 'I', '43.719'],
                ['uid___A002_X85c183_X36f.ms', 'PM03', '1', 'I', '43.719']]
 
@@ -213,10 +227,13 @@ class TestModelFitParamsGenerator(JyPerKWithVisTestCase):
         params = jyperk.ModelFitParamsGenerator.get_params(self.vis, spw='1')
 
         param = params.__next__()
-        self.assertEqual(param.param, {'date': '2014-07-01T21:49:32', 'temperature': 266.50347483801465,
-                                       'antenna': 'DA61', 'elevation': 51.11212932686397, 'band': 3,
-                                       'baseband': 1, 'frequency': 90994575000.0})
-        self.assertEqual(param.subparam, {'vis': 'uid___A002_X85c183_X36f.ms', 'spwid': 1})
+        self.assertEqual(
+            param.param,
+            {'date': '2014-07-01T21:49:32', 'temperature': 266.50347483801465,
+             'antenna': 'DA61', 'elevation': 51.11212932686397, 'band': 3,
+             'baseband': 1, 'frequency': 90994575000.0})
+        self.assertEqual(
+            param.subparam, {'vis': 'uid___A002_X85c183_X36f.ms', 'spwid': 1})
 
 
 class TestRequestsManager(unittest.TestCase):
@@ -243,7 +260,8 @@ class TestRequestsManager(unittest.TestCase):
         params = jyperk.ASDMParamsGenerator.get_params(self.vis)
         result = manager.get(params)
 
-        reference = [{'response': {'success': True, 'data': 'dummy'}, 'aux': 'uid___A002_Xb32033_X9067.ms'}]
+        reference = [{'response': {'success': True, 'data': 'dummy'},
+                      'aux': 'uid___A002_Xb32033_X9067.ms'}]
         self.assertEqual(result, reference)
         self.assertTrue(urlopen_patch.called)
         self.assertTrue(urlopen_patch.call_count == 1)
@@ -298,7 +316,8 @@ class TestJyPerKDatabaseClient(unittest.TestCase):
         with self.assertRaises(RuntimeError) as cm:
             client.get(self.param)
 
-        msg = 'Failed to load URL: https://asa.alma.cl/science/jy-kelvins/asdm/?uid=uid%3A%2F%2FA002%2FX85c183%2FX36f'
+        msg = 'Failed to load URL: ' + \
+              'https://asa.alma.cl/science/jy-kelvins/asdm/?uid=uid%3A%2F%2FA002%2FX85c183%2FX36f'
         self.assertEqual(cm.exception.args[0].split('\n')[0], msg)
         self.assertTrue(urlopen_patch.called)
         self.assertTrue(urlopen_patch.call_count == 1)
@@ -327,7 +346,8 @@ class TestJyPerKDatabaseClient(unittest.TestCase):
         with self.assertRaises(RuntimeError) as cm:
             client.get(self.param)
 
-        msg = 'Failed to load URL: https://asa.alma.cl/science/jy-kelvins/asdm/?uid=uid%3A%2F%2FA002%2FX85c183%2FX36f'
+        msg = 'Failed to load URL: ' + \
+              'https://asa.alma.cl/science/jy-kelvins/asdm/?uid=uid%3A%2F%2FA002%2FX85c183%2FX36f'
         self.assertEqual(cm.exception.args[0].split('\n')[0], msg)
         self.assertTrue(urlopen_patch.called)
         self.assertTrue(urlopen_patch.call_count == 1)
@@ -337,11 +357,11 @@ class TestTranslator(JyPerKWithVisTestCase):
     """Test Translator class."""
 
     responsed_factors = [{'Antenna': 'DA61', 'Spwid': 17, 'origSpwid': 20, 'Polarization':
-                'Polarization_0', 'MS': 'uid___A002_X85c183_X36f.ms', 'factor': 43.768},
-                {'Antenna': 'DA61', 'Spwid': 19, 'origSpwid': 22, 'Polarization':
-                'Polarization_0', 'MS': 'uid___A002_X85c183_X36fa.ms', 'factor': 43.776},
-                {'Antenna': 'DA61', 'Spwid': 21, 'origSpwid': 24, 'Polarization':
-                'Polarization_0', 'MS': 'uid___A002_X85c183_X36f.ms', 'factor': 43.824}]
+                          'Polarization_0', 'MS': 'uid___A002_X85c183_X36f.ms', 'factor': 43.768},
+                         {'Antenna': 'DA61', 'Spwid': 19, 'origSpwid': 22, 'Polarization':
+                          'Polarization_0', 'MS': 'uid___A002_X85c183_X36fa.ms', 'factor': 43.776},
+                         {'Antenna': 'DA61', 'Spwid': 21, 'origSpwid': 24, 'Polarization':
+                          'Polarization_0', 'MS': 'uid___A002_X85c183_X36f.ms', 'factor': 43.824}]
 
     factors = [['uid___A002_X85c183_X36f.ms', 'DA61', '17', 'I', '43.768'],
                ['uid___A002_X85c183_X36fa.ms', 'DA61', '19', 'I', '43.776'],
@@ -363,12 +383,19 @@ class TestTranslator(JyPerKWithVisTestCase):
 class TestASDMRspTranslator(JyPerKWithVisTestCase):
     """Test ASDMRspTranslator class."""
 
-    response = [{'response': {'success': True, 'timestamp': '2021-10-05T03:46:16',
-                'elapsed': '0:00:09.795', 'error': None, 'query': {'uid': 'uid://A002/X85c183/X36f'},
-                'data': {'length': 12, 'factors': [{'Antenna': 'DA61', 'Spwid': 17, 'origSpwid': 20,
-                'Polarization': 'Polarization_0', 'MS': 'uid___A002_X85c183_X36f.ms', 'factor': 43.768},
-                {'Antenna': 'DA61', 'Spwid': 19, 'origSpwid': 22, 'Polarization': 'Polarization_0',
-                'MS': 'uid___A002_X85c183_X36f.ms', 'factor': 43.776}]}}}]
+    response = [
+        {'response':
+            {'success': True, 'timestamp': '2021-10-05T03:46:16', 'elapsed': '0:00:09.795',
+             'error': None, 'query': {'uid': 'uid://A002/X85c183/X36f'},
+             'data': {'length': 12,
+                      'factors': [{'Antenna': 'DA61', 'Spwid': 17, 'origSpwid': 20,
+                                   'Polarization': 'Polarization_0',
+                                   'MS': 'uid___A002_X85c183_X36f.ms',
+                                   'factor': 43.768},
+                                  {'Antenna': 'DA61', 'Spwid': 19, 'origSpwid': 22,
+                                   'Polarization': 'Polarization_0',
+                                   'MS': 'uid___A002_X85c183_X36f.ms',
+                                   'factor': 43.776}]}}}]
     factors = [['uid___A002_X85c183_X36f.ms', 'DA61', '17', 'I', '43.768'],
                ['uid___A002_X85c183_X36f.ms', 'DA61', '19', 'I', '43.776']]
 
@@ -386,7 +413,7 @@ class TestJyPerKReader4File(unittest.TestCase):
     def setUpClass(cls):
         cls.casa_cwd_path = os.getcwd()
         cls.working_directory = TestJyPerKReader4File._generate_uniq_fuse_name_in_cwd(
-                                    prefix='working_directory_for_jyperk_')
+            prefix='working_directory_for_jyperk_')
         os.mkdir(cls.working_directory)
         os.chdir(cls.working_directory)
 
