@@ -41,7 +41,7 @@ class AbstractFolder:
 
     has_file = False
 
-    def __init__(self, file: str=None) -> None:
+    def __init__(self, file: str = None) -> None:
         """Initialize a Folder object."""
         if not os.path.exists(file):
             raise ValueError(f'file {file} is not found')
@@ -57,11 +57,11 @@ class AbstractFolder:
 class _EraseableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is permitted to erase."""
 
-    def __init__(self, file: str=None) -> None:
+    def __init__(self, file: str = None) -> None:
         super().__init__(file)
         _eraseable_folder_register.register(self)
 
-    def erase(self, dry_run: bool=True) -> None:
+    def erase(self, dry_run: bool = True) -> None:
         if self.has_file:
             if dry_run:
                 casalog.post(f'[DRY RUN] erase file: {self.path}', 'DEBUG2')
@@ -78,7 +78,7 @@ class _EraseableFolder(AbstractFolder):
 class _UnerasableFolder(AbstractFolder):
     """Image/MeasurementSet file path class. The file path is NOT permitted to erase."""
 
-    def erase(self, dry_run: bool=True) -> None:
+    def erase(self, dry_run: bool = True) -> None:
         casalog.post(f'un-erase file: {self.path}', 'DEBUG2')
 
 
@@ -93,7 +93,7 @@ class _EraseableFolderRegister():
         else:
             raise ValueError('Irregal folder would be appended', 'SEVERE')
 
-    def clear(self, dry_run: bool=True):
+    def clear(self, dry_run: bool = True):
         if not dry_run:
             for path, folder in self._register.items():
                 if not folder.has_file:
@@ -123,14 +123,14 @@ class AbstractFileStack:
     image(an argument 'imagename').
     """
 
-    def __init__(self, top: AbstractFolder=None, max_height=None) -> None:
+    def __init__(self, top: AbstractFolder = None, max_height=None) -> None:
         """Initialize a FileStack object."""
         self.stack = []
         self.max_height = max_height
         if isinstance(top, AbstractFolder):
             self.push(top)
 
-    def push(self, file: AbstractFolder=None) -> None:
+    def push(self, file: AbstractFolder = None) -> None:
         """Push a folder into the stack."""
         if not isinstance(file, AbstractFolder):
             raise ValueError(f'cannot append {file.path}')
@@ -177,7 +177,7 @@ class AbstractFileStack:
         else:
             raise RuntimeError('the stack has not have enough stuff')
 
-    def clear(self, dry_run: bool=True) -> None:
+    def clear(self, dry_run: bool = True) -> None:
         """Do erase method of all of the stack and clear the stack."""
         self.stack.clear()
 
@@ -189,7 +189,7 @@ class AbstractFileStack:
 class _CasaImageStack(AbstractFileStack):
     """FileStack for CasaImage."""
 
-    def __init__(self, top: AbstractFolder=None) -> None:
+    def __init__(self, top: AbstractFolder = None) -> None:
         super().__init__(top=top, max_height=IMAGE_STACK_MAX_HEIGHT)
 
 
@@ -231,8 +231,8 @@ class _ImageShape(AbstractValidatable):
     These parameters are been getting in Image2MS, using in MS2Image.
     """
 
-    def __init__(self, im_shape: np.ndarray=None, axis_dir: np.ndarray=None, axis_sp: int=None,
-                 axis_pol: int=None) -> None:
+    def __init__(self, im_shape: np.ndarray = None, axis_dir: np.ndarray = None,
+                 axis_sp: int = None, axis_pol: int = None) -> None:
         self.im_shape = im_shape
         self.axis_dir = axis_dir
         self.axis_sp = axis_sp
@@ -269,11 +269,12 @@ def _get_image_shape(imagepath: str) -> _ImageShape:
     with tool_manager(imagepath, image) as ia:
         try:
             cs = ia.coordsys()
-            shape = _ImageShape(ia.shape(),
-                                cs.findcoordinate('direction')['world'],
-                                __get_axis_position(cs.findcoordinate('spectral')['world']),  # 3 or 2 or -1
-                                __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
-                                )
+            shape = _ImageShape(
+                ia.shape(),
+                cs.findcoordinate('direction')['world'],
+                __get_axis_position(cs.findcoordinate('spectral')['world']),  # 3 or 2 or -1
+                __get_axis_position(cs.findcoordinate('stokes')['world'])   # 2 or 3 or -1
+            )
         finally:
             cs.done()
 
@@ -288,7 +289,7 @@ def _get_image_shape(imagepath: str) -> _ImageShape:
     return shape
 
 
-def __get_axis_position(val: array=None) -> int:
+def __get_axis_position(val: array = None) -> int:
     if val is not None and len(val) > 0:
         return val[0].item()
     return -1
@@ -344,12 +345,12 @@ def imbaseline(imagename=None, linefile=None, output_cont=None, bloutput=None, m
             _do_post_processing(linefile)
 
 
-def _validate_imagename(imagename: str=None) -> None:
+def _validate_imagename(imagename: str = None) -> None:
     if not os.path.exists(imagename):
         raise ValueError(f'Error: file {imagename} is not found.', 'SEVERE')
 
 
-def _prepare_linefile(linefile: str=None, imagename: str=None) -> str:
+def _prepare_linefile(linefile: str = None, imagename: str = None) -> str:
     if linefile == '' or linefile is None:
         linefile = os.path.basename(imagename).rstrip('/') + '_bs'
     if not OVERWRITE and os.path.exists(linefile):
@@ -358,7 +359,7 @@ def _prepare_linefile(linefile: str=None, imagename: str=None) -> str:
     return linefile
 
 
-def _generate_temporary_filename(prefix: str='', ext: str='') -> str:
+def _generate_temporary_filename(prefix: str = '', ext: str = '') -> str:
     if prefix and prefix[-1] != '-':
         prefix = prefix + '-'
     if ext != '':
@@ -369,7 +370,7 @@ def _generate_temporary_filename(prefix: str='', ext: str='') -> str:
             return filename
 
 
-def _copy_image_file(infile: str=None, outfile: str=None) -> None:
+def _copy_image_file(infile: str = None, outfile: str = None) -> None:
     if not os.path.exists(infile):
         raise Exception(f'Image files not found, infile: {infile}')
 
@@ -403,7 +404,7 @@ def __write_image_history(outfile) -> None:
 class _ImageSubtractionMethods():
 
     @staticmethod
-    def execute(linefile: str=None, image_stack: AbstractFileStack=None) -> None:
+    def execute(linefile: str = None, image_stack: AbstractFileStack = None) -> None:
         """Execute image subtraction.
 
         The output image is computed as follows:
@@ -427,7 +428,7 @@ class _ImageSubtractionMethods():
             image_stack.push(_UnerasableFolder(linefile))
 
     @staticmethod
-    def get_continuum_image(image_stack: AbstractFileStack=None) -> None:
+    def get_continuum_image(image_stack: AbstractFileStack = None) -> None:
         """Compute 'input_image - output_image'."""
         base_image = image_stack.bottom().path
         output_image = os.path.basename(base_image) + '.cont'
@@ -437,7 +438,7 @@ class _ImageSubtractionMethods():
         _ImageSubtractionMethods.__subtract_image(output_image, linefile)
 
     @staticmethod
-    def __subtract_image(operand_a: str=None, operand_b: str=None) -> None:
+    def __subtract_image(operand_a: str = None, operand_b: str = None) -> None:
         """Subtract image chunk."""
         image_array = None
         with tool_manager(operand_b, image) as ia:
@@ -451,8 +452,8 @@ class _ImsmoothMethods():
     """Methoods for Imsmooth execution."""
 
     @staticmethod
-    def execute(dirkernel: str=None, major: str=None, minor: str=None, pa: str=None,
-                kimage: str=None, scale: float=None, stack: AbstractFileStack=None) -> None:
+    def execute(dirkernel: str = None, major: str = None, minor: str = None, pa: str = None,
+                kimage: str = None, scale: float = None, stack: AbstractFileStack = None) -> None:
         """Call casatasks.imsmooth task if dirkernel is specified."""
         if not _ImsmoothMethods.require(dirkernel):
             casalog.post('omit image smoothing', 'INFO')
@@ -465,7 +466,7 @@ class _ImsmoothMethods():
         stack.push(_EraseableFolder(outfile))
 
     @staticmethod
-    def require(dirkernel: str='none') -> None:
+    def require(dirkernel: str = 'none') -> None:
         if not dirkernel:
             dirkernel = 'none'
         if dirkernel == 'none':
@@ -480,9 +481,9 @@ class _SdsmoothMethods():
     """Methoods for Sdsmooth execution."""
 
     @staticmethod
-    def execute(datacolumn: str=None, spkernel: str=None, kwidth: int=None,
-                image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None,
-                image_shape: _ImageShape=None) -> None:
+    def execute(datacolumn: str = None, spkernel: str = None, kwidth: int = None,
+                image_stack: AbstractFileStack = None, ms_stack: AbstractFileStack = None,
+                image_shape: _ImageShape = None) -> None:
         """Call casatasks.sdsmooth task if spkernel is specified."""
         if not _SdsmoothMethods.require(spkernel):
             casalog.post('omit spectral smoothing', 'INFO')
@@ -502,7 +503,7 @@ class _SdsmoothMethods():
         ms_stack.kwidth = params.kwidth
 
     @staticmethod
-    def require(spkernel: str='none') -> None:
+    def require(spkernel: str = 'none') -> None:
         if not spkernel:
             spkernel = 'none'
         if spkernel == 'none':
@@ -517,13 +518,14 @@ class _SdbaselineMethods():
     """Methoods for Sdbaseline execution."""
 
     @staticmethod
-    def execute(datacolumn: str=None, bloutput: str=None, maskmode: str=None, chans: str=None,
-                thresh: float=None, avg_limit: int=None, minwidth: int=None, edge: List[int]=None,
-                blfunc: str=None, order: int=None, npiece: int=None, applyfft: bool=None,
-                fftthresh: float=None, addwn: List[int]=None, rejwn: List[int]=None,
-                blparam: str=None, clipniter: int=None, clipthresh: float=None,
-                image_stack: AbstractFileStack=None, ms_stack: AbstractFileStack=None,
-                image_shape: _ImageShape=None) -> None:
+    def execute(datacolumn: str = None, bloutput: str = None, maskmode: str = None,
+                chans: str = None, thresh: float = None, avg_limit: int = None,
+                minwidth: int = None, edge: List[int] = None,
+                blfunc: str = None, order: int = None, npiece: int = None, applyfft: bool = None,
+                fftthresh: float = None, addwn: List[int] = None, rejwn: List[int] = None,
+                blparam: str = None, clipniter: int = None, clipthresh: float = None,
+                image_stack: AbstractFileStack = None, ms_stack: AbstractFileStack = None,
+                image_shape: _ImageShape = None) -> None:
         """Call casatasks.sdbaseline task."""
         casalog.post('execute spectral baselining', 'INFO')
         input_ms = ms_stack.peak().path
@@ -542,7 +544,7 @@ class _SdbaselineMethods():
             _SdbaselineMethods.__rename_blparam_filename(blparam_name, base_image)
 
     @staticmethod
-    def __rename_blparam_filename(filename: str=None, basename: str=None) -> str:
+    def __rename_blparam_filename(filename: str = None, basename: str = None) -> str:
         if not os.path.exists(filename):
             return None
         newname = os.path.basename(basename) + '.ms_blparam.' + \
@@ -572,16 +574,24 @@ class _ImsmoothParams(AbstractValidatable):
         overwrite=True
     )
 
-    def __init__(self, infile: str=None, outfile: str=None, dirkernel: str='none', major: str='',
-                 minor: str='', pa: str='', kimage: str='', scale: int=-1.0) -> None:
+    def __init__(self, infile: str = None, outfile: str = None, dirkernel: str = 'none',
+                 major: str = '', minor: str = '', pa: str = '', kimage: str = '',
+                 scale: int = -1.0) -> None:
         self.infile = infile
         self.outfile = outfile
-        self.kernel = dirkernel if dirkernel is not None else 'none'       # none(default)/gaussian/boxcar/image
-        self.major = major if major is not None else ''                    # dirkernel = gaussian/boxcar
-        self.minor = minor if minor is not None else ''                    # dirkernel = gaussian/boxcar
-        self.pa = pa if pa is not None else ''                             # dirkernel = gaussian/boxcar
-        self.kimage = kimage if kimage is not None else ''                 # dirkernel = image
-        self.scale = scale if scale is not None else -1.0                  # dirkernel = image
+
+        # dirkernel options: none(default)/gaussian/boxcar/image
+        self.kernel = dirkernel if dirkernel is not None else 'none'
+
+        # subparameter for dirkernel = gaussian/boxcar
+        self.major = major if major is not None else ''
+        self.minor = minor if minor is not None else ''
+        self.pa = pa if pa is not None else ''
+
+        # subparameter for dirkernel = image
+        self.kimage = kimage if kimage is not None else ''
+        self.scale = scale if scale is not None else -1.0
+
         self.validate()
 
     def validate(self) -> None:
@@ -626,8 +636,8 @@ class _SdsmoothParams(AbstractValidatable):
         overwrite=True
     )
 
-    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None,
-                 spkernel: str='none', kwidth: int=5) -> None:
+    def __init__(self, infile: str = None, outfile: str = None, datacolumn: str = None,
+                 spkernel: str = 'none', kwidth: int = 5) -> None:
         self.infile = infile
         self.outfile = outfile
         self.datacolumn = datacolumn
@@ -681,31 +691,48 @@ class _SdbaselineParams(AbstractValidatable):
         overwrite=True
     )
 
-    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str=None, bloutput: str='',
-                 maskmode: str='list', chans: str='', thresh: float=5.0, avg_limit: int=4,
-                 minwidth: int=4, edge: List[int]=[0, 0], blfunc: str='poly', order: int=5,
-                 npiece: int=3, applyfft: bool=True, fftthresh: float=3.0, addwn: List=[0],
-                 rejwn: List=[], blparam: str='', clipniter: int=0, clipthresh: float=3.0,
-                 spsmoothed: bool=False, image_shape: _ImageShape=None, kwidth: int=None) -> None:
+    def __init__(self, infile: str = None, outfile: str = None, datacolumn: str = None,
+                 bloutput: str = '', maskmode: str = 'list', chans: str = '', thresh: float = 5.0,
+                 avg_limit: int = 4, minwidth: int = 4, edge: List[int] = [0, 0],
+                 blfunc: str = 'poly', order: int = 5, npiece: int = 3, applyfft: bool = True,
+                 fftthresh: float = 3.0, addwn: List = [0],
+                 rejwn: List = [], blparam: str = '', clipniter: int = 0, clipthresh: float = 3.0,
+                 spsmoothed: bool = False, image_shape: _ImageShape = None,
+                 kwidth: int = None) -> None:
         self.infile = infile
         self.outfile = outfile
         self.datacolumn = datacolumn
         self.bloutput = bloutput if bloutput is not None else ''
-        self.maskmode = maskmode.lower() if maskmode is not None else 'list'  # list(default)/auto
-        self.spw = self.__chans2spw(chans, self.maskmode)                     # maskmode = list
-        self.thresh = thresh if thresh is not None else 5.0                   # maskmode = auto
-        self.avg_limit = avg_limit if avg_limit is not None else 4            # maskmode = auto
-        self.minwidth = minwidth if minwidth is not None else 4               # maskmode = auto
-        self.edge = edge if edge is not None else [0, 0]                      # maskmode = auto
-        self.blfunc = blfunc.lower() if blfunc is not None else 'poly'        # poly(default)/chebyshev/cspline/
-                                                                              #  sinusoid/variable
-        self.order = order if order is not None else 5                        # blfunc = poly/chebyshev
-        self.npiece = npiece if npiece is not None else 3                     # blfunc = cspline
-        self.applyfft = applyfft if applyfft is not None else True            # blfunc = sinusoid
-        self.fftthresh = fftthresh if fftthresh is not None else 3.0          # blfunc = sinusoid
-        self.addwn = addwn if addwn is not None else [0]                      # blfunc = sinusoid
-        self.rejwn = rejwn if rejwn is not None else []                       # blfunc = sinusoid
-        self.blparam = blparam if blparam is not None else ''                 # blfunc = variable
+
+        # maskmode: list(default)/auto
+        self.maskmode = maskmode.lower() if maskmode is not None else 'list'
+
+        # subparam for maskmode = list
+        self.spw = self.__chans2spw(chans, self.maskmode)
+
+        # subparam for maskmode = auto
+        self.thresh = thresh if thresh is not None else 5.0
+        self.avg_limit = avg_limit if avg_limit is not None else 4
+        self.minwidth = minwidth if minwidth is not None else 4
+        self.edge = edge if edge is not None else [0, 0]
+
+        # poly(default)/chebyshev/cspline/sinusoid/variable
+        self.blfunc = blfunc.lower() if blfunc is not None else 'poly'
+
+        # subparam for blfunc = poly/chebyshev
+        self.order = order if order is not None else 5
+
+        # subparam for blfunc = cspline
+        self.npiece = npiece if npiece is not None else 3
+
+        # subparam for blfunc = sinusoid
+        self.applyfft = applyfft if applyfft is not None else True
+        self.fftthresh = fftthresh if fftthresh is not None else 3.0
+        self.addwn = addwn if addwn is not None else [0]
+        self.rejwn = rejwn if rejwn is not None else []
+
+        # subparam for blfunc = variable
+        self.blparam = blparam if blparam is not None else ''
         self.clipniter = clipniter if clipniter is not None else 0
         self.clipthresh = clipthresh if clipthresh is not None else 3.0
 
@@ -771,8 +798,8 @@ class _SdbaselineParams(AbstractValidatable):
 class _Image2MSParams(AbstractValidatable):
     """Parameter manipulation class for executing image2ms()."""
 
-    def __init__(self, infile: str=None, outfile: str=None, datacolumn: str='DATA',
-                 input_image_shape: _ImageShape=None) -> None:
+    def __init__(self, infile: str = None, outfile: str = None, datacolumn: str = 'DATA',
+                 input_image_shape: _ImageShape = None) -> None:
         self.infile = infile
         self.outfile = outfile
         self.datacolumn = datacolumn
@@ -798,9 +825,9 @@ class _Image2MSMethods():
     """Methods for converting image to MeasurementSet."""
 
     @staticmethod
-    def execute(datacolumn: str=None, input_image_shape: _ImageShape=None,
-                image_stack: AbstractFileStack=None,
-                ms_stack: AbstractFileStack=None) -> None:
+    def execute(datacolumn: str = None, input_image_shape: _ImageShape = None,
+                image_stack: AbstractFileStack = None,
+                ms_stack: AbstractFileStack = None) -> None:
         """Convert a casaimage to a MeasurementSet."""
         casalog.post('convert casaimage to MeasurementSet', 'INFO')
         infile = image_stack.peak().path
@@ -809,13 +836,13 @@ class _Image2MSMethods():
         ms_stack.push(_EraseableFolder(outfile))
 
     @staticmethod
-    def __image2ms(params: _Image2MSParams=None) -> None:
+    def __image2ms(params: _Image2MSParams = None) -> None:
         """Convert CasaImage into MeasurementSet."""
         _Image2MSMethods.__create_empty_ms(params)
         _Image2MSMethods.__put_parametes_from_image_to_ms(params)
 
     @staticmethod
-    def __create_empty_ms(params: _Image2MSParams=None) -> None:
+    def __create_empty_ms(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__cleanup_ms_path(params)
         _Image2MSMethods.__create_maintable(params)
         _Image2MSMethods.__create_antenna_table(params)
@@ -839,7 +866,7 @@ class _Image2MSMethods():
         return mjd_sec + np.arange(nrow_req) * interval
 
     @staticmethod
-    def __create_maintable(params: _Image2MSParams=None) -> None:
+    def __create_maintable(params: _Image2MSParams = None) -> None:
         tb = table()
         try:
             tb.create(params.outfile, _EmptyMSBaseInformation.ms_desc,
@@ -866,7 +893,7 @@ class _Image2MSMethods():
             tb.close()
 
     @staticmethod
-    def __create_antenna_table(params: _Image2MSParams=None) -> None:
+    def __create_antenna_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'ANTENNA',
                                            _EmptyMSBaseInformation.antenna_desc,
@@ -875,7 +902,7 @@ class _Image2MSMethods():
             tb.addrows(1)
 
     @staticmethod
-    def __create_data_description_table(params: _Image2MSParams=None) -> None:
+    def __create_data_description_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'DATA_DESCRIPTION',
                                            _EmptyMSBaseInformation.data_description_desc,
@@ -886,7 +913,7 @@ class _Image2MSMethods():
             tb.putcell('POLARIZATION_ID', 0, 0)
 
     @staticmethod
-    def __create_feed_table(params: _Image2MSParams=None) -> None:
+    def __create_feed_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'FEED',
                                            _EmptyMSBaseInformation.feed_desc,
@@ -895,7 +922,7 @@ class _Image2MSMethods():
             tb.addrows(1)
 
     @staticmethod
-    def __create_field_table(params: _Image2MSParams=None) -> None:
+    def __create_field_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'FIELD',
                                            _EmptyMSBaseInformation.field_desc,
@@ -907,21 +934,21 @@ class _Image2MSMethods():
             tb.putcell('REFERENCE_DIR', 0, np.zeros((2, 1)))
 
     @staticmethod
-    def __create_flag_cmd_table(params: _Image2MSParams=None) -> None:
+    def __create_flag_cmd_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'FLAG_CMD',
                                            _EmptyMSBaseInformation.flag_cmd_desc,
                                            _EmptyMSBaseInformation.flag_cmd_dminfo)
 
     @staticmethod
-    def __create_history_table(params: _Image2MSParams=None) -> None:
+    def __create_history_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'HISTORY',
                                            _EmptyMSBaseInformation.history_desc,
                                            _EmptyMSBaseInformation.history_dminfo)
 
     @staticmethod
-    def __create_observation_table(params: _Image2MSParams=None) -> None:
+    def __create_observation_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'OBSERVATION',
                                            _EmptyMSBaseInformation.observation_desc,
@@ -930,14 +957,14 @@ class _Image2MSMethods():
             tb.addrows(1)
 
     @staticmethod
-    def __create_pointing_table(params: _Image2MSParams=None) -> None:
+    def __create_pointing_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'POINTING',
                                            _EmptyMSBaseInformation.pointing_desc,
                                            _EmptyMSBaseInformation.pointing_dminfo)
 
     @staticmethod
-    def __create_polarization_table(params: _Image2MSParams=None) -> None:
+    def __create_polarization_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'POLARIZATION',
                                            _EmptyMSBaseInformation.polarization_desc,
@@ -952,21 +979,21 @@ class _Image2MSMethods():
             tb.putcell('CORR_PRODUCT', 0, corr_product)
 
     @staticmethod
-    def __create_processor_table(params: _Image2MSParams=None) -> None:
+    def __create_processor_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'PROCESSOR',
                                            _EmptyMSBaseInformation.processor_desc,
                                            _EmptyMSBaseInformation.processor_dminfo)
 
     @staticmethod
-    def __create_source_table(params: _Image2MSParams=None) -> None:
+    def __create_source_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'SOURCE',
                                            _EmptyMSBaseInformation.source_desc,
                                            _EmptyMSBaseInformation.source_dminfo)
 
     @staticmethod
-    def __create_special_window_table(params: _Image2MSParams=None) -> None:
+    def __create_special_window_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'SPECTRAL_WINDOW',
                                            _EmptyMSBaseInformation.special_window_desc,
@@ -985,7 +1012,7 @@ class _Image2MSMethods():
             tb.putcell('TOTAL_BANDWIDTH', 0, cw.sum())
 
     @staticmethod
-    def __create_state_table(params: _Image2MSParams=None) -> None:
+    def __create_state_table(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__create_subtable(params.outfile,
                                            'STATE',
                                            _EmptyMSBaseInformation.state_desc,
@@ -996,15 +1023,15 @@ class _Image2MSMethods():
             tb.putcell('OBS_MODE', 0, 'OBSERVE_TARGET#ON_SOURCE_IMAGE_DOMAIN')
 
     @staticmethod
-    def __cleanup_ms_path(params, overwrite: bool=True) -> None:
+    def __cleanup_ms_path(params, overwrite: bool = True) -> None:
         exists = os.path.exists(params.outfile)
         if overwrite and exists:
             shutil.rmtree(params.outfile)
         return exists
 
     @staticmethod
-    def __create_subtable(outfile: str=None, subtable: str=None,
-                          desc: str=None, dminfo: str=None) -> None:
+    def __create_subtable(outfile: str = None, subtable: str = None,
+                          desc: str = None, dminfo: str = None) -> None:
         tb = table()
         try:
             tb.create(f'{outfile}/{subtable}', desc, dminfo=dminfo)
@@ -1014,12 +1041,12 @@ class _Image2MSMethods():
             tb.putkeyword(subtable, f'Table: {outfile}/{subtable}')
 
     @staticmethod
-    def __put_parametes_from_image_to_ms(params: _Image2MSParams=None) -> None:
+    def __put_parametes_from_image_to_ms(params: _Image2MSParams = None) -> None:
         _Image2MSMethods.__put_image_parameters_into_ms(
             params, *_Image2MSMethods.__get_image_parameters(params))
 
     @staticmethod
-    def __get_image_parameters(params: _Image2MSParams=None) -> Tuple[np.array, int]:
+    def __get_image_parameters(params: _Image2MSParams = None) -> Tuple[np.array, int]:
         # get image array and mask from the image
         with tool_manager(params.infile, image) as ia:
             arr = ia.getchunk()
@@ -1072,8 +1099,8 @@ class _Image2MSMethods():
 class _MS2ImageMethods():
 
     @staticmethod
-    def convert(base_image: str=None, input_ms: str=None, input_image_shape: _ImageShape=None,
-                datacolumn: str=None) -> None:
+    def convert(base_image: str = None, input_ms: str = None, input_image_shape: _ImageShape = None,
+                datacolumn: str = None) -> None:
         output_image = _MS2ImageMethods.__change_file_extension(input_ms, 'im')
         _copy_image_file(base_image, output_image)  # mask data is also copied in this method
 
@@ -1083,7 +1110,7 @@ class _MS2ImageMethods():
         return output_image
 
     @staticmethod
-    def __change_file_extension(path: str=None, ext: str=None) -> str:
+    def __change_file_extension(path: str = None, ext: str = None) -> str:
         if not os.path.exists(path):
             RuntimeError(f'cannot find path: {path}')
         base, oldext = os.path.splitext(path)
@@ -1099,8 +1126,8 @@ class _MS2ImageMethods():
         return new_path
 
     @staticmethod
-    def __make_image_array(input_image_shape: _ImageShape=None, infile: str=None,
-                           datacolumn: str=None) -> np.array:
+    def __make_image_array(input_image_shape: _ImageShape = None, infile: str = None,
+                           datacolumn: str = None) -> np.array:
         nx, ny = input_image_shape.dir_shape
         image_array = np.empty((nx, ny, input_image_shape.im_nchan))
         pos = 0
@@ -1114,7 +1141,7 @@ class _MS2ImageMethods():
         return image_array
 
     @staticmethod
-    def __output_image(outfile: str=None, image_array: np.array=None) -> None:
+    def __output_image(outfile: str = None, image_array: np.array = None) -> None:
         with tool_manager(outfile, image) as ia:
             ia.putchunk(pixels=image_array, locking=True)
 
@@ -1134,9 +1161,10 @@ def _dump_tasks(taskname: str, vals: dict):
 class _EmptyMSBaseInformation:
     """The Parameters class for creating an empty MeasurementSet.
 
-    This class contains dictionaries to create an empty MS using table.create(), and it has no method.
-    Dictionaries have two types; desc(desctiption) and dminfo(data management infomation),
-    these are used as arguments of table.create(), and for a table creating, it needs a desc dict and a dminfo dict.
+    This class contains dictionaries to create an empty MS using table.create(),
+    and it has no method. Dictionaries have two types; desc(desctiption) and
+    dminfo(data management infomation), these are used as arguments of table.create(),
+    and for a table creating, it needs a desc dict and a dminfo dict.
     so there are dicts of twice of table amount in a MeasurementSet.
     """
 
@@ -1216,7 +1244,8 @@ class _EmptyMSBaseInformation:
         'FLAG_CATEGORY': {'comment': 'The flag category, NUM_CAT flags for each datum',
                           'dataManagerGroup': 'TiledFlagCategory',
                           'dataManagerType': 'TiledShapeStMan',
-                          'keywords': {'CATEGORY': np.array(['FLAG_CMD', 'ORIGINAL', 'USER'], dtype='<U16')},
+                          'keywords': {'CATEGORY':
+                                       np.array(['FLAG_CMD', 'ORIGINAL', 'USER'], dtype='<U16')},
                           'maxlen': 0,
                           'ndim': 3,
                           'option': 0,
@@ -1539,15 +1568,16 @@ class _EmptyMSBaseInformation:
     }
 
     data_description_dminfo = {
-        '*1': {'COLUMNS': array(['FLAG_ROW', 'POLARIZATION_ID', 'SPECTRAL_WINDOW_ID'], dtype='<U19'),
-               'NAME': 'StandardStMan',
-               'SEQNR': 0,
-               'SPEC': {'BUCKETSIZE': 260,
-                        'IndexLength': 126,
-                        'MaxCacheSize': 2,
-                        'PERSCACHESIZE': 2},
-               'TYPE': 'StandardStMan'
-               }
+        '*1':
+        {'COLUMNS': array(['FLAG_ROW', 'POLARIZATION_ID', 'SPECTRAL_WINDOW_ID'], dtype='<U19'),
+         'NAME': 'StandardStMan',
+         'SEQNR': 0,
+         'SPEC': {'BUCKETSIZE': 260,
+                  'IndexLength': 126,
+                  'MaxCacheSize': 2,
+                  'PERSCACHESIZE': 2},
+         'TYPE': 'StandardStMan'
+         }
     }
 
     feed_desc = {
@@ -1707,15 +1737,16 @@ class _EmptyMSBaseInformation:
                       'ndim': 2,
                       'option': 0,
                       'valueType': 'double'},
-        'REFERENCE_DIR': {'comment': 'Direction of REFERENCE center (e.g. RA, DEC).as polynomial in time.',
-                          'dataManagerGroup': 'StandardStMan',
-                          'dataManagerType': 'StandardStMan',
-                          'keywords': {'MEASINFO': {'Ref': 'J2000', 'type': 'direction'},
-                                       'QuantumUnits': array(['rad', 'rad'], dtype='<U16')},
-                          'maxlen': 0,
-                          'ndim': 2,
-                          'option': 0,
-                          'valueType': 'double'},
+        'REFERENCE_DIR': {
+            'comment': 'Direction of REFERENCE center (e.g. RA, DEC).as polynomial in time.',
+            'dataManagerGroup': 'StandardStMan',
+            'dataManagerType': 'StandardStMan',
+            'keywords': {'MEASINFO': {'Ref': 'J2000', 'type': 'direction'},
+                         'QuantumUnits': array(['rad', 'rad'], dtype='<U16')},
+            'maxlen': 0,
+            'ndim': 2,
+            'option': 0,
+            'valueType': 'double'},
         'SOURCE_ID': {'comment': 'Source id',
                       'dataManagerGroup': 'StandardStMan',
                       'dataManagerType': 'StandardStMan',
@@ -2086,7 +2117,8 @@ class _EmptyMSBaseInformation:
                          'ndim': 2,
                          'option': 0,
                          'valueType': 'int'},
-        'CORR_TYPE': {'comment': 'The polarization type for each correlation product, as a Stokes enum.',
+        'CORR_TYPE': {'comment':
+                      'The polarization type for each correlation product, as a Stokes enum.',
                       'dataManagerGroup': 'StandardStMan',
                       'dataManagerType': 'StandardStMan',
                       'keywords': {},
@@ -2113,7 +2145,8 @@ class _EmptyMSBaseInformation:
         '_private_keywords_': {}}
 
     polarization_dminfo = {
-        '*1': {'COLUMNS': array(['CORR_PRODUCT', 'CORR_TYPE', 'FLAG_ROW', 'NUM_CORR'], dtype='<U16'),
+        '*1': {'COLUMNS': array(['CORR_PRODUCT', 'CORR_TYPE',
+                                 'FLAG_ROW', 'NUM_CORR'], dtype='<U16'),
                'NAME': 'StandardStMan',
                'SEQNR': 0,
                'SPEC': {'BUCKETSIZE': 644,
@@ -2163,7 +2196,8 @@ class _EmptyMSBaseInformation:
         '_private_keywords_': {}}
 
     processor_dminfo = {
-        '*1': {'COLUMNS': array(['FLAG_ROW', 'MODE_ID', 'SUB_TYPE', 'TYPE', 'TYPE_ID'], dtype='<U16'),
+        '*1': {'COLUMNS': array(['FLAG_ROW', 'MODE_ID',
+                                 'SUB_TYPE', 'TYPE', 'TYPE_ID'], dtype='<U16'),
                'NAME': 'StandardStMan',
                'SEQNR': 0,
                'SPEC': {'BUCKETSIZE': 1028,
@@ -2174,123 +2208,123 @@ class _EmptyMSBaseInformation:
 
     source_desc = {
         'CALIBRATION_GROUP': {'comment': 'Number of grouping for calibration purpose.',
-                                         'dataManagerGroup': 'StandardStMan',
-                                         'dataManagerType': 'StandardStMan',
-                                         'keywords': {},
-                                         'maxlen': 0,
-                                         'option': 0,
-                                         'valueType': 'int'},
-        'CODE': {'comment': 'Special characteristics of source, e.g. Bandpass calibrator',
-                            'dataManagerGroup': 'StandardStMan',
-                            'dataManagerType': 'StandardStMan',
-                            'keywords': {},
-                            'maxlen': 0,
-                            'option': 0,
-                            'valueType': 'string'},
-        'DIRECTION': {'comment': 'Direction (e.g. RA, DEC).',
-                                 'dataManagerGroup': 'StandardStMan',
-                                 'dataManagerType': 'StandardStMan',
-                                 'keywords': {'MEASINFO': {'Ref': 'J2000', 'type': 'direction'},
-                                              'QuantumUnits': array(['rad', 'rad'], dtype='<U16')},
-                                 'maxlen': 0,
-                                 'ndim': 1,
-                                 'option': 5,
-                                 'shape': array([2]),
-                                 'valueType': 'double'},
-        'INTERVAL': {'comment': 'Interval of time for which this set of parameters is accurate',
-                                'dataManagerGroup': 'StandardStMan',
-                                'dataManagerType': 'StandardStMan',
-                                'keywords': {'QuantumUnits': array(['s'], dtype='<U16')},
-                                'maxlen': 0,
-                                'option': 0,
-                                'valueType': 'double'},
-        'NAME': {'comment': 'Name of source as given during observations',
-                            'dataManagerGroup': 'StandardStMan',
-                            'dataManagerType': 'StandardStMan',
-                            'keywords': {},
-                            'maxlen': 0,
-                            'option': 0,
-                            'valueType': 'string'},
-        'NUM_LINES': {'comment': 'Number of spectral lines',
-                                 'dataManagerGroup': 'StandardStMan',
-                                 'dataManagerType': 'StandardStMan',
-                                 'keywords': {},
-                                 'maxlen': 0,
-                                 'option': 0,
-                                 'valueType': 'int'},
-        'POSITION': {'comment': 'Position (e.g. for solar system objects',
-                                'dataManagerGroup': 'StandardStMan',
-                                'dataManagerType': 'StandardStMan',
-                                'keywords': {'MEASINFO': {'Ref': 'ITRF', 'type': 'position'},
-                                             'QuantumUnits': array(['m', 'm', 'm'], dtype='<U16')},
-                                'maxlen': 0,
-                                'ndim': -1,
-                                'option': 0,
-                                'valueType': 'double'},
-        'PROPER_MOTION': {'comment': 'Proper motion',
-                                     'dataManagerGroup': 'StandardStMan',
-                                     'dataManagerType': 'StandardStMan',
-                                     'keywords': {'QuantumUnits': array(['rad/s'], dtype='<U16')},
-                                     'maxlen': 0,
-                                     'ndim': 1,
-                                     'option': 5,
-                                     'shape': array([2]),
-                                     'valueType': 'double'},
-        'REST_FREQUENCY': {'comment': 'Line rest frequency',
-                                      'dataManagerGroup': 'StandardStMan',
-                                      'dataManagerType': 'StandardStMan',
-                                      'keywords': {'MEASINFO': {'Ref': 'LSRK', 'type': 'frequency'},
-                                                   'QuantumUnits': array(['Hz'], dtype='<U16')},
-                                      'maxlen': 0,
-                                      'ndim': -1,
-                                      'option': 0,
-                                      'valueType': 'double'},
-        'SOURCE_ID': {'comment': 'Source id',
-                                 'dataManagerGroup': 'StandardStMan',
-                                 'dataManagerType': 'StandardStMan',
-                                 'keywords': {},
-                                 'maxlen': 0,
-                                 'option': 0,
-                                 'valueType': 'int'},
-        'SOURCE_MODEL': {'comment': 'Component Source Model',
-                                    'dataManagerGroup': 'StandardStMan',
-                                    'dataManagerType': 'StandardStMan',
-                                    'keywords': {},
-                                    'maxlen': 0,
-                                    'option': 0,
-                                    'valueType': 'record'},
-        'SPECTRAL_WINDOW_ID': {'comment': 'ID for this spectral window setup',
-                                          'dataManagerGroup': 'StandardStMan',
-                                          'dataManagerType': 'StandardStMan',
-                                          'keywords': {},
-                                          'maxlen': 0,
-                                          'option': 0,
-                                          'valueType': 'int'},
-        'SYSVEL': {'comment': 'Systemic velocity at reference',
                               'dataManagerGroup': 'StandardStMan',
                               'dataManagerType': 'StandardStMan',
-                              'keywords': {'MEASINFO': {'Ref': 'LSRK', 'type': 'radialvelocity'},
-                                           'QuantumUnits': array(['m/s'], dtype='<U16')},
+                              'keywords': {},
                               'maxlen': 0,
-                              'ndim': -1,
                               'option': 0,
-                              'valueType': 'double'},
+                              'valueType': 'int'},
+        'CODE': {'comment': 'Special characteristics of source, e.g. Bandpass calibrator',
+                 'dataManagerGroup': 'StandardStMan',
+                 'dataManagerType': 'StandardStMan',
+                 'keywords': {},
+                 'maxlen': 0,
+                 'option': 0,
+                 'valueType': 'string'},
+        'DIRECTION': {'comment': 'Direction (e.g. RA, DEC).',
+                      'dataManagerGroup': 'StandardStMan',
+                      'dataManagerType': 'StandardStMan',
+                      'keywords': {'MEASINFO': {'Ref': 'J2000', 'type': 'direction'},
+                                   'QuantumUnits': array(['rad', 'rad'], dtype='<U16')},
+                      'maxlen': 0,
+                      'ndim': 1,
+                      'option': 5,
+                      'shape': array([2]),
+                      'valueType': 'double'},
+        'INTERVAL': {'comment': 'Interval of time for which this set of parameters is accurate',
+                     'dataManagerGroup': 'StandardStMan',
+                     'dataManagerType': 'StandardStMan',
+                     'keywords': {'QuantumUnits': array(['s'], dtype='<U16')},
+                     'maxlen': 0,
+                     'option': 0,
+                     'valueType': 'double'},
+        'NAME': {'comment': 'Name of source as given during observations',
+                 'dataManagerGroup': 'StandardStMan',
+                 'dataManagerType': 'StandardStMan',
+                 'keywords': {},
+                 'maxlen': 0,
+                 'option': 0,
+                 'valueType': 'string'},
+        'NUM_LINES': {'comment': 'Number of spectral lines',
+                      'dataManagerGroup': 'StandardStMan',
+                      'dataManagerType': 'StandardStMan',
+                      'keywords': {},
+                      'maxlen': 0,
+                      'option': 0,
+                      'valueType': 'int'},
+        'POSITION': {'comment': 'Position (e.g. for solar system objects',
+                     'dataManagerGroup': 'StandardStMan',
+                     'dataManagerType': 'StandardStMan',
+                     'keywords': {'MEASINFO': {'Ref': 'ITRF', 'type': 'position'},
+                                  'QuantumUnits': array(['m', 'm', 'm'], dtype='<U16')},
+                     'maxlen': 0,
+                     'ndim': -1,
+                     'option': 0,
+                     'valueType': 'double'},
+        'PROPER_MOTION': {'comment': 'Proper motion',
+                          'dataManagerGroup': 'StandardStMan',
+                          'dataManagerType': 'StandardStMan',
+                          'keywords': {'QuantumUnits': array(['rad/s'], dtype='<U16')},
+                          'maxlen': 0,
+                          'ndim': 1,
+                          'option': 5,
+                          'shape': array([2]),
+                          'valueType': 'double'},
+        'REST_FREQUENCY': {'comment': 'Line rest frequency',
+                           'dataManagerGroup': 'StandardStMan',
+                           'dataManagerType': 'StandardStMan',
+                           'keywords': {'MEASINFO': {'Ref': 'LSRK', 'type': 'frequency'},
+                                        'QuantumUnits': array(['Hz'], dtype='<U16')},
+                           'maxlen': 0,
+                           'ndim': -1,
+                           'option': 0,
+                           'valueType': 'double'},
+        'SOURCE_ID': {'comment': 'Source id',
+                      'dataManagerGroup': 'StandardStMan',
+                      'dataManagerType': 'StandardStMan',
+                      'keywords': {},
+                      'maxlen': 0,
+                      'option': 0,
+                      'valueType': 'int'},
+        'SOURCE_MODEL': {'comment': 'Component Source Model',
+                         'dataManagerGroup': 'StandardStMan',
+                         'dataManagerType': 'StandardStMan',
+                         'keywords': {},
+                         'maxlen': 0,
+                         'option': 0,
+                         'valueType': 'record'},
+        'SPECTRAL_WINDOW_ID': {'comment': 'ID for this spectral window setup',
+                               'dataManagerGroup': 'StandardStMan',
+                               'dataManagerType': 'StandardStMan',
+                               'keywords': {},
+                               'maxlen': 0,
+                               'option': 0,
+                               'valueType': 'int'},
+        'SYSVEL': {'comment': 'Systemic velocity at reference',
+                   'dataManagerGroup': 'StandardStMan',
+                   'dataManagerType': 'StandardStMan',
+                   'keywords': {'MEASINFO': {'Ref': 'LSRK', 'type': 'radialvelocity'},
+                                'QuantumUnits': array(['m/s'], dtype='<U16')},
+                   'maxlen': 0,
+                   'ndim': -1,
+                   'option': 0,
+                   'valueType': 'double'},
         'TIME': {'comment': 'Midpoint of time for which this set of parameters is accurate.',
-                            'dataManagerGroup': 'StandardStMan',
-                            'dataManagerType': 'StandardStMan',
-                            'keywords': {'MEASINFO': {'Ref': 'TAI', 'type': 'epoch'},
-                                         'QuantumUnits': array(['s'], dtype='<U16')},
-                            'maxlen': 0,
-                            'option': 0,
-                            'valueType': 'double'},
+                 'dataManagerGroup': 'StandardStMan',
+                 'dataManagerType': 'StandardStMan',
+                 'keywords': {'MEASINFO': {'Ref': 'TAI', 'type': 'epoch'},
+                              'QuantumUnits': array(['s'], dtype='<U16')},
+                 'maxlen': 0,
+                 'option': 0,
+                 'valueType': 'double'},
         'TRANSITION': {'comment': 'Line Transition name',
-                                  'dataManagerGroup': 'StandardStMan',
-                                  'dataManagerType': 'StandardStMan',
-                                  'keywords': {},
-                                  'maxlen': 0,
-                                  'ndim': -1,
-                                  'option': 0,
-                                  'valueType': 'string'},
+                       'dataManagerGroup': 'StandardStMan',
+                       'dataManagerType': 'StandardStMan',
+                       'keywords': {},
+                       'maxlen': 0,
+                       'ndim': -1,
+                       'option': 0,
+                       'valueType': 'string'},
         '_define_hypercolumn_': {},
         '_keywords_': {},
         '_private_keywords_': {}}
@@ -2298,8 +2332,8 @@ class _EmptyMSBaseInformation:
     source_dminfo = {
         '*1': {'COLUMNS': array(['CALIBRATION_GROUP', 'CODE', 'DIRECTION', 'INTERVAL', 'NAME',
                                  'NUM_LINES', 'POSITION', 'PROPER_MOTION', 'REST_FREQUENCY',
-                                              'SOURCE_ID', 'SOURCE_MODEL', 'SPECTRAL_WINDOW_ID', 'SYSVEL',
-                                              'TIME', 'TRANSITION'], dtype='<U19'),
+                                 'SOURCE_ID', 'SOURCE_MODEL', 'SPECTRAL_WINDOW_ID', 'SYSVEL',
+                                 'TIME', 'TRANSITION'], dtype='<U19'),
                'NAME': 'StandardStMan',
                'SEQNR': 0,
                'SPEC': {'BUCKETSIZE': 4224,
@@ -2312,115 +2346,122 @@ class _EmptyMSBaseInformation:
         'CHAN_FREQ': {'comment': 'Center frequencies for each channel in the data matrix',
                       'dataManagerGroup': 'StandardStMan',
                       'dataManagerType': 'StandardStMan',
-                                         'keywords': {'MEASINFO': {'TabRefCodes': array([0, 1, 2, 3, 4, 5, 6, 7, 8, 64], dtype=uint64),
-                                                                   'TabRefTypes': array(['REST', 'LSRK', 'LSRD', 'BARY', 'GEO', 'TOPO', 'GALACTO',
-                                                                                         'LGROUP', 'CMB', 'Undefined'], dtype='<U16'),
-                                                                   'VarRefCol': 'MEAS_FREQ_REF',
-                                                                   'type': 'frequency'},
-                                                      'QuantumUnits': array(['Hz'], dtype='<U16')},
-                                         'maxlen': 0,
-                                         'ndim': 1,
-                                         'option': 0,
-                                         'valueType': 'double'},
+                      'keywords':
+                          {'MEASINFO':
+                              {'TabRefCodes': array([0, 1, 2, 3, 4, 5, 6, 7, 8, 64], dtype=uint64),
+                               'TabRefTypes': array(['REST', 'LSRK', 'LSRD', 'BARY',
+                                                     'GEO', 'TOPO', 'GALACTO',
+                                                     'LGROUP', 'CMB', 'Undefined'], dtype='<U16'),
+                               'VarRefCol': 'MEAS_FREQ_REF',
+                               'type': 'frequency'},
+                           'QuantumUnits': array(['Hz'], dtype='<U16')},
+                      'maxlen': 0,
+                      'ndim': 1,
+                      'option': 0,
+                      'valueType': 'double'},
         'CHAN_WIDTH': {'comment': 'Channel width for each channel',
                        'dataManagerGroup': 'StandardStMan',
                        'dataManagerType': 'StandardStMan',
-                                          'keywords': {'QuantumUnits': array(['Hz'], dtype='<U16')},
-                                          'maxlen': 0,
-                                          'ndim': 1,
-                                          'option': 0,
-                                          'valueType': 'double'},
+                       'keywords': {'QuantumUnits': array(['Hz'], dtype='<U16')},
+                       'maxlen': 0,
+                       'ndim': 1,
+                       'option': 0,
+                       'valueType': 'double'},
         'EFFECTIVE_BW': {'comment': 'Effective noise bandwidth of each channel',
                          'dataManagerGroup': 'StandardStMan',
                          'dataManagerType': 'StandardStMan',
-                                            'keywords': {'QuantumUnits': array(['Hz'], dtype='<U16')},
-                                            'maxlen': 0,
-                                            'ndim': 1,
-                                            'option': 0,
-                                            'valueType': 'double'},
+                         'keywords': {'QuantumUnits': array(['Hz'], dtype='<U16')},
+                         'maxlen': 0,
+                         'ndim': 1,
+                         'option': 0,
+                         'valueType': 'double'},
         'FLAG_ROW': {'comment': 'Row flag',
                      'dataManagerGroup': 'StandardStMan',
                      'dataManagerType': 'StandardStMan',
-                                        'keywords': {},
-                                        'maxlen': 0,
-                                        'option': 0,
-                                        'valueType': 'boolean'},
+                     'keywords': {},
+                     'maxlen': 0,
+                     'option': 0,
+                     'valueType': 'boolean'},
         'FREQ_GROUP': {'comment': 'Frequency group',
                        'dataManagerGroup': 'StandardStMan',
                        'dataManagerType': 'StandardStMan',
-                                          'keywords': {},
-                                          'maxlen': 0,
-                                          'option': 0,
-                                          'valueType': 'int'},
+                       'keywords': {},
+                       'maxlen': 0,
+                       'option': 0,
+                       'valueType': 'int'},
         'FREQ_GROUP_NAME': {'comment': 'Frequency group name',
                             'dataManagerGroup': 'StandardStMan',
                             'dataManagerType': 'StandardStMan',
-                                               'keywords': {},
-                                               'maxlen': 0,
-                                               'option': 0,
-                                               'valueType': 'string'},
+                            'keywords': {},
+                            'maxlen': 0,
+                            'option': 0,
+                            'valueType': 'string'},
         'IF_CONV_CHAIN': {'comment': 'The IF conversion chain number',
                           'dataManagerGroup': 'StandardStMan',
                           'dataManagerType': 'StandardStMan',
-                                             'keywords': {},
-                                             'maxlen': 0,
-                                             'option': 0,
-                                             'valueType': 'int'},
+                          'keywords': {},
+                          'maxlen': 0,
+                          'option': 0,
+                          'valueType': 'int'},
         'MEAS_FREQ_REF': {'comment': 'Frequency Measure reference',
                           'dataManagerGroup': 'StandardStMan',
                           'dataManagerType': 'StandardStMan',
-                                             'keywords': {},
-                                             'maxlen': 0,
-                                             'option': 0,
-                                             'valueType': 'int'},
+                          'keywords': {},
+                          'maxlen': 0,
+                          'option': 0,
+                          'valueType': 'int'},
         'NAME': {'comment': 'Spectral window name',
                  'dataManagerGroup': 'StandardStMan',
                  'dataManagerType': 'StandardStMan',
-                                    'keywords': {},
-                                    'maxlen': 0,
-                                    'option': 0,
-                                    'valueType': 'string'},
+                 'keywords': {},
+                 'maxlen': 0,
+                 'option': 0,
+                 'valueType': 'string'},
         'NET_SIDEBAND': {'comment': 'Net sideband',
                          'dataManagerGroup': 'StandardStMan',
                          'dataManagerType': 'StandardStMan',
-                                            'keywords': {},
-                                            'maxlen': 0,
-                                            'option': 0,
-                                            'valueType': 'int'},
+                         'keywords': {},
+                         'maxlen': 0,
+                         'option': 0,
+                         'valueType': 'int'},
         'NUM_CHAN': {'comment': 'Number of spectral channels',
                      'dataManagerGroup': 'StandardStMan',
                      'dataManagerType': 'StandardStMan',
-                                        'keywords': {},
-                                        'maxlen': 0,
-                                        'option': 0,
-                                        'valueType': 'int'},
-        'REF_FREQUENCY': {'comment': 'The reference frequency',
-                          'dataManagerGroup': 'StandardStMan',
-                          'dataManagerType': 'StandardStMan',
-                                             'keywords': {'MEASINFO': {'TabRefCodes': array([0, 1, 2, 3, 4, 5, 6, 7, 8, 64], dtype=uint64),
-                                                                       'TabRefTypes': array(['REST', 'LSRK', 'LSRD', 'BARY', 'GEO', 'TOPO', 'GALACTO',
-                                                                                             'LGROUP', 'CMB', 'Undefined'], dtype='<U16'),
-                                                                       'VarRefCol': 'MEAS_FREQ_REF',
-                                                                       'type': 'frequency'},
-                                                          'QuantumUnits': array(['Hz'], dtype='<U16')},
-                                             'maxlen': 0,
-                                             'option': 0,
-                                             'valueType': 'double'},
+                     'keywords': {},
+                     'maxlen': 0,
+                     'option': 0,
+                     'valueType': 'int'},
+        'REF_FREQUENCY': {
+            'comment': 'The reference frequency',
+            'dataManagerGroup': 'StandardStMan',
+            'dataManagerType': 'StandardStMan',
+            'keywords':
+                {'MEASINFO':
+                    {'TabRefCodes': array([0, 1, 2, 3, 4, 5, 6, 7, 8, 64], dtype=uint64),
+                     'TabRefTypes': array(['REST', 'LSRK', 'LSRD', 'BARY', 'GEO', 'TOPO', 'GALACTO',
+                                           'LGROUP', 'CMB', 'Undefined'], dtype='<U16'),
+                     'VarRefCol': 'MEAS_FREQ_REF',
+                     'type': 'frequency'},
+                 'QuantumUnits': array(['Hz'], dtype='<U16')},
+            'maxlen': 0,
+            'option': 0,
+            'valueType': 'double'},
         'RESOLUTION': {'comment': 'The effective noise bandwidth for each channel',
                        'dataManagerGroup': 'StandardStMan',
                        'dataManagerType': 'StandardStMan',
-                                          'keywords': {'QuantumUnits': array(['Hz'], dtype='<U16')},
-                                          'maxlen': 0,
-                                          'ndim': 1,
-                                          'option': 0,
-                                          'valueType': 'double'},
-        'TOTAL_BANDWIDTH': {'comment': 'The total bandwidth for this window',
-                            'dataManagerGroup': 'StandardStMan',
-                            'dataManagerType': 'StandardStMan',
-                                               'keywords': {'QuantumUnits': array(['Hz'], dtype='<U16')},
-                                               'maxlen': 0,
-                                               'option': 0,
-                                               'valueType': 'double'},
+                       'keywords': {'QuantumUnits': array(['Hz'], dtype='<U16')},
+                       'maxlen': 0,
+                       'ndim': 1,
+                       'option': 0,
+                       'valueType': 'double'},
+        'TOTAL_BANDWIDTH': {
+            'comment': 'The total bandwidth for this window',
+            'dataManagerGroup': 'StandardStMan',
+            'dataManagerType': 'StandardStMan',
+            'keywords': {'QuantumUnits': array(['Hz'], dtype='<U16')},
+            'maxlen': 0,
+            'option': 0,
+            'valueType': 'double'},
         '_define_hypercolumn_': {},
         '_keywords_': {},
         '_private_keywords_': {}}
