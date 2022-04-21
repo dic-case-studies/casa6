@@ -2464,10 +2464,10 @@ class test_clip(test_base):
         os.system('cp -r '+self.vis + ' ngc5921_virtual_model_col.ms')
 
         # Create MODEL column
-        setjy(vis=self.vis, field='1331+305*',modimage='',standard='Perley-Taylor 99',scalebychan=False, usescratch=True)
+        setjy(vis=self.vis, field='1331+305*',model='',standard='Perley-Taylor 99',scalebychan=False, usescratch=True)
 
         # Create virtual MODEL column
-        setjy(vis='ngc5921_virtual_model_col.ms', field='1331+305*',modimage='',standard='Perley-Taylor 99',scalebychan=False, usescratch=False)
+        setjy(vis='ngc5921_virtual_model_col.ms', field='1331+305*',model='',standard='Perley-Taylor 99',scalebychan=False, usescratch=False)
         
         # Flag RESIDUAL_DATA = DATA - MODEL
         flagdata(vis=self.vis, mode='clip',datacolumn='RESIDUAL_DATA',clipminmax=[2.3,3.1],clipoutside=False, action='apply')
@@ -2485,7 +2485,7 @@ class test_clip(test_base):
         os.system('cp -r '+self.vis + ' ngc5921_virtual_model_col.ms')
 
         # Create virtual MODEL column
-        setjy(vis='ngc5921_virtual_model_col.ms', field='1331+305*',modimage='',standard='Perley-Taylor 99',scalebychan=False, 
+        setjy(vis='ngc5921_virtual_model_col.ms', field='1331+305*',model='',standard='Perley-Taylor 99',scalebychan=False, 
               usescratch=False)
                                               
         # Flag RESIDUAL_DATA = DATA - virtual MODEL
@@ -4330,7 +4330,7 @@ class test_virtual_col(test_base):
         self.MSvirtual = 'ngc5921_virtual.ms'
         
         # First, run setjy to create a virtual MODEl column (SOURCE_MODEL)
-        setjy(vis=self.MSvirtual, field='1331+305*',modimage='',standard='Perley-Taylor 99',
+        setjy(vis=self.MSvirtual, field='1331+305*',model='',standard='Perley-Taylor 99',
                 scalebychan=False, usescratch=False)
         
         # Verify that the virtual column exist
@@ -4344,7 +4344,7 @@ class test_virtual_col(test_base):
 
         # Compare with a normal MODEL column flagging
         # Run setjy to create a normal MODEl column (SOURCE_MODEL)
-        setjy(vis=self.vis, field='1331+305*',modimage='',standard='Perley-Taylor 99',
+        setjy(vis=self.vis, field='1331+305*',model='',standard='Perley-Taylor 99',
                 scalebychan=False, usescratch=True)
         
         flagdata(vis=self.vis,mode='clip',datacolumn='RESIDUAL_DATA',clipminmax=[2.3,3.1],clipoutside=False)
