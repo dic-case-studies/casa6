@@ -2877,14 +2877,15 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
                     if (elem[0] != 'Baseline') or (elem[1] != 'parameters'):
                         continue
 
-                for k in blparams.keys():
-                    if k == 'func':
-                        val = elem[10] if isref else elem[4]
-                    elif k == 'pname':
-                        val = ('npiece' if elem[10] == 'cspline' else 'order') if isref else elem[5]
-                    elif k == 'pvalue':
-                        val = (elem[12] if elem[10] == 'cspline' else elem[11]) if isref else elem[7]
-                    blparams[k].append(val)
+                if isref:
+                    iscspline = (elem[10] == 'cspline')
+                    blparams['func'].append(elem[10])
+                    blparams['pname'].append('npiece' if iscspline else 'order')
+                    blparams['pvalue'].append(elem[12] if iscspline else elem[11])
+                else:
+                    blparams['func'].append(elem[4])
+                    blparams['pname'].append(elem[5])
+                    blparams['pvalue'].append(elem[7])
 
         return blparams
 
