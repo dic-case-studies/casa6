@@ -2831,6 +2831,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
     def _extract_blfunc_params(self, paramfile):
         blparams = {'func': [], 'pname': [], 'pvalue': []}
         isref = (paramfile == self.paramfile)
+        delimiter = ',' if isref else None
 
         with open(paramfile, 'r') as f:
             lines = sorted(f.readlines()) if isref else f.readlines()
@@ -2840,7 +2841,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
                 if isref and (elems[0] == '#'):
                     continue
 
-                elem = elems.split(',' if isref else None)
+                elem = elems.split(delimiter)
                 if not isref:
                     if len(elem) < 8:
                         continue
