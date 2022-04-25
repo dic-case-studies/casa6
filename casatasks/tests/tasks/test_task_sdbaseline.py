@@ -2909,10 +2909,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
                     if elem[0] != 'p0':
                         continue
 
-                    ncoeff = 0
-                    for e in elem:
-                        if e[0] == 'p':
-                            ncoeff += 1
+                    ncoeff = sum(e[0] == 'p' for e in elem)
 
                 ncoeffs.append(ncoeff)
 
