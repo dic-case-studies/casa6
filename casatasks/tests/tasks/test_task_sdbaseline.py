@@ -2884,6 +2884,8 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         delimiter = ',' if (isref or iscsv) else None
 
         with open(paramfile, 'r') as f:
+            # sort the reference blparam file so that row and pol ids are in ascending order
+            # for all (blparam, bloutput(csv) and bloutput(text)) files
             lines = sorted(f.readlines()) if isref else f.readlines()
 
             for line in lines:
@@ -2894,11 +2896,12 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
                 elems = line.split(delimiter)
                 if isref:
                     blfunc_type = elems[10]
-                    blfunc_order = int(elems[12] if (blfunc_type == 'cspline') else elems[11])
+                    iscspline = (blfunc_type == 'cspline')
+                    blfunc_order = int(elems[12] if iscspline else elems[11])
 
                     if blfunc_type in ['poly', 'chebyshev']:
                         ncoeff = blfunc_order + 1
-                    elif blfunc_type == 'cspline':
+                    elif iscspline:
                         ncoeff = blfunc_order + 3
                     else:
                         raise ValueError(f'{blfunc_type} is invalid for blfunc!')
@@ -2928,16 +2931,19 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         for ext in blformat_ext:
             bloutput.append(self.infile + '_blparam.' + ext)
 
-        sdbaseline(infile=self.infile, datacolumn='float_data',
-                   blformat=blformat, bloutput=bloutput,
+        sdbaseline(infile=self.infile,
+                   datacolumn='float_data',
+                   blformat=blformat,
+                   bloutput=bloutput,
                    dosubtract=False,
-                   blfunc='variable', blparam=self.paramfile)
+                   blfunc='variable',
+                   blparam=self.paramfile)
 
         ncoeff_ref = self._get_num_coeff(self.paramfile)
         for blfile in bloutput:
             ext = os.path.splitext(blfile)[1][1:]
             self.assertEqual(ncoeff_ref, self._get_num_coeff(blfile),
-                             msg='number of baseline coefficients in '+ext+' file is wrong.')
+                             msg=f'number of baseline coefficients in {ext} file is wrong.')
 
 
 class sdbaseline_bloutputTest(sdbaseline_unittest_base):
