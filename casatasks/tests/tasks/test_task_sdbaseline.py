@@ -2886,14 +2886,14 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
             lines = sorted(f.readlines()) if isref else f.readlines()
 
             for line in lines:
-                elems = line.rstrip('\n')
-                if isref and (elems[0] == '#'):
+                line = line.rstrip('\n')
+                if isref and (line[0] == '#'):
                     continue
 
-                elem = elems.split(delimiter)
+                elems = line.split(delimiter)
                 if isref:
-                    blfunc_type = elem[10]
-                    blfunc_order = int(elem[12] if (blfunc_type == 'cspline') else elem[11])
+                    blfunc_type = elems[10]
+                    blfunc_order = int(elems[12] if (blfunc_type == 'cspline') else elems[11])
 
                     if blfunc_type in ['poly', 'chebyshev']:
                         ncoeff = blfunc_order + 1
@@ -2902,14 +2902,14 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
                     else:
                         raise ValueError(f'{blfunc_type} is invalid for blfunc!')
                 elif iscsv:
-                    ncoeff = len(elem) - 10
+                    ncoeff = len(elems) - 10
                 else:  # txt
-                    if len(elem) < 1:
+                    if len(elems) < 1:
                         continue
-                    if elem[0] != 'p0':
+                    if elems[0] != 'p0':
                         continue
 
-                    ncoeff = sum(e[0] == 'p' for e in elem)
+                    ncoeff = sum(e[0] == 'p' for e in elems)
 
                 ncoeffs.append(ncoeff)
 
