@@ -2863,6 +2863,8 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         isref = (paramfile == self.paramfile)
 
         with open(paramfile, 'r') as f:
+            # sort the reference blparam file so that row and pol ids are in ascending order
+            # for all (blparam, bloutput(csv) and bloutput(text)) files
             lines = sorted(f.readlines()) if isref else f.readlines()
 
             for line in lines:
