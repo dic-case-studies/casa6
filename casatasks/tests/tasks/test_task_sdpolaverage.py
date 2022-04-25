@@ -21,15 +21,17 @@
 #
 #
 ##########################################################################
-import unittest
-import os
 import math
+import os
 import sys
+import unittest
 
 from casatasks import sdpolaverage
 from casatasks.private.sdutil import table_manager
 from casatools import ctsys
+
 datapath = ctsys.resolve('unittest/sdpolaverage/')
+
 
 def weighToSigma(weight):
     if weight > sys.float_info.min:
@@ -46,7 +48,7 @@ def sigmaToWeight(sigma):
 
 
 def check_eq(val, expval, tol=None):
-    """Checks that val matches expval within tol."""
+    """Check that val matches expval within tol."""
 #    print val
     if type(val) == dict:
         for k in val:
@@ -75,7 +77,6 @@ class test_sdpolaverage(unittest.TestCase):
     def setUp(self):
         self.inputms = "analytic_type1.fit.ms"
         self.outputms = "polave.ms"
-        #datapath = os.environ.get('CASAPATH').split()[0] + "/data/regression/unittest/tsdfit/"
         os.system('cp -RH ' + datapath + self.inputms + ' ' + self.inputms)
 
     def tearDown(self):
@@ -95,7 +96,8 @@ class test_sdpolaverage(unittest.TestCase):
                 self.assertEqual(indata[i][j], outdata[i][j], 'Input and output data unidentical.')
 
     def test_stokes_float_data(self):
-        sdpolaverage(infile=self.inputms, outfile=self.outputms, polaverage='stokes', datacolumn='float_data')
+        sdpolaverage(infile=self.inputms, outfile=self.outputms,
+                     polaverage='stokes', datacolumn='float_data')
         # check data
         with table_manager(self.inputms) as tb:
             indata = tb.getcell('FLOAT_DATA', 0)
@@ -120,7 +122,8 @@ class test_sdpolaverage(unittest.TestCase):
         self.assertEqual(outpoltype[0], 1, 'Has wrong polarization id.')
 
     def test_stokes_corrected_data(self):
-        sdpolaverage(infile=self.inputms, outfile=self.outputms, polaverage='stokes', datacolumn='corrected')
+        sdpolaverage(infile=self.inputms, outfile=self.outputms,
+                     polaverage='stokes', datacolumn='corrected')
         # check data
         with table_manager(self.inputms) as tb:
             indata = tb.getcell('CORRECTED_DATA', 0)
@@ -144,6 +147,7 @@ class test_sdpolaverage(unittest.TestCase):
 
         self.assertEqual(len(outpoltype), 1, 'Polarization id is inconsistent with data.')
         self.assertEqual(outpoltype[0], 1, 'Has wrong polarization id.')
+
 
 if __name__ == '__main__':
     unittest.main()
