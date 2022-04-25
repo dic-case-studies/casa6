@@ -2838,7 +2838,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
 
             for line in lines:
                 elems = line.rstrip('\n')
-                if isref and (elems[0] == '#'):
+                if isref and elems.startswith('#'):
                     continue
 
                 elem = elems.split(delimiter)
@@ -2888,7 +2888,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
 
             for line in lines:
                 line = line.rstrip('\n')
-                if isref and (line[0] == '#'):
+                if isref and line.startswith('#'):
                     continue
 
                 elems = line.split(delimiter)
@@ -2910,7 +2910,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
                     if elems[0] != 'p0':
                         continue
 
-                    ncoeff = sum(e[0] == 'p' for e in elems)
+                    ncoeff = sum(e.startswith('p') for e in elems)
 
                 ncoeffs.append(ncoeff)
 
