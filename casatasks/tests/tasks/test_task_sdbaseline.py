@@ -2899,6 +2899,8 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
                         ncoeff = blfunc_order + 1
                     elif blfunc_type == 'cspline':
                         ncoeff = blfunc_order + 3
+                    else:
+                        raise ValueError(f'{blfunc_type} is invalid for blfunc!')
                 elif iscsv:
                     ncoeff = len(elem) - 10
                 else:  # txt
