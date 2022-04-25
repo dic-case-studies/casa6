@@ -2851,10 +2851,13 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         blformat = 'text'
         bloutput = self.infile + '_blparam.txt'
 
-        sdbaseline(infile=self.infile, datacolumn='float_data',
-                   blformat=blformat, bloutput=bloutput,
+        sdbaseline(infile=self.infile,
+                   datacolumn='float_data',
+                   blformat=blformat,
+                   bloutput=bloutput,
                    dosubtract=False,
-                   blfunc='variable', blparam=self.paramfile)
+                   blfunc='variable',
+                   blparam=self.paramfile)
 
         blparams_answer = self._extract_blfunc_params(self.paramfile)
         blparams_result = self._extract_blfunc_params(bloutput)
