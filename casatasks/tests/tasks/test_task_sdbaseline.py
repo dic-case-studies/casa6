@@ -2880,6 +2880,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         ncoeffs = []
         isref = (paramfile == self.paramfile)
         iscsv = (os.path.splitext(paramfile)[1][1:] == 'csv')
+        delimiter = ',' if (isref or iscsv) else None
 
         with open(paramfile, 'r') as f:
             lines = sorted(f.readlines()) if isref else f.readlines()
@@ -2889,7 +2890,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
                 if isref and (elems[0] == '#'):
                     continue
 
-                elem = elems.split(',' if (isref or iscsv) else None)
+                elem = elems.split(delimiter)
                 if isref:
                     blfunc_type = elem[10]
                     blfunc_order = int(elem[12] if (blfunc_type == 'cspline') else elem[11])
