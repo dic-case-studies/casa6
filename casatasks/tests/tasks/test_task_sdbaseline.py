@@ -2650,6 +2650,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
 
     def tearDown(self):
         remove_files_dirs(os.path.splitext(self.infile)[0])
+        remove_single_file_dir(self.paramfile)
         remove_single_file_dir(self.outfile)
 
     def _refetch_files(self, files, from_dir=None):
@@ -2724,13 +2725,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile, self.refstat0, blparam=self.paramfile, datacolumn=self.column)
 
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
-
     def testVariable01(self):
         """Test blfunc='variable' with skipping rows by comment ('#') (rows should be flagged)"""
         infile = 'analytic_variable.ms'
@@ -2738,13 +2732,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile, self.refstat0, flag_spec=[(0, 0)],
                        blparam=self.paramfile, datacolumn=self.column)
-
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
 
     def testVariable02(self):
         """Test blfunc='variable' with non-existent lines in blparam file
@@ -2755,13 +2742,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile, self.refstat0, flag_spec=[(0, 0), (1, 1)],
                        blparam=self.paramfile, datacolumn=self.column)
-
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
 
     def testVariable03(self):
         """Test blfunc='variable' with mask selection"""
@@ -2774,13 +2754,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._run_test(infile, self.refstat0, mask=mask,
                        blparam=self.paramfile, datacolumn=self.column)
 
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
-
     def testVariable04(self):
         """Test blfunc='variable' with data selection (spw='1')"""
         infile = 'analytic_variable.ms'
@@ -2788,13 +2761,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile, self.refstat0, spw='1',
                        blparam=self.paramfile, datacolumn=self.column)
-
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
 
     def testVariable05(self):
         """Test blfunc='variable' with clipping"""
@@ -2807,26 +2773,12 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._run_test(infile, self.refstat0, atol=1.e-5,
                        mask=mask, blparam=self.paramfile, datacolumn=self.column)
 
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
-
     def testVariable06(self):
         """Test blfunc='variable' with duplicated fitting parameters (the last one is adopted)"""
         infile = 'analytic_variable.ms'
         self.paramfile = 'analytic_variable_blparam_duplicate.txt'
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile, self.refstat0, blparam=self.paramfile, datacolumn=self.column)
-
-        if os.path.exists(self.infile + '_blparam.txt'):
-            os.remove(self.infile + '_blparam.txt')
-        if os.path.exists(self.infile + '_blparam.csv'):
-            os.remove(self.infile + '_blparam.csv')
-        if os.path.exists(self.infile + '_blparam.btable'):
-            shutil.rmtree(self.infile + '_blparam.btable')
 
     """
     def _extract_blfunc_params(self, paramfile):
