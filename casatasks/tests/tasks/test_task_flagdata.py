@@ -425,13 +425,13 @@ class test_base(unittest.TestCase):
     def setUp_weightcol(self):
         '''Small MS with two rows and WEIGHT column'''
 
+        inpvis = "combine-1-timestamp-2-SPW-no-WEIGHT_SPECTRUM-Same-Exposure.ms"
         self.vis = "msweight.ms"
 
         if os.path.exists(self.vis):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            inpvis = "combine-1-timestamp-2-SPW-no-WEIGHT_SPECTRUM-Same-Exposure.ms"
             os.system('cp -RH '+os.path.join(datapath,inpvis)+' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
