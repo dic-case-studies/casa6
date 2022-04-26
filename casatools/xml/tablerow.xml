@@ -1,0 +1,138 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+  <tool module="table" name="tablerow">
+    <shortdescription>Access table rows from casa6</shortdescription>
+    <code>
+      <include>tablerow_forward.h</include>
+      <private>
+        <include>tablerow_private.h</include>
+      </private>
+    </code>
+
+    <description>
+      tablerow objects are created by table.row(...) they allow
+      the user to but retrieve and to replace rows
+    </description>
+
+    <method name="_iswritable" type="function">
+      <shortdescription>check to see if row can be modified</shortdescription>
+      <description>
+        check to see if row can be modified
+      </description>
+      <returns type="bool"/>
+    </method>
+
+    <method name="iswritable" type="function">
+      <shortdescription>check to see if row can be modified</shortdescription>
+      <description>
+        check to see if row can be modified
+      </description>
+      <returns type="bool"/>
+    </method>
+
+    <method name="_get" type="function">
+      <shortdescription>get a single row</shortdescription>
+      <description>
+        get a single row specified by rownr
+      </description>
+
+      <input>
+        <param name="rownr" type="int">
+          <description>row number to retrieve</description>
+        </param>
+      </input>
+      <returns type="record"/>
+    </method>
+
+    <method name="get" type="function">
+      <shortdescription>get a single row</shortdescription>
+      <description>
+        get a single row specified by rownr
+      </description>
+
+      <input>
+        <param name="rownr" type="int">
+          <description>row number to retrieve</description>
+        </param>
+      </input>
+      <returns type="record"/>
+    </method>
+
+    <method name="_put" type="function">
+      <shortdescription>put a single row</shortdescription>
+      <description>
+        put a single row specified by rownr
+      </description>
+
+      <input>
+        <param name="rownr" type="int">
+          <description>row number to store</description>
+        </param>
+
+        <param name="value" type="record">
+          <description>row record to store</description>
+        </param>
+
+        <param name="matchingfields" type="bool">
+          <description>
+            If true, this means that the value may contain more fields and only fields matching a column name will be used.
+          </description>
+          <value>true</value>
+        </param>
+      </input>
+
+      <returns type="bool"/>
+    </method>
+
+    <method name="put" type="function">
+      <shortdescription>put a single row</shortdescription>
+      <description>
+        put a single row specified by rownr
+      </description>
+
+      <input>
+        <param name="rownr" type="int">
+          <description>row number to store</description>
+        </param>
+
+        <param name="value" type="record">
+          <description>row record to store</description>
+        </param>
+
+        <param name="matchingfields" type="bool">
+          <description>
+            If true, this means that the value may contain more fields and only fields matching a column name will be used.
+          </description>
+          <value>true</value>
+        </param>
+      </input>
+
+      <returns type="bool"/>
+    </method>
+
+    <method name="__len__" type="function">
+      <shortdescription>number of rows available</shortdescription>
+      <description>
+        return the number of available rows for use in subscription
+      </description>
+      <returns type="int"/>
+    </method>
+
+    <method name="__getitem__" type="function">
+      <shortdescription>get row from table</shortdescription>
+      <description>
+        get one row from the referenced table used in subscription
+      </description>
+      <input>
+        <param name="rownr" type="pyobj">
+          <description>
+            Row number to return
+          </description>
+        </param>
+      </input>
+      <returns type="pyobj"/>
+    </method>
+
+  </tool>
+
+</casaxml>

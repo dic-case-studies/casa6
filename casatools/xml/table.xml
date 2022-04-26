@@ -1,6 +1,7 @@
 <casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
 
         <tool module="table" name="table">
+        <needs>tablerow</needs>
         <shortdescription>Access tables from casapy</shortdescription>
        
 <code>
@@ -3111,6 +3112,32 @@ tb.showcache()
         
         </example>
         
+   </method>
+
+   <method name="row" type="function">
+     <shortdescription>Get a row accessor for this table</shortdescription>
+     <description>
+       Return a table accessor object which includes or excludes (based upon the
+       exclude parameter) the specified columns.
+     </description>
+     <input>
+       <param name="columnnames" type="stringVec">
+         <description>
+           Column names to be included in (or optionally excluded from) the the
+           returned result.
+         </description>
+         <value/>
+       </param>
+
+       <param name="exclude" type="bool">
+         <description>
+           If set to true, then columnnames describes the coluns to excluded rather
+           than included.
+         </description>
+         <value>false</value>
+       </param>
+     </input>
+     <returns type="tablerow"/>
    </method>
 
 </tool>

@@ -128,7 +128,7 @@ if "--stripsyms" in sys.argv:
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.66.jar'
+xml_jar_file = 'xml-casa-assembly-1.67.jar'
 xml_jar_path = os.path.join( 'scripts', 'java', xml_jar_file)
 xml_jar_url = 'http://casa.nrao.edu/download/devel/xml-casa/java/%s' % xml_jar_file
 

@@ -3,7 +3,10 @@
 //  These are internal variables the connect us to the objects
 //
 casacore::LogIO      *itsLog;
-casacore::TableProxy *itsTable;
+
+// shared with casac::tablerow
+std::shared_ptr<casacore::TableProxy> itsTable;
+
 //
 // Private constructor so we can make components on the fly
 //
