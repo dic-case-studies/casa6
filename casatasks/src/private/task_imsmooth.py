@@ -68,6 +68,7 @@
 # </todo>
 
 from __future__ import absolute_import
+import inspect
 import os
 import sys
 import numpy
@@ -90,11 +91,15 @@ else:
     # not a local tool
     _qa = qa
 
+from casatasks.private.callabletask import log_origin_setter
+
+
+@log_origin_setter
 def imsmooth(
     imagename, kernel, major, minor, pa, targetres, kimage, scale, region,
     box, chans, stokes, mask, outfile, stretch, overwrite, beam
 ):
-    casalog.origin( 'imsmooth' )
+
     ikernel = kernel.startswith('i')
     ckernel = kernel.startswith('c')
     bkernel = kernel.startswith('b')
