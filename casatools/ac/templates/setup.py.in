@@ -64,6 +64,7 @@ from distutils.errors import DistutilsExecError, CompileError
 from distutils.dir_util import copy_tree, remove_tree
 from distutils.core import Command
 from distutils.util import spawn, get_platform
+from distutils.dist import Distribution
 
 from functools import reduce
 from itertools import dropwhile,takewhile
@@ -104,15 +105,18 @@ parser.add_argument('--version', help='version')
 parser.add_argument('--debug', help='debug', action='store_true')
 parser.add_argument('--relwithdebinfo', help='Release build with debug and optimization flags', action='store_true')
 parser.add_argument('--stripsyms', help='Strip debug info out of the executable files from --relwithdebinfo. Used with release builds.', action='store_true')
+parser.add_argument('--prebuilt', help="Don't build any external (non-python) sources. Assume previously built via genmake+make.", action='store_true')
 parser.add_argument('bdist_wheel', help='bdist_wheel')
 
 args=parser.parse_args()
 _debug_build_ = args.debug
 _rel_with_deb_info_ = args.relwithdebinfo
 _strip_syms_ = args.stripsyms
+_prebuilt_ = args.prebuilt
 print("_debug_build_: " + str(_debug_build_))
 print("_rel_with_deb_info_: " + str(_rel_with_deb_info_))
 print("_strip_syms_: " + str(_strip_syms_))
+print("_prebuilt_: " + str(_prebuilt_))
 
 # Remove the "non-standard" arguments from sys.argv so as not to confuse dist_tools
 if "--version" in sys.argv:
@@ -123,7 +127,8 @@ if "--relwithdebinfo" in sys.argv:
     sys.argv.remove("--relwithdebinfo")
 if "--stripsyms" in sys.argv:
     sys.argv.remove("--stripsyms")
-
+if "--prebuilt" in sys.argv:
+    sys.argv.remove("--prebuilt")
 
 module_name = 'casatools'
 
@@ -1019,6 +1024,7 @@ module_cflags = { 'casacore/': ['-DCFITSIO_VERSION_MAJOR=3', '-DCFITSIO_VERSION_
                                         '-DNO_CRASH_REPORTER', '-fno-omit-frame-pointer', '-DWITHOUT_ACS', '-DWITHOUT_BOOST', \
                                         '-DUSE_THREADS', '-DCASATOOLS', '-Dcasacore=casa6core', '-fPIC' ] \
                                         + platform_cflags[sys.platform],
+                       'sakura-source/': platform_cflags[sys.platform],
                        'src/':     ['-DAIPS_64B', '-DAIPS_AUTO_STL', '-DAIPS_DEBUG', '-DAIPS_HAS_QWT', \
                                         '-DAIPS_LINUX', '-DAIPS_LITTLE_ENDIAN', '-DAIPS_STDLIB', \
                                         '-DCASACORE_NEEDS_RETHROW', '-DCASA_USECASAPATH', '-DQWT6', \
@@ -1072,6 +1078,22 @@ def get_new_cxx_compiler_includes():
 def get_new_c_compiler_flags():
     return get_optimization_flags()
 
+def get_cxx_compiler_flags_from_setuputils():
+    # I (BGB) think that -pthread gets added to the wheel build in
+    # distutils/sysconfig.py:customize_compiler() -> get_config_pars('CC'),
+    # but I wasn't able to chase it down fully TODO find original source
+    return ['-pthread']
+
+def get_cxx_compiler_includes_from_setuputils():
+    # create instance of casa_build_ext (as in setuputils externals) to get the include flags from it
+    wheel_build_ext_cmd = casa_build_ext(Distribution())
+    wheel_build_ext_cmd.ensure_finalized()
+    # I (BGB) don't know where "-Ibinding" is coming from for bdist_util TODO find argument origins
+    # I also don't think that this argument really matters, but I'm adding it here just to ensure
+    # that make and bdist_wheel build with all of the same arguments.
+    incs = wheel_build_ext_cmd.include_dirs + ["binding"]
+    return ['-I'+inc for inc in incs]
+
 def get_use_grpc():
    return ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] )
 
@@ -1105,6 +1127,18 @@ def get_fortran_compiler_flags(ext):
         )
     return cc_args
 
+sys_cflags=''
+def update_sys_cflags():
+    global sys_cflags
+    sys_cflags = sep.join(
+        list(
+            filter(
+                lambda flag: not flag.startswith('-O'),sysconfig.get_config_var('CFLAGS').split()
+            )
+        )
+    )
+    return sys_cflags
+
 def customize_compiler(self):
     """inject customization into distutils.
 
@@ -1113,8 +1147,11 @@ def customize_compiler(self):
     use 'gcc', i.e. whichever compiler happens to be in the user's
     path. I want to select a specific compiler using autoconf.
 
-    I found this reference useful:
+    I (DS?) found this reference useful:
     https://github.com/rmcgibbo/npcuda-example/blob/master/cython/setup.py
+
+    I (BGB) believe that "self" here is an instance of distutils.UnixCCompiler.
+    https://github.com/python/cpython/blob/main/Lib/distutils/ccompiler.py
     """
 
     self.compiler_cxx = [ props['build.compiler.cxx'] ]
@@ -1160,6 +1197,9 @@ def customize_compiler(self):
             library_mangle = pickle.load(f)
     else:
         library_mangle = { }
+                
+    # Mimic the makefile so that the same build objects can be used:
+    filtered_sys_cflags = filter_optim_debug(update_sys_cflags()).split() # yes, we join only to take advantage of filter_optim_debug
 
     def _link(target_desc, objects, output_filename, output_dir=None,
               libraries=None, library_dirs=None, runtime_library_dirs=None,
@@ -1219,6 +1259,14 @@ def customize_compiler(self):
             ['-L' + get_casac_dir() + os.sep + 'lib'] + \
             list(dropwhile(lambda x: not x.startswith('-L'),self.linker_so))
 
+        # For some unknown reason, two of the linker arguments are concatenated together without a space.
+        # "-L/opt/rh/rh-python36/root/usr/lib64-Wl,-z,relro"
+        for i in range(len(self.linker_so)):
+            if "-Wl,-z,relro" in self.linker_so[i] and self.linker_so[i].index("-Wl,-z,relro") != 0: # terrible hack
+                self.linker_so[i] = self.linker_so[i].split("-Wl,-z,relro")[0]
+                self.linker_so.insert(i+1, "-Wl,-z,relro")
+                break
+
         superld(target_desc, objects, output_filename, output_dir,
                 [library_mangle[l] if l in library_mangle else l for l in libraries],
                 library_dirs+local_library_path, runtime_library_dirs, export_symbols,
@@ -1230,6 +1278,10 @@ def customize_compiler(self):
     # object but distutils doesn't have the ability to change compilers
     # based on source extension: we add it.
     def _compile(obj, src, ext, cc_args, postargs, pp_opts):
+        if _prebuilt_:
+            # Don't rebuild external (non-python) sources
+            return
+
         if ext == ".f" or ext == ".f90" :
             print("fortran compile...")
             if sys.platform == 'darwin' or sys.platform.startswith('linux'):
@@ -1259,17 +1311,19 @@ def customize_compiler(self):
             except DistutilsExecError as msg:
                 raise CompileError(msg)
         else:
+            tmp_sys_cflags = []
             if ext == ".c" :
                 print("c compile...")
                 new_compiler = new_compiler_cc
             else:
                 print("c++ compile...")
                 new_compiler = new_compiler_cxx
+                tmp_sys_cflags = filtered_sys_cflags
             ## get the cflags for the module being built; key is a subdir, value are flags
             m_cflags = map(lambda x: x[1] if x[0] in src else [], module_cflags.items())
             m_cflags = [item for sublist in m_cflags for item in sublist] ### python has not yet hit upon a flatten function...
             #self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + ( [ '-DUSE_GRPC' ] if props['option.grpc'] != "0" else [ ] )))
-            self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + get_use_grpc()))
+            self.set_executable('compiler_so', clean_args(new_compiler + m_cflags + tmp_sys_cflags + get_use_grpc()))
             supercc(obj, src, ext, clean_args(cc_args), clean_args(postargs), clean_args(pp_opts))
 
         # reset the default compiler_so (may not be necessary)
@@ -1345,6 +1399,9 @@ def generate_casac_init_py():
 
 # run the customize_compiler
 class casa_build_ext(build_ext):
+    # Builds the c files into the pre-compiled binaries to include in the distributed wheel.
+    # The compiler is determined by the call to customize_compiler.
+    # Most of the work is done by the parent build_ext class in the run() method.
     user_options = build_ext.user_options + [
         # The format is (long option, short option, description).
         ('debug', None, 'build a debugging version'),
@@ -1359,6 +1416,11 @@ class casa_build_ext(build_ext):
             self.debug = 1
         else:
             self.debug = 0
+
+    # build_ext::finalize_options() adds the includes for {devdir}/venv/include and /opt/rh/rh-python36/root/usr/include/python3.6m
+    # These includes are added to self.include_dirs
+    #def finalize_options(self):
+    #    build_ext.finalize_options(self)
 
     def build_extensions(self):
         customize_compiler(self.compiler)
@@ -1635,7 +1697,7 @@ def get_tp_libs():
     return [
             'sqlite3','xslt','xml2','xerces-c','fftw3f_threads','fftw3f', 'fftw3_threads',
             'fftw3','lapack','wcs','cfitsio','rpfits','blas'
-        ] + get_grpc_libs() + ['readline', 'gfortran', 'dl'] + mpi_libs
+        ] + get_grpc_libs() + ['readline', 'gfortran', 'dl'] + mpi_libs + [f"python{pyversion}m"]
 
 def get_gfortran_lib_path( ):
     proc = Popen([ props['build.compiler.fortran'], "-print-search-dirs"], stdout=PIPE, stderr=PIPE )
@@ -1701,11 +1763,7 @@ cpp = sep.join(get_ccache() + [props['build.compiler.cxx']])
 cc = sep.join(get_ccache() + [props['build.compiler.cc']])
 f77 = props['build.compiler.fortran']
 casatools_obj_list = []
-sys_cflags = sep.join(
-    list(
-        filter(lambda flag: not flag.startswith('-O'),sysconfig.get_config_var('CFLAGS').split())
-    )
-)
+sys_cflags = update_sys_cflags()
 
 python_inc = props['build.python.include']
 sepl = " -l"
@@ -1739,9 +1797,11 @@ def write_makefile_begin(targets, mode="genmake"):
         mk.write("\nDEPDIR := " + depdir + "\n")
         mk.write("# override optimization for debug builds")
         mk.write("\ndebug: OPTIM_FLAGS := -g \n")
+        mk.write("\nrelwithdebinfo: OPTIM_FLAGS := -g $(OPTIM_FLAGS) \n")
         mk.write("\n.PHONY: " + all_target + "\n")
         mk.write(all_target + ": " + sep.join(targets) + "\n")
         mk.write('\ndebug: ' + all_target)
+        mk.write('\nrelwithdebinfo: ' + all_target)
         mk.write(
             sep.join([
                 "\n", clean_target, ": "
@@ -1751,7 +1811,7 @@ def write_makefile_begin(targets, mode="genmake"):
         )
 
 def filter_optim_debug(cmd):
-    # take out explicit optimization/debugging flags
+    # take out explicit optimization/debugging flags, these are controlled instead with the make target
     cmd = cmd.replace('-g ', '')
     cmd = re.sub('-Wp,-D_FORTIFY_SOURCE=\d+', '', cmd)
     return re.sub('-O\d+','', cmd)
@@ -1794,33 +1854,27 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
             + '{dflags} -c $< -o $@' \
             + '\n\t$(POSTCOMPILE)'
     )
-    src = [
-        CODE_SRC, CORE_SRC, SAKURA_SRC, CODE_ATM, GRPC_REGISTRAR, SOURCE_BINDING
+    # this should mimic module_cflags
+    src_and_flags = [
+        (CODE_SRC, module_cflags['/code/']),
+        (CORE_SRC, module_cflags['casacore/']),
+        (SAKURA_SRC, module_cflags['sakura-source/']),
+        (CODE_ATM, module_cflags['/code/']),
+        (GRPC_REGISTRAR, platform_cflags[sys.platform]),
+        (SOURCE_BINDING, module_cflags['binding/'])
     ]
-    cflags = [
-        module_cflags['/code/'], module_cflags['casacore/'],
-        platform_cflags[sys.platform], module_cflags['/code/'],
-        platform_cflags[sys.platform], module_cflags['binding/']
-    ]
-    includes = sep.join(get_new_cxx_compiler_includes() + get_cflags())
-    flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
+
+    includes = sep.join(get_new_cxx_compiler_includes() + get_cxx_compiler_includes_from_setuputils() + get_cflags())
+    flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags() + get_cxx_compiler_flags_from_setuputils())
     flags = flags + " -fPIC"
-    # add_cflags = sysconfig.get_config_var('CFLAGS')
     # filter out the optimization flags which Darrell has done for C and C++ compiles for setup.py build
-    global sys_cflags
-    sys_cflags = sep.join(
-        list(
-            filter(
-                lambda flag: not flag.startswith('-O'),sysconfig.get_config_var('CFLAGS').split()
-            )
-        )
-    )
+    sys_cflags = update_sys_cflags()
     grpc_dirs = ["-I" + get_grpc_srcdir() + " -I" + get_grpc_incdir()] if duse_grpc else []
     mkdirs_cc_target = "mk_cc_obj_dirs"
     targdirs = set()
     cpp_list = []
     with open("makefile", "a") as mk:
-        for (mysrc, myflags) in zip(src, cflags):
+        for (mysrc, myflags) in src_and_flags:
             dflags = sep.join(myflags + duse_grpc + grpc_dirs)
             myinc = includes
             if mysrc == SOURCE_BINDING:
@@ -1976,6 +2030,7 @@ def write_casacode_linker():
     # FIXME hardcoded because I don't know where it comes from
     # ldflags1 += ' -shared -L/opt/rh/rh-python36/root/usr/lib64 -Wl,-z,relro -Wl,-rpath,'
     # ldflags1 += '/opt/rh/rh-python36/root/usr/lib64 -Wl,--enable-new-dtags'
+    # I don't know where setuputils gets its -lpython3.6m ~BGB
     modulelib = os.sep.join([moduledir, "__casac__", "lib"])
     ldflags2 = '-L/opt/rh/rh-python36/root/usr/lib64 -L' + modulelib
     # this needs to be added for the gcwrap tool libraries, but if added here, it breaks
@@ -2089,10 +2144,10 @@ def compile_casacore_tests():
                 + "-DCASACORE_NEEDS_RETHROW -DCASA_USECASAPATH -DQWT6 " \
                 + "-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE " \
                 + "-DNO_CRASH_REPORTER -fno-omit-frame-pointer -DWITHOUT_ACS " \
-                + "-DUSE_GRPC -Ibuild/binding.linux-x86_64-3.6/grpc " \
-                + "-Ibuild/lib.linux-x86_64-3.6/casatools/__casac__/include "
+                + f"-DUSE_GRPC -Ibuild/binding.linux-x86_64-{pyversion}/grpc " \
+                + f"-Ibuild/lib.linux-x86_64-{pyversion}/casatools/__casac__/include "
                 # -shared causes a segfault
-                + "-lpython3.6m " + dflags + " "
+                + f"-lpython{pyversion}m " + dflags + " "
                 + "-o " + exefile + " " + wflags + " "
                 + f + " "
             )
@@ -2296,9 +2351,9 @@ class create_makefile(Command):
         )
         dep_targ = dep_name + ": ;\nPRECIOUS: " + dep_name
         cflags = module_cflags['binding/'] + platform_cflags[sys.platform]
-        includes = sep.join(get_new_cxx_compiler_includes() + get_cflags() + ["-Isrc"])
+        includes = sep.join(get_new_cxx_compiler_includes() + get_cxx_compiler_includes_from_setuputils() + get_cflags() + ["-Isrc"])
         tool_inc = "-Ibinding/generated/tools/{toolname} -Isrc/tools/{toolname}"
-        flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags())
+        flags = sep.join(["$(DEPFLAGS)"] + get_new_cxx_compiler_flags() + get_cxx_compiler_flags_from_setuputils())
         add_cflags = sysconfig.get_config_var('CFLAGS')
         duse_grpc = get_use_grpc()
         grpc_dirs = ["-I" + get_grpc_srcdir() + " -I" + get_grpc_incdir()]
@@ -2468,7 +2523,7 @@ class create_makefile(Command):
                                   'cflags': [ '-DUSE_GRPC' ],
                                   'lflags': [ ],
                                   'libs': [ '-lgrpc++', '-lgrpc', '-lgpr', '-lprotobuf' ] }
-        g_build_state['python'] = { 'libs': [ '-lpython3.6m' ],
+        g_build_state['python'] = { 'libs': [ f"-lpython{pyversion}m" ],
                                     'cflags': [ ],
                                     'lflags': [ ],
                                     'include': [ ] }
@@ -2758,10 +2813,14 @@ if __name__ == '__main__':
            description = __doc__.split("\n")[0],
            long_description="\n".join(__doc__.split("\n")[2:]),
            classifiers=filter(None, classifiers.split("\n")),
+           # declare this as the "casatools" package
            package_dir={module_name: os.path.join('build',distutils_dir_name('lib'), module_name)},
            packages=[ module_name ],
+           # define our own "genmake", "ia", and "test" commands, override the setuptools built-in "build_ext" and "bdist_wheel" commands
+           # which of these commands is executed is determined by the command line arguments used to start this script
            cmdclass={ 'build_ext': casa_build_ext, 'test': casa_test, 'bdist_wheel': wheel_build, 'genmake': create_makefile, 'ia': create_makefile_ia } \
                                    if wheel_build \
                                    else { 'build_ext': casa_build_ext, 'test': casa_test, 'genmake': create_makefile, 'ia': create_makefile_ia },
+           # precompiled binaries aka externals to include in the distribution
            ext_modules=ext,
            install_requires=[ 'numpy' ] )
