@@ -63,8 +63,8 @@ namespace casac {
         return fromRecord(state.getSummaryRecord( ));
     }
 
-    long iterbotsink::cleanComplete(const bool lastcyclecheck) {
-        return state.cleanComplete(lastcyclecheck);
+    long iterbotsink::cleanComplete(const bool lastcyclecheck, const bool reachedMajorLimit) {
+        return state.cleanComplete(lastcyclecheck, reachedMajorLimit);
     }
 
     bool iterbotsink::endmajorcycle( ) {

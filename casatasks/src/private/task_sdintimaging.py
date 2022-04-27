@@ -140,7 +140,7 @@ def setup_imager(imagename, specmode,calcres,calpsf,inparams):
         ## Make dirty image
         if calcres == True:
             t0=time.time();
-            imagertool.runMajorCycle()
+            imagertool.runMajorCycle(isCleanCycle=False)
             t1=time.time();
             casalog.post("***Time for major cycle (calcres=T): "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");
 
@@ -185,7 +185,7 @@ def setup_deconvolver(imagename,specmode,inparams):
         ## Initialize deconvolvers. ( Order is important. This cleans up a leftover tablecache image.... FIX!)
     deconvolvertool.initializeDeconvolvers()
     deconvolvertool.initializeIterationControl() # This needs to be run before runMajorCycle
-    deconvolvertool.runMajorCycle() ## Make this to make template residual images.
+    deconvolvertool.runMajorCycle(isCleanCycle=False) ## Make this to make template residual images.
  
     return deconvolvertool
 

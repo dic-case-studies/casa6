@@ -1096,6 +1096,15 @@ class test_iterbot(testref_base):
           report=self.th.checkall(ret=ret,imgexist=[self.img+'.psf', self.img+'.residual'], imgval=[(self.img+'.model',0.74,[256,256,0,0]),(self.img+'.model', 0.54, [256,256,0,1])],firstcyclethresh=0.18661306)
 
           self.assertTrue(self.check_final(report))
+
+     def test_iterbot_nmajor_1(self):
+          """ [iterbot] Test_Iterbot_nmajor_1 : Performs one major cycle iteration """
+          self.prepData('refim_point_onespw0.ms') # smaller dataset for a faster test
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',nmajor=1,niter=500,interactive=0,calcres=True,restoration=True,parallel=self.parallel)
+          report=self.th.checkall(ret=ret, stopcode=9, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+                                  nmajordone=2) # 1 for calcres + 1 major cycle during cleaning
+          self.assertTrue(self.check_final(report))
+
 ##############################################
 ##############################################
 ##############################################
