@@ -2102,7 +2102,7 @@ class sdbaseline_multi_IF_test(sdbaseline_unittest_base):
         remove_single_file_dir(self.infile)
         remove_files_dirs(self.outroot)
 
-    @unittest.skip("Not currently part of the the test suite")
+    @unittest.skip("Not currently part of the test suite")
     def test200(self):
         """test200: Test the task works with multi IF data"""
         infile = self.infile
@@ -3109,7 +3109,7 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
         # self._run_test([['', 'text', '']])  # tentatively skipped for CAS-13673
         self._run_test([['csv', '', '']])
 
-    @unittest.skip("Not currently part of the the test suite")
+    @unittest.skip("Not currently part of the test suite")
     def test020(self):
         """double bloutput cases"""
         self._run_test([['table', 'text']])
@@ -3119,12 +3119,12 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
         self._run_test([['text', 'csv']])
         self._run_test([['csv', 'text']])
 
-    @unittest.skip("Not currently part of the the test suite")
+    @unittest.skip("Not currently part of the test suite")
     def test021(self):
         """double bloutput cases (blformat with an empty element)"""
         self._run_test([['table', 'text', ''], ['table', '', 'csv'], ['', 'text', 'csv']])
 
-    @unittest.skip("Not currently part of the the test suite")
+    @unittest.skip("Not currently part of the test suite")
     def test030(self):
         """triple bloutput cases"""
         self._run_test([['table', 'text', 'csv']])
