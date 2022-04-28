@@ -168,20 +168,20 @@ namespace casac {
                 *ptr++ = i < str.size( ) ? str[i] : 0;
             }
         }
-        return PyArray_New( &PyArray_Type, shape.nelements( ), shape.storage( ), NPY_STRING, nullptr, mem, itemlen, NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
+        return PyArray_New( &PyArray_Type, shape.nelements( ), (npy_intp*) shape.storage( ), NPY_STRING, nullptr, mem, itemlen, NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
     }
         
-#define PY_NUM_ARRAY( CASACORE_TYPE, NUMPY_TYPE )                                                                            \
-    static inline PyObject *toPy( const Array<CASACORE_TYPE> &a ) {                                                               \
-        auto shape = a.shape( );                                                                                                  \
-        PyObject *ndarray = PyArray_New( &PyArray_Type, shape.nelements( ), shape.storage( ), NUMPY_TYPE, nullptr, nullptr,       \
-                                         0, NPY_ARRAY_FARRAY, nullptr );                                                          \
-        bool free_storage = false;                                                                                                \
-        auto storage = a.getStorage( free_storage );                                                                              \
-        std::memcpy( PyArray_DATA(reinterpret_cast<PyArrayObject *>(ndarray)), storage, a.nelements( ) * sizeof(CASACORE_TYPE) ); \
-        PyArray_ENABLEFLAGS( reinterpret_cast<PyArrayObject *>(ndarray), NPY_ARRAY_OWNDATA );                                     \
-        if ( free_storage ) delete storage;                                                                                       \
-        return ndarray;                                                                                                           \
+#define PY_NUM_ARRAY( CASACORE_TYPE, NUMPY_TYPE )                                                                                       \
+    static inline PyObject *toPy( const Array<CASACORE_TYPE> &a ) {                                                                     \
+        auto shape = a.shape( );                                                                                                        \
+        PyObject *ndarray = PyArray_New( &PyArray_Type, shape.nelements( ), (npy_intp*) shape.storage( ), NUMPY_TYPE, nullptr, nullptr, \
+                                         0, NPY_ARRAY_FARRAY, nullptr );                                                                \
+        bool free_storage = false;                                                                                                      \
+        auto storage = a.getStorage( free_storage );                                                                                    \
+        std::memcpy( PyArray_DATA(reinterpret_cast<PyArrayObject *>(ndarray)), storage, a.nelements( ) * sizeof(CASACORE_TYPE) );       \
+        PyArray_ENABLEFLAGS( reinterpret_cast<PyArrayObject *>(ndarray), NPY_ARRAY_OWNDATA );                                           \
+        if ( free_storage ) delete storage;                                                                                             \
+        return ndarray;                                                                                                                 \
     }
     PY_NUM_ARRAY( bool, NPY_BOOL )
     PY_NUM_ARRAY( int8_t, NPY_INT8 )
