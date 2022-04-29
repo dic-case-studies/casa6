@@ -78,7 +78,7 @@ table::table(casacore::TableProxy *theTable) : itsTable(theTable)
 table::~table()
 {
   delete itsLog;
-  itsTable.reset( )
+  itsTable.reset( );
 }
 
 bool
