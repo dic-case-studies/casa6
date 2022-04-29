@@ -67,15 +67,19 @@ static bool numpy_initialized = _tablerow_initialize_numpy( );
 
 namespace casac {
 
-    tablerow::tablerow( ) : itsRow(0), itsTable(0) {
+    // constructor used by SWIG to initialize an empty tablerow
+    tablerow::tablerow( ) : itsRow(0) {
         itsLog = new casacore::LogIO;
     }
+    // constructor used by table class (in table_cmpt.cc) to return a
+    // tablerow for fetching one or more rows
     tablerow::tablerow( std::shared_ptr<casacore::TableProxy> myTable,
                         const std::vector<std::string> &columnnames, bool exclude ) : itsTable(myTable) {
         itsLog = new casacore::LogIO;
         itsRow = new TableRowProxy( *itsTable, columnnames, exclude );
     }
 
+    // check to see if tablerow can be modified
     bool tablerow::iswritable( ) {
         *itsLog << LogOrigin(__func__,"");
         try {
@@ -87,8 +91,10 @@ namespace casac {
         *itsLog << LogIO::WARN << "use of uninitialized table row" << LogIO::POST;
         return false;
     }
+    // magic function which casacore also supplies
     bool tablerow::_iswritable( ) { return iswritable( ); }
 
+    // fetch one row
     record *tablerow::get( long rownr ) {
         *itsLog << LogOrigin(__func__,"");
         try {
@@ -100,8 +106,10 @@ namespace casac {
         *itsLog << LogIO::WARN << "use of uninitalized table row" << LogIO::POST;
         return new record( );
     }
+    // magic function which casacore also supplies
     record *tablerow::_get( long rownr ) { return get(rownr); }
 
+    // replace one row
     bool tablerow::put( long rownr, const record &value, bool matchingfields) {
         *itsLog << LogOrigin(__func__,"");
         try {
@@ -118,8 +126,11 @@ namespace casac {
         *itsLog << LogIO::WARN << "use of uninitalized table row" << LogIO::POST;
         return false;
     }
+    // magic function casacore also supplies
     bool tablerow::_put( long rownr, const record &value, bool matchingfields) { return put( rownr, value, matchingfields ); }
 
+    // magic function for checking the length (it is not completely clear in which
+    // contexts this function is used)
     long tablerow::__len__( ) {
         *itsLog << LogOrigin(__func__,"");
         try {
@@ -132,11 +143,13 @@ namespace casac {
         return -1;
     }
 
+    // convert a boolean value to a PyObject
     static inline PyObject *toPy( bool b ) {
         if ( b ) { Py_INCREF(Py_True); return Py_True; }
         else { Py_INCREF(Py_False); return Py_False; }
     }
 
+    // convert numeric scalars to a PyObject
 #define PY_NUM_SCALAR( CASACORE_TYPE, NUMPY_TYPE )                                 \
     static inline PyObject *toPy( CASACORE_TYPE i ) {                              \
         static PyObject *itemlen = PyLong_FromLong(sizeof(i));                     \
@@ -156,7 +169,9 @@ namespace casac {
     PY_NUM_SCALAR( Complex, NPY_COMPLEX64 )
     PY_NUM_SCALAR( DComplex, NPY_COMPLEX128 )
 
+    // convert a string to a PyObject
     static inline PyObject *toPy( const String &s ) { return PyBytes_FromString(s.c_str( )); }
+    // convert an array of strings to a PyObject
     static inline PyObject *toPy( const Array<String> &a ) {
         auto shape = a.shape( );
         size_t itemlen = std::accumulate( a.begin( ), a.end( ), (size_t) 0, []( size_t tally, const String &s ) { return s.size( ) > tally ? s.length( ) : tally; } );
@@ -170,7 +185,8 @@ namespace casac {
         }
         return PyArray_New( &PyArray_Type, shape.nelements( ), (npy_intp*) shape.storage( ), NPY_STRING, nullptr, mem, itemlen, NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
     }
-        
+    
+    // convert numeric arrays to PyObjects
 #define PY_NUM_ARRAY( CASACORE_TYPE, NUMPY_TYPE )                                                                                       \
     static inline PyObject *toPy( const Array<CASACORE_TYPE> &a ) {                                                                     \
         auto shape = a.shape( );                                                                                                        \
@@ -199,6 +215,8 @@ namespace casac {
 
     static PyObject *toPy( const casacore::Record &rec ) {
         using namespace casacore;
+
+        // build map from table cell types to conversion functions
         std::map<int,function<PyObject*(size_t i)>> function_map = { {TpBool,[&](size_t i) ->PyObject* { return toPy(rec.asBool(i)); }},
                                                                      {TpChar,[&](size_t i) ->PyObject* { return toPy(rec.asuChar(i)); }},
                                                                      {TpUChar,[&](size_t i) ->PyObject* { return toPy(rec.asuChar(i)); }},
@@ -228,13 +246,17 @@ namespace casac {
                                                                      {TpRecord,[&](size_t i) ->PyObject* { return toPy(rec.asRecord(i)); }}
         };
 
+        // create result
         auto result = PyDict_New( );
         if ( result == nullptr ) throw PyExc_MemoryError;
+        // loop through record fields
         for ( uInt i=0; i < rec.nfields( ); ++i ) {
             auto func = function_map.find( rec.dataType(i) );
+            // lookup conversion function
             if ( func != function_map.end( ) ) {
                 auto newobj = func->second(i);
                 auto name = PyUnicode_FromString(rec.name(i).c_str( ));
+                // set field in result
                 if ( PyDict_SetItem( result, name, newobj ) != 0 ) {
                     Py_DECREF(result);
                     throw PyExc_ValueError;
@@ -250,6 +272,7 @@ namespace casac {
     PyObj* tablerow::__getitem__( PyObj *rownr ) {
         PyObject *obj = (PyObject*) rownr;
         if ( PyNumber_Check(obj) ) {
+            // index indicates a single row
             if ( itsTable && itsRow ) {
                 auto pylong = PyNumber_Long(obj);
                 auto index = PyLong_AsLong(pylong);
@@ -261,6 +284,7 @@ namespace casac {
             }
             throw PyExc_IndexError;
         } else if ( PySlice_Check(obj) ) {
+            // index indicates a slice
             if ( itsTable && itsRow ) {
                 Py_ssize_t start, stop, step, length;
                 if ( PySlice_Unpack( obj, &start, &stop, &step ) < 0 ) {
