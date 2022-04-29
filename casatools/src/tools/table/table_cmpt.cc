@@ -78,6 +78,7 @@ table::table(casacore::TableProxy *theTable) : itsTable(theTable)
 table::~table()
 {
   delete itsLog;
+  itsTable.reset( )
 }
 
 bool
@@ -187,6 +188,7 @@ table::close()
 
  Bool rstat(false);
  try {
+    itsTable.reset( );
     rstat = true;
  } catch (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -601,7 +603,7 @@ table::name()
    if(itsTable){
       myName = itsTable->table().tableName();
    } else {
-      *itsLog << LogIO::NORMAL << "No table opened. (name)" << LogIO::POST;
+      *itsLog << LogIO::NORMAL << "No table opened." << LogIO::POST;
    }
    return myName;
 }
@@ -644,11 +646,16 @@ table::toasciifmt(const std::string& asciifile, const std::string& headerfile, c
 ::casac::table*
 table::taql(const std::string& taqlcommand)
 {
- *itsLog << LogOrigin(__func__, (itsTable ? this->name() : "global-taql"));
+ *itsLog << LogOrigin(__func__, this->name());
  ::casac::table *rstat(0);
  try {
-   casacore::TableProxy *theQTab = new TableProxy(tableCommand(taqlcommand));
-   rstat = new ::casac::table(theQTab);
+   if(itsTable){
+     casacore::TableProxy *theQTab = new TableProxy(tableCommand(taqlcommand));
+     rstat = new ::casac::table(theQTab);
+   } else {
+     *itsLog << LogIO::WARN
+             << "No table specified, please open first" << LogIO::POST;
+   }
  } catch (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 
             << LogIO::POST;
@@ -2089,12 +2096,11 @@ bool table::fromascii(const std::string& tablename, const std::string& asciifile
    try {
       Vector<String> atmp, btmp;
       IPosition tautoshape;
-      if( itsTable )
-          itsTable.reset( );
+      itsTable.reset( );
       if(columnnames.size( ) > 0 && columnnames[0] != "")
-	      atmp = toVectorString(columnnames);
+          atmp = toVectorString(columnnames);
       if(datatypes.size( ) > 0 && datatypes[0] != "")
-	      btmp = toVectorString(datatypes);
+          btmp = toVectorString(datatypes);
       itsTable.reset( new casacore::TableProxy(String(asciifile), String(headerfile), String(tablename), autoheader, tautoshape, String(sep), String(commentmarker), firstline, lastline, atmp, btmp) );
       rstatus = true;
    } catch (AipsError x) {
