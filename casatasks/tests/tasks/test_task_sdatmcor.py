@@ -28,7 +28,7 @@ import unittest
 
 import numpy as np
 
-from casatasks import applycal, gencal, sdatmcor
+from casatasks import applycal, casalog, gencal, sdatmcor
 from casatasks.private.sdutil import (convert_antenna_spec_autocorr,
                                       get_antenna_selection_include_autocorr,
                                       table_manager)
@@ -38,6 +38,9 @@ from casatools import ms as mstool
 from casatools import quanta
 
 ctsys_resolve = ctsys.resolve
+
+# hold omp_get_num_threads value when this file is imported
+OMP_NUM_THREADS_INITIAL = casalog.ompGetNumThreads()
 
 
 def smart_remove(name):
@@ -209,6 +212,9 @@ class test_sdatmcor(unittest.TestCase):
             is_selected = spw in spwprocess
             is_processed = spwprocess.get(spw, False)
             self._check_result_spw(spw, is_selected, is_processed, on_source_only)
+
+        # test OpenMP related stuff
+        self.assertEqual(casalog.ompGetNumThreads(), OMP_NUM_THREADS_INITIAL)
 
     def test_sdatmcor_normal(self):
         """Test normal usage of sdatmcor."""
