@@ -2017,8 +2017,8 @@ to use the correct direction in which the antenna is pointing with respect to th
       <shortdescription>Maximum number of major cycles to evaluate</shortdescription>
       <description>Limits the number of major cycles that tclean executes.
                        
-                        The minimum number of major cycles to execute is 1. This value must be either
-                        0 or greater than 0. 0 means no limit. (default 0)
+                        The minimum number of major cycles to execute is 0. This value can be 0,
+                        -1, or greater than 0. Negative means no limit. (default -1)
          
                         If the major cycle limit is reached stopcode 9 will be returned. Other stopping
                         criteria (such as threshold) could cause tclean to stop in fewer than this
@@ -2028,7 +2028,7 @@ to use the correct direction in which the antenna is pointing with respect to th
                         If calcres=True, then an additional major cycle will be executed prior to
                         starting clean.
       </description>
-      <value type="int">0</value>
+      <value type="int">-1</value>
     </param>
 
 

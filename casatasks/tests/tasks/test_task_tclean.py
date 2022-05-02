@@ -1097,12 +1097,23 @@ class test_iterbot(testref_base):
 
           self.assertTrue(self.check_final(report))
 
-     def test_iterbot_nmajor_1(self):
-          """ [iterbot] Test_Iterbot_nmajor_1 : Performs one major cycle iteration """
+     def test_iterbot_nmajor_0(self):
+          """ [iterbot] Test_Iterbot_nmajor_0 : Performs zero major cycle iteration """
           self.prepData('refim_point_onespw0.ms') # smaller dataset for a faster test
-          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',nmajor=1,niter=500,interactive=0,calcres=True,restoration=True,parallel=self.parallel)
+          # create the initial residual, otherwise stopcode will be 2 for "threshold"
+          tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',nmajor=0,niter=0,interactive=0,calcres=True,restoration=False,parallel=self.parallel)
+          # run tclean with nmajor=0
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',nmajor=0,niter=500,interactive=0,calcres=False,restoration=True,parallel=self.parallel)
           report=self.th.checkall(ret=ret, stopcode=9, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
-                                  nmajordone=2) # 1 for calcres + 1 major cycle during cleaning
+                                  nmajordone=0)
+          self.assertTrue(self.check_final(report))
+
+     def test_iterbot_nmajor_2(self):
+          """ [iterbot] Test_Iterbot_nmajor_2 : Performs two major cycle iterations """
+          self.prepData('refim_point_onespw0.ms') # smaller dataset for a faster test
+          ret = tclean(vis=self.msfile,imagename=self.img,imsize=100,cell='8.0arcsec',nmajor=2,niter=500,interactive=0,calcres=True,parallel=self.parallel)
+          report=self.th.checkall(ret=ret, stopcode=9, imgexist=[self.img+'.psf', self.img+'.residual', self.img+'.image'],
+                                  nmajordone=3) # 1 for calcres + 2 major cycle during cleaning
           self.assertTrue(self.check_final(report))
 
 ##############################################

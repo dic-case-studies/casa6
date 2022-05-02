@@ -279,7 +279,7 @@ class PySynthesisImager:
 #         self.runInteractiveGUI2()
 
          # Check with the iteration controller about convergence.
-         reachedNmajor = (self.iterpars['nmajor'] > 0 and self.majorCnt >= self.iterpars['nmajor'])
+         reachedNmajor = (self.iterpars['nmajor'] >= 0 and self.majorCnt >= self.iterpars['nmajor'])
          stopflag = self.IBtool.cleanComplete(reachedMajorLimit=reachedNmajor)
          if( stopflag>0 ):
              casalog.post("Reached global stopping criterion : " + self.getStopDescription(stopflag), "INFO")
