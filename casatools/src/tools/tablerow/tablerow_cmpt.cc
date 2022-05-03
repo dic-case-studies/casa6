@@ -304,13 +304,13 @@ namespace casac {
         } else if ( PySlice_Check(obj) ) {
             // index indicates a slice
             if ( itsTable && itsRow ) {
-                Py_ssize_t start, stop, step, length;
+                Py_ssize_t start, stop, step;
                 if ( PySlice_Unpack( obj, &start, &stop, &step ) < 0 ) {
                     throw PyExc_IndexError;
                 }
                 auto slice_length = PySlice_AdjustIndices( itsTable->nrows( ), &start, &stop, step );
                 auto result = PyList_New( slice_length );
-                for ( size_t i=0, row=start; i < slice_length; ++i, row += step ) {
+                for ( ssize_t i=0, row=start; i < slice_length; ++i, row += step ) {
                     if ( row < 0 || row >= itsTable->nrows( ) ) throw PyExc_IndexError;
                     if ( PyList_SetItem( result, i, toPy( itsRow->get( row ) ) ) < 0 ) {
                         Py_DECREF(result);
