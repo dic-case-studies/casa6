@@ -2,17 +2,11 @@ import inspect
 from types import CodeType
 
 import numpy
-from casatasks.private.casa_transition import is_CASA6
 
-if is_CASA6:
-    from casatasks import casalog
-    from casatools import quanta
+from casatasks import casalog
+from casatools import quanta
 
-    from . import sdutil
-else:
-    import sdutil
-    from taskinit import casalog
-    from taskinit import qatool as quanta
+from . import sdutil
 
 qa = quanta()
 
@@ -44,11 +38,12 @@ def sdtimeaverage(
     #   (unexpected result warning)
     if ('scan' in timespan) and ('state' in timespan):
         #  WARN msg, to explain NRO specific issue.
-        msg = '\n'.join(["Explicitly both 'scan' and 'state' were specified in 'timespan'.",
-                         "   If 'state' distinguishes OBSERVE_TARGET#ON_SOURCE / OBSERVE_TARGET#OFF_SOURCE,",
-                         "   these two states are mixed, and unexpectedly averaged results might be generated.",
-                         "(Suggestion) Please specify timespan = 'scan'",
-                         "             to separate OBSERVE_TARGET#ON_SOURCE and OBSERVE_TARGET#OFF_SOURCE."])
+        msg = '\n'.join(
+            ["Explicitly both 'scan' and 'state' were specified in 'timespan'.",
+             "   If 'state' distinguishes OBSERVE_TARGET#ON_SOURCE / OBSERVE_TARGET#OFF_SOURCE,",
+             "   these two states are mixed, and unexpectedly averaged results might be generated.",
+             "(Suggestion) Please specify timespan = 'scan'",
+             "             to separate OBSERVE_TARGET#ON_SOURCE and OBSERVE_TARGET#OFF_SOURCE."])
         casalog.post(msg, 'WARN')
 
     # (Note) When timespan='' is specified.
@@ -95,10 +90,10 @@ def sdtimeaverage(
 
 
 def use_alternative_column(infile, datacolumn):
-    """
-     Alternatively use datacolumn if the specified column does not exist.
-       In case 'float_data' does not exist, sdtimeaverage attempt to use 'data'
-       and vice versa. (For user's convenience)
+    """Alternatively use datacolumn if the specified column does not exist.
+
+    In case 'float_data' does not exist, sdtimeaverage attempt to use 'data'
+    and vice versa. (For user's convenience)
     """
     #  obtain the existence of data-column on specified MS.
     ex_float_data, ex_data = check_column(infile)
@@ -119,7 +114,7 @@ def use_alternative_column(infile, datacolumn):
 
 
 def check_column(msname):
-    """ Check the specified column if it exists. """
+    """Check the specified column if it exists."""
     with sdutil.table_manager(msname) as tb:
         columnNames = tb.colnames()
         exist_float_data = 'FLOAT_DATA' in columnNames
@@ -128,9 +123,9 @@ def check_column(msname):
 
 
 def set_timebin_all():
-    """
-      Synthesize timebin
-        assign very large value to cover 'all'.
+    """Synthesize timebin.
+
+    assign very large value to cover 'all'.
     """
     timebin = numpy.finfo(float).max
     return str(timebin)
