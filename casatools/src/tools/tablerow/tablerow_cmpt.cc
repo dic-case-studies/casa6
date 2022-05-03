@@ -185,20 +185,38 @@ namespace casac {
         }
         return PyArray_New( &PyArray_Type, shape.nelements( ), (npy_intp*) shape.storage( ), NPY_STRING, nullptr, mem, itemlen, NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );
     }
-    
+
     // convert numeric arrays to PyObjects
-#define PY_NUM_ARRAY( CASACORE_TYPE, NUMPY_TYPE )                                                                                       \
-    static inline PyObject *toPy( const Array<CASACORE_TYPE> &a ) {                                                                     \
-        auto shape = a.shape( );                                                                                                        \
-        PyObject *ndarray = PyArray_New( &PyArray_Type, shape.nelements( ), (npy_intp*) shape.storage( ), NUMPY_TYPE, nullptr, nullptr, \
-                                         0, NPY_ARRAY_FARRAY, nullptr );                                                                \
-        bool free_storage = false;                                                                                                      \
-        auto storage = a.getStorage( free_storage );                                                                                    \
-        std::memcpy( PyArray_DATA(reinterpret_cast<PyArrayObject *>(ndarray)), storage, a.nelements( ) * sizeof(CASACORE_TYPE) );       \
-        PyArray_ENABLEFLAGS( reinterpret_cast<PyArrayObject *>(ndarray), NPY_ARRAY_OWNDATA );                                           \
-        if ( free_storage ) delete storage;                                                                                             \
-        return ndarray;                                                                                                                 \
+    // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+    // Allocating the result object with:
+    //
+    //   PyObject *ndarray = PyArray_New( &PyArray_Type, shape.nelements( ), (npy_intp*) shape.storage( ), NUMPY_TYPE,
+    //                                    nullptr, nullptr, 0, NPY_ARRAY_FARRAY, nullptr );
+    //
+    // and then filling it after the fact with:
+    //
+    //   bool free_storage = false;
+    //   auto storage = a.getStorage( free_storage );
+    //   std::memcpy( PyArray_DATA( reinterpret_cast<PyArrayObject *>(ndarray)),
+    //                              storage, a.nelements( ) * sizeof(CASACORE_TYPE) );
+    //   PyArray_ENABLEFLAGS( reinterpret_cast<PyArrayObject *>(ndarray), NPY_ARRAY_OWNDATA );
+    //   if ( free_storage ) delete storage;
+    //
+    // worked on RHEL7 + python 3.6 but fails on macos 10.15 + python 3.8
+    //
+#define PY_NUM_ARRAY( CASACORE_TYPE, NUMPY_TYPE )                                                                         \
+    static inline PyObject *toPy( const Array<CASACORE_TYPE> &a ) {                                                       \
+        auto shape = a.shape( );                                                                                          \
+        size_t memlen = a.nelements( ) * sizeof(CASACORE_TYPE);                                                           \
+        auto *mem = PyDataMem_NEW(memlen);                                                                                \
+        auto *ptr = reinterpret_cast<CASACORE_TYPE*>(mem);                                                                \
+        for ( const auto &ele : a ) {                                                                                     \
+            *ptr++ = ele;                                                                                                 \
+        }                                                                                                                 \
+        return PyArray_New( &PyArray_Type, shape.nelements( ), (npy_intp*) shape.storage( ), NUMPY_TYPE, nullptr, mem,    \
+                            sizeof(CASACORE_TYPE), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );                       \
     }
+
     PY_NUM_ARRAY( bool, NPY_BOOL )
     PY_NUM_ARRAY( int8_t, NPY_INT8 )
     PY_NUM_ARRAY( uint8_t, NPY_UINT8 )
@@ -312,5 +330,13 @@ namespace casac {
     tablerow::~tablerow( ) {
         delete itsLog;
         delete itsRow;
+        itsTable.reset( );
     }
+
+    void tablerow::done( ) {
+        delete itsRow;
+        itsRow = 0;
+        itsTable.reset( );
+    }
+
 }
