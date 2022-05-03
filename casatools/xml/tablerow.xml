@@ -133,6 +133,15 @@
       <returns type="pyobj"/>
     </method>
 
+    <method name="done" type="function">
+      <shortdescription>release references to the table resources</shortdescription>
+      <description>
+        Release the table resources. After this call, the tablerow object will no longer
+        be useful.
+      </description>
+      <returns type="void"/>
+    </method>
+
   </tool>
 
 </casaxml>
