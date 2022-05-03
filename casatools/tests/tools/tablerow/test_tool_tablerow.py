@@ -23,12 +23,8 @@ from uuid import uuid4
 from casatools import table, ctsys
 
 ms_name = 'ngc5921_ut.ms'
-orig_ms_path = ctsys.resolve( f'unittest/mstool/ngc5921_ut.ms')
-if orig_ms_path == 'unittest/mstool':
-    raise RuntimeError(f'cannot find test data {orig_ms_path}')
+orig_ms_path = ctsys.resolve( f'unittest/mstool/{ms_name}')
 print( f'tablerow tool tests will use {orig_ms_path}' )
-
-
 
 class TableRowBase(unittest.TestCase):
     "setup common to all tests"
