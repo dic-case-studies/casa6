@@ -213,8 +213,11 @@ namespace casac {
         for ( const auto &ele : a ) {                                                                                     \
             *ptr++ = ele;                                                                                                 \
         }                                                                                                                 \
-        return PyArray_New( &PyArray_Type, shape.nelements( ), (npy_intp*) shape.storage( ), NUMPY_TYPE, nullptr, mem,    \
-                            sizeof(CASACORE_TYPE), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );                       \
+        auto result = PyArray_New( &PyArray_Type, shape.nelements( ), (npy_intp*) shape.storage( ), NUMPY_TYPE, nullptr,  \
+                                   mem, sizeof(CASACORE_TYPE), NPY_ARRAY_OWNDATA | NPY_ARRAY_FARRAY, nullptr );           \
+        /*** setting NPY_ARRAY_OWNDATA here is required to avoid memory leak of allocated data (rhel7 + python 3.6) ***/  \
+        PyArray_ENABLEFLAGS( reinterpret_cast<PyArrayObject*>(result), NPY_ARRAY_OWNDATA );                               \
+        return result;                                                                                                    \
     }
 
     PY_NUM_ARRAY( bool, NPY_BOOL )
@@ -277,8 +280,12 @@ namespace casac {
                 // set field in result
                 if ( PyDict_SetItem( result, name, newobj ) != 0 ) {
                     Py_DECREF(result);
+                    Py_DECREF(newobj);
+                    Py_DECREF(name);
                     throw PyExc_ValueError;
                 }
+                Py_DECREF(newobj);
+                Py_DECREF(name);
             } else {
                 Py_DECREF(result);
                 throw PyExc_TypeError;
@@ -302,6 +309,7 @@ namespace casac {
             }
             throw PyExc_IndexError;
         } else if ( PySlice_Check(obj) ) {
+            
             // index indicates a slice
             if ( itsTable && itsRow ) {
                 Py_ssize_t start, stop, step;
@@ -312,8 +320,18 @@ namespace casac {
                 auto result = PyList_New( slice_length );
                 for ( ssize_t i=0, row=start; i < slice_length; ++i, row += step ) {
                     if ( row < 0 || row >= itsTable->nrows( ) ) throw PyExc_IndexError;
-                    if ( PyList_SetItem( result, i, toPy( itsRow->get( row ) ) ) < 0 ) {
+                    PyObject *newobj = 0;
+                    PyGILState_STATE state;  // Needed for PyGILState_Ensure() and PyGILState_Release()
+                    state = PyGILState_Ensure( );
+                    try {
+                        newobj = toPy( itsRow->get( row ) );
+                        PyGILState_Release(state);
+                    } catch (...) {
+                        PyGILState_Release(state);
+                    }
+                    if ( PyList_SetItem( result, i, newobj ) < 0 ) {
                         Py_DECREF(result);
+                        Py_DECREF(newobj);
                         throw PyExc_ValueError;
                     }
                 }
