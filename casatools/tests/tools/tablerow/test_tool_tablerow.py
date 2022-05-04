@@ -39,7 +39,7 @@ class TableRowBase(unittest.TestCase):
             os.makedirs(self.scratch_path)
         shutil.copytree( orig_ms_path, self.ms_path )
         self.tb.open(self.ms_path,nomodify=False)
-        self.rows = self.tb.row( )
+        self.rows = self.tb.rows( )
 
     @staticmethod
     def remove_readonly(func, path, _):
@@ -84,7 +84,7 @@ class row(TableRowBase):
         ### check to see if the new values are read back
         tb = table( )
         tb.open(self.ms_path)
-        rows = tb.row( )
+        rows = tb.rows( )
         storedrow = self.rows.get(22)
         rows.done( )
         tb.close( )

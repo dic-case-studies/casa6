@@ -3114,7 +3114,7 @@ tb.showcache()
         
    </method>
 
-   <method name="row" type="function">
+   <method name="rows" type="function">
      <shortdescription>Get a row accessor for this table</shortdescription>
      <description>
        Return a table accessor object which includes or excludes (based upon the
