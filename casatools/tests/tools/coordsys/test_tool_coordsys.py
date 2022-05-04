@@ -41,6 +41,63 @@ myim = "center_0.fits"
 
 datapath='unittest/coordsys/'
 
+def freqVelSetUp():
+    mycs = cs.newcoordsys(spectral=True)
+
+    # Set rest freq to reference freq
+    rv = mycs.referencevalue(format='n')
+    restFreq = rv['numeric'][0]
+    mycs.setrestfrequency(restFreq)
+
+    # Find radio velocity increment
+    df = mycs.increment(format='n')
+    c = qa.constants('c')['value']  # m/s
+    drv = -c * df['numeric'] / rv['numeric'][0] / 1000.0  # km/s
+    #
+    freq = rv['numeric'][0]
+    freqUnit = mycs.units()
+
+    return mycs, rv, restFreq, df, c, drv, freq, freqUnit
+
+def alleq(x,y,tolerance=0):
+    if x.size != y.size:
+        #print "x.size=", x.size
+        #print "y.size=", y.size
+        return False
+    if len(x.shape)==1:
+        for i in range(len(x)):
+            if not (abs(x[i]-y[i]) < tolerance):
+                #print "x[",i,"]=", x[i]
+                #print "y[",i,"]=", y[i]
+                return False
+    if len(x.shape)==2:
+        for i in range(len(x)):
+            for j in range(len(x[i])):
+                if not (abs(x[i][j]-y[i][j]) < tolerance):
+                    #print "x[",i,"][",j,"]=", x[i][j]
+                    #print "y[",i,"][",j,"]=", y[i][j]
+                    return False
+    if len(x.shape)==3:
+        for i in range(len(x)):
+            for j in range(len(x[i])):
+                for k in range(len(x[i][j])):
+                    if not (abs(x[i][j][k]-y[i][j][k]) < tolerance):
+                        #print "x[",i,"][",j,"][",k,"]=", x[i][j][k]
+                        #print "y[",i,"][",j,"][",k,"]=", y[i][j][k]
+                        return False
+    if len(x.shape)==4:
+        for i in range(len(x)):
+            for j in range(len(x[i])):
+                for k in range(len(x[i][j])):
+                    for l in range(len(x[i][j][k])):
+                        if not (abs(x[i][j][k][l]-y[i][j][k][l]) < tolerance):
+                            #print "x[",i,"][",j,"][",k,"][",l,"]=", x[i][j][k][l]
+                            #print "y[",i,"][",j,"][",k,"][",l,"]=", y[i][j][k][l]
+                            return False
+    if len(x.shape)>4:
+        print('unhandled array shape in alleq')
+    return True
+
 class coordsys_test(unittest.TestCase):
     
     def setUp(self):
@@ -139,7 +196,7 @@ class coordsys_test(unittest.TestCase):
         csys = coordsys()
         mycs = csys.newcoordsys()
 
-        self.assertTrue(mycs.ncoodrdinate() == 0)
+        self.assertTrue(mycs.ncoordinates() == 0)
         self.assertTrue(mycs.type() == 'coordsys')
         mycs.done()
 
@@ -151,7 +208,7 @@ class coordsys_test(unittest.TestCase):
         t1 = mycs.axiscoordinatetypes(True)
         t2 = mycs.axiscoordinatetypes(False)
 
-        self.assertTrue(mycs.ncoodrdinates() == 1)
+        self.assertTrue(mycs.ncoordinates() == 1)
         self.assertTrue(mycs.coordinatetype(0) == ['Direction'])
         self.assertTrue(t1[1] == 'Direction' and t1[1] == 'Direction')
         self.assertTrue(t2[0] == 'Direction' and t2[1] == 'Direction')
@@ -166,9 +223,9 @@ class coordsys_test(unittest.TestCase):
         t1 = mycs.axiscoordinatetypes(True)
         t2 = mycs.axiscoordinatetypes(False)
 
-        self.assertTrue(mycs.ncoodrdinates() == 1)
+        self.assertTrue(mycs.ncoordinates() == 1)
         self.assertTrue(mycs.coordinatetype(0) == ['Spectral'])
-        self.assertTrue(t1 == 'Spectral' and t2 == 'Spectral')
+        self.assertTrue(t1 == ['Spectral'] and t2 == ['Spectral'])
         mycs.done()
 
     def test_createStokesAxes(self):
@@ -179,12 +236,12 @@ class coordsys_test(unittest.TestCase):
         t1 = mycs.axiscoordinatetypes(True)
         t2 = mycs.axiscoordinatetypes(False)
 
-        self.assertTrue(mycs.ncoodrdinates() == 1)
+        self.assertTrue(mycs.ncoordinates() == 1)
         self.assertTrue(mycs.coordinatetype(0) == ['Stokes'])
-        self.assertTrue(t1 == 'Stokes' and t2 == 'Stokes')
+        self.assertTrue(t1 == ['Stokes'] and t2 == ['Stokes'])
         mycs.done()
 
-    def tet_createLinearAxes(self):
+    def test_createLinearAxes(self):
         """"Test that coordsys with linear axes can be created properly"""
 
         csys = coordsys()
@@ -192,7 +249,7 @@ class coordsys_test(unittest.TestCase):
         t1 = mycs.axiscoordinatetypes(True)
         t2 = mycs.axiscoordinatetypes(False)
 
-        self.assertTrue(mycs.ncoodrdinates() == 1)
+        self.assertTrue(mycs.ncoordinates() == 1)
         self.assertTrue(mycs.coordinatetype(0) == ['Linear'])
         self.assertTrue(t1[0] == 'Linear' and t2[0] == 'Linear')
         mycs.done()
@@ -205,9 +262,9 @@ class coordsys_test(unittest.TestCase):
         t1 = mycs.axiscoordinatetypes(True)
         t2 = mycs.axiscoordinatetypes(False)
 
-        self.assertTrue(mycs.ncoodrdinates() == 1)
+        self.assertTrue(mycs.ncoordinates() == 1)
         self.assertTrue(mycs.coordinatetype(0) == ['Tabular'])
-        self.assertTrue(t1 == 'Tabular' and t2 == 'Tabular')
+        self.assertTrue(t1 == ['Tabular'] and t2 == ['Tabular'])
         mycs.done()
 
     def test_createMixedAxes(self):
@@ -219,7 +276,7 @@ class coordsys_test(unittest.TestCase):
         types = mycs.coordinatetype()
         typesRes = ['Direction', 'Stokes', 'Spectral', 'Linear', 'Tabular']
 
-        self.assertTrue(mycs.ncoodrdinates() == 5)
+        self.assertTrue(mycs.ncoordinates() == 5)
         self.assertTrue(np.all(types == typesRes))
 
         t1 = mycs.axiscoordinatetypes(True)
@@ -237,7 +294,7 @@ class coordsys_test(unittest.TestCase):
         csys = coordsys()
         mycs = csys.newcoordsys(direction=True, spectral=True)
         d = me.frequency("LSRK")
-        list = me.listcode(d)
+        list = me.listcodes(d)
 
         for i in list['normal']:
             if (i!='REST'):
@@ -283,15 +340,16 @@ class coordsys_test(unittest.TestCase):
         p = mycs.projection('all')['types']
         self.assertTrue(len(p) == 27)
         for i in p:
-            n = mycs.projectio(i)
+            n = mycs.projection(i)
             if not n: self.fail()
 
     def test_restFreq(self):
         """Test that the rest frequency can be set"""
 
         csys = coordsys()
-        mycs = csys.newcoordsys(direction=True, spectral=True, linear=1)
+        mycs = csys.newcoordsys(direction=True, spectral=True)
         rf1 = qa.quantity('1.2GHz')
+        mycs.setrestfrequency(rf1)
         rf2 = mycs.restfrequency()
         rf2 = qa.convert(rf2, rf1['unit'])
 
@@ -326,10 +384,10 @@ class coordsys_test(unittest.TestCase):
 
         rec = mycs.torecord()
 
-        self.assertTrue(rec.has_key('direction0'))
-        self.assertTrue(rec.has_key('stokes1'))
-        self.assertTrue(rec.has_key('spectral2'))
-        self.assertTrue(rec.has_key('linear3'))
+        self.assertTrue('direction0' in rec)
+        self.assertTrue('stokes1' in rec)
+        self.assertTrue('spectral2' in rec)
+        self.assertTrue('linear3' in rec)
 
     def test_fromRecord(self):
         """Test that a record can be converted to a coordsys"""
@@ -426,15 +484,17 @@ class coordsys_test(unittest.TestCase):
 
         mycs = cs.newcoordsys(direction=True, spectral=True)
         val1 = "deg rad GHz"
+        mycs.setunits(value=val1)
         val2 = mycs.units()
 
         self.assertTrue(np.all(val1.split() == val2))
         # self.assertFalse(mycs.setunits(value="Hz Hz Hz"))
         # self.assertFalse(mycs.setunits(value="m"))
 
+        val1 = 'deg rad GHz'
         mycs.setunits(value=val1)
         val2 = mycs.units('spec')
-        self.assertTrue(val2[0] == val2.split()[2])
+        self.assertTrue(val2[0] == val1.split()[2])
 
         val1 = "kHz"
         mycs.setunits(type='spec', value=val1)
@@ -487,7 +547,7 @@ class coordsys_test(unittest.TestCase):
         mycs.setlineartransform(value=val1, type=type)
         val2 = mycs.lineartransform(type=type)
 
-        self.assertTrue(np.all(val1 == val2 == 1.0e-6))
+        self.assertTrue(np.all(np.isclose(val1, val2, atol=1.0e-6)))
 
     def test_linearTransformSpectral(self):
         """Test set linear transform type to spectral """
@@ -496,7 +556,7 @@ class coordsys_test(unittest.TestCase):
         type = 'spectral'
         mycs.setlineartransform(value=val1, type=type)
         val2 = mycs.lineartransform(type=type)
-        self.assertTrue(np.all(val1 == val2 == 1.0e-6))
+        self.assertTrue(np.all(np.isclose(val1, val2, atol=1.0e-6)))
 
     def test_linearTransformStokes(self):
         """Test set linear transform type to stokes"""
@@ -505,7 +565,7 @@ class coordsys_test(unittest.TestCase):
         type = 'stokes'
         mycs.setlineartransform(value=val1, type=type)
         val2 = mycs.lineartransform(type=type)
-        self.assertTrue(np.all(val1 == val2 == 1.0e-6))
+        self.assertFalse(np.all(np.isclose(val1, val2, atol=1.0e-6)))
 
     def test_linearTransformTabular(self):
         """Test set linear transform type to tabular"""
@@ -514,7 +574,7 @@ class coordsys_test(unittest.TestCase):
         type = 'tabular'
         mycs.setlineartransform(value=val1, type=type)
         val2 = mycs.lineartransform(type=type)
-        self.assertTrue(np.all(val1 == val2 == 1.0e-6))
+        self.assertTrue(np.all(np.isclose(val1, val2, atol=1.0e-6)))
 
     def test_linearTransformLinear(self):
         """Test set linear transform type to linear"""
@@ -526,7 +586,7 @@ class coordsys_test(unittest.TestCase):
         type = 'linear'
         mycs.setlineartransform(value=val1, type=type)
         val2 = mycs.lineartransform(type=type)
-        self.assertTrue(np.all(val1 == val2 == 1.0e-6))
+        self.assertTrue(np.all(np.isclose(val1, val2, atol=1.0e-6)))
 
     def test_referenceValueSetValRad(self):
         """Test set reference value in radians"""
@@ -561,10 +621,11 @@ class coordsys_test(unittest.TestCase):
         """Test setting the value incorrectly"""
         mycs = cs.newcoordsys(spectral=True)
         try:
+            ok = True
             mycs.setreferencevalue(value='i like doggies')
-        except Exception, e:
-            pass
-        self.fail()
+        except Exception as e:
+            ok = False
+        self.assertFalse(ok)
         mycs.done()
 
     def test_referenceValueSetSpectral(self):
@@ -620,11 +681,12 @@ class coordsys_test(unittest.TestCase):
         """Test increment with incorrect values"""
         mycs = cs.newcoordsys(spectral=True)
         try:
+            ok = True
             mycs.setincrement(value='i like doggies')
-        except Exception, e:
-            pass
-        mycs.close()
-        self.fail()
+        except Exception as e:
+            ok = False
+        mycs.done()
+        self.assertFalse(ok)
 
     def test_incrementSpectral(self):
         """Test increment using spectral type"""
@@ -637,7 +699,7 @@ class coordsys_test(unittest.TestCase):
         self.assertTrue(abs(val2['numeric'][0] - val1[2]) < 1e-6)
         try:
             val2 = mycs.increment(type='lin', format='q')
-        except Exception, e:
+        except Exception as e:
             val2 = False
             self.assertTrue(True)
         if val2: self.fail()
@@ -671,14 +733,14 @@ class coordsys_test(unittest.TestCase):
         try:
             stokes = True
             stokes = mycs.stokes()
-        except Exception, e:
+        except Exception as e:
             stokes = False
         self.assertFalse(stokes)
 
         try:
             ok = True
             ok = mycs.setstokes("I V")
-        except Exception, e:
+        except Exception as e:
             ok = False
         self.assertFalse(ok)
         mycs.done()
@@ -690,28 +752,28 @@ class coordsys_test(unittest.TestCase):
         rv = mycs.referencevalue(format='n')
 
         self.assertTrue(len(rp) == 6)
-        self.assertTrue(np.isclose(mycs.toworld(value=rp, format='n')['numeric'], rv['numeric'], atol=1e-6))
+        self.assertTrue(np.all(np.isclose(mycs.toworld(value=rp, format='n')['numeric'], rv['numeric'], atol=1e-6)))
         ###
         d = mycs.toworld(value=list(rp), format='q')
         u = mycs.units()
 
-        self.assertTrue(len(d)['quantity'] == len(rv['numeric']))
+        self.assertTrue(len(d['quantity']) == len(rv['numeric']))
 
         for i in range(len(d['quantity'])):
-            self.assertTrue(abs(d['quantity']['*' + str(i + 1)]['value'] - rv['numeric'][i]) > 1e-6)
+            self.assertFalse(abs(d['quantity']['*' + str(i + 1)]['value'] - rv['numeric'][i]) > 1e-6)
             self.assertTrue(d['quantity']['*' + str(i + 1)]['unit'] == u[i])
         ###
         q = mycs.toworld(value=rp, format='q')
         m = mycs.toworld(value=rp, format='m')
         m = m['measure']
 
-        self.assertTrue(m.has_key('direction') and m.has_key('spectral'))
-        self.assertTrue(m['spectral'].has_key('frequency'))
-        self.assertTrue(m['spectral'].has_key('opticalvelocity'))
-        self.assertTrue(m['spectral'].has_key('radiovelocity'))
-        self.assertTrue(m['spectral'].has_key('betavelocity'))
-        self.assertTrue(m.has_key('stokes'))
-        self.assertTrue(m.has_key('linear'))
+        self.assertTrue('direction' in m and 'spectral' in m)
+        self.assertTrue('frequency' in m['spectral'])
+        self.assertTrue('opticalvelocity' in m['spectral'])
+        self.assertTrue('radiovelocity' in m['spectral'])
+        self.assertTrue('betavelocity' in m['spectral'])
+        self.assertTrue('stokes' in m)
+        self.assertTrue('linear' in m)
 
         d = m['direction']
         f = m['spectral']['frequency']
@@ -781,7 +843,7 @@ class coordsys_test(unittest.TestCase):
             p2 = mycs.topixel(value=w)['numeric']
 
             self.assertTrue(len(p2) == 6)
-            self.assertTrue(np.all(np.isclose(p, rp, atol=tol)),
+            self.assertTrue(np.all(np.isclose(p, p2, atol=tol)),
                             msg='toworld/topixel reflection failed for format "' + format + '"')
         mycs.done()
 
@@ -814,7 +876,7 @@ class coordsys_test(unittest.TestCase):
 
         mycs = cs.newcoordsys(direction=True, spectral=True, stokes="I V", linear=2)
 
-        self.assertTrue(mycs.naxes == 6)
+        self.assertTrue(mycs.naxes() == 6)
 
     def test_axesmap(self):
         """Test that maps are the same"""
@@ -844,16 +906,567 @@ class coordsys_test(unittest.TestCase):
         mycs = cs.newcoordsys(direction=True, spectral=True, stokes='I V', linear=1)
         try:
             ok = mycs.reorder([1, 2])
-        except Exception, e:
+        except Exception as e:
             ok = False
         self.assertFalse(ok)
 
         try:
             ok = mycs.reorder([1, 2, 3, 10])
-        except Exception, e:
+        except Exception as e:
             ok = False
         self.assertFalse(ok)
         mycs.done()
+
+    def test_frequencyVelocityBasic(self):
+        """Test conversion between freq and velocity"""
+        # It seems difficult to decouple these two tasks
+        # Look into seperating these into their own test cases somehow?
+        mycs, rv, restFreq, df, c, drv, freq, freqUnit = freqVelSetUp()
+
+        vel = mycs.frequencytovelocity(value=freq, frequnit=freqUnit[0],
+                                       doppler='radio', velunit='km/s')
+        self.assertFalse(abs(vel) > 1e-6)
+
+    def test_velocityToFrequency(self):
+        """Test velocity To frequency conversion"""
+        mycs, rv, restFreq, df, c, drv, freq, freqUnit = freqVelSetUp()
+        vel = mycs.frequencytovelocity(value=freq, frequnit=freqUnit[0],
+                                               doppler='radio', velunit='km/s')
+
+        freq2 = mycs.velocitytofrequency(value=vel, frequnit=freqUnit[0],
+                                         doppler='optical', velunit='km/s')
+        self.assertFalse(abs(freq2-freq) > 1e-6)
+        self.assertFalse(abs(vel) > 1e-6)
+        #
+        freq2 = mycs.velocitytofrequency(value=vel, frequnit=freqUnit[0],
+                                         doppler='optical', velunit='km/s')
+        self.assertFalse(abs(freq2 - freq) > 1e-6)
+        ##
+
+    def test_frequencyToVelocity(self):
+        """Test frequency to velocity conversion"""
+        mycs, rv, restFreq, df, c, drv, freq, freqUnit = freqVelSetUp()
+
+        rp = mycs.referencepixel()['numeric']
+
+        self.assertTrue(rp == 0)
+
+        freq = mycs.toworld(value=rp + 1, format='n')
+        vel = mycs.frequencytovelocity(value=list(freq['numeric']),
+                                       frequnit=freqUnit[0],
+                                       doppler='radio', velunit='m/s')
+        d = abs(vel - (1000.0 * drv))
+        self.assertFalse(d > 1e-6)
+
+        freq2 = mycs.velocitytofrequency(value=vel, frequnit=freqUnit[0],
+                                         doppler='radio', velunit='m/s')
+        self.assertFalse(abs(freq2 - freq['numeric']) > 1e-6)
+        ##
+
+    def test_frequencyToVelocityDiff(self):
+        """Test the velocity diff"""
+        mycs, rv, restFreq, df, c, drv, freq, freqUnit = freqVelSetUp()
+
+        freq = [rv['numeric'][0], freq]
+        vel = mycs.frequencytovelocity(value=freq, frequnit=freqUnit[0],
+                                       doppler='radio', velunit='m/s')
+        self.assertTrue(len(vel == 2))
+
+        d1 = abs(vel[0] - 0.0)
+        d2 = abs(vel[1] - (1000.0 * drv))
+        self.assertFalse(d1 > 1e-6 and d2 > 1e-6)
+
+    def test_velocityToFrequencyDiff(self):
+        """Test the drequency diff"""
+        mycs, rv, restFreq, df, c, drv, freq, freqUnit = freqVelSetUp()
+        freq = [rv['numeric'][0], freq]
+        vel = mycs.frequencytovelocity(value=freq, frequnit=freqUnit[0],
+                                       doppler='radio', velunit='km/s')
+
+        freq2 = mycs.velocitytofrequency(value=vel, frequnit=freqUnit[0],
+                                         doppler='radio', velunit='m/s')
+        d1 = abs(freq[0] - freq2[0])
+        d2 = abs(freq[1] - freq2[1])
+        self.assertFalse(d1 > 1e-6 and d2 > 1e-6)
+
+    def test_frequencyVelocityInvalidInput(self):
+        """Test frequencytovelocity and velocitytofrequency with invalid inputs"""
+        mycs = cs.newcoordsys(spectral=True)
+
+        # Set rest freq to reference freq
+        rv = mycs.referencevalue(format='n')
+        restFreq = rv['numeric'][0]
+        mycs.setrestfrequency(restFreq)
+
+        # Forced errors
+        try:
+            vel = True
+            vel = mycs.frequencytovelocity(value=rv['numeric'][0],
+                                           frequnit='Jy',
+                                           doppler='radio', velunit='km/s')
+        except Exception as e:
+            vel = False
+        self.assertFalse(vel)
+
+        try:
+            freq = True
+            freq = mycs.velocitytofrequency(value=rv['numeric'][0],
+                                            frequnit='Jy',
+                                            doppler='radio', velunit='km/s')
+        except Exception as e:
+            freq = False
+        self.assertFalse(freq)
+        ##
+        try:
+            vel = True
+            vel = mycs.frequencytovelocity(value=rv['numeric'][0],
+                                           frequnit='GHz',
+                                           doppler='radio', velunit='doggies')
+        except Exception as e:
+            vel = False
+        self.assertFalse(vel)
+
+        try:
+            freq = True
+            freq = mycs.velocitytofrequency(value=rv['numeric'][0],
+                                            frequnit='GHz',
+                                            doppler='radio', velunit='doggies')
+        except Exception as e:
+            freq = False
+            self.assertFalse(freq)
+        #
+        mycs.done()
+        #
+        mycs = cs.newcoordsys(direction=True, spectral=False)
+        try:
+            vel = True
+            vel = mycs.frequencytovelocity(value=[1.0], frequnit='Hz',
+                                           doppler='radio', velunit='km/s')
+        except Exception as e:
+            vel = False
+        self.assertFalse(vel)
+        mycs.done()
+
+    def test_referenceLocation(self):
+        """Test that setreferencelocation correctly sets ref value"""
+        mycs = cs.newcoordsys(linear=2, spectral=True)
+        p = [1.0, 1.0, 1.0]
+        mycs.setreferencepixel(value=p)
+        rp = mycs.referencepixel()['numeric']
+
+        self.assertTrue(len(rp) == 3)
+        self.assertTrue(np.all(np.isclose(rp, p, atol=1e-6)))
+
+        inc = mycs.increment(format='n')['numeric']
+        w = mycs.toworld([1, 1, 1], 'n')['numeric']
+        w += inc
+        p = [51, 51, 5]  # p = ((shp-1)/2.0) + 1
+        mycs.setreferencelocation(pixel=p, world=w, mask=[True, True, True])
+        rp = mycs.referencepixel()['numeric']
+        rv = mycs.referencevalue(format='n')['numeric']
+
+        self.assertTrue(abs(rv[0] - w[0]) < 1e-6 and abs(rv[1] - w[1]) < 1e-6, msg='setreferencelocation recovered wrong reference value')
+        self.assertTrue(abs(rv[2] - w[2]) < 1e-6, msg='setreferencelocation recovered wrong reference value')
+
+        self.assertTrue(abs(rp[0] - p[0]) < 1e-6 and abs(rp[1] - p[1]) < 1e-6, msg='setreferencelocation recovered wrong reference pixel')
+        self.assertTrue(abs(rp[2] - p[2]) < 1e-6, msg='setreferencelocation recovered wrong reference pixel')
+        mycs.done()
+
+    def test_toAbsRelRefPix(self):
+        """Test that converting from pixel coordinates gives the correct value"""
+        mycs = cs.newcoordsys(direction=True, spectral=True, stokes="I V LL", linear=2)
+        p = mycs.referencepixel()
+        pn = p['numeric']  # pointer to numeric part of p
+        for i in range(len(pn)): pn[i] = pn[i] + 1
+        p2 = mycs.torel(p)
+        p3 = mycs.toabs(p2)['numeric']
+        d = abs(p3 - pn)
+        for i in range(len(d)):
+            self.assertTrue(d[i] <= 1e-6)
+
+    def test_toAbsRelWorld(self):
+        """Test that converting from world coordinates gives the correct value"""
+        mycs = cs.newcoordsys(direction=True, spectral=True, stokes="I V LL", linear=2)
+        p = mycs.referencepixel()['numeric']
+        for i in range(len(p)): p[i] += 1
+        #
+        for f in ["n", "q", "s"]:
+            w = mycs.toworld(p, format=f)
+            w2 = mycs.torel(w)
+            w3 = mycs.toabs(w2)
+
+            p2 = mycs.topixel(w3)['numeric']
+            self.assertTrue(np.all(np.isclose(p2, p, atol=1e-6)),
+                            msg='torel/toabs world reflection test 1 failed for format "' + f + '"')
+
+    def test_toAbsRelInvalidInput(self):
+        """Test expected failure cases of toabs and torel"""
+        mycs = cs.newcoordsys(direction=True, spectral=True, stokes="I V LL", linear=2)
+
+        p = mycs.referencepixel()
+        try:
+            p2 = mycs.toabs(p)
+        except Exception as e:
+            p2 = False
+        self.assertFalse(p2)
+        #
+        p2 = mycs.torel(p)
+        try:
+            p3 = mycs.torel(p2)
+        except Exception as e:
+            p3 = False
+        self.assertFalse(p3)
+        #
+        w = mycs.referencevalue()
+        try:
+            w2 = mycs.toabs(w)
+        except:
+            w2 = False
+        self.assertFalse(w2)
+        #
+        w2 = mycs.torel(w)
+
+        try:
+            w3 = mycs.torel(w2)
+        except Exception as e:
+            w3 = False
+        self.assertFalse(w3)
+
+    def test_toAbsRelMany(self):
+        """Test conversion of many to rel and abs"""
+        mycs = cs.newcoordsys(direction=True, spectral=True, stokes="I V LL", linear=2)
+        p = mycs.referencepixel()['numeric']
+        w = mycs.toworld(p, 'n')['numeric']
+        n = 5
+        pp = ia.makearray(0.0, [len(p), n])
+        ww = ia.makearray(0.0, [len(w), n])
+        print("w list: ", w)
+        for i in range(n):
+            for j in range(len(p)):
+                pp[j, i] = p[i]
+            for j in range(len(w)):
+                ww[j, i] = w[i]
+        print("ww list: ", ww)
+        #
+        relpix = mycs.torelmany(pp, False)
+        abspix = mycs.toabsmany(relpix, False)
+        #
+        relworld = mycs.torelmany(ww, True)
+        absworld = mycs.toabsmany(relworld, True)
+        print("absworld list: ", absworld['numeric'])
+        #
+
+        self.assertTrue(len(relpix['numeric']) == len(p))
+        self.assertTrue(len(abspix['numeric']) == len(relpix['numeric']))
+        self.assertTrue(len(relworld['numeric']) == len(w))
+        self.assertTrue(len(absworld['numeric']) == len(relworld['numeric']))
+        for i in range(n):
+            for j in range(len(p)):
+                self.assertTrue(abs(p[j] - abspix['numeric'][j, i]) < 1e-6,
+                                msg='toabsmany/torelmany gives wrong values for pixels')
+            for j in range(len(w)):
+                print((w[j], absworld['numeric'][j,i]))
+                self.assertTrue(alleq(w[j],absworld['numeric'][j,i],1e-6))
+            #
+        mycs.done()
+
+    def test_convert(self):
+        """Test the conversion from abs pix to rel pix"""
+        mycs = cs.newcoordsys(direction=True, spectral=True, stokes="I V LL",
+                              linear=2)
+        tol = 1.0e-6
+        n = mycs.naxes()
+
+        absin = n * [True]
+        unitsin = n * ['pix']
+        coordin = mycs.referencepixel()['numeric']  # Make sure in range of stokes
+        for i in range(len(coordin)):
+            coordin[i] += 2
+        unitsout = n * ['pix']
+        dopplerin = 'radio'
+        dopplerout = 'radio'
+        #
+        absout = n * [False]
+        p = mycs.convert(list(coordin), absin, dopplerin, unitsin,
+                         absout, dopplerout, unitsout)
+        #
+        p2 = mycs.torel(coordin, False)['numeric']
+
+        self.assertTrue(len(p2) == n)
+        self.assertTrue(np.all(np.isclose(p, p2, atol=tol)))
+
+    def test_convertMany(self):
+
+        mycs = cs.newcoordsys(direction=True, spectral=True, stokes="I V LL",
+                              linear=2)
+        tol = 1.0e-6
+        n = mycs.naxes()
+
+        coordin = mycs.referencepixel()['numeric']
+        absin = n * [True]
+        unitsin = n * ['pix']
+        dopplerin = 'radio'
+        absout = n * [True]
+        unitsout = mycs.units()
+        dopplerout = 'radio'
+        #
+        coordout = mycs.convert(list(coordin), absin, dopplerin,
+                                unitsin, absout, dopplerout, unitsout)
+        #
+        rIn = ia.makearray(0, [len(coordin), 10])
+        for i in range(10):
+            for j in range(len(coordin)):
+                rIn[j, i] = coordin[j]
+        rOut = mycs.convertmany(rIn, absin, dopplerin, unitsin,
+                                absout, dopplerout, unitsout)
+        for i in range(10):
+            for j in range(len(coordin)):
+                d = rOut[j, i] - coordout[j]
+                self.assertTrue(d < tol)
+
+    def test_setSpectralInvalidInput(self):
+
+        mycs = cs.newcoordsys(direction=True)
+        try:
+            ok = mycs.setspectral(refcode='lsrk')
+        except Exception as e:
+            ok = False
+        self.assertFalse(ok)
+        mycs.done()
+
+    def test_setSpectral(self):
+        #
+        mycs = cs.newcoordsys(spectral=True)
+        #
+        rc = 'LSRK'
+        mycs.setspectral(refcode=rc)
+        #
+        rf = qa.quantity('1.0GHz')
+        mycs.setspectral(restfreq=rf)
+        rf2 = mycs.restfrequency()
+        rf3 = qa.convert(rf2, 'GHz')
+        #
+        fd = [1, 1.5, 2, 2.5, 3]
+        fq = qa.quantity(fd, 'GHz')
+        mycs.setspectral(frequencies=fq)
+        #
+        doppler = 'optical'
+        vunit = 'km/s'
+        vd = mycs.frequencytovelocity(fd, 'GHz', doppler, vunit)
+        vq = qa.quantity(vd, vunit)
+        mycs.setspectral(velocities=vq, doppler=doppler)
+        #
+        fd2 = mycs.velocitytofrequency(vd, 'GHz', doppler, vunit)
+
+        self.assertTrue(mycs.referencecode('spectral') == [rc])
+        self.assertTrue(qa.getvalue(rf3) == 1.0)
+        self.assertTrue(np.all(np.isclose(fd2, fd, atol=1e-6)),
+                        msg='setspectral/freq/vel consistency test failed')
+        mycs.done()
+
+    def test_setTabular(self):
+        """Test that with tabular coordinates reference and pixel values can be set"""
+        mycs = cs.newcoordsys(tabular=True)
+        #
+        p = [0, 1, 2, 3, 4]
+        w = [10, 20, 30, 40, 50]
+        mycs.settabular(pixel=p, world=w)
+        rv = mycs.referencevalue()['numeric']
+        rp = mycs.referencepixel()['numeric']
+
+        self.assertTrue(rv[0] == w[0])
+        self.assertTrue(rp == 0.0)
+        self.assertTrue(rp == p[0])
+        #
+
+    def test_setTabularIncorrect(self):
+        """Test that incorrect inputs will raise exceptions"""
+        mycs = cs.newcoordsys(direction=True)
+
+        try:
+            ok = mycs.settabular(pixel=[1, 2], world=[1, 2])
+        except Exception as e:
+            ok = False
+        self.assertFalse(ok)
+
+        mycs.done()
+        mycs = cs.newcoordsys(tabular=True)
+        try:
+            ok = mycs.settabular(pixel=[0, 1, 2], world=[10, 20])
+        except Exception as e:
+            ok = False
+        self.assertFalse(ok)
+        #
+        try:
+            ok = mycs.settabular(pixel=[0, 1], world=[1, 10, 20])
+        except Exception as e:
+            ok = False
+        self.assertFalse(ok)
+        #
+        ok = mycs.settabular(pixel=[0, 1, 2], world=[1, 10, 20])
+        try:
+            ok = mycs.settabular(pixel=[0, 1, 2, 3])
+        except Exception as e:
+            ok = False
+        self.assertFalse(ok)
+        try:
+            ok = mycs.settabular(world=[0, 1, 2, 3])
+        except Exception as e:
+            ok = False
+        self.assertFalse(ok)
+        #
+        mycs.done()
+
+    def test_addCoordinate(self):
+        """Test that coordinates can be added"""
+        mycs = cs.newcoordsys()
+        mycs.addcoordinate(direction=True, spectral=True, linear=2, tabular=True, stokes="I V")
+        n = mycs.ncoordinates()
+
+        # We don't know what order they will be in.
+        types = mycs.coordinatetype()
+        hasDir = False
+        hasSpec = False
+        hasLin = False
+        hasTab = False
+        hasStokes = False
+        for i in range(n):
+            if (types[i] == 'Direction'):
+                hasDir = True
+            else:
+                if (types[i] == 'Spectral'):
+                    hasSpec = True
+                else:
+                    if (types[i] == 'Linear'):
+                        hasLin = True
+                    else:
+                        if (types[i] == 'Tabular'):
+                            hasTab = True
+                        else:
+                            if (types[i] == 'Stokes'):
+                                hasStokes = True
+        #
+        ok = hasDir and hasSpec and hasLin and hasTab and hasStokes
+        self.assertTrue(n == 5)
+        self.assertTrue(ok)
+        #
+        mycs.done()
+
+    def test_referenceConvert(self):
+        """Set values with reference conversion"""
+        mycs = cs.newcoordsys(direction=True, spectral=True)
+        v = mycs.units()
+        v[0] = 'rad'
+        v[1] = 'rad'
+        v[2] = 'Hz'
+        mycs.setunits(v)
+        #
+        mycs.setrestfrequency(1.420405752E9)
+        #
+        mycs.setreferencecode(value='J2000', type='direction', adjust=False)
+        mycs.setreferencecode(value='LSRK', type='spectral', adjust=False)
+        #
+        v = mycs.referencevalue()['numeric']
+        v[0] = 0.0
+        v[1] = -0.5
+        v[2] = 1.4e9
+        mycs.setreferencevalue(v)
+        #
+        v = list(mycs.referencepixel()['numeric'])
+        v[0] = 101
+        v[1] = 121
+        v[2] = 10.5
+        mycs.setreferencepixel(v)
+        #
+        v = mycs.increment()['numeric']
+        v[0] = -1.0e-6
+        v[1] = 2.0e-6
+        v[2] = 4.0e6
+        mycs.setincrement(v)
+        #
+        v = mycs.units()
+        v[0] = 'deg'
+        v[1] = 'deg'
+        mycs.setunits(v)
+
+        mycs.setconversiontype(direction='GALACTIC', spectral='BARY')
+        # local d,s
+        d = mycs.conversiontype(type='direction')
+        s = mycs.conversiontype(type='spectral')
+        #
+        p = mycs.referencepixel()['numeric']
+        for i in range(len(p)): p[i] += 10.0
+        w = mycs.toworld(value=p, format='n')
+        p2 = mycs.topixel(value=w)['numeric']
+        #
+        # Need to look into why i need such a large tolerance
+        #
+        tol = 1e-3
+        self.assertTrue(d == 'GALACTIC' and s == 'BARY')
+        self.assertTrue(len(p) == 3)
+        self.assertTrue(len(p2) == 3)
+        self.assertTrue(np.all(np.isclose(p2, p, tol)))
+
+    def test_setDirectionPixVal(self):
+        """Test that direction is set correctly with ref pix and val"""
+        mycs = cs.newcoordsys(direction=True)
+
+        refcode = 'GALACTIC'
+        proj = 'CAR'
+        projpar = []
+        refpix = list(mycs.referencepixel()['numeric'])
+        for i in range(len(refpix)): refpix[i] *= 1.1
+        refval = mycs.referencevalue(format='n')['numeric']
+        for i in range(len(refval)): refval[i] *= 1.1
+        xform = ia.makearray(0.0, [2, 2])
+        xform[0, 0] = 1.0
+        xform[1, 1] = 1.0
+        mycs.setdirection(refcode=refcode,
+                          proj=proj, projpar=projpar,
+                          refpix=refpix, refval=refval,
+                          xform=xform)
+        #
+        self.assertTrue(proj == mycs.projection()['type'])
+        if len(projpar) > 0:
+            self.assertTrue(projpar == mycs.projection()['parameters'])
+        self.assertTrue(np.all(np.isclose(refpix, mycs.referencepixel()['numeric'], atol=1e-6)))
+        self.assertTrue(np.all(np.isclose(refval, mycs.referencevalue(format='n')['numeric'], atol=1e-6)))
+
+    def test_setDirectionVal(self):
+        """Test that direction is set correctly with ref val"""
+        mycs = cs.newcoordsys(direction=True)
+        refcode = 'J2000'
+        proj = 'SIN'
+        projpar = [0, 0]
+        refval = "20.0deg -33deg"
+        refval2 = [20, -33]
+        mycs.setdirection(refcode=refcode,
+                               proj=proj, projpar=projpar,
+                               refval=refval)
+        #
+        self.assertTrue(proj == mycs.projection()['type'])
+        self.assertTrue(np.all(np.isclose(projpar, mycs.projection()['parameters'], atol=1e-6)))
+        mycs.setunits(value="deg deg")
+        self.assertTrue(np.all(np.isclose(refval2, mycs.referencevalue(format='n')['numeric'], atol=1e-6)))
+
+    def test_replace(self):
+        """Test that a coord types can be replaced"""
+        mycs = cs.newcoordsys(direction=True, linear=1)
+        cs2 = cs.newcoordsys(spectral=True)
+        mycs.replace(cs2.torecord(), whichin=0, whichout=1)
+
+        self.assertTrue(mycs.coordinatetype(1) == ['Spectral'])
+
+    def test_replaceIncorrect(self):
+        """Test that incorrect inputs for replace result in failures"""
+        mycs = cs.newcoordsys(direction=True, linear=1)
+        cs2 = cs.newcoordsys(linear=1)
+
+        try:
+            ok = mycs.replace(cs2.torecord(), whichin=0, whichout=0)
+        except Exception as e:
+            ok = False
+        self.assertFalse(ok)
 
 
 if __name__ == '__main__':
