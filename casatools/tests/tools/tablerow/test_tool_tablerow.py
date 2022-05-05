@@ -17,6 +17,7 @@
 ##########################################################################
 import shutil
 import unittest
+import itertools
 import os, stat
 import numpy as np
 from uuid import uuid4
@@ -103,6 +104,17 @@ class slice(TableRowBase):
         rows = self.rows[:15]
         ### check number of rows & sum of data
         self.assertTrue(len(rows) == 15 and np.isclose( sum([np.abs(np.sum(x['DATA'])) for x in rows]), 111601.736328125 ))
+
+    def test_columnnames_include(self):
+        self.assertTrue( list(itertools.chain(*[ x.keys() for x in self.tb.rows(columnnames=['DATA'])[:5] ])) == ['DATA', 'DATA', 'DATA', 'DATA', 'DATA'] )
+
+    def test_columnnames_exclude(self):
+        self.assertTrue( set(self.tb.rows(columnnames=['DATA'],exclude=True).get(0).keys( )) == set(['ANTENNA1', 'ANTENNA2', 'ARRAY_ID', 'DATA_DESC_ID', \
+                                                                                                     'EXPOSURE', 'FEED1', 'FEED2', 'FIELD_ID', 'FLAG', \
+                                                                                                     'FLAG_CATEGORY', 'FLAG_ROW', 'INTERVAL', \
+                                                                                                     'OBSERVATION_ID', 'PROCESSOR_ID', 'SCAN_NUMBER', \
+                                                                                                     'SIGMA', 'STATE_ID', 'TIME', 'TIME_CENTROID', \
+                                                                                                     'UVW', 'WEIGHT', 'WEIGHT_SPECTRUM']) )
 
 if __name__ == '__main__':
     unittest.main()
