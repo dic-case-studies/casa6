@@ -3122,6 +3122,9 @@ tb.showcache()
        of the dictionary by default includes all table columns, but it can be limited by using ``columnnames``
        parameter. The ``exclude`` parameter, which is ``False`` by default, indicates whether ``columnnames``
        lists the columns to *exclude* (``exclude=True``) or the columns to include (``exclude=False``).
+
+       The returned table accessor object can also be used to store changes to a single row using the ``put``
+       method.
      </description>
 
      <example>
@@ -3137,6 +3140,12 @@ tb.showcache()
 
        ### ENTIRE contents of the table
        whole_table = tb.rows( )[:]
+
+       ### store a single row
+       rows = tb.rows( )
+       row = rows.get(22)
+       row['DATA'].fill( 1.0/row['DATA'].size )
+       rows.put( 22, { 'DATA': row['DATA'] } )
      </example>
      <input>
        <param name="columnnames" type="stringVec">
