@@ -3117,9 +3117,27 @@ tb.showcache()
    <method name="rows" type="function">
      <shortdescription>Get a row accessor for this table</shortdescription>
      <description>
-       Return a table accessor object which includes or excludes (based upon the
-       exclude parameter) the specified columns.
+       Return a table accessor object which allows for accessing one or more rows from the table. A single
+       row is returned as a dictionary and multiple rows are returned as a list of dictionaries. The contents
+       of the dictionary by default includes all table columns, but it can be limited by using ``columnnames``
+       parameter. The ``exclude`` parameter, which is ``False`` by default, indicates whether ``columnnames``
+       lists the columns to *exclude* (``exclude=True``) or the columns to include (``exclude=False``).
      </description>
+
+     <example>
+       ### open table
+       tb = table( )
+       tb.open('ngc5921_ut.ms')
+
+       ### read a single row
+       print(f'row 3 is {tb.rows( )[3]}')
+
+       ### contents of the DATA column from the first 5 rows
+       first_five_data = tb.rows(columnnames=['DATA'])[:5]
+
+       ### ENTIRE contents of the table
+       whole_table = tb.rows( )[:]
+     </example>
      <input>
        <param name="columnnames" type="stringVec">
          <description>
