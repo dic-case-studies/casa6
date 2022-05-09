@@ -23,6 +23,7 @@
 ##########################################################################
 import itertools
 import os
+import re
 import shutil
 import unittest
 
@@ -500,6 +501,46 @@ class test_sdatmcor(unittest.TestCase):
                 atmdetail=True,
                 layerboundaries='800m,1.5km', layertemperature='250K,200K,190K'
             )
+
+    def test_omp_num_threads(self):
+        """Test if the task respects OMP_NUM_THREADS environment variable."""
+        omp_num_threads_org = os.environ.get('OMP_NUM_THREADS')
+        try:
+            # set num_threads for OpenMP to any different value than the current one
+            if omp_num_threads_org is None:
+                num_threads = 2
+            else:
+                iter = filter(lambda x: x != int(omp_num_threads_org), range(2, 9))
+                num_threads = next(iter)
+                self.assertNotEqual(num_threads, omp_num_threads_org)
+            os.environ['OMP_NUM_THREADS'] = f'{num_threads}'
+
+            # run task
+            sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
+        finally:
+            if omp_num_threads_org is None:
+                os.environ.pop('OMP_NUM_THREADS')
+            else:
+                os.environ['OMP_NUM_THREADS'] = omp_num_threads_org
+
+        # consistency check
+        if omp_num_threads_org is None:
+            self.assertIsNone(os.environ.get('OMP_NUM_THREADS'))
+        else:
+            self.assertEqual(os.environ.get('OMP_NUM_THREADS'), omp_num_threads_org)
+
+        # check log
+        if os.path.exists(casalog.logfile()):
+            with open(casalog.logfile(), 'r') as f:
+                pattern = re.compile(r'.*Setting numThreads_ to ([0-9+])')
+                lines = list(filter(lambda x: x is not None, map(lambda x: re.search(pattern, x), f)))
+            num_threads_log = int(lines[-1].group(1))
+
+            print(f'{OMP_NUM_THREADS_INITIAL} {omp_num_threads_org} {num_threads} {num_threads_log}')
+            self.assertEqual(num_threads, num_threads_log)
+
+        # check output MS
+        self.check_result({19: True, 23: True})
 
 
 class ATMParamTest(unittest.TestCase):
