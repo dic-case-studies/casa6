@@ -664,6 +664,38 @@ class immoment_test1(unittest.TestCase):
 
 class immoment_test2(unittest.TestCase):    
 
+    myim = 'myim.im'
+    mymask = 'mask.im'
+    mymask1 = 'mask1.im'
+    mymask2 = 'mask2.im'
+    mymask3 = 'mask3.im'
+    cas5287 = 'cas5287.im'
+    myexp = 'expected.im'
+    expected_integrated = myexp + '.integrated'
+    expected_median = myexp + '.median'
+    mygot = 'got.im'
+    temporary = 'Temporary_Image.'
+    temporary_integrated = temporary + 'integrated'
+    temporary_median = temporary + 'median'
+    cas8570 = 'cas8570.im'
+    zz = 'zz.im'
+    zz_out = 'zz_out.im'
+    zz_out_wc = zz_out + '.weighted_coord'
+    zz_out_avg = zz_out + '.average'
+    zz_out_wdc = zz_out + '.weighted_dispersion_coord'
+    median_coord = 'median_coord.im'
+    median_coord_out = 'median_coord_out.im'
+    myim2 = 'myim2.im'
+    coord = 'coord.im'
+    coord_max = coord + '.max'
+    coord_min = coord + '.min'
+    coord_max_out = coord_max + '.out'
+    coord_min_out = coord_min + '.out'
+    bb = 'bb.im'
+    jj = 'jj.fits'
+    myout1 = 'myout1.im'
+    myout2 = 'myout2.im'
+
     def setUp(self):
         self.tb = table( )
         if(os.path.exists(list2[1])):
@@ -678,6 +710,22 @@ class immoment_test2(unittest.TestCase):
             os.system('rm -rf ' +file)
             os.system('rm -rf mask_test*')
             os.system('rm -rf moment_test*')
+        list4 = [
+            self.myim, self.mymask, self.mymask1, self.mymask2, self.mymask3,
+            self.cas5287, self.myexp, self.mygot, self.expected_integrated,
+            self.expected_median, self.temporary_integrated,
+            self.temporary_median, self.cas8570, self.zz, self.zz_out,
+            self.zz_out_wc, self.zz_out_avg, self.zz_out_wdc, self.median_coord,
+            self.median_coord_out, self.myim2, self.coord, self.coord_max,
+            self.coord_min, self.coord_max_out, self.coord_min_out, self.bb,
+            self.jj, self.myout1, self.myout2
+        ]
+        for f in list4:
+            if os.path.exists(f):
+                if os.path.isdir(f):
+                    shutil.rmtree(f)
+                else:
+                    os.remove(f)
         self.assertTrue(len(self.tb.showcache()) == 0)
         self.tb.done( )
 
@@ -925,16 +973,16 @@ class immoment_test2(unittest.TestCase):
     def test_CAS2943(self):
         """Test the stretch parameter"""
         myia = image()
-        myia.fromshape("myim.im", [10, 20, 4, 40])
+        myim = self.myim
+        myia.fromshape(myim, [10, 20, 4, 40])
         myia.done()
-        myia.fromshape("mask1.im", [10, 20, 4, 40])
+        myia.fromshape(self.mymask1, [10, 20, 4, 40])
         myia.done()
-        myia.fromshape("mask2.im", [10, 20, 1, 1])
+        myia.fromshape(self.mymask2, [10, 20, 1, 1])
         myia.done()
-        myia.fromshape("mask3.im", [10, 20, 4, 2])
+        myia.fromshape(self.mymask3, [10, 20, 4, 2])
         myia.done()
         self.assertTrue(len(self.tb.showcache()) == 0)
-
         for i in range(4):
             outfile = ""
             mask = ""
@@ -967,7 +1015,7 @@ class immoment_test2(unittest.TestCase):
             func = ""
             if (atype):
                 immoments(
-                    imagename="myim.im", outfile=outfile,
+                    imagename=myim, outfile=outfile,
                     mask=mask, stretch=stretch
                 )
                 self.assertTrue(myia.open(outfile))
@@ -975,7 +1023,7 @@ class immoment_test2(unittest.TestCase):
                 myia.done()
             else:
                 self.assertRaises(
-                    Exception, immoments, imagename="myim.im", outfile=outfile,
+                    Exception, immoments, imagename=myim, outfile=outfile,
                     mask=mask, stretch=stretch
                 )
 
@@ -988,7 +1036,7 @@ class immoment_test2(unittest.TestCase):
         myia = image()
         shape = [100, 100, 1, 3]
         myia.fromshape("", shape)
-        myia = myia.subimage("exp", dropdeg=True)
+        myia = myia.subimage(self.myexp, dropdeg=True)
         aa = make_gauss2d([shape[0], shape[1]], 10, 10)
         for i in range(shape[3]):
             myia.putchunk(pixels=aa, blc=[0, 0, i])
@@ -998,11 +1046,11 @@ class immoment_test2(unittest.TestCase):
         ret.done()
         myia.done()
         for im in ["integrated", "median"]:
-            myia.open("exp." + im)
+            myia.open(self.myexp + '.' + im)
             self.assertTrue(myia.getchunk(getmask=True).all(), "bad mask for " + myia.name())
             myia.done()		
         myia.fromshape("", shape)
-        myia = myia.subimage("got", dropdeg=True)
+        myia = myia.subimage(self.mygot, dropdeg=True)
         myia.setbrightnessunit("Jy/beam")
         for i in range(shape[3]):
             fwhm = 6 + 2*i
@@ -1018,7 +1066,7 @@ class immoment_test2(unittest.TestCase):
         mask = image()
         mask.open("exp")
         mask = mask.subimage(
-            "mymask", region=_rg.box(blc=[0, 0, 0], trc=[99, 99,0]),
+            self.mymask, region=_rg.box(blc=[0, 0, 0], trc=[99, 99,0]),
             dropdeg=True
         )
         cc = mask.getchunk()
@@ -1031,11 +1079,9 @@ class immoment_test2(unittest.TestCase):
                 else:
                     cc[i,j] = 1
         for im in ["integrated", "median"]:
-            self.assertTrue(got.open("Temporary_Image." + im))
+            self.assertTrue(got.open(self.temporary + im))
             self.assertTrue(exp.open("exp." + im))
             shape = got.shape()
-            print("*** shape", shape)
-            print("*** cc shape", cc.shape)
             gotpix = got.getchunk() * cc
             exppix = exp.getchunk() * cc
             got.done()
@@ -1064,7 +1110,7 @@ class immoment_test2(unittest.TestCase):
 
     def test_CAS5287(self):
         """ Verify fix of CAS-5287"""
-        outfile = "cas5287.im"
+        outfile = self.cas5287
         immoments(
             imagename=os.path.join(datapath,"38chans.im"),moments=[8],axis="spectral",
             outfile=outfile
@@ -1077,19 +1123,19 @@ class immoment_test2(unittest.TestCase):
     def test_region_selected_in_fits(self):
         """Test that region selection happens in non-paged images, CAS-5278"""
         myia = image()
-        test1 = "bb.im"
+        test1 = self.bb
         myia.fromshape(test1 ,[2, 2, 5])
         bb = myia.getchunk()
         for i in range(5):
             bb[:,:,i] = 5
         myia.putchunk(bb)
-        fits = "jj.fits"
+        fits = self.jj
         myia.tofits(fits)
-        out1 = "myout1.im"
+        out1 = self.myout1
         immoments(imagename=test1, outfile=out1, chans="0~2")
         myia.open(out1)
         aa = myia.getchunk()
-        out2 = "myout2.im"
+        out2 = self.myout2
         immoments(imagename=fits, outfile=out2, chans="0~2")
         myia.open(out2)
         bb = myia.getchunk()
@@ -1099,8 +1145,8 @@ class immoment_test2(unittest.TestCase):
     def test_minmax_coord(self):
         """Verify CAS-5376, test min/max coords"""
         myia = image()
-        for minmax in ["max", "min"]:
-            imagename = "coord" + minmax + ".im"
+        for minmax, im in zip(("max", "min"),(self.coord_max, self.coord_min)):
+            imagename = im
             myia.fromshape(imagename, [10, 10, 10])
             vels = []
             bb = myia.getchunk()
@@ -1130,7 +1176,7 @@ class immoment_test2(unittest.TestCase):
     def test_median_coord(self):
         """Verify CAS-5570 fix for median"""
         myia = image()
-        imagename = "median_coord.im"
+        imagename = self.median_coord
         myia.fromshape(imagename, [11, 1, 11])
         cc = myia.getchunk()
         vels = []
@@ -1143,7 +1189,7 @@ class immoment_test2(unittest.TestCase):
         myia.putchunk(cc)
         myia.done()
         # FIXME this should be a task, not tool method, call for casa6
-        outfile = "median_coord.out"
+        outfile = self.median_coord_out
         immoments(imagename, outfile=outfile, moments=4, includepix=[0,12])
         myia.open(outfile)
         bb = myia.getchunk()
@@ -1169,7 +1215,7 @@ class immoment_test2(unittest.TestCase):
     def test_history(self):
         """Verify that history is written"""
         myia = image()
-        imagename = "zz.im"
+        imagename = self.zz
         myia.fromshape(imagename, [20, 20, 20])
         bb = myia.moments()
         myia.done()
@@ -1178,7 +1224,7 @@ class immoment_test2(unittest.TestCase):
         teststr = "ia.moments"
         self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")
         self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
-        outfile = "zz_out"
+        outfile = self.zz_out
         moments = [-1, 1, 2]
         axis = 2
         immoments(imagename=imagename, outfile=outfile, axis=axis, moments=moments)
@@ -1196,7 +1242,7 @@ class immoment_test2(unittest.TestCase):
         """CAS-8570: Ensure moments images are flushed to disk"""
         myia = image()
         myia.fromshape("", [20, 20, 20])
-        outfile = "CAS-8570.im"
+        outfile = self.cas8570
         bb = myia.moments(outfile=outfile, moments=8)
         # this running correctly indicates issue resolved
         imhistory(outfile)
