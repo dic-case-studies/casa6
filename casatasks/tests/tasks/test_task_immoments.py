@@ -30,7 +30,6 @@ from casatasks import casalog, imstat, imhistory, imval, immath, immoments
 
 _rg = regionmanager( )
 _ia = image( )
-#from imval import imval
 
     #
     # To make things a little more interesting, I've used the
@@ -1189,9 +1188,9 @@ class immoment_test2(unittest.TestCase):
             msgs = myia.history()
             myia.done()
             teststr = "version"
-            self.assertTrue(teststr in msgs[-2], "'" + teststr + "' not found")
+            self.assertTrue(teststr in msgs[-2], f'"{teststr}" not found')
             teststr = "immoments"
-            self.assertTrue(teststr in msgs[-1], "'" + teststr + "' not found")
+            self.assertTrue(teststr in msgs[-1], f'"{teststr}" not found')
 
     def test_flush(self):
         """CAS-8570: Ensure moments images are flushed to disk"""

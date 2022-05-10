@@ -157,18 +157,29 @@ def immoments(
 def _immoments_get_created_images(out1name, outfile):
     dirpath = os.path.dirname(out1name)
     target_time = os.path.getmtime(out1name)
-    # get all entries in the directory w/ stats
-    entries = (os.path.join(dirpath, fn) for fn in os.listdir(dirpath))
-    entries = ((os.stat(path), path) for path in entries)
-    # leave only directories, insert creation date
-    entries = ((stat.st_mtime, path)
-        for stat, path in entries if S_ISDIR(stat[ST_MODE]))
+    # get all subdirs in the directory w/ stats
+    subdirs = [
+        os.path.join(dirpath, name) for name in os.listdir(dirpath)
+            if os.path.isdir(os.path.join(dirpath, name))
+    ]
+    entries = []
+    for path in subdirs:
+        try:
+            entries.append((os.stat(path), path))
+        catch FileNotFoundError:
+            # CAS-13821 this directory disappeared during the execution of the
+            # task, so it was not created by the task but just a coincidental
+            # delete by some unrelated process, so just skip it
+            pass
+    # insert creation date
+    entries = ((stat.st_mtime, path) for stat, path in entries 
     # reverse sort by time
     zz = sorted(entries)
     zz.reverse()
     created_images = []
     for mdate, path in zz:
         if mdate < target_time:
+            # dirs created before execution of this task, so exit
             break
         if path != out1name and os.path.basename(path).startswith(outfile):
             created_images.append(path)
