@@ -166,13 +166,13 @@ def _immoments_get_created_images(out1name, outfile):
     for path in subdirs:
         try:
             entries.append((os.stat(path), path))
-        catch FileNotFoundError:
+        except FileNotFoundError:
             # CAS-13821 this directory disappeared during the execution of the
             # task, so it was not created by the task but just a coincidental
             # delete by some unrelated process, so just skip it
             pass
     # insert creation date
-    entries = ((stat.st_mtime, path) for stat, path in entries 
+    entries = ((stat.st_mtime, path) for stat, path in entries) 
     # reverse sort by time
     zz = sorted(entries)
     zz.reverse()
