@@ -1888,6 +1888,25 @@ to use the correct direction in which the antenna is pointing with respect to th
       <type>bool</type><type>int</type>
       <value type="bool">False</value>
     </param>
+    
+    <param type="int" name="nmajor">
+      <shortdescription>Maximum number of major cycles to evaluate</shortdescription>
+      <description>Limits the number of major cycles that sdintimaging executes.
+                       
+                        The minimum number of major cycles to execute is 0. This value can be 0,
+                        -1, or greater than 0. Negative means no limit. (default -1)
+         
+                        If the major cycle limit is reached stopcode 9 will be returned. Other stopping
+                        criteria (such as threshold) could cause sdintimaging to stop in fewer than this
+                        number of major cycles. In that case, the stopcode will be set based on that
+                        stopping criteria.
+                        
+                        If calcres=True, then an additional major cycle will be executed prior to
+                        starting clean. This additional major cycle will be visible in the logs, but
+                        it will not be included in the count for nmajor.
+      </description>
+      <value type="int">-1</value>
+    </param>
 
 
 

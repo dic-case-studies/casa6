@@ -387,6 +387,7 @@ def sdintimaging(
     minpsffraction,#=0.1,
     maxpsffraction,#=0.8,
     interactive,#=False, 
+    nmajor,#=-1,
 
     ##### (new) Mask parameters
     usemask,#='user',
@@ -494,6 +495,10 @@ def sdintimaging(
 
     if(usedata=='sd'):
         casalog.post("The Single-Dish-Only mode of sdintimaging is better supported via the deconvolve task which supports spectral cube, mfs and multi-term mfs deconvolution in the image domain alone. The deconvolve task is the more appropriate version to use for stand-alone image-domain deconvolution, and will not have the bookkeeping overheads currently present in the sdintimaging task's sd-only mode. Please note that the 'sd' option of the sdintimaging task will be removed in a subsequent release.  Please refer to the task deconvolve documentation for instructions on how to prepare image and psf cubes for the deconvolve task for all these modes.","WARN","task_sdintimaging");
+
+    if (nmajor < -1):
+        casalog.post("Negative values less than -1 for nmajor are reserved for possible future implementation", "WARN", "task_sdintimaging")
+        return
 
 
 #    if parallel==True:
@@ -737,6 +742,9 @@ def sdintimaging(
 
                 if usedata != "sd":
                     imager.runMajorCycle()
+                    # track nmajor for the deconvolvertool.hasConverged() method
+                    deconvolvertool.majorCnt = imager.majorCnt
+
  #               print('Max of int residual after major cycle' + str(imstat(int_cube+'.residual',verbose=False)['max'][0]))
                 t1=time.time();
                 casalog.post("***Time for major cycle: "+"%.2f"%(t1-t0)+" sec", "INFO3", "task_tclean");

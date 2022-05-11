@@ -2026,7 +2026,8 @@ to use the correct direction in which the antenna is pointing with respect to th
                         stopping criteria.
                         
                         If calcres=True, then an additional major cycle will be executed prior to
-                        starting clean.
+                        starting clean. This additional major cycle will be visible in the logs, but
+                        it will not be included in the count for nmajor.
       </description>
       <value type="int">-1</value>
     </param>
