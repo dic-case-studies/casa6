@@ -11,9 +11,6 @@
                 	<include>msmetadata_private.h</include>
                 </private>
         </code>
-
-
-
         <description>
 
   The msmd tool provides methods to retrieve metadata from measurement sets.
@@ -87,25 +84,28 @@ windows in the dataset and close the tool.
                 If the SPECTRAL_WINDOW table has the optional BBC_NO column and if the name
                 of the spectral window matches the regular expression &quot;BB_[0-9]#SQLD&quot;, where
                 [0-9] indicates that a single integer matches, the window is classified as
-                a square law detector spectral window.
+                a *square law detector spectral window*.
 
                 The following algorithm is used to identify WVR spwectral windows:
+                
                 1. check for water vapor radiometer (WVR) spectral windows using the spectral window
                    name &quot;WVR#NOMINAL&quot; and report these.
                 2. If no SPWs match that string, then the names are checked for &quot;WVR&quot; and are reported instead.
+                
                 If the window is not found to be a WVR window, it is then checked if
                 
-                The window is classified as a channel average spectral window if it is not
+                The window is classified as a *channel average spectral window* if it is not
                 a WVR window, if the number of channels is one, and the spectral window name
                 does not contain the string &quot;FULL_RES&quot;
 
-                The window is classifed as an FDM window if it is neither a WVR window nor
+                The window is classified as an *FDM window* if it is neither a WVR window nor
                 a channel average window and if either 
+                
                 1. its bandwidth is less than 2 GHz, or
                 2. the number of channels it contains is greater than or equal to 15 but not
                    equal to 256, 128, 64, 32, 16, 248, 124, 62, or 31.
 
-                The window is classified as a TDM spectral window if it is neither a WVR window,
+                The window is classified as a *TDM spectral window* if it is neither a WVR window,
                 a channel average window, nor an FDM window.
  
             </description>
@@ -514,7 +514,38 @@ windows in the dataset and close the tool.
             </example>
         </method>
         
-        <method name="corrprodsforpol" type="function">
+        <method name="corrbit" type="function">
+            <shortdescription>Get the value of the SPECTRAL_WINDOW::SDM_CORR_BIT column for the specified spw.</shortdescription>
+            <input>
+                <param name="spw" direction="in" type="any">
+                <any type="variant" limittype="int intArray"/>
+                    <description>Spectral window ID(s). May be an integer or list of integers. If integer, &lt;0 implies all.</description>
+                    <value type="int">-1</value>
+                </param>
+            </input>
+            <returns type="any"/>
+            <any type="variant"/>
+            <description>
+               Get the value of SPECTRAL_WINDOW::SDM_CORR_BIT column for the specified spw.
+               If spw &gt;= 0 is specified, a string value is returned. If spw &lt;0, a list
+               of string values with length equal to the number of spectral windows is returned.
+               If the SPECTRAL_WINDOW::SDM_CORR_BIT column does not exist, either
+               &quot;UNKNOWN&quot; is returned if spw&gt;=0, or a list with nspw entries of
+               &quot;UNKNOWN&quot; is returned if spw&lt;0. A list of integers may also be 
+               supplied for the spw parameter. In this case, all integers should be in the
+               range [0, spw-1] or an exception will be thrown. The return value will
+               be a list containing the corresponding CORR_BIT values in the order
+               of the spws specified. 
+            </description>
+            <example>
+                msmd.open(&quot;my.ms&quot;)
+                # get value of SPECTRAL_WINDOW::SDM_CORR_BIT column for spw=2.
+                cb = msmd.corrbit(spw=2)
+                msmd.done()
+            </example>
+        </method>
+
+         <method name="corrprodsforpol" type="function">
             <shortdescription>Get the correlation products associated with the specified polarization ID</shortdescription>
             <input>
                 <param name="pol" type="int">

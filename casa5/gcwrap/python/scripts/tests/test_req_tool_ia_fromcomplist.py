@@ -68,7 +68,8 @@
 import sys
 import os
 import shutil
-import numpy
+import math
+import numpy as np
 import unittest
 
 CASA6 = False
@@ -195,7 +196,7 @@ class ia_fromcomplist_test(unittest.TestCase):
             got = stats['sum'][i]
             expec = flux[stokestoflux[i]]
             self.assertTrue(
-                numpy.isclose(got, expec),
+                np.isclose(got, expec),
                 'i=' + str(i) + ' got=' + str(got) + ' expec=' + str(expec)
             )
         mycl.done()
@@ -239,10 +240,10 @@ class ia_fromcomplist_test(unittest.TestCase):
                 gotdir = mycl.getrefdir(0)
                 rainsec = myqa.convert(gotdir['m0'], 's')['value']
                 decinamin = myqa.convert(gotdir['m1'], 'arcmin')['value']
-                self.assertTrue(numpy.isclose(rainsec, expecra[j], tol))
-                self.assertTrue(numpy.isclose(decinamin, expecdec[j], tol))
+                self.assertTrue(np.isclose(rainsec, expecra[j], tol))
+                self.assertTrue(np.isclose(decinamin, expecdec[j], tol))
                 self.assertEqual(gotdir['refer'], "J2000")
-                self.assertTrue(numpy.isclose(mycl.getfluxvalue(0)[i], flux[i]))
+                self.assertTrue(np.isclose(mycl.getfluxvalue(0)[i], flux[i]))
                 mycl.done()
                 i += 1
             myia.done()
@@ -273,12 +274,12 @@ class ia_fromcomplist_test(unittest.TestCase):
                 rainsec = myqa.convert(gotdir['m0'], 's')['value']
                 decinamin = myqa.convert(gotdir['m1'], 'arcmin')['value']
                 self.assertTrue(
-                    numpy.isclose(rainsec, expecra[i], rtol=0, atol=atol),
+                    np.isclose(rainsec, expecra[i], rtol=0, atol=atol),
                     "got: " + str(rainsec) + " expec: " + str(expecra[i])
                 )
-                self.assertTrue(numpy.isclose(decinamin, expecdec[i], rtol=0, atol=atol))
+                self.assertTrue(np.isclose(decinamin, expecdec[i], rtol=0, atol=atol))
                 self.assertEqual(gotdir['refer'], "J2000")
-                self.assertTrue(numpy.isclose(mycl.getfluxvalue(0)[k], flux[k]))
+                self.assertTrue(np.isclose(mycl.getfluxvalue(0)[k], flux[k]))
             mycl.done()
             k += 1
         myia.done()
@@ -376,6 +377,41 @@ class ia_fromcomplist_test(unittest.TestCase):
         myia.done()
         self.assertTrue((bb == cc).all())
         
+    def test_plp(self):
+        """Test plp component"""
+        mycl = self._mycl
+        myia = self._myia
+        flux0 = [1, 0, 0, 0]
+        dir0 = ['J2000', '00:00:00.00', '00.00.00.0']
+        pt = "point"
+        index = [1, 2, 3, 4]
+        mycl.addcomponent(
+            flux=flux0, dir=dir0,shape=pt, spectrumtype='plp', index=index
+        )
+        freq0 = mycl.getspectrum(0)['frequency']['m0']['value']
+        shape = [20, 20, 20]
+        imagename = "jm.im"
+        myia.fromcomplist(outfile=imagename, shape=shape, cl=mycl.torecord())
+        mycl.done()
+        csys = myia.coordsys()
+        inc = csys.increment()['numeric']
+        inc[2] *= 10000
+        csys.setincrement(inc)
+        myia.setcoordsys(csys.torecord())
+        pix = myia.getchunk()
+        for chan in range(shape[2]):
+            freq = myia.toworld([10, 10, chan])['numeric'][2]/1e9
+            y = freq/freq0
+            x = math.log(y)
+            exponent = index[0] + index[1]*x + index[2]*x*x + index[3]*x*x*x
+            expec = pow(y, exponent)
+            self.assertTrue(
+                np.isclose(pix[10, 10, chan], expec, 1e-7),
+                'Incorrect pixel value'
+            )
+        myia.done()
+        
+
 def suite():
     return [ia_fromcomplist_test]
 
