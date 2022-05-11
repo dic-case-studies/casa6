@@ -74,7 +74,7 @@ class gclean:
     def update( self, msg ):
         """ Interactive clean parameters update.
 
-        msg: dict with possible keys 'niter', 'cycleniter', 'threshold', 'cyclefactor', 'mask' and 'nmajor'
+        msg: dict with possible keys 'niter', 'cycleniter', 'threshold', 'cyclefactor' and 'mask'
         """
         if 'niter' in msg:
             try:
@@ -103,7 +103,7 @@ class gclean:
 
     def __init__( self, vis, imagename, imsize=[100], cell="1arcsec", specmode='cube', nchan=-1, start='',
                   width='', interpolation='linear', gridder='standard', pblimit=0.2, deconvolver='hogbom',
-                  niter=0, threshold='0.1Jy', cycleniter=-1, cyclefactor=1.0, scales=[],
+                  niter=0, threshold='0.1Jy', cycleniter=-1, nmajor=1, cyclefactor=1.0, scales=[],
                   history_filter=lambda index, arg, history_value: history_value ):
         self._vis = vis
         self._imagename = imagename
@@ -120,7 +120,7 @@ class gclean:
         self._niter = niter
         self._threshold = threshold
         self._cycleniter = cycleniter
-        self._nmajor = 1
+        self._nmajor = nmajor
         self._cyclefactor = cyclefactor
         self._mask = ''
         self._scales = scales
@@ -217,6 +217,7 @@ class gclean:
                                            specmode=self._specmode, interpolation=self._interpolation, nchan=self._nchan,
                                            start=self._start, width=self._width, pblimit=self._pblimit, deconvolver=self._deconvolver,
                                            cyclefactor=self._cyclefactor, scales=self._scales, interactive=0,
+
                                            niter=1, gain=0.000001 )
             else:
                 tclean_ret = self._tclean( vis=self._vis, imagename=self._imagename, imsize=self._imsize, cell=self._cell,
