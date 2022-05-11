@@ -74,7 +74,7 @@ class gclean:
     def update( self, msg ):
         """ Interactive clean parameters update.
 
-        msg: dict with possible keys 'niter', 'cycleniter', 'threshold', 'cyclefactor', 'mask' and 'nmajor'
+        msg: dict with possible keys 'niter', 'cycleniter', 'threshold', 'cyclefactor', and 'mask'
         """
         if 'niter' in msg:
             try:
