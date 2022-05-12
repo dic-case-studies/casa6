@@ -1064,7 +1064,7 @@ class immoment_test2(unittest.TestCase):
         got = image()
         exp = image()
         mask = image()
-        mask.open("exp")
+        mask.open(self.myexp)
         mask = mask.subimage(
             self.mymask, region=_rg.box(blc=[0, 0, 0], trc=[99, 99,0]),
             dropdeg=True
