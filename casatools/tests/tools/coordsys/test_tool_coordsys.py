@@ -61,39 +61,29 @@ def freqVelSetUp():
 
 def alleq(x,y,tolerance=0):
     if x.size != y.size:
-        #print "x.size=", x.size
-        #print "y.size=", y.size
         return False
     if len(x.shape)==1:
         for i in range(len(x)):
-            if not (abs(x[i]-y[i]) < tolerance):
-                #print "x[",i,"]=", x[i]
-                #print "y[",i,"]=", y[i]
+            if abs(x[i] - y[i]) >= tolerance:
                 return False
     if len(x.shape)==2:
         for i in range(len(x)):
             for j in range(len(x[i])):
-                if not (abs(x[i][j]-y[i][j]) < tolerance):
-                    #print "x[",i,"][",j,"]=", x[i][j]
-                    #print "y[",i,"][",j,"]=", y[i][j]
+                if abs(x[i][j] - y[i][j]) >= tolerance:
                     return False
     if len(x.shape)==3:
         for i in range(len(x)):
             for j in range(len(x[i])):
                 for k in range(len(x[i][j])):
-                    if not (abs(x[i][j][k]-y[i][j][k]) < tolerance):
-                        #print "x[",i,"][",j,"][",k,"]=", x[i][j][k]
-                        #print "y[",i,"][",j,"][",k,"]=", y[i][j][k]
+                    if abs(x[i][j][k] - y[i][j][k]) >= tolerance:
                         return False
     if len(x.shape)==4:
         for i in range(len(x)):
             for j in range(len(x[i])):
                 for k in range(len(x[i][j])):
                     for l in range(len(x[i][j][k])):
-                        if not (abs(x[i][j][k][l]-y[i][j][k][l]) < tolerance):
-                            #print "x[",i,"][",j,"][",k,"][",l,"]=", x[i][j][k][l]
-                            #print "y[",i,"][",j,"][",k,"][",l,"]=", y[i][j][k][l]
-                            return False
+                        if abs(x[i][j][k][l] - y[i][j][k][l]) >= tolerance:
+                             return False
     if len(x.shape)>4:
         print('unhandled array shape in alleq')
     return True
@@ -884,7 +874,7 @@ class coordsys_test(unittest.TestCase):
         toworld = mycs.axesmap(toworld=True)
         topixel = mycs.axesmap(toworld=False)
 
-        idx = range(0, len(mycs.referencepixel()['numeric']))
+        idx = range(len(mycs.referencepixel()['numeric']))
 
         self.assertTrue(np.all(toworld == idx))
         self.assertTrue(np.all(topixel == idx))
@@ -1333,18 +1323,14 @@ class coordsys_test(unittest.TestCase):
         for i in range(n):
             if (types[i] == 'Direction'):
                 hasDir = True
-            else:
-                if (types[i] == 'Spectral'):
-                    hasSpec = True
-                else:
-                    if (types[i] == 'Linear'):
-                        hasLin = True
-                    else:
-                        if (types[i] == 'Tabular'):
-                            hasTab = True
-                        else:
-                            if (types[i] == 'Stokes'):
-                                hasStokes = True
+            elif (types[i] == 'Spectral'):
+                hasSpec = True
+            elif (types[i] == 'Linear'):
+                hasLin = True
+            elif (types[i] == 'Tabular'):
+                hasTab = True
+            elif (types[i] == 'Stokes'):
+                hasStokes = True
         #
         ok = hasDir and hasSpec and hasLin and hasTab and hasStokes
         self.assertTrue(n == 5)
@@ -1415,7 +1401,8 @@ class coordsys_test(unittest.TestCase):
         proj = 'CAR'
         projpar = []
         refpix = list(mycs.referencepixel()['numeric'])
-        for i in range(len(refpix)): refpix[i] *= 1.1
+        for item in refpix:
+            item *= 1.1
         refval = mycs.referencevalue(format='n')['numeric']
         for i in range(len(refval)): refval[i] *= 1.1
         xform = ia.makearray(0.0, [2, 2])
@@ -1427,7 +1414,7 @@ class coordsys_test(unittest.TestCase):
                           xform=xform)
         #
         self.assertTrue(proj == mycs.projection()['type'])
-        if len(projpar) > 0:
+        if projpar:
             self.assertTrue(projpar == mycs.projection()['parameters'])
         self.assertTrue(np.all(np.isclose(refpix, mycs.referencepixel()['numeric'], atol=1e-6)))
         self.assertTrue(np.all(np.isclose(refval, mycs.referencevalue(format='n')['numeric'], atol=1e-6)))
