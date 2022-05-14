@@ -150,6 +150,8 @@ def make_gauss2d(shape, xfwhm, yfwhm):
 # Returns True if successful, and False if it has failed.
 ####################################################################
 class immoment_test1(unittest.TestCase):
+
+    garbagergn = 'garbage.rgn'
     
     def setUp(self):
         self.tb = table( )
@@ -166,6 +168,7 @@ class immoment_test1(unittest.TestCase):
             os.system('rm -rf ' +file)
             os.system('rm -rf input_test*')
             os.system('rm -rf moment_test*')
+        os.system('rm -rf ' + self.garbagergn)
         self.assertTrue(len(self.tb.showcache()) == 0)
         self.tb.done( )
         
@@ -411,27 +414,33 @@ class immoment_test1(unittest.TestCase):
 
         success = False
         try:
-            immoments( 'n1333_both.image', region='garbage.rgn', outfile='input_test_bad_rgn' )
+            immoments(
+                'n1333_both.image', region=self.garbagergn,
+                outfile='input_test_bad_rgn'
+            )
         except:
             success = True
         if ( not success ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad region file, 'garbage.rgn', was not reported as missing."
+                 +f"\nError: Bad region file, '{self.garbagergn}', was not reported as missing."
     
 #        _momentTest_debug_msg( 23 )
-        with open('garbage.rgn','w') as fp:
+        with open(self.garbagergn,'w') as fp:
             fp.write('This file does NOT contain a valid CASA region specification')
 
         success = False
         try:
-            immoments( 'n1333_both.image', region='garbage.rgn', outfile='input_test_bad_rgn' )
+            immoments(
+                'n1333_both.image', region=self.garbagergn,
+                outfile='input_test_bad_rgn'
+            )
         except:
             success = True
         if ( not success ):
             retValue['success']=False
             retValue['error_msgs']=retValue['error_msgs']\
-                 +"\nError: Bad region file, 'garbage.rgn', was not reported as bad."
+                 +f"\nError: Bad region file, '{self.garbagergn}', was not reported as bad."
 #        _momentTest_debug_msg( 24 )
 
         try:
@@ -695,6 +704,7 @@ class immoment_test2(unittest.TestCase):
     jj = 'jj.fits'
     myout1 = 'myout1.im'
     myout2 = 'myout2.im'
+    testim = 'test.image'
 
     def setUp(self):
         self.tb = table( )
@@ -718,7 +728,7 @@ class immoment_test2(unittest.TestCase):
             self.zz_out_wc, self.zz_out_avg, self.zz_out_wdc, self.median_coord,
             self.median_coord_out, self.myim2, self.coord, self.coord_max,
             self.coord_min, self.coord_max_out, self.coord_min_out, self.bb,
-            self.jj, self.myout1, self.myout2
+            self.jj, self.myout1, self.myout2, self.testim
         ]
         for f in list4:
             if os.path.exists(f):
@@ -945,14 +955,17 @@ class immoment_test2(unittest.TestCase):
             _ia.open( 'n1333_both.image' )
             csys=_ia.coordsys()
             _ia.done()
-            _ia.fromshape( 'test.image', shape=[800,800,1,18], csys=csys.torecord(), overwrite=True, log=True )
+            _ia.fromshape(
+                self.testim, shape=[800,800,1,18], csys=csys.torecord(),
+                overwrite=True, log=True
+            )
             _ia.addnoise()
             stats=_ia.statistics(list=True, verbose=True)
             _ia.done()
             # pick a place that is slightly bigger then the mid value
             # range for doing the mask, just for fun.
             maskPt=float((stats['max'][0]+stats['min'][0])/2.0)-1.5
-            maskStr='test.image>'+str(maskPt)
+            maskStr=self.testim + '>' + str(maskPt)
                                       
             immoments( 'n1333_both.image', mask=maskStr, outfile='mask_test_4' )
         except Exception as e:
@@ -1080,7 +1093,7 @@ class immoment_test2(unittest.TestCase):
                     cc[i,j] = 1
         for im in ["integrated", "median"]:
             self.assertTrue(got.open(self.temporary + im))
-            self.assertTrue(exp.open("exp." + im))
+            self.assertTrue(exp.open(self.myexp + '.' + im))
             shape = got.shape()
             gotpix = got.getchunk() * cc
             exppix = exp.getchunk() * cc
