@@ -50,6 +50,7 @@ using casacore::LogOrigin;
 using casacore::AipsError;
 using casacore::TableRowProxy;
 using casacore::Array;
+using casacore::Record;
 using casacore::Complex;
 using casacore::DComplex;
 using casacore::String;
@@ -68,16 +69,14 @@ static bool numpy_initialized = _tablerow_initialize_numpy( );
 namespace casac {
 
     // constructor used by SWIG to initialize an empty tablerow
-    tablerow::tablerow( ) : itsRow(0) {
-        itsLog = new casacore::LogIO;
-    }
+    tablerow::tablerow( ) : itsLog(new casacore::LogIO) { }
+
     // constructor used by table class (in table_cmpt.cc) to return a
     // tablerow for fetching one or more rows
     tablerow::tablerow( std::shared_ptr<casacore::TableProxy> myTable,
-                        const std::vector<std::string> &columnnames, bool exclude ) : itsTable(myTable) {
-        itsLog = new casacore::LogIO;
-        itsRow = new TableRowProxy( *itsTable, columnnames, exclude );
-    }
+                        const std::vector<std::string> &columnnames, bool exclude ) :
+        itsLog(new casacore::LogIO), itsRow(new TableRowProxy( *itsTable, columnnames, exclude )),
+        itsTable(myTable) { }
 
     // check to see if tablerow can be modified
     bool tablerow::iswritable( ) {
@@ -114,9 +113,8 @@ namespace casac {
         *itsLog << LogOrigin(__func__,"");
         try {
             if ( itsRow ) {
-                auto tab = toRecord( value );
+                std::unique_ptr<Record> tab(toRecord( value ));
                 itsRow->put( rownr, *tab, matchingfields );
-                delete tab;
                 return true;
             }
         } catch (AipsError x) {
@@ -346,14 +344,11 @@ namespace casac {
     }
 
     tablerow::~tablerow( ) {
-        delete itsLog;
-        delete itsRow;
         itsTable.reset( );
     }
 
     void tablerow::done( ) {
-        delete itsRow;
-        itsRow = 0;
+        itsRow.reset( );
         itsTable.reset( );
     }
 
