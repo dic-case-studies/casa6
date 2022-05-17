@@ -542,6 +542,7 @@ def run(testnames, branch=None, DRY_RUN=False):
                 print(workdir + "tests/")
 
             for testname in testnames:
+                print(testname)
                 cmd = []
 
                 # Copy Test To nosedir Directory if in cwd
@@ -1033,7 +1034,10 @@ if __name__ == "__main__":
                     #print(component, myDict["testGroup"])
                     if component in myDict["testGroup"] or component in myDict["testType"]:
                         _isComponent = True
-                        if myDict["testScript"] not in testnames: testnames.append(myDict["testScript"])
+                        if (myDict["testScript"] not in testnames):
+                            if tests_to_ignore is not None:
+                                if myDict["testScript"] in tests_to_ignore: continue
+                            testnames.append(myDict["testScript"])
                 if not _isComponent:
                     print("No Tests for Component: {}".format(component))
                     no_test_components.append(component)
@@ -1166,7 +1170,7 @@ if __name__ == "__main__":
                         for root, dirs, files in os.walk(test_path):
                             for file in files:
                                 if file.endswith(".py") and file.startswith("test_"):
-                                     tests.append(os.path.join(root, file))
+                                     tests.append(os.path.realpath(os.path.join(root, file)))
                 else:
                     for test_path in test_paths:
                         #print(test_path)
@@ -1177,7 +1181,7 @@ if __name__ == "__main__":
                             for root, dirs, files in os.walk(test_path):
                                 for file in files:
                                     if file == test:
-                                        tests.append(os.path.join(root, file))
+                                        tests.append(os.path.realpath(os.path.join(root, file)))
                 testnames = tests
 
             if tests_to_ignore is not None:
@@ -1192,8 +1196,7 @@ if __name__ == "__main__":
                 print("List of tests is empty")
                 parser.print_help(sys.stderr)
                 sys.exit(1)
-            #print(testnames)
-            #sys.exit()
+
             run(testnames, args.branch, DRY_RUN)
     except:
         traceback.print_exc()
