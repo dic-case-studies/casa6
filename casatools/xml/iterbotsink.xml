@@ -126,6 +126,10 @@ This is used to construct {\tt synthesisiterbot} tool.
      <description>Pass in the output of synthesisdeconvolver.executeminorcycle()</description>
      <value type="record"/>
      </param>
+     <param name="immod" type="int">
+       <description>Outlier field id</description>
+       <value type="int"/>
+     </param>
 </input>
 <returns type="bool"/>
 </method>
