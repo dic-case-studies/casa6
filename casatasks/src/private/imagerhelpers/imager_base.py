@@ -384,6 +384,7 @@ class PySynthesisImager:
 #############################################
 
     def runMajorCycle(self, isCleanCycle=True):
+        # @param isCleanCycle: true if this is part of the major/minor cleaning loop, false if this is being used for some other purpose (such as generating the residual image)
         if self.IBtool != None:
             lastcycle = (self.IBtool.cleanComplete(lastcyclecheck=True) > 0)
         else:
