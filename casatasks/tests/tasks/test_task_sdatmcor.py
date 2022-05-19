@@ -501,7 +501,7 @@ class test_sdatmcor(unittest.TestCase):
                 layerboundaries='800m,1.5km', layertemperature='250K,200K,190K'
             )
 
-    def test_omp_num_threads(self):
+    def test_set_omp_num_threads(self):
         """Test if the task respects OMP_NUM_THREADS environment variable."""
         omp_num_threads_org = os.environ.get('OMP_NUM_THREADS')
         if omp_num_threads_org is not None:
@@ -545,6 +545,43 @@ class test_sdatmcor(unittest.TestCase):
             f'at test start time: {omp_num_threads_org}, current: {num_threads}, '
             f'last set in logfile: {num_threads_log}')
         self.assertEqual(num_threads, num_threads_log)
+
+        # check output MS
+        self.check_result({19: True, 23: True})
+
+    def test_unset_omp_num_threads(self):
+        """Test if the task respects OMP_NUM_THREADS environment variable."""
+        # unset OMP_NUM_THREADS if it is set
+        omp_num_threads_org = os.environ.get('OMP_NUM_THREADS')
+        if omp_num_threads_org is not None:
+            os.environ.pop('OMP_NUM_THREADS')
+        self.assertFalse('OMP_NUM_THREADS' in os.environ)
+        try:
+            # run task
+            sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
+        finally:
+            if omp_num_threads_org is not None:
+                os.environ['OMP_NUM_THREADS'] = omp_num_threads_org
+
+        # consistency check
+        if omp_num_threads_org is None:
+            self.assertIsNone(os.environ.get('OMP_NUM_THREADS'))
+        else:
+            self.assertEqual(os.environ.get('OMP_NUM_THREADS'), omp_num_threads_org)
+
+        # check log
+        self.assertTrue(os.path.exists(casalog.logfile()), msg='casalog file is missing!')
+        with open(casalog.logfile(), 'r') as f:
+            pattern = re.compile(r'.*Setting numThreads_ to ([0-9]+)')
+            lines = list(filter(lambda x: x is not None, map(lambda x: re.search(pattern, x), f)))
+        num_threads_log = int(lines[-1].group(1))
+        num_threads_expected = min(8, casalog.getNumCPUs())
+
+        casalog.post(
+            f'OMP_NUM_THREAD_VALUES: initial: {OMP_NUM_THREADS_INITIAL}, '
+            f'at test start time: {omp_num_threads_org}, expected: {num_threads_expected}, '
+            f'last set in logfile: {num_threads_log}')
+        self.assertEqual(num_threads_expected, num_threads_log)
 
         # check output MS
         self.check_result({19: True, 23: True})
