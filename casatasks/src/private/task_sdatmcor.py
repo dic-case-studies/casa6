@@ -597,6 +597,7 @@ def get_configuration_for_atmcor(infile, spw, outputspw, gainfactor, user_inputs
     config = dict(itertools.chain(*parameters))
 
     # number of threads for OpenMP
+    # if config['nthreads'] is set to -1, task will decide number of threads automatically
     config['nthreads'] = int(os.getenv('OMP_NUM_THREADS', -1))
 
     return config
