@@ -512,7 +512,7 @@ class test_sdatmcor(unittest.TestCase):
             else:
                 iter = filter(lambda x: x != int(omp_num_threads_org), range(2, 9))
                 num_threads = next(iter)
-                self.assertNotEqual(num_threads, omp_num_threads_org)
+            self.assertNotEqual(num_threads, omp_num_threads_org)
             os.environ['OMP_NUM_THREADS'] = f'{num_threads}'
 
             # run task
