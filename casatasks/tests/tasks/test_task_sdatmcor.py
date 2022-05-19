@@ -535,14 +535,14 @@ class test_sdatmcor(unittest.TestCase):
             self.assertEqual(os.environ.get('OMP_NUM_THREADS'), str(omp_num_threads_org))
 
         # check log
-        if os.path.exists(casalog.logfile()):
-            with open(casalog.logfile(), 'r') as f:
-                pattern = re.compile(r'.*Setting numThreads_ to ([0-9+])')
-                lines = list(filter(lambda x: x is not None, map(lambda x: re.search(pattern, x), f)))
-            num_threads_log = int(lines[-1].group(1))
+        self.assertTrue(os.path.exists(casalog.logfile()), msg='casalog file is missing!')
+        with open(casalog.logfile(), 'r') as f:
+            pattern = re.compile(r'.*Setting numThreads_ to ([0-9+])')
+            lines = list(filter(lambda x: x is not None, map(lambda x: re.search(pattern, x), f)))
+        num_threads_log = int(lines[-1].group(1))
 
-            print(f'{OMP_NUM_THREADS_INITIAL} {omp_num_threads_org} {num_threads} {num_threads_log}')
-            self.assertEqual(num_threads, num_threads_log)
+        print(f'{OMP_NUM_THREADS_INITIAL} {omp_num_threads_org} {num_threads} {num_threads_log}')
+        self.assertEqual(num_threads, num_threads_log)
 
         # check output MS
         self.check_result({19: True, 23: True})
