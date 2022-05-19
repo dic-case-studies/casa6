@@ -537,7 +537,7 @@ class test_sdatmcor(unittest.TestCase):
         # check log
         self.assertTrue(os.path.exists(casalog.logfile()), msg='casalog file is missing!')
         with open(casalog.logfile(), 'r') as f:
-            pattern = re.compile(r'.*Setting numThreads_ to ([0-9+])')
+            pattern = re.compile(r'.*Setting numThreads_ to ([0-9]+)')
             lines = list(filter(lambda x: x is not None, map(lambda x: re.search(pattern, x), f)))
         num_threads_log = int(lines[-1].group(1))
 
