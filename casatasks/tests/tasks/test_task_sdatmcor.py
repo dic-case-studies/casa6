@@ -21,6 +21,7 @@
 #
 #
 ##########################################################################
+import functools
 import itertools
 import os
 import re
@@ -501,6 +502,24 @@ class test_sdatmcor(unittest.TestCase):
                 layerboundaries='800m,1.5km', layertemperature='250K,200K,190K'
             )
 
+    def __extract_num_threads_from_logfile(self, logfile):
+        with open(logfile, 'r') as f:
+            pattern = re.compile(r'.*Setting numThreads_ to ([0-9]+)')
+            matches_iterator = map(lambda line: pattern.search(line), f)
+            last_match = functools.reduce(
+                lambda previous_match, current_match:
+                    current_match if current_match else previous_match,
+                matches_iterator
+            )
+
+        self.assertIsNotNone(
+            last_match,
+            msg=f'No match found for pattern "{pattern.pattern}" in "{casalog.logfile()}"'
+        )
+        num_threads_log = int(last_match.group(1))
+
+        return num_threads_log
+
     def test_set_omp_num_threads(self):
         """Test if the task respects OMP_NUM_THREADS environment variable."""
         omp_num_threads_org = os.environ.get('OMP_NUM_THREADS')
@@ -538,10 +557,7 @@ class test_sdatmcor(unittest.TestCase):
 
         # check log
         self.assertTrue(os.path.exists(casalog.logfile()), msg='casalog file is missing!')
-        with open(casalog.logfile(), 'r') as f:
-            pattern = re.compile(r'.*Setting numThreads_ to ([0-9]+)')
-            lines = list(filter(lambda x: x is not None, map(lambda x: re.search(pattern, x), f)))
-        num_threads_log = int(lines[-1].group(1))
+        num_threads_log = self.__extract_num_threads_from_logfile(casalog.logfile())
 
         casalog.post(
             f'OMP_NUM_THREAD_VALUES: initial: {OMP_NUM_THREADS_INITIAL} (returned by get_omp_num_threads), '
@@ -574,10 +590,7 @@ class test_sdatmcor(unittest.TestCase):
 
         # check log
         self.assertTrue(os.path.exists(casalog.logfile()), msg='casalog file is missing!')
-        with open(casalog.logfile(), 'r') as f:
-            pattern = re.compile(r'.*Setting numThreads_ to ([0-9]+)')
-            lines = list(filter(lambda x: x is not None, map(lambda x: re.search(pattern, x), f)))
-        num_threads_log = int(lines[-1].group(1))
+        num_threads_log = self.__extract_num_threads_from_logfile(casalog.logfile())
         num_threads_expected = min(8, casalog.getNumCPUs())
 
         casalog.post(
