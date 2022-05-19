@@ -114,7 +114,6 @@ class test_sdatmcor(unittest.TestCase):
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
 
     def tearDown(self):
-        print("tearDown::deleting MSs.")
         smart_remove(self.infile)
         smart_remove(self.outfile)
         smart_remove(self.caltable)
@@ -541,7 +540,10 @@ class test_sdatmcor(unittest.TestCase):
             lines = list(filter(lambda x: x is not None, map(lambda x: re.search(pattern, x), f)))
         num_threads_log = int(lines[-1].group(1))
 
-        print(f'{OMP_NUM_THREADS_INITIAL} {omp_num_threads_org} {num_threads} {num_threads_log}')
+        casalog.post(
+            f'OMP_NUM_THREAD_VALUES: initial: {OMP_NUM_THREADS_INITIAL}, '
+            f'at test start time: {omp_num_threads_org}, current: {num_threads}, '
+            f'last set in logfile: {num_threads_log}')
         self.assertEqual(num_threads, num_threads_log)
 
         # check output MS
@@ -572,14 +574,14 @@ class ATMParamTest(unittest.TestCase):
         qa = quanta()
         for user_input, expected in itertools.chain(
                 [(user_default, task_default)], valid_test_cases):
-            print('"{}" "{}"'.format(user_input, expected))
+            casalog.post(f'user input: "{user_input}", expected: "{expected}"')
             param, is_customized = sdatmcor_impl.parse_atm_params(
                 user_input,
                 user_default,
                 task_default,
                 default_unit=unit
             )
-            print('param {} is_customized {}'.format(param, is_customized))
+            casalog.post(f'param "{param}", is_customized "{is_customized}"')
             self.assertEqual(is_customized, user_input != user_default)
             if qa.isquantity(expected):
                 qparam = qa.quantity(param, unit)
@@ -613,7 +615,7 @@ class ATMParamTest(unittest.TestCase):
         qa = quanta()
         for user_input, expected in itertools.chain(
                 [(user_default, task_default)], valid_test_cases):
-            print('"{}" "{}"'.format(user_input, expected))
+            casalog.post(f'user input: "{user_input}", expected: "{expected}"')
             param, is_customized = sdatmcor_impl.parse_atm_list_params(
                 user_input,
                 user_default,
