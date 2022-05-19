@@ -505,13 +505,18 @@ class test_sdatmcor(unittest.TestCase):
     def test_omp_num_threads(self):
         """Test if the task respects OMP_NUM_THREADS environment variable."""
         omp_num_threads_org = os.environ.get('OMP_NUM_THREADS')
+        if omp_num_threads_org is not None:
+            self.assertTrue(
+                omp_num_threads_org.isdigit(),
+                msg="invalid value of OMP_NUM_THREADS environment variable"
+            )
+            omp_num_threads_org = int(omp_num_threads_org)
         try:
             # set num_threads for OpenMP to any value different from the current one
             if omp_num_threads_org is None:
                 num_threads = 2
             else:
-                iter = filter(lambda x: x != int(omp_num_threads_org), range(2, 9))
-                num_threads = next(iter)
+                num_threads = omp_num_threads_org + 1
             self.assertNotEqual(num_threads, omp_num_threads_org)
             os.environ['OMP_NUM_THREADS'] = f'{num_threads}'
 
@@ -521,13 +526,13 @@ class test_sdatmcor(unittest.TestCase):
             if omp_num_threads_org is None:
                 os.environ.pop('OMP_NUM_THREADS')
             else:
-                os.environ['OMP_NUM_THREADS'] = omp_num_threads_org
+                os.environ['OMP_NUM_THREADS'] = str(omp_num_threads_org)
 
         # consistency check
         if omp_num_threads_org is None:
             self.assertIsNone(os.environ.get('OMP_NUM_THREADS'))
         else:
-            self.assertEqual(os.environ.get('OMP_NUM_THREADS'), omp_num_threads_org)
+            self.assertEqual(os.environ.get('OMP_NUM_THREADS'), str(omp_num_threads_org))
 
         # check log
         if os.path.exists(casalog.logfile()):
