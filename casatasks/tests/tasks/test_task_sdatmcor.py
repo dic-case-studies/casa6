@@ -529,10 +529,12 @@ class test_sdatmcor(unittest.TestCase):
                 os.environ['OMP_NUM_THREADS'] = omp_num_threads_org
 
         # consistency check
-        if omp_num_threads_org is None:
-            self.assertIsNone(os.environ.get('OMP_NUM_THREADS'))
+        omp_num_threads_current = os.environ.get('OMP_NUM_THREADS')
+        if omp_num_threads_current is None:
+            self.assertIsNone(omp_num_threads_org)
         else:
-            self.assertEqual(os.environ.get('OMP_NUM_THREADS'), omp_num_threads_org)
+            self.assertIsNotNone(omp_num_threads_org)
+            self.assertEqual(omp_num_threads_current, omp_num_threads_org)
 
         # check log
         self.assertTrue(os.path.exists(casalog.logfile()), msg='casalog file is missing!')
@@ -542,7 +544,7 @@ class test_sdatmcor(unittest.TestCase):
         num_threads_log = int(lines[-1].group(1))
 
         casalog.post(
-            f'OMP_NUM_THREAD_VALUES: initial: {OMP_NUM_THREADS_INITIAL}, '
+            f'OMP_NUM_THREAD_VALUES: initial: {OMP_NUM_THREADS_INITIAL} (returned by get_omp_num_threads), '
             f'at test start time: {omp_num_threads_org}, current: {num_threads}, '
             f'last set in logfile: {num_threads_log}')
         self.assertEqual(num_threads, num_threads_log)
@@ -579,7 +581,7 @@ class test_sdatmcor(unittest.TestCase):
         num_threads_expected = min(8, casalog.getNumCPUs())
 
         casalog.post(
-            f'OMP_NUM_THREAD_VALUES: initial: {OMP_NUM_THREADS_INITIAL}, '
+            f'OMP_NUM_THREAD_VALUES: initial: {OMP_NUM_THREADS_INITIAL} (returned by get_omp_num_threads), '
             f'at test start time: {omp_num_threads_org}, expected: {num_threads_expected}, '
             f'last set in logfile: {num_threads_log}')
         self.assertEqual(num_threads_expected, num_threads_log)
