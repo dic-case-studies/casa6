@@ -506,7 +506,7 @@ class test_sdatmcor(unittest.TestCase):
         """Test if the task respects OMP_NUM_THREADS environment variable."""
         omp_num_threads_org = os.environ.get('OMP_NUM_THREADS')
         try:
-            # set num_threads for OpenMP to any different value than the current one
+            # set num_threads for OpenMP to any value different from the current one
             if omp_num_threads_org is None:
                 num_threads = 2
             else:
