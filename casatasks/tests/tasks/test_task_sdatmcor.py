@@ -516,12 +516,12 @@ class test_sdatmcor(unittest.TestCase):
             )
 
     def __extract_num_threads_from_logfile(self, logfile):
-        with open(logfile, 'r') as f:
+        with open(logfile, 'r') as file:
             pattern = re.compile(r'.*Setting numThreads_ to ([0-9]+)')
-            matches_iterator = map(lambda line: pattern.search(line), f)
+            matches_iterator = map(lambda line: pattern.search(line), file)
             last_match = functools.reduce(
-                lambda previous_match, current_match:
-                    current_match if current_match else previous_match,
+                lambda last_match_, current_match:
+                    current_match if current_match else last_match_,
                 matches_iterator
             )
 
