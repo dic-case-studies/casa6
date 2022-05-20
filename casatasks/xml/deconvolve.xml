@@ -55,7 +55,7 @@
                                be turned off via the 'restoration=T/F' parameter.
                                
                         Note : All input/output images should be 4D image cubes with axes
-                               [ra,dec,chan,pol], as is the default for the task tclean. Any input
+                               [ra,dec,pol,chan], as is the default for the task tclean. Any input
                                images without this format must be modified (eg with imregrid,
                                imtrans, image.adddegaxes) in order to be accepted.
 
