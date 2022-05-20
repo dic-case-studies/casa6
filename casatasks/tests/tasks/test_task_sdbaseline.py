@@ -2632,7 +2632,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
     04: test data selection
     05: test clipping
     06: duplicated fitting parameter in blparam file (the last one is adopted)
-    10: check if the names of baseline function correctly output in text file
+    10: check if baseline function names are correctly output in text file
     11: check if the numbers of baseline coefficients correctly output in text/csv
     NOT IMPLEMENTED YET
     * line finder
@@ -2860,7 +2860,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         return blparams
 
     def testVariable10(self):
-        """Check if the names of baseline function correctly output in text file"""
+        """Check if baseline function names are correctly output in text file"""
         self.infile = 'analytic_variable.ms'
         self.paramfile = 'analytic_variable_blparam.txt'
         self._refetch_files([self.infile, self.paramfile], self.datapath)
