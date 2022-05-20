@@ -391,7 +391,7 @@ maskmode -- mode of setting additional channel masks. When blmode='apply'
                  by setting a positive number to the clipniter parameter,
                  but linefinder doesn't run with this mode.
                  maskmode='auto' runs linefinder to detect line regions 
-                 to be excluded from fitting. this mode requires three 
+                 to be excluded from fitting. this mode requires four 
                  expandable parameters: thresh, avg_limit, minwidth, and edge.
                  NOTE maskmode='auto' is EXPERIMENTAL.
                  USE WITH CARE! May need to tweak the expandable parameters.
