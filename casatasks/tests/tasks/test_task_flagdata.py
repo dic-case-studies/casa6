@@ -427,7 +427,7 @@ class test_base(unittest.TestCase):
 
         inpvis = "combine-1-timestamp-2-SPW-no-WEIGHT_SPECTRUM-Same-Exposure.ms"
         self.vis = "msweight.ms"
-        
+
         if os.path.exists(self.vis):
             print("The MS is already around, just unflag")
         else:
@@ -507,6 +507,10 @@ class test_tfcrop(test_base):
     
     def setUp(self):
         self.setUp_data4tfcrop()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286.ms*')
         
     def test_tfcrop1(self):
         '''flagdata:: Test1 of mode = tfcrop'''
@@ -630,6 +634,14 @@ class test_rflag(test_base):
     
     def setUp(self):
         self.setUp_data4tfcrop()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286.ms*')
+        if os.path.exists('outcmd.txt'):
+            os.system('rm -rf outcmd.txt')
+        if os.path.exists('rflag_output_thresholds_freqdev0.txt'):
+            os.system('rm -rf rflag_output_thresholds_*')
 
     def cleanup_threshold_txt_files(self):
         os.remove('tdevfile.txt')
@@ -969,6 +981,10 @@ class test_rflag_evla(test_base):
     def setUp(self):
         self.setUp_evla_15A_397()
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf evla_15A-397_spw1_7_scan_4_6.ms*')
+
     def test_rflag_CAS_13360(self):
         '''flagdata:: rflag in a MS which has decreasing number of rows in subsequent chunks'''
         
@@ -985,6 +1001,21 @@ class test_rflag_evla(test_base):
 class test_shadow(test_base):
     def setUp(self):
         self.setUp_shadowdata2()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        if os.path.exists('shadowtest_part.ms'):
+            os.system('rm -rf shadowtest_part.ms*')
+        if os.path.exists('shadowAPP.ms'):
+            os.system('rm -rf shadowAPP.ms*')
+        if os.path.exists('cas2399.txt'):
+            os.system('rm -rf cas2399.txt*')
+        if os.path.exists('myants.txt'):
+            os.system('rm -rf myants.txt*')
+        if os.path.exists('listfile.txt'):
+            os.system('rm -rf listfile.txt*')
+        if os.path.exists('withdict.txt'):
+            os.system('rm -rf withdict.txt*')
 
     def test_CAS2399(self):
         '''flagdata: shadow by antennas not present in MS'''
@@ -1064,6 +1095,14 @@ class test_msselection(test_base):
 
     def setUp(self):
         self.setUp_ngc5921(True)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf ngc5921.ms*')
+        if os.path.exists('cas9366.flags.txt'):
+            os.system('rm -rf cas9366.flags.txt')
+        if os.path.exists('listauto.txt'):
+            os.system('rm -rf listauto.txt')
 
     def test_simple(self):
         '''flagdata: select only cross-correlations'''
@@ -1187,6 +1226,10 @@ class test_statistics_queries(test_base):
 
     def setUp(self):
         self.setUp_ngc5921(True)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf ngc5921.ms*')
 
     def test_CAS2021(self):
         '''flagdata: test antenna negation selection'''
@@ -1390,6 +1433,12 @@ class test_selections(test_base):
     def setUp(self):
         self.setUp_ngc5921(True)
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf ngc5921.ms*')
+        if os.path.exists('spwflags.txt'):
+            os.system('rm -rf spwflags.txt')
+
     def test_scan(self):
         '''flagdata: scan selection and manualflag compatibility'''
         flagdata(vis=self.vis, scan='3', mode='manualflag', savepars=False)
@@ -1521,6 +1570,10 @@ class test_alma(test_base):
     def setUp(self):
         self.setUp_alma_ms()
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf uid___A002_X30a93d_X43e_small*')
+
     def test_scanitent(self):
         '''flagdata: scanintent selection'''
         # flag POINTING CALIBRATION scans 
@@ -1635,7 +1688,13 @@ class test_selections2(test_base):
     
     def setUp(self):
         self.setUp_multi()
-        
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf multiobs*')
+        if os.path.exists('obs2.txt'):
+            os.system('rm -rf obs2.txt')
+
     def test_observation1(self):
         '''flagdata: observation ID selections'''
         # string
@@ -1699,6 +1758,10 @@ class test_elevation(test_base):
         self.x65 = 2854278
         self.all = 2854278
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf ngc5921*')
+
     def test_lower(self):
         flagdata(vis = self.vis, mode = 'elevation', savepars=False)
         
@@ -1743,9 +1806,13 @@ class test_list_file(test_base):
     
     def setUp(self):
         self.setUp_ngc5921(True)
-        
+
     def tearDown(self):
-        os.system('rm -rf list*.txt list*.tmp')
+        os.system('rm -rf list*.txt list*.tmp *myflags*')
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf ngc5921*')
 
     def test_file1(self):
         '''flagdata: apply flags from a list and do not save'''
@@ -1898,13 +1965,13 @@ class test_list_file(test_base):
     def test_reason2(self):
         '''flagdata: add_reason to text file'''
         flagdata(vis=self.vis, mode='clip', scan='4', clipminmax=[0, 5], savepars=True, 
-                  cmdreason='CLIPSCAN4', outfile='reason2.txt', action='')
+                  cmdreason='CLIPSCAN4', outfile='listreason2.txt', action='')
 
         flagdata(vis=self.vis, mode='clip', scan='2~3', clipminmax=[ 0, 5], savepars=True, 
-                  cmdreason='CLIPSCAN2_3', outfile='reason2.txt', action='')
+                  cmdreason='CLIPSCAN2_3', outfile='listreason2.txt', action='')
 
         # Apply flag cmd
-        flagdata(vis=self.vis, mode='list', inpfile='reason2.txt',reason='CLIPSCAN2_3',
+        flagdata(vis=self.vis, mode='list', inpfile='listreason2.txt',reason='CLIPSCAN2_3',
                  flagbackup=False)
         
         res = flagdata(vis=self.vis, mode='summary')
@@ -1997,17 +2064,17 @@ class test_list_file(test_base):
 
         # Extract only the type 'summary' reports into a list
         summary_reps = self.extract_reports(summary_stats_list)
- 
-        for ind in range(0,len(summary_reps)):        
+
+        for ind in range(len(summary_reps)):
             flagcount = summary_reps[ind]['flagged'];
-            totalcount = summary_reps[ind]['total'];         
+            totalcount = summary_reps[ind]['total'];
             # From the second summary onwards, subtract counts from the previous one :)
             if ( ind > 0 ):
                  flagcount = flagcount - summary_reps[ind-1]['flagged'];
-         
+
             print("Summary ", ind , "(" , summary_reps[ind]['name']  , ") :  Flagged : " , flagcount , " out of " , totalcount)
-         
-        self.assertEqual(summary_reps[0]['flagged'],238140, 'Should show only scan=2 flagged')    
+
+        self.assertEqual(summary_reps[0]['flagged'],238140, 'Should show only scan=2 flagged')
         self.assertEqual(summary_reps[1]['flagged']-summary_reps[0]['flagged'],0, 'Should not flag any zeros')    
  
     def test_file_summary2(self):
@@ -2132,9 +2199,21 @@ class test_list_file(test_base):
 
 class test_list_list(test_base):
     """Test of mode = 'list' using input list"""
-    
+
     def setUp(self):
         self.setUp_ngc5921(True)
+        self.outfile = ''
+        self.outfile2 = ''
+
+    def tearDown(self) -> None:
+        if os.path.exists(self.outfile):
+            os.system('rm -rf '+self.outfile)
+        if os.path.exists(self.outfile2):
+            os.system('rm -rf '+self.outfile2)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf ngc5921*')
 
     def test_list1(self):
         '''flagdata: apply flags from a Python list and do not save'''
@@ -2155,11 +2234,12 @@ class test_list_list(test_base):
         myinput = ["scan='1~3' mode='manual'",
                  "scan='5' mode='manual'"]
 
+        self.outfile = 'myflags.txt'
         # save to another file
-        if os.path.exists("myflags.txt"):
-            os.system('rm -rf myflags.txt')
+        if os.path.exists(self.outfile):
+            os.system('rm -rf '+self.outfile)
             
-        flagdata(vis=self.vis, mode='list', inpfile=myinput, savepars=True, action='', outfile='myflags.txt')
+        flagdata(vis=self.vis, mode='list', inpfile=myinput, savepars=True, action='', outfile=self.outfile)
         
         res = flagdata(vis=self.vis, mode='summary')
         self.assertEqual(res['flagged'], 0, 'No flags should have been applied')
@@ -2227,12 +2307,13 @@ class test_list_list(test_base):
                 "mode='manual' scan='2'",
                 "scan='3' reason='SCAN_3'",
                 "scan='4' reason=''"]
-        
-        flagdata(vis=self.vis, mode='list', inpfile=myinput, savepars=True, outfile='reason3b.txt',
+
+        self.outfile = 'reason3b.txt'
+        flagdata(vis=self.vis, mode='list', inpfile=myinput, savepars=True, outfile=self.outfile,
                   cmdreason='MANUALFLAG', action='')
         
         # Apply the flag cmds
-        flagdata(vis=self.vis, mode='list', inpfile='reason3b.txt', reason='MANUALFLAG',
+        flagdata(vis=self.vis, mode='list', inpfile=self.outfile, reason='MANUALFLAG',
                  flagbackup=False)
         
         res = flagdata(vis=self.vis, mode='summary')
@@ -2241,16 +2322,16 @@ class test_list_list(test_base):
     # The new parser allows whitespaces in reason values. Change the test
     def test_cmdreason1(self):
         '''flagdata: allow whitespace in cmdreason'''
-        outtxt1 = 'spacereason1.txt'
-        flagdata(vis=self.vis, scan='1,3', action='calculate', savepars=True, outfile=outtxt1, 
+        self.outfile = 'spacereason1.txt'
+        flagdata(vis=self.vis, scan='1,3', action='calculate', savepars=True, outfile=self.outfile,
                  cmdreason='ODD SCANS')
-        outtxt2 = 'spacereason2.txt'
-        flagdata(vis=self.vis, scan='2,4', action='calculate', savepars=True, outfile=outtxt2, 
+        self.outfile2 = 'spacereason2.txt'
+        flagdata(vis=self.vis, scan='2,4', action='calculate', savepars=True, outfile=self.outfile2,
                  cmdreason='EVEN SCANS')
-        os.system("cat "+outtxt1+" >> "+outtxt2)
+        os.system("cat "+self.outfile+" >> "+self.outfile2)
         
         # Apply the cmd with blanks in reason.
-        flagdata(vis=self.vis, mode='list', inpfile=outtxt2, reason='ODD SCANS')
+        flagdata(vis=self.vis, mode='list', inpfile=self.outfile2, reason='ODD SCANS')
         res = flagdata(vis=self.vis, mode='summary')
         self.assertEqual(res['scan']['1']['flagged'], 568134)
         self.assertEqual(res['scan']['3']['flagged'], 762048)
@@ -2258,7 +2339,7 @@ class test_list_list(test_base):
     
     def test_cmdreason2(self):
         '''flagdata: Blanks in reason are also allowed in FLAG_CMD table'''
-        outtxt = 'goodreason.txt'
+        self.outfile = 'goodreason.txt'
         flagdata(vis=self.vis, scan='1,3', action='calculate', savepars=True, 
                  cmdreason='ODD SCANS')
         flagdata(vis=self.vis, scan='2,4', action='calculate', savepars=True,
@@ -2292,7 +2373,20 @@ class test_clip(test_base):
     
     def setUp(self):
         self.setUp_data4tfcrop()
-        
+        self.timeavgms = ''
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286.ms*')
+        if os.path.exists('list5.txt'):
+            os.system('rm -rf list5.txt*')
+        if os.path.exists('test_residual_step1_timeavg.ms'):
+            os.system('rm -rf test_residual_step1_timeavg.ms*')
+        if os.path.exists('test_residual_step2_timeavg.ms'):
+            os.system('rm -rf test_residual_step2_timeavg.ms*')
+        if os.path.exists('timeavg.ms'):
+            os.system('rm -rf timeavg.ms*')
+
     def test_clipzeros(self):
         '''flagdata: clip only zero-value data'''
 
@@ -2393,14 +2487,15 @@ class test_clip(test_base):
                 tbt.close()
 
         # Create an output with 4 rows
-        split(vis=self.vis,outputvis='timeavg.ms',datacolumn='data',spw='9',scan='30',antenna='1&2',
+        timeavgms = 'timeavg.ms'
+        split(vis=self.vis,outputvis=timeavgms,datacolumn='data',spw='9',scan='30',antenna='1&2',
                timerange='2010/10/16/14:45:08.50~2010/10/16/14:45:11.50')
-        flagdata('timeavg.ms', flagbackup=False, mode='unflag')
+        flagdata(timeavgms, flagbackup=False, mode='unflag')
         
         # STEP 1
         # Create time averaged output in mstransform
         ms_step1 = 'test_residual_step1_timeavg.ms'
-        mstransform('timeavg.ms',outputvis=ms_step1,
+        mstransform(timeavgms,outputvis=ms_step1,
                     datacolumn='data',timeaverage=True,timebin='2s')
         
         # clip it
@@ -2411,11 +2506,11 @@ class test_clip(test_base):
         # STEP 2
         # Clip with time averaging.
         ms_step2 = 'test_residual_step2_timeavg.ms'
-        flagdata(vis='timeavg.ms', flagbackup=False, mode='clip', datacolumn='DATA', 
+        flagdata(vis=timeavgms, flagbackup=False, mode='clip', datacolumn='DATA',
                  timeavg=True, timebin='2s', clipminmax=[0.0,0.08])
         
         # Do another time average in mstransform to have the corrected averaged visibilities
-        mstransform('timeavg.ms', outputvis=ms_step2,
+        mstransform(timeavgms, outputvis=ms_step2,
                     datacolumn='data',timeaverage=True,timebin='2s')
         
         res2 = flagdata(vis=ms_step2, mode='summary', spwchan=True)
@@ -2464,10 +2559,10 @@ class test_clip(test_base):
         os.system('cp -r '+self.vis + ' ngc5921_virtual_model_col.ms')
 
         # Create MODEL column
-        setjy(vis=self.vis, field='1331+305*',modimage='',standard='Perley-Taylor 99',scalebychan=False, usescratch=True)
+        setjy(vis=self.vis, field='1331+305*',model='',standard='Perley-Taylor 99',scalebychan=False, usescratch=True)
 
         # Create virtual MODEL column
-        setjy(vis='ngc5921_virtual_model_col.ms', field='1331+305*',modimage='',standard='Perley-Taylor 99',scalebychan=False, usescratch=False)
+        setjy(vis='ngc5921_virtual_model_col.ms', field='1331+305*',model='',standard='Perley-Taylor 99',scalebychan=False, usescratch=False)
         
         # Flag RESIDUAL_DATA = DATA - MODEL
         flagdata(vis=self.vis, mode='clip',datacolumn='RESIDUAL_DATA',clipminmax=[2.3,3.1],clipoutside=False, action='apply')
@@ -2485,7 +2580,7 @@ class test_clip(test_base):
         os.system('cp -r '+self.vis + ' ngc5921_virtual_model_col.ms')
 
         # Create virtual MODEL column
-        setjy(vis='ngc5921_virtual_model_col.ms', field='1331+305*',modimage='',standard='Perley-Taylor 99',scalebychan=False, 
+        setjy(vis='ngc5921_virtual_model_col.ms', field='1331+305*',model='',standard='Perley-Taylor 99',scalebychan=False, 
               usescratch=False)
                                               
         # Flag RESIDUAL_DATA = DATA - virtual MODEL
@@ -2511,7 +2606,11 @@ class test_antint(test_base):
     def setUp(self):
         # TODO: we need a more appropriate input MS for this.
         self.setUp_data4tfcrop()
-        
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286.ms*')
+
     def test_antint_spw3_high_threshold(self):
         '''flagdata: mode = antint, spw = 3, minchanfrac = 0.6'''
 
@@ -2612,7 +2711,11 @@ class test_CASA_4_0_bug_fix(test_base):
 
     def setUp(self):
         self.setUp_data4tfcrop()
-        
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286.ms*')
+
     def test_CAS_4270(self):
         """flagdata: Test uvrange given in lambda units"""
                 
@@ -2763,7 +2866,13 @@ class test_tsys(test_base):
     
     def setUp(self):
          self.setUp_tsys_case()
-         
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf X7ef.tsys*')
+        if os.path.exists('callist.txt'):
+            os.system('rm -rf callist.txt')
+
     def test_unsupported_elevation(self):
         '''Flagdata: Unsupported elevation mode'''
         with self.assertRaises(ValueError):
@@ -3098,6 +3207,10 @@ class test_bandpass(test_base):
     def setUp(self):
         self.setUp_bpass_case()
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf cal.fewscans.bpass*')
+
     def test_unsupported_modes(self):
         '''Flagdata: elevation and shadow are not supported in cal tables'''
         with self.assertRaises(ValueError):
@@ -3316,7 +3429,11 @@ class test_newcal(test_base):
     
     def setUp(self):
         self.setUp_newcal()
-        
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf ap314.gcal*')
+
     def test_newcal_selection1(self):
         '''Flagdata: select one solution for one scan and spw'''
         flagdata(vis=self.vis, mode='clip', clipminmax=[0,0.1], correlation='Sol1', spw='0',
@@ -3389,7 +3506,11 @@ class test_newcal(test_base):
 # CAS-5044
 class test_weight_spectrum(test_base):
     """flagdata:: Test flagging WEIGHT_SPECTRUM column"""
-                                                
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf four_rows_weight_spectrum.ms*')
+        os.system('rm -rf msweight.ms*')
+
     def test_clipzeros_weight(self):
         '''flagdata: datacolumn=WEIGHT_SPECTRUM, clip zeros'''
         self.setUp_wtspec()
@@ -3534,7 +3655,13 @@ class test_float_column(test_base):
     
     def setUp(self):
         self.setUp_floatcol()
-                
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf SDFloatColumn.ms*')
+        if os.path.exists('outfakefield.txt'):
+            os.system('rm -rf outfakefield.txt')
+
     def test_manual_channels(self):
         '''flagdata: flag meta-data from a single-dish MS'''
         flagdata(vis=self.vis, spw='1;3;5;7:0~4,1;3:507~511,5:1019~1023,7:2043~2047')
@@ -3614,7 +3741,11 @@ class test_tbuff(test_base):
     '''Test flagdata in list mode and time buffer padding'''
     def setUp(self):
         self.setUp_tbuff()
-        
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf uid___A002_X72c4aa_X8f5_scan21_spw18_field2_corrXX.ms*')
+
     def tearDown(self):
         os.system('rm -rf '+self.online)
         os.system('rm -rf '+self.user)
@@ -3677,6 +3808,7 @@ class TestMergeManualTimerange(unittest.TestCase):
              'timerange': '00:06~00:07'},
             {'mode': 'summary3'}
             ]
+
     def test_empty(self):
         self.assertEqual(fh._merge_timerange([]), [])
 
@@ -3773,7 +3905,11 @@ class test_preaveraging(test_base):
     def setUp(self):
         self.setUp_data4preaveraging()
         self.corrs = ['RL', 'LL', 'LR', 'RR']
-        
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286_spw9_small_for_preaveraging.ms*')
+
     def tearDown(self):
         os.system('rm -rf test_preaveraging.ms')        
         os.system('rm -rf test_clip_timeavg*')
@@ -4189,6 +4325,10 @@ class test_preaveraging_rflag_residual(test_base):
     def setUp(self):
         self.setUp_data4tfcrop()
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286.ms*')
+
     def tearDown(self):
         os.system('rm -rf test_rflag_timeavg_residual*step2*ms')
         os.system('rm -rf test_rflag_channelavg_residual*step2*ms')
@@ -4298,7 +4438,7 @@ class test_preaveraging_rflag_residual(test_base):
 class test_virtual_col(test_base):
     def setUp(self):
         self.setUp_ngc5921(force=True)
-        
+
     def tearDown(self):    
         os.system('rm -rf ngc5921*')        
 
@@ -4330,7 +4470,7 @@ class test_virtual_col(test_base):
         self.MSvirtual = 'ngc5921_virtual.ms'
         
         # First, run setjy to create a virtual MODEl column (SOURCE_MODEL)
-        setjy(vis=self.MSvirtual, field='1331+305*',modimage='',standard='Perley-Taylor 99',
+        setjy(vis=self.MSvirtual, field='1331+305*',model='',standard='Perley-Taylor 99',
                 scalebychan=False, usescratch=False)
         
         # Verify that the virtual column exist
@@ -4344,7 +4484,7 @@ class test_virtual_col(test_base):
 
         # Compare with a normal MODEL column flagging
         # Run setjy to create a normal MODEl column (SOURCE_MODEL)
-        setjy(vis=self.vis, field='1331+305*',modimage='',standard='Perley-Taylor 99',
+        setjy(vis=self.vis, field='1331+305*',model='',standard='Perley-Taylor 99',
                 scalebychan=False, usescratch=True)
         
         flagdata(vis=self.vis,mode='clip',datacolumn='RESIDUAL_DATA',clipminmax=[2.3,3.1],clipoutside=False)
@@ -4373,8 +4513,7 @@ class test_flags_propagation_base(test_base):
         try:
             tbt = table()
             tbt.open(mss)
-            flags = tbt.getcol('FLAG')
-            return flags
+            return tbt.getcol('FLAG')
         finally:
             tbt.close()
 
@@ -4425,6 +4564,10 @@ class test_flags_propagation_channelavg(test_flags_propagation_base):
 
     def setUp(self):
         self.setUp_data4preaveraging()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286_spw9_small_for_preaveraging.ms*')
 
     def run_auto_flag_preavg_propagation(self, chanbin=2, mode='clip', ims='', **kwargs):
         """
@@ -4595,6 +4738,10 @@ class test_flags_propagation_timeavg(test_flags_propagation_base):
     def setUp(self):
         self.setUp_data4timeavg()
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286_spw9_small_for_timeavg.ms*')
+
     def run_auto_flag_preavg_propagation(self, timebin=2, mode='clip', ims='', **kwargs):
         """
         Enables time average and prepares a priori flags in a sparse pattern through rows/
@@ -4755,6 +4902,10 @@ class test_forbid_avg_in_non_autoflagging_list(test_base):
     def setUp(self):
         self.setUp_data4tfcrop()
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286.ms*')
+
     def _run_method_with_avg(self, method, more_params=''):
         inplist = ["mode='{}' timeavg=True timebin='1s' {}".format(method, more_params)]
 
@@ -4846,6 +4997,10 @@ class test_list_modes_forbidden_with_avg(test_base):
 
     def setUp(self):
         self.setUp_data4tfcrop()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286.ms*')
 
     def test_test_forbid_timeavg_list(self):
         '''flagdata: timeavg=True should not be accepted in list mode, with +manual'''
@@ -4967,6 +5122,10 @@ class test_auto_methods_display(test_base):
         """ This MS has 1 field, 2 scans, 16 spws, with 64 channels each. 4 corr"""
         self.setUp_data4tfcrop()
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286.ms*')
+
     def test_display_clip_timeavg_chanavg(self):
         """ Display data with clip, enabling avg (time and chan)"""
 
@@ -5008,32 +5167,6 @@ class test_auto_methods_display(test_base):
 
         flagdata(vis=self.vis, flagbackup=False, mode='list', inpfile=inplist,
                  display='data')
-
-
-# Cleanup class
-class cleanup(test_base):
-
-    def tearDown(self):
-        os.system('rm -rf ngc5921.*ms* testwma*ms*')
-        os.system('rm -rf flagdatatest.*ms*')
-        os.system('rm -rf missing-baseline.*ms*')
-        os.system('rm -rf multiobs.*ms*')
-        os.system('rm -rf uid___A002_X30a93d_X43e_small.*ms*')
-        os.system('rm -rf Four_ants_3C286*.ms')
-        os.system('rm -rf shadow*.*ms*')
-        os.system('rm -rf testmwa.*ms*')
-        os.system('rm -rf cal.fewscans.bpass*')
-        os.system('rm -rf X7ef.tsys* ap314.gcal*')
-        os.system('rm -rf list*txt*')
-        os.system('rm -rf fourrows*')
-        os.system('rm -rf SDFloatColumn*')
-        os.system('rm -rf *weight*ms*')
-        os.system('rm -rf uid___A002_X72c4aa_X8f5_scan21_spw18*')
-        os.system('rm -rf test_residual_step*.ms')
-
-    def test_runTest(self):
-        '''flagdata: Cleanup'''
-        pass
 
 if __name__ == '__main__':
     unittest.main()
