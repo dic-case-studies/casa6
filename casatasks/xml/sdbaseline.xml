@@ -84,7 +84,7 @@ pipeline processing for huge dataset.
     </param>
 
     <param name="maskmode" type="string">
-        <shortdescription>mode of setting additional channel masks</shortdescription>
+        <shortdescription>mode of setting additional channel masks [&quot;list&quot; or &quot;auto&quot;]</shortdescription>
 
         <description>mode of setting additional channel masks. &quot;list&quot; and &quot;auto&quot; are available now.</description>
         <value>list</value>
