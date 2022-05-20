@@ -96,12 +96,12 @@ def apply_gainfactor(name, spw, factor):
 
 @contextlib.contextmanager
 def environment_variable_manager(var_name):
-    var_org = os.environ[var_name]
+    var_org = os.environ.get(var_name)
     try:
         yield var_org
     finally:
         if var_org is None:
-            os.environ.pop(var_name)
+            os.environ.pop(var_name, None)
         else:
             os.environ[var_name] = var_org
 
