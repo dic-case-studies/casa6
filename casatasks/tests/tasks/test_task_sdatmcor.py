@@ -21,6 +21,7 @@
 #
 #
 ##########################################################################
+import contextlib
 import functools
 import itertools
 import os
@@ -91,6 +92,18 @@ def apply_gainfactor(name, spw, factor):
                     tsel.putcol(colname, data * factor)
         finally:
             tsel.close()
+
+
+@contextlib.contextmanager
+def environment_variable_manager(var_name):
+    var_org = os.environ[var_name]
+    try:
+        yield var_org
+    finally:
+        if var_org is None:
+            os.environ.pop(var_name)
+        else:
+            os.environ[var_name] = var_org
 
 
 class test_sdatmcor(unittest.TestCase):
@@ -522,10 +535,9 @@ class test_sdatmcor(unittest.TestCase):
 
     def test_set_omp_num_threads(self):
         """Test if the task respects OMP_NUM_THREADS environment variable."""
-        omp_num_threads_org = os.environ.get('OMP_NUM_THREADS')
         omp_num_threads_org_int = None
 
-        try:
+        with environment_variable_manager('OMP_NUM_THREADS') as omp_num_threads_org:
             # set num_threads for OpenMP to any value different from the current one
             if omp_num_threads_org is None:
                 num_threads = 2
@@ -541,11 +553,6 @@ class test_sdatmcor(unittest.TestCase):
 
             # run task
             sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
-        finally:
-            if omp_num_threads_org is None:
-                os.environ.pop('OMP_NUM_THREADS')
-            else:
-                os.environ['OMP_NUM_THREADS'] = omp_num_threads_org
 
         # consistency check
         omp_num_threads_current = os.environ.get('OMP_NUM_THREADS')
@@ -568,19 +575,48 @@ class test_sdatmcor(unittest.TestCase):
         # check output MS
         self.check_result({19: True, 23: True})
 
-    def test_unset_omp_num_threads(self):
-        """Test if the task respects OMP_NUM_THREADS environment variable."""
-        # unset OMP_NUM_THREADS if it is set
-        omp_num_threads_org = os.environ.get('OMP_NUM_THREADS')
-        if omp_num_threads_org is not None:
-            os.environ.pop('OMP_NUM_THREADS')
-        self.assertFalse('OMP_NUM_THREADS' in os.environ)
-        try:
+    def test_set_omp_num_threads_zero(self):
+        """Test if the task works when OMP_NUM_THREADS is zero."""
+        with environment_variable_manager('OMP_NUM_THREADS') as omp_num_threads_org:
+            # set num_threads for OpenMP to any value different from the current one
+            num_threads = 0
+            os.environ['OMP_NUM_THREADS'] = f'{num_threads}'
+
             # run task
             sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
-        finally:
+
+        # consistency check
+        omp_num_threads_current = os.environ.get('OMP_NUM_THREADS')
+        if omp_num_threads_current is None:
+            self.assertIsNone(omp_num_threads_org)
+        else:
+            self.assertIsNotNone(omp_num_threads_org)
+            self.assertEqual(omp_num_threads_current, omp_num_threads_org)
+
+        # check log
+        self.assertTrue(os.path.exists(casalog.logfile()), msg='casalog file is missing!')
+        num_threads_log = self.__extract_num_threads_from_logfile(casalog.logfile())
+        num_threads_expected = min(8, casalog.getNumCPUs())
+
+        casalog.post(
+            f'OMP_NUM_THREAD_VALUES: initial: {OMP_NUM_THREADS_INITIAL} (returned by get_omp_num_threads), '
+            f'at test start time: {omp_num_threads_org}, current: {num_threads}, '
+            f'last set in logfile: {num_threads_log}')
+        self.assertEqual(num_threads_expected, num_threads_log)
+
+        # check output MS
+        self.check_result({19: True, 23: True})
+
+    def test_unset_omp_num_threads(self):
+        """Test if the task respects OMP_NUM_THREADS environment variable."""
+        with environment_variable_manager('OMP_NUM_THREADS') as omp_num_threads_org:
+            # unset OMP_NUM_THREADS if it is set
             if omp_num_threads_org is not None:
-                os.environ['OMP_NUM_THREADS'] = omp_num_threads_org
+                os.environ.pop('OMP_NUM_THREADS')
+            self.assertFalse('OMP_NUM_THREADS' in os.environ)
+
+            # run task
+            sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
 
         # consistency check
         if omp_num_threads_org is None:
