@@ -59,11 +59,11 @@
       
       <value/>
     </param>
-    <param type="bool" name="showplot" subparam="True"><shortdescription>Plot S vs |u| to the screen?</shortdescription><description>Plot S vs |u| to the screen?</description>
+    <param type="bool" name="showplot" subparam="True"><shortdescription>Plot S vs \|u\| to the screen?</shortdescription><description>Plot S vs \|u\| to the screen?</description>
       
       <value>False</value>
     </param>
-    <param type="string" name="savefig" subparam="true"><shortdescription>Save a plot of S vs |u| to this filename</shortdescription><description>Save a plot of S vs |u| to this filename</description>
+    <param type="string" name="savefig" subparam="true"><shortdescription>Save a plot of S vs \|u\| to this filename</shortdescription><description>Save a plot of S vs \|u\| to this filename</description>
       
       <value/>
     </param>

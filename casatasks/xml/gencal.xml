@@ -9,23 +9,24 @@ and applied to the data using applycal. Several specialized
 calibrations are also generated with gencal.
 
 Current antenna-based gencal options (caltype) are:
-* 'amp'= amplitude correction
-* 'ph' = phase correction
-* 'sbd'= single-band delay (phase-frequency slope for each spw)
-* 'mbd'= multi-band delay (phase-frequency slope over all spw)
-* 'antpos' = ITRF antenna position corrections
-* 'antposvla' = VLA-centric antenna position corrections
-* 'tsys' = Tsys from the SYSCAL table (ALMA)
-* 'swpow' = EVLA switched-power gains (experimental)
-* 'evlagain' (='swpow') (this syntax will deprecate)
-* 'rq' = EVLA requantizer gains _only_
-* 'swp/rq' = EVLA switched-power gains divided by requantizer gain
-* 'opac' = Tropospheric opacity
-* 'gc' = Gain curve (zenith-angle-dependent gain) (VLA only)
-* 'eff' = Antenna efficiency (sqrt(K/Jy)) (VLA only)
-* 'gceff' = Gain curve and efficiency (VLA only)
-* 'tecim' = Time-dep TEC image specified in infile
-* 'jyperk'= Jy/K factor via Jy/K DB Web API
+
+    - 'amp'= amplitude correction
+    - 'ph' = phase correction
+    - 'sbd'= single-band delay (phase-frequency slope for each spw)
+    - 'mbd'= multi-band delay (phase-frequency slope over all spw)
+    - 'antpos' = ITRF antenna position corrections
+    - 'antposvla' = VLA-centric antenna position corrections
+    - 'tsys' = Tsys from the SYSCAL table (ALMA)
+    - 'swpow' = EVLA switched-power gains (experimental)
+    - 'evlagain' (='swpow') (this syntax will deprecate)
+    - 'rq' = EVLA requantizer gains _only_
+    - 'swp/rq' = EVLA switched-power gains divided by requantizer gain
+    - 'opac' = Tropospheric opacity
+    - 'gc' = Gain curve (zenith-angle-dependent gain) (VLA only)
+    - 'eff' = Antenna efficiency (sqrt(K/Jy)) (VLA only)
+    - 'gceff' = Gain curve and efficiency (VLA only)
+    - 'tecim' = Time-dep TEC image specified in infile
+    - 'jyperk'= Jy/K factor via Jy/K DB Web API
 </description>
 <input>
    <param mustexist="true" name="vis" type="path">
@@ -65,33 +66,33 @@ Current antenna-based gencal options (caltype) are:
                         'antposvla', 'tsys', 'evlagain', 'opac', 'gc',
                         'gceff', 'eff', 'tecim', 'jyperk'
    
-                        * 'amp' = gain (G) amplitude (1 real parameter
+                        - 'amp' = gain (G) amplitude (1 real parameter
                            per pol, antenna, spw)
-                        * 'ph'  = gain (G) phase (deg) (1 real parameter
+                        - 'ph'  = gain (G) phase (deg) (1 real parameter
                            per pol, antenna, spw)
-                        * 'sbd' = single-band delays (nsec) (1 real
+                        - 'sbd' = single-band delays (nsec) (1 real
                            parameter per pol, antenna, spw)
-                        * 'mbd' = multi-band delay (nsec) (1 real
+                        - 'mbd' = multi-band delay (nsec) (1 real
                            parameter per pol, antenna, spw)
-                        * 'antpos' = antenna position corrections (m) (3
+                        - 'antpos' = antenna position corrections (m) (3
                            real ITRF offset parameters per antenna; spw,
                            pol selection will be ignored)
                            With antenna='', this triggers an automated
                            lookup of antenna positions for EVLA and ALMA.
-                        * 'antposvla' = antenna position corrections (m)
+                        - 'antposvla' = antenna position corrections (m)
                            specified in the old VLA-centric coordinate
                            system
-                        * 'tsys' = Tsys from the SYSCAL table (ALMA)
-                        * 'evlagain' = EVLA switched-power gains
+                        - 'tsys' = Tsys from the SYSCAL table (ALMA)
+                        - 'evlagain' = EVLA switched-power gains
                            (experimental)
-                        * 'opac' = Tropospheric opacity (1 real parameter
+                        - 'opac' = Tropospheric opacity (1 real parameter
                            per antenna, spw)
-                        * 'gc' = Antenna zenith-angle dependent gain
+                        - 'gc' = Antenna zenith-angle dependent gain
                            curve (auto-lookup)
-                        * 'gceff' = Gain curve and efficiency
+                        - 'gceff' = Gain curve and efficiency
                            (auto-lookup)
-                        * 'eff' = Antenna efficiency (auto-lookup)
-                        * 'jyperk' = Jy/K factor via Jy/K DB Web API
+                        - 'eff' = Antenna efficiency (auto-lookup)
+                        - 'jyperk' = Jy/K factor via Jy/K DB Web API
    
                            Example: caltype='ph'
       </description>
@@ -173,7 +174,7 @@ Current antenna-based gencal options (caltype) are:
                            Examples: spw='0~2,4'; spectral windows 0,1,2,4 (all channels) spw='&lt;2';  spectral windows less than 2 (i.e. 0,1) spw='0:5~61'; spw 0, channels 5 to 61 spw='0,10,3:3~45'; spw 0,10 all channels, spw
                            3 - chans 3 to 45. spw='0~2:2~6'; spw 0,1,2 with channels 2
                            through 6 in each.
-                           spw = '*:3~64'  channels 3 through 64 for all sp id's
+                           spw = '\*:3~64'  channels 3 through 64 for all sp id's
                            spw = ' :3~64' will NOT work.
       </description>
       <value/>

@@ -682,6 +682,42 @@ bool msmetadata::close() {
     return false;
 }
 
+variant* msmetadata::corrbit(const variant& spw) {
+    _FUNC(
+        const auto myType = spw.type();
+        if (myType == variant::INT) {
+            auto intSpw = spw.toInt();
+            if (intSpw >= 0) {
+                _checkSpwId(intSpw, false);
+                auto mymap = _msmd->getCorrBits();
+                return new variant(string(mymap[intSpw]));
+            }
+            else {
+                auto mymap = _msmd->getCorrBits();
+                return new variant(_vectorStringToStdVectorString(mymap));
+            }
+        }
+        else if (myType == variant::INTVEC) {
+            auto vecSpw = spw.toIntVec();
+            for (const auto& s : vecSpw) {
+                _checkSpwId(s, true);
+            }
+            auto mymap = _msmd->getCorrBits();
+            vector<String> res;
+            for (const auto& s : vecSpw) {
+                res.push_back(mymap[s]);
+            }
+            return new variant(_vectorStringToStdVectorString(res));
+        }
+        else {
+            ThrowCc(
+                "Parameter spw must either be an integer or a list of integers"
+            );
+        }
+    )
+    return nullptr;
+}
+
 variant* msmetadata::corrprodsforpol(long polid) {
     _FUNC(
         _checkPolId(polid, true);
@@ -691,7 +727,7 @@ variant* msmetadata::corrprodsforpol(long polid) {
             vector<ssize_t>(prods.shape().begin(),prods.shape().end())
         );
     )
-    return NULL;
+    return nullptr;
 }
 
 vector<long> msmetadata::corrtypesforpol(long polid) {
@@ -2304,8 +2340,8 @@ void msmetadata::_checkSpwId(int id, bool throwIfNegative) const {
         id >= (int)_msmd->nSpw(true) || (throwIfNegative && id < 0),
         "Spectral window ID " + String::toString(id)
         + " out of range, must be "
-        + (throwIfNegative ? "nonnegative and " : "") + "less than "
-        + String::toString((int)_msmd->nSpw(true))
+        + (throwIfNegative ? "nonnegative and " : "") + "less than or equal to "
+        + String::toString((int)_msmd->nSpw(true) - 1)
     );
 }
 

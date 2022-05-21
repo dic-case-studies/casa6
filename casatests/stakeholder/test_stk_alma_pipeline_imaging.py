@@ -1323,6 +1323,32 @@ class Test_standard(test_tclean_base):
         test_dict[test_name]['images'].extend( \
             (img+'.image.moment8.png',img+'.residual.moment8.png'))
 
+        if savemetricdict:
+            ### serialize ndarray in mask_stats_dcit
+            mask_stats_mod_dict = copy.deepcopy(mask_stats_dict)
+            mask_stats_mod_dict['mask'] = mask_stats_dict['mask'].tolist()
+
+            #create a nested dictionary containing exp dictionaries to save
+            savedict = {}
+            #list of stats to save
+            # im_stats, mask_stats, pb_stats, psf_stats,\
+            # model_stats, resid_stats, sumwt_stats]
+            savedict['im_stats_dict']=im_stats_dict
+            savedict['mask_stats_dict']=mask_stats_mod_dict
+            savedict['pb_stats_dict']=pb_stats_dict
+            savedict['psf_stats_dict']=psf_stats_dict
+            savedict['model_stats_dict']=model_stats_dict
+            savedict['resid_stats_dict']=resid_stats_dict
+            savedict['sumwt_stats_dict']=sumwt_stats_dict
+
+            #if self.parallel:
+            # for serial get it from *.psf
+            #savedict['bmin_dict']=bmin_dict
+            #savedict['bmaj_dict']=bmaj_dict
+            #savedict['pa_dict']=pa_dict
+
+            self.save_dict_to_file(test_name, savedict, test_name+'_cur_stats')
+
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
 
@@ -1520,6 +1546,30 @@ class Test_standard(test_tclean_base):
         self.mom8_creator(img+'.residual.tt0', range_list=[-0.005, 0.04])
         test_dict['test_standard_mtmfs']['images'].extend( \
             (img+'.image.tt0.moment8.png',img+'.residual.tt0.moment8.png'))
+
+        if savemetricdict:
+            ### serialize ndarray in mask_stats_dcit
+            mask_stats_mod_dict = copy.deepcopy(mask_stats_dict)
+            mask_stats_mod_dict['mask'] = mask_stats_dict['mask'].tolist()
+
+            #create a nested dictionary containing exp dictionaries to save
+            savedict = {}
+            #list of stats to save
+            # im_stats, mask_stats, pb_stats, psf_stats,\
+            # model_stats, resid_stats, sumwt_stats]
+            savedict['im_stats_dict']=im_stats_dict
+            savedict['mask_stats_dict']=mask_stats_mod_dict
+            savedict['pb_stats_dict']=pb_stats_dict
+            savedict['psf_stats_dict']=psf_stats_dict
+            savedict['model_stats_dict']=model_stats_dict
+            savedict['resid_stats_dict']=resid_stats_dict
+            savedict['sumwt_stats_dict']=sumwt_stats_dict
+            savedict['im1_stats_dict']=im1_stats_dict
+            savedict['resid1_stats_dict']=resid1_stats_dict
+            savedict['model1_stats_dict']=model1_stats_dict
+            savedict['sumwt1_stats_dict']=sumwt1_stats_dict
+
+            self.save_dict_to_file(test_name, savedict, test_name+'_cur_stats')
 
         self.assertTrue(th.check_final(pstr = report), \
             msg = failed)
@@ -2969,6 +3019,9 @@ class Test_mosaic(test_tclean_base):
             ### serialize ndarray in mask_stats_dcit
             mask_stats_mod_dict = copy.deepcopy(mask_stats_dict)
             mask_stats_mod_dict['mask'] = mask_stats_dict['mask'].tolist()
+            pb_stats_mod_dict = copy.deepcopy(pb_stats_dict)
+            pb_stats_mod_dict['pb_mask_0.2'] = pb_stats_dict['pb_mask_0.2'].tolist()
+            pb_stats_mod_dict['pb_mask_0.5'] = pb_stats_dict['pb_mask_0.5'].tolist()
             #create a nested dictionary containing exp dictionaries to save
             savedict = {}
             #list of stats to save
@@ -2976,15 +3029,15 @@ class Test_mosaic(test_tclean_base):
             # model_stats, resid_stats, sumwt_stats]
             savedict['im_stats_dict']=im_stats_dict
             savedict['mask_stats_dict']=mask_stats_mod_dict
-            savedict['pb_stats_dict']=pb_stats_dict
+            savedict['pb_stats_dict']=pb_stats_mod_dict
             savedict['psf_stats_dict']=psf_stats_dict
             savedict['model_stats_dict']=model_stats_dict
             savedict['resid_stats_dict']=resid_stats_dict
             savedict['sumwt_stats_dict']=sumwt_stats_dict
             savedict['wt_stats_dict']=wt_stats_dict
-            savedict['bmin_dict']=bmin_stats_dict
-            savedict['bmaj_dict']=bmaj_stats_dict
-            savedict['pa_dict']=pa_stats_dict
+            savedict['bmin_dict']=bmin_dict
+            savedict['bmaj_dict']=bmaj_dict
+            savedict['pa_dict']=pa_dict
 
             self.save_dict_to_file(test_name, savedict, test_name+'_cur_stats')
 

@@ -1,16 +1,7 @@
-from casatasks.private.casa_transition import is_CASA6
 
-if is_CASA6:
-    from casatools import quanta, sidebandseparator
+from casatools import quanta, sidebandseparator
 
-    from . import sdutil
-else:
-    import sdutil
-    from casac import casac
-    from taskinit import qatool as quanta
-
-    def sidebandseparator():
-        return casac.sidebandseparator()
+from . import sdutil
 
 
 @sdutil.sdtask_decorator

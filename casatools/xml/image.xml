@@ -632,7 +632,7 @@ in addition to any default \pixelmask\ in the image (a logical OR). For example
 print &quot;\t----\t Intro Ex 5 \t----&quot;
 ia.maketestimage('zz', overwrite=true)
 ia.statistics(mask='zz &gt; 0')      # Only evaluate for positive values
-ia.calcmask (mask='(2*zz) &gt; 0')   # Create a new mask which is T (good)
+ia.calcmask (mask='(2\*zz) &gt; 0')   # Create a new mask which is T (good)
                                   # when twice the image values are
                                   # positive, else F
 ia.close()
@@ -854,7 +854,7 @@ This method is identical to ia.newimagefromfile(). The description of how it wor
 <description>
 This method returns an image analysis tool associated with the specified image.
 Constructing a image analysis tool in addition to the default ia tool allows the
-user to operate on multiple images simultaneously. All ia.newimagefrom*()
+user to operate on multiple images simultaneously. All ia.newimagefrom\*()
 methods share this behavior.
     
 The parameter infile may refer to a CASA image, a Miriad image, or a FITS image.
@@ -1052,7 +1052,7 @@ ia.addnoise()
 ia.fromshape('aC',[10,10],overwrite=true)
 ia.addnoise()
 ia.done()
-myim = ia.imagecalc('eF', 'sin(aD)+(aF*2)+min(bF)+real(aC)', overwrite=true)
+myim = ia.imagecalc('eF', 'sin(aD)+(aF\*2)+min(bF)+real(aC)', overwrite=true)
 myim.done()
 &quot;&quot;&quot;
     </example>
@@ -1125,7 +1125,7 @@ If one specifies function='flux', the following constraints must be true:
 2. The image must have at least one beam,
 3. The specified axes must be exactly the direction coordinate axes,
 4. Only one of the non-directional axes may be non-degenerate,
-5. The iamge brightness unit must be conformant with x*yJy/beam, where x is an optional unit (such as km/s for moments images)
+5. The iamge brightness unit must be conformant with x\*yJy/beam, where x is an optional unit (such as km/s for moments images)
    and y is an optional SI prefix.
 
 Axes may be specified as a single integer or an array of integers indicating the zero-based
@@ -1408,8 +1408,8 @@ topixel() will correctly interconvert world and pixel coordinates.
 
 In giving the input image names, the infiles argument can be a
 single string if you wild card it with standard shell symbols.  For
-example, infiles='cena\_???.*', where the ``?'' represents one
-character and ``*'' any number of characters. 
+example, infiles='cena\_???.*', where the '?' represents one
+character and '\*' any number of characters. 
 
 Otherwise, you must input a vector of strings such as
 infiles=&quot;cena1 cena2 cena3&quot;.  An input such as infiles='files1,file2'
@@ -1417,7 +1417,7 @@ will be interpreted as one string naming one file and an exception will
 be thrown.  The reason for this is that although the latter could be
 parsed to extract two file names by recognizing comma delimiters, it
 is not possible because an expression such as infiles='cena.\{a,b\}' 
-(meaning files of name ``cena.a'' and ``cena.b'') would confuse such
+(meaning files of name 'cena.a' and 'cena.b') would confuse such
 parsing (you would get two files of name cena.\{a} and {\sff b\}. 
 
 You can look at the coordinate system of the output image using the 
@@ -1496,7 +1496,7 @@ bigim.done()
 # result.  Because an oufile is not specified, the returned image analysis
 # tool captured in the variable named bigim just references the input images;
 # this call does not create a persistent result image.
-bigim = ia.imageconcat(infiles=&quot;im.*&quot;,relax=True)
+bigim = ia.imageconcat(infiles=&quot;im.\*&quot;,relax=True)
 bigim.done()
 &quot;&quot;&quot;
 </example>
@@ -2174,23 +2174,39 @@ ia.close()             # close to unlock disk image
     One may specify which statistic should be represented using the stattype parameter. The following values
     are recognized (minimum match supported):
     
-    iqr                   inner quartile range (q3 - q1)
-    max                   maximum
-    mean                  mean
-    medabsdevmed, madm    median absolute deviation from the median
-    median                median
-    min                   minimum
-    npts                  number of points
-    q1                    first quartile
-    q3                    third quartile
-    rms                   rms
-    sigma, std            standard deviation
-    sumsq                 sum of squares
-    sum                   sum
-    var                   variance
-    xmadm                 median absolute deviation from the median multipied by x, where x is the reciprocal of Phi^-1(3/4),
-                          where Phi^-1 is the reciprocal of the quantile function. Numerically, x = 1.482602218505602. See, eg,
-                          https://en.wikipedia.org/wiki/Median_absolute_deviation#Relation_to_standard_deviation
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | iqr                | inner quartile range (q3 - q1)                                                                        |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | max                | maximum                                                                                               |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | mean               | mean                                                                                                  |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | medabsdevmed, madm | median absolute deviation from the median                                                             |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | median             | median                                                                                                |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | min                | minimum                                                                                               |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | npts               | number of points                                                                                      |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | q1                 | first quartile                                                                                        |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | q3                 | third quartile                                                                                        |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | rms                | rms                                                                                                   |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | sigma, std         | standard deviation                                                                                    |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | sumsq              | sum of squares                                                                                        |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | sum                | sum                                                                                                   |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | var                | variance                                                                                              |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
+    | xmadm              | median absolute deviation from the median multipied by x, where x is the reciprocal of Phi^-1(3/4),   |
+    |                    | where Phi^-1 is the reciprocal of the quantile function. Numerically, x = 1.482602218505602. See, eg, |
+    |                    | https://en.wikipedia.org/wiki/Median_absolute_deviation#Relation_to_standard_deviation                |
+    +--------------------+-------------------------------------------------------------------------------------------------------+
     
     Using the statalg parameter, one may also select whether to use the Classical or Chauvenet/ZScore statistics algorithm to
     compute the desired statistic (see the help for ia.statistics() or imstat for a full description of these algorithms).
@@ -2412,10 +2428,10 @@ The random number generator seeds may be specified as an array of integers. Only
 two values are used. If none or a single value is provided, the necessary remaining value(s)
 are generated based on the current time, using the algorithm
 \begin{verbatim}
-seedBase = 1e7*MJD
+seedBase = 1e7\*MJD
 seed[1] = (Int)seedBase;
 # and if seed[0] is also not supplied
-seed[0] = (Int)((1e7*(seedBase - seed[1])))
+seed[0] = (Int)((1e7\*(seedBase - seed[1])))
 \end{verbatim}
 
 where MJD is the Modidfied Julian Day.
@@ -2543,7 +2559,7 @@ print &quot;\t----\t convolve Ex 2 \t----&quot;
 ia.open(infile='testdata')
 # Next, create a Python array of some kind to use as a convolution kernel. For example:
 from numpy import arange
-kernelarray = arange(10)**3
+kernelarray = arange(10)\*\*3
 # Set up a region to be operated upon (in this case, the whole image):
 r1 = rg.box()
 # Perform the convolution:
@@ -2574,8 +2590,8 @@ im3.done()
 This function finds the bounding box of a
 region of interest when it is applied to a particular image. Both
 float and complex valued images are supported. It is
-returned in a record which has fields {\cf `blc', `trc', `inc',
-`bbShape', `regionShape', `imageShape', `blcf'} and {\cf `trcf'}
+returned in a record which has fields {\cf 'blc', 'trc', 'inc',
+'bbShape', 'regionShape', 'imageShape', 'blcf'} and {\cf 'trcf'}
 containing the bottom-left corner, the top-right corner (in absolute
 image pixel coordinates), the increment (stride) of the region, the
 shape of the boundingbox, the shape of the region, the shape of the
@@ -2681,7 +2697,7 @@ the increment.
 			<param name="dmethod" type="string">
 				<description>If drop=True, method to use in plane decimation.
 					&quot;copy&quot;: direct copy of every second plane, &quot;m(ean)&quot;: average
-					planes n*i through n*(i+1) - 1 (inclusive) in the smoothed,
+					planes n\*i through n*(i+1) - 1 (inclusive) in the smoothed,
 					non-decimated image to form plane i in the output image.
 				</description>
 				<value>copy</value>
@@ -2712,7 +2728,7 @@ the increment.
 			valued images are supported. The length of the axis along which the
 			convolution is to occur must be at least w pixels in the selected region,
 			unless decimation using the mean function is chosen in which case the axis
-			length must be at least 2*w (see below). Masked pixel values are set to
+			length must be at least 2\*w (see below). Masked pixel values are set to
 			zero prior to convolution. All nondefault pixel masks are ignored during
 			the calculation. The convolution is done in the image domain (i.e., not
 			with an FFT).
@@ -2736,7 +2752,7 @@ the increment.
 
 			If drop=True and dmethod=&quot;mean&quot;, first the image described in the drop=False
 			case is calculated. Then, the ith plane of the output image is calculated by
-			averaging the i*w to the (i+1)*w-1  planes of this intermediate image. Thus, for
+			averaging the i\*w to the (i+1)*w-1  planes of this intermediate image. Thus, for
 			example, if the selected region in the input image has six planes along the
 			convolution axis, the boxcar width is chosen to be 2, and if the pixel values,
 			which are all unmasked, on a slice along this axis are [1, 2, 5, 10, 17, 26],
@@ -2884,7 +2900,7 @@ ia.close()
 ia.maketestimage('aC', overwrite=true)       # in
 ia.close()
 ia.maketestimage()
-ia.calc('sin(aD)+(aF*2)+min(bF)+real(aC)')   # the example
+ia.calc('sin(aD)+(aF\*2)+min(bF)+real(aC)')   # the example
 ia.close()
 #
 &quot;&quot;&quot;
@@ -3524,7 +3540,7 @@ print &quot;\t----\t coordmeasures Ex 1 \t----&quot;
 ia.maketestimage('myimage',overwrite=true)
 s = ia.shape()
 for i in range(len(s)):
-  s[i] = 0.5*s[i]
+  s[i] = 0.5\*s[i]
 meas = ia.coordmeasures(s)
 print meas.keys()                   # Get names of fields in record
 #['intensity', 'mask', 'measure']
@@ -3922,9 +3938,9 @@ ia.maketestimage('myimage',overwrite=true)
 ia.close()
 ia.maketestimage('myotherimage',overwrite=true)
 ia.close()
-ia.open('myimage')          # Attach to `myimage'
-ia.remove(F)                # Close imagetool and delete `myimage'
-ia.open('myotherimage')     # Open new imagefile `myotherimage'
+ia.open('myimage')          # Attach to 'myimage'
+ia.remove(F)                # Close imagetool and delete 'myimage'
+ia.open('myotherimage')     # Open new imagefile 'myotherimage'
 ia.remove()
 print &quot;!!!EXPECT THE FOLLOWING TO GENERATE AN ERROR MESSAGE!!!&quot;
 ia.open('myimage')          # 'myimage' was deleted above
@@ -4094,6 +4110,22 @@ Before the FFT is performed, any masked pixels are set to values of zero. The
 output mask is the result of ANDing the default input pixel mask (if any) and
 the OTF mask.  Any other input pixel masks will not be copied.  The method
 maskhandler() can be used if there is a need to copy other masks.
+
+The following rules are used to set the brightness units of the output images.
+1. The phase image always has units of radians.
+For the other output images,
+2. if the input image has units of Jy/beam or Jy/pixel
+   (ie it is an image-plane image), the output (uv-plane) images will have units
+   of Jy. In the case of the input image having a synthesized beam, the beam
+   will be copied to the output images (which is important for transforming back).
+3. If the input image has units of Jy (ie is a uv-plane image), the output
+   images will have either units of Jy/beam or Jy/pixel, depending on if the
+   input image has a beam or not.   
+
+For some transformations (e.g., UV domain to image domain transforms), it is 
+not possible to automatically generate an expected coordinate system for
+the output image(s); only the FFT numerics are performed and the coordinate
+system is generated using generic conventions.
 
 </description>
 
@@ -4398,7 +4430,7 @@ We use the Componentlist GUI to look at the strongest component.
             <value/>
         </param>
         <param name="spxest" type="doubleVec">
-            <description>REQUIRED. Initial estimates as array of numerical values for the spectral index function coefficients. eg [1.5, -0.8] if fitting a plp function thought to be close to 1.5*(x/div)**(-0.8) or [0.4055, -0.8] if fitting an lpt function thought to be close to ln(1.5) - 0.8*ln(x/div).</description>
+            <description>REQUIRED. Initial estimates as array of numerical values for the spectral index function coefficients. eg [1.5, -0.8] if fitting a plp function thought to be close to 1.5*(x/div)**(-0.8) or [0.4055, -0.8] if fitting an lpt function thought to be close to ln(1.5) - 0.8\*ln(x/div).</description>
             <value/>
         </param>
         <param name="spxfix" type="boolVec">
@@ -4481,11 +4513,11 @@ Additionally, a power logarithmic polynomial (plp) or a logarithmic tranformed p
 cannot be fit simultaneously with any other supported function. These functions are most often used for fitting the spectral index and
 higher order terms of a spectrum. A power logarithmic polynomial has the form
 
-y = c0*x/div**(c1 + c2*ln(x/div) + c3*ln(x/div)**2 + ... + cn*ln(x/div)**(n - 1))
+y = c0\*x/div**(c1 + c2\*ln(x/div) + c3\*ln(x/div)**2 + ... + cn\*ln(x/div)**(n - 1))
 
 and a logarithmic transformed polynomial is simply the result of this equation after taking the natural log of both sides so that it has the form
 
-ln(y) = c0 + c1*ln(x/div) + c2*ln(x/div)**2 +  ... + cn*ln(x/div)**n
+ln(y) = c0 + c1\*ln(x/div) + c2\*ln(x/div)**2 +  ... + cn\*ln(x/div)**n
 
 The coefficients of the two forms correspond with each other except that c0 in the second equation is equal to
 ln(c0) of the first. In the case of fitting a spectral index, the spectral index, traditionally represented as alpha, is
@@ -4495,11 +4527,11 @@ In both cases, div is a numerical value used to scale abscissa values so they ar
 improves the probability that the fit will converge. This parameter may be specified via the div parameter. A value of 0
 (the default) indicates that the application should determine a reasonable value for div, which is determined via
 
-div = 10**int(log10(sqrt(min(x)*max(x))))
+div = 10\*\*int(log10(sqrt(min(x)*max(x))))
 
 where min(x) and max(x) are the minimum and maximum abscissa values, respectively.
 
-So, for example, if S(nu) is proportional to nu**alpha and you expect alpha to be near -0.8 and the value of S(nu) is 1.5 at
+So, for example, if S(nu) is proportional to nu\*\*alpha and you expect alpha to be near -0.8 and the value of S(nu) is 1.5 at
 1e9 Hz and your image(s) have spectral units of Hz, you would specify spxest=[1.5, -0.8] and div=1e9 when fitting a plp function,
 or spxest=[0.405, -0.8] and div=1e9 if fitting an ltp function.
 
@@ -4529,11 +4561,11 @@ The order of the polynomial to fit is specified only via the poly parameter. If 
 coefficients can be specified; these are determined automatically.
 
 GAUSSIAN SINGLET FITTING
-In the absence of an estimates file and no estimates being specified by the p*est parameters, and gmncomps=0 or is empty, the ngauss parameter
+In the absence of an estimates file and no estimates being specified by the p\*est parameters, and gmncomps=0 or is empty, the ngauss parameter
 indicates the maximum number of gaussian singlets that should be fit. The initial estimates of the parameters for these gaussians will be attempted
 automatically in this case. If it deems appropriate, the fitter will fit fewer than this number. In the case where an estimates file is supplied,
-ngauss is ignored (see below). ngauss is also ignored if the p*est parameters are specified or if gmncomps is not an empty array or, if an integer,
-is greater than zero. If estimates is not specified or the p*est parameters are not specified and ngauss=0, gmncomps is empty or 0, and poly\&lt;0,
+ngauss is ignored (see below). ngauss is also ignored if the p\*est parameters are specified or if gmncomps is not an empty array or, if an integer,
+is greater than zero. If estimates is not specified or the p\*est parameters are not specified and ngauss=0, gmncomps is empty or 0, and poly\&lt;0,
 an error will occur as this indicates there is nothing to fit.
 
 One can specify initial estimates of gaussian singlet parameters via an estimates file or the pampest, pcenterest, pfwhmest, and optionally, the
@@ -4547,14 +4579,14 @@ zeroth pixel, and pfwhmest must be given in pixels. Optionally pfix can be speci
 can be a string. In it is coded which parameters should be held constant during the fix. Any combination of &quot;p&quot; (amplitude), &quot;c&quot; (center), or &quot;f&quot;
 (fwhm) is allowed; eg pfix=&quot;pc&quot; means fix both the amplitude and center during the fit. In the case of more than one gaussian and/or lorentzian
 singlets, these parameters must be specified as arrays of numbers. The length of the arrays indicates the number of singlets to fit and must be
-the same for all the p*est parameters.
+the same for all the p\*est parameters.
 
 If no parameters are to be fixed for any of the singlets, pfix can be set to the empty string. However, if at least one parameter of one singlet
-is to be fixed, pfix must be an array of strings and have a length equal to the p*est arrays. Singlets which are not to have any parameters fixed
+is to be fixed, pfix must be an array of strings and have a length equal to the p\*est arrays. Singlets which are not to have any parameters fixed
 should be represented as an empty string in the pfix array. So, for example, if one desires to fit three singlets and fix the fwhm of the middle
 one, one must specify pfix=[&quot;&quot;, &quot;f&quot;, &quot;&quot;], the empty strings indicating no parameters of the zeroth and second singlet should be held constant.
 
-In the case of multifit=True, the initial estimates, whether from the p*est parameters or from a file (see below), will be applied to the location
+In the case of multifit=True, the initial estimates, whether from the p\*est parameters or from a file (see below), will be applied to the location
 of the first fit. This is normally the bottom left corner of the region selected. If masked, not enough good points to perform a fit, or the
 attempted fit fails, the fitting proceeds to the next pixel with the pixel value of the lowest numbered axis changing the fastest. Once a
 successful fit has been performed, subsequent fits will use the results of a fit for a nearest pixel for which a previous fit was successful as the
@@ -4564,14 +4596,14 @@ One specifies what type of PCF profile to fit via the pfunc parameter. A PCF fun
 as both gaussian and lorentzian singlets can. If all singlets to be fit are gaussians, one can set pfunc equal to the empty string and all snglets
 will be assumed to be gaussians. If at least one lorentzian is to be fit, pfunc must be specified as a string (in the case of a single singlet) or
 an array of strings (in the case of multiple singlets). The position of each string corresponds to the positions of the initial estimates in the
-p*est and pfix arrays. Minimal match (&quot;g&quot;, &quot;G&quot;, &quot;l&quot;, or &quot;L&quot;) is supported. So, if one wanted to simultaneously fit two gaussian and two lorentzian
+p\*est and pfix arrays. Minimal match (&quot;g&quot;, &quot;G&quot;, &quot;l&quot;, or &quot;L&quot;) is supported. So, if one wanted to simultaneously fit two gaussian and two lorentzian
 singlets, the zeroth and last of which were lorentzians, one would specify pfunc=[&quot;L&quot;, &quot;G&quot;, &quot;G&quot;, &quot;L&quot;].
 
 ESTIMATES FILE FOR GAUSSIAN SINGLETS (NONRECOMMENDED METHOD)
 Initial estimates for gaussian singlets can be specified in an estimates file. Estimates files may be deprecated in the future in favor of the
-p*est parameters, so it is recommended users use those parameters instead. If an estimates file is desired to be used, the p*est parameters
+p\*est parameters, so it is recommended users use those parameters instead. If an estimates file is desired to be used, the p\*est parameters
 must be 0 or empty and mgncomps must be 0 or empty. Only gaussian singlets can be specified in an estimates file. If one desires to fit one or
-more gaussian multiplets and/or one or more lorentzian singlets simultaneously, the p*est parameters must be used to specify the initial parameters
+more gaussian multiplets and/or one or more lorentzian singlets simultaneously, the p\*est parameters must be used to specify the initial parameters
 of all gaussian singlets to fit; one cannot use an estimates file in this case. If an estimates file is specified, a polynomial
 can be fit simultaneously by specifying the poly parameter. The estimates file must contain initial estimates of parameters
 for all gaussian singlets to be fit. The number of gaussian singlets to fit is gotten from the number of estimates in the file. The file can contain
@@ -4605,7 +4637,7 @@ single quadruplet of gaussians. In the case of 2 or more multiplets, and array o
 gmncomps=[2, 4, 3] means 3 seperate multiples are to be fit, the zeroth being a doublet, the first being a quadruplet, and the second
 being a triplet.
 
-Initial estimates of all gaussians in all multiplets are specified via the gm*est parameters which must be arrays of numbers. The order
+Initial estimates of all gaussians in all multiplets are specified via the gm\*est parameters which must be arrays of numbers. The order
 starts with the zeroth component of the zeroth multiplet to the last component of the zeroth multiplet, then the zeroth component of
 the first multiplet to the last compoenent of the first multiplet, etc to the zeroth component of the last multiplet to the last 
 element of the last multiplet. The zeroth element of a multiplet is defined as the reference component of that multiplet and has the special
@@ -4645,7 +4677,7 @@ for that parameter. Note that using 0 to indicate no constraint for line center 
 position as the reference component but having a different FWHM from the reference component. If you must specify this very unusual case,
 try using a very small positive (or even negative) value for the center constraint.
 
-Note that when a parameter for a line is constrained, the corresponding value for that component in the corresponding gm*est array is
+Note that when a parameter for a line is constrained, the corresponding value for that component in the corresponding gm\*est array is
 ignored and the value of the constrained parameter is automatically used instead. So let's say, for our example above, we had specified
 the following estimates:
 
@@ -4723,7 +4755,7 @@ It is only the relative values that are important. A value of 0 means that pixel
 A has a higher standard deviation than pixel B, then pixel A is noisier than pixel B and will receive a lower weight when the fit is done.
 The weight of a pixel is the usual
 
-weight = 1/(sigma*sigma)
+weight = 1/(sigma\*sigma)
 
 In the case of multifit=False, the sigma values at each pixel along the fit axis in the hyperplane perpendicular to the fit axis which includes
 that pixel are averaged and the resultant averaged standard deviation spectrum is the one used in the fit. Internally, sigma values are normalized
@@ -4742,10 +4774,10 @@ axis having length of 1:
 attempted: a boolean array indicating which fits were attempted (eg if too few unmasked points, a fit will not be attempted).
 converged: a boolean array indicating which fits converged. False if the fit was not attempted.
 valid:     a boolean array indicating which solutions fall within the specified valid ranges of parameter space (see
-           section LIMITING RANGES FOR SOLUTION PARAMETERS for details).
+.          section LIMITING RANGES FOR SOLUTION PARAMETERS for details).
 niter:     an int array indicating the number of iterations for each profile, \&lt;0 if the fit did not converge
 ncomps:    the number of components (gaussian singlets + lorentzian singlets + gaussian multiplets + polynomial) fit for the profile,
-           \&lt;0 if the fit did not converge
+.          \&lt;0 if the fit did not converge
 direction: a string array containing the world direction coordinate for each profile
 
 There is a &quot;type&quot; array having number of dimensions equal to the number of dimensions in the above arrays plus one. The shape of
@@ -5014,17 +5046,17 @@ flux density units by hand to be (some prefix)Jy and then run cl.fromrecord() on
 bearing in mind your unit conversion.
 
 If the input image has units of K, the flux density of components will be reported in units
-of [prefix]K*rad*rad, where prefix is an SI prefix used so that the numerical value is between
-1 and 1000. To convert to units of K*beam, determine the area of the appropriate beam,
-which is given by pi/(4*ln(2))*bmaj*bmin, where bmaj and bmin are the major and minor axes
-of the beam, and convert to steradians (=rad*rad). This value is included in the beam portion
+of [prefix]K\*rad\*rad, where prefix is an SI prefix used so that the numerical value is between
+1 and 1000. To convert to units of K\*beam, determine the area of the appropriate beam,
+which is given by pi/(4\*ln(2))*bmaj\*bmin, where bmaj and bmin are the major and minor axes
+of the beam, and convert to steradians (=rad\*rad). This value is included in the beam portion
 of the component subdictionary (key 'beamster'). Then divide the numerical value of the
 logged flux density by the beam area in steradians. So, for example
 
 \begin{verbatim}
 # run on an image with K brightness units
 res = imfit(...)
-# get the I flux density in K*beam of component 0
+# get the I flux density in K\*beam of component 0
 comp = res['results']['component0']
 flux_density_kbeam = comp['flux']['value'][0]/comp['beam']['beamster']
 \end{verbatim}
@@ -5086,17 +5118,18 @@ are to be held fixed during the fit.
 ERROR ESTIMATES
 
 Error estimates are based on the work of Condon 1997, PASP, 109, 166. Key assumptions made are:
-  * The given model (elliptical Gaussian, or elliptical Gaussian plus constant offset) is an
+
+  - The given model (elliptical Gaussian, or elliptical Gaussian plus constant offset) is an
     adequate representation of the data
-  * An accurate estimate of the pixel noise is provided or can be derived (see above). For the
+  - An accurate estimate of the pixel noise is provided or can be derived (see above). For the
     case of correlated noise (e.g., a CLEAN map), the fit region should contain many &quot;beams&quot; or
     an independent value of rms should be provided.
-  * The signal-to-noise ratio (SNR) or the Gaussian component is large. This is necessary because
+  - The signal-to-noise ratio (SNR) or the Gaussian component is large. This is necessary because
     a Taylor series is used to linearize the problem. Condon (1997) states that the fractional
-    bias in the fitted amplitude due to this assumption is of order 1/(S*S), where S is the overall
+    bias in the fitted amplitude due to this assumption is of order 1/(S\*S), where S is the overall
     SNR of the Gaussian with respect to the given data set (defined more precisely below). For a 5
     sigma &quot;detection&quot; of the Gaussian, this is a 4% effect.
-  * All (or practically all) of the flux in the component being fit falls within the selected region.
+  - All (or practically all) of the flux in the component being fit falls within the selected region.
     If a constant offset term is simultaneously fit and not fixed, the region of interest should be
     even larger. The derivations of the expressions summarized in this note assume an effectively
     infinite region.
@@ -5107,20 +5140,20 @@ used have been described above in the description of the noisefwhm parameter.
 
 In the case of uncorrelated noise, the equations used are
 
-f(A) = f(I) = f(M) = f(m) = k*s(x)/M = k*s(y)/m = (s(p)/sqrt(2))*((M*M - m*m)/(M*m))
+f(A) = f(I) = f(M) = f(m) = k\*s(x)/M = k\*s(y)/m = (s(p)/sqrt(2))*((M\*M - m\*m)/(M\*m))
    = sqrt(2)/S
 
 where s(z) is the uncertainty associated with parameter z, f(z) = s(z)/abs(z) is the
 fractional uncertainty associated with parameter z, A is the peak intensity, I is the flux
 density, M  and m are the FWHM major and minor axes, p is the position angle of the
-component, and k = sqrt(8*ln(2)). s(x) and s(y) are the direction
+component, and k = sqrt(8\*ln(2)). s(x) and s(y) are the direction
 uncertainties of the component measured along the major and minor axes; the resulting
 uncertainties measured along the principle axes of the image direction coordinate are
 calculated by propagation of errors using the 2D rotation matrix which enacts the rotation through
 the position angle plus 90 degrees. S is the overall signal to noise ratio of the component,
 which, for the uncorrelated noise case is given by
 
-S = (A/(k*h*r))*sqrt(pi*M*m)
+S = (A/(k\*h\*r))*sqrt(pi\*M\*m)
 
 where h is the pixel width of the direction coordinate and r is the rms noise (see the
 discussion above for the rules governing how the value of r is determined).
@@ -5129,38 +5162,38 @@ For the correlated noise case, the same equations are used to determine the unce
 as in the uncorrelated noise case, except for the uncertainty in I (see below). However,
 S is given by
 
-S = (A/(2*r*N)) * sqrt(M*m) * (1 + ((N*N/(M*M)))**(a/2)) * (1 + ((N*N/(m*m)))**(b/2))
+S = (A/(2\*r\*N)) \* sqrt(M\*m) \* (1 + ((N\*N/(M\*M)))**(a/2)) \* (1 + ((N\*N/(m\*m)))**(b/2))
 
 where N is the noise-correlation beam FWHM (see discussion of the noisefwhm parameter for 
-rules governing how this value is determined). &quot;**&quot; indicates exponentiation and a and b
+rules governing how this value is determined). &quot;\*\*&quot; indicates exponentiation and a and b
 depend on which uncertainty is being calculated. For sigma(A), a = b = 3/2. For M and x,
 a = 5/2 and b = 1/2. For m, y, and p, a = 1/2 and b = 5/2. f(I) is calculated in the
 correlated noise case according to
 
-f(I) = sqrt( f(A)*f(A) + (N*N/(M*m))*(f(M*f(M) + f(m)*f(m))) )
+f(I) = sqrt( f(A)*f(A) + (N\*N/(M\*m))*(f(M\*f(M) + f(m)*f(m))) )
 
 Note well the following caveats:
-  * Fixing Gaussian component parameters will tend to cause the parameter uncertainties reported for free
+  - Fixing Gaussian component parameters will tend to cause the parameter uncertainties reported for free
     parameters to be overestimated.
-  * Fitting a zero level offset that is not fixed will tend to cause the reported parameter
+  - Fitting a zero level offset that is not fixed will tend to cause the reported parameter
     uncertainties to be slightly underestimated.
-  * The parameter uncertainties will be inaccurate at low SNR (a ~10% for SNR = 3).
-  * If the fitted region is not considerably larger than the largest component that is fit,
+  - The parameter uncertainties will be inaccurate at low SNR (a ~10% for SNR = 3).
+  - If the fitted region is not considerably larger than the largest component that is fit,
     parameter uncertainties may be mis-estimated.
-  * An accurate rms noise measurement, r, for the region in question must be supplied.
+  - An accurate rms noise measurement, r, for the region in question must be supplied.
     Alternatively, a sufficiently large signal-free region must be present in the selected region
     (at least about 25 noise beams in area) to auto-derive such an estimate.
-  * If the image noise is not statistically independent from pixel to pixel, a reasonably accurate noise
+  - If the image noise is not statistically independent from pixel to pixel, a reasonably accurate noise
     correlation scale, N, must be provided. If the noise correlation function is not approximately Gaussian,
     the correlation length can be estimated using
     
-    N = sqrt(2*ln(2)/pi)* double-integral(dx dy C(x,y))/sqrt(double-integral(dx dy C(x, y) * C(x,y)))
+    N = sqrt(2\*ln(2)/pi)* double-integral(dx dy C(x,y))/sqrt(double-integral(dx dy C(x, y) \* C(x,y)))
     
     where C(x,y) is the associated noise-smoothing function
-  * If fitted model components have significan spatial overlap, the parameter uncertainties are likely to
+  - If fitted model components have significan spatial overlap, the parameter uncertainties are likely to
     be mis-estimated (i.e., correlations between the parameters of separate components are not accounted
     for).
-  * If the image being analyzed is an interferometric image with poor uv sampling, the parameter
+  - If the image being analyzed is an interferometric image with poor uv sampling, the parameter
     uncertainties may be significantly underestimated.
     
 The deconvolved size and position angle errors are computed by taking the maximum of the absolute values of the
@@ -5392,7 +5425,7 @@ pixelmask arrays must necessarily be the bounding box of the specified region.  
 the region extends beyond the image, it is truncated.
 
 Recall that the recovered pixelmask will reflect both the pixelmask stored in the
-image, and the region (their masks are `anded' together).
+image, and the region (their masks are 'anded' together).
 
 The argument axes can be used to reduce the dimensionality of the output array. It
 specifies which pixel axes of the image to average the data over.  For example,
@@ -5501,7 +5534,7 @@ the specified aggregate function is applied to these pixels to generate the retu
 The aggregate function must be one of the functions supported by ia.collapse; ie, 'flux', 'madm', 'max', 'mean',
 'median', 'min', 'rms', 'stdev', 'sum', 'variance', and 'xmadm'. See the help for ia.collapse() for details regarding
 these functions. Minimum match and case insenstivity is supported. In addition, single binary (addition,
-subtraction, multiplication, and division) operations of these functions are supported, eg function='max*min'
+subtraction, multiplication, and division) operations of these functions are supported, eg function='max\*min'
 will return data that is the product of the maximum and the mininum for each plane along the specified
 axis.
 
@@ -5680,7 +5713,7 @@ ia.close()
         <value>false</value>
      </param>
      <param name="dmethod" type="string">
-        <description>If drop=True, method to use in plane decimation. &quot;c(opy)&quot;: direct copy of every second plane, &quot;m(ean)&quot;: average planes 2*i and 2*i+1 in the smoothed, non-decimated image to form plane i in the output image. </description>
+        <description>If drop=True, method to use in plane decimation. &quot;c(opy)&quot;: direct copy of every second plane, &quot;m(ean)&quot;: average planes 2\*i and 2\*i+1 in the smoothed, non-decimated image to form plane i in the output image. </description>
         <value>copy</value>
      </param>
 
@@ -5692,7 +5725,7 @@ ia.close()
 
 This application performs Hanning convolution of one axis of an image defined by
 
-z[i] = 0.25*y[i-1] + 0.5*y[i] + 0.25*y[i+1]       (equation 1)
+z[i] = 0.25\*y[i-1] + 0.5\*y[i] + 0.25\*y[i+1]       (equation 1)
 
 where z[i] is the value at pixel i in the hanning smoothed image, and
 y[i-1], y[i], and y[i+1] are the values of the input image at pixels i-1,
@@ -5708,11 +5741,11 @@ axis. The output pixel values along the convolution axis will be related to thos
 of the input values according to equation 1, except the first and last pixels. In that
 case, 
     
-    z[0] = 0.5*(y[0] + y[1])
+    z[0] = 0.5\*(y[0] + y[1])
     
 and,
     
-    z[N-1] = 0.5*(y[N-2] + y[N-1])
+    z[N-1] = 0.5\*(y[N-2] + y[N-1])
     
 where N is the number of pixels along the convolution aixs.
 The pixel mask, ORed with the OTF mask if specified, is copied from the selected
@@ -5736,7 +5769,7 @@ along this axis are [1, 2, 5, 10, 17, 26], the corresponding output pixel values
 If drop=True and dmethod=&quot;mean&quot;, first the image described in the drop=False case
 is calculated. The first plane and last plane(s) of that image are then discarded as
 described in the drop=True, dmethod=&quot;copy&quot; case. Then, the ith plane of the output
-image is calculated by averaging the (2*i)th and (2*i + 1)th planes of the intermediate
+image is calculated by averaging the (2\*i)th and (2\*i + 1)th planes of the intermediate
 image.Thus for example, if the selected region in the input image has six planes
 along the convolution axis, and if the pixel values, which are all unmasked, on a slice
 along this axis are [1, 2, 5, 10, 17, 26], the corresponding output pixel values will be
@@ -6651,7 +6684,7 @@ You can generate one or more output moment images.  The return value
 of this function is an on-the-fly Image \tool\ holding the {\bf first}
 of the output moment images.
 
-The word `moment' is used loosely here.  It refers to collapsing an axis
+The word 'moment' is used loosely here.  It refers to collapsing an axis
 (the moment axis) to one pixel and setting the value of that pixel (for
 all of the other non-collapsed axes) to something computed from the data
 values along the moment axis.  For example, take an RA-DEC-Velocity
@@ -6659,11 +6692,11 @@ cube, collapse the velocity axis by computing the mean intensity at each
 RA-DEC pixel.  This function offers many different moments and a variety
 of automatic methods to compute them. 
 
-We try to make a distinction between a `moment' and a `method'.  This
+We try to make a distinction between a 'moment' and a 'method'.  This
 boundary is a little blurred, but it claims to refer to the distinction
 between what you are computing, and how the pixels that were included in
-that computation were selected.  For example, a `moment' would be the
-average value of some pixel values in a spectrum.  A `method' for
+that computation were selected.  For example, a 'moment' would be the
+average value of some pixel values in a spectrum.  A 'method' for
 selecting those pixels would be a simple pixel value range specifying
 which pixels should be included. 
 
@@ -7322,7 +7355,7 @@ pix = ia.getchunk()           # get pixels to modify from example image
 for i in range(len(pix)):
   pix[i] = list(pix[i])       # convert tuple to list so it can be modified
   for j in range(len(pix[i])):
-    pix[i][j] = i*10 + j
+    pix[i][j] = i\*10 + j
   pix[i] = tuple(pix[i])      # convert list back to tuple
 ia.putchunk(pix)              # put pixels back into example image
 print pix                     # pixels have values 0-99
@@ -7903,7 +7936,7 @@ shp = ia.shape()
 refpix=refval['numeric'][:]
 refpix=list(refpix)                      # numpy makes this necessary
 for i in range(len(shp)):
-  shp[i] = shp[i] *2                     # Double shape
+  shp[i] = shp[i] \*2                     # Double shape
   refpix[i] = int((shp[i]-1)/2.0 + 1);   # New ref pix
 # Center image on location of interest
 mycs.setreferencelocation(pixel=refpix, world=refval)
@@ -8428,14 +8461,14 @@ a record containing all the beams is returned. This record contains three fields
 contains an integer value equal to the number of polarizations, and &quot;beams&quot; contains
 a record of information for all beams.
  If the image has no polarization
-axis or no spectral axis, the fields in the &quot;beams&quot; record run from &quot;*0&quot; to the number
-of spectral channels or number of polarizations less one, eg &quot;*31&quot; for an image with 32 channels.
+axis or no spectral axis, the fields in the &quot;beams&quot; record run from &quot;\*0&quot; to the number
+of spectral channels or number of polarizations less one, eg &quot;\*31&quot; for an image with 32 channels.
 Each of these fields references a beam subrecord with the structure described above for a single beam.
 
 If the image contains both a spectral axis and a polarization axis, the record returned contains
-fields running from &quot;*0&quot; to the number of spectral channels less one, eg &quot;*31&quot; for an image
+fields running from &quot;\*0&quot; to the number of spectral channels less one, eg &quot;\*31&quot; for an image
 with 32 spectral channels. Each of these fields has an associated subrecord with fields running
-from &quot;*0&quot; to the number of polarizations less one, eg &quot;*3&quot; in an image with 4 polarizations.
+from &quot;\*0&quot; to the number of polarizations less one, eg &quot;\*3&quot; in an image with 4 polarizations.
 Each one of those fields is associated with a beam record for that corresponding channel and
 polarization. The beam record has a structure described above for a single beam.
 
@@ -8532,8 +8565,8 @@ When you destroy the Image \tool\ (with the <link anchor="images:image.done.func
 temporary image is deleted.
 
 You specify which axes of the image you wish to convolve, by what kernel
-of what width. The kernel types can be shortened to {\cf `gauss',
-`hann'} and {\cf `box'}. 
+of what width. The kernel types can be shortened to {\cf 'gauss',
+'hann'} and {\cf 'box'}. 
 
 You specify the widths of the convolution kernels via the argument
 {\stfaf widths}.  The values can be specified as a vector of three
@@ -8565,8 +8598,8 @@ half-maximum.
 \item Boxcar (tophat) - the specified width is
 the full width.  
 
-\item Hanning - The kernel is $z[i] = 0.25*y[i-1] + 0.5*y[i] +
-0.25*y[i+1]$.  The width is always 3 pixels, regardless of what
+\item Hanning - The kernel is $z[i] = 0.25\*y[i-1] + 0.5\*y[i] +
+0.25\*y[i+1]$.  The width is always 3 pixels, regardless of what
 you give (but you still have to give it !).
 
 \end{itemize}
@@ -8769,7 +8802,7 @@ mycs = ia.coordsys();                # Recover Coordinate System
 incr = mycs.increment('n');          # Get increment as numeric vector
 incrn = incr['numeric']
 for i in range(len(incrn)):
-  incrn[i] = 2*incrn[i]
+  incrn[i] = 2\*incrn[i]
 incr['numeric']=incrn
 mycs.setincrement(value=incr);       # Set new increment in Coordinate System
 ia.setcoordsys(mycs.torecord());     # Set new Coordinate System in image
@@ -8900,10 +8933,10 @@ ia.fromshape(shape=[10,20,30])
 imshape = ia.shape()
 print imshape
 #[10L, 20L, 30L]
-# npixels = imshape[0]*imshape[1]*...*imshape[n-1]
+# npixels = imshape[0]\*imshape[1]*...*imshape[n-1]
 npixels=1
 for i in range(len(imshape)):
-  npixels=npixels*imshape[i]
+  npixels=npixels\*imshape[i]
 ia.close()
 #
 &quot;&quot;&quot;
@@ -9271,7 +9304,7 @@ the maximum pixel value
 
 The last four fields only appear if you evaluate the statistics over all
 axes in the image.  As an example, if the returned record is captured in
-{\stfaf `mystats'}, then you could access the `mean' field via
+{\stfaf 'mystats'}, then you could access the 'mean' field via
 {\cf print mystats['mean']}. 
 
 If there are no good points (e.g.  all pixels are masked bad in the
@@ -9299,7 +9332,7 @@ other, but not both.  If you only give one value for either of these,
 say {\stfaf includepix=b}, then this is interpreted as {\stfaf
 includepix=[-abs(b),abs(b)]}. 
 
-This function generates a `storage' lattice, into which the statistics
+This function generates a 'storage' lattice, into which the statistics
 are written.  It is only regenerated when necessary.  For example, if
 you run the function twice with identical arguments, the statistics will
 be directly retrieved from the storage lattice the second time. 
@@ -9349,7 +9382,7 @@ ALGORITHMS
 
 Several types of statistical algorithms are supported:
 
-* classic: This is the familiar algorithm, in which all unmasked pixels, subject to any
+- classic: This is the familiar algorithm, in which all unmasked pixels, subject to any
   specified pixel ranges, are used. One may choose one of two methods, which vary only by
   performance, for computing classic statistics, via the clmethod parameter. The &quot;tiled&quot;
   method is the old method and is fastest in cases where there are a large number of
@@ -9363,7 +9396,7 @@ Several types of statistical algorithms are supported:
   which be faster based on the number of pixels in the image and the choice of the axes
   parameter.
   
-* fit-half: This algorithm calculates statistics on a dataset created from real and virtual pixel values.
+- fit-half: This algorithm calculates statistics on a dataset created from real and virtual pixel values.
   The real values are determined by the input parameters center and lside. The parameter center
   tells the algorithm where the center value of the combined real+virtual dataset should be. Options
   are the mean or the median of the input image's pixel values, or at zero. The lside parameter tells
@@ -9376,8 +9409,8 @@ Several types of statistical algorithms are supported:
   minimum value is virtual if lside is False, the value of the maximum position (if lside=True) or
   minimum position (if lside=False) is not reported in the returned record.
 
-* hinges-fences: This algorithm calculates statistics by including data in a range
-  between Q1 - f*D and Q3 + f*D, inclusive, where Q1 is the first quartile of the distribution
+- hinges-fences: This algorithm calculates statistics by including data in a range
+  between Q1 - f\*D and Q3 + f\*D, inclusive, where Q1 is the first quartile of the distribution
   of unmasked data, subject to any specified pixel ranges, Q3 is the third quartile, D = Q3 - Q1
   (the inner quartile range), and f is the user-specified fence factor. Negative values of f
   indicate that the full distribution is to be used (ie, the classic algorithm is used). Sufficiently
@@ -9385,7 +9418,7 @@ Several types of statistical algorithms are supported:
   in the inner quartile range is used for computing statistics. The value of fence is silently
   ignored if algortihm is not &quot;hinges-fences&quot;.
   
-* chauvenet: The idea behind this algorithm is to eliminate outliers based on a maximum z-score value.
+- chauvenet: The idea behind this algorithm is to eliminate outliers based on a maximum z-score value.
   A z-score is the number of standard deviations a point is from the mean of a distribution. This
   method thus is meant to be used for (nearly) normal distributions. In general, this is an iterative
   process, with successive iterations discarding additional outliers as the remaining points become
@@ -9423,7 +9456,7 @@ Several types of statistical algorithms are supported:
   6.5    6,225,098,696
   7.0  195,341,107,722
   
-* biweight: The biweight algorithm is a robust iterative algorithm that computes two
+- biweight: The biweight algorithm is a robust iterative algorithm that computes two
   quantities called the &quot;location&quot; and the &quot;scale&quot;, which are analogous to the mean
   and the standard deviation. In this case, the only keys present in the returned
   dictionary are 'mean' (location), 'sigma' (scale), 'npts', 'min', and 'max'. The
@@ -9434,11 +9467,11 @@ Several types of statistical algorithms are supported:
   
   Important equations for the biweight algorithm are
 
-  A. How to compute u_i values, which are related to the weights w_i = (1 - u_i*u_i),
+  A. How to compute u_i values, which are related to the weights w_i = (1 - u_i\*u_i),
      using the
      equation
 
-      u_i = (x_i - c_bi)/(6.0*s_bi)                 (1)
+     ``u_i = (x_i - c_bi)/(6.0*s_bi)                  (1)``
 
      where x_i are the data values, c_bi is the biweight location and s_bi is the
      biweight scale. For the initial computation of the u_i values, c_bi is set
@@ -9447,22 +9480,22 @@ Several types of statistical algorithms are supported:
      median of the absolute deviation about the median multiplied by the value of
      the probit function at 0.75).
      
-  B  The location, c_bi, is computed from
+  B. The location, c_bi, is computed from
 
-      c_bi = sum(x_i * w_i^2)/sum(w_i^2)            (2)
+     ``c_bi = sum(x_i * w_i^2)/sum(w_i^2)             (2)``
 
-    where only values of u_i which satisfy abs(u_i) &lt; 1 (w_i &gt; 0) are used in the sums.
+     where only values of u_i which satisfy abs(u_i) &lt; 1 (w_i &gt; 0) are used in the sums.
 
-  C. The scale value is computed using
+  C. The scale value is computed using::
 
-               n * sum((x_i - c_bi)^2 * w_i^4)
-      s_bi^2 = _______________________________      (3)
-                      p * max(1, p - 1)
+     .             n * sum((x_i - c_bi)^2 * w_i^4)
+     . s_bi^2 =    _______________________________    (3)
+     .                    p * max(1, p - 1)               
 
   where n is the number of points for the entire distribution (which includes all
-  the data, even for which abs(u_i) &gt;= 1) and p is given by
+  the data, even for which abs(u_i) &gt;= 1) and p is given by::
 
-     p = abs(sum((w_i) * (5*w_i - 4)))
+     p = abs(sum((w_i) \* (5\*w_i - 4)))
 
   Again, the sums include only data for which abs(u_i) &lt; 1.
 
@@ -9483,7 +9516,7 @@ Several types of statistical algorithms are supported:
        iterations (specified in the niter parameter) is reached. The convergence
        criterion is given by
 
-         abs(s_bi - s_bi,prev) &lt; 0.03 * sqrt(0.5/(n - 1))
+         abs(s_bi - s_bi,prev) &lt; 0.03 \* sqrt(0.5/(n - 1))
 
        where s_bi,prev is the value of the scale computed in the previous iteration.
 
@@ -9535,7 +9568,7 @@ by the number of beam areas included in the region. The beam area is defined as 
 of the elliptical Gaussian defined by the synthesized beam, divided by the maximum of
 that function, which is equivalent to
 
-pi/(4*ln(2)) * major * minor
+pi/(4\*ln(2)) \* major \* minor
 
 where ln() is the natural logarithm and major and minor are the major and minor FWHM axes
 of the beam, respectively.
@@ -9883,12 +9916,12 @@ restoringbeam The restoring beam(s) if present.
 imagetype     The image type.
 
 For an image with multiple beams, the restoringbeam field is a dictionary of
-dictionaries with keys of names &quot;*&quot; followed by the channel number, if the image
+dictionaries with keys of names &quot;\*&quot; followed by the channel number, if the image
 has a spectral coordinate, or the polarization number if it does not. That is,
-the keys have names &quot;*0&quot;, &quot;*1&quot;, &quot;*2&quot;, etc. If the image has both a spectral and
+the keys have names &quot;\*0&quot;, &quot;\*1&quot;, &quot;\*2&quot;, etc. If the image has both a spectral and
 a polarization coordinate, each of these dictionaries is a dictionary with keys
 of the same form which range from 0 to the number of polarizations minus 1;
-&quot;*0&quot;, &quot;*1&quot;, ... The dictionaries pointed to by the channel and/or polarization
+&quot;\*0&quot;, &quot;\*1&quot;, ... The dictionaries pointed to by the channel and/or polarization
 number contain information for the beam at that position.
 
 If the list parameter is set to False, then the summary will not be written to
@@ -10135,7 +10168,7 @@ ia.close()
 
 <description>
 
-This function returns the string `image'.  It can be used in
+This function returns the string 'image'.  It can be used in
 a script to make sure this variable is an Image
 \tool.
 
@@ -10250,8 +10283,8 @@ print w
 #                           'refer': 'J2000',
 #                           'type': 'direction'}},
 # 'numeric': array([ 0.00174533, -0.0015708 ]),
-# 'quantity': {'*1': {'unit': 'rad', 'value': 0.0017453323593185704},
-#              '*2': {'unit': 'rad', 'value': -0.0015707969259645381}}}
+# 'quantity': {'\*1': {'unit': 'rad', 'value': 0.0017453323593185704},
+#              '\*2': {'unit': 'rad', 'value': -0.0015707969259645381}}}
 ia.close()
 #
 &quot;&quot;&quot;
