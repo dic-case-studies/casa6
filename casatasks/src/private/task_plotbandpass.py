@@ -728,7 +728,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
         Newer pyplots won't. Assume the index effectively used was 1 ("221")
         """
         xf = (xframe + 1) if str(xframe).endswith('0') else xframe
-        return pb.subplot(xframe)
+        return pb.subplot(xf)
     
     def safe_pb_clf():
         pb.clf()
