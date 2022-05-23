@@ -30,6 +30,10 @@ from matplotlib.ticker import (FormatStrFormatter, MultipleLocator,
                                ScalarFormatter)
 from six.moves import input, range
 
+# CAS-13722, CAS-13385
+import warnings
+import matplotlib.cbook
+warnings.filterwarnings("ignore",category=matplotlib.cbook.MatplotlibDeprecationWarning)
 
 PLOTBANDPASS_REVISION_STRING = "$Id: task_plotbandpass.py,v 1.102 2018/01/21 14:45:41 thunter Exp $" 
 TOP_MARGIN  = 0.25   # Used if showatm=T or showtksy=T
