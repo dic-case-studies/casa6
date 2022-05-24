@@ -1,18 +1,10 @@
 import inspect
 from types import CodeType
 
-from casatasks.private.casa_transition import is_CASA6
+from casatasks import casalog
+from casatools import quanta
 
-if is_CASA6:
-    from casatasks import casalog
-    from casatools import quanta
-
-    from . import sdutil
-else:
-    from taskinit import casalog
-    from taskinit import qatool as quanta
-
-    from . import sdutil
+from . import sdutil
 
 qa = quanta()
 
@@ -24,6 +16,7 @@ mstransform but not by sdpolaverage are kept and the
 default values for mstransform are given to them.
 (CAS-12083, 2019/1/22 WK)
 """
+
 
 @sdutil.sdtask_decorator
 def sdpolaverage(
@@ -40,15 +33,9 @@ def sdpolaverage(
 
     # followings are parameters of mstransform but not used by sdpolaverage.
     # just putting default values
-    vis = infile             # needed for ParallelDataHelper
-    outputvis = outfile      # needed for ParallelDataHelper
     do_timeaverage = False
     timebin = "0s"
     timespan = ""
-
-    # debug parameter
-    _disableparallel = False
-    _monolithic_processing = False
 
     # Only parse timeaverage parameters when timebin > 0s
     if do_timeaverage:

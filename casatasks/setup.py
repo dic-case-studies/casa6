@@ -271,6 +271,7 @@ xml_files = [ 'xml/imhead.xml',
               'xml/sdpolaverage.xml',
               'xml/sdsidebandsplit.xml',
               'xml/plotprofilemap.xml',
+              'xml/imbaseline.xml',
 ]
 
 if pyversion < 3:

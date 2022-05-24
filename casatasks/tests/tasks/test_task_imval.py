@@ -64,6 +64,90 @@ def note(message, priority="NORMAL", origin="imval_test"):
     print(message)
     casalog.postLocally(message, priority, origin)
 
+###########################################################################
+# Input test general format
+
+
+def tryInput(imagename, box='', chans='', stokes='', region='', errormsg=''):
+    retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+    note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
+    info('Performing input/output tests on imagename, errors WILL occur.')
+
+    results = None
+    try:
+        results = imval(imagename=imagename, box=box, chans=chans, stokes=stokes, region=region)
+    except:
+        pass
+    else:
+        if (results != None \
+                and ((isinstance(results, bool) and results == True) \
+                     or (isinstance(results, dict) and results != {}))):
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + errormsg
+    return retValue
+
+###########################################################################
+# Single point test general format
+
+
+def setUpImage(retValue):
+    bbox = {}
+    try:
+        _ia.open(image_file)
+        bbox = _ia.boundingbox()
+        _ia.done()
+    except:
+        retValue['success'] = False
+        retValue['error_msgs'] = retValue['error_msgs'] \
+                                 + "\nError: Unable to find size of image " + image_file
+
+    dir_blc = []
+    dir_trc = []
+    min_chan = max_chan = -1
+    min_stokes = max_stokes = -1
+    if (len(bbox) > 0 and 'blc' in bbox and 'trc' in bbox):
+        blc = bbox['blc']
+        trc = bbox['trc']
+
+        dir_blc = [blc[0], blc[1]]
+        dir_trc = [trc[0], trc[1]]
+        min_chan = blc[3]
+        max_chan = trc[3]
+        min_Stokes = blc[2]
+        max_stokes = trc[2]
+
+    error_margin = 0.00001
+
+    return dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin
+
+
+def trySinglePoint(retValue, imagename='', box='', chans='', stokes='', expected=0.0, errormsg='', errorval=0.00001):
+    results = None
+    try:
+        results = imval(imagename=imagename, box=box, chans=str(chans), \
+                        stokes=str(stokes))
+    except Exception:
+        retValue['success'] = False
+        retValue['error_msgs'] = retValue['error_msgs'] \
+                                 + "\nError: Failed to get the value in the bottom right" \
+                                 + " corner. " + box + "."
+    else:
+        if (results != None and 'blc' in results \
+                and 'data' in results and 'unit' in results \
+                and 'mask' in results):
+            msg = 'Bottom right corner, ' + str(results['blc']) + ', value is: ' \
+                  + str(results['data']) + str(results['unit']) \
+                  + ' with mask ' + str(results['mask'])
+        if (results == None or 'data' not in results or \
+                (results['data'] + expected > errorval or not results['mask'])):
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + errormsg
+
+    return retValue
+
+
 
 ###########################################################################
 # NAME: input_test
@@ -87,295 +171,269 @@ def note(message, priority="NORMAL", origin="imval_test"):
 class imval_test(unittest.TestCase):
     
     def setUp(self):
-        if (os.path.exists(image_file)):
-            os.system('rm -rf ' +image_file+ ' ' +good_rgn_file)
-            
-        os.system('cp -RH '+ os.path.join(datapath,image_file)+' ' + image_file)
-        os.system('cp -RH '+ os.path.join(datapath,good_rgn_file)+' ' + good_rgn_file)
+
+        if os.path.exists(image_file):
+            shutil.rmtree(image_file)
+        if os.path.exists(good_rgn_file):
+            os.remove(good_rgn_file)
+
+        shutil.copytree(os.path.join(datapath, image_file), image_file)
+        shutil.copyfile(os.path.join(datapath, good_rgn_file), good_rgn_file)
 
     def tearDown(self):
-            os.system('rm -rf ' +image_file+ ' ' +good_rgn_file)
-        
-    def test_input(self):
-        '''Imval: Input/output tests'''
-        retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
-        note( "Starting imval INPUT/OUTPUT tests.", 'NORMAL2' )
-    
+
+        shutil.rmtree(image_file)
+        os.remove(good_rgn_file)
+
+        if os.path.exists('mypv.im'):
+            shutil.rmtree('mypv.im')
+        if os.path.exists('xxyy.im'):
+            shutil.rmtree('xxyy.im')
+        if os.path.exists('garbage.rgn'):
+            os.remove('garbage.rgn')
+
+    def test_inputNoInputImage(self):
+        '''Test when no image is provided'''
+        retValue = tryInput(imagename='',
+                            errormsg="\nError: Empty imagename parameter not detected.")
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputRealInputImage(self):
+        '''Test when .rgn file is used as input instead of Image'''
+        retValue = tryInput(imagename=good_rgn_file,
+                            errormsg="\nError: Invalid image file name not detected.")
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputFloatVal(self):
+        '''Test when a float/invalid file is given as the input'''
+        retValue = tryInput(imagename=2.3,
+                            errormsg="\nError: Invalid image file name, 2.3,  not detected.")
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputn4826_bima(self):
+        '''Test with real image file n4826_bima'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
+
         ###########################################################
         # Image name tests
-        info( 'Performing input/output tests on imagename, errors WILL occur.' )
-        results=None
-        try:
-            results = imval( imagename='' )
-        except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Empty imagename parameter not detected."
-    
+        info('Performing input/output tests on imagename, errors WILL occur.')
         results = None
         try:
-            results = imval( imagename=good_rgn_file )
+            results = imval(imagename='n4826_bima.im')
         except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                              +"\nError: Invalid image file name not detected."
-    
-        results=None
-        try:
-            results = imval( imagename=2.3 )
-        except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                         +"\nError: Invalid image file name, 2.3,  not detected."
-    
-        results=None
-        try:
-            results = imval( imagename='n4826_bima.im' )
-        except:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                         +"\nError: imval failed with valid file name, n4826_bima.im."
-        if ( results == None ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Valid imagename, n4826_bima.im, test failed."
-        del results        
-            
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + "\nError: imval failed with valid file name, n4826_bima.im."
+        if (results == None):
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + "\nError: Valid imagename, n4826_bima.im, test failed."
+        del results
+
         ###################################################################
         # Testing out of range errors.
         # BLC=0,0,0,0  and TRC= 255,255,0,29   for n4826_bima.im
-        info( 'Performing input/output tests on "box", errors WILL occur.' )
-        results=None
+        info('Performing input/output tests on "box", errors WILL occur.')
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputBoxNegativeX(self):
+        '''Test when negative x value is given in the box parameter'''
+        retValue = tryInput(imagename=image_file,
+                            box='-3,0,-3,3',
+                            errormsg='\nInvalid box parameter, x=-3, values not detected.')
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputBoxLargeRangeX(self):
+        '''Test with large values for x in the box'''
+        retValue = tryInput(imagename=image_file,
+                            box='200,0,262,3',
+                            errormsg='Invalid box parameter values,262, not detected.')
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputBoxNegativeY(self):
+        '''Test when negative y value is given in the box parameter'''
+        retValue = tryInput(imagename=image_file,
+                            box='0,-3,0,3',
+                            errormsg='Invalid box parameter value, y=-3, not detected.')
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputLargeRangeY(self):
+        '''Test with large values of y in the box'''
+        retValue = tryInput(imagename=image_file,
+                            box='0,270,0,3',
+                            errormsg='Invalid box parameter value, y=270, not detected.')
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputBoxLargeY0(self):
+        '''Test when the first y value in the box is larger'''
+        retValue = tryInput(imagename=image_file,
+                            box='0,110,0,10',
+                            errormsg='Invalid box parameter value, y[1]>y[0], not detected.')
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputBox(self):
+        '''Test with valid box inputs'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
+
+        ###########################################################
+        # Image name tests
+        info('Performing input/output tests on imagename, errors WILL occur.')
+        results = None
         try:
-            results = imval( imagename=image_file, box='-3,0,-3,3' )
+            results = imval(imagename=image_file, box="1,2,3,4")
         except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                             +'\nInvalid box parameter, x=-3, values not detected.'
-            
-        results=None
-        try:
-            results = imval( imagename=image_file, box='200,0,262,3' )
-        except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                     +'Invalid box parameter values,262, not detected.'
-    
-        results=None
-        try:
-            results = imval( imagename=image_file, box='0,-3,0,3' )
-        except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                       + 'Invalid box parameter value, y=-3, not detected.'
-    
-        results=None
-        try:
-            results = imval( imagename=image_file, box='0,270,0,3' )
-        except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                          + 'Invalid box parameter value, y=270, not detected.'
-    
-        results=None
-        try:
-            results = imval( imagename=image_file, box='0,110,0,10' )
-        except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                          + 'Invalid box parameter value, y[1]>y[0], not detected.'
-    
-        results=None
-        try:
-            results = imval( imagename=image_file, box="1,2,3,4" )
-        except:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs'] \
-                       +'Valid box parameter values caused an error.'
-    
-        if ( results == None ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Valid box test, box=[1,2,3,4], failed."
-        del results        
-    
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + 'Valid box parameter values caused an error.'
+
+        if (results == None):
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + "\nError: Valid box test, box=[1,2,3,4], failed."
+        del results
+
         ##############################################################
         # CHANS parameter testing
-        info( 'Performing input/output tests on "chans", errors WILL occur.' )
-        result=None
+        info('Performing input/output tests on "chans", errors WILL occur.')
+        results = None
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputNegativeChans(self):
+        '''Test when the given channels are negative'''
+        retValue = tryInput(imagename=image_file,
+                            chans='-3',
+                            errormsg='Invalid chans parameter value,-3, not detected.')
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputChans50(self):
+        '''Test out of range channel value'''
+        retValue = tryInput(imagename=image_file,
+                            chans='50',
+                            errormsg='Invalid chans parameter value,50, not detected.')
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputChans10(self):
+        '''Test valid channel input'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
+
+        ###########################################################
+        # Image name tests
+        info('Performing input/output tests on imagename, errors WILL occur.')
+        results = None
         try:
-            results = imval( imagename=image_file, chans='-3' )
+            results = imval(imagename=image_file, chans="10")
         except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                        retValue['success']=False
-                        retValue['error_msgs']=retValue['error_msgs'] \
-                               +'Invalid chans parameter value,-3, not detected.'
-    
-        resutls=None
-        try:
-            results = imval( imagename=image_file, chans='50' )
-        except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                        retValue['success']=False
-                        retValue['error_msgs']=retValue['error_msgs'] \
-                            +'Invalid chans parameter value,50, not detected.'
-    
-        results=None
-        try:
-            results = imval( imagename=image_file, chans="10" )
-        except:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs'] \
-                  +'Valid chans parameter value caused an error.'
-    
-        if ( results == None ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Valid channel test, chans='10', failed."
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + 'Valid chans parameter value caused an error.'
+
+        if (results == None):
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + "\nError: Valid channel test, chans='10', failed."
         del results
-    
-    
+
         ###############################################################
         # STOKES parameter testing
-        info( 'Performing input/output tests on "stokes", errors WILL occur.' )
-        results=None
+        info('Performing input/output tests on "stokes", errors WILL occur.')
+        results = None
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputStokesQ(self):
+        '''Test with stokes Q'''
+        retValue = tryInput(imagename=image_file,
+                            stokes='Q',
+                            errormsg='Invalid stokes value, Q,  not detected.')
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputStokes0(self):
+        '''Test with 0 given as stokes value'''
+        retValue = tryInput(imagename=image_file,
+                            stokes=0,
+                            errormsg='Invalid stokes value, 0,  not detected.')
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputStokesI(self):
+        '''Test with valid stokes input I'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
+
+        ###########################################################
+        # Image name tests
+        info('Performing input/output tests on imagename, errors WILL occur.')
+        results = None
         try:
-            results = imval( imagename=image_file, stokes='Q' )        
+            results = imval(imagename=image_file, stokes='I')
         except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs'] \
-                           +'Invalid stokes value, Q,  not detected.'
-    
-        results=None
-        try:
-            results = imval( imagename=image_file, stokes=0 )
-        except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs'] \
-                           +'Invalid stokes value, 0,  not detected.'
-        results=None
-        try:
-            results = imval( imagename=image_file, stokes='I' )
-        except:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs'] \
-                           +'Valid stokes value, I, caused errors.'
-    
-        if ( results == None ):
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Valid stokes, 'I', test failed on file ."\
-                     +image_file+"\nRESULTS: "+str(results)
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + 'Valid stokes value, I, caused errors.'
+
+        if (results == None):
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + "\nError: Valid stokes, 'I', test failed on file ." \
+                                     + image_file + "\nRESULTS: " + str(results)
         del results
-            
+
         ########################################
         # REGION parameter tests
-        info( 'Performing input/output tests on "region", errors WILL occur.' )
-        results=None
-        try:
-            results = imval( imagename=image_file, region=[1,3] )
-        except:
-            pass
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                   +"\nError: Bad region, '[1, 3]', was not reported."
-                
-                   
+        info('Performing input/output tests on "region", errors WILL occur.')
+        results = None
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputRegion(self):
+        '''Test when given region array'''
+        retValue = tryInput(imagename=image_file,
+                            region=[1, 3],
+                            errormsg="\nError: Bad region, '[1, 3]', was not reported.")
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputRegionFile(self):
+        '''Test when given a bad region file'''
         # First make sure the region file does not exist.
-        garbage_rgn_file = os.getcwd()+'/garbage.rgn'
-        if ( os.path.exists( garbage_rgn_file )):
-            os.remove( garbage_rgn_file )
-        
+        garbage_rgn_file = 'garbage.rgn'
+        if (os.path.exists(garbage_rgn_file)):
+            os.remove(garbage_rgn_file)
+
+        retValue = tryInput(imagename=image_file,
+                            region=garbage_rgn_file,
+                            errormsg="\nError: Bad region file, 'garbage.rgn', was NOT " \
+                                         + "reported as missing.")
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputModifiedRegionFile(self):
+        '''Test with modified bad region file'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
+
+        ###########################################################
+        # Image name tests
+        info('Performing input/output tests on imagename, errors WILL occur.')
+        results = None
         try:
-            results = imval( imagename=image_file, \
-                             region=garbage_rgn_file )
-        except:
-            #We want this to fail
-            no_op = 'noop'
-        else:
-            if ( results!=None \
-                 and ( (isinstance(results,bool) and results==True )\
-                 or (isinstance(results,dict) and results!={} ) ) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                       + "\nError: Bad region file, 'garbage.rgn', was NOT "\
-                       + "reported as missing."
-                       
-        try:
-            rgn_file = os.getcwd()+'garbage.rgn'
-            fp=open( rgn_file, 'w' )
+            rgn_file = 'garbage.rgn'
+            fp = open(rgn_file, 'w')
             fp.writelines('This file does NOT contain a valid CASA region specification\n')
             fp.close()
         except:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Unable to create bad region file.\n\t"
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + "\nError: Unable to create bad region file.\n\t"
             raise
-    
-            
-    
         try:
             results = imval( imagename=image_file, region=rgn_file )
         except:
@@ -388,9 +446,18 @@ class imval_test(unittest.TestCase):
                 retValue['error_msgs']=retValue['error_msgs']\
                               + "\nError: Bad region file, 'garbage.rgn',"\
                               + " was not reported as bad."
-    
-        
-        results=None
+        results = None
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_inputGoodRegionFile(self):
+        '''Test region seleciton with good region file'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        note("Starting imval INPUT/OUTPUT tests.", 'NORMAL2')
+
+        ###########################################################
+        # Image name tests
+        info('Performing input/output tests on imagename, errors WILL occur.')
+        results = None
         try:
             results=imval( imagename=image_file, region=good_rgn_file )
         except:
@@ -404,9 +471,8 @@ class imval_test(unittest.TestCase):
                      +"\nError: Valid region file, "+good_rgn_file\
                      +" tset has failed."\
                      +"\nRESULTS: "+str(results)
-        del results
-                
-        self.assertTrue(retValue['success'],retValue['error_msgs'])
+        results = None
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
     
     ###########################################################################
     # NAME: single_point
@@ -421,239 +487,169 @@ class imval_test(unittest.TestCase):
     #           e) Value at 3 points within the image.
     #
     ############################################################################
-    
-    def test_single_point(self):
-        '''Imval: Single point tests'''
-        retValue = {'success': True, 'msgs': "", 'error_msgs': '' }
-        note( "Starting SINGLE POINT tests.", 'NORMAL2' )
-    
-        # Find the min/max points of the image.
-        bbox={}
-        try: 
-            _ia.open( image_file )
-            bbox=_ia.boundingbox()
-            _ia.done()
-        except:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Unable to find size of image "+image_file
-    
-        dir_blc=[]
-        dir_trc=[]
-        min_chan=max_chan=-1
-        min_stokes=max_stokes=-1    
-        if ( len(bbox) > 0 and 'blc' in bbox and 'trc' in bbox ):
-            blc=bbox['blc']
-            trc=bbox['trc']
-    
-            dir_blc=[blc[0], blc[1]]
-            dir_trc=[trc[0], trc[1]]
-            min_chan=blc[3]
-            max_chan=trc[3]
-            min_Stokes=blc[2]
-            max_stokes=trc[2]
-    
-        error_margin=0.00001
-    
-        
-        #############################################################
-        # Bottom-left
-        tbox=str(dir_blc[0])+','+str(dir_blc[1])+','+str(dir_blc[0])+','\
+
+
+    def test_singlePointBottomLeft(self):
+        '''Test box selection at bottom left'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
+
+        tbox = str(dir_trc[0])+','+str(dir_blc[1])+','+str(dir_trc[0])+','\
               +str(dir_blc[1])
-        msg="Bottom left corner value was Not Found"
-        results=None
+
+        trySinglePoint(retValue,
+                       imagename=image_file,
+                       box=tbox,
+                       chans=str(min_chan),
+                       stokes=str(min_stokes),
+                       expected=1.035184e-09,
+                       errormsg="\nError: Expected 1.035184e-09Jy/Beam with mask=True."\
+                     +"\n\t"+"Bottom left corner value was Not Found")
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_singlePointBottomRight(self):
+        '''Test box seleciton at bottom right'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
+
+        tbox = str(dir_trc[0]) + ',' + str(dir_blc[1]) + ',' + str(dir_trc[0]) + ',' \
+               + str(dir_blc[1])
+
+        trySinglePoint(retValue,
+                       imagename=image_file,
+                       box=tbox,
+                       chans=str(min_chan),
+                       stokes=str(min_stokes),
+                       expected=1.172165e-09,
+                       errormsg='\nError: Expected value of -1.172165e-09 and mask=True'\
+                         +'\n\t'+"Bottom right corner value was Not Found")
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_singlePointTopLeft(self):
+        '''Test box selection at top left'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
+
+        tbox = str(dir_blc[0]) + ',' + str(dir_trc[1]) + ',' + str(dir_blc[0]) + ',' \
+               + str(dir_trc[1])
+
+        trySinglePoint(retValue,
+                       imagename=image_file,
+                       box=tbox,
+                       chans=str(min_chan),
+                       stokes=str(min_stokes),
+                       expected=4.2731923e-09,
+                       errormsg="\nError: Expected value of -4.273192e-09, and mask=True"  + "\n\t" + "Top left corner value was Not Found")
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_singlePointTopRight(self):
+        '''Test box selection at top right'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
+
+        tbox = str(dir_trc[0]) + ',' + str(dir_trc[1]) + ',' + str(dir_trc[0]) + ',' \
+               + str(dir_trc[1])
+
+        trySinglePoint(retValue,
+                       imagename=image_file,
+                       box=tbox,
+                       chans=str(min_chan),
+                       stokes=str(min_stokes),
+                       expected=3.647830e-09,
+                       errormsg='\nError: Expected value -3.647830e-09Jy/Beam and mask=True'\
+                    +'\n\t'+"Top right corner value was Not Found")
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+
+    def test_singlePointLastChanStokes(self):
+        '''Test box seleciton with max stokes and chans'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
+
+        tbox = str(dir_trc[0]) + ',' + str(dir_trc[1]) + ',' + str(dir_trc[0]) + ',' + \
+               str(dir_trc[1])
+
+        trySinglePoint(retValue,
+                       imagename=image_file,
+                       box=tbox,
+                       chans=str(max_chan),
+                       stokes=str(max_stokes),
+                       expected=-3.55266e-10,
+                       errormsg='\nError: Expected value -3.647830e-09Jy/Beam and'\
+                            +' mask=True \n\t'+"Value NOT found when looking at last chanel and last stokes")
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_singlePointRandom(self):
+        '''Test selection a single random point'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
+
+        # A couple of not so random points
+        tbox = str(int(dir_trc[0] * 2 / 3)) + ',' + str(int(dir_trc[1] * 2 / 3)) + ',' \
+               + str(int(dir_trc[0] * 2 / 3)) + ',' + str(int(dir_trc[1] * 2 / 3))
+        msg = "Value NOT found when looking at first random point," + tbox + "."
+        results = None
+
         try:
-            results=imval( imagename=image_file, box=tbox, chans=str(min_chan), \
-                           stokes=str(min_stokes) )
+            results = imval(imagename=image_file, box=tbox, \
+                            chans=str(int(max_chan * 2 / 3)), stokes=str(max_stokes))
         except Exception:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Failed to get the value in the bottom left"\
-                     +" corner, "+tbox+"."
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + "\nError: " + msg
         else:
-            if ( results!=None and 'blc' in results \
-                 and 'data' in results and 'unit' in results\
-                 and 'mask' in results ):
-                msg='Bottom left corner valus is, '+str(results['blc'])\
-                     +', value is: '+str(results['data'])+str(results['unit'])\
-                     +' with mask '+str(results['mask'])
-            if ( results==None or 'data' not in results \
-                 or 'data' not in results or \
-               ( results['data']+1.035184e-09>error_margin or not results['mask']) ):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Expected 1.035184e-09Jy/Beam with mask=True."\
-                     +"\n\t"+msg
-    
-        #############################################################
-        # Bottom-right
-        tbox=str(dir_trc[0])+','+str(dir_blc[1])+','+str(dir_trc[0])+','\
-              +str(dir_blc[1])
-        msg="Bottom right corner value was Not Found"
-        results=None
+            if (results != None and 'blc' in results \
+                    and 'data' in results and 'unit' in results \
+                    and 'mask' in results):
+                msg = 'Value found at' + str(results['blc']) + ' is: ' \
+                      + str(results['data']) + str(results['unit']) \
+                      + '. with mask ' + str(results['mask'])
+            if (results == None or 'data' not in results or \
+                    (results['data'] - 0.062294 > error_margin)):
+                retValue['success'] = False
+                retValue['error_msgs'] = retValue['error_msgs'] \
+                                         + '\nError: Expected value of 0.062294Jy/Beam and mask=True' \
+                                         + '\n\t' + msg
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
+
+    def test_singlePointSecondRandom(self):
+        '''Test selecting another single random point'''
+        retValue = {'success': True, 'msgs': "", 'error_msgs': ''}
+        dir_blc, dir_trc, min_chan, max_chan, min_stokes, max_stokes, error_margin = setUpImage(retValue)
+
+        # Second random point
+        tbox = str(int(dir_trc[0] * 1 / 6)) + ',' + str(int(dir_trc[1] * 2 / 6)) + ',' \
+               + str(int(dir_trc[0] * 1 / 6)) + ',' + str(int(dir_trc[1] * 2 / 6))
+        msg = "Value NOT found when looking at second random point," + tbox + "."
+        results = None
+
         try:
-            results=imval( imagename=image_file, box=tbox, chans=str(min_chan),\
-                           stokes=str(min_stokes) )
+            results = imval(imagename=image_file, box=tbox, \
+                            chans=str(int(max_chan * 5 / 6)), stokes=str(max_stokes))
         except Exception:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Failed to get the value in the bottom right"\
-                     +" corner. "+tbox+"."                
+            retValue['success'] = False
+            retValue['error_msgs'] = retValue['error_msgs'] \
+                                     + "\nError: " + msg
         else:
-            if ( results!=None and 'blc' in results \
-                 and 'data' in results and 'unit' in results\
-                 and 'mask' in results ):
-                msg='Bottom right corner, '+str(results['blc'])+', value is: '\
-                     +str(results['data'])+str(results['unit'])\
-                     +' with mask '+str(results['mask'])
-            if ( results==None or 'data' not in results or \
-                ( results['data']+1.172165e-09 > 0.00001 or not results['mask'])):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                         +'\nError: Expected value of -1.172165e-09 and mask=True'\
-                         +'\n\t'+msg
-    
-        ######################################################3
-        # Top-left
-        tbox=str(dir_blc[0])+','+str(dir_trc[1])+','+str(dir_blc[0])+','\
-              +str(dir_trc[1])
-        msg="Top left corner value was Not Found"
-        results=None
-    
-        try:
-            results=imval( imagename=image_file, box=tbox, chans=str(min_chan),
-                           stokes=str(min_stokes) )
-        except Exception:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Failed to get the value in the top left"\
-                     +" corner, "+tbox+"."
-        else:
-            if ( results!=None and 'blc' in results \
-                 and 'data' in results and 'unit' in results\
-                 and 'mask' in results ):
-                msg='Top left corner, '+str(results['blc'])+', value is: '\
-                     +str(results['data'])+str(results['unit'])\
-                     +' with mask '+str(results['mask'])
-            if ( results==None or 'data' not in results or \
-                 ( results['data']+4.2731923e-09>error_margin or not results['mask'])):
-                retValue['success']=False
-                retValue['error_msgs'] = retValue['error_msgs'] + "\nError: Expected value of -4.273192e-09, and mask=True"  + "\n\t" + msg
-                
-        #############################################################
-        # Top-right
-        tbox=str(dir_trc[0])+','+str(dir_trc[1])+','+str(dir_trc[0])+','\
-              +str(dir_trc[1])
-        msg="Top right corner value was Not Found"
-        results=None
-        try:
-            results=imval( imagename=image_file, box=tbox, chans=str(min_chan),\
-                           stokes=str(min_stokes) )
-        except Exception:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Failed to get the value in the top right"\
-                     +" corner. "+tbox+"."
-        else:
-            if ( results!=None and 'blc' in results \
-                 and 'data' in results and 'unit' in results\
-                 and 'mask' in results ):
-                msg='Top right corner, '+str(results['blc'])+', value is: '\
-                     +str(results['data'])+str(results['unit'])\
-                     +' with mask '+str(results['mask'])
-            if ( results==None or 'data' not in results or \
-                 (results['data']+3.647830e-09>error_margin or not results['mask'])):
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                    +'\nError: Expected value -3.647830e-09Jy/Beam and mask=True'\
-                    +'\n\t'+msg
-    
-        #########################################################3
-        # Last channel and stokes
-        tbox=str(dir_trc[0])+','+str(dir_trc[1])+','+str(dir_trc[0])+','+\
-              str(dir_trc[1])
-        msg="Value NOT found when looking at last chanel and last stokes"
-        results=None
-    
-        try:
-            results=imval( imagename=image_file, box=tbox, chans=str(max_chan), \
-                           stokes=str(max_stokes) )
-        except Exception:
-            retValue['success']=False
-            retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: Failed to get the value at the last channel "\
-                     +" and last stokes, "+tbox+"."
-        else:
-            if ( results!=None and 'blc' in results \
-                 and 'data' in results and 'unit' in results\
-                 and 'mask' in results ):
-                msg='Value found at'+str(results['blc'])+' is: '\
-                     +str(results['data'])+str(results['unit'])\
-                     +'. with mask '+str(results['mask'])
-                if ( results==None or 'data' not in results or \
-                     ( results['data']-3.55266e-10 > error_margin ) ):
-                    retValue['success']=False
-                    retValue['error_msgs']=retValue['error_msgs']\
-                            +'\nError: Expected value -3.647830e-09Jy/Beam and'\
-                            +' mask=True \n\t'+msg
-    
-            #######################################################
-            # A couple of not so random points
-            tbox=str(int(dir_trc[0]*2/3))+','+str(int(dir_trc[1]*2/3))+','\
-                  +str(int(dir_trc[0]*2/3))+','+str(int(dir_trc[1]*2/3))
-            msg="Value NOT found when looking at first random point,"+tbox+"."
-            results=None
-    
-            try:
-                results=imval( imagename=image_file, box=tbox, \
-                chans=str(int(max_chan*2/3)), stokes=str(max_stokes) )
-            except Exception:
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: "+msg
-            else:
-                if ( results!=None and 'blc' in results \
-                     and 'data' in results and 'unit' in results\
-                     and 'mask' in results ):
-                    msg='Value found at'+str(results['blc'])+' is: '\
-                         +str(results['data'])+str(results['unit'])\
-                         +'. with mask '+str(results['mask'])
-                if ( results==None or 'data' not in results or \
-                     ( results['data']-0.062294 > error_margin ) ):
-                    retValue['success']=False
-                    retValue['error_msgs']=retValue['error_msgs']\
-                    +'\nError: Expected value of 0.062294Jy/Beam and mask=True'\
-                       +'\n\t'+msg
-    
-            # Second random point
-            tbox=str(int(dir_trc[0]*1/6))+','+str(int(dir_trc[1]*2/6))+','\
-                  +str(int(dir_trc[0]*1/6))+','+str(int(dir_trc[1]*2/6))
-            msg="Value NOT found when looking at second random point,"+tbox+"."
-            results=None
-    
-            try:
-                results=imval( imagename=image_file, box=tbox, \
-                            chans=str(int(max_chan*5/6)), stokes=str(max_stokes) )
-            except Exception:
-                retValue['success']=False
-                retValue['error_msgs']=retValue['error_msgs']\
-                     +"\nError: "+msg
-            else:
-                if ( results!=None and 'blc' in results \
-                     and 'data' in results and 'unit' in results\
-                     and 'mask' in results ):
-                     msg='Value found at'+str(results['blc'])+' is: '\
-                     +str(results['data'])+str(results['unit'])\
-                     +'. with mask '+str(results['mask'])
-    
-                if ( results==None or 'data' not in results or \
-                     ( results['data']+0.070744 > error_margin ) ):
-                    retValue['success']=False
-                    retValue['error_msgs']=retValue['error_msgs']\
-                          +'Error: Expected value of -0.070744Jy/Beam and '\
-                          +'mask=True'+'\n\t'+msg
-    
-        self.assertTrue(retValue['success'],retValue['error_msgs'])
+            if (results != None and 'blc' in results \
+                    and 'data' in results and 'unit' in results \
+                    and 'mask' in results):
+                msg = 'Value found at' + str(results['blc']) + ' is: ' \
+                      + str(results['data']) + str(results['unit']) \
+                      + '. with mask ' + str(results['mask'])
+
+            if (results == None or 'data' not in results or \
+                    (results['data'] + 0.070744 > error_margin)):
+                retValue['success'] = False
+                retValue['error_msgs'] = retValue['error_msgs'] \
+                                         + 'Error: Expected value of -0.070744Jy/Beam and ' \
+                                         + 'mask=True' + '\n\t' + msg
+
+        self.assertTrue(retValue['success'], retValue['error_msgs'])
     
     ###########################################################################
     # NAME: arrays 
@@ -863,6 +859,6 @@ class imval_test(unittest.TestCase):
         res = imval(imagename)
         got = res['data']
         self.assertTrue((got == expec).all())
-    
+
 if __name__ == '__main__':
     unittest.main()

@@ -189,20 +189,31 @@ class test_manual(test_base):
     
     def setUp(self):
         self.setUp_multi()
-        
+        self.filename = ''
+
+    def tearDown(self) -> None:
+        if os.path.exists(self.filename):
+            os.system('rm -rf '+self.filename)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        shutil.rmtree('multiobs.ms', ignore_errors=True)
+        shutil.rmtree('ngc5921.ms', ignore_errors=True)
+        shutil.rmtree('ngc5921.ms.flagversions', ignore_errors=True)
+
     def test_observation(self):
         myinput = "observation='1'"
-        filename = create_input(myinput)
+        self.filename = create_input(myinput)
         
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False,
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=False,
                 flagbackup=False)
         check_eq(flagdata(vis=self.vis, mode='summary'), 2882778, 28500)
 
     def test_compatibility(self):
         myinput = "observation='1' mode='manualflag'"
-        filename = create_input(myinput)
-        
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False,
+        self.filename = create_input(myinput)
+
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=False,
                 flagbackup=False)
         check_eq(flagdata(vis=self.vis, mode='summary'), 2882778, 28500)
         
@@ -213,23 +224,31 @@ class test_manual(test_base):
         res = flagdata(vis=self.vis, mode='summary')
         self.assertEqual(res['flagged'], 203994, 'Should flag only the auto-correlations')
         
-
 class test_alma(test_base):
     # Test various selections for alma data 
 
     def setUp(self):
 #        self.setUp_flagdatatest_alma()
         self.setUp_alma_ms()
-    
+        self.filename = ''
+
+    def tearDown(self) -> None:
+        if os.path.exists(self.filename):
+            os.system('rm -rf '+self.filename)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        shutil.rmtree('uid___A002_X30a93d_X43e_small.ms', ignore_errors=True)
+
     def test_intent(self):
         '''flagcmd: test scan intent selection'''
         
         myinput = "intent='CAL*POINT*'\n"\
                 "#scan=3,4"
-        filename = create_input(myinput)
+        self.filename = create_input(myinput)
         
         # flag POINTING CALIBRATION scans and ignore comment line
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False,
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=False,
                 flagbackup=False)
 #         check_eq(flagdata(vis=self.vis,mode='summary', antenna='2'), 377280, 26200)
         res = flagdata(vis=self.vis,mode='summary')
@@ -276,7 +295,17 @@ class test_unapply(test_base):
     # Action unapply
     def setUp(self):
         self.setUp_ngc5921()
-        
+        self.filename = ''
+
+    def tearDown(self) -> None:
+        if os.path.exists(self.filename):
+            os.system('rm -rf '+self.filename)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        shutil.rmtree('ngc5921.ms', ignore_errors=True)
+        shutil.rmtree('ngc5921.ms.flagversions', ignore_errors=True)
+
     def test_unsupported_unapply(self):
         '''flagcmd: raise exception from inpmode=list and unapply'''
         passes = False
@@ -300,16 +329,16 @@ class test_unapply(test_base):
 
         # Flag using manual agent
         myinput = "scan='1'"
-        filename = create_input(myinput)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=True)
+        self.filename = create_input(myinput)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=True)
         
         # Flag using tfcrop agent from file
         # Note : For this test, scan=4 gives identical flags on 32/64 bit machines,
         #           and one flag difference on a Mac (32)
         #           Other scans give differences at the 0.005% level.
         myinput = "scan='4' mode=tfcrop correlation='ABS_RR' extendflags=False"
-        filename = create_input(myinput)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=True,
+        self.filename = create_input(myinput)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=True,
                 flagbackup=False)
         res = flagdata(vis=self.vis,mode='summary')
         self.assertEqual(res['scan']['1']['flagged'], 568134, 'Whole scan=1 should be flagged')
@@ -330,8 +359,8 @@ class test_unapply(test_base):
 
         # Flag using manual agent
         myinput = "scan='4'"
-        filename = create_input(myinput)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False)
+        self.filename = create_input(myinput)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=False)
         
         # Check FLAG_ROW is all set to true
         mytb = table()
@@ -344,8 +373,8 @@ class test_unapply(test_base):
         
         # Flag using tfcrop agent from file
         myinput = "scan='4' mode=tfcrop correlation='ABS_RR' extendflags=False"
-        filename = create_input(myinput)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=True,
+        self.filename = create_input(myinput)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=True,
                 flagbackup=False)
         
         # Check FLAG_ROW is all set to true
@@ -376,8 +405,8 @@ class test_unapply(test_base):
 
         # Flag using manual agent
         myinput = "scan='4'"
-        filename = create_input(myinput)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False)
+        self.filename = create_input(myinput)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=False)
         
         # Check FLAG_ROW is all set to true
         mytb = table()
@@ -390,8 +419,8 @@ class test_unapply(test_base):
         
         # Flag using tfcrop agent from file
         myinput = "scan='4' mode=rflag "
-        filename = create_input(myinput)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=True,
+        self.filename = create_input(myinput)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=True,
                 flagbackup=False)
         
         # Check FLAG_ROW is all set to true
@@ -422,8 +451,8 @@ class test_unapply(test_base):
 
         # Flag using manual agent
         myinput = "scan='4'"
-        filename = create_input(myinput)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False)
+        self.filename = create_input(myinput)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=False)
         
         # Check FLAG_ROW is all set to true
         mytb = table()
@@ -436,8 +465,8 @@ class test_unapply(test_base):
         
         # Flag using clip agent from file
         myinput = "scan='4' mode=clip "
-        filename = create_input(myinput)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=True,
+        self.filename = create_input(myinput)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=True,
                 flagbackup=False)
         
         # Check FLAG_ROW is all set to true
@@ -469,8 +498,8 @@ class test_unapply(test_base):
         ant_name = 'VA01'
         # Flag with antint
         in_cmd = "antint_ref_antenna={0} spw='0' minchanfrac=0.8".format(ant_name)
-        filename = create_input(in_cmd)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply',
+        self.filename = create_input(in_cmd)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply',
                 savepars=True, flagbackup=False)
 
         res = flagdata(vis=self.vis, mode='summary')
@@ -478,8 +507,8 @@ class test_unapply(test_base):
 
         # Flag using manual agent
         in_manual = "scan='1'"
-        filename = create_input(in_manual)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply',
+        self.filename = create_input(in_manual)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply',
                 savepars=True, flagbackup=False)
         result = flagdata(vis=self.vis,mode='summary')
         man_flagged = result['antenna'][ant_name]['flagged']
@@ -504,16 +533,16 @@ class test_unapply(test_base):
 
         # Flag using the quack agent
         myinput = "scan='1~3' mode=quack quackinterval=1.0"
-        filename = create_input(myinput)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=True,
+        self.filename = create_input(myinput)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=True,
                 flagbackup=False)
         result = flagdata(vis=self.vis,mode='summary')
         quack_flags = result['scan']['1']['flagged']
 
         # Flag using manual agent
         myinput = "scan='1'"
-        filename = create_input(myinput)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=True,
+        self.filename = create_input(myinput)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=True,
                 flagbackup=False)
         result = flagdata(vis=self.vis,mode='summary')
         scan1_flags = result['scan']['1']['flagged']
@@ -537,14 +566,14 @@ class test_unapply(test_base):
 
         # Flag using manual agent
         myinput = "scan='1'"
-        filename = create_input(myinput)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=True,
+        self.filename = create_input(myinput)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=True,
                 flagbackup=False)
 
         # Flag using the quack agent
         myinput = "scan='1~3' mode=quack quackinterval=1.0"
-        filename = create_input(myinput)
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=True,
+        self.filename = create_input(myinput)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=True,
                 flagbackup=False)
         
         # Unapply the manual line
@@ -588,6 +617,22 @@ class test_savepars(test_base):
     # Action apply, with savepars=True/False
     def setUp(self):
         self.setUp_ngc5921()
+        self.filename = ''
+
+    def tearDown(self) -> None:
+        if os.path.exists(self.filename):
+            os.system('rm -rf '+self.filename)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        shutil.rmtree('ngc5921.ms', ignore_errors=True)
+        shutil.rmtree('ngc5921.ms.flagversions', ignore_errors=True)
+        if os.path.exists('myflags.txt'):
+            os.system('rm -rf myflags.txt')
+        if os.path.exists('newfile.txt'):
+            os.system('rm -rf newfile.txt')
+        if os.path.exists('filename1.txt'):
+            os.system('rm -rf filename1.txt')
 
     def test_list1(self):
         '''flagcmd: list and savepars=True/False'''
@@ -597,9 +642,9 @@ class test_savepars(test_base):
         ########## TEST 1 
         # create text file called flagcmd.txt
         myinput = "scan='4' mode='clip' correlation='ABS_RR' clipminmax=[0, 4]\n"
-        filename = create_input(myinput)
+        self.filename = create_input(myinput)
         filename1 = 'filename1.txt'
-        os.system('cp '+filename+' '+filename1)
+        os.system('cp '+self.filename+' '+filename1)
 
         # save command to MS
         flagcmd(vis=self.vis, action='list', inpmode='list', inpfile=[myinput], savepars=True)
@@ -614,16 +659,16 @@ class test_savepars(test_base):
         ########## TEST 2 
         # create another input
         myinput = "scan='1~3' mode='manual'\n"
-        filename = create_input(myinput)
+        self.filename = create_input(myinput)
         
         # apply and don't save to MS
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, action='apply', savepars=False,
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, action='apply', savepars=False,
                 flagbackup=False)
         
         # list and check that parameters were not saved to MS
         os.system('rm -rf myflags.txt')
         flagcmd(vis=self.vis, action='list', outfile='myflags.txt', savepars=True)
-        self.assertFalse(filecmp.cmp(filename, 'myflags.txt', 1), 'Files should not be equal')
+        self.assertFalse(filecmp.cmp(self.filename, 'myflags.txt', 1), 'Files should not be equal')
         
         ########### TEST 3 
         # apply cmd from TEST 1 and update APPLIED column
@@ -644,58 +689,58 @@ class test_savepars(test_base):
         # Only cmd from TEST 1 should be in MS
         os.system('rm -rf myflags.txt')
         flagcmd(vis=self.vis, action='list', outfile='myflags.txt', useapplied=True, savepars=True)
-        self.assertTrue(filecmp.cmp(filename1, 'myflags.txt', 1), 'Files should be equal')        
+        self.assertTrue(filecmp.cmp(filename1, 'myflags.txt', 1), 'Files should be equal')
 
     def test_overwrite_true(self):
         '''flagcmd: Use savepars and overwrite=True'''
         
         # Create flag commands in file called flagcmd.txt
         myinput = "scan='4' mode='clip' correlation='ABS_RR' clipminmax=[0, 4]\n"
-        filename = create_input(myinput)
+        self.filename = create_input(myinput)
         # Copy it to a new file
         newfile = 'newfile.txt'
         os.system('rm -rf '+newfile)
-        os.system('cp '+filename+' '+newfile)
+        os.system('cp '+self.filename+' '+newfile)
 
         # Create different flag command 
         myinput = "scan='1'\n"
-        filename = create_input(myinput)
+        self.filename = create_input(myinput)
                 
         # Apply flags from filename and try to save in newfile
         # Overwrite parameter should allow this
-        flagcmd(vis=self.vis, action='apply', inpmode='list',inpfile=filename, savepars=True, outfile=newfile,
+        flagcmd(vis=self.vis, action='apply', inpmode='list',inpfile=self.filename, savepars=True, outfile=newfile,
                 flagbackup=False)
         
         # newfile should contain what was in filename
-        self.assertTrue(filecmp.cmp(filename, newfile, 1), 'Files should be equal')        
+        self.assertTrue(filecmp.cmp(self.filename, newfile, 1), 'Files should be equal')
         
     def test_overwrite_false(self):
         '''flagcmd: Use savepars and overwrite=False'''
         
         # Create flag commands in file called flagcmd.txt
         myinput = "scan='4' mode='clip' correlation='ABS_RR' clipminmax=[0, 4]\n"
-        filename = create_input(myinput)
+        self.filename = create_input(myinput)
         # Copy it to a new file
         newfile = 'newfile.txt'
         os.system('rm -rf '+newfile)
-        os.system('cp '+filename+' '+newfile)
+        os.system('cp '+self.filename+' '+newfile)
 
         # Create different flag command 
         myinput = "scan='1'\n"
-        filename = create_input(myinput)
+        self.filename = create_input(myinput)
         
         passes = False
         try:
             # Apply flags from filename and try to save in newfile
             # Overwrite parameter at False should reject this
-            flagcmd(vis=self.vis, action='apply', inpmode='list',inpfile=filename, savepars=True, outfile=newfile,
+            flagcmd(vis=self.vis, action='apply', inpmode='list',inpfile=self.filename, savepars=True, outfile=newfile,
                     flagbackup=False, overwrite=False)
             # CASA5 gets here, that's OK
             passes = True
     
             # do this additional test for CASA5 to make sure
             # newfile should contain what was in filename
-            self.assertFalse(filecmp.cmp(filename, newfile, 1), 'Files should be different')        
+            self.assertFalse(filecmp.cmp(self.filename, newfile, 1), 'Files should be different')
         except:
             # CASA 6 throws an exception
             print('Expected error!')
@@ -711,7 +756,7 @@ class test_savepars(test_base):
         
         # Create flag commands in file called flagcmd.txt
         myinput = "scan='4' mode='clip' correlation='ABS_RR' clipminmax=[0, 4]\n"
-        filename = create_input(myinput)
+        self.filename = create_input(myinput)
 
         newfile = 'myflags.txt'  
         if os.path.exists("myflags.txt"):
@@ -719,29 +764,35 @@ class test_savepars(test_base):
                       
         # Apply flags from filename and try to save in newfile
         # Overwrite=False shouldn't do anything as newfile doesn't exist
-        flagcmd(vis=self.vis, action='apply', inpmode='list',inpfile=filename, savepars=True, outfile=newfile,
+        flagcmd(vis=self.vis, action='apply', inpmode='list',inpfile=self.filename, savepars=True, outfile=newfile,
                 flagbackup=False, overwrite=False)
         
         # newfile should contain what was in filename
-        self.assertTrue(filecmp.cmp(filename, newfile, 1), 'Files should be the same')        
+        self.assertTrue(filecmp.cmp(self.filename, newfile, 1), 'Files should be the same')
 
 
 class test_XML(test_base):
     
     def setUp(self):
         self.setUp_evla()
-        
+        self.filename = ''
+        self.filename1 = ''
+
     # During implementation of CAS-13049, test_xml2 would fail without a tearDown
     def tearDown(self):
         os.system('rm -rf tosr0001_scan3*.ms*')
+        if os.path.exists(self.filename):
+            os.system('rm -rf '+self.filename)
+        if os.path.exists(self.filename1):
+            os.system('rm -rf '+self.filename1)
 
-        
     def test_xml1(self):
         '''flagcmd: list xml file and save in outfile'''
         
         # The MS only contains clip and shadow commands
         # The XML contain the online flags
-        flagcmd(vis=self.vis, action='list', inpmode='xml', savepars=True, outfile='origxml.txt')
+        self.filename= 'origxml.txt'
+        flagcmd(vis=self.vis, action='list', inpmode='xml', savepars=True, outfile=self.filename)
         
         # Now save the online flags to the FLAG_CMD without applying
         flagcmd(vis=self.vis, action='list', inpmode='xml', savepars=True)
@@ -749,14 +800,14 @@ class test_XML(test_base):
         # Now apply them by selecting the reasons and save in another file
         # 507 cmds crash on my computer.
         reasons = ['ANTENNA_NOT_ON_SOURCE','FOCUS_ERROR','SUBREFLECTOR_ERROR']
-        flagcmd(vis=self.vis, action='apply', reason=reasons, savepars=True, outfile='myxml.txt',
+        self.filename1= 'myxml.txt'
+        flagcmd(vis=self.vis, action='apply', reason=reasons, savepars=True, outfile=self.filename1,
                 flagbackup=False)
                 
         # Compare with original XML
-        self.assertTrue(filecmp.cmp('origxml.txt', 'myxml.txt',1), 'Files should be equal')
+        self.assertTrue(filecmp.cmp(self.filename, self.filename1,1), 'Files should be equal')
         
         # Check that APPLIED column has been updated to TRUE
-        
         
     def test_xml2(self):
         '''flagcmd: list xml file and save in outfile'''
@@ -784,8 +835,14 @@ class test_XML(test_base):
         self.assertEqual(res['flagged'], 208000+208000, 'Should only flag RR and RL and not fail')
 
 class test_shadow(test_base):
+    filename = ''
     def setUp(self):
         self.setUp_shadowdata()
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.vis, ignore_errors=True)
+        if os.path.exists(self.filename):
+            os.system('rm -rf '+self.filename)
 
     def test_CAS2399(self):
         '''flagcmd: shadow by antennas not present in MS'''
@@ -808,7 +865,7 @@ class test_shadow(test_base):
 #        if os.path.exists(antfile):
 #            os.system('rm -rf myants.txt')
 
-        filename = create_input(myinput)
+        self.filename = create_input(myinput)
 
         # Create command line
         myinput = ["mode='shadow' tolerance=0.0 addantenna='flagcmd.txt'"]
@@ -835,6 +892,10 @@ class test_antint(test_base):
 
     def setUp(self):
         self.setUp_evla()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        shutil.rmtree('tosr0001_scan3_noonline.ms', ignore_errors=True)
 
     def test_antint_defaults(self):
         '''flagcmd:: Test of antint with defaults'''
@@ -883,6 +944,18 @@ class test_rflag(test_base):
 
     def setUp(self):
         self.setUp_data4rflag()
+
+    def tearDown(self) -> None:
+        if os.path.exists('rflag_output_thresholds_freqdev0.txt'):
+            os.system('rm -rf rflag_output_thresholds*')
+        if os.path.exists('fdevfile.txt'):
+            os.system('rm -rf *devfile.txt')
+        if os.path.exists('outcmd.txt'):
+            os.system('rm -rf outcmd.txt')
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf Four_ants_3C286.ms*')
 
     def test_rflaginputs(self):
         """flagcmd:: Test of rflag threshold-inputs of both types (file and inline)
@@ -995,12 +1068,18 @@ class test_actions(test_base):
     def setUp(self):
         self.setUp_data4rflag()
         
-    def tearDown(self):
-        shutil.rmtree(self.vis, ignore_errors=True)
-        os.system('rm -rf flagcmd.txt')
-#         if os.path.exists('fourplot.png'):
-#             os.remove('fourplot.png')
-        
+    def tearDown(self) -> None:
+        os.system('rm -rf list*txt *plot*png reasonfile*txt')
+        if os.path.exists('flagcmd.txt'):
+            os.system('rm -rf flagcmd.txt')
+        if os.path.exists('cas9366.flags.txt'):
+            os.system('rm -rf cas9366.flags.txt')
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf ngc5921.ms*')
+        os.system('rm -rf Four_ants_3C286.ms*')
+
     def test_action_plot_table(self):
         '''flagcmd: Test action=plot, nothing plotted'''
         outplot = 'noplot.png'
@@ -1072,8 +1151,8 @@ class test_actions(test_base):
          flagcmd(vis=self.vis, action='clear', clearall=True)         
          cmd = "spw='5~7'\n"+\
                 "spw='1'"
-         filename = create_input(cmd)         
-         flagcmd(vis=self.vis, action='list', inpmode='list', inpfile=filename, savepars=True)
+         self.filename = create_input(cmd)
+         flagcmd(vis=self.vis, action='list', inpmode='list', inpfile=self.filename, savepars=True)
 
          # Apply the flags
          flagcmd(vis=self.vis)
@@ -1180,6 +1259,13 @@ class test_cmdbandpass(test_base):
         shutil.rmtree(self.vis, ignore_errors=True)
         os.system('rm -rf flagcmd.txt')
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.system('rm -rf cal.fewscans*')
+        os.system('rm -rf Four_ants_3C286.ms*')
+        if os.path.exists('calflags.txt'):
+            os.system('rm -rf calflags.txt')
+
     def test_unsupported_mode_in_list(self):
         '''Flagcmd: elevation and shadow are not supported in cal tables'''
         res = flagcmd(vis=self.vis, inpmode='list', inpfile=["mode='elevation'",
@@ -1211,9 +1297,9 @@ class test_cmdbandpass(test_base):
         """Flagcmd:: Manually flag a bpass-based CalTable using file in list mode """
         
         myinput = "field='3C286_A'"
-        filename = create_input(myinput)
+        self.filename = create_input(myinput)
 
-        flagcmd(vis=self.vis, inpmode='list', inpfile=filename, flagbackup=False)
+        flagcmd(vis=self.vis, inpmode='list', inpfile=self.filename, flagbackup=False)
         summary=flagdata(vis=self.vis, mode='summary')
         self.assertEqual(summary['field']['3C286_A']['flagged'], 499200.0)
         self.assertEqual(summary['field']['3C286_B']['flagged'], 0)
@@ -1336,23 +1422,6 @@ class test_cmdbandpass(test_base):
         res=flagdata(vis=self.vis, mode='summary')
         self.assertEqual(res['flagged'],1248000)
         self.assertEqual(res['total'],1248000)
-
-        
-# Dummy class which cleans up created files
-class cleanup(test_base):
-    
-    def tearDown(self):
-        os.system('rm -rf multiobs.ms*')
-        os.system('rm -rf uid___A002_X30a93d_X43e_small.ms*')
-        os.system('rm -rf ngc5921.ms*')
-        os.system('rm -rf Four_ants*.ms*')
-        os.system('rm -rf shadowtest*.ms*')
-        os.system('rm -rf tosr0001_scan3*.ms*')
-        os.system('rm -rf cal.fewscans.bpass*')
-
-    def test1(self):
-        '''flagcmd: Cleanup'''
-        pass
 
 if __name__ == '__main__':
     unittest.main()
