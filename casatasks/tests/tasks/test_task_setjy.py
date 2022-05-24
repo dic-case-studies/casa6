@@ -38,9 +38,9 @@ ctsys_resolve = ctsys.resolve
 Unit tests for task setjy.
 
 Features tested:
-  1. Does setjy(modimage=modelimu, fluxdensity=0) NOT scale the model image's
+  1. Does setjy(model=modelimu, fluxdensity=0) NOT scale the model image's
      flux density?
-  2. Does setjy(modimage=modelimu) scale the model image's flux density?
+  2. Does setjy(model=modelimu) scale the model image's flux density?
   3. Solar system (Uranus) flux density calibration.
 """
 
@@ -234,7 +234,7 @@ class test_SingleObservation(SetjyUnitTestBase):
             #print("\nRunning setjy(field='Uranus').")
             print("\nRunning setjy(field='Titan').")
             #sjran = setjy(vis=self.inpms, field='Uranus', spw='', modimage='',
-            sjran = setjy(vis=self.inpms, field='Titan', spw='', modimage='',
+            sjran = setjy(vis=self.inpms, field='Titan', spw='', model='',
                           scalebychan=False, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2010', usescratch=True)
             #print("sjran=",sjran)
@@ -355,7 +355,7 @@ class test_SingleObservation(SetjyUnitTestBase):
             #print("\nRunning setjy(field='Uranus').")
             print("\nRunning setjy(field='Titan').")
             #sjran = setjy(vis=self.inpms, field='Uranus', spw='', modimage='',
-            sjran = setjy(vis=self.inpms, field='Titan', spw='', modimage='',
+            sjran = setjy(vis=self.inpms, field='Titan', spw='', model='',
                           scalebychan=True, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2010', usescratch=True)
         except Exception:
@@ -492,7 +492,7 @@ class test_SingleObservation(SetjyUnitTestBase):
             #print("\nRunning setjy(field='Uranus').")
             print("\nRunning setjy(field='Titan').")
             #sjran = setjy(vis=self.inpms, field='Uranus', spw='', modimage='',
-            sjran = setjy(vis=self.inpms, field='Titan', spw='', modimage='',
+            sjran = setjy(vis=self.inpms, field='Titan', spw='', model='',
                           scalebychan=False, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2012', usescratch=True)
         except Exception:
@@ -614,7 +614,7 @@ class test_SingleObservation(SetjyUnitTestBase):
         try:
             #print("\nRunning setjy(field='Uranus').")
             print("\nRunning setjy(field='Titan').")
-            sjran = setjy(vis=self.inpms, field='', spw='', modimage='',
+            sjran = setjy(vis=self.inpms, field='', spw='', model='',
                           selectdata=True, intent="*AMPLI*",
                           scalebychan=True, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2010', usescratch=True)
@@ -737,7 +737,7 @@ class test_SingleObservation(SetjyUnitTestBase):
         try:
             #print("\nRunning setjy(field='Uranus').")
             print("\nRunning setjy(field='Titan').")
-            sjran = setjy(vis=self.inpms, field='', spw='', modimage='',
+            sjran = setjy(vis=self.inpms, field='', spw='', model='',
                           selectdata=True, intent="*AMPLI*",
                           scalebychan=False, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2012', usescratch=True)
@@ -869,7 +869,7 @@ class test_MultipleObservations(SetjyUnitTestBase):
             print("\nRunning setjy(field='Titan').")
             sjran = setjy(self.inpms, field='Titan', spw='',
                           selectdata=True, observation=1, 
-                          modimage='',
+                          model='',
                           scalebychan=False, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2010', usescratch=True)
         except Exception:
@@ -939,7 +939,7 @@ class test_MultipleObservations(SetjyUnitTestBase):
             print("\nRunning setjy(field='Titan').")
             sjran = setjy(self.inpms, field='Titan', spw='',
                           selectdata=True, observation=1, 
-                          modimage='',
+                          model='',
                           scalebychan=False, fluxdensity=-1,
                           standard='Butler-JPL-Horizons 2012', usescratch=True)
         except Exception:
@@ -1079,7 +1079,7 @@ class test_ModImage(SetjyUnitTestBase):
         self.check_eq(self.result['spix']['setjyran']['12']['1']['fluxd'][0],1234.0328507,0.0001)
         #
         # -for standard='Perley-Butler 2010, with model image
-        """modimage != '' and fluxdensity == 0 -> no scaling?"""
+        """model != '' and fluxdensity == 0 -> no scaling?"""
         #self.check_eq(self.result[False]['short'], 2.712631, 0.05)
         # Updated value for the updated run_setjy 2014-05-01 TT
         self.check_eq(self.result[False]['short'], 1.0508747, 0.05)
@@ -1093,11 +1093,9 @@ class test_ModImage(SetjyUnitTestBase):
         #self.check_eq(self.result[True]['long'],  0.808885, 0.025)
         # Updated value for the updated run_setjy 2014-05-01 TT
         self.check_eq(self.result[True]['long'],  0.9114067, 0.025)
-        #"""modimage != '' and fluxdensity > 0""" this is no longer supported in the task
         """fluxdensity > 0"""  # should be = input fluxdensity for model vis
         self.check_eq(self.result['fluxdens']['short'], 1234.0, 0.05)
         self.check_eq(self.result['fluxdens']['long'],  1234.0, 0.05)
-        #"""modimage != '', fluxdensity > 0, and spix = -0.7""" with modimage no longer supproted
         """fluxdensity > 0, and spix = -0.7"""
         #self.check_eq(self.result['spix']['short'], 1233.7, 0.5)
         #self.check_eq(self.result['spix']['long'],  1095.2, 0.5)
@@ -1111,7 +1109,6 @@ class test_ModImage(SetjyUnitTestBase):
         try:
             if use_oldstandard:
                 record['setjyran'] = setjy(vis=self.inpms, field=self.field,
-                                           #modimage=self.modelim,
                                            scalebychan=False,
                                            standard='Perley-Taylor 99',
                                            usescratch=True
@@ -1190,7 +1187,7 @@ class test_newStandards(SetjyUnitTestBase):
         self.modelim = ""
         sjran = setjy(vis=self.inpms, 
                       field=self.field,
-                      modimage=self.modelim,
+                      model=self.modelim,
                       standard='Perley-Butler 2013',
                       usescratch=True
                       )
@@ -1215,7 +1212,7 @@ class test_newStandards(SetjyUnitTestBase):
         self.modelim = ""
         sjran = setjy(vis=self.inpms, 
                       field=self.field,
-                      modimage=self.modelim,
+                      model=self.modelim,
                       standard='Perley-Butler 2017',
                       usescratch=True
                       )
@@ -1257,7 +1254,7 @@ class test_newStandards_MMS(SetjyUnitTestBase):
         self.modelim = ""
         sjran = setjy(vis=self.inpmms,
                       field=self.field,
-                      modimage=self.modelim,
+                      model=self.modelim,
                       standard='Perley-Butler 2013',
                       usescratch=True
                       )
@@ -1282,7 +1279,7 @@ class test_newStandards_MMS(SetjyUnitTestBase):
         self.modelim = ""
         sjran = setjy(vis=self.inpmms,
                       field=self.field,
-                      modimage=self.modelim,
+                      model=self.modelim,
                       standard='Perley-Butler 2017',
                       usescratch=True
                       )
@@ -1361,7 +1358,7 @@ class test_conesearch(SetjyUnitTestBase):
     def test_searchByPosition(self): 
         sjran = setjy(vis=self.inpms, 
                       field=self.field,
-                      modimage=self.modelim,
+                      model=self.modelim,
                       scalebychan=False,
                       #standard='Perley-Taylor 99',
                       standard='Perley-Butler 2013',
@@ -1565,7 +1562,7 @@ class test_conesearch(SetjyUnitTestBase):
     def test_searchByPosition(self): 
         sjran = setjy(vis=self.inpms, 
                       field=self.field,
-                      modimage=self.modelim,
+                      model=self.modelim,
                       scalebychan=False,
                       #standard='Perley-Taylor 99',
                       standard='Perley-Butler 2013',

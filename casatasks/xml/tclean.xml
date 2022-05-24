@@ -2006,7 +2006,7 @@ to use the correct direction in which the antenna is pointing with respect to th
 
 
                        [ For scripting purposes, replacing True/False with 1/0 will get tclean to
-                         return an imaging summary dictionary to python ]
+                         return an imaging summary dictionary to python. More info at casadocs > Synthesis Imaging > Returned Dictionary. ]
 
 </description>
       <type>bool</type><type>int</type>
