@@ -1,5 +1,5 @@
 ##########################################################################
-# test_tool_tablerow.py
+# test_tool_table.py
 #
 # Copyright (C) 2022
 # Associated Universities, Inc. Washington DC, USA.
@@ -23,16 +23,19 @@ import numpy as np
 from uuid import uuid4
 from casatools import table, ctsys
 
-ms_name = 'ngc5921_ut.ms'
-orig_ms_path = ctsys.resolve( f'unittest/mstool/{ms_name}')
-print( f'tablerow tool tests will use {orig_ms_path}' )
+ms_name = 'n08c1_swap1.ms'
+orig_ms_path = ctsys.resolve( f'measurementset/other/{ms_name}' )
+print( f'table tool tests will use {orig_ms_path}' )
 
-class TableRowBase(unittest.TestCase):
+class TableBase(unittest.TestCase):
     "setup common to all tests"
 
+    @classmethod
+    def setUpClass(cls):
+        cls.scratch_path = str(uuid4( ))
+        cls.ms_path = os.path.join(cls.scratch_path,ms_name)
+
     def setUp(self):
-        self.scratch_path = str(uuid4( ))
-        self.ms_path = os.path.join(self.scratch_path,ms_name)
         self.tb = table( )
         if os.path.exists(self.scratch_path):
             shutil.rmtree( self.scratch_path, onerror=remove_readonly )
@@ -58,20 +61,20 @@ class TableRowBase(unittest.TestCase):
         if os.path.exists(self.scratch_path):
             shutil.rmtree( self.scratch_path, onerror=self.remove_readonly )
 
-class row(TableRowBase):
+class TableRowTest(TableBase):
     def test_get(self):
         """Test get function"""
         ### fetch single row
         row = self.rows.get(21)
         ### check values
-        self.assertTrue(np.isclose(np.abs(np.sum(row['DATA'])),7468.873846292496))
+        self.assertTrue(np.isclose(np.abs(np.sum(row['DATA'])),0.8696193426581154))
 
     def test_shape( self ):
         """Test for valid data shape"""
         ### fetch single row
         row = self.rows.get(21)
         ### check shape
-        self.assertTrue(row['DATA'].shape == (2, 63))
+        self.assertTrue(row['DATA'].shape == (4, 32))
         
     def test_put(self):
         """Test put function"""
@@ -84,7 +87,7 @@ class row(TableRowBase):
         self.rows.put( 22, { 'DATA': row['DATA'] } )
         ### check to see if the new values are read back
         tb = table( )
-        tb.open(self.ms_path)
+        tb.open(self.tb.name( ))
         rows = tb.rows( )
         storedrow = self.rows.get(22)
         rows.done( )
@@ -92,29 +95,28 @@ class row(TableRowBase):
         tb.done( )
         self.assertTrue(np.isclose(np.abs(np.sum(storedrow['DATA'])),1.0))
 
-class slice(TableRowBase):
     def test_all_rows(self):
         ### read all rows from table
         allrows = self.rows[:]
         ### check number of rows & sum of data
-        self.assertTrue(len(allrows) == 22653 and np.isclose( sum([np.abs(np.sum(x['DATA'])) for x in allrows]), 12600276.218082037 ))
+        self.assertTrue(len(allrows) == 720 and np.isclose( sum([np.abs(np.sum(x['DATA'])) for x in allrows]), 22031.1419634223 ))
 
     def test_some_rows(self):
         ### read slice from table
         rows = self.rows[:15]
         ### check number of rows & sum of data
-        self.assertTrue(len(rows) == 15 and np.isclose( sum([np.abs(np.sum(x['DATA'])) for x in rows]), 111601.736328125 ))
+        self.assertTrue(len(rows) == 15 and np.isclose( sum([np.abs(np.sum(x['DATA'])) for x in rows]), 498.3275412917137 ))
 
     def test_columnnames_include(self):
         self.assertTrue( list(itertools.chain(*[ x.keys() for x in self.tb.rows(columnnames=['DATA'])[:5] ])) == ['DATA', 'DATA', 'DATA', 'DATA', 'DATA'] )
 
     def test_columnnames_exclude(self):
-        self.assertTrue( set(self.tb.rows(columnnames=['DATA'],exclude=True).get(0).keys( )) == set(['ANTENNA1', 'ANTENNA2', 'ARRAY_ID', 'DATA_DESC_ID', \
-                                                                                                     'EXPOSURE', 'FEED1', 'FEED2', 'FIELD_ID', 'FLAG', \
-                                                                                                     'FLAG_CATEGORY', 'FLAG_ROW', 'INTERVAL', \
-                                                                                                     'OBSERVATION_ID', 'PROCESSOR_ID', 'SCAN_NUMBER', \
-                                                                                                     'SIGMA', 'STATE_ID', 'TIME', 'TIME_CENTROID', \
-                                                                                                     'UVW', 'WEIGHT', 'WEIGHT_SPECTRUM']) )
+        self.assertTrue( set(self.tb.rows(columnnames=['DATA'],exclude=True).get(0).keys( )) == set( [ 'ANTENNA1', 'ANTENNA2', 'ARRAY_ID', 'DATA_DESC_ID',
+                                                                                                       'EXPOSURE', 'FEED1', 'FEED2', 'FIELD_ID', 'FLAG', 
+                                                                                                       'FLAG_CATEGORY', 'FLAG_ROW', 'INTERVAL', 'OBSERVATION_ID',
+                                                                                                       'PROCESSOR_ID', 'SCAN_NUMBER', 'SIGMA', 'SIGMA_SPECTRUM', 
+                                                                                                       'STATE_ID', 'TIME', 'TIME_CENTROID', 'UVW', 'WEIGHT', 
+                                                                                                       'WEIGHT_SPECTRUM' ] ) )
 
 if __name__ == '__main__':
     unittest.main()

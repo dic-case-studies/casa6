@@ -75,8 +75,7 @@ namespace casac {
     // tablerow for fetching one or more rows
     tablerow::tablerow( std::shared_ptr<casacore::TableProxy> myTable,
                         const std::vector<std::string> &columnnames, bool exclude ) :
-        itsLog(new casacore::LogIO), itsRow(new TableRowProxy( *itsTable, columnnames, exclude )),
-        itsTable(myTable) { }
+        itsLog(new casacore::LogIO), itsTable(myTable), itsRow(new TableRowProxy( *itsTable, columnnames, exclude )) { }
 
     // check to see if tablerow can be modified
     bool tablerow::iswritable( ) {
