@@ -6,16 +6,19 @@ import string
 import time
 import re
 import copy
+import numpy as np
 
 from casatasks.private.casa_transition import is_CASA6
 if is_CASA6:
     from casatools import synthesisimager, synthesisdeconvolver, synthesisnormalizer, iterbotsink, ctsys, table
     from casatasks import casalog
+    from casatasks.private.imagerhelpers.summary_minor import SummaryMinor
 
     ctsys_hostinfo = ctsys.hostinfo
     _tb = table()
 else:
     from taskinit import *
+    from imagerhelpers.summary_minor import SummaryMinor
 
     synthesisimager = casac.synthesisimager
     synthesisdeconvolver = casac.synthesisdeconvolver
@@ -187,8 +190,41 @@ class PySynthesisImager:
 
 #############################################
 
+    def indexMinorCycleSummaryBySubimage(summaryminor):
+        """Re-indexes summaryminor from [row,column] to [channel,polarity,row,cycle]."""
+        # get some properties of the summaryminor matrix
+        nrows = summaryminor.shape[0]
+        ncols = summaryminor.shape[1]
+        chans = list(np.sort(np.unique(summaryminor[5])))
+        chans = [int(x) for x in chans]
+        pols = list(np.sort(np.unique(summaryminor[6])))
+        pols = [int(x) for x in pols]
+        ncycles = int( ncols / (len(chans)*len(pols)) )
+
+        # reindex based on subimage index (aka chan/pol index)
+        # ret is the return dictionary[chans][pols][rows][cycles]
+        # cummulativeCnt counts how many cols we've read for each channel/polarity/row
+        ret = [[0]*ncycles for row in range(nrows)]
+        ret = {pol:copy.deepcopy(ret) for pol in pols}
+        ret = {chan:copy.deepcopy(ret) for chan in chans}
+        cummulativeCnt = copy.deepcopy(ret) # copy ret's structure
+        for rowIdx in range(nrows):
+            for colIdx in range(ncols):
+                chan = int(summaryminor[5][colIdx])
+                pol = int(summaryminor[6][colIdx])
+                val = summaryminor[rowIdx][colIdx]
+                cummulativeCol = int(cummulativeCnt[chan][pol][rowIdx][0]) # ignore last index
+                ret[chan][pol][rowIdx][cummulativeCol] = val
+                cummulativeCnt[chan][pol][rowIdx][0] += 1
+
+        return ret
+
     def getSummary(self,fignum=1):
         summ = self.IBtool.getiterationsummary()
+        if ('stopcode' in summ):
+            summ['stopDescription'] = self.getStopDescription(summ['stopcode'])
+        if ('summaryminor' in summ):
+            summ['summaryminor'] = SummaryMinor(summ['summaryminor'])
         #self.plotReport( summ, fignum )
         return summ
 
@@ -241,6 +277,12 @@ class PySynthesisImager:
 
 #############################################
 
+    def getStopDescription(self, stopflag):
+        stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles', 'peak residual increased by more than 3 times from the previous major cycle','peak residual increased by more than 3 times from the minimum reached','zero mask', 'any combination of n-sigma and other valid exit criterion']
+        if (stopflag > 0):
+            return stopreasons[stopflag-1]
+        return None
+
     def hasConverged(self):
         # Merge peak-res info from all fields to decide iteration parameters
          time0=time.time()
@@ -254,14 +296,9 @@ class PySynthesisImager:
 #         self.runInteractiveGUI2()
 
          # Check with the iteration controller about convergence.
-         # casalog.post("check convergence")
          stopflag = self.IBtool.cleanComplete()
-         # casalog.post('STOPFLAG {}'.format(stopflag))
-         # casalog.post('Converged : ', stopflag)
          if( stopflag>0 ):
-             #stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles']
-             stopreasons = ['iteration limit', 'threshold', 'force stop','no change in peak residual across two major cycles', 'peak residual increased by more than 3 times from the previous major cycle','peak residual increased by more than 3 times from the minimum reached','zero mask', 'any combination of n-sigma and other valid exit criterion']
-             casalog.post("Reached global stopping criterion : " + stopreasons[stopflag-1], "INFO")
+             casalog.post("Reached global stopping criterion : " + self.getStopDescription(stopflag), "INFO")
 
              # revert the current automask to the previous one
              #if self.iterpars['interactive']:

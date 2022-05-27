@@ -301,7 +301,6 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 
 			/* Summary variables */
-			casacore::Int itsNSummaryFields;
 			casacore::Array<casacore::Double> itsSummaryMinor;
 			casacore::Array<casacore::Int>    itsSummaryMajor;
 
