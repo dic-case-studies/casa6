@@ -301,7 +301,7 @@ void FlagAgentShadow::calculateShadowedAntennas(const vi::VisBuffer2 &visBuffer,
 	Vector<Bool> listBaselines(nAnt*(nAnt-1)/2);
 	listBaselines = false;
 
-	/*
+
 	///
 	/// Commenting out this section, to force recalculation of UVWs for all baselines
 	///
@@ -324,7 +324,7 @@ void FlagAgentShadow::calculateShadowedAntennas(const vi::VisBuffer2 &visBuffer,
 	}
 
 
-//	Int antenna1, antenna2;
+    Int antenna1, antenna2;
 
 	// (1) Now, for all rows between 'rownr' and 'endrownr', calculate shadowed Ants.
 	// This row range represents all listed baselines in the "current" timestep.
@@ -349,9 +349,9 @@ void FlagAgentShadow::calculateShadowedAntennas(const vi::VisBuffer2 &visBuffer,
 	decideBaselineShadow(uvDistance, w, antenna1, antenna2);
 
       }// end of for 'row'
-	 */
+	 
 
-
+// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$####
 	// (2) Now, if there are any untouched baselines, calculate 'uvw' for all antennas,
 	//      and fill in missing baselines.
 	// This is the part that picks up invisible antennas, whether they come from the antenna_subtable or
