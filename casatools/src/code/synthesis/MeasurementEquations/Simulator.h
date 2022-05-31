@@ -210,7 +210,8 @@ public:
 	       const casacore::Float pwv,
 	       const casacore::Float deltapwv,
 	       const casacore::Float beta,
-	       const casacore::Float windspeed);
+	       const casacore::Float windspeed,
+	       const casacore::Float simintsec);
 
   // Apply antenna pointing and squint errors
   casacore::Bool setpointingerror(const casacore::String& epJTableName,

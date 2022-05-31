@@ -1459,6 +1459,11 @@ to use.
       <description>wind speed for screen type corruption (m/s)</description>
       <value>7.</value>
     </param>
+
+    <param name="simint" type="double">
+      <description>simulation time step interval (s)</description>
+      <value>-1.</value>
+    </param>
     
   </input>
   <returns type="bool">Bool</returns>
