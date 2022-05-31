@@ -6,7 +6,7 @@ from .mstools import write_history
 
 def uvcontsub2021(vis=None, outputvis=None, field=None, spw=None,
                   scan=None, intent=None, array=None, observation=None,
-                  datacolumn=None, fitspw=None, fitmethod=None, fitorder=None,
+                  datacolumn=None, fitspec=None, fitmethod=None, fitorder=None,
                   writemodel=None):
 
     """Continuum subtraction in the uv plane"""
@@ -43,7 +43,7 @@ def uvcontsub2021(vis=None, outputvis=None, field=None, spw=None,
             denoising_lib = False
         else:
             raise ValueError(f'Unrecognized fit method: {fitmethod}')
-        uvcont_cfg = {'fitspw': fitspw,
+        uvcont_cfg = {'fitspec': fitspec,
                       'denoising_lib': denoising_lib,
                       'niter': 1,
                       'fitorder': fitorder,

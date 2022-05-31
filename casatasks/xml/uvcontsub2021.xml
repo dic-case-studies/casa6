@@ -132,16 +132,20 @@
         </allowed>
       </param>
       
-      <param type="any" name="fitspw">
-        <shortdescription>Spectral window:channel specifications for fitting the continuum</shortdescription>
-        <description>Spectral window:channel specification for
-        fitting, per field. The continuum will be fitted using as
-        input the channels given, which can be considered the
-        line-free channels.  It can be a simple string, in which case
-        the same spw:channel specification is used for all fields, or
-        a list. The list can have up to as many elements as fields
-        have been selected from the input MS. Each element of the list
-        specifies a pair [field-ID(s), spw:channel-selection].
+      <param type="any" name="fitspec">
+        <shortdescription>Specification of polynomial order and spectral window:channel for fitting</shortdescription>
+        <description>Specification of fit per field and SPW. It
+        consists of fit order and spectral window:channel. The
+        continuum will be fitted using a polynomial of the order given
+        and using as input the channels given, which can be considered
+        the line-free channels. It can be a simple string or a
+        list. If it is a simple string, the same spw:channel
+        specification is used for all fields and the polynomial order
+        for all fields and SPWs is defined by the fitorder
+        parameter. If it is a list, the list can have up to as many
+        elements as fields x SPWs are present in the (and selected
+        from) the input MS. Each element of the list specifies a pair
+        [field-ID(s), spw:channel-selection].
 
         If a field or SPW is not included, the default (all channels)
         is assumed.
