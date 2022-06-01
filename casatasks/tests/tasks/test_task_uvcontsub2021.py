@@ -109,7 +109,7 @@ class uvcontsub2021_test_base(unittest.TestCase):
                         else:
                             query_str += ' AND DATA_DESC_ID in [{}]'.format(to_csv(ddis))
                     try:
-                        query_col = tbt.query(query_str, columns=col_name)
+                        query_col = tbt.query(query_str, columns=col_name, style='python')
                         col = query_col.getcol(col_name)
                     finally:
                         query_col.done()
@@ -468,12 +468,12 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_rows(self.output, 'DATA', 1080)
         self._check_data_stats(self.output, *expected_vals)
 
-    def test_fitspec_multifield_multispw_variable_fitorder(self):
+    def test_fitspec_multifield_multispw_diff_fitorder(self):
         """Check different fitorder values for different fields and spws, in
         addition to different spw:chan strings"""
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
                             fitspec=[
-                                ['0', '0:100~500;600~910;1215~1678;1810~1903,1:0', 1],
+                                ['0', '0:100~500;600~910;1215~1678;1810~1903', 1],
                                 ['0', '1:0', 2],
                                 ['1', 'NONE', 1],
                                 ['2', '0:100~1903', 2]
@@ -749,9 +749,9 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_data_stats(self.output, (-0.000782105923+0.000300504051j),
                                0j, (-66.9297485+55.1413803j), (57.7461967+16.6702766j))
 
-    def test_fitspec_spws_changing_fitorder(self):
+    def test_fitspec_spws_diff_fitorder(self):
         """Check that fitorder is applied correctly per field, per SPW, following
-        the fitspec list"""
+        the fitspec list with different fit orders (between 0 and 3) for different spws"""
         # Uses ms_mixed_pols: many SPWs (and with mixed pols), but 1 field
 
         # A: fit using order 0,1,2,3, without per field/spw fitspec
