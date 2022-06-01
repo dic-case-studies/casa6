@@ -631,8 +631,6 @@ pointingcolumn -- pointing data column to use
 restfreq -- specify rest frequency to use for output image
         default: '' (refer input data)
         example: 1.0e11, '100GHz'
-        If the default value '' is used, the task currently internally uses REST_FREQUENCY
-        of SOURCE table or mean frequency of given spectral window as it.
 stokes -- Stokes Planes to make
         default='I'; example: stokes='XXYY';
         options: 'I','Q','U','V','IV','QU','IQ','UV','IQUV','RR','LL','XX','YY','RRLL','XXYY','pseudoI' 
