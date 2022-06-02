@@ -132,6 +132,12 @@ class test_sdatmcor(unittest.TestCase):
         smart_remove(self.outfile)
         smart_remove(self.caltable)
 
+    def skip_omp_test_if_darwin(self):
+        sysname = os.uname()[0]
+        if sysname == 'Darwin':
+            self.skipTest('Skip OpenMP tests on macOS')
+            return
+
     def _check_result_spw(self, spw, is_selected, is_processed, on_source_only):
 
         contents_after = read_table(self.outfile, spw, ['STATE_ID', 'DATA', 'CORRECTED_DATA'])
@@ -535,6 +541,8 @@ class test_sdatmcor(unittest.TestCase):
 
     def test_set_omp_num_threads(self):
         """Test if the task respects OMP_NUM_THREADS environment variable."""
+        self.skip_omp_test_if_darwin()
+
         omp_num_threads_org_int = None
 
         with environment_variable_manager('OMP_NUM_THREADS') as omp_num_threads_org:
@@ -577,6 +585,8 @@ class test_sdatmcor(unittest.TestCase):
 
     def test_set_omp_num_threads_zero(self):
         """Test if the task works when OMP_NUM_THREADS is zero."""
+        self.skip_omp_test_if_darwin()
+
         with environment_variable_manager('OMP_NUM_THREADS') as omp_num_threads_org:
             # set num_threads for OpenMP to any value different from the current one
             num_threads = 0
@@ -609,6 +619,8 @@ class test_sdatmcor(unittest.TestCase):
 
     def test_unset_omp_num_threads(self):
         """Test if the task respects OMP_NUM_THREADS environment variable."""
+        self.skip_omp_test_if_darwin()
+
         with environment_variable_manager('OMP_NUM_THREADS') as omp_num_threads_org:
             # unset OMP_NUM_THREADS if it is set
             if omp_num_threads_org is not None:
