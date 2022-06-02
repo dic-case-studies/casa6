@@ -755,8 +755,8 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         # Uses ms_mixed_pols: many SPWs (and with mixed pols), but 1 field
 
         # A: fit using order 0,1,2,3, without per field/spw fitspec
-        res_order_0 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitspec='3',
-                                   fitorder=0)
+        res_order_0 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=0,
+                                    fitspec='3')
         self._check_task_return(res_order_0, fields=[0])
         stats_field_0_spw_3_order_0 = (
             (-0.000772132455+0.000219751841j), (-0.000659341924-0.0187813938j),
@@ -764,41 +764,43 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_data_stats(self.output, *stats_field_0_spw_3_order_0, fields=0, ddis=3)
         shutil.rmtree(self.output)
 
-        res_order_1 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=1)
+        res_order_1 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=1,
+                                    fitspec='2:100~500')
         self._check_task_return(res_order_1, fields=[0])
         stats_field_0_spw_2_order_1 = (
-            (-0.00513383183+0.00272844918j), (-0.00746986642-0.692457095j),
-            (-11.7615271-2.73180270j), (13.9488840+4.60956335j))
+            (-0.00390083172-0.00195605258j), (0.00536000915-0.0672568083j),
+            (-11.8622923-2.65349817j), (14.1239767+4.88118219j))
         self._check_data_stats(self.output, *stats_field_0_spw_2_order_1, fields=0, ddis=2)
         shutil.rmtree(self.output)
 
-        res_order_2 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=2)
+        res_order_2 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=2,
+                                    fitspec='63:2~50;55~60')
         self._check_task_return(res_order_2, fields=[0])
         stats_field_0_spw_63_order_2 = (
-            (-0.00269266613+0.000780056100j), (0.00119015481-0.0197205525j),
+            (-0.00150726591+0.00118314047j), (0.00288047199+0.00183670223j),
             (-2.88742280-0.969364464j), (2.69186521+1.11569095j))
         self._check_data_stats(self.output, *stats_field_0_spw_63_order_2, fields=0, ddis=63)
         shutil.rmtree(self.output)
 
-        res_order_3 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=3)
+        res_order_3 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=3,
+                                    fitspec='4:50~503;600~850;900~1002')
         self._check_task_return(res_order_3, fields=[0])
         stats_field_0_spw_4_order_3 = (
-            (-0.00274758955-0.000856035263j), (0.00658642594-0.773907602j),
-            (-10.5335312+2.73862195j), (9.72481632+5.37419081j))
+            (-0.00245836405+0.00548351408j), (0.00843574991+1.61623479j),
+            (-10.5505962+6.32199335j), (9.71259212+5.48828125j))
         self._check_data_stats(self.output, *stats_field_0_spw_4_order_3, fields=0, ddis=4)
         shutil.rmtree(self.output)
 
         # B: cross-check A against per field/spw fitspec with corresponding fit orders
-        # TODO: better cross-checks with the A above
         res_order0 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output,
                                    fitspec =[
                                        ['0', '1:0', 0],
                                        ['0', '2:100~500', 1],  # 2 pol, 512 chan
                                        ['0', '3', 0],  # 4 pol, 64 chan
-                                       ['0', '4:50~503:600~800:900:1002~', 3],
+                                       ['0', '4:50~503;600~850;900~1002', 3],
                                        # 2 pol, 1024 chan
                                        ['0', '5:100~495', 0],  # 2 pol, 512 chan
-                                       ['0', '63:2~50:55~60', 2]  # 4 pol, 64 chan
+                                       ['0', '63:2~50;55~60', 2]  # 4 pol, 64 chan
                                    ])
         self._check_data_stats(self.output, *stats_field_0_spw_2_order_1, fields=0, ddis=2)
         self._check_data_stats(self.output, *stats_field_0_spw_3_order_0, fields=0, ddis=3)
