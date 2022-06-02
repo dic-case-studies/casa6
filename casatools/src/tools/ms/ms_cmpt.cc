@@ -3906,21 +3906,44 @@ ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const lon
 
             if (average || chanAverage) {
                 // average across last axis
-                if (average)
+                if (average) {
                     getAveragedValues(itemnames, out);
-                // remove flag field if not requested
-                if (!do_flag)
+                }
+
+                // redefine flag field or remove if not requested
+                if (do_flag) {
+                    if (out.isDefined("avgflag")) {
+                        Array<Bool> avgflagarray = out.asArrayBool("avgflag");
+                        out.removeField("avgflag");
+                        if (out.isDefined("flag")) out.removeField("flag");
+                        out.define("flag", avgflagarray);
+                    }
+                } else {
                     if (out.isDefined("flag")) out.removeField("flag");
-                // remove or redefine weight field
-                if (!do_weight)
+                    if (out.isDefined("avgflag")) out.removeField("avgflag");
+                }
+
+                // redefine weight field or remove if not requested
+                if (do_weight) {
+                    if (out.isDefined("avgweight")) {
+                        Array<Float> avgweightarray = out.asArrayFloat("avgweight");
+                        out.removeField("avgweight");
+                        if (out.isDefined("weight")) out.removeField("weight");
+                        out.define("weight", avgweightarray);
+                    }
+                } else {
                     if (out.isDefined("weight")) out.removeField("weight");
+                    if (out.isDefined("avgflag")) out.removeField("avgflag");
+                }
             }
+
             if (do_flag_sum) {
                 Array<Bool> flagarray = out.asArrayBool("flag_sum");
                 out.removeField("flag_sum");
                 Array<Int> flagsum = getFlagCount(flagarray, ifraxis);
                 out.define("flag_sum", flagsum);
             }
+
             if (do_axis_info && ifraxis) {
                 // copy time field and remove if not requested by user
                 addTimeAxis(out);
@@ -3959,10 +3982,13 @@ void ms::getAveragedValues(Vector<String> fieldnames, Record& rec) {
     for (uInt it=0; it<fieldnames.size(); ++it) {
         String field = fieldnames(it);
         String recname(field);
+
         // remove "avg_" from fieldname for switch but keep it in recname
         if (!field.empty() && field.startsWith("avg_"))
             field = field.substr(4, field.size()-4);
+
         MSS::Field fld = MSS::field(field);
+
         switch(fld) {
             case MSS::AMPLITUDE:
             case MSS::CORRECTED_AMPLITUDE:
@@ -3975,10 +4001,17 @@ void ms::getAveragedValues(Vector<String> fieldnames, Record& rec) {
                 Array<Float> weight = rec.asArrayFloat("weight");
                 Array<Bool> dataflag;
                 MSSelUtil2<Complex>::timeAverage(dataflag, data, flags, weight);
+                // Averaged amplitude in Record
                 rec.removeField(recname);
                 rec.define(field, amplitude(data));
-                rec.removeField("flag");
-                rec.define("flag", dataflag);
+                // Averaged flag in Record
+                if (!rec.isDefined("avgflag")) {
+                    rec.define("avgflag", dataflag);
+                }
+                // Averaged weight in Record
+                if (!rec.isDefined("avgweight")) {
+                    rec.define("avgweight", weight);
+                }
                 }
                 break;
             case MSS::IMAGINARY:
@@ -3992,9 +4025,17 @@ void ms::getAveragedValues(Vector<String> fieldnames, Record& rec) {
                 Array<Float> weight = rec.asArrayFloat("weight");
                 Array<Bool> dataflag;
                 MSSelUtil2<Complex>::timeAverage(dataflag, data, flags, weight);
+                // Averaged imaginary in Record
                 rec.removeField(recname);
                 rec.define(field, imag(data));
-                rec.define("flag", dataflag);
+                // Averaged flag in Record
+                if (!rec.isDefined("avgflag")) {
+                    rec.define("avgflag", dataflag);
+                }
+                // Averaged weight in Record
+                if (!rec.isDefined("avgweight")) {
+                    rec.define("avgweight", weight);
+                }
                 }
                 break;
             case MSS::PHASE:
@@ -4008,9 +4049,17 @@ void ms::getAveragedValues(Vector<String> fieldnames, Record& rec) {
                 Array<Float> weight = rec.asArrayFloat("weight");
                 Array<Bool> dataflag;
                 MSSelUtil2<Complex>::timeAverage(dataflag, data, flags, weight);
+                // Averaged phase in Record
                 rec.removeField(recname);
                 rec.define(field, phase(data));
-                rec.define("flag", dataflag);
+                // Averaged flag in Record
+                if (!rec.isDefined("avgflag")) {
+                    rec.define("avgflag", dataflag);
+                }
+                // Averaged weight in Record
+                if (!rec.isDefined("avgweight")) {
+                    rec.define("avgweight", weight);
+                }
                 }
                 break;
             case MSS::REAL:
@@ -4024,9 +4073,17 @@ void ms::getAveragedValues(Vector<String> fieldnames, Record& rec) {
                 Array<Float> weight = rec.asArrayFloat("weight");
                 Array<Bool> dataflag;
                 MSSelUtil2<Complex>::timeAverage(dataflag, data, flags, weight);
+                // Averaged real in Record
                 rec.removeField(recname);
                 rec.define(field, real(data));
-                rec.define("flag", dataflag);
+                // Averaged flag in Record
+                if (!rec.isDefined("avgflag")) {
+                    rec.define("avgflag", dataflag);
+                }
+                // Averaged weight in Record
+                if (!rec.isDefined("avgweight")) {
+                    rec.define("avgweight", weight);
+                }
                 }
                 break;
             case MSS::FLOAT_DATA: {
@@ -4035,9 +4092,17 @@ void ms::getAveragedValues(Vector<String> fieldnames, Record& rec) {
                 Array<Float> weight = rec.asArrayFloat("weight");
                 Array<Bool> dataflag;
                 MSSelUtil2<Float>::timeAverage(dataflag, data, flags, weight);
+                // Averaged float in Record
                 rec.removeField(recname);
                 rec.define(field, data);
-                rec.define("flag", dataflag);
+                // Averaged flag in Record
+                if (!rec.isDefined("avgflag")) {
+                    rec.define("avgflag", dataflag);
+                }
+                // Averaged weight in Record
+                if (!rec.isDefined("avgweight")) {
+                    rec.define("avgweight", weight);
+                }
                 }
                 break; 
             case MSS::DATA:
@@ -4051,9 +4116,17 @@ void ms::getAveragedValues(Vector<String> fieldnames, Record& rec) {
                 Array<Float> weight = rec.asArrayFloat("weight");
                 Array<Bool> dataflag;
                 MSSelUtil2<Complex>::timeAverage(dataflag, data, flags, weight);
+                // Averaged data in Record
                 rec.removeField(recname);
                 rec.define(field, data);
-                rec.define("flag", dataflag);
+                // Averaged flag in Record
+                if (!rec.isDefined("avgflag")) {
+                    rec.define("avgflag", dataflag);
+                }
+                // Averaged weight in Record
+                if (!rec.isDefined("avgweight")) {
+                    rec.define("avgweight", weight);
+                }
                 }
                 break;
             case MSS::ANTENNA1:
@@ -4136,12 +4209,12 @@ void ms::getAvgSigma(Array<Float>& sigma) {
 }
 
 void ms::convertPoln(Cube<Complex>& inputcube, vi::VisBuffer2* vb) {
-	Cube<Complex> outputcube;
-	Vector<Int> inputPols = getCorrTypes(vb);
+    Cube<Complex> outputcube;
+    Vector<Int> inputPols = getCorrTypes(vb);
     StokesConverter* sc = new StokesConverter(wantedpol_p, inputPols, True);
     if (sc) {
         sc->convert(outputcube, inputcube);
-	    inputcube.reference(outputcube);
+        inputcube.reference(outputcube);
         delete sc;
     }
 }
@@ -4447,12 +4520,14 @@ bool ms::getitem(String item, vi::VisBuffer2* vb2, Record& outputRec, bool ifrax
     Record intermediateValue(RecordInterface::Variable); // for visibilities, get data first
     Bool fieldExists = outputRec.isDefined(itemname);
 
-    // field for switch
     MSS::Field fld;
-    if (itemname.startsWith("avg_"))
+    if (itemname.startsWith("avg_")) {
+        // Get data field for requested column:
+        // data is averaged before applying amp/phase/real/imag
         fld = MSS::field(getbaseitem(itemname));
-    else
+    } else {
         fld = MSS::field(itemname);
+    }
 
     switch(fld) {
         case MSS::AMPLITUDE: {
@@ -4884,12 +4959,15 @@ bool ms::getitem(String item, MSColumns& msc, Record& outputRec) {
     String itemname = downcase(item);
     Record intermediateValue(RecordInterface::Variable); // for visibilities, get data first
 
-    // field for switch
     MSS::Field fld;
-    if (itemname.startsWith("avg_"))
+    if (itemname.startsWith("avg_")) {
+        // Get data field for requested column:
+        // data is averaged before applying amp/phase/real/imag
         fld = MSS::field(getbaseitem(itemname));
-    else
+    } else {
         fld = MSS::field(itemname);
+    }
+
     switch(fld) {
         case MSS::AMPLITUDE: {
             getitem("data", msc, intermediateValue);
@@ -5201,15 +5279,21 @@ bool ms::getitem(String item, MSColumns& msc, Record& outputRec) {
 }
 
 casacore::String ms::getbaseitem(String itemname) {
-    String baseItem;
+    // Return data string for requested column, e.g. "model_data" for "avg_model_amplitude"
+    String derivedItem(itemname);
+    String baseItem("data");
+
     // remove "avg_"
-    String derivedItem = itemname.substr(4, itemname.size()-4);
-    // base item is column + "data"
+    if (itemname.startsWith("avg_")) {
+        derivedItem = itemname.substr(4, itemname.size() - 4);
+    }
+
+    // column precedes '_'
     string::size_type columnEnd = derivedItem.find_last_of('_');
-    if (columnEnd == string::npos)
-        baseItem = "data";
-    else
-        baseItem = derivedItem.substr(0,columnEnd) + "_data";
+    if (columnEnd != string::npos) {
+        baseItem = derivedItem.substr(0, columnEnd) + "_data";
+    }
+
     return baseItem;
 }
 
@@ -6854,16 +6938,16 @@ ms::uvsub(Bool reverse)
 
 bool ms::msselect(const ::casac::record& exprs, const bool onlyparse)
 {
-	// public: catches exception and prints log mesg rather than traceback
-	Bool retVal=false;
-	try
-	{
-		*itsLog << LogOrigin("ms", "msselect");
-		retVal = doMSSelection(exprs, onlyparse);
-	} catch (AipsError x) {
-		*itsLog << LogIO::WARN << x.getMesg() << LogIO::POST;
-	}
-	return retVal;
+    // public: catches exception and prints log mesg rather than traceback
+    Bool retVal=false;
+    try
+    {
+        *itsLog << LogOrigin("ms", "msselect");
+        retVal = doMSSelection(exprs, onlyparse);
+    } catch (AipsError x) {
+        *itsLog << LogIO::WARN << x.getMesg() << LogIO::POST;
+    }
+    return retVal;
 }
 
 void ms::setNewSel(const MeasurementSet& newSelectedMS) {
@@ -6874,55 +6958,60 @@ void ms::setNewSel(const MeasurementSet& newSelectedMS) {
 
 Bool ms::doMSSelection(const ::casac::record& exprs, const bool onlyparse)
 {
-	// for internal use
-	Bool retVal=false;
-	try
-	{
-		std::unique_ptr<Record> casaRec(toRecord(exprs));
-		String spwExpr, timeExpr, fieldExpr, baselineExpr, scanExpr, scanIntentExpr,
-			polnExpr, uvDistExpr, obsExpr, arrayExpr, taQLExpr;
-		Int nFields = casaRec->nfields();
-		for (Int i=0; i<nFields; i++)
-		{
-			if (casaRec->name(i) == "spw")
-				{spwExpr        = casaRec->asString(RecordFieldId(i));}
-			if (casaRec->name(i) == "time")
-  				{timeExpr       = casaRec->asString(RecordFieldId(i));}
-			if (casaRec->name(i) == "field")
-				{fieldExpr      = casaRec->asString(RecordFieldId(i));}
-			if (casaRec->name(i) == "baseline")
-				{baselineExpr   = casaRec->asString(RecordFieldId(i));}
-			if (casaRec->name(i) == "antenna")
-				{baselineExpr   = casaRec->asString(RecordFieldId(i));}
-			if (casaRec->name(i) == "scan")
-				{scanExpr       = casaRec->asString(RecordFieldId(i));}
-			if (casaRec->name(i) == "scanintent")
-				{scanIntentExpr = casaRec->asString(RecordFieldId(i));}
-			if (casaRec->name(i) == "state")
-				{scanIntentExpr = casaRec->asString(RecordFieldId(i));}
-			if (casaRec->name(i) == "polarization")
-				{polnExpr       = casaRec->asString(RecordFieldId(i));}
-			if (casaRec->name(i) == "uvdist")
-				{uvDistExpr     = casaRec->asString(RecordFieldId(i));}
-			if (casaRec->name(i) == "observation")
-				{obsExpr        = casaRec->asString(RecordFieldId(i));}
-			if (casaRec->name(i) == "array")
-				{arrayExpr      = casaRec->asString(RecordFieldId(i));}
-			if (casaRec->name(i) == "taql")
-				{taQLExpr       = casaRec->asString(RecordFieldId(i));}
-		}
-		// If only parsing is requested, just set up the itsMSS object.
-		// This is much faster if one is only interested in the indices
-		// and not the actual selected MS.
-		//
-		if (onlyparse)
-		{
-			itsMSS->reset(*itsMS, MSSelection::PARSE_NOW,timeExpr,baselineExpr,fieldExpr,
-				spwExpr,uvDistExpr, taQLExpr,polnExpr,scanExpr,arrayExpr,scanIntentExpr,
-				obsExpr);
-			retVal=(itsMSS->getTEN(itsMS).isNull() == false);
-		} else {
-		    MeasurementSet newSelectedMS(*itsSelectedMS);
+    // for internal use
+    Bool retVal=false;
+    try
+    {
+        std::unique_ptr<Record> casaRec(toRecord(exprs));
+        String spwExpr, timeExpr, fieldExpr, baselineExpr, scanExpr, scanIntentExpr,
+            polnExpr, uvDistExpr, obsExpr, arrayExpr, taQLExpr;
+        Int nFields = casaRec->nfields();
+
+        for (Int i=0; i<nFields; i++)
+        {
+            auto name = casaRec->name(i);
+
+            if (name == "spw")
+            {
+                spwExpr        = casaRec->asString(RecordFieldId(i));
+            } else if (name == "time") {
+                timeExpr       = casaRec->asString(RecordFieldId(i));
+            } else if (name == "field") {
+                fieldExpr      = casaRec->asString(RecordFieldId(i));
+            } else if (name == "baseline") {
+                baselineExpr   = casaRec->asString(RecordFieldId(i));
+            } else if (name == "antenna") {
+                baselineExpr   = casaRec->asString(RecordFieldId(i));
+            } else if (name == "scan") {
+                scanExpr       = casaRec->asString(RecordFieldId(i));
+            } else if (name == "scanintent") {
+                scanIntentExpr = casaRec->asString(RecordFieldId(i));
+            } else if (name == "state") {
+                scanIntentExpr = casaRec->asString(RecordFieldId(i));
+            } else if (name == "polarization") {
+                polnExpr       = casaRec->asString(RecordFieldId(i));
+            } else if (name == "uvdist") {
+                uvDistExpr     = casaRec->asString(RecordFieldId(i));
+            } else if (name == "observation") {
+                obsExpr        = casaRec->asString(RecordFieldId(i));
+            } else if (name == "array") {
+                arrayExpr      = casaRec->asString(RecordFieldId(i));
+            } else if (name == "taql") {
+                taQLExpr       = casaRec->asString(RecordFieldId(i));
+            }
+        }
+        // If only parsing is requested, just set up the itsMSS object.
+        // This is much faster if one is only interested in the indices
+        // and not the actual selected MS.
+        //
+        if (onlyparse)
+        {
+            itsMSS->reset(*itsMS, MSSelection::PARSE_NOW,timeExpr,baselineExpr,fieldExpr,
+                spwExpr,uvDistExpr, taQLExpr,polnExpr,scanExpr,arrayExpr,scanIntentExpr,
+                obsExpr);
+            retVal=(itsMSS->getTEN(itsMS).isNull() == false);
+        } else {
+            MeasurementSet newSelectedMS(*itsSelectedMS);
                     try {
                         retVal = mssSetData(*itsSelectedMS, newSelectedMS, "",/*outMSName*/
                                             timeExpr, baselineExpr, fieldExpr, spwExpr, uvDistExpr,
@@ -6934,17 +7023,17 @@ Bool ms::doMSSelection(const ::casac::record& exprs, const bool onlyparse)
                         setNewSel(newSelectedMS);
                         throw;
                     }
-		    setNewSel(newSelectedMS);
-		}
-		return retVal;
-	}
-	catch (const AipsError &x)
-	{
-		Table::relinquishAutoLocks(true);
-		RETHROW(x);
-	}
-	Table::relinquishAutoLocks(true);
-	return retVal;
+            setNewSel(newSelectedMS);
+        }
+        return retVal;
+    }
+    catch (const AipsError &x)
+    {
+        Table::relinquishAutoLocks(true);
+        RETHROW(x);
+    }
+    Table::relinquishAutoLocks(true);
+    return retVal;
 }
 
 ::casac::record*
