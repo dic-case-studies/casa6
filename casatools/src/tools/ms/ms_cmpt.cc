@@ -3918,7 +3918,8 @@ ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const lon
                         if (out.isDefined("flag")) out.removeField("flag");
                         out.define("flag", avgflagarray);
                     }
-                } else {
+                }
+                else {
                     if (out.isDefined("flag")) out.removeField("flag");
                     if (out.isDefined("avgflag")) out.removeField("avgflag");
                 }
@@ -3931,7 +3932,8 @@ ms::getdata(const std::vector<std::string>& items, const bool ifraxis, const lon
                         if (out.isDefined("weight")) out.removeField("weight");
                         out.define("weight", avgweightarray);
                     }
-                } else {
+                }
+                else {
                     if (out.isDefined("weight")) out.removeField("weight");
                     if (out.isDefined("avgflag")) out.removeField("avgflag");
                 }
@@ -4525,7 +4527,8 @@ bool ms::getitem(String item, vi::VisBuffer2* vb2, Record& outputRec, bool ifrax
         // Get data field for requested column:
         // data is averaged before applying amp/phase/real/imag
         fld = MSS::field(getbaseitem(itemname));
-    } else {
+    }
+    else {
         fld = MSS::field(itemname);
     }
 
@@ -4964,7 +4967,8 @@ bool ms::getitem(String item, MSColumns& msc, Record& outputRec) {
         // Get data field for requested column:
         // data is averaged before applying amp/phase/real/imag
         fld = MSS::field(getbaseitem(itemname));
-    } else {
+    }
+    else {
         fld = MSS::field(itemname);
     }
 
@@ -6970,33 +6974,43 @@ Bool ms::doMSSelection(const ::casac::record& exprs, const bool onlyparse)
         for (Int i=0; i<nFields; i++)
         {
             auto name = casaRec->name(i);
-
-            if (name == "spw")
-            {
+            if (name == "spw") {
                 spwExpr        = casaRec->asString(RecordFieldId(i));
-            } else if (name == "time") {
+            }
+			else if (name == "time") {
                 timeExpr       = casaRec->asString(RecordFieldId(i));
-            } else if (name == "field") {
+            }
+			else if (name == "field") {
                 fieldExpr      = casaRec->asString(RecordFieldId(i));
-            } else if (name == "baseline") {
+            }
+			else if (name == "baseline") {
                 baselineExpr   = casaRec->asString(RecordFieldId(i));
-            } else if (name == "antenna") {
+            }
+			else if (name == "antenna") {
                 baselineExpr   = casaRec->asString(RecordFieldId(i));
-            } else if (name == "scan") {
+            }
+			else if (name == "scan") {
                 scanExpr       = casaRec->asString(RecordFieldId(i));
-            } else if (name == "scanintent") {
+            }
+			else if (name == "scanintent") {
                 scanIntentExpr = casaRec->asString(RecordFieldId(i));
-            } else if (name == "state") {
+            }
+            else if (name == "state") {
                 scanIntentExpr = casaRec->asString(RecordFieldId(i));
-            } else if (name == "polarization") {
+            }
+            else if (name == "polarization") {
                 polnExpr       = casaRec->asString(RecordFieldId(i));
-            } else if (name == "uvdist") {
+            }
+            else if (name == "uvdist") {
                 uvDistExpr     = casaRec->asString(RecordFieldId(i));
-            } else if (name == "observation") {
+            }
+            else if (name == "observation") {
                 obsExpr        = casaRec->asString(RecordFieldId(i));
-            } else if (name == "array") {
+            }
+            else if (name == "array") {
                 arrayExpr      = casaRec->asString(RecordFieldId(i));
-            } else if (name == "taql") {
+            }
+            else if (name == "taql") {
                 taQLExpr       = casaRec->asString(RecordFieldId(i));
             }
         }
@@ -7004,20 +7018,21 @@ Bool ms::doMSSelection(const ::casac::record& exprs, const bool onlyparse)
         // This is much faster if one is only interested in the indices
         // and not the actual selected MS.
         //
-        if (onlyparse)
-        {
+        if (onlyparse) {
             itsMSS->reset(*itsMS, MSSelection::PARSE_NOW,timeExpr,baselineExpr,fieldExpr,
                 spwExpr,uvDistExpr, taQLExpr,polnExpr,scanExpr,arrayExpr,scanIntentExpr,
                 obsExpr);
             retVal=(itsMSS->getTEN(itsMS).isNull() == false);
-        } else {
+        }
+        else {
             MeasurementSet newSelectedMS(*itsSelectedMS);
                     try {
                         retVal = mssSetData(*itsSelectedMS, newSelectedMS, "",/*outMSName*/
                                             timeExpr, baselineExpr, fieldExpr, spwExpr, uvDistExpr,
                                             taQLExpr, polnExpr, scanExpr,
                                             arrayExpr, scanIntentExpr, obsExpr, itsMSS);
-                    } catch (const MSSelectionNullSelection &mssns) {
+                    }
+                    catch (const MSSelectionNullSelection &mssns) {
                         // Empty selections are valid in principle, and after this happens
                         // one should be able to know that for example nrow(true) is 0.
                         setNewSel(newSelectedMS);
