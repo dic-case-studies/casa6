@@ -824,7 +824,7 @@ ms::getfielddirmeas(const std::string& dircolname, long fieldid, double time, co
             }
             else if(colname=="REFERENCE_DIR"){
                 d = msfc.referenceDirMeas(fieldid, time);
-	    }
+            }
             else if(colname=="EPHEMERIS_DIR"){
                 d = msfc.ephemerisDirMeas(fieldid, time);
             }
@@ -2317,47 +2317,48 @@ ms::selectinitold(const long datadescid, const bool reset)
 bool
 ms::selectinit(const long datadescid, const bool resetsel)
 {
-	*itsLog << LogOrigin("ms", "selectinit");
-	Bool retval = false;
-	try {
-		Vector<Int> ddId(1, datadescid);
-		if(!detached()){
-			Int n=ddId.nelements();
-			if (n>0 && min(ddId)<0 && !resetsel) {
-				*itsLog << "The data description id must be a list of "
-					"positive integers" << LogIO::EXCEPTION;
-			}
-			if (resetsel) {
-				retval = reset();
-				initSel_p = false;
-			} else {
-				String selDDID = String::toString(datadescid);
-				String ddidTaql = "DATA_DESC_ID IN [" + selDDID + "]";
-				Record taqlSelRec(Record::Variable);
-				taqlSelRec.define("taql", ddidTaql);
-				std::unique_ptr<::casac::record> casacRec(fromRecord(taqlSelRec));
-				try {
-					// test it first, can't revert MSSelection selection
-					retval = doMSSelection(*casacRec, true);  // onlyparse=true
-					if (retval)
-						retval = doMSSelection(*casacRec); // onlyparse=false
-					initSel_p = retval;
-				} catch (const AipsError &x) {  // MSSelectionNullSelection
-					String mesg = "selectinit failed for datadescid " + selDDID;
-					*itsLog << LogOrigin("ms", "selectinit");
-					*itsLog << LogIO::WARN << mesg << LogIO::POST;
-					retval = initSel_p = false;
-				}
-			}
-		}
-	} catch (AipsError x) {
-		*itsLog << LogOrigin("ms", "selectinit");
-		*itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
-		Table::relinquishAutoLocks(true);
-		RETHROW(x);
-	}
-	Table::relinquishAutoLocks(true);
-	return retval;
+    *itsLog << LogOrigin("ms", "selectinit");
+    Bool retval = false;
+    try {
+        Vector<Int> ddId(1, datadescid);
+        if(!detached()){
+            Int n=ddId.nelements();
+            if (n>0 && min(ddId)<0 && !resetsel) {
+                *itsLog
+                    << "The data description id must be a list of positive integers"
+                    << LogIO::EXCEPTION;
+            }
+            if (resetsel) {
+                retval = reset();
+                initSel_p = false;
+            } else {
+                String selDDID = String::toString(datadescid);
+                String ddidTaql = "DATA_DESC_ID IN [" + selDDID + "]";
+                Record taqlSelRec(Record::Variable);
+                taqlSelRec.define("taql", ddidTaql);
+                std::unique_ptr<::casac::record> casacRec(fromRecord(taqlSelRec));
+                try {
+                    // test it first, can't revert MSSelection selection
+                    retval = doMSSelection(*casacRec, true);  // onlyparse=true
+                    if (retval)
+                        retval = doMSSelection(*casacRec); // onlyparse=false
+                    initSel_p = retval;
+                } catch (const AipsError &x) {  // MSSelectionNullSelection
+                    String mesg = "selectinit failed for datadescid " + selDDID;
+                    *itsLog << LogOrigin("ms", "selectinit");
+                    *itsLog << LogIO::WARN << mesg << LogIO::POST;
+                    retval = initSel_p = false;
+                }
+            }
+        }
+    } catch (AipsError x) {
+        *itsLog << LogOrigin("ms", "selectinit");
+        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+        Table::relinquishAutoLocks(true);
+        RETHROW(x);
+    }
+    Table::relinquishAutoLocks(true);
+    return retval;
 }
 
 bool
@@ -2389,11 +2390,11 @@ ms::selectold(const ::casac::record& items)
 bool
 ms::select(const ::casac::record& items)
 {
-	*itsLog << LogOrigin("ms", "select");
     // Use selecttaql and doMSSelection for these selections
-	Bool retval = true;
-	try {
-		if(!detached()){
+    *itsLog << LogOrigin("ms", "select");
+    Bool retval = true;
+    try {
+        if(!detached()){
             if (checkinit()) {
               *itsLog << LogOrigin("ms", "select");
               std::unique_ptr<Record> selRecord(toRecord(items));
@@ -2488,16 +2489,15 @@ ms::select(const ::casac::record& items)
                 }
                 else
                   *itsLog << LogIO::WARN << "Unrecognized field in input ignored: "+fieldStr << LogIO::POST;
-                     
-              }
-		  }
+                }
+            }
         }
-	} catch (AipsError x) {
-		Table::relinquishAutoLocks(true);
-		RETHROW(x);
-	}
-	Table::relinquishAutoLocks(true);
-	return retval;
+    } catch (AipsError x) {
+        Table::relinquishAutoLocks(true);
+        RETHROW(x);
+    }
+    Table::relinquishAutoLocks(true);
+    return retval;
 }
 
 bool
@@ -2537,18 +2537,20 @@ ms::selecttaql(const std::string& taqlstr)
             std::unique_ptr<::casac::record> casacRec(fromRecord(taqlSelRec));
             retval = doMSSelection(*casacRec);
         }
-	} catch (AipsError x) {
-    	*itsLog << LogOrigin("ms", "selecttaql");
-		if (x.getMesg().contains("zero rows")) {
-			*itsLog << LogIO::WARN << x.getMesg() << LogIO::POST;
-		} else {
-			*itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
-			Table::relinquishAutoLocks(true);
-			RETHROW(x);
-		}
-	}
-	Table::relinquishAutoLocks(true);
-	return retval;
+    }
+    catch (AipsError x) {
+        *itsLog << LogOrigin("ms", "selecttaql");
+        if (x.getMesg().contains("zero rows")) {
+            *itsLog << LogIO::WARN << x.getMesg() << LogIO::POST;
+        } else {
+            *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+            Table::relinquishAutoLocks(true);
+            RETHROW(x);
+        }
+    }
+
+    Table::relinquishAutoLocks(true);
+    return retval;
 }
 
 bool
@@ -6977,22 +6979,22 @@ Bool ms::doMSSelection(const ::casac::record& exprs, const bool onlyparse)
             if (name == "spw") {
                 spwExpr        = casaRec->asString(RecordFieldId(i));
             }
-			else if (name == "time") {
+            else if (name == "time") {
                 timeExpr       = casaRec->asString(RecordFieldId(i));
             }
-			else if (name == "field") {
+            else if (name == "field") {
                 fieldExpr      = casaRec->asString(RecordFieldId(i));
             }
-			else if (name == "baseline") {
+            else if (name == "baseline") {
                 baselineExpr   = casaRec->asString(RecordFieldId(i));
             }
-			else if (name == "antenna") {
+            else if (name == "antenna") {
                 baselineExpr   = casaRec->asString(RecordFieldId(i));
             }
-			else if (name == "scan") {
+            else if (name == "scan") {
                 scanExpr       = casaRec->asString(RecordFieldId(i));
             }
-			else if (name == "scanintent") {
+            else if (name == "scanintent") {
                 scanIntentExpr = casaRec->asString(RecordFieldId(i));
             }
             else if (name == "state") {
