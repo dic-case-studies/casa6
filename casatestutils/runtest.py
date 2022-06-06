@@ -1036,14 +1036,17 @@ if __name__ == "__main__":
                         _isComponent = True
                         if (myDict["testScript"] not in testnames):
                             if tests_to_ignore is not None:
-                                if myDict["testScript"] in tests_to_ignore: continue
+                                if myDict["testScript"] in tests_to_ignore:
+                                    continue
                             testnames.append(myDict["testScript"])
                 if not _isComponent:
                     print("No Tests for Component: {}".format(component))
                     no_test_components.append(component)
 
-            if (len(no_test_components) > 0) and (len(testnames)==0):
-                print("No Test Suite for Component(s): {} Using Component 'default'".format(no_test_components))
+            if len(testnames)==0:
+                if len(no_test_components) > 0:
+                    print("No Test Suite for Component(s): {}".format(no_test_components))
+                print("Generating Suite Using Component 'default'")
                 component = 'default'
                 for myDict in component_to_test_map["testlist"]:
                     if component in myDict["testGroup"]:
@@ -1184,6 +1187,7 @@ if __name__ == "__main__":
                                         tests.append(os.path.realpath(os.path.join(root, file)))
                 testnames = tests
 
+            # This section is duplicate. TO be removed with CAS-13820
             if tests_to_ignore is not None:
                 print("\nTests to Ignore: ",tests_to_ignore )
                 indices = []
@@ -1197,6 +1201,7 @@ if __name__ == "__main__":
                 parser.print_help(sys.stderr)
                 sys.exit(1)
 
+            print("Running {} Test(s)".format(len(testnames)))
             run(testnames, args.branch, DRY_RUN)
     except:
         traceback.print_exc()
