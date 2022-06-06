@@ -568,7 +568,7 @@ def flagdata(vis,
             tempdict = copy.deepcopy(seldic)
             # Remove the empty parameters
             for k,v in seldic.items():
-                if v is '':
+                if v == '':
                     tempdict.pop(k)
 
             cmddict = {'command':tempdict}
