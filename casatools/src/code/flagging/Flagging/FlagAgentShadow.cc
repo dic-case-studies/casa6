@@ -324,19 +324,20 @@ void FlagAgentShadow::calculateShadowedAntennas(const vi::VisBuffer2 &visBuffer,
 	}
 
 
-    Int antenna1, antenna2;
-
+	// See CAS-12555 for why this loop which was commented out for long time was
+	// brought back.
 	// (1) Now, for all rows between 'rownr' and 'endrownr', calculate shadowed Ants.
 	// This row range represents all listed baselines in the "current" timestep.
+	// For those, we take the u,v,w from the UVW column of the MS
     for (Int row_i=rownr;row_i<=endrownr;row_i++)
       {
 	// Retrieve antenna ids
-	antenna1 = visBuffer.antenna1()(row_i);
-	antenna2 = visBuffer.antenna2()(row_i);
+	auto antenna1 = visBuffer.antenna1()(row_i);
+	auto antenna2 = visBuffer.antenna2()(row_i);
 
-	// Check if this row corresponds to autocorrelation (Antennas don't shadow themselves)
+	// Check if this row corresponds to autocorrelation, or radiometer, sqld, etc.
+	// (Antennas don't shadow themselves)
 	if (antenna1 == antenna2) continue;
-
 	// Record the baseline being processed
 	listBaselines[baselineIndex(nAnt,antenna1,antenna2)] = true;
 
@@ -351,12 +352,11 @@ void FlagAgentShadow::calculateShadowedAntennas(const vi::VisBuffer2 &visBuffer,
       }// end of for 'row'
 	 
 
-// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$####
 	// (2) Now, if there are any untouched baselines, calculate 'uvw' for all antennas,
-	//      and fill in missing baselines.
+	// using 'computeAntUVW(), and fill in missing baselines.
 	// This is the part that picks up invisible antennas, whether they come from the antenna_subtable or
 	// are externally supplied.
-	if(product(listBaselines)==false)
+	if(product(listBaselines)==false)    // could use anyEQ(listBaselines, false)
 	{
 		// For the current timestep, compute UVWs for all antennas.
 		//    uvwAnt_p will be filled these values.
