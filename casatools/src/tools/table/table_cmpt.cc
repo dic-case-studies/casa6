@@ -1361,23 +1361,29 @@ table::getcell(const std::string& columnname, const long rownr)
  return rstat;
 }
 
-::casac::variant*
-table::getcellslice(const std::string& columnname, const long rownr, const std::vector<long>& blc, const std::vector<long>& trc, const std::vector<long>& incr)
-{
- *itsLog << LogOrigin(__func__, columnname);
- ::casac::variant *rstat(0);
- try {
-	 if(itsTable){
-		 ValueHolder theVal = itsTable->getCellSlice(columnname, rownr, blc, trc, incr);
-		 rstat = fromValueHolder(theVal);
-	 } else {
-		 *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
-	 }
- } catch (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
-    RETHROW(x);
- }
- return rstat;
+casac::variant* table::getcellslice(
+    const std::string& columnname, const long rownr,
+    const std::vector<long>& blc, const std::vector<long>& trc,
+    const std::vector<long>& incr
+) {
+    *itsLog << LogOrigin(__FUNCTION__, columnname);
+    casac::variant *rstat(0);
+    try {
+        if(itsTable){
+            ValueHolder theVal = itsTable->getCellSlice(
+                columnname, rownr, blc, trc, incr
+            );
+            rstat = fromValueHolder(theVal);
+	    }
+        else {
+		    *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
+	    }
+    }
+    catch (AipsError x) {
+        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+        RETHROW(x);
+    }
+    return rstat;
 }
 
 ::casac::variant*
