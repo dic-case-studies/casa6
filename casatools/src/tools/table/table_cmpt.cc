@@ -1375,7 +1375,7 @@ casac::variant* table::getcellslice(
         TableColumn col(itsTable->table(), columnname);
         auto shape = col.shape(rownr);
         auto ndim = shape.size();
-        auto blcCopy = blc; 
+        auto blcCopy = blc;
         if (blc.size() == 1 && blc[0] == -1) {
             // default value used
             ThrowIf(
@@ -1384,7 +1384,7 @@ casac::variant* table::getcellslice(
                 "so the shape of the requested row cannot easily be "
                 "determined. Please explicitly specify the blc and trc."
             );
-            blcCopy = vector<long>(shape.size(), 0);
+            blcCopy = vector<long>(ndim, 0);
         }
         auto trcCopy = trc;
         if (trc.size() == 1 && trc[0] == -1) {
@@ -1395,7 +1395,7 @@ casac::variant* table::getcellslice(
                 "and so the shape of the requested row cannot easily be "
                 "determined. Please explicitly specify the blc and trc."
             );
-            trcCopy = vector<long>(shape.size());
+            trcCopy = vector<long>(ndim);
             for (uint i=0; i<shape.size(); ++i) {
                 trcCopy[i] = shape[i] - 1;
             }
@@ -1406,8 +1406,16 @@ casac::variant* table::getcellslice(
             incrCopy = vector<long>(ndim, 1);
         }
         ThrowIf(
-            ! ((ndim == trcCopy.size()) && (ndim == incrCopy.size())),
-            "blc, trc, and incr must all have the same length"
+            ndim != blcCopy.size(),
+            "blc must have length of " + String::toString(ndim)
+        );
+        ThrowIf(
+            ndim != trcCopy.size(),
+            "trc must have length of " + String::toString(ndim)
+        );
+        ThrowIf(
+            ndim != incrCopy.size(),
+            "incr must have length of " + String::toString(ndim)
         );
         ValueHolder theVal = itsTable->getCellSlice(
             columnname, rownr, blcCopy, trcCopy, incrCopy

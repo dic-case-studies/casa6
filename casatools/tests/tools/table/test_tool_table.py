@@ -54,16 +54,56 @@ class table_getcellslice_test(TableBase):
             if os.path.exists(f) and os.path.isdir(f):
                shutil.rmtree(f)
 
-    def test_getcellslice(self):
-        """all tests"""
+    def test_exceptions(self):
+        """Test various exception cases"""
+        def __test_exception(method_parms, expected_msg):
+            with self.assertRaises(RuntimeError) as cm:
+                res = self.tb.getcellslice(**method_parms)
+            got_exception = cm.exception
+            pos = str(got_exception).find(expected_msg)
+            self.assertNotEqual(
+                pos, -1, msg=f'Unexpected exception was thrown: {got_exception}'
+            )
+            
         self.ia.fromarray(self.myim, self.arr)
         self.ia.done()
         self.tb.open(self.myim)
-        # bad cell name
-        z = self.tb.getcellslice('map_bogus', 0, [0,0,0], [2,2,2], [1,1,1])
+        # bad column name
+        parms = {}
+        parms['columnname'] = 'bogus'
+        parms['rownr'] = 0
+        parms['blc'] = -1
+        parms['trc'] = -1
+        __test_exception(
+            parms, f'Table column {parms["columnname"]} is unknown'
+        ) 
+        # bad row number
+        parms = {}
+        parms['columnname'] = 'map'
+        parms['rownr'] = 1
+        parms['blc'] = -1
+        parms['trc'] = -1
+        __test_exception(
+            parms, f'TableColumn: row number {parms["rownr"]} exceeds #rows 1 '
+            f'in table {os.path.dirname(os.path.abspath(self.myim))}'
+        )
+        # bad blc
+        parms = {}
+        parms['columnname'] = 'map'
+        parms['rownr'] = 0
+        parms['blc'] = [0, 0, 0]
+        parms['trc'] = -1
+        __test_exception(parms, 'blc must have length of 2')
 
+
+    def test_getcellslice(self):
+        """all tests"""
+
+        self.ia.fromarray(self.myim, self.arr)
+        self.ia.done()
+        self.tb.open(self.myim)
         # get the entire cell
-        z = self.tb.getcellslice('map', 0, [0,0,0], [2,2,2], [1,1,1])
+        # z = self.tb.getcellslice('map', 0, [0,0,0], [2,2,2], [1,1,1])
         z = self.tb.getcellslice('map', 0, -1, -1)
         self.assertTrue((z == self.arr).all(), 'getting entire array failed')
         self.tb.done()
