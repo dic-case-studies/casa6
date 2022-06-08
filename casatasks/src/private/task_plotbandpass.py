@@ -714,7 +714,7 @@ def run_with_old_pyplot_style(func):
     return func_old_style
 
 DEFAULT_PLATFORMING_THRESHOLD = 10.0 # unused if platformingSigma != 0
-# @run_with_old_pyplot_style
+@run_with_old_pyplot_style
 def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                  xaxis='chan', figfile='', plotrange=[0,0,0,0], 
                  caltable2='', overlay='', showflagged=False, timeranges='',
@@ -4060,9 +4060,6 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                   pb.text(xstartTitle, ystartTitle, caltableTitle, size=titlesize,
                                           color='k', transform=pb.gcf().transFigure)
                                   if (debug): print("drawOverlayTimeLegends loc 2")
-                                  print("Calling drawOverlayTimeLegends")
-                                  print("timerangeListTimes:")
-                                  print(timerangeListTimes)
                                   drawOverlayTimeLegends(xframe,firstFrame,xstartTitle,ystartTitle,
                                                          caltable,titlesize,fieldIndicesToPlot,
                                                          ispwInCalTable,uniqueTimesPerFieldPerSpw,
