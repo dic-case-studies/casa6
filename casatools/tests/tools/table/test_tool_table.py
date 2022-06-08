@@ -54,6 +54,7 @@ class table_getcellslice_test(TableBase):
             if os.path.exists(f) and os.path.isdir(f):
                shutil.rmtree(f)
 
+
     def test_exceptions(self):
         """Test various exception cases"""
         def __test_exception(method_parms, expected_msg):
@@ -94,18 +95,117 @@ class table_getcellslice_test(TableBase):
         parms['blc'] = [0, 0, 0]
         parms['trc'] = -1
         __test_exception(parms, 'blc must have length of 2')
+        # blc too low
+        parms = {}
+        parms['columnname'] = 'map'
+        parms['rownr'] = 0
+        parms['blc'] = [0, -1]
+        parms['trc'] = -1
+        __test_exception(
+            parms, 'All elements of blc must be greater than or equal to 0'
+        )
+        # blc too high
+        parms = {}
+        parms['columnname'] = 'map'
+        parms['rownr'] = 0
+        parms['blc'] = [0, 4]
+        parms['trc'] = -1
+        __test_exception(parms, 'Element 1 of blc must be less than 4')
+        # bad trc
+        parms = {}
+        parms['columnname'] = 'map'
+        parms['rownr'] = 0
+        parms['blc'] = -1
+        parms['trc'] = [5, 5, 5]
+        __test_exception(parms, 'trc must have length of 2')
+        # trc negative
+        parms = {}
+        parms['columnname'] = 'map'
+        parms['rownr'] = 0
+        parms['blc'] = -1
+        parms['trc'] = [2, -1]
+        __test_exception(
+            parms, 'All elements of trc must be greater than or equal to 0'
+        )
+        # trc too large
+        parms = {}
+        parms['columnname'] = 'map'
+        parms['rownr'] = 0
+        parms['blc'] = -1
+        parms['trc'] = [4, 4]
+        __test_exception(parms, 'Element 0 of trc must be less than 3')
+        # trc less than blc
+        parms = {}
+        parms['columnname'] = 'map'
+        parms['rownr'] = 0
+        parms['blc'] = [1, 2]
+        parms['trc'] = [2, 0]
+        __test_exception(
+            parms,
+            'All elements of trc must be greater than their corresponding blc '
+            'elements'
+        )
+        # trc equal to blc
+        parms = {}
+        parms['columnname'] = 'map'
+        parms['rownr'] = 0
+        parms['blc'] = [1, 2]
+        parms['trc'] = [2, 2]
+        __test_exception(
+            parms,
+            'All elements of trc must be greater than their corresponding blc '
+            'elements'
+        )
+        # too many values for inc
+        parms = {}
+        parms['columnname'] = 'map'
+        parms['rownr'] = 0
+        parms['blc'] = -1
+        parms['trc'] = -1
+        parms['incr'] = [1,1,1]
+        __test_exception(
+            parms, 'incr must have length of 2'
+        )
+        # incr negative
+        parms = {}
+        parms['columnname'] = 'map'
+        parms['rownr'] = 0
+        parms['blc'] = -1
+        parms['trc'] = -1
+        parms['incr'] = [1, 0]
+        __test_exception(
+            parms, 'All elements of incr must be greater than 0'
+        )
 
 
     def test_getcellslice(self):
-        """all tests"""
-
+        """tests for valid inputs"""
         self.ia.fromarray(self.myim, self.arr)
         self.ia.done()
         self.tb.open(self.myim)
         # get the entire cell
-        # z = self.tb.getcellslice('map', 0, [0,0,0], [2,2,2], [1,1,1])
         z = self.tb.getcellslice('map', 0, -1, -1)
         self.assertTrue((z == self.arr).all(), 'getting entire array failed')
+        z = self.tb.getcellslice('map', 0, [0, 0], -1)
+        self.assertTrue((z == self.arr).all(), 'getting entire array failed')
+        z = self.tb.getcellslice('map', 0, -1, [2 ,3])
+        self.assertTrue((z == self.arr).all(), 'getting entire array failed')
+        z = self.tb.getcellslice('map', 0, -1, -1, [1, 1])
+        self.assertTrue((z == self.arr).all(), 'getting entire array failed')
+        z = self.tb.getcellslice('map', 0, [1, 1], -1)
+        self.assertTrue((
+            z == self.arr[1:, 1:]).all(), 'setting blc to non-zero failed'
+        )
+        z = self.tb.getcellslice('map', 0, -1, [1, 1])
+        self.assertTrue((
+            z == self.arr[:2, :2]).all(), 'setting trc to not trc of array '
+            'failed'
+        )
+        z = self.tb.getcellslice('map', 0, -1, -1, [2, 2])
+        self.assertTrue((
+            z == self.arr[::2, ::2]).all(), 'setting incr to larger than 1 '
+            'failed'
+        )
         self.tb.done()
 
 

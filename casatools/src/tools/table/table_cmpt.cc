@@ -1361,6 +1361,40 @@ table::getcell(const std::string& columnname, const long rownr)
  return rstat;
 }
 
+void table::_checkCorner(
+    const vector<long>& corner, const String& name, const IPosition& shape,
+    const pair<vector<long>, vector<long>>* const &blctrc
+) {
+    const auto ndim = shape.size();
+    const auto lt0 = [](long x) {return x < 0;};
+    ThrowIf(
+        ndim != corner.size(),
+        name + " must have length of " + String::toString(ndim)
+    );
+    ThrowIf(
+        find_if(corner.begin(), corner.end(), lt0) != corner.end(),
+        "All elements of " + name + " must be greater than or equal to 0"
+    );
+    for (uint i=0; i<ndim; ++i) {
+        ThrowIf(
+            corner[i] >= shape[i],
+            "Element " + String::toString(i) + " of " + name + " must be less "
+            "than " + String::toString(shape[i])
+        );
+    }
+    if (blctrc) {
+        const auto blc = blctrc->first;
+        const auto trc = blctrc->second;
+        for (uint i=0; i<blc.size(); ++i) {
+            ThrowIf(
+                trc[i] <= blc[i],
+                "All elements of trc must be greater than their corresponding "
+                "blc elements"
+            );
+        }
+    }
+}
+
 casac::variant* table::getcellslice(
     const std::string& columnname, const long rownr,
     const std::vector<long>& blc, const std::vector<long>& trc, 
@@ -1386,6 +1420,9 @@ casac::variant* table::getcellslice(
             );
             blcCopy = vector<long>(ndim, 0);
         }
+        else {
+            _checkCorner(blcCopy, "blc", shape);
+        }
         auto trcCopy = trc;
         if (trc.size() == 1 && trc[0] == -1) {
             // default value
@@ -1400,23 +1437,28 @@ casac::variant* table::getcellslice(
                 trcCopy[i] = shape[i] - 1;
             }
         }
+        else {
+            auto p = make_pair(blc, trc);
+            _checkCorner(trcCopy, "trc", shape, &p);
+        }
         auto incrCopy = incr;
         if (incr.size() != ndim && incrCopy.size() == 1 && incr[0] == 1) { 
             // the default value of incr must be expanded
             incrCopy = vector<long>(ndim, 1);
         }
-        ThrowIf(
-            ndim != blcCopy.size(),
-            "blc must have length of " + String::toString(ndim)
-        );
-        ThrowIf(
-            ndim != trcCopy.size(),
-            "trc must have length of " + String::toString(ndim)
-        );
-        ThrowIf(
-            ndim != incrCopy.size(),
-            "incr must have length of " + String::toString(ndim)
-        );
+        else {
+            ThrowIf(
+                ndim != incrCopy.size(),
+                "incr must have length of " + String::toString(ndim)
+            );
+            const auto lt0 = [](long x) {return x <= 0;};
+            ThrowIf(
+                find_if(
+                    incrCopy.begin(), incrCopy.end(), lt0) != incrCopy.end(
+                ),
+                "All elements of incr must be greater than 0"
+            );
+        }
         ValueHolder theVal = itsTable->getCellSlice(
             columnname, rownr, blcCopy, trcCopy, incrCopy
         );
