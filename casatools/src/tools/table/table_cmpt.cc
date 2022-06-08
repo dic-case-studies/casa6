@@ -1363,27 +1363,63 @@ table::getcell(const std::string& columnname, const long rownr)
 
 casac::variant* table::getcellslice(
     const std::string& columnname, const long rownr,
-    const std::vector<long>& blc, const std::vector<long>& trc,
-    const std::vector<long>& incr
+    const std::vector<long>& blc, const std::vector<long>& trc, 
+    const std::vector<long>& incr 
 ) {
     *itsLog << LogOrigin(__FUNCTION__, columnname);
-    casac::variant *rstat(0);
     try {
-        if(itsTable){
-            ValueHolder theVal = itsTable->getCellSlice(
-                columnname, rownr, blc, trc, incr
+        if (! itsTable) {
+            *itsLog << LogIO::WARN << "No table specified, please open first"
+                << LogIO::POST;
+        }
+        TableColumn col(itsTable->table(), columnname);
+        auto shape = col.shape(rownr);
+        auto ndim = shape.size();
+        auto blcCopy = blc; 
+        if (blc.size() == 1 && blc[0] == -1) {
+            // default value used
+            ThrowIf(
+                ndim == 0,
+                "It appears arrays in this column have different shapes, and "
+                "so the shape of the requested row cannot easily be "
+                "determined. Please explicitly specify the blc and trc."
             );
-            rstat = fromValueHolder(theVal);
-	    }
-        else {
-		    *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
-	    }
-    }
-    catch (AipsError x) {
-        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
+            blcCopy = vector<long>(shape.size(), 0);
+        }
+        auto trcCopy = trc;
+        if (trc.size() == 1 && trc[0] == -1) {
+            // default value
+            ThrowIf(
+                ndim == 0,
+                "It appears arrays in this column have different shapes, "
+                "and so the shape of the requested row cannot easily be "
+                "determined. Please explicitly specify the blc and trc."
+            );
+            trcCopy = vector<long>(shape.size());
+            for (uint i=0; i<shape.size(); ++i) {
+                trcCopy[i] = shape[i] - 1;
+            }
+        }
+        auto incrCopy = incr;
+        if (incr.size() != ndim && incrCopy.size() == 1 && incr[0] == 1) { 
+            // the default value of incr must be expanded
+            incrCopy = vector<long>(ndim, 1);
+        }
+        ThrowIf(
+            ! ((ndim == trcCopy.size()) && (ndim == incrCopy.size())),
+            "blc, trc, and incr must all have the same length"
+        );
+        ValueHolder theVal = itsTable->getCellSlice(
+            columnname, rownr, blcCopy, trcCopy, incrCopy
+        );
+        return fromValueHolder(theVal);
+    }    
+    catch (const AipsError& x) { 
+        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
+            << LogIO::POST;
         RETHROW(x);
-    }
-    return rstat;
+    }    
+    return nullptr;
 }
 
 ::casac::variant*
@@ -1392,14 +1428,14 @@ table::getcol(const std::string& columnname, const long startrow, const long nro
  *itsLog << LogOrigin(__func__, columnname);
  ::casac::variant *rstat(0);
  try {
-	 if(itsTable){
+     if(itsTable){
                  // ValueHolder theVal = itsTable->getColumn(columnname, startrow, nrow, rowincr);
-		 rstat = fromValueHolder(itsTable->getColumn(columnname, startrow, nrow, rowincr));
+         rstat = fromValueHolder(itsTable->getColumn(columnname, startrow, nrow, rowincr));
                  // rstat = fromValueHolder(theVal);
-	 } else {
-		 *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
-	 }
- } catch (AipsError x) {
+     } else {
+         *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
+     }    
+ } catch (AipsError x) { 
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
  }
