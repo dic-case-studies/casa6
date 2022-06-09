@@ -617,6 +617,15 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
             self._check_task_return(res)
             self._check_rows(self.output, 'DATA', 1080)
 
+        shutil.rmtree(self.output)
+        with self.assertRaises(RuntimeError):
+            # Wrong string in field subdict (instead of NONE)
+            res = uvcontsub2021(vis=ms_alma, outputvis=self.output,
+                                fitspec={'1,2': 'bogus'
+                                         })
+            self._check_task_return(res)
+            self._check_rows(self.output, 'DATA', 1080)
+
     def test_fitspec_separate_fields(self):
         """Check that fitspec works. Different spw:chan strings for different
         fields, and each field to a different output MS (like example 3 from
