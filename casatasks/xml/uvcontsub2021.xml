@@ -178,7 +178,7 @@
         fitting algorithm. This is different from the spw parameter,
         which selects the data that will be included in the output.
         </description>
-        <type>string</type><type>any</type>
+        <type>string</type><type>record</type>
         <value type="string"/>
       </param>
 
