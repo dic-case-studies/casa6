@@ -1085,10 +1085,12 @@ class test_shadow(test_base):
         
     def test_shadow_APP(self):
         '''flagdata: flag shadowed antennas with ref frame APP'''
+        # After CAS-12555 this test no longer flags any data (ocmputeAntUVW not used when
+        # all antennas present in baselines found in data).
         self.setUp_shadowdata1()
         flagdata(vis=self.vis, flagbackup=False, mode='shadow')
         res = flagdata(self.vis, mode='summary')
-        self.assertEqual(res['flagged'], 2052)
+        self.assertEqual(res['flagged'], 0)
 
 
 class test_msselection(test_base):
