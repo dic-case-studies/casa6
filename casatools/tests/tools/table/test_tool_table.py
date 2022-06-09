@@ -142,19 +142,8 @@ class table_getcellslice_test(TableBase):
         parms['trc'] = [2, 0]
         __test_exception(
             parms,
-            'All elements of trc must be greater than their corresponding blc '
-            'elements'
-        )
-        # trc equal to blc
-        parms = {}
-        parms['columnname'] = 'map'
-        parms['rownr'] = 0
-        parms['blc'] = [1, 2]
-        parms['trc'] = [2, 2]
-        __test_exception(
-            parms,
-            'All elements of trc must be greater than their corresponding blc '
-            'elements'
+            'All elements of trc must be greater than or equal to their '
+            'corresponding blc elements'
         )
         # too many values for inc
         parms = {}

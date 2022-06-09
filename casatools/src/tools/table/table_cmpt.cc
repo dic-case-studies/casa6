@@ -1387,9 +1387,9 @@ void table::_checkCorner(
         const auto trc = blctrc->second;
         for (uint i=0; i<blc.size(); ++i) {
             ThrowIf(
-                trc[i] <= blc[i],
-                "All elements of trc must be greater than their corresponding "
-                "blc elements"
+                trc[i] < blc[i],
+                "All elements of trc must be greater than or equal to their "
+                "corresponding blc elements"
             );
         }
     }
