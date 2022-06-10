@@ -1085,12 +1085,27 @@ class test_shadow(test_base):
         
     def test_shadow_APP(self):
         '''flagdata: flag shadowed antennas with ref frame APP'''
-        # After CAS-12555 this test no longer flags any data (ocmputeAntUVW not used when
-        # all antennas present in baselines found in data).
+        # After CAS-12555 this test no longer flags any data (computeAntUVW not used when
+        # all antennas present in baselines found in data). See test_shadow_APP_with_sel
         self.setUp_shadowdata1()
         flagdata(vis=self.vis, flagbackup=False, mode='shadow')
         res = flagdata(self.vis, mode='summary')
         self.assertEqual(res['flagged'], 0)
+
+    def test_shadow_APP_with_sel(self):
+        '''flagdata: flag shadowed antennas with ref frame APP, selecting some antennas -> triggering computeAntUVW calculations'''
+        self.setUp_shadowdata1()
+        # Try to pick antennas such that the available UVW distances (shadow-code-block-1)
+        # leave enough untouched baselines for the phase-center distances
+        # (shadow-code-block-2 == computeAntUVW) to be able to flag them. CAS-12555
+        ants = 'DA61,PM02,PM03,CM07,DV18,CM06,DA59,DV20,DV24,CM12'
+        flagdata(vis=self.vis, antenna=ants, flagbackup=False, mode='shadow')
+        res = flagdata(self.vis, mode='summary')
+        self.assertEqual(res['flagged'], 720)
+        self.assertEqual(res['total'], 6552)
+        nflags_ants = {'CM10': 360, 'CM04': 360}
+        for ant, nflags in nflags_ants.items():
+            self.assertEqual(res['antenna'][ant]['flagged'], nflags)
 
 
 class test_msselection(test_base):
