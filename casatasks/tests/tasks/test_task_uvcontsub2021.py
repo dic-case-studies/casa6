@@ -412,7 +412,7 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='0',
                             fitspec={'0':
                                      {'1': {'chan': '',
-                                            'fitorder': 0}}
+                                            'fitorder': 1}}
                                      })
         self._check_task_return(res, fields=[0])
         self._check_rows(self.output, 'DATA', 600)
@@ -689,6 +689,17 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                (-4.05263185-2.67017555j), (-60.7157898-9.26315689j),
                                (45.24561309+28.1754398j))
 
+    def test_fitorder2(self):
+        """ Check different fit orders (0, 1, 2) work"""
+
+        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=2,
+                            fitspec='0:2~20')
+        self._check_task_return(res, fields=[0])
+        self._check_rows(self.output, 'DATA', 340)
+        self._check_data_stats(self.output, (8.891941398+3.44454119j),
+                               (2.90232849+1.83334923j), (-42.0941238-14.0698833j),
+                               (92.6959686+31.4091110j))
+
     def test_fitspec_dict_fitorder1(self):
         """Check different fit orders (0, 1, 2) work, when given in field/spw
         dict, and produce same results as simple command
@@ -705,17 +716,6 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
                                (-4.05263185-2.67017555j), (-60.7157898-9.26315689j),
                                (45.24561309+28.1754398j))
 
-    def test_fitorder2(self):
-        """ Check different fit orders (0, 1, 2) work"""
-
-        res = uvcontsub2021(vis=ms_simple, outputvis=self.output, fitorder=2,
-                            fitspec='0:2~20')
-        self._check_task_return(res, fields=[0])
-        self._check_rows(self.output, 'DATA', 340)
-        self._check_data_stats(self.output, (8.891941398+3.44454119j),
-                               (2.90232849+1.83334923j), (-42.0941238-14.0698833j),
-                               (92.6959686+31.4091110j))
-
     def test_fitspec_dict_fitorder2(self):
         """Check different fit orders (0, 1, 2) work, when given in field/spw
         dict, and produce same results as simple command
@@ -731,6 +731,75 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_data_stats(self.output, (8.891941398+3.44454119j),
                                (2.90232849+1.83334923j), (-42.0941238-14.0698833j),
                                (92.6959686+31.4091110j))
+
+    def test_fitspec_spws_diff_fitorder(self):
+        """Check that fitorder is applied correctly per field, per SPW, following
+        the fitspec list with different fit orders (between 0 and 3) for different spws"""
+        # Uses ms_mixed_pols: many SPWs (and with mixed pols), but 1 field
+
+        # A: fit using order 0,1,2,3, without per field/spw fitspec
+        res_order_0 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=0,
+                                    fitspec='3')
+        self._check_task_return(res_order_0, fields=[0])
+        stats_field_0_spw_3_order_0 = (
+            (-0.000772132455+0.000219751841j), (-0.000659341924-0.0187813938j),
+            (-1.42448926+0.441552132j), (0.793870270-0.328885317j))
+        self._check_data_stats(self.output, *stats_field_0_spw_3_order_0, fields=0, ddis=3)
+        shutil.rmtree(self.output)
+
+        res_order_1 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=1,
+                                    fitspec='2:100~500')
+        self._check_task_return(res_order_1, fields=[0])
+        stats_field_0_spw_2_order_1 = (
+            (-0.00390083172-0.00195605258j), (0.00536000915-0.0672568083j),
+            (-11.8622923-2.65349817j), (14.1239767+4.88118219j))
+        self._check_data_stats(self.output, *stats_field_0_spw_2_order_1, fields=0, ddis=2)
+        shutil.rmtree(self.output)
+
+        res_order_2 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=2,
+                                    fitspec='63:2~50;55~60')
+        self._check_task_return(res_order_2, fields=[0])
+        stats_field_0_spw_63_order_2 = (
+            (-0.00150726591+0.00118314047j), (0.00288047199+0.00183670223j),
+            (-2.88742280-0.969364464j), (2.69186521+1.11569095j))
+        self._check_data_stats(self.output, *stats_field_0_spw_63_order_2, fields=0, ddis=63)
+        shutil.rmtree(self.output)
+
+        res_order_3 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=3,
+                                    fitspec='4:50~503;600~850;900~1002')
+        self._check_task_return(res_order_3, fields=[0])
+        stats_field_0_spw_4_order_3 = (
+            (-0.00245836405+0.00548351408j), (0.00843574991+1.61623479j),
+            (-10.5505962+6.32199335j), (9.71259212+5.48828125j))
+        self._check_data_stats(self.output, *stats_field_0_spw_4_order_3, fields=0, ddis=4)
+        shutil.rmtree(self.output)
+
+        # B: cross-check A against per field/spw fitspec with corresponding fit orders
+        res_order0 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output,
+                                   fitspec={
+                                       '0': {'1': {'chan': '0',
+                                                   'fitorder': 0},
+                                             '2': {# 2 pol, 512 chan
+                                                   'chan': '100~500',
+                                                   'fitorder': 1},
+                                             '3': {# 4 pol, 64 chan
+                                                   'chan': '',
+                                                   'fitorder': 0},
+                                             '4': {# 2 pol, 1024 chan
+                                                   'chan': '50~503;600~850;900~1002',
+                                                   'fitorder': 3},
+                                             '5': {# 2 pol, 512 chan
+                                                   'chan': '100~495',
+                                                   'fitorder': 0},
+                                             '63': {# 4 pol, 64 chan
+                                                    'chan': '2~50;55~60',
+                                                    'fitorder': 2}
+                                             },
+                                       })
+        self._check_data_stats(self.output, *stats_field_0_spw_2_order_1, fields=0, ddis=2)
+        self._check_data_stats(self.output, *stats_field_0_spw_3_order_0, fields=0, ddis=3)
+        self._check_data_stats(self.output, *stats_field_0_spw_4_order_3, fields=0, ddis=4)
+        self._check_data_stats(self.output, *stats_field_0_spw_63_order_2, fields=0, ddis=63)
 
     def test_writemodel(self):
         """ Check the model column is added to the output MS and its values match
@@ -817,75 +886,6 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_rows(self.output, 'DATA', 1550)
         self._check_data_stats(self.output, (-0.000782105923+0.000300504051j),
                                0j, (-66.9297485+55.1413803j), (57.7461967+16.6702766j))
-
-    def test_fitspec_spws_diff_fitorder(self):
-        """Check that fitorder is applied correctly per field, per SPW, following
-        the fitspec list with different fit orders (between 0 and 3) for different spws"""
-        # Uses ms_mixed_pols: many SPWs (and with mixed pols), but 1 field
-
-        # A: fit using order 0,1,2,3, without per field/spw fitspec
-        res_order_0 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=0,
-                                    fitspec='3')
-        self._check_task_return(res_order_0, fields=[0])
-        stats_field_0_spw_3_order_0 = (
-            (-0.000772132455+0.000219751841j), (-0.000659341924-0.0187813938j),
-            (-1.42448926+0.441552132j), (0.793870270-0.328885317j))
-        self._check_data_stats(self.output, *stats_field_0_spw_3_order_0, fields=0, ddis=3)
-        shutil.rmtree(self.output)
-
-        res_order_1 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=1,
-                                    fitspec='2:100~500')
-        self._check_task_return(res_order_1, fields=[0])
-        stats_field_0_spw_2_order_1 = (
-            (-0.00390083172-0.00195605258j), (0.00536000915-0.0672568083j),
-            (-11.8622923-2.65349817j), (14.1239767+4.88118219j))
-        self._check_data_stats(self.output, *stats_field_0_spw_2_order_1, fields=0, ddis=2)
-        shutil.rmtree(self.output)
-
-        res_order_2 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=2,
-                                    fitspec='63:2~50;55~60')
-        self._check_task_return(res_order_2, fields=[0])
-        stats_field_0_spw_63_order_2 = (
-            (-0.00150726591+0.00118314047j), (0.00288047199+0.00183670223j),
-            (-2.88742280-0.969364464j), (2.69186521+1.11569095j))
-        self._check_data_stats(self.output, *stats_field_0_spw_63_order_2, fields=0, ddis=63)
-        shutil.rmtree(self.output)
-
-        res_order_3 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output, fitorder=3,
-                                    fitspec='4:50~503;600~850;900~1002')
-        self._check_task_return(res_order_3, fields=[0])
-        stats_field_0_spw_4_order_3 = (
-            (-0.00245836405+0.00548351408j), (0.00843574991+1.61623479j),
-            (-10.5505962+6.32199335j), (9.71259212+5.48828125j))
-        self._check_data_stats(self.output, *stats_field_0_spw_4_order_3, fields=0, ddis=4)
-        shutil.rmtree(self.output)
-
-        # B: cross-check A against per field/spw fitspec with corresponding fit orders
-        res_order0 = uvcontsub2021(vis=ms_mixed_pols, outputvis=self.output,
-                                   fitspec={
-                                       '0': {'1': {'chan': '0',
-                                                   'fitorder': 0},
-                                             '2': {# 2 pol, 512 chan
-                                                   'chan': '100~500',
-                                                   'fitorder': 1},
-                                             '3': {# 4 pol, 64 chan
-                                                   'chan': '',
-                                                   'fitorder': 0},
-                                             '4': {# 2 pol, 1024 chan
-                                                   'chan': '50~503;600~850;900~1002',
-                                                   'fitorder': 3},
-                                             '5': {# 2 pol, 512 chan
-                                                   'chan': '100~495',
-                                                   'fitorder': 0},
-                                             '63': {# 4 pol, 64 chan
-                                                    'chan': '2~50;55~60',
-                                                    'fitorder': 2}
-                                             },
-                                       })
-        self._check_data_stats(self.output, *stats_field_0_spw_2_order_1, fields=0, ddis=2)
-        self._check_data_stats(self.output, *stats_field_0_spw_3_order_0, fields=0, ddis=3)
-        self._check_data_stats(self.output, *stats_field_0_spw_4_order_3, fields=0, ddis=4)
-        self._check_data_stats(self.output, *stats_field_0_spw_63_order_2, fields=0, ddis=63)
 
 
 class uvcontsub2021_numerical_sim_test(uvcontsub2021_test_base):
