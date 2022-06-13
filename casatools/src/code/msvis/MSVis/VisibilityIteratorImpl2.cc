@@ -2879,8 +2879,8 @@ VisibilityIteratorImpl2::makeFrequencyConverter(
 
 	MEpoch epoch(MVEpoch(Quantity(time, "s")), timeFrameOfReference_p);
 
-	MPosition position = getObservatoryPosition();
-	MDirection direction = phaseCenter();
+	const MPosition &position = msIter_p->telescopePosition();
+	const MDirection &direction = msIter_p->phaseCenter();
 
 	MeasFrame measFrame(epoch, position, direction);
 
