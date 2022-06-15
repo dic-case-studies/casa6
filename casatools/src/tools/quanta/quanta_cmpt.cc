@@ -15,6 +15,8 @@
 #include <iomanip>
 #include <quanta_cmpt.h>
 
+#include <casacore/casa/BasicSL/STLIO.h>
+
 #include <casa/BasicSL/String.h>
 #include <casa/Quanta/QC.h>
 #include <casa/Quanta/UnitMap.h>
@@ -83,7 +85,7 @@ quanta::quantumHolderFromVar(const ::casac::variant& theVar){
   }
   return qh;
 }
-
+/*
 casac::record*
 quanta::recordFromQuantity(const casacore::Quantity q)
 {
@@ -104,26 +106,18 @@ quanta::recordFromQuantity(const casacore::Quantity q)
   }
   return r;
 }
-
-::casac::record*
-quanta::recordFromQuantity(const Quantum<Vector<Double> >& q)
-{
-  ::casac::record *r=0;
-  try {
+*/
+template<class T> record* quanta::recordFromQuantity(const Quantum<T>& q) {
     String error;
-    casacore::Record R;
-    if (QuantumHolder(q).toRecord(error, R)) {
-      r = fromRecord(R);
-    } else {
-      *itsLog << LogIO::SEVERE << "Could not convert quantity to record."
-              << LogIO::POST;
+    casacore::Record rec;
+    if (QuantumHolder(q).toRecord(error, rec)) {
+        return fromRecord(rec);
     }
-  } catch (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: "
-            << x.getMesg() << LogIO::POST;
-    RETHROW(x);
-  }
-  return r;
+    else {
+        *itsLog << LogIO::SEVERE << "Could not convert quantity to record."
+            << LogIO::POST;
+    }
+    return nullptr;
 }
 
 // setformat (t='', v=F) -> set specified format (e.g. 'prec') to value v
@@ -174,43 +168,56 @@ quanta::convertdop(const ::casac::variant& v, const std::string& outunit)
 }
 
 // quantity from value v and units name
-::casac::record*
-quanta::quantity(const ::casac::variant& v, const std::string& unitname)
-{
-  if(v.type()==::casac::variant::DOUBLE) {
-    return recordFromQuantity(casacore::Quantity(v.toDouble(),String(unitname)));
-  }
-  if(v.type()==::casac::variant::DOUBLEVEC) {
-    return recordFromQuantity(Quantum<Vector<Double> >(v.toDoubleVec(),
-						       String(unitname)));
-  }
-  if(v.type()==::casac::variant::INT) {
-    return recordFromQuantity(casacore::Quantity(v.toDouble(),String(unitname)));
-  }
-  if(v.type()==::casac::variant::INTVEC) {
-    return recordFromQuantity(Quantum<Vector<Double> >(v.toDoubleVec(),
-						       String(unitname)));
-  }
-  QuantumHolder qh = quantumHolderFromVar(v);
-  if (qh.isQuantumVectorDouble() ) {
-    Quantum<Vector<Double> > qv = qh.asQuantumVectorDouble();    
-    return recordFromQuantity(qv);
-  } else {
-    return recordFromQuantity(casaQuantity(v));
-  }
+record* quanta::quantity(
+    const variant& v, const std::string& unitname, bool keepshape
+) {
+    try {
+        auto vtype = v.type();
+        if (vtype == variant::DOUBLE || vtype == variant::INT) {
+            return recordFromQuantity(
+                casacore::Quantity(v.toDouble(),String(unitname))
+            );
+        }
+        if (vtype == variant::DOUBLEVEC || vtype == variant::INTVEC) {
+            const auto vecValues = v.toDoubleVec();
+            const Vector<int> shape(v.arrayshape());
+            if (keepshape && shape.size() > 1) {
+                IPosition iShape(shape);
+                Array<double> valuesArray(iShape);
+                Vector<double> vVecValues(vecValues);
+                casacore::convertArray(
+                    valuesArray, Vector<double>(vecValues).reform(iShape)
+                );
+                return recordFromQuantity(
+                    Quantum<Array<double>>(valuesArray, String(unitname))
+                );
+            }
+            else {
+                return recordFromQuantity(
+                    Quantum<Vector<double>>(vecValues, String(unitname))
+                );
+            }
+        }
+        QuantumHolder qh = quantumHolderFromVar(v);
+        if (qh.isQuantumVectorDouble()) {
+            const auto qv = qh.asQuantumVectorDouble();    
+            return recordFromQuantity(qv);
+        }
+        else if (qh.isQuantumArrayDouble()) {
+            const auto qv = qh.asQuantumArrayDouble();    
+            return recordFromQuantity(qv);
+        }
+        else {
+            return recordFromQuantity(casaQuantity(v));
+        }
+    }
+    catch (const AipsError& x) {
+        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
+            << LogIO::POST;
+        RETHROW(x);
+    }    
+    return nullptr;
 }
-
-//::casac::record*
-//quanta::quant(const double v, const std::string& name)
-//{
-//  return recordFromQuantity(casacore::Quantity(v,String(name)));
-//}
-
-//::casac::record* 
-//quanta::quantv(const std::vector<double>& v, const std::string& name)
-//{
-//  return recordFromQuantity(Quantum<Vector<Double> >(v,String(name)));
-//}
 
 // get value of quantity or quantity array
 std::vector<double>
@@ -270,22 +277,35 @@ quanta::canon(const ::casac::variant& v)
 }
 
 // convert (v='1', out='') -> convert unit v to units as in out
-::casac::record*
-quanta::convert(const ::casac::variant& v, const ::casac::variant& outunit)
-{
-  // Strangely, this cannot be declared const because of the possible
-  // .asQuantumVectorDouble() calls.
-  QuantumHolder qh(quantumHolderFromVar(v));
-
-  const Unit outU(casaQuantity(outunit).getUnit());
-
-  if (qh.isQuantumVectorDouble()) {
-    return recordFromQuantity(outU.empty() ? qh.asQuantumVectorDouble().get() :
-                              qh.asQuantumVectorDouble().get(outU));
-  } else {
-    return recordFromQuantity(outU.empty() ? casaQuantity(v).get() :
-			      casaQuantity(v).get(outU));
-  }
+record* quanta::convert(const variant& v, const variant& outunit) {
+    try {
+        // Strangely, this cannot be declared const because of the possible
+        // .asQuantumVectorDouble() calls.
+        QuantumHolder qh(quantumHolderFromVar(v));
+        const auto outU(casaQuantity(outunit).getUnit());
+        const auto uEmpty = outU.empty();
+        if (qh.isQuantumVectorDouble()) {
+            const auto qvd = qh.asQuantumVectorDouble();
+            return recordFromQuantity(uEmpty ? qvd.get() : qvd.get(outU));
+        }
+        else if (qh.isQuantumArrayDouble()) {
+            const auto qad = qh.asQuantumArrayDouble();
+            return recordFromQuantity(uEmpty ? qad.get() : qad.get(outU));
+        }
+        else if (qh.isQuantumDouble()) {
+            const auto q = casaQuantity(v);
+            return recordFromQuantity(uEmpty ? q.get() : q.get(outU));
+        }
+        else {
+            ThrowCc("Unhandled QuantumHolder type");
+        }
+    }
+    catch (const AipsError& x) {
+        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
+            << LogIO::POST;
+        RETHROW(x);
+    }
+    return nullptr;
 }
 
 // define name as new unit with value v
