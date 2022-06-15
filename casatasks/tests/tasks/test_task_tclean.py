@@ -2519,7 +2519,7 @@ class test_cube(testref_base):
 
           beamresult_uniform = imhead(im_uniform + '.image', mode='summary')['restoringbeam']
           beamresult_uniform_taper = imhead(im_uniform_taper + '.image', mode='summary')['restoringbeam']
-          beamresult_natural_taper = imhead(im_naturalcas_taper + '.image', mode='summary')['restoringbeam']
+          beamresult_natural_taper = imhead(im_natural_taper + '.image', mode='summary')['restoringbeam']
           beamresult_briggs_2_taper = imhead(im_briggs_2_taper + '.image', mode='summary')['restoringbeam']
 
           _, report1 = self.th.check_val(beamresult_uniform['major']['value'], 70.00, valname = 'Restoring beam major:', exact = False)
