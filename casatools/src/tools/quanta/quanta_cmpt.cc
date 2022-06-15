@@ -15,8 +15,6 @@
 #include <iomanip>
 #include <quanta_cmpt.h>
 
-#include <casacore/casa/BasicSL/STLIO.h>
-
 #include <casa/BasicSL/String.h>
 #include <casa/Quanta/QC.h>
 #include <casa/Quanta/UnitMap.h>
@@ -85,28 +83,7 @@ quanta::quantumHolderFromVar(const ::casac::variant& theVar){
   }
   return qh;
 }
-/*
-casac::record*
-quanta::recordFromQuantity(const casacore::Quantity q)
-{
-  ::casac::record *r=0;
-  try {
-    String error;
-    casacore::Record R;
-    if (QuantumHolder(q).toRecord(error, R)) {
-      r = fromRecord(R);
-    } else {
-      *itsLog << LogIO::SEVERE << "Could not convert quantity to record."
-	      << LogIO::POST;
-    }
-  } catch (AipsError x) {
-    *itsLog << LogIO::SEVERE << "Exception Reported: "
-	    << x.getMesg() << LogIO::POST;
-    RETHROW(x);
-  }
-  return r;
-}
-*/
+
 template<class T> record* quanta::recordFromQuantity(const Quantum<T>& q) {
     String error;
     casacore::Record rec;
@@ -200,11 +177,11 @@ record* quanta::quantity(
         }
         QuantumHolder qh = quantumHolderFromVar(v);
         if (qh.isQuantumVectorDouble()) {
-            const auto qv = qh.asQuantumVectorDouble();    
+            const auto qv = qh.asQuantumVectorDouble();
             return recordFromQuantity(qv);
         }
         else if (qh.isQuantumArrayDouble()) {
-            const auto qv = qh.asQuantumArrayDouble();    
+            const auto qv = qh.asQuantumArrayDouble();
             return recordFromQuantity(qv);
         }
         else {
@@ -215,7 +192,7 @@ record* quanta::quantity(
         *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
             << LogIO::POST;
         RETHROW(x);
-    }    
+    }
     return nullptr;
 }
 
