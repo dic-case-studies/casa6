@@ -274,7 +274,7 @@ record* quanta::convert(const variant& v, const variant& outunit) {
             return recordFromQuantity(uEmpty ? q.get() : q.get(outU));
         }
         else {
-            String mytype;
+            string mytype;
             if (qh.isEmpty()) {
                 mytype = "empty";
             }
