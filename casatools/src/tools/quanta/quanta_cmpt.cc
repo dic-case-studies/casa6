@@ -274,7 +274,83 @@ record* quanta::convert(const variant& v, const variant& outunit) {
             return recordFromQuantity(uEmpty ? q.get() : q.get(outU));
         }
         else {
-            ThrowCc("Unhandled QuantumHolder type");
+            String mytype;
+            if (qh.isEmpty()) {
+                mytype = "empty";
+            }
+            else if (qh.isQuantum()) {
+                mytype = "Quantum";
+            }
+            else if (qh.isScalar()) {
+                mytype = "Scalar";
+            }
+            else if (qh.isVector()) {
+                mytype = "Vector";
+            }
+            else if (qh.isArray()) {
+                mytype = "Array";
+            }
+            else if (qh.isReal()) {
+                mytype = "Real";
+            }
+            else if (qh.isComplex()) {
+                mytype = "Comples";
+            }
+            else if (qh.isQuantity()) {
+                mytype = "Quantity";
+            }
+            else if (qh.isQuantumDouble()) {
+                mytype = "QuantumDouble";
+            }
+            else if (qh.isQuantumFloat()) {
+                mytype = "QuantumFloat";
+            }
+            else if (qh.isQuantumInt()) {
+                mytype = "QuantumInt";
+            }
+            else if (qh.isQuantumComplex()) {
+                mytype = "QuantumComplex";
+            }
+            else if (qh.isQuantumDComplex()) {
+                mytype = "QuantumDComplex";
+            }
+            else if (qh.isQuantumVectorDouble()) {
+                mytype = "QuantumVectorDouble";
+            }
+            else if (qh.isQuantumVectorFloat()) {
+                mytype = "QuantumVectorFloat";
+            }
+            else if (qh.isQuantumVectorFloat()) {
+                mytype = "QuantumVectorFloat";
+            }
+            else if (qh.isQuantumVectorInt()) {
+                mytype = "QuantumVectorInt";
+            }
+            else if (qh.isQuantumVectorComplex()) {
+                mytype = "QuantumVectorComplex";
+            }
+            else if (qh.isQuantumVectorDComplex()) {
+                mytype = "QuantumVectorDComplex";
+            }
+            else if (qh.isQuantumArrayDouble()) {
+                mytype = "QuantumArrayDouble";
+            }
+            else if (qh.isQuantumArrayFloat()) {
+                mytype = "QuantumArrayFloat";
+            }
+            else if (qh.isQuantumArrayInt()) {
+                mytype = "QuantumArrayInt";
+            }
+            else if (qh.isQuantumArrayComplex()) {
+                mytype = "QuantumArrayComplex";
+            }
+            else if (qh.isQuantumArrayDComplex()) {
+                mytype = "QuantumArrayDComplex";
+            }
+            ThrowCc(
+                "Unhandled QuantumHolder type " + mytype + ". Inputs: v: "
+                + v.toString() + " outunit: " + outunit.toString()
+            );
         }
     }
     catch (const AipsError& x) {
