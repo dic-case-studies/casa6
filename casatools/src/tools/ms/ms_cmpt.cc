@@ -2700,7 +2700,8 @@ ms::selectpolarization(const std::vector<std::string>& wantedpol)
             if (checkinit()) {
                 *itsLog << LogOrigin("ms", "selectpolarization");
                 Record polnSelRec(Record::Variable);
-                String polnExpr = MSSelection::nameExprStr(wantedpol);
+                Vector<String> const wantedpolV(wantedpol);
+                String polnExpr = MSSelection::nameExprStr(wantedpolV);
                 polnSelRec.define("polarization", polnExpr);
                 std::unique_ptr<::casac::record> casacRec(fromRecord(polnSelRec));
                 retval = doMSSelection(*casacRec);
@@ -6038,7 +6039,7 @@ ms::split(const std::string&      outputms,  const ::casac::variant& field,
         Vector<Int> t_tileshape(1, 0);
         if(toCasaString(tileShape) != String("")){
             t_tileshape.resize();
-            t_tileshape=tileShape.toIntVec();
+            t_tileshape=Vector<Int>(tileShape.toIntVec());
         }
         const String t_combine = downcase(combine);
 
@@ -6121,7 +6122,7 @@ ms::partition(const std::string&      outputms,   const ::casac::variant& field,
         Vector<Int> t_tileshape(1,0);
         if(toCasaString(tileShape) != String("")){
             t_tileshape.resize();
-            t_tileshape=tileShape.toIntVec();
+            t_tileshape=Vector<Int>(tileShape.toIntVec());
         }
         const String t_combine = downcase(combine);
 

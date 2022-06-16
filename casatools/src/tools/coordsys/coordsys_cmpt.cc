@@ -407,7 +407,7 @@ coordsys::convertmany(const ::casac::variant& coordin,
   _setup(__func__);
   int n = naxes();
   // form Array<Double> coordIn
-  Vector<long long> coord_shape = coordin.arrayshape();
+  Vector<long long> coord_shape(coordin.arrayshape());
   std::vector<double> coord_vec = coordin.toDoubleVec();
   Array<Double> coordIn;
   coordIn.resize(IPosition(coord_shape));
@@ -1326,7 +1326,7 @@ coordsys::setdirection(const std::string& in_ref,
     xform(1,0) = 0.0; xform(1,1) = 1.0;
   } else {
     if (iv_xform.type() == ::casac::variant::DOUBLEVEC) {
-      Vector<long long> shape = iv_xform.arrayshape();
+      Vector<long long> shape(iv_xform.arrayshape());
       std::vector<double> xformVec = iv_xform.getDoubleVec();
       xform.resize(IPosition(shape));
       int i = 0;
@@ -1597,7 +1597,7 @@ coordsys::setlineartransform(const std::string& coordinateType,
     *_log << "You must specify the coordinate type" << LogIO::EXCEPTION;
   }
 
-  Vector<long long> shape = v_value.arrayshape();
+  Vector<long long> shape(v_value.arrayshape());
   if (shape.size() == 0) {
     *_log << "The value array is empty" << LogIO::EXCEPTION;
   }
@@ -1717,7 +1717,7 @@ coordsys::setprojection(const std::string& name,
 	_setup(__func__);
   Vector<Double> parameters;
   if ( !(in_parameters.size()==1 && in_parameters[0]==-1) ) {
-    parameters = in_parameters;
+    parameters = Vector<Double>(in_parameters);
   }
 
   // Exception if type not found
@@ -2045,8 +2045,7 @@ coordsys::setrestfrequency(const ::casac::variant& vfvalue, const long which,
     rf[0]=vfvalue.toDouble();
     restFrequency = Quantum<Vector<Double> >(rf,sc.worldAxisUnits()(0));
   } else if (vfvalue.type() == ::casac::variant::DOUBLEVEC) {
-    Vector<Double> rf;
-    rf=vfvalue.toDoubleVec();
+    Vector<Double> rf(vfvalue.toDoubleVec());
     restFrequency = Quantum<Vector<Double> >(rf,sc.worldAxisUnits()(0));
   } else {
     *_log << LogIO::WARN << "Bad input parameter" << LogIO::POST;
@@ -2635,7 +2634,7 @@ coordsys::toabsmany(const ::casac::variant& value, const long isworld)
   Array<Double> valueIn;
 
   if (value.type() == ::casac::variant::DOUBLEVEC) {
-    Vector<long long> value_shape = value.arrayshape();
+    Vector<long long> value_shape(value.arrayshape());
     std::vector<double> value_vec = value.getDoubleVec();
     valueIn.resize(IPosition(value_shape));
     int i = 0;
@@ -2829,7 +2828,7 @@ coordsys::topixelmany(const ::casac::variant& value)
   _setup(__func__);
 
   //
-  Vector<long long> value_shape = value.arrayshape();
+  Vector<long long> value_shape(value.arrayshape());
   std::vector<double> value_vec = value.getDoubleVec();
   Array<Double> world;
   world.resize(IPosition(value_shape));
@@ -2994,7 +2993,7 @@ coordsys::torelmany(const ::casac::variant& value, const long isWorld)
   _setup(__func__);
 
   // form Array<Double> valueIn
-  Vector<long long> value_shape = value.arrayshape();
+  Vector<long long> value_shape(value.arrayshape());
   std::vector<double> value_vec = value.getDoubleVec();
   Array<Double> valueIn;
   valueIn.resize(IPosition(value_shape));
@@ -3049,9 +3048,9 @@ coordsys::toworld(const ::casac::variant& value, const std::string& format)
     pixel.resize(refpix.size());
     for (uInt i=0; i < refpix.size(); i++) pixel[i]=refpix[i];
   } else if (value.type() == ::casac::variant::DOUBLEVEC) {
-    pixel = value.getDoubleVec();
+    pixel = Vector<Double>(value.getDoubleVec());
   } else if (value.type() == ::casac::variant::INTVEC) {
-    Vector<Int> ipixel = value.getIntVec();
+    Vector<Int> ipixel(value.getIntVec());
     Int n = ipixel.size();
     pixel.resize(n);
     for (int i=0 ; i < n; i++) pixel[i]=ipixel[i];
@@ -3087,7 +3086,7 @@ record* coordsys::toworldmany(const variant& value) {
 	try {
 		  _setup(__func__);
 
-		Vector<long long> value_shape = value.arrayshape();
+		Vector<long long> value_shape(value.arrayshape());
 	    if(value.type() != variant::DOUBLEVEC) {
 	        *_log
 	  	      << "You must provide a vector of doubles."
@@ -4422,12 +4421,12 @@ coordsys::coordinateValueToRecord(const ::casac::variant& value, Bool isWorld,
     return rec;
   }
   if (value.type() == ::casac::variant::DOUBLEVEC) {
-    Vector<Double> d = tmpv.asDoubleVec();
+    Vector<Double> d(tmpv.asDoubleVec());
     rec->define(RecordFieldId("numeric"), d);
     return rec;
   }
   if (value.type() == ::casac::variant::INTVEC) {
-    Vector<Double> d = tmpv.asDoubleVec();
+    Vector<Double> d(tmpv.asDoubleVec());
     rec->define(RecordFieldId("numeric"), d);
     return rec;
   }
