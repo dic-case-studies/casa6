@@ -261,6 +261,11 @@ record* quanta::convert(const variant& v, const variant& outunit) {
         QuantumHolder qh(quantumHolderFromVar(v));
         const auto outU(casaQuantity(outunit).getUnit());
         const auto uEmpty = outU.empty();
+        if (qh.isEmpty()) {
+            return recordFromQuantity(
+                outU.empty() ? casaQuantity(v).get() : casaQuantity(v).get(outU)
+            );
+        }
         if (qh.isQuantumVectorDouble()) {
             const auto qvd = qh.asQuantumVectorDouble();
             return recordFromQuantity(uEmpty ? qvd.get() : qvd.get(outU));
