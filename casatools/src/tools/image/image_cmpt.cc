@@ -314,22 +314,75 @@ record* image::beamarea(long channel, long polarization) {
             return nullptr;
         }
         _notSupported(__func__);
-        auto dc = _imageF
-            ? _imageF->coordinates().directionCoordinate()
-            : _imageC->coordinates().directionCoordinate();
-        auto pixelArea = dc.getPixelArea();
-        auto beamInPixels = _imageF
-            ? _imageF->imageInfo().getBeamAreaInPixels(
-                channel, polarization, dc
-            )
-            : _imageC->imageInfo().getBeamAreaInPixels(
-                    channel, polarization, dc
+        const auto ii = _imageF ? _imageF->imageInfo() : _imageC->imageInfo();
+        ThrowIf(
+            ! ii.hasBeam(),
+            "This image has no beam(s). The setrestoringbeam() method may be "
+            "used to set its beam(s)"
+        );
+        auto hasMultiBeams = ii.hasMultipleBeams();
+        auto nchan = 1;
+        auto nstokes = 1;
+        if (hasMultiBeams) {
+            nchan = ii.nChannels();
+            ThrowIf(
+                channel >= nchan,
+                "This image only has " + String::toString(nchan) + " channels, "
+                "so a channel value less than or equal to "
+                + String::toString(nchan - 1) + " must be specified"
             );
-        auto arcsec2 = beamInPixels*pixelArea;
-        record *rec = new record();
-        rec->insert("pixels", beamInPixels);
-        rec->insert("arcsec2", arcsec2.getValue("arcsec2"));
-        return rec;
+            nstokes = ii.nStokes();
+            ThrowIf(
+                polarization >= nstokes,
+                "This image only has " + String::toString(nstokes)
+                + " polarizations, so a polarization value less than or equal "
+                " to " + String::toString(nstokes - 1) + " must be specified"
+            );
+            ThrowIf(
+                (channel < 0 && polarization >= 0)
+                || (channel >= 0 && polarization < 0),
+                "In the case of a multibeam image, either both channel and "
+                "polarization must be non-negative, or both must be negative"
+            );
+        }
+        const auto csys = _imageF
+            ? _imageF->coordinates()
+            : _imageC->coordinates();
+        const auto dc = csys.directionCoordinate();
+        auto pixelArea = dc.getPixelArea();
+        std::unique_ptr<record> rec(new record());
+        if (hasMultiBeams && channel < 0 && polarization < 0) {
+            const auto beamSet = ii.getBeamSet();
+            const auto spectralAxis = csys.spectralAxisNumber();
+            const auto polAxis = csys.polarizationAxisNumber();
+            const auto spectralIsFirst = polAxis < 0 || spectralAxis < polAxis;
+            auto beamAreasAS2 = beamSet.getAreas().getValue("arcsec2");
+            auto beamAreasPix = beamAreasAS2/pixelArea.getValue("arcsec2");
+            if (! spectralIsFirst) {
+                IPosition newOrder(2, 1, 0);
+                const auto as2 = reorderArray(beamAreasAS2, newOrder);
+                const auto pix = reorderArray(beamAreasPix, newOrder);
+                beamAreasAS2.resize(as2.shape());
+                beamAreasPix.resize(pix.shape());
+                beamAreasAS2 = as2;
+                beamAreasPix = pix;
+            }
+            vector<double> v(beamAreasPix.begin(), beamAreasPix.end());
+            const auto shape = beamAreasPix.shape();
+            std::vector<ssize_t> shape_vec(shape.begin(), shape.end());
+            rec->insert("pixels", variant(v, shape_vec));
+            vector<double> w(beamAreasAS2.begin(), beamAreasAS2.end());
+            rec->insert("arcsec2", variant(w, shape_vec));
+        }
+        else {
+            auto beamInPixels = ii.getBeamAreaInPixels(
+                channel, polarization, dc
+            );
+            auto arcsec2 = beamInPixels*pixelArea;
+            rec->insert("pixels", beamInPixels);
+            rec->insert("arcsec2", arcsec2.getValue("arcsec2"));
+        }
+        return rec.release();
     }
     catch (const AipsError& x) {
         _log << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
@@ -2723,33 +2776,43 @@ variant* image::getregion(
         if (_detached()) {
             return nullptr;
         }
+        unique_ptr<variant> ret;
         if (_imageF) {
-            return _getregion2(
-                _imageF, region, axes, mask, list,
-                dropdeg, getmask, stretch
+            ret.reset(
+                _getregion2(
+                    _imageF, region, axes, mask, list,
+                    dropdeg, getmask, stretch
+                )
             );
         }
         else if (_imageC) {
-            return _getregion2(
-                _imageC, region, axes, mask, list,
-                dropdeg, getmask, stretch
+            ret.reset(
+                _getregion2(
+                    _imageC, region, axes, mask, list,
+                    dropdeg, getmask, stretch
+                )
             );
         }
         else if (_imageD) {
-            return _getregion2(
-                _imageD, region, axes, mask, list,
-                dropdeg, getmask, stretch
+            ret.reset(
+                _getregion2(
+                    _imageD, region, axes, mask, list,
+                    dropdeg, getmask, stretch
+                )
             );
         }
         else if (_imageDC) {
-            return _getregion2(
-                _imageDC, region, axes, mask, list,
-                dropdeg, getmask, stretch
+            ret.reset(
+                _getregion2(
+                    _imageDC, region, axes, mask, list,
+                    dropdeg, getmask, stretch
+                )
             );
         }
         else {
             ThrowCc("Logic error");
         }
+        return ret.release();
     }
     catch (const AipsError& x) {
         _log << LogIO::SEVERE << "Exception Reported: " << x.getMesg()
@@ -5200,34 +5263,107 @@ bool image::replacemaskedpixels(
     return false;
 }
 
-record* image::restoringbeam(long channel, long polarization) {
+record* image::restoringbeam(
+    long channel, long polarization, const string& mbret
+) {
     try {
         _log << _ORIGIN;
         if (_detached()) {
             return nullptr;
         }
-        if (_imageF) {
-            return fromRecord(
-                _imageF->imageInfo().beamToRecord(channel, polarization)
+        String ret = mbret;
+        ret.downcase();
+        const auto ii = _imageF ? _imageF->imageInfo()
+            : _imageC ? _imageC->imageInfo()
+            : _imageD ? _imageD->imageInfo()
+            : _imageDC->imageInfo();
+        const auto csys = _imageF ? _imageF->coordinates()
+            : _imageC ? _imageC->coordinates()
+            : _imageD ? _imageD->coordinates()
+            : _imageDC->coordinates();
+        const auto matrixMode = ret.startsWith("m");
+        const auto multiBeam = ii.hasMultipleBeams();
+        if (matrixMode) {
+            ThrowIf(
+                ! multiBeam,
+                "mbret='matrix' only makes sense if the image has "
+                "per-plane beams. This image does not"
             );
+            ThrowIf(
+                channel >= 0 || polarization >= 0,
+                "mbret='matrix' only makes sense if both channel and polarization "
+                "are negative"
+            );
+            std::unique_ptr<record> rec(new record());
+            const auto beams = ii.getBeamSet();
+            const ulong nchan =  beams.nchan();
+            const ulong nstokes = beams.nstokes();
+            rec->insert("nChannels", nchan);
+            rec->insert("nStokes", nstokes);
+            const auto matrices = beams.paramMatrices();
+            const auto spectralAxis = csys.spectralAxisNumber();
+            const auto polAxis = csys.polarizationAxisNumber();
+            const auto spectralIsFirst = polAxis < 0 
+                || (spectralAxis > 0 && spectralAxis < polAxis);
+            for (const auto m: matrices) {
+                const auto q = m.second;
+                auto vals = q.getValue();
+                if (! spectralIsFirst) {
+                    const IPosition newOrder(2, 1, 0);
+                    const auto t = reorderArray(vals, newOrder);
+                    const auto newShape = t.shape();
+                    vals.resize(newShape);
+                    vals = t;
+                }
+                const auto shape = vals.shape();
+                const std::vector<ssize_t> shape_vec(shape.begin(), shape.end());
+                vector<double> vec(vals.begin(), vals.end());
+                record r;
+                r.insert("value", variant(vec, shape_vec));
+                r.insert("unit", q.getUnit());
+                rec->insert(m.first, r);
+            }
+            return rec.release();
         }
-        else if (_imageC) {
-            return fromRecord(
-                _imageC->imageInfo().beamToRecord(channel, polarization)
-            );
-        }
-        else if (_imageD) {
-            return fromRecord(
-                _imageD->imageInfo().beamToRecord(channel, polarization)
-            );
-        }
-        else if (_imageDC) {
-            return fromRecord(
-                _imageDC->imageInfo().beamToRecord(channel, polarization)
-            );
+        else if (ret.startsWith("l")) {
+            if (multiBeam) {
+                // consistency checks for per-plane beams
+                const auto hasSpectral = csys.hasSpectralAxis();
+                auto nChan = ii.nChannels();
+                ThrowIf(
+                    nChan > 1 && channel >= nChan,
+                    "channel value specified as " + String::toString(channel)
+                    + " must be less than the number of channels "
+                    "in the image, which is " + String::toString(nChan)
+                );
+                const auto hasStokes = csys.hasPolarizationAxis();
+                auto nStokes = ii.nStokes();
+                ThrowIf(
+                    nStokes > 1 && polarization >= nStokes,
+                    "polarization value must be less than the number of "
+                    "polarization planes in the image, which is "
+                    + String::toString(nStokes)
+                );
+                if (hasSpectral && hasStokes) {
+                    const auto negPol = polarization < 0;
+                    const auto negChan = channel < 0;
+                    if (negChan != negPol) {
+                        const auto degPol = nStokes == 1;
+                        const auto degChan = nChan == 1;
+                        ThrowIf(
+                            ! (degPol || degChan),
+                            "In the case of an image with both a nondegenerate "
+                            "spectral axis and a nondegenerate polarization "
+                            "axis either both channel and polarization must be "
+                            "positive, or both must be negative"
+                        );
+                    }
+                }
+            }
+            return fromRecord(ii.beamToRecord(channel, polarization));
         }
         else {
-            ThrowCc("Logic error");
+            ThrowCc("Unsupported mbret value " + mbret);
         }
     }
     catch (const AipsError& x) {
