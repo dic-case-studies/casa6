@@ -105,12 +105,6 @@ class quanta_convert_test(quanta_test):
         self.assertTrue(
             res == {'unit': 'm.m-1', 'value': 5}, 'incorrect conversion'
         )
-        """
-        res = qa.convert[4, 8], 'm')
-        self.assertTrue(
-            res == {'unit': 'm.m-1', 'value': 5}, 'incorrect conversion'
-        )
-        """
 
 
 # Tests for quanta.quantity

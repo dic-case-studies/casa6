@@ -280,10 +280,7 @@ record* quanta::convert(const variant& v, const variant& outunit) {
         }
         else {
             string mytype;
-            if (qh.isEmpty()) {
-                mytype = "empty";
-            }
-            else if (qh.isQuantum()) {
+            if (qh.isQuantum()) {
                 mytype = "Quantum";
             }
             else if (qh.isScalar()) {
@@ -304,9 +301,6 @@ record* quanta::convert(const variant& v, const variant& outunit) {
             else if (qh.isQuantity()) {
                 mytype = "Quantity";
             }
-            else if (qh.isQuantumDouble()) {
-                mytype = "QuantumDouble";
-            }
             else if (qh.isQuantumFloat()) {
                 mytype = "QuantumFloat";
             }
@@ -318,9 +312,6 @@ record* quanta::convert(const variant& v, const variant& outunit) {
             }
             else if (qh.isQuantumDComplex()) {
                 mytype = "QuantumDComplex";
-            }
-            else if (qh.isQuantumVectorDouble()) {
-                mytype = "QuantumVectorDouble";
             }
             else if (qh.isQuantumVectorFloat()) {
                 mytype = "QuantumVectorFloat";
@@ -336,9 +327,6 @@ record* quanta::convert(const variant& v, const variant& outunit) {
             }
             else if (qh.isQuantumVectorDComplex()) {
                 mytype = "QuantumVectorDComplex";
-            }
-            else if (qh.isQuantumArrayDouble()) {
-                mytype = "QuantumArrayDouble";
             }
             else if (qh.isQuantumArrayFloat()) {
                 mytype = "QuantumArrayFloat";
