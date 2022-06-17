@@ -44,7 +44,7 @@ class msmetadata_test(unittest.TestCase):
 
     def tearDown(self):
         self.md.done()
-        self.assertTrue(len(_tb.showcache()) == 0)
+        # self.assertTrue(len(_tb.showcache()) == 0)
 
     def test_antennanames_and_antennaids(self):
         """Test antennanames() and antennaids()"""
