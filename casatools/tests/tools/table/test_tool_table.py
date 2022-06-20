@@ -24,7 +24,7 @@ from uuid import uuid4
 from casatools import table, ctsys
 
 ms_name = 'n08c1_swap1.ms'
-orig_ms_path = ctsys.resolve( f'measurementset/other/{ms_name}' )
+orig_ms_path = ctsys.resolve( f'unittest/table/{ms_name}' )
 print( f'table tool tests will use {orig_ms_path}' )
 
 class TableBase(unittest.TestCase):
