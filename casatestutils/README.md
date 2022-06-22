@@ -162,3 +162,15 @@ python3 runtest.py --bamboo -p casa-6.4.3-3-py3.6.tar.xz -m serial  -w /path/to/
 
 --bamboo option requires [testrunner module] (https://open-bitbucket.nrao.edu/projects/CASA/repos/casa6/browse/casatestutils/testrunner). 
 
+#### Verify runtest.py
+Run the unit tests of runtest.py in the command-line or in a Jupyter notebook
+
+Run locally using a casa tarball:
+```
+<tarball>/bin/pip3 install jupyter
+
+<tarball>/bin/python3 -m jupyter notebook --generate-config
+
+<tarball>/bin/python3 -m jupyter notebook --browser=firefox --ip='*' --NotebookApp.toke='' --NotebookApp.password='' tests/nb_test_runtest.ipynb
+```
+Run in [Google Colab](https://colab.research.google.com/drive/1lunhY-8iLot2H0UwFJ98_IWsmBM2TIMd?usp=sharing)
