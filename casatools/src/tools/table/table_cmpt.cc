@@ -77,6 +77,7 @@ table::table(casacore::TableProxy *theTable) : itsTable(theTable)
 
 table::~table()
 {
+  remove_all_tablerows( );
   delete itsLog;
   itsTable.reset( );
 }
@@ -88,6 +89,7 @@ table::open(const std::string& tablename, const ::casac::record& lockoptions, co
     try {
         Record *tlock = toRecord(lockoptions);
         //TableLock *itsLock = getLockOptions(tlock);
+        remove_all_tablerows( );
         if(nomodify){
             if(itsTable)close();
             itsTable.reset( new casacore::TableProxy(String(tablename),*tlock,Table::Old) );
@@ -121,6 +123,7 @@ table::create(const std::string& tablename, const ::casac::record& tabledesc,
    Record *tdesc = toRecord(tabledesc);
    Record *dmI   = toRecord(dminfo);
 
+   remove_all_tablerows( );
    if(itsTable)
      close();
    itsTable.reset( new casacore::TableProxy(String(tablename), *tlock,
@@ -188,6 +191,7 @@ table::close()
 
  Bool rstat(false);
  try {
+    remove_all_tablerows( );
     itsTable.reset( );
     rstat = true;
  } catch (AipsError x) {
@@ -2096,6 +2100,7 @@ bool table::fromascii(const std::string& tablename, const std::string& asciifile
    try {
       Vector<String> atmp, btmp;
       IPosition tautoshape;
+      remove_all_tablerows( );
       itsTable.reset( );
       if(columnnames.size( ) > 0 && columnnames[0] != "")
           atmp = toVectorString(columnnames);
@@ -2433,7 +2438,11 @@ bool table::testincrstman(const std::string& column)
 table::rows( const std::vector<std::string> &columnnames, bool exclude ) {
     *itsLog << LogOrigin(__func__,itsTable ? name( ) : "row without table");
     try {
-        if ( itsTable ) return new tablerow( itsTable, columnnames, exclude );
+        if ( itsTable ) {
+            auto result = new tablerow( this, itsTable, columnnames, exclude );
+            created_rows.push_back(result);
+            return result;
+        }
     } catch (AipsError x) {
         *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg( ) << LogIO::POST;
         RETHROW(x);

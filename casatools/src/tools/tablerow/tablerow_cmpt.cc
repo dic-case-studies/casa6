@@ -31,6 +31,7 @@
 //#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 #include <swigconvert_python.h>
+#include <table_cmpt.h>
 
 #include <stdint.h>
 #include <iostream>
@@ -73,21 +74,22 @@ namespace casac {
 
     // constructor used by table class (in table_cmpt.cc) to return a
     // tablerow for fetching one or more rows
-    tablerow::tablerow( std::shared_ptr<casacore::TableProxy> myTable,
+    tablerow::tablerow( table *tb, std::shared_ptr<casacore::TableProxy> myTable,
                         const std::vector<std::string> &columnnames, bool exclude ) :
-        itsLog(new casacore::LogIO), itsTable(myTable), itsRow(new TableRowProxy( *itsTable, columnnames, exclude )) { }
+        itsLog(new casacore::LogIO), itsProxy(myTable), itsTable(tb),
+        itsRow(new TableRowProxy( *itsProxy, columnnames, exclude )) { }
 
     // check to see if tablerow can be modified
     bool tablerow::iswritable( ) {
         *itsLog << LogOrigin(__func__,"");
         try {
-            if ( itsRow ) return itsRow->isWritable( );
+            if ( itsRow ) return itsRow->isWritable( ) && itsProxy->isWritable( );
         } catch (AipsError x) {
             *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg( ) << LogIO::POST;
             RETHROW(x);
         }
-        *itsLog << LogIO::WARN << "use of uninitialized table row" << LogIO::POST;
-        return false;
+        reset( );
+        throw AipsError( "use of uninitialized table row" );
     }
     // magic function which casacore also supplies
     bool tablerow::_iswritable( ) { return iswritable( ); }
@@ -101,8 +103,8 @@ namespace casac {
             *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg( ) << LogIO::POST;
             RETHROW(x);
         }
-        *itsLog << LogIO::WARN << "use of uninitalized table row" << LogIO::POST;
-        return new record( );
+        reset( );
+        throw AipsError( "use of uninitialized table row" );
     }
     // magic function which casacore also supplies
     record *tablerow::_get( long rownr ) { return get(rownr); }
@@ -120,8 +122,8 @@ namespace casac {
             *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg( ) << LogIO::POST;
             RETHROW(x);
         }
-        *itsLog << LogIO::WARN << "use of uninitalized table row" << LogIO::POST;
-        return false;
+        reset( );
+        throw AipsError( "use of uninitialized table row" );
     }
     // magic function casacore also supplies
     bool tablerow::_put( long rownr, const record &value, bool matchingfields) { return put( rownr, value, matchingfields ); }
@@ -131,13 +133,13 @@ namespace casac {
     long tablerow::__len__( ) {
         *itsLog << LogOrigin(__func__,"");
         try {
-            if ( itsTable ) return itsTable->nrows( );
+            if ( itsProxy ) return itsProxy->nrows( );
         } catch (AipsError x) {
             *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg( ) << LogIO::POST;
             RETHROW(x);
         }
-        *itsLog << LogIO::WARN << "use of uninitalized table row" << LogIO::POST;
-        return -1;
+        reset( );
+        throw AipsError( "use of uninitialized table row" );
     }
 
     // convert a boolean value to a PyObject
@@ -295,28 +297,28 @@ namespace casac {
         PyObject *obj = (PyObject*) rownr;
         if ( PyNumber_Check(obj) ) {
             // index indicates a single row
-            if ( itsTable && itsRow ) {
+            if ( itsProxy && itsRow ) {
                 auto pylong = PyNumber_Long(obj);
                 auto index = PyLong_AsLong(pylong);
                 Py_DECREF(pylong);
-                if ( index >= 0 && index < itsTable->nrows( ) )
+                if ( index >= 0 && index < itsProxy->nrows( ) )
                     return toPy( itsRow->get( index ) );
                 else
                     throw PyExc_IndexError;
             }
             throw PyExc_IndexError;
         } else if ( PySlice_Check(obj) ) {
-            
+
             // index indicates a slice
-            if ( itsTable && itsRow ) {
+            if ( itsProxy && itsRow ) {
                 Py_ssize_t start, stop, step;
                 if ( PySlice_Unpack( obj, &start, &stop, &step ) < 0 ) {
                     throw PyExc_IndexError;
                 }
-                auto slice_length = PySlice_AdjustIndices( itsTable->nrows( ), &start, &stop, step );
+                auto slice_length = PySlice_AdjustIndices( itsProxy->nrows( ), &start, &stop, step );
                 auto result = PyList_New( slice_length );
                 for ( ssize_t i=0, row=start; i < slice_length; ++i, row += step ) {
-                    if ( row < 0 || row >= itsTable->nrows( ) ) throw PyExc_IndexError;
+                    if ( row < 0 || row >= itsProxy->nrows( ) ) throw PyExc_IndexError;
                     PyObject *newobj = 0;
                     PyGILState_STATE state;  // Needed for PyGILState_Ensure() and PyGILState_Release()
                     state = PyGILState_Ensure( );
@@ -338,17 +340,26 @@ namespace casac {
         } else {
             throw PyExc_IndexError;
         }
-        throw PyExc_RuntimeError;
         return 0;
     }
 
     tablerow::~tablerow( ) {
-        itsTable.reset( );
+        if ( itsTable ) itsTable->remove_tablerow(this);
+        itsProxy.reset( );
+        itsTable = 0;
     }
 
     void tablerow::done( ) {
+        if ( itsTable ) itsTable->remove_tablerow(this);
         itsRow.reset( );
-        itsTable.reset( );
+        itsProxy.reset( );
+        itsTable = 0;
+    }
+
+    void tablerow::reset( ) {
+        itsRow.reset( );
+        itsProxy.reset( );
+        itsTable = 0;
     }
 
 }

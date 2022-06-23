@@ -3124,13 +3124,14 @@ tb.showcache()
        lists the columns to *exclude* (``exclude=True``) or the columns to include (``exclude=False``).
 
        The returned table accessor object can also be used to store changes to a single row using the ``put``
-       method.
+       method. This accessor object remains connected to the table object that created it. Closing or deleting
+       a table object invalidates any accessor objects that it created.
      </description>
 
      <example>
        ### open table
        tb = table( )
-       tb.open('ngc5921_ut.ms')
+       tb.open( 'ngc5921_ut.ms', nomodify=False )
 
        ### read a single row
        print(f'row 3 is {tb.rows( )[3]}')
