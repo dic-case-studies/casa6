@@ -3260,8 +3260,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                   if (sum(xflag)==nChannels and sum(yflag)==nChannels and showflagged==False):
                       if (overlayTimes):
                           msg = "Skip %s (%s) for time%d=%s all data flagged" % (antstring, titleString,mytime,utstring(uniqueTimes[mytime],3))
-                          print(msg)
-                          casalog.post(msg)
+                          casalogPost(True, msg)
                           # need to set doneOverlayTime = True if this is the final time,
                           # otherwise, we get "subplot number exceeds total subplots" at line 2427
                           # but we need to draw the labels at the top of the page, else they will not get done
