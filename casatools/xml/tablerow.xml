@@ -34,10 +34,10 @@
           for r in tb.rows( ):
               print(r)
 
-      Finally, there is a ``get`` member function which allows for fetching a single row:
-      <example>
+      Finally, there is a ``get`` member function which allows for fetching a single row::
+
           tb.rows( ).get( 3 )
-      </example>
+
     </description>
 
     <method name="tablerow" type="constructor" >
