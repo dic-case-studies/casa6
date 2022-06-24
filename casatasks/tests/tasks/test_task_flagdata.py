@@ -329,8 +329,7 @@ class test_base(unittest.TestCase):
             print("The MS is already around, just unflag")
         else:
             print("Moving data...")
-            os.system('cp -RH ' + os.path.join(datapath, '../mstransform', self.vis) + ' ' +
-                      self.vis)
+            os.system('cp -RH ' + os.path.join(datapath, self.vis) + ' ' + self.vis)
 
         os.system('rm -rf ' + self.vis + '.flagversions')
         flagdata(vis=self.vis, mode='unflag', flagbackup=False)
