@@ -69,8 +69,15 @@ static bool numpy_initialized = _tablerow_initialize_numpy( );
 
 namespace casac {
 
-    // constructor used by SWIG to initialize an empty tablerow
-    tablerow::tablerow( ) : itsLog(new casacore::LogIO) { }
+    // constructor used by from python to construct a tablerow object
+    tablerow::tablerow( const casac::table *_table, const std::vector<std::string> &_columnnames, bool _exclude ) :
+        itsLog(new casacore::LogIO)
+    {
+        if ( ! _table ) throw AipsError( "invalid table passed for parameter one" );
+        itsTable = (table*) _table;
+        itsProxy = _table->itsTable;
+        itsRow.reset( new TableRowProxy( *itsProxy, _columnnames, _exclude ) );
+    }
 
     // constructor used by table class (in table_cmpt.cc) to return a
     // tablerow for fetching one or more rows

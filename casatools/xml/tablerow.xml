@@ -10,9 +10,52 @@
     </code>
 
     <description>
-      tablerow objects are created by table.row(...) they allow
-      the user to but retrieve and to replace rows
+      tablerow objects allow the user to retrieve and to replace rows. There are two ways of creating
+      a table row object. The typical way to create a tablerow object is to use the ``rows`` member
+      function in the table object:
+      <example>
+          tb = table( )
+          tb.open( 'ngc5921_ut.ms', nomodify=False )
+          myrow = tb.rows( )
+      </example>
+      However, it can also be created directly:
+      <example>
+          tb = table( )
+          tb.open( 'ngc5921_ut.ms', nomodify=False )
+          myrow = tablerow( tb )
+      </example>
+      Once created, the tablerow object can be used to take row-wise slices of the table, for example to
+      fetch the first three rows from the table:
+      <example>
+          myrow[:3]
+      </example>
+      Or it can be used as a generator:
+      <example>
+          for r in tb.rows( ):
+              print(r)
+      </example>
+      Finally, there is a ``get`` member function which allows for fetching a single row:
+      <example>
+          tb.rows( ).get( 3 )
+      </example>
     </description>
+
+    <method name="tablerow" type="constructor" >
+      <input>
+        <param name="table" type="table">
+          <shortdescription>table whose rows will be accessed by the newly created tablerow object</shortdescription>
+          <nullable/>
+        </param>
+        <param name="columnnames" type="stringVec">
+          <shortdescription>columns to be included (or optionally excluded)</shortdescription>
+          <value/>
+        </param>
+        <param name="exclude" type="bool">
+          <shortdescription>exclude the columns identified by the columnnames parameter</shortdescription>
+          <value>false</value>
+        </param>
+      </input>
+    </method>
 
     <method name="_iswritable" type="function">
       <shortdescription>check to see if row can be modified</shortdescription>
