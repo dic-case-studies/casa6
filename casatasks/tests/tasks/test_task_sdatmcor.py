@@ -21,14 +21,17 @@
 #
 #
 ##########################################################################
+import contextlib
+import functools
 import itertools
 import os
+import re
 import shutil
 import unittest
 
 import numpy as np
 
-from casatasks import applycal, gencal, sdatmcor
+from casatasks import applycal, casalog, gencal, sdatmcor
 from casatasks.private.sdutil import (convert_antenna_spec_autocorr,
                                       get_antenna_selection_include_autocorr,
                                       table_manager)
@@ -38,6 +41,9 @@ from casatools import ms as mstool
 from casatools import quanta
 
 ctsys_resolve = ctsys.resolve
+
+# hold omp_get_num_threads value when this file is imported
+OMP_NUM_THREADS_INITIAL = casalog.ompGetNumThreads()
 
 
 def smart_remove(name):
@@ -88,6 +94,18 @@ def apply_gainfactor(name, spw, factor):
             tsel.close()
 
 
+@contextlib.contextmanager
+def environment_variable_manager(var_name):
+    var_org = os.environ.get(var_name)
+    try:
+        yield var_org
+    finally:
+        if var_org is None:
+            os.environ.pop(var_name, None)
+        else:
+            os.environ[var_name] = var_org
+
+
 class test_sdatmcor(unittest.TestCase):
     datapath = ctsys_resolve('measurementset/almasd')
     infile = 'X320b_sel2.ms'
@@ -110,10 +128,15 @@ class test_sdatmcor(unittest.TestCase):
         shutil.copytree(os.path.join(self.datapath, self.infile), self.infile)
 
     def tearDown(self):
-        print("tearDown::deleting MSs.")
         smart_remove(self.infile)
         smart_remove(self.outfile)
         smart_remove(self.caltable)
+
+    def skip_omp_test_if_darwin(self):
+        sysname = os.uname()[0]
+        if sysname == 'Darwin':
+            self.skipTest('Skip OpenMP tests on macOS')
+            return
 
     def _check_result_spw(self, spw, is_selected, is_processed, on_source_only):
 
@@ -209,6 +232,9 @@ class test_sdatmcor(unittest.TestCase):
             is_selected = spw in spwprocess
             is_processed = spwprocess.get(spw, False)
             self._check_result_spw(spw, is_selected, is_processed, on_source_only)
+
+        # test OpenMP related stuff
+        self.assertEqual(casalog.ompGetNumThreads(), OMP_NUM_THREADS_INITIAL)
 
     def test_sdatmcor_normal(self):
         """Test normal usage of sdatmcor."""
@@ -495,6 +521,135 @@ class test_sdatmcor(unittest.TestCase):
                 layerboundaries='800m,1.5km', layertemperature='250K,200K,190K'
             )
 
+    def __extract_num_threads_from_logfile(self, logfile):
+        with open(logfile, 'r') as file:
+            pattern = re.compile(r'.*Setting numThreads_ to ([0-9]+)')
+            matches_iterator = map(lambda line: pattern.search(line), file)
+            last_match = functools.reduce(
+                lambda last_match_, current_match:
+                    current_match if current_match else last_match_,
+                matches_iterator
+            )
+
+        self.assertIsNotNone(
+            last_match,
+            msg=f'No match found for pattern "{pattern.pattern}" in "{casalog.logfile()}"'
+        )
+        num_threads_log = int(last_match.group(1))
+
+        return num_threads_log
+
+    def test_set_omp_num_threads(self):
+        """Test if the task respects OMP_NUM_THREADS environment variable."""
+        self.skip_omp_test_if_darwin()
+
+        omp_num_threads_org_int = None
+
+        with environment_variable_manager('OMP_NUM_THREADS') as omp_num_threads_org:
+            # set num_threads for OpenMP to any value different from the current one
+            if omp_num_threads_org is None:
+                num_threads = 2
+            else:
+                self.assertTrue(
+                    omp_num_threads_org.isdigit(),
+                    msg="Value of OMP_NUM_THREADS environment variable must be integer"
+                )
+                omp_num_threads_org_int = int(omp_num_threads_org)
+                num_threads = omp_num_threads_org_int + 1
+            self.assertNotEqual(num_threads, omp_num_threads_org_int)
+            os.environ['OMP_NUM_THREADS'] = f'{num_threads}'
+
+            # run task
+            sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
+
+        # consistency check
+        omp_num_threads_current = os.environ.get('OMP_NUM_THREADS')
+        if omp_num_threads_current is None:
+            self.assertIsNone(omp_num_threads_org)
+        else:
+            self.assertIsNotNone(omp_num_threads_org)
+            self.assertEqual(omp_num_threads_current, omp_num_threads_org)
+
+        # check log
+        self.assertTrue(os.path.exists(casalog.logfile()), msg='casalog file is missing!')
+        num_threads_log = self.__extract_num_threads_from_logfile(casalog.logfile())
+
+        casalog.post(
+            f'OMP_NUM_THREAD_VALUES: initial: {OMP_NUM_THREADS_INITIAL} (returned by get_omp_num_threads), '
+            f'at test start time: {omp_num_threads_org}, current: {num_threads}, '
+            f'last set in logfile: {num_threads_log}')
+        self.assertEqual(num_threads, num_threads_log)
+
+        # check output MS
+        self.check_result({19: True, 23: True})
+
+    def test_set_omp_num_threads_zero(self):
+        """Test if the task works when OMP_NUM_THREADS is zero."""
+        self.skip_omp_test_if_darwin()
+
+        with environment_variable_manager('OMP_NUM_THREADS') as omp_num_threads_org:
+            # set num_threads for OpenMP to any value different from the current one
+            num_threads = 0
+            os.environ['OMP_NUM_THREADS'] = f'{num_threads}'
+
+            # run task
+            sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
+
+        # consistency check
+        omp_num_threads_current = os.environ.get('OMP_NUM_THREADS')
+        if omp_num_threads_current is None:
+            self.assertIsNone(omp_num_threads_org)
+        else:
+            self.assertIsNotNone(omp_num_threads_org)
+            self.assertEqual(omp_num_threads_current, omp_num_threads_org)
+
+        # check log
+        self.assertTrue(os.path.exists(casalog.logfile()), msg='casalog file is missing!')
+        num_threads_log = self.__extract_num_threads_from_logfile(casalog.logfile())
+        num_threads_expected = min(8, casalog.getNumCPUs())
+
+        casalog.post(
+            f'OMP_NUM_THREAD_VALUES: initial: {OMP_NUM_THREADS_INITIAL} (returned by get_omp_num_threads), '
+            f'at test start time: {omp_num_threads_org}, current: {num_threads}, '
+            f'last set in logfile: {num_threads_log}')
+        self.assertEqual(num_threads_expected, num_threads_log)
+
+        # check output MS
+        self.check_result({19: True, 23: True})
+
+    def test_unset_omp_num_threads(self):
+        """Test if the task respects OMP_NUM_THREADS environment variable."""
+        self.skip_omp_test_if_darwin()
+
+        with environment_variable_manager('OMP_NUM_THREADS') as omp_num_threads_org:
+            # unset OMP_NUM_THREADS if it is set
+            if omp_num_threads_org is not None:
+                os.environ.pop('OMP_NUM_THREADS')
+            self.assertFalse('OMP_NUM_THREADS' in os.environ)
+
+            # run task
+            sdatmcor(infile=self.infile, outfile=self.outfile, datacolumn='data')
+
+        # consistency check
+        if omp_num_threads_org is None:
+            self.assertIsNone(os.environ.get('OMP_NUM_THREADS'))
+        else:
+            self.assertEqual(os.environ.get('OMP_NUM_THREADS'), omp_num_threads_org)
+
+        # check log
+        self.assertTrue(os.path.exists(casalog.logfile()), msg='casalog file is missing!')
+        num_threads_log = self.__extract_num_threads_from_logfile(casalog.logfile())
+        num_threads_expected = min(8, casalog.getNumCPUs())
+
+        casalog.post(
+            f'OMP_NUM_THREAD_VALUES: initial: {OMP_NUM_THREADS_INITIAL} (returned by get_omp_num_threads), '
+            f'at test start time: {omp_num_threads_org}, expected: {num_threads_expected}, '
+            f'last set in logfile: {num_threads_log}')
+        self.assertEqual(num_threads_expected, num_threads_log)
+
+        # check output MS
+        self.check_result({19: True, 23: True})
+
 
 class ATMParamTest(unittest.TestCase):
     def _param_test_template(self, valid_test_cases,
@@ -520,14 +675,14 @@ class ATMParamTest(unittest.TestCase):
         qa = quanta()
         for user_input, expected in itertools.chain(
                 [(user_default, task_default)], valid_test_cases):
-            print('"{}" "{}"'.format(user_input, expected))
+            casalog.post(f'user input: "{user_input}", expected: "{expected}"')
             param, is_customized = sdatmcor_impl.parse_atm_params(
                 user_input,
                 user_default,
                 task_default,
                 default_unit=unit
             )
-            print('param {} is_customized {}'.format(param, is_customized))
+            casalog.post(f'param "{param}", is_customized "{is_customized}"')
             self.assertEqual(is_customized, user_input != user_default)
             if qa.isquantity(expected):
                 qparam = qa.quantity(param, unit)
@@ -561,7 +716,7 @@ class ATMParamTest(unittest.TestCase):
         qa = quanta()
         for user_input, expected in itertools.chain(
                 [(user_default, task_default)], valid_test_cases):
-            print('"{}" "{}"'.format(user_input, expected))
+            casalog.post(f'user input: "{user_input}", expected: "{expected}"')
             param, is_customized = sdatmcor_impl.parse_atm_list_params(
                 user_input,
                 user_default,
