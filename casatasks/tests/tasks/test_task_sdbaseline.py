@@ -40,6 +40,7 @@ from casatools import ctsys, table
 tb = table()
 ctsys_resolve = ctsys.resolve
 
+
 # Utilities for reading blparam file
 class FileReader(object):
     def __init__(self, filename):
@@ -604,7 +605,7 @@ class sdbaseline_basicTest(sdbaseline_unittest_base):
 
     Note: The input data 'OrionS_rawACSmod_calave.ms' is generated
           from a single dish regression data 'OrionS_rawACSmod' as follows:
-          
+
           sdcal(infile='OrionS_rawACSmod',scanlist=[20,21,22,23],
                 calmode='ps',tau=0.09,outfile='temp.asap')
           sdcal(infile='temp.asap',timeaverage=True,
