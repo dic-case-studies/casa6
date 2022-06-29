@@ -282,8 +282,9 @@ values. See description below for details of gridfunction available.
             </allowed>
     </param>
 
-    <param type="any" name="restfreq"><shortdescription>rest frequency to assign to image, e.g., \'114.5GHz\'</shortdescription><description>rest frequency to assign to image, e.g., \'114.5GHz\'</description>
-            
+    <param type="any" name="restfreq">
+            <shortdescription>rest frequency to assign to image, e.g., \'114.5GHz\'. When the default value \'\' is used, the task currently internally uses REST_FREQUENCY of SOURCE table or mean frequency of given spectral window as a default value.</shortdescription>
+            <description>rest frequency to assign to image, e.g., \'114.5GHz\'. When the default value \'\' is used, the task currently internally uses REST_FREQUENCY of SOURCE table or mean frequency of given spectral window as a default value.</description>
             <type>string</type><type>double</type>
             <value type="string"/>
     </param>

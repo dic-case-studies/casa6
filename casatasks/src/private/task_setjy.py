@@ -89,7 +89,7 @@ class SetjyHelper():
 
 def setjy(vis=None, field=None, spw=None,
           selectdata=None, timerange=None, scan=None, intent=None, observation=None,
-          scalebychan=None, standard=None, model=None, modimage=None, 
+          scalebychan=None, standard=None, model=None, 
           listmodels=None, fluxdensity=None, spix=None, reffreq=None, polindex=None,
           polangle=None, rotmeas=None, fluxdict=None, 
           useephemdir=None, interpolation=None, usescratch=None, ismms=None):
@@ -144,7 +144,7 @@ def setjy(vis=None, field=None, spw=None,
     else:
         retval = setjy_core(vis, field, spw, selectdata, timerange, 
                         scan, intent, observation, scalebychan, standard, model, 
-                        modimage, listmodels, fluxdensity, spix, reffreq,
+                        listmodels, fluxdensity, spix, reffreq,
                         polindex, polangle, rotmeas, fluxdict, 
                         useephemdir, interpolation, usescratch, ismms)
 
@@ -153,7 +153,7 @@ def setjy(vis=None, field=None, spw=None,
 
 def setjy_core(vis=None, field=None, spw=None,
                selectdata=None, timerange=None, scan=None, intent=None, observation=None,
-               scalebychan=None, standard=None, model=None, modimage=None, listmodels=None,
+               scalebychan=None, standard=None, model=None, listmodels=None,
                fluxdensity=None, spix=None, reffreq=None,
                polindex=None, polangle=None, rotmeas=None, fluxdict=None,
                useephemdir=None, interpolation=None, usescratch=None, ismms=None):
@@ -234,16 +234,19 @@ def setjy_core(vis=None, field=None, spw=None,
             else:
                 raise Exception('Visibility data set not found - please verify the name')
 
-            if modimage==None:  # defined as 'hidden' with default '' in the xml
-      	                        # but the default value does not seem to set so deal
-			        # with it here...
-                modimage=''
-            if model:
-                modimage=model
-            elif not model and modimage:
-                casalog.post("The modimage parameter is deprecated please use model instead", "WARNING")
+            # remove modimage handling to use 'model' parameter only (use modimage internally??)
+
+            #if modimage==None:  # defined as 'hidden' with default '' in the xml
+      	    #                    # but the default value does not seem to set so deal
+            #			        # with it here...
+            #    modimage=''
+            #if model:
+            #    modimage=model
+            #elif not model and modimage:
+            #    casalog.post("The modimage parameter is deprecated please use model instead", "WARNING")
             # If modimage is not an absolute path, see if we can find exactly 1 match in the likely places.
-            if modimage and modimage[0] != '/':
+            #if modimage and modimage[0] != '/':
+            if model and model[0] != '/':
                 cwd = os.path.abspath('.')
                 calmoddirs = [cwd]
                 # casa dict unavailable in CASA6
@@ -254,23 +257,23 @@ def setjy_core(vis=None, field=None, spw=None,
                                                        casa['dirs']['data']])
                 candidates = []
                 for calmoddir in calmoddirs:
-                    cand = os.path.join(calmoddir,modimage)
+                    cand = os.path.join(calmoddir,model)
                     if os.path.isdir(cand):
                         candidates.append(cand)
                 if not candidates:
-                    raise RuntimeError("%s was not found for modimage in %s." %(modimage,
+                    raise RuntimeError("%s was not found for model in %s." %(model,
                                  ', '.join(calmoddirs)))
 
                 elif len(candidates) > 1:
-                    casalog.post("More than 1 candidate for modimage was found:",
+                    casalog.post("More than 1 candidate for model was found:",
                          'SEVERE')
                     for c in candidates:
                         casalog.post("\t" + c, 'SEVERE')
                     raise RuntimeError("Please pick 1 and use the absolute path (starting with /).")
 
                 else:
-                    modimage = candidates[0]
-                    casalog.post("Using %s for modimage." % modimage, 'INFO')
+                    model = candidates[0]
+                    casalog.post("Using %s for model." % model, 'INFO')
 
             # Write the parameters to HISTORY before the tool writes anything.
             try:
@@ -361,7 +364,7 @@ def setjy_core(vis=None, field=None, spw=None,
                                 selreffreq=fluxdict["freq"][selspw[0]] 
                             casalog.post("Use fluxdensity=%s, reffreq=%s, spix=%s" %
                                      (selfluxd,selreffreq,selspix)) 
-                            curretval=myim.setjy(field=selfld,spw=selspw,modimage=modimage,
+                            curretval=myim.setjy(field=selfld,spw=selspw,modimage=model,
                                                  # enable spix in list
                                                  fluxdensity=selfluxd, spix=selspix, reffreq=selreffreq, 
                                                  #fluxdensity=selfluxd, spix=[selspix], reffreq=selreffreq, 
@@ -390,7 +393,7 @@ def setjy_core(vis=None, field=None, spw=None,
                     if spix==[]: # handle the default 
                         spix=0.0
                     # need to modify imager to accept double array for spix
-                    retval=myim.setjy(field=field, spw=spw, modimage=modimage, fluxdensity=influxdensity, 
+                    retval=myim.setjy(field=field, spw=spw, modimage=model, fluxdensity=influxdensity, 
                                       spix=spix, reffreq=reffreq, standard=instandard, scalebychan=scalebychan, 
                                       polindex=polindex, polangle=polangle, rotmeas=rotmeas,
                                       time=timerange, observation=str(observation), scan=scan, intent=intent, 
@@ -421,7 +424,7 @@ def better_glob(pats):
     return retset
   
 
-def lsmodims(path, modpat='*', header='Candidate modimages'):
+def lsmodims(path, modpat='*', header='Candidate models'):
     """
     Does an ls -d of files or directories in path matching modpat.
   
