@@ -146,7 +146,7 @@ class mstool_test_concat(mstool_test_base):
         self.assertTrue(self.ms.ismultims())
         # For multims returns path to SUBMSS as a list
         refTable = os.path.join(self.outputMS, "SUBMSS/ngc7538.ms")
-        self.assertEquals(self.ms.getreferencedtables(), [refTable])
+        self.assertEqual(self.ms.getreferencedtables(), [refTable])
         print
 
     def test_concatenate(self):
@@ -874,7 +874,7 @@ class mstool_test_dataIO(mstool_test_base):
         # defaults
         rec = self.ms.getdata(['data'])
         self.assertEqual(rec['data'].shape, (ncorr, nchan, nrow))
-	# caps and mixed case
+        # caps and mixed case
         rec = self.ms.getdata(['DATA', 'Flag'])
         self.assertEqual(rec['data'].shape, (ncorr, nchan, nrow))
         self.assertEqual(rec['flag'].shape, (ncorr, nchan, nrow))
@@ -893,6 +893,35 @@ class mstool_test_dataIO(mstool_test_base):
         self.assertEqual(rec['data'].shape, (ncorr, nchan, nIfr))
         testing.assert_array_almost_equal(rec['data'][0][0][:5], exp_data2, 8)
         print
+
+    def test_getdata_average(self):
+        # test consistent results for averaged amplitude, phase, weight, flag
+        # amp only
+        rec0amp = self.ms.getdata(['amplitude'], ifraxis=False, average=True)
+        amp0 = rec0amp['amplitude'][1]
+
+        # phase only
+        rec0phase = self.ms.getdata(['phase'], ifraxis=False, average=True)
+        phase0 = rec0phase['phase'][1]
+
+        # amp, phase same as 0
+        rec1 = self.ms.getdata(['amplitude', 'phase', 'weight', 'flag'], ifraxis=False, average=True)
+        amp1 = rec1['amplitude'][1]
+        phase1 = rec1['phase'][1]
+        weight1 = rec1['weight'][1]
+        flag1 = rec1['flag'][1]
+        testing.assert_array_equal(amp1, amp0)
+        testing.assert_array_equal(phase1, phase0)
+
+        # Change order: phase, amp same as 1
+        rec2 = self.ms.getdata(['phase', 'amplitude', 'weight', 'flag'], ifraxis=False, average=True)
+        amp2 = rec2['amplitude'][1]
+        phase2 = rec2['phase'][1]
+        weight2 = rec2['weight'][1]
+        flag1 = rec1['flag'][1]
+        testing.assert_array_equal(amp1, amp2)
+        testing.assert_array_equal(phase1, phase2)
+        testing.assert_array_equal(weight1, weight2)
 
     def xtest_ngetdata(self):
         """test ms.ngetdata"""
