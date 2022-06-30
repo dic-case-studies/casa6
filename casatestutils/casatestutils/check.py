@@ -1,20 +1,8 @@
 import os
-import logging
 import numpy
 
-try:
-    # CASA 6
-    logging.debug("Importing CASAtools")
-    import casatools
-    tb = casatools.table()
-    casa6 = True
-
-except ImportError:
-    # CASA 5
-    logging.debug("Import casa6 errors. Trying CASA5...")
-    from taskinit import tbtool
-    tb = tbtool()
-    casa5 = True
+import casatools
+tb = casatools.table()
 
 class Check(object):
     def __init__(self):
@@ -32,14 +20,13 @@ class Check(object):
 
         if os.path.isfile(plotfileName):
             self.plotSize = os.path.getsize(plotfileName) # Return the size, in bytes, of path.
-            logging.info('{} file size is: {}'.format(plotfileName, self.plotSize))
+            print('{} file size is: {}'.format(plotfileName, self.plotSize))
             if self.plotSize > min_size:
                 self.val = True
             if max_size is not None:
                 if not self.plotSize < max_size:
                     self.val = False
-        else:
-            logging.critical("Plot was not created")
+
         return self.val
 
     def check_pixels(self, imagename='', loc=None, refval=None, rtol=1e-05, atol=1e-08):
@@ -58,7 +45,7 @@ class Check(object):
             tb.open(imagename)
             image = tb.getcol('map')
             tb.close()
-            if not isinstance(refval, None):
+            if type(refval) is not type(None):
                 index = []
                 to_slice = loc.split(',')
                 for item in to_slice:
@@ -69,12 +56,11 @@ class Check(object):
                         index.append(slice(int(item_split[0]), int(item_split[1])))
                 selected_slice = image[tuple(index)]
                 if numpy.shape(selected_slice) != numpy.shape(refval):
-                    logging.warning('Please check that the shape of the reference and selected slice are the same')
-                    return False
+                    raise Exception('Please check that the shape of the reference and selected slice are the same')
                 isequal = numpy.isclose(selected_slice, refval, rtol=rtol, atol=atol)
-                logging.info("For pixel value check the obtained value was {}. The expected value was {} with a tolerance of {}. test success = {}.".format(selected_slice, refval, atol, isequal))
+                print("For pixel value check the obtained value was {}. The expected value was {} with a tolerance of {}. test success = {}.".format(selected_slice, refval, atol, numpy.all(isequal == True)))
                 return numpy.all(isequal == True)
             else:
-                logging.warning('Please provide a refernce value to compare against')
+                raise Exception('Please provide a refernce value to compare against')
         else:
-            logging.warning('Not a valid Image name')
+            raise Exception('{} Does Not Exist'.format(imagename))
