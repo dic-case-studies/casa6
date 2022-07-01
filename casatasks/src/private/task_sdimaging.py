@@ -30,7 +30,7 @@ def sdimaging(infiles, outfile, overwrite, field, spw, antenna, scan, intent,
               mode, nchan, start, width, veltype, outframe,
               gridfunction, convsupport, truncate, gwidth, jwidth,
               imsize, cell, phasecenter, projection, ephemsrcname,
-              pointingcolumn, restfreq, stokes, minweight, brightnessunit, clipminmax):
+              pointingcolumn, restfreq, stokes, minweight, brightnessunit, clipminmax, enablecache):
     with sdimaging_worker(**locals()) as worker:
         worker.initialize()
         worker.execute()
@@ -481,7 +481,16 @@ class sdimaging_worker(sdutil.sdtask_template_imaging):
 
         self.imager.defineimage(**self.imager_param)#self.__get_param())
         self.imager.setoptions(ftmachine='sd', gridfunction=self.gridfunction)
-        self.imager.setsdoptions(pointingcolumntouse=self.pointingcolumn, convsupport=self.convsupport, truncate=self.truncate, gwidth=self.gwidth, jwidth=self.jwidth, minweight = 0., clipminmax=self.clipminmax)
+        self.imager.setsdoptions(
+            pointingcolumntouse=self.pointingcolumn,
+            convsupport=self.convsupport,
+            truncate=self.truncate,
+            gwidth=self.gwidth,
+            jwidth=self.jwidth,
+            minweight = 0.,
+            clipminmax=self.clipminmax,
+            enablecache=self.enablecache
+        )
 
         # Create images
         imgtype_suffix = {'singledish': '', 'coverage' : '.weight'}

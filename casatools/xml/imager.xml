@@ -3972,10 +3972,15 @@ is multiplied by this factor.
      <value>0.</value>
      </param>
 
-	 <param name="clipminmax" type="bool">
-	 <description>Clip minimum and maximum values from each grid</description>
-	 <value>false</value>
-	 </param>
+     <param name="clipminmax" type="bool">
+     <description>Clip minimum and maximum values from each grid</description>
+     <value>false</value>
+     </param>
+
+     <param name="enablecache" type="bool">
+     <description>Cache spectra pixel coordinates for later re-use</description>
+     <value>false</value>
+     </param>
 
 </input>
 <returns type="bool"/>
