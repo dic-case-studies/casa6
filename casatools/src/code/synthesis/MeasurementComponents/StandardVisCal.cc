@@ -584,8 +584,12 @@ void TJones::createCorruptor(const VisIter& vi, const Record& simpar, const Int 
       }
 
       // RI todo T::createCorr make min screen granularity a user parameter
-      Float fBM_interval=max(interval(),10.); // generate screens on >10s intervals
-      if (prtlev()>2) cout<<"set fBM_interval"<<" to "<<fBM_interval<<" startTime="<<corruptor_p->startTime()<<" stopTime="<<corruptor_p->stopTime()<<endl;
+      Float minFBM_interval = 0.1; // generate screens on >0.1s intervals
+      Float fBM_interval=max(interval(), minFBM_interval); 
+      if (fBM_interval > interval()){
+	os << LogIO::WARN << " Requested phase screen time granularity (" << interval() 
+	   << " s) is too small! Will use the minimum permitted value: " << minFBM_interval << " s." <<  LogIO::POST;
+      }
 
       corruptor_p->setEvenSlots(fBM_interval);
 
