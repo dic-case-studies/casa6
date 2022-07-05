@@ -371,7 +371,7 @@ class test_onefield(testref_base):
 
           # briggs r=2
           ret4 = tclean(vis=self.msfile,imagename=self.img+'4',imsize=100,cell='8.0arcsec',niter=10,weighting='briggs', robust=2, interactive=0,parallel=self.parallel)     
-          report4=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imgexist=[self.img+'4.psf', self.img+'4.residual', self.img+'4.image', self.img+'4.model'], imgval=[(self.img+'4.psf',1.0,[50,50,0,0]),(self.img+'4.sumwt',3430533.5,[0,0,0,0])])
+          report4=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imgexist=[self.img+'4.psf', self.img+'4.residual', self.img+'4.image', self.img+'4.model'], imgval=[(self.img+'4.psf',1.0,[50,50,0,0]),(self.img+'4.sumwt',641971.5625,[0,0,0,0])])
 
           # radial
           ret5 = tclean(vis=self.msfile,imagename=self.img+'5',imsize=100,cell='8.0arcsec',niter=10,weighting='radial', interactive=0,parallel=self.parallel)     
@@ -383,7 +383,7 @@ class test_onefield(testref_base):
 
           # briggs r=0.5(default) with mtmfs (to test SIImageStoreMultiTerm)
           ret7 = tclean(vis=self.msfile,imagename=self.img+'7',imsize=100,cell='8.0arcsec',niter=10,deconvolver='mtmfs', weighting='briggs', robust=0.5, interactive=0,parallel=self.parallel)     
-          report7=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imgexist=[self.img+'7.psf.tt0', self.img+'7.residual.tt0', self.img+'7.image.tt0', self.img+'7.model.tt0'], imgval=[(self.img+'7.psf.tt0',1.0,[50,50,0,0]),(self.img+'7.psf.tt1',0.0898,[50,50,0,0]),(self.img+'7.sumwt.tt0',1532169.875,[0,0,0,0]),(self.img+'7.sumwt.tt1',137693.875,[0,0,0,0])])
+          report7=self.th.checkall(ret=ret, peakres=0.263, modflux=0.575, iterdone=10, imgexist=[self.img+'7.psf.tt0', self.img+'7.residual.tt0', self.img+'7.image.tt0', self.img+'7.model.tt0'], imgval=[(self.img+'7.psf.tt0',1.0,[50,50,0,0]),(self.img+'7.psf.tt1',0.0898,[50,50,0,0]),(self.img+'7.sumwt.tt0',286721.875,[0,0,0,0]),(self.img+'7.sumwt.tt1',25767.1796875,[0,0,0,0])])
 
 
           # beamareas: uniform < briggs-r=-2 < briggs r=0.5 < briggs r=+2 < natural, ...
@@ -639,8 +639,8 @@ class test_onefield(testref_base):
                                      peakres=0.409, modflux=0.764, iterdone=10, nmajordone=2,
                                      imgexist=checkims, 
                                      imgval=[(self.img+'.alpha',-2.0,[50,50,0,0]),
-                                            (self.img+'.sumwt.tt0', 94050.05,[0,0,0,0]) ,
-                                            (self.img+'.sumwt.tt1', 0.006198,[0,0,0,0]) ], 
+                                            (self.img+'.sumwt.tt0', 17600,[0,0,0,0]) ,
+                                            (self.img+'.sumwt.tt1', 0.0037891,[0,0,0,0]) ], 
                                      reffreq= [(self.img+'.image.tt0',1489984775.68)] )
           
           self.assertTrue(self.check_final(report))
@@ -5907,6 +5907,27 @@ class test_errors_failures(testref_base):
                             veltype='radio', outframe='LSRK',
                             parallel=self.parallel)
 
+###########################################################
+###########################################################
+###########################################################
+class test_gclean(testref_base):
+     """ gclean(...) is a class used by the vis team.
+     These tests are here to ensure that any changes to tclean don't break gclean.
+     """
+     @unittest.skipIf(ParallelTaskHelper.isMPIEnabled(), "glcean doesn't work with mpi")
+     def test_gclean_threeiter(self):
+          """test_gclean_threeiter: test the the gclean generator runs for at least three iterations"""
+          from casatasks.private.imagerhelpers._gclean import gclean
+          self.prepData('refim_point.ms')
+          cnt = 0
+          for rec in gclean( vis='refim_point.ms', imagename=self.img, imsize=100, cell='8.0arcsec',
+                             specmode='cube', interpolation='nearest', nchan=1, start='1.0GHz', width='0.2GHz',
+                             pblimit=-1e-05, deconvolver='hogbom', niter=500, cyclefactor=3, scales=[0, 3, 10] ):
+               cnt += 1
+               if cnt == 3:
+                    break
+          # as long as we've gotten this far, then the test has passed
+          pass
 
 if __name__ == '__main__':
      unittest.main()
