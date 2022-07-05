@@ -3114,7 +3114,7 @@ tb.showcache()
         
    </method>
 
-   <method name="rows" type="function">
+   <method name="row" type="function">
      <shortdescription>Get a row accessor for this table</shortdescription>
      <description>
        Return a table accessor object which allows for accessing one or more rows from the table. A single
@@ -3134,16 +3134,16 @@ tb.showcache()
        tb.open( 'ngc5921_ut.ms', nomodify=False )
 
        ### read a single row
-       print(f'row 3 is {tb.rows( )[3]}')
+       print(f'row 3 is {tb.row( )[3]}')
 
        ### contents of the DATA column from the first 5 rows
-       first_five_data = tb.rows(columnnames=['DATA'])[:5]
+       first_five_data = tb.row(columnnames=['DATA'])[:5]
 
        ### ENTIRE contents of the table
-       whole_table = tb.rows( )[:]
+       whole_table = tb.row( )[:]
 
        ### store a single row
-       rows = tb.rows( )
+       rows = tb.row( )
        row = rows.get(22)
        row['DATA'].fill( 1.0/row['DATA'].size )
        rows.put( 22, { 'DATA': row['DATA'] } )

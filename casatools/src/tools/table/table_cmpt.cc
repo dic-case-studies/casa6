@@ -2435,7 +2435,7 @@ bool table::testincrstman(const std::string& column)
 
 
 ::casac::tablerow*
-table::rows( const std::vector<std::string> &columnnames, bool exclude ) {
+table::row( const std::vector<std::string> &columnnames, bool exclude ) {
     *itsLog << LogOrigin(__func__,itsTable ? name( ) : "row without table");
     try {
         if ( itsTable ) {

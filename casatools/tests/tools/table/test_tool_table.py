@@ -43,7 +43,7 @@ class TableBase(unittest.TestCase):
             os.makedirs(self.scratch_path)
         shutil.copytree( orig_ms_path, self.ms_path )
         self.tb.open(self.ms_path,nomodify=False)
-        self.rows = self.tb.rows( )
+        self.rows = self.tb.row( )
 
     @staticmethod
     def remove_readonly(func, path, _):
@@ -88,7 +88,7 @@ class TableRowTest(TableBase):
         ### check to see if the new values are read back
         tb = table( )
         tb.open(self.tb.name( ))
-        rows = tb.rows( )
+        rows = tb.row( )
         storedrow = self.rows.get(22)
         rows.done( )
         tb.close( )
@@ -108,10 +108,10 @@ class TableRowTest(TableBase):
         self.assertTrue(len(rows) == 15 and np.isclose( sum([np.abs(np.sum(x['DATA'])) for x in rows]), 498.3275412917137 ))
 
     def test_columnnames_include(self):
-        self.assertTrue( list(itertools.chain(*[ x.keys() for x in self.tb.rows(columnnames=['DATA'])[:5] ])) == ['DATA', 'DATA', 'DATA', 'DATA', 'DATA'] )
+        self.assertTrue( list(itertools.chain(*[ x.keys() for x in self.tb.row(columnnames=['DATA'])[:5] ])) == ['DATA', 'DATA', 'DATA', 'DATA', 'DATA'] )
 
     def test_columnnames_exclude(self):
-        self.assertTrue( set(self.tb.rows(columnnames=['DATA'],exclude=True).get(0).keys( )) == set( [ 'ANTENNA1', 'ANTENNA2', 'ARRAY_ID', 'DATA_DESC_ID',
+        self.assertTrue( set(self.tb.row(columnnames=['DATA'],exclude=True).get(0).keys( )) == set( [ 'ANTENNA1', 'ANTENNA2', 'ARRAY_ID', 'DATA_DESC_ID',
                                                                                                        'EXPOSURE', 'FEED1', 'FEED2', 'FIELD_ID', 'FLAG', 
                                                                                                        'FLAG_CATEGORY', 'FLAG_ROW', 'INTERVAL', 'OBSERVATION_ID',
                                                                                                        'PROCESSOR_ID', 'SCAN_NUMBER', 'SIGMA', 'SIGMA_SPECTRUM', 
