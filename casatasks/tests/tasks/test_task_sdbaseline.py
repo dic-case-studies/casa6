@@ -2785,7 +2785,6 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
     def _extract_blfunc_params(self, paramfile):
         blparams = {'func': [], 'pname': [], 'pvalue': []}
         isref = (paramfile == self.paramfile)
-        delimiter = ',' if isref else None
 
         if isref:  # Extract baseline parameters from reference file in csv format
             ref_data = np.genfromtxt(paramfile,
@@ -2850,42 +2849,28 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
     def _get_num_coeff(self, paramfile):
         ncoeffs = []
         isref = (paramfile == self.paramfile)
-        iscsv = (os.path.splitext(paramfile)[1][1:] == 'csv')
-        delimiter = ',' if (isref or iscsv) else None
 
-        with open(paramfile, 'r') as f:
-            # sort the reference blparam file so that row and pol ids are in ascending order
-            # for all (blparam, bloutput(csv) and bloutput(text)) files
-            lines = sorted(f.readlines()) if isref else f.readlines()
+        if isref:
+            blparams = self._extract_blfunc_params(paramfile)
+            offsets = [1 if t == 'order' else 3 for t in blparams['pname']]
+            ncoeffs = [v + o for v, o in zip(blparams['pvalue'], offsets)]
+        else:
+            iscsv = (os.path.splitext(paramfile)[1][1:] == 'csv')
+            delimiter = ',' if iscsv else None
+            with open(paramfile, 'r') as f:
+                for line in f.readlines():
+                    elems = line.rstrip('\n').split(delimiter)
+                    if iscsv:
+                        ncoeff = len(elems) - 10
+                    else:  # txt
+                        if len(elems) < 1:
+                            continue
+                        if elems[0] != 'p0':
+                            continue
 
-            for line in lines:
-                line = line.rstrip('\n')
-                if isref and line.startswith('#'):
-                    continue
+                        ncoeff = sum(e.startswith('p') for e in elems)
 
-                elems = line.split(delimiter)
-                if isref:
-                    blfunc_type = elems[10]
-                    iscspline = (blfunc_type == 'cspline')
-                    blfunc_order = int(elems[12] if iscspline else elems[11])
-
-                    if blfunc_type in ['poly', 'chebyshev']:
-                        ncoeff = blfunc_order + 1
-                    elif iscspline:
-                        ncoeff = blfunc_order + 3
-                    else:
-                        raise ValueError(f'{blfunc_type} is invalid for blfunc!')
-                elif iscsv:
-                    ncoeff = len(elems) - 10
-                else:  # txt
-                    if len(elems) < 1:
-                        continue
-                    if elems[0] != 'p0':
-                        continue
-
-                    ncoeff = sum(e.startswith('p') for e in elems)
-
-                ncoeffs.append(ncoeff)
+                    ncoeffs.append(ncoeff)
 
         return ncoeffs
 
