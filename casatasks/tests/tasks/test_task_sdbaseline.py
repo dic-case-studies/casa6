@@ -27,8 +27,10 @@ import csv
 import filecmp
 import glob
 import os
+import re
 import shutil
 import unittest
+from io import StringIO
 
 import numpy as np
 from casatasks import casalog, sdbaseline
@@ -2780,66 +2782,46 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         self._refetch_files([infile, self.paramfile], self.datapath)
         self._run_test(infile, self.refstat0, blparam=self.paramfile, datacolumn=self.column)
 
-    """
     def _extract_blfunc_params(self, paramfile):
         blparams = {'func': [], 'pname': [], 'pvalue': []}
         isref = (paramfile == self.paramfile)
 
-        with open(paramfile, 'r') as f:
-            lines = sorted(f.readlines()) if isref else f.readlines()
+        if isref:  # Extract baseline parameters from reference file in csv format
+            ref_data = np.genfromtxt(paramfile,
+                                     delimiter=',',
+                                     names=True,
+                                     usecols=('ROW', 'POL', 'BL_TYPE', 'ORDER', 'N_PIECE'),
+                                     dtype=None,
+                                     encoding='utf-8')
 
-            for line in lines:
-                elems = line.rstrip('\n')
-                if isref and (elems[0] == '#'):
-                    continue
+            sorted_refdata = np.sort(ref_data, order=['ROW', 'POL'])
 
-                elem = elems.split(',' if isref else None)
-                if not isref:
-                    if len(elem) < 8:
-                        continue
-                    if (elem[0] != 'Baseline') or (elem[1] != 'parameters'):
-                        continue
+            bltype, order, npiece = [sorted_refdata[col] for col in ['BL_TYPE', 'ORDER', 'N_PIECE']]
 
-                val_func = elem[10] if isref else elem[4]
-                val_pname = ('npiece' if elem[10] == 'cspline' else 'order') if isref else elem[5]
-                val_pval = (elem[12] if elem[10] == 'cspline' else elem[11]) if isref else elem[7]
+            blparams['func'] = bltype.tolist()
+            blparams['pname'] = ['npiece' if t == 'cspline' else 'order' for t in bltype]
 
-                blparams['func'].append(val_func)
-                blparams['pname'].append(val_pname)
-                blparams['pvalue'].append(val_pval)
+            is_cspline = (bltype == 'cspline')
+            not_cspline = np.logical_not(is_cspline)
+            blparams['pvalue'] = np.select([is_cspline, not_cspline], [npiece, order]).tolist()
 
-        return blparams
-    """
-    def _extract_blfunc_params(self, paramfile):
-        blparams = {'func': [], 'pname': [], 'pvalue': []}
-        isref = (paramfile == self.paramfile)
+        else:  # Extract baseline parameters from ad-hoc 'free-format' text file
+            blparams_pattern = '^Baseline parameters  Function = (?P<func>[a-z]+)  '\
+                               '(?P<pname>[a-z]+) = (?P<pvalue>[0-9]+)'
 
-        with open(paramfile, 'r') as f:
-            # sort the reference blparam file so that row and pol ids are in ascending order
-            # for all (blparam, bloutput(csv) and bloutput(text)) files
-            lines = sorted(f.readlines()) if isref else f.readlines()
+            with open(paramfile, 'r') as f:
+                blparams_rows = re.findall(blparams_pattern, f.read(), re.MULTILINE)
 
-            for line in lines:
-                elems = line.rstrip('\n')
-                if isref and (elems[0] == '#'):
-                    continue
+            blparams_csv = '\n'.join([','.join(row) for row in blparams_rows])
 
-                elem = elems.split(',' if isref else None)
-                if not isref:
-                    if len(elem) < 8:
-                        continue
-                    if (elem[0] != 'Baseline') or (elem[1] != 'parameters'):
-                        continue
+            blparams_data = np.genfromtxt(StringIO(blparams_csv),
+                                          delimiter=',',
+                                          dtype=[('func', '<U10'),
+                                                 ('pname', '<U10'),
+                                                 ('pvalue', 'i4')])
 
-                if isref:
-                    iscspline = (elem[10] == 'cspline')
-                    blparams['func'].append(elem[10])
-                    blparams['pname'].append('npiece' if iscspline else 'order')
-                    blparams['pvalue'].append(elem[12] if iscspline else elem[11])
-                else:
-                    blparams['func'].append(elem[4])
-                    blparams['pname'].append(elem[5])
-                    blparams['pvalue'].append(elem[7])
+            for key in blparams.keys():
+                blparams[key] = blparams_data[key].tolist()
 
         return blparams
 
