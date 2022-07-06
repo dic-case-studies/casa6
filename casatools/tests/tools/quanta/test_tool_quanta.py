@@ -55,8 +55,8 @@ class quanta_convert_test(quanta_test):
                 pos, -1, msg=f'{got_exception}'
             )
 
-
-       # bogus unit
+        
+        # bogus unit
         parms = {}
         parms['v'] = qa.quantity('5kg')
         parms['outunit'] = 'bogus'
@@ -70,11 +70,13 @@ class quanta_convert_test(quanta_test):
     def test_value_as_string(self):
         """Test specifying value as a string"""
         for ks in (True, False):
-            res = qa.quantity('5kg', keepshape=ks)
-            self.assertEqual(res, {'value': 5, 'unit': 'kg'})
-            # test unitname is ignored in this case
-            res = qa.quantity('5kg', 'pc', keepshape=ks)
-            self.assertEqual(res, {'value': 5, 'unit': 'kg'})
+            # unit() is just a wrapper around quantity()
+            for code in (qa.quantity, qa.unit):
+                res = code('5kg', keepshape=ks)
+                self.assertEqual(res, {'value': 5, 'unit': 'kg'})
+                # test unitname is ignored in this case
+                res = code('5kg', 'pc', keepshape=ks)
+                self.assertEqual(res, {'value': 5, 'unit': 'kg'})
 
 
     def test_valid(self):
@@ -107,20 +109,22 @@ class quanta_convert_test(quanta_test):
         )
 
 
-# Tests for quanta.quantity
+# Tests for quanta.quantity() and qa.unit() (which is just a qa.quantity()
+# wraaper)
 class quanta_quantity_test(quanta_test):
 
 
     def test_exceptions(self):
         """Test various exception cases"""
         def __test_exception(method_parms, expected_msg):
-            with self.assertRaises(RuntimeError) as cm:
-                res = qa.quantity(**method_parms)
-            got_exception = cm.exception
-            pos = str(got_exception).find(expected_msg)
-            self.assertNotEqual(
-                pos, -1, msg=f'{got_exception}'
-            )
+            for code in (qa.quantity, qa.unit):
+                with self.assertRaises(RuntimeError) as cm:
+                    res = code(**method_parms)
+                got_exception = cm.exception
+                pos = str(got_exception).find(expected_msg)
+                self.assertNotEqual(
+                    pos, -1, msg=f'{got_exception}'
+                )
             
         parms = {}
         # string is bad quantity
@@ -139,44 +143,51 @@ class quanta_quantity_test(quanta_test):
     def test_value_as_string(self):
         """Test specifying value as a string"""
         for ks in (True, False):
-            res = qa.quantity('5kg', keepshape=ks)
-            self.assertEqual(res, {'value': 5, 'unit': 'kg'})
-            # test unitname is ignored in this case
-            res = qa.quantity('5kg', 'pc', keepshape=ks)
-            self.assertEqual(res, {'value': 5, 'unit': 'kg'})
+            for code in (qa.quantity, qa.unit):
+                res = code('5kg', keepshape=ks)
+                self.assertEqual(res, {'value': 5, 'unit': 'kg'})
+                # test unitname is ignored in this case
+                res = code('5kg', 'pc', keepshape=ks)
+                self.assertEqual(res, {'value': 5, 'unit': 'kg'})
 
 
     def test_scalar_value(self):
         """Test specifying the quantity as a scalar"""
         for ks in (True, False):
-            res = qa.quantity(5, 'kg', keepshape=ks)
-            self.assertEqual(res, {'value': 5, 'unit': 'kg'})
+            for code in (qa.quantity, qa.unit):
+                res = code(5, 'kg', keepshape=ks)
+                self.assertEqual(res, {'value': 5, 'unit': 'kg'})
 
 
     def test_vector_value(self):
         """Test specifying the quantity as a vector"""
         v = [5, 8, 7.5]
         for ks in (True, False):
-            res = qa.quantity(v, 'kg', keepshape=ks)
-            self.assertEqual(res['unit'], 'kg', 'incorrect unit')
-            self.assertTrue((res['value'] == v).all(), 'incorrect vector value(s)')
+            for code in (qa.quantity, qa.unit):
+                res = code(v, 'kg', keepshape=ks)
+                self.assertEqual(res['unit'], 'kg', 'incorrect unit')
+                self.assertTrue(
+                    (res['value'] == v).all(), 'incorrect vector value(s)'
+                )
 
 
     def test_multidimensional_arra_value(self):
         """Test specifying the quantity as a multidimensional array"""
         v = np.random.random((4,5))
-        # keepshape = False returns a 1D array
-        res = qa.quantity(v, 'kg', keepshape=False)
-        self.assertEqual(res['unit'], 'kg', 'incorrect unit')
-        self.assertTrue(
-            np.allclose(res['value'], v.ravel('F')), 'incorrect vector value(s)'
-        )
-        # keepshape = True preserves input array shape
-        res = qa.quantity(v, 'kg', keepshape=True)
-        self.assertEqual(res['unit'], 'kg', 'incorrect unit')
-        self.assertTrue(
-            np.allclose(res['value'], v), 'incorrect vector value(s)'
-        )
+        for code in (qa.quantity, qa.unit):
+            # keepshape = False returns a 1D array
+            res = code(v, 'kg', keepshape=False)
+            self.assertEqual(res['unit'], 'kg', 'incorrect unit')
+            self.assertTrue(
+                np.allclose(res['value'], v.ravel('F')),
+                'incorrect vector value(s)'
+            )
+            # keepshape = True preserves input array shape
+            res = code(v, 'kg', keepshape=True)
+            self.assertEqual(res['unit'], 'kg', 'incorrect unit')
+            self.assertTrue(
+                np.allclose(res['value'], v), 'incorrect vector value(s)'
+            )
 
 
     def test_value_as_record(self):
@@ -184,27 +195,28 @@ class quanta_quantity_test(quanta_test):
         Test value as record (eg already a quantity).
         This is essentially a reflection operator.
         """
-        v = {'unit': 'arcsec', 'value': 840}
-        # scalar
-        self.assertEqual(qa.quantity(v), v, 'scalar reflection failed')
-        # vector
-        v = {'unit': 'arcsec', 'value': [840., 840., 840., 840.]}
-        r = qa.quantity(v)
-        self.assertEqual(
-            r['unit'], v['unit'], 'vector reflection failed on unit test'
-        )
-        self.assertTrue(
-            (r['value'] == v['value']).all(), 'vector reflection failed'
-        )
-        # array
-        v = {'unit': 'arcsec', 'value': [[840., 840., 840., 840.]]}
-        r = qa.quantity(v)
-        self.assertEqual(
-            r['unit'], v['unit'], 'array reflection failed on unit test'
-        )
-        self.assertTrue(
-            (r['value'] == v['value']).all(), 'array reflection failed'
-        )
+        for code in (qa.quantity, qa.unit):
+            v = {'unit': 'arcsec', 'value': 840}
+            # scalar
+            self.assertEqual(code(v), v, 'scalar reflection failed')
+            # vector
+            v = {'unit': 'arcsec', 'value': [840., 840., 840., 840.]}
+            r = code(v)
+            self.assertEqual(
+                r['unit'], v['unit'], 'vector reflection failed on unit test'
+            )
+            self.assertTrue(
+                (r['value'] == v['value']).all(), 'vector reflection failed'
+            )
+            # array
+            v = {'unit': 'arcsec', 'value': [[840., 840., 840., 840.]]}
+            r = code(v)
+            self.assertEqual(
+                r['unit'], v['unit'], 'array reflection failed on unit test'
+            )
+            self.assertTrue(
+                (r['value'] == v['value']).all(), 'array reflection failed'
+            )
 
 
 if __name__ == '__main__':

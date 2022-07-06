@@ -1881,11 +1881,15 @@ print qa.done(kill=T)
      <description/>
      <value/>
      </param>
-</input>
+    <param name="keepshape" direction="in" type="bool">
+     <description/>
+     <value>false</value>
+     </param>
+    </input>
 <returns type="record"/>
 <description>
 unit makes a quantity from a string, or from a value and a string.
-Note that unit is a synonym for quantity (see example there).
+Note that unit is a synonym for quantity (see description and example there).
 </description>
 </method>
 

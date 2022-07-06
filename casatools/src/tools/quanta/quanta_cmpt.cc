@@ -873,9 +873,9 @@ quanta::done(const bool /*kill*/)
 // unit (v=1., name='') -> unit from string v; or from units name and value v
   //::casac::record* quanta::unit(const double v, const std::string& unitname)
 ::casac::record*
-quanta::unit(const ::casac::variant& v, const std::string& unitname)
+quanta::unit(const ::casac::variant& v, const std::string& unitname, const bool keepshape)
 {
-  return quantity(v, unitname);
+  return quantity(v, unitname, keepshape);
 }
 
 bool
