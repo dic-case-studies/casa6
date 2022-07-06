@@ -350,10 +350,10 @@ class sdimaging_unittest_base(unittest.TestCase):
         _ia.open(image)
         beam = _ia.restoringbeam()
         _ia.close()
-        maj_asec = numpy.asscalar(qa.getvalue(qa.convert(beam['major'], 'arcsec')))
-        min_asec = numpy.asscalar(qa.getvalue(qa.convert(beam['minor'], 'arcsec')))
-        maj_asec_ref = numpy.asscalar(qa.getvalue(qa.convert(ref_beam['major'], 'arcsec')))
-        min_asec_ref = numpy.asscalar(qa.getvalue(qa.convert(ref_beam['minor'], 'arcsec')))
+        maj_asec = numpy.ndarray.item(qa.getvalue(qa.convert(beam['major'], 'arcsec')))
+        min_asec = numpy.ndarray.item(qa.getvalue(qa.convert(beam['minor'], 'arcsec')))
+        maj_asec_ref = numpy.ndarray.item(qa.getvalue(qa.convert(ref_beam['major'], 'arcsec')))
+        min_asec_ref = numpy.ndarray.item(qa.getvalue(qa.convert(ref_beam['minor'], 'arcsec')))
         self.assertAlmostEqual(abs(maj_asec - maj_asec_ref) / max(maj_asec_ref, 1.e-12), 0.,
                                places=3,
                                msg=f"major axis = {maj_asec} arcsec (expected: {maj_asec_ref})")

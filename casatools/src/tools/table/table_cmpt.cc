@@ -893,7 +893,8 @@ table::selectrows(const std::vector<long>& rownrs, const std::string& name)
  ::casac::table *rstat(0);
  try {
 	 if(itsTable){
-		 rstat = new casac::table(new TableProxy(itsTable->selectRows(rownrs, String(name))));
+         Vector<Int64> const rownrsV(rownrs);
+		 rstat = new casac::table(new TableProxy(itsTable->selectRows(rownrsV, String(name))));
 	 } else {
 		 *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
 	 }
@@ -1249,7 +1250,8 @@ table::removerows(const std::vector<long>& rownrs)
  Bool rstat(false);
  try {
 	 if(itsTable){
-		 itsTable->removeRow(rownrs);
+         Vector<Int64> const rownrsV(rownrs);
+		 itsTable->removeRow(rownrsV);
 		 rstat = true;
 	 } else {
 		 *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
@@ -1368,7 +1370,10 @@ table::getcellslice(const std::string& columnname, const long rownr, const std::
  ::casac::variant *rstat(0);
  try {
 	 if(itsTable){
-		 ValueHolder theVal = itsTable->getCellSlice(columnname, rownr, blc, trc, incr);
+         Vector<Int> const blcV(blc);
+         Vector<Int> const trcV(trc);
+         Vector<Int> const incrV(incr);
+		 ValueHolder theVal = itsTable->getCellSlice(columnname, rownr, blcV, trcV, incrV);
 		 rstat = fromValueHolder(theVal);
 	 } else {
 		 *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
@@ -1426,8 +1431,11 @@ table::getcolslice(const std::string& columnname, const std::vector<long>& blc, 
  ::casac::variant *rstat(0);
  try {
 	 if(itsTable){
-		 ValueHolder theVal = itsTable->getColumnSlice(columnname, startrow, nrow, rowincr, blc,
-				                               trc, incr);
+         Vector<Int> const blcV(blc);
+         Vector<Int> const trcV(trc);
+         Vector<Int> const incrV(incr);
+		 ValueHolder theVal = itsTable->getColumnSlice(columnname, startrow, nrow, rowincr, blcV,
+				                               trcV, incrV);
 		 rstat = fromValueHolder(theVal);
 	 } else {
 		 *itsLog << LogIO::WARN << "No table specified, please open first" << LogIO::POST;
@@ -1457,7 +1465,8 @@ table::putcell(const std::string& columnname, const std::vector<long>& rownr,
       }
 
       ValueHolder *aval = toValueHolder(thevalue);
-      itsTable->putCell(columnname, rownr, *aval);
+      Vector<Int64> const rownrV(rownr);
+      itsTable->putCell(columnname, rownrV, *aval);
       delete aval;
       return true;
     } else {
@@ -1489,7 +1498,10 @@ table::putcellslice(const std::string& columnname, const long rownr,
       }
 
       ValueHolder *aval = toValueHolder(value);
-      itsTable->putCellSlice(columnname, rownr, blc, trc, incr, *aval);
+      Vector<Int> const blcV(blc);
+      Vector<Int> const trcV(trc);
+      Vector<Int> const incrV(incr);
+      itsTable->putCellSlice(columnname, rownr, blcV, trcV, incrV, *aval);
       delete aval;
       return true;
     } else {
@@ -1589,7 +1601,9 @@ table::putcolslice(const std::string& columnname, const ::casac::variant& value,
         iinc.resize(blc.size());
         iinc.set(1);
       }
-      itsTable->putColumnSlice(String(columnname), startrow, nrow, rowincr, blc, trc, iinc, *aval);
+      Vector<Int> const blcV(blc);
+      Vector<Int> const trcV(trc);
+      itsTable->putColumnSlice(String(columnname), startrow, nrow, rowincr, blcV, trcV, iinc, *aval);
       delete aval;
       rstat = true;
     } else {
