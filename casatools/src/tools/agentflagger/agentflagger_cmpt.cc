@@ -372,7 +372,7 @@ agentflagger::parseclipparameters(
 					String(feed),String(scan),String(antenna),
 					String(uvrange),String(timerange),String(correlation),
 					String(intent), String(observation),
-					String(datacolumn), clipminmax, Bool(clipoutside),
+					String(datacolumn), Vector<Double>(clipminmax), Bool(clipoutside),
 					Bool(channelavg), casac::variant(chanbin),Bool(timeavg), String(timebin),
 					Bool(clipzeros), Bool(apply));
 
