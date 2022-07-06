@@ -188,8 +188,8 @@ qa.quantity('5d0m30s')                  # OK
 </input>
 <returns type="doubleVec"/>
 <description>
-getvalue returns the internal value of a quantity. It also can handle an array
-of quantities.
+getvalue returns the internal value of a quantity. It also can handle a 1-D
+array of quantities, but multi-dimensional arrays are not supported.
 </description>
 <example>
 
@@ -232,7 +232,8 @@ print qa.getvalue(a)
 </input>
 <returns type="string"/>
 <description>
-getunit returns the internal unit string of a quantity
+getunit returns the internal unit string of a quantity. Note that 1-D arrays
+are supported, but multi-dimensional arrays are not.
 </description>
 <example>
 
