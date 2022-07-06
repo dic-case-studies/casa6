@@ -460,7 +460,8 @@ measures::comettopo()
   } catch (AipsError(x)) {
     *itsLog << LogIO::SEVERE << "Exception Reports: " << x.getMesg() << LogIO::POST;
   }
-  return recordFromQuantity(Quantum<Vector<Double> >(retval,unit));
+  Vector<Double> const retvalV(retval);
+  return recordFromQuantity(Quantum<Vector<Double> >(retvalV,unit));
 }
 
 // Get the distance of the current comet
@@ -2666,7 +2667,7 @@ measures::posangle (const casacore::MDirection& md1, const casacore::MDirection&
 ::casac::record*
 measures::posangle(const ::casac::record& m1, const ::casac::record& m2)
 {
-  std::vector<double> retval(1);
+  Vector<double> retval(1);
   String unit("deg");
   retval[0]=0;
   String error;
@@ -2726,7 +2727,7 @@ measures::posangle(const ::casac::record& m1, const ::casac::record& m2)
 ::casac::record*
 measures::separation(const ::casac::record& m1, const ::casac::record& m2)
 {
-  std::vector<double> retval(1);
+  Vector<double> retval(1);
   String unit("deg");
   retval[0]=0;
   String error;
@@ -2810,7 +2811,7 @@ measures::addxvalue(const ::casac::record& a)
       val.asMeasure().getData()->getXRecordValue();
     uInt len = res.size();
     if (len > 0) {
-      std::vector<double> arg0(len);
+      Vector<double> arg0(len);
       for (uInt i=0 ; i < len; i++) {
 	arg0[i]=res[i].getValue();
       } //no support for array of quantity
