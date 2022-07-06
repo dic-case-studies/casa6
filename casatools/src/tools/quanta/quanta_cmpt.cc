@@ -156,7 +156,7 @@ record* quanta::quantity(
             );
         }
         if (vtype == variant::DOUBLEVEC || vtype == variant::INTVEC) {
-            const auto vecValues = v.toDoubleVec();
+            const auto vecValues = Vector<double>(v.toDoubleVec());
             const Vector<int> shape(v.arrayshape());
             if (keepshape && shape.size() > 1) {
                 IPosition iShape(shape);
