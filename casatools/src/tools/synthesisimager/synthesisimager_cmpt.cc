@@ -712,6 +712,45 @@ synthesisimstore* synthesisimager::getimstore(const long id)
   return rstat;
 }
 
+std::string synthesisimager::getImageName(const long facetId, const std::string& imageId, long taylorTerm)
+{
+    std::string rstat = "";
+    try {
+        itsImager = makeSI();
+        CountedPtr<SIImageStore> itsImStore = itsImager->imageStore(facetId);
+        if (imageId == "MASK") {
+            rstat = itsImStore->mask((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "PSF") {
+            rstat = itsImStore->psf((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "MODEL") {
+            rstat = itsImStore->model((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "RESIDUAL") {
+            rstat = itsImStore->residual((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "WEIGHT") {
+            rstat = itsImStore->weight((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "IMAGE") {
+            rstat = itsImStore->image((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "SUMWT") {
+            rstat = itsImStore->sumwt((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "GRIDWT") {
+            throw AipsError("Retrieval of gridwt image name not supported at this time.");
+        } else if (imageId == "PB") {
+            rstat = itsImStore->pb((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "FORWARDGRID") {
+            rstat = itsImStore->forwardGrid((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "BACKWARDGRID") {
+            rstat = itsImStore->backwardGrid((casacore::uInt)taylorTerm)->name();
+        } else if (imageId == "IMAGEPBCOR") {
+            rstat = itsImStore->imagepbcor((casacore::uInt)taylorTerm)->name();
+        } else {
+            throw AipsError("Image id \""+imageId+"\" not recognized.");
+        }
+    } catch  (AipsError x) {
+        RETHROW(x);
+    }
+    return rstat;
+}
+
 casac::record* synthesisimager::getcsys()
 {
    casac::record* rstat(0);

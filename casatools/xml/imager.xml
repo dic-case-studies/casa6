@@ -319,8 +319,7 @@ this requirement.
 
      <param name="trc" type="intVec">
      <description>Top right corner, should be image shape</description>
-     <value><value>
-     </value></value>
+     <value></value>
      </param>
 
      <param name="value" type="double">

@@ -35,6 +35,9 @@ bool getitem(casacore::String item, casa::vi::VisBuffer2* vb2,
         casacore::Record& addToRec, bool ifraxis);
 bool getitem(casacore::String item, casacore::MSColumns& msc,
         casacore::Record& outputRec);
+void addAvgFlagWeightToRecord(const casacore::Array<casacore::Bool>& avgflag,
+    const casacore::Array<casacore::Float>& avgweight,
+    casacore::Record& outputRec);
 bool itemIsData(casacore::String item);
 casacore::String getbaseitem(casacore::String item);
 template <typename T> void getIfrArray(casacore::Array<T>& inputarray, 
