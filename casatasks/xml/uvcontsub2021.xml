@@ -237,6 +237,12 @@
         <shortdescription>Polynomial order for the fits</shortdescription>
         <description>Polynomial order for the fits
                      Default: 0
+
+                     Values of fitorder > 1 should be used with
+                     care. Higher order polynomials are more flexible,
+                     and may overfit and absorb line emission. They
+                     also tend to go wild at the edges of the range of
+                     channels used for fitting.
         </description>
         <value>0</value>
       </param>
