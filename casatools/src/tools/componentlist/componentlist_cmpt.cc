@@ -229,8 +229,8 @@ componentlist::remove(const std::vector<long>& which, const bool /*log*/)
   try{
     std::vector<int> intwhich(which.begin( ),which.end( ));
     if(itsList && itsBin){
-      const Vector<int> intVec = _checkIndices(intwhich, "remove",
-                                              "No components removed");
+      const Vector<int> intVec(_checkIndices(intwhich, "remove",
+                                             "No components removed"));
       for(uInt c = 0; c < intVec.nelements(); c++)
         itsBin->add(itsList->component(intVec(c)));
       itsList->remove(intVec);
@@ -367,8 +367,8 @@ bool componentlist::isphysical(const std::vector<long>& which)
   try{
     std::vector<int> intwhich(which.begin( ),which.end( ));
     if(itsList && itsBin){
-      const Vector<Int> intVec = _checkIndices(intwhich, "is_physical",
-                                              "Not checking any components");
+      const Vector<Int> intVec(_checkIndices(intwhich, "is_physical",
+                                             "Not checking any components"));
       rstat = itsList->isPhysical(intVec);
     }
     else {
@@ -482,7 +482,7 @@ bool componentlist::addcomponent(
             "Could not interpret direction parameter" 
         );
         MVDirection newDir = theDir.getValue();
-        const Vector<Int> intVec = (
+        const Vector<Int> intVec(
             _checkIndices(
                 which, __FUNCTION__,
                 "Direction not changed on any components"
@@ -602,8 +602,8 @@ bool componentlist::select(const std::vector<long>& which)
   try{
     if(itsList && itsBin){
       std::vector<int> intwhich(which.begin( ),which.end( ));
-      const Vector<Int> intVec = _checkIndices(intwhich, "select",
-                                              "No components selected");
+      const Vector<Int> intVec(_checkIndices(intwhich, "select",
+                                             "No components selected"));
       itsList->select(intVec);
       rstat=true;
     }
@@ -627,8 +627,8 @@ bool componentlist::deselect(const std::vector<long>& which)
   try{
     if(itsList && itsBin){
       std::vector<int> intwhich(which.begin( ),which.end( ));
-      const Vector<Int> intVec = _checkIndices(intwhich, "deselect",
-                                              "No components deselected");
+      const Vector<Int> intVec(_checkIndices(intwhich, "deselect",
+                                             "No components deselected"));
       itsList->deselect(intVec);
        rstat=true;
     } else {
@@ -885,8 +885,8 @@ bool componentlist::setflux(
 				<< endl << "Flux not changed on any components"
 				<< LogIO::EXCEPTION;
 		}
-		const Vector<Int> intVec = _checkIndices(which, "setflux",
-				"Flux not changed on any components");
+		const Vector<Int> intVec(_checkIndices(which, "setflux",
+				"Flux not changed on any components"));
 		itsList->setFlux(intVec, newFlux);
 		rstat = true;
 
@@ -913,8 +913,8 @@ bool componentlist::convertfluxunit(const long which, const std::string& unit)
                 << LogIO::POST;
         return false;
       }
-      const Vector<Int> intVec = _checkIndices(which, "convertfluxunit", 
-                                              "Flux not changed on any components");
+      const Vector<Int> intVec(_checkIndices(which, "convertfluxunit",
+                                             "Flux not changed on any components"));
       itsList->convertFluxUnit(intVec, fluxUnit);
       rstat = true;
     } else {
@@ -935,8 +935,8 @@ bool componentlist::convertfluxpol(const long which, const std::string& polariza
   bool rstat(false);
   try{
     if(itsList && itsBin){
-      const Vector<Int> intVec = _checkIndices(which, "convertfluxunit",
-                                              "Flux not changed on any components");
+      const Vector<Int> intVec(_checkIndices(which, "convertfluxunit",
+                                             "Flux not changed on any components"));
       itsList->convertFluxPol(intVec,
                        (ComponentType::Polarisation)_checkFluxPol(polarization));
       rstat=true;
@@ -1486,7 +1486,8 @@ bool componentlist::setspectrum(
                 "for a spectrum='plp', index must be a list of numbers"
             );
             MFrequency refFreq = itsList->component(which).spectrum().refFrequency();
-            spectrumPtr.reset(new PowerLogPoly(refFreq, index.toDoubleVec()));
+            Vector<Double> const indexV(index.toDoubleVec());
+            spectrumPtr.reset(new PowerLogPoly(refFreq, indexV));
         }
         else if (type.startsWith("C")) {
             spectrumPtr.reset(new ConstantSpectrum());
