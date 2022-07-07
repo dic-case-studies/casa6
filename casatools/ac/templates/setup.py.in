@@ -342,7 +342,7 @@ def distutils_loadable_object(base):
 def sakura_fetch( ):
 
     if not os.path.isdir('sakura-source'):
-        sakura_version = "libsakura-5.1.1"
+        sakura_version = "libsakura-5.1.2"
         sakura_release = f"{sakura_version}.tar.gz"
         url = "https://github.com/tnakazato/sakura/archive/refs/tags/%s" % sakura_release
         print( "fetching %s" % url )
