@@ -304,6 +304,13 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_task_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'DATA_DESC_ID', 810, 1)
 
+    def test_select_spw_mismatching_fitspec(self):
+        """ Check spw selection works when fitspec gives mismatching IDs (not selected)"""
+        # As if the user got confused with old uvcontsub w/ combinespw, and expected spw 1->0
+        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, spw='1', fitspec='0')
+        self._check_task_return(res)
+        self._check_rows(self.output, 'DATA_DESC_ID', 810, 1)
+
     def test_select_scan(self):
         """ Check field selection works"""
 
@@ -418,6 +425,26 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_rows(self.output, 'DATA', 600)
         self._check_data_stats(self.output, (0.115759703+7.48776972e-08j), 0j,
                                (-0.00129960873+0.000193971457j), (1.41059673+0j))
+
+    def test_fitspec_dict_select_spw_mismatching(self):
+        """ Check spw selection works when fitspec gives mismatching IDs (not selected)"""
+        # As if the user got confused with old uvcontsub w/ combinespw, and expected spw 1->0
+        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, field='0', spw='1',
+                            fitspec={'0':
+                                     {'0': {'chan': '2~127',
+                                            'fitorder': 0}},
+                                     '1':
+                                     {'0': {'chan': '0~40',
+                                            'fitorder': 1}},
+                                     '3':
+                                     {'0': {'chan': '1~33;56~119',
+                                            'fitorder': 1}}
+                                     })
+        self._check_task_return(res)
+        self._check_rows(self.output, 'DATA_DESC_ID', 450, 1)
+        self._check_data_stats(self.output, (0.939443643+2.88438311e-07j),
+                               (0.807941937+1.82268468e-05j),
+                               (-3.25873916e-05+3.86630063e-06j), (2.09603309+0j))
 
     def test_fitspec_channels(self):
         """Check that fitspec works. When selecting some channels in some SPWs,
