@@ -262,6 +262,14 @@ class uvcontsub2021_test(uvcontsub2021_test_base):
         self._check_task_return(res, fields=[0, 1, 2])
         self._check_rows(self.output, 'DATA_DESC_ID', 810, 1)
 
+    def test_select_spw_mismatching_fitspw(self):
+        """ Check spw selection works when fitspw gives mismatching IDs (not selected)"""
+        # As if the user got confused with old uvcontsub w/ combinespw, and expected spw 1->0
+        res = uvcontsub2021(vis=ms_alma, outputvis=self.output, spw='1', fitspw='0')
+        print(res)
+        self._check_task_return(res)
+        self._check_rows(self.output, 'DATA_DESC_ID', 810, 1)
+
     def test_select_scan(self):
         """ Check field selection works"""
 
