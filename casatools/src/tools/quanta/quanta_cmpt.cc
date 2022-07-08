@@ -181,14 +181,14 @@ quanta::quantity(const ::casac::variant& v, const std::string& unitname)
     return recordFromQuantity(casacore::Quantity(v.toDouble(),String(unitname)));
   }
   if(v.type()==::casac::variant::DOUBLEVEC) {
-    return recordFromQuantity(Quantum<Vector<Double> >(v.toDoubleVec(),
+    return recordFromQuantity(Quantum<Vector<Double> >(Vector<Double>(v.toDoubleVec()),
 						       String(unitname)));
   }
   if(v.type()==::casac::variant::INT) {
     return recordFromQuantity(casacore::Quantity(v.toDouble(),String(unitname)));
   }
   if(v.type()==::casac::variant::INTVEC) {
-    return recordFromQuantity(Quantum<Vector<Double> >(v.toDoubleVec(),
+    return recordFromQuantity(Quantum<Vector<Double> >(Vector<Double>(v.toDoubleVec()),
 						       String(unitname)));
   }
   QuantumHolder qh = quantumHolderFromVar(v);
