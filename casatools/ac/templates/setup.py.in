@@ -230,7 +230,8 @@ def xml_jar_fetch( ):
     if not os.path.exists(os.path.dirname(xml_jar_path)):
         mkpath(os.path.dirname(xml_jar_path))
     if not os.path.exists( xml_jar_path ):
-        with request.urlopen(xml_jar_url) as istream, open(xml_jar_path,'wb') as fd:
+        ctx = ssl._create_unverified_context()
+        with request.urlopen(xml_jar_url, context=ctx) as istream, open(xml_jar_path,'wb') as fd:
             copyfileobj( istream, fd )
 
 def install_version_header( major, minor, patch, feature, verstr ):
