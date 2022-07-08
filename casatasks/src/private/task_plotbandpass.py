@@ -30,6 +30,10 @@ from matplotlib.ticker import (FormatStrFormatter, MultipleLocator,
                                ScalarFormatter)
 from six.moves import input, range
 
+# CAS-13722, CAS-13385
+import warnings
+import matplotlib.cbook
+warnings.filterwarnings("ignore",category=matplotlib.cbook.MatplotlibDeprecationWarning)
 
 PLOTBANDPASS_REVISION_STRING = "$Id: task_plotbandpass.py,v 1.102 2018/01/21 14:45:41 thunter Exp $" 
 TOP_MARGIN  = 0.25   # Used if showatm=T or showtksy=T
@@ -722,25 +726,16 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
     http://casaguides.nrao.edu/index.php?title=Plotbandpass
     -- Todd Hunter
     """
-    axes = dict() # keep track of already created axes
     def safe_pb_subplot(xframe):
         """
         CAS-12786: old pyplots (up to CASA 5.6.1 used to accept "220" in the pos parameter
         Newer pyplots won't. Assume the index effectively used was 1 ("221")
-        
-        CAS-13276: pb.subplot will return a different instance in future matplotlib versions rather than
-        the same instance. We need to keep track of the axes that have been already created; otherwise, we will lose plots.
         """
-        if (axes.get(xframe) != None):
-            return axes.get(xframe)
-
-        if str(xframe).endswith('0'):
-            adesc = pb.subplot(xframe + 1)
-        else:
-            adesc = pb.subplot(xframe)
-        
-        axes[xframe] = adesc
-        return adesc
+        xf = (xframe + 1) if str(xframe).endswith('0') else xframe
+        return pb.subplot(xf)
+    
+    def safe_pb_clf():
+        pb.clf()
 
     casalog.origin('plotbandpass')
     casalogPost(debug,"%s" % (PLOTBANDPASS_REVISION_STRING))
@@ -2165,7 +2160,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
   
     newylimits = [LARGE_POSITIVE, LARGE_NEGATIVE]
     
-    pb.clf()
+    safe_pb_clf() # pb.clf()
     if (bpoly):
       # The number of polarizations cannot be reliably inferred from the shape of
       # the GAIN column in the caltable.  Must use the shape of the DATA column 
@@ -2236,7 +2231,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                     myUniqueColor = []
                     if (debug):
                         print("v) incrementing xframe to %d" % xframe)
-                    adesc = pb.subplot(xframe)
+                    adesc = pb.safe_pb_subplot(xframe)
                     previousSubplot = xframe
                     if (ispw==originalSpw[ispw]):
                         # all this was added mistakenly here.  If it causes a bug, remove it.
@@ -2351,13 +2346,13 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                  pages.append([xctr,spwctr,mytime,1])
 #                                 print("appending [%d,%d,%d,%d]" % (xctr,spwctr,mytime,1))
                                  newpage = 0
-                       pb.clf()
+                       safe_pb_clf()
   
                   if (yaxis.find('phase')>=0 or amplitudeWithPhase):
                     xframe += 1
                     myUniqueColor = []
 # #                  print("w) incrementing xframe to %d" % xframe)
-                    adesc = pb.subplot(xframe)
+                    adesc = pb.safe_pb_subplot(xframe)
                     previousSubplot = xframe
                     if (ispw==originalSpw[ispw]):
                           pb.title("%sspw%2d,  field %d: %s%s" % (antennaString,ispw,
@@ -2443,10 +2438,10 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
               xframe = xframeStart
               if (xctr+1 < len(antennasToPlot)):
                   # don't clear the final plot when finished
-                  pb.clf()
+                  safe_pb_clf()
               if (spwctr+1<len(spwsToPlot) or mytime+1<nUniqueTimes):
                   # don't clear the final plot when finished
-                  pb.clf()
+                  safe_pb_clf()
               pb.subplots_adjust(hspace=myhspace, wspace=mywspace)
            if (redisplay == False):
                mytime += 1
@@ -3236,7 +3231,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                   
 # #     # #        print("Overlay antenna %d, myUniqueTime=%d" % (xctr, myUniqueTime))
                   if (xframe == xframeStart):
-                        pb.clf()
+                        safe_pb_clf()
                   xflag = [item for sublist in xflag for item in sublist]
                   yflag = [item for sublist in yflag for item in sublist]
 #       #          pflag = [xflag, yflag]
@@ -4263,7 +4258,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                    ispw = spwsToPlot[spwctr]
 # #     # #                         print("Returning to [%d,%d,%d,%d]" % (xctr,spwctr,mytime,myap))
                                    if (xctr==pages[0][PAGE_ANT] and spwctr==pages[0][PAGE_SPW] and mytime==pages[0][PAGE_TIME] and pages[0][PAGE_AP]==myap):
-                                     pb.clf()
+                                     safe_pb_clf()
                                      if (debug):
                                          print("2)Setting xframe to %d" % xframeStart)
                                      xframe = xframeStart
@@ -4282,7 +4277,7 @@ def plotbandpass(caltable='', antenna='', field='', spw='', yaxis='amp',
                                        if (debug):
                                            print("amp: appending [%d,%d,%d,%d]" % (xctr,myspwctr,mytime,1))
                                        newpage = 0
-                               pb.clf()
+                               safe_pb_clf()
                                if (debug):
                                    print("3)Setting xframe to %d" % xframeStart)
                                xframe = xframeStart
