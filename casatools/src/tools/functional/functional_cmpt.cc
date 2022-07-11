@@ -12,13 +12,13 @@
 
 #include <functional_cmpt.h>
 
-#include <casa/Logging/LogIO.h>
-#include <casa/Quanta/Quantum.h>
-#include <casa/Quanta/QuantumHolder.h>
-#include <scimath/Functionals/Gaussian1D.h>
-#include <scimath/Functionals/Gaussian2D.h>
-#include <scimath/Functionals/Polynomial.h>
-#include <scimath/Functionals/PowerLogarithmicPolynomial.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Quanta/Quantum.h>
+#include <casacore/casa/Quanta/QuantumHolder.h>
+#include <casacore/scimath/Functionals/Gaussian1D.h>
+#include <casacore/scimath/Functionals/Gaussian2D.h>
+#include <casacore/scimath/Functionals/Polynomial.h>
+#include <casacore/scimath/Functionals/PowerLogarithmicPolynomial.h>
 
 #include <stdcasa/StdCasa/CasacSupport.h>
 
