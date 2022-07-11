@@ -2560,6 +2560,7 @@ g_tools = None
 g_build_state = { 'lib-path': {} }
 
 def generate_casacore_version_header():
+   casacore_version_from_project = None
     with open("casacore/CMakeLists.txt") as f:
         for line in f:
             r = re.match(".*set\(PROJECT_VERSION_MAJOR (\d+)\)",line)
@@ -2573,6 +2574,14 @@ def generate_casacore_version_header():
             r = re.match(".*set\(PROJECT_VERSION_PATCH (\d+)\)",line)
             if r is not None:
                 casacore_version_patch = r.group(1)
+
+            r = re.match(".*project\(casacore VERSION (\d+)\.(\d+)\.(\d+)\)",line)
+            if r is not None:
+                casacore_version_from_project = r.group(1, 2, 3)
+    if casacore_version_from_project is not None:
+        casacore_version_major = casacore_version_from_project[0]
+        casacore_version_minor = casacore_version_from_project[1]
+        casacore_version_patch = casacore_version_from_project[2]
 
     print("Casacore version " + casacore_version_major + "." + casacore_version_minor + "." + casacore_version_patch)
 
