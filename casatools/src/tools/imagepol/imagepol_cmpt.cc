@@ -100,7 +100,8 @@ imagepol::imagepoltestimage(const std::string& outfile,
     if (rm.size() == 1 and rm[0]==0.0) {
       rmdefault = true;
     }
-    rstat = itsImPol->imagepoltestimage(outfile, rm, rmdefault, pa0, sigma,
+    Vector<Double> const rmV(rm);
+    rstat = itsImPol->imagepoltestimage(outfile, rmV, rmdefault, pa0, sigma,
     					nx, ny, nf, f0, bw);
   } catch (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: "

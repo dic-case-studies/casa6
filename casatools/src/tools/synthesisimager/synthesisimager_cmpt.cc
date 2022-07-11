@@ -536,7 +536,8 @@ bool synthesisimager::setweighting(const std::string& type,
       
       //if( ! itsImager ) itsImager = new SynthesisImager();
       itsImager = makeSI();
-      itsImager->dryGridding(cfList);
+      Vector<String> const cfListV(cfList);
+      itsImager->dryGridding(cfListV);
       
     } catch  (AipsError x) {
       RETHROW(x);
@@ -558,7 +559,8 @@ bool synthesisimager::setweighting(const std::string& type,
       //if( ! itsImager ) itsImager = new SynthesisImager();
       itsImager = makeSI();
       //Bool conjBeams=itsImager->getSynthesisParamsGrid().conjBeams;
-      itsImager->fillCFCache(cfList,ftmName, cfcPath, psTermOn, aTermOn, conjBeams);
+      Vector<String> const cfListV(cfList);
+      itsImager->fillCFCache(cfListV,ftmName, cfcPath, psTermOn, aTermOn, conjBeams);
       
     } catch  (AipsError x) {
       RETHROW(x);
