@@ -40,6 +40,21 @@ namespace casa { //# NAMESPACE CASA - BEGIN
 
 namespace vi { //# NAMESPACE VI - BEGIN
 
+// One spw:chan (as str) + fit_order (as int) from the input fitspec record
+typedef std::pair<std::string, unsigned int> InFitSpec;
+
+// field -> fitspec spec with spw:chan string and fitorder
+typedef std::unordered_map<int, std::vector<InFitSpec>> InFitSpecMap;
+
+// Specification of a fit (given per field, per spw, or globally)
+struct FitSpec {
+  FitSpec() = default;  // should be =delete when C++17/insert_or_assign is available
+  FitSpec(Vector<bool> mask, unsigned int order);
+
+  Vector<bool> lineFreeChannelMask;
+  unsigned int fitOrder = -1;
+};
+
 //////////////////////////////////////////////////////////////////////////
 // UVContSubTVI class
 //////////////////////////////////////////////////////////////////////////
@@ -60,13 +75,15 @@ public:
     virtual void floatData (Cube<float> & vis) const;
     virtual void visibilityObserved (Cube<Complex> & vis) const;
     virtual void visibilityCorrected (Cube<Complex> & vis) const;
+    void savePrecalcModel(const Cube<Complex> & origVis,
+                          const Cube<Complex> & contSubVis) const;
     virtual void visibilityModel (Cube<Complex> & vis) const;
     virtual void result(casacore::Record &res) const;
 
 protected:
 
-    bool parseConfiguration(const Record &configuration);
-    void initialize();
+    InFitSpecMap parseConfiguration(const Record &configuration);
+    void initialize(const InFitSpecMap &fitspec);
 
     template<class T> void transformDataCube(	const Cube<T> &inputVis,
     											const Cube<float> &inputWeight,
@@ -81,25 +98,30 @@ protected:
                                                 int parallelCorrAxis=-1) const;
 
  private:
-    void parseFitSPW(const Record &configuration);
-    void parseListFitSPW(const Record &configuration);
-    void printFitSPW() const;
-    void spwInputChecks(const MeasurementSet *msVii, MSSelection &fieldFitspw) const;
-    void populatePerFieldLineFreeChannelMask(int fieldID, const std::string& fieldFitspw);
+    rownr_t getMaxMSFieldID() const;
+    InFitSpecMap parseFitSpec(const Record &configuration) const;
+    InFitSpecMap parseDictFitSpec(const Record &configuration) const;
+    void parseFieldSubDict(const Record &fieldRec, const std::vector<int> &fieldIdxs,
+                           InFitSpecMap &fitspec) const;
+    void printInputFitSpec(const InFitSpecMap &fitspec) const;
+    void populatePerFieldSpec(int fieldID, const std::vector<InFitSpec> &fitSpecs);
+    void insertToFieldSpecMap(const std::vector<int> &fieldIdxs, const InFitSpec &spec,
+                              InFitSpecMap &fitspec) const;
+    void fitSpecToPerFieldMap(const InFitSpecMap &fitspec);
+    void spwInputChecks(const MeasurementSet *msVii, MSSelection &spwChan) const;
+    unordered_map<int, vector<int>> makeLineFreeChannelSelMap(std::string spwChanStr) const;
 
     mutable uint fitOrder_p;
     mutable bool want_cont_p;
-    // field -> fitspw spec
-    std::unordered_map<int, std::string> fitspw_p;
-    // If the user gives SPWs in fitspw that are not in this list, give a warning
+    // If the user gives SPWs in fitspec that are not in this list, give a warning
     std::string allowedSpws_p;
     mutable bool withDenoisingLib_p;
     mutable uint nThreads_p;
     mutable uint niter_p;
 
-    // Maps field -> SPW -> channel_mask (1s will be combined with flags to exclude chans)
-    unordered_map<int, unordered_map<int, Vector<bool>>> perFieldLineFreeChannelMaskMap_p;
-    mutable map<int, denoising::GslPolynomialModel<Double>*> inputFrequencyMap_p;
+    // Maps field->SPW->(order, channel_mask), 1s will be or-ed with flags to exclude chans.
+    unordered_map<int, unordered_map<int, FitSpec>> perFieldSpecMap_p;
+    mutable map<int, unique_ptr<denoising::GslPolynomialModel<double>>> inputFrequencyMap_p;
 
     mutable UVContSubResult result_p;
 
