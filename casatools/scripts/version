@@ -56,7 +56,7 @@ sub get_last_tag () {
     my $delim = shift;
     my @versions;
     my @tags;
-    open( $githashes, "git log --since 2019-10-01 --simplify-by-decoration --pretty='%H' ".$gitbranch." |" );
+    open( $githashes, "git log --since='Jan 30, 2022' --simplify-by-decoration --pretty='%H' ".$gitbranch." |" );
     chomp( @hashes = <$githashes> );
     close( $githashes );
     foreach ( @hashes ) {
