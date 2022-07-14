@@ -73,7 +73,9 @@ namespace casac {
     tablerow::tablerow( const casac::table *_table, const std::vector<std::string> &_columnnames, bool _exclude ) :
         itsLog(new casacore::LogIO)
     {
-        if ( ! _table ) throw AipsError( "invalid table passed for parameter one" );
+        if ( ! _table ||
+             ! _table->itsTable ||
+             ! _table->itsTable->isReadable( ) ) throw AipsError( "invalid table passed for parameter one" );
         itsTable = (table*) _table;
         itsProxy = _table->itsTable;
         itsRow.reset( new TableRowProxy( *itsProxy, _columnnames, _exclude ) );
@@ -83,8 +85,13 @@ namespace casac {
     // tablerow for fetching one or more rows
     tablerow::tablerow( table *tb, std::shared_ptr<casacore::TableProxy> myTable,
                         const std::vector<std::string> &columnnames, bool exclude ) :
-        itsLog(new casacore::LogIO), itsProxy(myTable), itsTable(tb),
-        itsRow(new TableRowProxy( *itsProxy, columnnames, exclude )) { }
+        itsLog(new casacore::LogIO), itsProxy(myTable), itsTable(tb)
+    {
+        if ( ! tb ||
+             ! tb->itsTable ||
+             ! tb->itsTable->isReadable( ) ) throw AipsError( "invalid table passed for parameter one" );
+        itsRow.reset( new TableRowProxy( *itsProxy, columnnames, exclude ) );
+    }
 
     // check to see if tablerow can be modified
     bool tablerow::iswritable( ) {

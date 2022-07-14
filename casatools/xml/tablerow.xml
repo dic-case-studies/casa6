@@ -11,12 +11,12 @@
 
     <description>
       tablerow objects allow the user to retrieve and to replace rows. There are two ways of creating
-      a table row object. The typical way to create a tablerow object is to use the ``rows`` member
+      a table row object. The typical way to create a tablerow object is to use the ``row`` member
       function in the table object::
 
           tb = table( )
           tb.open( 'ngc5921_ut.ms', nomodify=False )
-          myrow = tb.rows( )
+          myrow = tb.row( )
 
       However, it can also be created directly::
 
@@ -31,19 +31,19 @@
 
       Or it can be used as a generator::
 
-          for r in tb.rows( ):
+          for r in tb.row( ):
               print(r)
 
       Finally, there is a ``get`` member function which allows for fetching a single row::
 
-          tb.rows( ).get( 3 )
+          tb.row( ).get( 3 )
 
     </description>
 
     <method name="tablerow" type="constructor" >
       <input>
         <param name="table" type="table">
-          <shortdescription>table whose rows will be accessed by the newly created tablerow object</shortdescription>
+          <shortdescription>an opened table object whose rows will be accessed by the newly created tablerow object</shortdescription>
           <nullable/>
         </param>
         <param name="columnnames" type="stringVec">

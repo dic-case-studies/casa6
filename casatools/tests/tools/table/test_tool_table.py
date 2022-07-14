@@ -35,21 +35,21 @@ class TableBase(unittest.TestCase):
         cls.scratch_path = str(uuid4( ))
         cls.ms_path = os.path.join(cls.scratch_path,ms_name)
 
-    def setUp(self):
-        self.tb = table( )
-        if os.path.exists(self.scratch_path):
-            shutil.rmtree( self.scratch_path, onerror=remove_readonly )
-        if not os.path.exists(self.scratch_path):
-            os.makedirs(self.scratch_path)
-        shutil.copytree( orig_ms_path, self.ms_path )
-        self.tb.open(self.ms_path,nomodify=False)
-        self.rows = self.tb.row( )
-
     @staticmethod
     def remove_readonly(func, path, _):
         "Clear the readonly bit and reattempt the removal"
         os.chmod(path, stat.S_IWRITE)
         func(path)
+
+    def setUp(self):
+        self.tb = table( )
+        if os.path.exists(self.scratch_path):
+            shutil.rmtree( self.scratch_path, onerror=self.remove_readonly )
+        if not os.path.exists(self.scratch_path):
+            os.makedirs(self.scratch_path)
+        shutil.copytree( orig_ms_path, self.ms_path )
+        self.tb.open(self.ms_path,nomodify=False)
+        self.rows = self.tb.row( )
 
     def tearDown(self):
         self.rows.done( )
