@@ -46,10 +46,6 @@ from casatasks.private.parallel.parallel_task_helper import ParallelTaskHelper
 
 from casatestutils import testhelper as th
 
-
-def lociteritems(adict):
-    return adict.items()
-
 datapath = ctsys.resolve('unittest/split/')
 
 # To run test_split with MMS, create MMS from the MSs used in these tests and save them
@@ -130,7 +126,7 @@ def compare_tables(tabname, exptabname, tol=None):
         raise ValueError(tabname + ' and ' + exptabname + ' have different keywords')
     if set(tabdict['cols'].keys()) != set(exptabdict['cols'].keys()):
         raise ValueError(tabname + ' and ' + exptabname + ' have different columns')
-    for col, tabentry in lociteritems(tabdict['cols']):
+    for col, tabentry in tabdict['cols'].items():
         if set(tabentry['keywords']) != set(exptabdict['cols'][col]['keywords']):
             raise ValueError(tabname + ' and ' + exptabname + ' have different keywords for column ' + col)
 
@@ -1092,18 +1088,7 @@ class split_test_blankov(unittest.TestCase):
         Does outputvis == '' cause a prompt exit?
         """
         splitran = False
-        # this value is only used for the python 2 case
-        original_throw_pref = False 
-        myf = None
         try:
-            # this is only needed for python2
-            if not is_python3:
-                myf = stack_frame_find( )
-                # This allows distinguishing ValueError from other exceptions, and
-                # quiets an expected error message.
-                original_throw_pref = myf.get('__rethrow_casa_exceptions', False)
-                myf['__rethrow_casa_exceptions'] = True
-                
             splitran = split(self.inpms, self.outms, datacolumn='data',
                              field='', spw='0:25', width=1,
                              antenna='',
@@ -1114,9 +1099,7 @@ class split_test_blankov(unittest.TestCase):
             splitran = False
         except Exception as e:
             print("Unexpected but probably benign exception:", e)
-        # only does something in the python 2 case
-        if myf is not None:
-            myf['__rethrow_casa_exceptions'] = original_throw_pref 
+
         assert not splitran
 
 class split_test_almapol(SplitChecker):

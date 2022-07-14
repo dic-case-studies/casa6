@@ -25,6 +25,7 @@
 //#
 #include <synthesis/ImagerObjects/DistSIIterBot.h>
 #include <synthesis/ImagerObjects/SIIterBot.h>
+#include <synthesis/ImagerObjects/SIMinorCycleController.h>
 #include <casadbus/session/DBusSession.h>
 #include <casadbus/utilities/Conversion.h>
 
@@ -388,14 +389,14 @@ DistSIIterBot_state::mergeMinorCycleSummary(const Array<Double>& summary) {
 	IPosition summaryShape = summary.shape();
 
 	if (accSummaryShape.nelements() != 2
-	    || accSummaryShape[0] != itsNSummaryFields
+	    || accSummaryShape[0] != SIMinorCycleController::nSummaryFields
 	    || summaryShape.nelements() != 2
-	    || summaryShape[0] != itsNSummaryFields)
+	    || summaryShape[0] != SIMinorCycleController::nSummaryFields)
 		throw AipsError(
 			"Internal error in shape of global minor-cycle summary record");
 
 	itsSummaryMinor.resize(
-		IPosition(2, itsNSummaryFields, accSummaryShape[1] + summaryShape[1]),
+		IPosition(2, SIMinorCycleController::nSummaryFields, accSummaryShape[1] + summaryShape[1]),
 		true);
 
 	ArrayIterator<Double> summaryIter(summary, IPosition(1, 1), false);
@@ -403,10 +404,14 @@ DistSIIterBot_state::mergeMinorCycleSummary(const Array<Double>& summary) {
 	                                     false);
 	accSummaryIter.set(IPosition(1, accSummaryShape[1]));
 
-	IPosition i0 = IPosition(1, 0);
+	IPosition i0 = IPosition(1, 0); // iterations done
+	IPosition i7 = IPosition(1, 7); // cycle start iterations done
+	IPosition i8 = IPosition(1, 8); // starting iterations done
 	while (!summaryIter.pastEnd()) {
 		accSummaryIter.array() = summaryIter.array();
 		accSummaryIter.array()(i0) += itsIterDone;
+		accSummaryIter.array()(i7) += itsIterDone;
+		accSummaryIter.array()(i8) += itsIterDone;
 		accSummaryIter.next();
 		summaryIter.next();
 	}
@@ -456,8 +461,8 @@ DistSIIterBot_state::getSummaryRecord() {
 		0, comm);
 
 	// Create Array of expected shape from acc
-	IPosition totalSummaryShape(2, itsNSummaryFields,
-	                            totalSize / itsNSummaryFields);
+	IPosition totalSummaryShape(2, SIMinorCycleController::nSummaryFields,
+	                            totalSize / SIMinorCycleController::nSummaryFields);
 	Array<Double> totalSummary(totalSummaryShape, acc.data(), SHARE);
 
 	// Create return Record
