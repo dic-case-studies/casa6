@@ -5,11 +5,11 @@
 //for a task or method.
 //
 
-#include <casa/aips.h>
+#include <casacore/casa/aips.h>
 #include <vector>
 #include <string>
 #include <map>
-#include <casa/Containers/Record.h>
+#include <casacore/casa/Containers/Record.h>
 
 using std::vector;
 using std::string;

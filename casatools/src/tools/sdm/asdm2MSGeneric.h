@@ -8,12 +8,12 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include <libxml/parserInternals.h>
-#include <casa/OS/Path.h>
+#include <casacore/casa/OS/Path.h>
 
 #include <memory>
 
-#include <casa/Logging/StreamLogSink.h>
-#include <casa/Logging/LogSink.h>
+#include <casacore/casa/Logging/StreamLogSink.h>
+#include <casacore/casa/Logging/LogSink.h>
 
 
 #include <alma/ASDM/ConversionException.h>
