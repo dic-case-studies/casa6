@@ -3599,7 +3599,8 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
     test050 : blmode='apply'
     test051 : blmode='apply', channels 4500~6500 flagged in input data
     test052 : blmode='apply', spw to flag channels 4500-6499
-    test060 : confirm that the clipping result (mask) is correctly used to compute weights
+    test060 : confirm if clipping result is used to compute weights in fit mode
+    test061 : confirm if clipping result is used to compute weights in apply mode
     """
 
     datapath = ctsys_resolve('unittest/sdbaseline/')
@@ -3612,6 +3613,9 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
                    'intent': 'OBSERVE_TARGET#ON_SOURCE',
                    'datacolumn': 'float_data',
                    'updateweight': True}
+
+    OUTLIER_CHANNEL = 4000
+    OUTLIER_VALUE = 100000000.0
 
     def setUp(self):
         remove_files_dirs(self.infile)
@@ -3789,28 +3793,47 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         self.params.update(spw=self.spw)
         self.run_apply_test()
 
-    def run_clipping_test(self):
+    def _set_data_for_clipping(self):
         # set artificial spectra (flat+outlier) in input MS
-        OUTLIER_CHANNEL = 4000
-        OUTLIER_VALUE = 100000000.0
         with table_manager(self.infile, nomodify=False) as tb:
             spec = tb.getcell('FLOAT_DATA', 0)  # row 0, shape = (npol, nchan)
             # flat spectrum with (mean, sigma) = (0, 1)
             spec[:, 0::2] = 1.0
             spec[:, 1::2] = -1.0
-            spec[:, OUTLIER_CHANNEL] = OUTLIER_VALUE
+            spec[:, self.OUTLIER_CHANNEL] = self.OUTLIER_VALUE
             tb.putcell('FLOAT_DATA', 0, spec)
 
             flag = tb.getcell('FLAG', 0)  # row 0
             flag.fill(False)
             tb.putcell('FLAG', 0, flag)
 
+            return spec, flag
+
+    def _get_reference_weight(self, spec, flag):
         # compute the reference weight value
-        flag[:, OUTLIER_CHANNEL] = True
+        flag[:, self.OUTLIER_CHANNEL] = True
         mdata = np.ma.masked_array(spec, mask=flag)
-        weight_ref = 1.0 / np.var(mdata, axis=1)
+
+        return 1.0 / np.var(mdata, axis=1)
+
+    def run_clipping_test(self, doapply=False):
+        bltable = self.infile + '_blparam.bltable'
+        if doapply:
+            self.params.update(blmode='fit',
+                               blformat='table', bloutput=bltable,
+                               dosubtract=False,
+                               updateweight=False)
+
+        spec, flag = self._set_data_for_clipping()
+        weight_ref = self._get_reference_weight(spec, flag)
 
         sdbaseline(**self.params)
+
+        if doapply:
+            self.params.update(blmode='apply', bltable=bltable,
+                               dosubtract=True,
+                               updateweight=True)
+            sdbaseline(**self.params)
 
         # value checking
         # the weight values in the output MS should be close to 1
@@ -3818,13 +3841,20 @@ class sdbaseline_updateweightTest2(sdbaseline_unittest_base):
         # if clipping result is not taken into account when computing weights,
         # the weight should be a very small value (~ 8 * 10^-13)
         with table_manager(self.outfile) as tb:
-            np.allclose(tb.getcell('WEIGHT', 0), weight_ref)
+            self.assertTrue(np.allclose(tb.getcell('WEIGHT', 0), weight_ref),
+                            msg='weight value is wrong.')
 
     def test060(self):
-        """confirm that the clipping result (mask) is correctly used to compute weights"""
+        """confirm if clipping result is used to compute weights in fit mode"""
         self.params.update(clipniter=5, clipthresh=3.0, updateweight=True,
                            blmode='fit', blfunc='poly', order=0)
         self.run_clipping_test()
+
+    def test061(self):
+        """confirm if clipping result is used to compute weights in apply mode"""
+        self.params.update(clipniter=5, clipthresh=3.0,
+                           blmode='fit', blfunc='poly', order=0)
+        self.run_clipping_test(doapply=True)
 
 
 class sdbaseline_clippingTest(sdbaseline_unittest_base):
