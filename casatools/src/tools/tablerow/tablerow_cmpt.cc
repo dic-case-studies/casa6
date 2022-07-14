@@ -78,7 +78,7 @@ namespace casac {
              ! _table->itsTable->isReadable( ) ) throw AipsError( "invalid table passed for parameter one" );
         itsTable = (table*) _table;
         itsProxy = _table->itsTable;
-        itsRow.reset( new TableRowProxy( *itsProxy, _columnnames, _exclude ) );
+        itsRow.reset( new TableRowProxy( *itsProxy, static_cast<casacore::Vector<casacore::String>>(_columnnames), _exclude ) );
     }
 
     // constructor used by table class (in table_cmpt.cc) to return a
@@ -90,7 +90,7 @@ namespace casac {
         if ( ! tb ||
              ! tb->itsTable ||
              ! tb->itsTable->isReadable( ) ) throw AipsError( "invalid table passed for parameter one" );
-        itsRow.reset( new TableRowProxy( *itsProxy, columnnames, exclude ) );
+        itsRow.reset( new TableRowProxy( *itsProxy, static_cast<casacore::Vector<casacore::String>>(columnnames), exclude ) );
     }
 
     // check to see if tablerow can be modified
