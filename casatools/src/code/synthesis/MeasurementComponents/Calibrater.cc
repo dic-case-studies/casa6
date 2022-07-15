@@ -88,6 +88,109 @@ using namespace casa::vpf;
 using namespace casacore;
 namespace casa { //# NAMESPACE CASA - BEGIN
 
+CalCounts::CalCounts():
+  antennaMap_(),
+  spwMap_(),
+  totalMap_()
+{}
+
+void CalCounts::initCounts(Int NSpw, Int NAnt, Int NPol) {
+    Vector<Int> polShape(NPol, 0);
+    Vector<Int> singleVector(1, 0);
+    
+    totalMap_["expected"] = polShape;
+    totalMap_["data_unflagged"] = polShape;
+    totalMap_["above_minblperant"] = polShape;
+    totalMap_["above_minsnr"] = polShape;
+    
+    for (Int spw=0; spw<NSpw; spw++) {
+      // Init spw map keys
+      spwMap_[spw]["expected"] = polShape;
+      spwMap_[spw]["data_unflagged"] = polShape;
+      spwMap_[spw]["above_minblperant"] = polShape;
+      spwMap_[spw]["above_minsnr"] = polShape;
+      for (Int ant=0; ant<NAnt; ant++) {
+          // Init antenna map keys
+          antennaMap_[spw][ant]["expected"] = polShape;
+          antennaMap_[spw][ant]["data_unflagged"] = polShape;
+          antennaMap_[spw][ant]["above_minblperant"] = polShape;
+          antennaMap_[spw][ant]["above_minsnr"] = polShape;
+          antennaMap_[spw][ant]["used_as_refant"] = singleVector;
+      }
+    }
+}
+
+void CalCounts::addAntennaCounts(Int spw, Int NAnt, Int NPol, std::map<Int, std::map<String, Vector<Int>>> resultMap) {
+    // Add the results to the antenna Map
+    Vector<Int> spwExp(NPol, 0), spwUnflag(NPol, 0), spwMinsnr(NPol, 0);
+    
+    for (Int ant=0; ant<NAnt; ant++) {
+        if (resultMap.find(ant) == resultMap.end()) {continue;};
+        // add if used as refant
+        antennaMap_[spw][ant]["used_as_refant"][0] += resultMap[ant]["used_as_refant"][0];
+        for (Int pol=0; pol<NPol; pol++) {
+            antennaMap_[spw][ant]["expected"][pol] += resultMap[ant]["expected"][pol];
+            antennaMap_[spw][ant]["data_unflagged"][pol] += resultMap[ant]["data_unflagged"][pol];
+            antennaMap_[spw][ant]["above_minblperant"][pol] += resultMap[ant]["above_minblperant"][pol];
+            antennaMap_[spw][ant]["above_minsnr"][pol] += resultMap[ant]["above_minsnr"][pol];
+            // if any antenna value is good add to spw total
+            if (resultMap[ant]["expected"][pol] == 1) {spwExp[pol] = 1;};
+            if (resultMap[ant]["data_unflagged"][pol] == 1) {spwUnflag[pol] = 1;};
+            if (resultMap[ant]["above_minblperant"][pol] == 1) {spwMinsnr[pol] = 1;};
+            if (resultMap[ant]["above_minsnr"][pol] == 1) {spwMinsnr[pol] = 1;};
+        }
+    }
+    // Add the totals to the spw Map
+    for (Int pol=0; pol<NPol; pol++) {
+        spwMap_[spw]["expected"][pol] += spwExp[pol];
+        spwMap_[spw]["data_unflagged"][pol] += spwUnflag[pol];
+        spwMap_[spw]["above_minblperant"][pol] += spwMinsnr[pol];
+        spwMap_[spw]["above_minsnr"][pol] += spwMinsnr[pol];
+        // Acumulate total overall values
+        totalMap_["expected"][pol] += spwExp[pol];
+        totalMap_["data_unflagged"][pol] += spwUnflag[pol];
+        totalMap_["above_minblperant"][pol] += spwMinsnr[pol];
+        totalMap_["above_minsnr"][pol] += spwMinsnr[pol];
+    }
+    
+}
+
+Record CalCounts::makeRecord(Int NAnt, Int NPol) {
+    
+    Vector<Int> totExp(NPol, 0), totUnflag(NPol, 0), totMinsnr(NPol, 0);
+    
+    nSpw = spwMap_.size();
+    cout << "spw map size: " << nSpw << endl;
+    Record resultRec = Record();
+    
+    resultRec.define("expected", totalMap_["expected"]);
+    resultRec.define("data_unflagged", totalMap_["data_unflagged"]);
+    resultRec.define("above_minblperant", totalMap_["above_minblperant"][0]);
+    resultRec.define("above_minsnr", totalMap_["above_minsnr"]);
+    
+    for (Int spw=0; spw<nSpw; spw++) {
+        Record spwRec = Record();
+        spwRec.define("expected", spwMap_[spw]["expected"]);
+        spwRec.define("data_unflagged", spwMap_[spw]["data_unflagged"]);
+        spwRec.define("above_minblperant", spwMap_[spw]["above_minblperant"][0]);
+        spwRec.define("above_minsnr", spwMap_[spw]["above_minsnr"]);
+        for (Int ant=0; ant<NAnt; ant++) {
+            Record subRec = Record();
+            subRec.define("expected", antennaMap_[spw][ant]["expected"]);
+            subRec.define("data_unflagged", antennaMap_[spw][ant]["data_unflagged"]);
+            subRec.define("above_minblperant", antennaMap_[spw][ant]["above_minblperant"][0]);
+            subRec.define("above_minsnr", antennaMap_[spw][ant]["above_minsnr"]);
+            subRec.define("used_as_refant", antennaMap_[spw][ant]["used_as_refant"]);
+            spwRec.defineRecord(RecordFieldId("ant"+to_string(ant)), subRec);
+        }
+        resultRec.defineRecord(RecordFieldId("spw"+to_string(spw)), spwRec);
+    }
+    
+    return resultRec;
+}
+
+CalCounts::~CalCounts() {}
+
 Calibrater::Calibrater(): 
   ms_p(0), 
   mssel_p(0), 
@@ -102,6 +205,7 @@ Calibrater::Calibrater():
   usingCalLibrary_(false),
   corrDepFlags_(false), // default (==traditional behavior)
   actRec_(),
+  resRec_(),
   simdata_p(false),
   ssvp_p()
 {
@@ -123,6 +227,7 @@ Calibrater::Calibrater(String msname):
   usingCalLibrary_(false),
   corrDepFlags_(false), // default (==traditional behavior)
   actRec_(),
+  resRec_(),
   simdata_p(false),
   ssvp_p()
 {
@@ -163,6 +268,7 @@ Calibrater::Calibrater(const vi::SimpleSimVi2Parameters& ssvp):
   usingCalLibrary_(false),
   corrDepFlags_(false), // default (==traditional behavior)
   actRec_(),
+  resRec_(),
   simdata_p(true),
   ssvp_p(ssvp)
 {
@@ -1162,6 +1268,8 @@ Bool Calibrater::getIteratorSelection(Vector<Int>* observationlist, Vector<Int>*
   rec.define("intents", getSelectedIntents());
   rec.define("apply tables", getApplyTables());
   rec.define("solve table", getSolveTable());
+    
+  rec.merge(resRec_);
   
   return rec;
 }
@@ -3283,6 +3391,11 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   Double time0=omp_get_wtime();
 #endif
 
+  // Create record to store results
+  resRec_ = Record();
+  Record attemptRec;
+  attemptRec = Record();
+    
   // Condition solint values 
   svc_p->reParseSolintForVI2();
 
@@ -3486,8 +3599,12 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   svc_p->createMemCalTable2();
 
   Vector<Float> spwwts(msmc_p->nSpw(),-1.0);
-  Vector<Int64> nexp(msmc_p->nSpw(),0), natt(msmc_p->nSpw(),0),nsuc(msmc_p->nSpw(),0);
-
+  Vector<Int64> nexp(msmc_p->nSpw(),0), natt(msmc_p->nSpw(),0),nsuc(msmc_p->nSpw(),0), nbelowsnr(msmc_p->nSpw(),0), nbelowbl(msmc_p->nSpw(),0);
+    
+  // Start Collecting counts
+  CalCounts* calCounts = new CalCounts();
+  calCounts->initCounts(msmc_p->nSpw(),msmc_p->nAnt(), vi.nPolarizationIds());
+    
 #ifdef _OPENMP
   Tsetup+=(omp_get_wtime()-time0);
 #endif
@@ -3522,7 +3639,7 @@ casacore::Bool Calibrater::genericGatherAndSolve()
       for (vi.origin();
 	   vi.more();
 	   ++ivb,vi.next()) {
-
+          
 	// Add this VB to the SDBList                                                                                       
 #ifdef _OPENMP
 	Double Tadd0=omp_get_wtime();
@@ -3571,6 +3688,7 @@ casacore::Bool Calibrater::genericGatherAndSolve()
 
     // Expecting a solution                                                                                                 
     nexp(thisSpw)+=1;
+      
 
 #ifdef _OPENMP
     Tgather+=(omp_get_wtime()-time0);
@@ -3578,7 +3696,7 @@ casacore::Bool Calibrater::genericGatherAndSolve()
 #endif
 
     if (sdbs.Ok()) {
-
+        
       // Some unflagged data, so Attempting a solution                                                                      
       natt(thisSpw)+=1;
 
@@ -3617,13 +3735,17 @@ casacore::Bool Calibrater::genericGatherAndSolve()
 
           // Execute the solve                                                                                              
           Bool goodsol=vcs.solve(*ve_p,*svc_p,sdbs);
-
+            
 
           if (goodsol) {
             totalGoodSol=True;
 
             svc_p->formSolveSNR();
             svc_p->applySNRThreshold();
+            // accumulate from SNR NEED POL NUM
+            std::map<Int, std::map<String, Vector<Int>>> resultMap = svc_p->getAntennaMap();
+            // Collect all the antenna based information (should minbl not be counted here?)
+            calCounts->addAntennaCounts(thisSpw,msmc_p->nAnt(), vi.nPolarizationIds(), resultMap);
           }
           else
 	    svc_p->currMetaNote();
@@ -3669,9 +3791,11 @@ casacore::Bool Calibrater::genericGatherAndSolve()
     
     //    throw(AipsError("EARLY ESCAPE!!"));
 
-
-  } // isol                                                                                                                 
-
+  } // isol
+  
+  // Compile all accumulated counts into a record
+  resRec_ = calCounts->makeRecord(msmc_p->nAnt(), vi.nPolarizationIds());
+    
   // Report nGood to logger
   logSink() << "  Found good " 
 	    << svc_p->typeName() << " solutions in "
@@ -3719,6 +3843,8 @@ casacore::Bool Calibrater::genericGatherAndSolve()
   actRec_.define("nExpected",nexp);
   actRec_.define("nAttempt",natt);
   actRec_.define("nSucceed",nsuc);
+    
+  cout << nexp << ", " << natt << ", " << nsuc << endl;
 
   { 
     Record solveRec=svc_p->solveActionRec();

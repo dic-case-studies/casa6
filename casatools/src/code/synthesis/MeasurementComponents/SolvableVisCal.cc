@@ -489,6 +489,7 @@ SolvableVisCal::SolvableVisCal(VisSet& vs) :
   dataInterval_(0.0),
   fitWt_(0.0),
   fit_(0.0),
+  antennaMap_(),
   solveCPar_(vs.numberSpw(),NULL),  // TBD: move inflation into ctor body
   solveRPar_(vs.numberSpw(),NULL),
   solveParOK_(vs.numberSpw(),NULL),
@@ -3697,6 +3698,8 @@ Bool SolvableVisCal::verifyConstraints(SDBList& sdbs) {  // VI2
   // Recursively apply threshold on baselines per antenna
   Vector<Bool> antOK(nAnt(),True);  // nominally OK
   Vector<Int> blperant(nAnt(),0);
+  Vector<Int> initVector(nPar(), 0);
+    
   Int iant=0;
   while (iant<nAnt()) {
     if (antOK(iant)) {   // avoid reconsidering already bad ones
@@ -3723,9 +3726,11 @@ Bool SolvableVisCal::verifyConstraints(SDBList& sdbs) {  // VI2
   // Apply constraints results to solutions and data
   solveParOK()=False;   // Solutions nominally bad
   for (Int iant=0;iant<nAnt();++iant) {
+    antennaMap_[iant]["above_minblperant"] = initVector;
     if (antOK(iant)) {
       // set solution good
       solveParOK().xyPlane(iant) = True;
+      antennaMap_[iant]["above_minblperant"][0] += 1;
     }
     else {
       // This ant not ok, set soln to zero
@@ -3973,14 +3978,34 @@ void SolvableVisCal::formSolveSNR() {
 void SolvableVisCal::applySNRThreshold() {
 
   Int nOk1(ntrue(solveParOK()));
+    
+  std::map<casacore::Int, std::map<casacore::String, casacore::Vector<casacore::Int>>> resultMap;
+  Vector<Int> initVector(nPar(), 0);
+  Vector<Int> initVectorSingle(1, 0);
   
-  for (Int iant=0;iant<nAnt();++iant)
-    for (Int ipar=0;ipar<nPar();++ipar)
-      if (solveParOK()(ipar,0,iant))
-	solveParOK()(ipar,0,iant)=(solveParSNR()(ipar,0,iant)>minSNR());
+  for (Int iant=0;iant<nAnt();++iant) {
+    // Create antenna accumulation
+    antennaMap_[iant]["expected"] = initVector;
+    antennaMap_[iant]["data_unflagged"] = initVector;
+    antennaMap_[iant]["above_minsnr"] = initVector;
+    antennaMap_[iant]["used_as_refant"] = initVectorSingle;
+    if (refant() == iant) {
+      antennaMap_[iant]["used_as_refant"][0] += 1;
+    }
+    for (Int ipar=0;ipar<nPar();++ipar) {
+      antennaMap_[iant]["expected"][ipar] += 1;
+      if (solveParOK()(ipar,0,iant)){
+	    solveParOK()(ipar,0,iant)=(solveParSNR()(ipar,0,iant)>minSNR());
+        antennaMap_[iant]["data_unflagged"][ipar] += 1;
+        if (solveParOK()(ipar,0,iant)) {antennaMap_[iant]["above_minsnr"][ipar] += 1;};
+      }
+    }
+  }
   
+  //cout << pexp << endl;
+    
   Int nOk2(ntrue(solveParOK()));
-  Int nFail=nOk1-nOk2;    
+  Int nFail=nOk1-nOk2;
   
   if (false) {
     // Report some stuff re SNR

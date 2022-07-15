@@ -145,7 +145,6 @@ private:
 };
 
 
-
  
 class SolvableVisCal : virtual public VisCal {
 public:
@@ -339,6 +338,10 @@ public:
 
   // Access to source pol parameters
   inline casacore::Vector<casacore::Complex>& srcPolPar() { return srcPolPar_; };
+    
+  // get antenna map
+  virtual std::map<casacore::Int, std::map<casacore::String, casacore::Vector<casacore::Int>>> getAntennaMap() {return antennaMap_;};
+    
 
   // Synchronize the meta data with a solvable VisBuffer
   //   (returns false if VisBuffer has no valid data)
@@ -735,6 +738,9 @@ private:
   casacore::PtrBlock<casacore::Cube<casacore::Float>*>   solveAllParSNR_; // [nSpw](nPar,nChan,{1|nElm})
 
   casacore::Vector<casacore::Complex> srcPolPar_;
+    
+  // Map for antenna information
+  std::map<casacore::Int, std::map<casacore::String, casacore::Vector<casacore::Int>>> antennaMap_;
 
   // A _pointer_ to the external channel mask
   casacore::PtrBlock<casacore::Vector<casacore::Bool>*> *chanmask_;
