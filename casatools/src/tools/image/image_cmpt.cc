@@ -5309,10 +5309,10 @@ record* image::restoringbeam(
             );
             std::unique_ptr<record> rec(new record());
             const auto beams = ii.getBeamSet();
-            const ulong nchan =  beams.nchan();
-            const ulong nstokes = beams.nstokes();
-            rec->insert("nChannels", nchan);
-            rec->insert("nStokes", nstokes);
+            const auto nchan =  beams.nchan();
+            const auto nstokes = beams.nstokes();
+            rec->insert("nChannels", (unsigned long)nchan);
+            rec->insert("nStokes", (unsigned long)nstokes);
             const auto matrices = beams.paramMatrices();
             const auto spectralAxis = csys.spectralAxisNumber();
             const auto polAxis = csys.polarizationAxisNumber();
