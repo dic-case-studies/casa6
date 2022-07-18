@@ -251,14 +251,14 @@ class ia_beamarea_test(ImageBase):
         __test_exception(
                 parms,
                 'This image only has 10 channels, so a channel value less than '
-                'or equal to 9 must be specified.'
+                '10 must be specified.'
             ) 
         parms['channel'] = 8
         parms['polarization'] = 5
         __test_exception(
                 parms,
                 'This image only has 4 polarizations, so a polarization value '
-                'less than or equal  to 3 must be specified.'
+                'less than 4 must be specified.'
             ) 
         parms['channel'] = -1
         parms['polarization'] = 0
