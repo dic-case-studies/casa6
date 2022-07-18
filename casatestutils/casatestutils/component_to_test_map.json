@@ -1571,6 +1571,16 @@
             "comment":""
         },
         {
+            "testScript":"test_tool_table",
+            "testType":"casatools",
+            "maintainer":"Darrell Schiebel",
+            "maintainerEmail":"dschieb@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_tool_vpmanager",
             "testType":"casatools",
             "maintainer":"Dirk Petry",
