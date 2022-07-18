@@ -8449,7 +8449,6 @@ image {\sff zz1}.
         shape is [200, 200, 4, 10] again with 10 channels and 4 stokes, the shape of the
         returned arrays will be (4, 10) since the polarization axis precedes the spectral
         axis.
-        This method does not support images with double precision (both real and complex) pixel values.
     </description>
 </method>
 

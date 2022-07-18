@@ -308,14 +308,29 @@ bool image::addnoise(
     return false;
 }
 
+const ImageInfo& image::_imageInfo() const {
+    // caller needs to ensure that one pointer is not null
+    return _imageF ? _imageF->imageInfo()
+        : _imageC ? _imageC->imageInfo()
+            : _imageD ? _imageD->imageInfo()
+                : _imageDC->imageInfo();
+}
+
+const CoordinateSystem& image::_coordinates() const {
+    // caller needs to ensure that one pointer is not null
+    return _imageF ? _imageF->coordinates()
+        : _imageC ? _imageC->coordinates()
+            : _imageD ? _imageD->coordinates()
+                : _imageDC->coordinates();
+}
+
 record* image::beamarea(long channel, long polarization) {
     try {
         _log << _ORIGIN;
         if (_detached()) {
             return nullptr;
         }
-        _notSupported(__func__);
-        const auto ii = _imageF ? _imageF->imageInfo() : _imageC->imageInfo();
+        const auto ii = _imageInfo();
         ThrowIf(
             ! ii.hasBeam(),
             "This image has no beam(s). The setrestoringbeam() method may be "
@@ -329,15 +344,15 @@ record* image::beamarea(long channel, long polarization) {
             ThrowIf(
                 channel >= nchan,
                 "This image only has " + String::toString(nchan) + " channels, "
-                "so a channel value less than or equal to "
-                + String::toString(nchan - 1) + " must be specified"
+                "so a channel value less than " + String::toString(nchan)
+                + " must be specified"
             );
             nstokes = ii.nStokes();
             ThrowIf(
                 polarization >= nstokes,
                 "This image only has " + String::toString(nstokes)
-                + " polarizations, so a polarization value less than or equal "
-                " to " + String::toString(nstokes - 1) + " must be specified"
+                + " polarizations, so a polarization value less than "
+                + String::toString(nstokes) + " must be specified"
             );
             ThrowIf(
                 (channel < 0 && polarization >= 0)
@@ -346,13 +361,12 @@ record* image::beamarea(long channel, long polarization) {
                 "polarization must be non-negative, or both must be negative"
             );
         }
-        const auto csys = _imageF
-            ? _imageF->coordinates()
-            : _imageC->coordinates();
+        const auto csys = _coordinates();
         const auto dc = csys.directionCoordinate();
         auto pixelArea = dc.getPixelArea();
         std::unique_ptr<record> rec(new record());
         if (hasMultiBeams && channel < 0 && polarization < 0) {
+            // return beam areas for all beams
             const auto beamSet = ii.getBeamSet();
             const auto spectralAxis = csys.spectralAxisNumber();
             const auto polAxis = csys.polarizationAxisNumber();
@@ -376,6 +390,8 @@ record* image::beamarea(long channel, long polarization) {
             rec->insert("arcsec2", variant(w, shape_vec));
         }
         else {
+            // image has only one beam or a single channel and single
+            // polarization were specified for a multi-beam image
             auto beamInPixels = ii.getBeamAreaInPixels(
                 channel, polarization, dc
             );
@@ -5276,14 +5292,8 @@ record* image::restoringbeam(
         }
         String ret = mbret;
         ret.downcase();
-        const auto ii = _imageF ? _imageF->imageInfo()
-            : _imageC ? _imageC->imageInfo()
-            : _imageD ? _imageD->imageInfo()
-            : _imageDC->imageInfo();
-        const auto csys = _imageF ? _imageF->coordinates()
-            : _imageC ? _imageC->coordinates()
-            : _imageD ? _imageD->coordinates()
-            : _imageDC->coordinates();
+        const auto ii = _imageInfo();
+        const auto csys = _coordinates();
         const auto matrixMode = ret.startsWith("m");
         const auto multiBeam = ii.hasMultipleBeams();
         if (matrixMode) {
@@ -6928,21 +6938,18 @@ std::shared_ptr<Record> image::_getRegion(
                 ! (_imageF || _imageC || _imageD || _imageDC),
                 "No attached image. Cannot use a string value for region"
             );
+            csys = _coordinates();
             if (_imageF) {
                 shape = _imageF->shape();
-                csys = _imageF->coordinates();
             }
             else if (_imageC) {
                 shape = _imageC->shape();
-                csys = _imageC->coordinates();
             }
             else if (_imageD) {
                 shape = _imageD->shape();
-                csys = _imageD->coordinates();
             }
             else if (_imageDC) {
                 shape = _imageDC->shape();
-                csys = _imageDC->coordinates();
             }
             else {
                 ThrowCc("Logic Error");
