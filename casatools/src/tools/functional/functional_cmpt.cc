@@ -206,7 +206,9 @@ functional* functional::gaussian2d(
 		else if (! mypa.isConform("rad")) {
 			throw AipsError("pa units must be angular");
 		}
-		Gaussian2D<Double> *g = new Gaussian2D<Double>(amplitude, mycenter, myfwhm, mypa.getValue("rad"));
+        Vector<Double> const mycenterV(mycenter);
+        Vector<Double> const myfwhmV(myfwhm);
+		Gaussian2D<Double> *g = new Gaussian2D<Double>(amplitude, mycenterV, myfwhmV, mypa.getValue("rad"));
 		return new functional(g);
 
 	);
