@@ -1521,6 +1521,16 @@
             "comment":""
         },
         {
+            "testScript":"test_tool_quanta",
+            "testType":"casatools",
+            "maintainer":"Dave Mehringer",
+            "maintainerEmail":"dmehring@nrao.edu",
+            "testOptions":[],
+            "testGroup":["casatools"],
+            "timeout":0,
+            "comment":""
+        },
+        {
             "testScript":"test_tool_regionmanager",
             "testType":"casatools",
             "maintainer":"David Mehringer",
