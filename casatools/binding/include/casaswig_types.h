@@ -12,6 +12,8 @@
 
 namespace casac {
 
+typedef void PyObj;
+
 struct complex {
 	complex() {}
 	complex(double arg0, double arg1): re(arg0), im(arg1){}
