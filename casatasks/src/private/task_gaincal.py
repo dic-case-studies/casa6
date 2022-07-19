@@ -160,9 +160,13 @@ def gaincal(vis=None,caltable=None,
         mycb.solve()
 
         reportsolvestats(mycb.activityrec());
+        
+        results_dict = mycb.returndict()
 
     finally:
         mycb.close()
+        
+    return results_dict
 
 def reportsolvestats(rec):
     if (list(rec.keys()).count('origin')==1 and
