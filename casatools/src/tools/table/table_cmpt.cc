@@ -1462,10 +1462,10 @@ casac::variant* table::getcellslice(
             );
         }
         Vector<int> cblc(ndim), ctrc(ndim), cinc(ndim);
-        for (int i=0; i<ndim; ++i) {
-            cblc = (int)blcCopy[i];
-            ctrc = (int)trcCopy[i];
-            cinc = (int)incrCopy[i];
+        for (uInt i=0; i<ndim; ++i) {
+            cblc[i] = (int)blcCopy[i];
+            ctrc[i] = (int)trcCopy[i];
+            cinc[i] = (int)incrCopy[i];
         }
         ValueHolder theVal = itsTable->getCellSlice(
             columnname, rownr, cblc, ctrc, cinc
