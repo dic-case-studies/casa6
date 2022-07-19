@@ -641,22 +641,16 @@ of extreme values that may affect the fit.
 ----------------------------------
 PER-SPECTRUM FIT PARAMETERS
 ----------------------------------
-Being an expert mode, per-spectrum baseline fitting parameters are accepted
-when setting blfunc='variable'.
-The fitting parameters can be defined in a text file, which should be set
-to the task parameter 'blparam'.
+Per-spectrum baseline fitting parameters can be applied when blfunc='variable'.
 
-Each line of the text file should store baseline fitting parameters for its
-corresponding spectrum in the input MS. It must be a comma-separated text
-and contain values in the following order:
+The fitting parameters can be defined in a text file and specified in a
+parameter 'blparam'. Each line of the text file should store baseline fitting
+parameters for its corresponding spectrum in the input MS. It must be a
+comma-separated text and contain values in the following order:
 
-(1) 'row': row index after selection
-(2) 'pol': polarization index in the row
-(3) 'mask': channel region(s) used for fitting. Connect the beginning and
-            the end channel indices with '~' to specify a single region.
-            Multiple regions can be specified by connecting each regions
-            using semicolon. Put a blank '' to use all channels
-            (see examples below)
+(1) 'row': row index
+(2) 'pol': polarization index in the specified row
+(3) 'mask': channel range(s) used for the fitting (see examples below).
 (4) 'clipniter': maximum number of times of iterative fitting (identical to
                  the task parameter 'clipniter')
 (5) 'clipthresh': clipping threshold for iterative fitting (identical to
@@ -676,7 +670,7 @@ and contain values in the following order:
                'blfunc')
 (12) 'order': order of polynomial function (identical to the task parameter
               'order'). Needed when (11) is 'poly' or 'chebyshev'. It will
-              be ignored when other values set for blfunc
+              be ignored when other values are set for blfunc
 (13) 'npiece': number of the element polynomials of cubic spline curve.
                Needed when (11) is 'cspline' (identical to the task
                parameter 'npiece')
@@ -684,8 +678,8 @@ and contain values in the following order:
               'sinusoid' though, actually, sinusoidal fitting is yet to be
               available with per-spectrum fitting
 
-Note that the following task parameters will be ignored even if they are
-specified explicitly when executing per-spectrum fitting:
+Note that the following task parameters will be ignored/overwritten when
+blfunc='variable' is specified (i.e., when per-spectrum fitting is executed):
 
 * for iterative clipping: clipniter, clipthresh
 * for linefinder: thresh, edge, avg_limit
