@@ -119,6 +119,11 @@ print qa.convertdop('10km/s','1')
      <value/>
      </param>
 
+     <param name="keepshape" direction="in" type="bool">
+     <description>Only used if input parameter v is a multi-dimensional array. Output array will have the same shape as v.</description>
+     <value>false</value>
+     </param>
+
 </input>
 <returns type="record"/>
 <description>
@@ -133,6 +138,11 @@ are given, the numeric value can be any numeric type, and can also be
 a vector of numeric values.  print qa.map() to get a list of recognized units.
 'd' is usually days, but can be degrees (see example).
 
+The keepshape input parameter is only relevant if v is a multi-dimensional array.
+In this case, if true, the output value array will have the same shape as v. If false,
+a one-dimensional array is returned with length equal to the number of elements in
+v. The default value is false in order to preserve backward compatibility with
+previous versions.
 </description>
 <example>
 
@@ -178,8 +188,8 @@ qa.quantity('5d0m30s')                  # OK
 </input>
 <returns type="doubleVec"/>
 <description>
-getvalue returns the internal value of a quantity. It also can handle an array
-of quantities.
+getvalue returns the internal value of a quantity. It also can handle a 1-D
+array of quantities, but multi-dimensional arrays are not supported.
 </description>
 <example>
 
@@ -222,7 +232,8 @@ print qa.getvalue(a)
 </input>
 <returns type="string"/>
 <description>
-getunit returns the internal unit string of a quantity
+getunit returns the internal unit string of a quantity. Note that 1-D arrays
+are supported, but multi-dimensional arrays are not.
 </description>
 <example>
 
@@ -1871,11 +1882,15 @@ print qa.done(kill=T)
      <description/>
      <value/>
      </param>
-</input>
+    <param name="keepshape" direction="in" type="bool">
+     <description/>
+     <value>false</value>
+     </param>
+    </input>
 <returns type="record"/>
 <description>
 unit makes a quantity from a string, or from a value and a string.
-Note that unit is a synonym for quantity (see example there).
+Note that unit is a synonym for quantity (see description and example there).
 </description>
 </method>
 

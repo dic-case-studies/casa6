@@ -206,8 +206,10 @@ vpmanager::setpbcospoly(const std::string& telescope, const std::string& otherte
     else
       pai=casaQuantity(paincrement);
     casacore::Record rec;
+    casacore::Vector<casacore::Double> const coeffV(coeff);
+    casacore::Vector<casacore::Double> const scaleV(scale);
     VPManager::Instance()->setpbcospoly(String(telescope), String(othertelescope), dopb,
-			 coeff, scale, mr, rf, isthispb, sdir, srf,
+			 coeffV, scaleV, mr, rf, isthispb, sdir, srf,
 			 dosquint, pai, usesymmetricbeam, rec);
     r=fromRecord(rec);
 
@@ -299,8 +301,9 @@ vpmanager::setpbinvpoly(const std::string& telescope, const std::string& otherte
     else
       pai=casaQuantity(paincrement);
     casacore::Record rec;
+    Vector<Double> const coeffV(coeff);
     VPManager::Instance()->setpbinvpoly(String(telescope), String(othertelescope), dopb,
-			 coeff, mr, rf, isthispb, sdir, srf,
+			 coeffV, mr, rf, isthispb, sdir, srf,
 			 dosquint, pai, usesymmetricbeam, rec);
     r=fromRecord(rec);
 
@@ -342,8 +345,9 @@ vpmanager::setpbnumeric(const std::string& telescope, const std::string& otherte
     else
       pai=casaQuantity(paincrement);
     casacore::Record rec;
+    Vector<Double> const vectV(vect);
     VPManager::Instance()->setpbnumeric(String(telescope), String(othertelescope), dopb,
-			 vect, mr, rf, isthispb, sdir, srf,
+			 vectV, mr, rf, isthispb, sdir, srf,
 			 dosquint, pai, usesymmetricbeam, rec);
     r=fromRecord(rec);
 
@@ -407,8 +411,9 @@ vpmanager::setpbpoly(const std::string& telescope, const std::string& otherteles
     else
       pai=casaQuantity(paincrement);
     casacore::Record rec;
+    Vector<Double> const coeffV(coeff);
     VPManager::Instance()->setpbpoly(String(telescope), String(othertelescope), dopb,
-		      coeff, mr, rf, isthispb, sdir, srf,
+		      coeffV, mr, rf, isthispb, sdir, srf,
 		      dosquint, pai, usesymmetricbeam, rec);
     r=fromRecord(rec);
 
@@ -747,8 +752,9 @@ vpmanager::getvps(const std::string& telescope,
       casacore::Vector<Record> out_rec_list;
       casacore::Vector<casacore::Vector<uInt> > beam_index;
 
+      Vector<String> const antennasV(antennas);
       if(VPManager::Instance()->getvps(out_rec_list, beam_index,
-				       telescope, mObsTimeV, mFreqV, antennas, mObsDir)){
+				       telescope, mObsTimeV, mFreqV, antennasV, mObsDir)){
 	if(beam_index.size()>0){
           // translate index into matrix
 	  Matrix<uInt> beamIndex(beam_index.size(), beam_index[0].size(), -1);
