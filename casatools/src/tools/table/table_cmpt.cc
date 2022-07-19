@@ -15,6 +15,7 @@
 #include <iostream>
 #include <algorithm>
 #include <table_cmpt.h>
+#include <tablerow_cmpt.h>
 #include <casa/aips.h>
 #include <tables/DataMan/IncrementalStMan.h>
 #include <tables/DataMan/IncrStManAccessor.h>
@@ -66,22 +67,19 @@ namespace casac {
 
 table::table()
 {
-   itsTable = 0;
    itsLog = new casacore::LogIO;
 }
 
-table::table(casacore::TableProxy *theTable)
+table::table(casacore::TableProxy *theTable) : itsTable(theTable)
 {
-   //itsTable = new TableProxy(*theTable);
-   itsTable = theTable;
    itsLog = new casacore::LogIO;
 }
 
 table::~table()
 {
+  remove_all_tablerows( );
   delete itsLog;
-  if(itsTable)
-     delete itsTable;
+  itsTable.reset( );
 }
 
 bool
@@ -91,12 +89,13 @@ table::open(const std::string& tablename, const ::casac::record& lockoptions, co
     try {
         Record *tlock = toRecord(lockoptions);
         //TableLock *itsLock = getLockOptions(tlock);
+        remove_all_tablerows( );
         if(nomodify){
             if(itsTable)close();
-            itsTable = new casacore::TableProxy(String(tablename),*tlock,Table::Old);
+            itsTable.reset( new casacore::TableProxy(String(tablename),*tlock,Table::Old) );
         } else {
             if(itsTable)close();
-            itsTable = new casacore::TableProxy(String(tablename),*tlock,Table::Update);
+            itsTable.reset( new casacore::TableProxy(String(tablename),*tlock,Table::Update) );
         }
         delete tlock;
         rstat = true;
@@ -124,11 +123,12 @@ table::create(const std::string& tablename, const ::casac::record& tabledesc,
    Record *tdesc = toRecord(tabledesc);
    Record *dmI   = toRecord(dminfo);
 
+   remove_all_tablerows( );
    if(itsTable)
      close();
-   itsTable = new casacore::TableProxy(String(tablename), *tlock,
-                                   String(endianformat), String(memtype),
-                                   nrow, *tdesc, *dmI);
+   itsTable.reset( new casacore::TableProxy(String(tablename), *tlock,
+                                            String(endianformat), String(memtype),
+                                            nrow, *tdesc, *dmI) );
    delete tlock;
    delete tdesc;
    delete dmI;
@@ -191,8 +191,8 @@ table::close()
 
  Bool rstat(false);
  try {
-    delete itsTable;
-    itsTable = 0;
+    remove_all_tablerows( );
+    itsTable.reset( );
     rstat = true;
  } catch (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -2114,14 +2114,13 @@ bool table::fromascii(const std::string& tablename, const std::string& asciifile
    try {
       Vector<String> atmp, btmp;
       IPosition tautoshape;
-      if(!itsTable)
-         delete itsTable;
+      remove_all_tablerows( );
+      itsTable.reset( );
       if(columnnames.size( ) > 0 && columnnames[0] != "")
-	      atmp = toVectorString(columnnames);
+          atmp = toVectorString(columnnames);
       if(datatypes.size( ) > 0 && datatypes[0] != "")
-	      btmp = toVectorString(datatypes);
-      itsTable = new casacore::TableProxy(String(asciifile), String(headerfile), String(tablename), autoheader, tautoshape, String(sep), String(commentmarker), firstline, lastline, atmp, btmp);
-      // itsTable = new casacore::TableProxy(asciifile, headerfile, String(tablename));
+          btmp = toVectorString(datatypes);
+      itsTable.reset( new casacore::TableProxy(String(asciifile), String(headerfile), String(tablename), autoheader, tautoshape, String(sep), String(commentmarker), firstline, lastline, atmp, btmp) );
       rstatus = true;
    } catch (AipsError x) {
       *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -2449,7 +2448,22 @@ bool table::testincrstman(const std::string& column)
 }
 
 
-
+::casac::tablerow*
+table::row( const std::vector<std::string> &columnnames, bool exclude ) {
+    *itsLog << LogOrigin(__func__,itsTable ? name( ) : "row without table");
+    try {
+        if ( itsTable ) {
+            auto result = new tablerow( this, itsTable, columnnames, exclude );
+            created_rows.push_back(result);
+            return result;
+        }
+    } catch (AipsError x) {
+        *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg( ) << LogIO::POST;
+        RETHROW(x);
+    }
+    *itsLog << LogIO::SEVERE << "Row access from unitialized table" << LogIO::POST;
+    throw AipsError("row access from unitialized table");
+}
 
 } // casac namespace
 

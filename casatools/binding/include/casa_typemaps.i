@@ -221,6 +221,15 @@ if($1){
     $1 = deleter.get ();
 }
 
+%typemap(in) PyObj* {
+    /* pass through PyObject */
+    $1 = $input;
+}
+%typemap(out) PyObj* {
+    /* pass through PyObject */
+    $result = (PyObject*) $1;
+}
+
 //%typemap(typecheck) variant {
  //  $1=1;
 //}
