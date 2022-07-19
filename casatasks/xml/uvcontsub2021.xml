@@ -139,7 +139,7 @@
         using a polynomial shape and using as input data points the
         channels given, which can be considered the line-free
         channels. fitspec can be a simple string or a dictionary. If
-        it is a simple string, it gives an spw:channel specificatin in
+        it is a simple string, it gives an spw:channel specification in
         MSSelection syntax, and that same spw:channel specification is
         used for all fields. In that case, the polynomial order for
         all fields and SPWs is defined by the fitorder parameter.
@@ -156,63 +156,56 @@
         channels, and polynomial order given in the global fitorder
         parameter).
 
-                     Default: '' (all channels for all SPWs for all fields)
-                     Examples:
-                     '17:100~500;600~910;1215~1678;1810~1903,19:7~100'
-                     (The ranges of channels given for SPW 17 and 19
-                     are used for all the fields present in the
-                     MeasurementSet.)
+           Default: '' (all channels for all SPWs for all fields)
+           Examples:
+           '17:100~500;600~910;1215~1678;1810~1903,19:7~100'
+           (The ranges of channels given for SPW 17 and 19
+            are used for all the fields present in the
+            MeasurementSet.)
 
-                     Dictionary to use different channels and polynomial
-                     orders for different fields and SPWs, assuming:
-                          4 SPWs, with IDs 17, 19, 21, 23.
-                          6 fields, with IDs 0, 1, 4, 5, 6, 7
-                     {
-                      {'0': {'17,19,21,23': {'chan': ''
-                                             'fitorder': 1}},
-                       '1': {'17': {'chan': '8~120'
-                                    'fitorder': 0},
-                             '19': {'chan': '7~100'
-                                    'fitorder': 1},
-                             '21': {'chan': '21:2~119'
-                                    'fitorder': 1},
-                             '23': {'chan': ''
-                                    'fitorder': 0},
-                            }
-                       '4,5,6': {'19': {'chan': '7~115'
-                                        'fitorder': 1},
-                                 '21': {'chan': ''
-                                        'fitorder': 1},
-                                 '21': {'chan': ''
-                                        'fitorder': 2},
-                                }
-                       '7': 'NONE'
-                      }
-                     (Field 0: fit all SPWs and channels (same as not giving it),
-                      but using polynomial order 1 for all SPWs.
-                      Field 1: fit only some channel ranges (all for SPW 23), with
-                      different polynomial orders.
-                      Fields 4,5,6: fit only some channel ranges in SPW 19, all
-                      channels for SPWs 21 and 23, and don't fit SPWs 17),
-                      also using different polynomial orders.
-                      Field 7: do not subtract continuum.
+           Dictionary to use different channels and polynomial
+           orders for different fields and SPWs, assuming:
+                4 SPWs, with IDs 17, 19, 21, 23
+                6 fields, with IDs 0, 1, 4, 5, 6, 7
+           {'0': {'17,19,21,23': {'chan': '', 'fitorder': 1}},
+            '1': {'17': {'chan': '8~120', 'fitorder': 0},
+                  '19': {'chan': '7~100', 'fitorder': 1},
+                  '21': {'chan': '21:2~119', 'fitorder': 1},
+                  '23': {'chan': '', 'fitorder': 0}},
+            '4,5,6': {'19': {'chan': '7~115', 'fitorder': 1},
+                      '21': {'chan': '', 'fitorder': 1},
+                      '23': {'chan': '', 'fitorder': 2}},
+            '7': 'NONE'}
 
-        In the example, the empty string given for field 0 and all
-        its SPWs means that all the channels are fitted (and
-        subtracted) in all the SPWs. For the corner case where for a
-        given field no channels should be fitted in any SPW, the
-        field entry can be given as a string set to 'NONE'.
+           (Field 0: fit all SPWs and channels (same as not giving it),
+            but using polynomial order 1 for all SPWs.
+            Field 1: fit only some channel ranges (all for SPW 23), with
+            different polynomial orders.
+            Fields 4,5,6: fit only some channel ranges in SPW 19, all
+            channels for SPWs 21 and 23, and don't fit SPWs 17),
+            also using different polynomial orders.
+            Field 7: do not subtract continuum)
+           (The dictionary fields 'chan' can be given in channel
+            numbers, as in the example above, or in frequencies, using
+            the MSSelection syntax)
+
+        In the example, the empty string given for field 0 and all its
+        SPWs means that all the channels are fitted (and subtracted)
+        in all those SPWs. For the corner case where for a given field
+        no channels should be fitted in any SPW, the field entry can
+        be given as a string set to 'NONE'.
 
         This specification of SPWs and channels uses a syntax similar
-        to the spw parameter. But here the SPWs and channels are used
-        as a mask applied on the input data only for fitting
+        to the spw parameter. But in contrast to the spw parameter,
+        the SPWs and channels given in fitspec are not used to select
+        data but as a mask applied on the input data only for fitting
         purposes. The channels that are not included in the
         specification are masked out and not used as input by the
         polynomial fitting algorithm. This is different from the spw
         parameter, which selects the data that will be included in the
-        output. All channels present in the output are continuum-subtracted,
-        regardless of whether they were specified as inputs to the fitting
-        in fitspec
+        output. All channels present in the output are
+        continuum-subtracted, regardless of whether they were
+        specified as inputs to the fitting in fitspec
         </description>
         <type>string</type><type>record</type>
         <value type="string"/>
