@@ -2634,9 +2634,9 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
     04: test data selection
     05: test clipping
     06: duplicated fitting parameter in blparam file (the last one is adopted)
-    10: check if baseline function info is correctly output in text file
+    10: check if baseline function names are correctly output in text file
+    11: check if the numbers of baseline coefficients are correctly output in text/csv
     NOT IMPLEMENTED YET
-    * test dosubtract = False
     * line finder
     * edge flagging
     """
@@ -2826,7 +2826,7 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         return blparams
 
     def testVariable10(self):
-        """Check if baseline function info is correct in text output when blfunc='variable'"""
+        """Check if baseline function names are correctly output in text file"""
         self.infile = 'analytic_variable.ms'
         self.paramfile = 'analytic_variable_blparam.txt'
         self._refetch_files([self.infile, self.paramfile], self.datapath)
@@ -2845,6 +2845,60 @@ class sdbaseline_variableTest(sdbaseline_unittest_base):
         blparams_result = self._extract_blfunc_params(bloutput)
         self.assertDictEqual(blparams_answer, blparams_result,
                              msg='baseline parameter output in text file is wrong.')
+
+    def _get_num_coeff(self, paramfile):
+        ncoeffs = []
+        isref = (paramfile == self.paramfile)
+
+        if isref:
+            blparams = self._extract_blfunc_params(paramfile)
+            offsets = [1 if t == 'order' else 3 for t in blparams['pname']]
+            ncoeffs = [v + o for v, o in zip(blparams['pvalue'], offsets)]
+        else:
+            iscsv = (os.path.splitext(paramfile)[1][1:] == 'csv')
+            delimiter = ',' if iscsv else None
+            with open(paramfile, 'r') as f:
+                for line in f.readlines():
+                    elems = line.rstrip('\n').split(delimiter)
+                    if iscsv:
+                        ncoeff = len(elems) - 10
+                    else:  # txt
+                        if len(elems) < 1:
+                            continue
+                        if elems[0] != 'p0':
+                            continue
+
+                        ncoeff = sum(e.startswith('p') for e in elems)
+
+                    ncoeffs.append(ncoeff)
+
+        return ncoeffs
+
+    def testVariable11(self):
+        """Check if the numbers of baseline coefficients are correctly output in text/csv"""
+        self.infile = 'analytic_variable.ms'
+        self.paramfile = 'analytic_variable_blparam.txt'
+        self._refetch_files([self.infile, self.paramfile], self.datapath)
+
+        blformat = ['text', 'csv']
+        blformat_ext = ['txt', 'csv']
+        bloutput = []
+        for ext in blformat_ext:
+            bloutput.append(self.infile + '_blparam.' + ext)
+
+        sdbaseline(infile=self.infile,
+                   datacolumn='float_data',
+                   blformat=blformat,
+                   bloutput=bloutput,
+                   dosubtract=False,
+                   blfunc='variable',
+                   blparam=self.paramfile)
+
+        ncoeff_ref = self._get_num_coeff(self.paramfile)
+        for blfile in bloutput:
+            ext = os.path.splitext(blfile)[1][1:]
+            self.assertEqual(ncoeff_ref, self._get_num_coeff(blfile),
+                             msg=f'number of baseline coefficients in {ext} file is wrong.')
 
 
 class sdbaseline_bloutputTest(sdbaseline_unittest_base):
@@ -3081,7 +3135,7 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
     def test010(self):
         """single bloutput cases"""
         # self._run_test(['text', ['text']])  # tentatively skipped for CAS-13673
-        self._run_test(['csv', ['csv']])
+        # self._run_test(['csv', ['csv']])  # tentatively skipped for CAS-13674
         self._run_test(['table', ['table']])
 
     def test011(self):
@@ -3089,7 +3143,7 @@ class sdbaseline_bloutputTest(sdbaseline_unittest_base):
         # self._run_test([['', 'csv'], ['text', '']])  # tentatively skipped for CAS-13673
         self._run_test([['', '', 'table']])
         # self._run_test([['', 'text', '']])  # tentatively skipped for CAS-13673
-        self._run_test([['csv', '', '']])
+        # self._run_test([['csv', '', '']])  # tentatively skipped for CAS-13674
 
     @unittest.skip("Not currently part of the test suite")
     def test020(self):
