@@ -133,7 +133,7 @@ if "--stripsyms" in sys.argv:
 module_name = 'casatools'
 
 pyversion = float(sys.version_info[0]) + float(sys.version_info[1]) / 10.0
-xml_jar_file = 'xml-casa-assembly-1.66.jar'
+xml_jar_file = 'xml-casa-assembly-1.68.jar'
 xml_jar_path = os.path.join( 'scripts', 'java', xml_jar_file)
 xml_jar_url = 'http://casa.nrao.edu/download/devel/xml-casa/java/%s' % xml_jar_file
 
@@ -1829,9 +1829,7 @@ def write_make_cpp(additional_subdir_filters=[], use_sakura=True, use_atm=True):
     with open("makefile", "a") as mk:
         for (mysrc, myflags) in zip(src, cflags):
             dflags = sep.join(myflags + duse_grpc + grpc_dirs)
-            myinc = includes
-            if mysrc == SOURCE_BINDING:
-                myinc += " -I" + python_inc
+            myinc = includes + f' -I{python_inc}'
             for s in mysrc:
                 b = os.path.splitext(s)[0]
                 objfile = obj_name.format(base=b)
@@ -2316,10 +2314,8 @@ class create_makefile(Command):
         with open("makefile", "a") as mk:
             for s in STATICS_CC + WRAP_CPP + CODE_BINDING:
                 base = os.path.splitext(s)[0]
-                myinc = includes
+                myinc = includes + f' -I{python_inc}'
                 toolname = base.split(os.sep)[-2]
-                if s in WRAP_CPP:
-                    myinc += " -I" + python_inc
                 # for tn in tool_deps[toolname]:
                 mylibs = set([toolname] + g_tools[toolname] if toolname in g_tools else [])
                 dependencies = set()

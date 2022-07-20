@@ -1,0 +1,190 @@
+<casaxml xsi:schemaLocation="http://casa.nrao.edu/schema/casa.xsd file:///opt/casa/code/tools/xml/casa.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://casa.nrao.edu/schema/psetTypes.html">
+
+  <tool module="table" name="tablerow">
+    <shortdescription>Access table rows from casa6</shortdescription>
+    <code>
+      <include>tablerow_forward.h</include>
+      <private>
+        <include>tablerow_private.h</include>
+      </private>
+    </code>
+
+    <description>
+      tablerow objects allow the user to retrieve and to replace rows. There are two ways of creating
+      a table row object. The typical way to create a tablerow object is to use the ``row`` member
+      function in the table object::
+
+          tb = table( )
+          tb.open( 'ngc5921_ut.ms', nomodify=False )
+          myrow = tb.row( )
+
+      However, it can also be created directly::
+
+          tb = table( )
+          tb.open( 'ngc5921_ut.ms', nomodify=False )
+          myrow = tablerow( tb )
+
+      Once created, the tablerow object can be used to take row-wise slices of the table, for example to
+      fetch the first three rows from the table::
+
+          myrow[:3]
+
+      Or it can be used as a generator::
+
+          for r in tb.row( ):
+              print(r)
+
+      Finally, there is a ``get`` member function which allows for fetching a single row::
+
+          tb.row( ).get( 3 )
+
+    </description>
+
+    <method name="tablerow" type="constructor" >
+      <input>
+        <param name="table" type="table">
+          <shortdescription>an opened table object whose rows will be accessed by the newly created tablerow object</shortdescription>
+          <nullable/>
+        </param>
+        <param name="columnnames" type="stringVec">
+          <shortdescription>columns to be included (or optionally excluded)</shortdescription>
+          <value/>
+        </param>
+        <param name="exclude" type="bool">
+          <shortdescription>exclude the columns identified by the columnnames parameter</shortdescription>
+          <value>false</value>
+        </param>
+      </input>
+    </method>
+
+    <method name="_iswritable" type="function">
+      <shortdescription>check to see if row can be modified</shortdescription>
+      <description>
+        check to see if row can be modified
+      </description>
+      <returns type="bool"/>
+    </method>
+
+    <method name="iswritable" type="function">
+      <shortdescription>check to see if row can be modified</shortdescription>
+      <description>
+        check to see if row can be modified
+      </description>
+      <returns type="bool"/>
+    </method>
+
+    <method name="_get" type="function">
+      <shortdescription>get a single row</shortdescription>
+      <description>
+        get a single row specified by rownr
+      </description>
+
+      <input>
+        <param name="rownr" type="int">
+          <description>row number to retrieve</description>
+        </param>
+      </input>
+      <returns type="record"/>
+    </method>
+
+    <method name="get" type="function">
+      <shortdescription>get a single row</shortdescription>
+      <description>
+        get a single row specified by rownr
+      </description>
+
+      <input>
+        <param name="rownr" type="int">
+          <description>row number to retrieve</description>
+        </param>
+      </input>
+      <returns type="record"/>
+    </method>
+
+    <method name="_put" type="function">
+      <shortdescription>put a single row</shortdescription>
+      <description>
+        put a single row specified by rownr
+      </description>
+
+      <input>
+        <param name="rownr" type="int">
+          <description>row number to store</description>
+        </param>
+
+        <param name="value" type="record">
+          <description>row record to store</description>
+        </param>
+
+        <param name="matchingfields" type="bool">
+          <description>
+            If true, this means that the value may contain more fields and only fields matching a column name will be used.
+          </description>
+          <value>true</value>
+        </param>
+      </input>
+
+      <returns type="bool"/>
+    </method>
+
+    <method name="put" type="function">
+      <shortdescription>put a single row</shortdescription>
+      <description>
+        put a single row specified by rownr
+      </description>
+
+      <input>
+        <param name="rownr" type="int">
+          <description>row number to store</description>
+        </param>
+
+        <param name="value" type="record">
+          <description>row record to store</description>
+        </param>
+
+        <param name="matchingfields" type="bool">
+          <description>
+            If true, this means that the value may contain more fields and only fields matching a column name will be used.
+          </description>
+          <value>true</value>
+        </param>
+      </input>
+
+      <returns type="bool"/>
+    </method>
+
+    <method name="__len__" type="function">
+      <shortdescription>number of rows available</shortdescription>
+      <description>
+        return the number of available rows for use in subscription
+      </description>
+      <returns type="int"/>
+    </method>
+
+    <method name="__getitem__" type="function">
+      <shortdescription>get row from table</shortdescription>
+      <description>
+        get one row from the referenced table used in subscription
+      </description>
+      <input>
+        <param name="rownr" type="pyobj">
+          <description>
+            Row number to return
+          </description>
+        </param>
+      </input>
+      <returns type="pyobj"/>
+    </method>
+
+    <method name="done" type="function">
+      <shortdescription>release references to the table resources</shortdescription>
+      <description>
+        Release the table resources. After this call, the tablerow object will no longer
+        be useful.
+      </description>
+      <returns type="void"/>
+    </method>
+
+  </tool>
+
+</casaxml>
