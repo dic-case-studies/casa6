@@ -1,4 +1,4 @@
-// used to access rows of table
+#include <utility>
 friend class tablerow;
 
 //Privates for table_cmpt
@@ -25,3 +25,10 @@ void remove_all_tablerows( ) {
 table(casacore::TableProxy *myTable);
 //
 casacore::TableLock *getLockOptions(casac::record &lockoptions);
+
+void _checkCorner(
+    const std::vector<long>& corner, const casacore::String& name,
+    const casacore::IPosition& shape,
+    const std::pair<std::vector<long>, std::vector<long>> *const &blctrc=nullptr
+);
+
