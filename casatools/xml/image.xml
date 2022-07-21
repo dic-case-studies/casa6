@@ -8473,11 +8473,11 @@ image {\sff zz1}.
 
 This function returns the restoring beam(s), if any, of the attahced image.    
 
-If mbret=&quot;matrix&quot;, an exception will be thrown if the attahced image
+If mbret=&quot;matrix&quot; (or &quot;m&quot;), an exception will be thrown if the attahced image
 does not have per-plane beams, or if channel or polarization is specified to be
 non-negative. See below for more information on the mbret parameter.
 
-If mbret=&quot;list&quot; and the attached image has no restoring beam(s), an
+If mbret=&quot;list&quot; (or &quot;l&quot;) and the attached image has no restoring beam(s), an
 empty dictionary is returned.
 
 If the image has a single traditional restoring beam and mbret=&quot;list&quot;,
