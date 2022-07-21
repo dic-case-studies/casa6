@@ -132,7 +132,7 @@ bool logsink::origin(const std::string &fromwhere)
 // getorigin: Return an origin string. It returns LogOrigin->taskName
 // This value must be synchronized with LogSink.globalSink->taskName
 // by a developer (you)
-std::string logsink::getorigin()
+std::string logsink::getOrigin()
 {
   return itsorigin->taskName();
 }

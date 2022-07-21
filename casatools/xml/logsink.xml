@@ -330,7 +330,7 @@
   <example>casalog.getNumCPUs(true)</example>
 </method>
 
-<method name="getorigin" type="function">
+<method name="getOrigin" type="function">
 	<shortdescription>Get the origin of the message</shortdescription>
 	<description>Gets the origin of messages to be displayed</description>
 	<input/>

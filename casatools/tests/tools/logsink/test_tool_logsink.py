@@ -48,7 +48,7 @@ class LogsinkTest(unittest.TestCase):
         for input_origin, expected in test_cases:
             with self.subTest(origin=input_origin):
                 casalog.origin(input_origin)
-                self.assertEqual(casalog.getorigin(), expected)
+                self.assertEqual(casalog.getOrigin(), expected)
 
     def test_getorigin_set_strings(self):
         """Check that the string values set logsink.origin can get correctly by getorigin."""
