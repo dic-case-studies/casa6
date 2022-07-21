@@ -34,7 +34,7 @@ class LogsinkTest(unittest.TestCase):
 
     def test_getorigin_initial_origin(self):
         """Check the initial value of logsink.origin by getorigin."""
-        self.assertEqual(casatools.logsink().getorigin(), '')
+        self.assertEqual(casatools.logsink().getOrigin(), '')
 
     def __getorigin_subtest(self, test_cases):
         """Run subtest of getorigin with test cases.
