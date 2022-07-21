@@ -23,7 +23,7 @@ import numpy as np
 import casatools
 
 
-class logsink_test(unittest.TestCase):
+class LogsinkTest(unittest.TestCase):
     """The unittest class of logsink."""
 
     def setUp(self):
