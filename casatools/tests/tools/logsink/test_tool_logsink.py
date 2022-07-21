@@ -36,39 +36,48 @@ class logsink_test(unittest.TestCase):
         """Check the initial value of logsink.origin by getorigin."""
         self.assertEqual(casatools.logsink().getorigin(), '')
 
+    def __getorigin_subtest(self, test_cases):
+        """Run subtest of getorigin with test cases.
+
+        Parameters
+        ----------
+        test_cases : list of tuple of {str, numeric, None}
+            List of test cases. Each test case is a tuple of origin and expected value.
+        """
+        casalog = casatools.logsink()
+        for input_origin, expected in test_cases:
+            with self.subTest(origin=input_origin):
+                casalog.origin(input_origin)
+                self.assertEqual(casalog.getorigin(), expected)
+
     def test_getorigin_set_strings(self):
         """Check that the string values set logsink.origin can get correctly by getorigin."""
-
-        casalog = casatools.logsink()
-        casalog.origin('test')
-        self.assertEqual(casalog.getorigin(), 'test')
-        casalog.origin('test\n')
-        self.assertEqual(casalog.getorigin(), 'test\n')
-        del casalog
+        self.__getorigin_subtest(
+            [
+                ('test', 'test'),
+                ('test\n', 'test\n')
+            ]
+        )
 
     def test_getorigin_set_nullvalues(self):
         """Check that the null values set logsink.origin can get correctly by getorigin."""
-
-        casalog = casatools.logsink()
-        casalog.origin('\0')
-        self.assertEqual(casalog.getorigin(), '')
-        casalog.origin(None)
-        self.assertEqual(casalog.getorigin(), 'None')
-        casalog.origin('')
-        self.assertEqual(casalog.getorigin(), '')
-        del casalog
+        self.__getorigin_subtest(
+            [
+                ('\0', ''),
+                (None, 'None'),
+                ('', '')
+            ]
+        )
 
     def test_getorigin_set_num(self):
         """Check that the numeric values set logsink.origin can get correctly by getorigin."""
-
-        casalog = casatools.logsink()
-        casalog.origin(1)
-        self.assertEqual(casalog.getorigin(), '1')
-        casalog.origin(np.pi)
-        self.assertEqual(casalog.getorigin(), str(np.pi))
-        casalog.origin(1 + 1j)
-        self.assertEqual(casalog.getorigin(), str(1 + 1j))
-        del casalog
+        self.__getorigin_subtest(
+            [
+                (1, '1'),
+                (np.pi, str(np.pi)),
+                (1 + 1j, str(1 + 1j))
+            ]
+        )
 
 
 if __name__ == '__main__':
