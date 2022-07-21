@@ -162,6 +162,19 @@
                                 (Note : This MEM implementation is not very robust.
                                              Improvements will be made in the future.)
 
+                        asp : Adaptive Scale Pixel algorithm [Bhatnagar and Cornwell, 2004]
+                                - Define a set of initial scales defined as 0, W, 2W 4W and 8W 
+                                 where W is a 2D Gaussian fitting width to the PSF 
+                                - Smooth the residual image by a Gaussian beam at initial scales
+                                - Search for the global peak (F) among these smoothed residual images
+                                - form an active Aspen set: amplitude(F), amplitude location(x,y)
+                                - Optimize the Aspen set by minimizing the objective function RI-Aspen*PSF, 
+                                 where RI is the residual image and * is the convulition operation. 
+                                - Compute the model image and update the residual image
+                                - Repeat from step 2
+                                       
+                                (Note : This is an experimental version of the ASP algorithm.)
+
 
 
       </description>
@@ -175,6 +188,7 @@
         <value>multiscale</value>
         <value>mtmfs</value>
         <value>mem</value>
+        <value>asp</value>
 
       </allowed>
     </param>
@@ -266,6 +280,49 @@
                         The effect of smallscalebias is more pronounced when using multi-scale relative to mtmfs. 
       </description>
       <value type="double">0.0</value>
+    </param>
+
+    <param type="double" name="fusedthreshold" subparam="true">
+     <shortdescription>Threshold for triggering Hogbom Clean </shortdescription>
+     <description> Threshold for triggering Hogbom Clean (number in units of Jy)
+
+                        fusedthreshold = 0.0001  : 0.1 mJy
+
+                        This is a subparameter of the Asp Clean deconvolver. When peak residual 
+                        is lower than the threshold, Asp Clean is "switched to Hogbom Clean" (i.e. only use the 0 scale for cleaning) for 
+                        the following number of iterations until it switches back to Asp Clean.
+
+                        NumberIterationsInHogbom = 50 + 2 * (exp(0.05 * NthHogbom) - 1)
+
+                        , where NthHogbom is the number of times Hogbom Clean has been triggered. 
+
+                        When the Asp Clean detects it is approaching convergence, it uses only the 0 scale for the following number of iterations for better computational efficiency. 
+
+                        NumberIterationsInHogbom = 500 + 2 * (exp(0.05 * NthHogbom) - 1)
+
+
+      </description>
+      <value type="double">0.0</value>
+    </param>
+
+    <param type="int" name="largestscale" subparam="true">
+     <shortdescription>Largest scale allowed for the Asp Clean deconvolver</shortdescription>
+     <description> Largest scale (in pixels) allowed for the initial guess for the Asp Clean deconvolver.
+
+                        largestscale = 100
+
+                        The default initial scale sizes used by Asp Clean is [0, w, 2w, 4w, 8w], 
+                        where `w` is the PSF width. The default `largestscale` is -1 which indicates 
+                        users accept these initial scales. If `largestscale` is set, the initial scales 
+                        would be [0, w, ... up to the `largestscale`]. This is only an initial guess,
+                        and actual fitted scale sizes may evolve from these initial values.
+
+                        It is recommended not to set `largestscale` unless Asp Clean picks a large 
+                        scale that has no constraints from the data (the UV hole issue). 
+
+
+      </description>
+      <value type="int">-1</value>
     </param>
 
 
@@ -697,7 +754,9 @@
           <default param="nterms"><value type="int">2</value></default>
           <default param="smallscalebias"><value>0.0</value></default>
         </equals>
-        <equals type="string" value="aasp">
+        <equals type="string" value="asp">
+          <default param="fusedthreshold"><value>0.0</value></default>
+          <default param="largestscale"><value>-1</value></default>
         </equals>
       </when>
 

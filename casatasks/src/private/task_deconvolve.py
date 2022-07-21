@@ -141,6 +141,8 @@ def deconvolve(
     scales,#=[],
     nterms,#=1,
     smallscalebias,#=0.0
+    fusedthreshold,#=0.0
+    largestscale,#=-1
 
     ### restoration options
     restoration,#=True,
@@ -199,6 +201,9 @@ def deconvolve(
         check_requiredmask_exists(usemask, mask)
         check_requiredimgs_exist(imagename, inp)
         check_starmodel_model_collisions(startmodel, imagename, deconvolver)
+
+        if deconvolver.lower() == "asp":
+            casalog.post("Warning! The asp deconvolver is currently expirimental for tclean, and extremely expirimental for deconvolve! Please proceed with caution!", "WARNING")
         
         # make a list of parameters with defaults from tclean
         if is_python3:
