@@ -245,7 +245,7 @@ Previous calibrations should be applied on the fly.
     for each caltable.
     * When frequency interpolation is relevant (B, Df,
     Xf), separate time-dependent and freq-dependent
-    interp types with a comma (freq_after_ the
+    interp types with a comma (freq after the
     comma). 
     * Specifications for frequency are ignored when the
     calibration table has no channel-dependence. 

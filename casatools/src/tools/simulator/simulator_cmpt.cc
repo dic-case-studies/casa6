@@ -420,7 +420,12 @@ simulator::setconfig(const std::string& telescopename, const std::vector<double>
 
 	
       }
-      rstat=itsSim->setconfig(telescopename, x, y, z, dishdiameter, offset,  
+      Vector<Double> const xV(x);
+      Vector<Double> const yV(y);
+      Vector<Double> const zV(z);
+      Vector<Double> const dishdiameterV(dishdiameter);
+      Vector<Double> const offsetV(offset);
+      rstat=itsSim->setconfig(telescopename, xV, yV, zV, dishdiameterV, offsetV,
 			      toVectorString(mount), toVectorString(antname), 
 			      toVectorString(padname), 
 			      coordsystem, mpos );
@@ -449,7 +454,9 @@ Bool rstat(false);
     
     if(itsSim !=0){
       
-      rstat=itsSim->setfeed(mode,x,y,toVectorString(pol));
+      Vector<Double> const xV(x);
+      Vector<Double> const yV(y);
+      rstat=itsSim->setfeed(mode,xV,yV,toVectorString(pol));
     }
     
     
@@ -586,7 +593,9 @@ simulator::setdata(const std::vector<long>& spwid, const std::vector<long>& fiel
  try {
    
    if(itsSim !=0){
-     rstat=itsSim->setdata(spwid, fieldid, msselect);
+     Vector<Int> const spwidV(spwid);
+     Vector<Int> const fieldidV(fieldid);
+     rstat=itsSim->setdata(spwidV, fieldidV, msselect);
    }
     
     
@@ -779,7 +788,8 @@ simulator::setbandpass(const std::string& mode, const std::string& table,
     if(itsSim !=0){
       
       casacore::Quantity qinter(casaQuantity(interval));
-      rstat=itsSim->setbandpass(mode, table, qinter, amplitude);
+      Vector<Double> const amplitudeV(amplitude);
+      rstat=itsSim->setbandpass(mode, table, qinter, amplitudeV);
     }
     
     
@@ -811,10 +821,11 @@ simulator::setapply(const std::string& table,
     os << "Beginning setapply--------------------------" << LogIO::POST;
 
     // Forward to the Simulator object
+    Vector<Int> const spwmapV(spwmap);
     if (itsSim)
       rstat = itsSim->setapply(type,t,table,
 			       "",toCasaString(field),
-			       interp,calwt,spwmap,opacity);
+			       interp,calwt,spwmapV,opacity);
     
   } catch  (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() 
@@ -870,7 +881,8 @@ simulator::setgain(const std::string& mode, const std::string& table,
     if(itsSim !=0){
       
       casacore::Quantity qint(casaQuantity(interval));
-      rstat=itsSim->setgain(mode, table, qint, amplitude);
+      Vector<Double> const amplitudeV(amplitude);
+      rstat=itsSim->setgain(mode, table, qint, amplitudeV);
     }
     
     
@@ -928,7 +940,9 @@ simulator::setleakage(const std::string& mode, const std::string& table,
       
       //casacore::Quantity qinter(casaQuantity(interval));
       //rstat=itsSim->setleakage(mode, table, qinter, amplitude);
-      rstat=itsSim->setleakage(mode, table, amplitude, offset);
+      Vector<Double> const amplitudeV(amplitude);
+      Vector<Double> const offsetV(offset);
+      rstat=itsSim->setleakage(mode, table, amplitudeV, offsetV);
     }
     
     

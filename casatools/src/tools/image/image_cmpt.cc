@@ -55,6 +55,7 @@
 #include <scimath/Functionals/Polynomial.h>
 #include <scimath/Mathematics/VectorKernel.h>
 #include <tables/LogTables/NewFile.h>
+#include <tables/Tables/TableUtil.h>
 
 #include <components/ComponentModels/GaussianDeconvolver.h>
 #include <components/ComponentModels/SkyCompRep.h>
@@ -244,6 +245,7 @@ bool image::addnoise(
     const variant& region, bool zeroIt, const vector<long>& seeds
 ) {
     try {
+        Vector<Double> const parsV(pars);
         _log << LogOrigin("image", __func__);
         if (_detached()) {
             return false;
@@ -267,25 +269,25 @@ bool image::addnoise(
         if (_imageF) {
             PixelValueManipulator<Float>::addNoise(
                 _imageF, type, *pRegion,
-                pars, zeroIt, seedPair.get()
+                parsV, zeroIt, seedPair.get()
             );
         }
         else if (_imageC) {
             PixelValueManipulator<Complex>::addNoise(
                 _imageC, type, *pRegion,
-                pars, zeroIt, seedPair.get()
+                parsV, zeroIt, seedPair.get()
             );
         }
         else if (_imageD) {
             PixelValueManipulator<Double>::addNoise(
                 _imageD, type, *pRegion,
-                pars, zeroIt, seedPair.get()
+                parsV, zeroIt, seedPair.get()
             );
         }
         else if (_imageDC) {
             PixelValueManipulator<DComplex>::addNoise(
                 _imageDC, type, *pRegion,
-                pars, zeroIt, seedPair.get()
+                parsV, zeroIt, seedPair.get()
             );
         }
         else {
@@ -1192,7 +1194,7 @@ record* image::coordmeasures(
         casacore::Record theVel;
         Vector<Double> vpixel;
         if (!(pixel.size() == 1 && pixel[0] == -1)) {
-            vpixel = pixel;
+            vpixel = Vector<Double>(pixel);
         }
         unique_ptr<Record> retval;
         casacore::String error;
@@ -1985,7 +1987,7 @@ record* image::fitprofile(const string& box, const variant& region,
         ) {
             sigmaArray.reset(new Array<Float>());
             vector<double> sigmaVector = sigma.getDoubleVec();
-            Vector<Int> shape = sigma.arrayshape();
+            Vector<Int> shape(sigma.arrayshape());
             sigmaArray->resize(IPosition(shape));
             convertArray(
                 *sigmaArray,
@@ -2304,8 +2306,9 @@ bool image::fromcomplist(
         else {
             ThrowCc("Unsupported type for parameter cl");
         }
+        Vector<Int> const shapeV(shape);
         _imageF = ImageFactory::createComponentListImage(
-            outfile, *mycl, shape, *coordinates, overwrite, log, cache
+            outfile, *mycl, shapeV, *coordinates, overwrite, log, cache
         );
         vector<String> names {
             "outfile", "shape", "cl",
@@ -2426,6 +2429,7 @@ bool image::fromshape(
     const bool linear, const bool overwrite, const bool log, const string& type
 ) {
     try {
+        Vector<Int> const shapeV(shape);
         LogOrigin lor("image", __func__);
         _log << lor;
         _reset();
@@ -2441,25 +2445,25 @@ bool image::fromshape(
         );
         if (mytype == "f") {
             _imageF = ImageFactory::floatImageFromShape(
-                outfile, shape, *coordinates,
+                outfile, shapeV, *coordinates,
                 linear, overwrite, log
             );
         }
         else if (mytype == "c") {
             _imageC = ImageFactory::complexImageFromShape(
-                outfile, shape, *coordinates,
+                outfile, shapeV, *coordinates,
                 linear, overwrite, log
             );
         }
         else if (mytype == "d") {
             _imageD = ImageFactory::doubleImageFromShape(
-                outfile, shape, *coordinates,
+                outfile, shapeV, *coordinates,
                 linear, overwrite, log
             );
         }
         else if (mytype == "cd") {
             _imageDC = ImageFactory::complexDoubleImageFromShape(
-                outfile, shape, *coordinates,
+                outfile, shapeV, *coordinates,
                 linear, overwrite, log
             );
         }
@@ -3079,19 +3083,19 @@ std::vector<std::string> image::history(bool list) {
         }
         if (_imageF) {
             ImageHistory<Float> hist(_imageF);
-            return fromVectorString(hist.get(list));
+            return fromVectorString(Vector<String>(hist.get(list)));
         }
         else if (_imageC) {
             ImageHistory<Complex> hist(_imageC);
-            return fromVectorString(hist.get(list));
+            return fromVectorString(Vector<String>(hist.get(list)));
         }
         else if (_imageD) {
             ImageHistory<Double> hist(_imageD);
-            return fromVectorString(hist.get(list));
+            return fromVectorString(Vector<String>(hist.get(list)));
         }
         else if (_imageDC) {
             ImageHistory<DComplex> hist(_imageDC);
-            return fromVectorString(hist.get(list));
+            return fromVectorString(Vector<String>(hist.get(list)));
         }
         else {
             ThrowCc("Logic error");
@@ -4211,7 +4215,7 @@ image* image::pbcor(
         Array<Float> pbPixels;
         SPCIIF pb_ptr;
         if (pbimage.type() == variant::DOUBLEVEC) {
-            Vector<Int> shape = pbimage.arrayshape();
+            Vector<Int> shape(pbimage.arrayshape());
             pbPixels.resize(IPosition(shape));
             Vector<Double> localpix(pbimage.getDoubleVec());
             casacore::convertArray(pbPixels, localpix.reform(IPosition(shape)));
@@ -4420,7 +4424,7 @@ template<class T> void image::_putchunk(
     const bool list, const bool locking, const bool replicate
 ) {
     Array<T> pixelsArray;
-    Vector<Int> shape = pixels.arrayshape();
+    Vector<Int> shape(pixels.arrayshape());
     pixelsArray.resize(IPosition(shape));
     if (pixels.type() == variant::DOUBLEVEC) {
         std::vector<double> pixelVector = pixels.getDoubleVec();
@@ -4936,7 +4940,7 @@ image* image::regrid(
         String mask = _getMask(vmask);
         Vector<Int> axes;
         if (!((inaxes.size() == 1) && (inaxes[0] == -1))) {
-            axes = inaxes;
+            axes = Vector<Int>(inaxes);
         }
         vector<String> msgs;
         if (_doHistory) {
@@ -5096,8 +5100,8 @@ bool image::removefile(const std::string& filename) {
 
         // Now try and blow it away.  If it's open, tabledelete won't delete it.
         String message;
-        if (Table::canDeleteTable(message, fileName, true)) {
-            Table::deleteTable(fileName, true);
+        if (TableUtil::canDeleteTable(message, fileName, true)) {
+            TableUtil::deleteTable(fileName, true);
             rstat = true;
         } else {
             _log << LogIO::WARN << "Cannot delete file " << fileName
@@ -6270,11 +6274,11 @@ template <class T> record* image::_toworld(
         pixel.resize(0);
     }
     else if (value.type() == variant::DOUBLEVEC) {
-        pixel = value.getDoubleVec();
+        pixel = Vector<Double>(value.getDoubleVec());
     }
     else if (value.type() == variant::INTVEC) {
         variant vcopy = value;
-        Vector<Int> ipixel = vcopy.asIntVec();
+        Vector<Int> ipixel(vcopy.asIntVec());
         Int n = ipixel.size();
         pixel.resize(n);
         for (int i = 0; i < n; ++i) {
@@ -6386,7 +6390,7 @@ bool image::twopointcorrelation(
         }
         Vector<Int> iAxes;
         if (!(axes.size() == 1 && axes[0] == -1)) {
-            iAxes = axes;
+            iAxes = Vector<Int>(axes);
         }
         vector<String> msgs;
         if (_doHistory) {
@@ -6894,11 +6898,11 @@ vector<double> image::_toDoubleVec(const variant& v) {
     );
     vector<double> output;
     if (type == variant::INTVEC) {
-        Vector<long> x = v.toIntVec();
+        Vector<long> x(v.toIntVec());
         std::copy(x.begin(), x.end(), std::back_inserter(output));
     }
     if (type == variant::DOUBLEVEC) {
-        Vector<Double> x = v.toDoubleVec();
+        Vector<Double> x(v.toDoubleVec());
         std::copy(x.begin(), x.end(), std::back_inserter(output));
     }
     return output;

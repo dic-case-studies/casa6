@@ -1,17 +1,9 @@
-from __future__ import absolute_import
 import os
 import time
 import copy
 
-from casatasks.private.casa_transition import is_CASA6
-if is_CASA6:
-    from casatools import agentflagger
-    from casatasks import casalog
-else:
-    from taskinit import *
-
-    agentflagger = casac.agentflagger
-
+from casatools import agentflagger
+from casatasks import casalog
 
 def flagmanager(
     vis=None,

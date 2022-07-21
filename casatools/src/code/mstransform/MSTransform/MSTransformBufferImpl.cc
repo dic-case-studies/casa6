@@ -42,10 +42,10 @@ MSTransformBufferImpl::MSTransformBufferImpl(MSTransformManager *manager)
 	inputOutputSPWIndexMap_p = manager_p->inputOutputSPWIndexMap_p;
 
 	// Store observatory position
-    MSObservation observationTable = manager_p->selectedInputMs_p->observation();
-    MSObservationColumns observationCols(observationTable);
-    String observatoryName = observationCols.telescopeName()(0);
-    MeasTable::Observatory(observatoryPosition_p,observatoryName);
+	MSObservation observationTable = manager_p->selectedInputMs_p->observation();
+	MSObservationColumns observationCols(observationTable);
+	String observatoryName = observationCols.telescopeName()(0);
+	MeasTable::Observatory(observatoryPosition_p,observatoryName);
 
 	if (not manager_p->reindex_p)
 	{
@@ -60,19 +60,8 @@ MSTransformBufferImpl::MSTransformBufferImpl(MSTransformManager *manager)
 		manager_p->outputInputSPWIndexMap_p.clear();
 	}
 
-	// Check if phase shifting has to be applied
-	if ( manager_p->phaseShifting_p and not manager_p->timeAverage_p)
-	{
-		applyPhaseShifting_p = true;
-		dx_p = manager_p->dx_p;
-		dy_p = manager_p->dy_p;
-	}
-	else
-	{
-		applyPhaseShifting_p = false;
-		dx_p = 0;
-		dy_p = 0;
-	}
+	dx_p = 0;
+	dy_p = 0;
 
 	// NONE datacol handling
 	if (manager_p->datacolumn_p.contains("NONE"))
@@ -1334,7 +1323,7 @@ const MFrequency::Types & MSTransformBufferImpl::freqRefFrameType () const
 		}
 
 		MFrequency refFrame = Vector<MFrequency>(spwRefRame_p(inputSPWIndex))(0);
-		freqRefFrameType_p = MFrequency::castType (refFrame.type());
+		freqRefFrameType_p = MFrequency::castType (refFrame.getRef().getType());
 	}
 
 	return freqRefFrameType_p;
@@ -1476,7 +1465,8 @@ Vector<Int> MSTransformBufferImpl::getChannelNumbersSelected (Int outputChannelI
 				// CAS-8018: If there is channel average then getChannelNumbers
 				//           is just an index ranging from 0 to nOutChans so there
 				//           is no need to re-map it.
-				outputInputChannelMap_p[outChanIdx] = manager_p->dataHandler_p->getSelectedChannelsMap()[inputSpw][outChanIdx];
+				outputInputChannelMap_p[outChanIdx] =
+                  Vector<Int>(manager_p->dataHandler_p->getSelectedChannelsMap()[inputSpw][outChanIdx]);
 			}
 		}
 

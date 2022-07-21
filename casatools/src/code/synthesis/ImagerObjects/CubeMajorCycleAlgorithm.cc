@@ -193,7 +193,8 @@ void CubeMajorCycleAlgorithm::task(){
           }
           subImgr.setCubeGridding(False);
           // TO DO get weight param and set weight
-          if(!weightParams_p.isDefined("type") || weightParams_p.asString("type")=="natural"){
+          // Modified to fix CAS-13660 bug for natural weight setting with uvtaper
+          if(!weightParams_p.isDefined("type") ){
             subImgr.weight("natural");
           }
           else{
@@ -341,7 +342,7 @@ void CubeMajorCycleAlgorithm::task(){
           status_p=false;
         }
         catch(std::exception& exc) {
-          logger << "Exception (std): " << exc.what() << LogIO::SEVERE;
+          logger << LogIO::SEVERE << "Exception (std): " << exc.what() << LogIO::POST;
           returnRec_p=Record();
         }
         catch(...){
@@ -356,7 +357,7 @@ void CubeMajorCycleAlgorithm::task(){
 	    os  << LogIO::WARN << "Unknown Exception for chan range "  << chanRange_p  << " ---   "<<  a.what()   << LogIO::POST;
 	  }
 
-          logger << "Unknown exception "  << LogIO::SEVERE;
+          logger << LogIO::SEVERE << "Unknown exception "  << LogIO::POST;
           status_p=False;
         }
 }

@@ -1,39 +1,15 @@
-from __future__ import absolute_import
 import os
 import copy
 import numpy as np
 from collections import defaultdict
 
-# get is_CASA6 and is_python3
-from casatasks.private.casa_transition import *
-if is_CASA6:
-    from casatasks import casalog
-    from casatools import ms, quanta, table, agentflagger
-    from .mstools import write_history
-    from . import flaghelper as fh
+from casatasks import casalog
+from casatools import ms, quanta, table, agentflagger
+from .mstools import write_history
+from . import flaghelper as fh
 
-    qalocal = quanta( )
-    tblocal = table( )
-else:
-    from taskinit import casalog, casac, qa, tb
-    from mstools import write_history
-    import flaghelper as fh
-
-    # naked tool constructors ala CASA6
-    agentflagger = casac.agentflagger
-    ms = casac.ms
-
-    # not really local
-    qalocal = qa
-    tblocal = tb
-
-# common function to use to get a dictionary item iterator
-if is_python3:
-    def lociteritems(adict):
-        return adict.items()
-else:
-    def lociteritems(adict):
-        return adict.iteritems()
+qalocal = quanta( )
+tblocal = table( )
 
 def flagcmd(
     vis=None,
@@ -403,7 +379,7 @@ def flagcmd(
                 for key in myflagcmd.keys():
                     cmddict = myflagcmd[key]['command']
                     cmdline = ""
-                    for k,v in lociteritems(cmddict):
+                    for k,v in cmddict.items():
                         cmdline = cmdline + k + '=' + str(v) + ' '
                     cmdline.rstrip()
                     outdict[key]['command'] = cmdline
@@ -420,11 +396,8 @@ def flagcmd(
     if not iscal and (action == 'apply' or action == 'unapply'):
         try:
             param_names = flagcmd.__code__.co_varnames[:flagcmd.__code__.co_argcount]
-            if is_python3:
-                vars = locals( )
-                param_vals = [vars[p] for p in param_names]
-            else:
-                param_vals = [eval(p) for p in param_names]
+            vars = locals( )
+            param_vals = [vars[p] for p in param_names]
 
             write_history(mslocal, vis, 'flagcmd', param_names,
                           param_vals, casalog)
@@ -1035,7 +1008,7 @@ def listFlagCommands(myflags=None, listmode=''):
             
             cmddict = myflags[k]['command']
             cmdline = ""
-            for key,val in lociteritems(cmddict):
+            for key,val in cmddict.items():
                 cmdstr = ""
                 if isinstance(val, str):
                     # Add quotes to string values
@@ -1060,7 +1033,7 @@ def listFlagCommands(myflags=None, listmode=''):
                 cmddict.pop('reason')
                 
             cmdline = ""
-            for key,val in lociteritems(cmddict):
+            for key,val in cmddict.items():
                 cmdstr = ""
                 if isinstance(val, str):
                     # Add quotes to string values
@@ -1235,7 +1208,7 @@ def listFlagCmd(
                 elif listmode == 'cmd':
                     # Loop over dictionary with commands
                     cmdline = ""
-                    for k,v in lociteritems(cmd):
+                    for k,v in cmd.items():
                         cmdline = cmdline + k + '=' + str(v) + ' '
                     
                     cmdline = cmdline.rstrip()                       
@@ -1251,7 +1224,7 @@ def listFlagCmd(
                         )
                 else:
                     cmdline = ""
-                    for k,v in lociteritems(cmd):
+                    for k,v in cmd.items():
                         cmdline = cmdline + k + '=' + str(v) + ' '
                     
                     cmdline = cmdline.rstrip()                       
@@ -1723,7 +1696,7 @@ def newplotflags(
         pl.ioff()
 
     plotflagperant = defaultdict(list)
-    for ipf, flag in lociteritems(plotflag):
+    for ipf, flag in plotflag.items():
         if not flag['show']:
             continue
         nflag = flag.copy()

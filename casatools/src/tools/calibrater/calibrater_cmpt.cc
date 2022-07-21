@@ -239,7 +239,8 @@ bool
 calibrater::setptmodel(const std::vector<double>& stokes) {
   try
     {
-      itsCalibrater->setModel(stokes);
+      Vector<Double> const stokesCasaVec(stokes);
+      itsCalibrater->setModel(stokesCasaVec);
     }
   catch (AipsError x)
     {
@@ -272,9 +273,11 @@ calibrater::setapply(const std::string& type,
     os << "Beginning setapply--(MSSelection version)-------" << LogIO::POST;
 
     // Forward to the Calibrater object (no spw sel yet)
+    Vector<Int> const spwmapV(spwmap);
+    Vector<Double> const opacityV(opacity);
     itsCalibrater->setapply(type,t,table,
 			    "",toCasaString(field),
-			    interp,calwt,spwmap,opacity);
+			    interp,calwt,spwmapV,opacityV);
     
   } catch(AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -394,12 +397,16 @@ calibrater::setsolve(const std::string& type,
     }
 
     // Forward to Calibrater object
+    Vector<Double> const delaywindowV(delaywindow);
+    Vector<Double> const ratewindowV(ratewindow);
+    Vector<Bool> const paramactiveV(paramactive);
+    Vector<Double> const rmsthreshV(rmsthresh);
     itsCalibrater->setsolve(type,toCasaString(t),table,append,preavg,mode,
 			    minblperant,
 			    toCasaString(refant),refantmode,
 			    solnorm,normtype, minsnr,combine,fillgaps,
 			    cfcache, painc, fitorder, fraction, numedge, radius, smooth,
-                            zerorates, globalsolve, niter, delaywindow, ratewindow, paramactive, solmode, rmsthresh);
+                            zerorates, globalsolve, niter, delaywindowV, ratewindowV, paramactiveV, solmode, rmsthreshV);
   } catch(AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
     RETHROW(x);
@@ -486,6 +493,31 @@ bool calibrater::setsolvebandpoly(const std::string& table,
   return true;
 }
 
+::casac::record*
+calibrater::returndict()
+{
+  ::casac::record* rec = 0;
+  if (! itsMS) {
+    *itsLog << LogIO::SEVERE << "Must first open a MeasurementSet."
+        << endl << LogIO::POST;
+    return nullptr;
+  }
+
+  // Grab variables to arrange in the dictionary
+  // applycal table(s) vc_p
+  // solvecal calibration term svc_p
+  // selection parameters mssel_p, or ms_p
+  Record outres = itsCalibrater->returndict();
+  Record statrec;
+  statrec.define("to apply", 0);
+  statrec.define("to solve", 0);
+  statrec.define("selected spw", 0);
+  rec = fromRecord(outres);
+  //cout << "mssel_p component: " << itsCalibrater->mssel_p << endl;
+  //cout << "ms_p component: " << itsCalibrater->ms_p << endl;
+    
+  return rec;
+}
 
 bool
 calibrater::state()
@@ -780,7 +812,8 @@ calibrater::initweights(const std::string& wtmode, const bool dowtsp,
     
     // Initialize the SIGMA, WEIGHT, and (optionally) WEIGHT_SPECTRUM columns
     if (wtmode.find("tsys") != std::string::npos) {
-    	retval = itsCalibrater->initWeightsWithTsys(wtmode,dowtsp, tsystable, gainfield, interp, spwmap);
+        Vector<Int> const spwmapV(spwmap);
+    	retval = itsCalibrater->initWeightsWithTsys(wtmode,dowtsp, tsystable, gainfield, interp, spwmapV);
     } else {
     	retval = itsCalibrater->initWeights(wtmode,dowtsp);
     }
@@ -846,9 +879,13 @@ casac::record* calibrater::fluxscale(
     oListFile.rtrim( '\n' );
     oListFile.rtrim( '\r' );
 
+    Vector<Int> const refspwmapV(refspwmap);
+    // tranidxV is updated in fluxscale method
+    // but updated values are never referenced in this method
+    Vector<Int> tranidxV(tranidx);
     itsCalibrater->fluxscale(tablein,tableout,
 			     toCasaString(reference),
-			     refspwmap,
+			     refspwmapV,
 			     toCasaString(transfer),
 			     append,
                              gainthreshold, 
@@ -856,7 +893,7 @@ casac::record* calibrater::fluxscale(
                              timerange,
                              scan,
 			     oFluxD,
-			     tranidx,
+			     tranidxV,
 			     oListFile,
                              incremental,
                              fitorder,
@@ -992,10 +1029,11 @@ calibrater::accumulate(const std::string& tablein,
     else
       tableOut = tableout;
     
+    Vector<Int> const spwmapV(spwmap);
     itsCalibrater->accumulate(tablein,incrtable,tableOut,
 			      toCasaString(field),
 			      toCasaString(calfield),
-			      interp,t,spwmap);
+			      interp,t,spwmapV);
     
   } catch (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -1050,7 +1088,8 @@ calibrater::specifycal(const std::string& caltable,
     LogIO os (LogOrigin ("calibrater", "specifycal"), logSink_p);
     os << "Beginning specifycal-----------------------" << LogIO::POST;
 
-    itsCalibrater->specifycal(caltype,caltable,time,spw,antenna,pol,parameter,infile,uniform);
+    Vector<Double> const parameterV(parameter);
+    itsCalibrater->specifycal(caltype,caltable,time,spw,antenna,pol,parameterV,infile,uniform);
     
   } catch (AipsError x) {
     *itsLog << LogIO::SEVERE << "Exception Reported: " << x.getMesg() << LogIO::POST;
@@ -1267,10 +1306,12 @@ calibrater::modelfit(const std::vector<bool>& vary,
     LogIO os(LogOrigin("calibrater", "modelfit"), logSink_p);
     os << "Beginning modelfit--------------------------" << LogIO::POST;
     
+    Vector<Double> const parV(par);
+    Vector<Bool> const varyV(vary);
     Vector<Double> thefit = itsCalibrater->modelfit(niter, 
 						    modeltype, 
-						    par, 
-						    vary, 
+						    parV,
+						    varyV,
 						    file);
     thefit.tovector(rstat);
   } catch  (AipsError x) {
