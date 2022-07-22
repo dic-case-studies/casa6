@@ -2483,6 +2483,7 @@ class test_cube(testref_base):
           report=self.th.checkall(imgexist=[self.img+'.image'],imgval=[(self.img+'.image',92.1789,[128,128,0,20])])
           ## line is tighter
           self.assertTrue(self.check_final(report))
+
      def test_cube_perchanweight_briggs(self):
           """[cube] test_cube_perchanweight_briggs: """
           self.prepData('refim_point_withline.ms')
@@ -2500,45 +2501,132 @@ class test_cube(testref_base):
           self.assertTrue(self.th.check_beam_compare(imbriggs_2+'.image', imbriggs0+'.image', operator.lt))
           self.assertTrue(self.th.check_beam_compare(imbriggs0+'.image', imbriggs_3+'.image', operator.lt))
     
+
+
      # unit test cases for CAS-13660
      def test_cube_weighting_taper(self):
           """[cube] test_cube_weighting_taper: """
           self.prepData('refim_point_withline.ms')
           delmod(self.msfile)
-          im_uniform=self.img+"_uniform_notaper"
-          im_uniform_taper=self.img+"_uniform_with_taper"
-          im_natural_taper=self.img+"_natural_with_taper"
-          im_briggs_2_taper=self.img+"_briggs_with_taper"
-          ret_uniform = tclean(vis=self.msfile,imagename=im_uniform,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='uniform', restoringbeam='common', parallel=self.parallel)
-          ret_uniform_taper = tclean(vis=self.msfile,imagename=im_uniform_taper,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='uniform', uvtaper=['50arcsec'], restoringbeam='common', parallel=self.parallel)
-          ret_natural_taper = tclean(vis=self.msfile,imagename=im_natural_taper,imsize=100,cell='8.0arcsec',specmode='cube',deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='natural', uvtaper=['500arcsec'], restoringbeam='common', parallel=self.parallel)
-          ret_briggs_2_taper=tclean(vis=self.msfile,imagename=im_briggs_2_taper,imsize=100,cell='8.0arcsec',specmode='cube', perchanweightdensity=True,deconvolver='hogbom',niter=1,threshold='0Jy',interactive=0, weighting='briggs', uvtaper=['50arcsec'], robust=-2.0, restoringbeam='common', parallel=self.parallel)
+          im_uniform = self.img + "_uniform_notaper"
+          im_uniform_taper = self.img + "_uniform_with_taper"
+          im_natural_taper = self.img + "_natural_with_taper"
+          im_briggs_2_taper = self.img + "_briggs_with_taper"
+          ret_uniform = tclean(vis=self.msfile, imagename=im_uniform, imsize=100, cell='8.0arcsec',
+                                    specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy', interactive=0,
+                                    weighting='uniform', restoringbeam='common', parallel=self.parallel)
+          ret_uniform_taper = tclean(vis=self.msfile, imagename=im_uniform_taper, imsize=100, cell='8.0arcsec',
+                                          specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
+                                          interactive=0, weighting='uniform', uvtaper=['50arcsec'],
+                                          restoringbeam='common', parallel=self.parallel)
+          ret_natural_taper = tclean(vis=self.msfile, imagename=im_natural_taper, imsize=100, cell='8.0arcsec',
+                                          specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
+                                          interactive=0, weighting='natural', uvtaper=['500arcsec'],
+                                          restoringbeam='common', parallel=self.parallel)
+          ret_briggs_2_taper = tclean(vis=self.msfile, imagename=im_briggs_2_taper, imsize=100, cell='8.0arcsec',
+                                           specmode='cube', perchanweightdensity=True, deconvolver='hogbom', niter=1,
+                                           threshold='0Jy', interactive=0, weighting='briggs', uvtaper=['50arcsec'],
+                                           robust=-2.0, restoringbeam='common', parallel=self.parallel)
 
-          self.assertTrue(os.path.exists(im_uniform+'.image') and os.path.exists(im_uniform_taper+'.image') and os.path.exists(im_natural_taper+'.image') and  os.path.exists(im_briggs_2_taper+'.image') )
-          self.assertTrue(self.th.check_beam_compare(im_uniform+'.image', im_uniform_taper+'.image', operator.lt))
+          self.assertTrue(os.path.exists(im_uniform + '.image') and os.path.exists(
+                    im_uniform_taper + '.image') and os.path.exists(im_natural_taper + '.image') and os.path.exists(
+                    im_briggs_2_taper + '.image'))
+          self.assertTrue(
+                    self.th.check_beam_compare(im_uniform + '.image', im_uniform_taper + '.image', operator.lt))
 
           beamresult_uniform = imhead(im_uniform + '.image', mode='summary')['restoringbeam']
           beamresult_uniform_taper = imhead(im_uniform_taper + '.image', mode='summary')['restoringbeam']
           beamresult_natural_taper = imhead(im_natural_taper + '.image', mode='summary')['restoringbeam']
           beamresult_briggs_2_taper = imhead(im_briggs_2_taper + '.image', mode='summary')['restoringbeam']
 
-          _, report1 = self.th.check_val(beamresult_uniform['major']['value'], 70.00, valname = 'Restoring beam major:', exact = False)
-          _, report2 = self.th.check_val(beamresult_uniform['minor']['value'], 51.07, valname='Restoring beam minor:', exact=False)
-          _, report3 = self.th.check_val(beamresult_uniform['positionangle']['value'], -83.78, valname='Restoring beam positionangle:', exact=False)
-          _, report4 = self.th.check_val(beamresult_uniform_taper['major']['value'], 75.52, valname='Restoring beam major:',exact=False)
-          _, report5 = self.th.check_val(beamresult_uniform_taper['minor']['value'], 61.63, valname='Restoring beam minor:',exact=False)
-          _, report6 = self.th.check_val(beamresult_uniform_taper['positionangle']['value'], -83.61,valname='Restoring beam positionangle:', exact=False)
-          _, report7 = self.th.check_val(beamresult_natural_taper['major']['value'], 457.07, valname='Restoring beam major:',exact=False)
-          _, report8 = self.th.check_val(beamresult_natural_taper['minor']['value'], 448.07, valname='Restoring beam minor:',exact=False)
-          _, report9 = self.th.check_val(beamresult_natural_taper['positionangle']['value'], 89.54,valname='Restoring beam positionangle:', exact=False)
-          _, report10 = self.th.check_val(beamresult_briggs_2_taper['major']['value'], 75.52,valname='Restoring beam major:', exact=False)
-          _, report11 = self.th.check_val(beamresult_briggs_2_taper['minor']['value'], 61.63,valname='Restoring beam minor:', exact=False)
-          _, report12 = self.th.check_val(beamresult_briggs_2_taper['positionangle']['value'], -83.61,valname='Restoring beam positionangle:', exact=False)
+          _, report1 = self.th.check_val(beamresult_uniform['major']['value'], 70.00,
+                                              valname='Restoring beam major:', exact=False)
+          _, report2 = self.th.check_val(beamresult_uniform['minor']['value'], 51.07,
+                                              valname='Restoring beam minor:', exact=False)
+          _, report3 = self.th.check_val(beamresult_uniform['positionangle']['value'], -83.78,
+                                              valname='Restoring beam positionangle:', exact=False)
+          _, report4 = self.th.check_val(beamresult_uniform_taper['major']['value'], 75.52,
+                                              valname='Restoring beam major:', exact=False)
+          _, report5 = self.th.check_val(beamresult_uniform_taper['minor']['value'], 61.63,
+                                              valname='Restoring beam minor:', exact=False)
+          _, report6 = self.th.check_val(beamresult_uniform_taper['positionangle']['value'], -83.61,
+                                              valname='Restoring beam positionangle:', exact=False)
+          _, report7 = self.th.check_val(beamresult_natural_taper['major']['value'], 457.07,
+                                              valname='Restoring beam major:', exact=False)
+          _, report8 = self.th.check_val(beamresult_natural_taper['minor']['value'], 448.07,
+                                              valname='Restoring beam minor:', exact=False)
+          _, report9 = self.th.check_val(beamresult_natural_taper['positionangle']['value'], 89.54,
+                                              valname='Restoring beam positionangle:', exact=False)
+          _, report10 = self.th.check_val(beamresult_briggs_2_taper['major']['value'], 75.52,
+                                               valname='Restoring beam major:', exact=False)
+          _, report11 = self.th.check_val(beamresult_briggs_2_taper['minor']['value'], 61.63,
+                                               valname='Restoring beam minor:', exact=False)
+          _, report12 = self.th.check_val(beamresult_briggs_2_taper['positionangle']['value'], -83.61,
+                                               valname='Restoring beam positionangle:', exact=False)
 
-          self.assertTrue(self.check_final(pstr=report1 + report2 + report3 + report4 + report5 + report6 + report7 + report8 + report9 + report10 + report11 + report12))
+          self.assertTrue(self.check_final(
+                    pstr=report1 + report2 + report3 + report4 + report5 + report6 + report7 + report8 + report9 + report10 + report11 + report12))
 
+     # unit test cases for CAS-13260
+     def test_cube_weighting_taper_cas13260(self):
+          """[cube] test_cube_weighting_taper_cas13260: """
+          self.prepData('refim_point_withline.ms')
+          delmod(self.msfile)
+          im_natural_taper_91500_lambda = self.img + "_natural_with_taper_91500_lambda"
+          im_natural_taper_1_arcsec = self.img + "_natural_with_taper_1_arcsec"
+          im_natural_taper_183_lambda = self.img + "_natural_with_taper_183_lambda"
+          im_natural_taper_500_arcsec = self.img + "_natural_with_taper_500_arcsec"
 
-          
+          ret_natural_taper_91500_lambda = tclean(vis=self.msfile, imagename=im_natural_taper_91500_lambda,
+                                                       imsize=100,
+                                                       cell='8.0arcsec',
+                                                       specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
+                                                       interactive=0,
+                                                       weighting='natural', uvtaper=['91.5karcsec'],
+                                                       restoringbeam='common',
+                                                       parallel=self.parallel)
+          ret_natural_taper_1_arcsec = tclean(vis=self.msfile, imagename=im_natural_taper_1_arcsec, imsize=100,
+                                                   cell='8.0arcsec',
+                                                   specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
+                                                   interactive=0,
+                                                   weighting='natural', uvtaper=['1arcsec'], restoringbeam='common',
+                                                   parallel=self.parallel)
+          ret_natural_taper_183_lambda = tclean(vis=self.msfile, imagename=im_natural_taper_183_lambda, imsize=100,
+                                                     cell='8.0arcsec',
+                                                     specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
+                                                     interactive=0,
+                                                     weighting='natural', uvtaper=['183lambda'], restoringbeam='common',
+                                                     parallel=self.parallel)
+          ret_natural_taper_500_arcsec = tclean(vis=self.msfile, imagename=im_natural_taper_500_arcsec, imsize=100,
+                                                     cell='8.0arcsec',
+                                                     specmode='cube', deconvolver='hogbom', niter=1, threshold='0Jy',
+                                                     interactive=0,
+                                                     weighting='natural', uvtaper=['500arcsec'], restoringbeam='common',
+                                                     parallel=self.parallel)
+
+          self.assertTrue(os.path.exists(im_natural_taper_91500_lambda + '.image') and os.path.exists(
+                    im_natural_taper_1_arcsec + '.image') and os.path.exists(
+                    im_natural_taper_183_lambda + '.image') and os.path.exists(im_natural_taper_500_arcsec + '.image'))
+
+          beamresult_taper_91500_lambda = imhead(im_natural_taper_91500_lambda + '.image', mode='summary')[
+                    'restoringbeam']
+          beamresult_taper_1_arcsec = imhead(im_natural_taper_1_arcsec + '.image', mode='summary')['restoringbeam']
+          beamresult_taper_183_lambda = imhead(im_natural_taper_183_lambda + '.image', mode='summary')[
+                    'restoringbeam']
+          beamresult_taper_500_arcsec = imhead(im_natural_taper_500_arcsec + '.image', mode='summary')[
+                    'restoringbeam']
+
+          _, report1 = self.th.check_val(beamresult_taper_91500_lambda['major']['value'], 130.49,
+                                              valname='Restoring beam major:', exact=False)
+          _, report2 = self.th.check_val(beamresult_taper_1_arcsec['major']['value'], 130.49,
+                                              valname='Restoring beam major:', exact=False)
+          _, report3 = self.th.check_val(beamresult_taper_183_lambda['major']['value'], 505.43,
+                                              valname='Restoring beam major:', exact=False)
+          _, report4 = self.th.check_val(beamresult_taper_500_arcsec['major']['value'], 451.36,
+                                              valname='Restoring beam major:', exact=False)
+
+          self.assertTrue(self.check_final(pstr=report1 + report2 + report3 + report4))
+
 #     def test_cube_D3(self):
 #          """ EMPTY : [cube] Test_Cube_D3 : specmode cubesrc - Doppler correct to a SOURCE ephemeris"""
 #          ret = tclean(vis=self.msfile,field='1',spw='0:105~135',specmode='cubesrc',nchan=30,start=105,width=1,veltype='radio',imagename=self.img,imsize=256,cell='0.01arcmin',phasecenter=1,deconvolver='hogbom',niter=10)

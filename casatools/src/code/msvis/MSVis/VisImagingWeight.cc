@@ -612,12 +612,14 @@ namespace casa { //# NAMESPACE CASA - BEGIN
       if( bmaj.getUnit().contains("lambda"))
     lambdafilt=true;
       if(lambdafilt){
-    os << "Filtering for Gaussian of shape: "
+    os << "Filtering for Gaussian of shape from read: "
        << bmaj.get("klambda").getValue() << " by "
        << bmin.get("klambda").getValue() << " (klambda) at p.a. "
        << bpa.get("deg").getValue() << " (degrees)" << LogIO::POST;
-    rbmaj_p=log(2.0)/square(bmaj.get("lambda").getValue());
-    rbmin_p=log(2.0)/square(bmin.get("lambda").getValue());
+      
+      rbmaj_p=log(2.0)/square(bmaj.get("lambda").getValue());
+      rbmin_p=log(2.0)/square(bmin.get("lambda").getValue());
+
       }
       else{
     os << "Filtering for Gaussian of shape: "
@@ -626,10 +628,11 @@ namespace casa { //# NAMESPACE CASA - BEGIN
        << bpa.get("deg").getValue() << " (degrees)" << LogIO::POST;
     
     // Convert to values that we can use
-    Double fact = 4.0*log(2.0);
+    // Refer CAS-13260 in jira for the fact modification from fact = 4.0*log(2.0) to pi.
+    Double fact = C::pi;
     rbmaj_p = fact*square(bmaj.get("rad").getValue());
     rbmin_p = fact*square(bmin.get("rad").getValue());
-      }
+
       Double rbpa  = MVAngle(bpa).get("rad").getValue();
       cospa_p = sin(rbpa);
       sinpa_p = cos(rbpa);
