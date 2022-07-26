@@ -151,11 +151,19 @@ datapath=[ "~/develop/casa/casatestdata/" ]
 -bash-4.2$
 ```
 
-The `datapath` list specifies directories where CASAtools should look for data files, and should include the directory we just checked out. After all of this is set, the full suite of tests can be run with:
+The `datapath` list specifies directories where CASAtools should look for data files, and should include the directory we just checked out. 
+
+A few of the casatools tests use the casatestutils module. That is built independently from casatools. 
+The path to a casatestutils build can be provided via PYTHONPATH prior to running the full suite of tests.
+
+After all of this is set, the full suite of tests can be run with:
 ```
--bash-4.2$ ./setup.py test
+-bash-4.2$ PYTHONPATH=../casatestutils/build/lib ./setup.py test
 ```
-There are bout 48 tests in total. Running all of them takes about 12 minutes on my laptop.
+There are about 28 tests in total. Running all of them takes about 48 minutes. 
+The test results can be found in subdirectory of the casatools/build directory (e.g. 
+casatools/build/testing.linux-x86_64-3.6). A separate directory is use for each tool 
+test script.
 
 *To run a single set of test*, you can just execute the test file:
 ```
