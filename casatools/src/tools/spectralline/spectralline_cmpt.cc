@@ -1,14 +1,14 @@
 #include <iostream>
 
-#include <casa/Containers/RecordField.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Logging/LogIO.h>
-#include <measures/Measures/MeasIERS.h>
+#include <casacore/casa/Containers/RecordField.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/measures/Measures/MeasIERS.h>
 #include <spectrallines/Splatalogue/ListConverter.h>
 #include <spectrallines/Splatalogue/SearchEngine.h>
-#include <tables/Tables/TableRow.h>
-#include <tables/Tables/ScalarColumn.h>
-#include <tables/Tables/TableProxy.h>
+#include <casacore/tables/Tables/TableRow.h>
+#include <casacore/tables/Tables/ScalarColumn.h>
+#include <casacore/tables/Tables/TableProxy.h>
 
 #include <spectralline_cmpt.h>
 
