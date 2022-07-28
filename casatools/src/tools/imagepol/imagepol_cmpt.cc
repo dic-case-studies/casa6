@@ -12,11 +12,11 @@
 
 #include <iostream>
 #include <imagepol_cmpt.h>
-#include <casa/Containers/Record.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/Logging/LogIO.h>
-#include <images/Images/ImageUtilities.h>
-#include <images/Images/ImageExpr.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/images/Images/ImageUtilities.h>
+#include <casacore/images/Images/ImageExpr.h>
 
 #include <imageanalysis/ImageAnalysis/ImageFactory.h>
 #include <imageanalysis/ImageAnalysis/ImagePolProxy.h>
@@ -24,7 +24,7 @@
 #include <imageanalysis/ImageAnalysis/LinearPolarizationAngleCalculator.h>
 #include <imageanalysis/ImageAnalysis/LinearPolarizationCalculator.h>
 
-#include <casa/namespace.h>
+#include <casacore/casa/namespace.h>
 
 using namespace std;
 

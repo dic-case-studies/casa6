@@ -13,30 +13,30 @@
 #include <math.h>
 
 #include <regionmanager_cmpt.h>
-#include <casa/Arrays/ArrayMath.h>
-#include <casa/BasicSL/String.h>
-#include <casa/Containers/Record.h>
-#include <casa/Exceptions/Error.h>
-#include <casa/fstream.h>
-#include <casa/Logging/LogFilter.h>
-#include <casa/Logging/LogIO.h>
-#include <casa/Logging/LogOrigin.h>
-#include <casa/OS/Directory.h>
-#include <casa/OS/EnvVar.h>
-#include <casa/OS/HostInfo.h>
-#include <casa/OS/RegularFile.h>
-#include <casa/OS/SymLink.h>
-#include <casa/Utilities/Assert.h>
-#include <coordinates/Coordinates/CoordinateSystem.h>
-#include <coordinates/Coordinates/StokesCoordinate.h>
-#include <coordinates/Coordinates/CoordinateUtil.h>
-#include <coordinates/Coordinates/DirectionCoordinate.h>
-#include <images/Regions/ImageRegion.h>
+#include <casacore/casa/Arrays/ArrayMath.h>
+#include <casacore/casa/BasicSL/String.h>
+#include <casacore/casa/Containers/Record.h>
+#include <casacore/casa/Exceptions/Error.h>
+#include <fstream>
+#include <casacore/casa/Logging/LogFilter.h>
+#include <casacore/casa/Logging/LogIO.h>
+#include <casacore/casa/Logging/LogOrigin.h>
+#include <casacore/casa/OS/Directory.h>
+#include <casacore/casa/OS/EnvVar.h>
+#include <casacore/casa/OS/HostInfo.h>
+#include <casacore/casa/OS/RegularFile.h>
+#include <casacore/casa/OS/SymLink.h>
+#include <casacore/casa/Utilities/Assert.h>
+#include <casacore/coordinates/Coordinates/CoordinateSystem.h>
+#include <casacore/coordinates/Coordinates/StokesCoordinate.h>
+#include <casacore/coordinates/Coordinates/CoordinateUtil.h>
+#include <casacore/coordinates/Coordinates/DirectionCoordinate.h>
+#include <casacore/images/Regions/ImageRegion.h>
 #include <imageanalysis/Regions/CasacRegionManager.h>
 #include <imageanalysis/Annotations/RegionTextList.h>
-#include <tables/Tables/TableRecord.h>
-#include <casa/namespace.h>
-#include <images/Regions/WCUnion.h>
+#include <casacore/tables/Tables/TableRecord.h>
+#include <casacore/casa/namespace.h>
+#include <casacore/images/Regions/WCUnion.h>
 
 using namespace std;
 
